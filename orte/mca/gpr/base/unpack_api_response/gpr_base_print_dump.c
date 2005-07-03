@@ -29,7 +29,7 @@
 #include "include/orte_types.h"
 #include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/gpr/base/base.h"
 
@@ -47,7 +47,7 @@ int orte_gpr_base_print_dump(orte_buffer_t *buffer, int output_id)
            ORTE_ERROR_LOG(rc);
            return rc;
        }
-	   ompi_output(output_id, "%s", line);
+	   opal_output(output_id, "%s", line);
 	   free(line);
        n=1;
     }

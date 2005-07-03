@@ -282,7 +282,7 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
                                                            &endpoint->lcl_qp_hndl_high, 
                                                            &endpoint->lcl_qp_prop_high, 
                                                            VAPI_TS_RC))) {
-        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                     ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -296,7 +296,7 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
                                                            &endpoint->lcl_qp_hndl_low, 
                                                            &endpoint->lcl_qp_prop_low, 
                                                            VAPI_TS_RC))) {
-        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                     ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -309,7 +309,7 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_req(endpoint))) {
-        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -333,7 +333,7 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
                                                            &endpoint->lcl_qp_hndl_high, 
                                                            &endpoint->lcl_qp_prop_high, 
                                                            VAPI_TS_RC))) {
-        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                     ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -347,7 +347,7 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
                                                            &endpoint->lcl_qp_hndl_low, 
                                                            &endpoint->lcl_qp_prop_low, 
                                                            VAPI_TS_RC))) {
-        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                     ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -367,14 +367,14 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
 
     rc = mca_btl_mvapi_endpoint_connect(endpoint);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
 
     /* Send connection info over to remote endpoint */
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_req(endpoint))) {
-        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -438,7 +438,7 @@ static void mca_btl_mvapi_endpoint_recv(
                      * and then reply with our QP information */
 
                     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_reply_start_connect(ib_endpoint, buffer))) {
-                        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+                        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
                         break;
                     }
@@ -451,7 +451,7 @@ static void mca_btl_mvapi_endpoint_recv(
 
                     mca_btl_mvapi_endpoint_set_remote_info(ib_endpoint, buffer);
                     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_connect(ib_endpoint))) {
-                        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
+                        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
                         break;
                     }
@@ -472,7 +472,7 @@ static void mca_btl_mvapi_endpoint_recv(
                 case MCA_BTL_IB_CONNECTED :
                     break;
                 default :
-                    ompi_output(0, "Connected -> Connecting not possible.\n");
+                    opal_output(0, "Connected -> Connecting not possible.\n");
             }
 
             break;
@@ -594,7 +594,7 @@ void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t* endpoint)
         /* We need to post this one */
         
         if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag))
-            ompi_output(0, "error in mca_btl_mvapi_endpoint_send");
+            opal_output(0, "error in mca_btl_mvapi_endpoint_send");
     }
 }
 
@@ -790,7 +790,7 @@ int mca_btl_mvapi_endpoint_qp_init_query(
     
     ret = VAPI_query_qp(nic, qp_hndl, &qp_attr, &qp_attr_mask, &qp_init_attr );          
     if (ret != VAPI_OK) {                                                                     
-        ompi_output(0, "error querying the queue pair"); 
+        opal_output(0, "error querying the queue pair"); 
         return OMPI_ERROR; 
     }                      
     

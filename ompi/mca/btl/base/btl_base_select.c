@@ -94,12 +94,12 @@ int mca_btl_base_select(bool enable_progress_threads,
         }
     }
 
-    ompi_output_verbose(10, mca_btl_base_output, 
+    opal_output_verbose(10, mca_btl_base_output, 
                        "select: initializing %s component %s",
                        component->btl_version.mca_type_name,
                        component->btl_version.mca_component_name);
     if (NULL == component->btl_init) {
-      ompi_output_verbose(10, mca_btl_base_output,
+      opal_output_verbose(10, mca_btl_base_output,
                          "select: no init function; ignoring component");
     } else {
       modules = component->btl_init(&num_btls, enable_progress_threads,
@@ -109,9 +109,9 @@ int mca_btl_base_select(bool enable_progress_threads,
          list and remove it from the component repository */
 
       if (NULL == modules) {
-        ompi_output_verbose(10, mca_btl_base_output,
+        opal_output_verbose(10, mca_btl_base_output,
                            "select: init returned failure");
-        ompi_output_verbose(10, mca_btl_base_output,
+        opal_output_verbose(10, mca_btl_base_output,
                             "select: module %s unloaded",
                             component->btl_version.mca_component_name);
 
@@ -122,7 +122,7 @@ int mca_btl_base_select(bool enable_progress_threads,
       /* Otherwise, it initialized properly.  Save it. */
 
       else {
-        ompi_output_verbose(10, mca_btl_base_output,
+        opal_output_verbose(10, mca_btl_base_output,
                            "select: init returned success");
 
         for (i = 0; i < num_btls; ++i) {

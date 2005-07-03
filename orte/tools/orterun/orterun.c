@@ -40,7 +40,7 @@
 #include "util/path.h"
 #include "util/cmd_line.h"
 #include "util/sys_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/universe_setup_file_io.h"
 #include "util/show_help.h"
 #include "util/basename.h"
@@ -346,7 +346,7 @@ int main(int argc, char *argv[])
     rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
-        ompi_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
+        opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
     } else {
         /* Wait for the app to complete */
 
@@ -916,7 +916,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                         free(value2);
                     }
                 } else {
-                    ompi_output(0, "Warning: could not find environment variable \"%s\"\n", param);
+                    opal_output(0, "Warning: could not find environment variable \"%s\"\n", param);
                 }
             }
         }

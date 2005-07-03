@@ -32,15 +32,14 @@
 #endif
 
 #include "include/constants.h"
-#include "util/output.h"
-#include "util/proc_info.h"
+#include "opal/util/output.h"
 #include "opal/threads/mutex.h"
 
 /*
  * Private data
  */
 static int verbose_stream = -1;
-static ompi_output_stream_t verbose = {
+static opal_output_stream_t verbose = {
   /* debugging */
   false,
   /* verbose level */
@@ -59,7 +58,7 @@ static ompi_output_stream_t verbose = {
 /*
  * Private functions
  */
-static int do_open(int output_id, ompi_output_stream_t *lds);
+static int do_open(int output_id, opal_output_stream_t *lds);
 static int open_file(int i);
 static void free_descriptor(int output_id);
 static void output(int output_id, const char *format, va_list arglist);
@@ -95,14 +94,14 @@ struct output_desc_t {
 };
 typedef struct output_desc_t output_desc_t;
 
-#define OMPI_OUTPUT_MAX_STREAMS 32
+#define OPAL_OUTPUT_MAX_STREAMS 32
 
 
 /*
  * Local state
  */
 static bool initialized = false;
-static output_desc_t info[OMPI_OUTPUT_MAX_STREAMS];
+static output_desc_t info[OPAL_OUTPUT_MAX_STREAMS];
 static char *temp_str = 0;
 static size_t temp_str_len = 0;
 static opal_mutex_t mutex;
@@ -112,10 +111,10 @@ static bool syslog_opened = false;
 /*
  * Setup the output stream infrastructure
  */
-bool ompi_output_init(void)
+bool opal_output_init(void)
 {
   int i;
-  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
+  for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
     info[i].ldi_used = false;
     info[i].ldi_enabled = false;
 
@@ -134,7 +133,7 @@ bool ompi_output_init(void)
 
   /* Open the default verbose stream */
 
-  verbose_stream = ompi_output_open(&verbose);
+  verbose_stream = opal_output_open(&verbose);
   return true;
 }
 
@@ -142,7 +141,7 @@ bool ompi_output_init(void)
 /*
  * Open a stream
  */
-int ompi_output_open(ompi_output_stream_t *lds)
+int opal_output_open(opal_output_stream_t *lds)
 {
   return do_open(-1, lds);
 }
@@ -151,7 +150,7 @@ int ompi_output_open(ompi_output_stream_t *lds)
 /*
  * Reset the parameters on a stream
  */
-int ompi_output_reopen(int output_id, ompi_output_stream_t *lds)
+int opal_output_reopen(int output_id, opal_output_stream_t *lds)
 {
   return do_open(output_id, lds);
 }
@@ -160,16 +159,16 @@ int ompi_output_reopen(int output_id, ompi_output_stream_t *lds)
 /*
  * Enable and disable outptu streams
  */
-bool ompi_output_switch(int output_id, bool enable)
+bool opal_output_switch(int output_id, bool enable)
 {
   bool ret = false;
 
   /* Setup */
 
   if (!initialized)
-    ompi_output_init();
+    opal_output_init();
 
-  if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS) {
+  if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS) {
     ret = info[output_id].ldi_enabled;
     info[output_id].ldi_enabled = enable;
   }
@@ -181,12 +180,12 @@ bool ompi_output_switch(int output_id, bool enable)
 /*
  * Reopen all the streams; used during checkpoint/restart.
  */
-void ompi_output_reopen_all(void)
+void opal_output_reopen_all(void)
 {
   int i;
-  ompi_output_stream_t lds;
+  opal_output_stream_t lds;
 
-  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
+  for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
 
     /* scan till we find ldi_used == 0, which is the end-marker */ 
 
@@ -195,7 +194,7 @@ void ompi_output_reopen_all(void)
     }
 
     /* 
-     * set this to zero to ensure that ompi_output_open will return this same
+     * set this to zero to ensure that opal_output_open will return this same
      * index as the output stream id 
      */
     info[i].ldi_used = false;
@@ -212,10 +211,10 @@ void ompi_output_reopen_all(void)
     lds.lds_file_suffix = info[i].ldi_file_suffix;
 
     /* 
-     * call ompi_output_open to open the stream. The return value is
+     * call opal_output_open to open the stream. The return value is
      * guaranteed to be i.  So we can ignore it. 
      */
-    ompi_output_open(&lds);
+    opal_output_open(&lds);
   }
 }
 
@@ -223,20 +222,20 @@ void ompi_output_reopen_all(void)
 /*
  * Close a stream
  */
-void ompi_output_close(int output_id)
+void opal_output_close(int output_id)
 {
   int i;
 
   /* Setup */
 
   if (!initialized) {
-    ompi_output_init();
+    opal_output_init();
   }
 
   /* If it's valid, used, enabled, and has an open file descriptor,
      free the resources associated with the descriptor */
 
-   if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS &&
+   if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
      free_descriptor(output_id);
@@ -245,13 +244,13 @@ void ompi_output_close(int output_id)
   /* If no one has the syslog open, we should close it */
 
   OPAL_THREAD_LOCK(&mutex);
-  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
+  for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
     if (info[i].ldi_used && info[i].ldi_syslog) {
       break;
     }
   }
 #ifndef WIN32
-  if (i >= OMPI_OUTPUT_MAX_STREAMS && syslog_opened) {
+  if (i >= OPAL_OUTPUT_MAX_STREAMS && syslog_opened) {
     closelog();
   }
 #else 
@@ -272,7 +271,7 @@ void ompi_output_close(int output_id)
 /*
  * Main function to send output to a stream
  */
-void ompi_output(int output_id, const char *format, ...)
+void opal_output(int output_id, const char *format, ...)
 {
   va_list arglist;
   va_start(arglist, format);
@@ -284,7 +283,7 @@ void ompi_output(int output_id, const char *format, ...)
 /*
  * Send a message to a stream if the verbose level is high enough
  */
-void ompi_output_verbose(int level, int output_id, const char *format, ...)
+void opal_output_verbose(int level, int output_id, const char *format, ...)
 {
   if (info[output_id].ldi_verbose_level >= level) {
     va_list arglist;
@@ -298,7 +297,7 @@ void ompi_output_verbose(int level, int output_id, const char *format, ...)
 /*
  * Set the verbosity level of a stream
  */
-void ompi_output_set_verbosity(int output_id, int level)
+void opal_output_set_verbosity(int output_id, int level)
 {
   info[output_id].ldi_verbose_level = level;
 }
@@ -307,11 +306,11 @@ void ompi_output_set_verbosity(int output_id, int level)
 /*
  * Shut down the output stream system
  */
-void ompi_output_finalize(void)
+void opal_output_finalize(void)
 {
   if (initialized) {
     if (verbose_stream != -1) {
-      ompi_output_close(verbose_stream);
+      opal_output_close(verbose_stream);
     }
     verbose_stream = -1;
   }
@@ -325,14 +324,14 @@ void ompi_output_finalize(void)
  * back-end function so that we can do the thread locking properly
  * (especially upon reopen).
  */
-static int do_open(int output_id, ompi_output_stream_t *lds)
+static int do_open(int output_id, opal_output_stream_t *lds)
 {
   int i;
 
   /* Setup */
 
   if (!initialized) {
-    ompi_output_init();
+    opal_output_init();
   }
 
   /* If output_id == -1, find an available stream, or return
@@ -340,12 +339,12 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
 
   if (-1 == output_id) {
     OPAL_THREAD_LOCK(&mutex);
-    for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
+    for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
       if (!info[i].ldi_used) {
         break;
       }
     }
-    if (i >= OMPI_OUTPUT_MAX_STREAMS) {
+    if (i >= OPAL_OUTPUT_MAX_STREAMS) {
       OPAL_THREAD_UNLOCK(&mutex);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -384,11 +383,11 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
 	  openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
     } else {
       info[i].ldi_syslog_ident = NULL;
-      openlog("ompi", LOG_PID, LOG_USER);
+      openlog("opal", LOG_PID, LOG_USER);
     }
 #else
     if (NULL == (info[i].ldi_syslog_ident = 
-                 RegisterEventSource(NULL, TEXT("Open MPI: ")))) {
+                 RegisterEventSource(NULL, TEXT("opal: ")))) {
         /* handle the error */
         return OMPI_ERROR;
     }
@@ -480,7 +479,7 @@ static void free_descriptor(int output_id)
 {
   output_desc_t *ldi;
 
-  if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS &&
+  if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
     ldi = &info[output_id];
@@ -527,12 +526,12 @@ static void output(int output_id, const char *format, va_list arglist)
   /* Setup */
 
   if (!initialized) {
-    ompi_output_init();
+    opal_output_init();
   }
 
   /* If it's valid, used, and enabled, output */
 
-  if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS &&
+  if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
     ldi = &info[output_id];
@@ -594,7 +593,7 @@ static void output(int output_id, const char *format, va_list arglist)
 
     /* File output -- first check to see if the file opening was
        delayed.  If so, try to open it.  If we failed to open it, then
-       just discard (there are big warnings in the ompi_output.h docs
+       just discard (there are big warnings in the opal_output.h docs
        about this!). */
 
     if (ldi->ldi_file) {
@@ -604,7 +603,7 @@ static void output(int output_id, const char *format, va_list arglist)
           } else if (ldi->ldi_file_num_lines_lost > 0) {
               char buffer[BUFSIZ];
               memset(buffer, 0, BUFSIZ);
-              snprintf(buffer, BUFSIZ - 1, "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when ompi_output() was invoked]\n", ldi->ldi_file_num_lines_lost);
+              snprintf(buffer, BUFSIZ - 1, "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n", ldi->ldi_file_num_lines_lost);
               write(ldi->ldi_fd, buffer, strlen(buffer));
               ldi->ldi_file_num_lines_lost = 0;
           }

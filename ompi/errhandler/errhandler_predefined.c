@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "errhandler/errhandler.h"
 #include "errhandler/errhandler_predefined.h"
 #include "errhandler/errcode.h"
@@ -122,9 +122,9 @@ static void out(char *str, char *arg)
 {
     if (ompi_mpi_initialized && !ompi_mpi_finalized) {
         if (NULL != arg) {
-            ompi_output(0, str, arg);
+            opal_output(0, str, arg);
         } else {
-            ompi_output(0, str);
+            opal_output(0, str);
         }
     } else {
         if (NULL != arg) {

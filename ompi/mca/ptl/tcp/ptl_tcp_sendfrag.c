@@ -181,15 +181,15 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
             case EINTR:
                 continue;
             case EWOULDBLOCK:
-                /* ompi_output(0, "mca_ptl_tcp_send_frag_handler: EWOULDBLOCK\n"); */
+                /* opal_output(0, "mca_ptl_tcp_send_frag_handler: EWOULDBLOCK\n"); */
                 return false;
 	    case EFAULT:
-                ompi_output( 0, "mca_ptl_tcp_send_frag_handler: writev error (%p, %d)\n\t%s(%d)\n",
+                opal_output( 0, "mca_ptl_tcp_send_frag_handler: writev error (%p, %d)\n\t%s(%d)\n",
                              frag->frag_vec_ptr[0].iov_base, frag->frag_vec_ptr[0].iov_len,
                              strerror(ompi_socket_errno), frag->frag_vec_cnt );
             default:
                 {
-                ompi_output(0, "mca_ptl_tcp_send_frag_handler: writev failed with errno=%d", ompi_socket_errno);
+                opal_output(0, "mca_ptl_tcp_send_frag_handler: writev failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_peer);
                 return false;
                 }

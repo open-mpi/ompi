@@ -123,28 +123,28 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 #define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq) \
 { \
  int i; \
- ompi_output(0, "[%d,%d,%d] src start, %llu\n",  \
+ opal_output(0, "[%d,%d,%d] src start, %llu\n",  \
     ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_start); \
 \
- ompi_output(0, "[%d,%d,%d] src send start, %llu\n",  \
+ opal_output(0, "[%d,%d,%d] src send start, %llu\n",  \
     ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_send1); \
 \
- ompi_output(0, "[%d,%d,%d] src scheduled, %llu\n",  \
+ opal_output(0, "[%d,%d,%d] src scheduled, %llu\n",  \
     ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_scheduled); \
 \
- ompi_output(0, "[%d,%d,%d] src send complete, %llu\n",  \
+ opal_output(0, "[%d,%d,%d] src send complete, %llu\n",  \
     ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_send2); \
 \
  for(i=0; i<(sendreq)->t_pin_index; i++) \
-     ompi_output(0, "[%d,%d,%d] src pin, %llu %llu\n",  \
+     opal_output(0, "[%d,%d,%d] src pin, %llu %llu\n",  \
         ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_pin[i], \
         (sendreq)->t_put[i] - (sendreq)->t_pin[i]); \
  for(i=0; i<(sendreq)->t_put_index; i++) \
-     ompi_output(0, "[%d,%d,%d] src put, %llu %llu\n",  \
+     opal_output(0, "[%d,%d,%d] src put, %llu %llu\n",  \
         ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_put[i], \
         (sendreq)->t_fin[i] - (sendreq)->t_put[i]); \
  for(i=0; i<(sendreq)->t_fin_index; i++) \
-     ompi_output(0, "[%d,%d,%d] src fin, %llu\n",  \
+     opal_output(0, "[%d,%d,%d] src fin, %llu\n",  \
         ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_fin[i]); \
 }
 

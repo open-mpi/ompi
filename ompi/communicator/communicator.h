@@ -22,7 +22,7 @@
 #include "errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mpi.h"
 #include "group/group.h"
 #include "mca/coll/coll.h"
@@ -212,7 +212,7 @@ struct ompi_communicator_t {
     {
 #if OMPI_ENABLE_DEBUG
 	if(peer_id >= comm->c_remote_group->grp_proc_count) {
-	    ompi_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
+	    opal_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
 	    return (ompi_proc_t *) NULL;
 	}
 #endif

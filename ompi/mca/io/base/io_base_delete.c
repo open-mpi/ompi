@@ -24,7 +24,7 @@
 #include "file/file.h"
 #include "opal/class/opal_list.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
@@ -81,7 +81,7 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
 
     /* Announce */
 
-    ompi_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, mca_io_base_output,
                         "io:base:delete: deleting file: %s", 
                         filename);
   
@@ -104,7 +104,7 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
         name_array = ompi_argv_split(names, ',');
         num_names = ompi_argv_count(name_array);
         
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:delete: Checking specific modules: %s",
                             names);
         selectable = check_components(&mca_io_base_components_available, 
@@ -116,7 +116,7 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
        check them all. */
   
     else {
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:delete: Checking all available modules");
         selectable = check_components(&mca_io_base_components_available, 
                                       filename, info, NULL, 0);
@@ -167,7 +167,7 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
     
     /* Announce the winner */
   
-    ompi_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, mca_io_base_output,
                         "io:base:delete: Selected io component %s", 
                         selected.ai_component.v1_0_0.io_version.mca_component_name);
   
@@ -286,12 +286,12 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
             avail->ai_priority : 100;
         avail->ai_priority = (avail->ai_priority < 0) ?
             0 : avail->ai_priority;
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:delete: component available: %s, priority: %d", 
                             component->mca_component_name, 
                             avail->ai_priority);
     } else {
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:delete: component not available: %s",
                             component->mca_component_name);
     }

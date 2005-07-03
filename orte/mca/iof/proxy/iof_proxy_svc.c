@@ -1,5 +1,5 @@
 #include "ompi_config.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/rml/rml.h"
 #include "mca/rml/rml_types.h"
 #include "mca/iof/base/base.h"
@@ -204,7 +204,7 @@ void orte_iof_proxy_svc_recv(
     orte_iof_base_header_t* hdr = (orte_iof_base_header_t*)msg->iov_base;
     int rc;
     if(NULL == msg->iov_base) {
-        ompi_output(0, "orte_iof_proxy_svc_recv: invalid message\n");
+        opal_output(0, "orte_iof_proxy_svc_recv: invalid message\n");
         return;
     }
 

@@ -57,7 +57,7 @@
 
 #include "event.h"
 #include "evsignal.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 extern struct opal_event_list opal_signalqueue;
 
@@ -74,7 +74,7 @@ volatile sig_atomic_t opal_evsignal_caught = 0;
 #if 0
 static void opal_event_signal_pipe_handler(int sd, short flags, void* user)
 {
-    ompi_output(0, "opal_event_signal_pipe_handler: %d\n", opal_event_signal_count);
+    opal_output(0, "opal_event_signal_pipe_handler: %d\n", opal_event_signal_count);
     while(opal_event_signal_count-- > 0) {
         char byte;
         read(opal_event_signal_pipe[0], &byte, 1);

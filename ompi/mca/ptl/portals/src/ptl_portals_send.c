@@ -141,7 +141,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
             sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_rendezvous_header_t);
         }
 
-        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+        OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                              "sending first frag of size %d for msg %lld to %lu",
                              sendfrag->frag_send.frag_base.frag_size,
                              sendreq->req_send.req_base.req_sequence,
@@ -155,7 +155,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
         hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
 
-        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+        OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                              "sending secnd frag of size %d for msg %lld, offset %lld to %lu, %p",
                              sendfrag->frag_send.frag_base.frag_size,
                              sendreq->req_send.req_base.req_sequence,
@@ -190,17 +190,17 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
         &(frag->frag_send.frag_base.frag_header);
 
     if (ev->type == PTL_EVENT_SEND_START) {
-        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+        OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                              "ptl event send start for msg %d",
                              (int) hdr->hdr_match.hdr_msg_seq));
     } else if (ev->type == PTL_EVENT_SEND_END) {
-        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+        OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                              "ptl event send end for msg %d",
                              (int) hdr->hdr_match.hdr_msg_seq));
     } else if (ev->type == PTL_EVENT_ACK) {
 
         if (frag->frag_send.frag_request == NULL) {
-            OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+            OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                                  "done sending ack for recv request %p to %lu", 
                                  hdr->hdr_ack.hdr_dst_match.pval,
                                  ev->initiator.pid));
@@ -216,17 +216,17 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
 #if OMPI_ENABLE_DEBUG
             if (MCA_PTL_HDR_TYPE_MATCH == hdr->hdr_common.hdr_type ||
                 MCA_PTL_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type) {
-                OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                                      "done sending first frag for msg %d to %lu",
                                      (int) hdr->hdr_match.hdr_msg_seq,
                                      ev->initiator.pid));
             } else if (MCA_PTL_HDR_TYPE_FRAG == hdr->hdr_common.hdr_type) {
-                OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                                      "done sending secnd frag to req %p, offset %lld",
                                      hdr->hdr_frag.hdr_dst_ptr.pval,
                                      hdr->hdr_frag.hdr_frag_offset));
             } else {
-                ompi_output(mca_ptl_portals_component.portals_output,
+                opal_output(mca_ptl_portals_component.portals_output,
                             "unexpected send event hdr type: %d.  aborting",
                             hdr->hdr_common.hdr_type);
                 abort();
@@ -248,7 +248,7 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
         /* unlink memory descriptor */
         PtlMDUnlink(ev->md_handle);
     } else {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "*** Unknown event for msg %d: %d",
                             (int) hdr->hdr_match.hdr_msg_seq, ev->type);
     }

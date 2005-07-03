@@ -56,7 +56,7 @@ mca_ptl_portals_recv_get_frag(struct mca_ptl_portals_module_t *ptl,
                        item, ret);
     recvfrag = (mca_ptl_portals_recv_frag_t*) item;
     if (OMPI_SUCCESS != ret) {
-        ompi_output(mca_ptl_portals_component.portals_output,
+        opal_output(mca_ptl_portals_component.portals_output,
                     "unable to allocate resources");
         return NULL;
     }
@@ -89,7 +89,7 @@ mca_ptl_portals_process_first_frag(struct mca_ptl_portals_module_t *ptl,
     recvfrag = mca_ptl_portals_recv_get_frag(ptl, hdr, ev, header_size);
     if (NULL == recvfrag) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+    OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                          "recving first frag of size %d for msg %d from %lu",
                          recvfrag->frag_size,
                          (int) hdr->hdr_match.hdr_msg_seq,
@@ -138,7 +138,7 @@ mca_ptl_portals_process_frag_frag(struct mca_ptl_portals_module_t *ptl,
                               &bytes_delivered, &free_after );
     }
 
-    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+    OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                          "recving secnd frag of size %d for msg %d, offset %lld from %lu, %p",
                          recvfrag->frag_size,
                          (int) hdr->hdr_match.hdr_msg_seq,

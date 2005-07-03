@@ -22,7 +22,7 @@
 #include "gm_config.h"
 #include <string.h>
 #include "class/ompi_bitmap.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "mca/ns/ns.h"
 #include "mca/ptl/ptl.h"
@@ -83,14 +83,14 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
         if( orte_proc == local_proc ) continue;
         ptl_proc = mca_ptl_gm_proc_create ((mca_ptl_gm_module_t *) ptl, orte_proc);
         if (NULL == ptl_proc) {
-            ompi_output( 0, "[%s:%d] cannot allocate memory for the GM module", __FILE__, __LINE__ );
+            opal_output( 0, "[%s:%d] cannot allocate memory for the GM module", __FILE__, __LINE__ );
             continue;
         }
 
         OPAL_THREAD_LOCK (&ptl_proc->proc_lock);
         if (ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
             OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
-            ompi_output( 0, "[%s:%d] modex exchange failed for GM module", __FILE__, __LINE__ );
+            opal_output( 0, "[%s:%d] modex exchange failed for GM module", __FILE__, __LINE__ );
             continue;
         }
         ptl_peer = NULL;  /* force it to NULL before looping through the ptls */
@@ -99,7 +99,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
             ptl_peer = OBJ_NEW (mca_ptl_gm_peer_t);
             if (NULL == ptl_peer) {
                 OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
-                ompi_output( 0, "[%s:%d] cannot allocate memory for one of the GM ptl", __FILE__, __LINE__ );
+                opal_output( 0, "[%s:%d] cannot allocate memory for one of the GM ptl", __FILE__, __LINE__ );
                 continue;
             }
 
@@ -111,7 +111,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
             if (GM_SUCCESS != gm_global_id_to_node_id(((mca_ptl_gm_module_t *) ptl)->gm_port,
 						      ptl_proc->proc_addrs[j].global_id,
 						      &(ptl_peer->peer_addr.local_id))) {
-                ompi_output( 0, "[%s:%d] error in converting global to local id \n", 
+                opal_output( 0, "[%s:%d] error in converting global to local id \n", 
 			     __FILE__, __LINE__ );
                 OBJ_RELEASE( ptl_peer );
                 assert( NULL == ptl_peer );
@@ -122,7 +122,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
 	    ptl_peer->peer_addr.local_id = gm_host_name_to_node_id( ((mca_ptl_gm_module_t *) ptl)->gm_port,
 								    ptl_proc->proc_addrs[j].global_id );
 	    if( GM_NO_SUCH_NODE_ID == ptl_peer->peer_addr.local_id ) {
-		ompi_output( 0, "Unable to convert the remote host name (%s) to a host id",
+		opal_output( 0, "Unable to convert the remote host name (%s) to a host id",
 			     ptl_proc->proc_addrs[j].global_id );
                 OBJ_RELEASE( ptl_peer );
                 assert( NULL == ptl_peer );
@@ -173,7 +173,7 @@ mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
     }
 
     if( index == mca_ptl_gm_component.gm_num_ptl_modules ) {
-        ompi_output( 0, "%p is not a GM PTL !!!\n", (void*)base_ptl );
+        opal_output( 0, "%p is not a GM PTL !!!\n", (void*)base_ptl );
         return OMPI_ERROR;
     }
 
@@ -244,7 +244,7 @@ mca_ptl_gm_request_init( struct mca_ptl_base_module_t *ptl,
     frag = mca_ptl_gm_alloc_send_frag(ptl, request);
    
     if (NULL == frag) {
-        ompi_output(0,"[%s:%d] Unable to allocate a gm send fragment\n");
+        opal_output(0,"[%s:%d] Unable to allocate a gm send fragment\n");
         return OMPI_ERR_OUT_OF_RESOURCE;   
     } else  {
 	req = (mca_ptl_gm_send_request_t *)request;
@@ -350,7 +350,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
 
         OMPI_FREE_LIST_WAIT( &(gm_ptl->gm_send_dma_frags), item, rc );
         if( NULL == item ) {
-            ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
+            opal_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
             OPAL_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
             opal_list_append (&mca_ptl_gm_module.gm_pending_acks, (opal_list_item_t *)frag);
             OPAL_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);

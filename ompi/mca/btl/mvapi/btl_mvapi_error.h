@@ -26,14 +26,14 @@
  * 
  */ 
 #define MCA_BTL_IB_VAPI_ERROR(vapi_ret, func_name) {                  \
-    ompi_output(0,"[%s:%d] ", __FILE__, __LINE__);                  \
-    ompi_output(0,"%s : %s",func_name,VAPI_strerror(vapi_ret));     \
+    opal_output(0,"[%s:%d] ", __FILE__, __LINE__);                  \
+    opal_output(0,"%s : %s",func_name,VAPI_strerror(vapi_ret));     \
 }
 
 /* Debug Print */
 #if 0
 #define DEBUG_OUT(fmt, args...) {                                     \
-    ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
+    opal_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
         ##args);                                                    \
 }
 #else

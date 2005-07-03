@@ -28,7 +28,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
@@ -151,7 +151,7 @@ mca_ptl_elan_component_close (void)
 
 #if OMPI_PTL_ELAN_THREADING
 	if ((mca_ptl_elan_thread_close(elan_mp)) != OMPI_SUCCESS) {
-	    ompi_output(0, "unable to close asynchronous threads\n");
+	    opal_output(0, "unable to close asynchronous threads\n");
 	}
 #endif
 	/* cleanup the proc, ptl, and the module */
@@ -177,7 +177,7 @@ mca_ptl_elan_component_close (void)
      * before desctructing this free_list */
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
         elan_mp->elan_recv_frags_free.super.opal_list_length) {
-        ompi_output (0, 
+        opal_output (0, 
 		     "[%s:%d] recv_frags : %d allocated %d returned\n",
 		     __FILE__, __LINE__,
                      elan_mp->elan_recv_frags_free.fl_num_allocated,
@@ -215,14 +215,14 @@ mca_ptl_elan_component_init (int *num_ptls,
 
     /* open basic elan device */
     if (OMPI_SUCCESS != mca_ptl_elan_state_init(&mca_ptl_elan_component)) {
-	ompi_output(0, 
+	opal_output(0, 
 		"[%s:%d] error in initializing elan state and PTL's.\n",
 		__FILE__, __LINE__);
         return NULL;
     }
 
     if (OMPI_SUCCESS != mca_ptl_elan_addr_put(&mca_ptl_elan_component)) {
-        ompi_output(0, 
+        opal_output(0, 
                 "[%s:%d] error in registering with Runtime/OOB \n",
                 __FILE__, __LINE__);
         return NULL;
@@ -231,7 +231,7 @@ mca_ptl_elan_component_init (int *num_ptls,
     ptls = (mca_ptl_base_module_t **) malloc (elan_mp->num_modules *
                                               sizeof (mca_ptl_elan_module_t *));
     if (NULL == ptls) {
-        ompi_output(0, 
+        opal_output(0, 
 		"[%s:%d] error in allocating memory \n",
                 __FILE__, __LINE__);
         return NULL;
@@ -257,7 +257,7 @@ mca_ptl_elan_component_init (int *num_ptls,
 
 #if OMPI_PTL_ELAN_THREADING
     if ((mca_ptl_elan_thread_init(elan_mp)) != OMPI_SUCCESS) {
-        ompi_output(0, 
+        opal_output(0, 
 		"unable to initialize %d asynchronous threads\n",
 		elan_mp->num_modules);
     }

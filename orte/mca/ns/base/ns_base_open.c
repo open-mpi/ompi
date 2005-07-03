@@ -22,7 +22,7 @@
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "dps/dps.h"
 
@@ -122,7 +122,7 @@ int orte_ns_base_open(void)
                                         NULL, 0);
     mca_base_param_lookup_int(param, &value);
     if (value != 0) {
-        mca_ns_base_output = ompi_output_open(NULL);
+        mca_ns_base_output = opal_output_open(NULL);
     } else {
         mca_ns_base_output = -1;
     }

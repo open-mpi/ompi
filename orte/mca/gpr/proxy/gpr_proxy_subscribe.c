@@ -27,7 +27,7 @@
 
 #include "include/orte_constants.h"
 #include "dps/dps.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "mca/ns/ns_types.h"

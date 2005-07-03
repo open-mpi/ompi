@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
@@ -597,19 +597,19 @@ int mca_btl_template_finalize(struct mca_btl_base_module_t* btl)
     
     if(template_btl->template_frag_eager.fl_num_allocated != 
        template_btl->template_frag_eager.super.opal_list_length){ 
-        ompi_output(0, "btl template_frag_eager: %d allocated %d returned \n", 
+        opal_output(0, "btl template_frag_eager: %d allocated %d returned \n", 
                     template_btl->template_frag_eager.fl_num_allocated, 
                     template_btl->template_frag_eager.super.opal_list_length); 
     }
     if(template_btl->template_frag_max.fl_num_allocated != 
       template_btl->template_frag_max.super.opal_list_length) { 
-        ompi_output(0, "btl template_frag_max: %d allocated %d returned \n", 
+        opal_output(0, "btl template_frag_max: %d allocated %d returned \n", 
                     template_btl->template_frag_max.fl_num_allocated, 
                     template_btl->template_frag_max.super.opal_list_length); 
     }
     if(template_btl->template_frag_user.fl_num_allocated != 
        template_btl->template_frag_user.super.opal_list_length){ 
-        ompi_output(0, "btl template_frag_user: %d allocated %d returned \n", 
+        opal_output(0, "btl template_frag_user: %d allocated %d returned \n", 
                     template_btl->template_frag_user.fl_num_allocated, 
                     template_btl->template_frag_user.super.opal_list_length); 
     }

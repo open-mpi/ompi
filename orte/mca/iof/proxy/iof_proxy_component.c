@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "mca/rml/rml.h"
 #include "mca/base/base.h"
@@ -132,7 +132,7 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
         NULL
     );
     if(rc < 0) {
-        ompi_output(0, "orte_iof_proxy_init: unable to post non-blocking recv");
+        opal_output(0, "orte_iof_proxy_init: unable to post non-blocking recv");
         return NULL;
     }
     initialized = true;

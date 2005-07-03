@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "mca/ns/ns.h"
@@ -178,7 +178,7 @@ int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *
     jobstring++;
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_jobid(&job, jobstring))) {
         ORTE_ERROR_LOG(rc);
-        ompi_output(0, "[%lu,%lu,%lu] %s\n", ORTE_NAME_ARGS(orte_process_info.my_name), jobstring);
+        opal_output(0, "[%lu,%lu,%lu] %s\n", ORTE_NAME_ARGS(orte_process_info.my_name), jobstring);
         return rc;
     }
     *jobid = job;

@@ -121,12 +121,12 @@ orte_pls_xgrid_component_init(int *priority)
 
     if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME") ||
         NULL == getenv("XGRID_CONTROLLER_PASSWORD")) {
-	ompi_output(orte_pls_base.pls_output,
+	opal_output(orte_pls_base.pls_output,
 		    "orte:pls:xgrid: not available: controller info not set");
         return NULL;
     }
 
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
 		"orte:pls:xgrid: initializing PlsXGridClient");
     mca_pls_xgrid_component.pool = [[NSAutoreleasePool alloc] init];
     mca_pls_xgrid_component.client = [[PlsXGridClient alloc] init];
@@ -153,11 +153,11 @@ orte_pls_xgrid_component_init(int *priority)
 
     opal_progress_register(orte_pls_xgrid_progress);
 
-    ompi_output(orte_pls_base.pls_output, "orte:pls:xgrid: initialized");
+    opal_output(orte_pls_base.pls_output, "orte:pls:xgrid: initialized");
 
     ret = [mca_pls_xgrid_component.client connect];
     if (ret != ORTE_SUCCESS) {
-	ompi_output(orte_pls_base.pls_output,
+	opal_output(orte_pls_base.pls_output,
 		    "orte:pls:xgrid: connection failed");
 	orte_pls_xgrid_finalize();
     }

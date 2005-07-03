@@ -20,7 +20,7 @@
 
 #include "include/orte_constants.h"
 #include "util/malloc.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/base/base.h"
 
 #include "runtime/opal.h"
@@ -40,7 +40,7 @@ int opal_init(void)
     ompi_malloc_init();
 
     /* initialize the output system */
-    ompi_output_init();
+    opal_output_init();
     
     /* initialize the mca */
     mca_base_open();

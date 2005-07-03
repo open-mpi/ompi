@@ -119,7 +119,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
      * mapping - as the daemon/proxy is responsibe for determining the apps
      * to launch on each node.
      */
-    if (mca_pls_poe_component.verbose > 10) ompi_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
+    if (mca_pls_poe_component.verbose > 10) opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
 
     if((mca_pls_poe_component.hostfile=tempnam(NULL,NULL))==NULL) return ORTE_ERR_OUT_OF_RESOURCE;
     if((mca_pls_poe_component.cmdfile=tempnam(NULL,NULL))==NULL) return ORTE_ERR_OUT_OF_RESOURCE;
@@ -223,7 +223,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
         /* setup process name */
         rc = orte_ns.get_proc_name_string(&name_string, name);
         if(ORTE_SUCCESS != rc) {
-            ompi_output(0, "orte_pls_poe: unable to create process name");
+            opal_output(0, "orte_pls_poe: unable to create process name");
             exit(-1);
         }
         argv[proc_name_index] = name_string;
@@ -233,7 +233,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
         fprintf(cfp,"\n");
 
         if (mca_pls_poe_component.verbose) {
-           ompi_output(0, "%s:cmdfile %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
+           opal_output(0, "%s:cmdfile %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
         }  
         vpid++;
         free(name);
@@ -268,7 +268,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
     if (mca_pls_poe_component.verbose) {
-       ompi_output(0, "%s:cmdline %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
+       opal_output(0, "%s:cmdline %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
     }  
 
     pid = fork();
@@ -280,7 +280,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     /* child */
     if(pid == 0) {
        execv(mca_pls_poe_component.path, argv);
-       ompi_output(0, "orte_pls_poe: execv failed with errno=%d\n", errno);
+       opal_output(0, "orte_pls_poe: execv failed with errno=%d\n", errno);
        exit(-1);
     } else {
     }
@@ -290,7 +290,7 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
-    if (mca_pls_poe_component.verbose > 10) ompi_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
+    if (mca_pls_poe_component.verbose > 10) opal_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
     return rc;
 }
 
@@ -308,7 +308,7 @@ int __poe_wait_job(pid_t pid, int status, void* cbdata)
     int rc;
 
     if(mca_pls_poe_component.verbose > 10) {
-       ompi_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
+       opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
     }
 
     /* query allocation for the job */
@@ -337,7 +337,7 @@ int __poe_wait_job(pid_t pid, int status, void* cbdata)
     OBJ_DESTRUCT(&map);
 cleanup:
     if(mca_pls_poe_component.verbose>10) {
-        ompi_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
+        opal_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
     }
     return rc;
 }
@@ -367,7 +367,7 @@ static int __poe_create_cmd_file(
     char **environ_copy;
 
     if(mca_pls_poe_component.verbose > 10) {
-        ompi_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
+        opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
     }
 
     /* setup base environment */
@@ -433,7 +433,7 @@ static int __poe_create_cmd_file(
     fprintf(cfp,"\n"); 
 
     if(mca_pls_poe_component.verbose>10) {
-        ompi_output(0, "%s: --- END ---\n", __FUNCTION__);
+        opal_output(0, "%s: --- END ---\n", __FUNCTION__);
     } 
 
     return ORTE_SUCCESS;
@@ -457,7 +457,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     sigset_t sigs;
 
     if(mca_pls_poe_component.verbose > 10) {
-        ompi_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
+        opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
     }
 
     if( (NULL==(mca_pls_poe_component.cmdfile=tempnam(NULL,NULL))) || 
@@ -547,7 +547,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
     if(mca_pls_poe_component.verbose>10) {
-        ompi_output(0, "%s:POE cmdline %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
+        opal_output(0, "%s:POE cmdline %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
     }  
 
     /* Start job with POE */
@@ -566,7 +566,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
         execv(mca_pls_poe_component.path, argv);
-        ompi_output(0, "orte_pls_poe: execv failed with errno=%d\n", errno);
+        opal_output(0, "orte_pls_poe: execv failed with errno=%d\n", errno);
         exit(-1);
     } else {
         orte_wait_cb(pid, __poe_wait_job, NULL);
@@ -583,7 +583,7 @@ cleanup:
     OBJ_DESTRUCT(&nodes);
 
     if(mca_pls_poe_component.verbose>10) {
-        ompi_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
+        opal_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
     } 
     return rc;
 }
@@ -620,14 +620,14 @@ pls_poe_finalize - clean up tempolary files
 static int pls_poe_finalize(void)
 {
     if (mca_pls_poe_component.verbose > 10) {
-       ompi_output(0, "%s: --- BEGIN ---\n", __FUNCTION__);
+       opal_output(0, "%s: --- BEGIN ---\n", __FUNCTION__);
     }
 
     unlink(mca_pls_poe_component.cmdfile);
     unlink(mca_pls_poe_component.hostfile);
 
     if (mca_pls_poe_component.verbose > 10) {
-       ompi_output(0, "%s: --- END ---\n", __FUNCTION__);
+       opal_output(0, "%s: --- END ---\n", __FUNCTION__);
     }
     return ORTE_SUCCESS;
 }

@@ -20,7 +20,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/rml/rml.h"
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_endpoint.h"
@@ -241,7 +241,7 @@ int orte_iof_base_endpoint_create(
 
     /* set file descriptor to be non-blocking */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "orte_iof_base_endpoint_create: fcntl(F_GETFL) failed with errno=%d\n", errno);
+        opal_output(0, "orte_iof_base_endpoint_create: fcntl(F_GETFL) failed with errno=%d\n", errno);
     } else {
         flags |= O_NONBLOCK;
         fcntl(fd, F_SETFL, flags);
@@ -267,7 +267,7 @@ int orte_iof_base_endpoint_create(
                 endpoint);
             break;
         default:
-            ompi_output(0, "orte_iof_base_endpoint_create: invalid mode %d\n", mode);
+            opal_output(0, "orte_iof_base_endpoint_create: invalid mode %d\n", mode);
             return OMPI_ERR_BAD_PARAM;
     }
 

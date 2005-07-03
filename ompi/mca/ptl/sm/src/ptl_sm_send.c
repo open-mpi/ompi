@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"

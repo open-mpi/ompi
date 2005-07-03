@@ -19,7 +19,7 @@
 #include "include/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/base/mca_base_param.h"
 
 
@@ -57,8 +57,8 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            ompi_output(0, "WARNING: MCA parameter mpi_param_check set to true, but parameter checking");
-            ompi_output(0, "WARNING: has been compiled out of Open MPI.  mpi_param_check value ignored.");
+            opal_output(0, "WARNING: MCA parameter mpi_param_check set to true, but parameter checking");
+            opal_output(0, "WARNING: has been compiled out of Open MPI.  mpi_param_check value ignored.");
             ompi_mpi_param_check = false;
         }
     }
@@ -101,9 +101,9 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            ompi_output(0, "WARNING: MCA parameter mpi_no_free_handles set to true, but MPI");
-            ompi_output(0, "WARNING: parameter checking has been compiled out of Open MPI.");
-            ompi_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
+            opal_output(0, "WARNING: MCA parameter mpi_no_free_handles set to true, but MPI");
+            opal_output(0, "WARNING: parameter checking has been compiled out of Open MPI.");
+            opal_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
         }
     }
     

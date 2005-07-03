@@ -23,7 +23,7 @@
 #include <errno.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 
@@ -100,7 +100,7 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
                         portals_procs[i],
                         &distance);
         if (ret != PTL_OK) {
-            ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+            opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                                 "Could not find distance to process %d", i);
             continue;
         }
@@ -152,7 +152,7 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                              PTL_EQ_HANDLER_NONE,
                              &(ptl->eq_handles[i]));
             if (ret != PTL_OK) {
-                ompi_output(mca_ptl_portals_component.portals_output,
+                opal_output(mca_ptl_portals_component.portals_output,
                             "Failed to allocate event queue: %d", ret);
                 return OMPI_ERROR;
             }
@@ -177,11 +177,11 @@ mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl_base)
 
     ret = PtlNIFini(ptl->ni_handle);
     if (PTL_OK != ret) {
-        ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(20, mca_ptl_portals_component.portals_output,
                             "PtlNIFini returned %d", ret);
         return OMPI_ERROR;
     }
-    ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(20, mca_ptl_portals_component.portals_output,
                         "successfully finalized module");
 
     return OMPI_SUCCESS;

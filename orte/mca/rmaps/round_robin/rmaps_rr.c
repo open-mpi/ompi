@@ -20,7 +20,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/rmaps/base/base.h"

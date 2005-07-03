@@ -25,7 +25,7 @@
 
 #include "include/constants.h"
 #include "opal/event/event.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "mca/mca.h"
@@ -168,16 +168,16 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     }
  
     if (orte_debug_flag) {
-        ompi_output(0, "[%lu,%lu,%lu] setting up session dir with",
+        opal_output(0, "[%lu,%lu,%lu] setting up session dir with",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
         if (NULL != orte_process_info.tmpdir_base) {
-            ompi_output(0, "\ttmpdir %s", orte_process_info.tmpdir_base);
+            opal_output(0, "\ttmpdir %s", orte_process_info.tmpdir_base);
         }
-        ompi_output(0, "\tuniverse %s", orte_universe_info.name);
-        ompi_output(0, "\tuser %s", orte_system_info.user);
-        ompi_output(0, "\thost %s", orte_system_info.nodename);
-        ompi_output(0, "\tjobid %s", jobid_str);
-        ompi_output(0, "\tprocid %s", procid_str);
+        opal_output(0, "\tuniverse %s", orte_universe_info.name);
+        opal_output(0, "\tuser %s", orte_system_info.user);
+        opal_output(0, "\thost %s", orte_system_info.nodename);
+        opal_output(0, "\tjobid %s", jobid_str);
+        opal_output(0, "\tprocid %s", procid_str);
     }
     if (ORTE_SUCCESS != (rc = orte_session_dir(true,
                                 orte_process_info.tmpdir_base,

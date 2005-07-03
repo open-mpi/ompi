@@ -14,7 +14,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/oob/base/base.h"
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_endpoint.h"

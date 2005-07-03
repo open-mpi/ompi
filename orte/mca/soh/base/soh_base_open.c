@@ -24,7 +24,7 @@
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "mca/oob/base/base.h"
 
@@ -74,11 +74,11 @@ int orte_soh_base_open(void)
 
   /* setup output for debug messages */
 
-    orte_soh_base.soh_output = ompi_output_open(NULL);
+    orte_soh_base.soh_output = opal_output_open(NULL);
     param = mca_base_param_register_int("soh", "base", "verbose", NULL, 0);
     mca_base_param_lookup_int(param, &value);
     if (value != 0) {
-        orte_soh_base.soh_output = ompi_output_open(NULL);
+        orte_soh_base.soh_output = opal_output_open(NULL);
     } else {
         orte_soh_base.soh_output = -1;
     }

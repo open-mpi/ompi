@@ -25,7 +25,7 @@
 #include "mca/schema/schema.h"
 #include "util/proc_info.h"
 #include "util/malloc.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/ns/base/base.h"
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     } 
 
     /* Open up the output streams */
-    if (!ompi_output_init()) {
+    if (!opal_output_init()) {
         return OMPI_ERROR;
     }
 
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
     orte_proc_info_finalize();
     mca_base_close();
     ompi_malloc_finalize();
-    ompi_output_finalize();
+    opal_output_finalize();
 
     fclose( test_out );
     test_finalize();

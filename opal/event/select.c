@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "ompi_config.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -228,13 +228,13 @@ select_dispatch(void *arg, struct timeval *tv)
 	            res = select(sop->event_fds + 1, sop->event_readset, 
 	                  sop->event_writeset, NULL, tv);
                 if(res < 0) {
-                    ompi_output(0, "bad file descriptor: %d\n", ev->ev_fd);
+                    opal_output(0, "bad file descriptor: %d\n", ev->ev_fd);
                     opal_event_del_i(ev);
                 }
             }
         }
 		if (errno != EINTR) {
-            ompi_output(0, "select failed with errno=%d\n", errno);
+            opal_output(0, "select failed with errno=%d\n", errno);
 		    return (-1);
 		}
 

@@ -29,7 +29,7 @@
 #endif
 
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/univ_info.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
@@ -79,7 +79,7 @@ int orte_universe_exists(orte_universe_t *univ)
 	}
 
 	if (orte_debug_flag) {
-	    ompi_output(0, "connect_uni: contact info read");
+	    opal_output(0, "connect_uni: contact info read");
 	}
 
 	if (!orte_universe_info.console) {  /* if we aren't trying to connect a console */
@@ -89,7 +89,7 @@ int orte_universe_exists(orte_universe_t *univ)
 		 * matching universe name
 		 */
 		if (orte_debug_flag) {
-		    ompi_output(0, "connect_uni: connection not allowed");
+		    opal_output(0, "connect_uni: connection not allowed");
 		}
         /* NOTE: THIS IS NOT AN ERROR - DON'T ERROR_LOG IT */
 		return ORTE_ERR_NO_CONNECTION_ALLOWED;
@@ -97,7 +97,7 @@ int orte_universe_exists(orte_universe_t *univ)
 	}
 
 	if (orte_debug_flag) {
-	    ompi_output(0, "connect_uni: contact info to set: %s", univ->seed_uri);
+	    opal_output(0, "connect_uni: contact info to set: %s", univ->seed_uri);
 	}
 
 

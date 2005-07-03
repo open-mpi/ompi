@@ -32,7 +32,7 @@
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mpool/mpool.h" 
 #include "mca/btl/btl.h"
 #include "btl_gm_endpoint.h"

@@ -22,7 +22,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "dps/dps.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "mca/errmgr/errmgr.h"
@@ -108,7 +108,7 @@ int orte_gpr_proxy_delete_entries(orte_gpr_addr_mode_t mode,
     int rc, ret;
 
     if (orte_gpr_proxy_globals.debug) {
-	    ompi_output(0, "[%lu,%lu,%lu] gpr_proxy_delete_object", ORTE_NAME_ARGS(orte_process_info.my_name));
+	    opal_output(0, "[%lu,%lu,%lu] gpr_proxy_delete_object", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* need to protect against errors */

@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/rmaps/base/base.h"
@@ -53,7 +53,7 @@ static orte_rmaps_base_module_t *select_preferred(char *name)
 
     /* Look for a matching selected name */
 
-    ompi_output(orte_rmaps_base.rmaps_output,
+    opal_output(orte_rmaps_base.rmaps_output,
                 "orte:base:select: looking for component %s", name);
     for (item = opal_list_get_first(&orte_rmaps_base.rmaps_available);
          item != opal_list_get_end(&orte_rmaps_base.rmaps_available);
@@ -62,7 +62,7 @@ static orte_rmaps_base_module_t *select_preferred(char *name)
 
         if (0 == strcmp(name, 
                         cmp->component->rmaps_version.mca_component_name)) {
-            ompi_output(orte_rmaps_base.rmaps_output,
+            opal_output(orte_rmaps_base.rmaps_output,
                         "orte:base:select: found module for compoent %s", name);
             return cmp->module;
         }
@@ -70,7 +70,7 @@ static orte_rmaps_base_module_t *select_preferred(char *name)
 
     /* Didn't find a matching name */
 
-    ompi_output(orte_rmaps_base.rmaps_output,
+    opal_output(orte_rmaps_base.rmaps_output,
                 "orte:base:select: did not find module for compoent %s", name);
     return NULL;
 }
@@ -84,7 +84,7 @@ static orte_rmaps_base_module_t *select_any(void)
     /* If the list is empty, return NULL */
 
     if (opal_list_is_empty(&orte_rmaps_base.rmaps_available) > 0) {
-        ompi_output(orte_rmaps_base.rmaps_output,
+        opal_output(orte_rmaps_base.rmaps_output,
                     "orte:base:select: no components available!");
         return NULL;
     }
@@ -94,7 +94,7 @@ static orte_rmaps_base_module_t *select_any(void)
 
     item = opal_list_get_first(&orte_rmaps_base.rmaps_available);
     cmp = (orte_rmaps_base_cmp_t *) item;
-    ompi_output(orte_rmaps_base.rmaps_output,
+    opal_output(orte_rmaps_base.rmaps_output,
                 "orte:base:select: highest priority component: %s",
                 cmp->component->rmaps_version.mca_component_name);
     return cmp->module;

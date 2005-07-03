@@ -22,7 +22,7 @@
 
 #include "include/constants.h"
 #include "class/ompi_pointer_array.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
@@ -74,7 +74,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
     int index;
 
     if (0) {
-        ompi_output(0,"ompi_pointer_array_add:  IN:  "
+        opal_output(0,"ompi_pointer_array_add:  IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " ptr = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -92,7 +92,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 	 */
 
         if (0) {
-	    ompi_output(0,"ompi_pointer_array_add:  INIT: table %p\n", table);
+	    opal_output(0,"ompi_pointer_array_add:  INIT: table %p\n", table);
         }
 
 	p = (void **) malloc(TABLE_INIT * sizeof(void *));
@@ -147,7 +147,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
     }
 
     if (0) {
-        ompi_output(0,"ompi_pointer_array_add:  OUT: "
+        opal_output(0,"ompi_pointer_array_add:  OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -175,7 +175,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
     assert(table != NULL);
 
 #if 0
-    ompi_output(0,"ompi_pointer_array_set_item: IN:  "
+    opal_output(0,"ompi_pointer_array_set_item: IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -248,7 +248,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
 	
 
 #if 0
-    ompi_output(0,"ompi_pointer_array_set_item: OUT: "
+    opal_output(0,"ompi_pointer_array_set_item: OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -280,7 +280,7 @@ bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table,
     assert(index >= 0);
 
 #if 0
-    ompi_output(0,"ompi_pointer_array_test_and_set_item: IN:  "
+    opal_output(0,"ompi_pointer_array_test_and_set_item: IN:  "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,
@@ -324,7 +324,7 @@ bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table,
     }
 
 #if 0
-    ompi_output(0,"ompi_pointer_array_test_and_set_item: OUT: "
+    opal_output(0,"ompi_pointer_array_test_and_set_item: OUT: "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,

@@ -518,7 +518,7 @@ int32_t ompi_ddt_init( void )
 
 #if defined(VERBOSE)
     {
-        ompi_ddt_dfd = ompi_output_open( NULL );
+        ompi_ddt_dfd = opal_output_open( NULL );
     }
 #endif  /* VERBOSE */
 
@@ -546,7 +546,7 @@ int32_t ompi_ddt_finalize( void )
 
 #if defined(VERBOSE)
     if( ompi_ddt_dfd != -1 )
-        ompi_output_close( ompi_ddt_dfd );
+        opal_output_close( ompi_ddt_dfd );
     ompi_ddt_dfd = -1;
 #endif  /* VERBOSE */
 
@@ -682,6 +682,6 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
         index += __dump_data_desc( pData->opt_desc.desc, pData->opt_desc.used, buffer + index, length - index );
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
-    ompi_output( 0, "%s\n", buffer );
+    opal_output( 0, "%s\n", buffer );
     free(buffer);
 }

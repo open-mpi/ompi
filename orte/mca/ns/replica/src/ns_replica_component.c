@@ -34,7 +34,7 @@
 
 #include "opal/threads/mutex.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
@@ -321,7 +321,7 @@ int orte_ns_replica_finalize(void)
     orte_ns_replica_dti_t *dti;
     
     if (orte_ns_replica_debug) {
-	   ompi_output(0, "finalizing ns replica");
+	   opal_output(0, "finalizing ns replica");
     }
 
   /* free all tracking storage, but only if this component was initialized */

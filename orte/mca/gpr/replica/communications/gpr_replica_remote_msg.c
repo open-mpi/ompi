@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_types.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns_types.h"
@@ -42,7 +42,7 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-        ompi_output(0, "sending trigger message");
+        opal_output(0, "sending trigger message");
     }
 
     command = ORTE_GPR_NOTIFY_CMD;

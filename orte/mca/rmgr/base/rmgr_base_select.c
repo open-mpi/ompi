@@ -18,7 +18,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/rmgr/base/base.h"
@@ -74,7 +74,7 @@ int orte_rmgr_base_select(void)
 
     /* If we didn't find one to select, barf */
     if (NULL == best_module) {
-        ompi_output(orte_rmgr_base.rmgr_output,
+        opal_output(orte_rmgr_base.rmgr_output,
                     "rmgr:select: no components available!");
         return ORTE_ERROR;
     }

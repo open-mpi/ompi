@@ -29,7 +29,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
@@ -119,7 +119,7 @@ do {                                                           \
 #define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)  \
 do {                                                           \
     if (value == unexp) {                                      \
-	ompi_output(output,                                    \
+	opal_output(output,                                    \
 		"[%s:%d] alloc received unexpect value \n",    \
 		__FILE__, __LINE__);                           \
 	return errno;                                          \
@@ -131,7 +131,7 @@ do {                                                           \
 #define PTL_ELAN4_GET_QBUFF(dspace, ctx, bsize, csize)      \
 do {                                                        \
     if (ptl_elan_cmdq_space.free == 0) {                    \
-	ompi_output(0,                                      \
+	opal_output(0,                                      \
 		"[%s:%d] error acquiring cmdq space \n",    \
 		__FILE__, __LINE__);                        \
     } else {                                                \
@@ -144,7 +144,7 @@ do {                                                        \
 do {                                                             \
     if (ptl_elan_cmdq_space.free >= ptl_elan_cmdq_space.total || \
       ptl_elan_cmdq_space.space != buff ) {                      \
-	ompi_output(0,                                      \
+	opal_output(0,                                      \
 		"[%s:%d] error releasing cmdq space \n",    \
 		__FILE__, __LINE__);                        \
     } else {                                                \

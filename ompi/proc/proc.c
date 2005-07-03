@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "opal/threads/mutex.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "dps/dps.h"
 #include "proc/proc.h"
@@ -81,7 +81,7 @@ int ompi_proc_init(void)
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
 
     if(OMPI_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, &self))) {
-        ompi_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
+        opal_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
         return rc;
     }
 

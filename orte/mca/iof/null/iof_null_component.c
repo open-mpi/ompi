@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "mca/rml/rml.h"
 #include "mca/base/base.h"

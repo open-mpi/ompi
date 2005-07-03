@@ -16,7 +16,7 @@
 
 #include "ptl_mx.h"
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "ptl_mx_peer.h"
 #include "ptl_mx_proc.h"
 #include "ptl_mx_module.h"
@@ -45,7 +45,7 @@ int mca_ptl_mx_module_init(void)
 
     /* intialize MX library */
     if(MX_SUCCESS != (status = mx_init())) {
-        ompi_output(0, "mca_ptl_mx_init: mx_init() failed with status=%d\n", status);
+        opal_output(0, "mca_ptl_mx_init: mx_init() failed with status=%d\n", status);
         return OMPI_ERROR;
     }
 
@@ -55,7 +55,7 @@ int mca_ptl_mx_module_init(void)
         MX_NIC_COUNT,
         &mca_ptl_mx_component.mx_num_ptls,
         sizeof(uint32_t))) != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_init: mx_get_info(MX_NIC_COUNT) failed with status=%d\n", status);
+        opal_output(0, "mca_ptl_mx_init: mx_get_info(MX_NIC_COUNT) failed with status=%d\n", status);
         return OMPI_ERROR;
     }
 
@@ -80,7 +80,7 @@ int mca_ptl_mx_module_init(void)
     mca_ptl_mx_component.mx_ptls = (mca_ptl_mx_module_t**)malloc(
         sizeof(mca_ptl_mx_module_t*) * mca_ptl_mx_component.mx_num_ptls);
     if(NULL == mca_ptl_mx_component.mx_ptls) {
-        ompi_output(0, "mca_ptl_mx_init: malloc() failed\n");
+        opal_output(0, "mca_ptl_mx_init: malloc() failed\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -98,7 +98,7 @@ int mca_ptl_mx_module_init(void)
     size = mca_ptl_mx_component.mx_num_ptls * sizeof(mx_endpoint_addr_t);
     endpoint_addrs = (mx_endpoint_addr_t*)malloc(size);
     if(NULL == endpoint_addrs) {
-        ompi_output(0, "mca_ptl_mx_module_init: malloc() failed\n");
+        opal_output(0, "mca_ptl_mx_module_init: malloc() failed\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
@@ -141,7 +141,7 @@ static void* mca_ptl_mx_thread(opal_object_t *arg)
         else if(ptl->mx_enabled == false)
             break;
         else if(mx_return != MX_SUCCESS) {
-            ompi_output(0, "mca_ptl_mx_thread: mx_probe() failed with status %d\n", 
+            opal_output(0, "mca_ptl_mx_thread: mx_probe() failed with status %d\n", 
                 mx_return);
             break;
         }
@@ -155,7 +155,7 @@ static void* mca_ptl_mx_thread(opal_object_t *arg)
         if(mx_return == MX_SUCCESS) {
             MCA_PTL_MX_PROGRESS(ptl, mx_status);
         } else {
-            ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
+            opal_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
                 mx_return);
         }
 
@@ -201,7 +201,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     /* allocate a fragment for receive */
     MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc); 
     if(rc != OMPI_SUCCESS) { 
-        ompi_output(0, "mca_ptl_mx_match: unable to allocate resources.\n");
+        opal_output(0, "mca_ptl_mx_match: unable to allocate resources.\n");
         return;
     }
 
@@ -236,7 +236,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     	frag->frag_recv.frag_is_buffered = true;
     	frag->frag_recv.frag_base.frag_addr = malloc(frag->frag_size);
     	if( NULL == frag->frag_recv.frag_base.frag_addr ) {
-            ompi_output(0, "mca_ptl_mx_match: unable to allocate buffer (%d)\n", frag->frag_size);
+            opal_output(0, "mca_ptl_mx_match: unable to allocate buffer (%d)\n", frag->frag_size);
             MCA_PTL_MX_RECV_FRAG_RETURN(frag);
             return;
     	}
@@ -267,7 +267,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         frag,
         &frag->frag_request);
     if(mx_return != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return);
+        opal_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return);
         MCA_PTL_MX_RECV_FRAG_RETURN(frag);
     }
 }
@@ -298,7 +298,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         0,
         &ptl->mx_endpoint);
     if(status != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_init: mx_open_endpoint() failed with status=%d\n", status);
+        opal_output(0, "mca_ptl_mx_init: mx_open_endpoint() failed with status=%d\n", status);
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
     }
@@ -307,7 +307,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
     if((status = mx_get_endpoint_addr(
         ptl->mx_endpoint,
         &ptl->mx_endpoint_addr)) != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_init: mx_get_endpoint_addr() failed with status=%d\n", status);
+        opal_output(0, "mca_ptl_mx_init: mx_get_endpoint_addr() failed with status=%d\n", status);
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
     }
@@ -318,13 +318,13 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         &ptl->mx_nic_addr,
         &ptl->mx_endpoint_id,
         &ptl->mx_filter)) != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_init: mx_decompose_endpoint_addr() failed with status=%d\n", status);
+        opal_output(0, "mca_ptl_mx_init: mx_decompose_endpoint_addr() failed with status=%d\n", status);
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
     }
 
     if(mca_ptl_mx_component.mx_debug) {
-        ompi_output(0, "mca_ptl_mx_create: opened %08X:%08X:%08X:%08X\n", 
+        opal_output(0, "mca_ptl_mx_create: opened %08X:%08X:%08X:%08X\n", 
             (uint32_t)(ptl->mx_nic_addr >> 32), 
             (uint32_t)ptl->mx_nic_addr,
             ptl->mx_endpoint_id,
@@ -354,7 +354,7 @@ void mca_ptl_mx_enable()
         ptl->mx_thread.t_run = mca_ptl_mx_thread;
         ptl->mx_thread.t_arg = ptl; 
         if(opal_thread_start(&ptl->mx_thread) != OMPI_SUCCESS) {
-            ompi_output(0, "mca_ptl_mx_create: unable to start progress thread.\n");
+            opal_output(0, "mca_ptl_mx_create: unable to start progress thread.\n");
             return;
         }
 #endif

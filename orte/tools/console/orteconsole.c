@@ -30,7 +30,7 @@
 #include "util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/os_path.h"
 #include "util/show_help.h"
 #include "util/universe_setup_file_io.h"

@@ -15,7 +15,7 @@
  */
 #include "ompi_config.h"
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/threads/thread.h"
 #include "ptl_mx.h"
 #include "ptl_mx_module.h"
@@ -139,7 +139,7 @@ int mca_ptl_mx_component_close(void)
     if (mca_ptl_mx_component.mx_send_frags.fl_num_allocated &&
         mca_ptl_mx_component.mx_send_frags.fl_num_allocated != 
         mca_ptl_mx_component.mx_send_frags.super.opal_list_length) {
-        ompi_output(0, "mx send frags: %d allocated %d returned\n",
+        opal_output(0, "mx send frags: %d allocated %d returned\n",
             mca_ptl_mx_component.mx_send_frags.fl_num_allocated, 
             mca_ptl_mx_component.mx_send_frags.super.opal_list_length);
     }
@@ -147,7 +147,7 @@ int mca_ptl_mx_component_close(void)
     if (mca_ptl_mx_component.mx_recv_frags.fl_num_allocated &&
         mca_ptl_mx_component.mx_recv_frags.fl_num_allocated - 3 > 
         mca_ptl_mx_component.mx_recv_frags.super.opal_list_length) {
-        ompi_output(0, "mx recv frags: %d allocated %d returned\n",
+        opal_output(0, "mx recv frags: %d allocated %d returned\n",
             mca_ptl_mx_component.mx_recv_frags.fl_num_allocated, 
             mca_ptl_mx_component.mx_recv_frags.super.opal_list_length);
     }
@@ -255,7 +255,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
             &mx_request,
             &mx_result);
         if(mx_return != MX_SUCCESS) {
-            ompi_output(0, "mca_ptl_mx_component_progress: mx_ipeek() failed with status %d\n",
+            opal_output(0, "mca_ptl_mx_component_progress: mx_ipeek() failed with status %d\n",
                 mx_return);
             return OMPI_ERROR;
         }
@@ -271,7 +271,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
         if(mx_return == MX_SUCCESS) {
              MCA_PTL_MX_PROGRESS(ptl, mx_status);
         } else {
-             ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
+             opal_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
                 mx_return);
         }
         num_progressed++;
@@ -288,7 +288,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
             &mx_status,
             &mx_result);
         if(mx_return != MX_SUCCESS) {
-            ompi_output(0, "mca_ptl_mx_component_progress: mx_ipeek() failed with status %d\n",
+            opal_output(0, "mca_ptl_mx_component_progress: mx_ipeek() failed with status %d\n",
                 mx_return);
             return OMPI_ERROR;
         }

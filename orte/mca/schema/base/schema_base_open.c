@@ -18,7 +18,7 @@
 #include "include/orte_constants.h"
 #include "include/constants.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/schema/base/base.h"
 
@@ -74,7 +74,7 @@ int orte_schema_base_open(void)
                                             NULL, 0);
         mca_base_param_lookup_int(param, &value);
         if (value != 0) {
-            orte_schema_base_output = ompi_output_open(NULL);
+            orte_schema_base_output = opal_output_open(NULL);
         } else {
             orte_schema_base_output = -1;
         }

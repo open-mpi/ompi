@@ -28,7 +28,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "dps/dps.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "mca/ns/ns_types.h"
@@ -105,7 +105,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     int rc, response;
     
     if (orte_gpr_proxy_globals.debug) {
-	   ompi_output(0, "[%lu,%lu,%lu] transmitting compound command",
+	   opal_output(0, "[%lu,%lu,%lu] transmitting compound command",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

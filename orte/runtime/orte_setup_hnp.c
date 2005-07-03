@@ -45,7 +45,7 @@
 #include "runtime/orte_wait.h"
 #include "util/argv.h"
 #include "util/ompi_environ.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/path.h"
 #include "util/univ_info.h"
 #include "util/sys_info.h"
@@ -438,7 +438,7 @@ MOVEON:
         /* exec the probe launch */
         execv(path, argv);
         ORTE_ERROR_LOG(ORTE_ERROR);
-        ompi_output(0, "orte_setup_hnp: execv failed with errno=%d\n", errno);
+        opal_output(0, "orte_setup_hnp: execv failed with errno=%d\n", errno);
         return ORTE_ERROR;
 
     } else {    /* parent */
@@ -543,26 +543,26 @@ static void orte_setup_hnp_wait(pid_t wpid, int status, void *cbdata)
     */
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
          /* tell the user something went wrong */
-        ompi_output(0, "ERROR: The probe on head node %s of the %s cluster failed to start as expected.",
+        opal_output(0, "ERROR: The probe on head node %s of the %s cluster failed to start as expected.",
                     data->headnode, data->target_cluster);
-        ompi_output(0, "ERROR: There may be more information available from");
-        ompi_output(0, "ERROR: the remote shell (see above).");
+        opal_output(0, "ERROR: There may be more information available from");
+        opal_output(0, "ERROR: the remote shell (see above).");
         if (WIFEXITED(status)) {
-            ompi_output(0, "ERROR: The probe exited unexpectedly with status %d.",
+            opal_output(0, "ERROR: The probe exited unexpectedly with status %d.",
                    WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
 #ifdef WCOREDUMP
             if (WCOREDUMP(status)) {
-                ompi_output(0, "The probe received a signal %d (with core).",
+                opal_output(0, "The probe received a signal %d (with core).",
                             WTERMSIG(status));
             } else {
-                ompi_output(0, "The probe received a signal %d.", WTERMSIG(status));
+                opal_output(0, "The probe received a signal %d.", WTERMSIG(status));
             }
 #else
-            ompi_output(0, "The probe received a signal %d.", WTERMSIG(status));
+            opal_output(0, "The probe received a signal %d.", WTERMSIG(status));
 #endif /* WCOREDUMP */
         } else {
-            ompi_output(0, "No extra status information is available: %d.", status);
+            opal_output(0, "No extra status information is available: %d.", status);
         }
     }
 

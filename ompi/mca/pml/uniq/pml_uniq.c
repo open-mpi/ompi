@@ -253,7 +253,7 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
                 /* allocate pml specific proc data */
                 proc_pml = OBJ_NEW(mca_pml_uniq_proc_t);
                 if (NULL == proc_pml) {
-                    ompi_output(0, "mca_pml_uniq_add_procs: unable to allocate resources");
+                    opal_output(0, "mca_pml_uniq_add_procs: unable to allocate resources");
                     free(ptl_peers);
                     return OMPI_ERR_OUT_OF_RESOURCE;
                 }
@@ -284,7 +284,7 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
                 /* choose the best for first and next. For the first look at the latency when
                  * for the next at the maximum bandwidth.
                  */
-                ompi_output( 0, "Not yet done dude !!!" );
+                opal_output( 0, "Not yet done dude !!!" );
 #if PML_UNIQ_ACCEPT_NEXT_PTL
 #endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
             }

@@ -25,7 +25,7 @@
 #include <dirent.h>
 
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/univ_info.h"
 #include "mca/errmgr/errmgr.h"
@@ -162,7 +162,7 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
             goto cleanup;
         }
         if(mca_pls_bproc_orted_component.debug) {
-            ompi_output(0, "orted bproc io setup. Path: %s\n", link_path);
+            opal_output(0, "orted bproc io setup. Path: %s\n", link_path);
         }
         /* we only want to actually connect stdin if the process is rank 0 */
         if(0 != i || connect_stdin) {
@@ -230,7 +230,7 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
             goto cleanup;
         }
         if(mca_pls_bproc_orted_component.debug) {
-            ompi_output(0, "orted bproc pipe io setup. Path: %s\n", link_path);
+            opal_output(0, "orted bproc pipe io setup. Path: %s\n", link_path);
         }
         /* we only want to actually connect stdin if the process is rank 0 */
         if(0 != i || connect_stdin) {
@@ -360,7 +360,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
 
     rc = bproc_currnode();
     if(0 > rc) {
-        ompi_output(0, "pls_bproc_orted component running on invalid node");
+        opal_output(0, "pls_bproc_orted component running on invalid node");
     }
     if(0 > asprintf(&param, "%d", rc)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -392,7 +392,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
         }
         for(i = 0; i < mapping->num_procs; i++) {
             if(0 < mca_pls_bproc_orted_component.debug) {
-                ompi_output(0, "orte_pls_bproc_orted_launch: setting up io for "
+                opal_output(0, "orte_pls_bproc_orted_launch: setting up io for "
                                "[%lu,%lu,%lu]\n",
                                ORTE_NAME_ARGS((&mapping->procs[i]->proc_name)));
             }
@@ -413,7 +413,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
                 }
             } else {
                 if(!pty_error_thrown) {
-                    ompi_output(1, "pls_bproc_orted: openpty failed, "
+                    opal_output(1, "pls_bproc_orted: openpty failed, "
                                    "using pipes instead");
                     pty_error_thrown = true;
                 }

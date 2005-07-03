@@ -17,7 +17,7 @@
 
 #include "ompi_config.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "runtime/runtime.h"
 #include "mca/ns/ns.h"
 
@@ -26,7 +26,7 @@
 
 void mca_errmgr_base_log(char *msg, char *filename, int line)
 {
-    ompi_output(0, "[%lu,%lu,%lu] ORTE_ERROR_LOG: %s in file %s at line %d",
+    opal_output(0, "[%lu,%lu,%lu] ORTE_ERROR_LOG: %s in file %s at line %d",
                 ORTE_NAME_ARGS(orte_process_info.my_name), 
                 msg, filename, line);
 }

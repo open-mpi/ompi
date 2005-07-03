@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/oob/oob.h"
 #include "mca/iof/base/iof_base_header.h"
 #include "mca/iof/base/iof_base_fragment.h"

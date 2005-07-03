@@ -208,8 +208,8 @@ OMPI_DECLSPEC  int mca_coll_base_close(void);
  */
 OMPI_DECLSPEC extern int mca_coll_base_param;
 /**
- * Coll framework debugging stream ID used with ompi_output() and
- * ompi_output_verbose().
+ * Coll framework debugging stream ID used with opal_output() and
+ * opal_output_verbose().
  */
 OMPI_DECLSPEC extern int mca_coll_base_output;
 

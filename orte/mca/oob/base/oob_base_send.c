@@ -31,7 +31,7 @@
 #include "mca/ns/ns_types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 /*
 *  Similiar to unix send(2).
 *

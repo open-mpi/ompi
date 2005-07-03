@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 #include "gm_config.h"
 #include <string.h>
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
@@ -579,7 +579,7 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
  
         default:
             /* error condition can't deal with */
-            ompi_output(0, "[%s:%d] send completed with unhandled gm error %d\n", __FILE__,__LINE__,status);
+            opal_output(0, "[%s:%d] send completed with unhandled gm error %d\n", __FILE__,__LINE__,status);
 
             /* release the send token */
             OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
@@ -602,7 +602,7 @@ static void mca_btl_gm_rdma_callback( struct gm_port* port, void* context, gm_st
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
             break;
         default:
-            ompi_output(0, "[%s:%d] gm rdma operation failed with status %d\n", __FILE__, __LINE__, status);
+            opal_output(0, "[%s:%d] gm rdma operation failed with status %d\n", __FILE__, __LINE__, status);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
             break;
     }
@@ -738,19 +738,19 @@ int mca_btl_gm_finalize(struct mca_btl_base_module_t* btl)
     
     if(gm_btl->gm_frag_eager.fl_num_allocated != 
        gm_btl->gm_frag_eager.super.opal_list_length){ 
-        ompi_output(0, "btl gm_frag_eager: %d allocated %d returned \n", 
+        opal_output(0, "btl gm_frag_eager: %d allocated %d returned \n", 
                     gm_btl->gm_frag_eager.fl_num_allocated, 
                     gm_btl->gm_frag_eager.super.opal_list_length); 
     }
     if(gm_btl->gm_frag_max.fl_num_allocated != 
       gm_btl->gm_frag_max.super.opal_list_length) { 
-        ompi_output(0, "btl gm_frag_max: %d allocated %d returned \n", 
+        opal_output(0, "btl gm_frag_max: %d allocated %d returned \n", 
                     gm_btl->gm_frag_max.fl_num_allocated, 
                     gm_btl->gm_frag_max.super.opal_list_length); 
     }
     if(gm_btl->gm_frag_user.fl_num_allocated != 
        gm_btl->gm_frag_user.super.opal_list_length){ 
-        ompi_output(0, "btl gm_frag_user: %d allocated %d returned \n", 
+        opal_output(0, "btl gm_frag_user: %d allocated %d returned \n", 
                     gm_btl->gm_frag_user.fl_num_allocated, 
                     gm_btl->gm_frag_user.super.opal_list_length); 
     }

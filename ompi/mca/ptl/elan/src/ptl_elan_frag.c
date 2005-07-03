@@ -66,7 +66,7 @@ mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t * frag)
     /*frag->frag.qdma = NULL;*/
     frag->alloc_buff = (char *) malloc (sizeof (char) * 2048 + 32);
     if (NULL == frag->alloc_buff) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] Fatal error, unable to allocate recv buff \n",
                      __FILE__, __LINE__);
     }
@@ -113,7 +113,7 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
     } else if (MCA_PTL_ELAN_DESC_GET == desc_type) {
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->get_desc_free;
     } else {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] Error: unknown to descriptor desc type\n",
                      __FILE__, __LINE__);
 	return NULL;

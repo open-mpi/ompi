@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "opal/class/opal_list.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/gpr/gpr.h"
 #include "mca/schema/schema.h"

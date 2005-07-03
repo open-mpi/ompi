@@ -18,7 +18,7 @@
 
 #include "class/opal_hash_table.h"
 #include "opal/threads/condition.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "dps/dps.h"
@@ -215,7 +215,7 @@ static void mca_base_modex_registry_callback(
     int rc;
 
 #if 0
-ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback\n", 
+opal_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback\n", 
     ORTE_NAME_ARGS(orte_process_info.my_name));
 orte_gpr_base_dump_notify_data(data,0);
 #endif
@@ -254,7 +254,7 @@ orte_gpr_base_dump_notify_data(data,0);
                 if(NULL == (modex = (mca_base_modex_t*)proc->proc_modex)) {
                     modex = OBJ_NEW(mca_base_modex_t);
                     if(NULL == modex) {
-                        ompi_output(0, "mca_base_modex_registry_callback: unable to allocate mca_base_modex_t\n");
+                        opal_output(0, "mca_base_modex_registry_callback: unable to allocate mca_base_modex_t\n");
                         OPAL_THREAD_UNLOCK(&proc->proc_lock);
                         return;
                     }
@@ -319,7 +319,7 @@ orte_gpr_base_dump_notify_data(data,0);
                     }
                     if (num_bytes != 0) {
                         if(NULL == (bytes = malloc(num_bytes))) {
-                            ompi_output(0, "Unable to allocate memory (length %d bytes).\n", num_bytes );
+                            opal_output(0, "Unable to allocate memory (length %d bytes).\n", num_bytes );
                             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                             continue;
                         }
@@ -333,7 +333,7 @@ orte_gpr_base_dump_notify_data(data,0);
                      * Lookup the corresponding modex structure
                      */
                     if(NULL == (modex_module = mca_base_modex_create_module(modex, &component))) {
-                        ompi_output(0, "mca_base_modex_registry_callback: mca_base_modex_create_module failed\n");
+                        opal_output(0, "mca_base_modex_registry_callback: mca_base_modex_create_module failed\n");
                         OBJ_RELEASE(data);
                         OPAL_THREAD_UNLOCK(&proc->proc_lock);
                         return;
@@ -343,7 +343,7 @@ orte_gpr_base_dump_notify_data(data,0);
                     modex_module->module_data_size = num_bytes;
                     modex_module->module_data_avail = true;
 #if 0
-ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: %s-%s-%d-%d received %d bytes\n",
+opal_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: %s-%s-%d-%d received %d bytes\n",
     ORTE_NAME_ARGS(orte_process_info.my_name),
     component.mca_type_name,
     component.mca_component_name,
@@ -492,7 +492,7 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
     trigs = &trig;
     rc = orte_gpr.subscribe(1, &subs, 1, &trigs);
     if(ORTE_SUCCESS != rc) {
-        ompi_output(0, "mca_base_modex_exchange: "
+        opal_output(0, "mca_base_modex_exchange: "
 		    "orte_gpr.subscribe failed with return code %d\n", rc);
         OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
@@ -651,7 +651,7 @@ int mca_base_modex_recv(
     /* wait until data is available */
     while(modex_module->module_data_avail == false) {
 #if 0
-ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: waiting for %s-%s-%d-%d\n",
+opal_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: waiting for %s-%s-%d-%d\n",
     ORTE_NAME_ARGS(orte_process_info.my_name),
     component->mca_type_name,
     component->mca_component_name,

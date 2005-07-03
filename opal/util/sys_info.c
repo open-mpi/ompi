@@ -31,7 +31,7 @@
 
 #include "include/orte_constants.h"
 #include "mca/errmgr/errmgr.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/printf.h"
 #include "mca/base/mca_base_param.h"
 

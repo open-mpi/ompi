@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "include/constants.h"
@@ -48,14 +48,14 @@ int mca_base_components_close(int output_id,
 
       if (NULL != component->mca_close_component) {
         component->mca_close_component();
-        ompi_output_verbose(10, output_id, 
+        opal_output_verbose(10, output_id, 
                             "mca: base: close: component %s closed",
                            component->mca_component_name);
       }
 
       /* Unload */
 
-      ompi_output_verbose(10, output_id, 
+      opal_output_verbose(10, output_id, 
                           "mca: base: close: unloading component %s",
                          component->mca_component_name);
       mca_base_component_repository_release((mca_base_component_t *) component);

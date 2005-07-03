@@ -41,7 +41,7 @@
 #include "include/constants.h"
 
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/os_path.h"
 #include "util/sys_info.h"
 #include "util/univ_info.h"

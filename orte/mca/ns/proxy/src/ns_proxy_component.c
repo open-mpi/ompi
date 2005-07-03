@@ -31,7 +31,7 @@
 
 #include "include/orte_constants.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
@@ -210,7 +210,7 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
     
     /* If we are NOT to host a replica, then we want to be selected, so do all
        the setup and return the module */
-    /*    ompi_output(mca_ns_base_output, "ns_proxy: entered init\n"); */
+    /*    opal_output(mca_ns_base_output, "ns_proxy: entered init\n"); */
     if (NULL != orte_process_info.ns_replica_uri) {
 
         	/* Return a module (choose an arbitrary, positive priority --
@@ -272,7 +272,7 @@ int orte_ns_proxy_finalize(void)
     orte_ns_proxy_cell_info_t *cptr;
     
     if (orte_ns_proxy_debug) {
-	   ompi_output(0, "finalizing ns proxy");
+	   opal_output(0, "finalizing ns proxy");
     }
 
     /* free the storage, but only if this component was initialized */

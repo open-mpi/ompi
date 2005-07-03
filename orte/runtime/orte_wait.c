@@ -30,7 +30,7 @@
 #endif
 
 #include "runtime/orte_wait.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"

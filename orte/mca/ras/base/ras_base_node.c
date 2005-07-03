@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/soh/soh_types.h"

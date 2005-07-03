@@ -58,7 +58,7 @@
 #endif
 
 #include "event.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #if OPAL_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
@@ -203,7 +203,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 	if (res == -1) {
 		if (errno != EINTR) {
-			ompi_output(0, "poll failed with errno=%d\n", errno);
+			opal_output(0, "poll failed with errno=%d\n", errno);
 			return (-1);
 		}
 

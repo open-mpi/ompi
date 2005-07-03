@@ -23,7 +23,7 @@
 #include <errno.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 
@@ -98,7 +98,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl,
                         portals_procs[i],
                         &distance);
         if (ret != PTL_OK) {
-            ompi_output_verbose(10, mca_btl_portals_component.portals_output,
+            opal_output_verbose(10, mca_btl_portals_component.portals_output,
                                 "Could not find distance to process %d", i);
             continue;
         }
@@ -137,12 +137,12 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     if (PTL_INVALID_HANDLE != btl->ni_handle) {
         ret = PtlNIFini(btl->ni_handle);
         if (PTL_OK != ret) {
-            ompi_output_verbose(20, mca_btl_portals_component.portals_output,
+            opal_output_verbose(20, mca_btl_portals_component.portals_output,
                                 "PtlNIFini returned %d", ret);
             return OMPI_ERROR;
         }
     }
-    ompi_output_verbose(20, mca_btl_portals_component.portals_output,
+    opal_output_verbose(20, mca_btl_portals_component.portals_output,
                         "successfully finalized module");
 
     return OMPI_SUCCESS;

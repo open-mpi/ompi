@@ -38,7 +38,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
@@ -135,7 +135,7 @@ int mca_ptl_self_component_close(void)
 {
     if (mca_ptl_self_component.self_send_requests.fl_num_allocated != 
         mca_ptl_self_component.self_send_requests.super.opal_list_length) {
-        ompi_output(0, "self send requests: %d allocated %d returned\n",
+        opal_output(0, "self send requests: %d allocated %d returned\n",
             mca_ptl_self_component.self_send_requests.fl_num_allocated, 
             mca_ptl_self_component.self_send_requests.super.opal_list_length);
     }

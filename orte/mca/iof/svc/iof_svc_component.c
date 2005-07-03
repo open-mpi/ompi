@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/rml/rml.h"
@@ -155,7 +155,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
         NULL
     );
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "orte_iof_svc_init: unable to post non-blocking recv");
+        opal_output(0, "orte_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }
     initialized = true;

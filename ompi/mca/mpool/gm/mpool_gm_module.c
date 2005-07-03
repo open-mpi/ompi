@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mpool_gm.h"
 
 
@@ -67,7 +67,7 @@ int mca_mpool_gm_register(
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     if((rc = gm_register_memory(gm_mpool->gm_port, addr, size)) != GM_SUCCESS) {
-        ompi_output(0, "[%s:%d] error(%d) registering gm memory\n", __FILE__, __LINE__, rc);
+        opal_output(0, "[%s:%d] error(%d) registering gm memory\n", __FILE__, __LINE__, rc);
         OBJ_RELEASE(reg);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -91,7 +91,7 @@ int mca_mpool_gm_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t s
         addr,
         size);
     if(GM_SUCCESS != rc) { 
-        ompi_output(0, "[%s:%d] error(%d) deregistering gm memory\n", __FILE__, __LINE__, rc); 
+        opal_output(0, "[%s:%d] error(%d) deregistering gm memory\n", __FILE__, __LINE__, rc); 
         return OMPI_ERROR; 
     }
     return OMPI_SUCCESS; 

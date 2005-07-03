@@ -250,7 +250,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                     /* allocate pml specific proc data */
                     proc_pml = OBJ_NEW(mca_pml_teg_proc_t);
                     if (NULL == proc_pml) {
-                        ompi_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
+                        opal_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
                         free(ptl_peers);
                         return OMPI_ERR_OUT_OF_RESOURCE;
                     }

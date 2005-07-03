@@ -21,7 +21,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/errmgr/base/base.h"
 
@@ -71,7 +71,7 @@ int orte_errmgr_base_open(void)
                                             NULL, 0);
         mca_base_param_lookup_int(param, &value);
         if (value != 0) {
-            orte_errmgr_base_output = ompi_output_open(NULL);
+            orte_errmgr_base_output = opal_output_open(NULL);
         } else {
             orte_errmgr_base_output = -1;
         }

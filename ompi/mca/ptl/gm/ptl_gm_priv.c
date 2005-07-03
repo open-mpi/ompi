@@ -50,13 +50,13 @@ static void mca_ptl_gm_basic_frag_callback( struct gm_port* port, void* context,
 	opal_atomic_add( &(gm_ptl->num_send_tokens), 1 );
         break;
     case GM_SEND_TIMED_OUT:
-        ompi_output( 0, "send_continue timed out\n" );
+        opal_output( 0, "send_continue timed out\n" );
         break;
     case GM_SEND_DROPPED:
-        ompi_output( 0, "send_continue dropped\n" );
+        opal_output( 0, "send_continue dropped\n" );
         break;
     default:
-        ompi_output( 0, "send_continue other error %d\n", status );
+        opal_output( 0, "send_continue other error %d\n", status );
     }
 }
 
@@ -78,7 +78,7 @@ static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_st
 
     switch( status ) {
     case GM_SUCCESS:
-        DO_DEBUG( ompi_output( 0, "receiver %d %p get_callback processed %lld validated %lld",
+        DO_DEBUG( opal_output( 0, "receiver %d %p get_callback processed %lld validated %lld",
                                orte_process_info.my_name->vpid, frag, frag->frag_bytes_processed, frag->frag_bytes_validated ); )
         /* send an ack message to the sender */
         mca_ptl_gm_send_quick_fin_message( peer, &(frag->frag_recv.frag_base) );
@@ -88,13 +88,13 @@ static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_st
         mca_ptl_gm_receiver_advance_pipeline( frag, 0 );
         break;
     case GM_SEND_TIMED_OUT:
-        ompi_output( 0, "mca_ptl_gm_get_callback timed out\n" );
+        opal_output( 0, "mca_ptl_gm_get_callback timed out\n" );
         break;
     case GM_SEND_DROPPED:
-        ompi_output( 0, "mca_ptl_gm_get_callback dropped\n" );
+        opal_output( 0, "mca_ptl_gm_get_callback dropped\n" );
         break;
     default:
-        ompi_output( 0, "mca_ptl_gm_get_callback other error %d\n", status );
+        opal_output( 0, "mca_ptl_gm_get_callback other error %d\n", status );
     }
 }
 
@@ -137,7 +137,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
         status = mca_ptl_gm_register_memory( peer->peer_ptl->gm_port, reg_line->local_memory.pval,
                                              reg_line->length );
         if( GM_SUCCESS != status ) {
-            ompi_output( 0, "Cannot register receiver memory (%p, %ld) bytes offset %ld\n",
+            opal_output( 0, "Cannot register receiver memory (%p, %ld) bytes offset %ld\n",
                          reg_line->local_memory.pval, reg_line->length, reg_line->offset );
             return OMPI_ERROR;
         }
@@ -155,7 +155,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
         status = mca_ptl_gm_deregister_memory( peer->peer_ptl->gm_port,
                                                dereg_line->local_memory.pval, dereg_line->length );
         if( GM_SUCCESS != status ) {
-            ompi_output( 0, "unpinning receiver memory from get (%p, %u) failed \n",
+            opal_output( 0, "unpinning receiver memory from get (%p, %u) failed \n",
                          dereg_line->local_memory.pval,
                          dereg_line->length );
         }
@@ -174,7 +174,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
         OMPI_FREE_LIST_RETURN( &(peer->peer_ptl->gm_recv_frags_free), (opal_list_item_t*)frag );
         DO_DEBUG( count += sprintf( buffer + count, " finish" ); )
     }
-    DO_DEBUG( ompi_output( 0, "receiver %d %s", orte_process_info.my_name->vpid, buffer ); )
+    DO_DEBUG( opal_output( 0, "receiver %d %s", orte_process_info.my_name->vpid, buffer ); )
     return OMPI_SUCCESS;
 }
 
@@ -225,7 +225,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
         status = mca_ptl_gm_deregister_memory( peer->peer_ptl->gm_port,
                                                dereg_line->local_memory.pval, dereg_line->length );
         if( GM_SUCCESS != status ) {
-            ompi_output( 0, "unpinning receiver memory from get (%p, %u) failed \n",
+            opal_output( 0, "unpinning receiver memory from get (%p, %u) failed \n",
                          dereg_line->local_memory.pval, dereg_line->length );
         }
         dereg_line->flags ^= (PTL_GM_PIPELINE_REGISTER | PTL_GM_PIPELINE_DEREGISTER);
@@ -254,7 +254,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
             status = mca_ptl_gm_register_memory( peer->peer_ptl->gm_port, reg_line->local_memory.pval,
                                                  reg_line->length );
             if( GM_SUCCESS != status ) {
-                ompi_output( 0, "Cannot register sender memory (%p, %ld) bytes offset %ld\n",
+                opal_output( 0, "Cannot register sender memory (%p, %ld) bytes offset %ld\n",
                              reg_line->local_memory.pval, reg_line->length, reg_line->offset );
                 return OMPI_ERROR;
             }
@@ -266,7 +266,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
         }
     }
     
-    DO_DEBUG( ompi_output( 0, "sender %d %s", orte_process_info.my_name->vpid, buffer ); )
+    DO_DEBUG( opal_output( 0, "sender %d %s", orte_process_info.my_name->vpid, buffer ); )
     return OMPI_SUCCESS;
 }
 #endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
@@ -304,7 +304,7 @@ int mca_ptl_gm_send_internal_rndv_header( mca_ptl_gm_peer_t *ptl_peer,
     hdr->registered_memory.lval        = 0L;
     hdr->registered_memory.pval        = NULL;
     
-    DO_DEBUG( ompi_output( 0, "sender %d before send internal rndv header hdr_offset %lld hdr_length %lld max_data %u",
+    DO_DEBUG( opal_output( 0, "sender %d before send internal rndv header hdr_offset %lld hdr_length %lld max_data %u",
                            orte_process_info.my_name->vpid, hdr->hdr_frag.hdr_frag_offset, hdr->hdr_frag.hdr_frag_length, max_data ); );
     gm_send_with_callback( ptl_peer->peer_ptl->gm_port, hdr, GM_SIZE,
                            sizeof(mca_ptl_gm_frag_header_t) + max_data,
@@ -312,7 +312,7 @@ int mca_ptl_gm_send_internal_rndv_header( mca_ptl_gm_peer_t *ptl_peer,
                            mca_ptl_gm_basic_frag_callback, (void *)hdr );
     fragment->frag_bytes_processed += max_data;
     fragment->frag_bytes_validated += max_data;
-    DO_DEBUG( ompi_output( 0, "sender %d after send internal rndv header processed %lld, validated %lld max_data %u",
+    DO_DEBUG( opal_output( 0, "sender %d after send internal rndv header processed %lld, validated %lld max_data %u",
                            orte_process_info.my_name->vpid, fragment->frag_bytes_processed, fragment->frag_bytes_validated, max_data ); );
     return OMPI_SUCCESS;
 }
@@ -370,7 +370,7 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
                                mca_ptl_gm_basic_frag_callback, (void*)hdr );
         hdr = NULL;  /* force to retrieve a new one on the next loop */
     }
-    DO_DEBUG( ompi_output( 0, "sender %d after burst offset %lld, processed %lld, validated %lld\n",
+    DO_DEBUG( opal_output( 0, "sender %d after burst offset %lld, processed %lld, validated %lld\n",
                            orte_process_info.my_name->vpid, fragment->frag_offset, fragment->frag_bytes_processed, fragment->frag_bytes_validated); );
     return OMPI_SUCCESS;
 }
@@ -398,7 +398,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
      */
     mca_ptl_base_send_request_offset( fragment->frag_send.frag_request,
                                       fragment->frag_send.frag_base.frag_size );
-    DO_DEBUG( ompi_output( 0, "sender %d start new send length %ld offset %ld\n", orte_process_info.my_name->vpid, *size, offset ); )
+    DO_DEBUG( opal_output( 0, "sender %d start new send length %ld offset %ld\n", orte_process_info.my_name->vpid, *size, offset ); )
     /* The first DMA memory buffer has been alocated in same time as the fragment */
     item = (opal_list_item_t*)fragment->send_buf;
     hdr = (mca_ptl_gm_frag_header_t*)item;
@@ -424,7 +424,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     if( burst_length > 0 ) {
         mca_ptl_gm_send_burst_data( ptl_peer, fragment, burst_length, &(hdr->hdr_frag), flags );
         item = NULL;  /* this buffer was already used by the mca_ptl_gm_send_burst_data function */
-        DO_DEBUG( ompi_output( 0, "sender %d burst %ld bytes", orte_process_info.my_name->vpid, burst_length ); );
+        DO_DEBUG( opal_output( 0, "sender %d burst %ld bytes", orte_process_info.my_name->vpid, burst_length ); );
     }
 
     if( fragment->frag_send.frag_base.frag_size == fragment->frag_bytes_processed ) {
@@ -470,12 +470,12 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     status = mca_ptl_gm_register_memory( ptl_peer->peer_ptl->gm_port, pipeline->local_memory.pval,
                                          pipeline->length );
     if( GM_SUCCESS != status ) {
-        ompi_output( 0, "Cannot register sender memory (%p, %ld) bytes offset %ld\n",
+        opal_output( 0, "Cannot register sender memory (%p, %ld) bytes offset %ld\n",
                      pipeline->local_memory.pval, pipeline->length, pipeline->offset );
     }
     pipeline->flags  = PTL_GM_PIPELINE_TRANSFERT;
     fragment->frag_bytes_processed += pipeline->length;
-    DO_DEBUG( ompi_output( 0, "sender %d %p start register %lld (%d)", orte_process_info.my_name->vpid,
+    DO_DEBUG( opal_output( 0, "sender %d %p start register %lld (%d)", orte_process_info.my_name->vpid,
                            fragment, pipeline->length, fragment->pipeline.pos_register ); )
     fragment->pipeline.pos_register = (fragment->pipeline.pos_register + 1) % GM_PIPELINE_DEPTH;
     /* Now we are waiting for the ack message. Meanwhile we can register the sender first piece
@@ -567,10 +567,10 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     
     if( !(flags & MCA_PTL_FLAGS_ACK) ) {
         ptl->ptl_send_progress( ptl, sendreq, max_data );
-        DO_DEBUG( ompi_output( 0, "sender %d complete request %p w/o rndv with %d bytes",
+        DO_DEBUG( opal_output( 0, "sender %d complete request %p w/o rndv with %d bytes",
                                orte_process_info.my_name->vpid, sendreq, max_data ); );
     } else {
-        DO_DEBUG( ompi_output( 0, "sender %d sent request %p for rndv with %d bytes",
+        DO_DEBUG( opal_output( 0, "sender %d sent request %p for rndv with %d bytes",
                                orte_process_info.my_name->vpid, sendreq, max_data ); );
     }
 
@@ -588,7 +588,7 @@ mca_ptl_gm_recv_frag_ctrl( struct mca_ptl_gm_module_t *ptl,
     req->req_peer_match = header->hdr_ack.hdr_dst_match;
     req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
     req->req_peer_size  = header->hdr_ack.hdr_dst_size;
-    DO_DEBUG( ompi_output( 0, "sender %d get back the rendez-vous for request %p",
+    DO_DEBUG( opal_output( 0, "sender %d get back the rendez-vous for request %p",
                            orte_process_info.my_name->vpid, req ); );
     ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, req, req->req_offset );
     
@@ -684,7 +684,7 @@ static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer
                           GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
                           GM_HIGH_PRIORITY, ptl_peer->peer_addr.local_id, ptl_peer->peer_addr.port_id,
                           recv_short_callback, (void*)hdr );
-    DO_DEBUG( ompi_output( 0, "receiver %d %p send quick message for length %lld", orte_process_info.my_name->vpid,
+    DO_DEBUG( opal_output( 0, "receiver %d %p send quick message for length %lld", orte_process_info.my_name->vpid,
                            frag, frag->frag_header.hdr_frag.hdr_frag_length ); )
     return OMPI_SUCCESS;
 }
@@ -710,7 +710,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
          * with the same request. The only question is if it's possible ?
          */
         convertor = &(frag->frag_recv.frag_base.frag_convertor);
-        DO_DEBUG( ompi_output( 0, "receiver %d get message tagged as HAS_FRAGMENT", orte_process_info.my_name->vpid ); );
+        DO_DEBUG( opal_output( 0, "receiver %d get message tagged as HAS_FRAGMENT", orte_process_info.my_name->vpid ); );
         if( PTL_FLAG_GM_REQUIRE_LOCK & hdr->hdr_frag.hdr_common.hdr_flags )
             header_length = sizeof(mca_ptl_gm_frag_header_t);
     } else {
@@ -742,7 +742,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
             header_length = sizeof(mca_ptl_gm_frag_header_t);
             frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length = hdr->hdr_frag.hdr_frag_length;
             convertor = &(frag->frag_recv.frag_base.frag_convertor);
-            DO_DEBUG( ompi_output( 0, "receiver %d create fragment with offset %lld and length %lld",
+            DO_DEBUG( opal_output( 0, "receiver %d create fragment with offset %lld and length %lld",
                                    orte_process_info.my_name->vpid, frag->frag_offset, frag->frag_recv.frag_base.frag_size ); );
         }
         /* GM does not use any of the convertor specializations, so we can just clone the
@@ -778,7 +778,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
                                           frag->frag_recv.frag_base.frag_size );
             OMPI_FREE_LIST_RETURN( &(((mca_ptl_gm_peer_t*)frag->frag_recv.frag_base.frag_peer)->peer_ptl->gm_recv_frags_free), (opal_list_item_t*)frag );
         }
-        DO_DEBUG( ompi_output( 0, "receiver %d waiting for burst with fragment ...", orte_process_info.my_name->vpid ); );
+        DO_DEBUG( opal_output( 0, "receiver %d waiting for burst with fragment ...", orte_process_info.my_name->vpid ); );
         return NULL;
     }
 
@@ -800,7 +800,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
             mca_ptl_gm_receiver_advance_pipeline( frag, 0 );
         } else {
             pipeline = &(frag->pipeline.lines[frag->pipeline.pos_remote]);
-            DO_DEBUG( ompi_output( 0, "receiver %d %p get remote memory length %lld (%d)\n",
+            DO_DEBUG( opal_output( 0, "receiver %d %p get remote memory length %lld (%d)\n",
                                    orte_process_info.my_name->vpid, frag, hdr->hdr_frag.hdr_frag_length, frag->pipeline.pos_remote ); );
             frag->pipeline.pos_remote = (frag->pipeline.pos_remote + 1) % GM_PIPELINE_DEPTH;
             assert( (pipeline->flags & PTL_GM_PIPELINE_REMOTE) == 0 );
@@ -830,13 +830,13 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t* ptl,
     if( PTL_FLAG_GM_REQUIRE_LOCK & hdr->hdr_common.hdr_flags ) {
 #if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
         if( 0 == hdr->hdr_ack.hdr_dst_size ) {
-            DO_DEBUG( ompi_output( 0, "sender %d %p get FIN message (initial)", orte_process_info.my_name->vpid, frag ); );
+            DO_DEBUG( opal_output( 0, "sender %d %p get FIN message (initial)", orte_process_info.my_name->vpid, frag ); );
             /* I just receive the ack for the first fragment => setup the pipeline */
             mca_ptl_gm_sender_advance_pipeline( frag );
         } else {
             /* mark the memory as ready to be deregistered */
             frag->pipeline.lines[frag->pipeline.pos_deregister].flags |= PTL_GM_PIPELINE_DEREGISTER;
-            DO_DEBUG( ompi_output( 0, "sender %d %p get FIN message (%d)", orte_process_info.my_name->vpid, frag, frag->pipeline.pos_deregister ); );
+            DO_DEBUG( opal_output( 0, "sender %d %p get FIN message (%d)", orte_process_info.my_name->vpid, frag, frag->pipeline.pos_deregister ); );
         }
         /* continue the pipeline ... send the next segment */
         mca_ptl_gm_sender_advance_pipeline( frag );
@@ -844,14 +844,14 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t* ptl,
         assert( 0 );
 #endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     } else {
-        DO_DEBUG( ompi_output( 0, "sender %d burst data after rendez-vous protocol", orte_process_info.my_name->vpid ); );
+        DO_DEBUG( opal_output( 0, "sender %d burst data after rendez-vous protocol", orte_process_info.my_name->vpid ); );
         /* do a burst but with the remote fragment as we just get it from the message */
         mca_ptl_gm_send_burst_data( (mca_ptl_gm_peer_t*)frag->frag_send.frag_base.frag_peer, frag,
                                     frag->frag_send.frag_base.frag_size - frag->frag_bytes_validated,
                                     NULL, hdr->hdr_common.hdr_flags );
     }
     if( frag->frag_send.frag_base.frag_size == frag->frag_bytes_validated ) {
-        DO_DEBUG( ompi_output( 0, "sender %d complete send operation", orte_process_info.my_name->vpid ); );
+        DO_DEBUG( opal_output( 0, "sender %d complete send operation", orte_process_info.my_name->vpid ); );
         ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
                                       frag->frag_send.frag_request,
                                       frag->frag_bytes_validated );
@@ -962,31 +962,31 @@ void mca_ptl_gm_dump_header( char* str, mca_ptl_base_header_t* hdr )
     case MCA_PTL_HDR_TYPE_FIN_ACK:
         goto print_match_hdr;
     default:
-        ompi_output( 0, "unknown header of type %d\n", hdr->hdr_common.hdr_type );
+        opal_output( 0, "unknown header of type %d\n", hdr->hdr_common.hdr_type );
     }
     return;
 
  print_ack_hdr:
-    ompi_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nack header hdr_src_ptr (lval %lld, pval %p)\n           hdr_dst_match (lval %lld pval %p)\n           hdr_dst_addr (lval %lld pval %p)\n           hdr_dst_size %lld\n",
+    opal_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nack header hdr_src_ptr (lval %lld, pval %p)\n           hdr_dst_match (lval %lld pval %p)\n           hdr_dst_addr (lval %lld pval %p)\n           hdr_dst_size %lld\n",
 		 str, hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags,
 		 hdr->hdr_ack.hdr_src_ptr.lval, hdr->hdr_ack.hdr_src_ptr.pval,
 		 hdr->hdr_ack.hdr_dst_match.lval, hdr->hdr_ack.hdr_dst_match.pval,
 		 hdr->hdr_ack.hdr_dst_addr.lval, hdr->hdr_ack.hdr_dst_addr.pval, hdr->hdr_ack.hdr_dst_size );
     return;
  print_frag_hdr:
-    ompi_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nfrag header hdr_frag_length %lld hdr_frag_offset %lld\n            hdr_src_ptr (lval %lld, pval %p)\n            hdr_dst_ptr (lval %lld, pval %p)\n",
+    opal_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nfrag header hdr_frag_length %lld hdr_frag_offset %lld\n            hdr_src_ptr (lval %lld, pval %p)\n            hdr_dst_ptr (lval %lld, pval %p)\n",
 		 str, hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags,
 		 hdr->hdr_frag.hdr_frag_length, hdr->hdr_frag.hdr_frag_offset, hdr->hdr_frag.hdr_src_ptr.lval,
 		 hdr->hdr_frag.hdr_src_ptr.pval, hdr->hdr_frag.hdr_dst_ptr.lval, hdr->hdr_frag.hdr_dst_ptr.pval );
     return;
  print_match_hdr:
-    ompi_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nmatch header hdr_contextid %d hdr_src %d hdr_dst %d hdr_tag %d\n             hdr_msg_length %lld hdr_msg_seq %d\n",
+    opal_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nmatch header hdr_contextid %d hdr_src %d hdr_dst %d hdr_tag %d\n             hdr_msg_length %lld hdr_msg_seq %d\n",
 		 str, hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags,
 		 hdr->hdr_match.hdr_contextid, hdr->hdr_match.hdr_src, hdr->hdr_match.hdr_dst,
 		 hdr->hdr_match.hdr_tag, hdr->hdr_match.hdr_msg_length, hdr->hdr_match.hdr_msg_seq );
     return;
  print_rndv_hdr:
-    ompi_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nrndv header hdr_contextid %d hdr_src %d hdr_dst %d hdr_tag %d\n            hdr_msg_length %lld hdr_msg_seq %d\n            hdr_frag_length %lld hdr_src_ptr (lval %lld, pval %p)\n",
+    opal_output( 0, "%s hdr_common hdr_type %d hdr_flags %x\nrndv header hdr_contextid %d hdr_src %d hdr_dst %d hdr_tag %d\n            hdr_msg_length %lld hdr_msg_seq %d\n            hdr_frag_length %lld hdr_src_ptr (lval %lld, pval %p)\n",
 		 str, hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags,
 		 hdr->hdr_rndv.hdr_match.hdr_contextid, hdr->hdr_rndv.hdr_match.hdr_src,
 		 hdr->hdr_rndv.hdr_match.hdr_dst, hdr->hdr_rndv.hdr_match.hdr_tag,

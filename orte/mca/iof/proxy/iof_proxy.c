@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/iof/iof.h"
 #include "mca/rml/rml.h"
 #include "mca/rml/rml_types.h"
@@ -65,7 +65,7 @@ int orte_iof_proxy_publish(
     if(mca_iof_proxy_component.proxy_debug > 1) {
         char* name_str;
         orte_ns.get_proc_name_string(&name_str, name);
-        ompi_output(0, "orte_iof_proxy_publish(%s,%d,%d,%d)\n", name_str, mode, tag, fd);
+        opal_output(0, "orte_iof_proxy_publish(%s,%d,%d,%d)\n", name_str, mode, tag, fd);
         free(name_str);
     }
 

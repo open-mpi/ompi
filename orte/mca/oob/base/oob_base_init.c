@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "runtime/runtime.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "util/argv.h"
 #include "mca/mca.h"
@@ -149,7 +149,7 @@ int mca_oob_base_init(void)
                                                                                                                      
 
         if (NULL == component->oob_init) {
-            ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
+            opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
         } else {
             int priority = -1;
             module = component->oob_init(&priority);
@@ -169,7 +169,7 @@ int mca_oob_base_init(void)
     }
     /* set the global variable to point to the first initialize module */
     if(s_module == NULL) {
-      ompi_output(0, "mca_oob_base_init: no OOB modules available\n");
+      opal_output(0, "mca_oob_base_init: no OOB modules available\n");
       return ORTE_ERROR;
    }
 

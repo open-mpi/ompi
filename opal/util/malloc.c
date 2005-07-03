@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "util/malloc.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 
 /*
@@ -49,7 +49,7 @@ int ompi_malloc_output = -1;
 /*
  * Private variables
  */
-static ompi_output_stream_t malloc_stream = {
+static opal_output_stream_t malloc_stream = {
   /* debugging */
   true,
   /* verbose level */
@@ -71,7 +71,7 @@ static ompi_output_stream_t malloc_stream = {
  */
 void ompi_malloc_init(void)
 {
-  ompi_malloc_output = ompi_output_open(&malloc_stream);
+  ompi_malloc_output = opal_output_open(&malloc_stream);
 }
 
 
@@ -81,7 +81,7 @@ void ompi_malloc_init(void)
 void ompi_malloc_finalize(void)
 {
   if (-1 != ompi_malloc_output) {
-    ompi_output_close(ompi_malloc_output);
+    opal_output_close(ompi_malloc_output);
     ompi_malloc_output = -1;
   }
 }
@@ -95,14 +95,14 @@ void *ompi_malloc(size_t size, const char *file, int line)
     void *addr;
     if (ompi_malloc_debug_level > 1) {
         if (size <= 0) {
-          ompi_output(ompi_malloc_output, "Request for %ld bytes (%s, %d)", 
+          opal_output(ompi_malloc_output, "Request for %ld bytes (%s, %d)", 
                      (long) size, file, line);
         }
     }
     addr = malloc(size);
     if (ompi_malloc_debug_level > 0) {
         if (NULL == addr) {
-            ompi_output(ompi_malloc_output, 
+            opal_output(ompi_malloc_output, 
                        "Request for %ld bytes failed (%s, %d)",
                        (long) size, file, line);
         }
@@ -120,7 +120,7 @@ void *ompi_calloc(size_t nmembers, size_t size, const char *file, int line)
     void *addr;
     if (ompi_malloc_debug_level > 1) {
         if (size <= 0) {
-          ompi_output(ompi_malloc_output,
+          opal_output(ompi_malloc_output,
                      "Request for %ld zeroed elements of size %ld (%s, %d)", 
                      (long) nmembers, (long) size, file, line);
         }
@@ -128,7 +128,7 @@ void *ompi_calloc(size_t nmembers, size_t size, const char *file, int line)
     addr = calloc(nmembers, size);
     if (ompi_malloc_debug_level > 0) {
         if (NULL == addr) {
-            ompi_output(ompi_malloc_output, 
+            opal_output(ompi_malloc_output, 
                        "Request for %ld zeroed elements of size %ld failed (%s, %d)",
                        (long) nmembers, (long) size, file, line);
         }
@@ -148,11 +148,11 @@ void *ompi_realloc(void *ptr, size_t size, const char *file, int line)
     if (ompi_malloc_debug_level > 1) {
         if (size <= 0) {
           if (NULL == ptr) {
-            ompi_output(ompi_malloc_output, 
+            opal_output(ompi_malloc_output, 
                        "Realloc NULL for %ld bytes (%s, %d)", 
                        (long) size, file, line);
           } else {
-            ompi_output(ompi_malloc_output, "Realloc %p for %ld bytes (%s, %d)", 
+            opal_output(ompi_malloc_output, "Realloc %p for %ld bytes (%s, %d)", 
                        ptr, (long) size, file, line);
           }
         }
@@ -160,7 +160,7 @@ void *ompi_realloc(void *ptr, size_t size, const char *file, int line)
     addr = realloc(ptr, size);
     if (ompi_malloc_debug_level > 0) {
         if (NULL == addr) {
-            ompi_output(ompi_malloc_output, 
+            opal_output(ompi_malloc_output, 
                        "Realloc %p for %ld bytes failed (%s, %d)",
                        ptr, (long) size, file, line);
         }
@@ -176,7 +176,7 @@ void *ompi_realloc(void *ptr, size_t size, const char *file, int line)
 void ompi_free(void *addr, const char *file, int line)
 {
     if (ompi_malloc_debug_level > 1 && NULL == addr) {
-      ompi_output(ompi_malloc_output, "Invalid free (%s, %d)", file, line);
+      opal_output(ompi_malloc_output, "Invalid free (%s, %d)", file, line);
     } else {
       free(addr);
     }

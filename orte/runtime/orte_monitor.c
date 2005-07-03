@@ -22,7 +22,7 @@
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "runtime/runtime.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
@@ -46,7 +46,7 @@ static bool ompi_rte_waiting = false;
 void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata)
 {
     if (orte_debug_flag) {
-	    ompi_output(0, "[%lu,%lu,%lu] all procs registered",
+	    opal_output(0, "[%lu,%lu,%lu] all procs registered",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

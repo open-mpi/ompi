@@ -23,7 +23,7 @@
 #include "opal/class/opal_list.h"
 #include "util/strncpy.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "include/constants.h"
@@ -84,9 +84,9 @@ int mca_base_components_open(const char *type_name, int output_id,
 
   mca_base_param_lookup_int(param_verbose, &verbose_level);
   if (output_id != 0) {
-    ompi_output_set_verbosity(output_id, verbose_level);
+    opal_output_set_verbosity(output_id, verbose_level);
   }
-  ompi_output_verbose(10, output_id, 
+  opal_output_verbose(10, output_id, 
                       "mca: base: components_open: Looking for components");
 
   /* Find and load all available components */
@@ -167,15 +167,15 @@ static int open_components(const char *type_name, int output_id,
   /* Announce */
 
   if (NULL == requested_component_names) {
-    ompi_output_verbose(10, output_id,
+    opal_output_verbose(10, output_id,
                         "mca: base: components_open: "
                         "looking for any %s components", type_name);
   } else {
-    ompi_output_verbose(10, output_id,
+    opal_output_verbose(10, output_id,
                         "mca: base: components_open: looking for specific %s components:", 
                         type_name);
     for (i = 0; NULL != requested_component_names[i]; ++i) {
-      ompi_output_verbose(10, output_id, "mca: base: components_open:   %s", 
+      opal_output_verbose(10, output_id, "mca: base: components_open:   %s", 
                           requested_component_names[i]);
     }
   }
@@ -208,13 +208,13 @@ static int open_components(const char *type_name, int output_id,
 
     if (acceptable) {
       opened = called_open = false;
-      ompi_output_verbose(10, output_id, 
+      opal_output_verbose(10, output_id, 
                           "mca: base: components_open: found loaded component %s",
                           component->mca_component_name);
       
       if (NULL == component->mca_open_component) {
         opened = true; 
-        ompi_output_verbose(10, output_id, 
+        opal_output_verbose(10, output_id, 
                             "mca: base: components_open: "
                             "component %s has no open function",
                             component->mca_component_name);
@@ -222,7 +222,7 @@ static int open_components(const char *type_name, int output_id,
         called_open = true;
         if (MCA_SUCCESS == component->mca_open_component()) {
           opened = true;
-          ompi_output_verbose(10, output_id, 
+          opal_output_verbose(10, output_id, 
                               "mca: base: components_open: "
                               "component %s open function successful",
                               component->mca_component_name);
@@ -233,11 +233,11 @@ static int open_components(const char *type_name, int output_id,
                expected. */
 
             if (show_errors) {
-                ompi_output(0, "mca: base: components_open: "
+                opal_output(0, "mca: base: components_open: "
                             "component %s open function failed",
                             component->mca_component_name);
             }
-            ompi_output_verbose(10, output_id, 
+            opal_output_verbose(10, output_id, 
                                 "mca: base: components_open: "
                                 "component %s open function failed",
                                 component->mca_component_name);
@@ -251,13 +251,13 @@ static int open_components(const char *type_name, int output_id,
           if (NULL != component->mca_close_component) {
             component->mca_close_component();
           }
-          ompi_output_verbose(10, output_id, 
+          opal_output_verbose(10, output_id, 
                               "mca: base: components_open: component %s closed",
                               component->mca_component_name);
           called_open = false;
         }
         mca_base_component_repository_release(component);
-        ompi_output_verbose(10, output_id, 
+        opal_output_verbose(10, output_id, 
                             "mca: base: components_open: component %s unloaded", 
                             component->mca_component_name);
       }

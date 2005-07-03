@@ -136,13 +136,13 @@ int mca_pml_ob1_component_close(void)
 #if OMPI_ENABLE_DEBUG
     if (mca_pml_ob1.send_requests.fl_num_allocated !=
         mca_pml_ob1.send_requests.super.opal_list_length) {
-        ompi_output(0, "ob1 send requests: %d allocated %d returned\n",
+        opal_output(0, "ob1 send requests: %d allocated %d returned\n",
             mca_pml_ob1.send_requests.fl_num_allocated,
             mca_pml_ob1.send_requests.super.opal_list_length);
     }
     if (mca_pml_ob1.recv_requests.fl_num_allocated !=
         mca_pml_ob1.recv_requests.super.opal_list_length) {
-        ompi_output(0, "ob1 recv requests: %d allocated %d returned\n",
+        opal_output(0, "ob1 recv requests: %d allocated %d returned\n",
             mca_pml_ob1.recv_requests.fl_num_allocated,
             mca_pml_ob1.recv_requests.super.opal_list_length);
     }
@@ -218,7 +218,7 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
 
     /* buffered send */
     if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
-        ompi_output(0, "mca_pml_ob1_component_init: mca_pml_bsend_init failed\n");
+        opal_output(0, "mca_pml_ob1_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
 

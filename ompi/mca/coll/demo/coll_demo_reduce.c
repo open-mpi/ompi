@@ -18,7 +18,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "coll_demo.h"
@@ -36,7 +36,7 @@ int mca_coll_demo_reduce_intra(void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                int root, struct ompi_communicator_t *comm)
 {
-    ompi_output_verbose(10, mca_coll_base_output, "In demo reduce_intra");
+    opal_output_verbose(10, mca_coll_base_output, "In demo reduce_intra");
     return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
                                                   op, root, comm);
 }
@@ -54,7 +54,7 @@ int mca_coll_demo_reduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                int root, struct ompi_communicator_t *comm)
 {
-    ompi_output_verbose(10, mca_coll_base_output, "In demo reduce_inter");
+    opal_output_verbose(10, mca_coll_base_output, "In demo reduce_inter");
     return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
                                                   op, root, comm);
 }

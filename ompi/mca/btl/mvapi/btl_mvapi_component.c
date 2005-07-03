@@ -20,7 +20,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 
@@ -260,7 +260,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     /* Determine the number of hca's available on the host */
     vapi_ret=EVAPI_list_hcas(0, &num_hcas, NULL);
     if( VAPI_EAGAIN != vapi_ret || 0 == num_hcas ) {
-        ompi_output(0,"No hca's found on this host \n"); 
+        opal_output(0,"No hca's found on this host \n"); 
         return NULL;
     }
 
@@ -289,14 +289,14 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     for(i = 0; i < num_hcas; i++){  
         vapi_ret = EVAPI_get_hca_hndl(hca_ids[i], &hca_hndl); 
         if(VAPI_OK != vapi_ret) { 
-            ompi_output(0, "%s:error getting hca handle\n", __func__); 
+            opal_output(0, "%s:error getting hca handle\n", __func__); 
             return NULL; 
         } 
         
 
         vapi_ret = VAPI_query_hca_cap(hca_hndl, &hca_vendor, &hca_cap); 
          if(VAPI_OK != vapi_ret) { 
-            ompi_output(0, "%s:error getting hca properties\n", __func__); 
+            opal_output(0, "%s:error getting hca properties\n", __func__); 
             return NULL; 
         } 
          
@@ -305,7 +305,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
          for(j = 1; j <= hca_cap.phys_port_num; j++){ 
              vapi_ret = VAPI_query_hca_port_prop(hca_hndl, (IB_port_t) j, &hca_port);  
              if(VAPI_OK != vapi_ret) { 
-                 ompi_output(0, "%s:error getting hca port properties\n", __func__); 
+                 opal_output(0, "%s:error getting hca port properties\n", __func__); 
                  return NULL; 
              } 
              
@@ -390,7 +390,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                                          &hca_pd); 
         
         if(NULL == mvapi_btl->ib_pool) { 
-            ompi_output(0, "%s: error creating vapi memory pool! aborting ib btl initialization", __func__); 
+            opal_output(0, "%s: error creating vapi memory pool! aborting ib btl initialization", __func__); 
             return NULL; 
         }
         /* Initialize pool of send fragments */ 
@@ -499,7 +499,7 @@ int mca_btl_mvapi_component_progress()
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_high, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
-                ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
+                opal_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
                             VAPI_wc_status_sym(comp.status), 
                             comp.vendor_err_syndrome, comp.id);  
                 return OMPI_ERROR; 
@@ -509,7 +509,7 @@ int mca_btl_mvapi_component_progress()
             switch(comp.opcode) {
             case VAPI_CQE_RQ_RDMA_WITH_IMM: 
                 if(comp.imm_data_valid){ 
-                    ompi_output(0, "Got an RQ_RDMA_WITH_IMM!\n"); 
+                    opal_output(0, "Got an RQ_RDMA_WITH_IMM!\n"); 
                     
                 }
                 break; 
@@ -541,7 +541,7 @@ int mca_btl_mvapi_component_progress()
                 break;
                 
             default:
-                ompi_output(0, "Errorneous network completion");
+                opal_output(0, "Errorneous network completion");
                 break;
             }
         }
@@ -551,7 +551,7 @@ int mca_btl_mvapi_component_progress()
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_low, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
-                ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
+                opal_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
                             VAPI_wc_status_sym(comp.status), 
                             comp.vendor_err_syndrome, comp.id);  
                 return OMPI_ERROR; 
@@ -588,7 +588,7 @@ int mca_btl_mvapi_component_progress()
                 break;
                 
             default:
-                ompi_output(0, "Errorneous network completion");
+                opal_output(0, "Errorneous network completion");
                 break;
             }
         }

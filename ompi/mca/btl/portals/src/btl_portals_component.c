@@ -22,7 +22,7 @@
 
 #include "include/constants.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/threads/thread.h"
 
 #include "btl_portals.h"
@@ -61,7 +61,7 @@ mca_btl_portals_component_t mca_btl_portals_component = {
 };
 
 
-static ompi_output_stream_t portals_output_stream = {
+static opal_output_stream_t portals_output_stream = {
     true,  /* is debugging */
     0,     /* verbose level */
     0,     /* want syslog */
@@ -139,7 +139,7 @@ mca_btl_portals_component_open(void)
              "btl: portals (%5d): ", getpid());
 
     mca_btl_portals_component.portals_output = 
-        ompi_output_open(&portals_output_stream);
+        opal_output_open(&portals_output_stream);
 
     /* fill default module state */
     mca_ptl_portals_module.super.btl_flags = MCA_BMI_FLAGS_RDMA;
@@ -201,7 +201,7 @@ mca_btl_portals_component_close(void)
         free(portals_output_stream.lds_prefix);
     }
 
-    ompi_output_close(mca_btl_portals_component.portals_output);
+    opal_output_close(mca_btl_portals_component.portals_output);
     mca_btl_portals_component.portals_output = -1;
 
     return OMPI_SUCCESS;
@@ -219,7 +219,7 @@ mca_btl_portals_component_init(int *num_btls,
     uint32_t length;
 
     if (enable_progress_threads) {
-        ompi_output_verbose(20, mca_btl_portals_component.portals_output,
+        opal_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because progress threads enabled");
         return NULL;
     }
@@ -227,7 +227,7 @@ mca_btl_portals_component_init(int *num_btls,
     /* initialize portals btl.  note that this is in the compat code because
        it's fairly non-portable between implementations */
     if (OMPI_SUCCESS != mca_btl_portals_init(&mca_btl_portals_component)) {
-        ompi_output_verbose(20, mca_btl_portals_component.portals_output,
+        opal_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because compatibility init failed");
         return NULL;
     }
@@ -270,7 +270,7 @@ mca_btl_portals_component_init(int *num_btls,
     }
     *num_btls = mca_btl_portals_component.portals_num_modules;
 
-    ompi_output_verbose(20, mca_btl_portals_component.portals_output,
+    opal_output_verbose(20, mca_btl_portals_component.portals_output,
                         "initialized %d modules",
                         *num_btls);
 
@@ -301,7 +301,7 @@ mca_btl_portals_component_progress(void)
                     PTL_SR_DROP_COUNT,
                     &numdropped);
         if (numdropped != module->dropped) {
-            ompi_output_verbose(30, mca_btl_portals_component.portals_output,
+            opal_output_verbose(30, mca_btl_portals_component.portals_output,
                                 "*** Dropped message count changed.  %lld, %lld",
                                 module->dropped, numdropped);
             module->dropped = numdropped;
@@ -318,11 +318,11 @@ mca_btl_portals_component_progress(void)
             continue;
         } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
             /* BWB - how can we report errors? */
-            ompi_output(mca_btl_portals_component.portals_output,
+            opal_output(mca_btl_portals_component.portals_output,
                         "Error calling PtlEQGet: %d", ret);
             continue;
         } else if (PTL_EQ_DROPPED == ret) {
-            ompi_output_verbose(10, mca_btl_portals_component.portals_output,
+            opal_output_verbose(10, mca_btl_portals_component.portals_output,
                                 "*** Event queue entries were dropped");
         }
 
@@ -331,7 +331,7 @@ mca_btl_portals_component_progress(void)
            so we can make sure we properly re-initialize the ones that
            need to be re-initialized */
         if (PTL_EVENT_UNLINK == ev.type) {
-            OMPI_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,
+            OPAL_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,
                                  "unlink event occurred"));
             continue;
         }

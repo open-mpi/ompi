@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -55,7 +55,7 @@ bool mca_topo_base_components_opened_valid = false;
 int mca_topo_base_open(void) 
 {
      /* Open the topo framework output stream */
-     mca_topo_base_output = ompi_output_open(NULL);
+     mca_topo_base_output = opal_output_open(NULL);
 
      /* Open up all available components  */
      if (OMPI_SUCCESS !=

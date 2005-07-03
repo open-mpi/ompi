@@ -19,7 +19,7 @@
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "rmaps_rr.h"
 
 /*

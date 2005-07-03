@@ -48,7 +48,7 @@
 #include "include/constants.h"
 #include "opal/class/opal_list.h"
 #include "util/if.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/strncpy.h"
 
 #ifndef IF_NAMESIZE
@@ -112,7 +112,7 @@ static int ompi_ifinit(void)
 
     /* create the internet socket to test off */
     if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        ompi_output(0, "ompi_ifinit: socket() failed with errno=%d\n", errno);
+        opal_output(0, "ompi_ifinit: socket() failed with errno=%d\n", errno);
         return OMPI_ERROR;
     }
 
@@ -155,7 +155,7 @@ static int ompi_ifinit(void)
                space.  so we'll fall down and try to expand our
                space */
             if (errno != EINVAL && lastlen != 0) {
-                ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFCONF) failed with errno=%d", 
+                opal_output(0, "ompi_ifinit: ioctl(SIOCGIFCONF) failed with errno=%d", 
                             errno);
                 close(sd);
                 return OMPI_ERROR;
@@ -215,7 +215,7 @@ static int ompi_ifinit(void)
             continue;
 
         if(ioctl(sd, SIOCGIFFLAGS, ifr) < 0) {
-            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFFLAGS) failed with errno=%d", errno);
+            opal_output(0, "ompi_ifinit: ioctl(SIOCGIFFLAGS) failed with errno=%d", errno);
             continue;
         }
         if ((ifr->ifr_flags & IFF_UP) == 0) 
@@ -233,7 +233,7 @@ static int ompi_ifinit(void)
         intf.if_index = opal_list_get_size(&ompi_if_list)+1;
 #else
         if(ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
-            ompi_output(0,"ompi_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
+            opal_output(0,"ompi_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
             continue;
         }
 #if defined(ifr_ifindex)
@@ -246,7 +246,7 @@ static int ompi_ifinit(void)
 #endif /* SIOCGIFINDEX */
 
         if(ioctl(sd, SIOCGIFADDR, ifr) < 0) {
-            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFADDR) failed with errno=%d", errno);
+            opal_output(0, "ompi_ifinit: ioctl(SIOCGIFADDR) failed with errno=%d", errno);
             break;
         }
         if(ifr->ifr_addr.sa_family != AF_INET) 
@@ -254,7 +254,7 @@ static int ompi_ifinit(void)
 
         memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(intf.if_addr));
         if(ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
-            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
+            opal_output(0, "ompi_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
             continue;
         }
         memcpy(&intf.if_mask, &ifr->ifr_addr, sizeof(intf.if_mask));
@@ -262,7 +262,7 @@ static int ompi_ifinit(void)
         intf_ptr = (ompi_if_t*) malloc(sizeof(ompi_if_t));
         OMPI_DEBUG_ZERO(*intf_ptr);
         if(intf_ptr == 0) {
-            ompi_output(0, "ompi_ifinit: unable to allocated %d bytes\n", sizeof(ompi_if_t));
+            opal_output(0, "ompi_ifinit: unable to allocated %d bytes\n", sizeof(ompi_if_t));
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         memcpy(intf_ptr, &intf, sizeof(intf));
@@ -303,7 +303,7 @@ static int ompi_ifinit(void)
     /* create a socket */
     sd = WSASocket (AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
     if (sd == SOCKET_ERROR) {
-        ompi_output(0, "ompi_ifinit: WSASocket failed with errno=%d\n",WSAGetLastError());
+        opal_output(0, "ompi_ifinit: WSASocket failed with errno=%d\n",WSAGetLastError());
         return OMPI_ERROR;
     }
 
@@ -317,7 +317,7 @@ static int ompi_ifinit(void)
                                   &num_bytes_returned, 
                                   0,
 		                          0)) {
-        ompi_output(0, "ompi_ifinit: WSAIoctl failed with errno=%d\n",WSAGetLastError());
+        opal_output(0, "ompi_ifinit: WSAIoctl failed with errno=%d\n",WSAGetLastError());
         return OMPI_ERROR;
     }
 
@@ -361,7 +361,7 @@ static int ompi_ifinit(void)
             /* copy all this into a persistent form and store it in the list */
             intf_ptr = malloc(sizeof(ompi_if_t));
             if (NULL == intf_ptr) {
-                ompi_output (0,"ompi_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
+                opal_output (0,"ompi_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -467,7 +467,7 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
     if(INADDR_NONE == inaddr) {
         h = gethostbyname(if_addr);
         if(0 == h) {
-            ompi_output(0,"ompi_ifaddrtoname: unable to resolve %s\n", if_addr);
+            opal_output(0,"ompi_ifaddrtoname: unable to resolve %s\n", if_addr);
             return OMPI_ERR_NOT_FOUND;
         }
         memcpy(&inaddr, h->h_addr, sizeof(inaddr));

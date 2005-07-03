@@ -221,14 +221,14 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
     }
     opal_mutex_unlock(&state_mutex);
 
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
 		"pls: xgrid: connection name: %s", [[connection name] cString]);
     
     controller = [[XGController alloc] initWithConnection:connection];
     opal_progress();
     grid = [controller defaultGrid];
 #if 0 /* gives a warning - need to figure out "right way" */
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
 		"pls: xgrid: grid name: %s", [[grid name] cString]);
 #endif
 
@@ -397,7 +397,7 @@ cleanup:
 
 -(void) connectionDidNotOpen:(XGConnection*) connection withError: (NSError*) error
 {
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
 		"pls: xgrid: got connectionDidNotOpen message");
     opal_condition_broadcast(&state_cond);
 }
@@ -405,7 +405,7 @@ cleanup:
 
 -(void) connectionDidClose:(XGConnection*) connection;
 {
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
 		"pls: xgrid: got connectionDidClose message");
     opal_condition_broadcast(&state_cond);
 }

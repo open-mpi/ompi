@@ -27,7 +27,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "mca/pml/pml.h"
@@ -197,7 +197,7 @@ int mca_ptl_sm_component_close(void)
                 mca_ptl_sm_component.mmap_file->map_size);
         if(-1 == return_value) {
             return_value=OMPI_ERROR;
-            ompi_output(0," munmap failed :: file - %s :: errno - %d \n",
+            opal_output(0," munmap failed :: file - %s :: errno - %d \n",
                     mca_ptl_sm_component.mmap_file->map_addr,
                     errno);
             goto CLEANUP;
@@ -217,7 +217,7 @@ int mca_ptl_sm_component_close(void)
         unsigned char cmd = DONE;
         if( write(mca_ptl_sm_component.sm_fifo_fd,&cmd,sizeof(cmd)) != 
                 sizeof(cmd)){
-            ompi_output(0, "mca_ptl_sm_component_close: write fifo failed: errno=%d\n",
+            opal_output(0, "mca_ptl_sm_component_close: write fifo failed: errno=%d\n",
                     errno);
         }
         opal_thread_join(&mca_ptl_sm_component.sm_fifo_thread, NULL);
@@ -262,12 +262,12 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
         "%s/sm_fifo.%d", orte_process_info.job_session_dir,
          orte_process_info.my_name->vpid);
     if(mkfifo(mca_ptl_sm_component.sm_fifo_path, 0660) < 0) {
-        ompi_output(0, "mca_ptl_sm_component_init: mkfifo failed with errno=%d\n",errno);
+        opal_output(0, "mca_ptl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
     }
     mca_ptl_sm_component.sm_fifo_fd = open(mca_ptl_sm_component.sm_fifo_path, O_RDWR);
     if(mca_ptl_sm_component.sm_fifo_fd < 0) {
-        ompi_output(0, "mca_ptl_sm_component_init: open(%s) failed with errno=%d\n",
+        opal_output(0, "mca_ptl_sm_component_init: open(%s) failed with errno=%d\n",
             mca_ptl_sm_component.sm_fifo_path, errno);
         return NULL;
     }

@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "util/proc_info.h"
 #include "opal/event/event.h"
@@ -189,7 +189,7 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
             goto cleanup;
         }
         if (mca_pls_bproc_component.debug) {
-            ompi_output(0, "mpirun bproc io setup. Path: %s\n", path);
+            opal_output(0, "mpirun bproc io setup. Path: %s\n", path);
         }
         io[i].fd = i;
         io[i].type = BPROC_IO_FILE;
@@ -385,7 +385,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
     free(param);
 
     if(0 < mca_pls_bproc_component.debug) {
-        ompi_output(0, "PLS_BPROC DEBUG: launching %d daemons. cmd: %s ", 
+        opal_output(0, "PLS_BPROC DEBUG: launching %d daemons. cmd: %s ", 
                     num_daemons, mca_pls_bproc_component.orted);
     }
     
@@ -394,18 +394,18 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
                          argv, map->app->env);
 
     if(0 < mca_pls_bproc_component.debug) {
-        ompi_output(0, "PLS_BPROC DEBUG: %d daemons launched. First pid: %d\n", 
+        opal_output(0, "PLS_BPROC DEBUG: %d daemons launched. First pid: %d\n", 
                     rc, *pids);
     }
 
     if(rc != num_daemons) {
-        ompi_output(0, "Failed to launch proper number of daemons.");
+        opal_output(0, "Failed to launch proper number of daemons.");
         rc = ORTE_ERROR;
         goto cleanup;
     }
     for(i = 0; i < num_daemons; i++) {
         if(0 >= pids[i]) {
-            ompi_output(0, "pls_bproc: failed to launch all daemons. " 
+            opal_output(0, "pls_bproc: failed to launch all daemons. " 
                         "Daemon pid was %d on node %d\n", pids[i], node_list[i]);
             rc = ORTE_ERROR;
             goto cleanup;
@@ -444,22 +444,22 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
             goto cleanup;
         }
         if(0 < mca_pls_bproc_component.debug) {
-            ompi_output(0, "pls_bproc: launching %d processes", num_nodes);
+            opal_output(0, "pls_bproc: launching %d processes", num_nodes);
         }
         rc = bproc_vexecmove_io(num_nodes, node_list, pids, bproc_io, 3, 
                                 map->app->app, map->app->argv, map->app->env);
         if(0 < mca_pls_bproc_component.debug) {
-            ompi_output(0, "pls_bproc: %d processes launched. First pid: %d",
+            opal_output(0, "pls_bproc: %d processes launched. First pid: %d",
                         rc, *pids);
         }
         if(rc != num_nodes) {
-            ompi_output(0, "pls_bproc: Failed to launch proper number of processes.");
+            opal_output(0, "pls_bproc: Failed to launch proper number of processes.");
             rc = ORTE_ERROR;
             goto cleanup;
         }
         for(j = 0; j < num_nodes; j++) {
             if(0 >= pids[j]) {
-                ompi_output(0, "pls_bproc: failed to launch all processes. Process"
+                opal_output(0, "pls_bproc: failed to launch all processes. Process"
                             " pid was %d on node %d\n", pids[j], node_list[j]);
                 rc = ORTE_ERROR;
                 goto cleanup;
@@ -559,7 +559,7 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid)
         return rc;
     for(i=0; i<num_pids; i++) {
         if(mca_pls_bproc_component.debug) {
-            ompi_output(0, "orte_pls_bproc: killing proc: %d\n", pids[i]);
+            opal_output(0, "orte_pls_bproc: killing proc: %d\n", pids[i]);
         }
         kill(pids[i], mca_pls_bproc_component.terminate_sig);
     }
@@ -571,7 +571,7 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid)
         return rc;
     for(i=0; i<num_pids; i++) { 
         if(mca_pls_bproc_component.debug) {
-            ompi_output(0, "orte_pls_bproc: killing daemon: %d\n", pids[i]);
+            opal_output(0, "orte_pls_bproc: killing daemon: %d\n", pids[i]);
         }
         kill(pids[i], mca_pls_bproc_component.terminate_sig);
     }

@@ -39,7 +39,7 @@
 #include "opal/event/event.h"
 #include "util/argv.h"
 #include "util/path.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     }
     
     /* Open up the output streams */
-    if (!ompi_output_init()) {
+    if (!opal_output_init()) {
         return OMPI_ERROR;
     }
 

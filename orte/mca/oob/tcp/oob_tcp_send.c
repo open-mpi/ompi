@@ -96,7 +96,7 @@ int mca_oob_tcp_send(
         return OMPI_ERR_UNREACH;
 
     if(mca_oob_tcp_component.tcp_debug > 3) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_send: tag %d\n",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_send: tag %d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             tag);

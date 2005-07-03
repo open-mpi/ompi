@@ -28,7 +28,7 @@
 #include "include/orte_constants.h"
 #include "mca/schema/schema.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "mca/ns/ns.h"
@@ -54,7 +54,7 @@ int orte_gpr_replica_process_callbacks(void)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "gpr replica: process_callbacks entered");
+	   opal_output(0, "gpr replica: process_callbacks entered");
     }
 
     /* check and set flag indicating callbacks being processed */
@@ -66,7 +66,7 @@ int orte_gpr_replica_process_callbacks(void)
     while (NULL != (cb = (orte_gpr_replica_callbacks_t*)opal_list_remove_last(&orte_gpr_replica.callbacks))) {
 	    if (NULL == cb->requestor) {  /* local callback */
 	        if (orte_gpr_replica_globals.debug) {
-		      ompi_output(0, "process_callbacks: local");
+		      opal_output(0, "process_callbacks: local");
 	        }
             /* each callback corresponds to a specific requestor
              * The message in the callback consists of at least one (and can
@@ -99,7 +99,7 @@ int orte_gpr_replica_process_callbacks(void)
             
         	} else {  /* remote request - send messages back */
     	       if (orte_gpr_replica_globals.debug) {
-    		      ompi_output(0, "process_callbacks: remote to [%lu,%lu,%lu]",
+    		      opal_output(0, "process_callbacks: remote to [%lu,%lu,%lu]",
                         ORTE_NAME_ARGS(cb->requestor));
     	       }
     	       orte_gpr_replica_remote_notify(cb->requestor, cb->message);

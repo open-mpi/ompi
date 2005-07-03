@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -61,7 +61,7 @@ int mca_coll_base_open(void)
 {
   /* Open an output stream for this framework */
 
-  mca_coll_base_output = ompi_output_open(NULL);
+  mca_coll_base_output = opal_output_open(NULL);
 
   /* Open up all available components */
 

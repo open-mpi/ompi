@@ -25,7 +25,7 @@
 #include <netinet/in.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
@@ -62,14 +62,14 @@ mca_ptl_portals_init(mca_ptl_portals_component_t *comp)
 
     info.nid = htonl(utcp_my_nid(mca_ptl_portals_component.portals_ifname));
     info.pid = htonl((ptl_pid_t) getpid());
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "contact info: %u, %u", ntohl(info.nid), 
                         ntohl(info.pid));
 
     ret = mca_base_modex_send(&mca_ptl_portals_component.super.ptlm_version,
                               &info, sizeof(ptl_process_id_t));
     if (OMPI_SUCCESS != ret) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "mca_base_modex_send failed: %d", ret);
         return ret;
     }
@@ -79,13 +79,13 @@ mca_ptl_portals_init(mca_ptl_portals_component_t *comp)
     comp->portals_modules = calloc(comp->portals_num_modules,
                                    sizeof(mca_ptl_portals_module_t *));
     if (NULL == comp->portals_modules) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "malloc failed in mca_ptl_portals_init");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
     comp->portals_modules[0] = malloc(sizeof(mca_ptl_portals_module_t));
     if (NULL == comp->portals_modules) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "malloc failed in mca_ptl_portals_init");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
@@ -126,7 +126,7 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
     /* get space for the portals procs list */
     *portals_procs = calloc(nprocs, sizeof(ptl_process_id_t));
     if (NULL == *portals_procs) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "calloc(nprocs, sizeof(ptl_process_id_t)) failed");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
@@ -137,11 +137,11 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
         ret = mca_base_modex_recv(&mca_ptl_portals_component.super.ptlm_version, 
                                   procs[i], (void**) &info, &size);
         if (OMPI_SUCCESS != ret) {
-            ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+            opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                                 "mca_base_modex_recv failed: %d", ret);
             return ret;
         } else if (sizeof(ptl_process_id_t) != size) {
-            ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+            opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                                 "mca_base_modex_recv returned size %d, expected %d", 
                                 size, sizeof(ptl_process_id_t));
             return OMPI_ERROR;
@@ -164,13 +164,13 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
         free(info);
     }
 
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "my rid: %u", my_rid);
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "nid map: %s", nidmap);
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "pid map: %s", pidmap);
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "iface: %s",
                         mca_ptl_portals_component.portals_ifname);
 
@@ -193,7 +193,7 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
      */
     ret = PtlInit(&max_interfaces);
     if (PTL_OK != ret) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "PtlInit failed, returning %d\n", ret);
         return OMPI_ERR_FATAL;
     }
@@ -205,7 +205,7 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
                     &(ptl->ni_handle)  /* our interface handle */
                     );
     if (PTL_OK != ret) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "PtlNIInit failed, returning %d\n", ret);
         return OMPI_ERR_FATAL;
     }
