@@ -86,7 +86,7 @@ static inline void opal_atomic_wmb(void)
 #if OMPI_GCC_INLINE_ASSEMBLY
 
 /* for these, the lock is held whenever lock.sparc_lock != 0.  We
-   attempt to leave it as OMPI_LOCKED whenever possible */
+   attempt to leave it as OPAL_LOCKED whenever possible */
 
 
 static inline void opal_atomic_init(opal_atomic_lock_t* lock, int value)

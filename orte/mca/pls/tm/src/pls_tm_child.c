@@ -81,7 +81,7 @@ int orte_pls_tm_child_init(void)
 
     /* Re-start us as a new ORTE process */
 
-    ompi_set_using_threads(false);
+    opal_set_using_threads(false);
     ompi_output(orte_pls_base.pls_output,
                 "pls:tm:launch:child: starting");
     if (NULL == (uri = orte_rml.get_uri())) {

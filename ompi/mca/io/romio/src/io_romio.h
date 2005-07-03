@@ -19,7 +19,7 @@
 
 #include "request/request.h"
 #include "file/file.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "romio-dist/adio/include/romioconf.h"
 #include "romio-dist/include/mpio.h"
 #include "mca/io/io.h"
@@ -32,7 +32,7 @@ extern "C" {
 /*
  * global variables, instantiated in module.c  
  */
-extern ompi_mutex_t mca_io_romio_mutex;
+extern opal_mutex_t mca_io_romio_mutex;
 extern mca_io_base_module_1_0_0_t mca_io_romio_module;
 extern opal_list_t mca_io_romio_pending_requests;
 

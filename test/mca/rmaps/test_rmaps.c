@@ -77,7 +77,7 @@ main(int argc, char **argv)
      * If threads are supported - assume that we are using threads -
      * and reset otherwise.
      */
-    ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
+    opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
     /* For malloc debugging */
     ompi_malloc_init();

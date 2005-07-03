@@ -19,7 +19,7 @@
 #ifndef MCA_PML_PROC_H
 #define MCA_PML_PROC_H
 
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "communicator/communicator.h"
 #include "group/group.h"
 #include "proc/proc.h"
@@ -35,7 +35,7 @@ extern "C" {
 struct mca_pml_proc_t {
    opal_list_item_t super;
    ompi_proc_t *proc_ompi;           /**< back-pointer to ompi_proc_t */
-   ompi_mutex_t proc_lock;           /**< lock to protect against concurrent access */
+   opal_mutex_t proc_lock;           /**< lock to protect against concurrent access */
    mca_ptl_array_t proc_ptl_first;   /**< array of ptls to use for first fragments */
    mca_ptl_array_t proc_ptl_next;    /**< array of ptls to use for remaining fragments */
    uint32_t proc_ptl_flags;          /**< aggregate ptl flags */

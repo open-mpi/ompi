@@ -87,9 +87,9 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
             continue;
         }
 
-        OMPI_THREAD_LOCK (&ptl_proc->proc_lock);
+        OPAL_THREAD_LOCK (&ptl_proc->proc_lock);
         if (ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
-            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+            OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
             ompi_output( 0, "[%s:%d] modex exchange failed for GM module", __FILE__, __LINE__ );
             continue;
         }
@@ -98,7 +98,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
         for( j = 0; j < num_peer_ptls; j++ ) {
             ptl_peer = OBJ_NEW (mca_ptl_gm_peer_t);
             if (NULL == ptl_peer) {
-                OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+                OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
                 ompi_output( 0, "[%s:%d] cannot allocate memory for one of the GM ptl", __FILE__, __LINE__ );
                 continue;
             }
@@ -133,7 +133,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
             ptl_proc->proc_peer_count++;
             ompi_bitmap_set_bit (reachable, i);  /* set the bit again and again */
         }
-        OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+        OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
         peers[i] = (struct mca_ptl_base_peer_t*)ptl_peer;
     }
 
@@ -185,7 +185,7 @@ mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
         void* thread_return;
 
 	pthread_cancel( ptl->thread.t_handle );
-	ompi_thread_join( &(ptl->thread), &thread_return );
+	opal_thread_join( &(ptl->thread), &thread_return );
     }
 #endif  /* OMPI_HAVE_POSIX_THREADS */
 
@@ -351,9 +351,9 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
         OMPI_FREE_LIST_WAIT( &(gm_ptl->gm_send_dma_frags), item, rc );
         if( NULL == item ) {
             ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
-            OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
+            OPAL_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
             opal_list_append (&mca_ptl_gm_module.gm_pending_acks, (opal_list_item_t *)frag);
-            OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
+            OPAL_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
         } else {
             opal_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
             assert( gm_ptl->num_send_tokens >= 0 );

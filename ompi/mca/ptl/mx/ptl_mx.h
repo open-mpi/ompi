@@ -47,7 +47,7 @@ struct mca_ptl_mx_component_t {
     ompi_free_list_t mx_recv_frags;        /**< free list of mx recv fragments */
     opal_hash_table_t mx_procs;            /**< hash table of procs */
     opal_list_t mx_pending_acks;           /**< queue of pending sends */
-    ompi_mutex_t mx_lock;                  /**< lock for accessing module state */
+    opal_mutex_t mx_lock;                  /**< lock for accessing module state */
 };
 
 typedef struct mca_ptl_mx_component_t mca_ptl_mx_component_t;
@@ -142,7 +142,7 @@ struct mca_ptl_mx_module_t {
     mx_endpoint_addr_t mx_endpoint_addr; /**< endpoint address */
     volatile int32_t mx_recvs_posted;    /**< count of posted match fragments */
 #if OMPI_ENABLE_PROGRESS_THREADS
-    ompi_thread_t mx_thread;             /**< thread for progressing outstanding requests */
+    opal_thread_t mx_thread;             /**< thread for progressing outstanding requests */
 #endif
 };
 typedef struct mca_ptl_mx_module_t mca_ptl_mx_module_t;

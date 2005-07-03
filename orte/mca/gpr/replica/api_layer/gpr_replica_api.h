@@ -28,8 +28,8 @@
 
 #include "class/orte_pointer_array.h"
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "mca/ns/ns_types.h"
 

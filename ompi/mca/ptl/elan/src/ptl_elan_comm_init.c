@@ -25,7 +25,7 @@
 #define OMPI_PTL_ELAN_CTRL_LIST(flist, init_num, inc_num, max_num) \
 do {                                                               \
     OBJ_CONSTRUCT (flist, ompi_free_list_t);                       \
-    OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);                  \
+    OBJ_CONSTRUCT(&flist->fl_lock, opal_mutex_t);                  \
     flist->fl_elem_size = flist->fl_max_to_alloc = max_num;        \
     flist->fl_num_allocated = init_num;                            \
     flist->fl_num_per_alloc = inc_num;                             \
@@ -81,7 +81,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     elan_size  = OMPI_PTL_ELAN_ALIGNUP (sizeof (E4_Event32), elan_align);
 #endif
 
-    OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&flist->fl_lock, opal_mutex_t);
     flist->fl_elem_size = flist->fl_max_to_alloc = OMPI_PTL_ELAN_MAX_QDESCS;
     flist->fl_num_allocated = 0;
     flist->fl_num_per_alloc = count = OMPI_PTL_ELAN_NUM_QDESCS;
@@ -477,7 +477,7 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         rxq->qr_es = ompi_init_elan_sleepdesc (&mca_ptl_elan_global_state,
                                                rxq->qr_rail);
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_es, NULL, OMPI_ERROR, 0);
-        OBJ_CONSTRUCT (&comp->rx_lock, ompi_mutex_t);
+        OBJ_CONSTRUCT (&comp->rx_lock, opal_mutex_t);
     }
 #endif
 
@@ -574,7 +574,7 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         rxq->qr_es = ompi_init_elan_sleepdesc (&mca_ptl_elan_global_state,
                                                rxq->qr_rail);
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_es, NULL, OMPI_ERROR, 0);
-        OBJ_CONSTRUCT (&queue->rx_lock, ompi_mutex_t);
+        OBJ_CONSTRUCT (&queue->rx_lock, opal_mutex_t);
     }
 
     return (OMPI_SUCCESS);
@@ -612,7 +612,7 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 	putget->pg_waitType   = ELAN_POLL_EVENT;
 	
 	/* construct the lock variable */
-        OBJ_CONSTRUCT (&putget->pg_lock, ompi_mutex_t);
+        OBJ_CONSTRUCT (&putget->pg_lock, opal_mutex_t);
 
 	cqp = OMPI_PTL_ELAN_PROBE_CMDQ (ctx, rail->r_alloc, 
 		0x10, CQ_AutoCtrlFlowOn);

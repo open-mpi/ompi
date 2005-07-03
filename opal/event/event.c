@@ -62,8 +62,8 @@
 #include "include/types.h"
 #include "include/constants.h"
 #include "opal/class/opal_object.h"
-#include "threads/mutex.h"
-#include "threads/thread.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/thread.h"
 #include "util/output.h"
 
 #if defined(HAVE_SELECT) && HAVE_SELECT
@@ -145,11 +145,11 @@ static struct ompi_event_list ompi_activequeue;
 struct ompi_event_list ompi_signalqueue;
 struct ompi_event_list ompi_eventqueue;
 static struct timeval ompi_event_tv;
-OMPI_DECLSPEC ompi_mutex_t ompi_event_lock;
+OMPI_DECLSPEC opal_mutex_t ompi_event_lock;
 static int  ompi_event_inited = 0;
 static bool ompi_event_enabled = false;
 #if OMPI_ENABLE_PROGRESS_THREADS
-static ompi_thread_t ompi_event_thread;
+static opal_thread_t ompi_event_thread;
 static ompi_event_t ompi_event_pipe_event;
 static int ompi_event_pipe[2];
 static int ompi_event_pipe_signalled;
@@ -158,7 +158,7 @@ static int ompi_event_pipe_signalled;
 bool ompi_event_progress_thread(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    return ompi_using_threads() ? ompi_thread_self_compare(&ompi_event_thread) : true;
+    return opal_using_threads() ? opal_thread_self_compare(&ompi_event_thread) : true;
 #else
     return true;
 #endif
@@ -218,13 +218,13 @@ static void* ompi_event_run(opal_object_t* arg)
 #endif
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    ompi_mutex_lock(&ompi_event_lock);
+    opal_mutex_lock(&ompi_event_lock);
     ompi_event_del_i(&ompi_event_pipe_event);
     close(ompi_event_pipe[0]);
     close(ompi_event_pipe[1]);
     ompi_event_pipe[0] = -1;
     ompi_event_pipe[1] = -1;
-    ompi_mutex_unlock(&ompi_event_lock);
+    opal_mutex_unlock(&ompi_event_lock);
 #endif
     return NULL;
 }
@@ -252,7 +252,7 @@ ompi_event_init(void)
     ompi_event_gotsig = 0;
     gettimeofday(&ompi_event_tv, NULL);
     
-    OBJ_CONSTRUCT(&ompi_event_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&ompi_event_lock, opal_mutex_t);
     RB_INIT(&ompi_timetree);
     TAILQ_INIT(&ompi_eventqueue);
     TAILQ_INIT(&ompi_activequeue);
@@ -288,10 +288,10 @@ int ompi_event_fini(void)
 int ompi_event_disable(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_using_threads()) {
-        ompi_mutex_lock(&ompi_event_lock);
+    if(opal_using_threads()) {
+        opal_mutex_lock(&ompi_event_lock);
         if(ompi_event_inited > 0 && ompi_event_enabled == false) {
-            ompi_mutex_unlock(&ompi_event_lock);
+            opal_mutex_unlock(&ompi_event_lock);
             return OMPI_SUCCESS;
         }
 
@@ -302,8 +302,8 @@ int ompi_event_disable(void)
                 ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
             ompi_event_pipe_signalled++;
         }
-        ompi_mutex_unlock(&ompi_event_lock);
-        ompi_thread_join(&ompi_event_thread, NULL);
+        opal_mutex_unlock(&ompi_event_lock);
+        opal_thread_join(&ompi_event_thread, NULL);
     } else {
         ompi_event_enabled = false;
     }
@@ -316,19 +316,19 @@ int ompi_event_disable(void)
 int ompi_event_enable(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_using_threads()) {
+    if(opal_using_threads()) {
         int rc;
 
-        ompi_mutex_lock(&ompi_event_lock);
+        opal_mutex_lock(&ompi_event_lock);
         if(ompi_event_inited > 0 && ompi_event_enabled == true) {
-            ompi_mutex_unlock(&ompi_event_lock);
+            opal_mutex_unlock(&ompi_event_lock);
             return OMPI_SUCCESS;
         }
 
         /* create a pipe to signal the event thread */
         if(pipe(ompi_event_pipe) != 0) {
             ompi_output(0, "ompi_event_init: pipe() failed with errno=%d\n", errno);
-            ompi_mutex_unlock(&ompi_event_lock);
+            opal_mutex_unlock(&ompi_event_lock);
             return OMPI_ERROR;
         }
 
@@ -343,14 +343,14 @@ int ompi_event_enable(void)
         ompi_event_pipe_signalled = 0;
 
         /* spin up a thread to dispatch events */
-        OBJ_CONSTRUCT(&ompi_event_thread, ompi_thread_t);
+        OBJ_CONSTRUCT(&ompi_event_thread, opal_thread_t);
         ompi_event_enabled = true;
         ompi_event_thread.t_run = ompi_event_run;
-        if((rc = ompi_thread_start(&ompi_event_thread)) != OMPI_SUCCESS) {
-            ompi_mutex_unlock(&ompi_event_lock);
+        if((rc = opal_thread_start(&ompi_event_thread)) != OMPI_SUCCESS) {
+            opal_mutex_unlock(&ompi_event_lock);
             return rc;
         }
-        ompi_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&ompi_event_lock);
     } else {
         ompi_event_pipe[0] = -1;
         ompi_event_pipe[1] = -1;
@@ -366,7 +366,7 @@ int ompi_event_restart(void)
 {
     int rc;
 #if OMPI_ENABLE_PROGRESS_THREADS
-    ompi_mutex_lock(&ompi_event_lock);
+    opal_mutex_lock(&ompi_event_lock);
     if(ompi_event_pipe[0] >= 0) {
         ompi_event_del_i(&ompi_event_pipe_event); 
         /* do not close pipes - in case of bproc_vrfork they are not open 
@@ -376,7 +376,7 @@ int ompi_event_restart(void)
         ompi_event_pipe[1] = -1;
     }
     ompi_event_enabled = false;
-    ompi_mutex_unlock(&ompi_event_lock);
+    opal_mutex_unlock(&ompi_event_lock);
 #endif
 
     ompi_event_enable();
@@ -408,10 +408,10 @@ ompi_event_process_active(void)
         while (ncalls) {
             ncalls--;
             ev->ev_ncalls = ncalls;
-            if(ompi_using_threads()) {
-                ompi_mutex_unlock(&ompi_event_lock);
+            if(opal_using_threads()) {
+                opal_mutex_unlock(&ompi_event_lock);
                 (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-                ompi_mutex_lock(&ompi_event_lock);
+                opal_mutex_lock(&ompi_event_lock);
             } else {
                 (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
             }
@@ -435,14 +435,14 @@ ompi_event_loop(int flags)
     if (ompi_event_inited == false)
         return(0);
 
-    if(ompi_using_threads()) {
-        ompi_mutex_lock(&ompi_event_lock);
+    if(opal_using_threads()) {
+        opal_mutex_lock(&ompi_event_lock);
     } 
 
     /* Calculate the initial events that we are waiting for */
     if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
         ompi_output(0, "ompi_event_loop: ompi_evsel->recalc() failed.");
-        ompi_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&ompi_event_lock);
         return (-1);
     }
 
@@ -455,7 +455,7 @@ ompi_event_loop(int flags)
                 if (res == -1) {
                     ompi_output(0, "ompi_event_loop: ompi_event_sigcb() failed.");
                     errno = EINTR;
-                    ompi_mutex_unlock(&ompi_event_lock);
+                    opal_mutex_unlock(&ompi_event_lock);
                     return (-1);
                 }
             }
@@ -476,7 +476,7 @@ ompi_event_loop(int flags)
 #endif
         if (res == -1) {
             ompi_output(0, "ompi_event_loop: ompi_evesel->dispatch() failed.");
-            ompi_mutex_unlock(&ompi_event_lock);
+            opal_mutex_unlock(&ompi_event_lock);
             return (-1);
         }
 
@@ -506,11 +506,11 @@ ompi_event_loop(int flags)
 
         if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
             ompi_output(0, "ompi_event_loop: ompi_evesel->recalc() failed.");
-            ompi_mutex_unlock(&ompi_event_lock);
+            opal_mutex_unlock(&ompi_event_lock);
             return (-1);
         }
     }
-    ompi_mutex_unlock(&ompi_event_lock);
+    opal_mutex_unlock(&ompi_event_lock);
     return (num_active);
 }
 
@@ -572,7 +572,7 @@ ompi_event_add_i(struct ompi_event *ev, struct timeval *tv)
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_using_threads() && ompi_event_pipe_signalled == 0) {
+    if(opal_using_threads() && ompi_event_pipe_signalled == 0) {
         unsigned char byte = 0;
         if(write(ompi_event_pipe[1], &byte, 1) != 1)
             ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
@@ -609,7 +609,7 @@ int ompi_event_del_i(struct ompi_event *ev)
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_using_threads() && ompi_event_pipe_signalled == 0) {
+    if(opal_using_threads() && ompi_event_pipe_signalled == 0) {
         unsigned char byte = 0;
         if(write(ompi_event_pipe[1], &byte, 1) != 1)
             ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);

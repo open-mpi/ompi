@@ -54,7 +54,7 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(
     for(i = 0; i < num_buckets; i++) {
         mem_options->buckets[i].free_chunk = NULL;
         mem_options->buckets[i].segment_head = NULL;
-        OBJ_CONSTRUCT(&(mem_options->buckets[i].lock), ompi_mutex_t);
+        OBJ_CONSTRUCT(&(mem_options->buckets[i].lock), opal_mutex_t);
     }
     mem_options->num_buckets = num_buckets;
     mem_options->get_mem_fn = get_mem_funct;
@@ -91,7 +91,7 @@ void * mca_allocator_bucket_alloc(
     }
 
     /* now that we know what bucket it will come from, we must get the lock */
-    OMPI_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
+    OPAL_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
     /* see if there is already a free chunk */
     if(NULL != mem_options->buckets[bucket_num].free_chunk) {
         chunk = mem_options->buckets[bucket_num].free_chunk;
@@ -100,7 +100,7 @@ void * mca_allocator_bucket_alloc(
         /* go past the header */
         chunk += 1; 
         /*release the lock */
-        OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
+        OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
         return((void *) chunk);
     }
     /* figure out the size of bucket we need */
@@ -113,7 +113,7 @@ void * mca_allocator_bucket_alloc(
                    mem_options->get_mem_fn(mem_options->super.alc_mpool, &allocated_size, registration);
     if(NULL == segment_header) {
         /* release the lock */
-        OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock)); 
+        OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock)); 
         return(NULL);
     }
     /* if were allocated more memory then we actually need, then we will try to
@@ -142,7 +142,7 @@ void * mca_allocator_bucket_alloc(
         first_chunk->next_in_segment = first_chunk;
     }
     first_chunk->u.bucket = bucket_num;
-    OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
+    OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
     /* return the memory moved past the header */
     return((void *) (first_chunk + 1));
 }
@@ -203,7 +203,7 @@ void * mca_allocator_bucket_alloc_align(
     allocated_size -= aligned_max_size;
     chunk = segment_header->first_chunk = first_chunk;
     /* we now need to get a lock on the bucket */
-    OMPI_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
+    OPAL_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
     /* add the segment into the segment list */
     segment_header->next_segment = mem_options->buckets[bucket_num].segment_head;
     mem_options->buckets[bucket_num].segment_head = segment_header;
@@ -225,7 +225,7 @@ void * mca_allocator_bucket_alloc_align(
         first_chunk->next_in_segment = first_chunk;
     }
     first_chunk->u.bucket = bucket_num;
-    OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
+    OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
     /* return the aligned memory */
     return((void *) (aligned_memory));
 }
@@ -280,10 +280,10 @@ void mca_allocator_bucket_free(mca_allocator_base_module_t * mem, void * ptr)
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     mca_allocator_bucket_chunk_header_t * chunk  = (mca_allocator_bucket_chunk_header_t *) ptr - 1; 
     int bucket_num = chunk->u.bucket;
-    OMPI_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
+    OPAL_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
     chunk->u.next_free = mem_options->buckets[bucket_num].free_chunk; 
     mem_options->buckets[bucket_num].free_chunk = chunk;
-    OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
+    OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
 }
 
 /*
@@ -304,7 +304,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
     bool empty = true;
 
     for(i = 0; i < mem_options->num_buckets; i++) {
-        OMPI_THREAD_LOCK(&(mem_options->buckets[i].lock));
+        OPAL_THREAD_LOCK(&(mem_options->buckets[i].lock));
         segment_header = &(mem_options->buckets[i].segment_head);
         /* traverse the list of segment headers until we hit NULL */
         while(NULL != *segment_header) {
@@ -346,7 +346,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
             empty = true; 
         }
         /* relese the lock on the bucket */
-        OMPI_THREAD_UNLOCK(&(mem_options->buckets[i].lock));
+        OPAL_THREAD_UNLOCK(&(mem_options->buckets[i].lock));
     }
     return(OMPI_SUCCESS);
 }

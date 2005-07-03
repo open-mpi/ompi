@@ -92,7 +92,7 @@ int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
      * of the number of times the routine has been called and run through
      * the scheduling logic once for every call.
     */
-    if(OMPI_THREAD_ADD32(&req->req_lock,1) == 1) {
+    if(OPAL_THREAD_ADD32(&req->req_lock,1) == 1) {
         proc = ompi_comm_peer_lookup(req->req_send.req_base.req_comm, req->req_send.req_base.req_peer);
         proc_pml = proc->proc_pml;
         do {
@@ -135,15 +135,15 @@ int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
     
             /* unable to complete send - queue for later */
             if(send_count == 0) {
-                OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
+                OPAL_THREAD_LOCK(&mca_pml_teg.teg_lock);
                 opal_list_append(&mca_pml_teg.teg_send_pending, (opal_list_item_t*)req);
-                OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+                OPAL_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
                 req->req_lock = 0;
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
         /* fragments completed while scheduling - so retry */
-        } while(OMPI_THREAD_ADD32(&req->req_lock,-1) > 0);
+        } while(OPAL_THREAD_ADD32(&req->req_lock,-1) > 0);
 
         /* free the request if completed while in the scheduler */
         if (req->req_send.req_base.req_free_called && req->req_send.req_base.req_pml_complete) {
@@ -171,7 +171,7 @@ void mca_pml_teg_send_request_progress(
 {
     bool schedule = false;
 
-    OMPI_THREAD_LOCK(&ompi_request_lock);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     req->req_bytes_sent += bytes_sent;
     if (req->req_bytes_sent >= req->req_send.req_bytes_packed) {
         req->req_send.req_base.req_pml_complete = true;
@@ -182,7 +182,7 @@ void mca_pml_teg_send_request_progress(
             req->req_send.req_base.req_ompi.req_status._count = req->req_bytes_sent;
             req->req_send.req_base.req_ompi.req_complete = true;
             if(ompi_request_waiting) {
-                ompi_condition_broadcast(&ompi_request_cond);
+                opal_condition_broadcast(&ompi_request_cond);
             }
         } else if(req->req_send.req_base.req_free_called) {
             /* don't free the request if in the scheduler */
@@ -196,7 +196,7 @@ void mca_pml_teg_send_request_progress(
     } else if (req->req_offset < req->req_send.req_bytes_packed) {
         schedule = true;
     }
-    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* schedule remaining fragments of this request */
     if(schedule) {
@@ -205,9 +205,9 @@ void mca_pml_teg_send_request_progress(
 
     /* check for pending requests that need to be progressed */
     while(opal_list_get_size(&mca_pml_teg.teg_send_pending) != 0) {
-        OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
+        OPAL_THREAD_LOCK(&mca_pml_teg.teg_lock);
         req = (mca_ptl_base_send_request_t*)opal_list_remove_first(&mca_pml_teg.teg_send_pending);
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+        OPAL_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
         if(req == NULL)
             break;
         if(mca_pml_teg_send_request_schedule(req) != OMPI_SUCCESS)

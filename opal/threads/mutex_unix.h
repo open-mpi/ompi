@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef  OMPI_MUTEX_UNIX_H
-#define  OMPI_MUTEX_UNIX_H 1
+#ifndef  OPAL_MUTEX_UNIX_H
+#define  OPAL_MUTEX_UNIX_H 1
 
 /**
  * @file:
@@ -41,7 +41,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-struct ompi_mutex_t {
+struct opal_mutex_t {
     opal_object_t super;
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
@@ -49,43 +49,43 @@ struct ompi_mutex_t {
     opal_atomic_lock_t m_lock_atomic;
 };
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_mutex_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 
 #if OPAL_HAVE_ATOMIC_SPINLOCKS && OMPI_HAVE_POSIX_THREADS 
 
 /*
- * ompi_mutex_*        implemented using pthreads
- * ompi_mutex_atomic_* implemented using atomic operations
+ * opal_mutex_*        implemented using pthreads
+ * opal_mutex_atomic_* implemented using atomic operations
  */
 
-static inline int ompi_mutex_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
     return pthread_mutex_trylock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_lock(ompi_mutex_t *m)
+static inline void opal_mutex_lock(opal_mutex_t *m)
 {
     pthread_mutex_lock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
     pthread_mutex_unlock(&m->m_lock_pthread);
 }
 
 
-static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
 {
     opal_atomic_lock(&m->m_lock_atomic);
 }
 
-static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
 {
     return opal_atomic_trylock(&m->m_lock_atomic);
 }
 
-static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
 {
     opal_atomic_unlock(&m->m_lock_atomic);
 }
@@ -94,77 +94,77 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 #elif OMPI_HAVE_POSIX_THREADS
 
 /*
- * ompi_mutex_* and ompi_mutex_atomic_* implemented using pthreads
+ * opal_mutex_* and opal_mutex_atomic_* implemented using pthreads
  */
 
-static inline int ompi_mutex_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
     return pthread_mutex_trylock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_lock(ompi_mutex_t *m)
+static inline void opal_mutex_lock(opal_mutex_t *m)
 {
     pthread_mutex_lock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
     pthread_mutex_unlock(&m->m_lock_pthread);
 }
 
 
-static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
 {
-    return ompi_mutex_trylock(m);
+    return opal_mutex_trylock(m);
 }
 
-static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
 {
-    ompi_mutex_lock(m);
+    opal_mutex_lock(m);
 }
 
-static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
 {
-    ompi_mutex_unlock(m);
+    opal_mutex_unlock(m);
 }
 
 
 #elif OPAL_HAVE_ATOMIC_SPINLOCKS
 
 /*
- * ompi_mutex_* and ompi_mutex_atomic_* implemented using atomic
+ * opal_mutex_* and opal_mutex_atomic_* implemented using atomic
  * operations
  */
 
-static inline int ompi_mutex_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
     return opal_atomic_trylock(&m->m_lock_atomic);
 }
 
-static inline void ompi_mutex_lock(ompi_mutex_t *m)
+static inline void opal_mutex_lock(opal_mutex_t *m)
 {
     opal_atomic_lock(&m->m_lock_atomic);
 }
 
-static inline void ompi_mutex_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
     opal_atomic_unlock(&m->m_lock_atomic);
 }
 
 
-static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
 {
-    return ompi_mutex_trylock(m);
+    return opal_mutex_trylock(m);
 }
 
-static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
 {
-    ompi_mutex_lock(m);
+    opal_mutex_lock(m);
 }
 
-static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
 {
-    ompi_mutex_unlock(m);
+    opal_mutex_unlock(m);
 }
 
 
@@ -177,4 +177,4 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif                          /* OMPI_MUTEX_UNIX_H */
+#endif                          /* OPAL_MUTEX_UNIX_H */

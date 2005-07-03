@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "class/opal_hash_table.h"
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 
@@ -50,13 +50,13 @@ struct mca_base_modex_module_t {
     void *module_data;
     size_t module_data_size;
     bool module_data_avail;
-    ompi_condition_t module_data_cond;
+    opal_condition_t module_data_cond;
 };
 typedef struct mca_base_modex_module_t mca_base_modex_module_t;
 
 static void mca_base_modex_module_construct(mca_base_modex_module_t *module)
 {
-    OBJ_CONSTRUCT(&module->module_data_cond, ompi_condition_t);
+    OBJ_CONSTRUCT(&module->module_data_cond, opal_condition_t);
     memset(&module->component, 0, sizeof(module->component));
     module->module_data = NULL;
     module->module_data_size = 0;
@@ -127,7 +127,7 @@ OBJ_CLASS_INSTANCE(
  */
 
 static opal_list_t  mca_base_modex_subscriptions;
-static ompi_mutex_t mca_base_modex_lock;
+static opal_mutex_t mca_base_modex_lock;
 
 
 /**
@@ -136,7 +136,7 @@ static ompi_mutex_t mca_base_modex_lock;
 int mca_base_modex_init(void)
 {
     OBJ_CONSTRUCT(&mca_base_modex_subscriptions, opal_list_t);
-    OBJ_CONSTRUCT(&mca_base_modex_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_base_modex_lock, opal_mutex_t);
     return OMPI_SUCCESS;
 }
 
@@ -250,12 +250,12 @@ orte_gpr_base_dump_notify_data(data,0);
                  * Lookup the modex data structure.
                  */
         
-                OMPI_THREAD_LOCK(&proc->proc_lock);
+                OPAL_THREAD_LOCK(&proc->proc_lock);
                 if(NULL == (modex = (mca_base_modex_t*)proc->proc_modex)) {
                     modex = OBJ_NEW(mca_base_modex_t);
                     if(NULL == modex) {
                         ompi_output(0, "mca_base_modex_registry_callback: unable to allocate mca_base_modex_t\n");
-                        OMPI_THREAD_UNLOCK(&proc->proc_lock);
+                        OPAL_THREAD_UNLOCK(&proc->proc_lock);
                         return;
                     }
                     proc->proc_modex = &modex->super;
@@ -335,7 +335,7 @@ orte_gpr_base_dump_notify_data(data,0);
                     if(NULL == (modex_module = mca_base_modex_create_module(modex, &component))) {
                         ompi_output(0, "mca_base_modex_registry_callback: mca_base_modex_create_module failed\n");
                         OBJ_RELEASE(data);
-                        OMPI_THREAD_UNLOCK(&proc->proc_lock);
+                        OPAL_THREAD_UNLOCK(&proc->proc_lock);
                         return;
                     }
 
@@ -351,9 +351,9 @@ ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: %s-%s-%d-%d rece
     component.mca_component_minor_version,
     num_bytes);
 #endif
-                    ompi_condition_signal(&modex_module->module_data_cond);
+                    opal_condition_signal(&modex_module->module_data_cond);
                 }
-                OMPI_THREAD_UNLOCK(&proc->proc_lock);
+                OPAL_THREAD_UNLOCK(&proc->proc_lock);
             }  /* convert string to process name */
         
         }  /* if value[i]->cnt > 0 */
@@ -382,19 +382,19 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
     int rc;
 
     /* check for an existing subscription */
-    OMPI_LOCK(&mca_base_modex_lock);
+    OPAL_LOCK(&mca_base_modex_lock);
     if (!opal_list_is_empty(&mca_base_modex_subscriptions)) {
         for(item =  opal_list_get_first(&mca_base_modex_subscriptions);
             item != opal_list_get_end(&mca_base_modex_subscriptions);
             item = opal_list_get_next(item)) {
             subscription = (mca_base_modex_subscription_t*)item;
             if(subscription->jobid == name->jobid) {
-                OMPI_UNLOCK(&mca_base_modex_lock);
+                OPAL_UNLOCK(&mca_base_modex_lock);
                 return OMPI_SUCCESS;
             }
         }
     }
-    OMPI_UNLOCK(&mca_base_modex_lock);
+    OPAL_UNLOCK(&mca_base_modex_lock);
 
     /* otherwise - subscribe to get this jobid's ptl contact info */
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, name))) {
@@ -500,11 +500,11 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
     }
 
     /* add this jobid to our list of subscriptions */
-    OMPI_LOCK(&mca_base_modex_lock);
+    OPAL_LOCK(&mca_base_modex_lock);
     subscription = OBJ_NEW(mca_base_modex_subscription_t);
     subscription->jobid = name->jobid;
     opal_list_append(&mca_base_modex_subscriptions, &subscription->item);
-    OMPI_UNLOCK(&mca_base_modex_lock);
+    OPAL_UNLOCK(&mca_base_modex_lock);
     OBJ_DESTRUCT(&sub);
     OBJ_DESTRUCT(&trig);
     return OMPI_SUCCESS;
@@ -627,24 +627,24 @@ int mca_base_modex_recv(
     mca_base_modex_module_t* modex_module;
 
     /* check the proc for cached data */
-    OMPI_THREAD_LOCK(&proc->proc_lock);
+    OPAL_THREAD_LOCK(&proc->proc_lock);
     if(NULL == (modex = (mca_base_modex_t*)proc->proc_modex)) {
         modex = OBJ_NEW(mca_base_modex_t);
         if(modex == NULL) {
-            OMPI_THREAD_UNLOCK(&proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         proc->proc_modex = &modex->super;
 
         /* verify that we have subscribed to this segment */
-        OMPI_THREAD_UNLOCK(&proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&proc->proc_lock);
         mca_base_modex_subscribe(&proc->proc_name);
-        OMPI_THREAD_LOCK(&proc->proc_lock);
+        OPAL_THREAD_LOCK(&proc->proc_lock);
     }
 
     /* lookup/create the module */
     if(NULL == (modex_module = mca_base_modex_create_module(modex, component))) {
-        OMPI_THREAD_UNLOCK(&proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&proc->proc_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -658,7 +658,7 @@ ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: waiting for %s-%
     component->mca_component_major_version,
     component->mca_component_minor_version);
 #endif
-        ompi_condition_wait(&modex_module->module_data_cond, &proc->proc_lock);
+        opal_condition_wait(&modex_module->module_data_cond, &proc->proc_lock);
     }
 
     /* copy the data out to the user */
@@ -674,7 +674,7 @@ ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: waiting for %s-%
         *buffer = copy;
         *size = modex_module->module_data_size;
     }
-    OMPI_THREAD_UNLOCK(&proc->proc_lock);
+    OPAL_THREAD_UNLOCK(&proc->proc_lock);
     return OMPI_SUCCESS;
 }
 

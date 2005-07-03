@@ -126,14 +126,14 @@ int mca_io_base_request_alloc(ompi_file_t *file,
        avoid locking and unlocking. */
 
     if (opal_list_get_size(&file->f_io_requests) > 0) {
-        OMPI_THREAD_LOCK(&file->f_io_requests_lock);
+        OPAL_THREAD_LOCK(&file->f_io_requests_lock);
         if (opal_list_get_size(&file->f_io_requests) > 0) {
             *req = (mca_io_base_request_t*) 
                 opal_list_remove_first(&file->f_io_requests);
         } else {
             *req = NULL;
         }
-        OMPI_THREAD_UNLOCK(&file->f_io_requests_lock);
+        OPAL_THREAD_UNLOCK(&file->f_io_requests_lock);
     } else {
         *req = NULL;
     }
@@ -207,9 +207,9 @@ void mca_io_base_request_free(ompi_file_t *file,
     /* Put the request back on the per-module freelist, since it's
        been initialized for that module */
 
-    OMPI_THREAD_LOCK(&file->f_io_requests_lock);
+    OPAL_THREAD_LOCK(&file->f_io_requests_lock);
     opal_list_prepend(&file->f_io_requests, (opal_list_item_t*) req);
-    OMPI_THREAD_UNLOCK(&file->f_io_requests_lock);
+    OPAL_THREAD_UNLOCK(&file->f_io_requests_lock);
 }
 
 
@@ -220,22 +220,22 @@ void mca_io_base_request_return(ompi_file_t *file)
 {
     opal_list_item_t *p, *next;
 
-    OMPI_THREAD_LOCK(&file->f_io_requests_lock);
+    OPAL_THREAD_LOCK(&file->f_io_requests_lock);
     for (p = opal_list_get_first(&file->f_io_requests);
          p != opal_list_get_end(&file->f_io_requests);
          p = next) {
         next = opal_list_get_next(p);
         OMPI_FREE_LIST_RETURN(&mca_io_base_requests, p);
     }
-    OMPI_THREAD_UNLOCK(&file->f_io_requests_lock);
+    OPAL_THREAD_UNLOCK(&file->f_io_requests_lock);
 }
 
 #if OMPI_ENABLE_PROGRESS_THREADS
 static volatile bool thread_running = false;
 static volatile bool thread_done = false;
-static ompi_thread_t progress_thread;
-static ompi_mutex_t progress_mutex;
-static ompi_condition_t progress_cond;
+static opal_thread_t progress_thread;
+static opal_mutex_t progress_mutex;
+static opal_condition_t progress_cond;
 
 static void*
 request_progress_thread(opal_object_t *arg)
@@ -252,7 +252,7 @@ request_progress_thread(opal_object_t *arg)
             mca_io_base_component_run_progress();
             sleep(2);
         }
-        ompi_condition_timedwait(&progress_cond, &progress_mutex, &abstime);
+        opal_condition_timedwait(&progress_cond, &progress_mutex, &abstime);
     }
 
     return NULL;
@@ -268,9 +268,9 @@ mca_io_base_request_progress_init()
     thread_running = false;
     thread_done = false;
 
-    OBJ_CONSTRUCT(&progress_mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&progress_cond, ompi_condition_t);
-    OBJ_CONSTRUCT(&progress_thread, ompi_thread_t);
+    OBJ_CONSTRUCT(&progress_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&progress_cond, opal_condition_t);
+    OBJ_CONSTRUCT(&progress_thread, opal_thread_t);
 
     progress_thread.t_run = request_progress_thread;
     progress_thread.t_arg = NULL;
@@ -285,19 +285,19 @@ mca_io_base_request_progress_add()
     /* if we don't have a progress thread, make us have a progress
        thread */
     if (! thread_running) {
-        OMPI_THREAD_LOCK(&progress_mutex);
+        OPAL_THREAD_LOCK(&progress_mutex);
         if (! thread_running) {
             thread_running = true;
-            ompi_thread_start(&progress_thread);
+            opal_thread_start(&progress_thread);
         }
-        OMPI_THREAD_UNLOCK(&progress_mutex);
+        OPAL_THREAD_UNLOCK(&progress_mutex);
     }
 #endif /* OMPI_ENABLE_PROGRESS_THREADS */
 
-    OMPI_THREAD_ADD32(&mca_io_base_request_num_pending, 1);
+    OPAL_THREAD_ADD32(&mca_io_base_request_num_pending, 1);
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    ompi_condition_signal(&progress_cond);
+    opal_condition_signal(&progress_cond);
 #endif /* OMPI_ENABLE_PROGRESS_THREADS */
 }
 
@@ -305,7 +305,7 @@ mca_io_base_request_progress_add()
 void
 mca_io_base_request_progress_del()
 {
-    OMPI_THREAD_ADD32(&mca_io_base_request_num_pending, -1);
+    OPAL_THREAD_ADD32(&mca_io_base_request_num_pending, -1);
 }
 
 
@@ -318,8 +318,8 @@ mca_io_base_request_progress_fini()
     /* make the helper thread die */
     thread_done = true;
     if (thread_running) {
-        ompi_condition_signal(&progress_cond);
-        ompi_thread_join(&progress_thread, &ret);
+        opal_condition_signal(&progress_cond);
+        opal_thread_join(&progress_thread, &ret);
     }
 
     /* clean up */

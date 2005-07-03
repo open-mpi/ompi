@@ -108,7 +108,7 @@ int mca_btl_gm_component_open(void)
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_gm_component.gm_procs, opal_list_t);
-    OBJ_CONSTRUCT(&mca_btl_gm_component.gm_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_gm_component.gm_lock, opal_mutex_t);
 
     /* register GM component parameters */
     mca_btl_gm_component.gm_free_list_num =
@@ -179,7 +179,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_frag_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->gm_frag_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->gm_pending, opal_list_t);
-    OBJ_CONSTRUCT(&btl->gm_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&btl->gm_lock, opal_mutex_t);
                                                                                                   
     /* query nic tokens */
     btl->gm_num_send_tokens = gm_num_send_tokens (btl->gm_port);

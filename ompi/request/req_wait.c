@@ -58,7 +58,7 @@ int ompi_request_wait_any(
 #endif
 
     /* give up and sleep until completion */
-    OMPI_THREAD_LOCK(&ompi_request_lock);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_waiting++;
     do {
         rptr = requests;
@@ -79,11 +79,11 @@ int ompi_request_wait_any(
         if(num_requests_null_inactive == count)
             break;
         if (completed < 0) {
-            ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
         }
     } while (completed < 0);
     ompi_request_waiting--;
-    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
 #if OMPI_ENABLE_PROGRESS_THREADS
 finished:
@@ -134,7 +134,7 @@ int ompi_request_wait_all(
          * not completed pend on condition variable until a request
          * completes
          */
-        OMPI_THREAD_LOCK(&ompi_request_lock);
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         ompi_request_waiting++;
         do {
             completed = 0;
@@ -146,11 +146,11 @@ int ompi_request_wait_all(
                 }
             }
             if (completed != count) {
-                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             }
         } while (completed != count);
         ompi_request_waiting--;
-        OMPI_THREAD_UNLOCK(&ompi_request_lock);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 
     if (MPI_STATUSES_IGNORE != statuses) {

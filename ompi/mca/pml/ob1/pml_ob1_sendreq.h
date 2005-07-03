@@ -181,7 +181,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
-    sendreq->req_send.req_base.req_sequence = OMPI_THREAD_ADD32(&proc->proc_sequence,1);  \
+    sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->proc_sequence,1);  \
     sendreq->req_endpoint = endpoint;                                                     \
                                                                                           \
     /* handle buffered send */                                                            \
@@ -210,7 +210,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         (sendreq)->req_state = MCA_PML_OB1_SR_COMPLETE;                                   \
         MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq);                                   \
         if(ompi_request_waiting) {                                                        \
-            ompi_condition_broadcast(&ompi_request_cond);                                 \
+            opal_condition_broadcast(&ompi_request_cond);                                 \
         }                                                                                 \
     } else if((sendreq)->req_send.req_base.req_free_called) {                             \
         MCA_PML_OB1_FREE((ompi_request_t**)&sendreq);                                     \

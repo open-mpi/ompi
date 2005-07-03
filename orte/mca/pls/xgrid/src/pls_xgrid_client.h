@@ -25,7 +25,7 @@
 #import <XgridFoundation/XgridFoundation.h>
 #import <Foundation/NSString.h>
 
-#import "threads/condition.h"
+#import "opal/threads/condition.h"
 #include "mca/ns/ns_types.h"
 
 @interface PlsXGridClient : NSObject
@@ -34,12 +34,12 @@
     NSString *controller_hostname;
     NSString *controller_password;
 
-    ompi_condition_t startup_cond;
+    opal_condition_t startup_cond;
     volatile int startup_val;
 
     /* state of the world... */
-    ompi_condition_t state_cond;
-    ompi_mutex_t state_mutex;
+    opal_condition_t state_cond;
+    opal_mutex_t state_mutex;
 
     XGConnection *connection;
     XGTwoWayRandomAuthenticator *authenticator;

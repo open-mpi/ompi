@@ -17,20 +17,20 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 
 
-static void ompi_thread_construct(ompi_thread_t *t);
+static void opal_thread_construct(opal_thread_t *t);
 
-OBJ_CLASS_INSTANCE(ompi_thread_t,
+OBJ_CLASS_INSTANCE(opal_thread_t,
                    opal_object_t,
-                   ompi_thread_construct, NULL);
+                   opal_thread_construct, NULL);
 
 
 /*
  * Constructor
  */
-static void ompi_thread_construct(ompi_thread_t *t)
+static void opal_thread_construct(opal_thread_t *t)
 {
     t->t_run = 0;
 #ifdef __WINDOWS__
@@ -49,7 +49,7 @@ static void ompi_thread_construct(ompi_thread_t *t)
  * Windows threads
  ************************************************************************/
 
-int ompi_thread_start(ompi_thread_t *t)
+int opal_thread_start(opal_thread_t *t)
 {
     DWORD tid;
 
@@ -74,7 +74,7 @@ int ompi_thread_start(ompi_thread_t *t)
 }
 
 
-int ompi_thread_join(ompi_thread_t *t, void **thr_return)
+int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
     DWORD rc;
 
@@ -91,7 +91,7 @@ int ompi_thread_join(ompi_thread_t *t, void **thr_return)
 }
 
 
-bool ompi_thread_self_compare(ompi_thread_t *t)
+bool opal_thread_self_compare(opal_thread_t *t)
 {
     DWORD thread_id;
     thread_id = GetCurrentThreadId();
@@ -102,9 +102,9 @@ bool ompi_thread_self_compare(ompi_thread_t *t)
 }
 
 
-ompi_thread_t *ompi_thread_get_self(void)
+opal_thread_t *opal_thread_get_self(void)
 {
-    ompi_thread_t *t = OBJ_NEW(ompi_thread_t);
+    opal_thread_t *t = OBJ_NEW(opal_thread_t);
     t->t_handle = GetCurrentThreadId();
     return t;
 }
@@ -117,7 +117,7 @@ ompi_thread_t *ompi_thread_get_self(void)
  * POSIX threads
  ************************************************************************/
 
-int ompi_thread_start(ompi_thread_t *t)
+int opal_thread_start(opal_thread_t *t)
 {
     int rc;
 
@@ -133,22 +133,22 @@ int ompi_thread_start(ompi_thread_t *t)
 }
 
 
-int ompi_thread_join(ompi_thread_t *t, void **thr_return)
+int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
     int rc = pthread_join(t->t_handle, thr_return);
     return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
 }
 
 
-bool ompi_thread_self_compare(ompi_thread_t *t)
+bool opal_thread_self_compare(opal_thread_t *t)
 {
     return t->t_handle == pthread_self();
 }
 
 
-ompi_thread_t *ompi_thread_get_self(void)
+opal_thread_t *opal_thread_get_self(void)
 {
-    ompi_thread_t *t = OBJ_NEW(ompi_thread_t);
+    opal_thread_t *t = OBJ_NEW(opal_thread_t);
     t->t_handle = pthread_self();
     return t;
 }
@@ -160,7 +160,7 @@ ompi_thread_t *ompi_thread_get_self(void)
  * Solaris threads
  ************************************************************************/
 
-int ompi_thread_start(ompi_thread_t *t)
+int opal_thread_start(opal_thread_t *t)
 {
     int rc;
 
@@ -177,22 +177,22 @@ int ompi_thread_start(ompi_thread_t *t)
 }
 
 
-int ompi_thread_join(ompi_thread_t *t, void **thr_return)
+int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
     int rc = thread_join(t->t_handle, NULL, thr_return);
     return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
 }
 
 
-bool ompi_thread_self_compare(ompi_thread_t *t)
+bool opal_thread_self_compare(opal_thread_t *t)
 {
     return t->t_handle == thr_self();
 }
 
 
-ompi_thread_t *ompi_thread_get_self(void)
+opal_thread_t *opal_thread_get_self(void)
 {
-    ompi_thread_t *t = OBJ_NEW(ompi_thread_t);
+    opal_thread_t *t = OBJ_NEW(opal_thread_t);
     t->t_handle = thr_self();
     return t;
 }
@@ -204,24 +204,24 @@ ompi_thread_t *ompi_thread_get_self(void)
  * No thread support
  ************************************************************************/
 
-int ompi_thread_start(ompi_thread_t *t)
+int opal_thread_start(opal_thread_t *t)
 {
     return OMPI_ERROR;
 }
 
 
-int ompi_thread_join(ompi_thread_t *t, void **thr_return)
+int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
     return OMPI_ERROR;
 }
 
 
-bool ompi_thread_self_compare(ompi_thread_t *t)
+bool opal_thread_self_compare(opal_thread_t *t)
 {
     return true;
 }
 
-ompi_thread_t *ompi_thread_get_self(void)
+opal_thread_t *opal_thread_get_self(void)
 {
     return NULL;
 }

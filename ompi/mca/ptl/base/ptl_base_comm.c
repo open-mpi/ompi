@@ -35,7 +35,7 @@ opal_class_t mca_pml_ptl_comm_t_class = {
 static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm)
 {
     OBJ_CONSTRUCT(&comm->c_wild_receives, opal_list_t);
-    OBJ_CONSTRUCT(&comm->c_matching_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&comm->c_matching_lock, opal_mutex_t);
     comm->c_recv_seq = 0;
 }
 

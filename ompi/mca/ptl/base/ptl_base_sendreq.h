@@ -58,7 +58,7 @@ static inline void mca_ptl_base_send_request_offset(
     mca_ptl_base_send_request_t* request,
     size_t offset)
 {
-    OMPI_THREAD_ADD_SIZE_T((&request->req_offset), offset);
+    OPAL_THREAD_ADD_SIZE_T((&request->req_offset), offset);
 }
 
 

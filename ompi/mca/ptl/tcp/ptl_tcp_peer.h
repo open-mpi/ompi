@@ -67,8 +67,8 @@ struct mca_ptl_base_peer_t {
     mca_ptl_tcp_state_t             peer_state;       /**< current state of the connection */
     size_t                          peer_retries;     /**< number of connection retries attempted */
     opal_list_t                     peer_frags;       /**< list of pending frags to send */
-    ompi_mutex_t                    peer_send_lock;   /**< lock for concurrent access to peer state */
-    ompi_mutex_t                    peer_recv_lock;   /**< lock for concurrent access to peer state */
+    opal_mutex_t                    peer_send_lock;   /**< lock for concurrent access to peer state */
+    opal_mutex_t                    peer_recv_lock;   /**< lock for concurrent access to peer state */
     ompi_event_t                    peer_send_event;  /**< event for async processing of send frags */
     ompi_event_t                    peer_recv_event;  /**< event for async processing of recv frags */
     bool                            peer_nbo;         /**< convert headers to network byte order? */

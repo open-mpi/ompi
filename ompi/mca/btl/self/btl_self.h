@@ -44,7 +44,7 @@ struct mca_btl_self_component_t {
     int free_list_num;                     /**< initial size of free lists */
     int free_list_max;                     /**< maximum size of free lists */
     int free_list_inc;                     /**< number of elements to alloc when growing free lists */
-    ompi_mutex_t self_lock;
+    opal_mutex_t self_lock;
     ompi_free_list_t self_frags_eager;     /**< free list of self first */
     ompi_free_list_t self_frags_send;      /**< free list of self second */
     ompi_free_list_t self_frags_rdma;      /**< free list of self second */

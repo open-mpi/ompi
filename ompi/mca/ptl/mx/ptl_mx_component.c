@@ -16,7 +16,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "util/output.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 #include "ptl_mx.h"
 #include "ptl_mx_module.h"
 #include "ptl_mx_peer.h"
@@ -95,7 +95,7 @@ int mca_ptl_mx_component_open(void)
     mca_ptl_mx_component.mx_num_ptls = 0;
 
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_recv_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_procs, opal_hash_table_t);
@@ -246,7 +246,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
 #if HAVE_MX_ICOMPLETED == 0
         mx_request_t mx_request;
         if(ptl->mx_recvs_posted == 0) {
-            OMPI_THREAD_ADD32(&ptl->mx_recvs_posted,1);
+            OPAL_THREAD_ADD32(&ptl->mx_recvs_posted,1);
             MCA_PTL_MX_POST(ptl,MCA_PTL_HDR_TYPE_MATCH,sizeof(mca_ptl_base_match_header_t));
         }
 
@@ -278,7 +278,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
 #else
         /* pre-post receive */
         if(ptl->mx_recvs_posted == 0) {
-            OMPI_THREAD_ADD32(&ptl->mx_recvs_posted,1);
+            OPAL_THREAD_ADD32(&ptl->mx_recvs_posted,1);
             MCA_PTL_MX_POST(ptl,MCA_PTL_HDR_TYPE_MATCH,sizeof(mca_ptl_base_match_header_t));
         }
 

@@ -22,7 +22,7 @@
 
 #include "ompi_config.h"
 #include "mca/pls/base/base.h"
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 #include <sys/bproc.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -62,8 +62,8 @@ struct orte_pls_bproc_component_t {
     int terminate_sig;
     size_t image_frag_size;
     size_t num_children;
-    ompi_mutex_t lock;
-    ompi_condition_t condition;
+    opal_mutex_t lock;
+    opal_condition_t condition;
 };
 typedef struct orte_pls_bproc_component_t orte_pls_bproc_component_t;
                                                                                                           

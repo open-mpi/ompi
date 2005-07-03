@@ -34,7 +34,7 @@
 #include "include/constants.h"
 #include "util/output.h"
 #include "util/proc_info.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 /*
  * Private data
@@ -105,7 +105,7 @@ static bool initialized = false;
 static output_desc_t info[OMPI_OUTPUT_MAX_STREAMS];
 static char *temp_str = 0;
 static size_t temp_str_len = 0;
-static ompi_mutex_t mutex;
+static opal_mutex_t mutex;
 static bool syslog_opened = false;
 
 
@@ -129,7 +129,7 @@ bool ompi_output_init(void)
 
   /* Initialize the mutex that protects the output */
 
-  OBJ_CONSTRUCT(&mutex, ompi_mutex_t);
+  OBJ_CONSTRUCT(&mutex, opal_mutex_t);
   initialized = true;
 
   /* Open the default verbose stream */
@@ -244,7 +244,7 @@ void ompi_output_close(int output_id)
 
   /* If no one has the syslog open, we should close it */
 
-  OMPI_THREAD_LOCK(&mutex);
+  OPAL_THREAD_LOCK(&mutex);
   for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
     if (info[i].ldi_used && info[i].ldi_syslog) {
       break;
@@ -265,7 +265,7 @@ void ompi_output_close(int output_id)
     temp_str = NULL;
     temp_str_len = 0;
   }
-  OMPI_THREAD_UNLOCK(&mutex);
+  OPAL_THREAD_UNLOCK(&mutex);
 }
 
 
@@ -339,14 +339,14 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
      OMPI_ERROR */
 
   if (-1 == output_id) {
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
       if (!info[i].ldi_used) {
         break;
       }
     }
     if (i >= OMPI_OUTPUT_MAX_STREAMS) {
-      OMPI_THREAD_UNLOCK(&mutex);
+      OPAL_THREAD_UNLOCK(&mutex);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } 
@@ -370,7 +370,7 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
 
   info[i].ldi_used = true;
   if (-1 == output_id) {
-      OMPI_THREAD_UNLOCK(&mutex);
+      OPAL_THREAD_UNLOCK(&mutex);
   }
   info[i].ldi_enabled = lds->lds_is_debugging ? 
     (bool) OMPI_ENABLE_DEBUG : true;
@@ -539,7 +539,7 @@ static void output(int output_id, const char *format, va_list arglist)
     
     /* Make the formatted string */
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     vasprintf(&str, format, arglist);
     total_len = len = strlen(str);
     if ('\n' != str[len - 1]) {
@@ -613,7 +613,7 @@ static void output(int output_id, const char *format, va_list arglist)
         write(ldi->ldi_fd, temp_str, total_len);
       }
     }
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     free(str);
   }  

@@ -35,11 +35,11 @@ void mca_btl_template_proc_construct(mca_btl_template_proc_t* proc)
     proc->proc_addr_count = 0;
     proc->proc_endpoints = 0;
     proc->proc_endpoint_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
     /* add to list of all proc instance */
-    OMPI_THREAD_LOCK(&mca_btl_template_component.template_lock);
+    OPAL_THREAD_LOCK(&mca_btl_template_component.template_lock);
     opal_list_append(&mca_btl_template_component.template_procs, &proc->super);
-    OMPI_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
+    OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
 }
 
 /*
@@ -49,9 +49,9 @@ void mca_btl_template_proc_construct(mca_btl_template_proc_t* proc)
 void mca_btl_template_proc_destruct(mca_btl_template_proc_t* proc)
 {
     /* remove from list of all proc instances */
-    OMPI_THREAD_LOCK(&mca_btl_template_component.template_lock);
+    OPAL_THREAD_LOCK(&mca_btl_template_component.template_lock);
     opal_list_remove_item(&mca_btl_template_component.template_procs, &proc->super);
-    OMPI_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
+    OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
 
     /* release resources */
     if(NULL != proc->proc_endpoints) {
@@ -68,7 +68,7 @@ static mca_btl_template_proc_t* mca_btl_template_proc_lookup_ompi(ompi_proc_t* o
 {
     mca_btl_template_proc_t* template_proc;
 
-    OMPI_THREAD_LOCK(&mca_btl_template_component.template_lock);
+    OPAL_THREAD_LOCK(&mca_btl_template_component.template_lock);
 
     for(template_proc = (mca_btl_template_proc_t*)
             opal_list_get_first(&mca_btl_template_component.template_procs);
@@ -77,13 +77,13 @@ static mca_btl_template_proc_t* mca_btl_template_proc_lookup_ompi(ompi_proc_t* o
             template_proc  = (mca_btl_template_proc_t*)opal_list_get_next(template_proc)) {
 
         if(template_proc->proc_ompi == ompi_proc) {
-            OMPI_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
+            OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
             return template_proc;
         }
 
     }
 
-    OMPI_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
+    OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
 
     return NULL;
 }

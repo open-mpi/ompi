@@ -108,14 +108,14 @@ static int orte_iof_svc_close(void)
     opal_list_item_t* item;
 
     if (initialized) {
-        OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+        OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
         while((item = opal_list_remove_first(&mca_iof_svc_component.svc_subscribed)) != NULL) {
             OBJ_RELEASE(item);
         }
         while((item = opal_list_remove_first(&mca_iof_svc_component.svc_published)) != NULL) {
             OBJ_RELEASE(item);
         }
-        OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+        OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
         orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
     }
 
@@ -139,7 +139,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
 
     OBJ_CONSTRUCT(&mca_iof_svc_component.svc_subscribed, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_svc_component.svc_published, opal_list_t);
-    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_lock, opal_mutex_t);
 
     /* post non-blocking recv */
     mca_iof_svc_component.svc_iov[0].iov_base = NULL;

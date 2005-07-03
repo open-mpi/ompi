@@ -31,7 +31,7 @@
 #include "group/group.h"
 #include "proc/proc.h"
 #include "info/info.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "util/proc_info.h"
 #include "util/bit_ops.h"
 #include "util/argv.h"

@@ -13,8 +13,8 @@
  * 
  * $HEADER$
  */
-#ifndef OMPI_CONDITION_SPINLOCK_H
-#define OMPI_CONDITION_SPINLOCK_H
+#ifndef OPAL_CONDITION_SPINLOCK_H
+#define OPAL_CONDITION_SPINLOCK_H
 
 #include "ompi_config.h"
 #ifdef HAVE_SYS_TIME_H
@@ -27,8 +27,8 @@
 #include <pthread.h>
 #endif
 
-#include "threads/condition.h"
-#include "threads/mutex.h"
+#include "opal/threads/condition.h"
+#include "opal/threads/mutex.h"
 #include "opal/runtime/opal_progress.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -40,7 +40,7 @@ extern "C" {
  * of threading vs. non-threading progress.
  */
 
-struct ompi_condition_t {
+struct opal_condition_t {
     opal_object_t super;
     volatile int c_waiting;
     volatile int c_signaled;
@@ -48,23 +48,23 @@ struct ompi_condition_t {
     pthread_cond_t c_cond;
 #endif
 };
-typedef struct ompi_condition_t ompi_condition_t;
+typedef struct opal_condition_t opal_condition_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_condition_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
 
 
-static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)
+static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 {
     int rc = 0;
     c->c_waiting++;
-    if (ompi_using_threads()) {
+    if (opal_using_threads()) {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_wait(&c->c_cond, &m->m_lock_pthread);
 #else
         while (c->c_signaled == 0) {
-            ompi_mutex_unlock(m);
+            opal_mutex_unlock(m);
             opal_progress();
-            ompi_mutex_lock(m);
+            opal_mutex_lock(m);
         }
 #endif
     } else {
@@ -77,8 +77,8 @@ static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)
     return rc;
 }
 
-static inline int ompi_condition_timedwait(ompi_condition_t *c,
-                                           ompi_mutex_t *m,
+static inline int opal_condition_timedwait(opal_condition_t *c,
+                                           opal_mutex_t *m,
                                            const struct timespec *abstime)
 {
     struct timeval tv;
@@ -86,7 +86,7 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
     int rc = 0;
 
     c->c_waiting++;
-    if (ompi_using_threads()) {
+    if (opal_using_threads()) {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_timedwait(&c->c_cond, &m->m_lock_pthread, abstime);
 #else
@@ -96,10 +96,10 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
         while (c->c_signaled == 0 &&  
                (tv.tv_sec <= abs.tv_sec ||
                (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
-            ompi_mutex_unlock(m);
+            opal_mutex_unlock(m);
             opal_progress();
             gettimeofday(&tv,NULL);
-            ompi_mutex_lock(m);
+            opal_mutex_lock(m);
         }
 #endif
     } else {
@@ -118,12 +118,12 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
     return rc;
 }
 
-static inline int ompi_condition_signal(ompi_condition_t *c)
+static inline int opal_condition_signal(opal_condition_t *c)
 {
     if (c->c_waiting) {
         c->c_signaled++;
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
-        if(ompi_using_threads()) {
+        if(opal_using_threads()) {
             pthread_cond_signal(&c->c_cond);
         }
 #endif
@@ -131,11 +131,11 @@ static inline int ompi_condition_signal(ompi_condition_t *c)
     return 0;
 }
 
-static inline int ompi_condition_broadcast(ompi_condition_t *c)
+static inline int opal_condition_broadcast(opal_condition_t *c)
 {
     c->c_signaled += c->c_waiting;
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_using_threads()) {
+    if(opal_using_threads()) {
         pthread_cond_broadcast(&c->c_cond);
     }
 #endif

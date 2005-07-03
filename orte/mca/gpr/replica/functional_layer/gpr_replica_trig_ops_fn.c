@@ -357,7 +357,7 @@ orte_gpr_replica_register_trigger(orte_gpr_replica_trigger_t **trigptr,
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true,
                                         trigger->values[i]->segment))) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
     

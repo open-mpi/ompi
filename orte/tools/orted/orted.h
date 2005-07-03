@@ -22,8 +22,8 @@
 #include <string.h>
 
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "util/cmd_line.h"
 #include "mca/mca.h"
@@ -59,8 +59,8 @@ typedef struct {
     char* universe;
     int bootproxy;
     int uri_pipe;
-    ompi_mutex_t mutex;
-    ompi_condition_t condition;
+    opal_mutex_t mutex;
+    opal_condition_t condition;
     bool exit_condition;
 } orted_globals_t;
 

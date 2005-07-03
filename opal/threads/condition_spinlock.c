@@ -16,26 +16,26 @@
 
 #include "ompi_config.h"
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #if (OMPI_HAVE_POSIX_THREADS == 0) || (OMPI_ENABLE_PROGRESS_THREADS == 0)
 
-static void ompi_condition_construct(ompi_condition_t *c)
+static void opal_condition_construct(opal_condition_t *c)
 {
     c->c_waiting = 0;
     c->c_signaled = 0;
 }
 
 
-static void ompi_condition_destruct(ompi_condition_t *c)
+static void opal_condition_destruct(opal_condition_t *c)
 {
 }
 
 
-OBJ_CLASS_INSTANCE(ompi_condition_t,
+OBJ_CLASS_INSTANCE(opal_condition_t,
                    opal_object_t,
-                   ompi_condition_construct,
-                   ompi_condition_destruct);
+                   opal_condition_construct,
+                   opal_condition_destruct);
 
 #endif

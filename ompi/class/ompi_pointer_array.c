@@ -39,7 +39,7 @@ OBJ_CLASS_INSTANCE(ompi_pointer_array_t, opal_object_t,
  */
 void ompi_pointer_array_construct(ompi_pointer_array_t *array)
 {
-    OBJ_CONSTRUCT(&array->lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&array->lock, opal_mutex_t);
     array->lowest_free = 0;
     array->number_free = 0;
     array->size = 0;
@@ -83,7 +83,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 
     assert(table != NULL);
 
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
 
     if (table->addr == NULL) {
 
@@ -97,7 +97,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 
 	p = (void **) malloc(TABLE_INIT * sizeof(void *));
 	if (p == NULL) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(table->lock));
             return OMPI_ERROR;
 	}
 	table->lowest_free = 0;
@@ -114,7 +114,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 
         if (!grow_table(table, table->size * TABLE_GROW, 
                         OMPI_FORTRAN_HANDLE_MAX)) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(table->lock));
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
@@ -154,7 +154,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
                 index, ptr);
     }
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     return index;
 }
 
@@ -184,11 +184,11 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
 
     /* expand table if required to set a specific index */
 
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
     if (table->size <= index) {
         if (!grow_table(table, ((index / TABLE_GROW) + 1) * TABLE_GROW,
                         index)) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(table->lock));
 	    return OMPI_ERROR;
         }
     }
@@ -255,7 +255,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
                 index, table->addr[index]);
 #endif
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     return OMPI_SUCCESS;
 }
 
@@ -288,10 +288,10 @@ bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table,
 #endif
 
     /* expand table if required to set a specific index */
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
     if ( index < table->size && table->addr[index] != NULL ) {
         /* This element is already in use */
-        OMPI_THREAD_UNLOCK(&(table->lock));
+        OPAL_THREAD_UNLOCK(&(table->lock));
         return false;
     }
 
@@ -300,7 +300,7 @@ bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table,
     if (table->size <= index) {
         if (!grow_table(table, (((index / TABLE_GROW) + 1) * TABLE_GROW),
                         index)) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(table->lock));
             return false;
         }
     }
@@ -331,7 +331,7 @@ bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table,
                index, table->addr[index]);
 #endif
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     return true;
 }
 

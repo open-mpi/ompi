@@ -19,8 +19,8 @@
 #ifndef MCA_PML_COMM_H
 #define MCA_PML_COMM_H
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 #include "mca/ptl/ptl.h"
 #include "opal/class/opal_list.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -37,7 +37,7 @@ struct mca_pml_comm_t {
     uint32_t *c_msg_seq;               /**< send message sequence number - sender side */
     uint16_t *c_next_msg_seq;          /**< send message sequence number - receiver side */
     mca_ptl_sequence_t c_recv_seq;     /**< recv request sequence number - receiver side */
-    ompi_mutex_t c_matching_lock;      /**< matching lock */
+    opal_mutex_t c_matching_lock;      /**< matching lock */
     opal_list_t *c_unexpected_frags;   /**< unexpected fragment queues */
     opal_list_t *c_frags_cant_match;   /**< out-of-order fragment queues */
     opal_list_t *c_specific_receives;  /**< queues of unmatched specific (source process specified) receives */
@@ -67,7 +67,7 @@ OMPI_DECLSPEC extern int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, si
 static inline mca_ptl_sequence_t mca_pml_ptl_comm_send_sequence(mca_pml_ptl_comm_t* comm, int dst)
 {
    volatile int32_t *msg_seq = (volatile int32_t*)(comm->c_msg_seq+dst);
-   return (mca_ptl_sequence_t)OMPI_THREAD_ADD32(msg_seq, 1)-1;
+   return (mca_ptl_sequence_t)OPAL_THREAD_ADD32(msg_seq, 1)-1;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

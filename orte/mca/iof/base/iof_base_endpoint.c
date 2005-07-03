@@ -92,7 +92,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
         return;
     }
 
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
 
     /* read up to the fragment size */
     rc = read(fd, frag->frag_data, sizeof(frag->frag_data));
@@ -100,7 +100,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
         /* non-blocking */
         if(rc < 0 && errno == EAGAIN) {
             ORTE_IOF_BASE_FRAG_RETURN(frag);
-            OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return;
         }
 
@@ -129,7 +129,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     if(ORTE_IOF_BASE_SEQDIFF(endpoint->ep_seq,endpoint->ep_ack) > orte_iof_base.iof_window_size) {
         ompi_event_del(&endpoint->ep_event);
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 
     /* start non-blocking OOB call to forward received data */
     rc = orte_rml.send_nb(
@@ -155,7 +155,7 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
      * step through the list of queued fragments and attempt to write
      * until the output descriptor would block
     */
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     while(opal_list_get_size(&endpoint->ep_frags)) {
         orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)opal_list_get_first(&endpoint->ep_frags);
         int rc = write(endpoint->ep_fd, frag->frag_ptr, frag->frag_len);
@@ -163,7 +163,7 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
             if(errno == EAGAIN)
                break;
             orte_iof_base_endpoint_closed(endpoint);
-            OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return;
         }
         frag->frag_len -= rc;
@@ -179,10 +179,10 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
     if(opal_list_get_size(&endpoint->ep_frags) == 0) {
         ompi_event_del(&endpoint->ep_event);
         if(orte_iof_base.iof_waiting) {
-            ompi_condition_signal(&orte_iof_base.iof_condition);
+            opal_condition_signal(&orte_iof_base.iof_condition);
         }
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 }
 
 /*
@@ -223,15 +223,15 @@ int orte_iof_base_endpoint_create(
     orte_iof_base_endpoint_t* endpoint;
     int flags;
  
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     if((endpoint = orte_iof_base_endpoint_lookup(proc,mode,tag)) != NULL) {
         OBJ_RELEASE(endpoint);
-        OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         return OMPI_SUCCESS;
     }
     endpoint = OBJ_NEW(orte_iof_base_endpoint_t);
     if(NULL == endpoint) {
-        OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     endpoint->ep_name = *proc;
@@ -272,7 +272,7 @@ int orte_iof_base_endpoint_create(
     }
 
     opal_list_append(&orte_iof_base.iof_endpoints, &endpoint->super);
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return ORTE_SUCCESS;
 }
 
@@ -287,7 +287,7 @@ int orte_iof_base_endpoint_delete(
     int tag)
 {
     opal_list_item_t* item;
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     item =  opal_list_get_first(&orte_iof_base.iof_endpoints);
     while(item != opal_list_get_end(&orte_iof_base.iof_endpoints)) {
         opal_list_item_t* next =  opal_list_get_next(item);
@@ -299,7 +299,7 @@ int orte_iof_base_endpoint_delete(
         }
         item = next;
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return ORTE_ERR_NOT_FOUND;
 }
 
@@ -345,7 +345,7 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
     int dst_tag)
 {
     opal_list_item_t* item;
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     for(item =  opal_list_get_first(&orte_iof_base.iof_endpoints);
         item != opal_list_get_end(&orte_iof_base.iof_endpoints);
         item =  opal_list_get_next(item)) {
@@ -353,12 +353,12 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
         if(orte_ns.compare(dst_mask,dst_name,&endpoint->ep_name) == 0) {
             if(endpoint->ep_tag == dst_tag || endpoint->ep_tag == ORTE_IOF_ANY || dst_tag == ORTE_IOF_ANY) {
                 OBJ_RETAIN(endpoint);
-                OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+                OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
                 return endpoint;
             }
         }
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return NULL;
 }
 
@@ -388,7 +388,7 @@ int orte_iof_base_endpoint_forward(
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     endpoint->ep_seq = hdr->msg_seq + hdr->msg_len;
     frag->frag_owner = endpoint;
     frag->frag_src = *src;
@@ -399,7 +399,7 @@ int orte_iof_base_endpoint_forward(
         rc = write(endpoint->ep_fd,data,len);
         if(rc < 0) {
             orte_iof_base_endpoint_closed(endpoint);
-            OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return ORTE_SUCCESS;
          } 
     } 
@@ -413,9 +413,9 @@ int orte_iof_base_endpoint_forward(
         if(opal_list_get_size(&endpoint->ep_frags) == 1) {
             ompi_event_add(&endpoint->ep_event,0);
         }
-        OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     } else {
-        OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 
         /* acknowledge fragment */
         orte_iof_base_endpoint_ack(endpoint, frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len);
@@ -437,7 +437,7 @@ int orte_iof_base_endpoint_ack(
 {
     bool window_closed, window_open;
 
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     window_closed =
             ORTE_IOF_BASE_SEQDIFF(endpoint->ep_seq,endpoint->ep_ack) >= orte_iof_base.iof_window_size;
     endpoint->ep_ack = seq;
@@ -446,14 +446,14 @@ int orte_iof_base_endpoint_ack(
                                                                                                               
     /* someone is waiting on all output to be flushed */
     if(orte_iof_base.iof_waiting && endpoint->ep_seq == endpoint->ep_ack) {
-        ompi_condition_signal(&orte_iof_base.iof_condition);
+        opal_condition_signal(&orte_iof_base.iof_condition);
     }
 
     /* check to see if we need to reenable forwarding */
     if(window_closed && window_open) {
         ompi_event_add(&endpoint->ep_event, 0);
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return ORTE_SUCCESS;
 }
 

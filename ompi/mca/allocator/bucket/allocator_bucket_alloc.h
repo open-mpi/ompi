@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 #include "mca/allocator/allocator.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -69,7 +69,7 @@ typedef struct mca_allocator_bucket_segment_head_t mca_allocator_bucket_segment_
   */
 struct mca_allocator_bucket_bucket_t {
     mca_allocator_bucket_chunk_header_t * free_chunk; /**< the first free chunk of memory */
-    ompi_mutex_t lock;                /**< the lock on the bucket */ 
+    opal_mutex_t lock;                /**< the lock on the bucket */ 
     mca_allocator_bucket_segment_head_t * segment_head; /**< the list of segment headers */
 };
 /**

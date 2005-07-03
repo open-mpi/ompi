@@ -36,7 +36,7 @@
 #include "op/op.h"
 #include "file/file.h"
 #include "attribute/attribute.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 
 #include "mca/base/base.h"
 #include "mca/allocator/base/base.h"
@@ -74,7 +74,7 @@ bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
 int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
-ompi_thread_t *ompi_mpi_main_thread = NULL;
+opal_thread_t *ompi_mpi_main_thread = NULL;
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
@@ -351,21 +351,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         ompi_mpi_main_thread = NULL;
     } else if (OMPI_ENABLE_MPI_THREADS == 1) {
         ompi_mpi_thread_provided = *provided = requested;
-        ompi_mpi_main_thread = ompi_thread_get_self();
+        ompi_mpi_main_thread = opal_thread_get_self();
     } else {
         if (MPI_THREAD_MULTIPLE == requested) {
             ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
         } else {
             ompi_mpi_thread_provided = *provided = requested;
         }
-        ompi_mpi_main_thread = ompi_thread_get_self();
+        ompi_mpi_main_thread = opal_thread_get_self();
     }
 
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
     if (OMPI_ENABLE_PROGRESS_THREADS == 1 ||
         OMPI_ENABLE_MPI_THREADS == 1) {
-        ompi_set_using_threads(true);
+        opal_set_using_threads(true);
     }
 
     /* Init coll for the comms */

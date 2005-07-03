@@ -25,7 +25,7 @@ static void mca_pml_ob1_proc_construct(mca_pml_ob1_proc_t* proc)
 {
     proc->proc_ompi = NULL;
     proc->proc_sequence = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&proc->btl_eager, mca_pml_ob1_ep_array_t);
     OBJ_CONSTRUCT(&proc->btl_send,  mca_pml_ob1_ep_array_t);
     OBJ_CONSTRUCT(&proc->btl_rdma,  mca_pml_ob1_ep_array_t);

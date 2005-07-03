@@ -38,9 +38,9 @@ MPI::Comm::mpi_comm_map_t MPI::Comm::mpi_comm_map;
 MPI::Comm::mpi_err_map_t MPI::Comm::mpi_err_map;
 MPI::Comm::key_fn_map_t MPI::Comm::key_fn_map;
 
-ompi_mutex_t *MPI::Comm::mpi_comm_map_mutex = NULL;
-ompi_mutex_t *MPI::Comm::mpi_err_map_mutex = NULL;
-ompi_mutex_t *MPI::Comm::key_fn_map_mutex = NULL;
+opal_mutex_t *MPI::Comm::mpi_comm_map_mutex = NULL;
+opal_mutex_t *MPI::Comm::mpi_err_map_mutex = NULL;
+opal_mutex_t *MPI::Comm::key_fn_map_mutex = NULL;
 
 extern "C"
 void ompi_mpi_cxx_errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)

@@ -19,8 +19,8 @@
 #ifndef MCA_PML_OB1_COMM_H
 #define MCA_PML_OB1_COMM_H
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 #include "mca/ptl/ptl.h"
 #include "opal/class/opal_list.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -45,7 +45,7 @@ typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 struct mca_pml_comm_t {
     opal_object_t super;
     mca_ptl_sequence_t recv_sequence;  /**< recv request sequence number - receiver side */
-    ompi_mutex_t matching_lock;   /**< matching lock */
+    opal_mutex_t matching_lock;   /**< matching lock */
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
     mca_pml_ob1_comm_proc_t* procs;
     size_t num_procs;

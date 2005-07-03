@@ -74,7 +74,7 @@ struct mca_btl_openib_component_t {
     ompi_event_t                            ib_recv_event;
     /**< event structure for recvs */
 
-    ompi_mutex_t                            ib_lock;
+    opal_mutex_t                            ib_lock;
     /**< lock for accessing module state */
 
     int                                     ib_mem_registry_hints_log_size;
@@ -136,7 +136,7 @@ struct mca_btl_openib_module_t {
                                        entries, this allows us to keep a working set of memory pinned */ 
     
     opal_list_t repost;            /**< list of buffers to repost */
-    ompi_mutex_t ib_lock;          /**< module level lock */ 
+    opal_mutex_t ib_lock;          /**< module level lock */ 
     
 
     mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */

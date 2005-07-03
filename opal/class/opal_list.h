@@ -67,7 +67,7 @@
 #if OMPI_ENABLE_DEBUG
 /* Need atomics for debugging (reference counting) */
 #include "include/sys/atomic.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -378,7 +378,7 @@ static inline opal_list_item_t *opal_list_remove_item
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that this item is still only on one list */
 
-    OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
+    OPAL_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
     assert(0 == item->opal_list_item_refcount);
     item->opal_list_item_belong_to = NULL;
 #endif
@@ -443,7 +443,7 @@ static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
   /* Spot check: ensure this item is only on the list that we just
      appended it to */
 
-  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
+  OPAL_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
   assert(1 == item->opal_list_item_refcount);
   item->opal_list_item_belong_to = list;
 #endif
@@ -492,7 +492,7 @@ static inline void opal_list_prepend(opal_list_t *list,
   /* Spot check: ensure this item is only on the list that we just
      prepended it to */
 
-  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
+  OPAL_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
   assert(1 == item->opal_list_item_refcount);
   item->opal_list_item_belong_to = list;
 #endif
@@ -553,7 +553,7 @@ static inline opal_list_item_t *opal_list_remove_first(opal_list_t *list)
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
+  OPAL_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
   assert(0 == item->opal_list_item_refcount);
 #endif
 
@@ -613,7 +613,7 @@ static inline opal_list_item_t *opal_list_remove_last(opal_list_t *list)
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
+  OPAL_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
   assert(0 == item->opal_list_item_refcount);
   item->opal_list_item_belong_to = NULL;
 #endif
@@ -656,7 +656,7 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
     /* Spot check: double check that this item is only on the list
        that we just added it to */
 
-    OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
+    OPAL_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
     assert(1 == item->opal_list_item_refcount);
     item->opal_list_item_belong_to = list;
 #endif

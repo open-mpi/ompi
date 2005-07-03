@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef  OMPI_MUTEX_WINDOWS_H
-#define  OMPI_MUTEX_WINDOWS_H 1
+#ifndef  OPAL_MUTEX_WINDOWS_H
+#define  OPAL_MUTEX_WINDOWS_H 1
 
 /**
  * @file:
@@ -33,21 +33,21 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-struct ompi_mutex_t {
+struct opal_mutex_t {
     opal_object_t super;
     volatile LONG m_lock;
 };
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_mutex_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 
-static inline int ompi_mutex_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
     return (int) InterlockedExchange(&m->m_lock, 1);
 }
 
 
-static inline void ompi_mutex_lock(ompi_mutex_t *m)
+static inline void opal_mutex_lock(opal_mutex_t *m)
 {
     while (InterlockedExchange(&m->m_lock, 1)) {
         while (m->m_lock == 1) {
@@ -57,31 +57,31 @@ static inline void ompi_mutex_lock(ompi_mutex_t *m)
 }
 
 
-static inline void ompi_mutex_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
     InterlockedExchange(&m->m_lock, 0);
 }
 
 
-static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
+static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
 {
-    return ompi_mutex_trylock(m);
+    return opal_mutex_trylock(m);
 }
 
 
-static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
 {
-   ompi_mutex_lock(m);
+   opal_mutex_lock(m);
 }
 
 
-static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
+static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
 {
-    ompi_mutex_unlock(m);
+    opal_mutex_unlock(m);
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif  /* OMPI_MUTEX_WINDOWS_H */
+#endif  /* OPAL_MUTEX_WINDOWS_H */

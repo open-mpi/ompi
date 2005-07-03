@@ -18,7 +18,7 @@
 #define MCA_TOPO_UNTIY_H
 
 #include "ompi_config.h"
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 #include "util/cmd_line.h"
 #include "request/request.h"
 #include "mca/topo/topo.h"

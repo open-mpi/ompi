@@ -27,10 +27,10 @@
 static void orte_iof_base_timer_cb(int fd, short flags, void *cbdata)
 {
     int *flushed = (int*)cbdata;
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     *flushed = 1;
-    ompi_condition_signal(&orte_iof_base.iof_condition);
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    opal_condition_signal(&orte_iof_base.iof_condition);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 }
 
 
@@ -55,14 +55,14 @@ int orte_iof_base_flush(void)
     */
 
     if(ompi_event_progress_thread() == false) {
-        OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+        OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
         ompi_evtimer_set(&ev, orte_iof_base_timer_cb, &flushed);
         ompi_event_add(&ev, &tv);
         while(flushed == 0)
-            ompi_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
+            opal_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
     } else {
         ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
-        OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+        OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     }
     orte_iof_base.iof_waiting++;
 
@@ -80,16 +80,16 @@ int orte_iof_base_flush(void)
         }
         if(pending != 0) {
             if(ompi_event_progress_thread() == false) {
-                ompi_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
+                opal_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
             } else {
-                OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+                OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
                 ompi_event_loop(OMPI_EVLOOP_ONCE);
-                OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+                OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
             }
         }
     }
     orte_iof_base.iof_waiting--;
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return OMPI_SUCCESS;
 }
 

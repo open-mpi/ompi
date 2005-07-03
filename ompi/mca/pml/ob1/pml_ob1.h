@@ -21,8 +21,8 @@
 #define MCA_PML_OB1_H
 
 #include "ompi_config.h"
-#include "threads/thread.h"
-#include "threads/condition.h"
+#include "opal/threads/thread.h"
+#include "opal/threads/condition.h"
 #include "class/ompi_free_list.h"
 #include "util/cmd_line.h"
 #include "request/request.h"
@@ -63,7 +63,7 @@ struct mca_pml_ob1_t {
     bool leave_pinned; 
 
     /* lock queue access */
-    ompi_mutex_t lock;
+    opal_mutex_t lock;
 
     /* free lists */
     ompi_free_list_t send_requests;

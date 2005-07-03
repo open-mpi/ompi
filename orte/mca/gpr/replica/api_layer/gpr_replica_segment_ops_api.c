@@ -35,11 +35,11 @@ int orte_gpr_replica_preallocate_segment(char *name, size_t num_slots)
     int rc;
     orte_gpr_replica_segment_t *seg=NULL;
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     /* find the segment */
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, name))) {
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
@@ -51,7 +51,7 @@ int orte_gpr_replica_preallocate_segment(char *name, size_t num_slots)
                                             orte_gpr_replica_globals.max_size,
                                             orte_gpr_replica_globals.block_size);
                                             
-     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
      
      return rc;
 }

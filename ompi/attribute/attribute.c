@@ -190,7 +190,7 @@
 #include "ompi_config.h"
 
 #include "attribute/attribute.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "include/constants.h"
 #include "datatype/datatype.h"
 #include "communicator/communicator.h"
@@ -250,7 +250,7 @@
                  &f_key, &attr_val, keyval_obj->extra_state, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
-                    OMPI_THREAD_UNLOCK(&alock); \
+                    OPAL_THREAD_UNLOCK(&alock); \
                 } \
                 return OMPI_FINT_2_INT(f_err); \
             } \
@@ -263,7 +263,7 @@
                  &f_key, &attr_val, keyval_obj->extra_state, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
-                    OMPI_THREAD_UNLOCK(&alock); \
+                    OPAL_THREAD_UNLOCK(&alock); \
                 } \
                 return OMPI_FINT_2_INT(f_err); \
             } \
@@ -277,7 +277,7 @@
 			    key, attr_val, \
 			    keyval_obj->extra_state)) != MPI_SUCCESS) {\
             if (need_lock) { \
-                OMPI_THREAD_UNLOCK(&alock); \
+                OPAL_THREAD_UNLOCK(&alock); \
             } \
 	    return err;\
         } \
@@ -300,7 +300,7 @@
                  &f_key, keyval_obj->extra_state, \
                  &in, &out, &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-                OMPI_THREAD_UNLOCK(&alock); \
+                OPAL_THREAD_UNLOCK(&alock); \
                 return OMPI_FINT_2_INT(f_err); \
             } \
             out_attr->av_value = (void*) 0; \
@@ -316,7 +316,7 @@
                  &f_key, keyval_obj->extra_state, &in, &out, \
                  &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-                OMPI_THREAD_UNLOCK(&alock); \
+                OPAL_THREAD_UNLOCK(&alock); \
                 return OMPI_FINT_2_INT(f_err); \
             } \
             out_attr->av_value = (void *) out; \
@@ -330,7 +330,7 @@
         if ((err = (*((keyval_obj->copy_attr_fn).attr_##type##_copy_fn)) \
               ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state, \
                in, &out, &flag)) != MPI_SUCCESS) { \
-            OMPI_THREAD_UNLOCK(&alock); \
+            OPAL_THREAD_UNLOCK(&alock); \
             return err; \
         } \
         out_attr->av_value = out; \
@@ -411,7 +411,7 @@ static unsigned int int_pos = 12345;
  * -- they're not in the performance-critical portions of the code.
  * So why bother?
  */
-static ompi_mutex_t alock;
+static opal_mutex_t alock;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 
@@ -442,10 +442,10 @@ ompi_attrkey_item_destruct(ompi_attrkey_item_t *item)
 {
     /* Remove the key entry from the hash and free the key */
 
-    OMPI_THREAD_LOCK(&alock);
+    OPAL_THREAD_LOCK(&alock);
     opal_hash_table_remove_value_uint32(keyval_hash, item->key);
     FREE_KEY(item->key);
-    OMPI_THREAD_UNLOCK(&alock);
+    OPAL_THREAD_UNLOCK(&alock);
 }
 
 
@@ -524,12 +524,12 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
 
     /* Create a new unique key and fill the hash */
   
-    OMPI_THREAD_LOCK(&alock);
+    OPAL_THREAD_LOCK(&alock);
     ret = CREATE_KEY(key);
     if (OMPI_SUCCESS == ret) {
         ret = opal_hash_table_set_value_uint32(keyval_hash, *key, attr);
     }
-    OMPI_THREAD_UNLOCK(&alock);
+    OPAL_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS != ret) {
 	return ret;
     }
@@ -563,10 +563,10 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
 
     /* Find the key-value pair */
 
-    OMPI_THREAD_LOCK(&alock);
+    OPAL_THREAD_LOCK(&alock);
     ret = opal_hash_table_get_value_uint32(keyval_hash, *key, 
 					   (void **) &key_item);
-    OMPI_THREAD_UNLOCK(&alock);
+    OPAL_THREAD_UNLOCK(&alock);
   
     if ((OMPI_SUCCESS != ret) || (NULL == key_item) || 
         (key_item->attr_type != type) ||
@@ -609,7 +609,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
        keyval_lock, so we should not try to lock it again. */
 
     if (need_lock) {
-        OMPI_THREAD_LOCK(&alock);
+        OPAL_THREAD_LOCK(&alock);
     }
 
     /* Check if the key is valid in the master keyval hash */
@@ -667,7 +667,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
 
  exit:
     if (need_lock) {
-	OMPI_THREAD_UNLOCK(&alock);
+	OPAL_THREAD_UNLOCK(&alock);
     }	
 
     /* Decrement the ref count for the key, and if ref count is 0,
@@ -830,7 +830,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
        thread modify the structure of the keyval hash or bitmap while
        we're traversing it */
 
-    OMPI_THREAD_LOCK(&alock);
+    OPAL_THREAD_LOCK(&alock);
 
     /* Get the first key-attr in the object's key hash */
     ret = opal_hash_table_get_first_key_uint32(oldkeyhash, &key, 
@@ -900,7 +900,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
     /* All done */
 
-    OMPI_THREAD_UNLOCK(&alock);
+    OPAL_THREAD_UNLOCK(&alock);
     return MPI_SUCCESS;
 }
 
@@ -931,7 +931,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
        thread modify the structure of the keyval hash or bitmap while
        we're traversing it */
 
-    OMPI_THREAD_LOCK(&alock);
+    OPAL_THREAD_LOCK(&alock);
 
     /* Get the first key in local object's key hash  */
     key_ret = opal_hash_table_get_first_key_uint32(keyhash,
@@ -958,7 +958,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
 
     /* All done */
 
-    OMPI_THREAD_UNLOCK(&alock);
+    OPAL_THREAD_UNLOCK(&alock);
     return del_ret;
 }
 
@@ -993,7 +993,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
        so we should not try to lock it again. */
 
     if (need_lock) {
-        OMPI_THREAD_LOCK(&alock);
+        OPAL_THREAD_LOCK(&alock);
     }
     ret = opal_hash_table_get_value_uint32(keyval_hash, key, 
 					   (void **) &key_item);
@@ -1004,7 +1004,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
         (key_item->attr_type != type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
         if (need_lock) {
-            OMPI_THREAD_UNLOCK(&alock);
+            OPAL_THREAD_UNLOCK(&alock);
         }
 	return OMPI_ERR_BAD_PARAM;
     }
@@ -1045,7 +1045,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
     ret = opal_hash_table_set_value_uint32(*keyhash, key, new_attr); 
 
     if (need_lock) {
-        OMPI_THREAD_UNLOCK(&alock);
+        OPAL_THREAD_UNLOCK(&alock);
     }
     if (OMPI_SUCCESS != ret) {
 	return ret; 
@@ -1080,12 +1080,12 @@ static int get_value(opal_hash_table_t *keyhash, int key,
        FALSE in the flag argument */
 
     *flag = 0;
-    OMPI_THREAD_LOCK(&alock);
+    OPAL_THREAD_LOCK(&alock);
     ret = opal_hash_table_get_value_uint32(keyval_hash, key, 
 					   (void**) &key_item);
 
     if (OMPI_ERR_NOT_FOUND == ret) {
-        OMPI_THREAD_UNLOCK(&alock);
+        OPAL_THREAD_UNLOCK(&alock);
 	return MPI_KEYVAL_INVALID;
     }
 
@@ -1093,12 +1093,12 @@ static int get_value(opal_hash_table_t *keyhash, int key,
        been cached on this object yet.  So just return *flag = 0. */
 
     if (NULL == keyhash) {
-        OMPI_THREAD_UNLOCK(&alock);
+        OPAL_THREAD_UNLOCK(&alock);
         return OMPI_SUCCESS;
     }
 
     ret = opal_hash_table_get_value_uint32(keyhash, key, &attr);
-    OMPI_THREAD_UNLOCK(&alock);
+    OPAL_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS == ret) {
         *attribute = attr;
 	*flag = 1;

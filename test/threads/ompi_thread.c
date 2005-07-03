@@ -1,7 +1,7 @@
 #include "ompi_config.h"
 #include "support.h"
 #include "include/constants.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 #include "include/sys/atomic.h"
 
 
@@ -38,27 +38,27 @@ static void* thr2_run(opal_object_t* obj)
 int main(int argc, char** argv)
 {
     int rc;
-    ompi_thread_t thr1;
-    ompi_thread_t thr2;
+    opal_thread_t thr1;
+    opal_thread_t thr2;
 
-    test_init("ompi_thread_t");
+    test_init("opal_thread_t");
 
-    OBJ_CONSTRUCT(&thr1, ompi_thread_t);
-    OBJ_CONSTRUCT(&thr2, ompi_thread_t);
+    OBJ_CONSTRUCT(&thr1, opal_thread_t);
+    OBJ_CONSTRUCT(&thr2, opal_thread_t);
 
     thr1.t_run = thr1_run;
     thr2.t_run = thr2_run;
 
-    rc = ompi_thread_start(&thr1);
+    rc = opal_thread_start(&thr1);
     test_verify_int(OMPI_SUCCESS, rc);
 
-    rc = ompi_thread_start(&thr2);
+    rc = opal_thread_start(&thr2);
     test_verify_int(OMPI_SUCCESS, rc);
    
-    rc = ompi_thread_join(&thr1, NULL);
+    rc = opal_thread_join(&thr1, NULL);
     test_verify_int(OMPI_SUCCESS, rc);
 
-    rc = ompi_thread_join(&thr2, NULL);
+    rc = opal_thread_join(&thr2, NULL);
     test_verify_int(OMPI_SUCCESS, rc);
 
     test_verify_int(3, count);

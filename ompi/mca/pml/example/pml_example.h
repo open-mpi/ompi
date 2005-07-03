@@ -11,8 +11,8 @@
 #ifndef PML_EXAMPLE_H_HAS_BEEN_INCLUDED
 #define PML_EXAMPLE_H_HAS_BEEN_INCLUDED
 
-#include "threads/thread.h"
-#include "threads/condition.h"
+#include "opal/threads/thread.h"
+#include "opal/threads/condition.h"
 #include "class/ompi_free_list.h"
 #include "util/cmd_line.h"
 #include "request/request.h"
@@ -33,7 +33,7 @@ struct mca_pml_example_t {
     size_t example_num_ptl_modules;
 
     opal_list_t  example_procs;
-    ompi_mutex_t example_lock;
+    opal_mutex_t example_lock;
 
     /* free list of requests */
     ompi_free_list_t example_send_requests;

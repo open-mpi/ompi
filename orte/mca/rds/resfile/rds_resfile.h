@@ -23,7 +23,7 @@
 
 #include "orte_config.h"
 
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 #include "mca/rds/base/base.h"
 
@@ -66,7 +66,7 @@ struct orte_rds_resfile_component_t {
     orte_rds_base_component_t super;
     int debug;
     char *filename;
-    ompi_mutex_t lock;
+    opal_mutex_t lock;
 };
 typedef struct orte_rds_resfile_component_t orte_rds_resfile_component_t;
 

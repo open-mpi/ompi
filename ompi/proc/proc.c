@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 #include "dps/dps.h"
@@ -29,7 +29,7 @@
 #include "datatype/convertor.h"
 
 static opal_list_t  ompi_proc_list;
-static ompi_mutex_t ompi_proc_lock;
+static opal_mutex_t ompi_proc_lock;
 ompi_proc_t* ompi_proc_local_proc = NULL;
 
 static void ompi_proc_construct(ompi_proc_t* proc);
@@ -48,15 +48,15 @@ void ompi_proc_construct(ompi_proc_t* proc)
 {
     proc->proc_pml = NULL;
     proc->proc_modex = NULL;
-    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 
     /* FIX - need to determine remote process architecture */
     proc->proc_convertor = ompi_convertor_create(0, 0);
     proc->proc_arch = 0;
 
-    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
 }
 
 
@@ -64,9 +64,9 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 {
     if(proc->proc_modex != NULL)
         OBJ_RELEASE(proc->proc_modex);
-    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     OBJ_DESTRUCT(&proc->proc_lock);
 }
 
@@ -78,7 +78,7 @@ int ompi_proc_init(void)
     int rc;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
-    OBJ_CONSTRUCT(&ompi_proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
 
     if(OMPI_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, &self))) {
         ompi_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
@@ -126,14 +126,14 @@ ompi_proc_t** ompi_proc_world(size_t *size)
         return NULL;
 
     /* return only the procs that match this jobid */
-    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         /* TSW - FIX */
         procs[count++] = proc;
     }
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     *size = count;
     return procs;
 }
@@ -149,14 +149,14 @@ ompi_proc_t** ompi_proc_all(size_t* size)
     if(NULL == procs)
         return NULL;
 
-    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         OBJ_RETAIN(proc);
         procs[count++] = proc;
     }
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     *size = count;
     return procs;
 }
@@ -181,7 +181,7 @@ ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
     /* return the proc-struct which matches this jobid+process id */
 
     mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
@@ -190,7 +190,7 @@ ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
             break;
         }
     }
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     return rproc;
 }
 
@@ -202,7 +202,7 @@ ompi_proc_t * ompi_proc_find_and_add ( const orte_process_name_t * name, bool* i
 
     /* return the proc-struct which matches this jobid+process id */
     mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
@@ -212,7 +212,7 @@ ompi_proc_t * ompi_proc_find_and_add ( const orte_process_name_t * name, bool* i
             break;
         }
     }
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
 
     if ( NULL == rproc ) {
 	    ompi_proc_t *tproc = OBJ_NEW(ompi_proc_t);
@@ -226,15 +226,15 @@ ompi_proc_t * ompi_proc_find_and_add ( const orte_process_name_t * name, bool* i
 int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize, orte_buffer_t* buf)
 {
     int i;
-    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
     for (i=0; i<proclistsize; i++) {
         int rc = orte_dps.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
         if(rc != OMPI_SUCCESS) {
-            OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
     }
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     return OMPI_SUCCESS;
 }
 

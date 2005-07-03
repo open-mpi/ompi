@@ -76,7 +76,7 @@ struct mca_ptl_portals_component_t {
     opal_list_t portals_pending_acks;
 
     /* lock for accessing component */
-    ompi_mutex_t portals_lock;
+    opal_mutex_t portals_lock;
 };
 typedef struct mca_ptl_portals_component_t mca_ptl_portals_component_t;
 

@@ -31,7 +31,7 @@
 
 #include "ompi_config.h"
 
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -45,7 +45,7 @@ struct ompi_pointer_array_t {
     /** base class */
     opal_object_t super;
     /** synchronization object */
-    ompi_mutex_t lock;
+    opal_mutex_t lock;
     /** Index of lowest free element.  NOTE: This is only an
         optimization to know where to search for the first free slot.
         It does \em not necessarily imply indices all above this index
@@ -105,9 +105,9 @@ static inline void *ompi_pointer_array_get_item(ompi_pointer_array_t *table,
                                                 int index)
 {
     void *p;
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
     p = table->addr[index];
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     return p;
 }
 

@@ -263,7 +263,7 @@ orte_gpr_base_module_t orte_gpr;
 bool orte_gpr_base_selected = false;
 opal_list_t orte_gpr_base_components_available;
 mca_gpr_base_component_t orte_gpr_base_selected_component;
-ompi_mutex_t orte_gpr_mutex;
+opal_mutex_t orte_gpr_mutex;
 
 
 /**

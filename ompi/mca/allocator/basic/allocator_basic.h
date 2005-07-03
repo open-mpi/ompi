@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 #include "class/ompi_free_list.h"
 #include "mca/allocator/allocator.h"
@@ -50,7 +50,7 @@ struct mca_allocator_basic_module_t {
     mca_allocator_base_component_segment_alloc_fn_t seg_alloc;
     mca_allocator_base_component_segment_free_fn_t seg_free;
     opal_list_t seg_list;
-    ompi_mutex_t seg_lock;
+    opal_mutex_t seg_lock;
     ompi_free_list_t seg_descriptors;
 };
 typedef struct mca_allocator_basic_module_t mca_allocator_basic_module_t;

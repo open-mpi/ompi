@@ -101,7 +101,7 @@ static char* orte_rds_resfile_param_register_string(
   */
 static int orte_rds_resfile_open(void)
 {
-    OBJ_CONSTRUCT(&mca_rds_resfile_component.lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_rds_resfile_component.lock, opal_mutex_t);
     mca_rds_resfile_component.debug = orte_rds_resfile_param_register_int("debug",1);
     mca_rds_resfile_component.filename = orte_rds_resfile_param_register_string("file", NULL);
     orte_rds_resfile_queried = false;

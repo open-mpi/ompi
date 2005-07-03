@@ -40,8 +40,8 @@
 #include "include/orte_constants.h"
 #include "dps/dps.h"
 #include "event/event.h"
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 #include "runtime/orte_wait.h"
 #include "util/argv.h"
 #include "util/ompi_environ.h"
@@ -78,8 +78,8 @@ typedef struct {
 
 /* Local condition variables and mutex
  */
-static ompi_mutex_t orte_setup_hnp_mutex;
-static ompi_condition_t orte_setup_hnp_condition;
+static opal_mutex_t orte_setup_hnp_mutex;
+static opal_condition_t orte_setup_hnp_condition;
 /* Local return code */
 static int orte_setup_hnp_rc;
 /* Local uri storage */
@@ -308,8 +308,8 @@ MOVEON:
     /* SETUP TO LAUNCH PROBE */
     
     /* setup the conditioned wait and mutex variables */
-    OBJ_CONSTRUCT(&orte_setup_hnp_mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&orte_setup_hnp_condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&orte_setup_hnp_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_setup_hnp_condition, opal_condition_t);
 
     /* get a jobid for the probe */
     if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&jobid))) {
@@ -449,9 +449,9 @@ MOVEON:
         ts.tv_sec = tv.tv_sec + 1000000;
         ts.tv_nsec = 0;
     
-        OMPI_THREAD_LOCK(&orte_setup_hnp_mutex);
-        ompi_condition_timedwait(&orte_setup_hnp_condition, &orte_setup_hnp_mutex, &ts);
-        OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
+        OPAL_THREAD_LOCK(&orte_setup_hnp_mutex);
+        opal_condition_timedwait(&orte_setup_hnp_condition, &orte_setup_hnp_mutex, &ts);
+        OPAL_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 
         if (ORTE_SUCCESS == orte_setup_hnp_rc) {
             /* need to restart the local system so it can connect to the remote daemon.
@@ -515,24 +515,24 @@ static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
     size_t n=1;
     int rc;
     
-    OMPI_THREAD_LOCK(&orte_setup_hnp_mutex);
+    OPAL_THREAD_LOCK(&orte_setup_hnp_mutex);
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &orte_setup_hnp_orted_uri, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         orte_setup_hnp_rc = rc;
-        ompi_condition_signal(&orte_setup_hnp_condition);
-        OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
+        opal_condition_signal(&orte_setup_hnp_condition);
+        OPAL_THREAD_UNLOCK(&orte_setup_hnp_mutex);
         return;
     }
     orte_setup_hnp_rc = ORTE_SUCCESS;
-    ompi_condition_signal(&orte_setup_hnp_condition);
-    OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
+    opal_condition_signal(&orte_setup_hnp_condition);
+    OPAL_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 }
 
 static void orte_setup_hnp_wait(pid_t wpid, int status, void *cbdata)
 {
     orte_setup_hnp_cb_data_t *data;
     
-    OMPI_THREAD_LOCK(&orte_setup_hnp_mutex);
+    OPAL_THREAD_LOCK(&orte_setup_hnp_mutex);
 
     data = (orte_setup_hnp_cb_data_t*)cbdata;
 
@@ -566,8 +566,8 @@ static void orte_setup_hnp_wait(pid_t wpid, int status, void *cbdata)
         }
     }
 
-    ompi_condition_signal(&orte_setup_hnp_condition);
-    OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
+    opal_condition_signal(&orte_setup_hnp_condition);
+    OPAL_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 
 }
 

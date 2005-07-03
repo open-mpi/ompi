@@ -20,21 +20,21 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 AM_LDFLAGS = -lpthread
 
 check_PROGRAMS = \
-	ompi_thread \
-	ompi_condition
+	opal_thread \
+	opal_condition
 
 TESTS = \
 	$(check_PROGRAMS)
 
-ompi_thread_SOURCES = ompi_thread.c
-ompi_thread_LDADD = \
+opal_thread_SOURCES = opal_thread.c
+opal_thread_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la
-ompi_thread_DEPENDENCIES = $(ompi_thread_LDADD)
+opal_thread_DEPENDENCIES = $(opal_thread_LDADD)
 
-ompi_condition_SOURCES = ompi_condition.c
-ompi_condition_LDADD = \
+opal_condition_SOURCES = opal_condition.c
+opal_condition_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la
-ompi_condition_DEPENDENCIES = $(ompi_condition_LDADD)
+opal_condition_DEPENDENCIES = $(opal_condition_LDADD)
 

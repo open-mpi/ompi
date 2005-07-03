@@ -44,12 +44,12 @@ int orte_gpr_replica_increment_value(orte_gpr_value_t *value)
           return ORTE_ERR_BAD_PARAM;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     /* find the segment */
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, value->segment))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
@@ -57,7 +57,7 @@ int orte_gpr_replica_increment_value(orte_gpr_value_t *value)
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
                                         value->tokens, &(value->num_tokens)))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
@@ -75,13 +75,13 @@ int orte_gpr_replica_increment_value(orte_gpr_value_t *value)
         if (ORTE_SUCCESS != 
             (rc = orte_gpr_replica_check_events())) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
         rc = orte_gpr_replica_process_callbacks();
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
     return rc;
 }
@@ -98,12 +98,12 @@ int orte_gpr_replica_decrement_value(orte_gpr_value_t *value)
           return ORTE_ERR_BAD_PARAM;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     /* find the segment */
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, value->segment))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
@@ -111,7 +111,7 @@ int orte_gpr_replica_decrement_value(orte_gpr_value_t *value)
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
                                         value->tokens, &(value->num_tokens)))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
@@ -129,12 +129,12 @@ int orte_gpr_replica_decrement_value(orte_gpr_value_t *value)
         if (ORTE_SUCCESS != 
             (rc = orte_gpr_replica_check_events())) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
         rc = orte_gpr_replica_process_callbacks();
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return rc;
 }

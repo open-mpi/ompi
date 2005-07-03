@@ -133,11 +133,11 @@ typedef mca_ptl_gm_recv_frag_t* (frag_management_fct_t)( struct mca_ptl_gm_modul
 #define OMPI_FREE_LIST_TRY_GET(fl, item) \
 { \
     item = NULL; \
-    if(ompi_using_threads()) { \
-        if( ompi_mutex_trylock( &((fl)->fl_lock)) ) { \
+    if(opal_using_threads()) { \
+        if( opal_mutex_trylock( &((fl)->fl_lock)) ) { \
             /* We get the lock. Now let's remove one of the elements */ \
             item = opal_list_remove_first(&((fl)->super)); \
-            ompi_mutex_unlock(&((fl)->fl_lock)); \
+            opal_mutex_unlock(&((fl)->fl_lock)); \
         } \
     } else { \
         item = opal_list_remove_first(&((fl)->super)); \

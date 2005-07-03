@@ -34,7 +34,7 @@
 #endif
 
 #include "opal/class/opal_free_list.h"
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 #include "mca/mca.h"
 #include "mca/iof/iof.h"
 
@@ -48,8 +48,8 @@ struct orte_iof_base_t {
    opal_list_t          iof_components_opened;
    bool                 iof_flush;
    opal_list_t          iof_endpoints;
-   ompi_mutex_t         iof_lock;
-   ompi_condition_t     iof_condition;
+   opal_mutex_t         iof_lock;
+   opal_condition_t     iof_condition;
    size_t               iof_waiting;
    opal_free_list_t     iof_fragments;
    size_t               iof_window_size;

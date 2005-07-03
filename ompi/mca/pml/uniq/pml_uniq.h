@@ -20,8 +20,8 @@
 #ifndef MCA_PML_UNIQ_H
 #define MCA_PML_UNIQ_H
 
-#include "threads/thread.h"
-#include "threads/condition.h"
+#include "opal/threads/thread.h"
+#include "opal/threads/condition.h"
 #include "class/ompi_free_list.h"
 #include "util/cmd_line.h"
 #include "request/request.h"
@@ -52,7 +52,7 @@ struct mca_pml_uniq_t {
     size_t uniq_num_ptl_progress;
 
     opal_list_t  uniq_procs;
-    ompi_mutex_t uniq_lock;
+    opal_mutex_t uniq_lock;
 
     int uniq_free_list_num;   /* initial size of free list */
     int uniq_free_list_max;   /* maximum size of free list */

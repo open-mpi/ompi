@@ -95,7 +95,7 @@ mca_ptl_gm_component_open(void)
     mca_ptl_gm_component.gm_num_ptl_modules = 0;
 
     /* initialize objects */
-    OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_lock, opal_mutex_t);
     OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_procs, opal_list_t);
     OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_send_req, opal_list_t);
 
@@ -231,7 +231,7 @@ mca_ptl_gm_module_store_data_toexchange (void)
 
 #if OMPI_HAVE_POSIX_THREADS
 static void*
-mca_ptl_gm_thread_progress( ompi_thread_t* thread )
+mca_ptl_gm_thread_progress( opal_thread_t* thread )
 {
     gm_recv_event_t *event;
     mca_ptl_gm_module_t* ptl = thread->t_arg;
@@ -476,12 +476,12 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
          */
         if( OMPI_SUCCESS != mca_ptl_gm_init_sendrecv( ptl ) )
             break;
-        if( ompi_using_threads() ) {
+        if( opal_using_threads() ) {
 #if OMPI_HAVE_POSIX_THREADS
-            ptl->thread.t_run = (ompi_thread_fn_t)mca_ptl_gm_thread_progress;
+            ptl->thread.t_run = (opal_thread_fn_t)mca_ptl_gm_thread_progress;
             ptl->thread.t_arg = (void*)ptl;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
-	    if( OMPI_SUCCESS != ompi_thread_start( &(ptl->thread) ) ) {
+	    if( OMPI_SUCCESS != opal_thread_start( &(ptl->thread) ) ) {
 		break;
             }
         }

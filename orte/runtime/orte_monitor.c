@@ -24,14 +24,14 @@
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "event/event.h"
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 #include "mca/ns/ns_types.h"
 #include "mca/gpr/gpr_types.h"
 
 
-static ompi_mutex_t ompi_rte_mutex;
-static ompi_condition_t ompi_rte_condition;
+static opal_mutex_t ompi_rte_mutex;
+static opal_condition_t ompi_rte_condition;
 static bool ompi_rte_job_started = false;
 static bool ompi_rte_job_finished = false;
 static bool ompi_rte_waiting = false;
@@ -50,23 +50,23 @@ void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata)
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
-    OMPI_THREAD_LOCK(&ompi_rte_mutex);
+    OPAL_THREAD_LOCK(&ompi_rte_mutex);
     ompi_rte_job_started = true;
     if (ompi_rte_waiting) {
-        ompi_condition_signal(&ompi_rte_condition);
+        opal_condition_signal(&ompi_rte_condition);
     }
-    OMPI_THREAD_UNLOCK(&ompi_rte_mutex);
+    OPAL_THREAD_UNLOCK(&ompi_rte_mutex);
 }
 
 
 void orte_all_procs_unregistered(orte_gpr_notify_message_t* match, void* cbdata)
 {
-    OMPI_THREAD_LOCK(&ompi_rte_mutex);
+    OPAL_THREAD_LOCK(&ompi_rte_mutex);
     ompi_rte_job_finished = true;
     if (ompi_rte_waiting) {
-	ompi_condition_signal(&ompi_rte_condition);
+	opal_condition_signal(&ompi_rte_condition);
     }
-    OMPI_THREAD_UNLOCK(&ompi_rte_mutex);
+    OPAL_THREAD_UNLOCK(&ompi_rte_mutex);
 }
 
 
@@ -81,39 +81,39 @@ int orte_monitor_procs_registered(void)
     struct timeval tv;
     struct timespec ts;
 
-    OBJ_CONSTRUCT(&ompi_rte_mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&ompi_rte_condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&ompi_rte_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&ompi_rte_condition, opal_condition_t);
 
     /* block until a timeout occurs or all processes have registered */
     gettimeofday(&tv, NULL);
     ts.tv_sec = tv.tv_sec + 1000000;
     ts.tv_nsec = 0;
 
-    OMPI_THREAD_LOCK(&ompi_rte_mutex);
+    OPAL_THREAD_LOCK(&ompi_rte_mutex);
     if(ompi_rte_job_started == false) {
         ompi_rte_waiting = true;
-        ompi_condition_timedwait(&ompi_rte_condition, &ompi_rte_mutex, &ts);
+        opal_condition_timedwait(&ompi_rte_condition, &ompi_rte_mutex, &ts);
         ompi_rte_waiting = false;
         if(ompi_rte_job_started == false) {
-            ompi_mutex_unlock(&ompi_rte_mutex);
+            opal_mutex_unlock(&ompi_rte_mutex);
             return OMPI_ERROR;
         }
     }
-    OMPI_THREAD_UNLOCK(&ompi_rte_mutex);
+    OPAL_THREAD_UNLOCK(&ompi_rte_mutex);
     return OMPI_SUCCESS;
 }
 
 int orte_monitor_procs_unregistered(void)
 {
-    OMPI_THREAD_LOCK(&ompi_rte_mutex);
+    OPAL_THREAD_LOCK(&ompi_rte_mutex);
     /* wait for all processes to complete */
     while(ompi_rte_job_finished == false) {
 	ompi_rte_waiting = true;
-	ompi_condition_wait(&ompi_rte_condition, &ompi_rte_mutex);
+	opal_condition_wait(&ompi_rte_condition, &ompi_rte_mutex);
         ompi_rte_waiting = false;
     }
 
-    OMPI_THREAD_UNLOCK(&ompi_rte_mutex);
+    OPAL_THREAD_UNLOCK(&ompi_rte_mutex);
     return OMPI_SUCCESS;
 }
 

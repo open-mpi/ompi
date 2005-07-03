@@ -79,7 +79,7 @@ struct mca_ptl_sm_component_t {
     size_t max_fragment_size;            /**< maximum (second and
                                              beyone) fragment size */
     size_t fragment_alignment;       /**< fragment alignment */
-    ompi_mutex_t sm_lock;
+    opal_mutex_t sm_lock;
     char* sm_resouce_ctl_file;     /**< name of shared memory file used 
                                             to coordinate resource usage */
     mca_common_sm_mmap_t *mmap_file;     /**< description of mmap'ed
@@ -123,7 +123,7 @@ struct mca_ptl_sm_component_t {
     ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
-    ompi_mutex_t sm_pending_ack_lock;
+    opal_mutex_t sm_pending_ack_lock;
     opal_list_t sm_pending_ack; /**< list of fragmnent that need to be
                                    acked */
 
@@ -131,7 +131,7 @@ struct mca_ptl_sm_component_t {
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
-    ompi_thread_t sm_fifo_thread;
+    opal_thread_t sm_fifo_thread;
 #endif
 };
 typedef struct mca_ptl_sm_component_t mca_ptl_sm_component_t;

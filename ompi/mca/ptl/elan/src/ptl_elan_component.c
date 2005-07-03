@@ -138,7 +138,7 @@ mca_ptl_elan_component_open (void)
     /* initialize objects*/
     OBJ_CONSTRUCT (&elan_mp->elan_procs, opal_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags_free, ompi_free_list_t);
-    OBJ_CONSTRUCT (&elan_mp->elan_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_lock, opal_mutex_t);
 
     return OMPI_SUCCESS;
 }

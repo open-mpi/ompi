@@ -35,7 +35,7 @@
 #include <stdarg.h>
 
 // forward declare so that we can still do inlining
-struct ompi_mutex_t;
+struct opal_mutex_t;
 
 //JGS: this is used for implementing user functions for MPI::Op
 extern "C" void

@@ -111,8 +111,8 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_tstamp = 0.0;
     endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
     endpoint->endpoint_retries = 0;
-    OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
 }
 
@@ -510,7 +510,7 @@ int mca_btl_mvapi_endpoint_send(
     int rc;
     mca_btl_mvapi_module_t *mvapi_btl; 
     
-    OMPI_THREAD_LOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
     
     switch(endpoint->endpoint_state) {
         case MCA_BTL_IB_CONNECTING:
@@ -568,7 +568,7 @@ int mca_btl_mvapi_endpoint_send(
         rc = OMPI_ERR_UNREACH;
     }
     
-    OMPI_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
     
     return rc;
 }

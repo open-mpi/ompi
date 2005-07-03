@@ -23,11 +23,11 @@
 #endif  /* HAVE_STRING_H */
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
-#include "threads/mutex.h" 
+#include "opal/threads/mutex.h" 
 
 ompi_rb_tree_t mca_mpool_base_tree;
 ompi_free_list_t mca_mpool_base_mem_list;
-ompi_mutex_t mca_mpool_base_tree_lock; 
+opal_mutex_t mca_mpool_base_tree_lock; 
 
 
 /**
@@ -61,7 +61,7 @@ struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base)
     mca_mpool_base_chunk_t* found;
     mca_mpool_base_chunk_t* copy;
 
-    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock);
+    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock);
     if(NULL != (found = mca_mpool_base_find(base))) {
         mca_mpool_base_reg_mpool_t* reg;
         copy = OBJ_NEW(mca_mpool_base_chunk_t);
@@ -74,7 +74,7 @@ struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base)
     } else {
         copy = NULL;
     }
-    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
+    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
     return copy;
 }
 
@@ -152,10 +152,10 @@ int mca_mpool_base_insert(void * addr, size_t size,
     ((mca_mpool_base_chunk_t *) item)->mpools[0].user_data = user_data;
     ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool_registration = registration;
 
-    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
     rc = ompi_rb_tree_insert(&mca_mpool_base_tree, 
                         &((mca_mpool_base_chunk_t *)item)->key, item);
-    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
     if(OMPI_SUCCESS != rc) {
         OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, item);
         return rc; 
@@ -176,13 +176,13 @@ int mca_mpool_base_remove(void * base)
     int rc; 
     mca_mpool_base_chunk_t *chunk;
 
-    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
     if(NULL == (chunk = mca_mpool_base_find_nl(base))) {
-        OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+        OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
         return OMPI_ERR_BAD_PARAM;
     }
     rc =  ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
+    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
     return rc;
 }
 
@@ -300,11 +300,11 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 ((mca_mpool_base_chunk_t *) item)->key.bottom = mem;
                 ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
                                                      ((char *) mem + size - 1);
-                OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+                OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
 
                 ompi_rb_tree_insert(&mca_mpool_base_tree, 
                                     &((mca_mpool_base_chunk_t *)item)->key, item);
-                OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+                OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
                 return mem;
             }
         }
@@ -367,10 +367,10 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     {
         ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = NULL;
     }
-    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
     ompi_rb_tree_insert(&mca_mpool_base_tree, 
                         &((mca_mpool_base_chunk_t *)item)->key, item);
-    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
     free(has_reg_function);
     return mem;
 }
@@ -389,10 +389,10 @@ int mca_mpool_base_free(void * base)
     int i = 0;
     int rc; 
 
-    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
     if(NULL == (chunk = mca_mpool_base_find_nl(base)))
     {
-        OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+        OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
         return OMPI_ERR_BAD_PARAM;
     }
 
@@ -402,7 +402,7 @@ int mca_mpool_base_free(void * base)
         free(chunk->key.bottom);
         OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (opal_list_item_t*) chunk);
         rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-        OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+        OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
         return rc;
     }
 
@@ -421,7 +421,7 @@ int mca_mpool_base_free(void * base)
     OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (opal_list_item_t *) chunk);
 
     rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
     return rc;
 }
 

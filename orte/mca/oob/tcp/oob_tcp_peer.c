@@ -84,7 +84,7 @@ OBJ_CLASS_INSTANCE(
 static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer) 
 { 
     OBJ_CONSTRUCT(&(peer->peer_send_queue), opal_list_t);
-    OBJ_CONSTRUCT(&(peer->peer_lock), ompi_mutex_t);
+    OBJ_CONSTRUCT(&(peer->peer_lock), opal_mutex_t);
     memset(&peer->peer_send_event, 0, sizeof(peer->peer_send_event));
     memset(&peer->peer_recv_event, 0, sizeof(peer->peer_recv_event));
     memset(&peer->peer_timer_event, 0, sizeof(peer->peer_timer_event));
@@ -136,7 +136,7 @@ static int mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
 int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 {
     int rc = OMPI_SUCCESS;
-    OMPI_THREAD_LOCK(&peer->peer_lock);
+    OPAL_THREAD_LOCK(&peer->peer_lock);
     switch(peer->peer_state) {
     case MCA_OOB_TCP_CONNECTING:
     case MCA_OOB_TCP_CONNECT_ACK:
@@ -148,7 +148,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
         opal_list_append(&peer->peer_send_queue, (opal_list_item_t*)msg);
         if(peer->peer_state == MCA_OOB_TCP_CLOSED) {
             peer->peer_state = MCA_OOB_TCP_RESOLVE;
-            OMPI_THREAD_UNLOCK(&peer->peer_lock);
+            OPAL_THREAD_UNLOCK(&peer->peer_lock);
             return mca_oob_tcp_resolve(peer);
         }
         break;
@@ -172,7 +172,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
         }
         break;
     }
-    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+    OPAL_THREAD_UNLOCK(&peer->peer_lock);
     return rc;
 }
 
@@ -191,11 +191,11 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
         return NULL;
     }
     
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     peer = (mca_oob_tcp_peer_t*)opal_hash_table_get_proc(
        &mca_oob_tcp_component.tcp_peers, name);
     if(NULL != peer && memcmp(&peer->peer_name,name,sizeof(peer->peer_name)) == 0) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return peer;
     }
 
@@ -205,7 +205,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
         item =  opal_list_get_next(item)) {
         peer = (mca_oob_tcp_peer_t*)item;
         if (memcmp(&peer->peer_name, name, sizeof(peer->peer_name)) == 0) {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
             return peer;
         }
     }
@@ -213,7 +213,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     /* allocate from free list */
     MCA_OOB_TCP_PEER_ALLOC(peer, rc);
     if(NULL == peer) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return NULL;
     }
 
@@ -230,7 +230,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     if(OMPI_SUCCESS != opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, 
         &peer->peer_name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return NULL;
     }
 
@@ -258,7 +258,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
             }
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     return peer;
 }
 
@@ -646,11 +646,11 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
 
 /* static void mca_oob_tcp_peer_recv_ident(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hdr_t* hdr) */
 /* { */
-/*     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock); */
+/*     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock); */
 /*     ompi_rb_tree_delete(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name); */
 /*     peer->peer_name = hdr->msg_src; */
 /*     ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer); */
-/*     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock); */
+/*     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock); */
 /* } */
 
 
@@ -662,7 +662,7 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
 static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t *)user;
-    OMPI_THREAD_LOCK(&peer->peer_lock);
+    OPAL_THREAD_LOCK(&peer->peer_lock);
     switch(peer->peer_state) {
         case MCA_OOB_TCP_CONNECT_ACK: 
         {
@@ -701,7 +701,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 mca_oob_tcp_msg_recv_handler(peer->peer_recv_msg, peer)) {
                mca_oob_tcp_msg_t* msg = peer->peer_recv_msg;
                peer->peer_recv_msg = NULL;
-               OMPI_THREAD_UNLOCK(&peer->peer_lock);
+               OPAL_THREAD_UNLOCK(&peer->peer_lock);
                mca_oob_tcp_msg_recv_complete(msg, peer);
                return;
             }
@@ -717,7 +717,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
             break;
         }
     }
-    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+    OPAL_THREAD_UNLOCK(&peer->peer_lock);
 }
 
 /*
@@ -727,7 +727,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
 static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 {
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t *)user;
-    OMPI_THREAD_LOCK(&peer->peer_lock);
+    OPAL_THREAD_LOCK(&peer->peer_lock);
     switch(peer->peer_state) {
     case MCA_OOB_TCP_CONNECTING:
         mca_oob_tcp_peer_complete_connect(peer);
@@ -763,7 +763,7 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
         ompi_event_del(&peer->peer_send_event);
         break;
     }
-    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+    OPAL_THREAD_UNLOCK(&peer->peer_lock);
 }
                                                                                                                        
 
@@ -829,7 +829,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
 {
     int cmpval;
-    OMPI_THREAD_LOCK(&peer->peer_lock);
+    OPAL_THREAD_LOCK(&peer->peer_lock);
     cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, &peer->peer_name, orte_process_info.my_name);
     if ((peer->peer_state == MCA_OOB_TCP_CLOSED) ||
         (peer->peer_state == MCA_OOB_TCP_RESOLVE) ||
@@ -848,7 +848,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 ORTE_NAME_ARGS(&(peer->peer_name)));
             mca_oob_tcp_peer_close(peer);
-            OMPI_THREAD_UNLOCK(&peer->peer_lock);
+            OPAL_THREAD_UNLOCK(&peer->peer_lock);
             return false;
         }
 
@@ -857,10 +857,10 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
         if(mca_oob_tcp_component.tcp_debug > 0) {
             mca_oob_tcp_peer_dump(peer, "accepted");
         }
-        OMPI_THREAD_UNLOCK(&peer->peer_lock);
+        OPAL_THREAD_UNLOCK(&peer->peer_lock);
         return true;
     }
-    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+    OPAL_THREAD_UNLOCK(&peer->peer_lock);
     return false;
 }
 
@@ -871,13 +871,13 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
 
 void mca_oob_tcp_peer_resolved(mca_oob_tcp_peer_t* peer, mca_oob_tcp_addr_t* addr)
 {
-    OMPI_THREAD_LOCK(&peer->peer_lock);
+    OPAL_THREAD_LOCK(&peer->peer_lock);
     peer->peer_addr = addr;
     if((peer->peer_state == MCA_OOB_TCP_RESOLVE) ||
        (peer->peer_state == MCA_OOB_TCP_CLOSED && opal_list_get_size(&peer->peer_send_queue))) {
         mca_oob_tcp_peer_start_connect(peer);
     }
-    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+    OPAL_THREAD_UNLOCK(&peer->peer_lock);
 }
 
 /*
@@ -889,10 +889,10 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
     /* start the connection to the peer */
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)user;
     ompi_output(0, "mca_oob_tcp_peer_timer_handler\n");
-    OMPI_THREAD_LOCK(&peer->peer_lock);
+    OPAL_THREAD_LOCK(&peer->peer_lock);
     if(peer->peer_state == MCA_OOB_TCP_CLOSED)
         mca_oob_tcp_peer_start_connect(peer);
-    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+    OPAL_THREAD_UNLOCK(&peer->peer_lock);
 }
 
 /*
@@ -902,7 +902,7 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
 void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 {
     opal_list_item_t* item;
-    OMPI_THREAD_LOCK(&peer->peer_lock);
+    OPAL_THREAD_LOCK(&peer->peer_lock);
     if (peer->peer_send_msg == msg)
         peer->peer_send_msg = NULL;
     if (peer->peer_recv_msg == msg)
@@ -916,7 +916,7 @@ void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* m
             break;
         }
     }
-    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+    OPAL_THREAD_UNLOCK(&peer->peer_lock);
 }
 
 

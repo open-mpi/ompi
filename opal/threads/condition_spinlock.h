@@ -20,8 +20,8 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include "threads/condition.h"
-#include "threads/mutex.h"
+#include "opal/threads/condition.h"
+#include "opal/threads/mutex.h"
 #include "opal/runtime/opal_progress.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -29,24 +29,24 @@ extern "C" {
 #endif
 
 
-struct ompi_condition_t {
+struct opal_condition_t {
     opal_object_t super;
     volatile int c_waiting;
     volatile int c_signaled;
 };
-typedef struct ompi_condition_t ompi_condition_t;
+typedef struct opal_condition_t opal_condition_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_condition_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
 
 
-static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)
+static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 {
     c->c_waiting++;
-    if (ompi_using_threads()) {
+    if (opal_using_threads()) {
         while (c->c_signaled == 0) {
-            ompi_mutex_unlock(m);
+            opal_mutex_unlock(m);
             opal_progress();
-            ompi_mutex_lock(m);
+            opal_mutex_lock(m);
         }
     } else {
         while (c->c_signaled == 0) {
@@ -58,8 +58,8 @@ static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)
     return 0;
 }
 
-static inline int ompi_condition_timedwait(ompi_condition_t *c,
-                                           ompi_mutex_t *m,
+static inline int opal_condition_timedwait(opal_condition_t *c,
+                                           opal_mutex_t *m,
                                            const struct timespec *abstime)
 {
     struct timeval tv;
@@ -69,14 +69,14 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
     gettimeofday(&tv,NULL);
 
     c->c_waiting++;
-    if (ompi_using_threads()) {
+    if (opal_using_threads()) {
         while (c->c_signaled == 0 &&  
                (tv.tv_sec <= abs.tv_sec ||
                (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
-            ompi_mutex_unlock(m);
+            opal_mutex_unlock(m);
             opal_progress();
             gettimeofday(&tv,NULL);
-            ompi_mutex_lock(m);
+            opal_mutex_lock(m);
         }
     } else {
         while (c->c_signaled == 0 &&  
@@ -91,7 +91,7 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
     return 0;
 }
 
-static inline int ompi_condition_signal(ompi_condition_t *c)
+static inline int opal_condition_signal(opal_condition_t *c)
 {
     if (c->c_waiting) {
         c->c_signaled++;
@@ -99,7 +99,7 @@ static inline int ompi_condition_signal(ompi_condition_t *c)
     return 0;
 }
 
-static inline int ompi_condition_broadcast(ompi_condition_t *c)
+static inline int opal_condition_broadcast(opal_condition_t *c)
 {
     c->c_signaled += c->c_waiting;
     return 0;

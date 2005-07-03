@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "include/constants.h"
 #include "communicator/communicator.h"
 #include "mca/pml/pml.h"
@@ -350,7 +350,7 @@ bool mca_ptl_base_match(
      * end points) from being processed, and potentially "loosing"
      * the fragment.
      */
-    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = (uint16_t)*((pml_comm->c_next_msg_seq)+frag_src);
@@ -434,7 +434,7 @@ bool mca_ptl_base_match(
                     (opal_list_item_t *)frag_desc);
     }
 
-    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_UNLOCK(&pml_comm->c_matching_lock);
     return match_made;
 }
 
@@ -624,7 +624,7 @@ bool mca_ptl_base_match_in_order_network_delivery(
      * end points) from being processed, and potentially "loosing"
      * the fragment.
      */
-    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /*
      * figure out what sort of matching logic to use, if need to
@@ -667,6 +667,6 @@ bool mca_ptl_base_match_in_order_network_delivery(
     }
 
 
-    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_UNLOCK(&pml_comm->c_matching_lock);
     return match_made;
 }

@@ -39,7 +39,7 @@ extern "C" {
      unqualified name for a header file.  :-) */
 #include "ompi_config.h"
 #endif
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -188,7 +188,7 @@ OMPI_DECLSPEC int ompi_event_restart(void);
 OMPI_DECLSPEC int   ompi_event_add_i(struct ompi_event *, struct timeval *);
 OMPI_DECLSPEC int   ompi_event_del_i(struct ompi_event *);
 OMPI_DECLSPEC void  ompi_event_active_i(struct ompi_event*, int, short);
-OMPI_DECLSPEC extern ompi_mutex_t ompi_event_lock;
+OMPI_DECLSPEC extern opal_mutex_t ompi_event_lock;
 OMPI_DECLSPEC extern int ompi_evsignal_restart(void);
 
 /* public functions */
@@ -213,12 +213,12 @@ ompi_event_set(struct ompi_event *ev, int fd, short events,
 static inline int
 ompi_event_add(struct ompi_event *ev, struct timeval *tv)
 {
-    extern ompi_mutex_t ompi_event_lock;
+    extern opal_mutex_t ompi_event_lock;
     int rc;
-    if(ompi_using_threads()) {
-        ompi_mutex_lock(&ompi_event_lock);
+    if(opal_using_threads()) {
+        opal_mutex_lock(&ompi_event_lock);
         rc = ompi_event_add_i(ev, tv);
-        ompi_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&ompi_event_lock);
     } else {
         rc = ompi_event_add_i(ev, tv);
     }
@@ -228,12 +228,12 @@ ompi_event_add(struct ompi_event *ev, struct timeval *tv)
 static inline int 
 ompi_event_del(struct ompi_event *ev)
 {
-    extern ompi_mutex_t ompi_event_lock;
+    extern opal_mutex_t ompi_event_lock;
     int rc;
-    if(ompi_using_threads()) {
-        ompi_mutex_lock(&ompi_event_lock);
+    if(opal_using_threads()) {
+        opal_mutex_lock(&ompi_event_lock);
         rc = ompi_event_del_i(ev);
-        ompi_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&ompi_event_lock);
     } else {
         rc = ompi_event_del_i(ev);
     }
@@ -243,10 +243,10 @@ ompi_event_del(struct ompi_event *ev)
 static inline void 
 ompi_event_active(struct ompi_event* ev, int res, short ncalls)
 {
-    if(ompi_using_threads()) {
-        ompi_mutex_lock(&ompi_event_lock);
+    if(opal_using_threads()) {
+        opal_mutex_lock(&ompi_event_lock);
         ompi_event_active_i(ev, res, ncalls);
-        ompi_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&ompi_event_lock);
     } else {
         ompi_event_active_i(ev, res, ncalls);
     }

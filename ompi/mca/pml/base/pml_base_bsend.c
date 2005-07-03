@@ -15,8 +15,8 @@
  */
 
 #include "ompi_config.h"
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 #include "mca/allocator/base/base.h"
 #include "mca/allocator/allocator.h"
 #include "mca/base/mca_base_param.h"
@@ -27,8 +27,8 @@
 #include "mca/mpool/mpool.h" 
 
 
-static ompi_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
-static ompi_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
+static opal_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
+static opal_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
 static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;  
 static mca_allocator_base_module_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
 static unsigned char   *mca_pml_bsend_base;       /* base address of users buffer */
@@ -73,12 +73,12 @@ int mca_pml_base_bsend_init(bool thread_safe)
     char *name;
     size_t tmp;
 
-    if(OMPI_THREAD_ADD32(&mca_pml_bsend_init, 1) > 1)
+    if(OPAL_THREAD_ADD32(&mca_pml_bsend_init, 1) > 1)
         return OMPI_SUCCESS;
 
     /* initialize static objects */
-    OBJ_CONSTRUCT(&mca_pml_bsend_mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_pml_bsend_condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&mca_pml_bsend_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_bsend_condition, opal_condition_t);
 
     /* lookup name of the allocator to use for buffered sends */
     mca_base_param_lookup_string(id, &name);
@@ -104,7 +104,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
  */
 int mca_pml_base_bsend_fini()
 {
-    if(OMPI_THREAD_ADD32(&mca_pml_bsend_init,-1) > 0) 
+    if(OPAL_THREAD_ADD32(&mca_pml_bsend_init,-1) > 0) 
         return OMPI_SUCCESS;
 
     if(NULL != mca_pml_bsend_allocator)
@@ -128,16 +128,16 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     }
 
     /* check for buffer already attached */
-    OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
     if(NULL != mca_pml_bsend_allocator) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
     /* try to create an instance of the allocator - to determine thread safety level */
     mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(thread_safe, mca_pml_bsend_alloc_segment, NULL, NULL);
     if(NULL == mca_pml_bsend_allocator) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
@@ -146,7 +146,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     mca_pml_bsend_addr = addr;
     mca_pml_bsend_size = size;
     mca_pml_bsend_count = 0;
-    OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }
 
@@ -155,17 +155,17 @@ int mca_pml_base_bsend_attach(void* addr, int size)
  */
 int mca_pml_base_bsend_detach(void* addr, int* size)
 {
-    OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
 
     /* is buffer attached */
     if(NULL == mca_pml_bsend_allocator) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
     /* wait on any pending requests */
     while(mca_pml_bsend_count != 0)
-        ompi_condition_wait(&mca_pml_bsend_condition, &mca_pml_bsend_mutex);
+        opal_condition_wait(&mca_pml_bsend_condition, &mca_pml_bsend_mutex);
     
     /* free resources associated with the allocator */
     mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
@@ -182,7 +182,7 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
     mca_pml_bsend_addr = NULL;
     mca_pml_bsend_size = 0;
     mca_pml_bsend_count = 0;
-    OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 } 
 
@@ -202,10 +202,10 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
     if(sendreq->req_count > 0) {
 
         /* has a buffer been provided */
-        OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+        OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
         if(NULL == mca_pml_bsend_addr) {
             sendreq->req_addr = NULL;
-            OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+            OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
             return OMPI_ERR_BUFFER;
         }
 
@@ -215,7 +215,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         if(NULL == sendreq->req_addr) {
             /* release resources when request is freed */
             sendreq->req_base.req_pml_complete = true;
-            OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+            OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
             return OMPI_ERR_BUFFER;
         }
     
@@ -225,7 +225,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 
         /* increment count of pending requests */
         mca_pml_bsend_count++;
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
         /* The convertor is already initialized in the begining so we just have to
          * pack the data in the newly allocated buffer.
@@ -258,7 +258,7 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
         return OMPI_SUCCESS;
 
     /* remove from list of pending requests */
-    OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
 
     /* free buffer */
     mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, sendreq->req_addr);
@@ -266,9 +266,9 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 
     /* decrement count of buffered requests */
     if(--mca_pml_bsend_count == 0)
-        ompi_condition_signal(&mca_pml_bsend_condition);
+        opal_condition_signal(&mca_pml_bsend_condition);
 
-    OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }
                                                                                                              

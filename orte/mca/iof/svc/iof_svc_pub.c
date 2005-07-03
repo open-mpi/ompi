@@ -41,7 +41,7 @@ int orte_iof_svc_pub_create(
     orte_iof_svc_pub_t* pub;
     opal_list_item_t* item;
 
-    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
 
     /* has this endpoint already been published */
     for(item  = opal_list_get_first(&mca_iof_svc_component.svc_published);
@@ -51,7 +51,7 @@ int orte_iof_svc_pub_create(
         if(orte_ns.compare(pub_mask,pub_name,&pub->pub_name) == 0 &&
            orte_ns.compare(ORTE_NS_CMP_ALL,pub_proxy,&pub->pub_proxy) == 0 &&
            pub_tag == pub->pub_tag) {
-           OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+           OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
            return OMPI_SUCCESS;
         }
     }
@@ -76,7 +76,7 @@ int orte_iof_svc_pub_create(
 
     /* append this published endpoint to the global list */
     opal_list_append(&mca_iof_svc_component.svc_published, &pub->super);
-    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
     return ORTE_SUCCESS;
 }
 
@@ -120,10 +120,10 @@ int orte_iof_svc_pub_delete(
     opal_list_item_t* item;
     orte_iof_svc_pub_t* pub;
 
-    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
     pub = orte_iof_svc_pub_lookup(pub_name,pub_proxy,pub_mask,pub_tag);
     if(NULL == pub) {
-        OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+        OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
         return ORTE_ERR_NOT_FOUND;
     }
 
@@ -137,7 +137,7 @@ int orte_iof_svc_pub_delete(
     }
     opal_list_remove_item(&mca_iof_svc_component.svc_published, &pub->super);
     OBJ_RELEASE(pub);
-    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
     return ORTE_SUCCESS;
 }
                                                                                                            

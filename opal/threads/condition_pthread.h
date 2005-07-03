@@ -19,38 +19,38 @@
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-struct ompi_condition_t {
+struct opal_condition_t {
     opal_object_t super;
     pthread_cond_t c_cond;
 };
-typedef struct ompi_condition_t ompi_condition_t;
+typedef struct opal_condition_t opal_condition_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_condition_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
 
 
-static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)
+static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 {
     return pthread_cond_wait(&c->c_cond, &m->m_lock_pthread);
 }
 
-static inline int ompi_condition_timedwait(ompi_condition_t *c,
-                                           ompi_mutex_t *m,
+static inline int opal_condition_timedwait(opal_condition_t *c,
+                                           opal_mutex_t *m,
                                            const struct timespec *abstime)
 {
     return pthread_cond_timedwait(&c->c_cond, &m->m_lock_pthread, abstime);
 }
 
-static inline int ompi_condition_signal(ompi_condition_t *c)
+static inline int opal_condition_signal(opal_condition_t *c)
 {
     return pthread_cond_signal(&c->c_cond);
 }
 
-static inline int ompi_condition_broadcast(ompi_condition_t *c)
+static inline int opal_condition_broadcast(opal_condition_t *c)
 {
     return pthread_cond_broadcast(&c->c_cond);
 }

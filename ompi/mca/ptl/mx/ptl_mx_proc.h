@@ -45,7 +45,7 @@ struct mca_ptl_mx_proc_t {
     size_t proc_addr_count;             /**< number of addresses published by peer */
     mca_ptl_mx_peer_t **proc_peers;     /**< array of peers that have been created to access this proc */
     size_t proc_peer_count;             /**< number of peers */
-    ompi_mutex_t proc_lock;             /**< lock to protect against concurrent access to proc state */
+    opal_mutex_t proc_lock;             /**< lock to protect against concurrent access to proc state */
 };
 typedef struct mca_ptl_mx_proc_t mca_ptl_mx_proc_t;
 

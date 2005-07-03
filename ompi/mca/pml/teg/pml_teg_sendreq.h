@@ -48,7 +48,7 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
     if(NULL == proc) {                                                     \
        return OMPI_ERR_OUT_OF_RESOURCE;                                    \
     }                                                                      \
-    OMPI_THREAD_SCOPED_LOCK(&proc->proc_lock,                              \
+    OPAL_THREAD_SCOPED_LOCK(&proc->proc_lock,                              \
        (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));        \
     ptl_base = ptl_proc->ptl_base;                                         \
     /*                                                                     \
@@ -56,11 +56,11 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
      * this ptl - if so try the allocation from there.                     \
     */                                                                     \
     if(NULL != ptl_base) {                                                 \
-        OMPI_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
+        OPAL_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
         sendreq = (mca_pml_teg_send_request_t*)                            \
             opal_list_remove_first(&ptl_base->ptl_cache);                  \
         if(NULL != sendreq) {                                              \
-            OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
+            OPAL_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             rc = OMPI_SUCCESS;                                             \
         } else if (ptl_base->ptl_cache_alloc < ptl_base->ptl_cache_size) { \
             /*                                                             \
@@ -75,13 +75,13 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
                 sendreq->req_cached = true;                                \
                 ptl_base->ptl_cache_alloc++;                               \
             }                                                              \
-            OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
+            OPAL_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
         } else {                                                           \
             /*                                                             \
              * take a request from the global pool                         \
             */                                                             \
             opal_list_item_t* item;                                        \
-            OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
+            OPAL_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
             sendreq = (mca_pml_teg_send_request_t*)item;                   \
             sendreq->req_ptl = ptl_proc->ptl;                              \
@@ -135,10 +135,10 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
      * to return the send descriptor to the cache.                         \
      */                                                                    \
     if(NULL != ptl->ptl_base && (sendreq)->req_cached) {                   \
-        OMPI_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
+        OPAL_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
         opal_list_prepend(&ptl_base->ptl_cache,                            \
                           (opal_list_item_t*)sendreq);                     \
-        OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                     \
+        OPAL_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                     \
     } else {                                                               \
         OMPI_FREE_LIST_RETURN(                                             \
             &mca_pml_teg.teg_send_requests, (opal_list_item_t*)sendreq);   \

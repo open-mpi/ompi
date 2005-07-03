@@ -65,7 +65,7 @@ struct mca_ptl_tcp_component_t {
     struct mca_ptl_tcp_proc_t* tcp_local;  /**< the tcp proc instance corresponding to the local process */
     ompi_event_t tcp_send_event;           /**< event structure for sends */
     ompi_event_t tcp_recv_event;           /**< event structure for recvs */
-    ompi_mutex_t tcp_lock;                 /**< lock for accessing module state */
+    opal_mutex_t tcp_lock;                 /**< lock for accessing module state */
 };
 typedef struct mca_ptl_tcp_component_t mca_ptl_tcp_component_t;
 struct mca_ptl_tcp_recv_frag_t;

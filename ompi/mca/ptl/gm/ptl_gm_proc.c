@@ -56,12 +56,12 @@ mca_ptl_gm_proc_construct (mca_ptl_gm_proc_t * proc)
     proc->peer_arr = NULL;
     proc->proc_peer_count = 0;
 
-    OBJ_CONSTRUCT (&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT (&proc->proc_lock, opal_mutex_t);
 
     /* add to list of all proc instance */
-    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
+    OPAL_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
     opal_list_append (&mca_ptl_gm_component.gm_procs, &proc->super);
-    OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
+    OPAL_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
 
     return;
 }
@@ -75,9 +75,9 @@ void
 mca_ptl_gm_proc_destruct (mca_ptl_gm_proc_t * proc)
 {
     /* remove from list of all proc instances */
-    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
+    OPAL_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
     opal_list_remove_item (&mca_ptl_gm_component.gm_procs, &proc->super);
-    OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
+    OPAL_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
 
     /* release resources */
     if (NULL != proc->peer_arr)
@@ -161,7 +161,7 @@ mca_ptl_gm_proc_lookup_ompi (ompi_proc_t * ompi_proc)
 {
     mca_ptl_gm_proc_t *gm_proc;
 
-    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
+    OPAL_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
 
     gm_proc = (mca_ptl_gm_proc_t *)
         opal_list_get_first (&mca_ptl_gm_component.gm_procs);
@@ -170,11 +170,11 @@ mca_ptl_gm_proc_lookup_ompi (ompi_proc_t * ompi_proc)
          opal_list_get_end (&mca_ptl_gm_component.gm_procs);
          gm_proc = (mca_ptl_gm_proc_t *) opal_list_get_next (gm_proc)) {
         if (gm_proc->proc_ompi == ompi_proc) {
-            OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
+            OPAL_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
             return gm_proc;
         }
     }
-    OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
+    OPAL_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
 
     return NULL;
 }

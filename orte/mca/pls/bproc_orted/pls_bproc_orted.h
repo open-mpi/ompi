@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 #include "mca/mca.h"
 #include "mca/pls/pls.h"
 #include "class/orte_value_array.h"
@@ -55,8 +55,8 @@ struct orte_pls_bproc_orted_component_t {
     int debug;
     int priority;
     int num_procs;
-    ompi_mutex_t lock;
-    ompi_condition_t condition;
+    opal_mutex_t lock;
+    opal_condition_t condition;
 
 };
 typedef struct orte_pls_bproc_orted_component_t orte_pls_bproc_orted_component_t;

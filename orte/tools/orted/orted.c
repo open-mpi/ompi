@@ -32,8 +32,8 @@
 
 #include "include/orte_constants.h"
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "dps/dps.h"
 #include "util/ompi_environ.h"
@@ -314,8 +314,8 @@ int main(int argc, char *argv[])
     }
 
     /* setup the thread lock and condition variable */
-    OBJ_CONSTRUCT(&orted_globals.mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&orted_globals.condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
     /*
      *  Set my process status to "starting". Note that this must be done
@@ -347,13 +347,13 @@ int main(int argc, char *argv[])
     }
 
      /* setup and enter the event monitor */
-    OMPI_THREAD_LOCK(&orted_globals.mutex);
+    OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     while (false == orted_globals.exit_condition) {
-	    ompi_condition_wait(&orted_globals.condition, &orted_globals.mutex);
+	    opal_condition_wait(&orted_globals.condition, &orted_globals.mutex);
     }
 
-    OMPI_THREAD_UNLOCK(&orted_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
 	   ompi_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
@@ -384,7 +384,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     size_t n;
     char *contact_info;
 
-    OMPI_THREAD_LOCK(&orted_globals.mutex);
+    OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
 	   ompi_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
@@ -405,7 +405,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
         /****    EXIT COMMAND    ****/
     if (ORTE_DAEMON_EXIT_CMD == command) {
 	    orted_globals.exit_condition = true;
-	    ompi_condition_signal(&orted_globals.condition);
+	    opal_condition_signal(&orted_globals.condition);
 
 	/****     CONTACT QUERY COMMAND    ****/
     } else if (ORTE_DAEMON_CONTACT_QUERY_CMD == command) {
@@ -438,6 +438,6 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(ret);
     }
 
-    OMPI_THREAD_UNLOCK(&orted_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orted_globals.mutex);
     return;
 }

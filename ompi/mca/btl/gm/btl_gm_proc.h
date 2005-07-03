@@ -56,7 +56,7 @@ struct mca_btl_gm_proc_t {
     size_t proc_endpoint_count;                  
     /**< number of endpoints */
 
-    ompi_mutex_t proc_lock;                  
+    opal_mutex_t proc_lock;                  
     /**< lock to protect against concurrent access to proc state */
 };
 typedef struct mca_btl_gm_proc_t mca_btl_gm_proc_t;

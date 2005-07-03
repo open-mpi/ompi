@@ -25,7 +25,7 @@ static void mca_pml_uniq_proc_construct(mca_pml_proc_t* proc)
 {
     proc->proc_ompi = NULL;
     proc->proc_ptl_flags = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 
     proc->proc_ptl_first.ptl_peer = NULL;
     proc->proc_ptl_first.ptl_base = NULL;
@@ -35,17 +35,17 @@ static void mca_pml_uniq_proc_construct(mca_pml_proc_t* proc)
     proc->proc_ptl_next.ptl_base = NULL;
     proc->proc_ptl_next.ptl = NULL;
 #endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
-    OMPI_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
+    OPAL_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
     opal_list_append(&mca_pml_uniq.uniq_procs, (opal_list_item_t*)proc);
-    OMPI_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);
+    OPAL_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);
 }
 
 
 static void mca_pml_uniq_proc_destruct(mca_pml_proc_t* proc)
 {
-    OMPI_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
+    OPAL_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
     opal_list_remove_item(&mca_pml_uniq.uniq_procs, (opal_list_item_t*)proc);
-    OMPI_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);
+    OPAL_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);
 
     OBJ_DESTRUCT(&proc->proc_lock);
 }

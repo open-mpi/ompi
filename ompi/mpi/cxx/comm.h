@@ -349,16 +349,16 @@ public: // JGS hmmm, these used by errhandler_intercept
   typedef ::std::pair<Comm*, CommType> comm_pair_t;
   typedef ::std::map<MPI_Comm, comm_pair_t*> mpi_comm_map_t;
   static mpi_comm_map_t mpi_comm_map;
-  static ompi_mutex_t *mpi_comm_map_mutex;
+  static opal_mutex_t *mpi_comm_map_mutex;
 
   typedef ::std::map<MPI_Comm, Comm*> mpi_err_map_t;
   static mpi_err_map_t mpi_err_map;
-  static ompi_mutex_t *mpi_err_map_mutex;
+  static opal_mutex_t *mpi_err_map_mutex;
   
   typedef ::std::pair<Comm::_MPI2CPP_COPYATTRFN_*, Comm::_MPI2CPP_DELETEATTRFN_*> key_pair_t;
   typedef ::std::map<int, key_pair_t*> key_fn_map_t;
   static key_fn_map_t key_fn_map;
-  static ompi_mutex_t *key_fn_map_mutex;
+  static opal_mutex_t *key_fn_map_mutex;
   
   void init() {
     my_errhandler = (Errhandler*)0;

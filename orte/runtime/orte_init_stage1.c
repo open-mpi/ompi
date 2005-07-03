@@ -26,7 +26,7 @@
 #include "include/constants.h"
 #include "event/event.h"
 #include "util/output.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"

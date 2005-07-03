@@ -44,7 +44,7 @@
 #include "util/universe_setup_file_io.h"
 #include "util/show_help.h"
 #include "util/basename.h"
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 
 #include "mca/base/base.h"
 #include "mca/ns/ns.h"
@@ -95,8 +95,8 @@ struct globals_t {
     char *appfile;
     char *wdir;
     char *path;
-    ompi_mutex_t lock;
-    ompi_condition_t cond;
+    opal_mutex_t lock;
+    opal_condition_t cond;
 } orterun_globals;
 static bool globals_init = false;
 
@@ -351,9 +351,9 @@ int main(int argc, char *argv[])
         /* Wait for the app to complete */
 
         if (wait_for_job_completion) {
-            OMPI_THREAD_LOCK(&orterun_globals.lock);
+            OPAL_THREAD_LOCK(&orterun_globals.lock);
             while (!orterun_globals.exit) {
-                ompi_condition_wait(&orterun_globals.cond, 
+                opal_condition_wait(&orterun_globals.cond, 
                                     &orterun_globals.lock);
             }
             /* Make sure we propagate the exit code */
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
             } else {
                 rc = WTERMSIG(orterun_globals.exit_status);
             }
-            OMPI_THREAD_UNLOCK(&orterun_globals.lock);
+            OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
             /* If we showed more abort messages than were allowed,
                show a followup message here */
@@ -510,7 +510,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 {
-    OMPI_THREAD_LOCK(&orterun_globals.lock);
+    OPAL_THREAD_LOCK(&orterun_globals.lock);
 
     /* Note that there's only two states that we're interested in
        here:
@@ -535,10 +535,10 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
         case ORTE_PROC_STATE_TERMINATED:
             dump_aborted_procs(jobid);
             orterun_globals.exit = true;
-            ompi_condition_signal(&orterun_globals.cond);
+            opal_condition_signal(&orterun_globals.cond);
             break;
     }
-    OMPI_THREAD_UNLOCK(&orterun_globals.lock);
+    OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 }
 
 /*
@@ -606,8 +606,8 @@ static int init_globals(void)
     /* Only CONSTRUCT things once */
     
     if (!globals_init) {
-        OBJ_CONSTRUCT(&orterun_globals.lock, ompi_mutex_t);
-        OBJ_CONSTRUCT(&orterun_globals.cond, ompi_condition_t);
+        OBJ_CONSTRUCT(&orterun_globals.lock, opal_mutex_t);
+        OBJ_CONSTRUCT(&orterun_globals.cond, opal_condition_t);
     }
 
     /* Reset this every time */

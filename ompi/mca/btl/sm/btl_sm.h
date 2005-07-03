@@ -81,7 +81,7 @@ struct mca_btl_sm_component_t {
     void* sm_mpool_base;               /**< base address of shared memory pool */
     size_t eager_limit;                /**< first fragment size */
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
-    ompi_mutex_t sm_lock;
+    opal_mutex_t sm_lock;
     char* sm_resouce_ctl_file;         /**< name of shared memory file used 
                                             to coordinate resource usage */
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
@@ -126,7 +126,7 @@ struct mca_btl_sm_component_t {
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
-    ompi_thread_t sm_fifo_thread;
+    opal_thread_t sm_fifo_thread;
 #endif
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;

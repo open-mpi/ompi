@@ -61,7 +61,7 @@ struct mca_btl_gm_component_t {
     int gm_free_list_inc;   /**< number of elements to alloc when growing free lists */
 
     opal_list_t gm_procs;   /**< list of gm proc structures */
-    ompi_mutex_t gm_lock;   /**< lock for accessing module state */
+    opal_mutex_t gm_lock;   /**< lock for accessing module state */
     char* gm_mpool_name;    /**< name of memory pool */ 
 
     bool leave_pinned;
@@ -97,7 +97,7 @@ struct mca_btl_gm_module_t {
 
     /* lock for accessing module state */
     opal_list_t gm_pending; /**< list of pending send descriptors */
-    ompi_mutex_t gm_lock;
+    opal_mutex_t gm_lock;
     struct mca_mpool_base_module_t* gm_mpool;
 }; 
 typedef struct mca_btl_gm_module_t mca_btl_gm_module_t;

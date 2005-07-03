@@ -21,7 +21,7 @@
 #include "orte_config.h"
 #include "include/types.h"
 #include "include/orte_constants.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "opal/class/opal_list.h"
 #include "dps/dps.h"
 #include "mca/oob/oob_types.h"
@@ -88,7 +88,7 @@ extern orte_data_type_t orte_ns_replica_next_dti;
 extern opal_list_t orte_ns_replica_taglist;
 extern opal_list_t orte_ns_replica_dtlist;
 extern int orte_ns_replica_debug;
-extern ompi_mutex_t orte_ns_replica_mutex;
+extern opal_mutex_t orte_ns_replica_mutex;
 
 /*
  * Module open / close

@@ -32,7 +32,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "util/proc_info.h"
 #include "util/output.h"
 
@@ -206,7 +206,7 @@ orte_data_type_t orte_ns_replica_next_dti;
 opal_list_t orte_ns_replica_taglist;
 opal_list_t orte_ns_replica_dtlist;
 int orte_ns_replica_debug;
-ompi_mutex_t orte_ns_replica_mutex;
+opal_mutex_t orte_ns_replica_mutex;
 int orte_ns_replica_isolate;
 
 /*
@@ -273,7 +273,7 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
       orte_ns_replica_next_dti = ORTE_DPS_ID_DYNAMIC;
 
       /* setup the thread lock */
-      OBJ_CONSTRUCT(&orte_ns_replica_mutex, ompi_mutex_t);
+      OBJ_CONSTRUCT(&orte_ns_replica_mutex, opal_mutex_t);
       
       /* setup the "0" job counter - this is the default one that belongs to
        * all daemons. Seed must automatically have it.

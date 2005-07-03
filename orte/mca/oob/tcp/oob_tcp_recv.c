@@ -49,14 +49,14 @@ int mca_oob_tcp_recv(
     }
 
     /* lock the tcp struct */
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* check to see if a matching receive is on the list */
     msg = mca_oob_tcp_msg_match_recv(peer, tag);
     if(NULL != msg) {
 
         if(msg->msg_rc < 0)  {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
             return msg->msg_rc;
         }
  
@@ -82,7 +82,7 @@ int mca_oob_tcp_recv(
                    rc += msg->msg_rwiov[i].iov_len;
             }
             if(MCA_OOB_PEEK & flags) {
-                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+                OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
                 return rc;
             }
         }
@@ -90,14 +90,14 @@ int mca_oob_tcp_recv(
         /* otherwise dequeue the message and return to free list */
         opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (opal_list_item_t *) msg);
         MCA_OOB_TCP_MSG_RETURN(msg);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         return rc;
     }
 
     /* the message has not already been received. So we add it to the receive queue */
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
     if(NULL == msg) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         return rc;
     }
 
@@ -128,7 +128,7 @@ int mca_oob_tcp_recv(
     msg->msg_rwbuf = NULL;
     msg->msg_rwiov = NULL;
     opal_list_append(&mca_oob_tcp_component.tcp_msg_post, (opal_list_item_t *) msg);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* wait for the receive to complete */
     mca_oob_tcp_msg_wait(msg, &rc);
@@ -161,14 +161,14 @@ int mca_oob_tcp_recv_nb(
     int i, rc, size = 0;
 
     /* lock the tcp struct */
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* check to see if a matching receive is on the list */
     msg = mca_oob_tcp_msg_match_recv(peer, tag);
     if(NULL != msg) {
 
         if(msg->msg_rc < 0)  {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
             return msg->msg_rc; 
         }
 
@@ -176,7 +176,7 @@ int mca_oob_tcp_recv_nb(
         if(flags & MCA_OOB_ALLOC) {
 
             if(NULL == iov || 0 == count) {
-                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+                OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
                 return OMPI_ERR_BAD_PARAM;
             }
             iov[0].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
@@ -194,7 +194,7 @@ int mca_oob_tcp_recv_nb(
                    rc += msg->msg_rwiov[i].iov_len;
             }
             if(MCA_OOB_PEEK & flags) {
-                 OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+                 OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
                  cbfunc(rc, &msg->msg_peer, iov, count, tag, cbdata);
                  return 0;
             }
@@ -202,7 +202,7 @@ int mca_oob_tcp_recv_nb(
 
         /* otherwise dequeue the message and return to free list */
         opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (opal_list_item_t *) msg);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         cbfunc(rc, &msg->msg_peer, iov, count, msg->msg_hdr.msg_tag, cbdata);
         MCA_OOB_TCP_MSG_RETURN(msg);
         return rc;
@@ -211,7 +211,7 @@ int mca_oob_tcp_recv_nb(
     /* the message has not already been received. So we add it to the receive queue */
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
     if(NULL == msg) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         return rc;
     }
 
@@ -237,7 +237,7 @@ int mca_oob_tcp_recv_nb(
     msg->msg_rwbuf = NULL;
     msg->msg_rwiov = NULL;
     opal_list_append(&mca_oob_tcp_component.tcp_msg_post, (opal_list_item_t *) msg);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     return 0;
 }
 
@@ -258,11 +258,11 @@ int mca_oob_tcp_recv_cancel(
     opal_list_item_t *item, *next;
 
     /* wait for any previously matched messages to be processed */
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 #if OMPI_ENABLE_PROGRESS_THREADS
     if(opal_progress_thread() == false) {
         while(mca_oob_tcp_component.tcp_match_count) {
-            ompi_condition_wait(
+            opal_condition_wait(
                 &mca_oob_tcp_component.tcp_match_cond, 
                 &mca_oob_tcp_component.tcp_match_lock);
         }
@@ -286,7 +286,7 @@ int mca_oob_tcp_recv_cancel(
             }
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     return (matched > 0) ? OMPI_SUCCESS : OMPI_ERR_NOT_FOUND;
 }
 

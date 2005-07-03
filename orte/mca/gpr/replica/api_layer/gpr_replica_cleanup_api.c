@@ -36,25 +36,25 @@ int orte_gpr_replica_cleanup_job(orte_jobid_t jobid)
 {
     int rc;
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     
     rc = orte_gpr_replica_cleanup_job_fn(jobid);
     
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
     rc = orte_gpr_replica_process_callbacks();
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
     return rc;
 }
@@ -64,23 +64,23 @@ int orte_gpr_replica_cleanup_proc(orte_process_name_t *proc)
 {
     int rc;
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     rc = orte_gpr_replica_cleanup_proc_fn(proc);
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
     rc = orte_gpr_replica_process_callbacks();
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
     return rc;
 }

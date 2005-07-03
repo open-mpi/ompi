@@ -83,7 +83,7 @@ extern int orte_ns_proxy_debug;
 extern opal_list_t orte_ns_proxy_cell_info_list;
 extern opal_list_t orte_ns_proxy_taglist;
 extern opal_list_t orte_ns_proxy_dtlist;
-extern ompi_mutex_t orte_ns_proxy_mutex;
+extern opal_mutex_t orte_ns_proxy_mutex;
 
 /*
  * proxy function prototypes

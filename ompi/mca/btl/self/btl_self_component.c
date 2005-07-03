@@ -122,7 +122,7 @@ int mca_btl_self_component_open(void)
         mca_btl_self_param_register_int("flags", MCA_BTL_FLAGS_RDMA);
 
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_btl_self_component.self_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_self_component.self_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_send, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_self_component.self_frags_rdma, ompi_free_list_t);
