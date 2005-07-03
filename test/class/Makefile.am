@@ -24,7 +24,7 @@ check_PROGRAMS = \
 	ompi_fifo \
 	ompi_hash_table \
 	opal_list \
-	ompi_value_array \
+	opal_value_array \
 	ompi_pointer_array \
 	ompi_rb_tree \
 	orte_bitmap
@@ -68,11 +68,11 @@ ompi_pointer_array_LDADD = \
         $(top_builddir)/test/support/libsupport.a
 ompi_pointer_array_DEPENDENCIES = $(ompi_pointer_array_LDADD)
 
-ompi_value_array_SOURCES = ompi_value_array.c
-ompi_value_array_LDADD = \
+opal_value_array_SOURCES = opal_value_array.c
+opal_value_array_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a
-ompi_value_array_DEPENDENCIES = $(ompi_value_array_LDADD)
+opal_value_array_DEPENDENCIES = $(opal_value_array_LDADD)
 
 ompi_rb_tree_SOURCES = ompi_rb_tree.c
 ompi_rb_tree_LDADD = \

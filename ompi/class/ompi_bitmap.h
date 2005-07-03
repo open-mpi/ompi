@@ -38,7 +38,7 @@
  *
  * - ompi_bitmap and orte_bitmap
  * - ompi_pointer_array and orte_pointer_array
- * - ompi_value_array and orte_value_array
+ * - opal_value_array and orte_value_array
  *
  * Short version: 
  *
