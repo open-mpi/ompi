@@ -21,7 +21,7 @@
 #include "include/constants.h"
 #include "util/output.h"
 #include "mca/ptl/ptl.h"
-#include "mca/base/mca_base_module_exchange.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "ptl_gm.h"
 #include "ptl_gm_priv.h"
 #include "ptl_gm_peer.h"

@@ -34,7 +34,7 @@ libclass_la_SOURCES = \
         ompi_bitmap.c \
         ompi_free_list.c \
         ompi_pointer_array.c \
-	ompi_rb_tree.h
+	ompi_rb_tree.c
 
 # Conditionally install the header files
 

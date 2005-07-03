@@ -33,7 +33,7 @@
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/base/mca_base_module_exchange.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "ptl_elan.h"
 #include "ptl_elan_proc.h"
 #include "ptl_elan_frag.h"

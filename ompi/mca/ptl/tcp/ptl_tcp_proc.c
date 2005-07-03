@@ -20,7 +20,7 @@
 
 #include "include/sys/atomic.h"
 #include "class/ompi_proc_table.h"
-#include "mca/base/mca_base_module_exchange.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "mca/ns/ns_types.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"

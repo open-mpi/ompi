@@ -34,7 +34,6 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/mpool/base/base.h"
-#include "mca/base/mca_base_module_exchange.h"
 #include "mca/oob/base/base.h"
 #include "mca/common/sm/common_sm_mmap.h"
 #include "ptl_sm.h"

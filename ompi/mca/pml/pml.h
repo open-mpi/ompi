@@ -62,6 +62,7 @@
 #include "communicator/communicator.h"
 #include "request/request.h"
 #include "mca/mca.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 
 #if defined(c_plusplus) || defined(__cplusplus)

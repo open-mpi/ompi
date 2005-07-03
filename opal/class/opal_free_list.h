@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_FREE_LIST_H
-#define OMPI_FREE_LIST_H
+#ifndef OPAL_FREE_LIST_H
+#define OPAL_FREE_LIST_H
 
 #include "ompi_config.h"
 

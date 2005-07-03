@@ -25,7 +25,7 @@
 #include "mca/btl/btl.h"
 
 #include "mca/base/mca_base_param.h"
-#include "mca/base/mca_base_module_exchange.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/mpool/base/base.h" 
 #include "btl_template.h"

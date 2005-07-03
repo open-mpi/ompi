@@ -32,7 +32,7 @@
 #include "util/proc_info.h"
 #include "mca/pml/pml.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/base/mca_base_module_exchange.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "mca/mpool/base/base.h"
 #include "mca/common/sm/common_sm_mmap.h"
 #include "btl_sm.h"
