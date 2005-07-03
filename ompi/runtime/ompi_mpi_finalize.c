@@ -32,8 +32,9 @@
 #include "info/info.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
-#include "runtime/runtime.h"
-#include "runtime/ompi_progress.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "orte/runtime/runtime.h"
+#include "opal/runtime/ompi_progress.h"
 #include "attribute/attribute.h"
 
 #include "mca/base/base.h"

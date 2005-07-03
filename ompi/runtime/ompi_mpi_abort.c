@@ -23,7 +23,8 @@
 #include "communicator/communicator.h"
 #include "util/show_help.h"
 #include "util/proc_info.h"
-#include "runtime/runtime.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "orte/runtime/runtime.h"
 #include "mca/ns/ns.h"
 #include "mca/rmgr/rmgr.h"
 

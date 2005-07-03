@@ -17,8 +17,8 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
-#include "mpi/runtime/mpiruntime.h"
-#include "mpi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
 #include "util/output.h"
 #include "mca/base/mca_base_param.h"
 

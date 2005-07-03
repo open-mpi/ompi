@@ -18,7 +18,7 @@
 
 #include "file/file.h"
 #include "class/ompi_list.h"
-#include "mpi/runtime/params.h"
+#include "ompi/runtime/params.h"
 #include "mca/io/base/base.h"
 #include "info/info.h"
 #include "util/output.h"

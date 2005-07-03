@@ -18,7 +18,7 @@
 
 #include "include/constants.h"
 #include "info/info.h"
-#include "mpi/runtime/params.h"
+#include "ompi/runtime/params.h"
 #include "util/output.h"
 
 

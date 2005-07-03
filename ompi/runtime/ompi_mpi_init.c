@@ -17,10 +17,10 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
-#include "mpi/runtime/mpiruntime.h"
-#include "mpi/runtime/params.h"
-#include "runtime/runtime.h"
-#include "runtime/ompi_progress.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
+#include "orte/runtime/runtime.h"
+#include "opal/runtime/ompi_progress.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
@@ -60,9 +60,8 @@
 #include "mca/soh/base/base.h"
 #include "mca/errmgr/errmgr.h"
 
-#include "runtime/opal.h"
-#include "runtime/runtime.h"
-#include "event/event.h"
+#include "opal/runtime/opal.h"
+#include "opal/event/event.h"
 
 /*
  * Global variables and symbols for the MPI layer

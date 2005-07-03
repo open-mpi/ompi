@@ -26,7 +26,7 @@
 #include "mca/coll/base/base.h"
 #include "mca/topo/base/base.h"
 #include "mca/ns/base/base.h"
-#include "mpi/runtime/params.h"
+#include "ompi/runtime/params.h"
 #include "communicator/communicator.h"
 #include "group/group.h"
 #include "attribute/attribute.h"
