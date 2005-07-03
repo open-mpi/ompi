@@ -322,7 +322,7 @@ static void mca_ptl_gm_basic_ack_callback( struct gm_port* port, void* context, 
 
     OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
     /* release the send token */
-    ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
+    opal_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
 
 /*  A posted receive has been matched - if required send an
@@ -355,7 +355,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
             opal_list_append (&mca_ptl_gm_module.gm_pending_acks, (opal_list_item_t *)frag);
             OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
         } else {
-            ompi_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
+            opal_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
             assert( gm_ptl->num_send_tokens >= 0 );
             hdr = (mca_ptl_base_header_t*)item;
 

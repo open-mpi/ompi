@@ -48,7 +48,7 @@
  */
 struct ompi_cb_fifo_ctl_t {
     /* spin-lock for access control */
-    ompi_lock_t lock;
+    opal_atomic_lock_t lock;
 
     /* current queue index */
     volatile int fifo_index;
@@ -172,7 +172,7 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
     }
 
     /* initialize the head structure */
-    ompi_atomic_unlock(&(fifo->head->lock));
+    opal_atomic_unlock(&(fifo->head->lock));
     fifo->head->fifo_index=0;
     fifo->head->num_to_clear=0;
 
@@ -184,7 +184,7 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
     }
 
     /* initialize the head structure */
-    ompi_atomic_unlock(&(fifo->tail->lock));
+    opal_atomic_unlock(&(fifo->tail->lock));
     fifo->tail->fifo_index=0;
     fifo->tail->num_to_clear=0;
 
@@ -501,7 +501,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
     }
 
     /* initialize the head structure */
-    ompi_atomic_unlock(&(fifo->head->lock));
+    opal_atomic_unlock(&(fifo->head->lock));
     fifo->head->fifo_index=0;
     fifo->head->num_to_clear=0;
 
@@ -513,7 +513,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
     }
 
     /* initialize the head structure */
-    ompi_atomic_unlock(&(fifo->tail->lock));
+    opal_atomic_unlock(&(fifo->tail->lock));
     fifo->tail->fifo_index=0;
     fifo->tail->num_to_clear=0;
 

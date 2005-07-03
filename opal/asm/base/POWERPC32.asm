@@ -2,25 +2,25 @@ START_FILE
 	TEXT
 
 	ALIGN(4)
-START_FUNC(ompi_atomic_mb)
+START_FUNC(opal_atomic_mb)
 	sync
 	blr
-END_FUNC(ompi_atomic_mb)
+END_FUNC(opal_atomic_mb)
 
 
-START_FUNC(ompi_atomic_rmb)
+START_FUNC(opal_atomic_rmb)
 	lwsync
 	blr
-END_FUNC(ompi_atomic_rmb)
+END_FUNC(opal_atomic_rmb)
 
 
-START_FUNC(ompi_atomic_wmb)
+START_FUNC(opal_atomic_wmb)
 	eieio
 	blr
-END_FUNC(ompi_atomic_wmb)
+END_FUNC(opal_atomic_wmb)
 
 
-START_FUNC(ompi_atomic_cmpset_32)
+START_FUNC(opal_atomic_cmpset_32)
 	LSYM(1) lwarx   r0, 0, r3  
 	   cmpw    0, r0, r4  
 	   bne-    REFLSYM(2)
@@ -31,10 +31,10 @@ START_FUNC(ompi_atomic_cmpset_32)
 	subfic r5,r3,0
 	adde r3,r5,r3
 	blr
-END_FUNC(ompi_atomic_cmpset_32)
+END_FUNC(opal_atomic_cmpset_32)
 
 
-START_FUNC(ompi_atomic_cmpset_acq_32)
+START_FUNC(opal_atomic_cmpset_acq_32)
 	LSYM(3) lwarx   r0, 0, r3  
 	   cmpw    0, r0, r4  
 	   bne-    REFLSYM(4)         
@@ -47,10 +47,10 @@ START_FUNC(ompi_atomic_cmpset_acq_32)
 	adde r3,r5,r3
 	lwsync
 	blr
-END_FUNC(ompi_atomic_cmpset_acq_32)
+END_FUNC(opal_atomic_cmpset_acq_32)
 
 
-START_FUNC(ompi_atomic_cmpset_rel_32)
+START_FUNC(opal_atomic_cmpset_rel_32)
 	eieio
 	LSYM(5) lwarx   r0, 0, r3  
 	   cmpw    0, r0, r4  
@@ -63,10 +63,10 @@ START_FUNC(ompi_atomic_cmpset_rel_32)
 	subfic r5,r3,0
 	adde r3,r5,r3
 	blr
-END_FUNC(ompi_atomic_cmpset_rel_32)
+END_FUNC(opal_atomic_cmpset_rel_32)
 
 #START_64BIT
-START_FUNC(ompi_atomic_cmpset_64)
+START_FUNC(opal_atomic_cmpset_64)
 	stw r4,-32(r1)
 	stw r5,-28(r1)
 	stw r6,-24(r1)
@@ -83,10 +83,10 @@ START_FUNC(ompi_atomic_cmpset_64)
 	subfic r5,r3,0
 	adde r3,r5,r3
 	blr
-END_FUNC(ompi_atomic_cmpset_64)
+END_FUNC(opal_atomic_cmpset_64)
 
 
-START_FUNC(ompi_atomic_cmpset_acq_64)
+START_FUNC(opal_atomic_cmpset_acq_64)
         stw r4,-32(r1)
         stw r5,-28(r1)
         stw r6,-24(r1)
@@ -106,10 +106,10 @@ START_FUNC(ompi_atomic_cmpset_acq_64)
         blr
         lwsync
         blr
-END_FUNC(ompi_atomic_cmpset_acq_64)
+END_FUNC(opal_atomic_cmpset_acq_64)
 
 
-START_FUNC(ompi_atomic_cmpset_rel_64)
+START_FUNC(opal_atomic_cmpset_rel_64)
         stw r4,-32(r1)
         stw r5,-28(r1)
         stw r6,-24(r1)
@@ -130,11 +130,11 @@ START_FUNC(ompi_atomic_cmpset_rel_64)
         blr
         lwsync
         blr
-END_FUNC(ompi_atomic_cmpset_rel_64)
+END_FUNC(opal_atomic_cmpset_rel_64)
 #END_64BIT
 
 
-START_FUNC(ompi_atomic_add_32)
+START_FUNC(opal_atomic_add_32)
 	LSYM(13)   lwarx r0, 0, r3 
 	     add  r0, r4, r0                
 	     stwcx.   r0, 0, r3              
@@ -142,10 +142,10 @@ START_FUNC(ompi_atomic_add_32)
 	
 	lwz r3,0(r3)
 	blr
-END_FUNC(ompi_atomic_add_32)
+END_FUNC(opal_atomic_add_32)
 
 
-START_FUNC(ompi_atomic_sub_32)
+START_FUNC(opal_atomic_sub_32)
 	LSYM(14)   lwarx r0,0,r3
 	     subf  r0,r4,r0                
 	     stwcx.   r0,0,r3              
@@ -153,4 +153,4 @@ START_FUNC(ompi_atomic_sub_32)
 	
 	lwz r3,0(r3)
 	blr
-END_FUNC(ompi_atomic_sub_32)
+END_FUNC(opal_atomic_sub_32)

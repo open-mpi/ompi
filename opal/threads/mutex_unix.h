@@ -46,13 +46,13 @@ struct ompi_mutex_t {
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
 #endif
-    ompi_lock_t m_lock_atomic;
+    opal_atomic_lock_t m_lock_atomic;
 };
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_mutex_t);
 
 
-#if OMPI_HAVE_ATOMIC_SPINLOCKS && OMPI_HAVE_POSIX_THREADS 
+#if OPAL_HAVE_ATOMIC_SPINLOCKS && OMPI_HAVE_POSIX_THREADS 
 
 /*
  * ompi_mutex_*        implemented using pthreads
@@ -77,17 +77,17 @@ static inline void ompi_mutex_unlock(ompi_mutex_t *m)
 
 static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
 {
-    ompi_atomic_lock(&m->m_lock_atomic);
+    opal_atomic_lock(&m->m_lock_atomic);
 }
 
 static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
 {
-    return ompi_atomic_trylock(&m->m_lock_atomic);
+    return opal_atomic_trylock(&m->m_lock_atomic);
 }
 
 static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 {
-    ompi_atomic_unlock(&m->m_lock_atomic);
+    opal_atomic_unlock(&m->m_lock_atomic);
 }
 
 
@@ -129,7 +129,7 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 }
 
 
-#elif OMPI_HAVE_ATOMIC_SPINLOCKS
+#elif OPAL_HAVE_ATOMIC_SPINLOCKS
 
 /*
  * ompi_mutex_* and ompi_mutex_atomic_* implemented using atomic
@@ -138,17 +138,17 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 
 static inline int ompi_mutex_trylock(ompi_mutex_t *m)
 {
-    return ompi_atomic_trylock(&m->m_lock_atomic);
+    return opal_atomic_trylock(&m->m_lock_atomic);
 }
 
 static inline void ompi_mutex_lock(ompi_mutex_t *m)
 {
-    ompi_atomic_lock(&m->m_lock_atomic);
+    opal_atomic_lock(&m->m_lock_atomic);
 }
 
 static inline void ompi_mutex_unlock(ompi_mutex_t *m)
 {
-    ompi_atomic_unlock(&m->m_lock_atomic);
+    opal_atomic_unlock(&m->m_lock_atomic);
 }
 
 

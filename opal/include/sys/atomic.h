@@ -29,18 +29,18 @@
  * The following #defines will be true / false based on
  * assembly support:
  *
- *  - \c OMPI_HAVE_MEM_BARRIER atomic memory barriers
- *  - \c OMPI_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
- *  - \c OMPI_HAVE_ATOMIC_MATH_32 if 32 bit add/sub/cmpset can be done "atomicly"
- *  - \c OMPI_HAVE_ATOMIC_MATH_64 if 32 bit add/sub/cmpset can be done "atomicly"
+ *  - \c OPAL_HAVE_ATOMIC_MEM_BARRIER atomic memory barriers
+ *  - \c OPAL_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
+ *  - \c OPAL_HAVE_ATOMIC_MATH_32 if 32 bit add/sub/cmpset can be done "atomicly"
+ *  - \c OPAL_HAVE_ATOMIC_MATH_64 if 32 bit add/sub/cmpset can be done "atomicly"
  *
  * Note that for the Atomic math, atomic add/sub may be implemented as
- * C code using ompi_atomic_cmpset.  The appearance of atomic
+ * C code using opal_atomic_cmpset.  The appearance of atomic
  * operation will be upheld in these cases.
  */
 
-#ifndef OMPI_SYS_ATOMIC_H
-#define OMPI_SYS_ATOMIC_H 1
+#ifndef OPAL_SYS_ATOMIC_H
+#define OPAL_SYS_ATOMIC_H 1
 
 #include "ompi_config.h"
 
@@ -77,14 +77,14 @@ extern "C" {
  * to use an int or unsigned char as the lock value - the user is not
  * informed either way.
  */
-struct ompi_lock_t {
+struct opal_atomic_lock_t {
     union {
         volatile int lock;         /**< The lock address (an integer) */
         volatile unsigned char sparc_lock; /**< The lock address on sparc */
         char padding[sizeof(int)]; /**< Array for optional padding */
     } u;
 };
-typedef struct ompi_lock_t ompi_lock_t;
+typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 
 
 /**********************************************************************
@@ -124,11 +124,11 @@ typedef struct ompi_lock_t ompi_lock_t;
 /* compare and set operations can't really be emulated from software,
    so if these defines aren't already set, they should be set to 0
    now */
-#ifndef OMPI_HAVE_ATOMIC_CMPSET_32
-#define OMPI_HAVE_ATOMIC_CMPSET_32 0
+#ifndef OPAL_HAVE_ATOMIC_CMPSET_32
+#define OPAL_HAVE_ATOMIC_CMPSET_32 0
 #endif
-#ifndef OMPI_HAVE_ATOMIC_CMPSET_64
-#define OMPI_HAVE_ATOMIC_CMPSET_64 0
+#ifndef OPAL_HAVE_ATOMIC_CMPSET_64
+#define OPAL_HAVE_ATOMIC_CMPSET_64 0
 #endif
 #endif /* DOXYGEN */
 
@@ -138,18 +138,18 @@ typedef struct ompi_lock_t ompi_lock_t;
  *                   but can't inline
  *
  *********************************************************************/
-#if !defined(OMPI_HAVE_ATOMIC_MEM_BARRIER) && !defined(DOXYGEN)
+#if !defined(OPAL_HAVE_ATOMIC_MEM_BARRIER) && !defined(DOXYGEN)
 /* no way to emulate in C code */
-#define OMPI_HAVE_ATOMIC_MEM_BARRIER 0
+#define OPAL_HAVE_ATOMIC_MEM_BARRIER 0
 #endif
 
-#if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_MEM_BARRIER
+#if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MEM_BARRIER
 /**
  * Memory barrier
  *
  * Will use system-specific features to instruct the processor and
  * memory controller that all writes and reads that have been posted
- * before the call to \c ompi_atomic_mb() must appear to have
+ * before the call to \c opal_atomic_mb() must appear to have
  * completed before the next read or write.
  *
  * \note This can have some expensive side effects, including flushing
@@ -157,31 +157,31 @@ typedef struct ompi_lock_t ompi_lock_t;
  * generally grinding the memory controller's performance.  Use only
  * if you need *both* read and write barriers.
  */
-void ompi_atomic_mb(void);
+void opal_atomic_mb(void);
 
 /**
  * Read memory barrier
  *
  * Use system-specific features to instruct the processor and memory
  * conrtoller that all reads that have been posted before the call to
- * \c ompi_atomic_rmb() must appear to have been completed before the
+ * \c opal_atomic_rmb() must appear to have been completed before the
  * next read.  Nothing is said about the ordering of writes when using
- * \c ompi_atomic_rmb().
+ * \c opal_atomic_rmb().
  */
-void ompi_atomic_rmb(void);
+void opal_atomic_rmb(void);
 
 /**
  * Write memory barrier.
  *
  * Use system-specific features to instruct the processor and memory
  * conrtoller that all writes that have been posted before the call to
- * \c ompi_atomic_rmb() must appear to have been completed before the
+ * \c opal_atomic_rmb() must appear to have been completed before the
  * next write.  Nothing is said about the ordering of reads when using
- * \c ompi_atomic_rmb().
+ * \c opal_atomic_rmb().
  */
-void ompi_atomic_wmb(void);
+void opal_atomic_wmb(void);
 
-#endif /* defined(DOXYGEN) || OMPI_HAVE_MEM_BARRIER */
+#endif /* defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MEM_BARRIER */
 
 
 /**********************************************************************
@@ -190,20 +190,20 @@ void ompi_atomic_wmb(void);
  *
  *********************************************************************/
 
-#if !defined(OMPI_HAVE_ATOMIC_SPINLOCKS) && !defined(DOXYGEN)
+#if !defined(OPAL_HAVE_ATOMIC_SPINLOCKS) && !defined(DOXYGEN)
 /* 0 is more like "pending" - we'll fix up at the end after all
    the static inline functions are declared */
-#define OMPI_HAVE_ATOMIC_SPINLOCKS 0
+#define OPAL_HAVE_ATOMIC_SPINLOCKS 0
 #endif
 
-#if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_SPINLOCKS || (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
+#if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_SPINLOCKS || (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
 
 /**
  * Enumeration of lock states
  */
 enum {
-    OMPI_ATOMIC_UNLOCKED = 0,
-    OMPI_ATOMIC_LOCKED = 1
+    OPAL_ATOMIC_UNLOCKED = 0,
+    OPAL_ATOMIC_LOCKED = 1
 };
 
 
@@ -213,10 +213,10 @@ enum {
  * @param lock         Address of the lock
  * @param value        Initial value to set lock to
  */
-#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+#if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
 static inline 
 #endif
-void ompi_atomic_init(ompi_lock_t* lock, int value);
+void opal_atomic_init(opal_atomic_lock_t* lock, int value);
 
 
 /**
@@ -225,10 +225,10 @@ void ompi_atomic_init(ompi_lock_t* lock, int value);
  * @param lock          Address of the lock.
  * @return              0 if the lock was acquired, 1 otherwise.
  */
-#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+#if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
 static inline
 #endif
-int ompi_atomic_trylock(ompi_lock_t *lock);
+int opal_atomic_trylock(opal_atomic_lock_t *lock);
 
 
 /**
@@ -236,10 +236,10 @@ int ompi_atomic_trylock(ompi_lock_t *lock);
  *
  * @param lock          Address of the lock.
  */
-#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+#if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
 static inline
 #endif
-void ompi_atomic_lock(ompi_lock_t *lock);
+void opal_atomic_lock(opal_atomic_lock_t *lock);
 
 
 /**
@@ -247,19 +247,19 @@ void ompi_atomic_lock(ompi_lock_t *lock);
  *
  * @param lock          Address of the lock.
  */
-#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+#if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
 static inline
 #endif
-void ompi_atomic_unlock(ompi_lock_t *lock);
+void opal_atomic_unlock(opal_atomic_lock_t *lock);
 
 
-#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
-#undef OMPI_HAVE_ATOMIC_SPINLOCKS
-#define OMPI_HAVE_ATOMIC_SPINLOCKS (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
-#define OMPI_NEED_INLINE_ATOMIC_SPINLOCKS
+#if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
+#undef OPAL_HAVE_ATOMIC_SPINLOCKS
+#define OPAL_HAVE_ATOMIC_SPINLOCKS (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
+#define OPAL_NEED_INLINE_ATOMIC_SPINLOCKS
 #endif
 
-#endif /* OMPI_HAVE_ATOMIC_SPINLOCKS */
+#endif /* OPAL_HAVE_ATOMIC_SPINLOCKS */
 
 
 /**********************************************************************
@@ -267,91 +267,91 @@ void ompi_atomic_unlock(ompi_lock_t *lock);
  * Atomic math operations
  *
  *********************************************************************/
-#if !defined(OMPI_HAVE_ATOMIC_CMPSET_32) && !defined(DOXYGEN)
-#define OMPI_HAVE_ATOMIC_CMPSET_32 0
+#if !defined(OPAL_HAVE_ATOMIC_CMPSET_32) && !defined(DOXYGEN)
+#define OPAL_HAVE_ATOMIC_CMPSET_32 0
 #endif
-#if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_CMPSET_32
-int ompi_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval, 
+#if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_32
+int opal_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval, 
                           int32_t newval);
-int ompi_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval, 
+int opal_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval, 
                               int32_t newval);
-int ompi_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval, 
+int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval, 
                               int32_t newval);
 #endif
 
 
-#if !defined(OMPI_HAVE_ATOMIC_CMPSET_64) && !defined(DOXYGEN)
-#define OMPI_HAVE_ATOMIC_CMPSET_64 0
+#if !defined(OPAL_HAVE_ATOMIC_CMPSET_64) && !defined(DOXYGEN)
+#define OPAL_HAVE_ATOMIC_CMPSET_64 0
 #endif
-#if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_CMPSET_64
-int ompi_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval, 
+#if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_64
+int opal_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval, 
                           int64_t newval);
-int ompi_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval, 
+int opal_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval, 
                               int64_t newval);
-int ompi_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval, 
+int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval, 
                               int64_t newval);
 #endif
 
-#if !defined(OMPI_HAVE_ATOMIC_MATH_32) && !defined(DOXYGEN)
+#if !defined(OPAL_HAVE_ATOMIC_MATH_32) && !defined(DOXYGEN)
 /* define to 0 for these tests.  WIll fix up later. */
-#define OMPI_HAVE_ATOMIC_MATH_32 0
+#define OPAL_HAVE_ATOMIC_MATH_32 0
 #endif
-#if defined(DOXYGEN) ||  OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_CMPSET_32
-#if ! OMPI_HAVE_ATOMIC_MATH_32
+#if defined(DOXYGEN) ||  OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_CMPSET_32
+#if ! OPAL_HAVE_ATOMIC_MATH_32
 static inline
 #endif
-int32_t ompi_atomic_add_32(volatile int32_t *addr, int delta);
-#if ! OMPI_HAVE_ATOMIC_MATH_32
+int32_t opal_atomic_add_32(volatile int32_t *addr, int delta);
+#if ! OPAL_HAVE_ATOMIC_MATH_32
 static inline
 #endif
-int32_t ompi_atomic_sub_32(volatile int32_t *addr, int delta);
-#endif /* OMPI_HAVE_ATOMIC_MATH_32 */
-#if ! OMPI_HAVE_ATOMIC_MATH_32
+int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
+#endif /* OPAL_HAVE_ATOMIC_MATH_32 */
+#if ! OPAL_HAVE_ATOMIC_MATH_32
 /* fix up the value of ompi_have_atomic_math_32 to allow for C versions */
-#undef OMPI_HAVE_ATOMIC_MATH_32
-#define OMPI_HAVE_ATOMIC_MATH_32 OMPI_HAVE_ATOMIC_CMPSET_32
+#undef OPAL_HAVE_ATOMIC_MATH_32
+#define OPAL_HAVE_ATOMIC_MATH_32 OPAL_HAVE_ATOMIC_CMPSET_32
 #endif
 
-#ifndef OMPI_HAVE_ATOMIC_MATH_64
+#ifndef OPAL_HAVE_ATOMIC_MATH_64
 /* define to 0 for these tests.  WIll fix up later. */
-#define OMPI_HAVE_ATOMIC_MATH_64 0
+#define OPAL_HAVE_ATOMIC_MATH_64 0
 #endif
-#if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_MATH_64 || OMPI_HAVE_ATOMIC_CMPSET_64
-#if OMPI_HAVE_ATOMIC_CMPSET_64
+#if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MATH_64 || OPAL_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_CMPSET_64
 static inline
 #endif
-int64_t ompi_atomic_add_64(volatile int64_t *addr, int64_t delta);
-#if OMPI_HAVE_ATOMIC_CMPSET_64
+int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta);
+#if OPAL_HAVE_ATOMIC_CMPSET_64
 static inline 
 #endif
-int64_t ompi_atomic_sub_64(volatile int64_t *addr, int64_t delta);
-#endif /* OMPI_HAVE_ATOMIC_MATH_32 */
-#if ! OMPI_HAVE_ATOMIC_MATH_64
+int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta);
+#endif /* OPAL_HAVE_ATOMIC_MATH_32 */
+#if ! OPAL_HAVE_ATOMIC_MATH_64
 /* fix up the value of ompi_have_atomic_math_64 to allow for C versions */
-#undef OMPI_HAVE_ATOMIC_MATH_64
-#define OMPI_HAVE_ATOMIC_MATH_64 OMPI_HAVE_ATOMIC_CMPSET_64
+#undef OPAL_HAVE_ATOMIC_MATH_64
+#define OPAL_HAVE_ATOMIC_MATH_64 OPAL_HAVE_ATOMIC_CMPSET_64
 #endif
 
 
-#if defined(DOXYGEN) || (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
+#if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
 /* these are always done with inline functions, so always mark as
    static inline */
-static inline int ompi_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
+static inline int opal_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
                                         int64_t newval, size_t length);
-static inline int ompi_atomic_cmpset_acq_xx(volatile void* addr, 
+static inline int opal_atomic_cmpset_acq_xx(volatile void* addr, 
                                             int64_t oldval,  int64_t newval, 
                                             size_t length);
-static inline int ompi_atomic_cmpset_rel_xx(volatile void* addr, 
+static inline int opal_atomic_cmpset_rel_xx(volatile void* addr, 
                                             int64_t oldval, int64_t newval, 
                                             size_t length);
 
-static inline int ompi_atomic_cmpset_ptr(volatile void* addr, 
+static inline int opal_atomic_cmpset_ptr(volatile void* addr, 
                                          void* oldval, 
                                          void* newval);
-static inline int ompi_atomic_cmpset_acq_ptr(volatile void* addr, 
+static inline int opal_atomic_cmpset_acq_ptr(volatile void* addr, 
                                              void* oldval, 
                                              void* newval);
-static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr, 
+static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr, 
                                              void* oldval, 
                                              void* newval);
 
@@ -366,10 +366,10 @@ static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr,
  * @param oldval        Comparison value <TYPE>.
  * @param newval        New value to set if comparision is true <TYPE>.
  *
- * See ompi_atomic_cmpset_* for pseudo-code.
+ * See opal_atomic_cmpset_* for pseudo-code.
  */
-#define ompi_atomic_cmpset( ADDR, OLDVAL, NEWVAL )                  \
-   ompi_atomic_cmpset_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
+#define opal_atomic_cmpset( ADDR, OLDVAL, NEWVAL )                  \
+   opal_atomic_cmpset_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
                           (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
 /**
@@ -383,10 +383,10 @@ static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr,
  * @param oldval        Comparison value <TYPE>.
  * @param newval        New value to set if comparision is true <TYPE>.
  *
- * See ompi_atomic_cmpset_acq_* for pseudo-code.
+ * See opal_atomic_cmpset_acq_* for pseudo-code.
  */
-#define ompi_atomic_cmpset_acq( ADDR, OLDVAL, NEWVAL )           \
-   ompi_atomic_cmpset_acq_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
+#define opal_atomic_cmpset_acq( ADDR, OLDVAL, NEWVAL )           \
+   opal_atomic_cmpset_acq_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
                               (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
 
@@ -401,23 +401,23 @@ static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr,
  * @param oldval        Comparison value <TYPE>.
  * @param newval        New value to set if comparision is true <TYPE>.
  *
- * See ompi_atomic_cmpsetrel_* for pseudo-code.
+ * See opal_atomic_cmpsetrel_* for pseudo-code.
  */
-#define ompi_atomic_cmpset_rel( ADDR, OLDVAL, NEWVAL )           \
-   ompi_atomic_cmpset_rel_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
+#define opal_atomic_cmpset_rel( ADDR, OLDVAL, NEWVAL )           \
+   opal_atomic_cmpset_rel_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
                               (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
-#endif /* (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64) */
+#endif /* (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64) */
 
-#if defined(DOXYGEN) || (OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_MATH_64)
+#if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64)
 
-static inline void ompi_atomic_add_xx(volatile void* addr, 
+static inline void opal_atomic_add_xx(volatile void* addr, 
                                       int32_t value, size_t length);
-static inline void ompi_atomic_sub_xx(volatile void* addr, 
+static inline void opal_atomic_sub_xx(volatile void* addr, 
                                       int32_t value, size_t length);
-static inline int ompi_atomic_add_pt(volatile void* addr, 
+static inline int opal_atomic_add_pt(volatile void* addr, 
                                             void* delta);
-static inline int ompi_atomic_sub_ptr(volatile void* addr, 
+static inline int opal_atomic_sub_ptr(volatile void* addr, 
                                              void* delta);
 
 /**
@@ -430,8 +430,8 @@ static inline int ompi_atomic_sub_ptr(volatile void* addr,
  * @param addr          Address of <TYPE>
  * @param delta         Value to add (converted to <TYPE>).
  */
-#define ompi_atomic_add( ADDR, VALUE )                                  \
-   ompi_atomic_add_xx( (volatile void*)(ADDR), (int32_t)(VALUE), \
+#define opal_atomic_add( ADDR, VALUE )                                  \
+   opal_atomic_add_xx( (volatile void*)(ADDR), (int32_t)(VALUE), \
                        sizeof(*(ADDR)) )
 
 /**
@@ -444,11 +444,11 @@ static inline int ompi_atomic_sub_ptr(volatile void* addr,
  * @param addr          Address of <TYPE>
  * @param delta         Value to substract (converted to <TYPE>).
  */
-#define ompi_atomic_sub( ADDR, VALUE )                                  \
-   ompi_atomic_sub_xx( (volatile void*)(ADDR), (int32_t)(VALUE),        \
+#define opal_atomic_sub( ADDR, VALUE )                                  \
+   opal_atomic_sub_xx( (volatile void*)(ADDR), (int32_t)(VALUE),        \
                       sizeof(*(ADDR)) )
 
-#endif /* OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_MATH_64 */
+#endif /* OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64 */
 
 
 /**********************************************************************
@@ -467,4 +467,4 @@ static inline int ompi_atomic_sub_ptr(volatile void* addr,
 
 
 
-#endif /* OMPI_SYS_ATOMIC_H */
+#endif /* OPAL_SYS_ATOMIC_H */

@@ -47,7 +47,7 @@ opal_class_t opal_object_t_class = {
 /*
  * Local variables
  */
-static ompi_lock_t class_lock = { { OMPI_ATOMIC_UNLOCKED } };
+static opal_atomic_lock_t class_lock = { { OPAL_ATOMIC_UNLOCKED } };
 static void** classes = NULL;
 static int num_classes = 0;
 static int max_classes = 0;
@@ -77,14 +77,14 @@ void opal_class_initialize(opal_class_t *cls)
     if (1 == cls->cls_initialized) {
         return;
     }
-    ompi_atomic_lock(&class_lock);
+    opal_atomic_lock(&class_lock);
 
     /* If another thread initializing this same class came in at
        roughly the same time, it may have gotten the lock and
        initialized.  So check again. */
 
     if (1 == cls->cls_initialized) {
-        ompi_atomic_unlock(&class_lock);
+        opal_atomic_unlock(&class_lock);
         return;
     }
 
@@ -122,7 +122,7 @@ void opal_class_initialize(opal_class_t *cls)
 
     /* All done */
 
-    ompi_atomic_unlock(&class_lock);
+    opal_atomic_unlock(&class_lock);
 }
 
 

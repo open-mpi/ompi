@@ -1,31 +1,31 @@
 START_FILE
 	TEXT
 
-START_FUNC(ompi_atomic_mb)
+START_FUNC(opal_atomic_mb)
 	pushl	%ebp
 	movl	%esp, %ebp
 	leave
 	ret
-END_FUNC(ompi_atomic_mb)
+END_FUNC(opal_atomic_mb)
 
 
-START_FUNC(ompi_atomic_rmb)
+START_FUNC(opal_atomic_rmb)
 	pushl	%ebp
 	movl	%esp, %ebp
 	leave
 	ret
-END_FUNC(ompi_atomic_rmb)
+END_FUNC(opal_atomic_rmb)
 
 
-START_FUNC(ompi_atomic_wmb)
+START_FUNC(opal_atomic_wmb)
 	pushl	%ebp
 	movl	%esp, %ebp
 	leave
 	ret
-END_FUNC(ompi_atomic_wmb)
+END_FUNC(opal_atomic_wmb)
 
 
-START_FUNC(ompi_atomic_cmpset_32)
+START_FUNC(opal_atomic_cmpset_32)
 	pushl   %ebp
 	movl    %esp, %ebp
 	movl    8(%ebp), %edx
@@ -39,10 +39,10 @@ START_FUNC(ompi_atomic_cmpset_32)
 	movzbl  %dl, %eax
 	leave
 	ret
-END_FUNC(ompi_atomic_cmpset_32)
+END_FUNC(opal_atomic_cmpset_32)
 
 
-START_FUNC(ompi_atomic_cmpset_64)
+START_FUNC(opal_atomic_cmpset_64)
 	pushl	%ebp
 	movl	%esp, %ebp
 	subl	$32, %esp
@@ -78,10 +78,10 @@ START_FUNC(ompi_atomic_cmpset_64)
 	movl	%ebp, %esp
 	popl	%ebp
 	ret
-END_FUNC(ompi_atomic_cmpset_64)
+END_FUNC(opal_atomic_cmpset_64)
 
 
-START_FUNC(ompi_atomic_add_32)
+START_FUNC(opal_atomic_add_32)
         pushl   %ebp
         movl    %esp, %ebp
         movl    8(%ebp), %eax
@@ -92,10 +92,10 @@ START_FUNC(ompi_atomic_add_32)
         movl    (%eax), %eax
         leave
         ret
-END_FUNC(ompi_atomic_add_32)
+END_FUNC(opal_atomic_add_32)
 
 
-START_FUNC(ompi_atomic_sub_32)
+START_FUNC(opal_atomic_sub_32)
         pushl   %ebp
         movl    %esp, %ebp
         movl    8(%ebp), %eax
@@ -106,4 +106,4 @@ START_FUNC(ompi_atomic_sub_32)
         movl    (%eax), %eax
         leave
         ret
-END_FUNC(ompi_atomic_sub_32)
+END_FUNC(opal_atomic_sub_32)

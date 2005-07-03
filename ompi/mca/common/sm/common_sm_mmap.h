@@ -33,7 +33,7 @@ struct mca_mpool_base_module_t;
 struct mca_common_sm_file_header_t {
 
     /* lock to control atomic access */
-    ompi_lock_t seg_lock;
+    opal_atomic_lock_t seg_lock;
     /* is the segment ready for use */
     
     volatile bool seg_inited;

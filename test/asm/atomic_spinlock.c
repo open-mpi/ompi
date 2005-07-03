@@ -32,10 +32,10 @@ int atomic_verbose = 0;
 struct start_info {
     int tid;
     int count;
-    ompi_lock_t *lock;
+    opal_atomic_lock_t *lock;
 };
 
-static int atomic_spinlock_test(ompi_lock_t *lock, int count, int id);
+static int atomic_spinlock_test(opal_atomic_lock_t *lock, int count, int id);
 
 #if OMPI_HAVE_POSIX_THREADS
 static void* atomic_spinlock_start(void* arg)
@@ -49,7 +49,7 @@ static void* atomic_spinlock_start(void* arg)
 
 
 static int
-atomic_spinlock_test_th(ompi_lock_t *lock, int count, int id, int thr_count)
+atomic_spinlock_test_th(opal_atomic_lock_t *lock, int count, int id, int thr_count)
 {
 #if OMPI_HAVE_POSIX_THREADS
     pthread_t *th;
@@ -94,18 +94,18 @@ atomic_spinlock_test_th(ompi_lock_t *lock, int count, int id, int thr_count)
 
 
 static int
-atomic_spinlock_test(ompi_lock_t *lock, int count, int id)
+atomic_spinlock_test(opal_atomic_lock_t *lock, int count, int id)
 {
     int i;
 
     for (i = 0 ; i < count ; ++i) {
-        ompi_atomic_lock(lock);
+        opal_atomic_lock(lock);
         if (atomic_verbose) { printf("id %03d has the lock (lock)\n", id); }
-        ompi_atomic_unlock(lock);
+        opal_atomic_unlock(lock);
 
-        while (ompi_atomic_trylock(lock)) { ; }
+        while (opal_atomic_trylock(lock)) { ; }
         if (atomic_verbose) { printf("id %03d has the lock (trylock)\n", id); }
-        ompi_atomic_unlock(lock);
+        opal_atomic_unlock(lock);
     }
 
     return 0;
@@ -116,7 +116,7 @@ int
 main(int argc, char *argv[])
 {
     int ret = 77;
-    ompi_lock_t lock;
+    opal_atomic_lock_t lock;
     int num_threads = 1;
 
     if (argc != 2) {
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
     }
     num_threads = atoi(argv[1]);
 
-    ompi_atomic_init(&lock, OMPI_ATOMIC_UNLOCKED);
+    opal_atomic_init(&lock, OPAL_ATOMIC_UNLOCKED);
     ret = atomic_spinlock_test_th(&lock, TEST_REPS, 0, num_threads);
 
     return ret;

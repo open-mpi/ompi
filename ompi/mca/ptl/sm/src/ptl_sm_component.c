@@ -394,7 +394,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
         /* aquire thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_lock( &(send_fifo->tail_lock) );
+            opal_atomic_lock( &(send_fifo->tail_lock) );
         }
 
         /* get pointer - pass in offset to change queue pointer
@@ -404,14 +404,14 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         if( OMPI_CB_FREE == header_ptr ) {
             /* release thread lock */
             if( ompi_using_threads() ) {
-                ompi_atomic_unlock(&(send_fifo->tail_lock));
+                opal_atomic_unlock(&(send_fifo->tail_lock));
             }
             continue;
         }
 
         /* release thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_unlock(&(send_fifo->tail_lock));
+            opal_atomic_unlock(&(send_fifo->tail_lock));
         }
 
         /* figure out what type of message this is */
@@ -490,7 +490,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
         /* aquire thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_lock(&(send_fifo->tail_lock));
+            opal_atomic_lock(&(send_fifo->tail_lock));
         }
 
         /* get pointer - pass in offset to change queue pointer
@@ -500,14 +500,14 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         if( OMPI_CB_FREE == header_ptr ) {
             /* release thread lock */
             if( ompi_using_threads() ) {
-                ompi_atomic_unlock(&(send_fifo->tail_lock));
+                opal_atomic_unlock(&(send_fifo->tail_lock));
             }
             continue;
         }
 
         /* release thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_unlock(&(send_fifo->tail_lock));
+            opal_atomic_unlock(&(send_fifo->tail_lock));
         }
 
         /* change the address from address relative to the shared

@@ -22,15 +22,15 @@
 int
 main(int argc, char *argv[])
 {
-#if OMPI_HAVE_ATOMIC_MEM_BARRIER
+#if OPAL_HAVE_ATOMIC_MEM_BARRIER
 
     /* there really isn't a great way to test that the barriers
        actually barrier, but at least make sure they don't kill the
        machine.*/
 
-    ompi_atomic_mb();
-    ompi_atomic_rmb();
-    ompi_atomic_wmb();
+    opal_atomic_mb();
+    opal_atomic_rmb();
+    opal_atomic_wmb();
 
     return 0;
 #else

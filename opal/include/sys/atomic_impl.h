@@ -30,92 +30,92 @@
  * undefine all those functions if there is no 64 bit cmpset
  *
  *********************************************************************/
-#if OMPI_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_CMPSET_32
 
-#if !defined(OMPI_HAVE_ATOMIC_ADD_32)
-#define OMPI_HAVE_ATOMIC_ADD_32 1
+#if !defined(OPAL_HAVE_ATOMIC_ADD_32)
+#define OPAL_HAVE_ATOMIC_ADD_32 1
 static inline int32_t
-ompi_atomic_add_32(volatile int32_t *addr, int delta)
+opal_atomic_add_32(volatile int32_t *addr, int delta)
 {
    int32_t oldval;
    
    do {
       oldval = *addr;
-   } while (0 == ompi_atomic_cmpset_32(addr, oldval, oldval + delta));
+   } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval + delta));
    return (oldval + delta);
 }
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
 
-#if !defined(OMPI_HAVE_ATOMIC_SUB_32)
-#define OMPI_HAVE_ATOMIC_SUB_32 1
+#if !defined(OPAL_HAVE_ATOMIC_SUB_32)
+#define OPAL_HAVE_ATOMIC_SUB_32 1
 static inline int32_t
-ompi_atomic_sub_32(volatile int32_t *addr, int delta)
+opal_atomic_sub_32(volatile int32_t *addr, int delta)
 {
    int32_t oldval;
    
    do {
       oldval = *addr;
-   } while (0 == ompi_atomic_cmpset_32(addr, oldval, oldval - delta));
+   } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval - delta));
    return (oldval - delta);
 }
-#endif  /* OMPI_HAVE_ATOMIC_SUB_32 */
+#endif  /* OPAL_HAVE_ATOMIC_SUB_32 */
 
-#endif /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+#endif /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
 
-#if OMPI_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_CMPSET_64
 
-#if !defined(OMPI_HAVE_ATOMIC_ADD_64)
-#define OMPI_HAVE_ATOMIC_ADD_64 1
+#if !defined(OPAL_HAVE_ATOMIC_ADD_64)
+#define OPAL_HAVE_ATOMIC_ADD_64 1
 static inline int64_t
-ompi_atomic_add_64(volatile int64_t *addr, int64_t delta)
+opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
 {
    int64_t oldval;
    
    do {
       oldval = *addr;
-   } while (0 == ompi_atomic_cmpset_64(addr, oldval, oldval + delta));
+   } while (0 == opal_atomic_cmpset_64(addr, oldval, oldval + delta));
    return (oldval + delta);
 }
-#endif  /* OMPI_HAVE_ATOMIC_ADD_64 */
+#endif  /* OPAL_HAVE_ATOMIC_ADD_64 */
 
 
-#if !defined(OMPI_HAVE_ATOMIC_SUB_64)
-#define OMPI_HAVE_ATOMIC_SUB_64 1
+#if !defined(OPAL_HAVE_ATOMIC_SUB_64)
+#define OPAL_HAVE_ATOMIC_SUB_64 1
 static inline int64_t
-ompi_atomic_sub_64(volatile int64_t *addr, int64_t delta)
+opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 {
     int64_t oldval;
 
     do {
         oldval = *addr;
-    } while (0 == ompi_atomic_cmpset_64(addr, oldval, oldval - delta));
+    } while (0 == opal_atomic_cmpset_64(addr, oldval, oldval - delta));
     return (oldval - delta);
 }
-#endif  /* OMPI_HAVE_ATOMIC_SUB_64 */
+#endif  /* OPAL_HAVE_ATOMIC_SUB_64 */
 
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
 
 
-#if (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
+#if (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
 
 static inline int
-ompi_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
+opal_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
                       int64_t newval, size_t length)
 {
    switch( length ) {
-#if OMPI_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_CMPSET_32
    case 4:
-      return ompi_atomic_cmpset_32( (volatile int32_t*)addr,
+      return opal_atomic_cmpset_32( (volatile int32_t*)addr,
                                     (int32_t)oldval, (int32_t)newval );
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
-#if OMPI_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_CMPSET_64
    case 8:
-      return ompi_atomic_cmpset_64( (volatile int64_t*)addr,
+      return opal_atomic_cmpset_64( (volatile int64_t*)addr,
                                     (int64_t)oldval, (int64_t)newval );
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
       /* This should never happen, so deliberately cause a seg fault
          for corefile analysis */
@@ -126,21 +126,21 @@ ompi_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
 
 
 static inline int
-ompi_atomic_cmpset_acq_xx(volatile void* addr, int64_t oldval,
+opal_atomic_cmpset_acq_xx(volatile void* addr, int64_t oldval,
                           int64_t newval, size_t length)
 {
    switch( length ) {
-#if OMPI_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_CMPSET_32
    case 4:
-      return ompi_atomic_cmpset_acq_32( (volatile int32_t*)addr,
+      return opal_atomic_cmpset_acq_32( (volatile int32_t*)addr,
                                         (int32_t)oldval, (int32_t)newval );
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
-#if OMPI_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_CMPSET_64
    case 8:
-      return ompi_atomic_cmpset_acq_64( (volatile int64_t*)addr,
+      return opal_atomic_cmpset_acq_64( (volatile int64_t*)addr,
                                         (int64_t)oldval, (int64_t)newval );
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
       /* This should never happen, so deliberately cause a seg fault
          for corefile analysis */
@@ -151,21 +151,21 @@ ompi_atomic_cmpset_acq_xx(volatile void* addr, int64_t oldval,
 
 
 static inline int
-ompi_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
+opal_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
                           int64_t newval, size_t length)
 {
    switch( length ) {
-#if OMPI_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_CMPSET_32
    case 4:
-      return ompi_atomic_cmpset_rel_32( (volatile int32_t*)addr,
+      return opal_atomic_cmpset_rel_32( (volatile int32_t*)addr,
                                         (int32_t)oldval, (int32_t)newval );
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
-#if OMPI_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_CMPSET_64
    case 8:
-      return ompi_atomic_cmpset_rel_64( (volatile int64_t*)addr,
+      return opal_atomic_cmpset_rel_64( (volatile int64_t*)addr,
                                         (int64_t)oldval, (int64_t)newval );
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
       /* This should never happen, so deliberately cause a seg fault
          for corefile analysis */
@@ -176,15 +176,15 @@ ompi_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
 
 
 static inline int
-ompi_atomic_cmpset_ptr(volatile void* addr, 
+opal_atomic_cmpset_ptr(volatile void* addr, 
                        void* oldval, 
                        void* newval)
 {
-#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
-    return ompi_atomic_cmpset_32((int32_t*) addr, (unsigned long) oldval, 
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+    return opal_atomic_cmpset_32((int32_t*) addr, (unsigned long) oldval, 
                                  (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
-    return ompi_atomic_cmpset_64((int64_t*) addr, (unsigned long) oldval, 
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+    return opal_atomic_cmpset_64((int64_t*) addr, (unsigned long) oldval, 
                                  (unsigned long) newval);
 #else
     abort();
@@ -194,15 +194,15 @@ ompi_atomic_cmpset_ptr(volatile void* addr,
 
 
 static inline int
-ompi_atomic_cmpset_acq_ptr(volatile void* addr, 
+opal_atomic_cmpset_acq_ptr(volatile void* addr, 
                            void* oldval, 
                            void* newval)
 {
-#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
-    return ompi_atomic_cmpset_acq_32((int32_t*) addr, (unsigned long) oldval, 
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+    return opal_atomic_cmpset_acq_32((int32_t*) addr, (unsigned long) oldval, 
                                      (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
-    return ompi_atomic_cmpset_acq_64((int64_t*) addr, (unsigned long) oldval, 
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+    return opal_atomic_cmpset_acq_64((int64_t*) addr, (unsigned long) oldval, 
                                      (unsigned long) newval);
 #else
     abort();
@@ -211,15 +211,15 @@ ompi_atomic_cmpset_acq_ptr(volatile void* addr,
 }
 
 
-static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr, 
+static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr, 
                                              void* oldval, 
                                              void* newval)
 {
-#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
-    return ompi_atomic_cmpset_rel_32((int32_t*) addr, (unsigned long) oldval, 
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+    return opal_atomic_cmpset_rel_32((int32_t*) addr, (unsigned long) oldval, 
                                      (unsigned long) newval);
-#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
-    return ompi_atomic_cmpset_rel_64((int64_t*) addr, (unsigned long) oldval, 
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+    return opal_atomic_cmpset_rel_64((int64_t*) addr, (unsigned long) oldval, 
                                      (unsigned long) newval);
 #else
     abort();
@@ -227,26 +227,26 @@ static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr,
 #endif
 }
 
-#endif /* (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64) */
+#endif /* (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64) */
 
-#if OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_MATH_64
+#if OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64
 
 
 static inline void
-ompi_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
+opal_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
 {
    switch( length ) {
-#if OMPI_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_CMPSET_32
    case 4:
-      ompi_atomic_add_32( (volatile int32_t*)addr, (int32_t)value );
+      opal_atomic_add_32( (volatile int32_t*)addr, (int32_t)value );
       break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
-#if OMPI_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_CMPSET_64
    case 8:
-      ompi_atomic_add_64( (volatile int64_t*)addr, (int64_t)value );
+      opal_atomic_add_64( (volatile int64_t*)addr, (int64_t)value );
       break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
       /* This should never happen, so deliberately cause a seg fault
          for corefile analysis */
@@ -256,20 +256,20 @@ ompi_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
 
 
 static inline void
-ompi_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
+opal_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
 {
    switch( length ) {
-#if OMPI_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_CMPSET_32
    case 4:
-      ompi_atomic_sub_32( (volatile int32_t*)addr, (int32_t)value );
+      opal_atomic_sub_32( (volatile int32_t*)addr, (int32_t)value );
       break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
-#if OMPI_HAVE_ATOMIC_CMPSET_64 
+#if OPAL_HAVE_ATOMIC_CMPSET_64 
    case 8:
-      ompi_atomic_sub_64( (volatile int64_t*)addr, (int64_t)value );
+      opal_atomic_sub_64( (volatile int64_t*)addr, (int64_t)value );
       break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
       /* This should never happen, so deliberately cause a seg fault
          for corefile analysis */
@@ -277,13 +277,13 @@ ompi_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
    }
 }
 
-static inline int ompi_atomic_add_pt(volatile void* addr, 
+static inline int opal_atomic_add_pt(volatile void* addr, 
                                             void* delta)
 {
-#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
-    return ompi_atomic_add_32((int32_t*) addr, (unsigned long) delta);
-#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
-    return ompi_atomic_add_64((int64_t*) addr, (unsigned long) delta);
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+    return opal_atomic_add_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+    return opal_atomic_add_64((int64_t*) addr, (unsigned long) delta);
 #else
     abort();
     return 0;
@@ -291,52 +291,52 @@ static inline int ompi_atomic_add_pt(volatile void* addr,
 }
 
 
-static inline int ompi_atomic_sub_ptr(volatile void* addr, 
+static inline int opal_atomic_sub_ptr(volatile void* addr, 
                                              void* delta)
 {
-#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
-    return ompi_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
-#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
-    return ompi_atomic_sub_64((int64_t*) addr, (unsigned long) delta);
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+    return opal_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+    return opal_atomic_sub_64((int64_t*) addr, (unsigned long) delta);
 #else
     abort();
     return 0;
 #endif
 }
 
-#endif /* OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_MATH_64 */
+#endif /* OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64 */
 
 /**********************************************************************
  *
  * Atomic spinlocks
  *
  *********************************************************************/
-#ifdef OMPI_NEED_INLINE_ATOMIC_SPINLOCKS
+#ifdef OPAL_NEED_INLINE_ATOMIC_SPINLOCKS
 
 /* 
  * Lock initialization function. It set the lock to UNLOCKED.
  */
 static inline void
-ompi_atomic_init( ompi_lock_t* lock, int value )
+opal_atomic_init( opal_atomic_lock_t* lock, int value )
 {
    lock->u.lock = value;
 }
 
 
 static inline int
-ompi_atomic_trylock(ompi_lock_t *lock)
+opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
-   return ompi_atomic_cmpset_acq( &(lock->u.lock),
-                                  OMPI_ATOMIC_UNLOCKED, OMPI_ATOMIC_LOCKED);
+   return opal_atomic_cmpset_acq( &(lock->u.lock),
+                                  OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED);
 }
 
 
 static inline void
-ompi_atomic_lock(ompi_lock_t *lock)
+opal_atomic_lock(opal_atomic_lock_t *lock)
 {
-   while( !ompi_atomic_cmpset_acq( &(lock->u.lock),
-                                  OMPI_ATOMIC_UNLOCKED, OMPI_ATOMIC_LOCKED) ) {
-      while (lock->u.lock == OMPI_ATOMIC_LOCKED) {
+   while( !opal_atomic_cmpset_acq( &(lock->u.lock),
+                                  OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED) ) {
+      while (lock->u.lock == OPAL_ATOMIC_LOCKED) {
          /* spin */ ;
       }
    }
@@ -344,13 +344,13 @@ ompi_atomic_lock(ompi_lock_t *lock)
 
 
 static inline void
-ompi_atomic_unlock(ompi_lock_t *lock)
+opal_atomic_unlock(opal_atomic_lock_t *lock)
 {
     /*
-   ompi_atomic_cmpset_rel( &(lock->u.lock),
-                           OMPI_ATOMIC_LOCKED, OMPI_ATOMIC_UNLOCKED);
+   opal_atomic_cmpset_rel( &(lock->u.lock),
+                           OPAL_ATOMIC_LOCKED, OPAL_ATOMIC_UNLOCKED);
                            */
-   lock->u.lock=OMPI_ATOMIC_UNLOCKED;
+   lock->u.lock=OPAL_ATOMIC_UNLOCKED;
 }
 
-#endif /* OMPI_HAVE_ATOMIC_SPINLOCKS */
+#endif /* OPAL_HAVE_ATOMIC_SPINLOCKS */

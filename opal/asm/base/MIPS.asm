@@ -6,32 +6,32 @@ START_FILE
 	TEXT
 
 	ALIGN(8)
-LEAF(ompi_atomic_mb)
+LEAF(opal_atomic_mb)
  #APP
 	sync
  #NO_APP
 	j	ra
-END(ompi_atomic_mb)
+END(opal_atomic_mb)
 
 	
 	ALIGN(8)
-LEAF(ompi_atomic_rmb)
+LEAF(opal_atomic_rmb)
  #APP
 	sync
  #NO_APP
 	j	ra
-END(ompi_atomic_rmb)
+END(opal_atomic_rmb)
 	
 	
-LEAF(ompi_atomic_wmb)
+LEAF(opal_atomic_wmb)
  #APP
 	sync
  #NO_APP
 	j	ra
-END(ompi_atomic_wmb)
+END(opal_atomic_wmb)
 
 
-LEAF(ompi_atomic_cmpset_32)
+LEAF(opal_atomic_cmpset_32)
  #APP
 	.set noreorder        
 retry1:                
@@ -47,10 +47,10 @@ done1:
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
-END(ompi_atomic_cmpset_32)
+END(opal_atomic_cmpset_32)
 
 
-LEAF(ompi_atomic_cmpset_acq_32)
+LEAF(opal_atomic_cmpset_acq_32)
  #APP
 	.set noreorder        
 retry2:                
@@ -67,10 +67,10 @@ done2:
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
-END(ompi_atomic_cmpset_acq_32)
+END(opal_atomic_cmpset_acq_32)
 
 	
-LEAF(ompi_atomic_cmpset_rel_32)
+LEAF(opal_atomic_cmpset_rel_32)
  #APP
 	.set noreorder        
 	sync
@@ -87,10 +87,10 @@ done3:
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
-END(ompi_atomic_cmpset_rel_32)
+END(opal_atomic_cmpset_rel_32)
 	
 	
-LEAF(ompi_atomic_cmpset_64)
+LEAF(opal_atomic_cmpset_64)
  #APP
 		.set noreorder        
 retry4:                
@@ -106,10 +106,10 @@ done4:
 	xor	$4,$3,$5
 	j	ra
 	sltu	$3,$4,1
-END(ompi_atomic_cmpset_64)
+END(opal_atomic_cmpset_64)
 
 
-LEAF(ompi_atomic_cmpset_acq_64)
+LEAF(opal_atomic_cmpset_acq_64)
  #APP
 	.set noreorder        
 retry5:                
@@ -125,10 +125,10 @@ done5:
 	xor	$4,$3,$5
 	j	ra
 	sltu	$3,$4,1
-END(ompi_atomic_cmpset_acq_64)
+END(opal_atomic_cmpset_acq_64)
 
 
-LEAF(ompi_atomic_cmpset_rel_64)
+LEAF(opal_atomic_cmpset_rel_64)
  #APP
 	.set noreorder        
 	sync
@@ -145,4 +145,4 @@ done6:
 	xor	$4,$3,$5
 	j	ra
 	sltu	$3,$4,1
-END(ompi_atomic_cmpset_rel_64)
+END(opal_atomic_cmpset_rel_64)

@@ -158,7 +158,7 @@ mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
 	     req->req_peer_addr.pval,
 	     req->req_peer_size);
 
-    if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) {
+    if(opal_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) {
 	ptl->super.ptl_send_progress(
 	       	(struct mca_ptl_base_module_t*) ptl,
 		req, header->hdr_ack.hdr_dst_size);

@@ -29,15 +29,15 @@
                                        (LOCKS_TABLE_SIZE - 1)]))
 
 /* have to fix if you change LOCKS_TABLE_SIZE */
-static ompi_lock_t locks_table[LOCKS_TABLE_SIZE] = {
-    { { OMPI_ATOMIC_UNLOCKED } }, 
-    { { OMPI_ATOMIC_UNLOCKED } },
-    { { OMPI_ATOMIC_UNLOCKED } },
-    { { OMPI_ATOMIC_UNLOCKED } },
-    { { OMPI_ATOMIC_UNLOCKED } },
-    { { OMPI_ATOMIC_UNLOCKED } },
-    { { OMPI_ATOMIC_UNLOCKED } },
-    { { OMPI_ATOMIC_UNLOCKED } }
+static opal_atomic_lock_t locks_table[LOCKS_TABLE_SIZE] = {
+    { { OPAL_ATOMIC_UNLOCKED } }, 
+    { { OPAL_ATOMIC_UNLOCKED } },
+    { { OPAL_ATOMIC_UNLOCKED } },
+    { { OPAL_ATOMIC_UNLOCKED } },
+    { { OPAL_ATOMIC_UNLOCKED } },
+    { { OPAL_ATOMIC_UNLOCKED } },
+    { { OPAL_ATOMIC_UNLOCKED } },
+    { { OPAL_ATOMIC_UNLOCKED } }
 };
 
 # else /* OMPI_WANT_SMP_LOCKS */
@@ -45,36 +45,36 @@ static ompi_lock_t locks_table[LOCKS_TABLE_SIZE] = {
 #define LOCKS_TABLE_SIZE 1
 #define FIND_LOCK(addr) (&(locks_table[0]))
 
-static ompi_lock_t locks_table[1] = { OMPI_ATOMIC_UNLOCKED };
+static opal_atomic_lock_t locks_table[1] = { OPAL_ATOMIC_UNLOCKED };
 
 #endif /* OMPI_WANT_SMP_LOCKS */
 
 
 int32_t
-ompi_atomic_add_32(volatile int32_t *addr, int delta)
+opal_atomic_add_32(volatile int32_t *addr, int delta)
 {
     int32_t ret;
 
-    ompi_atomic_lock(FIND_LOCK(addr));
+    opal_atomic_lock(FIND_LOCK(addr));
 
     ret = (*addr += delta);
 
-    ompi_atomic_unlock(FIND_LOCK(addr));
+    opal_atomic_unlock(FIND_LOCK(addr));
 
     return ret;
 }
 
 
 int32_t
-ompi_atomic_sub_32(volatile int32_t *addr, int delta)
+opal_atomic_sub_32(volatile int32_t *addr, int delta)
 {
     int32_t ret;
 
-    ompi_atomic_lock(FIND_LOCK(addr));
+    opal_atomic_lock(FIND_LOCK(addr));
 
     ret = (*addr -= delta);
 
-    ompi_atomic_unlock(FIND_LOCK(addr));
+    opal_atomic_unlock(FIND_LOCK(addr));
 
     return ret;
 }

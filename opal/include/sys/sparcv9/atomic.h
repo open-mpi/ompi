@@ -35,11 +35,11 @@
  * Define constants for Sparc v9 (Ultra Sparc)
  *
  *********************************************************************/
-#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
+#define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_32 1
+#define OPAL_HAVE_ATOMIC_CMPSET_32 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_64 1
+#define OPAL_HAVE_ATOMIC_CMPSET_64 1
 
 
 /**********************************************************************
@@ -49,19 +49,19 @@
  *********************************************************************/
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline void ompi_atomic_mb(void)
+static inline void opal_atomic_mb(void)
 {
     MEMBAR("#LoadLoad | #LoadStore | #StoreStore | #StoreLoad");
 }
 
 
-static inline void ompi_atomic_rmb(void)
+static inline void opal_atomic_rmb(void)
 {
     MEMBAR("#LoadLoad");
 }
 
 
-static inline void ompi_atomic_wmb(void)
+static inline void opal_atomic_wmb(void)
 {
     MEMBAR("#StoreStore");
 }
@@ -76,7 +76,7 @@ static inline void ompi_atomic_wmb(void)
  *********************************************************************/
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
+static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                                          int32_t oldval, int32_t newval)
 {
    /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
@@ -96,29 +96,29 @@ static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
 }
 
 
-static inline int ompi_atomic_cmpset_acq_32( volatile int32_t *addr,
+static inline int opal_atomic_cmpset_acq_32( volatile int32_t *addr,
                                              int32_t oldval, int32_t newval)
 {
    int rc;
 
-   rc = ompi_atomic_cmpset_32(addr, oldval, newval);
-   ompi_atomic_rmb();
+   rc = opal_atomic_cmpset_32(addr, oldval, newval);
+   opal_atomic_rmb();
 
    return rc;
 }
 
 
-static inline int ompi_atomic_cmpset_rel_32( volatile int32_t *addr,
+static inline int opal_atomic_cmpset_rel_32( volatile int32_t *addr,
                                              int32_t oldval, int32_t newval)
 {
-   ompi_atomic_wmb();
-   return ompi_atomic_cmpset_32(addr, oldval, newval);
+   opal_atomic_wmb();
+   return opal_atomic_cmpset_32(addr, oldval, newval);
 }
 
 
 #if OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 
-static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
+static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
@@ -138,7 +138,7 @@ static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
 
 #else /* OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
 
-static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
+static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
     /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
@@ -166,23 +166,23 @@ static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
 
 #endif /* OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
 
-static inline int ompi_atomic_cmpset_acq_64( volatile int64_t *addr,
+static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
    int rc;
    
-   rc = ompi_atomic_cmpset_64(addr, oldval, newval);
-   ompi_atomic_rmb();
+   rc = opal_atomic_cmpset_64(addr, oldval, newval);
+   opal_atomic_rmb();
    
    return rc;
 }
 
 
-static inline int ompi_atomic_cmpset_rel_64( volatile int64_t *addr,
+static inline int opal_atomic_cmpset_rel_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
-   ompi_atomic_wmb();
-   return ompi_atomic_cmpset_64(addr, oldval, newval);
+   opal_atomic_wmb();
+   return opal_atomic_cmpset_64(addr, oldval, newval);
 }
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */

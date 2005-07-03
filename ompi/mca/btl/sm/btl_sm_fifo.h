@@ -12,7 +12,7 @@ do { \
  \
     /* thread lock */ \
     if(ompi_using_threads()) \
-        ompi_atomic_lock(&fifo->head_lock); \
+        opal_atomic_lock(&fifo->head_lock); \
     if(OMPI_CB_FREE == fifo->head) { \
         /* no queues have been allocated - allocate now */ \
         rc=ompi_fifo_init_same_base_addr( \
@@ -24,7 +24,7 @@ do { \
             fifo, mca_btl_sm_component.sm_mpool); \
         if( rc != OMPI_SUCCESS ) { \
             if(ompi_using_threads()) \
-                ompi_atomic_unlock(&(fifo->head_lock)); \
+                opal_atomic_unlock(&(fifo->head_lock)); \
             break; \
         } \
     } \
@@ -37,7 +37,7 @@ do { \
         rc=OMPI_SUCCESS; \
     } \
     if(ompi_using_threads()) \
-        ompi_atomic_unlock(&fifo->head_lock); \
+        opal_atomic_unlock(&fifo->head_lock); \
 } while(0) 
 
 

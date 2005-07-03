@@ -36,7 +36,7 @@ int ompi_request_wait_any(
 
 #if OMPI_ENABLE_PROGRESS_THREADS
     /* poll for completion */
-    ompi_atomic_mb();
+    opal_atomic_mb();
     for (c = 0; completed < 0 && c < ompi_request_poll_iterations; c++) {
         rptr = requests;
         num_requests_null_inactive = 0;

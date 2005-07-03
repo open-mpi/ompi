@@ -35,7 +35,7 @@ static const int ompi_progress_default_tick_rate = 100;
  * Local variables
  */
 #if OMPI_HAVE_THREAD_SUPPORT
-static ompi_lock_t progress_lock;
+static opal_atomic_lock_t progress_lock;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 /* callbacks to progress */
@@ -61,7 +61,7 @@ ompi_progress_init(void)
 {
     /* reentrant issues */
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_init(&progress_lock, OMPI_ATOMIC_UNLOCKED);
+    opal_atomic_init(&progress_lock, OPAL_ATOMIC_UNLOCKED);
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
     /* always call sched yield when in the rte only... */
@@ -144,7 +144,7 @@ ompi_progress_finalize(void)
 
     /* free memory associated with the callbacks */
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_lock(&progress_lock);
+    opal_atomic_lock(&progress_lock);
 #endif
 
     if (NULL != callbacks) {
@@ -155,7 +155,7 @@ ompi_progress_finalize(void)
     callbacks_size = 0;
 
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_unlock(&progress_lock);
+    opal_atomic_unlock(&progress_lock);
 #endif
 
     return OMPI_SUCCESS;
@@ -196,7 +196,7 @@ ompi_progress(void)
        via ompi_progress (which is usually only called when there are
        no PROGRESS_THREADS running).  This should be made more fine-grained
        at some point in the future. */
-    if (! ompi_atomic_trylock(&progress_lock)) {
+    if (! opal_atomic_trylock(&progress_lock)) {
         /* someone is already progressing - return */
         return;
     }
@@ -228,7 +228,7 @@ ompi_progress(void)
 
 #if OMPI_HAVE_THREAD_SUPPORT
     /* release the lock before yielding, for obvious reasons */
-    ompi_atomic_unlock(&progress_lock);
+    opal_atomic_unlock(&progress_lock);
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
     if (call_yield && events <= 0) {
@@ -251,7 +251,7 @@ ompi_progress_register(ompi_progress_callback_t cb)
     int ret = OMPI_SUCCESS;
 
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_lock(&progress_lock);
+    opal_atomic_lock(&progress_lock);
 #endif
 
     /* see if we need to allocate more space */
@@ -272,7 +272,7 @@ ompi_progress_register(ompi_progress_callback_t cb)
  cleanup:
 
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_unlock(&progress_lock);
+    opal_atomic_unlock(&progress_lock);
 #endif
 
     return ret;
@@ -285,7 +285,7 @@ ompi_progress_unregister(ompi_progress_callback_t cb)
     int ret = OMPI_ERR_NOT_FOUND;
 
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_lock(&progress_lock);
+    opal_atomic_lock(&progress_lock);
 #endif
 
     for (i = 0 ; i < callbacks_len ; ++i) {
@@ -313,7 +313,7 @@ ompi_progress_unregister(ompi_progress_callback_t cb)
     }
 
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_unlock(&progress_lock);
+    opal_atomic_unlock(&progress_lock);
 #endif
 
     return ret;
@@ -324,7 +324,7 @@ int
 ompi_progress_event_increment()
 {
     int32_t val;
-    val = ompi_atomic_add_32(&event_num_mpi_users, 1);
+    val = opal_atomic_add_32(&event_num_mpi_users, 1);
     /* always reset the tick rate - can't hurt */
     event_progress_counter = 0;
 
@@ -336,7 +336,7 @@ int
 ompi_progress_event_decrement()
 {
     int32_t val;
-   val = ompi_atomic_sub_32(&event_num_mpi_users, 1);
+   val = opal_atomic_sub_32(&event_num_mpi_users, 1);
    if (val >= 0) {
        event_progress_counter = event_progress_counter_reset;
    }

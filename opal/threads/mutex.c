@@ -44,8 +44,8 @@ static void ompi_mutex_construct(ompi_mutex_t *m)
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_init(&m->m_lock_pthread, 0);
 #endif
-#if OMPI_HAVE_ATOMIC_SPINLOCKS
-    ompi_atomic_init( &m->m_lock_atomic, OMPI_ATOMIC_UNLOCKED );
+#if OPAL_HAVE_ATOMIC_SPINLOCKS
+    opal_atomic_init( &m->m_lock_atomic, OPAL_ATOMIC_UNLOCKED );
 #endif
 }
 

@@ -25,14 +25,14 @@
 #endif
 
 #ifdef OMPI_GENERATE_ASM_FILE
-struct ompi_lock_t {
+struct opal_atomic_lock_t {
     union {
         volatile int lock;         /**< The lock address (an integer) */
         volatile unsigned char sparc_lock; /**< The lock address on sparc */
         char padding[sizeof(int)]; /**< Array for optional padding */
     } u;
 };
-typedef struct ompi_lock_t ompi_lock_t;
+typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #endif
 
 /**********************************************************************
@@ -40,16 +40,16 @@ typedef struct ompi_lock_t ompi_lock_t;
  * Define constants for Sparc
  *
  *********************************************************************/
-#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
+#define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_32 0
-#define OMPI_HAVE_ATOMIC_CMPSET_64 0
+#define OPAL_HAVE_ATOMIC_CMPSET_32 0
+#define OPAL_HAVE_ATOMIC_CMPSET_64 0
 
-#define OMPI_HAVE_ATOMIC_MATH_32 1
-#define OMPI_HAVE_ATOMIC_SUB_32 1
-#define OMPI_HAVE_ATOMIC_ADD_32 1
+#define OPAL_HAVE_ATOMIC_MATH_32 1
+#define OPAL_HAVE_ATOMIC_SUB_32 1
+#define OPAL_HAVE_ATOMIC_ADD_32 1
 
-#define OMPI_HAVE_ATOMIC_SPINLOCKS 1
+#define OPAL_HAVE_ATOMIC_SPINLOCKS 1
 
 /**********************************************************************
  *
@@ -58,19 +58,19 @@ typedef struct ompi_lock_t ompi_lock_t;
  *********************************************************************/
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline void ompi_atomic_mb(void)
+static inline void opal_atomic_mb(void)
 {
     MB();
 }
 
 
-static inline void ompi_atomic_rmb(void)
+static inline void opal_atomic_rmb(void)
 {
     MB();
 }
 
 
-static inline void ompi_atomic_wmb(void)
+static inline void opal_atomic_wmb(void)
 {
     MB();
 }
@@ -89,13 +89,13 @@ static inline void ompi_atomic_wmb(void)
    attempt to leave it as OMPI_LOCKED whenever possible */
 
 
-static inline void ompi_atomic_init(ompi_lock_t* lock, int value)
+static inline void opal_atomic_init(opal_atomic_lock_t* lock, int value)
 {
     lock->u.sparc_lock = (unsigned char) value;
 }
 
 
-static inline int ompi_atomic_trylock(ompi_lock_t *lock)
+static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
     unsigned char result;
 
@@ -112,7 +112,7 @@ static inline int ompi_atomic_trylock(ompi_lock_t *lock)
 }
 
 
-static inline void ompi_atomic_lock(ompi_lock_t *lock)
+static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 {
     /* From page 264 of The SPARC Architecture Manual, Version 8 */
     __asm__ __volatile__ (
@@ -135,7 +135,7 @@ static inline void ompi_atomic_lock(ompi_lock_t *lock)
 }
 
 
-static inline void ompi_atomic_unlock(ompi_lock_t *lock)
+static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
 {
     /* 0 out that byte in memory */
     __asm__ __volatile__ ("\t"

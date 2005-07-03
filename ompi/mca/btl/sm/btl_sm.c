@@ -400,7 +400,7 @@ int mca_btl_sm_add_procs_same_base_addr(
 
             /* memory barrier to ensure this flag is set before other
              *  flags are set */
-            ompi_atomic_mb();
+            opal_atomic_mb();
         }
    
         /* Note:  Need to make sure that proc 0 initializes control
@@ -422,7 +422,7 @@ int mca_btl_sm_add_procs_same_base_addr(
             mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool);
         /* memory barrier to ensure this flag is set before other
          *  flags are set */
-        ompi_atomic_mb();
+        opal_atomic_mb();
 
         mca_btl_sm_component.sm_ctl_header->segment_header.
             base_shared_mem_flags[mca_btl_sm_component.my_smp_rank]=1;
@@ -445,8 +445,8 @@ int mca_btl_sm_add_procs_same_base_addr(
         for( j=0 ; j < n_to_allocate ; j++ ) {
             my_fifos[j].head=OMPI_CB_FREE;
             my_fifos[j].tail=OMPI_CB_FREE;
-            ompi_atomic_unlock(&(my_fifos[j].head_lock));
-            ompi_atomic_unlock(&(my_fifos[j].tail_lock));
+            opal_atomic_unlock(&(my_fifos[j].head_lock));
+            opal_atomic_unlock(&(my_fifos[j].tail_lock));
         }
         fifo_tmp=(ompi_fifo_t * volatile *)
                 ( (char *)(mca_btl_sm_component.sm_ctl_header->fifo) +

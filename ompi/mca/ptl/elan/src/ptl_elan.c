@@ -441,7 +441,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
         }
     }
 
-    set = ompi_atomic_fetch_and_set_int (
+    set = opal_atomic_fetch_and_set_int (
 	    &((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
     if (!set) {
 	/* IN TCP case, IO_VEC is first allocated.

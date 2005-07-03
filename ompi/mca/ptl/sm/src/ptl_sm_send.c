@@ -122,7 +122,7 @@ void mca_ptl_sm_matched(
 
     /* lock as multiple processes can attempt to init the head */
     if(ompi_using_threads())
-        ompi_atomic_lock(&send_fifo->head_lock);
+        opal_atomic_lock(&send_fifo->head_lock);
 
     /* check to see if fifo is allocated */
     if(OMPI_CB_FREE == send_fifo->head) {
@@ -136,7 +136,7 @@ void mca_ptl_sm_matched(
                 send_fifo, mca_ptl_sm_component.sm_mpool);
         if( return_status != OMPI_SUCCESS ) {
             if(ompi_using_threads())
-                ompi_atomic_unlock(&send_fifo->head_lock);
+                opal_atomic_unlock(&send_fifo->head_lock);
             return;
         }
     }
@@ -152,7 +152,7 @@ void mca_ptl_sm_matched(
             send_fifo, mca_ptl_sm_component.sm_mpool);
 
     if(ompi_using_threads())
-        ompi_atomic_unlock(&send_fifo->head_lock);
+        opal_atomic_unlock(&send_fifo->head_lock);
 
     /* if can't ack, put on list for later delivery */
     if( 0 > return_status ) {
