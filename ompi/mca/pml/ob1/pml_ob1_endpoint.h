@@ -182,7 +182,7 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_find(
 do {                                                                                     \
     if(NULL != (descriptor = endpoint->btl_cache)) {                                     \
         /* atomically acquire the cached descriptor */                                   \
-        if(ompi_atomic_cmpset_ptr(&endpoint->btl_cache, descriptor, NULL) == 0) {        \
+        if(opal_atomic_cmpset_ptr(&endpoint->btl_cache, descriptor, NULL) == 0) {        \
             endpoint->btl_cache = NULL;                                                  \
         } else {                                                                         \
             descriptor = endpoint->btl_alloc(endpoint->btl, sizeof(mca_pml_ob1_hdr_t) +  \
@@ -215,7 +215,7 @@ do {                                                                            
 #define MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, descriptor)                            \
 do {                                                                                     \
     if(NULL == endpoint->btl_cache) {                                                    \
-        if(ompi_atomic_cmpset_ptr(&endpoint->btl_cache,NULL,descriptor) == 0) {          \
+        if(opal_atomic_cmpset_ptr(&endpoint->btl_cache,NULL,descriptor) == 0) {          \
              endpoint->btl_free(endpoint->btl,descriptor);                               \
         }                                                                                \
     } else {                                                                             \

@@ -184,7 +184,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 
     /* initialize the segment - only the first process to open the file */
     if( !file_previously_opened ) {
-        ompi_atomic_unlock(&seg->seg_lock);
+        opal_atomic_unlock(&seg->seg_lock);
         seg->seg_inited = false;
         seg->seg_offset = mem_offset;
         seg->seg_size = size;
@@ -222,7 +222,7 @@ void* mca_common_sm_mmap_seg_alloc(
     mca_common_sm_file_header_t* seg = map->map_seg;
     void* addr;
 
-    ompi_atomic_lock(&seg->seg_lock);
+    opal_atomic_lock(&seg->seg_lock);
     if(seg->seg_offset + *size > map->map_size) {
         addr = NULL;
     } else {
@@ -230,7 +230,7 @@ void* mca_common_sm_mmap_seg_alloc(
         addr = map->data_addr + seg->seg_offset;
         seg->seg_offset += *size;
     }
-    ompi_atomic_unlock(&seg->seg_lock);
+    opal_atomic_unlock(&seg->seg_lock);
     return addr;
 }
 

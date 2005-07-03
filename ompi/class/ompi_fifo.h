@@ -67,8 +67,8 @@ struct ompi_fifo_t {
     volatile ompi_cb_fifo_wrapper_t *tail;
 
     /* locks for thread synchronization */
-    ompi_lock_t head_lock;
-    ompi_lock_t tail_lock;
+    opal_atomic_lock_t head_lock;
+    opal_atomic_lock_t tail_lock;
 
 };
 

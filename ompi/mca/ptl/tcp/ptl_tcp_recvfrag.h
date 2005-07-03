@@ -131,7 +131,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
     uint32_t iov_count;
     size_t max_data;
     int32_t freeAfter;
-    int32_t frag_progressed = ompi_atomic_add_32(&frag->frag_progressed,1);
+    int32_t frag_progressed = opal_atomic_add_32(&frag->frag_progressed,1);
 
     /* For a match/rendezvous packet - we need to progress the fragment after
      * the match has been made and all data has arrived. So this routine is

@@ -35,11 +35,11 @@
  * Define constants for AMD64 / x86_64 / EM64T / ...
  *
  *********************************************************************/
-#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
+#define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_32 1
+#define OPAL_HAVE_ATOMIC_CMPSET_32 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_64 1
+#define OPAL_HAVE_ATOMIC_CMPSET_64 1
 
 
 /**********************************************************************
@@ -49,19 +49,19 @@
  *********************************************************************/
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline void ompi_atomic_mb(void)
+static inline void opal_atomic_mb(void)
 {
     MB();
 }
 
 
-static inline void ompi_atomic_rmb(void)
+static inline void opal_atomic_rmb(void)
 {
     MB();
 }
 
 
-static inline void ompi_atomic_wmb(void)
+static inline void opal_atomic_wmb(void)
 {
     MB();
 }
@@ -76,7 +76,7 @@ static inline void ompi_atomic_wmb(void)
  *********************************************************************/
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
+static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                                         int32_t oldval, int32_t newval)
 {
     unsigned long prev;
@@ -89,12 +89,12 @@ static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
-#define ompi_atomic_cmpset_acq_32 ompi_atomic_cmpset_32
-#define ompi_atomic_cmpset_rel_32 ompi_atomic_cmpset_32
+#define opal_atomic_cmpset_acq_32 opal_atomic_cmpset_32
+#define opal_atomic_cmpset_rel_32 opal_atomic_cmpset_32
 
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
+static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
    int64_t prev;
@@ -110,7 +110,7 @@ static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
-#define ompi_atomic_cmpset_acq_64 ompi_atomic_cmpset_64
-#define ompi_atomic_cmpset_rel_64 ompi_atomic_cmpset_64
+#define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
+#define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
 
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */

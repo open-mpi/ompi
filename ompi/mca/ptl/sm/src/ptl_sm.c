@@ -409,7 +409,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
 
             /* memory barrier to ensure this flag is set before other
              *  flags are set */
-            ompi_atomic_mb();
+            opal_atomic_mb();
         }
    
         /* Note:  Need to make sure that proc 0 initializes control
@@ -431,7 +431,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
             mca_ptl_sm_component.sm_mpool->mpool_base(mca_ptl_sm_component.sm_mpool);
         /* memory barrier to ensure this flag is set before other
          *  flags are set */
-        ompi_atomic_mb();
+        opal_atomic_mb();
 
         mca_ptl_sm_component.sm_ctl_header->segment_header.
             base_shared_mem_flags[mca_ptl_sm_component.my_smp_rank]=1;
@@ -455,8 +455,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
         for( j=0 ; j < n_to_allocate ; j++ ) {
             my_fifos[j].head=OMPI_CB_FREE;
             my_fifos[j].tail=OMPI_CB_FREE;
-            ompi_atomic_unlock(&(my_fifos[j].head_lock));
-            ompi_atomic_unlock(&(my_fifos[j].tail_lock));
+            opal_atomic_unlock(&(my_fifos[j].head_lock));
+            opal_atomic_unlock(&(my_fifos[j].tail_lock));
         }
         fifo_tmp=(ompi_fifo_t * volatile *)
                 ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
@@ -851,7 +851,7 @@ int mca_ptl_sm_send(
 
     /* thread lock */
     if(ompi_using_threads()) 
-        ompi_atomic_lock(&send_fifo->head_lock);
+        opal_atomic_lock(&send_fifo->head_lock);
     if(OMPI_CB_FREE == send_fifo->head) {
         /* no queues have been allocated - allocate now */
         return_status=ompi_fifo_init_same_base_addr(
@@ -863,7 +863,7 @@ int mca_ptl_sm_send(
             send_fifo, mca_ptl_sm_component.sm_mpool);
         if( return_status != OMPI_SUCCESS ) {
             if(ompi_using_threads())
-                ompi_atomic_unlock(&(send_fifo->head_lock));
+                opal_atomic_unlock(&(send_fifo->head_lock));
             return return_status;
         }
     }
@@ -876,7 +876,7 @@ int mca_ptl_sm_send(
         return_status=OMPI_SUCCESS;
     }
     if(ompi_using_threads())
-        ompi_atomic_unlock(&send_fifo->head_lock);
+        opal_atomic_unlock(&send_fifo->head_lock);
 
     /* if this is the entire message - signal request is complete */
     if(sendreq->req_send.req_bytes_packed == size && 
@@ -985,7 +985,7 @@ int mca_ptl_sm_send_continue(
      * we need shared memory access to these lock, and in some pthread
      * implementation, such mutex's don't work correctly */
     if(ompi_using_threads())
-        ompi_atomic_lock(&send_fifo->head_lock);
+        opal_atomic_lock(&send_fifo->head_lock);
 
     /* post descriptor */
     return_status=ompi_fifo_write_to_head_same_base_addr(send_frag,
@@ -997,6 +997,6 @@ int mca_ptl_sm_send_continue(
 
     /* release thread lock */
     if(ompi_using_threads())
-        ompi_atomic_unlock(&send_fifo->head_lock);
+        opal_atomic_unlock(&send_fifo->head_lock);
     return return_status;
 }

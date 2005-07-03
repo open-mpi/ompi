@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-CFILE=/tmp/ompi_atomic_$$.c
+CFILE=/tmp/opal_atomic_$$.c
 
 trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
 

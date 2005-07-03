@@ -107,7 +107,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
      */ 
     frag_ack = (frag->frag_send.frag_base.frag_header. 
         hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false; 
-    if(frag_ack == false || ompi_atomic_add_32(&frag->frag_progressed,1) == 2) {
+    if(frag_ack == false || opal_atomic_add_32(&frag->frag_progressed,1) == 2) {
 
         /* update request status */ 
         frag->frag_send.frag_base.frag_owner->ptl_send_progress(

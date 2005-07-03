@@ -4,34 +4,34 @@ START_FILE
 	ALIGN(4)
 
 	
-START_FUNC(ompi_atomic_mb)
+START_FUNC(opal_atomic_mb)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	membar #LoadLoad | #LoadStore | #StoreStore | #StoreLoad
 	retl
 	nop
-END_FUNC(ompi_atomic_mb)
+END_FUNC(opal_atomic_mb)
 
 
-START_FUNC(ompi_atomic_rmb)
+START_FUNC(opal_atomic_rmb)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	membar #LoadLoad
 	retl
 	nop
-END_FUNC(ompi_atomic_rmb)
+END_FUNC(opal_atomic_rmb)
 
 
-START_FUNC(ompi_atomic_wmb)
+START_FUNC(opal_atomic_wmb)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	membar #StoreStore
 	retl
 	nop
-END_FUNC(ompi_atomic_wmb)
+END_FUNC(opal_atomic_wmb)
 
 
-START_FUNC(ompi_atomic_cmpset_32)
+START_FUNC(opal_atomic_cmpset_32)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	casa [%o0] 0x80, %o1, %o2
@@ -39,10 +39,10 @@ START_FUNC(ompi_atomic_cmpset_32)
 	subcc	%g0, %o2, %g0
 	retl
 	subx	%g0, -1, %o0
-END_FUNC(ompi_atomic_cmpset_32)
+END_FUNC(opal_atomic_cmpset_32)
 
 
-START_FUNC(ompi_atomic_cmpset_acq_32)
+START_FUNC(opal_atomic_cmpset_acq_32)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	casa [%o0] 0x80, %o1, %o2
@@ -52,10 +52,10 @@ START_FUNC(ompi_atomic_cmpset_acq_32)
 	membar #LoadLoad
 	retl
 	sra     %o0, 0, %o0
-END_FUNC(ompi_atomic_cmpset_acq_32)
+END_FUNC(opal_atomic_cmpset_acq_32)
 
 
-START_FUNC(ompi_atomic_cmpset_rel_32)
+START_FUNC(opal_atomic_cmpset_rel_32)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	membar #StoreStore
@@ -64,10 +64,10 @@ START_FUNC(ompi_atomic_cmpset_rel_32)
 	subcc   %g0, %o2, %g0
 	retl
 	subx    %g0, -1, %o0
-END_FUNC(ompi_atomic_cmpset_rel_32)
+END_FUNC(opal_atomic_cmpset_rel_32)
 
 
-START_FUNC(ompi_atomic_cmpset_64)
+START_FUNC(opal_atomic_cmpset_64)
 	!#PROLOGUE# 0
 	save	%sp, -128, %sp
 	!#PROLOGUE# 1
@@ -94,10 +94,10 @@ START_FUNC(ompi_atomic_cmpset_64)
 LSYM(12)
 	ret
 	restore
-END_FUNC(ompi_atomic_cmpset_64)
+END_FUNC(opal_atomic_cmpset_64)
 
 
-START_FUNC(ompi_atomic_cmpset_acq_64)
+START_FUNC(opal_atomic_cmpset_acq_64)
 	!#PROLOGUE# 0
 	save	%sp, -128, %sp
 	!#PROLOGUE# 1
@@ -126,10 +126,10 @@ LSYM(16)
 	membar #LoadLoad
 	ret
 	restore
-END_FUNC(ompi_atomic_cmpset_acq_64)
+END_FUNC(opal_atomic_cmpset_acq_64)
 
 
-START_FUNC(ompi_atomic_cmpset_rel_64)
+START_FUNC(opal_atomic_cmpset_rel_64)
 	!#PROLOGUE# 0
 	save	%sp, -128, %sp
 	!#PROLOGUE# 1
@@ -158,4 +158,4 @@ START_FUNC(ompi_atomic_cmpset_rel_64)
 LSYM(21)
 	ret
 	restore
-END_FUNC(ompi_atomic_cmpset_rel_64)
+END_FUNC(opal_atomic_cmpset_rel_64)

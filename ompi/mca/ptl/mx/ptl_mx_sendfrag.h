@@ -103,7 +103,7 @@ do { \
      */ \
     frag_ack = (frag->frag_send.frag_base.frag_header. \
         hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false; \
-    if(frag_ack == false || ompi_atomic_add_32(&frag->frag_progress,1) == 2) { \
+    if(frag_ack == false || opal_atomic_add_32(&frag->frag_progress,1) == 2) { \
  \
         /* update request status */ \
         frag->frag_send.frag_base.frag_owner->ptl_send_progress( \

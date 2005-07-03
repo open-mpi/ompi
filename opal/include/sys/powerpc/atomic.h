@@ -45,17 +45,17 @@
  * Define constants for PowerPC 32
  *
  *********************************************************************/
-#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
+#define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_32 1
+#define OPAL_HAVE_ATOMIC_CMPSET_32 1
 
-#define OMPI_HAVE_ATOMIC_MATH_32 1
-#define OMPI_HAVE_ATOMIC_ADD_32 1
-#define OMPI_HAVE_ATOMIC_SUB_32 1
+#define OPAL_HAVE_ATOMIC_MATH_32 1
+#define OPAL_HAVE_ATOMIC_ADD_32 1
+#define OPAL_HAVE_ATOMIC_SUB_32 1
 
 
 #if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64) || OMPI_ASM_SUPPORT_64BIT
-#define OMPI_HAVE_ATOMIC_CMPSET_64 1
+#define OPAL_HAVE_ATOMIC_CMPSET_64 1
 #endif
 
 
@@ -67,21 +67,21 @@
 #if OMPI_GCC_INLINE_ASSEMBLY
 
 static inline
-void ompi_atomic_mb(void)
+void opal_atomic_mb(void)
 {
     MB();
 }
 
 
 static inline
-void ompi_atomic_rmb(void)
+void opal_atomic_rmb(void)
 {
     RMB();
 }
 
 
 static inline
-void ompi_atomic_wmb(void)
+void opal_atomic_wmb(void)
 {
     WMB();
 }
@@ -94,23 +94,23 @@ void ompi_atomic_wmb(void)
  * containing the right hex for the instructions).
  */
 
-void ompi_atomic_mb(void);
-#pragma mc_func ompi_atomic_mb { "7c0004ac" }          /* sync  */
-#pragma reg_killed_by ompi_atomic_mb                   /* none */
+void opal_atomic_mb(void);
+#pragma mc_func opal_atomic_mb { "7c0004ac" }          /* sync  */
+#pragma reg_killed_by opal_atomic_mb                   /* none */
 
-void ompi_atomic_rmb(void);
-#pragma mc_func ompi_atomic_rmb { "7c2004ac" }         /* lwsync  */
-#pragma reg_killed_by ompi_atomic_rmb                  /* none */
+void opal_atomic_rmb(void);
+#pragma mc_func opal_atomic_rmb { "7c2004ac" }         /* lwsync  */
+#pragma reg_killed_by opal_atomic_rmb                  /* none */
 
-void ompi_atomic_wmb(void);
-#pragma mc_func ompi_atomic_wmb { "7c0006ac" }         /* eieio */
-#pragma reg_killed_by ompi_atomic_wmb                  /* none */
+void opal_atomic_wmb(void);
+#pragma mc_func opal_atomic_wmb { "7c0006ac" }         /* eieio */
+#pragma reg_killed_by opal_atomic_wmb                  /* none */
 
 #else /* end OMPI_XLC_INLINE_ASSEMBLY */
 
-void ompi_atomic_mb(void);
-void ompi_atomic_rmb(void);
-void ompi_atomic_wmb(void);
+void opal_atomic_mb(void);
+void opal_atomic_rmb(void);
+void opal_atomic_wmb(void);
 
 #endif
 
@@ -121,7 +121,7 @@ void ompi_atomic_wmb(void);
  *********************************************************************/
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
+static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
                                         int32_t oldval, int32_t newval)
 {
    int32_t ret;
@@ -145,31 +145,31 @@ static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline int ompi_atomic_cmpset_acq_32(volatile int32_t *addr,
+static inline int opal_atomic_cmpset_acq_32(volatile int32_t *addr,
                                             int32_t oldval, int32_t newval)
 {
     int rc;
 
-    rc = ompi_atomic_cmpset_32(addr, oldval, newval);
-    ompi_atomic_rmb();
+    rc = opal_atomic_cmpset_32(addr, oldval, newval);
+    opal_atomic_rmb();
 
     return rc;
 }
 
 
-static inline int ompi_atomic_cmpset_rel_32(volatile int32_t *addr,
+static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
                                             int32_t oldval, int32_t newval)
 {
-    ompi_atomic_wmb();
-    return ompi_atomic_cmpset_32(addr, oldval, newval);
+    opal_atomic_wmb();
+    return opal_atomic_cmpset_32(addr, oldval, newval);
 }
 
 #else
-int ompi_atomic_cmpset_32(volatile int32_t *addr,
+int opal_atomic_cmpset_32(volatile int32_t *addr,
                           int32_t oldval, int32_t newval);
-int ompi_atomic_cmpset_acq_32(volatile int32_t *addr,
+int opal_atomic_cmpset_acq_32(volatile int32_t *addr,
                               int32_t oldval, int32_t newval);
-int ompi_atomic_cmpset_rel_32(volatile int32_t *addr,
+int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
                               int32_t oldval, int32_t newval);
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
@@ -177,7 +177,7 @@ int ompi_atomic_cmpset_rel_32(volatile int32_t *addr,
 #if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64)
 
 #if  OMPI_GCC_INLINE_ASSEMBLY
-static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
+static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
 {
    int64_t ret;
@@ -201,32 +201,32 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
+static inline int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
                                             int64_t oldval, int64_t newval)
 {
     int rc;
 
-    rc = ompi_atomic_cmpset_64(addr, oldval, newval);
-    ompi_atomic_rmb();
+    rc = opal_atomic_cmpset_64(addr, oldval, newval);
+    opal_atomic_rmb();
 
     return rc;
 }
 
 
-static inline int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
+static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
                                             int64_t oldval, int64_t newval)
 {
-    ompi_atomic_wmb();
-    return ompi_atomic_cmpset_64(addr, oldval, newval);
+    opal_atomic_wmb();
+    return opal_atomic_cmpset_64(addr, oldval, newval);
 }
 
 #else /* OMPI_GCC_INLINE_ASSEMBLY */
 
-int ompi_atomic_cmpset_64(volatile int64_t *addr,
+int opal_atomic_cmpset_64(volatile int64_t *addr,
                           int64_t oldval, int64_t newval);
-int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
+int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
                               int64_t oldval, int64_t newval);
-int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
+int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
                               int64_t oldval, int64_t newval);
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
@@ -240,7 +240,7 @@ int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
 
 #if  OMPI_GCC_INLINE_ASSEMBLY
 
-static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
+static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
 {
     int ret;
@@ -281,32 +281,32 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
    the assembly, meaning there is one function call overhead instead
    of two */
-static inline int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
+static inline int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
                                             int64_t oldval, int64_t newval)
 {
     int rc;
 
-    rc = ompi_atomic_cmpset_64(addr, oldval, newval);
-    ompi_atomic_rmb();
+    rc = opal_atomic_cmpset_64(addr, oldval, newval);
+    opal_atomic_rmb();
 
     return rc;
 }
 
 
-static inline int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
+static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
                                             int64_t oldval, int64_t newval)
 {
-    ompi_atomic_wmb();
-    return ompi_atomic_cmpset_64(addr, oldval, newval);
+    opal_atomic_wmb();
+    return opal_atomic_cmpset_64(addr, oldval, newval);
 }
 
 #else /* OMPI_GCC_INLINE_ASSEMBLY */
 
-int ompi_atomic_cmpset_64(volatile int64_t *addr,
+int opal_atomic_cmpset_64(volatile int64_t *addr,
                           int64_t oldval, int64_t newval);
-int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
+int opal_atomic_cmpset_acq_64(volatile int64_t *addr,
                               int64_t oldval, int64_t newval);
-int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
+int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
                               int64_t oldval, int64_t newval);
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
@@ -316,7 +316,7 @@ int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
 
 #if OMPI_GCC_INLINE_ASSEMBLY
 
-static inline int32_t ompi_atomic_add_32(volatile int32_t* v, int inc)
+static inline int32_t opal_atomic_add_32(volatile int32_t* v, int inc)
 {
    int32_t t;
 
@@ -333,7 +333,7 @@ static inline int32_t ompi_atomic_add_32(volatile int32_t* v, int inc)
 }
 
 
-static inline int32_t ompi_atomic_sub_32(volatile int32_t* v, int dec)
+static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int dec)
 {
    int32_t t;
 

@@ -1,31 +1,31 @@
 START_FILE
 	TEXT
 
-START_FUNC(ompi_atomic_mb)
+START_FUNC(opal_atomic_mb)
 	pushq	%rbp
 	movq	%rsp, %rbp
 	leave
 	ret
-END_FUNC(ompi_atomic_mb)
+END_FUNC(opal_atomic_mb)
 
 
-START_FUNC(ompi_atomic_rmb)
+START_FUNC(opal_atomic_rmb)
 	pushq	%rbp
 	movq	%rsp, %rbp
 	leave
 	ret
-END_FUNC(ompi_atomic_rmb)
+END_FUNC(opal_atomic_rmb)
 
 
-START_FUNC(ompi_atomic_wmb)
+START_FUNC(opal_atomic_wmb)
 	pushq	%rbp
 	movq	%rsp, %rbp
 	leave
 	ret
-END_FUNC(ompi_atomic_wmb)
+END_FUNC(opal_atomic_wmb)
 
 
-START_FUNC(ompi_atomic_cmpset_32)
+START_FUNC(opal_atomic_cmpset_32)
 	pushq	%rbp
 	movq	%rsp, %rbp
 	movq	%rdi, -8(%rbp)
@@ -48,10 +48,10 @@ START_FUNC(ompi_atomic_cmpset_32)
 	movl	-28(%rbp), %eax
 	leave
 	ret
-END_FUNC(ompi_atomic_cmpset_32)
+END_FUNC(opal_atomic_cmpset_32)
 
 
-START_FUNC(ompi_atomic_cmpset_64)
+START_FUNC(opal_atomic_cmpset_64)
 	pushq	%rbp
 	movq	%rsp, %rbp
 	movq	%rdi, -8(%rbp)
@@ -71,4 +71,4 @@ START_FUNC(ompi_atomic_cmpset_64)
 	movzbl	%al, %eax
 	leave
 	ret
-END_FUNC(ompi_atomic_cmpset_64)
+END_FUNC(opal_atomic_cmpset_64)

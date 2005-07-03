@@ -25,13 +25,13 @@ static volatile int count = 0;
 
 static void* thr1_run(opal_object_t* obj)
 {
-    ompi_atomic_add(&count, 1);
+    opal_atomic_add(&count, 1);
     return NULL;
 }
 
 static void* thr2_run(opal_object_t* obj)
 {
-    ompi_atomic_add(&count, 2);
+    opal_atomic_add(&count, 2);
     return NULL;
 }
 

@@ -32,7 +32,7 @@ int ompi_request_test_any(
     ompi_request_t **rptr;
     ompi_request_t *request;
 
-    ompi_atomic_mb();
+    opal_atomic_mb();
     rptr = requests;
     for (i = 0; i < count; i++, rptr++) {
         request = *rptr;
@@ -79,7 +79,7 @@ int ompi_request_test_all(
     size_t num_completed = 0;
     ompi_request_t *request;
 
-    ompi_atomic_mb();
+    opal_atomic_mb();
     rptr = requests;
     for (i = 0; i < count; i++, rptr++) {
         request = *rptr;

@@ -447,7 +447,7 @@ static inline opal_object_t *opal_obj_new(size_t size, opal_class_t * cls)
 static inline int opal_obj_update(opal_object_t *object, int inc)
 {
 #if OMPI_HAVE_THREAD_SUPPORT
-    ompi_atomic_add(&(object->obj_reference_count), inc );
+    opal_atomic_add(&(object->obj_reference_count), inc );
 #else
     object->obj_reference_count += inc;
 #endif

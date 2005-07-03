@@ -21,12 +21,12 @@ typedef int     affinity_t;
 
 #ifndef ENABLE_NUMA
 
-static inline int ompi_set_affinity(void *addr, size_t size, affinity_t affinity)
+static inline int opal_set_affinity(void *addr, size_t size, affinity_t affinity)
 {
     return 1;
 }
 
-static inline int ompi_get_cpu_set(void)
+static inline int opal_get_cpu_set(void)
 {
     return OMPI_SUCCESS;
 }
@@ -35,8 +35,8 @@ static inline int ompi_get_cpu_set(void)
 
 /* OS / architecture specific implementation elsewhere */
 
-int ompi_set_affinity(void *addr, size_t size, affinity_t affinity);
+int opal_set_affinity(void *addr, size_t size, affinity_t affinity);
 
-int ompi_get_cpu_set(void)
+int opal_get_cpu_set(void)
 
 #endif

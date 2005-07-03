@@ -46,7 +46,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
         }
     }
 
-    ompi_atomic_mb();
+    opal_atomic_mb();
     if( (request == MPI_REQUEST_NULL) || (request->req_state == OMPI_REQUEST_INACTIVE) ) {
         *flag = true;
         if( MPI_STATUS_IGNORE != status ) {

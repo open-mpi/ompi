@@ -347,7 +347,7 @@ int mca_btl_sm_component_progress(void)
 
         /* aquire thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_lock( &(fifo->tail_lock) );
+            opal_atomic_lock( &(fifo->tail_lock) );
         }
 
         /* get pointer - pass in offset to change queue pointer
@@ -357,14 +357,14 @@ int mca_btl_sm_component_progress(void)
         if( OMPI_CB_FREE == frag ) {
             /* release thread lock */
             if( ompi_using_threads() ) {
-                ompi_atomic_unlock(&(fifo->tail_lock));
+                opal_atomic_unlock(&(fifo->tail_lock));
             }
             continue;
         }
 
         /* release thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_unlock(&(fifo->tail_lock));
+            opal_atomic_unlock(&(fifo->tail_lock));
         }
 
         /* dispatch fragment by type */
@@ -424,7 +424,7 @@ int mca_btl_sm_component_progress(void)
 
         /* aquire thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_lock(&(fifo->tail_lock));
+            opal_atomic_lock(&(fifo->tail_lock));
         }
 
         /* get pointer - pass in offset to change queue pointer
@@ -434,14 +434,14 @@ int mca_btl_sm_component_progress(void)
         if( OMPI_CB_FREE == frag ) {
             /* release thread lock */
             if( ompi_using_threads() ) {
-                ompi_atomic_unlock(&(fifo->tail_lock));
+                opal_atomic_unlock(&(fifo->tail_lock));
             }
             continue;
         }
 
         /* release thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_unlock(&(fifo->tail_lock));
+            opal_atomic_unlock(&(fifo->tail_lock));
         }
 
         /* change the address from address relative to the shared

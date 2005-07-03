@@ -172,7 +172,7 @@ mca_ptl_elan_send_desc_done (
 
 #if OMPI_PTL_ELAN_ENABLE_GET
     if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_GET) {
-	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) {
+	if(opal_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_recv_progress(ptl, 
 		    (mca_pml_base_recv_request_t *) req, 
 		    frag->frag_base.frag_size,
@@ -198,7 +198,7 @@ mca_ptl_elan_send_desc_done (
 		(opal_list_item_t *) frag);
     } else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
 	    || mca_pml_base_send_request_matched(req)) {
-	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) 
+	if(opal_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) 
 	{
 	    ptl->super.ptl_send_progress(
 		    (struct mca_ptl_base_module_t*) ptl, 

@@ -3,40 +3,40 @@ START_FILE
 
 	ALIGN(4)
 
-START_FUNC(ompi_atomic_mb)
+START_FUNC(opal_atomic_mb)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	retl
 	nop
-END_FUNC(ompi_atomic_mb)
+END_FUNC(opal_atomic_mb)
 
 
-START_FUNC(ompi_atomic_rmb)
+START_FUNC(opal_atomic_rmb)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	retl
 	nop
-END_FUNC(ompi_atomic_rmb)
+END_FUNC(opal_atomic_rmb)
 
 
-START_FUNC(ompi_atomic_wmb)
+START_FUNC(opal_atomic_wmb)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	retl
 	nop
-END_FUNC(ompi_atomic_wmb)
+END_FUNC(opal_atomic_wmb)
 
 
-START_FUNC(ompi_atomic_init)
+START_FUNC(opal_atomic_init)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	stb	%o1, [%o0]
 	retl
 	nop
-END_FUNC(ompi_atomic_init)
+END_FUNC(opal_atomic_init)
 
 
-START_FUNC(ompi_atomic_trylock)
+START_FUNC(opal_atomic_trylock)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 	ldstub [%o0], %o0
@@ -44,10 +44,10 @@ START_FUNC(ompi_atomic_trylock)
 	subcc	%g0, %o0, %g0
 	retl
 	subx	%g0, -1, %o0
-END_FUNC(ompi_atomic_trylock)
+END_FUNC(opal_atomic_trylock)
 
 
-START_FUNC(ompi_atomic_lock)
+START_FUNC(opal_atomic_lock)
 	!#PROLOGUE# 0
 	save	%sp, -112, %sp
 	!#PROLOGUE# 1
@@ -66,10 +66,10 @@ LSYM(out)
 	nop
 	ret
 	restore
-END_FUNC(ompi_atomic_lock)
+END_FUNC(opal_atomic_lock)
 
 
-START_FUNC(ompi_atomic_unlock)
+START_FUNC(opal_atomic_unlock)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
 		stbar             
@@ -77,4 +77,4 @@ START_FUNC(ompi_atomic_unlock)
 	
 	retl
 	nop
-END_FUNC(ompi_atomic_unlock)
+END_FUNC(opal_atomic_unlock)

@@ -47,7 +47,7 @@ static void mca_ptl_gm_basic_frag_callback( struct gm_port* port, void* context,
     case GM_SUCCESS:
 	OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
 	/* release the send token */
-	ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
+	opal_atomic_add( &(gm_ptl->num_send_tokens), 1 );
         break;
     case GM_SEND_TIMED_OUT:
         ompi_output( 0, "send_continue timed out\n" );
@@ -196,7 +196,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
         int32_t rc;
 	
         OMPI_FREE_LIST_WAIT( &(peer->peer_ptl->gm_send_dma_frags), item, rc );
-        ompi_atomic_sub( &(peer->peer_ptl->num_send_tokens), 1 );
+        opal_atomic_sub( &(peer->peer_ptl->num_send_tokens), 1 );
         hdr = (mca_ptl_gm_frag_header_t*)item;
 	
         hdr->hdr_frag.hdr_common.hdr_type  = MCA_PTL_HDR_TYPE_FRAG;
@@ -334,7 +334,7 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
         if( NULL == hdr ) {
             opal_list_item_t* item;
             OMPI_FREE_LIST_WAIT( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
-            ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
+            opal_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
             hdr = (mca_ptl_base_frag_header_t*)item;
         }
         iov.iov_base = (char*)hdr + sizeof(mca_ptl_base_frag_header_t);
@@ -439,7 +439,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     }
     if( NULL == item ) {
         OMPI_FREE_LIST_WAIT( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
-        ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
+        opal_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
         hdr = (mca_ptl_gm_frag_header_t*)item;
     }
 
@@ -496,7 +496,7 @@ static void send_match_callback( struct gm_port* port, void* context, gm_status_
 
     OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
     /* release the send token */
-    ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
+    opal_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
 
 /* This function is used for the initial send. For small size messages the data will be attached
@@ -523,7 +523,7 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     char* sendbuf;
 
     OMPI_FREE_LIST_WAIT( &(ptl_gm->gm_send_dma_frags), item, rc );
-    ompi_atomic_sub( &(ptl_gm->num_send_tokens), 1 );
+    opal_atomic_sub( &(ptl_gm->num_send_tokens), 1 );
     sendbuf = (char*)item;
 
     hdr = (mca_ptl_base_header_t*)item;
@@ -657,7 +657,7 @@ static void recv_short_callback( struct gm_port* port, void* context, gm_status_
 
     OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
     /* release the send token */
-    ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
+    opal_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
 
 static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer,
@@ -668,7 +668,7 @@ static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer
     int rc;
 
     OMPI_FREE_LIST_WAIT( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
-    ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
+    opal_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
     hdr = (mca_ptl_base_header_t*)item;
 
     hdr->hdr_common.hdr_type        = MCA_PTL_HDR_TYPE_FIN;
