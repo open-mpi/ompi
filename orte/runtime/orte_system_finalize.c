@@ -21,7 +21,7 @@
 #include "include/orte_constants.h"
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/rml/base/base.h"
 #include "dps/dps.h"
 #include "mca/ns/base/base.h"
@@ -67,7 +67,7 @@ int orte_system_finalize(void)
 
     opal_progress_finalize();
 
-    ompi_event_fini();
+    opal_event_fini();
 
 #ifndef WIN32
     orte_session_dir_finalize(orte_process_info.my_name);

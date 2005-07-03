@@ -29,7 +29,7 @@
 #include <netinet/in.h>
 #endif
 #include "opal/class/opal_list.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -69,8 +69,8 @@ struct mca_ptl_base_peer_t {
     opal_list_t                     peer_frags;       /**< list of pending frags to send */
     opal_mutex_t                    peer_send_lock;   /**< lock for concurrent access to peer state */
     opal_mutex_t                    peer_recv_lock;   /**< lock for concurrent access to peer state */
-    ompi_event_t                    peer_send_event;  /**< event for async processing of send frags */
-    ompi_event_t                    peer_recv_event;  /**< event for async processing of recv frags */
+    opal_event_t                    peer_send_event;  /**< event for async processing of send frags */
+    opal_event_t                    peer_recv_event;  /**< event for async processing of recv frags */
     bool                            peer_nbo;         /**< convert headers to network byte order? */
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;

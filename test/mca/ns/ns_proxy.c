@@ -24,7 +24,7 @@
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "util/output.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -79,8 +79,8 @@ int main(int argc, char **argv)
     }
 
     /* initialize event library */
-    if (OMPI_SUCCESS != ompi_event_init()) {
-	    fprintf(test_out, "ompi_event_init failed - please report error to bugs@open-mpi.org\n");
+    if (OMPI_SUCCESS != opal_event_init()) {
+	    fprintf(test_out, "opal_event_init failed - please report error to bugs@open-mpi.org\n");
 	    exit (1);
     }
 
@@ -110,11 +110,11 @@ int main(int argc, char **argv)
             int status;
             if(waitpid(pid, &status, WNOHANG) != 0)
                 break;
-            ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+            opal_event_loop(OPAL_EVLOOP_NONBLOCK);
         }
 #else
         fprintf(stderr, "OMPI_MCA_oob_base_seed=%s", mca_oob_get_contact_info());
-        ompi_event_loop(0);
+        opal_event_loop(0);
 #endif
     } else {
         run_test();

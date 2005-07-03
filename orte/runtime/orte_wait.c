@@ -33,7 +33,7 @@
 #include "util/output.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "include/constants.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
@@ -124,7 +124,7 @@ static volatile int cb_enabled = true;
 static opal_mutex_t mutex;
 static opal_list_t pending_pids;
 static opal_list_t registered_cb;
-static struct ompi_event handler;
+static struct opal_event handler;
 
 
 /*********************************************************************
@@ -159,11 +159,11 @@ orte_wait_init(void)
     OBJ_CONSTRUCT(&pending_pids, opal_list_t);
     OBJ_CONSTRUCT(&registered_cb, opal_list_t);
 
-    ompi_event_set(&handler, SIGCHLD, OMPI_EV_SIGNAL|OMPI_EV_PERSIST,
+    opal_event_set(&handler, SIGCHLD, OPAL_EV_SIGNAL|OPAL_EV_PERSIST,
                    orte_wait_signal_callback,
                    &handler);
 
-    ompi_event_add(&handler, NULL);
+    opal_event_add(&handler, NULL);
     return OMPI_SUCCESS;
 }
 
@@ -174,7 +174,7 @@ orte_wait_finalize(void)
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&mutex);
-    ompi_event_del(&handler);
+    opal_event_del(&handler);
 
     /* clear out the lists */
     while (NULL != (item = opal_list_remove_first(&pending_pids))) {
@@ -272,7 +272,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
             if (opal_using_threads()) {
                 opal_mutex_unlock(&mutex);
-                ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+                opal_event_loop(OPAL_EVLOOP_NONBLOCK);
                 opal_mutex_lock(&mutex);
             }
 #endif            
@@ -296,8 +296,8 @@ orte_waitpid(pid_t wpid, int *status, int options)
                from under it. Yes, it's spinning.  No, we won't spin
                for long. */
 
-            if (!OMPI_HAVE_THREAD_SUPPORT || ompi_event_progress_thread()) {
-                ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+            if (!OMPI_HAVE_THREAD_SUPPORT || opal_event_progress_thread()) {
+                opal_event_loop(OPAL_EVLOOP_NONBLOCK);
             }
         }
 
@@ -355,9 +355,9 @@ orte_wait_cb_cancel(pid_t wpid)
 void
 orte_wait_signal_callback(int fd, short event, void *arg)
 {
-    struct ompi_event *signal = (struct ompi_event*) arg;
+    struct opal_event *signal = (struct opal_event*) arg;
 
-    if (SIGCHLD != OMPI_EVENT_SIGNAL(signal)) return;
+    if (SIGCHLD != OPAL_EVENT_SIGNAL(signal)) return;
 
     OPAL_THREAD_LOCK(&mutex);
     do_waitall(0);
@@ -559,9 +559,9 @@ internal_waitpid(pid_t pid, int *status, int options)
 #if  OMPI_THREADS_HAVE_DIFFERENT_PIDS
     waitpid_callback_data_t data;
     struct timeval tv;
-    struct ompi_event ev;
+    struct opal_event ev;
 
-    if (ompi_event_progress_thread()) {
+    if (opal_event_progress_thread()) {
         /* I already am the progress thread.  no need to event me */
         return waitpid(pid, status, options);
     }
@@ -577,8 +577,8 @@ internal_waitpid(pid_t pid, int *status, int options)
     tv.tv_sec = 0;
     tv.tv_usec = 0;
 
-    ompi_evtimer_set(&ev, internal_waitpid_callback, &data);
-    ompi_evtimer_add(&ev, &tv);
+    opal_evtimer_set(&ev, internal_waitpid_callback, &data);
+    opal_evtimer_add(&ev, &tv);
 
     while (data.done == false) {
         opal_condition_wait(&(data.cond), &(data.mutex));

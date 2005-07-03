@@ -39,7 +39,7 @@
 
 #include "include/orte_constants.h"
 #include "dps/dps.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "runtime/orte_wait.h"

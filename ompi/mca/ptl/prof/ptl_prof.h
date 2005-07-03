@@ -20,7 +20,7 @@
 #ifndef PTL_PROF_H_HAS_BEEN_INCLUDED
 #define PTL_PROF_H_HAS_BEEN_INCLUDED
 
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_recvreq.h"

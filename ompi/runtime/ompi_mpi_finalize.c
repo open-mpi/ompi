@@ -21,7 +21,7 @@
 #include "mca/schema/schema.h"
 
 #include "mpi.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "group/group.h"
 #include "errhandler/errcode.h"
 #include "errhandler/errclass.h"
@@ -63,7 +63,7 @@ int ompi_mpi_finalize(void)
 
     ompi_mpi_finalized = true;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    opal_progress_events(OMPI_EVLOOP_NONBLOCK);
+    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
 #endif
 
     /* Change progress function priority back to RTE level stuff */

@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "include/sys/cache.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mpi.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"

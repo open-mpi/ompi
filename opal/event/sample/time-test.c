@@ -34,7 +34,7 @@ void
 timeout_cb(int fd, short event, void *arg)
 {
 	struct timeval tv;
-	struct ompi_event *timeout = arg;
+	struct opal_event *timeout = arg;
 	int newtime = time(NULL);
 
 	printf("%s: called at %d: %d\n", __func__, newtime,
@@ -43,28 +43,28 @@ timeout_cb(int fd, short event, void *arg)
 
 	timerclear(&tv);
 	tv.tv_sec = 2;
-	ompi_event_add(timeout, &tv);
+	opal_event_add(timeout, &tv);
 }
 
 int
 main (int argc, char **argv)
 {
-	struct ompi_event timeout;
+	struct opal_event timeout;
 	struct timeval tv;
  
 	/* Initalize the event library */
-	ompi_event_init();
+	opal_event_init();
 
 	/* Initalize one event */
-	ompi_evtimer_set(&timeout, timeout_cb, &timeout);
+	opal_evtimer_set(&timeout, timeout_cb, &timeout);
 
 	timerclear(&tv);
 	tv.tv_sec = 2;
-	ompi_event_add(&timeout, &tv);
+	opal_event_add(&timeout, &tv);
 
 	lasttime = time(NULL);
 	
-	ompi_event_dispatch();
+	opal_event_dispatch();
 
 	return (0);
 }

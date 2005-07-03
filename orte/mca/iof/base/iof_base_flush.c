@@ -42,7 +42,7 @@ static void orte_iof_base_timer_cb(int fd, short flags, void *cbdata)
 int orte_iof_base_flush(void)
 {
     opal_list_item_t* item;
-    ompi_event_t ev;
+    opal_event_t ev;
     struct timeval tv = { 0, 0 };
     int flushed = 0;
     size_t pending;
@@ -54,14 +54,14 @@ int orte_iof_base_flush(void)
      * wait on a timer callback to be called out of the event loop
     */
 
-    if(ompi_event_progress_thread() == false) {
+    if(opal_event_progress_thread() == false) {
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
-        ompi_evtimer_set(&ev, orte_iof_base_timer_cb, &flushed);
-        ompi_event_add(&ev, &tv);
+        opal_evtimer_set(&ev, orte_iof_base_timer_cb, &flushed);
+        opal_event_add(&ev, &tv);
         while(flushed == 0)
             opal_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
     } else {
-        ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     }
     orte_iof_base.iof_waiting++;
@@ -79,11 +79,11 @@ int orte_iof_base_flush(void)
             }
         }
         if(pending != 0) {
-            if(ompi_event_progress_thread() == false) {
+            if(opal_event_progress_thread() == false) {
                 opal_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
             } else {
                 OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-                ompi_event_loop(OMPI_EVLOOP_ONCE);
+                opal_event_loop(OPAL_EVLOOP_ONCE);
                 OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
             }
         }

@@ -127,7 +127,7 @@ static int rtsig_del(void *, struct event *);
 static int rtsig_recalc(void *, int);
 static int rtsig_dispatch(void *, struct timeval *);
 
-struct ompi_eventop rtsigops = {
+struct opal_eventop rtsigops = {
     "rtsig",
     rtsig_init,
     rtsig_add,

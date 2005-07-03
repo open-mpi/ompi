@@ -24,9 +24,9 @@
 #endif
 
 #include "include/constants.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "util/output.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -70,7 +70,7 @@ int orte_restart(orte_process_name_t *name, const char* uri)
      * Restart event library
      */
 
-    if (ORTE_SUCCESS != (rc = ompi_event_restart())) {
+    if (ORTE_SUCCESS != (rc = opal_event_restart())) {
         ORTE_ERROR_LOG(rc);
 	return rc;
     }

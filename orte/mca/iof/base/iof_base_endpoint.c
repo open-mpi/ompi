@@ -44,7 +44,7 @@ static void orte_iof_base_endpoint_construct(orte_iof_base_endpoint_t* endpoint)
 static void orte_iof_base_endpoint_destruct(orte_iof_base_endpoint_t* endpoint)
 {
     if(endpoint->ep_fd >= 0) {
-        ompi_event_del(&endpoint->ep_event);
+        opal_event_del(&endpoint->ep_event);
     }
     OBJ_DESTRUCT(&endpoint->ep_frags);
 }
@@ -127,7 +127,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     /* if window size has been exceeded - disable forwarding */
     endpoint->ep_seq += frag->frag_len;
     if(ORTE_IOF_BASE_SEQDIFF(endpoint->ep_seq,endpoint->ep_ack) > orte_iof_base.iof_window_size) {
-        ompi_event_del(&endpoint->ep_event);
+        opal_event_del(&endpoint->ep_event);
     }
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 
@@ -177,7 +177,7 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
 
     /* is there anything left to write? */
     if(opal_list_get_size(&endpoint->ep_frags) == 0) {
-        ompi_event_del(&endpoint->ep_event);
+        opal_event_del(&endpoint->ep_event);
         if(orte_iof_base.iof_waiting) {
             opal_condition_signal(&orte_iof_base.iof_condition);
         }
@@ -250,19 +250,19 @@ int orte_iof_base_endpoint_create(
     /* setup event handler */
     switch(mode) {
         case ORTE_IOF_SOURCE:
-            ompi_event_set(
+            opal_event_set(
                 &endpoint->ep_event,
                 endpoint->ep_fd,
-                OMPI_EV_READ|OMPI_EV_PERSIST,
+                OPAL_EV_READ|OPAL_EV_PERSIST,
                 orte_iof_base_endpoint_read_handler,
                 endpoint);
-            ompi_event_add(&endpoint->ep_event, 0);
+            opal_event_add(&endpoint->ep_event, 0);
             break;
         case ORTE_IOF_SINK:
-            ompi_event_set(
+            opal_event_set(
                 &endpoint->ep_event,
                 endpoint->ep_fd,
-                OMPI_EV_WRITE|OMPI_EV_PERSIST,
+                OPAL_EV_WRITE|OPAL_EV_PERSIST,
                 orte_iof_base_endpoint_write_handler,
                 endpoint);
             break;
@@ -312,7 +312,7 @@ int orte_iof_base_endpoint_close(orte_iof_base_endpoint_t* endpoint)
     endpoint->ep_state = ORTE_IOF_EP_CLOSING;
     switch(endpoint->ep_mode) {
     case ORTE_IOF_SOURCE:
-        ompi_event_del(&endpoint->ep_event);
+        opal_event_del(&endpoint->ep_event);
         if(endpoint->ep_seq == endpoint->ep_ack) {
             endpoint->ep_state = ORTE_IOF_EP_CLOSED;
         }
@@ -411,7 +411,7 @@ int orte_iof_base_endpoint_forward(
         memcpy(frag->frag_ptr, data+rc, frag->frag_len);
         opal_list_append(&endpoint->ep_frags, &frag->super);
         if(opal_list_get_size(&endpoint->ep_frags) == 1) {
-            ompi_event_add(&endpoint->ep_event,0);
+            opal_event_add(&endpoint->ep_event,0);
         }
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     } else {
@@ -451,7 +451,7 @@ int orte_iof_base_endpoint_ack(
 
     /* check to see if we need to reenable forwarding */
     if(window_closed && window_open) {
-        ompi_event_add(&endpoint->ep_event, 0);
+        opal_event_add(&endpoint->ep_event, 0);
     }
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return ORTE_SUCCESS;

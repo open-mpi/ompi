@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #include "include/constants.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/iof/iof.h"

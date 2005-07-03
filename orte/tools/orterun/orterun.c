@@ -32,7 +32,7 @@
 
 #include "include/orte_constants.h"
 
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "class/orte_pointer_array.h"
 #include "util/proc_info.h"
 #include "util/argv.h"
@@ -65,8 +65,8 @@ extern char** environ;
 /*
  * Globals
  */
-static struct ompi_event term_handler;
-static struct ompi_event int_handler;
+static struct opal_event term_handler;
+static struct opal_event int_handler;
 static orte_jobid_t jobid = ORTE_JOBID_MAX;
 static orte_pointer_array_t *apps_pa;
 static bool wait_for_job_completion = true;
@@ -334,12 +334,12 @@ int main(int argc, char *argv[])
     
      /* Prep to start the application */
 
-    ompi_event_set(&term_handler, SIGTERM, OMPI_EV_SIGNAL,
+    opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    signal_callback, NULL);
-    ompi_event_add(&term_handler, NULL);
-    ompi_event_set(&int_handler, SIGINT, OMPI_EV_SIGNAL,
+    opal_event_add(&term_handler, NULL);
+    opal_event_set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
                    signal_callback, NULL);
-    ompi_event_add(&int_handler, NULL);
+    opal_event_add(&int_handler, NULL);
 
     /* Spawn the job */
     
@@ -562,7 +562,7 @@ static void signal_callback(int fd, short flags, void *arg)
 {
     int ret;
     struct timeval tv = { 5, 0 };
-    ompi_event_t* event;
+    opal_event_t* event;
 
     static int signalled = 0;
     if (0 != signalled++) {
@@ -577,9 +577,9 @@ static void signal_callback(int fd, short flags, void *arg)
         }
     }
 
-    if (NULL != (event = (ompi_event_t*)malloc(sizeof(ompi_event_t)))) {
-        ompi_evtimer_set(event, exit_callback, NULL);
-        ompi_evtimer_add(event, &tv);
+    if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
+        opal_evtimer_set(event, exit_callback, NULL);
+        opal_evtimer_add(event, &tv);
     }
 }
 

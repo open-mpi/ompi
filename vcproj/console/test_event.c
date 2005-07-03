@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 	WSAStartup (MAKE_WORD(2,2), &winsockdata);
 
 	ompi_init();
-	ompi_event_init();
+	opal_event_init();
 	WSACleanup();
 
 

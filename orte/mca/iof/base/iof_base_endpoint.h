@@ -3,7 +3,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_list.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/iof/iof.h"
 #include "mca/iof/base/iof_base_header.h"
 
@@ -26,7 +26,7 @@ struct orte_iof_base_endpoint_t {
     int ep_state;
     uint32_t ep_seq;
     uint32_t ep_ack;
-    ompi_event_t ep_event;
+    opal_event_t ep_event;
     opal_list_t ep_frags;
 };
 typedef struct orte_iof_base_endpoint_t orte_iof_base_endpoint_t;

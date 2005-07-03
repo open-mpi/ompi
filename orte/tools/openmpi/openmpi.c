@@ -37,7 +37,7 @@
 #endif
 #include <errno.h>
 
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "include/constants.h"
 
 #include "util/argv.h"

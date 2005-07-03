@@ -21,7 +21,7 @@
 #define PTL_SELF_H_HAS_BEEN_INCLUDED
 
 #include "class/ompi_free_list.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"

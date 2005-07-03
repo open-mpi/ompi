@@ -28,7 +28,7 @@
 #include "util/output.h"
 #include "util/ompi_environ.h"
 #include "util/proc_info.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "runtime/orte_wait.h"
 #include "runtime/runtime.h"
 #include "mca/ns/base/base.h"
@@ -843,14 +843,14 @@ complete:
 int orte_pls_bproc_seed_launch_threaded(orte_jobid_t jobid)
 {
     struct timeval tv = { 0, 0 };
-    struct ompi_event event;
+    struct opal_event event;
     struct orte_pls_bproc_stack_t stack;
 
     OBJ_CONSTRUCT(&stack, orte_pls_bproc_stack_t);
 
     stack.jobid = jobid;
-    ompi_evtimer_set(&event, orte_pls_bproc_seed_launch_cb, &stack);
-    ompi_evtimer_add(&event, &tv);
+    opal_evtimer_set(&event, orte_pls_bproc_seed_launch_cb, &stack);
+    opal_evtimer_add(&event, &tv);
    
     OPAL_THREAD_LOCK(&stack.mutex);
     while(stack.complete == false)

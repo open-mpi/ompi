@@ -34,7 +34,7 @@
 #endif
 
 #include "include/constants.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
 #include "util/output.h"
@@ -64,7 +64,7 @@
 
 struct mca_ptl_tcp_event_t {
     opal_list_item_t item;
-    ompi_event_t event;
+    opal_event_t event;
 };
 typedef struct mca_ptl_tcp_event_t mca_ptl_tcp_event_t;
 
@@ -252,7 +252,7 @@ int mca_ptl_tcp_component_close(void)
         free(mca_ptl_tcp_component.tcp_ptl_modules);
  
     if (mca_ptl_tcp_component.tcp_listen_sd >= 0) {
-        ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
+        opal_event_del(&mca_ptl_tcp_component.tcp_recv_event);
         close(mca_ptl_tcp_component.tcp_listen_sd);
         mca_ptl_tcp_component.tcp_listen_sd = -1;
     }
@@ -263,7 +263,7 @@ int mca_ptl_tcp_component_close(void)
         item != NULL; 
         item =  opal_list_remove_first(&mca_ptl_tcp_component.tcp_events)) {
         mca_ptl_tcp_event_t* event = (mca_ptl_tcp_event_t*)item;
-        ompi_event_del(&event->event);
+        opal_event_del(&event->event);
         OBJ_RELEASE(event);
     }
     OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
@@ -442,10 +442,10 @@ static int mca_ptl_tcp_component_create_listen(void)
     }
 
     /* register listen port */
-    ompi_event_set(
+    opal_event_set(
         &mca_ptl_tcp_component.tcp_recv_event,
         mca_ptl_tcp_component.tcp_listen_sd, 
-        OMPI_EV_READ|OMPI_EV_PERSIST, 
+        OPAL_EV_READ|OPAL_EV_PERSIST, 
         mca_ptl_tcp_component_recv_handler, 
         0);
     return OMPI_SUCCESS;
@@ -537,12 +537,12 @@ int mca_ptl_tcp_component_control(int param, void* value, size_t size)
     switch(param) {
         case MCA_PTL_ENABLE:
             if(*(int*)value) {
-                ompi_event_add(&mca_ptl_tcp_component.tcp_recv_event, 0);
+                opal_event_add(&mca_ptl_tcp_component.tcp_recv_event, 0);
                 if(opal_hash_table_get_size(&mca_ptl_tcp_component.tcp_procs) > 0) {
-                    opal_progress_events(OMPI_EVLOOP_NONBLOCK);
+                    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
                 }
             } else {
-                ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
+                opal_event_del(&mca_ptl_tcp_component.tcp_recv_event);
             }
             break;
         default:
@@ -589,8 +589,8 @@ static void mca_ptl_tcp_component_accept(void)
         /* wait for receipt of peers process identifier to complete this connection */
          
         event = OBJ_NEW(mca_ptl_tcp_event_t);
-        ompi_event_set(&event->event, sd, OMPI_EV_READ, mca_ptl_tcp_component_recv_handler, event);
-        ompi_event_add(&event->event, 0);
+        opal_event_set(&event->event, sd, OPAL_EV_READ, mca_ptl_tcp_component_recv_handler, event);
+        opal_event_add(&event->event, 0);
     }
 }
 

@@ -404,7 +404,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
      /* BWB - is this still needed? */
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    opal_progress_events(OMPI_EVLOOP_NONBLOCK);
+    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
 #endif
 
     /* Second barrier -- wait for message from

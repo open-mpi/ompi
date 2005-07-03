@@ -28,7 +28,7 @@
 /* Open MPI includes */
 #include "class/ompi_free_list.h"
 #include "class/ompi_bitmap.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h"

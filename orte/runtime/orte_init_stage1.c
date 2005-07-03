@@ -24,7 +24,7 @@
 #endif
 
 #include "include/constants.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "util/output.h"
 #include "opal/threads/mutex.h"
 #include "dps/dps.h"
@@ -116,7 +116,7 @@ int orte_init_stage1(void)
     /*
      * Initialize the event library 
     */
-    if (OMPI_SUCCESS != (ret = ompi_event_init())) {
+    if (OMPI_SUCCESS != (ret = opal_event_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

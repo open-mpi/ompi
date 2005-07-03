@@ -59,29 +59,29 @@
 
 #include "event.h"
 #include "util/output.h"
-#if OMPI_EVENT_USE_SIGNALS
+#if OPAL_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
 #include "opal/threads/mutex.h"
 
 
-extern struct ompi_event_list ompi_eventqueue;
-extern volatile sig_atomic_t ompi_evsignal_caught;
-extern opal_mutex_t ompi_event_lock;
+extern struct opal_event_list opal_eventqueue;
+extern volatile sig_atomic_t opal_evsignal_caught;
+extern opal_mutex_t opal_event_lock;
 
 /* Open MPI: make this struct instance be static */
 static struct pollop {
 	int event_count;		/* Highest number alloc */
 	struct pollfd *event_set;
-	struct ompi_event **event_back;
-#if OMPI_EVENT_USE_SIGNALS
+	struct opal_event **event_back;
+#if OPAL_EVENT_USE_SIGNALS
 	sigset_t evsigmask;
 #endif
 } pollop;
 
 static void *poll_init	(void);
-static int poll_add		(void *, struct ompi_event *);
-static int poll_del		(void *, struct ompi_event *);
+static int poll_add		(void *, struct opal_event *);
+static int poll_del		(void *, struct opal_event *);
 #if 0
 /* Open MPI: JMS As far as I can tell, this function is not used
    anywhere */
@@ -89,7 +89,7 @@ static int poll_recalc	(void *, int);
 #endif
 static int poll_dispatch	(void *, struct timeval *);
 
-const struct ompi_eventop ompi_pollops = {
+const struct opal_eventop opal_pollops = {
 	"poll",
 	poll_init,
 	poll_add,
@@ -106,8 +106,8 @@ poll_init(void)
 		return (NULL);
 
 	memset(&pollop, 0, sizeof(pollop));
-#if OMPI_EVENT_USE_SIGNALS
-	ompi_evsignal_init(&pollop.evsigmask);
+#if OPAL_EVENT_USE_SIGNALS
+	opal_evsignal_init(&pollop.evsigmask);
 #endif
 	return (&pollop);
 }
@@ -123,9 +123,9 @@ poll_init(void)
 static int
 poll_recalc(void *arg, int max)
 {
-#if OMPI_EVENT_USE_SIGNALS
+#if OPAL_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-	return (ompi_evsignal_recalc(&pop->evsigmask));
+	return (opal_evsignal_recalc(&pop->evsigmask));
 #else
 	return (0);
 #endif
@@ -136,12 +136,12 @@ static int
 poll_dispatch(void *arg, struct timeval *tv)
 {
 	int res, i, count, sec, nfds;
-	struct ompi_event *ev;
+	struct opal_event *ev;
 	struct pollop *pop = arg;
 
 	count = pop->event_count;
 	nfds = 0;
-	TAILQ_FOREACH(ev, &ompi_eventqueue, ev_next) {
+	TAILQ_FOREACH(ev, &opal_eventqueue, ev_next) {
 		if (nfds + 1 >= count) {
 			if (count < 256)
 				count = 256;
@@ -156,14 +156,14 @@ poll_dispatch(void *arg, struct timeval *tv)
 				return (-1);
 			}
 			pop->event_back = realloc(pop->event_back,
-			    count * sizeof(struct ompi_event *));
+			    count * sizeof(struct opal_event *));
 			if (pop->event_back == NULL) {
 				log_error("realloc");
 				return (-1);
 			}
 			pop->event_count = count;
 		}
-		if (ev->ev_events & OMPI_EV_WRITE) {
+		if (ev->ev_events & OPAL_EV_WRITE) {
 			struct pollfd *pfd = &pop->event_set[nfds];
 			pfd->fd = ev->ev_fd;
 			pfd->events = POLLOUT;
@@ -173,7 +173,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 			nfds++;
 		}
-		if (ev->ev_events & OMPI_EV_READ) {
+		if (ev->ev_events & OPAL_EV_READ) {
 			struct pollfd *pfd = &pop->event_set[nfds];
 
 			pfd->fd = ev->ev_fd;
@@ -186,18 +186,18 @@ poll_dispatch(void *arg, struct timeval *tv)
 		}
 	}
 
-#if OMPI_EVENT_USE_SIGNALS
-	if (ompi_evsignal_deliver(&pop->evsigmask) == -1)
+#if OPAL_EVENT_USE_SIGNALS
+	if (opal_evsignal_deliver(&pop->evsigmask) == -1)
 		return (-1);
 #endif
 
 	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        opal_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&opal_event_lock);
 	    res = poll(pop->event_set, nfds, sec);
-        opal_mutex_lock(&ompi_event_lock);
+        opal_mutex_lock(&opal_event_lock);
 
-#if OMPI_EVENT_USE_SIGNALS
-	if (ompi_evsignal_recalc(&pop->evsigmask) == -1)
+#if OPAL_EVENT_USE_SIGNALS
+	if (opal_evsignal_recalc(&pop->evsigmask) == -1)
 		return (-1);
 #endif
 
@@ -207,15 +207,15 @@ poll_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-#if OMPI_EVENT_USE_SIGNALS
-		ompi_evsignal_process();
+#if OPAL_EVENT_USE_SIGNALS
+		opal_evsignal_process();
 #endif
 		return (0);
 	} 
 
-#if OMPI_EVENT_USE_SIGNALS
-	else if (ompi_evsignal_caught)
-		ompi_evsignal_process();
+#if OPAL_EVENT_USE_SIGNALS
+	else if (opal_evsignal_caught)
+		opal_evsignal_process();
 #endif
 
 	LOG_DBG((LOG_MISC, 80, "%s: poll reports %d", __func__, res));
@@ -232,9 +232,9 @@ poll_dispatch(void *arg, struct timeval *tv)
 		if (what & (POLLHUP | POLLERR | POLLNVAL))
 			what |= POLLIN|POLLOUT;
 		if (what & POLLIN)
-			res |= OMPI_EV_READ;
+			res |= OPAL_EV_READ;
 		if (what & POLLOUT)
-			res |= OMPI_EV_WRITE;
+			res |= OPAL_EV_WRITE;
 		if (res == 0)
 			continue;
 
@@ -242,9 +242,9 @@ poll_dispatch(void *arg, struct timeval *tv)
 		res &= ev->ev_events;
 
 		if (res) {
-			if (!(ev->ev_events & OMPI_EV_PERSIST))
-				ompi_event_del_i(ev);
-			ompi_event_active_i(ev, res, 1);
+			if (!(ev->ev_events & OPAL_EV_PERSIST))
+				opal_event_del_i(ev);
+			opal_event_active_i(ev, res, 1);
 		}	
 	}
 
@@ -252,12 +252,12 @@ poll_dispatch(void *arg, struct timeval *tv)
 }
 
 static int
-poll_add(void *arg, struct ompi_event *ev)
+poll_add(void *arg, struct opal_event *ev)
 {
-#if OMPI_EVENT_USE_SIGNALS
+#if OPAL_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-	if (ev->ev_events & OMPI_EV_SIGNAL)
-		return (ompi_evsignal_add(&pop->evsigmask, ev));
+	if (ev->ev_events & OPAL_EV_SIGNAL)
+		return (opal_evsignal_add(&pop->evsigmask, ev));
 #endif
 	return (0);
 }
@@ -267,15 +267,15 @@ poll_add(void *arg, struct ompi_event *ev)
  */
 
 static int
-poll_del(void *arg, struct ompi_event *ev)
+poll_del(void *arg, struct opal_event *ev)
 {
-#if OMPI_EVENT_USE_SIGNALS
+#if OPAL_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
 #endif
-	if (!(ev->ev_events & OMPI_EV_SIGNAL))
+	if (!(ev->ev_events & OPAL_EV_SIGNAL))
 		return (0);
-#if OMPI_EVENT_USE_SIGNALS
-	return (ompi_evsignal_del(&pop->evsigmask, ev));
+#if OPAL_EVENT_USE_SIGNALS
+	return (opal_evsignal_del(&pop->evsigmask, ev));
 #else
 	return (0);
 #endif

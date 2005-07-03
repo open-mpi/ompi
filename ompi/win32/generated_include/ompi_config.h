@@ -337,7 +337,7 @@
 #define OMPI_ENABLE_MPI_PROFILING 1
 
 /* Do we want to use the event library signal handlers */
-#define OMPI_EVENT_USE_SIGNALS 1
+#define OPAL_EVENT_USE_SIGNALS 1
 
 /* OMPI underlying F90 compiler */
 #define OMPI_WANT_F90_BINDINGS 0
