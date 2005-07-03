@@ -295,7 +295,7 @@ if test -z "$with_openmpi"; then
 
         top_ompi_srcdir='$(top_srcdir)/../../../..'
         top_ompi_builddir='$(top_builddir)/../../../..'
-        INCFLAGS='-I$(top_srcdir)/include -I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal -I$(top_builddir)/opal -I$(top_srcdir)/orte -I$(top_builddir)/orte -I$(top_srcdir)/ompi -I$(top_builddir)/ompi'" $CPPFLAGS"
+        INCFLAGS='-I$(top_ompi_srcdir)/include -I$(top_ompi_srcdir) -I$(top_ompi_builddir) -I$(top_ompi_srcdir)/opal -I$(top_ompi_builddir)/opal -I$(top_ompi_srcdir)/orte -I$(top_ompi_builddir)/orte -I$(top_ompi_srcdir)/ompi -I$(top_ompi_builddir)/ompi'" $CPPFLAGS"
         found_ompi_headers=1
         AC_MSG_RESULT([already in Open MPI source tree])
     fi
