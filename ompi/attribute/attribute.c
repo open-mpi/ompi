@@ -366,10 +366,10 @@ static void attribute_value_construct(attribute_value_t *item);
 static void ompi_attrkey_item_construct(ompi_attrkey_item_t *item);
 static void ompi_attrkey_item_destruct(ompi_attrkey_item_t *item);
 static int set_value(ompi_attribute_type_t type, void *object, 
-                     ompi_hash_table_t **keyhash, int key, 
+                     opal_hash_table_t **keyhash, int key, 
                      attribute_value_t *new_attr,
                      bool predefined, bool need_lock);
-static int get_value(ompi_hash_table_t *keyhash, int key, 
+static int get_value(opal_hash_table_t *keyhash, int key, 
                      attribute_value_t **attribute, int *flag);
 static void *translate_to_c(attribute_value_t *val);
 static MPI_Fint translate_to_fortran_mpi1(attribute_value_t *val);
@@ -398,7 +398,7 @@ static OBJ_CLASS_INSTANCE(ompi_attrkey_item_t,
  * Static variables 
  */
 
-static ompi_hash_table_t *keyval_hash;
+static opal_hash_table_t *keyval_hash;
 static ompi_bitmap_t *key_bitmap;
 static unsigned int int_pos = 12345;
 
@@ -443,7 +443,7 @@ ompi_attrkey_item_destruct(ompi_attrkey_item_t *item)
     /* Remove the key entry from the hash and free the key */
 
     OMPI_THREAD_LOCK(&alock);
-    ompi_hash_table_remove_value_uint32(keyval_hash, item->key);
+    opal_hash_table_remove_value_uint32(keyval_hash, item->key);
     FREE_KEY(item->key);
     OMPI_THREAD_UNLOCK(&alock);
 }
@@ -460,7 +460,7 @@ int ompi_attr_init(void)
     void *bogus = (void*) 1;
     MPI_Fint *p = (MPI_Fint*) &bogus;
 
-    keyval_hash = OBJ_NEW(ompi_hash_table_t);
+    keyval_hash = OBJ_NEW(opal_hash_table_t);
     if (NULL == keyval_hash) {
 	return MPI_ERR_SYSRESOURCE;
     }
@@ -476,7 +476,7 @@ int ompi_attr_init(void)
         }
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_hash_table_init(keyval_hash,
+    if (OMPI_SUCCESS != (ret = opal_hash_table_init(keyval_hash,
                                                     ATTR_TABLE_SIZE))) {
 	return ret;
     }
@@ -527,7 +527,7 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
     OMPI_THREAD_LOCK(&alock);
     ret = CREATE_KEY(key);
     if (OMPI_SUCCESS == ret) {
-        ret = ompi_hash_table_set_value_uint32(keyval_hash, *key, attr);
+        ret = opal_hash_table_set_value_uint32(keyval_hash, *key, attr);
     }
     OMPI_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS != ret) {
@@ -564,7 +564,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
     /* Find the key-value pair */
 
     OMPI_THREAD_LOCK(&alock);
-    ret = ompi_hash_table_get_value_uint32(keyval_hash, *key, 
+    ret = opal_hash_table_get_value_uint32(keyval_hash, *key, 
 					   (void **) &key_item);
     OMPI_THREAD_UNLOCK(&alock);
   
@@ -589,7 +589,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
 
 
 int ompi_attr_delete(ompi_attribute_type_t type, void *object, 
-                     ompi_hash_table_t *keyhash, int key,
+                     opal_hash_table_t *keyhash, int key,
                      bool predefined, bool need_lock) 
 {
     ompi_attrkey_item_t *key_item;
@@ -614,7 +614,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
 
     /* Check if the key is valid in the master keyval hash */
 
-    ret = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+    ret = opal_hash_table_get_value_uint32(keyval_hash, key, 
 					   (void **) &key_item);
 
     if ((OMPI_SUCCESS != ret) || (NULL == key_item) ||
@@ -635,7 +635,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
        yes, then delete the attribute and key entry from the object's key
        hash */
 
-    ret = ompi_hash_table_get_value_uint32(keyhash, key, (void**) &attr);
+    ret = opal_hash_table_get_value_uint32(keyhash, key, (void**) &attr);
     if (OMPI_SUCCESS == ret) {
 	switch (type) {
         case COMM_ATTR:
@@ -658,7 +658,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
 	}
         OBJ_RELEASE(attr);
     
-	ret = ompi_hash_table_remove_value_uint32(keyhash, key);
+	ret = opal_hash_table_remove_value_uint32(keyhash, key);
 	if (OMPI_SUCCESS != ret) {
 	    goto exit;
 	}
@@ -684,7 +684,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
  * attribute.
  */
 int ompi_attr_set_c(ompi_attribute_type_t type, void *object, 
-                    ompi_hash_table_t **keyhash,
+                    opal_hash_table_t **keyhash,
                     int key, void *attribute, bool predefined, bool need_lock)
 {
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
@@ -704,7 +704,7 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * an attribute.
  */
 int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
-                               ompi_hash_table_t **keyhash,
+                               opal_hash_table_t **keyhash,
                                int key, MPI_Fint attribute, 
                                bool predefined, bool need_lock)
 {
@@ -726,7 +726,7 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
  * an attribute.
  */
 int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object, 
-                               ompi_hash_table_t **keyhash,
+                               opal_hash_table_t **keyhash,
                                int key, MPI_Aint attribute, 
                                bool predefined, bool need_lock)
 {
@@ -746,7 +746,7 @@ int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
  * Front-end function called by the C MPI API functions to get
  * attributes.
  */
-int ompi_attr_get_c(ompi_hash_table_t *keyhash, int key, 
+int ompi_attr_get_c(opal_hash_table_t *keyhash, int key, 
                     void **attribute, int *flag)
 {
     attribute_value_t *val;
@@ -765,7 +765,7 @@ int ompi_attr_get_c(ompi_hash_table_t *keyhash, int key,
  * Front-end function called by the Fortran MPI-1 API functions to get
  * attributes.
  */
-int ompi_attr_get_fortran_mpi1(ompi_hash_table_t *keyhash, int key, 
+int ompi_attr_get_fortran_mpi1(opal_hash_table_t *keyhash, int key, 
                                MPI_Fint *attribute, int *flag)
 {
     attribute_value_t *val;
@@ -784,7 +784,7 @@ int ompi_attr_get_fortran_mpi1(ompi_hash_table_t *keyhash, int key,
  * Front-end function called by the Fortran MPI-2 API functions to get
  * attributes.
  */
-int ompi_attr_get_fortran_mpi2(ompi_hash_table_t *keyhash, int key, 
+int ompi_attr_get_fortran_mpi2(opal_hash_table_t *keyhash, int key, 
                                MPI_Aint *attribute, int *flag)
 {
     attribute_value_t *val;
@@ -803,8 +803,8 @@ int ompi_attr_get_fortran_mpi2(ompi_hash_table_t *keyhash, int key,
  * Copy all the attributes from one MPI object to another
  */
 int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
-                       void *new_object, ompi_hash_table_t *oldkeyhash,
-                       ompi_hash_table_t *newkeyhash)
+                       void *new_object, opal_hash_table_t *oldkeyhash,
+                       opal_hash_table_t *newkeyhash)
 {
     int ret;
     int err;
@@ -833,7 +833,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
     OMPI_THREAD_LOCK(&alock);
 
     /* Get the first key-attr in the object's key hash */
-    ret = ompi_hash_table_get_first_key_uint32(oldkeyhash, &key, 
+    ret = opal_hash_table_get_first_key_uint32(oldkeyhash, &key, 
                                                (void **) &old_attr,
                                                &node);
 
@@ -845,7 +845,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         /* Get the attr_item in the main keyval hash - so that we know
            what the copy_attr_fn is */
 
-	err = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+	err = opal_hash_table_get_value_uint32(keyval_hash, key, 
 					       (void **) &hash_value);
 
         new_attr = OBJ_NEW(attribute_value_t);
@@ -893,7 +893,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
             OBJ_RELEASE(new_attr);
         }
 
-        ret = ompi_hash_table_get_next_key_uint32(oldkeyhash, &key, 
+        ret = opal_hash_table_get_next_key_uint32(oldkeyhash, &key, 
                                                   (void **) &old_attr, 
                                                   in_node, &node);
     }
@@ -909,7 +909,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
  * Delete all the attributes on an MPI object
  */
 int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
-                         ompi_hash_table_t *keyhash)
+                         opal_hash_table_t *keyhash)
 {
     int key_ret, del_ret;
     uint32_t key, oldkey;
@@ -934,7 +934,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
     OMPI_THREAD_LOCK(&alock);
 
     /* Get the first key in local object's key hash  */
-    key_ret = ompi_hash_table_get_first_key_uint32(keyhash,
+    key_ret = opal_hash_table_get_first_key_uint32(keyhash,
                                                &key, &old_attr,
                                                &node);
     del_ret = OMPI_SUCCESS;
@@ -948,7 +948,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
 	
 	/* Move to the next node */
 
-	key_ret = ompi_hash_table_get_next_key_uint32(keyhash,
+	key_ret = opal_hash_table_get_next_key_uint32(keyhash,
                                                       &key, &old_attr, 
                                                       in_node, &node);
 	/* Now delete this attribute */
@@ -968,7 +968,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
  * Back-end function to set an attribute on an MPI object
  */
 static int set_value(ompi_attribute_type_t type, void *object, 
-                     ompi_hash_table_t **keyhash, int key, 
+                     opal_hash_table_t **keyhash, int key, 
                      attribute_value_t *new_attr,
                      bool predefined, bool need_lock)
 {
@@ -995,7 +995,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
     if (need_lock) {
         OMPI_THREAD_LOCK(&alock);
     }
-    ret = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+    ret = opal_hash_table_get_value_uint32(keyval_hash, key, 
 					   (void **) &key_item);
 
     /* If key not found */
@@ -1018,7 +1018,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
     /* Now see if the key is present in the object's key hash. If so,
        delete the old attribute value. */
 
-    ret = ompi_hash_table_get_value_uint32(*keyhash, key, (void**) &old_attr);
+    ret = opal_hash_table_get_value_uint32(*keyhash, key, (void**) &old_attr);
     if (OMPI_SUCCESS == ret)  {
 	switch (type) {
 	case COMM_ATTR:
@@ -1042,7 +1042,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
         OBJ_RELEASE(old_attr);
     }
 
-    ret = ompi_hash_table_set_value_uint32(*keyhash, key, new_attr); 
+    ret = opal_hash_table_set_value_uint32(*keyhash, key, new_attr); 
 
     if (need_lock) {
         OMPI_THREAD_UNLOCK(&alock);
@@ -1067,7 +1067,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
  * in small, standalone functions that are called from several
  * different places.
  */
-static int get_value(ompi_hash_table_t *keyhash, int key, 
+static int get_value(opal_hash_table_t *keyhash, int key, 
                      attribute_value_t **attribute, int *flag)
 {
     int ret;
@@ -1081,7 +1081,7 @@ static int get_value(ompi_hash_table_t *keyhash, int key,
 
     *flag = 0;
     OMPI_THREAD_LOCK(&alock);
-    ret = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+    ret = opal_hash_table_get_value_uint32(keyval_hash, key, 
 					   (void**) &key_item);
 
     if (OMPI_ERR_NOT_FOUND == ret) {
@@ -1097,7 +1097,7 @@ static int get_value(ompi_hash_table_t *keyhash, int key,
         return OMPI_SUCCESS;
     }
 
-    ret = ompi_hash_table_get_value_uint32(keyhash, key, &attr);
+    ret = opal_hash_table_get_value_uint32(keyhash, key, &attr);
     OMPI_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS == ret) {
         *attribute = attr;

@@ -211,8 +211,8 @@ int orte_iof_svc_sub_forward(
 static void orte_iof_svc_fwd_construct(orte_iof_svc_fwd_t* fwd)
 {
     fwd->fwd_pub = NULL;
-    OBJ_CONSTRUCT(&fwd->fwd_seq, ompi_hash_table_t);
-    ompi_hash_table_init(&fwd->fwd_seq, 256);
+    OBJ_CONSTRUCT(&fwd->fwd_seq, opal_hash_table_t);
+    opal_hash_table_init(&fwd->fwd_seq, 256);
 }
 
 static void orte_iof_svc_fwd_destruct(orte_iof_svc_fwd_t* fwd)

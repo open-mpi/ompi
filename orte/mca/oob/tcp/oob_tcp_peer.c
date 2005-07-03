@@ -192,7 +192,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     }
     
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    peer = (mca_oob_tcp_peer_t*)ompi_hash_table_get_proc(
+    peer = (mca_oob_tcp_peer_t*)opal_hash_table_get_proc(
        &mca_oob_tcp_component.tcp_peers, name);
     if(NULL != peer && memcmp(&peer->peer_name,name,sizeof(peer->peer_name)) == 0) {
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -227,7 +227,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     peer->peer_retries = 0;
 
     /* add to lookup table */
-    if(OMPI_SUCCESS != ompi_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, 
+    if(OMPI_SUCCESS != opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, 
         &peer->peer_name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);

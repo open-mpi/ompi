@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #include "threads/condition.h"
 #include "util/output.h"
 #include "util/proc_info.h"

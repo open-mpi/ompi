@@ -82,7 +82,7 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
                     ompi_proc_t **local_procs,
                     int remote_size,
                     ompi_proc_t **remote_procs,
-                    ompi_hash_table_t *attr,
+                    opal_hash_table_t *attr,
                     ompi_errhandler_t *errh,
                     mca_base_component_t *topocomponent )
 {

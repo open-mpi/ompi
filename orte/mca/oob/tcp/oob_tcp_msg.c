@@ -351,9 +351,9 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
     
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     if (orte_ns.compare(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != 0) {
-        ompi_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
+        opal_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
         peer->peer_name = src;
-        ompi_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
+        opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
     }
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }

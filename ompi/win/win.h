@@ -21,7 +21,7 @@
 #include "mpi.h"
 #include "errhandler/errhandler.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -35,7 +35,7 @@ struct ompi_win_t {
 
   /* Attributes */
 
-  ompi_hash_table_t *w_keyhash;
+  opal_hash_table_t *w_keyhash;
 
   /* index in Fortran <-> C translation array */
 

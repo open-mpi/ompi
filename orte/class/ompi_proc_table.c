@@ -43,7 +43,7 @@ static OBJ_CLASS_INSTANCE(
     NULL);
 
 
-void* ompi_hash_table_get_proc(ompi_hash_table_t* ht, 
+void* opal_hash_table_get_proc(opal_hash_table_t* ht, 
     const orte_process_name_t* proc)
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
@@ -52,8 +52,8 @@ void* ompi_hash_table_get_proc(ompi_hash_table_t* ht,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "ompi_hash_table_get_proc:"
-		   "ompi_hash_table_init() has not been called");
+        ompi_output(0, "opal_hash_table_get_proc:"
+		   "opal_hash_table_init() has not been called");
         return NULL;
     }
 #endif
@@ -68,8 +68,8 @@ void* ompi_hash_table_get_proc(ompi_hash_table_t* ht,
 }
 
 
-int ompi_hash_table_set_proc(
-    ompi_hash_table_t* ht,
+int opal_hash_table_set_proc(
+    opal_hash_table_t* ht,
     const orte_process_name_t* proc, 
     void* value)
 {
@@ -79,8 +79,8 @@ int ompi_hash_table_set_proc(
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "ompi_hash_table_set_value_proc:"
-		   "ompi_hash_table_init() has not been called");
+        ompi_output(0, "opal_hash_table_set_value_proc:"
+		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
 #endif
@@ -107,8 +107,8 @@ int ompi_hash_table_set_proc(
 }
 
 
-int ompi_hash_table_remove_proc(
-    ompi_hash_table_t* ht, 
+int opal_hash_table_remove_proc(
+    opal_hash_table_t* ht, 
     const orte_process_name_t* proc)
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
@@ -117,8 +117,8 @@ int ompi_hash_table_remove_proc(
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "ompi_hash_table_remove_value_proc:"
-		   "ompi_hash_table_init() has not been called");
+        ompi_output(0, "opal_hash_table_remove_value_proc:"
+		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
 #endif

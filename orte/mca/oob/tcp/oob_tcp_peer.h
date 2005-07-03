@@ -91,7 +91,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
 #define MCA_OOB_TCP_PEER_RETURN(peer) \
     { \
     mca_oob_tcp_peer_shutdown(peer); \
-    ompi_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name); \
+    opal_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name); \
     OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (opal_list_item_t*)peer); \
     }
 

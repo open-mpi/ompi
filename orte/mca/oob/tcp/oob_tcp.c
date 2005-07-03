@@ -177,8 +177,8 @@ int mca_oob_tcp_component_open(void)
     
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,     ompi_hash_table_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    ompi_hash_table_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,     opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    opal_hash_table_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          opal_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,          ompi_mutex_t);
@@ -496,8 +496,8 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
         return NULL;
 
     /* initialize data structures */
-    ompi_hash_table_init(&mca_oob_tcp_component.tcp_peers, 128);
-    ompi_hash_table_init(&mca_oob_tcp_component.tcp_peer_names, 128);
+    opal_hash_table_init(&mca_oob_tcp_component.tcp_peers, 128);
+    opal_hash_table_init(&mca_oob_tcp_component.tcp_peer_names, 128);
 
     opal_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
         sizeof(mca_oob_tcp_peer_t),
@@ -582,7 +582,7 @@ void mca_oob_tcp_registry_callback(
             }
 
             /* check for existing cache entry */
-            existing = (mca_oob_tcp_addr_t *)ompi_hash_table_get_proc(
+            existing = (mca_oob_tcp_addr_t *)opal_hash_table_get_proc(
                 &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
             if(NULL != existing) {
                 /* TSW - need to update existing entry */
@@ -591,8 +591,8 @@ void mca_oob_tcp_registry_callback(
             }
 
             /* insert into cache and notify peer */
-            ompi_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
-            peer = (mca_oob_tcp_peer_t *)ompi_hash_table_get_proc(
+            opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
+            peer = (mca_oob_tcp_peer_t *)opal_hash_table_get_proc(
                 &mca_oob_tcp_component.tcp_peers, &addr->addr_name);
             if(NULL != peer)
                 mca_oob_tcp_peer_resolved(peer, addr);
@@ -616,7 +616,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
   
     /* if the address is already cached - simply return it */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    addr = (mca_oob_tcp_addr_t *)ompi_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names, 
+    addr = (mca_oob_tcp_addr_t *)opal_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names, 
          &peer->peer_name);
     if(NULL != addr) {
          OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -1125,14 +1125,14 @@ int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
         return rc;
 
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    addr = (mca_oob_tcp_addr_t*)ompi_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names, name);
+    addr = (mca_oob_tcp_addr_t*)opal_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names, name);
     if(NULL == addr) {
         addr = OBJ_NEW(mca_oob_tcp_addr_t);
         addr->addr_name = *name;
-        ompi_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
+        opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
     }
     rc = mca_oob_tcp_addr_insert(addr, &inaddr);
-    peer = (mca_oob_tcp_peer_t *)ompi_hash_table_get_proc(
+    peer = (mca_oob_tcp_peer_t *)opal_hash_table_get_proc(
         &mca_oob_tcp_component.tcp_peers, &addr->addr_name);
     if(NULL != peer) {
         mca_oob_tcp_peer_resolved(peer, addr);

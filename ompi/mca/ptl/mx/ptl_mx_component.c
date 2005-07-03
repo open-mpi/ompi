@@ -98,8 +98,8 @@ int mca_ptl_mx_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_recv_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_procs, ompi_hash_table_t);
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_pending_acks, ompi_hash_table_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_procs, opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_pending_acks, opal_hash_table_t);
 
     /* register MX module parameters */
     mca_ptl_mx_component.mx_filter =
@@ -190,7 +190,7 @@ mca_ptl_base_module_t** mca_ptl_mx_component_init(
         NULL); /* use default allocator */
 
     /* intialize process hash table */
-    ompi_hash_table_init(&mca_ptl_mx_component.mx_procs, 256);
+    opal_hash_table_init(&mca_ptl_mx_component.mx_procs, 256);
 
     /* initialize mx ptls */
     if(OMPI_SUCCESS != mca_ptl_mx_module_init())

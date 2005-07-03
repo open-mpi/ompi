@@ -18,7 +18,7 @@
 #define OMPI_COMMUNICATOR_H
 
 #include "opal/class/opal_object.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #include "errhandler/errhandler.h"
 #include "threads/mutex.h"
 
@@ -102,7 +102,7 @@ struct ompi_communicator_t {
     ompi_group_t       *c_remote_group;
   
     /* Attributes */
-    ompi_hash_table_t       *c_keyhash;
+    opal_hash_table_t       *c_keyhash;
 
     /**< inscribing cube dimension */
     int c_cube_dim; 
@@ -342,7 +342,7 @@ struct ompi_communicator_t {
                         ompi_proc_t **local_procs,
                         int remote_size,
                         ompi_proc_t **remote_procs,
-                        ompi_hash_table_t *attr,
+                        opal_hash_table_t *attr,
                         ompi_errhandler_t *errh, 
                         mca_base_component_t *topocomponent );
     /**

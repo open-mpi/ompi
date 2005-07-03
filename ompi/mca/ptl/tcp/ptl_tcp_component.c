@@ -178,12 +178,12 @@ int mca_ptl_tcp_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, ompi_hash_table_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, opal_hash_table_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_pending_acks, opal_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_events, opal_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_recv_frags, ompi_free_list_t);
-    ompi_hash_table_init(&mca_ptl_tcp_component.tcp_procs, 256);
+    opal_hash_table_init(&mca_ptl_tcp_component.tcp_procs, 256);
 
     /* register TCP module parameters */
     mca_ptl_tcp_component.tcp_if_include =
@@ -538,7 +538,7 @@ int mca_ptl_tcp_component_control(int param, void* value, size_t size)
         case MCA_PTL_ENABLE:
             if(*(int*)value) {
                 ompi_event_add(&mca_ptl_tcp_component.tcp_recv_event, 0);
-                if(ompi_hash_table_get_size(&mca_ptl_tcp_component.tcp_procs) > 0) {
+                if(opal_hash_table_get_size(&mca_ptl_tcp_component.tcp_procs) > 0) {
                     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
                 }
             } else {

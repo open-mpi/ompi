@@ -23,7 +23,7 @@
 #include "mpi.h"
 #include "include/constants.h"
 #include "opal/class/opal_value_array.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #if 0
 /* JMS commented out for now -- see lookup_keyvals() below for an
    explanation */
@@ -66,7 +66,7 @@ static int param_register(const char *type_name, const char *component_name,
                           mca_base_param_storage_t *file_value,
                           mca_base_param_storage_t *override_value);
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
-                         ompi_hash_table_t *attrs);
+                         opal_hash_table_t *attrs);
 static bool param_set_override(size_t index, 
                                mca_base_param_storage_t *storage,
                                mca_base_param_type_t type);
@@ -74,7 +74,7 @@ static bool lookup_override(mca_base_param_t *param,
                             mca_base_param_storage_t *storage);
 static bool lookup_keyvals(mca_base_param_t *param,
                            mca_base_param_storage_t *storage,
-                           ompi_hash_table_t *attrs);
+                           opal_hash_table_t *attrs);
 static bool lookup_env(mca_base_param_t *param,
                        mca_base_param_storage_t *storage);
 static bool lookup_file(mca_base_param_t *param,
@@ -237,7 +237,7 @@ int mca_base_param_lookup_int(int index, int *value)
 /*
  * Look up an integer MCA parameter, including in attributes
  */
-int mca_base_param_kv_lookup_int(int index, ompi_hash_table_t *attrs, 
+int mca_base_param_kv_lookup_int(int index, opal_hash_table_t *attrs, 
                                  int *value)
 {
   mca_base_param_storage_t storage;
@@ -282,7 +282,7 @@ int mca_base_param_lookup_string(int index, char **value)
 /*
  * Look up a string MCA parameter, including in attributes.
  */
-int mca_base_param_kv_lookup_string(int index, ompi_hash_table_t *attrs, 
+int mca_base_param_kv_lookup_string(int index, opal_hash_table_t *attrs, 
                                     char **value)
 {
   mca_base_param_storage_t storage;
@@ -987,7 +987,7 @@ static bool param_set_override(size_t index,
  * Lookup a parameter in multiple places
  */
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
-                         ompi_hash_table_t *attrs)
+                         opal_hash_table_t *attrs)
 {
     size_t size;
     mca_base_param_t *array;
@@ -1077,7 +1077,7 @@ static bool lookup_override(mca_base_param_t *param,
  */
 static bool lookup_keyvals(mca_base_param_t *param,
                            mca_base_param_storage_t *storage,
-                           ompi_hash_table_t *attrs)
+                           opal_hash_table_t *attrs)
 {
 #if 1
     /* JMS: Comment this out for now, because it drags in all of

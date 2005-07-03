@@ -36,7 +36,7 @@
 #include <string.h>
 #include "include/constants.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #include "class/ompi_pointer_array.h"
 #include "mpi.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -101,7 +101,7 @@ typedef struct ompi_datatype_t {
    uint64_t           bdt_used; /**< which basic datatypes are used in the data description */
 
    /* Attribute fields */
-   ompi_hash_table_t *d_keyhash;
+   opal_hash_table_t *d_keyhash;
    int32_t            d_f_to_c_index;
    char               name[MPI_MAX_OBJECT_NAME];
    dt_type_desc_t     desc;     /**< the data description */
