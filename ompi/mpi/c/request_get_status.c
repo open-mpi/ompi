@@ -63,7 +63,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
     }
     *flag = false;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    ompi_progress();
+    opal_progress();
 #endif
     return MPI_SUCCESS;
 }

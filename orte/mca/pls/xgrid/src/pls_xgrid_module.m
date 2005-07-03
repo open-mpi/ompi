@@ -229,7 +229,7 @@ orte_pls_xgrid_finalize(void)
     [mca_pls_xgrid_component.client release];
     [mca_pls_xgrid_component.pool release];
 
-    ompi_progress_unregister(orte_pls_xgrid_progress);
+    opal_progress_unregister(orte_pls_xgrid_progress);
 
     /* cleanup any pending recvs */
     orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_CLNT);

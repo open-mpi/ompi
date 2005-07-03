@@ -21,7 +21,7 @@
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
-#include "runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 
 /*
  * Private variables
@@ -51,7 +51,7 @@ int mca_io_base_component_init(void)
 
     initialized = true;
 
-    ompi_progress_register(mca_io_base_component_run_progress);
+    opal_progress_register(mca_io_base_component_run_progress);
 
     return OMPI_SUCCESS;
 }
@@ -211,7 +211,7 @@ int mca_io_base_component_finalize(void)
 {
     initialized = false;
 
-    ompi_progress_unregister(mca_io_base_component_run_progress);
+    opal_progress_unregister(mca_io_base_component_run_progress);
 
 
     OBJ_DESTRUCT(&components_in_use);

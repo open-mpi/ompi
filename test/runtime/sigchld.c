@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "runtime/orte_wait.h"
-#include "runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 #include "runtime/runtime.h"
 
 #ifdef HAVE_SYS_TYPES_H
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     }
     
     while (count > 0) { 
-        ompi_progress(); 
+        opal_progress(); 
     }
 
     orte_finalize();

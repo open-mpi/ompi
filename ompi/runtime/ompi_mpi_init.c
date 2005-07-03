@@ -20,7 +20,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "orte/runtime/runtime.h"
-#include "opal/runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
@@ -147,8 +147,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* initialize the progress engine for MPI functionality */
-    if (OMPI_SUCCESS != ompi_progress_mpi_init()) {
-        error = "ompi_progress_mpi_init() failed";
+    if (OMPI_SUCCESS != opal_progress_mpi_init()) {
+        error = "opal_progress_mpi_init() failed";
         goto error;
     }
 
@@ -404,7 +404,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
      /* BWB - is this still needed? */
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+    opal_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 
     /* Second barrier -- wait for message from
@@ -434,8 +434,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* put the event library in "high performance MPI mode" */
-    if (OMPI_SUCCESS != ompi_progress_mpi_enable()) {
-        error = "ompi_progress_mpi_enable() failed";
+    if (OMPI_SUCCESS != opal_progress_mpi_enable()) {
+        error = "opal_progress_mpi_enable() failed";
         goto error;
     }
 

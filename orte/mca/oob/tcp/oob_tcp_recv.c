@@ -260,7 +260,7 @@ int mca_oob_tcp_recv_cancel(
     /* wait for any previously matched messages to be processed */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_progress_thread() == false) {
+    if(opal_progress_thread() == false) {
         while(mca_oob_tcp_component.tcp_match_count) {
             ompi_condition_wait(
                 &mca_oob_tcp_component.tcp_match_cond, 

@@ -40,7 +40,7 @@
 #include "util/os_create_dirpath.h"
 #include "mca/oob/base/base.h"
 #include "util/os_path.h"
-#include "runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 #include "pls_bproc_orted.h"
 
 orte_pls_base_module_1_0_0_t orte_pls_bproc_orted_module = {

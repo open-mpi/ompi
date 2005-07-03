@@ -20,7 +20,7 @@
 #include <sched.h>
 #endif
 
-#include "runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 #include "event/event.h"
 #include "include/constants.h"
 #include "mca/base/mca_base_param.h"
@@ -28,8 +28,8 @@
 /* 
  * default parameters 
  */
-static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
-static const int ompi_progress_default_tick_rate = 100;
+static int opal_progress_event_flag = OMPI_EVLOOP_ONCE;
+static const int opal_progress_default_tick_rate = 100;
 
 /*
  * Local variables
@@ -39,7 +39,7 @@ static opal_atomic_lock_t progress_lock;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 /* callbacks to progress */
-static ompi_progress_callback_t *callbacks = NULL;
+static opal_progress_callback_t *callbacks = NULL;
 static size_t callbacks_len = 0;
 static size_t callbacks_size = 0;
 
@@ -57,7 +57,7 @@ static int32_t event_num_mpi_users = 0;
 
 /* init the progress engine - called from orte_init */
 int
-ompi_progress_init(void)
+opal_progress_init(void)
 {
     /* reentrant issues */
 #if OMPI_HAVE_THREAD_SUPPORT
@@ -74,7 +74,7 @@ ompi_progress_init(void)
 
 
 int
-ompi_progress_mpi_init(void)
+opal_progress_mpi_init(void)
 {
     event_num_mpi_users = 0;
 
@@ -83,7 +83,7 @@ ompi_progress_mpi_init(void)
 
 /* turn on MPI optimizations */
 int
-ompi_progress_mpi_enable(void)
+opal_progress_mpi_enable(void)
 {
     int param, value;
 
@@ -104,7 +104,7 @@ ompi_progress_mpi_enable(void)
 
     if (value < 0) {
         /* user didn't specify - default tick rate */
-        event_progress_counter_reset = ompi_progress_default_tick_rate;
+        event_progress_counter_reset = opal_progress_default_tick_rate;
     } else if (value == 0) {
         /* user specified as never tick - don't count often */
         event_progress_counter_reset = INT_MAX;
@@ -125,7 +125,7 @@ ompi_progress_mpi_enable(void)
 
 
 int
-ompi_progress_mpi_disable(void)
+opal_progress_mpi_disable(void)
 {
     /* always call sched yield from here on... */
     call_yield = 1;
@@ -138,7 +138,7 @@ ompi_progress_mpi_disable(void)
 
 
 int
-ompi_progress_finalize(void)
+opal_progress_finalize(void)
 {
     /* don't need to free the progess lock */
 
@@ -164,9 +164,9 @@ ompi_progress_finalize(void)
 
 
 void
-ompi_progress_events(int flag)
+opal_progress_events(int flag)
 {
-    ompi_progress_event_flag = flag;
+    opal_progress_event_flag = flag;
 }
 
 
@@ -182,7 +182,7 @@ ompi_progress_events(int flag)
  * of the if checks (they were resulting in bad pipe stalling behabior)
  */
 void
-ompi_progress(void)
+opal_progress(void)
 {
     size_t i;
     int events = 0;
@@ -193,7 +193,7 @@ ompi_progress(void)
        if the PTL progress functions are all reentrant or not.  The I/O
        code should all be reentrant.  Because of the uncertainty, we are
        preventing more than one thread of execution from progressing the
-       via ompi_progress (which is usually only called when there are
+       via opal_progress (which is usually only called when there are
        no PROGRESS_THREADS running).  This should be made more fine-grained
        at some point in the future. */
     if (! opal_atomic_trylock(&progress_lock)) {
@@ -205,10 +205,10 @@ ompi_progress(void)
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     /* trip the event library if we've reached our tick rate and we are
        enabled */
-    if (event_progress_counter-- <= 0 && ompi_progress_event_flag != 0) {
+    if (event_progress_counter-- <= 0 && opal_progress_event_flag != 0) {
         event_progress_counter = 
             (event_num_mpi_users > 0) ? 1 : event_progress_counter_reset;
-        events += ompi_event_loop(ompi_progress_event_flag);
+        events += ompi_event_loop(opal_progress_event_flag);
     }
 #endif
 
@@ -246,7 +246,7 @@ ompi_progress(void)
 
 
 int
-ompi_progress_register(ompi_progress_callback_t cb)
+opal_progress_register(opal_progress_callback_t cb)
 {
     int ret = OMPI_SUCCESS;
 
@@ -256,8 +256,8 @@ ompi_progress_register(ompi_progress_callback_t cb)
 
     /* see if we need to allocate more space */
     if (callbacks_len + 1 > callbacks_size) {
-        ompi_progress_callback_t *tmp;
-        tmp = realloc(callbacks, sizeof(ompi_progress_callback_t) * (callbacks_size + 4));
+        opal_progress_callback_t *tmp;
+        tmp = realloc(callbacks, sizeof(opal_progress_callback_t) * (callbacks_size + 4));
         if (tmp == NULL) {
             ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;
@@ -279,7 +279,7 @@ ompi_progress_register(ompi_progress_callback_t cb)
 }
 
 int
-ompi_progress_unregister(ompi_progress_callback_t cb)
+opal_progress_unregister(opal_progress_callback_t cb)
 {
     size_t i;
     int ret = OMPI_ERR_NOT_FOUND;
@@ -321,7 +321,7 @@ ompi_progress_unregister(ompi_progress_callback_t cb)
 
 
 int
-ompi_progress_event_increment()
+opal_progress_event_increment()
 {
     int32_t val;
     val = opal_atomic_add_32(&event_num_mpi_users, 1);
@@ -333,7 +333,7 @@ ompi_progress_event_increment()
 
 
 int
-ompi_progress_event_decrement()
+opal_progress_event_decrement()
 {
     int32_t val;
    val = opal_atomic_sub_32(&event_num_mpi_users, 1);

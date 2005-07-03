@@ -146,7 +146,7 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
 
 	    actionMonitor = [job performDeleteAction];
 	    while (XGActionMonitorOutcomeNone == [actionMonitor outcome]) {
-		ompi_progress();
+		opal_progress();
 	    }
 
 	    /* we should have a result - find out if it worked */
@@ -225,7 +225,7 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
 		"pls: xgrid: connection name: %s", [[connection name] cString]);
     
     controller = [[XGController alloc] initWithConnection:connection];
-    ompi_progress();
+    opal_progress();
     grid = [controller defaultGrid];
 #if 0 /* gives a warning - need to figure out "right way" */
     ompi_output(orte_pls_base.pls_output,
@@ -335,7 +335,7 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
 
     /* wait until we have some idea if job succeeded or not */
     while (XGActionMonitorOutcomeNone == [actionMonitor outcome]) {
-	ompi_progress();
+	opal_progress();
     }
 
     /* we should have a result - find out if it worked */
@@ -371,7 +371,7 @@ cleanup:
 
     XGActionMonitor *actionMonitor = [job performStopAction];
     while (XGActionMonitorOutcomeNone == [actionMonitor outcome]) {
-	ompi_progress();
+	opal_progress();
     }
 
     /* we should have a result - find out if it worked */

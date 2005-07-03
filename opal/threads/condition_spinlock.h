@@ -22,7 +22,7 @@
 #endif
 #include "threads/condition.h"
 #include "threads/mutex.h"
-#include "runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -45,12 +45,12 @@ static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)
     if (ompi_using_threads()) {
         while (c->c_signaled == 0) {
             ompi_mutex_unlock(m);
-            ompi_progress();
+            opal_progress();
             ompi_mutex_lock(m);
         }
     } else {
         while (c->c_signaled == 0) {
-            ompi_progress();
+            opal_progress();
         }
     }
     c->c_signaled--;
@@ -74,7 +74,7 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
                (tv.tv_sec <= abs.tv_sec ||
                (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
             ompi_mutex_unlock(m);
-            ompi_progress();
+            opal_progress();
             gettimeofday(&tv,NULL);
             ompi_mutex_lock(m);
         }
@@ -82,7 +82,7 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
         while (c->c_signaled == 0 &&  
                (tv.tv_sec <= abs.tv_sec ||
                (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
-            ompi_progress();
+            opal_progress();
             gettimeofday(&tv,NULL);
         }
     }

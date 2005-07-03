@@ -151,7 +151,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                      component->pmlm_version.mca_component_name);
 
   /* register the winner's callback */
-  ompi_progress_register(mca_pml.pml_progress);
+  opal_progress_register(mca_pml.pml_progress);
 
   /* All done */
 

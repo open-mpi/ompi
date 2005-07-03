@@ -28,7 +28,7 @@
 int mca_pml_base_close(void)
 {
   /* turn off the progress code for the pml */
-  ompi_progress_unregister(mca_pml.pml_progress);
+  opal_progress_unregister(mca_pml.pml_progress);
 
   /* Blatently ignore the return code (what would we do to recover,
      anyway?  This module is going away, so errors don't matter

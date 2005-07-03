@@ -41,7 +41,7 @@ int mca_pml_uniq_iprobe(int src,
             *matched = 1;
         } else {
             /* we are supposed to progress ... */
-            ompi_progress();
+            opal_progress();
         }
     }
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );

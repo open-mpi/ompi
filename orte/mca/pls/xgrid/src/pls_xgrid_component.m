@@ -151,7 +151,7 @@ orte_pls_xgrid_component_init(int *priority)
     mca_base_param_lookup_int(param, &val);
     [mca_pls_xgrid_component.client setCleanUp: val];
 
-    ompi_progress_register(orte_pls_xgrid_progress);
+    opal_progress_register(orte_pls_xgrid_progress);
 
     ompi_output(orte_pls_base.pls_output, "orte:pls:xgrid: initialized");
 

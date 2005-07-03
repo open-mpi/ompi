@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
     /*
      * Intialize the general progress engine
      */
-    if (OMPI_SUCCESS != (ret = ompi_progress_init())) {
+    if (OMPI_SUCCESS != (ret = opal_progress_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
