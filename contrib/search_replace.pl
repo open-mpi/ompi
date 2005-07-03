@@ -29,8 +29,9 @@ print "search: $search_string\n";
 print "replace: $replace_string\n";
 
 sub replace {
-    # don't process directories, and dont' recurse down 
+    # don't process directories or links, and dont' recurse down 
     # "special" directories
+    if ( -l $_ ) { return; }
     if ( -d $_ ) { 
         if ((/\.svn/) || (/\.deps/) || (/\.libs/)) {
             $File::Find::prune = true;
