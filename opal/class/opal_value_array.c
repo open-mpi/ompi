@@ -16,10 +16,10 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_value_array.h"
+#include "opal/class/opal_value_array.h"
 
 
-static void ompi_value_array_construct(ompi_value_array_t* array)
+static void opal_value_array_construct(opal_value_array_t* array)
 {
     array->array_items = NULL;
     array->array_size = 0;
@@ -27,25 +27,25 @@ static void ompi_value_array_construct(ompi_value_array_t* array)
     array->array_alloc_size = 0;
 }
 
-static void ompi_value_array_destruct(ompi_value_array_t* array)
+static void opal_value_array_destruct(opal_value_array_t* array)
 {
     if (NULL != array->array_items)
         free(array->array_items);
 }
 
-opal_class_t ompi_value_array_t_class = {
-    "ompi_value_array_t",
+opal_class_t opal_value_array_t_class = {
+    "opal_value_array_t",
      OBJ_CLASS(opal_object_t),
-     (opal_construct_t)ompi_value_array_construct,
-     (opal_destruct_t)ompi_value_array_destruct
+     (opal_construct_t)opal_value_array_construct,
+     (opal_destruct_t)opal_value_array_destruct
 };
 
 
-int ompi_value_array_set_size(ompi_value_array_t* array, size_t size)
+int opal_value_array_set_size(opal_value_array_t* array, size_t size)
 {
 #if OMPI_ENABLE_DEBUG
     if(array->array_item_sizeof == 0) {
-        ompi_output(0, "ompi_value_array_set_size: item size must be initialized");
+        ompi_output(0, "opal_value_array_set_size: item size must be initialized");
         return OMPI_ERR_BAD_PARAM;
     }
 #endif

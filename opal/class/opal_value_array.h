@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_VALUE_ARRAY_H
-#define OMPI_VALUE_ARRAY_H
+#ifndef OPAL_VALUE_ARRAY_H
+#define OPAL_VALUE_ARRAY_H
 
 #include <string.h>
 #include "ompi_config.h"
@@ -36,10 +36,10 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern opal_class_t ompi_value_array_t_class;
+OMPI_DECLSPEC extern opal_class_t opal_value_array_t_class;
 
 
-struct ompi_value_array_t
+struct opal_value_array_t
 {
     opal_object_t    super;
     unsigned char*  array_items;
@@ -47,7 +47,7 @@ struct ompi_value_array_t
     size_t          array_size;
     size_t          array_alloc_size;
 };
-typedef struct ompi_value_array_t ompi_value_array_t;
+typedef struct opal_value_array_t opal_value_array_t;
 
 
 
@@ -64,7 +64,7 @@ typedef struct ompi_value_array_t ompi_value_array_t;
  * delete it.
  */
 
-static inline int ompi_value_array_init(ompi_value_array_t *array, size_t item_sizeof)
+static inline int opal_value_array_init(opal_value_array_t *array, size_t item_sizeof)
 {
     array->array_item_sizeof = item_sizeof;
     array->array_alloc_size = 1; 
@@ -82,7 +82,7 @@ static inline int ompi_value_array_init(ompi_value_array_t *array, size_t item_s
  *  @return  OMPI error code.
  */
 
-static inline int ompi_value_array_reserve(ompi_value_array_t* array, size_t size)
+static inline int opal_value_array_reserve(opal_value_array_t* array, size_t size)
 {
      if(size > array->array_alloc_size) {
          array->array_items = (unsigned char*)realloc(array->array_items, array->array_item_sizeof * size);
@@ -105,7 +105,7 @@ static inline int ompi_value_array_reserve(ompi_value_array_t* array, size_t siz
  *  @return  The number of elements currently in use.
  */
 
-static inline size_t ompi_value_array_get_size(ompi_value_array_t* array)
+static inline size_t opal_value_array_get_size(opal_value_array_t* array)
 {
     return array->array_size;
 }
@@ -122,11 +122,11 @@ static inline size_t ompi_value_array_get_size(ompi_value_array_t* array)
  *  Note that resizing the array to a smaller size may not change
  *  the underlying memory allocated by the array. However, setting
  *  the size larger than the current allocation will grow it. In either
- *  case, if the routine is successful, ompi_value_array_get_size() will 
+ *  case, if the routine is successful, opal_value_array_get_size() will 
  *  return the new size.
  */
 
-int ompi_value_array_set_size(ompi_value_array_t* array, size_t size);
+int opal_value_array_set_size(opal_value_array_t* array, size_t size);
 
 
 /** 
@@ -143,7 +143,7 @@ int ompi_value_array_set_size(ompi_value_array_t* array, size_t size);
  *  ensuring the array index is valid (0 <= item index < array size).
  */
 
-#define OMPI_VALUE_ARRAY_GET_ITEM(array, item_type, item_index) \
+#define OPAL_VALUE_ARRAY_GET_ITEM(array, item_type, item_index) \
     ((item_type*)((array)->array_items))[item_index]
 
 /**
@@ -158,9 +158,9 @@ int ompi_value_array_set_size(ompi_value_array_t* array, size_t size);
  *  array size, the array is grown to satisfy the request.
  */
 
-static inline void* ompi_value_array_get_item(ompi_value_array_t *array, size_t index)
+static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t index)
 {
-    if(index >= array->array_size && ompi_value_array_set_size(array, index+1) != OMPI_SUCCESS)
+    if(index >= array->array_size && opal_value_array_set_size(array, index+1) != OMPI_SUCCESS)
         return NULL;
     return array->array_items + (index * array->array_item_sizeof);
 }
@@ -181,7 +181,7 @@ static inline void* ompi_value_array_get_item(ompi_value_array_t *array, size_t 
  * copied into the array by value.
  */
 
-#define OMPI_VALUE_ARRAY_SET_ITEM(array, item_type, item_index, item_value) \
+#define OPAL_VALUE_ARRAY_SET_ITEM(array, item_type, item_index, item_value) \
     (((item_type*)((array)->array_items))[item_index] = item_value)
 
 /** 
@@ -198,11 +198,11 @@ static inline void* ompi_value_array_get_item(ompi_value_array_t *array, size_t 
  * copied into the array by value.
  */
 
-static inline int ompi_value_array_set_item(ompi_value_array_t *array, size_t index, const void* item)
+static inline int opal_value_array_set_item(opal_value_array_t *array, size_t index, const void* item)
 {
     int rc;
     if(index >= array->array_size && 
-       (rc = ompi_value_array_set_size(array, index+1)) != OMPI_SUCCESS)
+       (rc = opal_value_array_set_size(array, index+1)) != OMPI_SUCCESS)
         return rc;
     memcpy(array->array_items + (index * array->array_item_sizeof), item, array->array_item_sizeof);
     return OMPI_SUCCESS;
@@ -223,9 +223,9 @@ static inline int ompi_value_array_set_item(ompi_value_array_t *array, size_t in
  * it is copied by value into the array.
  */
 
-static inline int ompi_value_array_append_item(ompi_value_array_t *array, const void *item)
+static inline int opal_value_array_append_item(opal_value_array_t *array, const void *item)
 {
-    return ompi_value_array_set_item(array, array->array_size, item);
+    return opal_value_array_set_item(array, array->array_size, item);
 }
 
 
@@ -241,11 +241,11 @@ static inline int ompi_value_array_append_item(ompi_value_array_t *array, const 
  * All elements following this index are shifted down.
  */
 
-static inline int ompi_value_array_remove_item(ompi_value_array_t *array, size_t index)
+static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t index)
 {
 #if OMPI_ENABLE_DEBUG
     if (index >= array->array_size) {
-        ompi_output(0, "ompi_value_array_remove_item: invalid index %d\n", index);
+        ompi_output(0, "opal_value_array_remove_item: invalid index %d\n", index);
         return OMPI_ERR_BAD_PARAM;
     }
 #endif   
@@ -267,12 +267,12 @@ static inline int ompi_value_array_remove_item(ompi_value_array_t *array, size_t
  * This function is helpful when you need to iterate through an
  * entire array; simply get the base value of the array and use native
  * C to iterate through it manually.  This can have better performance
- * than looping over OMPI_VALUE_ARRAY_GET_ITEM() and
- * OMPI_VALUE_ARRAY_SET_ITEM() because it will [potentially] reduce the
+ * than looping over OPAL_VALUE_ARRAY_GET_ITEM() and
+ * OPAL_VALUE_ARRAY_SET_ITEM() because it will [potentially] reduce the
  * number of pointer dereferences.
  */
 
-#define OMPI_VALUE_ARRAY_GET_BASE(array, item_type) \
+#define OPAL_VALUE_ARRAY_GET_BASE(array, item_type) \
   ((item_type*) ((array)->array_items))
 
 #if defined(c_plusplus) || defined(__cplusplus)

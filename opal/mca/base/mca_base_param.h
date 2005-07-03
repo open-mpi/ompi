@@ -58,7 +58,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_value_array.h"
+#include "opal/class/opal_value_array.h"
 #include "opal/class/opal_list.h"
 #include "class/ompi_hash_table.h"
 

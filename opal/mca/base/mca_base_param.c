@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "class/ompi_value_array.h"
+#include "opal/class/opal_value_array.h"
 #include "class/ompi_hash_table.h"
 #if 0
 /* JMS commented out for now -- see lookup_keyvals() below for an
@@ -48,7 +48,7 @@ opal_list_t mca_base_param_file_values;
 /*
  * local variables
  */
-static ompi_value_array_t mca_base_params;
+static opal_value_array_t mca_base_params;
 static const char *mca_prefix = "OMPI_MCA_";
 static char *home = NULL;
 static bool initialized = false;
@@ -115,8 +115,8 @@ int mca_base_param_init(void)
 
         /* Init the value array for the param storage */
 
-        OBJ_CONSTRUCT(&mca_base_params, ompi_value_array_t);
-        ompi_value_array_init(&mca_base_params, sizeof(mca_base_param_t));
+        OBJ_CONSTRUCT(&mca_base_params, opal_value_array_t);
+        opal_value_array_init(&mca_base_params, sizeof(mca_base_param_t));
 
         /* Init the file param value list */
 
@@ -201,7 +201,7 @@ int mca_base_param_kv_associate(int index, int keyval)
     return OMPI_ERROR;
   }
 
-  len = ompi_value_array_get_size(&mca_base_params);
+  len = opal_value_array_get_size(&mca_base_params);
   if (((size_t) index) > len) {
     return OMPI_ERROR;
   }
@@ -210,7 +210,7 @@ int mca_base_param_kv_associate(int index, int keyval)
      parameters, so if the index is >0 and <len, it must be good), so
      save the keyval */
 
-  array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+  array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   array[index].mbp_keyval = keyval;
 
   /* All done */
@@ -321,7 +321,7 @@ int mca_base_param_unset(int index)
         return OMPI_ERROR;
     }
 
-    len = ompi_value_array_get_size(&mca_base_params);
+    len = opal_value_array_get_size(&mca_base_params);
     if (((size_t) index) > len) {
         return OMPI_ERROR;
     }
@@ -330,7 +330,7 @@ int mca_base_param_unset(int index)
        parameters, so if the index is >0 and <len, it must be good),
        so save the internal flag */
 
-    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     if (array[index].mbp_override_value_set) {
         if (MCA_BASE_PARAM_TYPE_STRING == array[index].mbp_type &&
             NULL != array[index].mbp_override_value.stringval) {
@@ -364,7 +364,7 @@ char *mca_base_param_environ_variable(const char *type,
 
     id = mca_base_param_find(type, component, param);
     if (OMPI_ERROR != id) {
-        array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+        array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
         ret = strdup(array[id].mbp_env_var_name);
     } else {
         len = strlen(mca_prefix) + strlen(type) + 16;
@@ -418,8 +418,8 @@ int mca_base_param_find(const char *type_name, const char *component_name,
   /* Loop through looking for a parameter of a given
      type/component/param */
 
-  size = ompi_value_array_get_size(&mca_base_params);
-  array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+  size = opal_value_array_get_size(&mca_base_params);
+  array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < size; ++i) {
     if (0 == strcmp(type_name, array[i].mbp_type_name) &&
         ((NULL == component_name && NULL == array[i].mbp_component_name) ||
@@ -449,7 +449,7 @@ int mca_base_param_set_internal(int index, bool internal)
         return OMPI_ERROR;
     }
 
-    len = ompi_value_array_get_size(&mca_base_params);
+    len = opal_value_array_get_size(&mca_base_params);
     if (((size_t) index) > len) {
         return OMPI_ERROR;
     }
@@ -458,7 +458,7 @@ int mca_base_param_set_internal(int index, bool internal)
        parameters, so if the index is >0 and <len, it must be good),
        so save the internal flag */
 
-    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     array[index].mbp_internal = internal;
   
     /* All done */
@@ -489,8 +489,8 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
 
     /* Iterate through all the registered parameters */
 
-    len = ompi_value_array_get_size(&mca_base_params);
-    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    len = opal_value_array_get_size(&mca_base_params);
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     for (i = 0; i < len; ++i) {
         if(array[i].mbp_internal == internal || internal) {
             p = OBJ_NEW(mca_base_param_info_t);
@@ -532,8 +532,8 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
 
     /* Iterate through all the registered parameters */
 
-    len = ompi_value_array_get_size(&mca_base_params);
-    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    len = opal_value_array_get_size(&mca_base_params);
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     for (i = 0; i < len; ++i) {
         if (array[i].mbp_internal == internal || internal) {
             if (param_lookup(i, &storage, NULL)) {
@@ -606,10 +606,10 @@ int mca_base_param_finalize(void)
 
         /* This is slow, but effective :-) */
 
-        array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-        while (ompi_value_array_get_size(&mca_base_params) > 0) {
+        array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+        while (opal_value_array_get_size(&mca_base_params) > 0) {
             OBJ_DESTRUCT(&array[0]);
-            ompi_value_array_remove_item(&mca_base_params, 0);
+            opal_value_array_remove_item(&mca_base_params, 0);
         }
         OBJ_DESTRUCT(&mca_base_params);
 
@@ -803,8 +803,8 @@ static int param_register(const char *type_name, const char *component_name,
 
   /* See if this entry is already in the array */
 
-  len = ompi_value_array_get_size(&mca_base_params);
-  array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+  len = opal_value_array_get_size(&mca_base_params);
+  array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < len; ++i) {
     if (0 == strcmp(param.mbp_full_name, array[i].mbp_full_name)) {
 
@@ -939,10 +939,10 @@ static int param_register(const char *type_name, const char *component_name,
   /* Add it to the array */
 
   if (OMPI_SUCCESS != 
-      (ret = ompi_value_array_append_item(&mca_base_params, &param))) {
+      (ret = opal_value_array_append_item(&mca_base_params, &param))) {
     return ret;
   }
-  return ompi_value_array_get_size(&mca_base_params) - 1;
+  return opal_value_array_get_size(&mca_base_params) - 1;
 }
 
 
@@ -961,12 +961,12 @@ static bool param_set_override(size_t index,
     if (!initialized) {
         return false;
     }
-    size = ompi_value_array_get_size(&mca_base_params);
+    size = opal_value_array_get_size(&mca_base_params);
     if (index > size) {
         return false;
     }
 
-    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     if (MCA_BASE_PARAM_TYPE_INT == type) {
         array[index].mbp_override_value.intval = storage->intval;
     } else if (MCA_BASE_PARAM_TYPE_STRING == type) {
@@ -998,11 +998,11 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
     if (!initialized) {
         return false;
     }
-    size = ompi_value_array_get_size(&mca_base_params);
+    size = opal_value_array_get_size(&mca_base_params);
     if (index > size) {
         return false;
     }
-    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
 
     /* Ensure that MCA param has a good type */
 

@@ -203,10 +203,10 @@
 						RelativePath="..\..\src\class\ompi_rb_tree.h">
 					</File>
 					<File
-						RelativePath="..\..\src\class\ompi_value_array.c">
+						RelativePath="..\..\src\class\opal_value_array.c">
 					</File>
 					<File
-						RelativePath="..\..\src\class\ompi_value_array.h">
+						RelativePath="..\..\src\class\opal_value_array.h">
 					</File>
 				</Filter>
 				<Filter

@@ -30,7 +30,7 @@
 #include <netdb.h>
 #endif
 
-#include "class/ompi_value_array.h"
+#include "opal/class/opal_value_array.h"
 #include "util/printf.h"
 #include "util/show_help.h"
 #include "mca/base/mca_base_param.h"
@@ -61,7 +61,7 @@ string ompi_info::path_sysconfdir = "sysconfdir";
 // in mca_base_param.h so that no one else will use it.
 //
 
-extern ompi_value_array_t mca_base_params;
+extern opal_value_array_t mca_base_params;
 
 
 void ompi_info::do_params(bool want_all, bool want_internal)
