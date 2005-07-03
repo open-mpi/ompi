@@ -296,7 +296,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
  */
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-void mca_btl_sm_component_event_thread(ompi_object_t* thread)
+void mca_btl_sm_component_event_thread(opal_object_t* thread)
 {
     while(1) {
         unsigned char cmd;

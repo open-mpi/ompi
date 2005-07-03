@@ -25,7 +25,7 @@ headers = \
         opal_free_list.h \
         ompi_hash_table.h \
         ompi_list.h \
-        ompi_object.h \
+        opal_object.h \
         ompi_value_array.h
 
 libclass_la_SOURCES = \
@@ -33,7 +33,7 @@ libclass_la_SOURCES = \
         opal_free_list.c \
         ompi_hash_table.c \
         ompi_list.c \
-        ompi_object.c \
+        opal_object.c \
         ompi_value_array.c
 
 # Conditionally install the header files

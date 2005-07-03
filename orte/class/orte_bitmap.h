@@ -39,13 +39,13 @@
 #include <string.h>
 
 #include "include/types.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 struct orte_bitmap_t {
-    ompi_object_t super; /**< Subclass of ompi_object_t */
+    opal_object_t super; /**< Subclass of opal_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
     size_t array_size;  /**< The actual array size that maintains the bitmap */
     size_t legal_numbits; /**< The number of bits which are legal (the

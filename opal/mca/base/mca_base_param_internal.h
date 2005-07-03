@@ -32,7 +32,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_list.h"
 #include "class/ompi_hash_table.h"
 #include "mca/base/mca_base_param.h"
@@ -58,7 +58,7 @@ typedef union {
  */
 struct mca_base_param_t {
     /** Allow this to be an OMPI OBJ */
-    ompi_object_t mbp_super;
+    opal_object_t mbp_super;
 
     /** Enum indicating the type of the parameter (integer or string) */
     mca_base_param_type_t mbp_type;

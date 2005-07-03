@@ -25,7 +25,7 @@
 #include "util/argv.h"
 #include "util/show_help.h"
 #include "class/ompi_list.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/coll/coll.h"

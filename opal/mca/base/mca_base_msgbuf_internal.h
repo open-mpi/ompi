@@ -30,7 +30,7 @@
  * data structures
  */
 
-/* this struct is changing to be a ompi_object with a ompi_list inside! */
+/* this struct is changing to be a opal_object with a ompi_list inside! */
 /* and a few locks */
 struct mca_base_msgbuffer_s {
     int     msg_buff_id;    /* internal ID of this buffer */

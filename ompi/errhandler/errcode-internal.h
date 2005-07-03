@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_pointer_array.h"
 
 #define OMPI_MAX_ERROR_STRING 64
@@ -33,7 +33,7 @@ extern "C" {
  * Back-end type for MPI error codes
  */
 struct ompi_errcode_intern_t {
-    ompi_object_t                       super;
+    opal_object_t                       super;
     int                                  code;
     int                              mpi_code;
     int                                 index;

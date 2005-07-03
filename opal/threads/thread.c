@@ -23,7 +23,7 @@
 static void ompi_thread_construct(ompi_thread_t *t);
 
 OBJ_CLASS_INSTANCE(ompi_thread_t,
-                   ompi_object_t,
+                   opal_object_t,
                    ompi_thread_construct, NULL);
 
 

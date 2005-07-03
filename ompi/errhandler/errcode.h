@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_pointer_array.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -32,7 +32,7 @@ extern "C" {
  * Back-end type for MPI error codes
  */
 struct ompi_mpi_errcode_t {
-    ompi_object_t                      super;
+    opal_object_t                      super;
     int                                 code;
     int                                cls;
     char     errstring[MPI_MAX_ERROR_STRING];

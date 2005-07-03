@@ -29,7 +29,7 @@ static void orte_pointer_array_construct(orte_pointer_array_t *);
 static void orte_pointer_array_destruct(orte_pointer_array_t *);
 static bool grow_table(orte_pointer_array_t *table);
 
-OBJ_CLASS_INSTANCE(orte_pointer_array_t, ompi_object_t,
+OBJ_CLASS_INSTANCE(orte_pointer_array_t, opal_object_t,
                    orte_pointer_array_construct,
                    orte_pointer_array_destruct);
 

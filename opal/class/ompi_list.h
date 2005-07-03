@@ -62,7 +62,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 #if OMPI_ENABLE_DEBUG
 /* Need atomics for debugging (reference counting) */
@@ -94,7 +94,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_list_item_t);
  */
 struct ompi_list_item_t
 {
-    ompi_object_t super;
+    opal_object_t super;
     /**< Generic parent class for all Open MPI objects */
     volatile struct ompi_list_item_t *ompi_list_next;
     /**< Pointer to next list item */
@@ -142,7 +142,7 @@ typedef struct ompi_list_item_t ompi_list_item_t;
  */
 struct ompi_list_t
 {
-    ompi_object_t       super;
+    opal_object_t       super;
     /**< Generic parent class for all Open MPI objects */
     ompi_list_item_t    ompi_list_head;
     /**< Head item of the list */

@@ -38,6 +38,6 @@ static void ompi_condition_destruct(ompi_condition_t *c)
 }
 
 OBJ_CLASS_INSTANCE(ompi_condition_t,
-                   ompi_object_t,
+                   opal_object_t,
                    ompi_condition_construct,
                    ompi_condition_destruct);

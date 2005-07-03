@@ -44,9 +44,9 @@ mca_ptl_elan_peer_destruct (mca_ptl_elan_peer_t * ptl_peer)
     /*mca_ptl_elan_peer_close(ptl_peer); */
 }
 
-ompi_class_t mca_ptl_elan_peer_t_class = {
+opal_class_t mca_ptl_elan_peer_t_class = {
     "mca_elan_ptl_peer_t",
     OBJ_CLASS (ompi_list_item_t),
-    (ompi_construct_t) mca_ptl_elan_peer_construct,
-    (ompi_destruct_t) mca_ptl_elan_peer_destruct
+    (opal_construct_t) mca_ptl_elan_peer_construct,
+    (opal_destruct_t) mca_ptl_elan_peer_destruct
 };

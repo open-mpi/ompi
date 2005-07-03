@@ -22,7 +22,7 @@
 #ifndef IO_BASE_REQUEST_H
 #define IO_BASE_REQUEST_H
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "request/request.h"
 #include "file/file.h"
 #include "mca/io/base/base.h"

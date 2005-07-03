@@ -41,7 +41,7 @@ static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
 
 static OBJ_CLASS_INSTANCE(
     mca_pml_ob1_comm_proc_t,
-    ompi_object_t,
+    opal_object_t,
     mca_pml_ob1_comm_proc_construct,
     mca_pml_ob1_comm_proc_destruct);
 
@@ -70,7 +70,7 @@ static void mca_pml_ob1_comm_destruct(mca_pml_ob1_comm_t* comm)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_comm_t,
-    ompi_object_t,
+    opal_object_t,
     mca_pml_ob1_comm_construct,
     mca_pml_ob1_comm_destruct);
 

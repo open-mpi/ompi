@@ -45,7 +45,7 @@ static void ompi_op_destruct(ompi_op_t *eh);
 /*
  * Class instance
  */
-OBJ_CLASS_INSTANCE(ompi_op_t, ompi_object_t, 
+OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t, 
                    ompi_op_construct, ompi_op_destruct);
 
 

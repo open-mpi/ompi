@@ -27,7 +27,7 @@
 static void ompi_bitmap_construct(ompi_bitmap_t *bm);
 static void ompi_bitmap_destruct(ompi_bitmap_t *bm);
 
-OBJ_CLASS_INSTANCE(ompi_bitmap_t, ompi_object_t, 
+OBJ_CLASS_INSTANCE(ompi_bitmap_t, opal_object_t, 
                    ompi_bitmap_construct, ompi_bitmap_destruct);
 
 

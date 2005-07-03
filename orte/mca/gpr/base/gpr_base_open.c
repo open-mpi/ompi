@@ -70,10 +70,10 @@ static void orte_gpr_keyval_destructor(orte_gpr_keyval_t* keyval)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
     orte_gpr_keyval_t,              /* type name */
-    ompi_object_t,                  /* parent "class" name */
+    opal_object_t,                  /* parent "class" name */
     orte_gpr_keyval_construct,      /* constructor */
     orte_gpr_keyval_destructor);    /* destructor */
 
@@ -117,10 +117,10 @@ static void orte_gpr_value_destructor(orte_gpr_value_t* reg_val)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
 		   orte_gpr_value_t,  /* type name */
-		   ompi_object_t, /* parent "class" name */
+		   opal_object_t, /* parent "class" name */
 		   orte_gpr_value_construct, /* constructor */
 		   orte_gpr_value_destructor); /* destructor */
 
@@ -148,10 +148,10 @@ static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
             orte_gpr_notify_data_t,  /* type name */
-            ompi_object_t, /* parent "class" name */
+            opal_object_t, /* parent "class" name */
             orte_gpr_notify_data_construct, /* constructor */
             orte_gpr_notify_data_destructor); /* destructor */
 
@@ -184,10 +184,10 @@ static void orte_gpr_subscription_destructor(orte_gpr_subscription_t* sub)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
          orte_gpr_subscription_t,  /* type name */
-         ompi_object_t, /* parent "class" name */
+         opal_object_t, /* parent "class" name */
          orte_gpr_subscription_construct, /* constructor */
          orte_gpr_subscription_destructor); /* destructor */
 
@@ -217,10 +217,10 @@ static void orte_gpr_trigger_destructor(orte_gpr_trigger_t* trig)
     
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
          orte_gpr_trigger_t,  /* type name */
-         ompi_object_t, /* parent "class" name */
+         opal_object_t, /* parent "class" name */
          orte_gpr_trigger_construct, /* constructor */
          orte_gpr_trigger_destructor); /* destructor */
 
@@ -247,10 +247,10 @@ static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
     
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
             orte_gpr_notify_message_t,            /* type name */
-            ompi_object_t,                             /* parent "class" name */
+            opal_object_t,                             /* parent "class" name */
             orte_gpr_notify_message_construct,    /* constructor */
             orte_gpr_notify_message_destructor);  /* destructor */
 

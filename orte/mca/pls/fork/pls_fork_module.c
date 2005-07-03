@@ -509,7 +509,7 @@ static void orte_pls_fork_stack_destruct(orte_pls_fork_stack_t* stack)
 
 static OBJ_CLASS_INSTANCE(
     orte_pls_fork_stack_t,
-    ompi_object_t,
+    opal_object_t,
     orte_pls_fork_stack_construct,
     orte_pls_fork_stack_destruct);
 

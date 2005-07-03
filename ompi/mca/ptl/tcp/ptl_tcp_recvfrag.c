@@ -39,11 +39,11 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd);
 static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd);
 
 
-ompi_class_t  mca_ptl_tcp_recv_frag_t_class = {
+opal_class_t  mca_ptl_tcp_recv_frag_t_class = {
     "mca_ptl_tcp_recv_frag_t",
     OBJ_CLASS(mca_ptl_base_recv_frag_t),
-    (ompi_construct_t)mca_ptl_tcp_recv_frag_construct,
-    (ompi_destruct_t)mca_ptl_tcp_recv_frag_destruct
+    (opal_construct_t)mca_ptl_tcp_recv_frag_construct,
+    (opal_destruct_t)mca_ptl_tcp_recv_frag_destruct
 };
                                                                                                            
 

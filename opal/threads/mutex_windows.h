@@ -27,14 +27,14 @@
  * On Windows, base everything on InterlockedExchange().
  */
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "include/sys/atomic.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 struct ompi_mutex_t {
-    ompi_object_t super;
+    opal_object_t super;
     volatile LONG m_lock;
 };
 

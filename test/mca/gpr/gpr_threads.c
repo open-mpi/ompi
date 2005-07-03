@@ -45,7 +45,7 @@
 static FILE *test_out=NULL;
 
 /* function for exercising the registry */
-void *thread_fn(ompi_object_t *object);
+void *thread_fn(opal_object_t *object);
 
 #if !OMPI_HAVE_THREAD_SUPPORT
 
@@ -138,7 +138,7 @@ int main(int argc, char **argv)
     return(0);
 }
 
-void *thread_fn(ompi_object_t *obj)
+void *thread_fn(opal_object_t *obj)
 {
     return NULL;
 }

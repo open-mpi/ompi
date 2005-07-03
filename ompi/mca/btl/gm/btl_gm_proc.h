@@ -18,7 +18,7 @@
 #define MCA_BTL_GM_PROC_H
 
 #include "mca/ns/ns.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "proc/proc.h"
 #include "btl_gm.h"
 #include "btl_gm_endpoint.h"

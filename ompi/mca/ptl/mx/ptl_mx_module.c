@@ -120,7 +120,7 @@ int mca_ptl_mx_module_init(void)
 
 #if OMPI_ENABLE_PROGRESS_THREADS
 
-static void* mca_ptl_mx_thread(ompi_object_t *arg)
+static void* mca_ptl_mx_thread(opal_object_t *arg)
 {
     ompi_thread_t* thr = (ompi_thread_t*)arg;
     mca_ptl_mx_module_t* ptl = thr->t_arg;

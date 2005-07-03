@@ -51,7 +51,7 @@
  * @endcode
  * This macro actually expands to 
  * @code
- *   ompi_class_t sally_t_class = {
+ *   opal_class_t sally_t_class = {
  *     "sally_t",
  *     OBJ_CLASS(parent_t),  // pointer to parent_t_class
  *     sally_construct,
@@ -109,8 +109,8 @@
  * @endcode
  */
 
-#ifndef OMPI_OBJECT_H
-#define OMPI_OBJECT_H
+#ifndef OPAL_OBJECT_H
+#define OPAL_OBJECT_H
 
 #include <assert.h>
 #include <stdlib.h>
@@ -134,10 +134,10 @@
 
 /* typedefs ***********************************************************/
 
-typedef struct ompi_object_t ompi_object_t;
-typedef struct ompi_class_t ompi_class_t;
-typedef void (*ompi_construct_t) (ompi_object_t *);
-typedef void (*ompi_destruct_t) (ompi_object_t *);
+typedef struct opal_object_t opal_object_t;
+typedef struct opal_class_t opal_class_t;
+typedef void (*opal_construct_t) (opal_object_t *);
+typedef void (*opal_destruct_t) (opal_object_t *);
 
 
 /* types **************************************************************/
@@ -148,16 +148,16 @@ typedef void (*ompi_destruct_t) (ompi_object_t *);
  * There should be a single instance of this descriptor for each class
  * definition.
  */
-struct ompi_class_t {
+struct opal_class_t {
     const char *cls_name;           /**< symbolic name for class */
-    ompi_class_t *cls_parent;       /**< parent class descriptor */
-    ompi_construct_t cls_construct; /**< class constructor */
-    ompi_destruct_t cls_destruct;   /**< class destructor */
+    opal_class_t *cls_parent;       /**< parent class descriptor */
+    opal_construct_t cls_construct; /**< class constructor */
+    opal_destruct_t cls_destruct;   /**< class destructor */
     int cls_initialized;            /**< is class initialized */
     int cls_depth;                  /**< depth of class hierarchy tree */
-    ompi_construct_t *cls_construct_array;
+    opal_construct_t *cls_construct_array;
                                     /**< array of parent class constructors */
-    ompi_destruct_t *cls_destruct_array;
+    opal_destruct_t *cls_destruct_array;
                                     /**< array of parent class destructors */
 };
 
@@ -166,8 +166,8 @@ struct ompi_class_t {
  *
  * This is special and does not follow the pattern for other classes.
  */
-struct ompi_object_t {
-    ompi_class_t *obj_class;            /**< class descriptor */
+struct opal_object_t {
+    opal_class_t *obj_class;            /**< class descriptor */
     volatile int obj_reference_count;   /**< reference count */
 #if OMPI_ENABLE_DEBUG
    const char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
@@ -198,11 +198,11 @@ struct ompi_object_t {
  * Put this in NAME.c
  */
 #define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)       \
-    ompi_class_t NAME ## _class = {                                     \
+    opal_class_t NAME ## _class = {                                     \
         # NAME,                                                         \
         OBJ_CLASS(PARENT),                                              \
-        (ompi_construct_t) CONSTRUCTOR,                                 \
-        (ompi_destruct_t) DESTRUCTOR,                                   \
+        (opal_construct_t) CONSTRUCTOR,                                 \
+        (opal_destruct_t) DESTRUCTOR,                                   \
         0, 0, NULL, NULL                                                \
     }
 
@@ -215,7 +215,7 @@ struct ompi_object_t {
  * Put this in NAME.h
  */
 #define OBJ_CLASS_DECLARATION(NAME)             \
-    extern ompi_class_t NAME ## _class
+    extern opal_class_t NAME ## _class
 
 
 /**
@@ -225,20 +225,20 @@ struct ompi_object_t {
  * @param type          Type (class) of the object
  * @return              Pointer to the object 
  */
-static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls);
+static inline opal_object_t *opal_obj_new(size_t size, opal_class_t * cls);
 #if OMPI_ENABLE_DEBUG
-static inline ompi_object_t *ompi_obj_new_debug(size_t obj_size, ompi_class_t* type, const char* file, int line)
+static inline opal_object_t *opal_obj_new_debug(size_t obj_size, opal_class_t* type, const char* file, int line)
 {
-    ompi_object_t* object = ompi_obj_new(obj_size, type);
+    opal_object_t* object = opal_obj_new(obj_size, type);
     object->cls_init_file_name = file;
     object->cls_init_lineno = line;
     return object;
 }
 #define OBJ_NEW(type)                                   \
-    ((type *)ompi_obj_new_debug(sizeof(type), OBJ_CLASS(type), __FILE__, __LINE__))
+    ((type *)opal_obj_new_debug(sizeof(type), OBJ_CLASS(type), __FILE__, __LINE__))
 #else
 #define OBJ_NEW(type)                                   \
-    ((type *) ompi_obj_new(sizeof(type), OBJ_CLASS(type)))
+    ((type *) opal_obj_new(sizeof(type), OBJ_CLASS(type)))
 #endif  /* OMPI_ENABLE_DEBUG */
 
 /**
@@ -249,11 +249,11 @@ static inline ompi_object_t *ompi_obj_new_debug(size_t obj_size, ompi_class_t* t
 #define OBJ_RETAIN(object)                                              \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((ompi_object_t *) (object))->obj_class);        \
+        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         if (NULL != object) {                                           \
-            ompi_obj_update((ompi_object_t *) (object), 1);             \
+            opal_obj_update((opal_object_t *) (object), 1);             \
         }                                                               \
-        assert(((ompi_object_t *) (object))->obj_reference_count >= 0); \
+        assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
     } while (0)
 
 
@@ -270,9 +270,9 @@ static inline ompi_object_t *ompi_obj_new_debug(size_t obj_size, ompi_class_t* t
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((ompi_object_t *) (object))->obj_class);        \
-        if (0 == ompi_obj_update((ompi_object_t *) (object), -1)) {     \
-            ompi_obj_run_destructors((ompi_object_t *) (object));       \
+        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            opal_obj_run_destructors((opal_object_t *) (object));       \
             free(object);                                               \
             object = NULL;                                              \
         }                                                               \
@@ -290,8 +290,8 @@ static inline ompi_object_t *ompi_obj_new_debug(size_t obj_size, ompi_class_t* t
 #define OBJ_CONSTRUCT(object, type)                             \
 do {                                                            \
     OBJ_CONSTRUCT_INTERNAL((object), OBJ_CLASS(type));          \
-    ((ompi_object_t *)(object))->cls_init_file_name = __FILE__; \
-    ((ompi_object_t *)(object))->cls_init_lineno = __LINE__;    \
+    ((opal_object_t *)(object))->cls_init_file_name = __FILE__; \
+    ((opal_object_t *)(object))->cls_init_lineno = __LINE__;    \
 } while (0)
 #else
 #define OBJ_CONSTRUCT(object, type)                             \
@@ -301,12 +301,12 @@ do {                                                            \
 #define OBJ_CONSTRUCT_INTERNAL(object, type)                            \
     do {                                                                \
         if (0 == (type)->cls_initialized) {                             \
-            ompi_class_initialize((type));                              \
+            opal_class_initialize((type));                              \
         }                                                               \
         if (NULL != object) {                                           \
-            ((ompi_object_t *) (object))->obj_class = (type);           \
-            ((ompi_object_t *) (object))->obj_reference_count = 1;      \
-            ompi_obj_run_constructors((ompi_object_t *) (object));      \
+            ((opal_object_t *) (object))->obj_class = (type);           \
+            ((opal_object_t *) (object))->obj_reference_count = 1;      \
+            opal_obj_run_constructors((opal_object_t *) (object));      \
         }                                                               \
     } while (0)
 
@@ -319,12 +319,12 @@ do {                                                            \
 #define OBJ_DESTRUCT(object)                                      \
     do {                                                          \
         if (NULL != object) {                                     \
-            ompi_obj_run_destructors((ompi_object_t *) (object)); \
+            opal_obj_run_destructors((opal_object_t *) (object)); \
         }                                                         \
     } while (0)
 
 BEGIN_C_DECLS
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_object_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
 
 
 /* declarations *******************************************************/
@@ -337,7 +337,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_object_t);
  *
  * @param class    Pointer to class descriptor
  */
-OMPI_DECLSPEC void ompi_class_initialize(ompi_class_t *);
+OMPI_DECLSPEC void opal_class_initialize(opal_class_t *);
 
 /**
  * Shut down the class system and release all memory
@@ -348,7 +348,7 @@ OMPI_DECLSPEC void ompi_class_initialize(ompi_class_t *);
  * tools like valgrind and purify don't report still-reachable memory
  * upon process termination.
  */
-OMPI_DECLSPEC int ompi_class_finalize(void);
+OMPI_DECLSPEC int opal_class_finalize(void);
 
 END_C_DECLS
 /**
@@ -363,9 +363,9 @@ END_C_DECLS
  * Hardwired for fairly shallow inheritance trees
  * @param size          Pointer to the object.
  */
-static inline void ompi_obj_run_constructors(ompi_object_t * object)
+static inline void opal_obj_run_constructors(opal_object_t * object)
 {
-    ompi_class_t *cls;
+    opal_class_t *cls;
     int i;
 
     assert(NULL != object);
@@ -388,9 +388,9 @@ static inline void ompi_obj_run_constructors(ompi_object_t * object)
  *
  * @param size          Pointer to the object.
  */
-static inline void ompi_obj_run_destructors(ompi_object_t * object)
+static inline void opal_obj_run_destructors(opal_object_t * object)
 {
-    ompi_class_t *cls;
+    opal_class_t *cls;
     int i;
 
     assert(NULL != object);
@@ -415,20 +415,20 @@ static inline void ompi_obj_run_destructors(ompi_object_t * object)
  * @param cls           Pointer to the class descriptor of this object
  * @return              Pointer to the object 
  */
-static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls)
+static inline opal_object_t *opal_obj_new(size_t size, opal_class_t * cls)
 {
-    ompi_object_t *object;
+    opal_object_t *object;
 
-    assert(size >= sizeof(ompi_object_t));
+    assert(size >= sizeof(opal_object_t));
 
-    object = (ompi_object_t *) malloc(size);
+    object = (opal_object_t *) malloc(size);
     if (0 == cls->cls_initialized) {
-        ompi_class_initialize(cls);
+        opal_class_initialize(cls);
     }
     if (NULL != object) {
         object->obj_class = cls;
         object->obj_reference_count = 1;
-        ompi_obj_run_constructors(object);
+        opal_obj_run_constructors(object);
     }
     return object;
 }
@@ -444,7 +444,7 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls)
  * @param inc           Increment by which to update reference count
  * @return              New value of the reference count
  */
-static inline int ompi_obj_update(ompi_object_t *object, int inc)
+static inline int opal_obj_update(opal_object_t *object, int inc)
 {
 #if OMPI_HAVE_THREAD_SUPPORT
     ompi_atomic_add(&(object->obj_reference_count), inc );
@@ -457,4 +457,4 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
 
 /**********************************************************************/
 
-#endif                          /* OMPI_OBJECT_H */
+#endif                          /* OPAL_OBJECT_H */

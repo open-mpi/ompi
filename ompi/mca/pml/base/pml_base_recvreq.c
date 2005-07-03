@@ -25,11 +25,11 @@ static void mca_pml_base_recv_request_construct(mca_pml_base_recv_request_t*);
 static void mca_pml_base_recv_request_destruct(mca_pml_base_recv_request_t*);
 
 
-ompi_class_t mca_pml_base_recv_request_t_class = { 
+opal_class_t mca_pml_base_recv_request_t_class = { 
     "mca_pml_base_recv_request_t", 
     OBJ_CLASS(mca_pml_base_request_t),
-    (ompi_construct_t) mca_pml_base_recv_request_construct, 
-    (ompi_destruct_t) mca_pml_base_recv_request_destruct 
+    (opal_construct_t) mca_pml_base_recv_request_construct, 
+    (opal_destruct_t) mca_pml_base_recv_request_destruct 
 };
                                                                                                  
 

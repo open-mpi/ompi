@@ -44,8 +44,8 @@ struct repository_item_t {
   ompi_list_t ri_dependencies;
 };
 typedef struct repository_item_t repository_item_t;
-static void ri_constructor(ompi_object_t *obj);
-static void ri_destructor(ompi_object_t *obj);
+static void ri_constructor(opal_object_t *obj);
+static void ri_destructor(opal_object_t *obj);
 static OBJ_CLASS_INSTANCE(repository_item_t, ompi_list_item_t, 
                           ri_constructor, ri_destructor);
 
@@ -55,8 +55,8 @@ struct dependency_item_t {
   repository_item_t *di_repository_entry;
 };
 typedef struct dependency_item_t dependency_item_t;
-static void di_constructor(ompi_object_t *obj);
-static void di_destructor(ompi_object_t *obj);
+static void di_constructor(opal_object_t *obj);
+static void di_destructor(opal_object_t *obj);
 static OBJ_CLASS_INSTANCE(dependency_item_t, ompi_list_item_t, 
                           di_constructor, di_destructor);
 
@@ -289,7 +289,7 @@ static int link_items(repository_item_t *src, repository_item_t *depend)
 /*
  * Basic sentinel values, and construct the inner list
  */
-static void ri_constructor(ompi_object_t *obj)
+static void ri_constructor(opal_object_t *obj)
 {
   repository_item_t *ri = (repository_item_t *) obj;
 
@@ -304,7 +304,7 @@ static void ri_constructor(ompi_object_t *obj)
 /*
  * Close a component 
  */
-static void ri_destructor(ompi_object_t *obj)
+static void ri_destructor(opal_object_t *obj)
 {
   repository_item_t *ri = (repository_item_t *) obj;
   dependency_item_t *di;
@@ -336,7 +336,7 @@ static void ri_destructor(ompi_object_t *obj)
 /*
  * Basic sentinel values
  */
-static void di_constructor(ompi_object_t *obj)
+static void di_constructor(opal_object_t *obj)
 {
   dependency_item_t *di = (dependency_item_t *) obj;
 
@@ -348,7 +348,7 @@ static void di_constructor(ompi_object_t *obj)
  * When a dependency item is released, go release the repository entry
  * that it points to
  */
-static void di_destructor(ompi_object_t *obj)
+static void di_destructor(opal_object_t *obj)
 {
   dependency_item_t *di = (dependency_item_t *) obj;
 

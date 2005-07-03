@@ -22,7 +22,7 @@
 #include "ompi_config.h"
 #include <myriexpress.h>
 #include "mca/ns/ns.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "proc/proc.h"
 #include "ptl_mx.h"
 #include "ptl_mx_peer.h"

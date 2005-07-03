@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_pointer_array.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "errhandler/errhandler_predefined.h"
@@ -68,7 +68,7 @@ typedef enum ompi_errhandler_type_t ompi_errhandler_type_t;
  * Back-end type for MPI_Errorhandler.
  */
 struct ompi_errhandler_t {
-    ompi_object_t super;
+    opal_object_t super;
 
     char eh_name[MPI_MAX_OBJECT_NAME];
     /* Type of MPI object that this handler is for */

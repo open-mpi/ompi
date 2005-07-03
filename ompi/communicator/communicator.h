@@ -17,7 +17,7 @@
 #ifndef OMPI_COMMUNICATOR_H
 #define OMPI_COMMUNICATOR_H
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_hash_table.h"
 #include "errhandler/errhandler.h"
 #include "threads/mutex.h"
@@ -34,7 +34,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
+OMPI_DECLSPEC extern opal_class_t ompi_communicator_t_class;
 
 #define OMPI_COMM_INTER      0x00000001
 #define OMPI_COMM_CART       0x00000002
@@ -89,7 +89,7 @@ OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators; 
 
 struct ompi_communicator_t {
-    ompi_object_t              c_base; 
+    opal_object_t              c_base; 
     ompi_mutex_t               c_lock; /* mutex for name and potentially 
                                           attributes */
     char  c_name[MPI_MAX_OBJECT_NAME];

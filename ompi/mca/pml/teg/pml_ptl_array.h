@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-extern ompi_class_t mca_pml_teg_ptl_array_t_class;
+extern opal_class_t mca_pml_teg_ptl_array_t_class;
 
 /**
  * A data structure associated with a ompi_proc_t that caches
@@ -46,7 +46,7 @@ typedef struct mca_ptl_proc_t mca_ptl_proc_t;
  * scheduling across contents.
  */
 struct mca_ptl_array_t {
-    ompi_object_t     super;
+    opal_object_t     super;
     mca_ptl_proc_t*  ptl_procs;   /**< array of ptl procs */
     size_t           ptl_size;    /**< number available */
     size_t           ptl_reserve; /**< size of allocated ptl_proc array */

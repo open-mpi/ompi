@@ -21,7 +21,7 @@
 #include "datatype/convertor.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Unpack_external = PMPI_Unpack_external

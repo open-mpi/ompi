@@ -40,7 +40,7 @@ static void ompi_errhandler_destruct(ompi_errhandler_t *eh);
 /*
  * Class instance
  */
-OBJ_CLASS_INSTANCE(ompi_errhandler_t, ompi_object_t, ompi_errhandler_construct,
+OBJ_CLASS_INSTANCE(ompi_errhandler_t, opal_object_t, ompi_errhandler_construct,
                    ompi_errhandler_destruct);
 
 

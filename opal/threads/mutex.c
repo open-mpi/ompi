@@ -59,6 +59,6 @@ static void ompi_mutex_destruct(ompi_mutex_t *m)
 #endif
 
 OBJ_CLASS_INSTANCE(ompi_mutex_t,
-                   ompi_object_t,
+                   opal_object_t,
                    ompi_mutex_construct,
                    ompi_mutex_destruct);

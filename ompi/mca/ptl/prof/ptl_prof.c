@@ -159,7 +159,7 @@ static void ptl_prof_destruct(mca_ptl_prof_t* ptl)
    /* deregistering the profiling ids from the profiling layer */
 }
 
-OBJ_CLASS_INSTANCE( mca_ptl_prof_t, ompi_object_t,
+OBJ_CLASS_INSTANCE( mca_ptl_prof_t, opal_object_t,
                     ptl_prof_construct,
                     ptl_prof_destruct );
 

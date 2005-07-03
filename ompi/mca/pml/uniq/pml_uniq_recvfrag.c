@@ -25,7 +25,7 @@
 #include "pml_uniq_proc.h"
 
 
-OMPI_DECLSPEC extern ompi_class_t mca_ptl_base_recv_frag_t_class;
+OMPI_DECLSPEC extern opal_class_t mca_ptl_base_recv_frag_t_class;
 
 
 /**

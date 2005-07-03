@@ -351,7 +351,7 @@ typedef enum ompi_attribute_translate_t {
  * struct to hold attribute values on each MPI object
  */
 typedef struct attribute_value_t {
-    ompi_object_t super;
+    opal_object_t super;
     void *av_value;
     MPI_Aint *av_address_kind_pointer;
     MPI_Fint *av_integer_pointer;
@@ -380,7 +380,7 @@ static MPI_Aint translate_to_fortran_mpi2(attribute_value_t *val);
  * attribute_value_t class
  */
 static OBJ_CLASS_INSTANCE(attribute_value_t,
-                          ompi_object_t,
+                          opal_object_t,
                           attribute_value_construct,
                           NULL);
 
@@ -389,7 +389,7 @@ static OBJ_CLASS_INSTANCE(attribute_value_t,
  * ompi_attribute_entry_t classes
  */
 static OBJ_CLASS_INSTANCE(ompi_attrkey_item_t, 
-                          ompi_object_t,
+                          opal_object_t,
                           ompi_attrkey_item_construct,
                           ompi_attrkey_item_destruct);
 
@@ -433,7 +433,7 @@ static void
 ompi_attrkey_item_construct(ompi_attrkey_item_t *item) 
 {
     memset(&(item->attr_type), 0, 
-	   sizeof(ompi_attrkey_item_t) - sizeof(ompi_object_t));
+	   sizeof(ompi_attrkey_item_t) - sizeof(opal_object_t));
 }
 
 

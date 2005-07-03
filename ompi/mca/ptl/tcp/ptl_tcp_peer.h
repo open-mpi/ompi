@@ -75,7 +75,7 @@ struct mca_ptl_base_peer_t {
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 
-extern ompi_class_t mca_ptl_tcp_peer_t_class;
+extern opal_class_t mca_ptl_tcp_peer_t_class;
 typedef struct mca_ptl_base_peer_t mca_ptl_tcp_peer_t;
 
 void mca_ptl_tcp_set_socket_options(int sd);

@@ -34,12 +34,12 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern ompi_class_t ompi_hash_table_t_class;
+OMPI_DECLSPEC extern opal_class_t ompi_hash_table_t_class;
                            
 
 struct ompi_hash_table_t
 {
-    ompi_object_t        super;          /**< subclass of ompi_object_t */
+    opal_object_t        super;          /**< subclass of opal_object_t */
     ompi_list_t          ht_nodes;       /**< free list of hash nodes */
     ompi_list_t         *ht_table;       /**< each item is an array of ompi_fhnode_t nodes */
     size_t              ht_table_size;  /**< size of table */

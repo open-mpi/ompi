@@ -26,14 +26,14 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern ompi_class_t mca_pml_ptl_comm_t_class;
+OMPI_DECLSPEC extern opal_class_t mca_pml_ptl_comm_t_class;
 
 /**
  *  Cached on ompi_communicator_t to hold queues/state
  *  used by the PML<->PTL interface for matching logic. 
  */
 struct mca_pml_comm_t {
-    ompi_object_t super;
+    opal_object_t super;
     uint32_t *c_msg_seq;               /**< send message sequence number - sender side */
     uint16_t *c_next_msg_seq;          /**< send message sequence number - receiver side */
     mca_ptl_sequence_t c_recv_seq;     /**< recv request sequence number - receiver side */

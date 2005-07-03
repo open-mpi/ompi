@@ -120,7 +120,7 @@ static void orte_ns_proxy_cell_info_destructor(orte_ns_proxy_cell_info_t* ptr)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_cell_info_t,  /* type name */
         ompi_list_item_t, /* parent "class" name */
@@ -142,7 +142,7 @@ static void orte_ns_proxy_tagitem_destructor(orte_ns_proxy_tagitem_t* tagitem)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_tagitem_t,  /* type name */
         ompi_list_item_t, /* parent "class" name */
@@ -164,7 +164,7 @@ static void orte_ns_proxy_dti_destructor(orte_ns_proxy_dti_t* dti)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_dti_t,  /* type name */
         ompi_list_item_t, /* parent "class" name */

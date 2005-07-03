@@ -39,7 +39,7 @@ static void mca_ptl_array_destruct(mca_ptl_array_t* array)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_teg_ptl_array_t,
-    ompi_object_t,
+    opal_object_t,
     mca_ptl_array_construct,
     mca_ptl_array_destruct
 );

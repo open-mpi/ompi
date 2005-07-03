@@ -17,7 +17,7 @@
 /**
  * @file
  * 
- * Implementation of ompi_object_t, the base ompi foundation class
+ * Implementation of opal_object_t, the base ompi foundation class
  */
 
 #include "ompi_config.h"
@@ -26,15 +26,15 @@
 
 #include "include/constants.h"
 #include "include/sys/atomic.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 /*
  * Instantiation of class descriptor for the base class.  This is
  * special, since be mark it as already initialized, with no parent
  * and no constructor or desctructor
  */
-ompi_class_t ompi_object_t_class = {
-    "ompi_object_t", /* name */
+opal_class_t opal_object_t_class = {
+    "opal_object_t", /* name */
     NULL,           /* parent class */
     NULL,           /* constructor */
     NULL,           /* destructor */
@@ -57,16 +57,16 @@ static const int increment = 10;
 /*
  * Local functions
  */
-static void save_class(ompi_class_t *cls);
+static void save_class(opal_class_t *cls);
 static void expand_array(void);
 
 
 /*
  * Lazy initialization of class descriptor.
  */
-void ompi_class_initialize(ompi_class_t *cls)
+void opal_class_initialize(opal_class_t *cls)
 {
-    ompi_class_t *c;
+    opal_class_t *c;
     int i;
 
     assert(cls);
@@ -102,8 +102,8 @@ void ompi_class_initialize(ompi_class_t *cls)
      */
 
     cls->cls_construct_array = 
-        (void (**)(ompi_object_t*))malloc(cls->cls_depth *
-                                          sizeof(ompi_construct_t) * 2);
+        (void (**)(opal_object_t*))malloc(cls->cls_depth *
+                                          sizeof(opal_construct_t) * 2);
     if (NULL == cls->cls_construct_array) {
         perror("Out of memory");
         exit(-1);
@@ -129,7 +129,7 @@ void ompi_class_initialize(ompi_class_t *cls)
 /*
  * Note that this is finalize for *all* classes.
  */
-int ompi_class_finalize(void)
+int opal_class_finalize(void)
 {
     int i;
 
@@ -149,7 +149,7 @@ int ompi_class_finalize(void)
 }
 
 
-static void save_class(ompi_class_t *cls)
+static void save_class(opal_class_t *cls)
 {
     if (num_classes >= max_classes) {
         expand_array();

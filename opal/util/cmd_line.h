@@ -110,7 +110,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_list.h"
 #include "threads/mutex.h"
 
@@ -124,7 +124,7 @@ extern "C" {
      */
     struct ompi_cmd_line_t {
         /** Make this an OBJ handle */
-        ompi_object_t super;
+        opal_object_t super;
         
         /** Thread safety */
         ompi_mutex_t lcl_mutex;

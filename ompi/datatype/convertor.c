@@ -66,7 +66,7 @@ static void ompi_convertor_destruct( ompi_convertor_t* convertor )
     ompi_convertor_cleanup( convertor );
 }
 
-OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, ompi_convertor_construct, ompi_convertor_destruct );
+OBJ_CLASS_INSTANCE(ompi_convertor_t, opal_object_t, ompi_convertor_construct, ompi_convertor_destruct );
 
 
 /* 

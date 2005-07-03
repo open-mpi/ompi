@@ -24,11 +24,11 @@ static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm);
 static void mca_pml_ptl_comm_destruct(mca_pml_ptl_comm_t* comm);
 
 
-ompi_class_t mca_pml_ptl_comm_t_class = {
+opal_class_t mca_pml_ptl_comm_t_class = {
     "mca_pml_ptl_comm_t",
-    OBJ_CLASS(ompi_object_t),
-    (ompi_construct_t)mca_pml_ptl_comm_construct,
-    (ompi_destruct_t)mca_pml_ptl_comm_destruct
+    OBJ_CLASS(opal_object_t),
+    (opal_construct_t)mca_pml_ptl_comm_construct,
+    (opal_destruct_t)mca_pml_ptl_comm_destruct
 };
 
 

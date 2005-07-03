@@ -29,7 +29,7 @@
 #include <netinet/in.h>
 #endif
 #include "dps/dps.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "mca/ns/ns_types.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -38,7 +38,7 @@ extern "C" {
  * Address info published to registry
  */
 struct mca_oob_tcp_addr_t {
-    ompi_object_t super;
+    opal_object_t super;
     orte_process_name_t addr_name;
     uint32_t addr_count;               
     uint32_t addr_next;

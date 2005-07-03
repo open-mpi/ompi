@@ -27,7 +27,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern ompi_class_t opal_free_list_t_class;
+OMPI_DECLSPEC extern opal_class_t opal_free_list_t_class;
 
 
 struct opal_free_list_t
@@ -38,7 +38,7 @@ struct opal_free_list_t
     size_t fl_num_per_alloc;
     size_t fl_num_waiting;
     size_t fl_elem_size;
-    ompi_class_t* fl_elem_class;
+    opal_class_t* fl_elem_class;
     ompi_mutex_t fl_lock;
     ompi_condition_t fl_condition; 
 };
@@ -56,7 +56,7 @@ typedef struct opal_free_list_item_t opal_free_list_item_t;
  *
  * @param free_list (IN)           Free list.
  * @param element_size (IN)        Size of each element.
- * @param element_class (IN)       ompi_class_t of element - used to initialize allocated elements.
+ * @param element_class (IN)       opal_class_t of element - used to initialize allocated elements.
  * @param num_elements_to_alloc    Initial number of elements to allocate.
  * @param max_elements_to_alloc    Maximum number of elements to allocate.
  * @param num_elements_per_alloc   Number of elements to grow by per allocation.
@@ -65,7 +65,7 @@ typedef struct opal_free_list_item_t opal_free_list_item_t;
 OMPI_DECLSPEC int opal_free_list_init(
     opal_free_list_t *free_list, 
     size_t element_size,
-    ompi_class_t* element_class,
+    opal_class_t* element_class,
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc);

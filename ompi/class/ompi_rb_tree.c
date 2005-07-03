@@ -23,7 +23,7 @@
 
 /* declare the instance of the classes  */
 OBJ_CLASS_INSTANCE(ompi_rb_tree_node_t, ompi_list_item_t, NULL, NULL);
-OBJ_CLASS_INSTANCE(ompi_rb_tree_t, ompi_object_t, ompi_rb_tree_construct,
+OBJ_CLASS_INSTANCE(ompi_rb_tree_t, opal_object_t, ompi_rb_tree_construct,
                    ompi_rb_tree_destruct);
 
 /* Private functions */
@@ -43,7 +43,7 @@ static void inorder_traversal(ompi_rb_tree_t *tree,
 
 
 /* constructor */
-void ompi_rb_tree_construct(ompi_object_t * object)
+void ompi_rb_tree_construct(opal_object_t * object)
 {
     ompi_rb_tree_t * tree = (ompi_rb_tree_t *) object;
     tree->root_ptr = NULL;
@@ -54,7 +54,7 @@ void ompi_rb_tree_construct(ompi_object_t * object)
 }
 
 /* the destructor function */
-void ompi_rb_tree_destruct(ompi_object_t * object)
+void ompi_rb_tree_destruct(opal_object_t * object)
 {
     if(NULL != ((ompi_rb_tree_t *)object)->root_ptr) {
         ompi_rb_tree_destroy((ompi_rb_tree_t *) object);

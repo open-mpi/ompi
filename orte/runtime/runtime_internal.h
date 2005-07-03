@@ -24,6 +24,6 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 #endif

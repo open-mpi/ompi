@@ -33,11 +33,11 @@ static void ompi_value_array_destruct(ompi_value_array_t* array)
         free(array->array_items);
 }
 
-ompi_class_t ompi_value_array_t_class = {
+opal_class_t ompi_value_array_t_class = {
     "ompi_value_array_t",
-     OBJ_CLASS(ompi_object_t),
-     (ompi_construct_t)ompi_value_array_construct,
-     (ompi_destruct_t)ompi_value_array_destruct
+     OBJ_CLASS(opal_object_t),
+     (opal_construct_t)ompi_value_array_construct,
+     (opal_destruct_t)ompi_value_array_destruct
 };
 
 

@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_list.h"
 #include "include/sys/atomic.h"
 #include "mca/mpool/mpool.h" 

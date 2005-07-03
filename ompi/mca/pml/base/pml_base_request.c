@@ -28,11 +28,11 @@ static void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
 {
 }
 
-ompi_class_t mca_pml_base_request_t_class = { 
+opal_class_t mca_pml_base_request_t_class = { 
     "mca_pml_base_request_t", 
     OBJ_CLASS(ompi_request_t),
-    (ompi_construct_t) mca_pml_base_request_construct, 
-    (ompi_destruct_t) mca_pml_base_request_destruct 
+    (opal_construct_t) mca_pml_base_request_construct, 
+    (opal_destruct_t) mca_pml_base_request_destruct 
 };
                                                                                                  
 

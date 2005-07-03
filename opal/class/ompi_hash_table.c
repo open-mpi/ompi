@@ -36,7 +36,7 @@ static void ompi_hash_table_destruct(ompi_hash_table_t* ht);
 
 OBJ_CLASS_INSTANCE(
     ompi_hash_table_t, 
-    ompi_object_t,
+    opal_object_t,
     ompi_hash_table_construct,
     ompi_hash_table_destruct
 );

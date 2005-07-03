@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "include/types.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #if OMPI_ENABLE_DEBUG
 #include "util/output.h"
 #endif
@@ -36,12 +36,12 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern ompi_class_t ompi_value_array_t_class;
+OMPI_DECLSPEC extern opal_class_t ompi_value_array_t_class;
 
 
 struct ompi_value_array_t
 {
-    ompi_object_t    super;
+    opal_object_t    super;
     unsigned char*  array_items;
     size_t          array_item_sizeof;
     size_t          array_size;

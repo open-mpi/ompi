@@ -51,7 +51,7 @@ static void mca_oob_tcp_addr_destruct(mca_oob_tcp_addr_t* addr)
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_addr_t,
-    ompi_object_t,
+    opal_object_t,
     mca_oob_tcp_addr_construct,
     mca_oob_tcp_addr_destruct);
 

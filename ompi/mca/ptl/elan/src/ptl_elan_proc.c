@@ -31,11 +31,11 @@ static void mca_ptl_elan_proc_destruct (mca_ptl_elan_proc_t * proc);
 static mca_ptl_elan_proc_t *mca_ptl_elan_proc_lookup_ompi (ompi_proc_t *
                                                            ompi_proc);
 
-ompi_class_t mca_ptl_elan_proc_t_class = {
+opal_class_t mca_ptl_elan_proc_t_class = {
     "mca_ptl_elan_proc_t",
     OBJ_CLASS (ompi_list_item_t),
-    (ompi_construct_t) mca_ptl_elan_proc_construct,
-    (ompi_destruct_t) mca_ptl_elan_proc_destruct
+    (opal_construct_t) mca_ptl_elan_proc_construct,
+    (opal_destruct_t) mca_ptl_elan_proc_destruct
 };
 
 

@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 struct ompi_condition_t {
-    ompi_object_t super;
+    opal_object_t super;
     pthread_cond_t c_cond;
 };
 typedef struct ompi_condition_t ompi_condition_t;

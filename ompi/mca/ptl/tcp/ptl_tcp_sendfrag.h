@@ -37,7 +37,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t mca_ptl_tcp_send_frag_t_class;
+extern opal_class_t mca_ptl_tcp_send_frag_t_class;
 struct mca_ptl_base_peer_t;
 
 

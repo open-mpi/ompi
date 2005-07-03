@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "class/orte_bitmap.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 

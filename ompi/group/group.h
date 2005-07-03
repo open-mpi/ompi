@@ -33,7 +33,7 @@ extern "C" {
  * Group structure
  */
 struct ompi_group_t {
-    ompi_object_t super;    /**< base class */
+    opal_object_t super;    /**< base class */
     int grp_proc_count;     /**< number of processes in group */
     int grp_my_rank;        /**< rank in group */
     int grp_f_to_c_index;   /**< index in Fortran <-> C translation array */

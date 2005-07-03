@@ -34,7 +34,7 @@ static volatile int thr2_count = 0;
 #define TEST_COUNT 1000000
 
 
-static void* thr1_run(ompi_object_t* obj)
+static void* thr1_run(opal_object_t* obj)
 {
     int i;
     clock_t c1, c2;
@@ -51,7 +51,7 @@ static void* thr1_run(ompi_object_t* obj)
     return NULL;
 }
 
-static void* thr2_run(ompi_object_t* obj)
+static void* thr2_run(opal_object_t* obj)
 {
     int i;
     clock_t c1, c2;

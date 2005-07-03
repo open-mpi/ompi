@@ -94,7 +94,7 @@ static void info_destructor(mca_base_param_info_t *p);
 /*
  * Make the class instance for mca_base_param_t
  */
-OBJ_CLASS_INSTANCE(mca_base_param_t, ompi_object_t, 
+OBJ_CLASS_INSTANCE(mca_base_param_t, opal_object_t, 
                    param_constructor, param_destructor);
 OBJ_CLASS_INSTANCE(mca_base_param_file_value_t, ompi_list_item_t,
                    fv_constructor, fv_destructor);

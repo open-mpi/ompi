@@ -61,7 +61,7 @@ typedef uint32_t orte_rmgr_cmd_t;
  */
 typedef struct {
     /** Parent object */
-    ompi_object_t super;
+    opal_object_t super;
     /** One of the ORTE_APP_CONTEXT_MAP_* values */
     uint8_t map_type;
     /** String data */
@@ -76,7 +76,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_map_t);
  */
 typedef struct {
     /** Parent object */
-    ompi_object_t super;
+    opal_object_t super;
     /** Unique index when multiple apps per job */
     size_t idx;
     /** Absolute pathname of argv[0] */
