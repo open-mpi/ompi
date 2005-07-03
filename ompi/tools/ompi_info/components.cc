@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mpi/runtime/params.h"
-#include "runtime/runtime.h"
+#include "ompi/runtime/params.h"
+#include "orte/runtime/runtime.h"
 #include "tools/ompi_info/ompi_info.h"
 
 #include "mca/base/base.h"

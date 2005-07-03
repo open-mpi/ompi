@@ -117,6 +117,7 @@ SUBDIRS = \
         op \
         proc \
         request \
+        runtime \
         win \
         . \
         dynamic-mca \
@@ -146,7 +147,7 @@ libmpi_la_LIBADD = \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
         mpi/c/libmpi_c.la $(c_mpi_lib) $(c_pmpi_lib) \
         $(f77_base_lib) $(f77_mpi_lib) $(f77_pmpi_lib) \
-        mpi/runtime/libmpiruntime.la \
+        runtime/libmpiruntime.la \
         op/libop.la \
         proc/libproc.la \
         request/librequest.la

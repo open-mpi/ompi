@@ -35,10 +35,6 @@
 #include "util/univ_info.h"
 #include "mca/ns/ns.h"
 
-/* For backwards compatibility.  If you only need MPI stuff, please include
-   mpiruntime/mpiruntime.h directly */
-#include "mpi/runtime/mpiruntime.h"
-
 /* constants for spawn constraints */
 
 /** Spawn constraint - require multi-cell support.  The selected spawn

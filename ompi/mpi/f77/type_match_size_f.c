@@ -21,7 +21,7 @@
 #include "datatype/datatype.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
-#include "mpi/runtime/params.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_MATCH_SIZE = mpi_type_match_size_f

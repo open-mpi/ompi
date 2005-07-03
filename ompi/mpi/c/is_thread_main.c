@@ -18,7 +18,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "mpi/runtime/mpiruntime.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 #include "threads/thread.h"

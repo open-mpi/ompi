@@ -1547,6 +1547,7 @@ AC_CONFIG_FILES([
     ompi/op/Makefile
     ompi/proc/Makefile
     ompi/request/Makefile
+    ompi/runtime/Makefile
     ompi/win/Makefile
 
     ompi/mpi/Makefile
@@ -1559,7 +1560,6 @@ AC_CONFIG_FILES([
     ompi/mpi/f90/fortran_kinds.sh
     ompi/mpi/f90/fortran_sizes.h
     ompi/mpi/f90/scripts/Makefile
-    ompi/mpi/runtime/Makefile
 
     ompi/tools/Makefile
     ompi/tools/ompi_info/Makefile
