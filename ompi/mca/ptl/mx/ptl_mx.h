@@ -45,7 +45,7 @@ struct mca_ptl_mx_component_t {
     struct mca_ptl_mx_module_t** mx_ptls;  /**< array of available PTL moduless */
     ompi_free_list_t mx_send_frags;        /**< free list of mx send fragments */
     ompi_free_list_t mx_recv_frags;        /**< free list of mx recv fragments */
-    ompi_hash_table_t mx_procs;            /**< hash table of procs */
+    opal_hash_table_t mx_procs;            /**< hash table of procs */
     opal_list_t mx_pending_acks;           /**< queue of pending sends */
     ompi_mutex_t mx_lock;                  /**< lock for accessing module state */
 };

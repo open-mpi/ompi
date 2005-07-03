@@ -26,7 +26,7 @@
 #include "mca/base/base.h"
 #include "mca/ns/ns_types.h"
 #include "opal/class/opal_free_list.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #include "event/event.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"
@@ -249,8 +249,8 @@ struct mca_oob_tcp_component_t {
     unsigned short     tcp_listen_port;      /**< listen port */
     opal_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
     opal_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
-    ompi_hash_table_t  tcp_peers;            /**< peers sorted by name */
-    ompi_hash_table_t  tcp_peer_names;       /**< cache of peer contact info sorted by name */
+    opal_hash_table_t  tcp_peers;            /**< peers sorted by name */
+    opal_hash_table_t  tcp_peer_names;       /**< cache of peer contact info sorted by name */
     opal_free_list_t   tcp_peer_free;        /**< free list of peers */
     int                tcp_peer_limit;       /**< max size of tcp peer cache */
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */

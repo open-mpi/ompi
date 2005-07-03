@@ -60,7 +60,7 @@
 
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_list.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 
 /**
  * The types of MCA parameters.
@@ -272,7 +272,7 @@ extern "C" {
      * called first to associate a keyval with the index.
      */
     OMPI_DECLSPEC int mca_base_param_kv_lookup_int(int index,
-                                                   struct ompi_hash_table_t *attrs, 
+                                                   struct opal_hash_table_t *attrs, 
                                                    int *value);
     
     /**
@@ -320,7 +320,7 @@ extern "C" {
      * have been called first to associate a keyval with the index.
      */
     OMPI_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
-                                                      struct ompi_hash_table_t *attrs, 
+                                                      struct opal_hash_table_t *attrs, 
                                                       char **value);
 
     /**

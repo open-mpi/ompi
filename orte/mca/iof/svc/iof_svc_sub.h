@@ -14,7 +14,7 @@
 struct orte_iof_svc_fwd_t {
     opal_list_item_t super;
     orte_iof_svc_pub_t* fwd_pub;
-    ompi_hash_table_t fwd_seq;
+    opal_hash_table_t fwd_seq;
 };
 typedef struct orte_iof_svc_fwd_t orte_iof_svc_fwd_t;
 

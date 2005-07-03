@@ -207,10 +207,10 @@ static void orte_iof_svc_proxy_ack(
             if (orte_ns.compare(pub->pub_mask,&pub->pub_name,src) == 0 ||
                 orte_ns.compare(ORTE_NS_CMP_ALL,&pub->pub_proxy,src) == 0) {
                 value.uval = hdr->msg_seq + hdr->msg_len;
-                ompi_hash_table_set_proc(&fwd->fwd_seq,
+                opal_hash_table_set_proc(&fwd->fwd_seq,
                                          &hdr->msg_src, &value.vval);
             } else {
-                value.vval = ompi_hash_table_get_proc(&fwd->fwd_seq,
+                value.vval = opal_hash_table_get_proc(&fwd->fwd_seq,
                                                       &hdr->msg_src);
                 if(value.uval < seq_min) {
                     seq_min = value.uval;

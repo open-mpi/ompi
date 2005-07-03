@@ -34,7 +34,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #include "mca/base/mca_base_param.h"
 
 /**

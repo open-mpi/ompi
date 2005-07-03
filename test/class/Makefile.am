@@ -22,7 +22,7 @@ check_PROGRAMS = \
 	ompi_bitmap \
 	ompi_circular_buffer_fifo \
 	ompi_fifo \
-	ompi_hash_table \
+	opal_hash_table \
 	opal_list \
 	opal_value_array \
 	ompi_pointer_array \
@@ -56,11 +56,11 @@ opal_list_LDADD = \
         $(top_builddir)/test/support/libsupport.a
 opal_list_DEPENDENCIES = $(opal_list_LDADD)
 
-ompi_hash_table_SOURCES = ompi_hash_table.c
-ompi_hash_table_LDADD = \
+opal_hash_table_SOURCES = opal_hash_table.c
+opal_hash_table_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a
-ompi_hash_table_DEPENDENCIES = $(ompi_hash_table_LDADD)
+opal_hash_table_DEPENDENCIES = $(opal_hash_table_LDADD)
 
 ompi_pointer_array_SOURCES = ompi_pointer_array.c
 ompi_pointer_array_LDADD = \

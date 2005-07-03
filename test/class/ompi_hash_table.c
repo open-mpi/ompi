@@ -21,7 +21,7 @@
 #include <string.h>
 #include "support.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 
 static FILE *error_out=NULL;
 
@@ -62,63 +62,63 @@ typedef union {
     void *vvalue;
 } value_t;
 
-static void validate_table(ompi_hash_table_t *table, char *keys[], int is_numeric_keys)
+static void validate_table(opal_hash_table_t *table, char *keys[], int is_numeric_keys)
 {
     int         j, ret;
     value_t value;
     
     for ( j = 0; keys[j]; j += 2) {
         if ( 1 == is_numeric_keys ) {
-            ret = ompi_hash_table_get_value_uint32(table, atoi(keys[j]),
+            ret = opal_hash_table_get_value_uint32(table, atoi(keys[j]),
                                                    (void**) &value.uvalue);
         } else {
-            ret = ompi_hash_table_get_value_ptr(table, keys[j], 
+            ret = opal_hash_table_get_value_ptr(table, keys[j], 
                                                 strlen(keys[j]), 
                                                 &value.vvalue);
         }
         test_verify_str(keys[j+1], value.vvalue);
     }
-    test_verify_int(j/2, ompi_hash_table_get_size(table));
+    test_verify_int(j/2, opal_hash_table_get_size(table));
 }
 
-static void test_htable(ompi_hash_table_t *table)
+static void test_htable(opal_hash_table_t *table)
 {
     int j;
     fprintf(error_out, "\nTesting integer keys...\n");
     for ( j = 0; num_keys[j]; j += 2)
     {
-        ompi_hash_table_set_value_uint32(table, atoi(num_keys[j]), num_keys[j+1]);
+        opal_hash_table_set_value_uint32(table, atoi(num_keys[j]), num_keys[j+1]);
     }
     validate_table(table, num_keys, 1);
     
     /* remove all values for next test */
-    ompi_hash_table_remove_all(table);
-    test_verify_int(0, ompi_hash_table_get_size(table));
+    opal_hash_table_remove_all(table);
+    test_verify_int(0, opal_hash_table_get_size(table));
     
     fprintf(error_out, "\nTesting string keys...\n");
     for ( j = 0; str_keys[j]; j += 2)
     {
-        ompi_hash_table_set_value_ptr(table, str_keys[j], strlen(str_keys[j]), str_keys[j+1]);
+        opal_hash_table_set_value_ptr(table, str_keys[j], strlen(str_keys[j]), str_keys[j+1]);
     }
     validate_table(table, str_keys, 0);
     
     /* remove all values for next test */
-    ompi_hash_table_remove_all(table);
-    test_verify_int(0, ompi_hash_table_get_size(table));
+    opal_hash_table_remove_all(table);
+    test_verify_int(0, opal_hash_table_get_size(table));
     
     fprintf(error_out, "\nTesting collision resolution...\n");
     /* All of the string keys in keys array should
         have the same hash value. */
     for ( j = 0; perm_keys[j]; j += 2)
     {
-        ompi_hash_table_set_value_ptr(table, perm_keys[j], strlen(perm_keys[j]), perm_keys[j+1]);
+        opal_hash_table_set_value_ptr(table, perm_keys[j], strlen(perm_keys[j]), perm_keys[j+1]);
     }
 
     validate_table(table, perm_keys, 0);
     
     /* remove all values for next test */
-    ompi_hash_table_remove_all(table);
-    test_verify_int(0, ompi_hash_table_get_size(table));
+    opal_hash_table_remove_all(table);
+    test_verify_int(0, opal_hash_table_get_size(table));
     
     fprintf(error_out, "\n\n");
 }
@@ -126,16 +126,16 @@ static void test_htable(ompi_hash_table_t *table)
 
 static void test_dynamic(void)
 {
-    ompi_hash_table_t     *table;
+    opal_hash_table_t     *table;
     
-    table = OBJ_NEW(ompi_hash_table_t);
+    table = OBJ_NEW(opal_hash_table_t);
     if ( NULL == table )
     {
         fprintf(error_out, "Error: Unable to create hash table.\n");
         exit(-1);
     }
     fprintf(error_out, "Testing with dynamically created table...\n");
-    ompi_hash_table_init(table, 4);
+    opal_hash_table_init(table, 4);
     test_htable(table);
     
     OBJ_RELEASE(table);
@@ -144,10 +144,10 @@ static void test_dynamic(void)
 
 static void test_static(void)
 {
-    ompi_hash_table_t     table;
+    opal_hash_table_t     table;
     
-    OBJ_CONSTRUCT(&table, ompi_hash_table_t);
-    ompi_hash_table_init(&table, 128);
+    OBJ_CONSTRUCT(&table, opal_hash_table_t);
+    opal_hash_table_init(&table, 128);
 
     fprintf(error_out, "Testing with statically created table...\n");
     test_htable(&table);
@@ -159,12 +159,12 @@ static void test_static(void)
 int main(int argc, char **argv)
 {
     /* local variables */
-    test_init("ompi_hash_table_t");
+    test_init("opal_hash_table_t");
 
 #ifdef STANDALONE
     error_out = stderr;
 #else
-    error_out = fopen( "./ompi_hash_table_test_out.txt", "w" );
+    error_out = fopen( "./opal_hash_table_test_out.txt", "w" );
     if( error_out == NULL ) error_out = stderr;
 #endif
     

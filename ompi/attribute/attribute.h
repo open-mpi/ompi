@@ -30,7 +30,7 @@
 #include "include/constants.h"
 #include "opal/class/opal_object.h"
 #include "class/ompi_bitmap.h"
-#include "class/ompi_hash_table.h"
+#include "class/opal_hash_table.h"
 #include "mca/gpr/gpr_types.h"
 
 #define ATTR_HASH_SIZE 10
@@ -167,14 +167,14 @@ typedef struct ompi_attrkey_item_t ompi_attrkey_item_t;
  */
 
 static inline
-int ompi_attr_hash_init(ompi_hash_table_t **keyhash)
+int ompi_attr_hash_init(opal_hash_table_t **keyhash)
 {
-   *keyhash = OBJ_NEW(ompi_hash_table_t);
+   *keyhash = OBJ_NEW(opal_hash_table_t);
     if (NULL == keyhash) {
 	fprintf(stderr, "Error while creating the local attribute list\n");
 	return MPI_ERR_SYSRESOURCE;
     }
-    if (OMPI_SUCCESS != ompi_hash_table_init(*keyhash, ATTR_HASH_SIZE)) {
+    if (OMPI_SUCCESS != opal_hash_table_init(*keyhash, ATTR_HASH_SIZE)) {
 	return MPI_ERR_SYSRESOURCE;
     }
   
@@ -274,7 +274,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  * (read: better) this way.
  */
 int ompi_attr_set_c(ompi_attribute_type_t type, void *object, 
-                    ompi_hash_table_t **keyhash,
+                    opal_hash_table_t **keyhash,
                     int key, void *attribute, bool predefined, bool need_lock);
 
 /**
@@ -311,7 +311,7 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
-                               ompi_hash_table_t **keyhash,
+                               opal_hash_table_t **keyhash,
                                int key, MPI_Fint attribute, 
                                bool predefined, bool need_lock);
 
@@ -349,7 +349,7 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object, 
-                               ompi_hash_table_t **keyhash,
+                               opal_hash_table_t **keyhash,
                                int key, MPI_Aint attribute, 
                                bool predefined, bool need_lock);
 
@@ -375,7 +375,7 @@ int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 
-int ompi_attr_get_c(ompi_hash_table_t *keyhash, int key, 
+int ompi_attr_get_c(opal_hash_table_t *keyhash, int key, 
                     void **attribute, int *flag);
 
 
@@ -402,7 +402,7 @@ int ompi_attr_get_c(ompi_hash_table_t *keyhash, int key,
  * (read: better) this way.
  */
 
-int ompi_attr_get_fortran_mpi1(ompi_hash_table_t *keyhash, int key, 
+int ompi_attr_get_fortran_mpi1(opal_hash_table_t *keyhash, int key, 
                                MPI_Fint *attribute, int *flag);
 
 
@@ -429,7 +429,7 @@ int ompi_attr_get_fortran_mpi1(ompi_hash_table_t *keyhash, int key,
  * (read: better) this way.
  */
 
-int ompi_attr_get_fortran_mpi2(ompi_hash_table_t *keyhash, int key, 
+int ompi_attr_get_fortran_mpi2(opal_hash_table_t *keyhash, int key, 
                                MPI_Aint *attribute, int *flag);
 
 
@@ -451,7 +451,7 @@ int ompi_attr_get_fortran_mpi2(ompi_hash_table_t *keyhash, int key,
  */
 
 int ompi_attr_delete(ompi_attribute_type_t type, void *object, 
-                     ompi_hash_table_t *keyhash , int key,
+                     opal_hash_table_t *keyhash , int key,
                      bool predefined, bool need_lock);
 
 
@@ -469,8 +469,8 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
  */
 
 int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
-		      void *new_object, ompi_hash_table_t *oldkeyhash,
-		      ompi_hash_table_t *newkeyhash);
+		      void *new_object, opal_hash_table_t *oldkeyhash,
+		      opal_hash_table_t *newkeyhash);
 
 
 /** 
@@ -484,7 +484,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
  */
 
 int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
-			ompi_hash_table_t *keyhash);
+			opal_hash_table_t *keyhash);
 
 
 /**
