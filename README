@@ -18,11 +18,18 @@ software is "mostly stable", but is definitely rough around the edges
 -- it is not complete and not completely debugged.  Our intent with
 this release is to get the Open MPI software onto other people's
 machines and see what creative ways you can come up with to break it,
-and to send us your comments and suggestions.
+and to send us your comments and suggestions.  
 
 However, we want to stress the following point: this is an *beta*
 quality release.  We're quite aware that there are several things
 still broken (but report them anyway!).
+
+Also note that many performance enhancements were applied to the Open
+MPI code repository *after* we forked for this beta release (in
+mid-May, 2005).  To get the most recent advancements, you'll need to
+get a checkout of the current code base (keeping in mind that that is
+the head of development, and is not always stable!).  See
+http://www.open-mpi.org/svn/ for details.
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
@@ -45,12 +52,13 @@ Thanks for your time.
 
 ===========================================================================
 
-This tarball is a beta release of Open MPI.  It is not yet complete,
-mainly in the following areas:
+This tarball is a beta release of Open MPI, representing the head of
+development as of mid-May 2005.  It is not yet complete.
 
-- All MPI point-to-point transports need more performance tuning.  GM
-  and shared memory in particular have only had a light tuning and
-  consequently do not perform well for large messages.
+- All MPI point-to-point transports were extensively tuned for
+  performance after branching for this beta.  As result, some
+  point-to-point transports in this beta do not perform well,
+  especially for large messages (e.g,. shared memory).
 
 - The Open MPI installation must be in your PATH on all nodes (and
   potentially LD_LIBRARY_PATH, if libmpi is a shared library).
@@ -58,7 +66,7 @@ mainly in the following areas:
 - LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
 
 - Support for Quadrics and Infiniband (both mVAPI and OpenIB) is
-  missing.
+  missing (see the current code base).
 
 - Shared memory support will not function properly on machines that
   have a weak memory consistency mode.  The default in this beta is to
@@ -87,12 +95,13 @@ mainly in the following areas:
 
 - Systems that have been tested are:
   - Linux, 32 bit, with gcc
-  - Linux, 64 bit, with gcc
   - OS X (10.3), 32 bit, with gcc
   - OS X (10.4), 32 bit, with gcc
 
 - Other systems have been lightly (but not fully tested):
-  - Other compilers on Linux, both 32 and 64 bit
+  - Other compilers on Linux, 32 bit
+  - 64 bit platforms (AMD, PPC64, Sparc); they "mostly work", but
+    there are still some known issues
 
 - As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
   in 64 bit mode due to an ioctl() bug in OS X.  Apple has been
@@ -109,6 +118,9 @@ mainly in the following areas:
 - Running on nodes with different endian and/or different datatype
   sizes within a single parallel application is not supported in this
   beta.
+
+- Threading support (both asynchronous progress and
+  MPI_THREAD_MULTIPLE) is included, but is only lightly tested.
 
 
 ===========================================================================
@@ -283,8 +295,8 @@ them.
 
 Since rsh is probably the launcher that you will be using (if you are
 outside of Los Alamos National Laboratory), you can also specify a
--hostfile or -machinefile parameter, indicating an standard
-mpirun-style hostfile (one hostname per line):
+-hostfile parameter, indicating an standard mpirun-style hostfile (one
+hostname per line):
 
 shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
 
@@ -430,7 +442,7 @@ contribute to Open MPI?  Please let us know!
 User-level questions and comments should generally be sent to the
 user's mailing list (users@open-mpi.org).  Because of spam, only
 subscribers are allowed to post to this list (ensure that you
-subscribe with and post from exactly the same e-mail address --
+subscribe with and post from *exactly* the same e-mail address --
 joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit this page to subscribe to the
 user's list:
@@ -438,14 +450,14 @@ user's list:
      http://www.open-mpi.org/mailman/listinfo.cgi/users
 
 Developer-level bug reports, questions, and comments should generally
-be sent to the developer's mailing list (devel@open-mpi.org; please do
-not post the same question to both lists).  As with the user's list,
+be sent to the developer's mailing list (devel@open-mpi.org).  Please
+do not post the same question to both lists.  As with the user's list,
 only subscribers are allowed to post to the developer's list.  Visit
 the following web page to subscribe:
 
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
 
-When submitting bug reports to either list, please include the
+When submitting bug reports to either list, be sure to include the
 following information in your mail (please compress!):
 
 - the stdout and stderr from Open MPI's configure
@@ -485,4 +497,4 @@ about your installation and can greatly assist us in helping with your
 problem.
 
 Be sure to also include any other useful files (in the
-ompi-output.tar.gz), such as output showing specific errors.
+ompi-output.tar.gz tarball), such as output showing specific errors.
