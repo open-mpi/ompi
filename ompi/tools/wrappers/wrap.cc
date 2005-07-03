@@ -393,6 +393,8 @@ ompi_wrap_build_libs(const ompi_sv_t & env_list,
     // Next comes the MPI library
 
     libs.push_back("-lmpi");
+    libs.push_back("-lorte");
+    libs.push_back("-lopal");
 
     ompi_wrap_split_append_sv(WRAPPER_EXTRA_LIBS, libs);
 }
