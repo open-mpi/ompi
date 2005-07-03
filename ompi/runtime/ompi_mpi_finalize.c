@@ -34,7 +34,7 @@
 #include "util/sys_info.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "orte/runtime/runtime.h"
-#include "opal/runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 #include "attribute/attribute.h"
 
 #include "mca/base/base.h"
@@ -63,11 +63,11 @@ int ompi_mpi_finalize(void)
 
     ompi_mpi_finalized = true;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+    opal_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 
     /* Change progress function priority back to RTE level stuff */
-    ompi_progress_mpi_disable();
+    opal_progress_mpi_disable();
 
     /* begin recording compound command */
 /*    if (OMPI_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {

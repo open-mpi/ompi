@@ -24,12 +24,12 @@ noinst_LTLIBRARIES = libruntime.la
 # Source code files
 
 headers = \
-        ompi_progress.h \
+        opal_progress.h \
         opal.h
 
 libruntime_la_SOURCES = \
         $(headers) \
-        ompi_progress.c \
+        opal_progress.c \
         opal_finalize.c \
         opal_init.c
 

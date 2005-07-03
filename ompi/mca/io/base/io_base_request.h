@@ -148,7 +148,7 @@ extern "C" {
     void mca_io_base_request_progress_fini(void);
 
     /**
-     * External progress function; invoked from ompi_progress()
+     * External progress function; invoked from opal_progress()
      */
     static inline int mca_io_base_request_progress(void)
     {

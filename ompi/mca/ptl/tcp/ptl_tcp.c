@@ -131,7 +131,7 @@ int mca_ptl_tcp_add_procs(
         /* we increase the count of MPI users of the event library
            once per peer, so that we are used until we aren't
            connected to a peer */
-        ompi_progress_event_increment();
+        opal_progress_event_increment();
     }
     return OMPI_SUCCESS;
 }
@@ -149,7 +149,7 @@ int mca_ptl_tcp_del_procs(struct mca_ptl_base_module_t* ptl, size_t nprocs, stru
     for(i=0; i<nprocs; i++) {
         opal_list_remove_item(&ptl_tcp->ptl_peers, (opal_list_item_t*)peers[i]);
         OBJ_RELEASE(peers[i]);
-        ompi_progress_event_decrement();
+        opal_progress_event_decrement();
     }
     return OMPI_SUCCESS;
 }
@@ -167,7 +167,7 @@ int mca_ptl_tcp_finalize(struct mca_ptl_base_module_t* ptl)
          item = opal_list_remove_first(&ptl_tcp->ptl_peers)) {
         mca_ptl_tcp_peer_t *peer = (mca_ptl_tcp_peer_t*)item;
         OBJ_RELEASE(peer);
-        ompi_progress_event_decrement();
+        opal_progress_event_decrement();
     }
     free(ptl);
     return OMPI_SUCCESS;

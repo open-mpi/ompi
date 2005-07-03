@@ -2234,10 +2234,10 @@
 						RelativePath="..\..\src\runtime\ompi_init.c">
 					</File>
 					<File
-						RelativePath="..\..\src\runtime\ompi_progress.c">
+						RelativePath="..\..\src\runtime\opal_progress.c">
 					</File>
 					<File
-						RelativePath="..\..\src\runtime\ompi_progress.h">
+						RelativePath="..\..\src\runtime\opal_progress.h">
 					</File>
 					<File
 						RelativePath="..\..\src\runtime\ompi_rte_cmd_line_setup.c">

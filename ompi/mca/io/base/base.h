@@ -199,7 +199,7 @@ extern "C" {
      * the component is already in the list, its reference count will
      * be increases.  
      *
-     * For asynchronous progress, ompi_progress() will call
+     * For asynchronous progress, opal_progress() will call
      * mca_io_base_progress(), which will go down the list of active
      * io components and call their progress() function.
      *

@@ -26,7 +26,7 @@
 #include "opal/class/opal_list.h"
 #include "class/ompi_pointer_array.h"
 #include "errhandler/errhandler.h"
-#include "runtime/ompi_progress.h"
+#include "opal/runtime/opal_progress.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"
                                                                                                                             
@@ -226,7 +226,7 @@ static inline int ompi_request_test(
     } else {
         *completed = false;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-        ompi_progress();
+        opal_progress();
 #endif
         return OMPI_SUCCESS;
     }

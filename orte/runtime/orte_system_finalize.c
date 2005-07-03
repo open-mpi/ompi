@@ -65,7 +65,7 @@ int orte_system_finalize(void)
     orte_rml_base_close();
     orte_dps_close();
 
-    ompi_progress_finalize();
+    opal_progress_finalize();
 
     ompi_event_fini();
 

@@ -89,7 +89,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 
         /* tell the progress engine to tick the event library more
            often, to make sure that the OOB messages get sent */
-        ompi_progress_event_increment();
+        opal_progress_event_increment();
 
 	if (ORTE_SUCCESS != (rc = orte_dps.pack(nbuf, &size, 1, ORTE_INT))) {
 	    goto exit;
@@ -218,8 +218,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     
  exit:
     /* done with OOB and such - slow our tick rate again */
-    ompi_progress();
-    ompi_progress_event_decrement();
+    opal_progress();
+    opal_progress_event_decrement();
 
 
     if ( NULL != rprocs ) {
@@ -330,7 +330,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     */
 
     /* make sure the progress engine properly trips the event library */
-    ompi_progress_event_increment();
+    opal_progress_event_increment();
 
     /* Convert the list of commands to an array of orte_app_context_t
        pointers */
@@ -345,7 +345,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             /* rollback what was already done */
             for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
-            ompi_progress_event_decrement();
+            opal_progress_event_decrement();
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         /* copy over the name of the executable */
@@ -354,7 +354,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             /* rollback what was already done */
             for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
-            ompi_progress_event_decrement();
+            opal_progress_event_decrement();
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         /* record the number of procs to be generated */
@@ -381,7 +381,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 	    for (j=0; j < i; j++) {
 		OBJ_RELEASE(apps[j]);
 	    }
-            ompi_progress_event_decrement();
+            opal_progress_event_decrement();
 	    return ORTE_ERR_OUT_OF_RESOURCE;
 	}
 	apps[i]->argv[0] = strdup(array_of_commands[i]);
@@ -404,7 +404,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             /* rollback what was already done */
             for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
-            ompi_progress_event_decrement();
+            opal_progress_event_decrement();
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         asprintf(&(apps[i]->env[0]), "OMPI_PARENT_PORT=%s", port_name);
@@ -436,12 +436,12 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, &new_jobid,
                                     NULL))) {
     	ORTE_ERROR_LOG(rc);
-        ompi_progress_event_decrement();
+        opal_progress_event_decrement();
         return MPI_ERR_SPAWN;
     }
     
     /* clean up */
-    ompi_progress_event_decrement();
+    opal_progress_event_decrement();
     for ( i=0; i<count; i++) {
 	OBJ_RELEASE(apps[i]);
     }

@@ -34,7 +34,7 @@ extern "C" {
  * functions.  At this point, any function in the progress engine
  * interface may be called.
  */
-OMPI_DECLSPEC extern int ompi_progress_init(void);
+OMPI_DECLSPEC extern int opal_progress_init(void);
 
 /**
  * Configure the progress engine for executing MPI applications
@@ -42,10 +42,10 @@ OMPI_DECLSPEC extern int ompi_progress_init(void);
  * Register to receive any needed information from the GPR and 
  * intialize any data structures required for MPI applications.
  *
- * \note ompi_progress_init() must be called before calling
+ * \note opal_progress_init() must be called before calling
  * this function.  Failure to do so is an error.
  */
-OMPI_DECLSPEC extern int ompi_progress_mpi_init(void);
+OMPI_DECLSPEC extern int opal_progress_mpi_init(void);
 
 /** 
  * Turn on optimizations for MPI progress
@@ -55,16 +55,16 @@ OMPI_DECLSPEC extern int ompi_progress_mpi_init(void);
  * active use and possibly disabling the sched_yield call when the
  * progress engine is idle 
  */
-OMPI_DECLSPEC extern int ompi_progress_mpi_enable(void);
+OMPI_DECLSPEC extern int opal_progress_mpi_enable(void);
 
 /**
- * Turn off all optimizations enabled by ompi_progress_mpi_enable().
+ * Turn off all optimizations enabled by opal_progress_mpi_enable().
  *
  * Completely reverses all optimizations enabled by
- * ompi_progress_mpi_enable().  The event library resumes constant
+ * opal_progress_mpi_enable().  The event library resumes constant
  * ticking and the progress engine yields the CPU when idle.
  */
-OMPI_DECLSPEC extern int ompi_progress_mpi_disable(void);
+OMPI_DECLSPEC extern int opal_progress_mpi_disable(void);
 
 /** 
  * Shut down the progress engine
@@ -73,42 +73,42 @@ OMPI_DECLSPEC extern int ompi_progress_mpi_disable(void);
  * registered callbacks and freeing all resources.  After finalize
  * returns, no calls into the progress interface are allowed.
  */
-OMPI_DECLSPEC extern int ompi_progress_finalize(void);
+OMPI_DECLSPEC extern int opal_progress_finalize(void);
 
 /**
  * Control how the event library is called
  */
-OMPI_DECLSPEC extern void ompi_progress_events(int);
+OMPI_DECLSPEC extern void opal_progress_events(int);
 
 /**
  * Progress all pending events
  */
-OMPI_DECLSPEC extern void ompi_progress(void);
+OMPI_DECLSPEC extern void opal_progress(void);
 
-typedef int (*ompi_progress_callback_t)(void);
+typedef int (*opal_progress_callback_t)(void);
 
 
 /**
  * Register an event to be progressed
  */
-OMPI_DECLSPEC int ompi_progress_register(ompi_progress_callback_t cb);
+OMPI_DECLSPEC int opal_progress_register(opal_progress_callback_t cb);
 
 
 /**
  * Unregister previously registered event
  */
-OMPI_DECLSPEC int ompi_progress_unregister(ompi_progress_callback_t cb);
+OMPI_DECLSPEC int opal_progress_unregister(opal_progress_callback_t cb);
 
 
 /**
  * Increase count of MPI users of the event library
  */   
-OMPI_DECLSPEC int ompi_progress_event_increment(void);
+OMPI_DECLSPEC int opal_progress_event_increment(void);
 
 /**
  * Decrease count of MPI users of the event library
  */   
-OMPI_DECLSPEC int ompi_progress_event_decrement(void);
+OMPI_DECLSPEC int opal_progress_event_decrement(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

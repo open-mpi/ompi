@@ -539,7 +539,7 @@ int mca_ptl_tcp_component_control(int param, void* value, size_t size)
             if(*(int*)value) {
                 ompi_event_add(&mca_ptl_tcp_component.tcp_recv_event, 0);
                 if(opal_hash_table_get_size(&mca_ptl_tcp_component.tcp_procs) > 0) {
-                    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+                    opal_progress_events(OMPI_EVLOOP_NONBLOCK);
                 }
             } else {
                 ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
