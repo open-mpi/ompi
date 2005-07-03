@@ -22,7 +22,7 @@
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 
 int orte_abort(int status, char *fmt, ...)
@@ -33,7 +33,7 @@ int orte_abort(int status, char *fmt, ...)
 
   va_start(arglist, fmt);
   if (NULL != fmt) {
-    ompi_output(0, fmt);
+    opal_output(0, fmt);
   }
   va_end(arglist);
 

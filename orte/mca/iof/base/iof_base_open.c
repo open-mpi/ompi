@@ -25,7 +25,7 @@
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_header.h"
 #include "mca/iof/base/iof_base_fragment.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -76,7 +76,7 @@ int orte_iof_base_open(void)
     id = mca_base_param_register_int("iof", "base", "verbose", NULL, 0);
     mca_base_param_lookup_int(id, &int_value);
     if (int_value != 0) {
-        orte_iof_base.iof_output = ompi_output_open(NULL);
+        orte_iof_base.iof_output = opal_output_open(NULL);
     } else {
         orte_iof_base.iof_output = -1;
     }

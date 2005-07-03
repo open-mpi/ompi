@@ -38,7 +38,7 @@
 #include "include/orte_constants.h"
 #include "util/argv.h"
 #include "util/ompi_environ.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/univ_info.h"
 #include "util/session_dir.h"
 #include "util/if.h"
@@ -159,27 +159,27 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
  cleanup:
         /* tell the user something went wrong */
-        ompi_output(0, "ERROR: A daemon on node %s failed to start as expected.",
+        opal_output(0, "ERROR: A daemon on node %s failed to start as expected.",
         			info->node->node_name);
-        ompi_output(0, "ERROR: There may be more information available from");
-        ompi_output(0, "ERROR: the remote shell (see above).");
+        opal_output(0, "ERROR: There may be more information available from");
+        opal_output(0, "ERROR: the remote shell (see above).");
 
         if (WIFEXITED(status)) {
-            ompi_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
+            opal_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
                    WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
 #ifdef WCOREDUMP
             if (WCOREDUMP(status)) {
-                ompi_output(0, "The daemon received a signal %d (with core).",
+                opal_output(0, "The daemon received a signal %d (with core).",
                 			WTERMSIG(status));
             } else {
-            	ompi_output(0, "The daemon received a signal %d.", WTERMSIG(status));
+            	opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
             }
 #else
-			ompi_output(0, "The daemon received a signal %d.", WTERMSIG(status));
+			opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
 #endif /* WCOREDUMP */
         } else {
-            ompi_output(0, "No extra status information is available: %d.", status);
+            opal_output(0, "No extra status information is available: %d.", status);
         }
     }
 #endif /* WIN32 */
@@ -469,7 +469,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, name);
             if(ORTE_SUCCESS != rc) {
-                ompi_output(0, "orte_pls_rsh: unable to create process name");
+                opal_output(0, "orte_pls_rsh: unable to create process name");
                 exit(-1);
             }
             argv[proc_name_index] = name_string;
@@ -477,7 +477,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (mca_pls_rsh_component.debug > 2) {
                 /* debug output */
                 char* cmd = ompi_argv_join(argv, ' ');  
-                ompi_output(0, "orte_pls_rsh: %s %s\n", exec_path, cmd);
+                opal_output(0, "orte_pls_rsh: %s %s\n", exec_path, cmd);
                 exit(0);
             } 
 
@@ -536,7 +536,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     
             /* exec the daemon */
             execve(exec_path, exec_argv, env);
-            ompi_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);
+            opal_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);
             exit(-1);
 
         } else {

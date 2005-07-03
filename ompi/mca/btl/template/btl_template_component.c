@@ -20,7 +20,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 

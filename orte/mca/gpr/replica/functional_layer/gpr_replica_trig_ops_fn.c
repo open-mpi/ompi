@@ -27,7 +27,7 @@
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/gpr/replica/api_layer/gpr_replica_api.h"
 #include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 #include "gpr_replica_fn.h"
@@ -913,7 +913,7 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_trigger_t *trig)
         }
         if (fire) { /* all levels were equal */
             if (orte_gpr_replica_globals.debug) {
-                ompi_output(0, "REGISTERING CALLBACK FOR TRIG %d", trig->index);
+                opal_output(0, "REGISTERING CALLBACK FOR TRIG %d", trig->index);
             }
             goto FIRED;
         }

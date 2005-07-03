@@ -192,7 +192,7 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
         PUSH_STACK( pStack, pConvertor->stack_pos, index, pElems[index].elem.common.type,
                     pElems[index].elem.count, pElems[index].elem.disp, 0 );
     } else {
-        ompi_output( 0, "Here we should have a data in the datatype description\n" );
+        opal_output( 0, "Here we should have a data in the datatype description\n" );
 	ompi_ddt_dump( pConvertor->pDesc );
     }
     pConvertor->bConverted = 0;

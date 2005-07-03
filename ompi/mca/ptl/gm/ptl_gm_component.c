@@ -19,7 +19,7 @@
  */
 #include "ompi_config.h"
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_module_exchange.h"
 #include "ptl_gm.h"
@@ -180,7 +180,7 @@ mca_ptl_gm_create( mca_ptl_gm_module_t** pptl )
 
     ptl = (mca_ptl_gm_module_t *)malloc( sizeof(mca_ptl_gm_module_t) );
     if (NULL == ptl) {
-        ompi_output( 0, " ran out of resource to allocate ptl_instance \n" );
+        opal_output( 0, " ran out of resource to allocate ptl_instance \n" );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
@@ -285,19 +285,19 @@ mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
 
         /*  Get node local Id */
         if( GM_SUCCESS != gm_get_node_id( gm_port, &local_id) ) {
-            ompi_output (0, " failure to get local_id \n");
+            opal_output (0, " failure to get local_id \n");
             continue;
         }
         /* Gather an unique id for the node */
 #if GM_API_VERSION > 0x200
         if (GM_SUCCESS != gm_node_id_to_global_id( gm_port, local_id, &global_id) ) {
-	    ompi_output (0, " Error: Unable to get my GM global unique id \n");
+	    opal_output (0, " Error: Unable to get my GM global unique id \n");
 	    continue;
 	}
 #else
 	{
 	    if( GM_SUCCESS != gm_get_host_name( gm_port, global_id ) ) {
-		ompi_output( 0, "Error: Unable to get the GM host name\n" );
+		opal_output( 0, "Error: Unable to get the GM host name\n" );
 		continue;
 	    }
 	}
@@ -376,7 +376,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     ptl->gm_send_dma_memory = gm_dma_malloc( ptl->gm_port,
                                              (mca_ptl_gm_component.gm_segment_size * ptl->num_send_tokens) + GM_PAGE_LEN );
     if( NULL == ptl->gm_send_dma_memory ) {
-        ompi_output( 0, "unable to allocate registered memory\n" );
+        opal_output( 0, "unable to allocate registered memory\n" );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for (i = 0; i < ptl->num_send_tokens; i++) {
@@ -391,7 +391,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     /*****************RECEIVE*****************************/
     /* allow remote memory access */
     if( GM_SUCCESS != gm_allow_remote_memory_access (ptl->gm_port) ) {
-        ompi_output (0, "unable to allow remote memory access\n");
+        opal_output (0, "unable to allow remote memory access\n");
     }
 
     OBJ_CONSTRUCT (&(ptl->gm_recv_outstanding_queue), opal_list_t);
@@ -415,7 +415,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     ptl->gm_recv_dma_memory =
         gm_dma_malloc( ptl->gm_port, (mca_ptl_gm_component.gm_segment_size * ptl->num_recv_tokens) + GM_PAGE_LEN );
     if( NULL == ptl->gm_recv_dma_memory ) {
-        ompi_output( 0, "unable to allocate registered memory for receive\n" );
+        opal_output( 0, "unable to allocate registered memory for receive\n" );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -448,14 +448,14 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
 
     /* let's try to find if GM is available */
     if( GM_SUCCESS != gm_init() ) {
-        ompi_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
+        opal_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /* First discover all available boards. For each board we will create a unique PTL */
     mca_ptl_gm_component.gm_ptl_modules = calloc( mca_ptl_gm_component.gm_max_ptl_modules,
 						  sizeof (mca_ptl_gm_module_t *));
     if (NULL == mca_ptl_gm_component.gm_ptl_modules) {
-        ompi_output( 0, "[%s:%d] error in initializing the gm PTL's.\n", __FILE__, __LINE__ );
+        opal_output( 0, "[%s:%d] error in initializing the gm PTL's.\n", __FILE__, __LINE__ );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -526,7 +526,7 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
     *num_ptl_modules = 0;
 
     if (OMPI_SUCCESS != mca_ptl_gm_init (&mca_ptl_gm_component)) {
-        /*ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's. (%d PTL's)\n",
+        /*opal_output( 0, "[%s:%d] error in initializing gm state and PTL's. (%d PTL's)\n",
                      __FILE__, __LINE__, mca_ptl_gm_component.gm_num_ptl_modules );*/
         return NULL;
     }

@@ -33,7 +33,7 @@
 
 #include "include/constants.h"
 #include "common_sm_mmap.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 
@@ -61,7 +61,7 @@ static int mca_common_sm_mmap_open(char* path)
         struct timespec ts;
         fd = open(path, O_CREAT|O_RDWR, 0000); 
         if(fd < 0 && errno != EACCES) {
-            ompi_output(0, 
+            opal_output(0, 
             "mca_ptl_sm_mmap_open: open %s failed with errno=%d\n", path, errno);
             return -1;
         }
@@ -118,7 +118,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
      * file will succeed. */
     fd=mca_common_sm_mmap_open(file_name);
     if( -1 == fd ) {
-        ompi_output(0, "mca_common_sm_mmap_init: mca_common_sm_mmap_open failed \n");
+        opal_output(0, "mca_common_sm_mmap_init: mca_common_sm_mmap_open failed \n");
         return NULL;
     }
 
@@ -126,7 +126,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     file_previously_opened=false;
     return_code=fstat(fd,&s_stat);
     if( 0 > return_code ) {
-        ompi_output(0, "mca_common_sm_mmap_init: fstat failed with errno=%d\n", errno);
+        opal_output(0, "mca_common_sm_mmap_init: fstat failed with errno=%d\n", errno);
         close(fd);
         return NULL;
     }
@@ -139,7 +139,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     if( !file_previously_opened ) {
         /* truncate the file to the requested size */
         if(ftruncate(fd, size) != 0) {
-            ompi_output(0, 
+            opal_output(0, 
                     "mca_common_sm_mmap_init: ftruncate failed with errno=%d\n",
                     errno);
             close(fd);
@@ -150,7 +150,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     /* map the file and initialize segment state */
     seg = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if( (void*)-1 == seg ) {
-        ompi_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
+        opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
                 errno);
         close(fd);
         return NULL;
@@ -170,7 +170,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     addr=(unsigned char *)( (tmp/data_seg_alignment)*data_seg_alignment);
     /* is addr past end of file ? */
     if( (unsigned char*)seg+size < addr ){
-        ompi_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
+        opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
                 size,addr);
         fchmod(fd, 0600);
         close(fd);
@@ -192,7 +192,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 
     /* enable access by other processes on this host */
     if(fchmod(fd, 0600) != 0) {
-        ompi_output(0, "mca_common_sm_mmap_init: fchmod failed with errno=%d :: fd %d\n",
+        opal_output(0, "mca_common_sm_mmap_init: fchmod failed with errno=%d :: fd %d\n",
                 errno,fd);
         OBJ_RELEASE(map);
         close(fd);

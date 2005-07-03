@@ -19,7 +19,7 @@
 
 #include "include/constants.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/threads/thread.h"
 
 #include "ptl_portals.h"
@@ -61,7 +61,7 @@ mca_ptl_portals_component_t mca_ptl_portals_component = {
 };
 
 
-static ompi_output_stream_t portals_output_stream = {
+static opal_output_stream_t portals_output_stream = {
     true,  /* is debugging */
     0,     /* verbose level */
     0,     /* want syslog */
@@ -172,7 +172,7 @@ mca_ptl_portals_component_open(void)
              "ptl: portals (%5d): ", getpid());
 
     mca_ptl_portals_component.portals_output = 
-        ompi_output_open(&portals_output_stream);
+        opal_output_open(&portals_output_stream);
 
     /* fill in remaining defaults for module data */
     for (i = 0 ; i < MCA_PTL_PORTALS_EQ_SIZE ; ++i) {
@@ -206,7 +206,7 @@ mca_ptl_portals_component_close(void)
         free(portals_output_stream.lds_prefix);
     }
 
-    ompi_output_close(mca_ptl_portals_component.portals_output);
+    opal_output_close(mca_ptl_portals_component.portals_output);
     mca_ptl_portals_component.portals_output = -1;
 
     return OMPI_SUCCESS;
@@ -222,7 +222,7 @@ mca_ptl_portals_component_init(int *num_ptls,
     *num_ptls = 0;
 
     if (enable_progress_threads) {
-        ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(20, mca_ptl_portals_component.portals_output,
                             "disabled because progress threads enabled");
         return NULL;
     }
@@ -246,7 +246,7 @@ mca_ptl_portals_component_init(int *num_ptls,
     /* initialize portals ptl.  note that this is in the compat code because
        it's fairly non-portable between implementations */
     if (OMPI_SUCCESS != mca_ptl_portals_init(&mca_ptl_portals_component)) {
-        ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(20, mca_ptl_portals_component.portals_output,
                             "disabled because compatibility init failed");
         return NULL;
     }
@@ -262,7 +262,7 @@ mca_ptl_portals_component_init(int *num_ptls,
            sizeof(mca_ptl_base_module_t*));
     *num_ptls = mca_ptl_portals_component.portals_num_modules;
 
-    ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(20, mca_ptl_portals_component.portals_output,
                         "initialized %d modules",
                         *num_ptls);
 
@@ -276,7 +276,7 @@ mca_ptl_portals_component_control(int param, void* value, size_t size)
     uint32_t i;
     int ret = OMPI_SUCCESS;
 
-    ompi_output_verbose(30, mca_ptl_portals_component.portals_output,
+    opal_output_verbose(30, mca_ptl_portals_component.portals_output,
                         "component control: %d, %d", 
                         param, (*(int*) value));
 
@@ -322,7 +322,7 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
                     PTL_SR_DROP_COUNT,
                     &numdropped);
         if (numdropped != module->dropped) {
-            ompi_output_verbose(30, mca_ptl_portals_component.portals_output,
+            opal_output_verbose(30, mca_ptl_portals_component.portals_output,
                                 "*** Dropped message count changed.  %lld, %lld",
                                 module->dropped, numdropped);
             module->dropped = numdropped;
@@ -339,11 +339,11 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
             continue;
         } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
             /* BWB - how can we report errors? */
-            ompi_output(mca_ptl_portals_component.portals_output,
+            opal_output(mca_ptl_portals_component.portals_output,
                         "Error calling PtlEQGet: %d", ret);
             continue;
         } else if (PTL_EQ_DROPPED == ret) {
-            ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+            opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                                 "*** Event queue entries were dropped");
         }
 
@@ -352,7 +352,7 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
            so we can make sure we properly re-initialize the ones that
            need to be re-initialized */
         if (PTL_EVENT_UNLINK == ev.type) {
-            OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+            OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                                  "unlink event occurred"));
             continue;
         }

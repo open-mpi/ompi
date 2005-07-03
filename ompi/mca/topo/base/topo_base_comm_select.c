@@ -25,7 +25,7 @@
 #include "mca/base/base.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "communicator/communicator.h"
 
 
@@ -99,7 +99,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     snprintf(name, sizeof(name), "%s (cid %d)", comm->c_name,
                comm->c_contextid);
     name[sizeof(name) - 1] = '\0';
-    ompi_output_verbose(10, mca_topo_base_output,
+    opal_output_verbose(10, mca_topo_base_output,
                         "topo:base:comm_select: new communicator: %s",
                         name);
 
@@ -114,7 +114,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
          
          str = &(preferred->mca_component_name[0]);
          
-         ompi_output_verbose(10, mca_topo_base_output,
+         opal_output_verbose(10, mca_topo_base_output,
                              "topo:base:comm_select: Checking preferred component: %s",
                              str);
 
@@ -165,7 +165,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
         name_array = ompi_argv_split (names, ',');
         num_names = ompi_argv_count (name_array);
 
-        ompi_output_verbose(10, mca_topo_base_output,
+        opal_output_verbose(10, mca_topo_base_output,
                             "topo:base:comm_Select: Checking all available module");
 
         /* since there are somethings which the mca requested through the 
@@ -184,7 +184,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
             /* convert the opal_list_item_t returned into the proper type */
             cpli = (mca_base_component_priority_list_item_t *) item;
             component = (mca_topo_base_component_t *) cpli->super.cli_component;
-            ompi_output_verbose(10, mca_topo_base_output,
+            opal_output_verbose(10, mca_topo_base_output,
                                 "select: initialising %s component %s",
                                 component->topom_version.mca_type_name,
                                 component->topom_version.mca_component_name);
@@ -211,7 +211,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
         if (0 == opal_list_get_size(selectable)) {
             was_selectable_constructed = true;
             OBJ_RELEASE (selectable);
-            ompi_output_verbose (10, mca_topo_base_output,
+            opal_output_verbose (10, mca_topo_base_output,
                                  "topo:base:comm_select: preferred modules were not available");
             return OMPI_ERROR;
         }
@@ -232,7 +232,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
         */
        cpli = (mca_base_component_priority_list_item_t *) item;
        component = (mca_topo_base_component_t *) cpli->super.cli_component;
-       ompi_output_verbose(10, mca_topo_base_output,
+       opal_output_verbose(10, mca_topo_base_output,
                            "select: initialising %s component %s",
                            component->topom_version.mca_type_name,
                            component->topom_version.mca_component_name);
@@ -241,7 +241,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
         * we can call the query function only if there is a function :-)
         */
        if (NULL == component->topom_comm_query) {
-          ompi_output_verbose(10, mca_topo_base_output,
+          opal_output_verbose(10, mca_topo_base_output,
                              "select: no query, ignoring the component");
        } else {
            /*
@@ -256,10 +256,10 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
                /*
                 * query did not return any action which can be used
                 */ 
-               ompi_output_verbose(10, mca_topo_base_output,
+               opal_output_verbose(10, mca_topo_base_output,
                                   "select: query returned failure");
            } else {
-               ompi_output_verbose(10, mca_topo_base_output,
+               opal_output_verbose(10, mca_topo_base_output,
                                   "select: query returned priority &d",
                                   priority);
                /* 
@@ -363,7 +363,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
                  * unquery. Hence this check is necessary
                  */
                  (void) om->om_component->topom_comm_unquery(comm);
-                 ompi_output_verbose(10, mca_topo_base_output,
+                 opal_output_verbose(10, mca_topo_base_output,
                                      "select: component %s is not selected",
                                      om->om_component->topom_version.mca_component_name);
                } /* end if */
@@ -371,7 +371,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
           OBJ_RELEASE(om);
     } /* traversing through the entire list */
     
-    ompi_output_verbose(10, mca_topo_base_output,
+    opal_output_verbose(10, mca_topo_base_output,
                        "select: component %s selected",
                         best_component->topom_version.mca_component_name);
 

@@ -27,7 +27,7 @@
 #include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"

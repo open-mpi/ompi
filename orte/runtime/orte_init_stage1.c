@@ -25,7 +25,7 @@
 
 #include "include/constants.h"
 #include "opal/event/event.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/threads/mutex.h"
 #include "dps/dps.h"
 #include "mca/mca.h"
@@ -214,11 +214,11 @@ int orte_init_stage1(void)
                 orte_universe_info.name = NULL;
                 pid = getpid();
                 if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, (int)pid)) {
-                    ompi_output(0, "orte_init: failed to create unique universe name");
+                    opal_output(0, "orte_init: failed to create unique universe name");
                     return ret;
                 }
-                ompi_output(0, "Could not join a running, existing universe");
-                ompi_output(0, "Establishing a new one named: %s",
+                opal_output(0, "Could not join a running, existing universe");
+                opal_output(0, "Establishing a new one named: %s",
                                 orte_universe_info.name);
     
             }
@@ -290,16 +290,16 @@ int orte_init_stage1(void)
     }
  
     if (orte_debug_flag) {
-        ompi_output(0, "[%lu,%lu,%lu] setting up session dir with",
+        opal_output(0, "[%lu,%lu,%lu] setting up session dir with",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
         if (NULL != orte_process_info.tmpdir_base) {
-            ompi_output(0, "\ttmpdir %s", orte_process_info.tmpdir_base);
+            opal_output(0, "\ttmpdir %s", orte_process_info.tmpdir_base);
         }
-        ompi_output(0, "\tuniverse %s", orte_universe_info.name);
-        ompi_output(0, "\tuser %s", orte_system_info.user);
-        ompi_output(0, "\thost %s", orte_system_info.nodename);
-        ompi_output(0, "\tjobid %s", jobid_str);
-        ompi_output(0, "\tprocid %s", procid_str);
+        opal_output(0, "\tuniverse %s", orte_universe_info.name);
+        opal_output(0, "\tuser %s", orte_system_info.user);
+        opal_output(0, "\thost %s", orte_system_info.nodename);
+        opal_output(0, "\tjobid %s", jobid_str);
+        opal_output(0, "\tprocid %s", procid_str);
     }
     if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                 orte_process_info.tmpdir_base,
@@ -332,16 +332,16 @@ int orte_init_stage1(void)
         contact_path = orte_os_path(false, orte_process_info.universe_session_dir,
                     "universe-setup.txt", NULL);
         if (orte_debug_flag) {
-            ompi_output(0, "[%lu,%lu,%lu] contact_file %s",
+            opal_output(0, "[%lu,%lu,%lu] contact_file %s",
                         ORTE_NAME_ARGS(orte_process_info.my_name), contact_path);
         }
 
         if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
             if (orte_debug_flag) {
-                ompi_output(0, "[%lu,%lu,%lu] couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+                opal_output(0, "[%lu,%lu,%lu] couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
             }
         } else if (orte_debug_flag) {
-            ompi_output(0, "[%lu,%lu,%lu] wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+            opal_output(0, "[%lu,%lu,%lu] wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
         }
         free(contact_path);
     }

@@ -27,7 +27,7 @@
 
 #include "class/orte_bitmap.h"
 #include "opal/class/opal_object.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "mca/rml/rml.h"
@@ -264,7 +264,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
         }
         
         if (orte_gpr_replica_globals.debug) {
-            ompi_output(0, "nb receive setup");
+            opal_output(0, "nb receive setup");
         }
        
        	/* Return the module */
@@ -302,7 +302,7 @@ int orte_gpr_replica_finalize(void)
     orte_gpr_replica_callbacks_t* cb;
     
     if (orte_gpr_replica_globals.debug) {
-	    ompi_output(0, "finalizing gpr replica");
+	    opal_output(0, "finalizing gpr replica");
     }
 
     seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;

@@ -119,7 +119,7 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
                               &size);
 
     if (rc != OMPI_SUCCESS) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] mca_base_modex_recv failed to recv data \n",
                      __FILE__, __LINE__);
         OBJ_RELEASE (ptl_proc);
@@ -127,7 +127,7 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
     }
 
     if (0 != (size % sizeof (mca_ptl_gm_addr_t))) {
-        ompi_output (0, "[%s:%d] invalid received data size %d\n",
+        opal_output (0, "[%s:%d] invalid received data size %d\n",
                      __FILE__, __LINE__, size);
         return NULL;
     }
@@ -139,7 +139,7 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
 
     if (NULL == ptl_proc->peer_arr) {
         OBJ_RELEASE (ptl_proc);
-        ompi_output (0, "[%s:%d] unable to allocate peer procs \n"
+        opal_output (0, "[%s:%d] unable to allocate peer procs \n"
                      __FILE__, __LINE__);
         return NULL;
     }

@@ -22,7 +22,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/errmgr/errmgr.h"
@@ -125,18 +125,18 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
 
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         if(ORTE_SUCCESS != orte_ras_bjs_node_resolve(node->node_name, &node_num)) {
-            ompi_output(0, "error: a specified node (%s) is invalid.\n", node->node_name);
+            opal_output(0, "error: a specified node (%s) is invalid.\n", node->node_name);
             return ORTE_NODE_ERROR;
         }
 
         if(orte_ras_bjs_node_state(node_num) != ORTE_NODE_STATE_UP) {
-            ompi_output(0, "error: a specified node (%s) is not up.\n", 
+            opal_output(0, "error: a specified node (%s) is not up.\n", 
                 node->node_name);
             return ORTE_NODE_DOWN;
         }
 
         if(bproc_access(node_num, BPROC_X_OK) != 0) {
-            ompi_output(0, "error: a specified node (%s) is not accessible.\n", 
+            opal_output(0, "error: a specified node (%s) is not accessible.\n", 
                 node->node_name);
             return ORTE_NODE_ERROR;
         }
@@ -176,12 +176,12 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
         }
 
         if(ORTE_NODE_STATE_UP != (node_state = orte_ras_bjs_node_state(node_num))) {
-            ompi_output(0, "error: a specified node (%d) is not up.\n", node_num);
+            opal_output(0, "error: a specified node (%d) is not up.\n", node_num);
             rc = ORTE_NODE_DOWN;
             goto cleanup;
         }
         if(bproc_access(node_num, BPROC_X_OK) != 0) {
-            ompi_output(0, "error: a specified node (%d) is not accessible.\n", node_num);
+            opal_output(0, "error: a specified node (%d) is not accessible.\n", node_num);
             rc = ORTE_NODE_ERROR;
             goto cleanup;
         }

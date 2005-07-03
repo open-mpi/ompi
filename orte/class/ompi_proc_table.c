@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "class/ompi_proc_table.h"
 
 
@@ -52,7 +52,7 @@ void* opal_hash_table_get_proc(opal_hash_table_t* ht,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_get_proc:"
+        opal_output(0, "opal_hash_table_get_proc:"
 		   "opal_hash_table_init() has not been called");
         return NULL;
     }
@@ -79,7 +79,7 @@ int opal_hash_table_set_proc(
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_set_value_proc:"
+        opal_output(0, "opal_hash_table_set_value_proc:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
@@ -117,7 +117,7 @@ int opal_hash_table_remove_proc(
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_remove_value_proc:"
+        opal_output(0, "opal_hash_table_remove_value_proc:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }

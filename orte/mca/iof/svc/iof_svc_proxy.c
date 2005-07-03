@@ -1,5 +1,5 @@
 #include "ompi_config.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/rml/rml.h"
 #include "mca/rml/rml_types.h"
 #include "mca/iof/base/iof_base_header.h"
@@ -75,7 +75,7 @@ void orte_iof_svc_proxy_recv(
             orte_iof_svc_proxy_unsub(peer, &hdr->hdr_sub);
             break;
         default:
-            ompi_output(0, "orte_iof_svc_recv: invalid message type: %d\n", hdr->hdr_common.hdr_type);
+            opal_output(0, "orte_iof_svc_recv: invalid message type: %d\n", hdr->hdr_common.hdr_type);
             break;
     }
 
@@ -113,7 +113,7 @@ static void orte_iof_svc_proxy_msg(
 {
     opal_list_item_t* item;
     if(mca_iof_svc_component.svc_debug > 1) {
-        ompi_output(0, "orte_iof_svc_proxy_msg: tag %d seq %d\n",hdr->msg_tag,hdr->msg_seq);
+        opal_output(0, "orte_iof_svc_proxy_msg: tag %d seq %d\n",hdr->msg_tag,hdr->msg_seq);
     }
 
     /* dispatch based on subscription list */
@@ -130,7 +130,7 @@ static void orte_iof_svc_proxy_msg(
         /* source match */
         if(orte_ns.compare(sub->src_mask,&sub->src_name,&hdr->msg_src) == 0) {
             if(mca_iof_svc_component.svc_debug > 1) {
-                ompi_output(0, "[%lu,%lu,%lu] orte_iof_svc_proxy_msg: tag %d sequence %d\n",
+                opal_output(0, "[%lu,%lu,%lu] orte_iof_svc_proxy_msg: tag %d sequence %d\n",
                     ORTE_NAME_ARGS(&sub->src_name),hdr->msg_tag,hdr->msg_seq);
             }
             orte_iof_svc_sub_forward(sub,src,hdr,data);
@@ -176,7 +176,7 @@ static void orte_iof_svc_proxy_ack(
     } value;
 
     if(mca_iof_svc_component.svc_debug > 1) {
-        ompi_output(0, "orte_iof_svc_proxy_ack");
+        opal_output(0, "orte_iof_svc_proxy_ack");
     }
 
     /* for each of the subscriptions that match the source of the data:
@@ -282,7 +282,7 @@ static void orte_iof_svc_proxy_pub(
 {
     int rc;
     if(mca_iof_svc_component.svc_debug > 1) {
-        ompi_output(0, "orte_iof_svc_proxy_pub");
+        opal_output(0, "orte_iof_svc_proxy_pub");
     }
 
     rc = orte_iof_svc_pub_create(
@@ -305,7 +305,7 @@ static void orte_iof_svc_proxy_unpub(
 {
     int rc;
     if(mca_iof_svc_component.svc_debug > 1) {
-        ompi_output(0, "orte_iof_svc_proxy_unpub");
+        opal_output(0, "orte_iof_svc_proxy_unpub");
     }
 
     rc = orte_iof_svc_pub_delete(
@@ -330,7 +330,7 @@ static void orte_iof_svc_proxy_sub(
 {
     int rc;
     if(mca_iof_svc_component.svc_debug > 1) {
-        ompi_output(0, "orte_iof_svc_proxy_sub");
+        opal_output(0, "orte_iof_svc_proxy_sub");
     }
 
     rc = orte_iof_svc_sub_create(
@@ -355,7 +355,7 @@ static void orte_iof_svc_proxy_unsub(
 {
     int rc;
     if(mca_iof_svc_component.svc_debug > 1) {
-        ompi_output(0, "orte_iof_svc_proxy_unsub");
+        opal_output(0, "orte_iof_svc_proxy_unsub");
     }
 
     rc = orte_iof_svc_sub_delete(

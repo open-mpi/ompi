@@ -22,7 +22,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/rmgr/base/base.h"
@@ -63,7 +63,7 @@ static int allocate(orte_jobid_t jobid)
 
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     if (ORTE_SUCCESS != (ret = discover(jobid, &nodes))) {
-        ompi_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:xgrid:allocate: discover failed!");
         return ret;
     }
@@ -77,10 +77,10 @@ static int allocate(orte_jobid_t jobid)
     /* All done */
 
     if (ORTE_SUCCESS == ret) {
-        ompi_output(orte_ras_base.ras_output, 
+        opal_output(orte_ras_base.ras_output, 
                     "ras:xgrid:allocate: success");
     } else {
-        ompi_output(orte_ras_base.ras_output, 
+        opal_output(orte_ras_base.ras_output, 
                     "ras:xgrid:allocate: failure (base_allocate_nodes=%d)", ret);
     }
 
@@ -93,7 +93,7 @@ static int allocate(orte_jobid_t jobid)
  */
 static int deallocate(orte_jobid_t jobid)
 {
-    ompi_output(orte_ras_base.ras_output, 
+    opal_output(orte_ras_base.ras_output, 
                 "ras:xgrid:deallocate: success (nothing to do)");
     return ORTE_SUCCESS;
 }
@@ -104,7 +104,7 @@ static int deallocate(orte_jobid_t jobid)
  */
 static int finalize(void)
 {
-    ompi_output(orte_ras_base.ras_output, 
+    opal_output(orte_ras_base.ras_output, 
                 "ras:xgrid:finalize: success (nothing to do)");
     return ORTE_SUCCESS;
 }
@@ -142,7 +142,7 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
     }
 
     /* Add these nodes to the registry, and return all the values */
-    ompi_output(orte_ras_base.ras_output, 
+    opal_output(orte_ras_base.ras_output, 
                 "ras:xgrid:allocate:discover: done -- adding to registry");
     ret = orte_ras_base_node_insert(&new_nodes);
     for (item = opal_list_remove_first(&new_nodes);
@@ -156,10 +156,10 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
 
     /* All done */
     if (ORTE_SUCCESS == ret) {
-        ompi_output(orte_ras_base.ras_output, 
+        opal_output(orte_ras_base.ras_output, 
                     "ras:xgrid:allocate:discover: success");
     } else {
-        ompi_output(orte_ras_base.ras_output, 
+        opal_output(orte_ras_base.ras_output, 
                     "ras:xgrid:allocate:discover: failed (rc=%d)", ret);
     }
     OBJ_DESTRUCT(&new_nodes);

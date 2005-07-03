@@ -94,7 +94,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
                     MCA_PTL_BASE_ACK_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_ack);
                     break;
                 default:
-                    ompi_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
+                    opal_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
                         *(unsigned long*)&frag->frag_recv.frag_base.frag_header);
                     return true;
             }
@@ -133,7 +133,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
     case MCA_PTL_HDR_TYPE_NACK:
         return mca_ptl_tcp_recv_frag_ack(frag, sd);
     default:
-        ompi_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
+        opal_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
             *(unsigned long*)&frag->frag_recv.frag_base.frag_header);
          return true;
     }
@@ -159,10 +159,10 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
             case EINTR:
                 continue;
             case EWOULDBLOCK:
-                /* ompi_output(0, "mca_ptl_tcp_recv_frag_header: EWOULDBLOCK\n"); */
+                /* opal_output(0, "mca_ptl_tcp_recv_frag_header: EWOULDBLOCK\n"); */
                 return false;
             default:
-                ompi_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", ompi_socket_errno);
+                opal_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (opal_list_item_t*)frag);
                 return false;
@@ -272,7 +272,7 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
             case EWOULDBLOCK:
                 return false;
             default:
-                ompi_output(0, "mca_ptl_tcp_recv_frag_data: recv() failed with errno=%d", ompi_socket_errno);
+                opal_output(0, "mca_ptl_tcp_recv_frag_data: recv() failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (opal_list_item_t*)frag);
                 return false;
@@ -309,10 +309,10 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
             case EINTR:
                 continue;
             case EWOULDBLOCK:
-                /* ompi_output(0, "mca_ptl_tcp_recv_frag_discard: EWOULDBLOCK\n"); */
+                /* opal_output(0, "mca_ptl_tcp_recv_frag_discard: EWOULDBLOCK\n"); */
                 return false;
             default:
-                ompi_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", ompi_socket_errno);
+                opal_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (opal_list_item_t*)frag);
                 return false;

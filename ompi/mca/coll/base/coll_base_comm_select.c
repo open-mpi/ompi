@@ -130,7 +130,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
   snprintf(name, sizeof(name), "%s (cid %d)", comm->c_name, 
            comm->c_contextid);
   name[sizeof(name) - 1] = '\0';
-  ompi_output_verbose(10, mca_coll_base_output,
+  opal_output_verbose(10, mca_coll_base_output,
                       "coll:base:comm_select: new communicator: %s", 
                       name);
   
@@ -166,7 +166,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
   if (NULL != preferred) {
     str = &(preferred->mca_component_name[0]);
 
-    ompi_output_verbose(10, mca_coll_base_output, 
+    opal_output_verbose(10, mca_coll_base_output, 
                        "coll:base:comm_select: Checking preferred module: %s",
                        str);
     selectable = check_components(&mca_coll_base_components_available, 
@@ -191,7 +191,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
     name_array = ompi_argv_split(names, ',');
     num_names = ompi_argv_count(name_array);
 
-    ompi_output_verbose(10, mca_coll_base_output, 
+    opal_output_verbose(10, mca_coll_base_output, 
                        "coll:base:comm_select: Checking specific modules: %s",
                        names);
     selectable = check_components(&mca_coll_base_components_available, 
@@ -203,7 +203,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
      check them all. */
   
   else {
-    ompi_output_verbose(10, mca_coll_base_output, 
+    opal_output_verbose(10, mca_coll_base_output, 
                        "coll:base:comm_select: Checking all available modules");
     selectable = check_components(&mca_coll_base_components_available, 
                                   comm, NULL, 0);
@@ -296,7 +296,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
 
   /* Announce the winner */
   
-  ompi_output_verbose(10, mca_coll_base_output,
+  opal_output_verbose(10, mca_coll_base_output,
                      "coll:base:comm_select: Selected coll module %s", 
                      selected_component->collm_version.mca_component_name);
   
@@ -429,13 +429,13 @@ static int check_one_component(ompi_communicator_t *comm,
 
   if (OMPI_SUCCESS == err) {
     priority = (priority < 100) ? priority : 100;
-    ompi_output_verbose(10, mca_coll_base_output, 
+    opal_output_verbose(10, mca_coll_base_output, 
                         "coll:base:comm_select: component available: %s, priority: %d", 
                         component->mca_component_name, priority);
 
   } else {
     priority = -1;
-    ompi_output_verbose(10, mca_coll_base_output, 
+    opal_output_verbose(10, mca_coll_base_output, 
                         "coll:base:comm_select: component not available: %s",
                         component->mca_component_name);
   }

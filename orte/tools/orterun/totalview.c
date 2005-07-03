@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <strings.h>
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/schema/schema.h"
@@ -184,7 +184,7 @@ void orte_totalview_init(orte_jobgrp_t job_grp)
         int h, rc;
         size_t num_daemons;
 
-        ompi_output_verbose(10, 0, "Info: Setting up debugger "
+        opal_output_verbose(10, 0, "Info: Setting up debugger "
                             "process table for daemons\n");
 
         /* get the daemon process data */
@@ -198,7 +198,7 @@ void orte_totalview_init(orte_jobgrp_t job_grp)
         MPIR_proctable = (MPIR_PROCDESC *) malloc(sizeof(MPIR_PROCDESC) *
                                                   MPIR_proctable_size);
         if (MPIR_proctable == NULL) {
-            ompi_output(0, "Error: Out of memory\n");
+            opal_output(0, "Error: Out of memory\n");
             exit(1);
         }
 
@@ -220,7 +220,7 @@ void orte_totalview_init(orte_jobgrp_t job_grp)
          * processes in case someone attaches later.
          */
 
-        ompi_output_verbose(10, 0, "Info: Setting up debugger "
+        opal_output_verbose(10, 0, "Info: Setting up debugger "
                             "process table for applications\n");
 
         /* get the application process data */
@@ -233,7 +233,7 @@ void orte_totalview_init(orte_jobgrp_t job_grp)
         MPIR_proctable = (MPIR_PROCDESC *) malloc(sizeof(MPIR_PROCDESC) *
                                                   MPIR_proctable_size);
         if (MPIR_proctable == NULL) {
-            ompi_output(0, "Error: Out of memory\n");
+            opal_output(0, "Error: Out of memory\n");
             exit(1);
         }
 

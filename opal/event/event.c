@@ -64,7 +64,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/thread.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #if defined(HAVE_SELECT) && HAVE_SELECT
 extern const struct opal_eventop opal_selectops;
@@ -235,7 +235,7 @@ static void opal_event_pipe_handler(int sd, short flags, void* user)
 {
     unsigned char byte;
     if(read(sd, &byte, 1) < 0) {
-        ompi_output(0, "opal_event_pipe: read failed with: errno=%d\n", errno);
+        opal_output(0, "opal_event_pipe: read failed with: errno=%d\n", errno);
         opal_event_del(&opal_event_pipe_event);
     }
 }
@@ -299,7 +299,7 @@ int opal_event_disable(void)
         if(opal_event_pipe_signalled == 0) {
             unsigned char byte = 0;
             if(write(opal_event_pipe[1], &byte, 1) != 1)
-                ompi_output(0, "opal_event_add: write() to opal_event_pipe[1] failed with errno=%d\n", errno);
+                opal_output(0, "opal_event_add: write() to opal_event_pipe[1] failed with errno=%d\n", errno);
             opal_event_pipe_signalled++;
         }
         opal_mutex_unlock(&opal_event_lock);
@@ -327,7 +327,7 @@ int opal_event_enable(void)
 
         /* create a pipe to signal the event thread */
         if(pipe(opal_event_pipe) != 0) {
-            ompi_output(0, "opal_event_init: pipe() failed with errno=%d\n", errno);
+            opal_output(0, "opal_event_init: pipe() failed with errno=%d\n", errno);
             opal_mutex_unlock(&opal_event_lock);
             return OMPI_ERROR;
         }
@@ -441,7 +441,7 @@ opal_event_loop(int flags)
 
     /* Calculate the initial events that we are waiting for */
     if (opal_evsel->recalc && opal_evsel->recalc(opal_evbase, 0) == -1) {
-        ompi_output(0, "opal_event_loop: opal_evsel->recalc() failed.");
+        opal_output(0, "opal_event_loop: opal_evsel->recalc() failed.");
         opal_mutex_unlock(&opal_event_lock);
         return (-1);
     }
@@ -453,7 +453,7 @@ opal_event_loop(int flags)
             if (opal_event_sigcb) {
                 res = (*opal_event_sigcb)();
                 if (res == -1) {
-                    ompi_output(0, "opal_event_loop: opal_event_sigcb() failed.");
+                    opal_output(0, "opal_event_loop: opal_event_sigcb() failed.");
                     errno = EINTR;
                     opal_mutex_unlock(&opal_event_lock);
                     return (-1);
@@ -475,7 +475,7 @@ opal_event_loop(int flags)
         opal_event_pipe_signalled = 1;
 #endif
         if (res == -1) {
-            ompi_output(0, "opal_event_loop: ompi_evesel->dispatch() failed.");
+            opal_output(0, "opal_event_loop: ompi_evesel->dispatch() failed.");
             opal_mutex_unlock(&opal_event_lock);
             return (-1);
         }
@@ -505,7 +505,7 @@ opal_event_loop(int flags)
             done = 1;
 
         if (opal_evsel->recalc && opal_evsel->recalc(opal_evbase, 0) == -1) {
-            ompi_output(0, "opal_event_loop: ompi_evesel->recalc() failed.");
+            opal_output(0, "opal_event_loop: ompi_evesel->recalc() failed.");
             opal_mutex_unlock(&opal_event_lock);
             return (-1);
         }
@@ -575,7 +575,7 @@ opal_event_add_i(struct opal_event *ev, struct timeval *tv)
     if(opal_using_threads() && opal_event_pipe_signalled == 0) {
         unsigned char byte = 0;
         if(write(opal_event_pipe[1], &byte, 1) != 1)
-            ompi_output(0, "opal_event_add: write() to opal_event_pipe[1] failed with errno=%d\n", errno);
+            opal_output(0, "opal_event_add: write() to opal_event_pipe[1] failed with errno=%d\n", errno);
         opal_event_pipe_signalled++;
     }
 #endif
@@ -612,7 +612,7 @@ int opal_event_del_i(struct opal_event *ev)
     if(opal_using_threads() && opal_event_pipe_signalled == 0) {
         unsigned char byte = 0;
         if(write(opal_event_pipe[1], &byte, 1) != 1)
-            ompi_output(0, "opal_event_add: write() to opal_event_pipe[1] failed with errno=%d\n", errno);
+            opal_output(0, "opal_event_add: write() to opal_event_pipe[1] failed with errno=%d\n", errno);
         opal_event_pipe_signalled++;
     }
 #endif

@@ -45,7 +45,7 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
 
     while (OMPI_SUCCESS != rc) {
 	/* FIXME: progress the recv state machine */
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] Retry to allocate a recv fragment",
                      __FILE__, __LINE__);
 	OMPI_FREE_LIST_GET (&mca_ptl_elan_component.elan_recv_frags_free, 
@@ -309,7 +309,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
         iov.iov_len  = size_in;
         if((rc = ompi_convertor_pack(convertor, 
 			&iov, &iov_count, &max_data, &freeAfter)) < 0) {
-	    ompi_output (0, "[%s:%d] Unable to pack data\n",
+	    opal_output (0, "[%s:%d] Unable to pack data\n",
 			 __FILE__, __LINE__);
             return;
 	}
@@ -462,7 +462,7 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
         iov.iov_len  = size_in;
         if((rc = ompi_convertor_pack(convertor, 
 			&iov, &iov_count, &max_data, &freeAfter)) < 0) {
-	    ompi_output (0, "[%s:%d] Unable to pack data\n",
+	    opal_output (0, "[%s:%d] Unable to pack data\n",
 			 __FILE__, __LINE__);
             return;
 	}
@@ -858,7 +858,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
         /* Insert frag into the list of outstanding DMA's */
         opal_list_append (&ptl->send_frags, (opal_list_item_t *) frag);
     } else {
-        ompi_output (0, "To support GET and Other types of DMA "
+        opal_output (0, "To support GET and Other types of DMA "
 	       "are not supported right now \n");
         return OMPI_ERROR;
     }

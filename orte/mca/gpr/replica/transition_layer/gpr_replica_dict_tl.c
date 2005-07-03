@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "class/orte_pointer_array.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/replica/functional_layer/gpr_replica_fn.h"

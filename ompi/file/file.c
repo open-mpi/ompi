@@ -21,7 +21,7 @@
 #include "ompi/runtime/params.h"
 #include "mca/io/base/base.h"
 #include "info/info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 /*
  * Table for Fortran <-> C file handle conversion
@@ -190,7 +190,7 @@ int ompi_file_finalize(void)
            we're destroying everything, it isn't worth it */
     }
     if (num_unnamed > 0) {
-        ompi_output(0, "WARNING: %d unnamed MPI_File handles still allocated at MPI_FINALIZE", num_unnamed);
+        opal_output(0, "WARNING: %d unnamed MPI_File handles still allocated at MPI_FINALIZE", num_unnamed);
     }
     OBJ_DESTRUCT(&ompi_file_f_to_c_table);
   

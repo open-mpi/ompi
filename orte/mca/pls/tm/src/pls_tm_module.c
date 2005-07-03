@@ -32,7 +32,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
@@ -101,7 +101,7 @@ static int pls_tm_launch(orte_jobid_t jobid)
 
     /* Child */
 
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:launch: launching child to do the work");
     child_pid = fork();
     if (0 == child_pid) {
@@ -139,7 +139,7 @@ static int pls_tm_terminate_job(orte_jobid_t jobid)
        the child.  */
 
     if (child_pid > 0) {
-        ompi_output(orte_pls_base.pls_output,
+        opal_output(orte_pls_base.pls_output,
                     "pls:tm:terminate_job: killing tm shephard");
         kill(child_pid, SIGKILL);
         waitpid(child_pid, NULL, 0);
@@ -150,7 +150,7 @@ static int pls_tm_terminate_job(orte_jobid_t jobid)
     /* Open up our connection to tm.  Note that we may be called from
        launch, above, in which case we don't need to tm_init */
 
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:terminate_job: killing jobid %d", jobid);
     if (!orte_pls_tm_connected) {
         ret = tm_init(NULL, &tm_root);
@@ -165,7 +165,7 @@ static int pls_tm_terminate_job(orte_jobid_t jobid)
 
     ret = orte_pls_tm_get_tids(jobid, &tids, &names, &size);
     if (ORTE_SUCCESS == ret && size > 0) {
-        ompi_output(orte_pls_base.pls_output,
+        opal_output(orte_pls_base.pls_output,
                     "pls:tm:terminate_job: got %d tids from registry", size);
         ret = kill_tids(tids, names, size);
         if (NULL != names) {
@@ -175,7 +175,7 @@ static int pls_tm_terminate_job(orte_jobid_t jobid)
             free(tids);
         }
     } else {
-        ompi_output(orte_pls_base.pls_output, 
+        opal_output(orte_pls_base.pls_output, 
                     "pls:tm:terminate_job: got no tids from registry -- nothing to kill");
     }
 
@@ -193,7 +193,7 @@ static int pls_tm_terminate_job(orte_jobid_t jobid)
  */
 static int pls_tm_terminate_proc(const orte_process_name_t *name)
 {
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:terminate_proc: not supported");
     ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
     return ORTE_ERR_NOT_SUPPORTED;
@@ -240,7 +240,7 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
 
         /* First, kill with SIGTERM */
 
-        ompi_output(orte_pls_base.pls_output,
+        opal_output(orte_pls_base.pls_output,
                     "pls:tm:terminate:kill_tids: killing tid %d", tids[i]);
         ret = tm_kill(tids[i], SIGTERM, &event);
 
@@ -248,12 +248,12 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
            have exited on its own */
 
         if (TM_ENOTFOUND == ret) {
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "pls:tm:terminate:kill_tids: tid %d not found (already dead?)",
                         tids[i]);
             died = true;
         } else if (TM_SUCCESS != ret) {
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "pls:tm:kill: tm_kill failed with %d", ret);
             ret = ORTE_ERROR;
             ORTE_ERROR_LOG(ret);
@@ -261,14 +261,14 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
         }
         if (!died) {
             tm_poll(TM_NULL_EVENT, &event, 1, &local_errno);
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "pls:tm:kill: killed tid %d with SIGTERM", tids[i]);
 
             /* Did it die? */
 
             ret = tm_obit(tids[i], &exit_status, &event);
             if (TM_SUCCESS != ret) {
-                ompi_output(orte_pls_base.pls_output,
+                opal_output(orte_pls_base.pls_output,
                             "pls:tm:kill: tm_obit failed with %d", ret);
                 ret = ORTE_ERROR;
                 ORTE_ERROR_LOG(ret);
@@ -290,7 +290,7 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
                     tm_poll(TM_NULL_EVENT, &event, 0, &local_errno);
                     if (TM_NULL_EVENT != event) {
                         died = true;
-                        ompi_output(orte_pls_base.pls_output,
+                        opal_output(orte_pls_base.pls_output,
                                     "pls:tm:kill: tid %d died", tids[i]);
                         break;
                     }
@@ -306,7 +306,7 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
                 if (!died) {
                     ret = tm_kill(tids[i], SIGKILL, &event);
                     if (TM_SUCCESS != ret) {
-                        ompi_output(orte_pls_base.pls_output,
+                        opal_output(orte_pls_base.pls_output,
                                     "pls:tm:kill: tm_kill failed with %d",
                                     ret);
                         ret = ORTE_ERROR;
@@ -314,14 +314,14 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
                         return ret;
                     }
                     tm_poll(TM_NULL_EVENT, &event, 1, &local_errno);
-                    ompi_output(orte_pls_base.pls_output,
+                    opal_output(orte_pls_base.pls_output,
                                 "pls:tm:kill: killed tid %d with SIGKILL",
                                 tids[i]);
                     /* Did it die this time? */
                     
                     ret = tm_obit(tids[i], &exit_status, &event);
                     if (TM_SUCCESS != ret) {
-                        ompi_output(orte_pls_base.pls_output,
+                        opal_output(orte_pls_base.pls_output,
                                     "pls:tm:kill: tm_obit failed with %d",
                                     ret);
                         ret = ORTE_ERROR;
@@ -340,7 +340,7 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
                         for (j = 0; j < NUM_SIGNAL_POLL_ITERS; ++j) {
                             tm_poll(TM_NULL_EVENT, &event, 0, &local_errno);
                             if (TM_NULL_EVENT != event) {
-                                ompi_output(orte_pls_base.pls_output,
+                                opal_output(orte_pls_base.pls_output,
                                             "pls:tm:kill: tid %d (finally) died",
                                             tids[i]);
                                 died = true;
@@ -354,7 +354,7 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
                         }
                         
                         if (j >= NUM_SIGNAL_POLL_ITERS) {
-                            ompi_output(orte_pls_base.pls_output,
+                            opal_output(orte_pls_base.pls_output,
                                         "pls:tm:kill: tid %d did not die!",
                                         tids[i]);
                         }

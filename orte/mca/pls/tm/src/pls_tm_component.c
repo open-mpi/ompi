@@ -110,14 +110,14 @@ static struct orte_pls_base_module_1_0_0_t *pls_tm_init(int *priority)
         NULL != getenv("PBS_JOBID")) {
         mca_base_param_lookup_int(param_priority, priority);
 
-        ompi_output(orte_pls_base.pls_output, 
+        opal_output(orte_pls_base.pls_output, 
                     "pls:tm: available for selection, priority %d", *priority);
         return &orte_pls_tm_module;
     }
 
     /* Sadly, no */
 
-    ompi_output(orte_pls_base.pls_output, 
+    opal_output(orte_pls_base.pls_output, 
                 "pls:tm: NOT available for selection");
     return NULL;
 }

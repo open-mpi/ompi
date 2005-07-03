@@ -220,7 +220,7 @@ opal_progress(void)
             events += (callbacks[i])();
 #if OMPI_ENABLE_DEBUG
         } else {
-            ompi_output(0, "WARNING: ompi_progess attempted to call NULL"
+            opal_output(0, "WARNING: ompi_progess attempted to call NULL"
                         " function at line %d, index %d.", __LINE__, i);
         }  
 #endif

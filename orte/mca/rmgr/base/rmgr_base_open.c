@@ -23,7 +23,7 @@
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/argv.h"
 
 #include "mca/rmgr/base/base.h"
@@ -151,11 +151,11 @@ int orte_rmgr_base_open(void)
 
     /* Debugging / verbose output */
 
-    orte_rmgr_base.rmgr_output = ompi_output_open(NULL);
+    orte_rmgr_base.rmgr_output = opal_output_open(NULL);
     param = mca_base_param_register_int("rmgr", "base", "verbose", NULL, 0);
     mca_base_param_lookup_int(param, &value);
     if (value != 0) {
-        orte_rmgr_base.rmgr_output = ompi_output_open(NULL);
+        orte_rmgr_base.rmgr_output = opal_output_open(NULL);
     } else {
         orte_rmgr_base.rmgr_output = -1;
     }

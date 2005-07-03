@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/iof/iof.h"
 #include "mca/rml/rml.h"
 #include "mca/rml/rml_types.h"

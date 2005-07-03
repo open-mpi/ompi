@@ -38,7 +38,7 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
     emp->num_modules = 0;
     emp->modules = malloc (rail_count * sizeof (mca_ptl_elan_module_t *));
     if (NULL == emp->modules) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] error in malloc for ptl references \n",
                      __FILE__, __LINE__);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -51,7 +51,7 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
 
         ptl = malloc (sizeof (mca_ptl_elan_module_t));
         if (NULL == ptl) {
-            ompi_output (0,
+            opal_output (0,
                          "[%s:%d] error in malloc for ptl structures \n",
                          __FILE__, __LINE__);
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -131,7 +131,7 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
 
         /* Add all virtual process from 0 to (nvp-1) */
         if (elan4_add_p2pvp (rail->r_ctx, 0, cap) < 0) {
-            ompi_output (0,
+            opal_output (0,
                          "[%s:%d] error in adding vp to elan capability \n",
                          __FILE__, __LINE__);
             return OMPI_ERROR;
@@ -142,7 +142,7 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
 
         if (elan4_attach (rail->r_ctx, cap)) {
             perror("can not attach to elan network");
-            ompi_output (0,
+            opal_output (0,
                          "[%s:%d] error in attaching to the network \n",
                          __FILE__, __LINE__);
             return OMPI_ERROR;
@@ -187,7 +187,7 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
     ems->elan_nvp = elan_nvps (ems->elan_cap);
 
     if (ems->elan_vp >= ems->elan_nvp) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] error getting vp and nvp from capability \n",
                      __FILE__, __LINE__);
         return OMPI_ERROR;
@@ -197,7 +197,7 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
     ems->elan_localvps = (int *) malloc (sizeof (int) * (ems->elan_nvp + 1));
 
     if (NULL == ems->elan_localvps) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] error in malloc for elan_localvps \n", 
 		     __FILE__, __LINE__);
         return OMPI_ERROR;
@@ -215,7 +215,7 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
 
     /* Allocate more than we need to keep the heap in sync */
     if (NULL == (vps = (int *) malloc (sizeof (int) * ems->elan_nvp))) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] error in malloc for vps \n", __FILE__,
                      __LINE__);
         return OMPI_ERROR;
@@ -314,7 +314,7 @@ ompi_elan_device_init (mca_ptl_elan_component_t * emp,
 
 #ifdef ELAN_VERSION
     if (!elan_checkVersion (ELAN_VERSION)) {
-        ompi_output (0,
+        opal_output (0,
                      "Elan version is not compatible with %s \n",
                      ELAN_VERSION);
         return OMPI_ERROR;
@@ -330,21 +330,21 @@ ompi_elan_device_init (mca_ptl_elan_component_t * emp,
     if (getenv ("ELAN_AUTO") || getenv ("RMS_NPROCS")) {
         /* RMS generated capabilities */
         if (rms_getcap (0, ems->elan_cap)) {
-            ompi_output (0,
+            opal_output (0,
                          "[%s:%d] error in gettting elan capability \n",
                          __FILE__, __LINE__);
             return OMPI_ERROR;
         }
     } else if ( elan_getenvCap (ems->elan_cap, 0) < 0 ) {
        	/* Grab the capability from the user environment */
-	ompi_output (0,
+	opal_output (0,
 		     "[%s:%d] Can't get capability from environment \n",
 		     __FILE__, __LINE__);
 	return OMPI_ERROR;
     }
 
     if ((num_rails = ems->elan_nrails = elan_nrails (ems->elan_cap)) <= 0) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] error in gettting number of rails \n",
                      __FILE__, __LINE__);
         return OMPI_ERROR;
@@ -407,7 +407,7 @@ ompi_elan_device_init (mca_ptl_elan_component_t * emp,
 
         if (elan4_set_standard_mappings (rail->r_ctx) < 0
             || elan4_set_required_mappings (rail->r_ctx) < 0) {
-            ompi_output (0,
+            opal_output (0,
                          "[%s:%d] error setting memory mapping for rail %d \n",
                          __FILE__, __LINE__, rails[i]);
             return OMPI_ERROR;
@@ -502,7 +502,7 @@ ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
     /* XXX, rail[0] is choosen instead this rail */
     if (elan4_alloc_intcookie (ems->elan_rail[0]->rail_ctx,
                                es->es_cookie) < 0) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] Failed to allocate IRQ cookie \n",
                      __FILE__, __LINE__);
     }
@@ -569,7 +569,7 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
 
     /* Setup communication infrastructure and construct PTL's */
     if (OMPI_SUCCESS != ompi_mca_ptl_elan_setup (ems)) {
-        ompi_output (0,
+        opal_output (0,
                      "[%s:%d] error in setting up elan "
                      "communication state machines for elan PTL's.\n",
                      __FILE__, __LINE__);

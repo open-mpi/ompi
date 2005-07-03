@@ -38,7 +38,7 @@
 #include "../src/util/proc_info.h"
 #include "../src/util/sys_info.h"
 #include "util/malloc.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "../src/mca/base/base.h"
 #include "../src/dps/dps.h"
 #include "../src/mca/ns/ns.h"
@@ -78,7 +78,7 @@ int main (int argc, char* argv[])
     test_out = stderr;
     
     /* Open up the output streams */
-    if (!ompi_output_init()) {
+    if (!opal_output_init()) {
         return OMPI_ERROR;
     }
 

@@ -19,7 +19,7 @@
 #ifndef MCA_PML_OB1_ENDPOINT_H
 #define MCA_PML_OB1_ENDPOINT_H
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/btl/btl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -107,7 +107,7 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_insert(mca_pml_ob1_ep
 {
 #if OMPI_ENABLE_DEBUG
     if(array->arr_size >= array->arr_reserve) {
-        ompi_output(0, "mca_pml_ob1_ep_array_insert: invalid array index %d >= %d", 
+        opal_output(0, "mca_pml_ob1_ep_array_insert: invalid array index %d >= %d", 
             array->arr_size, array->arr_reserve);
         return 0;
     }
@@ -125,7 +125,7 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_get_index(mca_pml_ob1
 {
 #if OMPI_ENABLE_DEBUG
     if(index >= array->arr_size) {
-        ompi_output(0, "mca_pml_ob1_ep_array_get_index: invalid array index %d >= %d",
+        opal_output(0, "mca_pml_ob1_ep_array_get_index: invalid array index %d >= %d",
             index, array->arr_size);
         return 0;
     }
@@ -144,7 +144,7 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_get_next(mca_pml_ob1_
     mca_pml_ob1_endpoint_t* endpoint;
 #if OMPI_ENABLE_DEBUG
     if(array->arr_size == 0) {
-        ompi_output(0, "mca_pml_ob1_ep_array_get_next: invalid array size");
+        opal_output(0, "mca_pml_ob1_ep_array_get_next: invalid array size");
         return 0;
     }
 #endif

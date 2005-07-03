@@ -23,7 +23,7 @@
 #include "mpi.h"
 #include "file/file.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "mca/mca.h"
@@ -90,7 +90,7 @@ int mca_io_base_file_select(ompi_file_t *file,
 
     /* Announce */
 
-    ompi_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, mca_io_base_output,
                         "io:base:file_select: new file: %s", 
                         file->f_filename);
   
@@ -119,7 +119,7 @@ int mca_io_base_file_select(ompi_file_t *file,
     if (NULL != preferred) {
         str = &(preferred->mca_component_name[0]);
 
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:file_select: Checking preferred module: %s",
                             str);
         selectable = check_components(&mca_io_base_components_available, 
@@ -144,7 +144,7 @@ int mca_io_base_file_select(ompi_file_t *file,
         name_array = ompi_argv_split(names, ',');
         num_names = ompi_argv_count(name_array);
         
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:file_select: Checking specific modules: %s",
                             names);
         selectable = check_components(&mca_io_base_components_available, 
@@ -156,7 +156,7 @@ int mca_io_base_file_select(ompi_file_t *file,
        check them all. */
   
     else {
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:file_select: Checking all available modules");
         selectable = check_components(&mca_io_base_components_available, 
                                       file, NULL, 0);
@@ -219,7 +219,7 @@ int mca_io_base_file_select(ompi_file_t *file,
 
     /* Announce the winner */
   
-    ompi_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, mca_io_base_output,
                         "io:base:file_select: Selected io module %s", 
                         selected.ai_component.v1_0_0.io_version.mca_component_name);
   
@@ -338,12 +338,12 @@ static avail_io_t *check_one_component(ompi_file_t *file,
             avail->ai_priority : 100;
         avail->ai_priority = (avail->ai_priority < 0) ?
             0 : avail->ai_priority;
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:file_select: component available: %s, priority: %d", 
                             component->mca_component_name, 
                             avail->ai_priority);
     } else {
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:base:file_select: component not available: %s",
                             component->mca_component_name);
     }

@@ -36,7 +36,7 @@
 #include "include/orte_constants.h"
 #include "opal/event/event.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/univ_info.h"
 #include "util/ompi_environ.h"
@@ -312,9 +312,9 @@ static int orte_pls_fork_proc(
         /* Exec the new executable */
 
         execve(context->app, context->argv, environ_copy);
-        ompi_output(0, "orte_pls_fork: %s - %s\n", context->app, 
+        opal_output(0, "orte_pls_fork: %s - %s\n", context->app, 
             ompi_argv_join(context->argv, ' '));
-        ompi_output(0, "orte_pls_fork: execv failed with errno=%d\n", errno);
+        opal_output(0, "orte_pls_fork: execv failed with errno=%d\n", errno);
         exit(-1);
 
     } else {

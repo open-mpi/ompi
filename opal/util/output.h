@@ -15,14 +15,14 @@
  */
 
 /** @file
- * OMPI output stream facility.
+ * OPAL output stream facility.
  *
- * The OMPI output stream facility is used to send output from the OMPI
+ * The OPAL output stream facility is used to send output from the OPAL
  * libraries to output devices.  It is meant to fully replace all
  * forms of printf() (and friends).  Output streams are opened via the
- * ompi_output_open() function call, and then sent output via
- * ompi_output_verbose(), OMPI_OUTPUT(), and ompi_output().  Streams are
- * closed with ompi_output_close().
+ * opal_output_open() function call, and then sent output via
+ * opal_output_verbose(), OPAL_OUTPUT(), and opal_output().  Streams are
+ * closed with opal_output_close().
  *
  * Streams can multiplex output to several kinds of outputs (one of
  * each):
@@ -32,23 +32,23 @@
  * - standard error
  * - file
  *
- * Which outputs to use are specified during ompi_output_open().
+ * Which outputs to use are specified during opal_output_open().
  *
  * WARNING: When using "file" as an output destination, be aware that
  * the file may not exist until the session directory for the process
  * exists.  This is at least part of the way through MPI_INIT (for
  * example).  Most MCA components and internals of Open MPI won't be
  * affected by this, but some RTE / startup aspects of Open MPI will
- * not be able to write to a file for output.  See ompi_output() for
+ * not be able to write to a file for output.  See opal_output() for
  * details on what happens in these cases.
  *
- * ompi_output_open() returns an integer handle that is used in
- * successive calls to OMPI_OUTPUT() and ompi_output() to send output to
+ * opal_output_open() returns an integer handle that is used in
+ * successive calls to OPAL_OUTPUT() and opal_output() to send output to
  * the stream.
  *
  * The default "verbose" stream is opened after invoking
- * ompi_output_init() (and closed after invoking
- * ompi_output_finalize()).  This stream outputs to stderr only, and
+ * opal_output_init() (and closed after invoking
+ * opal_output_finalize()).  This stream outputs to stderr only, and
  * has a stream handle ID of 0.
  *
  * It is erroneous to have one thread close a stream and have another
@@ -56,8 +56,8 @@
  * will be serialized in an unspecified order.
  */
 
-#ifndef OMPI_OUTPUT_H_
-#define OMPI_OUTPUT_H_
+#ifndef OPAL_OUTPUT_H_
+#define OPAL_OUTPUT_H_
 
 #include "ompi_config.h"
 
@@ -68,29 +68,29 @@ extern "C" {
 #endif
 
 /**
- * \class ompi_output_stream_t 
+ * \class opal_output_stream_t 
  *
- * Structure used to request the opening of a OMPI output stream.  A
- * pointer to this structure is passed to ompi_output_open() to tell
- * the ompi_output subsystem where to send output for a given stream.
+ * Structure used to request the opening of a OPAL output stream.  A
+ * pointer to this structure is passed to opal_output_open() to tell
+ * the opal_output subsystem where to send output for a given stream.
  * It is valid to specify multiple destinations of output for a stream
  * -- output streams can be multiplexed to multiple different
- * destinations through the ompi_output facility.
+ * destinations through the opal_output facility.
  *
  * Note that all strings in this struct are cached on the stream by
  * value; there is no need to keep them allocated after the return
- * from ompi_output_open().
+ * from opal_output_open().
  *
  * @see output.h
  */
-struct ompi_output_stream_t {
+struct opal_output_stream_t {
   /**
    * Indicates whether the output of the stream is
    * debugging/developer-only output or not.
    *
    * This field should be "true" if the output is for debugging
    * purposes only.  In that case, the output will never be sent to
-   * the stream unless OMPI was configured with --enable-debug.
+   * the stream unless OPAL was configured with --enable-debug.
    */
   bool lds_is_debugging;
 
@@ -99,8 +99,8 @@ struct ompi_output_stream_t {
    *
    * Verbose levels are a convenience mechanisms, and are only
    * consulted when output is sent to a stream through the
-   * ompi_output_verbose() function.  Verbose levels are ignored in
-   * OMPI_OUTPUT() and ompi_output().
+   * opal_output_verbose() function.  Verbose levels are ignored in
+   * OPAL_OUTPUT() and opal_output().
    *
    * Valid verbose levels typically start at 0 (meaning "minimal
    * information").  Higher verbosity levels generally indicate that
@@ -123,7 +123,7 @@ struct ompi_output_stream_t {
    */
   bool lds_want_syslog;
   /**
-   * When ompi_output_stream_t::lds_want_syslog is true, this field is
+   * When opal_output_stream_t::lds_want_syslog is true, this field is
    * examined to see what priority output from the stream should be
    * sent to the syslog.
    *
@@ -133,10 +133,10 @@ struct ompi_output_stream_t {
    */
   int lds_syslog_priority;
   /**
-   * When ompi_output_stream_t::lds_want_syslog is true, this field is
+   * When opal_output_stream_t::lds_want_syslog is true, this field is
    * examined to see what ident value should be passed to openlog(3).
    * 
-   * If a NULL value is given, the string "ompi" is used.
+   * If a NULL value is given, the string "opal" is used.
    */
   char *lds_syslog_ident;
 
@@ -173,7 +173,7 @@ struct ompi_output_stream_t {
    */
   bool lds_want_file;
   /**
-   * When ompi_output_stream_t::lds_want_file is true, this field
+   * When opal_output_stream_t::lds_want_file is true, this field
    * indicates whether to append the file (if it exists) or overwrite
    * it.
    *
@@ -181,23 +181,23 @@ struct ompi_output_stream_t {
    */
   bool lds_want_file_append;
   /**
-   * When ompi_output_stream_t::lds_want_file is true, this field
+   * When opal_output_stream_t::lds_want_file is true, this field
    * indicates the string suffix to add to the filename.
    *
-   * The output file will be in the OMPI session directory and have a
-   * OMPI-generated prefix (generally "$proc_sessiondir/output-").
+   * The output file will be in the OPAL session directory and have a
+   * OPAL-generated prefix (generally "$proc_sessiondir/output-").
    * The suffix is intended to give stream users a chance to write
    * their output into unique files.  If this field is NULL, the
    * suffix "output.txt" is used.
    *
    * Note that it is possible that the process session directory does
-   * not exist when ompi_output_open() is invoked.  See ompi_output()
+   * not exist when opal_output_open() is invoked.  See opal_output()
    * for details on what happens in this situation.
    */
   char *lds_file_suffix;
 };
 
-typedef struct ompi_output_stream_t ompi_output_stream_t;
+typedef struct opal_output_stream_t opal_output_stream_t;
 
 
   /**
@@ -209,13 +209,13 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    *
    * This should be the first function invoked in the output
    * subsystem.  After this call, the default "verbose" stream is open
-   * and can be written to via calls to ompi_output_verbose() and
-   * ompi_output_error().
+   * and can be written to via calls to opal_output_verbose() and
+   * opal_output_error().
    *
    * By definition, the default verbose stream has a handle ID of 0,
    * and has a verbose level of 0.
    */
-OMPI_DECLSPEC   bool ompi_output_init(void);
+OMPI_DECLSPEC   bool opal_output_init(void);
 
   /**
    * Shut down the output stream system.
@@ -223,18 +223,18 @@ OMPI_DECLSPEC   bool ompi_output_init(void);
    * Shut down the output stream system, including the default verbose
    * stream.
    */
-OMPI_DECLSPEC   void ompi_output_finalize(void);
+OMPI_DECLSPEC   void opal_output_finalize(void);
 
   /**
    * Opens an output stream.
    *
-   * @param lds A pointer to ompi_output_stream_t describing what the
+   * @param lds A pointer to opal_output_stream_t describing what the
    * characteristics of the output stream should be.
    *
    * This function opens an output stream and returns an integer
    * handle.  The caller is responsible for maintaining the handle and
-   * using it in successive calls to OMPI_OUTPUT(), ompi_output(),
-   * ompi_output_switch(), and ompi_output_close().
+   * using it in successive calls to OPAL_OUTPUT(), opal_output(),
+   * opal_output_switch(), and opal_output_close().
    *
    * If lds is NULL, the default descriptions will be used, meaning
    * that output will only be sent to stderr.
@@ -243,17 +243,17 @@ OMPI_DECLSPEC   void ompi_output_finalize(void);
    * simultaneously; their execution will be serialized in an
    * unspecified manner.
    *
-   * Be sure to see ompi_output() for a description of what happens
-   * when open_open() / ompi_output() is directed to send output to a
+   * Be sure to see opal_output() for a description of what happens
+   * when open_open() / opal_output() is directed to send output to a
    * file but the process session directory does not yet exist.
    */
-OMPI_DECLSPEC   int ompi_output_open(ompi_output_stream_t *lds);
+OMPI_DECLSPEC   int opal_output_open(opal_output_stream_t *lds);
 
   /**
    * Re-opens / redirects an output stream.
    *
    * @param output_id Stream handle to reopen
-   * @param lds A pointer to ompi_output_stream_t describing what the
+   * @param lds A pointer to opal_output_stream_t describing what the
    * characteristics of the reopened output stream should be.
    *
    * This function redirects an existing stream into a new [set of]
@@ -261,7 +261,7 @@ OMPI_DECLSPEC   int ompi_output_open(ompi_output_stream_t *lds);
    * passed is invalid, this call is effectively the same as opening a
    * new stream with a specific stream handle.
    */
-OMPI_DECLSPEC   int ompi_output_reopen(int output_id, ompi_output_stream_t *lds);
+OMPI_DECLSPEC   int opal_output_reopen(int output_id, opal_output_stream_t *lds);
 
   /**
    * Enables and disables output streams.
@@ -276,11 +276,11 @@ OMPI_DECLSPEC   int ompi_output_reopen(int output_id, ompi_output_stream_t *lds)
    * The output of a stream can be temporarily disabled by passing an
    * enable value to false, and later resumed by passing an enable
    * value of true.  This does not close the stream -- it simply tells
-   * the ompi_output subsystem to intercept and discard any output sent
-   * to the stream via OMPI_OUTPUT() or ompi_output() until the output
+   * the opal_output subsystem to intercept and discard any output sent
+   * to the stream via OPAL_OUTPUT() or opal_output() until the output
    * is re-enabled.
    */
-OMPI_DECLSPEC   bool ompi_output_switch(int output_id, bool enable);
+OMPI_DECLSPEC   bool opal_output_switch(int output_id, bool enable);
 
   /**
    * \internal
@@ -291,7 +291,7 @@ OMPI_DECLSPEC   bool ompi_output_switch(int output_id, bool enable);
    * typically only invoked after a restart (i.e., in a new process)
    * where output streams need to be re-initialized.
    */
-OMPI_DECLSPEC   void ompi_output_reopen_all(void);
+OMPI_DECLSPEC   void opal_output_reopen_all(void);
 
   /**
    * Close an output stream.
@@ -303,19 +303,19 @@ OMPI_DECLSPEC   void ompi_output_reopen_all(void);
    * re-used; it is possible that after a stream is closed, if another
    * stream is opened, it will get the same handle value.
    */
-OMPI_DECLSPEC   void ompi_output_close(int output_id);
+OMPI_DECLSPEC   void opal_output_close(int output_id);
 
   /**
    * Main function to send output to a stream.
    *
-   * @param output_id Stream id returned from ompi_output_open().
+   * @param output_id Stream id returned from opal_output_open().
    * @param format printf-style format string.
    * @param varargs printf-style varargs list to fill the string
    * specified by the format parameter.
    *
    * This is the main function to send output to custom streams (note
    * that output to the default "verbose" stream is handled through
-   * ompi_output_verbose() and ompi_output_error()).
+   * opal_output_verbose() and opal_output_error()).
    *
    * It is never necessary to send a trailing "\n" in the strings to
    * this function; some streams requires newlines, others do not --
@@ -325,18 +325,18 @@ OMPI_DECLSPEC   void ompi_output_close(int output_id);
    *
    * Note that for output streams that are directed to files, the
    * files are stored under the process' session directory.  If the
-   * session directory does not exist when ompi_output() is invoked,
+   * session directory does not exist when opal_output() is invoked,
    * the output will be discarded!  Once the session directory is
-   * created, ompi_output() will automatically create the file and
+   * created, opal_output() will automatically create the file and
    * writing to it.
    */
-OMPI_DECLSPEC   void ompi_output(int output_id, const char *format, ...);
+OMPI_DECLSPEC   void opal_output(int output_id, const char *format, ...);
 
   /**
    * Send output to a stream only if the passed verbosity level is
    * high enough.
    *
-   * @param output_id Stream id returned from ompi_output_open().
+   * @param output_id Stream id returned from opal_output_open().
    * @param level Target verbosity level.
    * @param format printf-style format string.
    * @param varargs printf-style varargs list to fill the string
@@ -355,65 +355,65 @@ OMPI_DECLSPEC   void ompi_output(int output_id, const char *format, ...);
    * This function is really a convenience wrapper around checking the
    * current verbosity level set on the stream, and if the passed
    * level is less than or equal to the stream's verbosity level, this
-   * function will effectively invoke ompi_output to send the output to
+   * function will effectively invoke opal_output to send the output to
    * the stream.
    *
-   * @see ompi_output_set_verbosity()
+   * @see opal_output_set_verbosity()
    */
-OMPI_DECLSPEC   void ompi_output_verbose(int verbose_level, int output_id, 
+OMPI_DECLSPEC   void opal_output_verbose(int verbose_level, int output_id, 
                                          const char *format, ...);
 
   /**
    * Set the verbosity level for a stream.
    *
-   * @param output_id Stream id returned from ompi_output_open().
+   * @param output_id Stream id returned from opal_output_open().
    * @param level New verbosity level
    *
    * This function sets the verbosity level on a given stream.  It
-   * will be used for all future invocations of ompi_output_verbose().
+   * will be used for all future invocations of opal_output_verbose().
    */
-OMPI_DECLSPEC   void ompi_output_set_verbosity(int output_id, int level);
+OMPI_DECLSPEC   void opal_output_set_verbosity(int output_id, int level);
 
 #if OMPI_ENABLE_DEBUG
   /**
    * Main macro for use in sending debugging output to output streams;
-   * will be "compiled out" when OMPI is configured without
+   * will be "compiled out" when OPAL is configured without
    * --enable-debug.
    *
-   * @see ompi_output()
+   * @see opal_output()
    */
-#define OMPI_OUTPUT(a) ompi_output a
+#define OPAL_OUTPUT(a) opal_output a
 
     /** 
      * Macro for use in sending debugging output to the output
-     * streams.  Will be "compiled out" when OMPI is configured
+     * streams.  Will be "compiled out" when OPAL is configured
      * without --enable-debug.
      *
-     * @see ompi_output_verbose()
+     * @see opal_output_verbose()
      */
-#define OMPI_OUTPUT_VERBOSE(a) ompi_output_verbose a
+#define OPAL_OUTPUT_VERBOSE(a) opal_output_verbose a
 #else
   /**
    * Main macro for use in sending debugging output to output streams;
-   * will be "compiled out" when OMPI is configured without
+   * will be "compiled out" when OPAL is configured without
    * --enable-debug.
    *
-   * @see ompi_output()
+   * @see opal_output()
    */
-#define OMPI_OUTPUT(a)
+#define OPAL_OUTPUT(a)
 
     /** 
      * Macro for use in sending debugging output to the output
-     * streams.  Will be "compiled out" when OMPI is configured
+     * streams.  Will be "compiled out" when OPAL is configured
      * without --enable-debug.
      *
-     * @see ompi_output_verbose()
+     * @see opal_output_verbose()
      */
-#define OMPI_OUTPUT_VERBOSE(a)
+#define OPAL_OUTPUT_VERBOSE(a)
 #endif
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* OMPI_OUTPUT_H_ */
+#endif /* OPAL_OUTPUT_H_ */
 

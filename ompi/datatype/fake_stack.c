@@ -58,7 +58,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     assert( pConvertor->bConverted != (unsigned long)starting_point );
     assert( starting_point <= (int)(pConvertor->count * pData->size) );
 
-    /*ompi_output( 0, "Data extent %d size %d count %d total_size %d starting_point %d\n",
+    /*opal_output( 0, "Data extent %d size %d count %d total_size %d starting_point %d\n",
                  pData->ub - pData->lb, pData->size, pConvertor->count,
                  pData->size * pConvertor->count, starting_point );*/
     pConvertor->stack_pos = 0;

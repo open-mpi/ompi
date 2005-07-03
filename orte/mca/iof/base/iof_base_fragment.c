@@ -14,7 +14,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/rml/rml.h"
 #include "mca/rml/rml_types.h"
 #include "mca/iof/base/base.h"
@@ -90,7 +90,7 @@ int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, const char* file, int li
             orte_iof_base_frag_send_cb,
             frag);
         if(rc != OMPI_SUCCESS) {
-            ompi_output(0, "orte_iof_base_frag_ack: orte_oob_send failed with status=%d\n", rc);
+            opal_output(0, "orte_iof_base_frag_ack: orte_oob_send failed with status=%d\n", rc);
         }
     }
     return rc;

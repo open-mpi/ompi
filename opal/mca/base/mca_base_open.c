@@ -23,7 +23,7 @@
 #include <syslog.h>
 #endif
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/printf.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -37,8 +37,8 @@ bool mca_base_opened = false;
 /*
  * Private functions
  */
-static void set_defaults(ompi_output_stream_t *lds);
-static void parse_verbose(char *e, ompi_output_stream_t *lds);
+static void set_defaults(opal_output_stream_t *lds);
+static void parse_verbose(char *e, opal_output_stream_t *lds);
 
 
 /*
@@ -48,7 +48,7 @@ int mca_base_open(void)
 {
   int param_index;
   char *value;
-  ompi_output_stream_t lds;
+  opal_output_stream_t lds;
 
   if (!mca_base_opened) {
     mca_base_opened = true;
@@ -87,8 +87,8 @@ int mca_base_open(void)
   } else {
     set_defaults(&lds);
   }
-  ompi_output_reopen(0, &lds);
-  ompi_output_verbose(5, 0, "mca: base: opening components");
+  opal_output_reopen(0, &lds);
+  opal_output_verbose(5, 0, "mca: base: opening components");
 
   /* Open up the component repository */
 
@@ -99,7 +99,7 @@ int mca_base_open(void)
 /*
  * Set sane default values for the lds
  */
-static void set_defaults(ompi_output_stream_t *lds)
+static void set_defaults(opal_output_stream_t *lds)
 {
   /* Load up defaults */
 
@@ -122,7 +122,7 @@ static void set_defaults(ompi_output_stream_t *lds)
 /*
  * Parse the value of an environment variable describing verbosity
  */
-static void parse_verbose(char *e, ompi_output_stream_t *lds)
+static void parse_verbose(char *e, opal_output_stream_t *lds)
 {
   char *edup;
   char *ptr, *next;

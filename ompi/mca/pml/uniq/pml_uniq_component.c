@@ -77,7 +77,7 @@ int mca_pml_uniq_component_open(void)
 #ifdef WIN32
      WSADATA win_sock_data;
      if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-         ompi_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: %d\n", WSAGetLastError());
+         opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: %d\n", WSAGetLastError());
          return OMPI_ERROR;
       }
 #endif
@@ -121,7 +121,7 @@ int mca_pml_uniq_component_close(void)
 #if OMPI_ENABLE_DEBUG
     if (mca_pml_uniq.uniq_recv_requests.fl_num_allocated !=
         mca_pml_uniq.uniq_recv_requests.super.opal_list_length) {
-        ompi_output(0, "uniq recv requests: %d allocated %d returned\n",
+        opal_output(0, "uniq recv requests: %d allocated %d returned\n",
             mca_pml_uniq.uniq_recv_requests.fl_num_allocated,
             mca_pml_uniq.uniq_recv_requests.super.opal_list_length);
     }
@@ -165,7 +165,7 @@ mca_pml_base_module_t* mca_pml_uniq_component_init(int* priority,
 
     /* buffered send */
     if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
-        ompi_output(0, "mca_pml_uniq_component_init: mca_pml_bsend_init failed\n");
+        opal_output(0, "mca_pml_uniq_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
 

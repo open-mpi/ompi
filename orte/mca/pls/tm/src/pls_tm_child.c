@@ -30,7 +30,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
@@ -82,13 +82,13 @@ int orte_pls_tm_child_init(void)
     /* Re-start us as a new ORTE process */
 
     opal_set_using_threads(false);
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:launch:child: starting");
     if (NULL == (uri = orte_rml.get_uri())) {
         ORTE_ERROR_LOG(ORTE_ERROR);
         exit(-1);
     }
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:launch:child: got uri: %s", uri);
 
     orte_ns.get_cellid(&new_cellid, orte_process_info.my_name);
@@ -107,14 +107,14 @@ int orte_pls_tm_child_init(void)
         ORTE_ERROR_LOG(ret);
         exit(-1);
     }
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:launch:child: restarting ORTE");
     ret = orte_restart(new_child_name, uri);
     if (ORTE_SUCCESS != ret) {
         ORTE_ERROR_LOG(ret);
         exit(-1);
     }
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:launch:child: am now a new ORTE process");
 
     /* All done */
@@ -169,7 +169,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
         i += map->num_procs;
     }
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:launch:child: found a total of %d procs", i);
     task_ids = malloc((sizeof(tm_task_id) * i) + 
                       (sizeof(orte_process_name_t) * i));
@@ -206,7 +206,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
             ORTE_ERROR_LOG(ret);
             goto cleanup; 
         }
-        ompi_output(orte_pls_base.pls_output,
+        opal_output(orte_pls_base.pls_output,
                     "pls:tm:launch:child: app %d cwd (%s) exists", 
                     i, app->cwd);
 
@@ -240,7 +240,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
                     asprintf(&new_path, "PATH=%s:.", path);
                     free(local_env[j]);
                     local_env[j] = new_path;
-                    ompi_output(orte_pls_base.pls_output,
+                    opal_output(orte_pls_base.pls_output,
                                 "pls:tm:launch:child: appended \".\" to PATH");
                     break;
                 }
@@ -267,7 +267,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
 
             /* Launch it */
             
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "pls:tm:launch:child: starting process %d (%s) on %s (TM node id %d)",
                         num_spawned, flat, proc->proc_node->node_name, 
                         tnodeid);
@@ -286,7 +286,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
                 ORTE_ERROR_LOG(ret);
                 goto loop_error;
             }
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "pls:tm:launch:child: launch successful (tid %d); posting to registry", task_ids[num_spawned]);
 
             /* Write this proc's TID to the registry (so that we can
@@ -341,7 +341,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
     /* All done */
 
  cleanup:
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:launch:child: launched %d processes", num_spawned);
 
     if (NULL != mca_env) {
@@ -371,7 +371,7 @@ int orte_pls_tm_child_wait(orte_jobid_t jobid)
     tm_event_t event, *events;
     struct tm_roots tm_root;
 
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:wait:child: waiting for processes to exit");
 
     /* Open up our connection to tm */
@@ -400,7 +400,7 @@ int orte_pls_tm_child_wait(orte_jobid_t jobid)
     for (i = 0; i < num_spawned; ++i) {
         ret = tm_obit(task_ids[i], &exit_statuses[i], &events[i]);
         if (TM_SUCCESS != ret) {
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "pls:tm:kill: tm_obit failed with %d", ret);
             ret = ORTE_ERROR;
             ORTE_ERROR_LOG(ret);
@@ -414,7 +414,7 @@ int orte_pls_tm_child_wait(orte_jobid_t jobid)
         tm_poll(TM_NULL_EVENT, &event, 1, &local_errno);
         for (j = 0; j < num_spawned; ++j) {
             if (event == events[j]) {
-                ompi_output(orte_pls_base.pls_output,
+                opal_output(orte_pls_base.pls_output,
                             "pls:tm:wait:child: caught obit for tid %d",
                             task_ids[j]);
                 ret = orte_soh.set_proc_soh(&names[j], 
@@ -431,7 +431,7 @@ int orte_pls_tm_child_wait(orte_jobid_t jobid)
     }
 
  cleanup:
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:wait:child: done waiting for process obits");
 
     if (NULL != events) {
@@ -462,7 +462,7 @@ int orte_pls_tm_child_finalize(void)
 
     /* All done */
 
-    ompi_output(orte_pls_base.pls_output,
+    opal_output(orte_pls_base.pls_output,
                 "pls:tm:finalize:child: all done -- exiting");
     orte_finalize();
     return ORTE_SUCCESS;
@@ -494,7 +494,7 @@ static int do_tm_resolve(char *hostname, tm_node_id *tnodeid)
     for (i = 0; i < num_tm_hostnames; ++i) {
         if (0 == strcmp(hostname, tm_hostnames[i])) {
             *tnodeid = tm_node_ids[i];
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "pls:tm:launch: resolved host %s to node ID %d",
                         hostname, tm_node_ids[i]);
             break;

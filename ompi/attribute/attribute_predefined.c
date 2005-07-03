@@ -253,7 +253,7 @@ int ompi_attr_create_predefined(void)
     trig1 = &trig;
     rc = orte_gpr.subscribe(1, &sub1, 1, &trig1);
     if(ORTE_SUCCESS != rc) {
-        ompi_output(0, "ompi_attr_create_predefined: subscribe failed");
+        opal_output(0, "ompi_attr_create_predefined: subscribe failed");
         OBJ_DESTRUCT(&value);
         sub.values = NULL;
         OBJ_DESTRUCT(&sub);

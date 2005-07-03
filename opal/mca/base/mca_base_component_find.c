@@ -25,7 +25,7 @@
 #include "libltdl/ltdl.h"
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -131,7 +131,7 @@ int mca_base_component_find(const char *directory, const char *type,
   if (open_dso_components) {
       find_dyn_components(directory, type, NULL, found_components);
   } else {
-    ompi_output_verbose(40, 0, 
+    opal_output_verbose(40, 0, 
                         "mca: base: component_find: dso loading for %s MCA components disabled", 
                         type);
   }
@@ -166,11 +166,11 @@ static void find_dyn_components(const char *path, const char *type_name,
 
   if (NULL == name) {
     params.name[0] = '\0';
-    ompi_output_verbose(40, 0, "mca: base: component_find: looking for all dynamic %s MCA components", 
+    opal_output_verbose(40, 0, "mca: base: component_find: looking for all dynamic %s MCA components", 
                        type_name, NULL);
   } else {
     strcpy(params.name, name);
-    ompi_output_verbose(40, 0,
+    opal_output_verbose(40, 0,
                        "mca: base: component_find: looking for dynamic %s MCA component named \"%s\"",
                        type_name, name, NULL);
   }
@@ -327,16 +327,16 @@ static int open_component(component_file_item_t *target_file,
   mca_base_component_list_item_t *mitem;
   dependency_item_t *ditem;
 
-  ompi_output_verbose(40, 0, "mca: base: component_find: examining dyanmic %s MCA component \"%s\"",
+  opal_output_verbose(40, 0, "mca: base: component_find: examining dyanmic %s MCA component \"%s\"",
                      target_file->type, target_file->name, NULL);
-  ompi_output_verbose(40, 0, "mca: base: component_find: %s", target_file->filename, NULL);
+  opal_output_verbose(40, 0, "mca: base: component_find: %s", target_file->filename, NULL);
   param = mca_base_param_find("base", NULL, "component_show_load_errors");
   mca_base_param_lookup_int(param, &show_errors);
 
   /* Was this component already loaded (e.g., via dependency)? */
 
   if (LOADED == target_file->status) {
-    ompi_output_verbose(40, 0, "mca: base: component_find: already loaded (ignored)", NULL);
+    opal_output_verbose(40, 0, "mca: base: component_find: already loaded (ignored)", NULL);
     return OMPI_SUCCESS;
   }
 
@@ -352,7 +352,7 @@ static int open_component(component_file_item_t *target_file,
     mitem = (mca_base_component_list_item_t *) cur;
     if (0 == strcmp(mitem->cli_component->mca_type_name, target_file->type) &&
         0 == strcmp(mitem->cli_component->mca_component_name, target_file->name)) {
-      ompi_output_verbose(40, 0, "mca: base: component_find: already loaded (ignored)", NULL);
+      opal_output_verbose(40, 0, "mca: base: component_find: already loaded (ignored)", NULL);
       target_file->status = FAILED_TO_LOAD;
       return OMPI_ERR_BAD_PARAM;
     }
@@ -375,9 +375,9 @@ static int open_component(component_file_item_t *target_file,
   if (NULL == component_handle) {
     err = strdup(lt_dlerror());
     if (0 != show_errors) {
-        ompi_output(0, "mca: base: component_find: unable to open: %s (ignored)", err);
+        opal_output(0, "mca: base: component_find: unable to open: %s (ignored)", err);
     }
-    ompi_output_verbose(40, 0, "mca: base: component_find: unable to open: %s (ignored)", 
+    opal_output_verbose(40, 0, "mca: base: component_find: unable to open: %s (ignored)", 
                         err, NULL);
     free(err);
     target_file->status = FAILED_TO_LOAD;
@@ -411,11 +411,11 @@ static int open_component(component_file_item_t *target_file,
   component_struct = lt_dlsym(component_handle, struct_name);
   if (NULL == component_struct) {
     if (0 != show_errors) {
-        ompi_output(0, "mca: base: component_find: \"%s\" does not appear to be a valid "
+        opal_output(0, "mca: base: component_find: \"%s\" does not appear to be a valid "
                        "%s MCA dynamic component (ignored)", 
                        target_file->basename, target_file->type, NULL);
     }
-    ompi_output_verbose(40, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
+    opal_output_verbose(40, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
                        "%s MCA dynamic component (ignored)", 
                        target_file->basename, target_file->type, NULL);
     free(mitem);
@@ -449,7 +449,7 @@ static int open_component(component_file_item_t *target_file,
   }
   OBJ_DESTRUCT(&dependencies);
 
-  ompi_output_verbose(40, 0, "mca: base: component_find: opened dynamic %s MCA component \"%s\"",
+  opal_output_verbose(40, 0, "mca: base: component_find: opened dynamic %s MCA component \"%s\"",
                      target_file->type, target_file->name, NULL);
   target_file->status = LOADED;
     
@@ -496,7 +496,7 @@ static int check_ompi_info(component_file_item_t *target_file,
      them.  Return failure upon the first component that fails to
      load. */
 
-  ompi_output_verbose(40, 0, "mca: base: component_find: opening ompi_info file: %s", depname, NULL);
+  opal_output_verbose(40, 0, "mca: base: component_find: opening ompi_info file: %s", depname, NULL);
   while (NULL != fgets(buffer, BUFSIZ, fp)) {
 
     /* Perl chomp */
@@ -538,7 +538,7 @@ static int check_ompi_info(component_file_item_t *target_file,
       }
     }
   }
-  ompi_output_verbose(40, 0, "mca: base: component_find: ompi_info file closed (%s)", 
+  opal_output_verbose(40, 0, "mca: base: component_find: ompi_info file closed (%s)", 
                      target_file->basename, NULL);
 
   /* All done -- all depenencies satisfied */
@@ -602,7 +602,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
     /* Catch the bozo dependency on itself */
 
     else if (mitem == target_file) {
-      ompi_output_verbose(40, 0,
+      opal_output_verbose(40, 0,
                          "mca: base: component_find: component depends on itself (ignored dependency)", 
                          NULL);
       happiness = true;
@@ -613,7 +613,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
        dependency sub-tree) */
 
     else if (LOADED == mitem->status) {
-      ompi_output_verbose(40, 0, "mca: base: component_find: dependency has already been loaded (%s)",
+      opal_output_verbose(40, 0, "mca: base: component_find: dependency has already been loaded (%s)",
                          mitem->basename, NULL);
       happiness = true;
       break;
@@ -624,7 +624,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
        dependencies. */
 
     else if (FAILED_TO_LOAD == mitem->status) {
-      ompi_output_verbose(40, 0, "mca: base: component_find: dependency previously failed to load (%s)",
+      opal_output_verbose(40, 0, "mca: base: component_find: dependency previously failed to load (%s)",
                          mitem->basename, NULL);
       break;
     }
@@ -632,7 +632,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
     /* If we hit a cycle, return badness */
 
     else if (CHECKING_CYCLE == mitem->status) {
-      ompi_output_verbose(40, 0, "mca: base: component_find: found cycle! (%s)",
+      opal_output_verbose(40, 0, "mca: base: component_find: found cycle! (%s)",
                          mitem->basename, NULL);
       break;
     }
@@ -641,12 +641,12 @@ static int check_dependency(char *line, component_file_item_t *target_file,
        to load it. */
 
     else if (UNVISITED == mitem->status) {
-      ompi_output_verbose(40, 0, "mca: base: component_find: loading dependency (%s)",
+      opal_output_verbose(40, 0, "mca: base: component_find: loading dependency (%s)",
                          mitem->basename, NULL);
       if (OMPI_SUCCESS == open_component(target_file, found_components)) {
         happiness = true;
       } else {
-        ompi_output_verbose(40, 0, "mca: base: component_find: dependency failed to load (%s)",
+        opal_output_verbose(40, 0, "mca: base: component_find: dependency failed to load (%s)",
                            mitem->basename, NULL);
       }
       break;

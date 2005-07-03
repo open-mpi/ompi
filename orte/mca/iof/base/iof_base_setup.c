@@ -51,7 +51,7 @@
 #include "mca/iof/base/iof_base_setup.h"
 
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/iof/iof.h"
 #include "mca/ns/ns.h"

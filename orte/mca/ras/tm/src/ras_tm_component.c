@@ -70,11 +70,11 @@ static orte_ras_base_module_t *ras_tm_init(int* priority)
 
     if (NULL != getenv("PBS_ENVIRONMENT") &&
         NULL != getenv("PBS_JOBID")) {
-        ompi_output(orte_ras_base.ras_output, "ras:tm: available for selection");
+        opal_output(orte_ras_base.ras_output, "ras:tm: available for selection");
         return &orte_ras_tm_module;
     }
 
     /* Sadly, no */
-    ompi_output(orte_ras_base.ras_output, "ras:tm: NOT available for selection");
+    opal_output(orte_ras_base.ras_output, "ras:tm: NOT available for selection");
     return NULL;
 }

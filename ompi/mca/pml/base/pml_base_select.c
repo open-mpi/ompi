@@ -69,21 +69,21 @@ int mca_pml_base_select(bool enable_progress_threads,
              strcmp(component->pmlm_version.mca_component_name, mca_pml_base_pml) != 0)
             continue;
 
-        ompi_output_verbose(10, mca_pml_base_output, 
+        opal_output_verbose(10, mca_pml_base_output, 
             "select: initializing %s component %s",
             component->pmlm_version.mca_type_name,
             component->pmlm_version.mca_component_name);
         if (NULL == component->pmlm_init) {
-            ompi_output_verbose(10, mca_pml_base_output,
+            opal_output_verbose(10, mca_pml_base_output,
                          "select: no init function; ignoring component");
         } else {
             module = component->pmlm_init(&priority, enable_progress_threads,
                                      enable_mpi_threads);
             if (NULL == module) {
-                ompi_output_verbose(10, mca_pml_base_output,
+                opal_output_verbose(10, mca_pml_base_output,
                              "select: init returned failure");
             } else {
-                ompi_output_verbose(10, mca_pml_base_output,
+                opal_output_verbose(10, mca_pml_base_output,
                            "select: init returned priority %d", priority);
                 if (priority > best_priority) {
                     best_priority = priority;
@@ -126,7 +126,7 @@ int mca_pml_base_select(bool enable_progress_threads,
            don't matter anymore) */
 
         om->om_component->pmlm_finalize();
-        ompi_output_verbose(10, mca_pml_base_output, 
+        opal_output_verbose(10, mca_pml_base_output, 
                            "select: component %s not selected / finalized",
                            component->pmlm_version.mca_component_name);
       }
@@ -146,7 +146,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
   mca_pml_base_selected_component = *best_component;
   mca_pml = *best_module;
-  ompi_output_verbose(10, mca_pml_base_output, 
+  opal_output_verbose(10, mca_pml_base_output, 
                      "select: component %s selected",
                      component->pmlm_version.mca_component_name);
 

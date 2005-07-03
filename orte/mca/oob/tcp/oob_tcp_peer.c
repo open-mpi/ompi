@@ -36,7 +36,7 @@
 #endif
 
 #include "class/ompi_proc_table.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/gpr/gpr.h"
 #include "mca/ns/ns.h"
@@ -281,7 +281,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
     if (peer->peer_sd < 0) {
         struct timeval tv = { 1,0 };
-        ompi_output(0, 
+        opal_output(0, 
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: socket() failed with errno=%d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
@@ -296,14 +296,14 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             ompi_socket_errno);
     } else {
        flags |= O_NONBLOCK;
         if(fcntl(peer->peer_sd, F_SETFL, flags) < 0)
-            ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", 
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", 
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 ORTE_NAME_ARGS(&(peer->peer_name)),
                 ompi_socket_errno);
@@ -311,7 +311,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 
     /* pick an address in round-robin fashion from the list exported by the peer */
     if((rc = mca_oob_tcp_addr_get_next(peer->peer_addr, &inaddr)) != OMPI_SUCCESS) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: mca_oob_tcp_addr_get_next failed with error=%d",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: mca_oob_tcp_addr_get_next failed with error=%d",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             rc);
@@ -319,7 +319,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     }
 
     if(mca_oob_tcp_component.tcp_debug > 0) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connecting port %d to: %s:%d\n",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connecting port %d to: %s:%d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             ntohs(mca_oob_tcp_component.tcp_listen_port),
@@ -335,7 +335,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
             opal_event_add(&peer->peer_send_event, 0);
             return OMPI_SUCCESS;
         }
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connect to %s:%d failed with errno=%d",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connect to %s:%d failed with errno=%d",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             inet_ntoa(inaddr.sin_addr),
@@ -350,7 +350,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
         opal_event_add(&peer->peer_recv_event, 0);
     } else {
-        ompi_output(0, 
+        opal_output(0, 
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: "
             "mca_oob_tcp_peer_send_connect_ack to %s:%d failed with errno=%d",
             ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -379,7 +379,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
 
     /* check connect completion status */
     if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", 
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             ompi_socket_errno);
@@ -391,7 +391,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         return;
     } else if (so_error == ECONNREFUSED || so_error == ETIMEDOUT) {
         struct timeval tv = { 1,0 };
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: "
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: "
             "connection failed (errno=%d) - retrying (pid=%d)\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
@@ -400,7 +400,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         opal_evtimer_add(&peer->peer_timer_event, &tv);
         return;
     } else if(so_error != 0) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: connect() failed with errno=%d\n", 
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: connect() failed with errno=%d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             so_error);
@@ -412,7 +412,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
         opal_event_add(&peer->peer_recv_event, 0);
     } else {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: unable to send connect ack.",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_complete_connect: unable to send connect ack.",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)));
         mca_oob_tcp_peer_close(peer);
@@ -444,7 +444,7 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
     if(mca_oob_tcp_component.tcp_debug > 0) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_close(%p) sd %d state %d\n",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_close(%p) sd %d state %d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             peer,
@@ -524,14 +524,14 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
     }
     MCA_OOB_TCP_HDR_NTOH(&hdr);
     if(hdr.msg_type != MCA_OOB_TCP_CONNECT) {
-        ompi_output(0, "mca_oob_tcp_peer_recv_connect_ack: invalid header type: %d\n", hdr.msg_type);
+        opal_output(0, "mca_oob_tcp_peer_recv_connect_ack: invalid header type: %d\n", hdr.msg_type);
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
     }
                                                                                                             
     /* compare the peers name to the expected value */
     if(memcmp(&peer->peer_name, &hdr.msg_src, sizeof(orte_process_name_t)) != 0) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_connect_ack: "
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_connect_ack: "
             "received unexpected process identifier [%d,%d,%d]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
@@ -571,7 +571,7 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
         /* remote closed connection */
         if(retval == 0) {
             if(mca_oob_tcp_component.tcp_debug > 0) {
-                ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_blocking: "
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_blocking: "
                     "peer closed connection: peer state %d",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
@@ -585,7 +585,7 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
         if(retval < 0) {
             IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
-                ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_blocking: recv() failed with errno=%d\n",
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_blocking: recv() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
                     errno);
@@ -612,7 +612,7 @@ static int mca_oob_tcp_peer_send_blocking(mca_oob_tcp_peer_t* peer, void* data, 
         if(retval < 0) {
             IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
-                ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_send_blocking: send() failed with errno=%d\n",
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_send_blocking: send() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
                     ompi_socket_errno);
@@ -677,7 +677,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 mca_oob_tcp_msg_t* msg;
                 MCA_OOB_TCP_MSG_ALLOC(msg, rc);
                 if(NULL == msg) {
-                    ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_handler: unable to allocate recv message\n",
+                    opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_handler: unable to allocate recv message\n",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_NAME_ARGS(&(peer->peer_name)));
                     return;
@@ -709,7 +709,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
         }
         default: 
         {
-            ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_handler: invalid socket state(%d)", 
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_handler: invalid socket state(%d)", 
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
                     peer->peer_state);
@@ -756,7 +756,7 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
         break;
         }
     default:
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_send_handler: invalid connection state (%d)",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_send_handler: invalid connection state (%d)",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             peer->peer_state);
@@ -786,13 +786,13 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
                                                                                                             
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: fcntl(F_GETFL) failed with errno=%d\n", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_peer_dump: fcntl(F_GETFL) failed with errno=%d\n", ompi_socket_errno);
     }
                                                                                                             
 #if defined(SO_SNDBUF)
     optlen = sizeof(sndbuf);
     if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, &optlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: SO_SNDBUF option: errno %d\n", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_peer_dump: SO_SNDBUF option: errno %d\n", ompi_socket_errno);
     }
 #else
     sndbuf = -1;
@@ -800,7 +800,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 #if defined(SO_RCVBUF)
     optlen = sizeof(rcvbuf);
     if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, &optlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: SO_RCVBUF option: errno %d\n", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_peer_dump: SO_RCVBUF option: errno %d\n", ompi_socket_errno);
     }
 #else
     rcvbuf = -1;
@@ -808,7 +808,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 #if defined(TCP_NODELAY)
     optlen = sizeof(nodelay);
     if(getsockopt(peer->peer_sd, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, &optlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: TCP_NODELAY option: errno %d\n", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_peer_dump: TCP_NODELAY option: errno %d\n", ompi_socket_errno);
     }
 #else
     nodelay = 0;
@@ -818,7 +818,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
         ORTE_NAME_ARGS(orte_process_info.my_name),
         ORTE_NAME_ARGS(&(peer->peer_name)),
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
-    ompi_output(0, buff);
+    opal_output(0, buff);
 }
 
 
@@ -843,7 +843,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
         mca_oob_tcp_peer_event_init(peer);
 
         if(mca_oob_tcp_peer_send_connect_ack(peer) != OMPI_SUCCESS) {
-            ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_accept: "
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_accept: "
                 "mca_oob_tcp_peer_send_connect_ack failed\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 ORTE_NAME_ARGS(&(peer->peer_name)));
@@ -888,7 +888,7 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
 {
     /* start the connection to the peer */
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)user;
-    ompi_output(0, "mca_oob_tcp_peer_timer_handler\n");
+    opal_output(0, "mca_oob_tcp_peer_timer_handler\n");
     OPAL_THREAD_LOCK(&peer->peer_lock);
     if(peer->peer_state == MCA_OOB_TCP_CLOSED)
         mca_oob_tcp_peer_start_connect(peer);

@@ -28,19 +28,19 @@
 void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                           const union dt_elem_desc* pDesc, const char* name )
 {
-    ompi_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
+    opal_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ; stack_pos >= 0; stack_pos-- ) {
-        ompi_output( 0, "%d: pos %d count %d disp %ld end_loop %d ", stack_pos, pStack[stack_pos].index,
+        opal_output( 0, "%d: pos %d count %d disp %ld end_loop %d ", stack_pos, pStack[stack_pos].index,
                      pStack[stack_pos].count, pStack[stack_pos].disp, pStack[stack_pos].end_loop );
         if( pStack->index != -1 )
-            ompi_output( 0, "\t[desc count %d disp %ld extent %d]\n",
+            opal_output( 0, "\t[desc count %d disp %ld extent %d]\n",
                          pDesc[pStack[stack_pos].index].elem.count,
                          pDesc[pStack[stack_pos].index].elem.disp,
                          pDesc[pStack[stack_pos].index].elem.extent );
         else
-            ompi_output( 0, "\n" );
+            opal_output( 0, "\n" );
     }
-    ompi_output( 0, "\n" );
+    opal_output( 0, "\n" );
 }
 
 /*
@@ -190,7 +190,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     pos_desc = pStack->index;
     lastDisp = pStack->disp;
     last_count = pStack->count; 
-    /*ompi_output( 0, "ompi_convertor_unpack_homogeneous stack_pos %d index %d count %d lastDisp %ld bConverted %d\n",
+    /*opal_output( 0, "ompi_convertor_unpack_homogeneous stack_pos %d index %d count %d lastDisp %ld bConverted %d\n",
                    pConv->stack_pos, pStack->index, pStack->count, lastDisp, pConv->bConverted );*/
     pStack--;
     pConv->stack_pos--;
@@ -230,7 +230,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                 for( i = 0; i < last_count; i++ ) {
                     OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, end_loop->size,
                                                 pConv->pBaseBuf, pData, pConv->count );
-                    /*ompi_output( 0, "3. memcpy %p, %p, %d", pConv->pBaseBuf + lastDisp, pSrcBuf, end_loop->size );*/
+                    /*opal_output( 0, "3. memcpy %p, %p, %d", pConv->pBaseBuf + lastDisp, pSrcBuf, end_loop->size );*/
                     MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, end_loop->size );
                     pSrcBuf += end_loop->size;
                     lastDisp += pElems[pos_desc].loop.extent;
@@ -267,7 +267,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                 }
                 OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
                                             pConv->pBaseBuf, pData, pConv->count );
-                /*ompi_output( 0, "1. memcpy %p, %p, %d -> %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, bConverted );*/
+                /*opal_output( 0, "1. memcpy %p, %p, %d -> %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, bConverted );*/
                 MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );
                 bConverted += last_blength;
                 space -= last_blength;
@@ -279,7 +279,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                 for( i = 0; i < last_count; i++ ) {
                     OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
                                                 pConv->pBaseBuf, pData, pConv->count );
-                    /*ompi_output( 0, "2. memcpy %p, %p, %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );*/
+                    /*opal_output( 0, "2. memcpy %p, %p, %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );*/
                     MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );
                     lastDisp += pElems[pos_desc].elem.extent;
                     pSrcBuf += basic_type->size;
@@ -297,7 +297,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
                                     pConv->pBaseBuf, pData, pConv->count );
         MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );
-        /*ompi_output( 0, "1. memcpy %p, %p, %d -> %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, bConverted );*/
+        /*opal_output( 0, "1. memcpy %p, %p, %d -> %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, bConverted );*/
         bConverted += last_blength;
         lastDisp += last_blength;
     }

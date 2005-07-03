@@ -22,7 +22,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pls/base/base.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 
 int orte_pls_base_finalize(void)
@@ -33,7 +33,7 @@ int orte_pls_base_finalize(void)
         while (NULL != 
                (item = opal_list_remove_first(&orte_pls_base.pls_available))) {
             orte_pls_base_cmp_t* cmp = (orte_pls_base_cmp_t*) item;
-            ompi_output(orte_pls_base.pls_output,
+            opal_output(orte_pls_base.pls_output,
                         "orte:base:close: finalizing module %s",
                         cmp->component->pls_version.mca_component_name);
             if (NULL != cmp->module->finalize) {

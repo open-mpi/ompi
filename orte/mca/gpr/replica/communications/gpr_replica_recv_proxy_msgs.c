@@ -25,7 +25,7 @@
  */
 #include "orte_config.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "mca/errmgr/errmgr.h"
@@ -45,7 +45,7 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%lu,%lu,%lu] gpr replica: received message from [%lu,%lu,%lu]",
+	   opal_output(0, "[%lu,%lu,%lu] gpr replica: received message from [%lu,%lu,%lu]",
 			    ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(sender));
     }
 
@@ -59,7 +59,7 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
 
 	OBJ_RELEASE(answer);
 	if (orte_gpr_replica_globals.debug) {
-	    ompi_output(0, "gpr replica: msg processing complete - processing callbacks");
+	    opal_output(0, "gpr replica: msg processing complete - processing callbacks");
 	}
 
     /* be sure to process callbacks */

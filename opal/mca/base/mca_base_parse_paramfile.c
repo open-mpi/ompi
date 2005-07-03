@@ -21,7 +21,7 @@
 
 #include "include/constants.h"
 #include "opal/class/opal_list.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param_internal.h"
@@ -167,6 +167,6 @@ static void save_value(char *name, char *value)
 static void parse_error(int num)
 {
     /* JMS need better error/warning message here */
-    ompi_output(0, "paramfile: error %d reading file %s at line %d:\n  %s\n",
+    opal_output(0, "paramfile: error %d reading file %s at line %d:\n  %s\n",
                 num, filename, mca_base_yynewlines, mca_base_yytext);
 }

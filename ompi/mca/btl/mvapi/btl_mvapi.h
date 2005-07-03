@@ -30,7 +30,7 @@
 #include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mpool/mpool.h" 
 #include "btl_mvapi_error.h" 
 

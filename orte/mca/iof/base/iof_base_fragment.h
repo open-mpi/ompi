@@ -37,7 +37,7 @@ OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
     opal_list_item_t* item; \
     OPAL_FREE_LIST_GET(&orte_iof_base.iof_fragments, item,rc); \
     if((frag = (orte_iof_base_frag_t*)item) == NULL) { \
-        ompi_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
+        opal_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
     } \
 }
 

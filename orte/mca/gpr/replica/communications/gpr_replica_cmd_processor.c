@@ -27,7 +27,7 @@
 
 #include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "gpr_replica_comm.h"
 
 /* 
@@ -65,7 +65,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
         
             	case ORTE_GPR_COMPOUND_CMD:  /*****     COMPOUND COMMAND     ******/
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tcompound cmd");
+            		    opal_output(0, "\tcompound cmd");
             	    }
                     
                     compound_cmd = true;
@@ -75,7 +75,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_DELETE_SEGMENT_CMD:  /******    DELETE SEGMENT    *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tdelete segment cmd");
+            		    opal_output(0, "\tdelete segment cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
@@ -89,7 +89,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_PUT_CMD:  /*****    PUT    *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tput cmd");
+            		    opal_output(0, "\tput cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_put_cmd(input_buffer, answer))) {
@@ -103,7 +103,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_GET_CMD:  /*****    GET    *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tget cmd");
+            		    opal_output(0, "\tget cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_get_cmd(input_buffer, answer))) {
@@ -116,7 +116,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_DELETE_ENTRIES_CMD:  /*****     DELETE ENTRIES     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tdelete object cmd");
+            		    opal_output(0, "\tdelete object cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
@@ -130,7 +130,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_INDEX_CMD:  /*****     INDEX     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tindex cmd");
+            		    opal_output(0, "\tindex cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_index_cmd(input_buffer, answer))) {
@@ -143,7 +143,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_SUBSCRIBE_CMD:  /*****     SUBSCRIBE     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		ompi_output(0, "\tsubscribe cmd");
+            		opal_output(0, "\tsubscribe cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
@@ -157,7 +157,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_UNSUBSCRIBE_CMD:  /*****     UNSUBSCRIBE     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tunsubscribe cmd");
+            		    opal_output(0, "\tunsubscribe cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
@@ -172,7 +172,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 case ORTE_GPR_CANCEL_TRIGGER_CMD:  /*****     CANCEL_TRIGGER     *****/
             
                     if (orte_gpr_replica_globals.debug) {
-                        ompi_output(0, "\tcancel trigger cmd");
+                        opal_output(0, "\tcancel trigger cmd");
                     }
             
                     if (ORTE_SUCCESS != (ret =
@@ -187,7 +187,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_DUMP_ALL_CMD:  /*****     DUMP     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tdump all cmd");
+            		    opal_output(0, "\tdump all cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_all_cmd(answer))) {
@@ -201,7 +201,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 case ORTE_GPR_DUMP_SEGMENTS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {
-                      ompi_output(0, "\tdump segments cmd");
+                      opal_output(0, "\tdump segments cmd");
                   }
             
                  if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_segments_cmd(answer))) {
@@ -215,7 +215,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 case ORTE_GPR_DUMP_TRIGGERS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {
-                      ompi_output(0, "\tdump triggers cmd");
+                      opal_output(0, "\tdump triggers cmd");
                   }
             
                  if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_triggers_cmd(answer))) {
@@ -229,7 +229,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 case ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {
-                      ompi_output(0, "\tdump subscriptions cmd");
+                      opal_output(0, "\tdump subscriptions cmd");
                   }
             
                  if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_subscriptions_cmd(answer))) {
@@ -243,7 +243,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 case ORTE_GPR_DUMP_CALLBACKS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {
-                      ompi_output(0, "\tdump callbacks cmd");
+                      opal_output(0, "\tdump callbacks cmd");
                   }
             
                  if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_callbacks_cmd(answer))) {
@@ -257,7 +257,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_INCREMENT_VALUE_CMD:  /*****     INCREMENT_VALUE     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tincrement_value cmd");
+            		    opal_output(0, "\tincrement_value cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
@@ -272,7 +272,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_DECREMENT_VALUE_CMD:  /*****     DECREMENT_VALUE     ******/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tdecrement_value cmd");
+            		    opal_output(0, "\tdecrement_value cmd");
             	    }
             
                  if (ORTE_SUCCESS != (ret =
@@ -287,7 +287,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_CLEANUP_JOB_CMD:  /*****     CLEANUP JOB    *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tcleanup job cmd");
+            		    opal_output(0, "\tcleanup job cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
@@ -302,7 +302,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	case ORTE_GPR_CLEANUP_PROC_CMD:  /*****     CLEANUP PROCESS     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tcleanup proc cmd");
+            		    opal_output(0, "\tcleanup proc cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
@@ -351,7 +351,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
     
 RETURN_ERROR:
 	if (orte_gpr_replica_globals.debug) {
-		ompi_output(0, "unrecognized command");
+		opal_output(0, "unrecognized command");
 	}
     OBJ_RELEASE(*output_buffer);
     *output_buffer = answer = OBJ_NEW(orte_buffer_t);

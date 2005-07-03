@@ -20,7 +20,7 @@
 
 #include "include/constants.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "ptl_mx.h"
@@ -305,7 +305,7 @@ int mca_ptl_mx_send(
         sendfrag,
         &sendfrag->frag_request);
     if(mx_return != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_send: mx_isend() failed with return value=%d\n", mx_return);
+        opal_output(0, "mca_ptl_mx_send: mx_isend() failed with return value=%d\n", mx_return);
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -414,7 +414,7 @@ int mca_ptl_mx_send_continue(
         sendfrag,
         &sendfrag->frag_request);
     if(mx_return != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_send: mx_isend() failed with return value=%d\n", mx_return);
+        opal_output(0, "mca_ptl_mx_send: mx_isend() failed with return value=%d\n", mx_return);
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -479,7 +479,7 @@ void mca_ptl_mx_matched(
                 ack,
                 &ack->frag_request);
             if(mx_return != MX_SUCCESS) {
-                ompi_output(0, "mca_ptl_mx_matched: mx_isend() failed with return value=%d\n", mx_return);
+                opal_output(0, "mca_ptl_mx_matched: mx_isend() failed with return value=%d\n", mx_return);
                 OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
                 ack_pending = true;
                 opal_list_append(&mca_ptl_mx_component.mx_pending_acks, (opal_list_item_t*)frag);

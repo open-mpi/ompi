@@ -62,7 +62,7 @@ mca_ptl_portals_send_frag(struct mca_ptl_portals_module_t *ptl,
                     PTL_UNLINK,
                     &md_handle);
     if (ret != PTL_OK) {
-        ompi_output(mca_ptl_portals_component.portals_output,
+        opal_output(mca_ptl_portals_component.portals_output,
                     "PtlMDBind failed with error %d", ret);
         return OMPI_ERROR;
     }
@@ -76,7 +76,7 @@ mca_ptl_portals_send_frag(struct mca_ptl_portals_module_t *ptl,
                  0, /* remote offset - not used */
                  0); /* hdr_data - not used */
     if (ret != PTL_OK) {
-        ompi_output(mca_ptl_portals_component.portals_output,
+        opal_output(mca_ptl_portals_component.portals_output,
                     "PtlPut failed with error %d", ret);
         PtlMDUnlink(md_handle);
         return OMPI_ERROR;
@@ -132,7 +132,7 @@ mca_ptl_portals_send_ack(struct mca_ptl_portals_module_t *ptl,
 
     sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_ack_header_t);
 
-    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+    OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                          "sending ack for recv request %p", request));
         
     return mca_ptl_portals_send_frag(ptl, sendfrag);

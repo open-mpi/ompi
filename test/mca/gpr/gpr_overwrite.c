@@ -32,7 +32,7 @@
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "util/malloc.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns_types.h"
 #include "mca/gpr/gpr.h"
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     setenv("OMPI_MCA_gpr_replica_isolate", "1", 1);
     
     /* Open up the output streams */
-    if (!ompi_output_init()) {
+    if (!opal_output_init()) {
         return OMPI_ERROR;
     }
 
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
     orte_proc_info_finalize();
     mca_base_close();
     ompi_malloc_finalize();
-    ompi_output_finalize();
+    opal_output_finalize();
     ompi_class_finalize();
     
     fclose( test_out );

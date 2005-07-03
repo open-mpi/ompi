@@ -15,7 +15,7 @@
  */
 
 #include "ompi_config.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/allocator/base/base.h"
@@ -121,12 +121,12 @@ static mca_mpool_base_module_t* mca_mpool_gm_init(
             mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
                 opal_list_get_first(&mca_allocator_base_components);
             allocator_component = (mca_allocator_base_component_t*)item->cli_component;
-            ompi_output(0, "[%d:%d] unable to locate allocator: %s - using %s\n",
+            opal_output(0, "[%d:%d] unable to locate allocator: %s - using %s\n",
                 __FILE__, __LINE__,
                 mca_mpool_gm_component.gm_allocator_name, 
                 allocator_component->allocator_version.mca_component_name);
         } else {
-            ompi_output(0, "[%s:%d] unable to locate allocator: %s\n",
+            opal_output(0, "[%s:%d] unable to locate allocator: %s\n",
                 __FILE__, __LINE__,
                 mca_mpool_gm_component.gm_allocator_name);
             return NULL;
@@ -141,7 +141,7 @@ static mca_mpool_base_module_t* mca_mpool_gm_init(
     gm_mpool->gm_allocator = 
       allocator_component->allocator_init(true, mca_common_gm_segment_alloc, NULL, &gm_mpool->super);
     if(NULL == gm_mpool->gm_allocator) {
-        ompi_output(0, "[%s:%d] unable to initialize allocator", __FILE__, __LINE__);
+        opal_output(0, "[%s:%d] unable to initialize allocator", __FILE__, __LINE__);
         return NULL;
     }
     return &gm_mpool->super;

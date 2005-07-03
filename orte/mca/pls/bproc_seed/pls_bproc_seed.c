@@ -25,7 +25,7 @@
 #include <fcntl.h>
 
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "util/proc_info.h"
 #include "opal/event/event.h"
@@ -99,12 +99,12 @@ static int orte_pls_bproc_dump(orte_app_context_t* app, uint8_t** image, size_t*
     int rc = ORTE_SUCCESS;
 
     if (pipe(pfd)) {
-        ompi_output(0, "orte_pls_bproc_seed: pipe() failed errno=%d\n",errno);
+        opal_output(0, "orte_pls_bproc_seed: pipe() failed errno=%d\n",errno);
         return ORTE_ERROR;
     }
 
     if ((pid = fork ()) < 0) {
-        ompi_output(0, "orte_pls_bproc_seed: fork() failed errno=%d\n",errno);
+        opal_output(0, "orte_pls_bproc_seed: fork() failed errno=%d\n",errno);
         return ORTE_ERROR;
     }
 
@@ -219,7 +219,7 @@ static int orte_pls_bproc_undump(
         }
 
         bproc_undump(p_image[0]);  /* child is now executing */
-        ompi_output(0, "orte_pls_bproc: bproc_undump failed errno=%d\n", errno);
+        opal_output(0, "orte_pls_bproc: bproc_undump failed errno=%d\n", errno);
         exit(1);
     }
 
@@ -270,7 +270,7 @@ static int orte_pls_bproc_undump(
     while(bytes_writen < image_len) {
         rc = write(p_image[1], image+bytes_writen, image_len-bytes_writen);
         if(rc < 0) {
-            ompi_output(0, "orte_pls_bproc_undump: write failed errno=%d\n", errno);
+            opal_output(0, "orte_pls_bproc_undump: write failed errno=%d\n", errno);
             return ORTE_ERROR;
         }
         bytes_writen += rc;
@@ -478,7 +478,7 @@ static int orte_pls_bproc_launch_app(
         }
 
         if(mca_pls_bproc_seed_component.debug) {
-            ompi_output(0, "orte_pls_bproc: rank=%d\n", rank);
+            opal_output(0, "orte_pls_bproc: rank=%d\n", rank);
         }
 
         /* find this node */
@@ -505,7 +505,7 @@ static int orte_pls_bproc_launch_app(
             _exit(-1);
         }
         if(mca_pls_bproc_seed_component.debug) {
-            ompi_output(0, "orte_pls_bproc: node=%s name=%d.%d.%d procs=%d\n", 
+            opal_output(0, "orte_pls_bproc: node=%s name=%d.%d.%d procs=%d\n", 
                 node->node_name, 
                 orte_process_info.my_name->cellid, 0, 
                 daemon_vpid_start+rank,
@@ -535,7 +535,7 @@ static int orte_pls_bproc_launch_app(
             pid_t pid;
 
             if(mca_pls_bproc_seed_component.debug) {
-                ompi_output(0, "orte_pls_bproc: starting: [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(&proc->proc_name));
+                opal_output(0, "orte_pls_bproc: starting: [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(&proc->proc_name));
             }
             rc = orte_pls_bproc_undump(proc, vpid_start, vpid_range, image, image_len, &pid);
             if(ORTE_SUCCESS != rc) {
@@ -550,7 +550,7 @@ static int orte_pls_bproc_launch_app(
             orte_wait_cb(pid, orte_pls_bproc_wait_proc, proc);
 
             if(mca_pls_bproc_seed_component.debug) {
-                ompi_output(0, "orte_pls_bproc: started: [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(&proc->proc_name));
+                opal_output(0, "orte_pls_bproc: started: [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(&proc->proc_name));
             }
         }
 
@@ -559,7 +559,7 @@ static int orte_pls_bproc_launch_app(
 
         /* wait for all children to complete */
         if(mca_pls_bproc_seed_component.debug) {
-            ompi_output(0, "orte_pls_bproc: waiting for %d children",  mca_pls_bproc_seed_component.num_children);
+            opal_output(0, "orte_pls_bproc: waiting for %d children",  mca_pls_bproc_seed_component.num_children);
         }
         OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
         while(mca_pls_bproc_seed_component.num_children > 0) {
@@ -662,7 +662,7 @@ int orte_pls_bproc_seed_terminate_job(orte_jobid_t jobid)
         return rc;
     for(i=0; i<num_pids; i++) {
         if(mca_pls_bproc_seed_component.debug) {
-            ompi_output(0, "orte_pls_bproc: killing proc: %d\n", pids[i]);
+            opal_output(0, "orte_pls_bproc: killing proc: %d\n", pids[i]);
         }
         kill(pids[i], mca_pls_bproc_seed_component.terminate_sig);
     }
@@ -674,7 +674,7 @@ int orte_pls_bproc_seed_terminate_job(orte_jobid_t jobid)
         return rc;
     for(i=0; i<num_pids; i++) { 
         if(mca_pls_bproc_seed_component.debug) {
-            ompi_output(0, "orte_pls_bproc: killing daemon: %d\n", pids[i]);
+            opal_output(0, "orte_pls_bproc: killing daemon: %d\n", pids[i]);
         }
         kill(pids[i], mca_pls_bproc_seed_component.terminate_sig);
     }
@@ -783,7 +783,7 @@ static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
     /* fork the child */
     pid = fork();
     if(pid < 0) {
-        ompi_output(0, "orte_pls_bproc: fork failed with errno=%d\n", errno);
+        opal_output(0, "orte_pls_bproc: fork failed with errno=%d\n", errno);
         stack->rc = ORTE_ERR_OUT_OF_RESOURCE;
 
     } else if (pid == 0) {

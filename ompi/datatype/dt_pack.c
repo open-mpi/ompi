@@ -336,7 +336,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     pack_elem.common.type = pElems[pos_desc].elem.common.type;
     last_blength = pack_elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
     lastDisp = pStack->disp;
-    DO_DEBUG( ompi_output( 0, "pack_no_conversion stack_pos %d index %d count %d last_blength %ld lastDisp %ld savePos %p bConverted %d\n",
+    DO_DEBUG( opal_output( 0, "pack_no_conversion stack_pos %d index %d count %d last_blength %ld lastDisp %ld savePos %p bConverted %d\n",
                            pConv->stack_pos, pStack->index, pStack->count, last_blength, lastDisp, savePos,
                            pConv->bConverted ); );
     saveLength = 0;
@@ -372,7 +372,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                 }
                                 OMPI_DDT_SAFEGUARD_POINTER( source, copy_length,
                                                             pConv->pBaseBuf, pData, pConv->count );
-                                DO_DEBUG( ompi_output( 0, "1. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
+                                DO_DEBUG( opal_output( 0, "1. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                                        copy_length, bConverted, space_on_iovec, pConv->bConverted ); );
                                 MEMCPY( destination, source, copy_length );
                                 source += copy_length;
@@ -431,13 +431,13 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 for( i = 0; i < (int)pack_elem.count; i++ ) {
                     OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, end_loop->size,
                                                 pConv->pBaseBuf, pData, pConv->count );
-                    DO_DEBUG (ompi_output( 0, "2. memcpy( %p, %p, %ld )\n", destination, pConv->pBaseBuf + lastDisp,
+                    DO_DEBUG (opal_output( 0, "2. memcpy( %p, %p, %ld )\n", destination, pConv->pBaseBuf + lastDisp,
                                            end_loop->size ); );
                     MEMCPY( destination, pConv->pBaseBuf + lastDisp, end_loop->size );
                     lastDisp += pElems[pos_desc].loop.extent;
                     destination += end_loop->size;
                 }
-                DO_DEBUG( ompi_output( 0, "\t\tbConverted %d space %d pConv->bConverted %d\n",
+                DO_DEBUG( opal_output( 0, "\t\tbConverted %d space %d pConv->bConverted %d\n",
                                        bConverted, space_on_iovec, pConv->bConverted ); );
                 i = end_loop->size * pack_elem.count;  /* temporary value */
                 space_on_iovec -= i;
@@ -511,7 +511,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                     if( space_on_iovec > saveLength ) {
                         OMPI_DDT_SAFEGUARD_POINTER( source, saveLength,
                                                     pConv->pBaseBuf, pData, pConv->count );
-                        DO_DEBUG( ompi_output( 0, "3. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
+                        DO_DEBUG( opal_output( 0, "3. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                                saveLength, bConverted, space_on_iovec, pConv->bConverted ); );
                         MEMCPY( destination, source, saveLength );
                         destination += saveLength;
@@ -526,7 +526,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                     }
                     OMPI_DDT_SAFEGUARD_POINTER( source, space_on_iovec,
                                                 pConv->pBaseBuf, pData, pConv->count );
-                    DO_DEBUG( ompi_output( 0, "4. memcpy( %p, %p, %ld )  bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
+                    DO_DEBUG( opal_output( 0, "4. memcpy( %p, %p, %ld )  bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                            space_on_iovec, bConverted, space_on_iovec, pConv->bConverted ); );
                     MEMCPY( destination, source, space_on_iovec );
                     /* let's prepare for the next round. As I keep trace of the amount that I still
@@ -574,7 +574,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     if( ((*out_size) == iov_pos) || (iov[iov_pos].iov_base == NULL) ) *out_size = iov_pos;
     else *out_size = iov_pos + 1;
     assert( pConv->bConverted <= (pData->size * pConv->count) );
-    DO_DEBUG( ompi_output( 0, "--------------------------------------------------------------------\n" ); );
+    DO_DEBUG( opal_output( 0, "--------------------------------------------------------------------\n" ); );
     return (pConv->bConverted == (pData->size * pConv->count));
 }
 

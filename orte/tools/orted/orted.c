@@ -37,7 +37,7 @@
 
 #include "dps/dps.h"
 #include "util/ompi_environ.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
     }
 
     if (orted_globals.debug_daemons) {
-	    ompi_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
+	    opal_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
      /* register the daemon main callback function */
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
      */
 
     if (orted_globals.debug_daemons) {
-	    ompi_output(0, "[%lu,%lu,%lu] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
+	    opal_output(0, "[%lu,%lu,%lu] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
      /* setup and enter the event monitor */
@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-	   ompi_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
+	   opal_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* cleanup */
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
     orte_finalize();
 
     if (orted_globals.debug_daemons) {
-	   ompi_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
+	   opal_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     exit(0);
@@ -387,7 +387,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-	   ompi_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
+	   opal_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     answer = OBJ_NEW(orte_buffer_t);

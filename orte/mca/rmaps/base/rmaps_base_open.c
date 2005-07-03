@@ -20,7 +20,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/rmaps/base/base.h"
 
@@ -67,7 +67,7 @@ int orte_rmaps_base_open(void)
     param = mca_base_param_register_int("rmaps", "base", "verbose", NULL, 0);
     mca_base_param_lookup_int(param, &value);
     if (value != 0) {
-        orte_rmaps_base.rmaps_output = ompi_output_open(NULL);
+        orte_rmaps_base.rmaps_output = opal_output_open(NULL);
     } else {
         orte_rmaps_base.rmaps_output = -1;
     }
@@ -88,7 +88,7 @@ int orte_rmaps_base_open(void)
          item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_rmaps_base_component_t *) cli->cli_component;
-        ompi_output(orte_rmaps_base.rmaps_output,
+        opal_output(orte_rmaps_base.rmaps_output,
                     "orte:base:open: querying component %s", 
                     component->rmaps_version.mca_component_name);
 
@@ -101,7 +101,7 @@ int orte_rmaps_base_open(void)
            to be considered for selection */
 
         if (NULL != module) {
-            ompi_output(orte_rmaps_base.rmaps_output,
+            opal_output(orte_rmaps_base.rmaps_output,
                         "orte:base:open: component %s returns priority %d", 
                         component->rmaps_version.mca_component_name,
                         priority);
@@ -113,7 +113,7 @@ int orte_rmaps_base_open(void)
 
             opal_list_append(&orte_rmaps_base.rmaps_available, &cmp->super);
         } else {
-            ompi_output(orte_rmaps_base.rmaps_output,
+            opal_output(orte_rmaps_base.rmaps_output,
                         "orte:base:open: component %s does NOT want to be considered for selection", 
                         component->rmaps_version.mca_component_name);
         }

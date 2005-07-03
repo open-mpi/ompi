@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
@@ -83,7 +83,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
         ptl_proc = mca_ptl_elan_proc_create (ompi_proc);
 
         if (NULL == ptl_proc) {
-            ompi_output (0,
+            opal_output (0,
                          "[%s:%d] could not create a ptl proc\n",
                          __FILE__, __LINE__);
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -97,7 +97,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
 
         if (ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
             OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
-            ompi_output (0, "all peers are taken already\n");
+            opal_output (0, "all peers are taken already\n");
             return OMPI_ERR_UNREACH;
         }
 
@@ -108,7 +108,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
 	ptl_peer = OBJ_NEW (mca_ptl_elan_peer_t);
 	if (NULL == ptl_peer) {
 	    OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
-	    ompi_output (0, "[%s:%d] unabled to allocate ptl_peer \n",
+	    opal_output (0, "[%s:%d] unabled to allocate ptl_peer \n",
 		    __FILE__, __LINE__);
 	    return OMPI_ERR_OUT_OF_RESOURCE;
 	}
@@ -191,7 +191,7 @@ mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
 	    (struct mca_pml_base_request_t *) request, 
 	    MCA_PTL_ELAN_DESC_QDMA);
     if (NULL == desc) {
-        ompi_output(0,
+        opal_output(0,
                 "[%s:%d] Unable to allocate an elan send descriptors \n", 
                 __FILE__, __LINE__);
 	return OMPI_ERR_OUT_OF_RESOURCE; 
@@ -268,7 +268,7 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
 		(struct mca_pml_base_request_t *) sendreq, 
 		MCA_PTL_ELAN_DESC_QDMA);
 	if (NULL == desc) {
-	    ompi_output(0,
+	    opal_output(0,
 		    "[%s:%d] Unable to allocate an elan send descriptors \n", 
 		    __FILE__, __LINE__);
 	}
@@ -318,7 +318,7 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 	    (struct mca_pml_base_request_t *) sendreq, 
 	    MCA_PTL_ELAN_DESC_PUT);
     if (NULL == desc) {
-	ompi_output(0,
+	opal_output(0,
 		"[%s:%d] Unable to allocate an elan send descriptors \n", 
 		__FILE__, __LINE__);
     }
@@ -371,7 +371,7 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
 	    (struct mca_pml_base_request_t *) req, 
 	    MCA_PTL_ELAN_DESC_GET);
     if (NULL == desc) {
-	ompi_output(0,
+	opal_output(0,
 		"[%s:%d] Unable to allocate an elan send descriptors \n", 
 		__FILE__, __LINE__);
     }
@@ -420,7 +420,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	/* Get a frag desc and allocate a send desc */
 	desc = mca_ptl_elan_alloc_desc(ptl, NULL, desc_type);
 	if (NULL == desc) {
-	    ompi_output(0,
+	    opal_output(0,
 		    "[%s:%d] Unable to allocate an elan send descriptors \n", 
 		    __FILE__, __LINE__);
             OPAL_THREAD_LOCK(&mca_ptl_elan_component.elan_lock);

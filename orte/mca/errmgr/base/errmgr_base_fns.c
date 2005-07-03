@@ -25,7 +25,7 @@
 
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "mca/ns/ns.h"
 
@@ -37,10 +37,10 @@
 void orte_errmgr_base_log(int error_code, char *filename, int line)
 {
     if (NULL == orte_process_info.my_name) {
-        ompi_output(0, "[NO-NAME] ORTE_ERROR_LOG: %s in file %s at line %d",
+        opal_output(0, "[NO-NAME] ORTE_ERROR_LOG: %s in file %s at line %d",
                                 ORTE_ERROR_NAME(error_code), filename, line);
     } else {
-        ompi_output(0, "[%lu,%lu,%lu] ORTE_ERROR_LOG: %s in file %s at line %d",
+        opal_output(0, "[%lu,%lu,%lu] ORTE_ERROR_LOG: %s in file %s at line %d",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_ERROR_NAME(error_code), filename, line);
     }

@@ -47,7 +47,7 @@
 #include "util/univ_info.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
 
@@ -314,15 +314,15 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     }
 
     if (orte_debug_flag) {
-    	ompi_output(0, "procdir: %s", 
+    	opal_output(0, "procdir: %s", 
                     OMPI_PRINTF_FIX_STRING(orte_process_info.proc_session_dir));
-    	ompi_output(0, "jobdir: %s", 
+    	opal_output(0, "jobdir: %s", 
                     OMPI_PRINTF_FIX_STRING(orte_process_info.job_session_dir));
-    	ompi_output(0, "unidir: %s", 
+    	opal_output(0, "unidir: %s", 
                     OMPI_PRINTF_FIX_STRING(orte_process_info.universe_session_dir));
-    	ompi_output(0, "top: %s", 
+    	opal_output(0, "top: %s", 
                     OMPI_PRINTF_FIX_STRING(orte_process_info.top_session_dir));
-    	ompi_output(0, "tmp: %s", 
+    	opal_output(0, "tmp: %s", 
                     OMPI_PRINTF_FIX_STRING(orte_process_info.tmpdir_base));
     }
 
@@ -408,48 +408,48 @@ orte_session_dir_finalize(orte_process_name_t *proc)
 
     if (orte_is_empty(proc_session_dir)) {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: found proc session dir empty - deleting");
+    	    opal_output(0, "sess_dir_finalize: found proc session dir empty - deleting");
     	}
     	rmdir(proc_session_dir);
     } else {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
+    	    opal_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
     	}
         goto CLEANUP;
     }
 
     if (orte_is_empty(job_session_dir)) {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: found job session dir empty - deleting");
+    	    opal_output(0, "sess_dir_finalize: found job session dir empty - deleting");
     	}
     	rmdir(job_session_dir);
     } else {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: job session dir not empty - leaving");
+    	    opal_output(0, "sess_dir_finalize: job session dir not empty - leaving");
     	}
         goto CLEANUP;
     }
 
     if (orte_is_empty(orte_process_info.universe_session_dir)) {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: found univ session dir empty - deleting");
+    	    opal_output(0, "sess_dir_finalize: found univ session dir empty - deleting");
     	}
     	rmdir(orte_process_info.universe_session_dir);
     } else {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: univ session dir not empty - leaving");
+    	    opal_output(0, "sess_dir_finalize: univ session dir not empty - leaving");
     	}
     	goto CLEANUP;
     }
 
     if (orte_is_empty(tmp)) {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: found top session dir empty - deleting");
+    	    opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");
     	}
     	rmdir(tmp);
     } else {
     	if (orte_debug_flag) {
-    	    ompi_output(0, "sess_dir_finalize: top session dir not empty - leaving");
+    	    opal_output(0, "sess_dir_finalize: top session dir not empty - leaving");
     	}
     }
 

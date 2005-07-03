@@ -25,7 +25,7 @@
 
 #include "orte_config.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "mca/ns/ns_types.h"
 #include "mca/errmgr/errmgr.h"
@@ -43,7 +43,7 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
     /* protect ourselves against errors */
     if (NULL == values) {
         	if (orte_gpr_replica_globals.debug) {
-        	    ompi_output(0, "[%lu,%lu,%lu] gpr replica: error in input - put rejected",
+        	    opal_output(0, "[%lu,%lu,%lu] gpr replica: error in input - put rejected",
                                 ORTE_NAME_ARGS(orte_process_info.my_name));
         	}
         	return ORTE_ERROR;

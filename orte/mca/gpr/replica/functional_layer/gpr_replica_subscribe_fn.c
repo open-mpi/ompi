@@ -25,7 +25,7 @@
 
 #include "orte_config.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
@@ -45,7 +45,7 @@ int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
     int rc=ORTE_SUCCESS;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%lu,%lu,%lu] gpr replica: subscribe entered",
+	   opal_output(0, "[%lu,%lu,%lu] gpr replica: subscribe entered",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

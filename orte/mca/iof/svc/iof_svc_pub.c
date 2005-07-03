@@ -1,5 +1,5 @@
 #include "ompi_config.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/oob/oob.h"
 #include "mca/iof/base/iof_base_header.h"
 #include "iof_svc.h"

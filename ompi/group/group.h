@@ -23,7 +23,7 @@
 #ifndef OMPI_GROUP_H
 #define OMPI_GROUP_H
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mpi.h"
 #include "class/ompi_pointer_array.h"
 #if defined(c_plusplus) || defined(__cplusplus)

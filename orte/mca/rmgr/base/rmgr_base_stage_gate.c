@@ -26,7 +26,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "dps/dps.h"
 #include "mca/gpr/gpr.h"

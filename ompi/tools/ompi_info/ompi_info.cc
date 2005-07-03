@@ -36,7 +36,7 @@
 
 #include "opal/class/opal_object.h"
 #include "runtime/runtime.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/cmd_line.h"
 #include "util/argv.h"
 #include "util/show_help.h"

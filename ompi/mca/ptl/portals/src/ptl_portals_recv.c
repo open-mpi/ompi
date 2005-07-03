@@ -80,7 +80,7 @@ ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl, void *data_ptr)
         return OMPI_ERROR;
     }
 
-    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+    OPAL_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                          "new receive buffer posted"));
 
     return OMPI_SUCCESS;
@@ -94,12 +94,12 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
     int ret;
 
     if (ev->type == PTL_EVENT_PUT_START) {
-        OMPI_OUTPUT_VERBOSE((101, mca_ptl_portals_component.portals_output,
+        OPAL_OUTPUT_VERBOSE((101, mca_ptl_portals_component.portals_output,
                              "starting to receive message", ev->link));
     } else if (ev->type == PTL_EVENT_PUT_END) {
         mca_ptl_base_header_t *hdr;
 
-        OMPI_OUTPUT_VERBOSE((101, mca_ptl_portals_component.portals_output,
+        OPAL_OUTPUT_VERBOSE((101, mca_ptl_portals_component.portals_output,
                              "message %ld received, start: %p, mlength: %lld,"
                              " offset: %lld",
                              ev->link, ev->md.start, ev->mlength, ev->offset));
@@ -134,7 +134,7 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
                 sendreq = sendfrag->frag_send.frag_request;
                 sendreq->req_peer_match = hdr->hdr_ack.hdr_dst_match;
 
-                OMPI_OUTPUT_VERBOSE((100, 
+                OPAL_OUTPUT_VERBOSE((100, 
                                      mca_ptl_portals_component.portals_output,
                                      "received ack for recv request %p (msg %d)",
                                      hdr->hdr_ack.hdr_dst_match,
@@ -145,7 +145,7 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
             break;
 
         default:
-            ompi_output(mca_ptl_portals_component.portals_output,
+            opal_output(mca_ptl_portals_component.portals_output,
                         "*** unable to deal with header of type %d",
                         hdr->hdr_common.hdr_type);
             break;
@@ -155,14 +155,14 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
             /* use the same memory as the old md - it's not using it anymore */
             ret = ptl_portals_post_recv_md(ptl, ev->md.start);
             if (OMPI_SUCCESS != ret) {
-                ompi_output(mca_ptl_portals_component.portals_output,
+                opal_output(mca_ptl_portals_component.portals_output,
                             "failed to allocate receive memory descriptor");
                 /* BWB - ok, what do I do now? */
             }
         }
 
     } else {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "*** unknown event: %d (%ld)",
                             ev->type, ev->link);
     }

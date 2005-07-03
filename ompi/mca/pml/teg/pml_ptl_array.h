@@ -19,7 +19,7 @@
 #ifndef OMPI_PTL_ARRAY_H
 #define OMPI_PTL_ARRAY_H
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/ptl/ptl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -91,7 +91,7 @@ static inline mca_ptl_proc_t* mca_ptl_array_insert(mca_ptl_array_t* array)
 {
 #if OMPI_ENABLE_DEBUG
     if(array->ptl_size >= array->ptl_reserve) {
-        ompi_output(0, "mca_ptl_array_insert: invalid array index %d >= %d", 
+        opal_output(0, "mca_ptl_array_insert: invalid array index %d >= %d", 
             array->ptl_size, array->ptl_reserve);
         return 0;
     }
@@ -109,7 +109,7 @@ static inline mca_ptl_proc_t* mca_ptl_array_get_index(mca_ptl_array_t* array, si
 {
 #if OMPI_ENABLE_DEBUG
     if(index >= array->ptl_size) {
-        ompi_output(0, "mca_ptl_array_get_index: invalid array index %d >= %d",
+        opal_output(0, "mca_ptl_array_get_index: invalid array index %d >= %d",
             index, array->ptl_size);
         return 0;
     }
@@ -128,7 +128,7 @@ static inline mca_ptl_proc_t* mca_ptl_array_get_next(mca_ptl_array_t* array)
     mca_ptl_proc_t* ptl_proc;
 #if OMPI_ENABLE_DEBUG
     if(array->ptl_size == 0) {
-        ompi_output(0, "mca_ptl_array_get_next: invalid array size");
+        opal_output(0, "mca_ptl_array_get_next: invalid array size");
         return 0;
     }
 #endif

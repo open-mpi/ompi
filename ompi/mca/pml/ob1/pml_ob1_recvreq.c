@@ -295,14 +295,14 @@ void mca_pml_ob1_recv_request_progress(
 #if MCA_PML_OB1_TIMESTAMPS
         if(recvreq->req_bytes_received > 0) {
             int i;
-            ompi_output(0, "[%d,%d,%d] dst ack: %llu",
+            opal_output(0, "[%d,%d,%d] dst ack: %llu",
                     ORTE_NAME_ARGS(orte_process_info.my_name), recvreq->ack);
             for(i=0; i<recvreq->pin_index; i++) {
-                ompi_output(0, "[%d,%d,%d] dst pin, %llu %llu", 
+                opal_output(0, "[%d,%d,%d] dst pin, %llu %llu", 
                     ORTE_NAME_ARGS(orte_process_info.my_name), recvreq->pin1[i], recvreq->pin2[i] - recvreq->pin1[i]);
             }
             for(i=0; i<recvreq->fin_index; i++) {
-                ompi_output(0, "[%d,%d,%d] dst fin: %llu %llu",
+                opal_output(0, "[%d,%d,%d] dst fin: %llu %llu",
                     ORTE_NAME_ARGS(orte_process_info.my_name), recvreq->fin1[i], recvreq->fin2[i] - recvreq->fin1[i]);
             }
         }

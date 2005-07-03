@@ -32,7 +32,7 @@
 #include <arpa/inet.h>
 #endif
 #include "include/ompi_socket_errno.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/if.h"
 #include "class/ompi_proc_table.h"
 #include "mca/oob/tcp/oob_tcp.h"
@@ -170,7 +170,7 @@ int mca_oob_tcp_component_open(void)
 #ifdef WIN32
     WSADATA win_sock_data;
     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-        ompi_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
+        opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
         return OMPI_ERROR;
     }
 #endif
@@ -253,13 +253,13 @@ static void mca_oob_tcp_accept(void)
             if(ompi_socket_errno == EINTR)
                 continue;
             if(ompi_socket_errno != EAGAIN || ompi_socket_errno != EWOULDBLOCK)
-                ompi_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", ompi_socket_errno);
+                opal_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", ompi_socket_errno);
             return;
         }
 
         /* log the accept */
         if(mca_oob_tcp_component.tcp_debug) {
-            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_accept: %s:%d\n",
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_accept: %s:%d\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 inet_ntoa(addr.sin_addr),
                 addr.sin_port);
@@ -285,7 +285,7 @@ static int mca_oob_tcp_create_listen(void)
     /* create a listen socket for incoming connections */
     mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_oob_tcp_component.tcp_listen_sd < 0) {
-        ompi_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", ompi_socket_errno);
+        opal_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
     memset(&inaddr, 0, sizeof(inaddr));
@@ -294,32 +294,32 @@ static int mca_oob_tcp_create_listen(void)
     inaddr.sin_port = 0;
 
     if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        ompi_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", ompi_socket_errno);
+        opal_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
 
     /* resolve system assigned port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
                                                                                                                    
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
-        ompi_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
                                                                                                                    
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_oob_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(mca_oob_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
-            ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with errno=%d", ompi_socket_errno);
+            opal_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with errno=%d", ompi_socket_errno);
             return OMPI_ERROR;
         }
     }
@@ -354,7 +354,7 @@ static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
         if(retval < 0) {
             IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
-                ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_probe: send() failed with errno=%d\n",
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_probe: send() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(hdr->msg_src)),
                     ompi_socket_errno);
@@ -379,12 +379,12 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d", 
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d", 
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d", 
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d", 
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
         }
     }
@@ -408,7 +408,7 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     /* lookup the corresponding process */
     peer = mca_oob_tcp_peer_lookup(&hdr->msg_src);
     if(NULL == peer) {
-        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: unable to locate peer",
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: unable to locate peer",
                 ORTE_NAME_ARGS(orte_process_info.my_name));
         close(sd);
         return;
@@ -416,7 +416,7 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     /* is the peer instance willing to accept this connection */
     if(mca_oob_tcp_peer_accept(peer, sd) == false) {
         if(mca_oob_tcp_component.tcp_debug > 0) {
-            ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv_handler: "
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv_handler: "
                     "rejected connection from [%lu,%lu,%lu] connection state %d",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
@@ -450,14 +450,14 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     while((rc = recv(sd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
         if(rc >= 0) {
             if(mca_oob_tcp_component.tcp_debug > 1) {
-                ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: peer closed connection",
+                opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: peer closed connection",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
             }
             close(sd);
             return;
         }
         if(ompi_socket_errno != EINTR) {
-            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
             close(sd);
             return;
@@ -474,7 +474,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             mca_oob_tcp_recv_connect(sd, &hdr);
             break;
         default:
-            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n", 
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n", 
                 ORTE_NAME_ARGS(orte_process_info.my_name), hdr.msg_type);
             close(sd);
             break;
@@ -519,7 +519,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 
     /* create a listen socket */
     if(mca_oob_tcp_create_listen() != OMPI_SUCCESS) {
-        ompi_output(0, "mca_oob_tcp_init: unable to create listen socket\n");
+        opal_output(0, "mca_oob_tcp_init: unable to create listen socket\n");
         return NULL;
     }
     return &mca_oob_tcp;
@@ -536,7 +536,7 @@ void mca_oob_tcp_registry_callback(
 {
     size_t i;
     if(mca_oob_tcp_component.tcp_debug > 1) {
-        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback\n",
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -570,13 +570,13 @@ void mca_oob_tcp_registry_callback(
             addr = mca_oob_tcp_addr_unpack(&buffer);
             OBJ_DESTRUCT(&buffer);
             if(NULL == addr) {
-                ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: unable to unpack peer address\n",
+                opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: unable to unpack peer address\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
                 continue;
             }
 
             if(mca_oob_tcp_component.tcp_debug > 1) {
-                ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: received peer [%lu,%lu,%lu]\n",
+                opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: received peer [%lu,%lu,%lu]\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(addr->addr_name)));
             }
@@ -795,7 +795,7 @@ int mca_oob_tcp_init(void)
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
     if(mca_oob_tcp_component.tcp_debug > 2) {
-        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.subscribe\n", 
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.subscribe\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -960,7 +960,7 @@ int mca_oob_tcp_init(void)
     }
 
     if(mca_oob_tcp_component.tcp_debug > 2) {
-        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.put(%s)\n", 
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.put(%s)\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             value->segment);
     }

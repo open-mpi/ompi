@@ -18,7 +18,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "coll_demo.h"
@@ -37,7 +37,7 @@ int mca_coll_demo_alltoall_intra(void *sbuf, int scount,
                                  struct ompi_datatype_t *rdtype,
                                  struct ompi_communicator_t *comm)
 {
-    ompi_output_verbose(10, mca_coll_base_output, "In demo alltoall_intra\n");
+    opal_output_verbose(10, mca_coll_base_output, "In demo alltoall_intra\n");
     return comm->c_coll_basic_module->coll_alltoall(sbuf, scount, sdtype,
                                                     rbuf, rcount, rdtype, 
                                                     comm);
@@ -57,7 +57,7 @@ int mca_coll_demo_alltoall_inter(void *sbuf, int scount,
                                  struct ompi_datatype_t *rdtype,
                                  struct ompi_communicator_t *comm)
 {
-    ompi_output_verbose(10, mca_coll_base_output, "In demo alltoall_inter\n");
+    opal_output_verbose(10, mca_coll_base_output, "In demo alltoall_inter\n");
     return comm->c_coll_basic_module->coll_alltoall(sbuf, scount, sdtype,
                                                     rbuf, rcount, rdtype, 
                                                     comm);

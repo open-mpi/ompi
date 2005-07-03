@@ -19,7 +19,7 @@
 #include "include/orte_types.h"
 #include "mca/schema/schema.h"
 
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/gpr/gpr.h"
 #include "mca/ns/ns.h"
@@ -464,7 +464,7 @@ int orte_rmaps_base_get_node_map(
             if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
                 size_t app_index = keyval->value.size;
                 if(app_index >= num_context) {
-                    ompi_output(0, "orte_rmaps_base_get_map: invalid context\n");
+                    opal_output(0, "orte_rmaps_base_get_map: invalid context\n");
                     rc = ORTE_ERR_BAD_PARAM;
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;

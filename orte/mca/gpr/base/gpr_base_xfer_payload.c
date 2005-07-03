@@ -19,7 +19,7 @@
 #include "include/constants.h"
 
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/errmgr/errmgr.h"
 

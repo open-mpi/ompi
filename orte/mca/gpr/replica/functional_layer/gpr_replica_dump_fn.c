@@ -29,7 +29,7 @@
 #include "include/orte_types.h"
 
 #include "dps/dps.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns_types.h"
@@ -747,7 +747,7 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
     }
     
     if (NULL == buffer) {
-        ompi_output(0, "%s", tmp);
+        opal_output(0, "%s", tmp);
     } else {
         orte_gpr_replica_dump_load_string(buffer, &tmp2);
     }

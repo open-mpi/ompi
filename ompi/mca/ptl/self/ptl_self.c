@@ -38,7 +38,7 @@
 #include "class/ompi_bitmap.h"
 #include "opal/event/event.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "datatype/datatype.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
@@ -152,7 +152,7 @@ int mca_ptl_self_send( struct mca_ptl_base_module_t* ptl,
      * the receive should be already posted. Otherwise the program will lead to a deadlock.
      */
     if( (false == match) && (MCA_PML_REQUEST_SEND == req->req_send.req_base.req_type) ) {
-        ompi_output( 0, "OMPI reach a dead-lock situation. A send to self was posted without a proper receive\n" );
+        opal_output( 0, "OMPI reach a dead-lock situation. A send to self was posted without a proper receive\n" );
         return OMPI_ERROR;
     }
 #endif  /* OMPI_ENABLE_MPI_THREADS */

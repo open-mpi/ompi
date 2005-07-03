@@ -26,7 +26,7 @@
 #include "oob_tcp_peer.h"
 #include "oob_tcp_hdr.h"
 #include <errno.h>
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

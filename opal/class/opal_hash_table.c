@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "class/opal_hash_table.h"
 
@@ -135,7 +135,7 @@ int opal_hash_table_get_value_uint32(opal_hash_table_t* ht, uint32_t key,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_get_value_uint32:"
+        opal_output(0, "opal_hash_table_get_value_uint32:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERROR;
     }
@@ -160,7 +160,7 @@ int opal_hash_table_set_value_uint32(opal_hash_table_t* ht,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_set_value_uint32:"
+        opal_output(0, "opal_hash_table_set_value_uint32:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
@@ -195,7 +195,7 @@ int opal_hash_table_remove_value_uint32(opal_hash_table_t* ht, uint32_t key)
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_remove_value_uint32:"
+        opal_output(0, "opal_hash_table_remove_value_uint32:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
@@ -241,7 +241,7 @@ int opal_hash_table_get_value_uint64(opal_hash_table_t* ht, uint64_t key,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_get_value_uint64:"
+        opal_output(0, "opal_hash_table_get_value_uint64:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERROR;
     }
@@ -266,7 +266,7 @@ int opal_hash_table_set_value_uint64(opal_hash_table_t* ht,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_set_value_uint64:"
+        opal_output(0, "opal_hash_table_set_value_uint64:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
@@ -302,7 +302,7 @@ int opal_hash_table_remove_value_uint64(opal_hash_table_t* ht, uint64_t key)
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_remove_value_uint64:"
+        opal_output(0, "opal_hash_table_remove_value_uint64:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
@@ -377,7 +377,7 @@ int opal_hash_table_get_value_ptr(opal_hash_table_t* ht, const void* key,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_get_value_ptr:"
+        opal_output(0, "opal_hash_table_get_value_ptr:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERROR;
     }
@@ -404,7 +404,7 @@ int opal_hash_table_set_value_ptr(opal_hash_table_t* ht, const void* key,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_set_value_ptr:"
+        opal_output(0, "opal_hash_table_set_value_ptr:"
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }
@@ -445,7 +445,7 @@ int opal_hash_table_remove_value_ptr(opal_hash_table_t* ht,
 
 #if OMPI_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        ompi_output(0, "opal_hash_table_remove_value_ptr: "
+        opal_output(0, "opal_hash_table_remove_value_ptr: "
 		   "opal_hash_table_init() has not been called");
         return OMPI_ERR_BAD_PARAM;
     }

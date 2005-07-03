@@ -21,7 +21,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 
@@ -201,7 +201,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         &btl->super,
         &resources);
     if(NULL == btl->gm_mpool) {
-        ompi_output (0, "[%s:%d] unable to initialize mpool", __FILE__, __LINE__);
+        opal_output (0, "[%s:%d] unable to initialize mpool", __FILE__, __LINE__);
         return OMPI_ERROR;
     }
  
@@ -250,7 +250,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
 
     /* enable rdma */
     if( GM_SUCCESS != gm_allow_remote_memory_access (btl->gm_port) ) {
-        ompi_output (0, "[%s:%d] unable to allow remote memory access", __FILE__, __LINE__);
+        opal_output (0, "[%s:%d] unable to allow remote memory access", __FILE__, __LINE__);
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -294,18 +294,18 @@ static int mca_btl_gm_discover( void )
 
         /*  Get node local Id */
         if( GM_SUCCESS != gm_get_node_id( gm_port, &local_id) ) {
-            ompi_output (0, " failure to get local_id \n");
+            opal_output (0, " failure to get local_id \n");
             continue;
         }
         /* Gather an unique id for the node */
 #if GM_API_VERSION > 0x200
         if (GM_SUCCESS != gm_node_id_to_global_id( gm_port, local_id, &global_id) ) {
-            ompi_output (0, "[%s:%d] Unable to get my GM global unique id", __FILE__, __LINE__);
+            opal_output (0, "[%s:%d] Unable to get my GM global unique id", __FILE__, __LINE__);
             continue;
         }
 #else
         if( GM_SUCCESS != gm_get_host_name( gm_port, global_id ) ) {
-            ompi_output( 0, "[%s:%d] Unable to get the GM host name\n", __FILE__, __LINE__);
+            opal_output( 0, "[%s:%d] Unable to get the GM host name\n", __FILE__, __LINE__);
             continue;
         }
 #endif  /* GM_API_VERSION > 0x200 */
@@ -313,7 +313,7 @@ static int mca_btl_gm_discover( void )
         /* create the btl module */
         btl = (mca_btl_gm_module_t *)malloc( sizeof(mca_btl_gm_module_t) );
         if (NULL == btl) {
-            ompi_output( 0, "[%s:%d] out of resources", __FILE__, __LINE__);
+            opal_output( 0, "[%s:%d] out of resources", __FILE__, __LINE__);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         /* copy the basic informations into the new BTL */
@@ -330,7 +330,7 @@ static int mca_btl_gm_discover( void )
 #endif  /* GM_API_VERSION > 0x200 */
 
         if((rc = mca_btl_gm_module_init(btl)) != OMPI_SUCCESS) {
-            ompi_output(0, "[%s:%d] unable to initialze gm port", __FILE__, __LINE__);
+            opal_output(0, "[%s:%d] unable to initialze gm port", __FILE__, __LINE__);
             return rc;
         }
 
@@ -389,14 +389,14 @@ mca_btl_gm_component_init (int *num_btl_modules,
 
     /* s try to initialize GM */
     if( GM_SUCCESS != gm_init() ) {
-        ompi_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
+        opal_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
         return NULL;
     }
 
     /* First discover all available boards. For each board we create a unique BTL */
     mca_btl_gm_component.gm_btls = malloc( mca_btl_gm_component.gm_max_btls * sizeof (mca_btl_gm_module_t *));
     if (NULL == mca_btl_gm_component.gm_btls) {
-        ompi_output( 0, "[%s:%d] out of resources.", __FILE__, __LINE__ );
+        opal_output( 0, "[%s:%d] out of resources.", __FILE__, __LINE__ );
         return NULL;
     }
 

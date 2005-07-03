@@ -22,7 +22,7 @@
 #include "mpi.h"
 #include "include/constants.h"
 #include "opal/class/opal_list.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
@@ -139,7 +139,7 @@ static int init_query(const mca_base_component_t *m,
 {
     int ret;
 
-    ompi_output_verbose(10, mca_io_base_output,
+    opal_output_verbose(10, mca_io_base_output,
                         "io:find_available: querying io component %s", 
                         m->mca_component_name);
 
@@ -154,7 +154,7 @@ static int init_query(const mca_base_component_t *m,
     } else {
         /* Unrecognized io API version */
 
-        ompi_output_verbose(10, mca_io_base_output,
+        opal_output_verbose(10, mca_io_base_output,
                             "io:find_available: unrecognized io API version (%d.%d.%d)", 
                             m->mca_type_major_version,
                             m->mca_type_minor_version,
@@ -166,14 +166,14 @@ static int init_query(const mca_base_component_t *m,
     /* Query done -- look at the return value to see what happened */
 
     if (OMPI_SUCCESS != ret) {
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:find_available: io component %s is not available", 
                             m->mca_component_name);
         if (NULL != m->mca_close_component) {
             m->mca_close_component();
         }
     } else {
-        ompi_output_verbose(10, mca_io_base_output, 
+        opal_output_verbose(10, mca_io_base_output, 
                             "io:find_available: io component %s is available", 
                             m->mca_component_name);
     }

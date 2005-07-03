@@ -22,7 +22,7 @@
 
 #include "include/orte_constants.h"
 #include "opal/class/opal_list.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -37,7 +37,7 @@
 
 static void orte_rds_hostfile_parse_error(void)
 {
-    ompi_output(0, "Error reading hostfile at line %d: %s\n",
+    opal_output(0, "Error reading hostfile at line %d: %s\n",
         orte_rds_hostfile_line, orte_rds_hostfile_value.sval);
 }
 
@@ -266,7 +266,7 @@ static int orte_rds_hostfile_query(void)
         if(mca_rds_hostfile_component.default_hostfile) {
             rc = ORTE_SUCCESS;
         } else {
-            ompi_output(0, "orte_rds_hostfile: could not open %s\n", mca_rds_hostfile_component.path);
+            opal_output(0, "orte_rds_hostfile: could not open %s\n", mca_rds_hostfile_component.path);
         }
         goto cleanup;
     } else if (ORTE_SUCCESS != rc) {

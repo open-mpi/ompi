@@ -17,7 +17,7 @@
 
 #include "orte_config.h"
 #include "include/orte_constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pls/base/base.h"
@@ -51,7 +51,7 @@ int orte_pls_base_open(void)
     param = mca_base_param_register_int("pls", "base", "verbose", NULL, 0);
     mca_base_param_lookup_int(param, &value);
     if (value != 0) {
-        orte_pls_base.pls_output = ompi_output_open(NULL);
+        orte_pls_base.pls_output = opal_output_open(NULL);
     } else {
         orte_pls_base.pls_output = -1;
     }

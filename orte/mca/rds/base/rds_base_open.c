@@ -22,7 +22,7 @@
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/gpr/gpr_types.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 #include "mca/rds/base/base.h"
 
@@ -97,11 +97,11 @@ int orte_rds_base_open(void)
 
     /* Debugging / verbose output */
 
-    orte_rds_base.rds_output = ompi_output_open(NULL);
+    orte_rds_base.rds_output = opal_output_open(NULL);
     param = mca_base_param_register_int("rds", "base", "verbose", NULL, 0);
     mca_base_param_lookup_int(param, &value);
     if (value != 0) {
-        orte_rds_base.rds_output = ompi_output_open(NULL);
+        orte_rds_base.rds_output = opal_output_open(NULL);
     } else {
         orte_rds_base.rds_output = -1;
     }

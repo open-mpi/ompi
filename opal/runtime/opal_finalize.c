@@ -20,7 +20,7 @@
 
 #include "include/orte_constants.h"
 #include "opal/class/opal_object.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/malloc.h"
 #include "mca/base/base.h"
 #include "runtime/opal.h"
@@ -40,7 +40,7 @@ int opal_finalize(void)
     mca_base_close();
 
     /* finalize the output system */
-    ompi_output_finalize();
+    opal_output_finalize();
     
     /* finalize the class/object system */
     opal_class_finalize();

@@ -37,7 +37,7 @@ do { \
  \
     MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc); \
     if(rc != OMPI_SUCCESS) { \
-        ompi_output(0, "mca_ptl_mx_match: unable to allocate resources.\n"); \
+        opal_output(0, "mca_ptl_mx_match: unable to allocate resources.\n"); \
         break; \
     } \
     frag->frag_size = 0; \
@@ -60,7 +60,7 @@ do { \
         frag, \
         &frag->frag_request); \
     if(mx_return != MX_SUCCESS) { \
-        ompi_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return); \
+        opal_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return); \
         MCA_PTL_MX_RECV_FRAG_RETURN(frag); \
     } \
 } while(0)
@@ -126,7 +126,7 @@ do {                                                                            
         }                                                                           \
         default:                                                                    \
         {                                                                           \
-            ompi_output(0, "mca_ptl_mx_progress: invalid request type: %d",         \
+            opal_output(0, "mca_ptl_mx_progress: invalid request type: %d",         \
                 frag->frag_type);                                                   \
             break;                                                                  \
         }                                                                           \

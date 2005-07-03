@@ -23,7 +23,7 @@
 
 #include "include/orte_constants.h"
 #include "class/orte_pointer_array.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 static void orte_pointer_array_construct(orte_pointer_array_t *);
 static void orte_pointer_array_destruct(orte_pointer_array_t *);
@@ -118,7 +118,7 @@ int orte_pointer_array_add(size_t *location, orte_pointer_array_t *table, void *
     size_t i, index;
 
     if (0) {
-        ompi_output(0,"orte_pointer_array_add:  IN:  "
+        opal_output(0,"orte_pointer_array_add:  IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " ptr = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -166,7 +166,7 @@ int orte_pointer_array_add(size_t *location, orte_pointer_array_t *table, void *
     }
 
     if (0) {
-        ompi_output(0,"orte_pointer_array_add:  OUT: "
+        opal_output(0,"orte_pointer_array_add:  OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -195,7 +195,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
     assert(table != NULL);
 
 #if 0
-    ompi_output(0,"orte_pointer_array_set_item: IN:  "
+    opal_output(0,"orte_pointer_array_set_item: IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -267,7 +267,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
 	
 
 #if 0
-    ompi_output(0,"orte_pointer_array_set_item: OUT: "
+    opal_output(0,"orte_pointer_array_set_item: OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -298,7 +298,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
     assert(table != NULL);
 
 #if 0
-    ompi_output(0,"orte_pointer_array_test_and_set_item: IN:  "
+    opal_output(0,"orte_pointer_array_test_and_set_item: IN:  "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,
@@ -341,7 +341,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
     }
 
 #if 0
-    ompi_output(0,"orte_pointer_array_test_and_set_item: OUT: "
+    opal_output(0,"orte_pointer_array_test_and_set_item: OUT: "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,

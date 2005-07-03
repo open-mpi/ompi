@@ -23,7 +23,7 @@
 #include "include/types.h"
 #include "opal/class/opal_object.h"
 #if OMPI_ENABLE_DEBUG
-#include "util/output.h"
+#include "opal/util/output.h"
 #endif
 
 /*
@@ -245,7 +245,7 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
 {
 #if OMPI_ENABLE_DEBUG
     if (index >= array->array_size) {
-        ompi_output(0, "opal_value_array_remove_item: invalid index %d\n", index);
+        opal_output(0, "opal_value_array_remove_item: invalid index %d\n", index);
         return OMPI_ERR_BAD_PARAM;
     }
 #endif   

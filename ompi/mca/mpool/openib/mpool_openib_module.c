@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mpool/mvapi/mpool_openib.h"
 
 
@@ -93,7 +93,7 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
                            ); 
     
     if(VAPI_OK != ret){ 
-        ompi_output(0, "error pinning vapi memory\n"); 
+        opal_output(0, "error pinning vapi memory\n"); 
         return OMPI_ERROR; 
     }
     
@@ -122,7 +122,7 @@ int mca_mpool_openib_deregister(mca_mpool_base_module_t* mpool, void *addr, size
                              ); 
     
     if(VAPI_OK != ret){ 
-        ompi_output(0, "%s: error unpinning vapi memory\n", __func__); 
+        opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
         return OMPI_ERROR; 
     }
     free(registration); 

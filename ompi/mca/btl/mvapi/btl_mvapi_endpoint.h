@@ -199,16 +199,16 @@ static inline int mca_btl_mvapi_endpoint_post_rr( mca_btl_mvapi_endpoint_t * end
 }
 
 #define DUMP_ENDPOINT(endpoint_ptr) {                                       \
-    ompi_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
-    ompi_output(0, "Dumping endpoint %d state",                         \
+    opal_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
+    opal_output(0, "Dumping endpoint %d state",                         \
             endpoint->endpoint_proc->proc_guid.vpid);                       \
-    ompi_output(0, "Local QP hndl : %d",                            \
+    opal_output(0, "Local QP hndl : %d",                            \
             endpoint_ptr->endpoint_conn->lres->qp_hndl);                    \
-    ompi_output(0, "Local QP num : %d",                             \
+    opal_output(0, "Local QP num : %d",                             \
             endpoint_ptr->endpoint_conn->lres->qp_prop.qp_num);             \
-    ompi_output(0, "Remote QP num : %d",                            \
+    opal_output(0, "Remote QP num : %d",                            \
             endpoint_ptr->endpoint_conn->rres->qp_num);                     \
-    ompi_output(0, "Remote LID : %d",                               \
+    opal_output(0, "Remote LID : %d",                               \
             endpoint_ptr->endpoint_conn->rres->lid);                        \
 }
 

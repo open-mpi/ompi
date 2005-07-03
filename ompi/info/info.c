@@ -19,7 +19,7 @@
 #include "include/constants.h"
 #include "info/info.h"
 #include "ompi/runtime/params.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 
 
 /*
@@ -322,12 +322,12 @@ int ompi_info_finalize(void)
             
             if (!info->i_freed && ompi_debug_show_handle_leaks) {
                 if (ompi_debug_show_handle_leaks) {
-                    ompi_output(0, "WARNING: MPI_Info still allocated at MPI_FINALIZE");
+                    opal_output(0, "WARNING: MPI_Info still allocated at MPI_FINALIZE");
                     for (item = opal_list_get_first(&(info->super));
                          opal_list_get_end(&(info->super)) != item;
                          item = opal_list_get_next(item)) {
                         entry = (ompi_info_entry_t *) item;
-                        ompi_output(0, "WARNING:   key=\"%s\", value=\"%s\"", 
+                        opal_output(0, "WARNING:   key=\"%s\", value=\"%s\"", 
                                     entry->ie_key,
                                     NULL != entry->ie_value ? entry->ie_value : "(null)");
                         found = true;
@@ -341,7 +341,7 @@ int ompi_info_finalize(void)
                since we're destroying everything, it isn't worth it */
 
             if (!found && ompi_debug_show_handle_leaks) {
-                ompi_output(0, "WARNING:   (no keys)");
+                opal_output(0, "WARNING:   (no keys)");
             }
         }
     }

@@ -26,7 +26,7 @@
 #include "opal/threads/mutex.h"
 #include "datatype/convertor.h"
 #include "include/sys/atomic.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/if.h"
 #include "util/proc_info.h"
 #include "util/printf.h"
@@ -171,7 +171,7 @@ int mca_btl_sm_add_procs_same_base_addr(
                 &mca_btl_sm_component.super.btl_version, procs[proc],
                 (void**)(&(sm_proc_info[proc])), &size);
         if(return_code != OMPI_SUCCESS) {
-            ompi_output(0, "mca_btl_sm_add_procs: mca_base_modex_recv: failed with return value=%d", return_code);
+            opal_output(0, "mca_btl_sm_add_procs: mca_base_modex_recv: failed with return value=%d", return_code);
             goto CLEANUP;
         }
 
@@ -205,7 +205,7 @@ int mca_btl_sm_add_procs_same_base_addr(
                    procs[proc]->proc_name.vpid);
                peer->fifo_fd = open(path, O_WRONLY);
                if(peer->fifo_fd < 0) {
-                   ompi_output(0, "mca_btl_sm_add_procs: open(%s) failed with errno=%d\n", path, errno);
+                   opal_output(0, "mca_btl_sm_add_procs: open(%s) failed with errno=%d\n", path, errno);
                    goto CLEANUP;
                }
 #endif
@@ -304,7 +304,7 @@ int mca_btl_sm_add_procs_same_base_addr(
                         mca_btl_sm_component.sm_resouce_ctl_file,
                         sizeof(mca_btl_sm_module_resource_t), 8 ))) 
         {
-            ompi_output(0, "mca_btl_sm_add_procs: unable to create shared memory BTL coordinating strucure :: size %ld \n",
+            opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory BTL coordinating strucure :: size %ld \n",
                     size);
             return_code=OMPI_ERROR;
             goto CLEANUP;

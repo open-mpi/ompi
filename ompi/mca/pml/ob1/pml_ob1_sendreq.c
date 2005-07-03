@@ -87,7 +87,7 @@ static void mca_pml_ob1_short_completion(
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
-        ompi_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
     }
 
@@ -120,7 +120,7 @@ static void mca_pml_ob1_send_completion(
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
-        ompi_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
     }
 
@@ -141,7 +141,7 @@ static void mca_pml_ob1_send_completion(
             sendreq->req_bytes_delivered -= sizeof(mca_pml_ob1_frag_hdr_t);
             break;
         default:
-            ompi_output(0, "mca_pml_ob1_send_completion: invalid header type\n");
+            opal_output(0, "mca_pml_ob1_send_completion: invalid header type\n");
             break;
     }
 

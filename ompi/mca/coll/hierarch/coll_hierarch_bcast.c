@@ -19,7 +19,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "mca/coll/base/coll_tags.h"

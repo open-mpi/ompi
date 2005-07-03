@@ -110,12 +110,12 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
         (void**)&ptl_proc->proc_addrs, 
         &size);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_proc_create: mca_base_modex_recv: failed with return value=%d", rc);
+        opal_output(0, "mca_ptl_mx_proc_create: mca_base_modex_recv: failed with return value=%d", rc);
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
     if(0 != (size % sizeof(mx_endpoint_addr_t))) {
-        ompi_output(0, "mca_ptl_mx_proc_create: mca_base_modex_recv: invalid size %d\n", size);
+        opal_output(0, "mca_ptl_mx_proc_create: mca_base_modex_recv: invalid size %d\n", size);
         return NULL;
     }
     ptl_proc->proc_addr_count = size / sizeof(mx_endpoint_addr_t);

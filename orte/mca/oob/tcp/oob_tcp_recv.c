@@ -42,7 +42,7 @@ int mca_oob_tcp_recv(
     int i, rc = 0, size = 0;
 
     if(mca_oob_tcp_component.tcp_debug > 3) {
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv: tag %d\n",
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv: tag %d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(peer),
             tag);

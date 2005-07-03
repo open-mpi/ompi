@@ -84,7 +84,7 @@ do {                                                \
     for( i = 0; i < copy_loops; i++ ) { \
         OMPI_DDT_SAFEGUARD_POINTER( (CONVERTOR)->pBaseBuf + lastDisp, end_loop->size, \
                                     (CONVERTOR)->pBaseBuf, (CONVERTOR)->pDesc, (CONVERTOR)->count ); \
-        DO_DEBUG (ompi_output( 0, "2. memcpy( %p, %p, %ld )\n", pDestBuf, (CONVERTOR)->pBaseBuf + lastDisp,  \
+        DO_DEBUG (opal_output( 0, "2. memcpy( %p, %p, %ld )\n", pDestBuf, (CONVERTOR)->pBaseBuf + lastDisp,  \
                                end_loop->size ); ); \
         MEMCPY( pDestBuf, (CONVERTOR)->pBaseBuf + lastDisp, end_loop->size ); \
         lastDisp += loop->extent;  \

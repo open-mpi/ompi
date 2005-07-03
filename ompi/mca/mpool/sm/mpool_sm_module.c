@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/mpool/sm/mpool_sm.h"
 #include "mca/common/sm/common_sm_mmap.h"
 

@@ -18,7 +18,7 @@
 #ifndef DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 #define DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 
-#include "util/output.h"
+#include "opal/util/output.h"
 
 extern int ompi_ddt_dfd;
 
@@ -26,17 +26,17 @@ extern int ompi_ddt_dfd;
 #  define DDT_DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
      ompi_ddt_dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
 #  if defined(ACCEPT_C99)
-#    define DUMP( ARGS... )          ompi_output(ompi_ddt_dfd, __VA_ARGS__)
+#    define DUMP( ARGS... )          opal_output(ompi_ddt_dfd, __VA_ARGS__)
 #  else
 #    if defined(__GNUC__) && !defined(__STDC__)
-#      define DUMP(ARGS...)          ompi_output( ompi_ddt_dfd, ARGS)
+#      define DUMP(ARGS...)          opal_output( ompi_ddt_dfd, ARGS)
 #  else
 static inline void DUMP( char* fmt, ... )
 {
    va_list list;
 
    va_start( list, fmt );
-   ompi_output( ompi_ddt_dfd, fmt, list );
+   opal_output( ompi_ddt_dfd, fmt, list );
    va_end( list );
 }
 #      define DUMP                   printf
@@ -235,7 +235,7 @@ do { \
 
 #define MEMCPY( DST, SRC, BLENGTH ) \
 do { \
-    /*ompi_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
+    /*opal_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
     memcpy( (DST), (SRC), (BLENGTH) ); \
 } while (0)
 
@@ -251,7 +251,7 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
     __lower_bound += (PDATA)->true_lb; \
     __upper_bound = (INITPTR) + ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1) + (PDATA)->true_ub; \
     if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
-        ompi_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
+        opal_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
                      __FILE__, __LINE__, (ACTPTR), (LENGTH), __lower_bound, __upper_bound, \
                      (INITPTR), (COUNT) ); \
         ompi_ddt_dump( (PDATA) ); \

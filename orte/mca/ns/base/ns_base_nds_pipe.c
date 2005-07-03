@@ -25,7 +25,7 @@
 
 #include "include/orte_constants.h"
 #include "util/proc_info.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
@@ -55,14 +55,14 @@ int orte_ns_nds_pipe_get(void)
 
     rc = read(fd,&orte_process_info.vpid_start, sizeof(orte_process_info.vpid_start));
     if(rc != sizeof(orte_process_info.vpid_start)) {
-        ompi_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
+        opal_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
 
     rc = read(fd,&num_procs, sizeof(num_procs));
     if(rc != sizeof(num_procs)) {
-        ompi_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
+        opal_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }

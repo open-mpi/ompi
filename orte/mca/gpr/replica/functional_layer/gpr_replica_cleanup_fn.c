@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "class/orte_pointer_array.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/proc_info.h"
 
 #include "mca/ns/ns.h"
@@ -72,7 +72,7 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc)
     size_t i, j;
 
 	if (orte_gpr_replica_globals.debug) {
-		ompi_output(0, "[%lu,%lu,%lu] gpr_replica_cleanup_proc: function entered for process [%lu,%lu,%lu]",
+		opal_output(0, "[%lu,%lu,%lu] gpr_replica_cleanup_proc: function entered for process [%lu,%lu,%lu]",
 					ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(proc));
 	}
 	

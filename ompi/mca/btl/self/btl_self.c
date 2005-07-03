@@ -26,7 +26,7 @@
 #include "opal/threads/mutex.h"
 #include "datatype/convertor.h"
 #include "include/sys/atomic.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/if.h"
 #include "util/proc_info.h"
 #include "util/printf.h"

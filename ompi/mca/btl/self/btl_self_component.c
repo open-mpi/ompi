@@ -27,7 +27,7 @@
 #include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "mca/pml/pml.h"

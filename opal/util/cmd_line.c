@@ -27,7 +27,7 @@
 #include "util/argv.h"
 #include "util/cmd_line.h"
 #include "util/strncpy.h"
-#include "util/output.h"
+#include "opal/util/output.h"
 #include "mca/base/mca_base_param.h"
 
 
@@ -377,7 +377,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                     /* If we run out of parameters, error */
 
                     if (i >= cmd->lcl_argc) {
-                        ompi_output(0, "Error: option \"%s\" did not have "
+                        opal_output(0, "Error: option \"%s\" did not have "
                                     "enough parameters (%d)",
                                     cmd->lcl_argv[orig],
                                     option->clo_num_params);
@@ -387,7 +387,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                     } else {
                         if (0 == strcmp(cmd->lcl_argv[i], 
                                         special_empty_token)) {
-                            ompi_output(0, "Error: option \"%s\" did not have "
+                            opal_output(0, "Error: option \"%s\" did not have "
                                         "enough parameters (%d)",
                                         cmd->lcl_argv[orig],
                                         option->clo_num_params);
@@ -442,7 +442,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
 
         if (is_unknown) {
             if (!ignore_unknown) {
-                ompi_output(0, "Error: unknown option \"%s\"", 
+                opal_output(0, "Error: unknown option \"%s\"", 
                             cmd->lcl_argv[i]);
             }
             while (i < cmd->lcl_argc) {

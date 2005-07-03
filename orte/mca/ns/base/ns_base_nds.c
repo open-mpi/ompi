@@ -43,7 +43,7 @@ int orte_ns_base_set_my_name(void)
     
     /* check to see if name has already been set - if so, THIS IS AN ERROR */
     if (NULL != orte_process_info.my_name) {
-        ompi_output(0, "my name was set to [%d,%d,%d]", ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "my name was set to [%d,%d,%d]", ORTE_NAME_ARGS(orte_process_info.my_name));
         ORTE_ERROR_LOG(ORTE_ERR_FATAL);
         return ORTE_ERR_FATAL;
     }
