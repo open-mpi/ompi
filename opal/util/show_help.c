@@ -51,7 +51,7 @@ int ompi_show_help(const char *filename, const char *topic,
 {
     int ret;
     va_list arglist;
-    char **array;
+    char **array = NULL;
 
     if (OMPI_SUCCESS != (ret = open_file(filename, topic))) {
         return ret;
