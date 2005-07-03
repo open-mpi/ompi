@@ -38,7 +38,7 @@
 #include <limits.h>
 
 #include "include/types.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 
 #define ORTE_NAME_ARGS(n) \
     (unsigned long) ((NULL == n) ? -1 : (ssize_t)(n)->cellid), \
@@ -91,7 +91,7 @@ extern orte_process_name_t orte_name_all;
 /** List of names for general use
  */
 struct orte_name_services_namelist_t {
-    ompi_list_item_t item;     /**< Allows this item to be placed on a list */
+    opal_list_item_t item;     /**< Allows this item to be placed on a list */
     orte_process_name_t *name;  /**< Name of a process */
 };
 typedef struct orte_name_services_namelist_t orte_name_services_namelist_t;

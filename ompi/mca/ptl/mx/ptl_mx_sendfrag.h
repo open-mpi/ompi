@@ -45,7 +45,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
 
 #define MCA_PTL_MX_SEND_FRAG_ALLOC(sendfrag, rc)  \
     { \
-    ompi_list_item_t* item; \
+    opal_list_item_t* item; \
     OMPI_FREE_LIST_GET(&mca_ptl_mx_component.mx_send_frags, item, rc); \
     sendfrag = (mca_ptl_mx_send_frag_t*)item; \
     }
@@ -61,7 +61,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
         seg_free >>= 1; \
         seg_ptr++; \
     } \
-    OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_send_frags, (ompi_list_item_t*)sendfrag); \
+    OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_send_frags, (opal_list_item_t*)sendfrag); \
     }
 
 #define MCA_PTL_MX_SEND_FRAG_INIT_ACK(ack,ptl,frag) \

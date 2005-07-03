@@ -19,7 +19,7 @@
 #ifndef MCA_PTL_BASE_FRAGMENT_H
 #define MCA_PTL_BASE_FRAGMENT_H
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "datatype/datatype.h"
@@ -43,7 +43,7 @@ typedef enum {
  * Base type for fragment descriptors. 
  */
 struct mca_ptl_base_frag_t {
-    ompi_list_item_t super; /**< allow the fragment to be placed on a list */
+    opal_list_item_t super; /**< allow the fragment to be placed on a list */
     mca_ptl_base_header_t frag_header; /**< header used for fragment matching */
     struct mca_ptl_base_module_t* frag_owner; /**< PTL that allocated this fragment */
     struct mca_ptl_base_peer_t* frag_peer; /**< PTL specific addressing info */

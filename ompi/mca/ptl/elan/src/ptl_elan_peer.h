@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
@@ -35,7 +35,7 @@ extern "C" {
  *  An abstraction that represents a connection to a peer process.
  */
 struct mca_ptl_elan_peer_t {
-    ompi_list_item_t            super;
+    opal_list_item_t            super;
 
     struct mca_ptl_elan_module_t *peer_ptl;    
     struct mca_ptl_elan_proc_t *peer_proc; 

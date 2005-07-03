@@ -33,7 +33,7 @@
 /*
  * Local variable
  */
-static ompi_list_item_t *cur_node_item = NULL;
+static opal_list_item_t *cur_node_item = NULL;
 
 
 static int claim_slot(orte_rmaps_base_map_t *map, 
@@ -71,11 +71,11 @@ static int claim_slot(orte_rmaps_base_map_t *map,
     proc->proc_rank = vpid;
     orte_ns.free_name(&proc_name);
     OBJ_RETAIN(proc); /* bump reference count for the node */
-    ompi_list_append(&rmaps_node->node_procs, &proc->super);
+    opal_list_append(&rmaps_node->node_procs, &proc->super);
     map->procs[proc_index] = proc;
     
     /* Save this node on the map */
-    ompi_list_append(&map->nodes, &rmaps_node->super);
+    opal_list_append(&map->nodes, &rmaps_node->super);
     
     /* Decrease the number of slots available for allocation
        on this node */
@@ -99,12 +99,12 @@ static int map_app_by_node(
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
     int rank,
-    ompi_list_t* nodes)
+    opal_list_t* nodes)
 {
     int rc;
     size_t num_alloc = 0;
     size_t proc_index = 0;
-    ompi_list_item_t *start, *next;
+    opal_list_item_t *start, *next;
     orte_ras_base_node_t *node;
     bool did_alloc;
 
@@ -118,10 +118,10 @@ static int map_app_by_node(
 
        But do a bozo check to ensure that we don't have a empty node
        list. */
-    if (0 == ompi_list_get_size(nodes)) {
+    if (0 == opal_list_get_size(nodes)) {
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
-    } else if (ompi_list_get_end(nodes) == cur_node_item) {
-        cur_node_item = ompi_list_get_first(nodes);
+    } else if (opal_list_get_end(nodes) == cur_node_item) {
+        cur_node_item = opal_list_get_first(nodes);
     }
     start = cur_node_item;
 
@@ -139,7 +139,7 @@ static int map_app_by_node(
     did_alloc = false;
     while (num_alloc < app->num_procs) {
         node = (orte_ras_base_node_t*) cur_node_item;
-        next = ompi_list_get_next(cur_node_item);
+        next = opal_list_get_next(cur_node_item);
 
         /* If we have an available slot on this node, claim it */
         if (node->node_slots_alloc > 0) {
@@ -149,7 +149,7 @@ static int map_app_by_node(
                 return rc;
             }
             if (node->node_slots_alloc == 0) {
-                ompi_list_remove_item(nodes, (ompi_list_item_t*)node);
+                opal_list_remove_item(nodes, (opal_list_item_t*)node);
                 OBJ_RELEASE(node);
             }
 
@@ -168,8 +168,8 @@ static int map_app_by_node(
         /* Move on to the next node */
 
         cur_node_item = next;
-        if (ompi_list_get_end(nodes) == cur_node_item) {
-            cur_node_item = ompi_list_get_first(nodes);
+        if (opal_list_get_end(nodes) == cur_node_item) {
+            cur_node_item = opal_list_get_first(nodes);
         }
 
         /* Are we done? */
@@ -178,7 +178,7 @@ static int map_app_by_node(
         }
 
         /* Double check that the list is not empty */
-        if (ompi_list_get_end(nodes) == cur_node_item) {
+        if (opal_list_get_end(nodes) == cur_node_item) {
             return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
         }
 
@@ -211,12 +211,12 @@ static int map_app_by_slot(
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
     int rank,
-    ompi_list_t* nodes)
+    opal_list_t* nodes)
 {
     int rc;
     size_t num_alloc = 0;
     size_t proc_index = 0;
-    ompi_list_item_t *next;
+    opal_list_item_t *next;
     orte_ras_base_node_t *node;
 
     /* Note that cur_node_item already points to the Right place in
@@ -229,19 +229,19 @@ static int map_app_by_slot(
 
        But do a bozo check to ensure that we don't have a empty node
        list. */
-    if (0 == ompi_list_get_size(nodes)) {
+    if (0 == opal_list_get_size(nodes)) {
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
-    } else if (ompi_list_get_end(nodes) == cur_node_item) {
-        cur_node_item = ompi_list_get_first(nodes);
+    } else if (opal_list_get_end(nodes) == cur_node_item) {
+        cur_node_item = opal_list_get_first(nodes);
     }
 
     /* Go through all nodes and take up to node_slots_alloc slots and
        map it to this job */
 
-    while (ompi_list_get_end(nodes) != cur_node_item &&
+    while (opal_list_get_end(nodes) != cur_node_item &&
            num_alloc < app->num_procs) {
         node = (orte_ras_base_node_t*) cur_node_item;
-        next = ompi_list_get_next(cur_node_item);
+        next = opal_list_get_next(cur_node_item);
 
         /* If we have available slots on this node, claim it */
         while (node->node_slots_alloc > 0 &&
@@ -259,7 +259,7 @@ static int map_app_by_slot(
             ++num_alloc;
         }
         if (node->node_slots_alloc == 0) {
-            ompi_list_remove_item(nodes, (ompi_list_item_t*)node);
+            opal_list_remove_item(nodes, (opal_list_item_t*)node);
             OBJ_RELEASE(node);
         }
 
@@ -287,9 +287,9 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
 {
     orte_app_context_t** context;
     size_t i, num_context;
-    ompi_list_t nodes;
-    ompi_list_t mapping;
-    ompi_list_item_t* item;
+    opal_list_t nodes;
+    opal_list_t mapping;
+    opal_list_item_t* item;
     orte_vpid_t vpid_start;
     size_t num_procs = 0;
     int rank = 0;
@@ -320,15 +320,15 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     }
 
     /* query for all nodes allocated to this job */
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(&nodes,jobid))) {
         OBJ_DESTRUCT(&nodes);
         return rc;
     }
 
     /* construct a default mapping */
-    OBJ_CONSTRUCT(&mapping, ompi_list_t);
-    cur_node_item = ompi_list_get_first(&nodes);
+    OBJ_CONSTRUCT(&mapping, opal_list_t);
+    cur_node_item = opal_list_get_first(&nodes);
     for(i=0; i<num_context; i++) {
         orte_app_context_t* app = context[i];
         orte_rmaps_base_map_t* map = OBJ_NEW(orte_rmaps_base_map_t);
@@ -336,7 +336,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
-        ompi_list_append(&mapping, &map->super);
+        opal_list_append(&mapping, &map->super);
 
         map->app = app;
         map->procs = malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
@@ -364,11 +364,11 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     rc = orte_rmaps_base_set_vpid_range(jobid,vpid_start,num_procs);
 
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&nodes))) {
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
-    while(NULL != (item = ompi_list_remove_first(&mapping))) {
+    while(NULL != (item = opal_list_remove_first(&mapping))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&mapping);

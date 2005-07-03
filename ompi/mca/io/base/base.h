@@ -26,7 +26,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "class/ompi_free_list.h"
 #include "mca/io/io.h"
 
@@ -291,7 +291,7 @@ OMPI_DECLSPEC extern bool mca_io_base_components_opened_valid;
  * initialized and destroyed when we reduce the list to all available
  * io components.
  */
-OMPI_DECLSPEC extern ompi_list_t mca_io_base_components_opened;
+OMPI_DECLSPEC extern opal_list_t mca_io_base_components_opened;
 /**
  * Indicator as to whether the list of available io components is valid
  * or not.
@@ -302,7 +302,7 @@ OMPI_DECLSPEC extern bool mca_io_base_components_available_valid;
  * components to all those who indicate that they may run during this
  * process.
  */
-OMPI_DECLSPEC extern ompi_list_t mca_io_base_components_available;
+OMPI_DECLSPEC extern opal_list_t mca_io_base_components_available;
 /**
  * Indicator as to whether the freelist of IO requests is valid or
  * not.

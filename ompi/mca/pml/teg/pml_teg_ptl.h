@@ -26,7 +26,7 @@ extern "C" {
 
 
 struct mca_pml_base_ptl_t {
-    ompi_list_t       ptl_cache;       /**< cache of send requests */
+    opal_list_t       ptl_cache;       /**< cache of send requests */
     size_t            ptl_cache_size;  /**< maximum size of cache */
     size_t            ptl_cache_alloc; /**< current number of allocated items */
     ompi_mutex_t      ptl_cache_lock;  /**< lock for queue access */

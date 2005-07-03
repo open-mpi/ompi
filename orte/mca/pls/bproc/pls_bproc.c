@@ -79,14 +79,14 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
  */
 static int orte_pls_bproc_node_array(orte_rmaps_base_map_t* map, 
                                      int ** node_array, int * node_array_len) {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     int num_procs = 0;
     int num_on_node;
     
     *node_array_len = 0;
-    for(item =  ompi_list_get_first(&map->nodes);
-        item != ompi_list_get_end(&map->nodes);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&map->nodes);
+        item != opal_list_get_end(&map->nodes);
+        item =  opal_list_get_next(item)) {
         if(*node_array_len < atol(((orte_rmaps_base_node_t*)item)->node_name)) {
             *node_array_len = atol(((orte_rmaps_base_node_t*)item)->node_name);
         }
@@ -100,11 +100,11 @@ static int orte_pls_bproc_node_array(orte_rmaps_base_map_t* map,
     }
     memset(*node_array, 0, sizeof(int) * *node_array_len);
 
-    for(item =  ompi_list_get_first(&map->nodes);
-        item != ompi_list_get_end(&map->nodes);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&map->nodes);
+        item != opal_list_get_end(&map->nodes);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)item;
-        num_on_node = ompi_list_get_size(&node->node_procs);
+        num_on_node = opal_list_get_size(&node->node_procs);
         (*node_array)[atol(node->node_name)] += num_on_node;
         num_procs += num_on_node;
     }
@@ -504,14 +504,14 @@ cleanup:
  */
 int orte_pls_bproc_launch(orte_jobid_t jobid)
 {
-    ompi_list_item_t* item;
-    ompi_list_t mapping;
+    opal_list_item_t* item;
+    opal_list_t mapping;
     orte_vpid_t vpid_start;
     orte_vpid_t vpid_range;
     int rc;
 
     /* query for the application context and allocated nodes */
-    OBJ_CONSTRUCT(&mapping, ompi_list_t);
+    OBJ_CONSTRUCT(&mapping, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_map(jobid, &mapping))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -523,9 +523,9 @@ int orte_pls_bproc_launch(orte_jobid_t jobid)
     }
 
     /* for each application context - launch across the first n nodes required */
-    for(item =  ompi_list_get_first(&mapping);
-        item != ompi_list_get_end(&mapping);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&mapping);
+        item != opal_list_get_end(&mapping);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         rc = orte_pls_bproc_launch_app(jobid, map, vpid_start, vpid_range, 
                                        map->app->idx); 
@@ -536,7 +536,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid)
     }
   
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&mapping)))
+    while(NULL != (item = opal_list_remove_first(&mapping)))
         OBJ_RELEASE(item);
     OBJ_DESTRUCT(&mapping);
     return rc;

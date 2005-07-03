@@ -36,7 +36,7 @@
 #include <sys/types.h>
 
 #include "include/orte_constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
@@ -288,7 +288,7 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **v
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
  * 
  * @code
- * ompi_list_t *keyval_list;
+ * opal_list_t *keyval_list;
  * 
  * status_code = orte_gpr.get(addr_mode, segment, tokens, keyval_list);
  * @endcode

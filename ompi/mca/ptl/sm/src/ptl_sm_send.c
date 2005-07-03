@@ -157,8 +157,8 @@ void mca_ptl_sm_matched(
     /* if can't ack, put on list for later delivery */
     if( 0 > return_status ) {
         OMPI_THREAD_LOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
-        ompi_list_append(&(mca_ptl_sm_component.sm_pending_ack),
-                (ompi_list_item_t *)sm_frag_desc);
+        opal_list_append(&(mca_ptl_sm_component.sm_pending_ack),
+                (opal_list_item_t *)sm_frag_desc);
         OMPI_THREAD_UNLOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
     } else {
         MCA_PTL_SM_SIGNAL_PEER(mca_ptl_sm_component.sm_peers[peer_local_smp_rank]);

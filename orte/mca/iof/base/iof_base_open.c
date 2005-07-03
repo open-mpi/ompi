@@ -54,8 +54,8 @@ int orte_iof_base_open(void)
     char* str_value;
 
     /* Initialize globals */
-    OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, ompi_list_t);
-    OBJ_CONSTRUCT(&orte_iof_base.iof_endpoints, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
+    OBJ_CONSTRUCT(&orte_iof_base.iof_endpoints, opal_list_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_condition, ompi_condition_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_fragments, opal_free_list_t);

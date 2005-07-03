@@ -60,7 +60,7 @@ OMPI_DECLSPEC mca_pml_base_module_t mca_pml = {
     NULL                     /* pml_start */
 };
 
-ompi_list_t mca_pml_base_components_available;
+opal_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
 char *mca_pml_base_pml;
 

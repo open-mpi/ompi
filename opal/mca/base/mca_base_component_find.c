@@ -26,7 +26,7 @@
 
 #include "include/constants.h"
 #include "util/output.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 
@@ -44,7 +44,7 @@ typedef enum component_status {
 } component_status_t;
 
 struct component_file_item_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
 
   char type[MCA_BASE_MAX_TYPE_NAME_LEN];
   char name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
@@ -54,16 +54,16 @@ struct component_file_item_t {
 };
 typedef struct component_file_item_t component_file_item_t;
 
-static OBJ_CLASS_INSTANCE(component_file_item_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(component_file_item_t, opal_list_item_t, NULL, NULL);
 
 struct dependency_item_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
 
   component_file_item_t *di_component_file_item;
 };
 typedef struct dependency_item_t dependency_item_t;
 
-static OBJ_CLASS_INSTANCE(dependency_item_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t, NULL, NULL);
 
 struct ltfn_data_holder_t {
   char type[MCA_BASE_MAX_TYPE_NAME_LEN];
@@ -76,17 +76,17 @@ typedef struct ltfn_data_holder_t ltfn_data_holder_t;
  * Private functions
  */
 static void find_dyn_components(const char *path, const char *type, 
-                             const char *name, ompi_list_t *found_components);
+                             const char *name, opal_list_t *found_components);
 static int save_filename(const char *filename, lt_ptr data);
 static int open_component(component_file_item_t *target_file, 
-                       ompi_list_t *found_components);
+                       opal_list_t *found_components);
 static int check_ompi_info(component_file_item_t *target_file, 
-                         ompi_list_t *dependencies,
-                         ompi_list_t *found_components);
+                         opal_list_t *dependencies,
+                         opal_list_t *found_components);
 static int check_dependency(char *line, component_file_item_t *target_file, 
-                            ompi_list_t *dependencies, 
-                            ompi_list_t *found_components);
-static void free_dependency_list(ompi_list_t *dependencies);
+                            opal_list_t *dependencies, 
+                            opal_list_t *found_components);
+static void free_dependency_list(opal_list_t *dependencies);
 
 
 /*
@@ -95,7 +95,7 @@ static void free_dependency_list(ompi_list_t *dependencies);
 static const char *ompi_info_suffix = ".ompi_info";
 static const char *key_dependency = "dependency=";
 static const char component_template[] = "mca_%s_";
-static ompi_list_t found_files;
+static opal_list_t found_files;
 
 
 /*
@@ -109,7 +109,7 @@ static ompi_list_t found_files;
  */
 int mca_base_component_find(const char *directory, const char *type, 
                          const mca_base_component_t *static_components[], 
-                            ompi_list_t *found_components,
+                            opal_list_t *found_components,
                             bool open_dso_components)
 {
   int i;
@@ -117,14 +117,14 @@ int mca_base_component_find(const char *directory, const char *type,
 
   /* Find all the components that were statically linked in */
 
-  OBJ_CONSTRUCT(found_components, ompi_list_t);
+  OBJ_CONSTRUCT(found_components, opal_list_t);
   for (i = 0; NULL != static_components[i]; ++i) {
     cli = OBJ_NEW(mca_base_component_list_item_t);
     if (NULL == cli) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
     cli->cli_component = static_components[i];
-    ompi_list_append(found_components, (ompi_list_item_t *) cli);
+    opal_list_append(found_components, (opal_list_item_t *) cli);
   }
 
   /* Find any available dynamic components in the specified directory */
@@ -155,12 +155,12 @@ int mca_base_component_find(const char *directory, const char *type,
  */
 static void find_dyn_components(const char *path, const char *type_name, 
                                 const char *name,
-                                ompi_list_t *found_components)
+                                opal_list_t *found_components)
 {
   ltfn_data_holder_t params;
   char *path_to_use, *dir, *end, *param;
   component_file_item_t *file;
-  ompi_list_item_t *cur;
+  opal_list_item_t *cur;
 
   strcpy(params.type, type_name);
 
@@ -197,7 +197,7 @@ static void find_dyn_components(const char *path, const char *type_name,
      make a master array of all the matching filenames that we
      find. */
 
-  OBJ_CONSTRUCT(&found_files, ompi_list_t);
+  OBJ_CONSTRUCT(&found_files, opal_list_t);
   dir = path_to_use;
   if (NULL != dir) {
     do {
@@ -222,9 +222,9 @@ static void find_dyn_components(const char *path, const char *type_name,
      give every file one chance to try to load.  If they load, great.
      If not, great. */
 
-  for (cur = ompi_list_get_first(&found_files); 
-       ompi_list_get_end(&found_files) != cur;
-       cur = ompi_list_get_next(cur)) {
+  for (cur = opal_list_get_first(&found_files); 
+       opal_list_get_end(&found_files) != cur;
+       cur = opal_list_get_next(cur)) {
     file = (component_file_item_t *) cur;
     if (UNVISITED == file->status) {
       open_component(file, found_components);
@@ -234,9 +234,9 @@ static void find_dyn_components(const char *path, const char *type_name,
   /* So now we have a final list of loaded components.  We can free all
      the file information. */
   
-  for (cur = ompi_list_remove_first(&found_files); 
+  for (cur = opal_list_remove_first(&found_files); 
        NULL != cur;
-       cur = ompi_list_remove_first(&found_files)) {
+       cur = opal_list_remove_first(&found_files)) {
     OBJ_RELEASE(cur);
   }
 
@@ -303,7 +303,7 @@ static int save_filename(const char *filename, lt_ptr data)
   strcpy(component_file->basename, basename);
   strcpy(component_file->filename, filename);
   component_file->status = UNVISITED;
-  ompi_list_append(&found_files, (ompi_list_item_t *) component_file);
+  opal_list_append(&found_files, (opal_list_item_t *) component_file);
 
   /* All done */
 
@@ -316,14 +316,14 @@ static int save_filename(const char *filename, lt_ptr data)
  * Open a component, chasing down its dependencies first, if possible.
  */
 static int open_component(component_file_item_t *target_file, 
-                       ompi_list_t *found_components)
+                       opal_list_t *found_components)
 {
   int len, show_errors, param;
   lt_dlhandle component_handle;
   mca_base_component_t *component_struct;
   char *struct_name, *err;
-  ompi_list_t dependencies;
-  ompi_list_item_t *cur;
+  opal_list_t dependencies;
+  opal_list_item_t *cur;
   mca_base_component_list_item_t *mitem;
   dependency_item_t *ditem;
 
@@ -346,9 +346,9 @@ static int open_component(component_file_item_t *target_file,
      Hence, returning OMPI_ERR_PARAM indicates that the *file* failed
      to load, not the component. */
 
-  for (cur = ompi_list_get_first(found_components); 
-       ompi_list_get_end(found_components) != cur;
-       cur = ompi_list_get_next(cur)) {
+  for (cur = opal_list_get_first(found_components); 
+       opal_list_get_end(found_components) != cur;
+       cur = opal_list_get_next(cur)) {
     mitem = (mca_base_component_list_item_t *) cur;
     if (0 == strcmp(mitem->cli_component->mca_type_name, target_file->type) &&
         0 == strcmp(mitem->cli_component->mca_component_name, target_file->name)) {
@@ -362,7 +362,7 @@ static int open_component(component_file_item_t *target_file,
      them.  If we can't load them, then this component must also fail to
      load. */
 
-  OBJ_CONSTRUCT(&dependencies, ompi_list_t);
+  OBJ_CONSTRUCT(&dependencies, opal_list_t);
   if (0 != check_ompi_info(target_file, &dependencies, found_components)) {
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
@@ -430,16 +430,16 @@ static int open_component(component_file_item_t *target_file,
      be closed later. */
 
   mitem->cli_component = component_struct;
-  ompi_list_append(found_components, (ompi_list_item_t *) mitem);
+  opal_list_append(found_components, (opal_list_item_t *) mitem);
   mca_base_component_repository_retain(target_file->type, component_handle, 
                                     component_struct);
 
   /* Now that that's all done, link all the dependencies in to this
      component's repository entry */
 
-  for (cur = ompi_list_remove_first(&dependencies);
+  for (cur = opal_list_remove_first(&dependencies);
        NULL != cur;
-       cur = ompi_list_remove_first(&dependencies)) {
+       cur = opal_list_remove_first(&dependencies)) {
     ditem = (dependency_item_t *) cur;
     mca_base_component_repository_link(target_file->type,
                                        target_file->name,
@@ -468,8 +468,8 @@ static int open_component(component_file_item_t *target_file,
  * Detect dependency cycles and error out.
  */
 static int check_ompi_info(component_file_item_t *target_file, 
-                           ompi_list_t *dependencies, 
-                           ompi_list_t *found_components)
+                           opal_list_t *dependencies, 
+                           opal_list_t *found_components)
 {
   int len;
   FILE *fp;
@@ -555,15 +555,15 @@ static int check_ompi_info(component_file_item_t *target_file,
  * it's not already loaded.
  */
 static int check_dependency(char *line, component_file_item_t *target_file,
-                            ompi_list_t *dependencies,
-                            ompi_list_t *found_components)
+                            opal_list_t *dependencies,
+                            opal_list_t *found_components)
 {
   bool happiness;
   char buffer[BUFSIZ];
   char *type, *name;
   component_file_item_t *mitem;
   dependency_item_t *ditem;
-  ompi_list_item_t *cur;
+  opal_list_item_t *cur;
 
   /* Ensure that this was a valid dependency statement */
 
@@ -589,9 +589,9 @@ static int check_dependency(char *line, component_file_item_t *target_file,
 
   mitem = NULL;
   target_file->status = CHECKING_CYCLE;
-  for (happiness = false, cur = ompi_list_get_first(&found_files);
-       ompi_list_get_end(&found_files) != cur;
-       cur = ompi_list_get_next(cur)) {
+  for (happiness = false, cur = opal_list_get_first(&found_files);
+       opal_list_get_end(&found_files) != cur;
+       cur = opal_list_get_next(cur)) {
     mitem = (component_file_item_t *) cur;
 
     /* Compare the name to the basename */
@@ -672,7 +672,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
           return OMPI_ERR_OUT_OF_RESOURCE;
       }
       ditem->di_component_file_item = mitem;
-      ompi_list_append(dependencies, (ompi_list_item_t*) ditem);
+      opal_list_append(dependencies, (opal_list_item_t*) ditem);
   }
   
   /* All done -- all depenencies satisfied */
@@ -684,13 +684,13 @@ static int check_dependency(char *line, component_file_item_t *target_file,
 /*
  * Free a dependency list
  */
-static void free_dependency_list(ompi_list_t *dependencies)
+static void free_dependency_list(opal_list_t *dependencies)
 {
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
 
-  for (item = ompi_list_remove_first(dependencies);
+  for (item = opal_list_remove_first(dependencies);
        NULL != item;
-       item = ompi_list_remove_first(dependencies)) {
+       item = opal_list_remove_first(dependencies)) {
     OBJ_RELEASE(item);
   }
   OBJ_DESTRUCT(dependencies);

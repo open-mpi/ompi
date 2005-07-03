@@ -92,7 +92,7 @@ mca_ptl_portals_send_ack(struct mca_ptl_portals_module_t *ptl,
 {
     mca_ptl_base_header_t* hdr;
     mca_ptl_portals_send_frag_t* sendfrag;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_ptl_base_recv_request_t* request = recvfrag->frag_recv.frag_request;
     int ret;
 
@@ -156,7 +156,7 @@ mca_ptl_portals_complete_send_event(mca_ptl_portals_send_frag_t* frag)
             free(frag->frag_vector[1].iov_base);
         }
         OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
-                              (ompi_list_item_t*) frag);
+                              (opal_list_item_t*) frag);
     }
 }                        
 

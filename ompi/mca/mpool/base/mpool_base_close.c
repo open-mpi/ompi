@@ -27,14 +27,14 @@
 
 int mca_mpool_base_close(void)
 {
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   mca_mpool_base_selected_module_t *sm;
 
   /* Finalize all the mpool components and free their list items */
 
-  for (item = ompi_list_remove_first(&mca_mpool_base_modules);
+  for (item = opal_list_remove_first(&mca_mpool_base_modules);
        NULL != item; 
-       item = ompi_list_remove_first(&mca_mpool_base_modules)) {
+       item = opal_list_remove_first(&mca_mpool_base_modules)) {
     sm = (mca_mpool_base_selected_module_t *) item;
 
     /* Blatently ignore the return code (what would we do to recover,

@@ -63,7 +63,7 @@ int orte_gpr_replica_process_callbacks(void)
     }
     orte_gpr_replica.processing_callbacks = true;
     
-    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_last(&orte_gpr_replica.callbacks))) {
+    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)opal_list_remove_last(&orte_gpr_replica.callbacks))) {
 	    if (NULL == cb->requestor) {  /* local callback */
 	        if (orte_gpr_replica_globals.debug) {
 		      ompi_output(0, "process_callbacks: local");
@@ -267,9 +267,9 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
             j++;
             
             /* see if a callback has already been registered for this process */
-            for (cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_first(&(orte_gpr_replica.callbacks));
-                 cb != (orte_gpr_replica_callbacks_t*)ompi_list_get_end(&(orte_gpr_replica.callbacks));
-                 cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_next(cb)) {
+            for (cb = (orte_gpr_replica_callbacks_t*)opal_list_get_first(&(orte_gpr_replica.callbacks));
+                 cb != (orte_gpr_replica_callbacks_t*)opal_list_get_end(&(orte_gpr_replica.callbacks));
+                 cb = (orte_gpr_replica_callbacks_t*)opal_list_get_next(cb)) {
     
                  if ((NULL == reqs[i]->requestor && NULL == cb->requestor) ||
                      ((NULL != reqs[i]->requestor && NULL != cb->requestor) &&
@@ -301,7 +301,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
                     goto CLEANUP;
                 }
             }
-            ompi_list_append(&orte_gpr_replica.callbacks, &cb->item);
+            opal_list_append(&orte_gpr_replica.callbacks, &cb->item);
             
             /* construct the message */
             cb->message = OBJ_NEW(orte_gpr_notify_message_t);

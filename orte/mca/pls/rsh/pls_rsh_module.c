@@ -103,8 +103,8 @@ static void set_handler_default(int sig);
 static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
     rsh_daemon_info_t *info = (rsh_daemon_info_t*) cbdata;
-    ompi_list_t map;
-    ompi_list_item_t* item;
+    opal_list_t map;
+    opal_list_item_t* item;
     int rc;
 
     /* if ssh exited abnormally, set the child processes to aborted
@@ -122,7 +122,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 #else
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* get the mapping for our node so we can cancel the right things */
-        OBJ_CONSTRUCT(&map, ompi_list_t);
+        OBJ_CONSTRUCT(&map, opal_list_t);
         rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
                                           info->jobid,
                                           info->node->node_name,
@@ -134,9 +134,9 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
         /* set state of all processes associated with the daemon as
            terminated */
-        for(item =  ompi_list_get_first(&map);
-            item != ompi_list_get_end(&map);
-            item =  ompi_list_get_next(item)) {
+        for(item =  opal_list_get_first(&map);
+            item != opal_list_get_end(&map);
+            item =  opal_list_get_next(item)) {
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
             size_t i;
 
@@ -253,8 +253,8 @@ static int orte_pls_rsh_set_node_name(orte_ras_base_node_t* node, orte_jobid_t j
 
 int orte_pls_rsh_launch(orte_jobid_t jobid)
 {
-    ompi_list_t nodes;
-    ompi_list_item_t* item;
+    opal_list_t nodes;
+    opal_list_item_t* item;
     size_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
@@ -273,7 +273,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      * mapping - as the daemon/proxy is responsibe for determining the apps
      * to launch on each node.
      */
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
 
     rc = orte_ras_base_node_query_alloc(&nodes, jobid);
     if(ORTE_SUCCESS != rc) {
@@ -284,7 +284,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      * Allocate a range of vpids for the daemons.
      */
 
-    num_nodes = ompi_list_get_size(&nodes);
+    num_nodes = opal_list_get_size(&nodes);
     if(num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
     }
@@ -380,9 +380,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      * up a daemon.
      */
 
-    for(item =  ompi_list_get_first(&nodes);
-        item != ompi_list_get_end(&nodes);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&nodes);
+        item != opal_list_get_end(&nodes);
+        item =  opal_list_get_next(item)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         orte_process_name_t* name;
         pid_t pid;
@@ -574,7 +574,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
 
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&nodes))) {
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);

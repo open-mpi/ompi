@@ -21,13 +21,13 @@
 #define MCA_MPOOL_H
 #include "mca/mca.h"
 #include "info/info.h"
-#include "class/ompi_list.h" 
+#include "opal/class/opal_list.h" 
 
 
 struct mca_mpool_base_resources_t;
 
 struct mca_mpool_base_registration_t { 
-    ompi_list_item_t super; 
+    opal_list_item_t super; 
     struct mca_mpool_base_module_t *mpool; 
     unsigned char* base;
     unsigned char* bound; 

@@ -24,7 +24,7 @@
 #include "pcm_bproc.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
 #include "runtime/ompi_rte_wait.h"

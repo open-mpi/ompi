@@ -63,7 +63,7 @@ mca_ptl_gm_module_t mca_ptl_gm_module = {
 
 OBJ_CLASS_INSTANCE (mca_ptl_gm_send_request_t,
                     mca_ptl_base_send_request_t, NULL, NULL);
-OBJ_CLASS_INSTANCE (mca_ptl_gm_peer_t, ompi_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE (mca_ptl_gm_peer_t, opal_list_item_t, NULL, NULL);
 
 int
 mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
@@ -269,7 +269,7 @@ mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
     mca_ptl_gm_send_frag_t *frag;
     frag = ((mca_ptl_gm_send_request_t *)request)->req_frag;
     OMPI_FREE_LIST_RETURN(&(((mca_ptl_gm_module_t *)ptl)->gm_send_frags),
-                                            (ompi_list_item_t *)frag);
+                                            (opal_list_item_t *)frag);
     frag->status = 0;
 #endif
 
@@ -320,7 +320,7 @@ static void mca_ptl_gm_basic_ack_callback( struct gm_port* port, void* context, 
 
     gm_ptl = (mca_ptl_gm_module_t*)header->hdr_ack.hdr_dst_addr.pval;
 
-    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
     /* release the send token */
     ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
@@ -346,13 +346,13 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
     peer = (mca_ptl_gm_peer_t*)recv_frag->frag_recv.frag_base.frag_peer;
 
     if( frag->frag_base.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK ) {  /* need to send an ack back */
-        ompi_list_item_t *item;
+        opal_list_item_t *item;
 
         OMPI_FREE_LIST_WAIT( &(gm_ptl->gm_send_dma_frags), item, rc );
         if( NULL == item ) {
             ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
             OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
-            ompi_list_append (&mca_ptl_gm_module.gm_pending_acks, (ompi_list_item_t *)frag);
+            opal_list_append (&mca_ptl_gm_module.gm_pending_acks, (opal_list_item_t *)frag);
             OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
         } else {
             ompi_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
@@ -407,6 +407,6 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
     }
     
     /* I'm done with this fragment. Return it to the free list */
-    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag );
+    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_recv_frags_free), (opal_list_item_t*)frag );
 }
 

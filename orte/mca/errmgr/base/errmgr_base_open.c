@@ -51,7 +51,7 @@ orte_errmgr_base_module_t orte_errmgr = {
     orte_errmgr_base_abort
 };
 bool orte_errmgr_base_selected = false;
-ompi_list_t orte_errmgr_base_components_available;
+opal_list_t orte_errmgr_base_components_available;
 mca_errmgr_base_component_t orte_errmgr_base_selected_component;
 bool orte_errmgr_initialized = false;
 

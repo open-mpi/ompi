@@ -117,9 +117,9 @@ static mca_mpool_base_module_t* mca_mpool_gm_init(
     /* if specified allocator cannout be loaded - look for an alternative */
     allocator_component = mca_allocator_component_lookup(mca_mpool_gm_component.gm_allocator_name);
     if(NULL == allocator_component) {
-        if(ompi_list_get_size(&mca_allocator_base_components) == 0) {
+        if(opal_list_get_size(&mca_allocator_base_components) == 0) {
             mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
-                ompi_list_get_first(&mca_allocator_base_components);
+                opal_list_get_first(&mca_allocator_base_components);
             allocator_component = (mca_allocator_base_component_t*)item->cli_component;
             ompi_output(0, "[%d:%d] unable to locate allocator: %s - using %s\n",
                 __FILE__, __LINE__,

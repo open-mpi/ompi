@@ -43,9 +43,9 @@ bool mca_pml_uniq_recv_frag_match(
 {
     bool matched;
     bool matches = false;
-    ompi_list_t matched_frags;
+    opal_list_t matched_frags;
     if((matched = mca_ptl_base_match(header, frag, &matched_frags, &matches)) == false) {
-        frag = (matches ? (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags) : NULL);
+        frag = (matches ? (mca_ptl_base_recv_frag_t*)opal_list_remove_first(&matched_frags) : NULL);
     }
 
     while(NULL != frag) {
@@ -82,7 +82,7 @@ bool mca_pml_uniq_recv_frag_match(
         };
 
         /* process any additional fragments that arrived out of order */
-        frag = (matches ? (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags) : NULL);
+        frag = (matches ? (mca_ptl_base_recv_frag_t*)opal_list_remove_first(&matched_frags) : NULL);
     };
     return matched;
 }

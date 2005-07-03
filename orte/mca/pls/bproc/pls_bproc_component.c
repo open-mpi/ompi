@@ -20,7 +20,7 @@
 
 #include "include/orte_constants.h"
 #include "include/types.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/proc_info.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"

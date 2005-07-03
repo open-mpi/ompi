@@ -215,7 +215,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
         orte_gpr_replica.num_subs = 0;
         
     	/* initialize the callback list head */
-    	OBJ_CONSTRUCT(&orte_gpr_replica.callbacks, ompi_list_t);
+    	OBJ_CONSTRUCT(&orte_gpr_replica.callbacks, opal_list_t);
         orte_gpr_replica.processing_callbacks = false;
     
         /* initialize the local subscription and trigger trackers */
@@ -325,7 +325,7 @@ int orte_gpr_replica_finalize(void)
     }
     OBJ_RELEASE(orte_gpr_replica.triggers);
     
-    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_first(&orte_gpr_replica.callbacks))) {
+    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)opal_list_remove_first(&orte_gpr_replica.callbacks))) {
         OBJ_RELEASE(cb);
     }
     OBJ_DESTRUCT(&orte_gpr_replica.callbacks);

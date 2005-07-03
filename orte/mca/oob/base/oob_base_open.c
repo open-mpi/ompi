@@ -39,8 +39,8 @@ mca_oob_t mca_oob;
 int mca_oob_base_output = -1;
 char* mca_oob_base_include = NULL;
 char* mca_oob_base_exclude = NULL;
-ompi_list_t mca_oob_base_components;
-ompi_list_t mca_oob_base_modules;
+opal_list_t mca_oob_base_components;
+opal_list_t mca_oob_base_modules;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -50,8 +50,8 @@ int mca_oob_base_open(void)
 {
   /* Open up all available components */
 
-  OBJ_CONSTRUCT(&mca_oob_base_components, ompi_list_t);
-  OBJ_CONSTRUCT(&mca_oob_base_modules, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
+  OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
 
   if (OMPI_SUCCESS != 
       mca_base_components_open("oob", 0, mca_oob_base_static_components, 

@@ -261,7 +261,7 @@ OBJ_CLASS_INSTANCE(
 int orte_gpr_base_output = -1;
 orte_gpr_base_module_t orte_gpr;
 bool orte_gpr_base_selected = false;
-ompi_list_t orte_gpr_base_components_available;
+opal_list_t orte_gpr_base_components_available;
 mca_gpr_base_component_t orte_gpr_base_selected_component;
 ompi_mutex_t orte_gpr_mutex;
 

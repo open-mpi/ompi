@@ -48,7 +48,7 @@ mca_ptl_gm_send_frag_t*
 mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
 			    struct mca_ptl_base_send_request_t* sendreq )
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     mca_ptl_gm_send_frag_t* frag;
     int32_t rc;
 

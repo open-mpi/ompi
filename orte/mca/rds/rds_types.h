@@ -16,7 +16,7 @@
 
 #include "orte_config.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/gpr/gpr_types.h"
 #include "mca/ns/ns_types.h"
 
@@ -26,7 +26,7 @@
 /* resource descriptor object */
 typedef struct {
     /** Base object */
-    ompi_list_item_t super;
+    opal_list_item_t super;
     /** id of cell in which this resource resides */
     orte_cellid_t cellid;
     /** string name of the site */
@@ -36,7 +36,7 @@ typedef struct {
     /** string type of the resource */
     char *type;
     /** list of attributes */
-    ompi_list_t attributes;
+    opal_list_t attributes;
 } orte_rds_cell_desc_t;
 
 OBJ_CLASS_DECLARATION(orte_rds_cell_desc_t);
@@ -44,7 +44,7 @@ OBJ_CLASS_DECLARATION(orte_rds_cell_desc_t);
 /* resource attribute object */
 typedef struct {
     /** Base object */
-    ompi_list_item_t super;
+    opal_list_item_t super;
     /** key-value pair describing attribute */
     orte_gpr_keyval_t keyval;
 } orte_rds_cell_attr_t;

@@ -55,7 +55,7 @@ static orte_gpr_base_module_t *gpr_module = NULL;
  */
 struct test_node_t {
     /** Base object */
-    ompi_list_item_t super;
+    opal_list_item_t super;
     /** String node name */
     char *node_name;
     /** String of the architecture for the node.  This is permitted to
@@ -120,16 +120,16 @@ static void test_node_destruct(test_node_t* node)
 
 OBJ_CLASS_INSTANCE(
     test_node_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     test_node_construct,
     test_node_destruct);
 
 
-static int test_overwrite(ompi_list_t* nodes);
+static int test_overwrite(opal_list_t* nodes);
 
 int main(int argc, char **argv)
 {
-    ompi_list_t nodes;
+    opal_list_t nodes;
     test_node_t *node;
     int i, rc;
     test_component_handle_t handle;
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
     }
     
     /* setup a node list */
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     for (i=0; i < 5; i++) {
         node = OBJ_NEW(test_node_t);
         asprintf(&(node->node_name), "node-%d", i);
@@ -259,7 +259,7 @@ int main(int argc, char **argv)
         node->node_slots_alloc = i%2;
         node->node_slots_inuse = i % 3;
         node->node_slots_max = i * 5;
-        ompi_list_append(&nodes, &node->super);
+        opal_list_append(&nodes, &node->super);
     }
 
     fprintf(test_out, "putting initial set of values on registry\n");
@@ -275,9 +275,9 @@ int main(int argc, char **argv)
     
     fprintf(test_out, "changing values for overwrite test\n");
     /* change the arch, state, and slots_inuse values */
-    for (i=0, node = (test_node_t*)ompi_list_get_first(&nodes);
-         node != (test_node_t*)ompi_list_get_end(&nodes);
-         node = (test_node_t*)ompi_list_get_next(node), i++) {
+    for (i=0, node = (test_node_t*)opal_list_get_first(&nodes);
+         node != (test_node_t*)opal_list_get_end(&nodes);
+         node = (test_node_t*)opal_list_get_next(node), i++) {
          
          free(node->node_arch);
          asprintf(&(node->node_arch), "new-arch-%d", i*10);
@@ -297,7 +297,7 @@ int main(int argc, char **argv)
     gpr_module->dump_all(0);
     
     fprintf(stderr, "now finalize and see if all memory cleared\n");
-    while (NULL != (node = (test_node_t*)ompi_list_remove_first(&nodes))) {
+    while (NULL != (node = (test_node_t*)opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(node);
     }
     OBJ_DESTRUCT(&nodes);
@@ -318,15 +318,15 @@ int main(int argc, char **argv)
 }
 
 
-int test_overwrite(ompi_list_t* nodes)
+int test_overwrite(opal_list_t* nodes)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     orte_gpr_value_t **values;
     int rc;
     test_node_t* node;
     size_t i, j, num_values;
     
-    num_values = ompi_list_get_size(nodes);
+    num_values = opal_list_get_size(nodes);
     if (0 >= num_values) {
         return ORTE_ERR_BAD_PARAM;
     }
@@ -374,9 +374,9 @@ int test_overwrite(ompi_list_t* nodes)
         }
     }
     
-    for(i=0, item =  ompi_list_get_first(nodes);
-        i < num_values && item != ompi_list_get_end(nodes);
-        i++, item =  ompi_list_get_next(item)) {
+    for(i=0, item =  opal_list_get_first(nodes);
+        i < num_values && item != opal_list_get_end(nodes);
+        i++, item =  opal_list_get_next(item)) {
         orte_gpr_value_t* value = values[i];
         node = (test_node_t*)item;
 

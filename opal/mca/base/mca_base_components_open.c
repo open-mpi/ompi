@@ -20,7 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/strncpy.h"
 #include "util/argv.h"
 #include "util/output.h"
@@ -29,7 +29,7 @@
 #include "include/constants.h"
 
 struct component_name_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
 
   char mn_name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
 };
@@ -46,8 +46,8 @@ static bool show_errors = false;
  * Local functions
  */
 static int open_components(const char *type_name, int output_id, 
-                           ompi_list_t *components_found, 
-                           ompi_list_t *components_available,
+                           opal_list_t *components_found, 
+                           opal_list_t *components_available,
                            char **requested_component_names);
 static int parse_requested(int mca_param, char ***requested_component_names);
 
@@ -58,12 +58,12 @@ static int parse_requested(int mca_param, char ***requested_component_names);
  */
 int mca_base_components_open(const char *type_name, int output_id,
                              const mca_base_component_t **static_components,
-                             ompi_list_t *components_available,
+                             opal_list_t *components_available,
                              bool open_dso_components)
 {
   int ret, param;
-  ompi_list_item_t *item;
-  ompi_list_t components_found;
+  opal_list_item_t *item;
+  opal_list_t components_found;
   char **requested_component_names;
   int param_verbose = -1;
   int param_type = -1;
@@ -108,8 +108,8 @@ int mca_base_components_open(const char *type_name, int output_id,
 
   /* Free resources */
 
-  for (item = ompi_list_remove_first(&components_found); NULL != item;
-       item = ompi_list_remove_first(&components_found)) {
+  for (item = opal_list_remove_first(&components_found); NULL != item;
+       item = opal_list_remove_first(&components_found)) {
     OBJ_RELEASE(item);
   }
   if (NULL != requested_component_names) {
@@ -152,12 +152,12 @@ static int parse_requested(int mca_param, char ***requested_component_names)
  * If it opens, add it to the components_available list.
  */
 static int open_components(const char *type_name, int output_id, 
-                           ompi_list_t *components_found, 
-                           ompi_list_t *components_available,
+                           opal_list_t *components_found, 
+                           opal_list_t *components_available,
                            char **requested_component_names)
 {
   int i;
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   const mca_base_component_t *component;
   mca_base_component_list_item_t *cli;
   bool acceptable;
@@ -182,10 +182,10 @@ static int open_components(const char *type_name, int output_id,
 
   /* Traverse the list of found components */
 
-  OBJ_CONSTRUCT(components_available, ompi_list_t);
-  for (item = ompi_list_get_first(components_found);
-       ompi_list_get_end(components_found) != item;
-       item = ompi_list_get_next(item)) {
+  OBJ_CONSTRUCT(components_available, opal_list_t);
+  for (item = opal_list_get_first(components_found);
+       opal_list_get_end(components_found) != item;
+       item = opal_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
     component = cli->cli_component;
 
@@ -280,7 +280,7 @@ static int open_components(const char *type_name, int output_id,
           return OMPI_ERR_OUT_OF_RESOURCE;
         }
         cli->cli_component = component;
-        ompi_list_append(components_available, (ompi_list_item_t *) cli);
+        opal_list_append(components_available, (opal_list_item_t *) cli);
       }
     }
   }

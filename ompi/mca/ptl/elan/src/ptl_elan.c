@@ -215,7 +215,7 @@ mca_ptl_elan_req_fini (struct mca_ptl_base_module_t *ptl,
     /* return the fragment and update the status */
     queue = ((struct mca_ptl_elan_module_t * )ptl)->queue;
     desc = ((mca_ptl_elan_send_request_t *) request)->req_frag;
-    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free, (ompi_list_item_t *) desc);
+    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free, (opal_list_item_t *) desc);
     desc->desc->desc_status = MCA_PTL_ELAN_DESC_LOCAL;
     return;
 }
@@ -226,7 +226,7 @@ mca_ptl_elan_recv_frag_return (struct mca_ptl_base_module_t *ptl,
                                struct mca_ptl_elan_recv_frag_t *frag)
 {
     OMPI_FREE_LIST_RETURN(&mca_ptl_elan_component.elan_recv_frags_free, 
-            (ompi_list_item_t*)frag);
+            (opal_list_item_t*)frag);
     return;
 }
 
@@ -425,8 +425,8 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    __FILE__, __LINE__);
             OMPI_THREAD_LOCK(&mca_ptl_elan_component.elan_lock);
 	    recv_frag->frag_ack_pending = true;
-            ompi_list_append(&((mca_ptl_elan_module_t * )ptl)->pending_acks, 
-		    (ompi_list_item_t*)frag);
+            opal_list_append(&((mca_ptl_elan_module_t * )ptl)->pending_acks, 
+		    (opal_list_item_t*)frag);
             OMPI_THREAD_UNLOCK(&mca_ptl_elan_component.elan_lock);
 	} else {
 	    /* XXX: recv_frag is released a few lines below,

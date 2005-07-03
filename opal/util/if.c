@@ -46,7 +46,7 @@
 #endif
 
 #include "include/constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/if.h"
 #include "util/output.h"
 #include "util/strncpy.h"
@@ -68,7 +68,7 @@
 #endif
 
 struct ompi_if_t {
-    ompi_list_item_t     super;
+    opal_list_item_t     super;
     char                if_name[IF_NAMESIZE];
     int                 if_index;
 #ifndef WIN32
@@ -86,7 +86,7 @@ struct ompi_if_t {
 };
 typedef struct ompi_if_t ompi_if_t;
 
-static ompi_list_t ompi_if_list;
+static opal_list_t ompi_if_list;
 static bool already_done = false;
 
 #define DEFAULT_NUMBER_INTERFACES 10
@@ -180,7 +180,7 @@ static int ompi_ifinit(void)
     /* 
      * Setup indexes 
      */
-    OBJ_CONSTRUCT(&ompi_if_list, ompi_list_t);
+    OBJ_CONSTRUCT(&ompi_if_list, opal_list_t);
     ptr = (char*) ifconf.ifc_req;
     rem = ifconf.ifc_len;
     num = 0;
@@ -192,7 +192,7 @@ static int ompi_ifinit(void)
         ompi_if_t *intf_ptr;
         int length;
 
-        OBJ_CONSTRUCT(&intf, ompi_list_item_t);
+        OBJ_CONSTRUCT(&intf, opal_list_item_t);
 
         /* compute offset for entries */
 #if OMPI_HAVE_SA_LEN
@@ -230,7 +230,7 @@ static int ompi_ifinit(void)
         intf.if_flags = ifr->ifr_flags;
 
 #ifndef SIOCGIFINDEX
-        intf.if_index = ompi_list_get_size(&ompi_if_list)+1;
+        intf.if_index = opal_list_get_size(&ompi_if_list)+1;
 #else
         if(ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
             ompi_output(0,"ompi_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
@@ -266,7 +266,7 @@ static int ompi_ifinit(void)
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         memcpy(intf_ptr, &intf, sizeof(intf));
-        ompi_list_append(&ompi_if_list, (ompi_list_item_t*)intf_ptr);
+        opal_list_append(&ompi_if_list, (opal_list_item_t*)intf_ptr);
     }
     free(ifconf.ifc_req);
     close(sd);
@@ -322,7 +322,7 @@ static int ompi_ifinit(void)
     }
 
     /* create and populate ompi_if_list */
-    OBJ_CONSTRUCT (&ompi_if_list, ompi_list_t);
+    OBJ_CONSTRUCT (&ompi_if_list, opal_list_t);
 
 
     /* loop through all the interfaces and create the list */
@@ -331,7 +331,7 @@ static int ompi_ifinit(void)
         /* do all this only if the interface is up */
         if (if_list[i].iiFlags & IFF_UP) {
 
-            OBJ_CONSTRUCT (&intf, ompi_list_item_t);
+            OBJ_CONSTRUCT (&intf, opal_list_item_t);
         
             /* fill in the interface address */ 
             memcpy (&intf.if_addr, &(if_list[i].iiAddress), sizeof(intf.if_addr));
@@ -346,7 +346,7 @@ static int ompi_ifinit(void)
             intf.if_flags = if_list[i].iiFlags;
 
             /* fill in the index in the table */
-            intf.if_index = ompi_list_get_size(&ompi_if_list)+1;
+            intf.if_index = opal_list_get_size(&ompi_if_list)+1;
 
             /* generate the interface name on your own ....
                loopback: lo
@@ -361,12 +361,12 @@ static int ompi_ifinit(void)
             /* copy all this into a persistent form and store it in the list */
             intf_ptr = malloc(sizeof(ompi_if_t));
             if (NULL == intf_ptr) {
-                ompi_output (0,"ompi_ifinit: Unable to malloc %d bytes",sizeof(ompi_list_t));
+                ompi_output (0,"ompi_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
             memcpy (intf_ptr, &intf, sizeof(intf));
-            ompi_list_append(&ompi_if_list, (ompi_list_item_t *)intf_ptr);
+            opal_list_append(&ompi_if_list, (opal_list_item_t *)intf_ptr);
         }
     }
     
@@ -384,7 +384,7 @@ int ompi_iffinalize(void)
 #ifndef WIN32
     ompi_if_t *intf_ptr;
     
-    while (NULL != (intf_ptr = (ompi_if_t*)ompi_list_remove_first(&ompi_if_list))) {
+    while (NULL != (intf_ptr = (ompi_if_t*)opal_list_remove_first(&ompi_if_list))) {
         OBJ_RELEASE(intf_ptr);
     }
     OBJ_DESTRUCT(&ompi_if_list);
@@ -406,9 +406,9 @@ int ompi_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    for(intf =  (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-        intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
-        intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
+    for(intf =  (ompi_if_t*)opal_list_get_first(&ompi_if_list);
+        intf != (ompi_if_t*)opal_list_get_end(&ompi_if_list);
+        intf =  (ompi_if_t*)opal_list_get_next(intf)) {
         if(strcmp(intf->if_name, if_name) == 0) {
             memcpy(addr, &intf->if_addr, length);
             return OMPI_SUCCESS;
@@ -430,9 +430,9 @@ int ompi_ifnametoindex(const char* if_name)
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    for(intf =  (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-        intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
-        intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
+    for(intf =  (ompi_if_t*)opal_list_get_first(&ompi_if_list);
+        intf != (ompi_if_t*)opal_list_get_end(&ompi_if_list);
+        intf =  (ompi_if_t*)opal_list_get_next(intf)) {
         if(strcmp(intf->if_name, if_name) == 0) {
             return intf->if_index;
         }
@@ -473,9 +473,9 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
         memcpy(&inaddr, h->h_addr, sizeof(inaddr));
     }
 
-    for(intf =  (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-        intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
-        intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
+    for(intf =  (ompi_if_t*)opal_list_get_first(&ompi_if_list);
+        intf != (ompi_if_t*)opal_list_get_end(&ompi_if_list);
+        intf =  (ompi_if_t*)opal_list_get_next(intf)) {
         if(intf->if_addr.sin_addr.s_addr == inaddr) {
             strncpy(if_name, intf->if_name, length);
             return OMPI_SUCCESS;
@@ -492,7 +492,7 @@ int ompi_ifcount(void)
 {
     if(ompi_ifinit() != OMPI_SUCCESS)
         return (-1);
-    return ompi_list_get_size(&ompi_if_list);
+    return opal_list_get_size(&ompi_if_list);
 }
 
 
@@ -506,7 +506,7 @@ int ompi_ifbegin(void)
     ompi_if_t *intf;
     if(ompi_ifinit() != OMPI_SUCCESS)
         return (-1);
-    intf = (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
+    intf = (ompi_if_t*)opal_list_get_first(&ompi_if_list);
     if(NULL != intf)
         return intf->if_index;
     return (-1);
@@ -525,13 +525,13 @@ int ompi_ifnext(int if_index)
     if(ompi_ifinit() != OMPI_SUCCESS)
         return (-1);
 
-    for(intf =  (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-        intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
-        intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
+    for(intf =  (ompi_if_t*)opal_list_get_first(&ompi_if_list);
+        intf != (ompi_if_t*)opal_list_get_end(&ompi_if_list);
+        intf =  (ompi_if_t*)opal_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             do {
-                ompi_if_t* if_next = (ompi_if_t*)ompi_list_get_next(intf);
-                ompi_if_t* if_end =  (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
+                ompi_if_t* if_next = (ompi_if_t*)opal_list_get_next(intf);
+                ompi_if_t* if_end =  (ompi_if_t*)opal_list_get_end(&ompi_if_list);
                 if (if_next == if_end) {
                     return -1;
                 }
@@ -556,9 +556,9 @@ int ompi_ifindextoaddr(int if_index, struct sockaddr* if_addr, int length)
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    for(intf =  (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-        intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
-        intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
+    for(intf =  (ompi_if_t*)opal_list_get_first(&ompi_if_list);
+        intf != (ompi_if_t*)opal_list_get_end(&ompi_if_list);
+        intf =  (ompi_if_t*)opal_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             memcpy(if_addr, &intf->if_addr, length);
             return OMPI_SUCCESS;
@@ -580,9 +580,9 @@ int ompi_ifindextomask(int if_index, struct sockaddr* if_mask, int length)
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    for(intf =  (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-        intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
-        intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
+    for(intf =  (ompi_if_t*)opal_list_get_first(&ompi_if_list);
+        intf != (ompi_if_t*)opal_list_get_end(&ompi_if_list);
+        intf =  (ompi_if_t*)opal_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             memcpy(if_mask, &intf->if_mask, length);
             return OMPI_SUCCESS;
@@ -605,9 +605,9 @@ int ompi_ifindextoname(int if_index, char* if_name, int length)
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    for(intf =  (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-        intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
-        intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
+    for(intf =  (ompi_if_t*)opal_list_get_first(&ompi_if_list);
+        intf != (ompi_if_t*)opal_list_get_end(&ompi_if_list);
+        intf =  (ompi_if_t*)opal_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             strncpy(if_name, intf->if_name, length);
             return OMPI_SUCCESS;

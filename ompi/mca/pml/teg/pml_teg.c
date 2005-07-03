@@ -94,7 +94,7 @@ int mca_pml_teg_add_ptls(void)
 {
     /* build an array of ptls and ptl modules */
     mca_ptl_base_selected_module_t* selected_ptl;
-    size_t num_ptls = ompi_list_get_size(&mca_ptl_base_modules_initialized);
+    size_t num_ptls = opal_list_get_size(&mca_ptl_base_modules_initialized);
     size_t cache_bytes = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
     mca_pml_teg.teg_num_ptl_progress = 0;
@@ -109,10 +109,10 @@ int mca_pml_teg_add_ptls(void)
     }
 
     for(selected_ptl = (mca_ptl_base_selected_module_t*)
-            ompi_list_get_first(&mca_ptl_base_modules_initialized);
+            opal_list_get_first(&mca_ptl_base_modules_initialized);
         selected_ptl != (mca_ptl_base_selected_module_t*)
-            ompi_list_get_end(&mca_ptl_base_modules_initialized);
-        selected_ptl = (mca_ptl_base_selected_module_t*)ompi_list_get_next(selected_ptl)) {
+            opal_list_get_end(&mca_ptl_base_modules_initialized);
+        selected_ptl = (mca_ptl_base_selected_module_t*)opal_list_get_next(selected_ptl)) {
         mca_ptl_base_module_t *ptl = selected_ptl->pbsm_module;
         size_t i;
 

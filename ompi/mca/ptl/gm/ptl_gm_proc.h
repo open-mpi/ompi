@@ -32,7 +32,7 @@ extern "C" {
 extern opal_class_t mca_ptl_gm_proc_t_class;
 
 struct mca_ptl_gm_proc_t {
-    ompi_list_item_t super;                 /**< allow proc to be placed on a list */
+    opal_list_item_t super;                 /**< allow proc to be placed on a list */
     struct ompi_proc_t *proc_ompi;          /**< pointer to corresponding orte_process_name_t */
     struct mca_ptl_gm_addr_t *proc_addrs;   /**< array of addresses published by peer */
     ompi_mutex_t proc_lock;                 /**< lock to protect against concurrent access to proc state */

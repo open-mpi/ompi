@@ -27,12 +27,12 @@
 
 int mca_oob_base_close(void)
 {
-  ompi_list_item_t* item;
+  opal_list_item_t* item;
 
   /* Finalize all the oob modules and free their list items */
-  for (item =  ompi_list_remove_first(&mca_oob_base_modules);
+  for (item =  opal_list_remove_first(&mca_oob_base_modules);
        item != NULL;
-       item =  ompi_list_remove_first(&mca_oob_base_modules)) {
+       item =  opal_list_remove_first(&mca_oob_base_modules)) {
     mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
     base->oob_module->oob_fini();
   }

@@ -34,7 +34,7 @@ opal_class_t mca_pml_ptl_comm_t_class = {
 
 static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm)
 {
-    OBJ_CONSTRUCT(&comm->c_wild_receives, ompi_list_t);
+    OBJ_CONSTRUCT(&comm->c_wild_receives, opal_list_t);
     OBJ_CONSTRUCT(&comm->c_matching_lock, ompi_mutex_t);
     comm->c_recv_seq = 0;
 }
@@ -69,30 +69,30 @@ int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size)
     memset(comm->c_next_msg_seq, 0, sizeof(uint16_t) * size);
 
     /* unexpected fragments queues */
-    comm->c_unexpected_frags = malloc(sizeof(ompi_list_t) * size);
+    comm->c_unexpected_frags = malloc(sizeof(opal_list_t) * size);
     if(NULL == comm->c_unexpected_frags)
         return OMPI_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++) {
-        ompi_list_t* object = comm->c_unexpected_frags+i;
-        OBJ_CONSTRUCT(object, ompi_list_t);
+        opal_list_t* object = comm->c_unexpected_frags+i;
+        OBJ_CONSTRUCT(object, opal_list_t);
     }
 
      /* out-of-order fragments queues */
-    comm->c_frags_cant_match = malloc(sizeof(ompi_list_t) * size);
+    comm->c_frags_cant_match = malloc(sizeof(opal_list_t) * size);
     if(NULL == comm->c_frags_cant_match)
         return OMPI_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++) {
-        ompi_list_t* object = comm->c_frags_cant_match+i;
-        OBJ_CONSTRUCT(object, ompi_list_t);
+        opal_list_t* object = comm->c_frags_cant_match+i;
+        OBJ_CONSTRUCT(object, opal_list_t);
     }
 
     /* queues of unmatched specific (source process specified) receives */
-    comm->c_specific_receives = malloc(sizeof(ompi_list_t) * size);
+    comm->c_specific_receives = malloc(sizeof(opal_list_t) * size);
     if(NULL == comm->c_specific_receives)
         return OMPI_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++) {
-        ompi_list_t *object = comm->c_specific_receives+i;
-        OBJ_CONSTRUCT(object, ompi_list_t);
+        opal_list_t *object = comm->c_specific_receives+i;
+        OBJ_CONSTRUCT(object, opal_list_t);
     }
     return OMPI_SUCCESS;
 }

@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "util/strncpy.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "class/ompi_pointer_array.h"
 #include "threads/mutex.h"
 
@@ -31,7 +31,7 @@
  * ompi_info_t structure. MPI_Info is a pointer to this structure
  */
 struct ompi_info_t {
-  ompi_list_t super; 
+  opal_list_t super; 
   /**< generic list pointer which is the container for (key,value)
        pairs */
   int i_f_to_c_index; 
@@ -55,7 +55,7 @@ typedef struct ompi_info_t ompi_info_t;
  * type. It contains (key,value) pairs
  */
 struct ompi_info_entry_t {
-    ompi_list_item_t super; /**< required for ompi_list_t type */
+    opal_list_item_t super; /**< required for opal_list_t type */
     char *ie_value; /**< value part of the (key, value) pair.
                   * Maximum length is MPI_MAX_INFO_VAL */
     char ie_key[MPI_MAX_INFO_KEY + 1]; /**< "key" part of the (key, value)
@@ -242,7 +242,7 @@ static inline bool ompi_info_is_freed(ompi_info_t *info)
 static inline int 
 ompi_info_get_nkeys(ompi_info_t *info, int *nkeys) 
 {
-    *nkeys = (int) ompi_list_get_size(&(info->super));
+    *nkeys = (int) opal_list_get_size(&(info->super));
     return MPI_SUCCESS;
 }
 

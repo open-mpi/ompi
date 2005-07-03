@@ -24,7 +24,7 @@
 #include "pcm_bproc.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/pcm/base/base_job_track.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"

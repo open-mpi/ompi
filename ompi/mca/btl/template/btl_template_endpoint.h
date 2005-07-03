@@ -17,7 +17,7 @@
 #ifndef MCA_BTL_TEMPLATE_ENDPOINT_H
 #define MCA_BTL_TEMPLATE_ENDPOINT_H
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
@@ -37,7 +37,7 @@ OBJ_CLASS_DECLARATION(mca_btl_template_endpoint_t);
  */
 
 struct mca_btl_base_endpoint_t {
-    ompi_list_item_t            super;
+    opal_list_item_t            super;
 
     struct mca_btl_template_module_t* endpoint_btl;
     /**< BTL instance that created this connection */

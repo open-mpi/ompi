@@ -21,7 +21,7 @@
 
 static void mca_pml_base_ptl_construct(mca_pml_base_ptl_t* ptl)
 {
-    OBJ_CONSTRUCT(&ptl->ptl_cache, ompi_list_t);
+    OBJ_CONSTRUCT(&ptl->ptl_cache, opal_list_t);
     OBJ_CONSTRUCT(&ptl->ptl_cache_lock, ompi_mutex_t);
     ptl->ptl = NULL;
     ptl->ptl_cache_size = 0;
@@ -36,7 +36,7 @@ static void mca_pml_base_ptl_destruct(mca_pml_base_ptl_t* ptl)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_base_ptl_t,
-    ompi_list_t,
+    opal_list_t,
     mca_pml_base_ptl_construct,
     mca_pml_base_ptl_destruct
 );

@@ -65,7 +65,7 @@ struct mca_btl_mvapi_component_t {
     int ib_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
-    ompi_list_t                             ib_procs;
+    opal_list_t                             ib_procs;
     /**< list of ib proc structures */
 
     ompi_event_t                            ib_send_event;
@@ -130,10 +130,10 @@ struct mca_btl_mvapi_module_t {
     ompi_free_list_t recv_free_eager;    /**< High priority free list of buffer descriptors */
     ompi_free_list_t recv_free_max;      /**< Low priority free list of buffer descriptors */ 
 
-    ompi_list_t reg_mru_list;   /**< a most recently used list of mca_mpool_mvapi_registration_t 
+    opal_list_t reg_mru_list;   /**< a most recently used list of mca_mpool_mvapi_registration_t 
                                        entries, this allows us to keep a working set of memory pinned */ 
     
-    ompi_list_t repost;            /**< list of buffers to repost */
+    opal_list_t repost;            /**< list of buffers to repost */
     ompi_mutex_t ib_lock;          /**< module level lock */ 
     
 

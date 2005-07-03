@@ -104,7 +104,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     OMPI_PTL_ELAN_CHECK_UNEX (elan_ptr, NULL, OMPI_ERROR, 0);
 
     for (i = 0; i < flist->fl_num_per_alloc; i++) {
-        ompi_list_item_t *item;
+        opal_list_item_t *item;
 
         desc->ptl   = ptl;
         desc->elan_event = (E4_Event *) elan_ptr;
@@ -160,8 +160,8 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 	PRIMEEVENT_WORD (ctx, desc->elan_event, 1);
 #endif
 
-        item = (ompi_list_item_t *) frag;
-        ompi_list_append (&flist->super, item);
+        item = (opal_list_item_t *) frag;
+        opal_list_append (&flist->super, item);
 
         /* Progress to the next element */
         desc = (ompi_ptl_elan_qdma_desc_t *) ((char *) desc + main_size);
@@ -277,7 +277,7 @@ mca_ptl_elan_putget_desc_construct (
 do {                                                                      \
     int i;                                                                \
     for (i = 0; i < flist->fl_num_per_alloc; i++) {                       \
-        ompi_list_item_t *item;                                           \
+        opal_list_item_t *item;                                           \
                                                                           \
         frag->desc = (ompi_ptl_elan_base_desc_t *)dp;                     \
                                                                           \
@@ -285,8 +285,8 @@ do {                                                                      \
 	mca_ptl_elan_putget_desc_construct (ptl, dp,                       \
 		eptr, 0, 0, local);                                       \
                                                                           \
-        item = (ompi_list_item_t *) frag;                                 \
-        ompi_list_append (&flist->super, item);                           \
+        item = (opal_list_item_t *) frag;                                 \
+        opal_list_append (&flist->super, item);                           \
                                                                           \
         /* Progress to the next element */                                \
         dp= (ompi_ptl_elan_putget_desc_t *) ((char *)dp + msize);         \

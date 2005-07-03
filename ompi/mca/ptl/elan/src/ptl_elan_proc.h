@@ -37,7 +37,7 @@ extern opal_class_t mca_ptl_elan_proc_t_class;
  *  PTL instance that attempts to open a connection to the process.
  */
 struct mca_ptl_elan_proc_t {
-    ompi_list_item_t super;   /**< allow proc to be placed on a list */
+    opal_list_item_t super;   /**< allow proc to be placed on a list */
     ompi_proc_t *proc_ompi;   /**< pointer to corresponding ompi_proc_t */
 
     ompi_process_name_t proc_guid; /**< globally unique identifier 

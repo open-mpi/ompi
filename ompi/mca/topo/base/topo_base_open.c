@@ -20,7 +20,7 @@
 
 #include "include/constants.h"
 #include "util/output.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/topo/base/base.h"
@@ -38,8 +38,8 @@
 int mca_topo_base_output = -1;
 int mca_topo_base_param = -1;
 
-ompi_list_t mca_topo_base_components_available;
-ompi_list_t mca_topo_base_components_opened;
+opal_list_t mca_topo_base_components_available;
+opal_list_t mca_topo_base_components_opened;
 
 mca_topo_base_component_t mca_topo_base_selected_component;
 mca_topo_base_module_t mca_topo;

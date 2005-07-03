@@ -32,7 +32,7 @@ orte_iof_base_module_t orte_iof;
  */
 int orte_iof_base_select(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     int selected_priority = -1;
     orte_iof_base_component_t *selected_component = NULL;
@@ -41,9 +41,9 @@ int orte_iof_base_select(void)
     bool selected_have_hidden;
  
     /* Traverse the list of opened modules; call their init functions. */
-    for(item = ompi_list_get_first(&orte_iof_base.iof_components_opened);
-        item != ompi_list_get_end(&orte_iof_base.iof_components_opened);
-        item = ompi_list_get_next(item)) {
+    for(item = opal_list_get_first(&orte_iof_base.iof_components_opened);
+        item != opal_list_get_end(&orte_iof_base.iof_components_opened);
+        item = opal_list_get_next(item)) {
         orte_iof_base_component_t* component;
  
         cli = (mca_base_component_list_item_t *) item;
@@ -82,9 +82,9 @@ int orte_iof_base_select(void)
     }
 
     /* unload all components that were not selected */
-    item = ompi_list_get_first(&orte_iof_base.iof_components_opened);
-    while(item != ompi_list_get_end(&orte_iof_base.iof_components_opened)) {
-        ompi_list_item_t* next = ompi_list_get_next(item);
+    item = opal_list_get_first(&orte_iof_base.iof_components_opened);
+    while(item != opal_list_get_end(&orte_iof_base.iof_components_opened)) {
+        opal_list_item_t* next = opal_list_get_next(item);
         orte_iof_base_component_t* component;
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_iof_base_component_t *) cli->cli_component;
@@ -93,7 +93,7 @@ int orte_iof_base_select(void)
                 "orte_iof_base_select: module %s unloaded",
                 component->iof_version.mca_component_name);
             mca_base_component_repository_release((mca_base_component_t *) component);
-            ompi_list_remove_item(&orte_iof_base.iof_components_opened, item);
+            opal_list_remove_item(&orte_iof_base.iof_components_opened, item);
             OBJ_RELEASE(item);
         }
         item = next;

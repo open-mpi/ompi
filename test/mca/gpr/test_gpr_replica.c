@@ -38,14 +38,14 @@ int main(int argc, char **argv)
 {
     bool multi_thread = false;
     bool hidden_thread = false;
-    ompi_list_t *test_list, *internal_tests;
+    opal_list_t *test_list, *internal_tests;
     ompi_registry_index_value_t *ptr;
     ompi_registry_internal_test_results_t *ptri;
     ompi_registry_object_t test_buffer;
     uint8_t *test_buf;
     ompi_registry_object_size_t input_size;
     ompi_registry_mode_t mode;
-    ompi_list_t *answer;
+    opal_list_t *answer;
     ompi_registry_value_t *ans;
     bool multi, hidden;
     int i, j, result;
@@ -87,16 +87,16 @@ test_out = stderr;
     fprintf(test_out, "\n\ntesting internals\n");
     /* check internals */
     internal_tests = ompi_registry.test_internals(1);
-    if (0 == ompi_list_get_size(internal_tests)) { /* should have been something in list */
+    if (0 == opal_list_get_size(internal_tests)) { /* should have been something in list */
 	fprintf(test_out, "internal tests failed\n");
 	test_failure("test_gpr_replica internal_tests failed\n");
 	test_finalize();
 	exit(1);
     } else {
 	fprintf(test_out, "internal test results list\n");
-	for (ptri = (ompi_registry_internal_test_results_t*)ompi_list_get_first(internal_tests);
-	     ptri != (ompi_registry_internal_test_results_t*)ompi_list_get_end(internal_tests);
-	     ptri = (ompi_registry_internal_test_results_t*)ompi_list_get_next(ptri)) {
+	for (ptri = (ompi_registry_internal_test_results_t*)opal_list_get_first(internal_tests);
+	     ptri != (ompi_registry_internal_test_results_t*)opal_list_get_end(internal_tests);
+	     ptri = (ompi_registry_internal_test_results_t*)opal_list_get_next(ptri)) {
 	    fprintf(test_out, "\t%s\n", ptri->test);
 	    fprintf(test_out, "\t%s\n", ptri->message);
 	}
@@ -106,16 +106,16 @@ test_out = stderr;
     fprintf(test_out, "\n\ntesting index\n");
     /* check index */
     test_list = ompi_registry.index(NULL);
-    if (0 == ompi_list_get_size(test_list)) { /* should have been something in dictionary */
+    if (0 == opal_list_get_size(test_list)) { /* should have been something in dictionary */
 	fprintf(test_out, "GPR replica: index function failed\n");
 	test_failure("test_gpr_replica index_global_dictionary failed\n");
 	test_finalize();
 	exit(1);
     } else {
 	fprintf(test_out, "GPR index returned list\n");
-	for (ptr = (ompi_registry_index_value_t*)ompi_list_get_first(test_list);
-	     ptr != (ompi_registry_index_value_t*)ompi_list_get_end(test_list);
-	     ptr = (ompi_registry_index_value_t*)ompi_list_get_next(ptr)) {
+	for (ptr = (ompi_registry_index_value_t*)opal_list_get_first(test_list);
+	     ptr != (ompi_registry_index_value_t*)opal_list_get_end(test_list);
+	     ptr = (ompi_registry_index_value_t*)opal_list_get_next(ptr)) {
 	    fprintf(test_out, "\t%s\n", ptr->token);
 	}
 	test_success();
@@ -255,9 +255,9 @@ test_out = stderr;
 	if (10 %  i) {
 	    mode = OMPI_REGISTRY_AND;
 	    answer = ompi_registry.get(mode, name, name2);
-	    for (ans = (ompi_registry_value_t*)ompi_list_get_first(answer);
-		 ans != (ompi_registry_value_t*)ompi_list_get_end(answer);
-		 ans = (ompi_registry_value_t*)ompi_list_get_next(ans)) {
+	    for (ans = (ompi_registry_value_t*)opal_list_get_first(answer);
+		 ans != (ompi_registry_value_t*)opal_list_get_end(answer);
+		 ans = (ompi_registry_value_t*)opal_list_get_next(ans)) {
 		if (ans->object_size != input_size) {
 		    success = false;
 		}
@@ -265,7 +265,7 @@ test_out = stderr;
 	} else {
 	    mode = OMPI_REGISTRY_XAND;
 	    answer = ompi_registry.get(mode, name, name3);
-	    if (0 < ompi_list_get_size(answer)) {  /* should not have gotten a result */
+	    if (0 < opal_list_get_size(answer)) {  /* should not have gotten a result */
 		success = false;
 	    }
 	}
@@ -313,16 +313,16 @@ test_out = stderr;
     for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
 	test_list = ompi_registry.index(name);
-	if (0 == ompi_list_get_size(test_list)) { /* should have been something in dictionary */
+	if (0 == opal_list_get_size(test_list)) { /* should have been something in dictionary */
 	    fprintf(test_out, "GPR replica: index function failed\n");
 	    test_failure("test_gpr_replica index_global_dictionary failed\n");
 	    test_finalize();
 	    exit(1);
 	} else {
 	    fprintf(test_out, "GPR index returned list for segment %s\n", name);
-	    for (ptr = (ompi_registry_index_value_t*)ompi_list_get_first(test_list);
-		 ptr != (ompi_registry_index_value_t*)ompi_list_get_end(test_list);
-		 ptr = (ompi_registry_index_value_t*)ompi_list_get_next(ptr)) {
+	    for (ptr = (ompi_registry_index_value_t*)opal_list_get_first(test_list);
+		 ptr != (ompi_registry_index_value_t*)opal_list_get_end(test_list);
+		 ptr = (ompi_registry_index_value_t*)opal_list_get_next(ptr)) {
 		fprintf(test_out, "\t%s\n", ptr->token);
 	    }
 	}

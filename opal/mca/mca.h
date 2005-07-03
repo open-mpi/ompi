@@ -24,7 +24,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/cmd_line.h"
 
 /**

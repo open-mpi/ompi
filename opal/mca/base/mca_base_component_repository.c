@@ -27,7 +27,7 @@
 #include "libltdl/ltdl.h"
 
 #include "include/constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 
@@ -36,28 +36,28 @@
  * Private types
  */
 struct repository_item_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
 
   char ri_type[MCA_BASE_MAX_TYPE_NAME_LEN];
   lt_dlhandle ri_dlhandle;
   const mca_base_component_t *ri_component_struct;
-  ompi_list_t ri_dependencies;
+  opal_list_t ri_dependencies;
 };
 typedef struct repository_item_t repository_item_t;
 static void ri_constructor(opal_object_t *obj);
 static void ri_destructor(opal_object_t *obj);
-static OBJ_CLASS_INSTANCE(repository_item_t, ompi_list_item_t, 
+static OBJ_CLASS_INSTANCE(repository_item_t, opal_list_item_t, 
                           ri_constructor, ri_destructor);
 
 struct dependency_item_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
 
   repository_item_t *di_repository_entry;
 };
 typedef struct dependency_item_t dependency_item_t;
 static void di_constructor(opal_object_t *obj);
 static void di_destructor(opal_object_t *obj);
-static OBJ_CLASS_INSTANCE(dependency_item_t, ompi_list_item_t, 
+static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t, 
                           di_constructor, di_destructor);
 
 
@@ -65,7 +65,7 @@ static OBJ_CLASS_INSTANCE(dependency_item_t, ompi_list_item_t,
  * Private variables
  */
 static bool initialized = false;
-static ompi_list_t repository;
+static opal_list_t repository;
 
 
 /*
@@ -90,7 +90,7 @@ int mca_base_component_repository_initialize(void)
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    OBJ_CONSTRUCT(&repository, ompi_list_t);
+    OBJ_CONSTRUCT(&repository, opal_list_t);
     initialized = true;
   }
 
@@ -126,7 +126,7 @@ int mca_base_component_repository_retain(char *type,
 
   /* Append the new item to the repository */
 
-  ompi_list_append(&repository, (ompi_list_item_t *) ri);
+  opal_list_append(&repository, (opal_list_item_t *) ri);
 
   /* All done */
 
@@ -195,7 +195,7 @@ void mca_base_component_repository_release(const mca_base_component_t *component
  */
 void mca_base_component_repository_finalize(void)
 {
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   repository_item_t *ri;
 
   if (initialized) {
@@ -214,13 +214,13 @@ void mca_base_component_repository_finalize(void)
        technically an error). */
 
     do {
-      for (item = ompi_list_get_first(&repository);
-           ompi_list_get_end(&repository) != item; ) {
+      for (item = opal_list_get_first(&repository);
+           opal_list_get_end(&repository) != item; ) {
         ri = (repository_item_t *) item;
-        item = ompi_list_get_next(item);
+        item = opal_list_get_next(item);
         OBJ_RELEASE(ri);
       }
-    } while (ompi_list_get_size(&repository) > 0);
+    } while (opal_list_get_size(&repository) > 0);
 
     /* Close down libltdl */
 
@@ -232,12 +232,12 @@ void mca_base_component_repository_finalize(void)
 
 static repository_item_t *find_component(const char *type, const char *name)
 {
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   repository_item_t *ri;
 
-  for (item = ompi_list_get_first(&repository);
-       ompi_list_get_end(&repository) != item;
-       item = ompi_list_get_next(item)) {
+  for (item = opal_list_get_first(&repository);
+       opal_list_get_end(&repository) != item;
+       item = opal_list_get_next(item)) {
     ri = (repository_item_t *) item;
     if (0 == strcmp(ri->ri_type, type) && 
         0 == strcmp(ri->ri_component_struct->mca_component_name, name)) {
@@ -274,7 +274,7 @@ static int link_items(repository_item_t *src, repository_item_t *depend)
 
   /* Add it to the dependency list on the source repository entry */
 
-  ompi_list_append(&src->ri_dependencies, (ompi_list_item_t *) di);
+  opal_list_append(&src->ri_dependencies, (opal_list_item_t *) di);
 
   /* Increment the refcount in the dependency */
 
@@ -297,7 +297,7 @@ static void ri_constructor(opal_object_t *obj)
   ri->ri_dlhandle = NULL;
   ri->ri_component_struct = NULL;
 
-  OBJ_CONSTRUCT(&ri->ri_dependencies, ompi_list_t);
+  OBJ_CONSTRUCT(&ri->ri_dependencies, opal_list_t);
 }
 
 
@@ -308,7 +308,7 @@ static void ri_destructor(opal_object_t *obj)
 {
   repository_item_t *ri = (repository_item_t *) obj;
   dependency_item_t *di;
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
 
   /* Close the component (and potentially unload it from memory */
 
@@ -322,14 +322,14 @@ static void ri_destructor(opal_object_t *obj)
   /* Now go release/close (at a minimum: decrement the refcount) any
      dependencies of this component */
 
-  for (item = ompi_list_remove_first(&ri->ri_dependencies);
+  for (item = opal_list_remove_first(&ri->ri_dependencies);
        NULL != item; 
-       item = ompi_list_remove_first(&ri->ri_dependencies)) {
+       item = opal_list_remove_first(&ri->ri_dependencies)) {
     di = (dependency_item_t *) item;
     OBJ_RELEASE(di);
   }
   OBJ_DESTRUCT(&ri->ri_dependencies);
-  ompi_list_remove_item(&repository, (ompi_list_item_t *) ri);
+  opal_list_remove_item(&repository, (opal_list_item_t *) ri);
 }
 
 

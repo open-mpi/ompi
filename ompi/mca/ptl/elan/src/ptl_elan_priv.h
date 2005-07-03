@@ -344,8 +344,8 @@ struct ompi_ptl_elan_putget_ctrl_t {
     E4_CmdQParams    *pg_cmdPar;
 
     uint32_t          *pg_pendingGetCount; 
-    ompi_list_t       put_desc;
-    ompi_list_t       get_desc;
+    opal_list_t       put_desc;
+    opal_list_t       get_desc;
                       
     ompi_free_list_t  put_desc_free;
     ompi_free_list_t  get_desc_free;

@@ -130,9 +130,9 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
     tm_event_t event;
     char *flat;
     char old_cwd[OMPI_PATH_MAX];
-    ompi_list_t mapping;
+    opal_list_t mapping;
     bool mapping_valid = false;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     char **mca_env = NULL, **tmp_env, **local_env;
     char *path, *new_path;
     int num_mca_env;
@@ -154,7 +154,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
        have to cross reference against TM, it's much more efficient to
        do all the nodes in the entire map all at once. */
 
-    OBJ_CONSTRUCT(&mapping, ompi_list_t);
+    OBJ_CONSTRUCT(&mapping, opal_list_t);
     if (ORTE_SUCCESS != (ret = orte_rmaps_base_get_map(jobid, &mapping))) {
         goto cleanup;
     }
@@ -163,9 +163,9 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
     /* Count how many processes we're starting so that we can allocate
        space for all the tid's */
 
-    for (failure = false, i = 0, item = ompi_list_get_first(&mapping);
-         !failure && item != ompi_list_get_end(&mapping);
-         item = ompi_list_get_next(item)) {
+    for (failure = false, i = 0, item = opal_list_get_first(&mapping);
+         !failure && item != opal_list_get_end(&mapping);
+         item = opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
         i += map->num_procs;
     }
@@ -192,9 +192,9 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
 
     getcwd(old_cwd, OMPI_PATH_MAX);
     failure = false;
-    for (num_spawned = i = 0, item = ompi_list_get_first(&mapping);
-         !failure && item != ompi_list_get_end(&mapping);
-         item = ompi_list_get_next(item), ++i) {
+    for (num_spawned = i = 0, item = opal_list_get_first(&mapping);
+         !failure && item != opal_list_get_end(&mapping);
+         item = opal_list_get_next(item), ++i) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
         app = map->app;
 
@@ -348,7 +348,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
         ompi_argv_free(mca_env);
     }
     if (mapping_valid) {
-        while (NULL != (item = ompi_list_remove_first(&mapping))) {
+        while (NULL != (item = opal_list_remove_first(&mapping))) {
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&mapping);

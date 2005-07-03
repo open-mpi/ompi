@@ -38,11 +38,11 @@ extern "C" {
         /** Verbose/debug output stream */
         int pls_output;
         /** List of opened components */
-        ompi_list_t pls_opened;
+        opal_list_t pls_opened;
         /** Whether the list of opened components is valid */
         bool pls_opened_valid;
         /** Sorted list of available components (highest priority first) */
-        ompi_list_t pls_available;
+        opal_list_t pls_available;
         /** Whether the list of available components is valid */
         bool pls_available_valid;
     } orte_pls_base_t;
@@ -57,7 +57,7 @@ extern "C" {
      */
     struct orte_pls_base_cmp_t {
         /** Base object */
-        ompi_list_item_t super;
+        opal_list_item_t super;
         /** pls component */
         orte_pls_base_component_t *component;
         /** pls module */

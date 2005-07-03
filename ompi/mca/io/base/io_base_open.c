@@ -47,10 +47,10 @@ int mca_io_base_param = -1;
 int mca_io_base_output = -1;
 
 bool mca_io_base_components_opened_valid = false;
-ompi_list_t mca_io_base_components_opened;
+opal_list_t mca_io_base_components_opened;
 
 bool mca_io_base_components_available_valid = false;
-ompi_list_t mca_io_base_components_available;
+opal_list_t mca_io_base_components_available;
 
 
 /*

@@ -57,9 +57,9 @@ struct mca_ptl_elan_module_t {
 
     unsigned int elan_vp;      /**< elan vpid, not ompi vpid */
     unsigned int elan_nvp;     /**< total # of elan vpid */
-    ompi_list_t  send_frags;   /**< outstanding send/put/get */
-    ompi_list_t  recv_frags;   /**< outstanding recv's */
-    ompi_list_t  pending_acks;
+    opal_list_t  send_frags;   /**< outstanding send/put/get */
+    opal_list_t  recv_frags;   /**< outstanding recv's */
+    opal_list_t  pending_acks;
 
     struct ompi_ptl_elan_comp_queue_t  *comp;  /**< completion queue */
     struct ompi_ptl_elan_queue_ctrl_t  *queue; /**< Queue ctrl struct*/
@@ -89,7 +89,7 @@ struct mca_ptl_elan_component_t {
     struct ompi_ptl_elan_thread_t **send_threads; /**< recv-related threads*/
 
     ompi_mutex_t elan_lock;                  /**< lock for module state */
-    ompi_list_t  elan_procs;                 /**< elan proc's */
+    opal_list_t  elan_procs;                 /**< elan proc's */
     ompi_free_list_t elan_recv_frags_free;
 };
 typedef struct mca_ptl_elan_component_t mca_ptl_elan_component_t;

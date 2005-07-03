@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -25,7 +25,7 @@
 
 
 typedef struct opened_component_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
   mca_pml_base_component_t *om_component;
 } opened_component_t;
 
@@ -44,11 +44,11 @@ int mca_pml_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
     int priority = 0, best_priority = 0;
-    ompi_list_item_t *item = NULL;
+    opal_list_item_t *item = NULL;
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
     mca_pml_base_module_t *module = NULL, *best_module = NULL;
-    ompi_list_t opened;
+    opal_list_t opened;
     opened_component_t *om = NULL;
 
     /* Traverse the list of available components; call their init
@@ -57,10 +57,10 @@ int mca_pml_base_select(bool enable_progress_threads,
     best_priority = -1;
     best_component = NULL;
     module = NULL;
-    OBJ_CONSTRUCT(&opened, ompi_list_t);
-    for (item = ompi_list_get_first(&mca_pml_base_components_available);
-         ompi_list_get_end(&mca_pml_base_components_available) != item;
-         item = ompi_list_get_next(item)) {
+    OBJ_CONSTRUCT(&opened, opal_list_t);
+    for (item = opal_list_get_first(&mca_pml_base_components_available);
+         opal_list_get_end(&mca_pml_base_components_available) != item;
+         item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_pml_base_component_t *) cli->cli_component;
 
@@ -95,9 +95,9 @@ int mca_pml_base_select(bool enable_progress_threads,
                 if (NULL == om) {
                     return OMPI_ERR_OUT_OF_RESOURCE;
                 }
-                OBJ_CONSTRUCT(om, ompi_list_item_t);
+                OBJ_CONSTRUCT(om, opal_list_item_t);
                 om->om_component = component;
-                ompi_list_append(&opened, (ompi_list_item_t*) om);
+                opal_list_append(&opened, (opal_list_item_t*) om);
             }
         }
     }
@@ -111,9 +111,9 @@ int mca_pml_base_select(bool enable_progress_threads,
 
   /* Finalize all non-selected components */
 
-  for (item = ompi_list_remove_first(&opened);
+  for (item = opal_list_remove_first(&opened);
        NULL != item;
-       item = ompi_list_remove_first(&opened)) {
+       item = opal_list_remove_first(&opened)) {
     om = (opened_component_t *) item;
     if (om->om_component != best_component) {
 

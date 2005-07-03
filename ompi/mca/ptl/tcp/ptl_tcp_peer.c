@@ -68,7 +68,7 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 
 opal_class_t  mca_ptl_tcp_peer_t_class = {
     "mca_tcp_ptl_peer_t", 
-    OBJ_CLASS(ompi_list_item_t),
+    OBJ_CLASS(opal_list_item_t),
     (opal_construct_t)mca_ptl_tcp_peer_construct, 
     (opal_destruct_t)mca_ptl_tcp_peer_destruct
 };
@@ -90,7 +90,7 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
     ptl_peer->peer_nbo = false;
-    OBJ_CONSTRUCT(&ptl_peer->peer_frags, ompi_list_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_frags, opal_list_t);
     OBJ_CONSTRUCT(&ptl_peer->peer_send_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, ompi_mutex_t);
 }
@@ -197,7 +197,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
     case MCA_PTL_TCP_CONNECTING:
     case MCA_PTL_TCP_CONNECT_ACK:
     case MCA_PTL_TCP_CLOSED:
-        ompi_list_append(&ptl_peer->peer_frags, (ompi_list_item_t*)frag);
+        opal_list_append(&ptl_peer->peer_frags, (opal_list_item_t*)frag);
         if(ptl_peer->peer_state == MCA_PTL_TCP_CLOSED)
             rc = mca_ptl_tcp_peer_start_connect(ptl_peer);
         break;
@@ -206,7 +206,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         break;
     case MCA_PTL_TCP_CONNECTED:
         if (NULL != ptl_peer->peer_send_frag) {
-            ompi_list_append(&ptl_peer->peer_frags, (ompi_list_item_t*)frag);
+            opal_list_append(&ptl_peer->peer_frags, (opal_list_item_t*)frag);
         } else if (offset == 0) {
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
                 OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
@@ -365,10 +365,10 @@ static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
     /* setup socket options */
     ptl_peer->peer_state = MCA_PTL_TCP_CONNECTED;
     ptl_peer->peer_retries = 0;
-    if(ompi_list_get_size(&ptl_peer->peer_frags) > 0) {
+    if(opal_list_get_size(&ptl_peer->peer_frags) > 0) {
         if(NULL == ptl_peer->peer_send_frag)
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
-                ompi_list_remove_first(&ptl_peer->peer_frags);
+                opal_list_remove_first(&ptl_peer->peer_frags);
         ompi_event_add(&ptl_peer->peer_send_event, 0);
     }
 }
@@ -653,7 +653,7 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 
             /* progress any pending sends */
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
-                ompi_list_remove_first(&ptl_peer->peer_frags);
+                opal_list_remove_first(&ptl_peer->peer_frags);
         } while (NULL != ptl_peer->peer_send_frag);
 
         /* if nothing else to do unregister for send event notifications */

@@ -38,7 +38,7 @@ struct mca_ptl_base_recv_frag_t;
 OMPI_DECLSPEC bool mca_ptl_base_match(
     mca_ptl_base_match_header_t *frag_header,
     struct mca_ptl_base_recv_frag_t *frag_desc, 
-    ompi_list_t *additional_matches, 
+    opal_list_t *additional_matches, 
     bool* additional_matched);
 
 /**

@@ -73,7 +73,7 @@ struct mca_ptl_portals_component_t {
     ompi_free_list_t portals_recv_frags;
 
     /* queue of pending sends */
-    ompi_list_t portals_pending_acks;
+    opal_list_t portals_pending_acks;
 
     /* lock for accessing component */
     ompi_mutex_t portals_lock;

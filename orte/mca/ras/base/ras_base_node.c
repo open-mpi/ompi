@@ -52,7 +52,7 @@ static void orte_ras_base_node_destruct(orte_ras_base_node_t* node)
 
 OBJ_CLASS_INSTANCE(
     orte_ras_base_node_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_ras_base_node_construct,
     orte_ras_base_node_destruct);
 
@@ -61,7 +61,7 @@ OBJ_CLASS_INSTANCE(
  * Query the registry for all available nodes 
  */
 
-int orte_ras_base_node_query(ompi_list_t* nodes)
+int orte_ras_base_node_query(opal_list_t* nodes)
 {
     size_t i, cnt;
     orte_gpr_value_t** values;
@@ -117,7 +117,7 @@ int orte_ras_base_node_query(ompi_list_t* nodes)
                 continue;
             }
         }
-        ompi_list_append(nodes, &node->super);
+        opal_list_append(nodes, &node->super);
     }
     return ORTE_SUCCESS;
 }
@@ -125,7 +125,7 @@ int orte_ras_base_node_query(ompi_list_t* nodes)
 /*
  * Query the registry for all nodes allocated to a specified job
  */
-int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
+int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
 {
     char* keys[] = { 
         ORTE_NODE_NAME_KEY, 
@@ -205,7 +205,7 @@ int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
             OBJ_RELEASE(node);
             continue;
         }
-        ompi_list_append(nodes, &node->super);
+        opal_list_append(nodes, &node->super);
     }
     return ORTE_SUCCESS;
 }
@@ -213,15 +213,15 @@ int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
 /*
  * Add the specified node definitions to the registry
  */
-int orte_ras_base_node_insert(ompi_list_t* nodes)
+int orte_ras_base_node_insert(opal_list_t* nodes)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     orte_gpr_value_t **values;
     int rc;
     size_t num_values, i, j;
     orte_ras_base_node_t* node;
     
-    num_values = ompi_list_get_size(nodes);
+    num_values = opal_list_get_size(nodes);
     if (0 >= num_values) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -270,9 +270,9 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
         }
     }
     
-    for(i=0, item =  ompi_list_get_first(nodes);
-        i < num_values && item != ompi_list_get_end(nodes);
-        i++, item =  ompi_list_get_next(item)) {
+    for(i=0, item =  opal_list_get_first(nodes);
+        i < num_values && item != opal_list_get_end(nodes);
+        i++, item =  opal_list_get_next(item)) {
         orte_gpr_value_t* value = values[i];
         node = (orte_ras_base_node_t*)item;
 
@@ -337,14 +337,14 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
 /*
  * Delete the specified nodes from the registry
  */
-int orte_ras_base_node_delete(ompi_list_t* nodes)
+int orte_ras_base_node_delete(opal_list_t* nodes)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     int rc;
     
-    for(item =  ompi_list_get_first(nodes);
-        item != ompi_list_get_end(nodes);
-        item =  ompi_list_get_next(nodes)) {
+    for(item =  opal_list_get_first(nodes);
+        item != opal_list_get_end(nodes);
+        item =  opal_list_get_next(nodes)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         char* cellid;
         char* tokens[3];
@@ -376,16 +376,16 @@ int orte_ras_base_node_delete(ompi_list_t* nodes)
  * Assign the allocated slots on the specified nodes to the  
  * indicated jobid.
  */
-int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
+int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     orte_gpr_value_t **values;
     int rc;
     size_t num_values, i, j;
     orte_ras_base_node_t* node;
     char* jobid_str;
     
-    num_values = ompi_list_get_size(nodes);
+    num_values = opal_list_get_size(nodes);
     if (0 >= num_values) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -432,9 +432,9 @@ int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
         }
     }
     
-    for(i=0, item =  ompi_list_get_first(nodes);
-        i < num_values && item != ompi_list_get_end(nodes);
-        i++, item = ompi_list_get_next(item)) {
+    for(i=0, item =  opal_list_get_first(nodes);
+        i < num_values && item != opal_list_get_end(nodes);
+        i++, item = opal_list_get_next(item)) {
         int rc;
         node = (orte_ras_base_node_t*)item;
 

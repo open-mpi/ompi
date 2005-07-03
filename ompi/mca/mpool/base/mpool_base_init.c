@@ -26,11 +26,11 @@
 #include "class/ompi_free_list.h"
 #include "threads/mutex.h" 
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, ompi_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NULL);
 static bool mca_mpool_enable_progress_threads = true;
 static bool mca_mpool_enable_mpi_threads = true;
          
-OBJ_CLASS_INSTANCE(mca_mpool_base_chunk_t, ompi_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(mca_mpool_base_chunk_t, opal_list_item_t, NULL, NULL);
 
 /**
  * Function for weeding out mpool modules that don't want to run.
@@ -38,7 +38,7 @@ OBJ_CLASS_INSTANCE(mca_mpool_base_chunk_t, ompi_list_item_t, NULL, NULL);
  * Call the init function on all available components to find out if they
  * want to run.  Select all components that don't fail.  Failing modules
  * will be closed and unloaded.  The selected modules will be returned
- * to the caller in a ompi_list_t.
+ * to the caller in a opal_list_t.
  */
 int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
 {

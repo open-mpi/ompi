@@ -718,7 +718,7 @@ int mca_ptl_sm_finalize(struct mca_ptl_base_module_t* ptl)
 int mca_ptl_sm_request_alloc(struct mca_ptl_base_module_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     mca_ptl_sm_send_request_t *sm_request;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     int rc;
 
     /* allocate shared memory, first fragment */
@@ -738,11 +738,11 @@ int mca_ptl_sm_request_alloc(struct mca_ptl_base_module_t* ptl, struct mca_ptl_b
 void mca_ptl_sm_request_return(struct mca_ptl_base_module_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     mca_ptl_sm_send_request_t *sm_request;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     /* return the fragment descriptor to the free list */
     sm_request=(mca_ptl_sm_send_request_t *)request;
-    item=(ompi_list_item_t *)sm_request->req_frag;
+    item=(opal_list_item_t *)sm_request->req_frag;
     OMPI_FREE_LIST_RETURN(&(mca_ptl_sm_component.sm_first_frags),item);
 
 }
@@ -909,7 +909,7 @@ int mca_ptl_sm_send_continue(
     ompi_fifo_t *send_fifo;
     mca_ptl_base_header_t* hdr;
     void *sm_data_ptr ;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     mca_ptl_sm_second_frag_t *send_frag;
     ompi_convertor_t *convertor;
     struct iovec address;

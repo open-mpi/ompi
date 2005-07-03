@@ -35,7 +35,7 @@
 /*
  * Global variables
  */
-ompi_list_t mca_allocator_base_components;
+opal_list_t mca_allocator_base_components;
 int mca_allocator_base_output = -1;
 
 /**
@@ -63,10 +63,10 @@ int mca_allocator_base_open(void)
 mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name)
 {
     /* Traverse the list of available components; call their init functions. */
-    ompi_list_item_t* item;
-    for (item = ompi_list_get_first(&mca_allocator_base_components);
-         item != ompi_list_get_end(&mca_allocator_base_components);
-         item = ompi_list_get_next(item)) {
+    opal_list_item_t* item;
+    for (item = opal_list_get_first(&mca_allocator_base_components);
+         item != opal_list_get_end(&mca_allocator_base_components);
+         item = opal_list_get_next(item)) {
          mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) item;
          mca_allocator_base_component_t* component = (mca_allocator_base_component_t *) cli->cli_component;
          if(strcmp(component->allocator_version.mca_component_name,

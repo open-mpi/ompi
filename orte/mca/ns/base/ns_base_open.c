@@ -80,7 +80,7 @@ OMPI_DECLSPEC mca_ns_base_module_t orte_ns = {
     orte_ns_base_get_peers
 };
 bool mca_ns_base_selected = false;
-ompi_list_t mca_ns_base_components_available;
+opal_list_t mca_ns_base_components_available;
 mca_ns_base_component_t mca_ns_base_selected_component;
 
 
@@ -101,7 +101,7 @@ static void orte_name_services_namelist_destructor(orte_name_services_namelist_t
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
 		   orte_name_services_namelist_t,              /* type name */
-		   ompi_list_item_t,                        /* parent "class" name */
+		   opal_list_item_t,                        /* parent "class" name */
 		   orte_name_services_namelist_construct,    /* constructor */
 		   orte_name_services_namelist_destructor);  /* destructor */
 

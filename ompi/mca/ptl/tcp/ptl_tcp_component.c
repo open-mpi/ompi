@@ -63,7 +63,7 @@
  */
 
 struct mca_ptl_tcp_event_t {
-    ompi_list_item_t item;
+    opal_list_item_t item;
     ompi_event_t event;
 };
 typedef struct mca_ptl_tcp_event_t mca_ptl_tcp_event_t;
@@ -71,20 +71,20 @@ typedef struct mca_ptl_tcp_event_t mca_ptl_tcp_event_t;
 static void mca_ptl_tcp_event_construct(mca_ptl_tcp_event_t* event)
 {
     OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    ompi_list_append(&mca_ptl_tcp_component.tcp_events, &event->item);
+    opal_list_append(&mca_ptl_tcp_component.tcp_events, &event->item);
     OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 }
 
 static void mca_ptl_tcp_event_destruct(mca_ptl_tcp_event_t* event)
 {
     OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    ompi_list_remove_item(&mca_ptl_tcp_component.tcp_events, &event->item);
+    opal_list_remove_item(&mca_ptl_tcp_component.tcp_events, &event->item);
     OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 }
 
 OBJ_CLASS_INSTANCE(
     mca_ptl_tcp_event_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     mca_ptl_tcp_event_construct,
     mca_ptl_tcp_event_destruct);
 
@@ -179,8 +179,8 @@ int mca_ptl_tcp_component_open(void)
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, ompi_hash_table_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_pending_acks, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_events, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_pending_acks, opal_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_events, opal_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_recv_frags, ompi_free_list_t);
     ompi_hash_table_init(&mca_ptl_tcp_component.tcp_procs, 256);
@@ -225,22 +225,22 @@ int mca_ptl_tcp_component_open(void)
 
 int mca_ptl_tcp_component_close(void)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 #ifdef WIN32
     WSACleanup();
 #endif
 #if OMPI_ENABLE_DEBUG
     if (mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated != 
-        mca_ptl_tcp_component.tcp_send_frags.super.ompi_list_length) {
+        mca_ptl_tcp_component.tcp_send_frags.super.opal_list_length) {
         ompi_output(0, "tcp send frags: %d allocated %d returned\n",
             mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated, 
-            mca_ptl_tcp_component.tcp_send_frags.super.ompi_list_length);
+            mca_ptl_tcp_component.tcp_send_frags.super.opal_list_length);
     }
     if (mca_ptl_tcp_component.tcp_recv_frags.fl_num_allocated != 
-        mca_ptl_tcp_component.tcp_recv_frags.super.ompi_list_length) {
+        mca_ptl_tcp_component.tcp_recv_frags.super.opal_list_length) {
         ompi_output(0, "tcp recv frags: %d allocated %d returned\n",
             mca_ptl_tcp_component.tcp_recv_frags.fl_num_allocated, 
-            mca_ptl_tcp_component.tcp_recv_frags.super.ompi_list_length);
+            mca_ptl_tcp_component.tcp_recv_frags.super.opal_list_length);
     }
 #endif
 
@@ -259,9 +259,9 @@ int mca_ptl_tcp_component_close(void)
 
     /* cleanup any pending events */
     OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    for(item =  ompi_list_remove_first(&mca_ptl_tcp_component.tcp_events);
+    for(item =  opal_list_remove_first(&mca_ptl_tcp_component.tcp_events);
         item != NULL; 
-        item =  ompi_list_remove_first(&mca_ptl_tcp_component.tcp_events)) {
+        item =  opal_list_remove_first(&mca_ptl_tcp_component.tcp_events)) {
         mca_ptl_tcp_event_t* event = (mca_ptl_tcp_event_t*)item;
         ompi_event_del(&event->event);
         OBJ_RELEASE(event);
@@ -290,7 +290,7 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
     if(NULL == ptl)
         return OMPI_ERR_OUT_OF_RESOURCE;
     memcpy(ptl, &mca_ptl_tcp_module, sizeof(mca_ptl_tcp_module));
-    OBJ_CONSTRUCT(&ptl->ptl_peers, ompi_list_t);
+    OBJ_CONSTRUCT(&ptl->ptl_peers, opal_list_t);
     mca_ptl_tcp_component.tcp_ptl_modules[mca_ptl_tcp_component.tcp_num_ptl_modules++] = ptl;
 
     /* initialize the ptl */

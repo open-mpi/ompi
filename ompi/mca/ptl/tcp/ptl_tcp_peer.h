@@ -28,7 +28,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
@@ -57,7 +57,7 @@ typedef enum {
  *  are established dynamically on an as-needed basis:
 */
 struct mca_ptl_base_peer_t {
-    ompi_list_item_t                super;
+    opal_list_item_t                super;
     struct mca_ptl_tcp_module_t*    peer_ptl;         /**< PTL instance that created this connection */
     struct mca_ptl_tcp_proc_t*      peer_proc;        /**< proc structure corresponding to peer */
     struct mca_ptl_tcp_addr_t*      peer_addr;        /**< address of peer */
@@ -66,7 +66,7 @@ struct mca_ptl_base_peer_t {
     struct mca_ptl_tcp_recv_frag_t* peer_recv_frag;   /**< current recv frag being processed */
     mca_ptl_tcp_state_t             peer_state;       /**< current state of the connection */
     size_t                          peer_retries;     /**< number of connection retries attempted */
-    ompi_list_t                     peer_frags;       /**< list of pending frags to send */
+    opal_list_t                     peer_frags;       /**< list of pending frags to send */
     ompi_mutex_t                    peer_send_lock;   /**< lock for concurrent access to peer state */
     ompi_mutex_t                    peer_recv_lock;   /**< lock for concurrent access to peer state */
     ompi_event_t                    peer_send_event;  /**< event for async processing of send frags */

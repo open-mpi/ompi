@@ -51,7 +51,7 @@ struct mca_pml_teg_t {
     mca_ptl_base_component_progress_fn_t* teg_ptl_progress;
     size_t teg_num_ptl_progress;
 
-    ompi_list_t  teg_procs;
+    opal_list_t  teg_procs;
     ompi_mutex_t teg_lock;
 
     int teg_priority;
@@ -66,7 +66,7 @@ struct mca_pml_teg_t {
     ompi_free_list_t teg_recv_requests;
 
     /* list of pending send requests */
-    ompi_list_t teg_send_pending;
+    opal_list_t teg_send_pending;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 

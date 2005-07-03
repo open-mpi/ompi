@@ -106,9 +106,9 @@ static int btl_exclusivity_compare(const void* arg1, const void* arg2)
 int mca_pml_ob1_add_btls()
 {
     /* build an array of ob1s and ob1 modules */
-    ompi_list_t* btls = &mca_btl_base_modules_initialized;
+    opal_list_t* btls = &mca_btl_base_modules_initialized;
     mca_btl_base_selected_module_t* selected_btl;
-    size_t num_btls = ompi_list_get_size(btls);
+    size_t num_btls = opal_list_get_size(btls);
 
     mca_pml_ob1.num_btl_modules = 0;
     mca_pml_ob1.num_btl_progress = 0;
@@ -123,9 +123,9 @@ int mca_pml_ob1_add_btls()
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for(selected_btl =  (mca_btl_base_selected_module_t*)ompi_list_get_first(btls);
-        selected_btl != (mca_btl_base_selected_module_t*)ompi_list_get_end(btls);
-        selected_btl =  (mca_btl_base_selected_module_t*)ompi_list_get_next(selected_btl)) {
+    for(selected_btl =  (mca_btl_base_selected_module_t*)opal_list_get_first(btls);
+        selected_btl != (mca_btl_base_selected_module_t*)opal_list_get_end(btls);
+        selected_btl =  (mca_btl_base_selected_module_t*)opal_list_get_next(selected_btl)) {
         mca_btl_base_module_t *btl = selected_btl->btl_module;
         size_t i;
         int rc;

@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"
 

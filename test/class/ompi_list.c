@@ -18,50 +18,50 @@
 #include <assert.h>
 
 #include "support.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 
 /*
  * Data type used for testing
  */
 typedef struct test_data {
     /* link list data structure */
-    ompi_list_item_t ll_element;
+    opal_list_item_t ll_element;
     /* test data */
     size_t data;
 } test_data_t;
 
 OBJ_CLASS_INSTANCE(test_data_t,
-                   ompi_list_item_t,
+                   opal_list_item_t,
                    NULL, NULL);
 
 int main(int argc, char **argv)
 {
     /* local variables */
-    ompi_list_t list, x;
+    opal_list_t list, x;
     size_t indx,i,list_size, tmp_size_1, tmp_size_2,size_elements;
     int error_cnt;
     test_data_t *elements, *ele;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
-    test_init("ompi_list_t");
+    test_init("opal_list_t");
 
     /* initialize list */
-    OBJ_CONSTRUCT(&list, ompi_list_t);
-    OBJ_CONSTRUCT(&x, ompi_list_t);
+    OBJ_CONSTRUCT(&list, opal_list_t);
+    OBJ_CONSTRUCT(&x, opal_list_t);
 
     /* check length of list */
-    list_size=ompi_list_get_size(&list);
+    list_size=opal_list_get_size(&list);
     if( 0 == list_size ) {
         test_success();
     } else {
-        test_failure(" ompi_list_get_size");
+        test_failure(" opal_list_get_size");
     }
 
     /* check for empty */
-    if (ompi_list_is_empty(&list)) {
+    if (opal_list_is_empty(&list)) {
         test_success();
     } else {
-        test_failure(" ompi_list_is_empty(empty list)");
+        test_failure(" opal_list_is_empty(empty list)");
     }
 
     /* create test elements */
@@ -75,9 +75,9 @@ int main(int argc, char **argv)
 
     /* populate list */
     for(i=0 ; i < size_elements ; i++) {
-        ompi_list_append(&list,(ompi_list_item_t *)(elements+i));
+        opal_list_append(&list,(opal_list_item_t *)(elements+i));
     }
-    list_size=ompi_list_get_size(&list);
+    list_size=opal_list_get_size(&list);
     if( list_size == size_elements ) {
         test_success();
     } else {
@@ -85,18 +85,18 @@ int main(int argc, char **argv)
     }
 
     /* checking for empty on non-empty list */
-    if (!ompi_list_is_empty(&list)) {
+    if (!opal_list_is_empty(&list)) {
         test_success();
     } else {
-        test_failure(" ompi_list_is_empty(non-empty list)");
+        test_failure(" opal_list_is_empty(non-empty list)");
     }
 
     /* check that list is ordered as expected */
     i=0;
     error_cnt=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         if( ele->data != i )
             error_cnt++;
         i++;
@@ -107,132 +107,132 @@ int main(int argc, char **argv)
         test_failure(" error in list order ");
     }
 
-    /* check ompi_list_get_first */
+    /* check opal_list_get_first */
     ele = (test_data_t *)NULL;
-    ele = (test_data_t *) ompi_list_get_first(&list);
+    ele = (test_data_t *) opal_list_get_first(&list);
     assert(ele);
     if( 0 == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_get_first");
+        test_failure(" error in opal_list_get_first");
     }
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( size_elements == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_get_first - list size changed ");
+        test_failure(" error in opal_list_get_first - list size changed ");
     }
 
-    /* check ompi_list_get_last */
+    /* check opal_list_get_last */
     ele = (test_data_t *)NULL;
-    ele = (test_data_t *) ompi_list_get_last(&list);
+    ele = (test_data_t *) opal_list_get_last(&list);
     assert(ele);
     if( (size_elements-1) == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_get_last");
+        test_failure(" error in opal_list_get_last");
     }
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( size_elements == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_get_first - list size changed ");
+        test_failure(" error in opal_list_get_first - list size changed ");
     }
 
-    /* check ompi_list_remove_first */
+    /* check opal_list_remove_first */
     ele = (test_data_t *)NULL;
-    ele = (test_data_t *) ompi_list_remove_first(&list);
+    ele = (test_data_t *) opal_list_remove_first(&list);
     assert(ele);
     if( 0 == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove_first");
+        test_failure(" error in opal_list_remove_first");
     }
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( (size_elements-1) == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove_first - list size changed ");
+        test_failure(" error in opal_list_remove_first - list size changed ");
     }
 
-    /* test ompi_list_prepend */
-    ompi_list_prepend(&list,(ompi_list_item_t *)elements);
+    /* test opal_list_prepend */
+    opal_list_prepend(&list,(opal_list_item_t *)elements);
     ele = (test_data_t *)NULL;
-    ele = (test_data_t *) ompi_list_get_first(&list);
+    ele = (test_data_t *) opal_list_get_first(&list);
     assert(ele);
     if( 0 == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_prepend");
+        test_failure(" error in opal_list_prepend");
     }
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( size_elements == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_prepend - list size changed ");
+        test_failure(" error in opal_list_prepend - list size changed ");
     }
 
-    /* check ompi_list_remove_last */
+    /* check opal_list_remove_last */
     ele = (test_data_t *)NULL;
-    ele = (test_data_t *) ompi_list_remove_last(&list);
+    ele = (test_data_t *) opal_list_remove_last(&list);
     assert(ele);
     if( (size_elements-1) == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove_last");
+        test_failure(" error in opal_list_remove_last");
     }
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( (size_elements-1) == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove_last - list size changed ");
+        test_failure(" error in opal_list_remove_last - list size changed ");
     }
 
-    /* test ompi_list_append */
-    ompi_list_append(&list,(ompi_list_item_t *)(elements+size_elements-1));
+    /* test opal_list_append */
+    opal_list_append(&list,(opal_list_item_t *)(elements+size_elements-1));
     ele = (test_data_t *)NULL;
-    ele = (test_data_t *) ompi_list_get_last(&list);
+    ele = (test_data_t *) opal_list_get_last(&list);
     assert(ele);
     if( (size_elements-1) == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_append");
+        test_failure(" error in opal_list_append");
     }
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( size_elements == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_append - list size changed ");
+        test_failure(" error in opal_list_append - list size changed ");
     }
 
     /* remove element from list */
@@ -242,55 +242,55 @@ int main(int argc, char **argv)
     assert(2 <= size_elements);
     ele = (test_data_t *)NULL;
     ele = (test_data_t *) 
-        ompi_list_remove_item(&list,(ompi_list_item_t *)(elements+indx));
+        opal_list_remove_item(&list,(opal_list_item_t *)(elements+indx));
     assert(ele);
     if( (indx-1) == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove - previous");
+        test_failure(" error in opal_list_remove - previous");
     }
-    ele=(test_data_t *)(((ompi_list_item_t *)ele)->ompi_list_next);
+    ele=(test_data_t *)(((opal_list_item_t *)ele)->opal_list_next);
     if( (indx+1) == ele->data ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove - next");
+        test_failure(" error in opal_list_remove - next");
     }
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( (size_elements-1) == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove - list size changed incorrectly");
+        test_failure(" error in opal_list_remove - list size changed incorrectly");
     }
 
     /* test the insert function */
-    i=ompi_list_insert(&list,(ompi_list_item_t *)(elements+indx),indx);
+    i=opal_list_insert(&list,(opal_list_item_t *)(elements+indx),indx);
     if( 1 == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_remove_item \n");
+        test_failure(" error in opal_list_remove_item \n");
     }
 
     i=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         i++;
     }
     if( size_elements == i ) {
         test_success();
     } else {
-        test_failure(" error in ompi_list_insert - incorrect list length");
+        test_failure(" error in opal_list_insert - incorrect list length");
     }
     i=0;
     error_cnt=0;
-    for(ele = (test_data_t *) ompi_list_get_first(&list);
-            ele != (test_data_t *) ompi_list_get_end(&list);
-            ele = (test_data_t *) ((ompi_list_item_t *)ele)->ompi_list_next) {
+    for(ele = (test_data_t *) opal_list_get_first(&list);
+            ele != (test_data_t *) opal_list_get_end(&list);
+            ele = (test_data_t *) ((opal_list_item_t *)ele)->opal_list_next) {
         if( ele->data != i )
             error_cnt++;
         i++;
@@ -298,18 +298,18 @@ int main(int argc, char **argv)
     if( 0 == error_cnt ) {
         test_success();
     } else {
-        test_failure(" error in list order - ompi_list_remove_item ");
+        test_failure(" error in list order - opal_list_remove_item ");
     }
 
     /* test the splice and join functions  */
-    list_size = ompi_list_get_size(&list);
-    for (i = 0, item = ompi_list_get_first(&list) ; 
-         i < list_size / 2 ; ++i, item = ompi_list_get_next(item)) {
+    list_size = opal_list_get_size(&list);
+    for (i = 0, item = opal_list_get_first(&list) ; 
+         i < list_size / 2 ; ++i, item = opal_list_get_next(item)) {
     }
-    ompi_list_splice(&x, ompi_list_get_end(&x),
-                     &list, item, ompi_list_get_end(&list));
-    tmp_size_1 = ompi_list_get_size(&list);
-    tmp_size_2 = ompi_list_get_size(&x);
+    opal_list_splice(&x, opal_list_get_end(&x),
+                     &list, item, opal_list_get_end(&list));
+    tmp_size_1 = opal_list_get_size(&list);
+    tmp_size_2 = opal_list_get_size(&x);
     if (tmp_size_1 != i) {
         test_failure(" error in splice (size of list)");
     } else if (tmp_size_2 != list_size - tmp_size_1) {
@@ -318,9 +318,9 @@ int main(int argc, char **argv)
         test_success();
     }
 
-    ompi_list_join(&list, ompi_list_get_end(&list), &x);
-    tmp_size_1 = ompi_list_get_size(&list);
-    tmp_size_2 = ompi_list_get_size(&x);
+    opal_list_join(&list, opal_list_get_end(&list), &x);
+    tmp_size_1 = opal_list_get_size(&list);
+    tmp_size_2 = opal_list_get_size(&x);
     if (tmp_size_1 != list_size) {
         test_failure(" error in join (size of list)");
     } else if (tmp_size_2 != 0) {

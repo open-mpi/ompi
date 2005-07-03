@@ -137,8 +137,8 @@ int orte_iof_svc_unsubscribe(
 struct orte_iof_svc_component_t { 
     orte_iof_base_component_t super;
     int svc_debug;
-    ompi_list_t svc_published;
-    ompi_list_t svc_subscribed;
+    opal_list_t svc_published;
+    opal_list_t svc_subscribed;
     ompi_mutex_t svc_lock;
     struct iovec svc_iov[1];
 };

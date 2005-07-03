@@ -45,7 +45,7 @@ static void mca_ptl_gm_basic_frag_callback( struct gm_port* port, void* context,
 
     switch( status ) {
     case GM_SUCCESS:
-	OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+	OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
 	/* release the send token */
 	ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
         break;
@@ -171,7 +171,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
         peer->peer_ptl->super.ptl_recv_progress( (mca_ptl_base_module_t*)peer->peer_ptl,
 						 frag->frag_recv.frag_request, frag->frag_recv.frag_base.frag_size,
 						 frag->frag_recv.frag_base.frag_size );
-        OMPI_FREE_LIST_RETURN( &(peer->peer_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag );
+        OMPI_FREE_LIST_RETURN( &(peer->peer_ptl->gm_recv_frags_free), (opal_list_item_t*)frag );
         DO_DEBUG( count += sprintf( buffer + count, " finish" ); )
     }
     DO_DEBUG( ompi_output( 0, "receiver %d %s", orte_process_info.my_name->vpid, buffer ); )
@@ -192,7 +192,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
     /* send current segment */
     send_line = &(frag->pipeline.lines[frag->pipeline.pos_transfert]);
     if( (send_line->flags & PTL_GM_PIPELINE_TRANSFERT) == PTL_GM_PIPELINE_TRANSFERT ) {
-        ompi_list_item_t* item;
+        opal_list_item_t* item;
         int32_t rc;
 	
         OMPI_FREE_LIST_WAIT( &(peer->peer_ptl->gm_send_dma_frags), item, rc );
@@ -332,7 +332,7 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
 
     while( 0 < burst_length ) {  /* send everything for the burst_length size */
         if( NULL == hdr ) {
-            ompi_list_item_t* item;
+            opal_list_item_t* item;
             OMPI_FREE_LIST_WAIT( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
             ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
             hdr = (mca_ptl_base_frag_header_t*)item;
@@ -384,7 +384,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 {
     mca_ptl_gm_frag_header_t* hdr;
     uint64_t remaining_bytes, burst_length;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     int rc = 0;
 #if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
     gm_status_t status;
@@ -400,7 +400,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
                                       fragment->frag_send.frag_base.frag_size );
     DO_DEBUG( ompi_output( 0, "sender %d start new send length %ld offset %ld\n", orte_process_info.my_name->vpid, *size, offset ); )
     /* The first DMA memory buffer has been alocated in same time as the fragment */
-    item = (ompi_list_item_t*)fragment->send_buf;
+    item = (opal_list_item_t*)fragment->send_buf;
     hdr = (mca_ptl_gm_frag_header_t*)item;
     remaining_bytes = fragment->frag_send.frag_base.frag_size - fragment->frag_bytes_processed;
     if( remaining_bytes < mca_ptl_gm_component.gm_eager_limit ) {
@@ -433,7 +433,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
             ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
                                                          fragment->frag_send.frag_request,
                                                          (*size) );
-            OMPI_FREE_LIST_RETURN( &(ptl_peer->peer_ptl->gm_send_frags), ((ompi_list_item_t*)fragment) );
+            OMPI_FREE_LIST_RETURN( &(ptl_peer->peer_ptl->gm_send_frags), ((opal_list_item_t*)fragment) );
         }
         return OMPI_SUCCESS;
     }
@@ -494,7 +494,7 @@ static void send_match_callback( struct gm_port* port, void* context, gm_status_
 
     gm_ptl = (mca_ptl_gm_module_t*)((long)header->hdr_rndv.hdr_frag_length);
 
-    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
     /* release the send token */
     ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
@@ -519,7 +519,7 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     int rc, freeAfter;
     size_t max_data = 0;
     mca_ptl_gm_peer_t* ptl_peer = (mca_ptl_gm_peer_t*)ptl_base_peer;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     char* sendbuf;
 
     OMPI_FREE_LIST_WAIT( &(ptl_gm->gm_send_dma_frags), item, rc );
@@ -655,7 +655,7 @@ static void recv_short_callback( struct gm_port* port, void* context, gm_status_
     frag_base = (mca_ptl_base_frag_t*)header->hdr_dst_match.pval;
     gm_ptl = (mca_ptl_gm_module_t *)frag_base->frag_owner;
 
-    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((opal_list_item_t*)header) );
     /* release the send token */
     ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
@@ -663,7 +663,7 @@ static void recv_short_callback( struct gm_port* port, void* context, gm_status_
 static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer,
 					      struct mca_ptl_base_frag_t* frag )
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_ptl_base_header_t *hdr;
     int rc;
 
@@ -776,7 +776,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
             ptl->super.ptl_recv_progress( (mca_ptl_base_module_t*)ptl, request,
                                           frag->frag_recv.frag_base.frag_size,
                                           frag->frag_recv.frag_base.frag_size );
-            OMPI_FREE_LIST_RETURN( &(((mca_ptl_gm_peer_t*)frag->frag_recv.frag_base.frag_peer)->peer_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag );
+            OMPI_FREE_LIST_RETURN( &(((mca_ptl_gm_peer_t*)frag->frag_recv.frag_base.frag_peer)->peer_ptl->gm_recv_frags_free), (opal_list_item_t*)frag );
         }
         DO_DEBUG( ompi_output( 0, "receiver %d waiting for burst with fragment ...", orte_process_info.my_name->vpid ); );
         return NULL;
@@ -855,7 +855,7 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t* ptl,
         ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
                                       frag->frag_send.frag_request,
                                       frag->frag_bytes_validated );
-        OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t*)frag );
+        OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (opal_list_item_t*)frag );
     }
 
     return NULL;
@@ -867,23 +867,23 @@ void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
     int  size;
     bool matched; 
     
-    size = ompi_list_get_size (&ptl->gm_recv_outstanding_queue);
+    size = opal_list_get_size (&ptl->gm_recv_outstanding_queue);
     
     if (size > 0) {
         frag = (mca_ptl_gm_recv_frag_t *)
-	    ompi_list_remove_first( (ompi_list_t *)&(ptl->gm_recv_outstanding_queue) );
+	    opal_list_remove_first( (opal_list_t *)&(ptl->gm_recv_outstanding_queue) );
 	
 	
         matched = ptl->super.ptl_match( &(ptl->super), &(frag->frag_recv),
                                         &(frag->frag_recv.frag_base.frag_header.hdr_match) );
 	
         if(!matched) {
-            ompi_list_append((ompi_list_t *)&(ptl->gm_recv_outstanding_queue),
-                             (ompi_list_item_t *) frag);
+            opal_list_append((opal_list_t *)&(ptl->gm_recv_outstanding_queue),
+                             (opal_list_item_t *) frag);
         } else {
             /* if allocated buffer, free the buffer */
             /* return the recv descriptor to the free list */
-            OMPI_FREE_LIST_RETURN(&(ptl->gm_recv_frags_free), (ompi_list_item_t *)frag);   
+            OMPI_FREE_LIST_RETURN(&(ptl->gm_recv_frags_free), (opal_list_item_t *)frag);   
         }  
     }
 } 

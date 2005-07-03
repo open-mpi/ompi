@@ -22,7 +22,7 @@
 
 #include "include/constants.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "threads/mutex.h"
 #include "util/argv.h"
 #include "util/cmd_line.h"
@@ -47,7 +47,7 @@
  * Description of a command line option
  */
 struct cmd_line_option_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
 
     char clo_short_name;
     char *clo_single_dash_name;
@@ -65,14 +65,14 @@ typedef struct cmd_line_option_t cmd_line_option_t;
 static void option_constructor(cmd_line_option_t *cmd);
 static void option_destructor(cmd_line_option_t *cmd);
 static OBJ_CLASS_INSTANCE(cmd_line_option_t,
-                          ompi_list_item_t,
+                          opal_list_item_t,
                           option_constructor, option_destructor);
 
 /*
  * An option that was used in the argv that was parsed
  */
 struct cmd_line_param_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
 
     /* Note that clp_arg points to storage "owned" by someone else; it
        has the original option string by referene, not by value.
@@ -96,7 +96,7 @@ typedef struct cmd_line_param_t cmd_line_param_t;
 static void param_constructor(cmd_line_param_t *cmd);
 static void param_destructor(cmd_line_param_t *cmd);
 static OBJ_CLASS_INSTANCE(cmd_line_param_t,
-                          ompi_list_item_t,
+                          opal_list_item_t,
                           param_constructor, param_destructor);
 
 /*
@@ -430,7 +430,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                    list on the ompi_cmd_line_t handle */
 
                 if (NULL != param) {
-                    ompi_list_append(&cmd->lcl_params, &param->super);
+                    opal_list_append(&cmd->lcl_params, &param->super);
                 }
             }
         }
@@ -473,7 +473,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
     char **argv;
     char *ret, temp[MAX_WIDTH * 2], line[MAX_WIDTH * 2];
     char *start, *desc, *ptr;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     cmd_line_option_t *option;
     bool filled;
 
@@ -487,9 +487,9 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
     argc = 0;
     argv = NULL;
     ret = NULL;
-    for (item = ompi_list_get_first(&cmd->lcl_options); 
-         ompi_list_get_end(&cmd->lcl_options) != item;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&cmd->lcl_options); 
+         opal_list_get_end(&cmd->lcl_options) != item;
+         item = opal_list_get_next(item)) {
         option = (cmd_line_option_t *) item;
         if (NULL != option->clo_description) {
             
@@ -671,7 +671,7 @@ bool ompi_cmd_line_is_taken(ompi_cmd_line_t *cmd, const char *opt)
 int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt)
 {
     int ret;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     cmd_line_param_t *param;
     cmd_line_option_t *option;
 
@@ -685,9 +685,9 @@ int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt)
     ret = 0;
     option = find_option(cmd, opt);
     if (NULL != option) {
-        for (item = ompi_list_get_first(&cmd->lcl_params); 
-             ompi_list_get_end(&cmd->lcl_params) != item;
-             item = ompi_list_get_next(item)) {
+        for (item = opal_list_get_first(&cmd->lcl_params); 
+             opal_list_get_end(&cmd->lcl_params) != item;
+             item = opal_list_get_next(item)) {
             param = (cmd_line_param_t *) item;
             if (param->clp_option == option) {
                 ++ret;
@@ -713,7 +713,7 @@ char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst,
                               int idx)
 {
     int num_found;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     cmd_line_param_t *param;
     cmd_line_option_t *option;
 
@@ -732,9 +732,9 @@ char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst,
            parameter index greater than we will have */
 
         if (idx < option->clo_num_params) {
-            for (item = ompi_list_get_first(&cmd->lcl_params); 
-                 ompi_list_get_end(&cmd->lcl_params) != item;
-                 item = ompi_list_get_next(item)) {
+            for (item = opal_list_get_first(&cmd->lcl_params); 
+                 opal_list_get_end(&cmd->lcl_params) != item;
+                 item = opal_list_get_next(item)) {
                 param = (cmd_line_param_t *) item;
                 if (param->clp_option == option) {
                     if (num_found == inst) {
@@ -857,8 +857,8 @@ static void cmd_line_constructor(ompi_cmd_line_t *cmd)
 
     /* Initialize the lists */
 
-    OBJ_CONSTRUCT(&cmd->lcl_options, ompi_list_t);
-    OBJ_CONSTRUCT(&cmd->lcl_params, ompi_list_t);
+    OBJ_CONSTRUCT(&cmd->lcl_options, opal_list_t);
+    OBJ_CONSTRUCT(&cmd->lcl_params, opal_list_t);
 
     /* Initialize the argc/argv pairs */
 
@@ -871,14 +871,14 @@ static void cmd_line_constructor(ompi_cmd_line_t *cmd)
 
 static void cmd_line_destructor(ompi_cmd_line_t *cmd)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
     /* Free the contents of the options list (do not free the list
        itself; it was not allocated from the heap) */
 
-    for (item = ompi_list_remove_first(&cmd->lcl_options);
+    for (item = opal_list_remove_first(&cmd->lcl_options);
          NULL != item;
-         item = ompi_list_remove_first(&cmd->lcl_options)) {
+         item = opal_list_remove_first(&cmd->lcl_options)) {
         OBJ_RELEASE(item);
     }
 
@@ -944,7 +944,7 @@ static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e)
     /* Append the item, serializing thread access */
 
     ompi_mutex_lock(&cmd->lcl_mutex);
-    ompi_list_append(&cmd->lcl_options, &option->super);
+    opal_list_append(&cmd->lcl_options, &option->super);
     ompi_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
@@ -955,14 +955,14 @@ static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e)
 
 static void free_parse_results(ompi_cmd_line_t *cmd)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
     /* Free the contents of the params list (do not free the list
        itself; it was not allocated from the heap) */
 
-    for (item = ompi_list_remove_first(&cmd->lcl_params);
+    for (item = opal_list_remove_first(&cmd->lcl_params);
          NULL != item; 
-         item = ompi_list_remove_first(&cmd->lcl_params)) {
+         item = opal_list_remove_first(&cmd->lcl_params)) {
         OBJ_RELEASE(item);
     }
 
@@ -1057,16 +1057,16 @@ static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args,
 static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd, 
                                       const char *option_name)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     cmd_line_option_t *option;
 
     /* Iterate through the list of options hanging off the
        ompi_cmd_line_t and see if we find a match in either the short
        or long names */
 
-    for (item = ompi_list_get_first(&cmd->lcl_options);
-         ompi_list_get_end(&cmd->lcl_options) != item;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&cmd->lcl_options);
+         opal_list_get_end(&cmd->lcl_options) != item;
+         item = opal_list_get_next(item)) {
         option = (cmd_line_option_t *) item;
         if ((NULL != option->clo_long_name &&
              0 == strcmp(option_name, option->clo_long_name)) ||

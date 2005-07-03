@@ -16,17 +16,17 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "include/constants.h"
 
 int mca_base_components_close(int output_id, 
-                              ompi_list_t *components_available, 
+                              opal_list_t *components_available, 
                               const mca_base_component_t *skip)
 {
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   mca_base_component_priority_list_item_t *pcli, *skipped_pcli = NULL;
   const mca_base_component_t *component;
 
@@ -35,9 +35,9 @@ int mca_base_components_close(int output_id,
      components.  It's easier to simply remove the entire list and
      then simply re-add the skip entry when done. */
 
-  for (item = ompi_list_remove_first(components_available);
+  for (item = opal_list_remove_first(components_available);
        NULL != item; 
-       item = ompi_list_remove_first(components_available)) {
+       item = opal_list_remove_first(components_available)) {
     pcli = (mca_base_component_priority_list_item_t *) item;
     component = pcli->super.cli_component;
 
@@ -69,7 +69,7 @@ int mca_base_components_close(int output_id,
      list (see above comment) */
 
   if (NULL != skipped_pcli) {
-    ompi_list_append(components_available, (ompi_list_item_t *) skipped_pcli);
+    opal_list_append(components_available, (opal_list_item_t *) skipped_pcli);
   }
 
   /* All done */

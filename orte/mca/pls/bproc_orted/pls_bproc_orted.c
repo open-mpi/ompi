@@ -336,9 +336,9 @@ static int pls_bproc_orted_remove_dir() {
  */
 int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
 {
-    ompi_list_t map;
+    opal_list_t map;
     orte_rmaps_base_map_t * mapping;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     int rc, id;
     int master[3];
     int slave;
@@ -367,7 +367,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
         goto cleanup;
     }
     /* query the allocation for this node */
-    OBJ_CONSTRUCT(&map, ompi_list_t);
+    OBJ_CONSTRUCT(&map, opal_list_t);
     rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid, jobid, 
                                       param, &map);
     free(param);
@@ -383,9 +383,9 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
     mca_base_param_lookup_int(id, (int *) &app_context);
 
     /* figure out what processes will be on this node and set up the io files */
-    for(item =  ompi_list_get_first(&map);
-        item != ompi_list_get_end(&map);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&map);
+        item != opal_list_get_end(&map);
+        item =  opal_list_get_next(item)) {
         mapping = (orte_rmaps_base_map_t *) item;
         if(mapping->app->idx != app_context) {
             continue;
@@ -451,7 +451,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
     rc = OMPI_SUCCESS;
 
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&map))) {
+    while(NULL != (item = opal_list_remove_first(&map))) {
         OBJ_RELEASE(item);
     }
     if(NULL != pty_name) {

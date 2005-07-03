@@ -26,7 +26,7 @@
 
 
 OBJ_CLASS_INSTANCE(orte_rds_base_selected_t,
-                   ompi_list_item_t, NULL, NULL);
+                   opal_list_item_t, NULL, NULL);
 
 
 /**
@@ -34,16 +34,16 @@ OBJ_CLASS_INSTANCE(orte_rds_base_selected_t,
  */
 int orte_rds_base_select(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     orte_rds_base_component_t *component;
     orte_rds_base_module_t *module;
 
     /* Iterate through all the available components */
   
-    for (item = ompi_list_get_first(&orte_rds_base.rds_components);
-         item != ompi_list_get_end(&orte_rds_base.rds_components);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_rds_base.rds_components);
+         item != opal_list_get_end(&orte_rds_base.rds_components);
+         item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_rds_base_component_t *) cli->cli_component;
 
@@ -59,11 +59,11 @@ int orte_rds_base_select(void)
             orte_rds_base_selected_t* selected = OBJ_NEW(orte_rds_base_selected_t);
             selected->module = module;
             selected->component = component;
-            ompi_list_append(&orte_rds_base.rds_selected, &selected->super);
+            opal_list_append(&orte_rds_base.rds_selected, &selected->super);
         } 
     }
 
-    if (ompi_list_is_empty(&orte_rds_base.rds_selected)) {
+    if (opal_list_is_empty(&orte_rds_base.rds_selected)) {
         ompi_output(orte_rds_base.rds_output,
                     "rda:select: no components available!");
         return ORTE_ERROR;

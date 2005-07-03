@@ -173,7 +173,7 @@ static void mca_pml_ob1_send_completion(
                 break;
         }
         OMPI_THREAD_LOCK(&mca_pml_ob1.ob1_lock);
-        sendreq = (mca_pml_ob1_send_request_t*)ompi_list_remove_first(&mca_pml_ob1.send_pending);
+        sendreq = (mca_pml_ob1_send_request_t*)opal_list_remove_first(&mca_pml_ob1.send_pending);
         OMPI_THREAD_UNLOCK(&mca_pml_ob1.ob1_lock);
     }
 }
@@ -423,7 +423,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     &size);
                 if(des == NULL) {
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-                    ompi_list_append(&mca_pml_ob1.send_pending, (ompi_list_item_t*)sendreq);
+                    opal_list_append(&mca_pml_ob1.send_pending, (opal_list_item_t*)sendreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
@@ -452,7 +452,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
                     ep->btl_free(ep->btl,des);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-                    ompi_list_append(&mca_pml_ob1.send_pending, (ompi_list_item_t*)sendreq);
+                    opal_list_append(&mca_pml_ob1.send_pending, (opal_list_item_t*)sendreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
@@ -533,7 +533,7 @@ static void mca_pml_ob1_put_completion(
     MCA_PML_OB1_ENDPOINT_DES_ALLOC(frag->rdma_ep, fin, sizeof(mca_pml_ob1_fin_hdr_t));
     if(NULL == fin) {
         OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-        ompi_list_append(&mca_pml_ob1.rdma_pending, (ompi_list_item_t*)frag);
+        opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
         OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
         goto cleanup;
     }
@@ -560,7 +560,7 @@ static void mca_pml_ob1_put_completion(
         btl->btl_free(btl, fin);
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {
             OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-            ompi_list_append(&mca_pml_ob1.rdma_pending, (ompi_list_item_t*)frag);
+            opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
             OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
         } else {
             /* TSW - FIX */
@@ -647,7 +647,7 @@ void mca_pml_ob1_send_request_put(
         &size);
     if(NULL == des) { 
         OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-        ompi_list_append(&mca_pml_ob1.rdma_pending, (ompi_list_item_t*)frag);
+        opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
         OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
     }
     frag->rdma_state = MCA_PML_OB1_RDMA_PUT;
@@ -668,7 +668,7 @@ void mca_pml_ob1_send_request_put(
     if(OMPI_SUCCESS != (rc = btl->btl_put(btl, ep->btl_endpoint, des))) {
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {
             OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-            ompi_list_append(&mca_pml_ob1.rdma_pending, (ompi_list_item_t*)frag);
+            opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
             OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
         } else {
             /* TSW - FIX */

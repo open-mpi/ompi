@@ -37,16 +37,16 @@
 static void orte_iof_svc_sub_construct(orte_iof_svc_sub_t* sub)
 {
     sub->sub_endpoint = NULL;
-    OBJ_CONSTRUCT(&sub->sub_forward, ompi_list_t);
+    OBJ_CONSTRUCT(&sub->sub_forward, opal_list_t);
 }
 
 
 static void orte_iof_svc_sub_destruct(orte_iof_svc_sub_t* sub)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     if(sub->sub_endpoint != NULL)
         OBJ_RELEASE(sub->sub_endpoint);
-    while(NULL != (item = ompi_list_remove_first(&sub->sub_forward))) {
+    while(NULL != (item = opal_list_remove_first(&sub->sub_forward))) {
         OBJ_RELEASE(item);
     }
 }
@@ -54,7 +54,7 @@ static void orte_iof_svc_sub_destruct(orte_iof_svc_sub_t* sub)
 
 OBJ_CLASS_INSTANCE(
     orte_iof_svc_sub_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_iof_svc_sub_construct,
     orte_iof_svc_sub_destruct);
 
@@ -70,7 +70,7 @@ int orte_iof_svc_sub_create(
     orte_ns_cmp_bitmask_t dst_mask,
     orte_iof_base_tag_t dst_tag)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     orte_iof_svc_sub_t* sub = OBJ_NEW(orte_iof_svc_sub_t);
 
     sub->src_name = *src_name;
@@ -83,16 +83,16 @@ int orte_iof_svc_sub_create(
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
 
     /* search through published endpoints for a match */
-    for(item  = ompi_list_get_first(&mca_iof_svc_component.svc_published);
-        item != ompi_list_get_end(&mca_iof_svc_component.svc_published);
-        item  = ompi_list_get_next(item)) {
+    for(item  = opal_list_get_first(&mca_iof_svc_component.svc_published);
+        item != opal_list_get_end(&mca_iof_svc_component.svc_published);
+        item  = opal_list_get_next(item)) {
         orte_iof_svc_pub_t* pub = (orte_iof_svc_pub_t*)item;
         if(orte_iof_svc_fwd_match(sub,pub)) {
             orte_iof_svc_fwd_create(sub,pub);
         }
     }
 
-    ompi_list_append(&mca_iof_svc_component.svc_subscribed, &sub->super);
+    opal_list_append(&mca_iof_svc_component.svc_subscribed, &sub->super);
     OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
     return ORTE_SUCCESS;
 }
@@ -109,11 +109,11 @@ int orte_iof_svc_sub_delete(
     orte_ns_cmp_bitmask_t dst_mask,
     orte_iof_base_tag_t dst_tag)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
-    item =  ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
-    while(item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed)) {
-        ompi_list_item_t* next =  ompi_list_get_next(item);
+    item =  opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
+    while(item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed)) {
+        opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
         if (sub->src_mask == src_mask &&
             orte_ns.compare(sub->src_mask,&sub->src_name,src_name) == 0 &&
@@ -121,7 +121,7 @@ int orte_iof_svc_sub_delete(
             sub->dst_mask == dst_mask &&
             orte_ns.compare(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
             sub->dst_tag == dst_tag) {
-            ompi_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
+            opal_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
             OBJ_RELEASE(item);
         }
         item = next;
@@ -161,10 +161,10 @@ int orte_iof_svc_sub_forward(
     orte_iof_base_msg_header_t* hdr,
     const unsigned char* data)
 {
-    ompi_list_item_t* item;
-    for(item  = ompi_list_get_first(&sub->sub_forward);
-        item != ompi_list_get_end(&sub->sub_forward);
-        item =  ompi_list_get_next(item)) {
+    opal_list_item_t* item;
+    for(item  = opal_list_get_first(&sub->sub_forward);
+        item != opal_list_get_end(&sub->sub_forward);
+        item =  opal_list_get_next(item)) {
         orte_iof_svc_fwd_t* fwd = (orte_iof_svc_fwd_t*)item;
         orte_iof_svc_pub_t* pub = fwd->fwd_pub;
         int rc;
@@ -225,7 +225,7 @@ static void orte_iof_svc_fwd_destruct(orte_iof_svc_fwd_t* fwd)
 
 OBJ_CLASS_INSTANCE(
     orte_iof_svc_fwd_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_iof_svc_fwd_construct,
     orte_iof_svc_fwd_destruct);
 
@@ -261,7 +261,7 @@ int orte_iof_svc_fwd_create(
     }
     OBJ_RETAIN(pub);
     fwd->fwd_pub = pub;
-    ompi_list_append(&sub->sub_forward, &fwd->super);
+    opal_list_append(&sub->sub_forward, &fwd->super);
     return ORTE_SUCCESS;
 }
 
@@ -275,13 +275,13 @@ int orte_iof_svc_fwd_delete(
     orte_iof_svc_sub_t* sub,
     orte_iof_svc_pub_t* pub)
 {
-    ompi_list_item_t* item;
-    for(item =  ompi_list_get_first(&sub->sub_forward);
-        item != ompi_list_get_end(&sub->sub_forward);
-        item =  ompi_list_get_next(item)) {
+    opal_list_item_t* item;
+    for(item =  opal_list_get_first(&sub->sub_forward);
+        item != opal_list_get_end(&sub->sub_forward);
+        item =  opal_list_get_next(item)) {
         orte_iof_svc_fwd_t* fwd = (orte_iof_svc_fwd_t*)item;
         if(fwd->fwd_pub == pub) {
-            ompi_list_remove_item(&sub->sub_forward,item);
+            opal_list_remove_item(&sub->sub_forward,item);
             OBJ_RELEASE(fwd);
             return ORTE_SUCCESS;
         }

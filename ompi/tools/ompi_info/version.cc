@@ -142,10 +142,10 @@ void ompi_info::show_component_version(const string& type_name,
   ompi_info::type_vector_t::size_type i;
   bool want_all_components = (type_all == component_name);
   bool found;
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   mca_base_component_list_item_t *cli;
   const mca_base_component_t *component;
-  ompi_list_t *components;
+  opal_list_t *components;
 
   // Check to see if the type is valid
 
@@ -167,9 +167,9 @@ void ompi_info::show_component_version(const string& type_name,
 
   components = component_map[type_name];
   if (NULL != components) {
-    for (item = ompi_list_get_first(components);
-         ompi_list_get_end(components) != item;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(components);
+         opal_list_get_end(components) != item;
+         item = opal_list_get_next(item)) {
       cli = (mca_base_component_list_item_t *) item;
       component = cli->cli_component;
       if (want_all_components || 

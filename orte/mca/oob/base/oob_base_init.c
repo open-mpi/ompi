@@ -34,14 +34,14 @@
 
 OBJ_CLASS_INSTANCE(
     mca_oob_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     NULL,
     NULL
 );
 
 OBJ_CLASS_INSTANCE(
     mca_oob_base_info_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     NULL,
     NULL
 );
@@ -96,11 +96,11 @@ int mca_oob_parse_contact_info(
  */
 int mca_oob_base_init(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     mca_oob_base_component_t *component;
     mca_oob_t *module;
-    extern ompi_list_t mca_oob_base_components;
+    extern opal_list_t mca_oob_base_components;
     mca_oob_t *s_module = NULL;
     int  s_priority = -1;
 
@@ -108,9 +108,9 @@ int mca_oob_base_init(void)
     char** exclude = ompi_argv_split(mca_oob_base_exclude, ',');
 
     /* Traverse the list of available modules; call their init functions. */
-    for (item = ompi_list_get_first(&mca_oob_base_components);
-        item != ompi_list_get_end(&mca_oob_base_components);
-        item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&mca_oob_base_components);
+        item != opal_list_get_end(&mca_oob_base_components);
+        item = opal_list_get_next(item)) {
         mca_oob_base_info_t *inited;
 
         cli = (mca_base_component_list_item_t *) item;
@@ -157,7 +157,7 @@ int mca_oob_base_init(void)
                 inited = OBJ_NEW(mca_oob_base_info_t);
                 inited->oob_component = component;
                 inited->oob_module = module;
-                ompi_list_append(&mca_oob_base_modules, &inited->super);
+                opal_list_append(&mca_oob_base_modules, &inited->super);
 
                 /* setup highest priority oob channel */
                 if(priority > s_priority) {
@@ -226,10 +226,10 @@ int mca_oob_set_contact_info(const char* contact_info)
         return rc;
 
     for(ptr = uri; ptr != NULL && *ptr != NULL; ptr++) {
-        ompi_list_item_t* item;
-        for (item =  ompi_list_get_first(&mca_oob_base_modules);
-             item != ompi_list_get_end(&mca_oob_base_modules);
-             item =  ompi_list_get_next(item)) {
+        opal_list_item_t* item;
+        for (item =  opal_list_get_first(&mca_oob_base_modules);
+             item != opal_list_get_end(&mca_oob_base_modules);
+             item =  opal_list_get_next(item)) {
             mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
             if (strncmp(base->oob_component->oob_base.mca_component_name, *ptr,
                 strlen(base->oob_component->oob_base.mca_component_name)) == 0)
@@ -250,12 +250,12 @@ int mca_oob_set_contact_info(const char* contact_info)
 
 int mca_oob_base_module_init(void)
 {
-  ompi_list_item_t* item;
+  opal_list_item_t* item;
 
   /* Initialize all modules after oob/gpr/ns have initialized */
-  for (item =  ompi_list_get_first(&mca_oob_base_modules);
-       item != ompi_list_get_end(&mca_oob_base_modules);
-       item =  ompi_list_get_next(item)) {
+  for (item =  opal_list_get_first(&mca_oob_base_modules);
+       item != opal_list_get_end(&mca_oob_base_modules);
+       item =  opal_list_get_next(item)) {
     mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
     if (NULL != base->oob_module->oob_init)
         base->oob_module->oob_init();

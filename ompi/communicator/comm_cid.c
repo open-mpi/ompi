@@ -24,7 +24,7 @@
 #include "proc/proc.h"
 #include "include/constants.h"
 #include "class/ompi_pointer_array.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
@@ -86,7 +86,7 @@ static int      ompi_comm_unregister_cid (uint32_t contextid);
 static uint32_t ompi_comm_lowest_cid ( void );
 
 struct ompi_comm_reg_t{
-    ompi_list_item_t super;
+    opal_list_item_t super;
     uint32_t           cid;
 };
 typedef struct ompi_comm_reg_t ompi_comm_reg_t;
@@ -96,14 +96,14 @@ static void ompi_comm_reg_constructor(ompi_comm_reg_t *regcom);
 static void ompi_comm_reg_destructor(ompi_comm_reg_t *regcom);
 
 OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
-		    ompi_list_item_t,
+		    opal_list_item_t,
 		    ompi_comm_reg_constructor,
 		    ompi_comm_reg_destructor );
 
 #if OMPI_HAVE_THREAD_SUPPORT
 static ompi_mutex_t ompi_cid_lock;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
-static ompi_list_t ompi_registered_comms;
+static opal_list_t ompi_registered_comms;
 
 
 int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
@@ -234,7 +234,7 @@ static void ompi_comm_reg_destructor (ompi_comm_reg_t *regcom)
 
 void ompi_comm_reg_init (void)
 {
-    OBJ_CONSTRUCT(&ompi_registered_comms, ompi_list_t);
+    OBJ_CONSTRUCT(&ompi_registered_comms, opal_list_t);
 }
 
 void ompi_comm_reg_finalize (void)
@@ -245,25 +245,25 @@ void ompi_comm_reg_finalize (void)
 
 static int ompi_comm_register_cid (uint32_t cid )
 {
-    ompi_list_item_t *item=NULL;
+    opal_list_item_t *item=NULL;
     ompi_comm_reg_t *regcom=NULL;
     ompi_comm_reg_t *newentry = OBJ_NEW(ompi_comm_reg_t);
 
     newentry->cid = cid;
-    if ( !(ompi_list_is_empty (&ompi_registered_comms)) ) {
-	for (item = ompi_list_get_first(&ompi_registered_comms);
-	     item != ompi_list_get_end(&ompi_registered_comms);
-	     item = ompi_list_get_next(item)) {
+    if ( !(opal_list_is_empty (&ompi_registered_comms)) ) {
+	for (item = opal_list_get_first(&ompi_registered_comms);
+	     item != opal_list_get_end(&ompi_registered_comms);
+	     item = opal_list_get_next(item)) {
 	    regcom = (ompi_comm_reg_t *)item;
 	    if ( regcom->cid > cid ) {
 		break;
 	    }
 	}
-	ompi_list_insert_pos (&ompi_registered_comms, (ompi_list_item_t *)regcom, 
-			      (ompi_list_item_t *)newentry);
+	opal_list_insert_pos (&ompi_registered_comms, (opal_list_item_t *)regcom, 
+			      (opal_list_item_t *)newentry);
     }
     else {
-	ompi_list_append (&ompi_registered_comms, (ompi_list_item_t *)newentry);
+	opal_list_append (&ompi_registered_comms, (opal_list_item_t *)newentry);
     }
 
     return OMPI_SUCCESS;
@@ -272,7 +272,7 @@ static int ompi_comm_register_cid (uint32_t cid )
 static int ompi_comm_unregister_cid (uint32_t cid)
 {
     ompi_comm_reg_t *regcom=NULL;
-    ompi_list_item_t *item=ompi_list_remove_first(&ompi_registered_comms);
+    opal_list_item_t *item=opal_list_remove_first(&ompi_registered_comms);
 
     regcom = (ompi_comm_reg_t *) item;
     OBJ_RELEASE(regcom);
@@ -283,7 +283,7 @@ static int ompi_comm_unregister_cid (uint32_t cid)
 static uint32_t ompi_comm_lowest_cid (void)
 {
     ompi_comm_reg_t *regcom=NULL;
-    ompi_list_item_t *item=ompi_list_get_first (&ompi_registered_comms);
+    opal_list_item_t *item=opal_list_get_first (&ompi_registered_comms);
 
     regcom = (ompi_comm_reg_t *)item;
     return regcom->cid;

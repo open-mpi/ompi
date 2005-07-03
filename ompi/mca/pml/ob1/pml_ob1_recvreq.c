@@ -54,10 +54,10 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     OMPI_THREAD_LOCK(&comm->matching_lock);
     if( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ) { /* the match has not been already done */
        if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
-          ompi_list_remove_item( &comm->wild_receives, (ompi_list_item_t*)request );
+          opal_list_remove_item( &comm->wild_receives, (opal_list_item_t*)request );
        } else {
           mca_pml_ob1_comm_proc_t* proc = comm->procs + request->req_recv.req_base.req_peer;
-          ompi_list_remove_item(&proc->specific_receives, (ompi_list_item_t*)request);
+          opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
        }
     }
     OMPI_THREAD_UNLOCK(&comm->matching_lock);
@@ -204,7 +204,7 @@ retry:
     frag->hdr.hdr_rndv = *hdr;
     frag->num_segments = 0;
     frag->request = recvreq;
-    ompi_list_append(&mca_pml_ob1.acks_pending, (ompi_list_item_t*)frag);
+    opal_list_append(&mca_pml_ob1.acks_pending, (opal_list_item_t*)frag);
 }
 
 
@@ -407,7 +407,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
 #endif
                 if(dst == NULL) {
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-                    ompi_list_append(&mca_pml_ob1.recv_pending, (ompi_list_item_t*)recvreq);
+                    opal_list_append(&mca_pml_ob1.recv_pending, (opal_list_item_t*)recvreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
@@ -423,7 +423,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 if(ctl == NULL) {
                     ep->btl_free(ep->btl,dst);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-                    ompi_list_append(&mca_pml_ob1.recv_pending, (ompi_list_item_t*)recvreq);
+                    opal_list_append(&mca_pml_ob1.recv_pending, (opal_list_item_t*)recvreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
@@ -455,7 +455,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     recvreq->req_rdma_offset -= size;
                     OMPI_THREAD_ADD32(&recvreq->req_pipeline_depth,-1);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
-                    ompi_list_append(&mca_pml_ob1.recv_pending, (ompi_list_item_t*)recvreq);
+                    opal_list_append(&mca_pml_ob1.recv_pending, (opal_list_item_t*)recvreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
@@ -484,7 +484,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     /* assign sequence number */
     request->req_recv.req_base.req_sequence = comm->recv_sequence++;
 
-    if (ompi_list_get_size(&proc->unexpected_frags) > 0 &&
+    if (opal_list_get_size(&proc->unexpected_frags) > 0 &&
         (frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
         OMPI_THREAD_UNLOCK(&comm->matching_lock);
         
@@ -500,7 +500,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
      * it when the message comes in.
     */
     if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
-        ompi_list_append(&proc->specific_receives, (ompi_list_item_t*)request);
+        opal_list_append(&proc->specific_receives, (opal_list_item_t*)request);
     }
     OMPI_THREAD_UNLOCK(&comm->matching_lock);
 }
@@ -533,7 +533,7 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
         mca_pml_ob1_recv_frag_t* frag;
 
         /* continue if no frags to match */
-        if (ompi_list_get_size(&proc->unexpected_frags) == 0) {
+        if (opal_list_get_size(&proc->unexpected_frags) == 0) {
             proc++;
             continue;
         }
@@ -557,7 +557,7 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
     */
  
     if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE)
-        ompi_list_append(&comm->wild_receives, (ompi_list_item_t*)request);
+        opal_list_append(&comm->wild_receives, (opal_list_item_t*)request);
     OMPI_THREAD_UNLOCK(&comm->matching_lock);
 }
 
@@ -571,15 +571,15 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     mca_pml_ob1_recv_request_t* request, 
     mca_pml_ob1_comm_proc_t* proc)
 {
-    ompi_list_t* unexpected_frags = &proc->unexpected_frags;
+    opal_list_t* unexpected_frags = &proc->unexpected_frags;
     mca_pml_ob1_recv_frag_t* frag;
     mca_pml_ob1_match_hdr_t* hdr;
     int tag = request->req_recv.req_base.req_tag;
 
     if( OMPI_ANY_TAG == tag ) {
-        for (frag =  (mca_pml_ob1_recv_frag_t*)ompi_list_get_first(unexpected_frags);
-             frag != (mca_pml_ob1_recv_frag_t*)ompi_list_get_end(unexpected_frags);
-             frag =  (mca_pml_ob1_recv_frag_t*)ompi_list_get_next(frag)) {
+        for (frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_first(unexpected_frags);
+             frag != (mca_pml_ob1_recv_frag_t*)opal_list_get_end(unexpected_frags);
+             frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_next(frag)) {
             hdr = &(frag->hdr.hdr_match);
             
             /* check first frag - we assume that process matching has been done already */
@@ -588,9 +588,9 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
             } 
         }
     } else {
-        for (frag =  (mca_pml_ob1_recv_frag_t*)ompi_list_get_first(unexpected_frags);
-             frag != (mca_pml_ob1_recv_frag_t*)ompi_list_get_end(unexpected_frags);
-             frag =  (mca_pml_ob1_recv_frag_t*)ompi_list_get_next(frag)) {
+        for (frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_first(unexpected_frags);
+             frag != (mca_pml_ob1_recv_frag_t*)opal_list_get_end(unexpected_frags);
+             frag =  (mca_pml_ob1_recv_frag_t*)opal_list_get_next(frag)) {
             hdr = &(frag->hdr.hdr_match);
             
             /* check first frag - we assume that process matching has been done already */
@@ -605,7 +605,7 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     MCA_PML_OB1_RECV_REQUEST_MATCHED(request, hdr);
     if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
           (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-        ompi_list_remove_item(unexpected_frags, (ompi_list_item_t*)frag);
+        opal_list_remove_item(unexpected_frags, (opal_list_item_t*)frag);
         frag->request = request;
     } 
     return frag;

@@ -494,7 +494,7 @@ static void orte_gpr_replica_callbacks_destructor(orte_gpr_replica_callbacks_t* 
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
          orte_gpr_replica_callbacks_t,           /* type name */
-         ompi_list_item_t,            /* parent "class" name */
+         opal_list_item_t,            /* parent "class" name */
          orte_gpr_replica_callbacks_construct,   /* constructor */
          orte_gpr_replica_callbacks_destructor); /* destructor */
 
@@ -518,7 +518,7 @@ static void orte_gpr_replica_list_destructor(orte_gpr_replica_list_t* replica)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
            orte_gpr_replica_list_t,           /* type name */
-           ompi_list_item_t,                 /* parent "class" name */
+           opal_list_item_t,                 /* parent "class" name */
            orte_gpr_replica_list_construct,   /* constructor */
            orte_gpr_replica_list_destructor); /* destructor */
 
@@ -527,7 +527,7 @@ OBJ_CLASS_INSTANCE(
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
            orte_gpr_replica_write_invalidate_t,            /* type name */
-           ompi_list_item_t,                          /* parent "class" name */
+           opal_list_item_t,                          /* parent "class" name */
            NULL,    /* constructor */
            NULL);  /* destructor */
 

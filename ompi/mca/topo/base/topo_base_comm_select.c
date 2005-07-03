@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/argv.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
@@ -38,16 +38,16 @@ static void fill_null_pointers(mca_topo_base_module_t *module);
 /*
  * This structure is needed so that we can close the modules 
  * which are not selected but were opened. mca_base_modules_close
- * which does this job for us requires a ompi_list_t which contains
+ * which does this job for us requires a opal_list_t which contains
  * these modules
  */
 struct queried_module_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     mca_topo_base_component_t *om_component;
     mca_topo_base_module_t *om_module;
 };
 typedef struct queried_module_t queried_module_t;
-static OBJ_CLASS_INSTANCE(queried_module_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
 
 
 /*
@@ -74,8 +74,8 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     int priority; 
     int best_priority; 
     char name[MPI_MAX_OBJECT_NAME+32];
-    ompi_list_item_t *item; 
-    ompi_list_item_t *next_item; 
+    opal_list_item_t *item; 
+    opal_list_item_t *next_item; 
     mca_base_component_priority_list_item_t *selectable_item;
     char *names, **name_array;
     int num_names;
@@ -83,9 +83,9 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     mca_topo_base_component_t *component; 
     mca_topo_base_component_t *best_component;
     mca_topo_base_module_t *module; 
-    ompi_list_t queried;
+    opal_list_t queried;
     queried_module_t *om;
-    ompi_list_t *selectable;
+    opal_list_t *selectable;
     char *str;
     int err = MPI_SUCCESS;
     int i;
@@ -172,16 +172,16 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
            if the intersection is NULL, then we barf saying that the requested
            modules are not being available */
 
-        selectable = OBJ_NEW(ompi_list_t);
+        selectable = OBJ_NEW(opal_list_t);
         was_selectable_constructed = true;
         
         /* go through the compoents_available list and check against the names
          * to see whether this can be added or not */
 
-        for (item = ompi_list_get_first(&mca_topo_base_components_available);
-            item != ompi_list_get_end(&mca_topo_base_components_available);
-            item = ompi_list_get_next(item)) {
-            /* convert the ompi_list_item_t returned into the proper type */
+        for (item = opal_list_get_first(&mca_topo_base_components_available);
+            item != opal_list_get_end(&mca_topo_base_components_available);
+            item = opal_list_get_next(item)) {
+            /* convert the opal_list_item_t returned into the proper type */
             cpli = (mca_base_component_priority_list_item_t *) item;
             component = (mca_topo_base_component_t *) cpli->super.cli_component;
             ompi_output_verbose(10, mca_topo_base_output,
@@ -199,7 +199,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
 
                     selectable_item = OBJ_NEW (mca_base_component_priority_list_item_t);
                     *selectable_item = *cpli;
-                    ompi_list_append (selectable, (ompi_list_item_t *)selectable_item);
+                    opal_list_append (selectable, (opal_list_item_t *)selectable_item);
                     break;
                 }
             }
@@ -208,7 +208,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
         /* check for a NULL intersection between the available list and the 
          * list which was asked for */
 
-        if (0 == ompi_list_get_size(selectable)) {
+        if (0 == opal_list_get_size(selectable)) {
             was_selectable_constructed = true;
             OBJ_RELEASE (selectable);
             ompi_output_verbose (10, mca_topo_base_output,
@@ -222,13 +222,13 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
 
     best_component = NULL;
     best_priority = -1;
-    OBJ_CONSTRUCT(&queried, ompi_list_t);
+    OBJ_CONSTRUCT(&queried, opal_list_t);
 
-    for (item = ompi_list_get_first(selectable);
-         item != ompi_list_get_end(selectable);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(selectable);
+         item != opal_list_get_end(selectable);
+         item = opal_list_get_next(item)) {
        /*
-        * convert the ompi_list_item_t returned into the proper type
+        * convert the opal_list_item_t returned into the proper type
         */
        cpli = (mca_base_component_priority_list_item_t *) item;
        component = (mca_topo_base_component_t *) cpli->super.cli_component;
@@ -280,7 +280,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
                }
                om->om_component = component;
                om->om_module = module; 
-               ompi_list_append(&queried, (ompi_list_item_t *)om); 
+               opal_list_append(&queried, (opal_list_item_t *)om); 
            } /* end else of if (NULL == module) */
        } /* end else of if (NULL == component->topom_init) */
     } /* end for ... end of traversal */
@@ -292,10 +292,10 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     if (was_selectable_constructed) {
 
         /* remove all the items first */
-        for (item = ompi_list_get_first(&mca_topo_base_components_available);
-             item != ompi_list_get_end(&mca_topo_base_components_available);
+        for (item = opal_list_get_first(&mca_topo_base_components_available);
+             item != opal_list_get_end(&mca_topo_base_components_available);
              item = next_item) {
-             next_item = ompi_list_get_next(item);
+             next_item = opal_list_get_next(item);
              OBJ_RELEASE (item);
         }
                 
@@ -327,9 +327,9 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
      * unquery() those components which have not been selected and
      * init() the component which was selected
      */ 
-    for (item = ompi_list_remove_first(&queried);
+    for (item = opal_list_remove_first(&queried);
          NULL != item;
-         item = ompi_list_remove_first(&queried)) {
+         item = opal_list_remove_first(&queried)) {
         om = (queried_module_t *) item;
         if (om->om_component == best_component) {
            /*

@@ -17,7 +17,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -31,7 +31,7 @@
 static orte_pls_base_module_t *select_preferred(char *name);
 static orte_pls_base_module_t *select_any(void);
 
-static int compare(ompi_list_item_t **a, ompi_list_item_t **b);
+static int compare(opal_list_item_t **a, opal_list_item_t **b);
 static void cmp_constructor(orte_pls_base_cmp_t *cmp);
 static void cmp_destructor(orte_pls_base_cmp_t *cmp);
 
@@ -39,7 +39,7 @@ static void cmp_destructor(orte_pls_base_cmp_t *cmp);
 /*
  * Global variables
  */
-OBJ_CLASS_INSTANCE(orte_pls_base_cmp_t, ompi_list_item_t,
+OBJ_CLASS_INSTANCE(orte_pls_base_cmp_t, opal_list_item_t,
                    cmp_constructor, cmp_destructor);
 
 
@@ -52,7 +52,7 @@ orte_pls_base_module_t* orte_pls_base_select(char *preferred)
 {
     /* Construct the empty list */
 
-    OBJ_CONSTRUCT(&orte_pls_base.pls_available, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_pls_base.pls_available, opal_list_t);
     orte_pls_base.pls_available_valid = true;
 
     /* Now - did we want a specific one? */
@@ -67,7 +67,7 @@ orte_pls_base_module_t* orte_pls_base_select(char *preferred)
 
 static orte_pls_base_module_t *select_preferred(char *name)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     orte_pls_base_component_t *component;
     orte_pls_base_module_t *module;
@@ -78,9 +78,9 @@ static orte_pls_base_module_t *select_preferred(char *name)
 
     ompi_output(orte_pls_base.pls_output,
                 "orte:base:select: looking for component %s", name);
-    for (item = ompi_list_get_first(&orte_pls_base.pls_opened);
-         item != ompi_list_get_end(&orte_pls_base.pls_opened);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_pls_base.pls_opened);
+         item != opal_list_get_end(&orte_pls_base.pls_opened);
+         item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_pls_base_component_t *) cli->cli_component;
 
@@ -107,7 +107,7 @@ static orte_pls_base_module_t *select_preferred(char *name)
                 cmp->module = module;
                 cmp->priority = priority;
 
-                ompi_list_append(&orte_pls_base.pls_available, &cmp->super);
+                opal_list_append(&orte_pls_base.pls_available, &cmp->super);
                 return module;
             }
         }
@@ -123,7 +123,7 @@ static orte_pls_base_module_t *select_preferred(char *name)
 
 static orte_pls_base_module_t *select_any(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     orte_pls_base_component_t *component;
     orte_pls_base_module_t *module;
@@ -132,9 +132,9 @@ static orte_pls_base_module_t *select_any(void)
 
     /* Query all the opened components and see if they want to run */
 
-    for (item = ompi_list_get_first(&orte_pls_base.pls_opened); 
-         ompi_list_get_end(&orte_pls_base.pls_opened) != item; 
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_pls_base.pls_opened); 
+         opal_list_get_end(&orte_pls_base.pls_opened) != item; 
+         item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_pls_base_component_t *) cli->cli_component;
         ompi_output(orte_pls_base.pls_output,
@@ -160,7 +160,7 @@ static orte_pls_base_module_t *select_any(void)
             cmp->module = module;
             cmp->priority = priority;
 
-            ompi_list_append(&orte_pls_base.pls_available, &cmp->super);
+            opal_list_append(&orte_pls_base.pls_available, &cmp->super);
         } else {
             ompi_output(orte_pls_base.pls_output,
                         "orte:base:open: component %s does NOT want to be considered for selection", 
@@ -170,7 +170,7 @@ static orte_pls_base_module_t *select_any(void)
 
     /* If the list is empty, return NULL */
 
-    if (ompi_list_is_empty(&orte_pls_base.pls_available)) {
+    if (opal_list_is_empty(&orte_pls_base.pls_available)) {
         ompi_output(orte_pls_base.pls_output,
                     "orte:base:select: no components available!");
         return NULL;
@@ -178,12 +178,12 @@ static orte_pls_base_module_t *select_any(void)
 
     /* Sort the resulting available list in priority order */
 
-    ompi_list_sort(&orte_pls_base.pls_available, compare);
+    opal_list_sort(&orte_pls_base.pls_available, compare);
 
     /* Otherwise, return the first item (it's already sorted in
        priority order) */
 
-    item = ompi_list_get_first(&orte_pls_base.pls_available);
+    item = opal_list_get_first(&orte_pls_base.pls_available);
     cmp = (orte_pls_base_cmp_t *) item;
     ompi_output(orte_pls_base.pls_output,
                 "orte:base:select: highest priority component: %s",
@@ -197,7 +197,7 @@ static orte_pls_base_module_t *select_any(void)
  * so that we get the highest priority first (i.e., so the sort is
  * highest->lowest, not lowest->highest)
  */
-static int compare(ompi_list_item_t **a, ompi_list_item_t **b)
+static int compare(opal_list_item_t **a, opal_list_item_t **b)
 {
     orte_pls_base_cmp_t *aa = *((orte_pls_base_cmp_t **) a);
     orte_pls_base_cmp_t *bb = *((orte_pls_base_cmp_t **) b);

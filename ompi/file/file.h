@@ -18,7 +18,7 @@
 #define OMPI_FILE_H
 
 #include "mpi.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "errhandler/errhandler.h"
 #include "threads/mutex.h"
 #include "mca/io/io.h"
@@ -84,7 +84,7 @@ struct ompi_file_t {
     struct mca_io_base_file_t *f_io_selected_data;
 
     /** Per-module io request freelist */
-    ompi_list_t f_io_requests;
+    opal_list_t f_io_requests;
 
     /** Lock for the per-module io request freelist */
     ompi_mutex_t f_io_requests_lock;

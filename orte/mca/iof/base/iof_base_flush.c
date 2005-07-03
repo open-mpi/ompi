@@ -41,7 +41,7 @@ static void orte_iof_base_timer_cb(int fd, short flags, void *cbdata)
 
 int orte_iof_base_flush(void)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     ompi_event_t ev;
     struct timeval tv = { 0, 0 };
     int flushed = 0;
@@ -67,12 +67,12 @@ int orte_iof_base_flush(void)
     orte_iof_base.iof_waiting++;
 
     /* wait for all of the endpoints to reach an idle state */
-    pending = ompi_list_get_size(&orte_iof_base.iof_endpoints);
+    pending = opal_list_get_size(&orte_iof_base.iof_endpoints);
     while(pending > 0) {
         pending = 0;
-        for(item = ompi_list_get_first(&orte_iof_base.iof_endpoints);
-            item != ompi_list_get_end(&orte_iof_base.iof_endpoints);
-            item =  ompi_list_get_next(item)) {
+        for(item = opal_list_get_first(&orte_iof_base.iof_endpoints);
+            item != opal_list_get_end(&orte_iof_base.iof_endpoints);
+            item =  opal_list_get_next(item)) {
             orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
             if(orte_iof_base_endpoint_pending(endpoint)) {
                 pending++;

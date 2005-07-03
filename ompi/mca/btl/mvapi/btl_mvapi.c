@@ -267,7 +267,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             } 
 
             if(is_leave_pinned) { 
-                if(NULL == ompi_list_remove_item(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)){ 
+                if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)){ 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                     return NULL; 
                 }
@@ -296,15 +296,15 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             OBJ_RETAIN(vapi_reg); 
             if(is_leave_pinned) {
                 vapi_reg->is_leave_pinned = is_leave_pinned; 
-                ompi_list_append(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+                opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             } 
         }   
         else if(is_leave_pinned) { 
-            if(NULL == ompi_list_remove_item(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+            if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
                 ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }
-            ompi_list_append(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
         }
         
         frag->mem_hndl = vapi_reg->hndl; 
@@ -345,11 +345,11 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
 
         
         if(mca_btl_mvapi_component.leave_pinned) { 
-            if(mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.ompi_list_length  ) {
+            if(mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.opal_list_length  ) {
                 
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
-                    ompi_list_remove_last(&mvapi_btl->reg_mru_list);
+                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
@@ -383,7 +383,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             
             vapi_reg->is_leave_pinned = true; 
                     
-            ompi_list_append(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             
         } else { 
             mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
@@ -522,7 +522,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
             } 
 
             if(is_leave_pinned) { 
-                if(NULL == ompi_list_remove_item(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+                if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                     return NULL; 
                 }
@@ -549,27 +549,27 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
             
             if(is_leave_pinned) { 
                 vapi_reg->is_leave_pinned = is_leave_pinned; 
-                ompi_list_append(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+                opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             } 
 
         } 
         else if(is_leave_pinned){ 
-            if(NULL == ompi_list_remove_item(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+            if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
                 ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }    
-            ompi_list_append(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg); 
+            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg); 
         }
     }  else { 
            
         if(mca_btl_mvapi_component.leave_pinned) { 
             
         
-            if( mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.ompi_list_length  ) {
+            if( mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.opal_list_length  ) {
                
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
-                    ompi_list_remove_last(&mvapi_btl->reg_mru_list);
+                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
@@ -603,7 +603,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
             } 
 
             OBJ_RETAIN(vapi_reg); 
-            ompi_list_append(&mvapi_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             
         } else { 
             mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
@@ -641,36 +641,36 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     
     if(mvapi_btl->send_free_eager.fl_num_allocated != 
-       mvapi_btl->send_free_eager.super.ompi_list_length){ 
+       mvapi_btl->send_free_eager.super.opal_list_length){ 
         ompi_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
                     mvapi_btl->send_free_eager.fl_num_allocated, 
-                    mvapi_btl->send_free_eager.super.ompi_list_length); 
+                    mvapi_btl->send_free_eager.super.opal_list_length); 
     }
     if(mvapi_btl->send_free_max.fl_num_allocated != 
-      mvapi_btl->send_free_max.super.ompi_list_length){ 
+      mvapi_btl->send_free_max.super.opal_list_length){ 
         ompi_output(0, "btl ib send_free_max frags: %d allocated %d returned \n", 
                     mvapi_btl->send_free_max.fl_num_allocated, 
-                    mvapi_btl->send_free_max.super.ompi_list_length); 
+                    mvapi_btl->send_free_max.super.opal_list_length); 
     }
     if(mvapi_btl->send_free_frag.fl_num_allocated != 
-       mvapi_btl->send_free_frag.super.ompi_list_length){ 
+       mvapi_btl->send_free_frag.super.opal_list_length){ 
         ompi_output(0, "btl ib send_free_frag frags: %d allocated %d returned \n", 
                     mvapi_btl->send_free_frag.fl_num_allocated, 
-                    mvapi_btl->send_free_frag.super.ompi_list_length); 
+                    mvapi_btl->send_free_frag.super.opal_list_length); 
     }
     
     if(mvapi_btl->recv_free_eager.fl_num_allocated != 
-       mvapi_btl->recv_free_eager.super.ompi_list_length){ 
+       mvapi_btl->recv_free_eager.super.opal_list_length){ 
         ompi_output(0, "btl ib recv_free_eager frags: %d allocated %d returned \n", 
                     mvapi_btl->recv_free_eager.fl_num_allocated, 
-                    mvapi_btl->recv_free_eager.super.ompi_list_length); 
+                    mvapi_btl->recv_free_eager.super.opal_list_length); 
     }
 
     if(mvapi_btl->recv_free_max.fl_num_allocated != 
-       mvapi_btl->recv_free_max.super.ompi_list_length){ 
+       mvapi_btl->recv_free_max.super.opal_list_length){ 
         ompi_output(0, "btl ib recv_free_max frags: %d allocated %d returned \n", 
                     mvapi_btl->recv_free_max.fl_num_allocated, 
-                    mvapi_btl->recv_free_max.super.ompi_list_length); 
+                    mvapi_btl->recv_free_max.super.opal_list_length); 
     }
 
     return OMPI_SUCCESS;

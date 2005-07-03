@@ -102,7 +102,7 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
 {
 
     ompi_free_list_t *flist;
-    ompi_list_item_t *item = NULL;
+    opal_list_item_t *item = NULL;
     mca_ptl_elan_send_frag_t *desc;
 
     /* TODO: Dynamically bind a base request to PUT/GET/QDMA/STEN */
@@ -120,18 +120,18 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
     }
 
     LOG_PRINT(PTL_ELAN_DEBUG_SEND, "flist %p length %d type %d\n", 
-	    flist, flist->super.ompi_list_length, desc_type);
+	    flist, flist->super.opal_list_length, desc_type);
     if (ompi_using_threads ()) {
 	ompi_mutex_lock(&flist->fl_lock);
-	item = ompi_list_remove_first (&((flist)->super));
+	item = opal_list_remove_first (&((flist)->super));
 	while (NULL == item) {
 	    mca_ptl_tstamp_t tstamp = 0;
 	    ptl_ptr->ptl_component->ptlm_progress (tstamp);
-	    item = ompi_list_remove_first (&((flist)->super));
+	    item = opal_list_remove_first (&((flist)->super));
 	}
 	ompi_mutex_unlock(&flist->fl_lock);
     } else {
-	item = ompi_list_remove_first (&((flist)->super));
+	item = opal_list_remove_first (&((flist)->super));
 	/* XXX: 
 	 * Ouch..., this still does not trigger the progress on 
 	 * PTL's from other modules.  Wait for PML to change.
@@ -139,7 +139,7 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
 	while (NULL == item) {
 	    mca_ptl_tstamp_t tstamp = 0;
 	    ptl_ptr->ptl_component->ptlm_progress (tstamp);
-	    item = ompi_list_remove_first (&((flist)->super));
+	    item = opal_list_remove_first (&((flist)->super));
 	}
     }
     desc = (mca_ptl_elan_send_frag_t *) item; 
@@ -182,7 +182,7 @@ mca_ptl_elan_send_desc_done (
 		((ompi_ptl_elan_putget_desc_t *) frag->desc)
 		->chain_event->ev_Params[1], 8);
 	OMPI_FREE_LIST_RETURN (&ptl->putget->get_desc_free,
-	       	(ompi_list_item_t *) frag);
+	       	(opal_list_item_t *) frag);
 	return;
     }
 #endif
@@ -195,7 +195,7 @@ mca_ptl_elan_send_desc_done (
 
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
-		(ompi_list_item_t *) frag);
+		(opal_list_item_t *) frag);
     } else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
 	    || mca_pml_base_send_request_matched(req)) {
 	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) 
@@ -219,12 +219,12 @@ mca_ptl_elan_send_desc_done (
 	    } else {
 		flist = &ptl->queue->tx_desc_free;
 	    }
-	    OMPI_FREE_LIST_RETURN (flist, (ompi_list_item_t *) frag);
+	    OMPI_FREE_LIST_RETURN (flist, (opal_list_item_t *) frag);
 	} else {
 	    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
 		    "PML will return frag to list %p, length %d\n", 
 		    &ptl->queue->tx_desc_free,
-		    ptl->queue->tx_desc_free.super.ompi_list_length);
+		    ptl->queue->tx_desc_free.super.opal_list_length);
 	}
     }
 }

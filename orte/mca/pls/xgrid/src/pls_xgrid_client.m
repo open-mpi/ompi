@@ -238,8 +238,8 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
 
 -(int) launchJob:(orte_jobid_t) jobid
 {
-    ompi_list_t nodes;
-    ompi_list_item_t *item;
+    opal_list_t nodes;
+    opal_list_item_t *item;
     int ret;
     size_t num_nodes;
     orte_vpid_t vpid;
@@ -250,12 +250,12 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
     orted_path = ompi_path_findv((char*) [orted cString], 0, environ, NULL); 
 
     /* query the list of nodes allocated to the job */
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     ret = orte_ras_base_node_query_alloc(&nodes, jobid);
     if (ORTE_SUCCESS != ret) goto cleanup;
 
     /* allocate vpids for the daemons */
-    num_nodes = ompi_list_get_size(&nodes);
+    num_nodes = opal_list_get_size(&nodes);
     if (num_nodes == 0) return OMPI_ERR_BAD_PARAM;
     ret = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != ret) goto cleanup;
@@ -263,9 +263,9 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
     /* build up the array of task specifications */
     NSMutableDictionary *taskSpecifications = [NSMutableDictionary dictionary];
     
-    for (item =  ompi_list_get_first(&nodes);
-	 item != ompi_list_get_end(&nodes);
-	 item =  ompi_list_get_next(item)) {
+    for (item =  opal_list_get_first(&nodes);
+	 item != opal_list_get_end(&nodes);
+	 item =  opal_list_get_next(item)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         orte_process_name_t* name;
 	char *name_str, *nsuri, *gpruri;
@@ -353,7 +353,7 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
 		 forKey: [NSString stringWithFormat: @"%d", jobid]];
 
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&nodes))) {
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);

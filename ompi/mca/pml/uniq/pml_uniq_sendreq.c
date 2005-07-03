@@ -113,7 +113,7 @@ int mca_pml_uniq_send_request_schedule(mca_ptl_base_send_request_t* req)
             bytes_remaining = req->req_send.req_bytes_packed - req->req_offset;
         } else { /* unable to complete send - queue for later */
             OMPI_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
-            ompi_list_append(&mca_pml_uniq.uniq_send_pending, (ompi_list_item_t*)req);
+            opal_list_append(&mca_pml_uniq.uniq_send_pending, (opal_list_item_t*)req);
             OMPI_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);
             req->req_lock = 0;
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -180,9 +180,9 @@ void mca_pml_uniq_send_request_progress(
     }
 
     /* check for pending requests that need to be progressed */
-    while(ompi_list_get_size(&mca_pml_uniq.uniq_send_pending) != 0) {
+    while(opal_list_get_size(&mca_pml_uniq.uniq_send_pending) != 0) {
         OMPI_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
-        req = (mca_ptl_base_send_request_t*)ompi_list_remove_first(&mca_pml_uniq.uniq_send_pending);
+        req = (mca_ptl_base_send_request_t*)opal_list_remove_first(&mca_pml_uniq.uniq_send_pending);
         OMPI_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);
         if(req == NULL)
             break;

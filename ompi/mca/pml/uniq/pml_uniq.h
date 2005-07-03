@@ -51,7 +51,7 @@ struct mca_pml_uniq_t {
     mca_ptl_base_component_progress_fn_t* uniq_ptl_progress;
     size_t uniq_num_ptl_progress;
 
-    ompi_list_t  uniq_procs;
+    opal_list_t  uniq_procs;
     ompi_mutex_t uniq_lock;
 
     int uniq_free_list_num;   /* initial size of free list */
@@ -64,7 +64,7 @@ struct mca_pml_uniq_t {
     ompi_free_list_t uniq_recv_requests;
 
     /* list of pending send requests */
-    ompi_list_t uniq_send_pending;
+    opal_list_t uniq_send_pending;
 };
 typedef struct mca_pml_uniq_t mca_pml_uniq_t; 
 

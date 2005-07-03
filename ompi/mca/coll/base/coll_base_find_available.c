@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "util/show_help.h"
 #include "mca/mca.h"
@@ -35,7 +35,7 @@
  * Global variables
  */
 bool mca_coll_base_components_available_valid = false;
-ompi_list_t mca_coll_base_components_available;
+opal_list_t mca_coll_base_components_available;
 const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component = NULL;
 
 
@@ -69,21 +69,21 @@ int mca_coll_base_find_available(bool enable_progress_threads,
 {
   bool found = false;
   mca_base_component_priority_list_item_t *entry;
-  ompi_list_item_t *p;
+  opal_list_item_t *p;
   const mca_base_component_t *component;
 
   /* Initialize the list */
 
-  OBJ_CONSTRUCT(&mca_coll_base_components_available, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_coll_base_components_available, opal_list_t);
   mca_coll_base_components_available_valid = true;
 
   /* The list of components that we should check has already been
      established in mca_coll_base_open. */
   
   for (found = false, 
-         p = ompi_list_remove_first(&mca_coll_base_components_opened);
+         p = opal_list_remove_first(&mca_coll_base_components_opened);
        p != NULL;
-       p = ompi_list_remove_first(&mca_coll_base_components_opened)) {
+       p = opal_list_remove_first(&mca_coll_base_components_opened)) {
     component = ((mca_base_component_list_item_t *) p)->cli_component;
 
     /* Call a subroutine to do the work, because the component may
@@ -114,8 +114,8 @@ int mca_coll_base_find_available(bool enable_progress_threads,
          level for this process. */
       
       else {
-        ompi_list_append(&mca_coll_base_components_available, 
-                         (ompi_list_item_t *) entry);
+        opal_list_append(&mca_coll_base_components_available, 
+                         (opal_list_item_t *) entry);
       }
 
       /* Either way, we found something :-) */

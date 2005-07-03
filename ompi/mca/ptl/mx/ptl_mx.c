@@ -158,7 +158,7 @@ int mca_ptl_mx_send(
     if (sendreq->req_cached) {
         sendfrag = (mca_ptl_mx_send_frag_t*)(sendreq+1);
     } else {
-        ompi_list_item_t* item;
+        opal_list_item_t* item;
         OMPI_FREE_LIST_GET(&mca_ptl_mx_component.mx_send_frags, item, rc);
         if(NULL == (sendfrag = (mca_ptl_mx_send_frag_t*)item))
             return rc;
@@ -460,7 +460,7 @@ void mca_ptl_mx_matched(
         if(NULL == ack) {
             OMPI_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
             ack_pending = true;
-            ompi_list_append(&mca_ptl_mx_component.mx_pending_acks, (ompi_list_item_t*)frag);
+            opal_list_append(&mca_ptl_mx_component.mx_pending_acks, (opal_list_item_t*)frag);
             OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
         } else {
             mx_return_t mx_return;
@@ -482,7 +482,7 @@ void mca_ptl_mx_matched(
                 ompi_output(0, "mca_ptl_mx_matched: mx_isend() failed with return value=%d\n", mx_return);
                 OMPI_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
                 ack_pending = true;
-                ompi_list_append(&mca_ptl_mx_component.mx_pending_acks, (ompi_list_item_t*)frag);
+                opal_list_append(&mca_ptl_mx_component.mx_pending_acks, (opal_list_item_t*)frag);
                 OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
             }
         }

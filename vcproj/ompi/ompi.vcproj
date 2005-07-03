@@ -173,10 +173,10 @@
 						RelativePath="..\..\src\class\ompi_hash_table.h">
 					</File>
 					<File
-						RelativePath="..\..\src\class\ompi_list.c">
+						RelativePath="..\..\src\class\opal_list.c">
 					</File>
 					<File
-						RelativePath="..\..\src\class\ompi_list.h">
+						RelativePath="..\..\src\class\opal_list.h">
 					</File>
 					<File
 						RelativePath="..\..\src\class\opal_object.c">

@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #endif
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
 #include "mca/ras/base/ras_base_node.h"
@@ -53,10 +53,10 @@ extern "C" {
  */
 
 struct orte_rmaps_base_node_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     orte_cellid_t node_cellid;
     char* node_name;
-    ompi_list_t node_procs;
+    opal_list_t node_procs;
 };
 typedef struct orte_rmaps_base_node_t orte_rmaps_base_node_t;
 
@@ -68,7 +68,7 @@ OBJ_CLASS_DECLARATION(orte_rmaps_base_node_t);
  */
 
 struct orte_rmaps_base_proc_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     char *app;          /* name of executable */
     orte_rmaps_base_node_t* proc_node;
     orte_process_name_t proc_name;
@@ -87,20 +87,20 @@ OBJ_CLASS_DECLARATION(orte_rmaps_base_proc_t);
  */
 
 struct orte_rmaps_base_map_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     orte_app_context_t *app;
     orte_rmaps_base_proc_t** procs;
     size_t num_procs;
-    ompi_list_t nodes;
+    opal_list_t nodes;
 };
 typedef struct orte_rmaps_base_map_t orte_rmaps_base_map_t;
 
 OBJ_CLASS_DECLARATION(orte_rmaps_base_map_t);
 
 
-int orte_rmaps_base_get_map(orte_jobid_t, ompi_list_t* mapping);
-int orte_rmaps_base_set_map(orte_jobid_t, ompi_list_t* mapping);
-int orte_rmaps_base_get_node_map(orte_cellid_t, orte_jobid_t, const char*, ompi_list_t* mapping);
+int orte_rmaps_base_get_map(orte_jobid_t, opal_list_t* mapping);
+int orte_rmaps_base_set_map(orte_jobid_t, opal_list_t* mapping);
+int orte_rmaps_base_get_node_map(orte_cellid_t, orte_jobid_t, const char*, opal_list_t* mapping);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

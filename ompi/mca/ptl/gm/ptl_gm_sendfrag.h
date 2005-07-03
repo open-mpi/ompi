@@ -136,11 +136,11 @@ typedef mca_ptl_gm_recv_frag_t* (frag_management_fct_t)( struct mca_ptl_gm_modul
     if(ompi_using_threads()) { \
         if( ompi_mutex_trylock( &((fl)->fl_lock)) ) { \
             /* We get the lock. Now let's remove one of the elements */ \
-            item = ompi_list_remove_first(&((fl)->super)); \
+            item = opal_list_remove_first(&((fl)->super)); \
             ompi_mutex_unlock(&((fl)->fl_lock)); \
         } \
     } else { \
-        item = ompi_list_remove_first(&((fl)->super)); \
+        item = opal_list_remove_first(&((fl)->super)); \
     }  \
 }
 
@@ -203,7 +203,7 @@ typedef mca_ptl_gm_recv_frag_t* (frag_management_fct_t)( struct mca_ptl_gm_modul
     mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
     {
         int rc;
-        ompi_list_item_t* item;
+        opal_list_item_t* item;
         mca_ptl_gm_recv_frag_t* frag;
         
         OMPI_FREE_LIST_GET( &(((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free), item, rc );

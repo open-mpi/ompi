@@ -18,7 +18,7 @@
  */
 
 struct orte_iof_svc_pub_t {
-    ompi_list_item_t          super;
+    opal_list_item_t          super;
     orte_process_name_t       pub_name;
     orte_process_name_t       pub_proxy;
     orte_ns_cmp_bitmask_t     pub_mask;

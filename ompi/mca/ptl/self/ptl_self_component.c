@@ -134,10 +134,10 @@ int mca_ptl_self_component_open(void)
 int mca_ptl_self_component_close(void)
 {
     if (mca_ptl_self_component.self_send_requests.fl_num_allocated != 
-        mca_ptl_self_component.self_send_requests.super.ompi_list_length) {
+        mca_ptl_self_component.self_send_requests.super.opal_list_length) {
         ompi_output(0, "self send requests: %d allocated %d returned\n",
             mca_ptl_self_component.self_send_requests.fl_num_allocated, 
-            mca_ptl_self_component.self_send_requests.super.ompi_list_length);
+            mca_ptl_self_component.self_send_requests.super.opal_list_length);
     }
 
 #if 0

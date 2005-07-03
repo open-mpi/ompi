@@ -23,7 +23,7 @@
 #define ORTE_IOF_H
 
 #include "orte_config.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
 

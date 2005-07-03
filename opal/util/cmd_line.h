@@ -111,7 +111,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_object.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "threads/mutex.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -130,7 +130,7 @@ extern "C" {
         ompi_mutex_t lcl_mutex;
         
         /** List of cmd_line_option_t's (defined internally) */
-        ompi_list_t lcl_options;
+        opal_list_t lcl_options;
         
         /** Duplicate of argc from ompi_cmd_line_parse() */
         int lcl_argc;
@@ -138,7 +138,7 @@ extern "C" {
         char **lcl_argv;
         
         /** Parsed output; list of cmd_line_param_t's (defined internally) */
-        ompi_list_t lcl_params;
+        opal_list_t lcl_params;
         
         /** List of tail (unprocessed) arguments */
         int lcl_tail_argc;

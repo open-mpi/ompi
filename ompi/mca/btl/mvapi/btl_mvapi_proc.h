@@ -35,7 +35,7 @@ OBJ_CLASS_DECLARATION(mca_btl_mvapi_proc_t);
  * BTL instance that attempts to open a connection to the process.
  */
 struct mca_btl_mvapi_proc_t {
-    ompi_list_item_t super;                  
+    opal_list_item_t super;                  
     /**< allow proc to be placed on a list */
 
     ompi_proc_t *proc_ompi;                  

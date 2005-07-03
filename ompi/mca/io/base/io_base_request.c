@@ -61,7 +61,7 @@ static void io_base_request_constructor(mca_io_base_request_t *req)
  */
 int mca_io_base_request_create_freelist(void)
 {
-    ompi_list_item_t *p;
+    opal_list_item_t *p;
     const mca_base_component_t *component;
     const mca_io_base_component_1_0_0_t *v100;
     size_t size = 0;
@@ -70,9 +70,9 @@ int mca_io_base_request_create_freelist(void)
     /* Find the maximum additional number of bytes required by all io
        components for requests and make that the request size */
 
-    for (p = ompi_list_get_first(&mca_io_base_components_available); 
-         p != ompi_list_get_end(&mca_io_base_components_available); 
-         p = ompi_list_get_next(p)) {
+    for (p = opal_list_get_first(&mca_io_base_components_available); 
+         p != opal_list_get_end(&mca_io_base_components_available); 
+         p = opal_list_get_next(p)) {
         component = ((mca_base_component_priority_list_item_t *) 
                      p)->super.cli_component;
 
@@ -117,7 +117,7 @@ int mca_io_base_request_alloc(ompi_file_t *file,
 {
     int err;
     mca_io_base_module_request_once_init_fn_t func;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
     /* See if we've got a request on the module's freelist (which is
        cached on the file, since there's only one module per
@@ -125,11 +125,11 @@ int mca_io_base_request_alloc(ompi_file_t *file,
        enough) check as a slight optimization to potentially having to
        avoid locking and unlocking. */
 
-    if (ompi_list_get_size(&file->f_io_requests) > 0) {
+    if (opal_list_get_size(&file->f_io_requests) > 0) {
         OMPI_THREAD_LOCK(&file->f_io_requests_lock);
-        if (ompi_list_get_size(&file->f_io_requests) > 0) {
+        if (opal_list_get_size(&file->f_io_requests) > 0) {
             *req = (mca_io_base_request_t*) 
-                ompi_list_remove_first(&file->f_io_requests);
+                opal_list_remove_first(&file->f_io_requests);
         } else {
             *req = NULL;
         }
@@ -208,7 +208,7 @@ void mca_io_base_request_free(ompi_file_t *file,
        been initialized for that module */
 
     OMPI_THREAD_LOCK(&file->f_io_requests_lock);
-    ompi_list_prepend(&file->f_io_requests, (ompi_list_item_t*) req);
+    opal_list_prepend(&file->f_io_requests, (opal_list_item_t*) req);
     OMPI_THREAD_UNLOCK(&file->f_io_requests_lock);
 }
 
@@ -218,13 +218,13 @@ void mca_io_base_request_free(ompi_file_t *file,
  */
 void mca_io_base_request_return(ompi_file_t *file)
 {
-    ompi_list_item_t *p, *next;
+    opal_list_item_t *p, *next;
 
     OMPI_THREAD_LOCK(&file->f_io_requests_lock);
-    for (p = ompi_list_get_first(&file->f_io_requests);
-         p != ompi_list_get_end(&file->f_io_requests);
+    for (p = opal_list_get_first(&file->f_io_requests);
+         p != opal_list_get_end(&file->f_io_requests);
          p = next) {
-        next = ompi_list_get_next(p);
+        next = opal_list_get_next(p);
         OMPI_FREE_LIST_RETURN(&mca_io_base_requests, p);
     }
     OMPI_THREAD_UNLOCK(&file->f_io_requests_lock);

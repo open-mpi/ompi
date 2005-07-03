@@ -29,7 +29,7 @@
 
 int mca_btl_base_close(void)
 {
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   mca_btl_base_selected_module_t *sm;
 
   /* disable event processing while cleaning up btls */
@@ -37,9 +37,9 @@ int mca_btl_base_close(void)
 
   /* Finalize all the btl components and free their list items */
 
-  for (item = ompi_list_remove_first(&mca_btl_base_modules_initialized);
+  for (item = opal_list_remove_first(&mca_btl_base_modules_initialized);
        NULL != item; 
-       item = ompi_list_remove_first(&mca_btl_base_modules_initialized)) {
+       item = opal_list_remove_first(&mca_btl_base_modules_initialized)) {
     sm = (mca_btl_base_selected_module_t *) item;
 
     /* Blatebtly ignore the return code (what would we do to recover,
@@ -53,7 +53,7 @@ int mca_btl_base_close(void)
   /* Close all remaining opened components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
   
-  if (0 != ompi_list_get_size(&mca_btl_base_components_opened)) {
+  if (0 != opal_list_get_size(&mca_btl_base_components_opened)) {
       mca_base_components_close(mca_btl_base_output, 
                                 &mca_btl_base_components_opened, NULL);
   }

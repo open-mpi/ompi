@@ -21,7 +21,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/allocator/allocator.h"
 
@@ -32,8 +32,8 @@ extern "C" {
  * Structure which describes a selected module.
  */
 struct mca_allocator_base_selected_module_t {
-  ompi_list_item_t super;    
-  /**< Makes this an object of type ompi_list_item */
+  opal_list_item_t super;    
+  /**< Makes this an object of type opal_list_item */
   mca_allocator_base_component_t *allocator_component; 
   /**< Info about the module */
   mca_allocator_base_module_t *allocator_module; 
@@ -65,7 +65,7 @@ OMPI_DECLSPEC mca_allocator_base_component_t* mca_allocator_component_lookup(con
 /**
  * The list of all the selected components.
  */
-OMPI_DECLSPEC extern ompi_list_t mca_allocator_base_components;
+OMPI_DECLSPEC extern opal_list_t mca_allocator_base_components;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

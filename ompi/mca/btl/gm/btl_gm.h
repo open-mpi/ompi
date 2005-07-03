@@ -60,7 +60,7 @@ struct mca_btl_gm_component_t {
     int gm_free_list_max;   /**< maximum size of free lists */
     int gm_free_list_inc;   /**< number of elements to alloc when growing free lists */
 
-    ompi_list_t gm_procs;   /**< list of gm proc structures */
+    opal_list_t gm_procs;   /**< list of gm proc structures */
     ompi_mutex_t gm_lock;   /**< lock for accessing module state */
     char* gm_mpool_name;    /**< name of memory pool */ 
 
@@ -96,7 +96,7 @@ struct mca_btl_gm_module_t {
     unsigned int gm_max_recv_tokens;
 
     /* lock for accessing module state */
-    ompi_list_t gm_pending; /**< list of pending send descriptors */
+    opal_list_t gm_pending; /**< list of pending send descriptors */
     ompi_mutex_t gm_lock;
     struct mca_mpool_base_module_t* gm_mpool;
 }; 

@@ -40,7 +40,7 @@
  * - used exclusively by "get" routines
  */
 typedef struct {
-    ompi_list_item_t item;              /* required for this to be on list */
+    opal_list_item_t item;              /* required for this to be on list */
     orte_gpr_replica_itag_t itag;       /* itag for this value's key */
     orte_data_type_t type;              /* the type of value stored */
     orte_gpr_value_union_t value;
@@ -73,7 +73,7 @@ static void orte_gpr_replica_ival_list_destructor(orte_gpr_replica_ival_list_t* 
 /* define instance of ival_list_t */
 OBJ_CLASS_INSTANCE(
           orte_gpr_replica_ival_list_t,  /* type name */
-          ompi_list_item_t, /* parent "class" name */
+          opal_list_item_t, /* parent "class" name */
           orte_gpr_replica_ival_list_constructor, /* constructor */
           orte_gpr_replica_ival_list_destructor); /* destructor */
 
@@ -82,9 +82,9 @@ OBJ_CLASS_INSTANCE(
  * - used exclusively by "get" routines
  */
 typedef struct {
-    ompi_list_item_t item;              /* required for this to be on list */
+    opal_list_item_t item;              /* required for this to be on list */
     orte_gpr_replica_container_t *cptr;   /* pointer to the container */
-    ompi_list_t *ival_list;             /* list of ival_list_t of values found by get */
+    opal_list_t *ival_list;             /* list of ival_list_t of values found by get */
 } orte_gpr_replica_get_list_t;
 
 OBJ_CLASS_DECLARATION(orte_gpr_replica_get_list_t);
@@ -93,7 +93,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_get_list_t);
 static void orte_gpr_replica_get_list_constructor(orte_gpr_replica_get_list_t* ptr)
 {
     ptr->cptr = NULL;
-    ptr->ival_list = OBJ_NEW(ompi_list_t);
+    ptr->ival_list = OBJ_NEW(opal_list_t);
 }
 
 /* destructor - used to free any resources held by instance */
@@ -101,7 +101,7 @@ static void orte_gpr_replica_get_list_destructor(orte_gpr_replica_get_list_t* pt
 {
     orte_gpr_replica_ival_list_t *iptr;
     
-    while (NULL != (iptr = (orte_gpr_replica_ival_list_t*)ompi_list_remove_first(ptr->ival_list))) {
+    while (NULL != (iptr = (orte_gpr_replica_ival_list_t*)opal_list_remove_first(ptr->ival_list))) {
         OBJ_RELEASE(iptr);
     }
     OBJ_RELEASE(ptr->ival_list);
@@ -111,7 +111,7 @@ static void orte_gpr_replica_get_list_destructor(orte_gpr_replica_get_list_t* pt
 /* define instance of get_list_t */
 OBJ_CLASS_INSTANCE(
           orte_gpr_replica_get_list_t,  /* type name */
-          ompi_list_item_t, /* parent "class" name */
+          opal_list_item_t, /* parent "class" name */
           orte_gpr_replica_get_list_constructor, /* constructor */
           orte_gpr_replica_get_list_destructor); /* destructor */
 
@@ -271,7 +271,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_itag_t *keytags, size_t num_keys,
                             size_t *cnt, orte_gpr_value_t ***values)
 {
-    ompi_list_t get_list;
+    opal_list_t get_list;
     orte_gpr_replica_get_list_t *gptr;
     orte_gpr_replica_ival_list_t *ival_list;
     orte_gpr_replica_container_t **cptr, *cptr2;
@@ -312,7 +312,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     }
 
     /* initialize the list of findings */
-    OBJ_CONSTRUCT(&get_list, ompi_list_t);
+    OBJ_CONSTRUCT(&get_list, opal_list_t);
     *cnt = 0;
     *values = NULL;
     
@@ -366,10 +366,10 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                             OBJ_RELEASE(ival_list);
                             return rc;
                         }
-                        ompi_list_append(gptr->ival_list, &ival_list->item);
+                        opal_list_append(gptr->ival_list, &ival_list->item);
                     }
                 }
-                ompi_list_append(&get_list, &gptr->item);
+                opal_list_append(&get_list, &gptr->item);
                 (*cnt)++; /* update number of containers that had something found */
             }
         }
@@ -388,7 +388,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
         goto CLEANUP;
     }
     for (i=0; i < *cnt; i++) {
-        gptr = (orte_gpr_replica_get_list_t*)ompi_list_remove_first(&get_list);
+        gptr = (orte_gpr_replica_get_list_t*)opal_list_remove_first(&get_list);
         if (NULL == gptr) {
             rc = ORTE_ERROR;
             goto CLEANUP;
@@ -401,7 +401,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
         }
         (*values)[i]->addr_mode = addr_mode;
         (*values)[i]->segment = strdup(seg->name);
-        (*values)[i]->cnt = ompi_list_get_size(gptr->ival_list);
+        (*values)[i]->cnt = opal_list_get_size(gptr->ival_list);
         cptr2 = gptr->cptr;
         (*values)[i]->num_tokens = cptr2->num_itags;
         (*values)[i]->tokens = (char **)malloc(cptr2->num_itags * sizeof(char*));
@@ -423,7 +423,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
         
         kptr = (*values)[i]->keyvals;
         for (j=0; j < (*values)[i]->cnt; j++) {
-            ival_list = (orte_gpr_replica_ival_list_t*)ompi_list_remove_first(gptr->ival_list);
+            ival_list = (orte_gpr_replica_ival_list_t*)opal_list_remove_first(gptr->ival_list);
             if (NULL == ival_list) {
                 rc = ORTE_ERROR;
                 goto CLEANUP;
@@ -449,7 +449,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
 
 CLEANUP:
     
-    while (NULL != (gptr = (orte_gpr_replica_get_list_t*)ompi_list_remove_first(&get_list))) {
+    while (NULL != (gptr = (orte_gpr_replica_get_list_t*)opal_list_remove_first(&get_list))) {
         OBJ_RELEASE(gptr);
     }
     OBJ_DESTRUCT(&get_list);

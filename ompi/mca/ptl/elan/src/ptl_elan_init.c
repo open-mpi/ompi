@@ -79,9 +79,9 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         ptl->elan_vp  = ems->elan_vp;
         ptl->elan_nvp = ems->elan_nvp;
 
-	OBJ_CONSTRUCT (&ptl->recv_frags, ompi_list_t);
-	OBJ_CONSTRUCT (&ptl->send_frags, ompi_list_t);
-	OBJ_CONSTRUCT (&ptl->pending_acks, ompi_list_t);
+	OBJ_CONSTRUCT (&ptl->recv_frags, opal_list_t);
+	OBJ_CONSTRUCT (&ptl->send_frags, opal_list_t);
+	OBJ_CONSTRUCT (&ptl->pending_acks, opal_list_t);
         emp->num_modules++;
     } while (emp->num_modules < rail_count);
 

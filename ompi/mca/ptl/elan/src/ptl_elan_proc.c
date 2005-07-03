@@ -33,7 +33,7 @@ static mca_ptl_elan_proc_t *mca_ptl_elan_proc_lookup_ompi (ompi_proc_t *
 
 opal_class_t mca_ptl_elan_proc_t_class = {
     "mca_ptl_elan_proc_t",
-    OBJ_CLASS (ompi_list_item_t),
+    OBJ_CLASS (opal_list_item_t),
     (opal_construct_t) mca_ptl_elan_proc_construct,
     (opal_destruct_t) mca_ptl_elan_proc_destruct
 };
@@ -59,7 +59,7 @@ mca_ptl_elan_proc_construct (mca_ptl_elan_proc_t * proc)
 
     /* add to list of all proc instance */
     OMPI_THREAD_LOCK (&mca_ptl_elan_component.elan_lock);
-    ompi_list_append (&mca_ptl_elan_component.elan_procs, &proc->super);
+    opal_list_append (&mca_ptl_elan_component.elan_procs, &proc->super);
     OMPI_THREAD_UNLOCK (&mca_ptl_elan_component.elan_lock);
 
     return;
@@ -75,7 +75,7 @@ mca_ptl_elan_proc_destruct (mca_ptl_elan_proc_t * proc)
 {
     /* remove from list of all proc instances */
     OMPI_THREAD_LOCK (&mca_ptl_elan_component.elan_lock);
-    ompi_list_remove_item (&mca_ptl_elan_component.elan_procs, &proc->super);
+    opal_list_remove_item (&mca_ptl_elan_component.elan_procs, &proc->super);
     OMPI_THREAD_UNLOCK (&mca_ptl_elan_component.elan_lock);
 
     /* release resources */
@@ -161,12 +161,12 @@ mca_ptl_elan_proc_lookup_ompi (ompi_proc_t * ompi_proc)
     OMPI_THREAD_LOCK (&mca_ptl_elan_component.elan_lock);
 
     elan_proc = (mca_ptl_elan_proc_t *)
-        ompi_list_get_first (&mca_ptl_elan_component.elan_procs);
+        opal_list_get_first (&mca_ptl_elan_component.elan_procs);
 
     for (; elan_proc != (mca_ptl_elan_proc_t *)
-         ompi_list_get_end (&mca_ptl_elan_component.elan_procs);
+         opal_list_get_end (&mca_ptl_elan_component.elan_procs);
          elan_proc =
-         (mca_ptl_elan_proc_t *) ompi_list_get_next (elan_proc)) {
+         (mca_ptl_elan_proc_t *) opal_list_get_next (elan_proc)) {
         if (elan_proc->proc_ompi == ompi_proc) {
             OMPI_THREAD_UNLOCK (&mca_ptl_elan_component.elan_lock);
             return elan_proc;

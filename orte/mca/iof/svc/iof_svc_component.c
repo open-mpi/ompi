@@ -105,14 +105,14 @@ static int orte_iof_svc_open(void)
 
 static int orte_iof_svc_close(void)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     if (initialized) {
         OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
-        while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_subscribed)) != NULL) {
+        while((item = opal_list_remove_first(&mca_iof_svc_component.svc_subscribed)) != NULL) {
             OBJ_RELEASE(item);
         }
-        while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_published)) != NULL) {
+        while((item = opal_list_remove_first(&mca_iof_svc_component.svc_published)) != NULL) {
             OBJ_RELEASE(item);
         }
         OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
@@ -137,8 +137,8 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_subscribed, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_published, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_subscribed, opal_list_t);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_published, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_svc_component.svc_lock, ompi_mutex_t);
 
     /* post non-blocking recv */

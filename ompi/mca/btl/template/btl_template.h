@@ -63,7 +63,7 @@ struct mca_btl_template_component_t {
     int template_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
-    ompi_list_t template_procs;
+    opal_list_t template_procs;
     /**< list of template proc structures */
 
     ompi_mutex_t template_lock;

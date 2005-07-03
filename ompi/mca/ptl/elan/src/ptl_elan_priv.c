@@ -35,7 +35,7 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
 {
     /* Allocate a recv frag descriptor */
     mca_ptl_elan_recv_frag_t *recv_frag;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
     bool        matched; 
     int         rc = OMPI_SUCCESS;
@@ -168,16 +168,16 @@ mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
     if ( (desc->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
 	if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
 	    OMPI_FREE_LIST_RETURN (&ptl->putget->put_desc_free,
-		    (ompi_list_item_t *) desc);
+		    (opal_list_item_t *) desc);
 	} else {
 	    OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
-		    (ompi_list_item_t *) desc);
+		    (opal_list_item_t *) desc);
 	}
     } else {
 	LOG_PRINT(PTL_ELAN_DEBUG_ACK,
 		"PML will return frag to list %p, length %d\n", 
 		(void*)&ptl->queue->tx_desc_free,
-		ptl->queue->tx_desc_free.super.ompi_list_length);
+		ptl->queue->tx_desc_free.super.opal_list_length);
     }
 
 }
@@ -808,7 +808,7 @@ mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,
 	       	E4_COOKIE_TYPE_STEN , destvp));
     elan4_flush_cmdq_reorder (elan_ptl->putget->get_cmdq);
     MEMBAR_DRAIN();
-    ompi_list_append (&elan_ptl->send_frags, (ompi_list_item_t *) frag);
+    opal_list_append (&elan_ptl->send_frags, (opal_list_item_t *) frag);
 
     /* XXX: fragment state, remember the recv_frag may be gone */
     frag->desc->req = (mca_pml_base_request_t *) request ; /*recv req*/
@@ -843,7 +843,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
 		sendreq, offset, size, flags);
         elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
 	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
-        ompi_list_append (&ptl->send_frags, (ompi_list_item_t *) frag);
+        opal_list_append (&ptl->send_frags, (opal_list_item_t *) frag);
 
     } else if (MCA_PTL_ELAN_DESC_PUT == frag->desc->desc_type) {
 
@@ -856,7 +856,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
 	elan4_flush_cmdq_reorder (ptl->putget->put_cmdq);
 
         /* Insert frag into the list of outstanding DMA's */
-        ompi_list_append (&ptl->send_frags, (ompi_list_item_t *) frag);
+        opal_list_append (&ptl->send_frags, (opal_list_item_t *) frag);
     } else {
         ompi_output (0, "To support GET and Other types of DMA "
 	       "are not supported right now \n");
@@ -928,7 +928,7 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
 	       	E4_COOKIE_TYPE_STEN , destvp));
     elan4_flush_cmdq_reorder (elan_ptl->putget->get_cmdq);
     MEMBAR_DRAIN();
-    ompi_list_append (&elan_ptl->send_frags, (ompi_list_item_t *) frag);
+    opal_list_append (&elan_ptl->send_frags, (opal_list_item_t *) frag);
 
     /* XXX: fragment state, remember recv_frag may be gone */
     frag->desc->req = (mca_pml_base_request_t *) request ; /*recv req*/
@@ -1050,7 +1050,7 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     elan4_flush_cmdq_reorder (elan_ptl->queue->tx_cmdq);
 
     /* Insert desc into the list of outstanding DMA's */
-    ompi_list_append (&elan_ptl->send_frags, (ompi_list_item_t *) desc);
+    opal_list_append (&elan_ptl->send_frags, (opal_list_item_t *) desc);
 
     /* fragment state */
     desc->desc->req = NULL;
@@ -1245,18 +1245,18 @@ ptl_elan_send_comp:
 
 #else
     ctx  = ptl->ptl_elan_ctx;
-    while (ompi_list_get_size (&ptl->send_frags) > 0) {
+    while (opal_list_get_size (&ptl->send_frags) > 0) {
 	mca_ptl_elan_send_frag_t   *frag;
 
 	frag = (mca_ptl_elan_send_frag_t *)
-	    ompi_list_get_first (&ptl->send_frags);
+	    opal_list_get_first (&ptl->send_frags);
 	rc = * ((int *) (&frag->desc->main_doneWord));
 	if (rc) {
 	    ompi_ptl_elan_base_desc_t *basic;
 
 	    /* Remove the desc, update the request, return to free list */
 	    frag = (mca_ptl_elan_send_frag_t *)
-		ompi_list_remove_first (&ptl->send_frags);
+		opal_list_remove_first (&ptl->send_frags);
 	    basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
 
 	    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", frag, basic);

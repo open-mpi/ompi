@@ -41,8 +41,8 @@
  * Global variables
  */
 int mca_mpool_base_output = -1;
-ompi_list_t mca_mpool_base_components;
-ompi_list_t mca_mpool_base_modules;
+opal_list_t mca_mpool_base_components;
+opal_list_t mca_mpool_base_modules;
 
 
 /**
@@ -64,7 +64,7 @@ int mca_mpool_base_open(void)
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_mpool_base_modules, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_mpool_base_modules, opal_list_t);
 
   /* All done */
 

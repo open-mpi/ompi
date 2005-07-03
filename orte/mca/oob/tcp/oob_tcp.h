@@ -247,8 +247,8 @@ struct mca_oob_tcp_component_t {
     char*              tcp_exclude;          /**< list of ip interfaces to exclude */
     int                tcp_listen_sd;        /**< listen socket for incoming connection requests */
     unsigned short     tcp_listen_port;      /**< listen port */
-    ompi_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
-    ompi_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
+    opal_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
+    opal_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
     ompi_hash_table_t  tcp_peers;            /**< peers sorted by name */
     ompi_hash_table_t  tcp_peer_names;       /**< cache of peer contact info sorted by name */
     opal_free_list_t   tcp_peer_free;        /**< free list of peers */
@@ -258,9 +258,9 @@ struct mca_oob_tcp_component_t {
     ompi_event_t       tcp_send_event;       /**< event structure for sends */
     ompi_event_t       tcp_recv_event;       /**< event structure for recvs */
     ompi_mutex_t       tcp_lock;             /**< lock for accessing module state */
-    ompi_list_t        tcp_events;           /**< list of pending events (accepts) */
-    ompi_list_t        tcp_msg_post;         /**< list of recieves user has posted */
-    ompi_list_t        tcp_msg_recv;         /**< list of recieved messages */
+    opal_list_t        tcp_events;           /**< list of pending events (accepts) */
+    opal_list_t        tcp_msg_post;         /**< list of recieves user has posted */
+    opal_list_t        tcp_msg_recv;         /**< list of recieved messages */
     ompi_mutex_t       tcp_match_lock;       /**< lock held while searching/posting messages */
     ompi_condition_t   tcp_match_cond;       /**< condition variable used in finalize */
     int                tcp_match_count;      /**< number of matched recvs in progress */

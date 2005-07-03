@@ -18,7 +18,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "info/info.h"
 #include "util/strncpy.h"
 #include <stdlib.h>

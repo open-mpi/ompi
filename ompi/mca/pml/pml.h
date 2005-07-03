@@ -58,7 +58,7 @@
 #define MCA_PML_H
 
 #include "ompi_config.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "communicator/communicator.h"
 #include "request/request.h"
 #include "mca/mca.h"

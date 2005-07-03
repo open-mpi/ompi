@@ -73,10 +73,10 @@ struct mca_pml_ob1_t {
     ompi_free_list_t buffers;
 
     /* list of pending operations */
-    ompi_list_t acks_pending;
-    ompi_list_t send_pending;
-    ompi_list_t recv_pending;
-    ompi_list_t rdma_pending;
+    opal_list_t acks_pending;
+    opal_list_t send_pending;
+    opal_list_t recv_pending;
+    opal_list_t rdma_pending;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
 

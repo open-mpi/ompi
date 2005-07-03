@@ -45,7 +45,7 @@
  */
 
 struct mca_base_modex_module_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     mca_base_component_t component;
     void *module_data;
     size_t module_data_size;
@@ -70,7 +70,7 @@ static void mca_base_modex_module_destruct(mca_base_modex_module_t *module)
 
 OBJ_CLASS_INSTANCE(
     mca_base_modex_module_t, 
-    ompi_list_item_t, 
+    opal_list_item_t, 
     mca_base_modex_module_construct, 
     mca_base_modex_module_destruct
 );
@@ -83,13 +83,13 @@ OBJ_CLASS_INSTANCE(
  */
 struct mca_base_modex_t {
     opal_object_t super;
-    ompi_list_t modex_modules;
+    opal_list_t modex_modules;
 };
 typedef struct mca_base_modex_t mca_base_modex_t;
 
 static void mca_base_modex_construct(mca_base_modex_t* modex)
 {
-    OBJ_CONSTRUCT(&modex->modex_modules, ompi_list_t);
+    OBJ_CONSTRUCT(&modex->modex_modules, opal_list_t);
 }
 
 static void mca_base_modex_destruct(mca_base_modex_t* modex)
@@ -111,14 +111,14 @@ OBJ_CLASS_INSTANCE(
  */
 
 struct mca_base_modex_subscription_t {
-    ompi_list_item_t item;
+    opal_list_item_t item;
     orte_jobid_t jobid;
 };
 typedef struct mca_base_modex_subscription_t mca_base_modex_subscription_t;
 
 OBJ_CLASS_INSTANCE(
     mca_base_modex_subscription_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     NULL,
     NULL);
 
@@ -126,7 +126,7 @@ OBJ_CLASS_INSTANCE(
  * Globals to track the list of subscriptions.
  */
 
-static ompi_list_t  mca_base_modex_subscriptions;
+static opal_list_t  mca_base_modex_subscriptions;
 static ompi_mutex_t mca_base_modex_lock;
 
 
@@ -135,7 +135,7 @@ static ompi_mutex_t mca_base_modex_lock;
  */
 int mca_base_modex_init(void)
 {
-    OBJ_CONSTRUCT(&mca_base_modex_subscriptions, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_base_modex_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&mca_base_modex_lock, ompi_mutex_t);
     return OMPI_SUCCESS;
 }
@@ -145,8 +145,8 @@ int mca_base_modex_init(void)
  */
 int mca_base_modex_finalize(void)
 {
-    ompi_list_item_t *item;
-    while(NULL != (item = ompi_list_remove_first(&mca_base_modex_subscriptions)))
+    opal_list_item_t *item;
+    while(NULL != (item = opal_list_remove_first(&mca_base_modex_subscriptions)))
         OBJ_RELEASE(item);
     OBJ_DESTRUCT(&mca_base_modex_subscriptions);
     return OMPI_SUCCESS;
@@ -162,9 +162,9 @@ static mca_base_modex_module_t* mca_base_modex_lookup_module(
     mca_base_component_t* component)
 {
     mca_base_modex_module_t* modex_module;
-    for(modex_module =  (mca_base_modex_module_t*)ompi_list_get_first(&modex->modex_modules);
-        modex_module != (mca_base_modex_module_t*)ompi_list_get_end(&modex->modex_modules);
-        modex_module =  (mca_base_modex_module_t*)ompi_list_get_next(modex_module)) {
+    for(modex_module =  (mca_base_modex_module_t*)opal_list_get_first(&modex->modex_modules);
+        modex_module != (mca_base_modex_module_t*)opal_list_get_end(&modex->modex_modules);
+        modex_module =  (mca_base_modex_module_t*)opal_list_get_next(modex_module)) {
         if(mca_base_component_compatible(&modex_module->component, component) == 0) {
             return modex_module;
         }
@@ -186,7 +186,7 @@ static mca_base_modex_module_t* mca_base_modex_create_module(
         modex_module = OBJ_NEW(mca_base_modex_module_t);
         if(NULL != modex_module) {
             modex_module->component = *component;
-            ompi_list_append(&modex->modex_modules, (ompi_list_item_t*)modex_module);
+            opal_list_append(&modex->modex_modules, (opal_list_item_t*)modex_module);
         }
     }
     return modex_module;
@@ -377,16 +377,16 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
     orte_gpr_trigger_t trig, *trigs;
     orte_gpr_subscription_t sub, *subs;
     orte_jobid_t jobid;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     mca_base_modex_subscription_t* subscription;
     int rc;
 
     /* check for an existing subscription */
     OMPI_LOCK(&mca_base_modex_lock);
-    if (!ompi_list_is_empty(&mca_base_modex_subscriptions)) {
-        for(item =  ompi_list_get_first(&mca_base_modex_subscriptions);
-            item != ompi_list_get_end(&mca_base_modex_subscriptions);
-            item = ompi_list_get_next(item)) {
+    if (!opal_list_is_empty(&mca_base_modex_subscriptions)) {
+        for(item =  opal_list_get_first(&mca_base_modex_subscriptions);
+            item != opal_list_get_end(&mca_base_modex_subscriptions);
+            item = opal_list_get_next(item)) {
             subscription = (mca_base_modex_subscription_t*)item;
             if(subscription->jobid == name->jobid) {
                 OMPI_UNLOCK(&mca_base_modex_lock);
@@ -503,7 +503,7 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
     OMPI_LOCK(&mca_base_modex_lock);
     subscription = OBJ_NEW(mca_base_modex_subscription_t);
     subscription->jobid = name->jobid;
-    ompi_list_append(&mca_base_modex_subscriptions, &subscription->item);
+    opal_list_append(&mca_base_modex_subscriptions, &subscription->item);
     OMPI_UNLOCK(&mca_base_modex_lock);
     OBJ_DESTRUCT(&sub);
     OBJ_DESTRUCT(&trig);

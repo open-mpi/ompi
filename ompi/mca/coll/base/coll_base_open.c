@@ -50,7 +50,7 @@ int mca_coll_base_bcast_collmaxlin = 4;
 int mca_coll_base_bcast_collmaxdim = 64;
 
 bool mca_coll_base_components_opened_valid = false;
-ompi_list_t mca_coll_base_components_opened;
+opal_list_t mca_coll_base_components_opened;
 
 
 /*

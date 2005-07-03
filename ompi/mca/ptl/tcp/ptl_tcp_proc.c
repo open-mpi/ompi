@@ -33,7 +33,7 @@ static void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc);
 
 OBJ_CLASS_INSTANCE(
     mca_ptl_tcp_proc_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     mca_ptl_tcp_proc_construct,
     mca_ptl_tcp_proc_destruct
 );

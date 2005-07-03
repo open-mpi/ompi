@@ -42,7 +42,7 @@ static ompi_info_entry_t *info_find_key (ompi_info_t *info, char *key);
  * ompi_info_t classes
  */
 OBJ_CLASS_INSTANCE(ompi_info_t,
-                   ompi_list_t,
+                   opal_list_t,
                    info_constructor,
                    info_destructor);
 
@@ -50,7 +50,7 @@ OBJ_CLASS_INSTANCE(ompi_info_t,
  * ompi_info_entry_t classes
  */
 OBJ_CLASS_INSTANCE(ompi_info_entry_t,
-                   ompi_list_item_t,
+                   opal_list_item_t,
                    info_entry_constructor,
                    info_entry_destructor);
 
@@ -87,13 +87,13 @@ int ompi_info_init(void)
 int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo) 
 {
     int err;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     ompi_info_entry_t *iterator;
 
     OMPI_THREAD_LOCK(info->i_lock);
-    for (item = ompi_list_get_first(&(info->super));
-         item != ompi_list_get_end(&(info->super));
-         item = ompi_list_get_next(iterator)) {
+    for (item = opal_list_get_first(&(info->super));
+         item != opal_list_get_end(&(info->super));
+         item = opal_list_get_next(iterator)) {
          iterator = (ompi_info_entry_t *) item;
          err = ompi_info_set(*newinfo, iterator->ie_key, iterator->ie_value);
          if (MPI_SUCCESS != err) {
@@ -136,7 +136,7 @@ int ompi_info_set (ompi_info_t *info, char *key, char *value)
          }
         strcpy (new_info->ie_key, key);
         new_info->ie_value = new_value;
-        ompi_list_append (&(info->super), (ompi_list_item_t *) new_info);
+        opal_list_append (&(info->super), (opal_list_item_t *) new_info);
     }
     OMPI_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
@@ -211,8 +211,8 @@ int ompi_info_delete (ompi_info_t *info, char *key)
           * and free the memory allocated to it
           */
           found = (ompi_info_entry_t *)
-            ompi_list_remove_item (&(info->super),
-                                   (ompi_list_item_t *)search);
+            opal_list_remove_item (&(info->super),
+                                   (opal_list_item_t *)search);
           OBJ_RELEASE(search);
     }
     OMPI_THREAD_UNLOCK(info->i_lock);
@@ -256,18 +256,18 @@ int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key)
      * Iterate over and over till we get to the nth key
      */
     OMPI_THREAD_LOCK(info->i_lock);
-    for (iterator = (ompi_info_entry_t *)ompi_list_get_first(&(info->super));
+    for (iterator = (ompi_info_entry_t *)opal_list_get_first(&(info->super));
          n > 0;
          --n) {
-         iterator = (ompi_info_entry_t *)ompi_list_get_next(iterator);
-         if (ompi_list_get_end(&(info->super)) == 
-             (ompi_list_item_t *) iterator) {
+         iterator = (ompi_info_entry_t *)opal_list_get_next(iterator);
+         if (opal_list_get_end(&(info->super)) == 
+             (opal_list_item_t *) iterator) {
              OMPI_THREAD_UNLOCK(info->i_lock);
              return MPI_ERR_ARG;
          }
     }
     /*
-     * iterator is of the type ompi_list_item_t. We have to
+     * iterator is of the type opal_list_item_t. We have to
      * cast it to ompi_info_entry_t before we can use it to
      * access the value
      */
@@ -284,7 +284,7 @@ int ompi_info_finalize(void)
 {
     size_t i, max;
     ompi_info_t *info;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     ompi_info_entry_t *entry;
     bool found = false;
     
@@ -323,9 +323,9 @@ int ompi_info_finalize(void)
             if (!info->i_freed && ompi_debug_show_handle_leaks) {
                 if (ompi_debug_show_handle_leaks) {
                     ompi_output(0, "WARNING: MPI_Info still allocated at MPI_FINALIZE");
-                    for (item = ompi_list_get_first(&(info->super));
-                         ompi_list_get_end(&(info->super)) != item;
-                         item = ompi_list_get_next(item)) {
+                    for (item = opal_list_get_first(&(info->super));
+                         opal_list_get_end(&(info->super)) != item;
+                         item = opal_list_get_next(item)) {
                         entry = (ompi_info_entry_t *) item;
                         ompi_output(0, "WARNING:   key=\"%s\", value=\"%s\"", 
                                     entry->ie_key,
@@ -380,14 +380,14 @@ static void info_constructor(ompi_info_t *info)
  */ 
 static void info_destructor(ompi_info_t *info) 
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     ompi_info_entry_t *iterator;
 
     /* Remove every key in the list */
   
-    for (item = ompi_list_remove_first(&(info->super));
+    for (item = opal_list_remove_first(&(info->super));
          NULL != item;
-         item = ompi_list_remove_first(&(info->super))) {
+         item = opal_list_remove_first(&(info->super))) {
         iterator = (ompi_info_entry_t *) item;
         OBJ_RELEASE(iterator);
     }
@@ -442,9 +442,9 @@ static ompi_info_entry_t *info_find_key (ompi_info_t *info, char *key)
      * return immediately. Else, the loop will fall of the edge
      * and NULL is returned
      */
-    for (iterator = (ompi_info_entry_t *)ompi_list_get_first(&(info->super));
-         ompi_list_get_end(&(info->super)) != (ompi_list_item_t*) iterator;
-         iterator = (ompi_info_entry_t *)ompi_list_get_next(iterator)) {
+    for (iterator = (ompi_info_entry_t *)opal_list_get_first(&(info->super));
+         opal_list_get_end(&(info->super)) != (opal_list_item_t*) iterator;
+         iterator = (ompi_info_entry_t *)opal_list_get_next(iterator)) {
         if (0 == strcmp(key, iterator->ie_key)) {
             return iterator;
         }

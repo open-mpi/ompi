@@ -97,8 +97,8 @@ static inline int __poe_argv_append_int(int *argc, char ***argv, int varname, in
 */
 int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
 {
-    ompi_list_t nodes;
-    ompi_list_item_t* item;
+    opal_list_t nodes;
+    opal_list_item_t* item;
     size_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
@@ -126,7 +126,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     if((hfp=fopen(mca_pls_poe_component.hostfile,"w"))==NULL) return ORTE_ERR_OUT_OF_RESOURCE;
     if((cfp=fopen(mca_pls_poe_component.cmdfile,"w"))==NULL) return ORTE_ERR_OUT_OF_RESOURCE;
 
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     rc = orte_ras_base_node_query_alloc(&nodes, jobid);
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
@@ -136,7 +136,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
      * Allocate a range of vpids for the daemons.
      */
      
-    num_nodes = ompi_list_get_size(&nodes);
+    num_nodes = opal_list_get_size(&nodes);
     if(num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
     }
@@ -201,9 +201,9 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
      * up a daemon.
      */
      
-    for(item =  ompi_list_get_first(&nodes);
-        item != ompi_list_get_end(&nodes);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&nodes);
+        item != opal_list_get_end(&nodes);
+        item =  opal_list_get_next(item)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         orte_process_name_t* name;
         pid_t pid;
@@ -286,7 +286,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     }
      
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&nodes))) {
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
@@ -303,8 +303,8 @@ __poe_wait_job - call back when POE finish
 */
 int __poe_wait_job(pid_t pid, int status, void* cbdata)
 {
-    ompi_list_t map;
-    ompi_list_item_t* item;
+    opal_list_t map;
+    opal_list_item_t* item;
     int rc;
 
     if(mca_pls_poe_component.verbose > 10) {
@@ -312,16 +312,16 @@ int __poe_wait_job(pid_t pid, int status, void* cbdata)
     }
 
     /* query allocation for the job */
-    OBJ_CONSTRUCT(&map, ompi_list_t);
+    OBJ_CONSTRUCT(&map, opal_list_t);
     rc = orte_rmaps_base_get_map(mca_pls_poe_component.jobid,&map);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
-    for(item =  ompi_list_get_first(&map);
-        item != ompi_list_get_end(&map);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&map);
+        item != opal_list_get_end(&map);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
         size_t i;
                 
@@ -446,8 +446,8 @@ __poe_launch_interactive - launch an interactive job
 */
 static inline int __poe_launch_interactive(orte_jobid_t jobid)
 {
-    ompi_list_t map, nodes;
-    ompi_list_item_t* item;
+    opal_list_t map, nodes;
+    opal_list_item_t* item;
     orte_vpid_t vpid_start, vpid_range;
     size_t num_nodes, num_procs;
     FILE *hfp, *cfp;
@@ -467,11 +467,11 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
 
     mca_pls_poe_component.jobid = jobid;
 
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     rc = orte_ras_base_node_query_alloc(&nodes, jobid);
     if(ORTE_SUCCESS != rc) { goto cleanup; }
      
-    num_nodes = ompi_list_get_size(&nodes);
+    num_nodes = opal_list_get_size(&nodes);
 
     if(num_nodes > 0) { 
 
@@ -481,9 +481,9 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
             (NULL==(hfp=fopen(mca_pls_poe_component.hostfile,"w"))) ) {
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        for(item =  ompi_list_get_first(&nodes);
-            item != ompi_list_get_end(&nodes);
-            item =  ompi_list_get_next(item)) {
+        for(item =  opal_list_get_first(&nodes);
+            item != opal_list_get_end(&nodes);
+            item =  opal_list_get_next(item)) {
             orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
             fprintf(hfp,"%s\n",node->node_name); 
         }
@@ -493,7 +493,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     rc = orte_rmgr_base_get_job_slots(jobid, &num_procs);
     if(ORTE_SUCCESS != rc) { return rc; }
     
-    OBJ_CONSTRUCT(&map, ompi_list_t);
+    OBJ_CONSTRUCT(&map, opal_list_t);
     rc = orte_rmaps_base_get_map(jobid,&map);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
@@ -502,9 +502,9 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
 
     /* Create a tempolary POE command file */
 
-    for(item =  ompi_list_get_first(&map);
-        item != ompi_list_get_end(&map);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&map);
+        item != opal_list_get_end(&map);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map2 = (orte_rmaps_base_map_t*)item;
         size_t i;
         for(i=0; i<map2->num_procs; i++) {
@@ -573,11 +573,11 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     }
    
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&map))) {
+    while(NULL != (item = opal_list_remove_first(&map))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&map);
-    while(NULL != (item = ompi_list_remove_first(&nodes))) {
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);

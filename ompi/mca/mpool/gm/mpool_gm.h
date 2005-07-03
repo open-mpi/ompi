@@ -21,7 +21,7 @@
 
 #include "ompi_config.h"
 #include <gm.h>
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "class/ompi_free_list.h"
 #include "event/event.h"
 #include "mca/mpool/mpool.h"
