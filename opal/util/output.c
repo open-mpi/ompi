@@ -429,7 +429,8 @@ static int open_file(int i)
 
     /* Setup the filename and open flags */
 
-    dir = orte_process_info.proc_session_dir;
+    /* BWB - fix me! - used to look at orte_process_info */
+    dir = NULL;
     if (NULL != dir) {
         filename = (char*) malloc(MAXPATHLEN);
         if (NULL == filename) {
