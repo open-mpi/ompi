@@ -26,7 +26,7 @@
  * display help messages, but it can actually be used to display any
  * arbitrary text messages.
  *
- * The function ompi_show_help() is used to find a help message and
+ * The function opal_show_help() is used to find a help message and
  * display it.  Its important parameters are a filename, message name,
  * and printf()-style varargs parameters used to substitute into the
  * message.
@@ -43,7 +43,7 @@
  * appropriate help message to display.  It looks for the message name
  * in the file, reads in the message, and displays it.  printf()-like
  * substitutions are performed (e.g., %d, %s, etc.) --
- * ompi_show_help() takes a variable legnth argument list that are
+ * opal_show_help() takes a variable legnth argument list that are
  * used for these substitutions.
  *
  * The format of the help file is simplistic:
@@ -72,7 +72,7 @@
  * It is expected that help messages will be grouped by filename;
  * similar messages should be in a single file.  For example, an MCA
  * component may install its own helpfile in Open MPI's $pkgdatadir,
- * and therefore the component can invoke ompi_show_help() to display
+ * and therefore the component can invoke opal_show_help() to display
  * its own help messages.
  *
  * Message files in $pkgdatadir have a naming convention: they
@@ -83,8 +83,8 @@
  * previously.
  */
 
-#ifndef OMPI_SHOW_HELP_H
-#define OMPI_SHOW_HELP_H
+#ifndef OPAL_SHOW_HELP_H
+#define OPAL_SHOW_HELP_H
 
 #include "ompi_config.h"
 
@@ -111,7 +111,7 @@ extern "C" {
      * based on the topic, and displays it.  If want_error_header is
      * true, a header and footer of asterisks are also displayed.
      */
-OMPI_DECLSPEC int ompi_show_help(const char *filename, const char *topic, 
+OMPI_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
                        bool want_error_header, ...);
 
     /**
@@ -123,7 +123,7 @@ OMPI_DECLSPEC int ompi_show_help(const char *filename, const char *topic,
      * flex parser since we may not hit the <<EOF>> rule and call this
      * function automatically.
      */
-OMPI_DECLSPEC int ompi_show_help_finish_parsing(void);
+OMPI_DECLSPEC int opal_show_help_finish_parsing(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

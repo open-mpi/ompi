@@ -20,7 +20,7 @@
 
 #include "include/constants.h"
 #include "opal/util/argv.h"
-#include "util/strncpy.h"
+#include "opal/util/strncpy.h"
 
 #define ARGSIZE 128
 

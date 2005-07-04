@@ -17,8 +17,8 @@
 include $(top_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
-AM_LFLAGS = -Pompi_show_help_yy
-LEX_OUTPUT_ROOT = lex.ompi_show_help_yy
+AM_LFLAGS = -Popal_show_help_yy
+LEX_OUTPUT_ROOT = lex.opal_show_help_yy
 
 noinst_LTLIBRARIES = libopalutil.la
 

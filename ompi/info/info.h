@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "mpi.h"
-#include "util/strncpy.h"
+#include "opal/util/strncpy.h"
 #include "opal/class/opal_list.h"
 #include "class/ompi_pointer_array.h"
 #include "opal/threads/mutex.h"

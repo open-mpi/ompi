@@ -34,7 +34,7 @@
 #include <signal.h>
 #endif
 
-#include "util/stacktrace.h"
+#include "opal/util/stacktrace.h"
 #include "mca/base/mca_base_param.h"
 
 #ifndef _NSIG
@@ -56,7 +56,7 @@
  * FIXME: Should distinguish for systems, which don't have siginfo...
  */
 #ifndef WIN32
-static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
+static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 {   
 #ifdef __GLIBC__
     int i;
@@ -263,7 +263,7 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
 
 
 /**
- * Here we register the ompi_show_stackframe function for signals
+ * Here we register the opal_show_stackframe function for signals
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun
  * by the user.
  *
@@ -272,7 +272,7 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
  *    is not a valid signal-number
  *               
  */
-int ompi_util_register_stackhandlers (void)
+int opal_util_register_stackhandlers (void)
 {
 #ifndef WIN32
     struct sigaction act;
@@ -285,7 +285,7 @@ int ompi_util_register_stackhandlers (void)
     mca_base_param_lookup_string (param, &string_value);
 
     memset(&act, 0, sizeof(act));
-    act.sa_sigaction = ompi_show_stackframe;
+    act.sa_sigaction = opal_show_stackframe;
     act.sa_flags = SA_SIGINFO;
 #ifdef SA_ONESHOT
     act.sa_flags |= SA_ONESHOT;

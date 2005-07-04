@@ -28,7 +28,7 @@
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
 #include "runtime/ompi_rte_wait.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "mca/pcm/base/base_kill_track.h"
 #include "mca/pcm/base/base_job_track.h"
 
@@ -49,7 +49,7 @@ mca_pcm_bproc_monitor_cb(pid_t pid, int status, void *data)
     ret = mca_pcm_base_job_list_get_job_info(me->jobs, pid, &jobid,
                                              &lower, &upper, true);
     if (ret != OMPI_SUCCESS) {
-        ompi_show_help("help-mca-pcm-bproc.txt",
+        opal_show_help("help-mca-pcm-bproc.txt",
                        "spawn:no-process-record", true, pid, status);
         return;
     }

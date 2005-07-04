@@ -20,7 +20,7 @@
 #include "mpi/c/bindings.h"
 #include "opal/class/opal_list.h"
 #include "info/info.h"
-#include "util/strncpy.h"
+#include "opal/util/strncpy.h"
 #include <stdlib.h>
 #include <string.h>
 #include "errhandler/errhandler.h"

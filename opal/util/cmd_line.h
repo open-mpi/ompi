@@ -393,7 +393,7 @@ extern "C" {
      * display (to allow for undocumented options).
      *
      * This function is typically only invoked internally by the
-     * ompi_show_help() function.
+     * opal_show_help() function.
      *
      * This function should probably be fixed up to produce prettier
      * output.

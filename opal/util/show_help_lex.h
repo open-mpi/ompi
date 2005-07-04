@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SHOW_HELP_LEX_H
-#define OMPI_SHOW_HELP_LEX_H
+#ifndef OPAL_SHOW_HELP_LEX_H
+#define OPAL_SHOW_HELP_LEX_H
 
 #include "ompi_config.h"
 
@@ -33,13 +33,13 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-int ompi_show_help_yylex(void);
-int ompi_show_help_init_buffer(FILE *file);
+int opal_show_help_yylex(void);
+int opal_show_help_init_buffer(FILE *file);
 
-extern FILE *ompi_show_help_yyin;
-extern bool ompi_show_help_parse_done;
-extern char *ompi_show_help_yytext;
-extern int ompi_show_help_yynewlines;
+extern FILE *opal_show_help_yyin;
+extern bool opal_show_help_parse_done;
+extern char *opal_show_help_yytext;
+extern int opal_show_help_yynewlines;
 
 /*
  * Make lex-generated files not issue compiler warnings
@@ -51,13 +51,13 @@ extern int ompi_show_help_yynewlines;
 #define YY_NO_UNPUT 1
 
 enum {
-    OMPI_SHOW_HELP_PARSE_DONE,
-    OMPI_SHOW_HELP_PARSE_ERROR,
+    OPAL_SHOW_HELP_PARSE_DONE,
+    OPAL_SHOW_HELP_PARSE_ERROR,
 
-    OMPI_SHOW_HELP_PARSE_TOPIC,
-    OMPI_SHOW_HELP_PARSE_MESSAGE,
+    OPAL_SHOW_HELP_PARSE_TOPIC,
+    OPAL_SHOW_HELP_PARSE_MESSAGE,
 
-    OMPI_SHOW_HELP_PARSE_MAX
+    OPAL_SHOW_HELP_PARSE_MAX
 };
 #if defined(c_plusplus) || defined(__cplusplus)
 }

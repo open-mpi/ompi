@@ -32,7 +32,7 @@
 #include "util/session_dir.h"
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "util/universe_setup_file_io.h"
 #include "runtime/runtime.h"
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     if (OMPI_SUCCESS != opal_cmd_line_parse(cmd_line, true, argc, argv)) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        ompi_show_help("help-console.txt", "console:usage", false,
+        opal_show_help("help-console.txt", "console:usage", false,
                        argv[0], args);
         free(args);
         return 1;
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
         opal_cmd_line_is_taken(cmd_line, "h")) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        ompi_show_help("help-console.txt", "console:usage", false,
+        opal_show_help("help-console.txt", "console:usage", false,
                        argv[0], args);
         free(args);
         return 1;

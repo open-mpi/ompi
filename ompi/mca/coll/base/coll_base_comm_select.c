@@ -23,7 +23,7 @@
 #include "mpi.h"
 #include "communicator/communicator.h"
 #include "opal/util/argv.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "mca/mca.h"
@@ -224,7 +224,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
 
     if (!found) {
       /* There's no modules available -- including basic.  Doh! */
-      ompi_show_help("help-mca-coll-base",
+      opal_show_help("help-mca-coll-base",
                      "comm-select:none-available", true);
       return OMPI_ERROR;
     }

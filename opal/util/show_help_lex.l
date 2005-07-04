@@ -22,12 +22,12 @@
 #include <unistd.h>
 #endif
 
-#include "util/show_help_lex.h"
+#include "opal/util/show_help_lex.h"
 
 /*
  * public functions
  */
-int ompi_show_help_finish_parsing(void);
+int opal_show_help_finish_parsing(void);
 
 
 /*
@@ -36,7 +36,7 @@ int ompi_show_help_finish_parsing(void);
 #ifdef __cplusplus
  extern "C" {
 #endif
-     static int ompi_show_help_yywrap(void);
+     static int opal_show_help_yywrap(void);
 #ifdef __cplusplus
  }
 #endif
@@ -44,12 +44,12 @@ int ompi_show_help_finish_parsing(void);
 /*
  * global variables
  */
-int ompi_show_help_yynewlines = 1;
-bool ompi_show_help_parse_done = false;
-char *ompi_show_help_string = NULL;
+int opal_show_help_yynewlines = 1;
+bool opal_show_help_parse_done = false;
+char *opal_show_help_string = NULL;
 
 #define yyterminate() \
-  return ompi_show_help_finish_parsing()
+  return opal_show_help_finish_parsing()
 
 %}
 
@@ -62,11 +62,11 @@ CHAR        [A-Za-z0-9_\-\.]
 
 #.*\n               ; /* comment line */
 
-^\[.+\]/.*\n { BEGIN(CHOMP); return OMPI_SHOW_HELP_PARSE_TOPIC; }
+^\[.+\]/.*\n { BEGIN(CHOMP); return OPAL_SHOW_HELP_PARSE_TOPIC; }
 
 <CHOMP>.*\n { BEGIN(INITIAL); }
 
-.*/\n { BEGIN(CHOMP); return OMPI_SHOW_HELP_PARSE_MESSAGE; }
+.*/\n { BEGIN(CHOMP); return OPAL_SHOW_HELP_PARSE_MESSAGE; }
 
 %%
 
@@ -75,7 +75,7 @@ CHAR        [A-Za-z0-9_\-\.]
  * This cleans up at the end of the parse (since, in this case, we
  * always parse the entire file) and prevents a memory leak.
  */
-int ompi_show_help_finish_parsing(void) 
+int opal_show_help_finish_parsing(void) 
 {
     if (NULL != YY_CURRENT_BUFFER) {
         yy_delete_buffer(YY_CURRENT_BUFFER); 
@@ -89,9 +89,9 @@ int ompi_show_help_finish_parsing(void)
 }
 
 
-static int ompi_show_help_yywrap(void)
+static int opal_show_help_yywrap(void)
 {
-    ompi_show_help_parse_done = true;
+    opal_show_help_parse_done = true;
     return 1;
 }
 
@@ -105,7 +105,7 @@ static int ompi_show_help_yywrap(void)
  * have a valid buffer.  Hence, here we ensure to give it a valid
  * buffer.
  */
-int ompi_show_help_init_buffer(FILE *file)
+int opal_show_help_init_buffer(FILE *file)
 {
     YY_BUFFER_STATE buf = yy_create_buffer(file, YY_BUF_SIZE);
     yy_switch_to_buffer(buf);

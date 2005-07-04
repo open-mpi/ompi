@@ -21,8 +21,8 @@
 #include <locale.h>
 
 #include "include/constants.h"
-#include "util/show_help.h"
-#include "util/show_help_lex.h"
+#include "opal/util/show_help.h"
+#include "opal/util/show_help_lex.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
 
@@ -46,7 +46,7 @@ static const char *default_filename = "help-messages";
 static const char *dash_line = "--------------------------------------------------------------------------\n";
 
 
-int ompi_show_help(const char *filename, const char *topic, 
+int opal_show_help(const char *filename, const char *topic, 
                    bool want_error_header, ...)
 {
     int ret;
@@ -57,13 +57,13 @@ int ompi_show_help(const char *filename, const char *topic,
         return ret;
     }
     if (OMPI_SUCCESS != (ret = find_topic(filename, topic))) {
-        fclose(ompi_show_help_yyin);
+        fclose(opal_show_help_yyin);
         return ret;
     }
 
     ret = read_message(&array);
-    ompi_show_help_finish_parsing();
-    fclose(ompi_show_help_yyin);
+    opal_show_help_finish_parsing();
+    fclose(opal_show_help_yyin);
     if (OMPI_SUCCESS != ret) {
         destroy_message(array);
         return ret;
@@ -101,11 +101,11 @@ static int open_file(const char *base, const char *topic)
        extension. */
 
     asprintf(&filename, "%s/%s", OMPI_PKGDATADIR, base);
-    ompi_show_help_yyin = fopen(filename, "r");
+    opal_show_help_yyin = fopen(filename, "r");
     free(filename);
-    if (NULL == ompi_show_help_yyin) {
+    if (NULL == opal_show_help_yyin) {
         asprintf(&filename, "%s/%s.txt", OMPI_PKGDATADIR, base);
-        ompi_show_help_yyin = fopen(filename, "r");
+        opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }
 #else
@@ -120,27 +120,27 @@ static int open_file(const char *base, const char *topic)
        default language (because we know that we have that one) */
 
     asprintf(&filename, "%s/%s.%s", OMPI_PKGDATADIR, base, lang);
-    ompi_show_help_yyin = fopen(filename, "r");
+    opal_show_help_yyin = fopen(filename, "r");
     free(filename);
-    if (NULL == ompi_show_help_yyin) {
+    if (NULL == opal_show_help_yyin) {
         asprintf(&filename, "%s/%s.%s", OMPI_PKGDATADIR, 
                  base, default_language);
-        ompi_show_help_yyin = fopen(filename, "r");
+        opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }
 
     /* If we still couldn't find it, try with no extension */
 
-    if (NULL == ompi_show_help_yyin) {
+    if (NULL == opal_show_help_yyin) {
         asprintf(&filename, "%s/%s", OMPI_PKGDATADIR, base);
-        ompi_show_help_yyin = fopen(filename, "r");
+        opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }
 #endif
 
     /* If we still couldn't open it, then something is wrong */
 
-    if (NULL == ompi_show_help_yyin) {
+    if (NULL == opal_show_help_yyin) {
         fprintf(stderr, dash_line);
         fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
         fprintf(stderr, "But I couldn't find any file matching that name.  Sorry!\n");
@@ -150,7 +150,7 @@ static int open_file(const char *base, const char *topic)
 
     /* Set the buffer */
 
-    ompi_show_help_init_buffer(ompi_show_help_yyin);
+    opal_show_help_init_buffer(opal_show_help_yyin);
 
     /* Happiness */
 
@@ -170,10 +170,10 @@ static int find_topic(const char *base, const char *topic)
     /* Examine every topic */
 
     while (1) {
-        token = ompi_show_help_yylex();
+        token = opal_show_help_yylex();
         switch (token) {
-        case OMPI_SHOW_HELP_PARSE_TOPIC:
-            tmp = strdup(ompi_show_help_yytext);
+        case OPAL_SHOW_HELP_PARSE_TOPIC:
+            tmp = strdup(opal_show_help_yytext);
             if (NULL == tmp) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -185,10 +185,10 @@ static int find_topic(const char *base, const char *topic)
             }
             break;
 
-        case OMPI_SHOW_HELP_PARSE_MESSAGE:
+        case OPAL_SHOW_HELP_PARSE_MESSAGE:
             break;
 
-        case OMPI_SHOW_HELP_PARSE_DONE:
+        case OPAL_SHOW_HELP_PARSE_DONE:
             fprintf(stderr, dash_line);
             fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
             fprintf(stderr, "But I couldn't find that topic in the file.  Sorry!\n");
@@ -215,10 +215,10 @@ static int read_message(char ***array)
     int token;
 
     while (1) {
-        token = ompi_show_help_yylex();
+        token = opal_show_help_yylex();
         switch (token) {
-        case OMPI_SHOW_HELP_PARSE_MESSAGE:
-            tmp = strdup(ompi_show_help_yytext);
+        case OPAL_SHOW_HELP_PARSE_MESSAGE:
+            tmp = strdup(opal_show_help_yytext);
             if (NULL == tmp) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }

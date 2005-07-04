@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include "util/strncpy.h"
+#include "opal/util/strncpy.h"
 
 
 /**
@@ -41,7 +41,7 @@
  * Hat Advanced Server glibc cough cough).
  */
 char *
-ompi_strncpy(char *dest, const char *src, size_t len)
+opal_strncpy(char *dest, const char *src, size_t len)
 {
   size_t i;
   int pad = 0;

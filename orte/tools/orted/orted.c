@@ -38,7 +38,7 @@
 #include "dps/dps.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "opal/util/cmd_line.h"
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
     if (orted_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        ompi_show_help("help-orted.txt", "orted:usage", false,
+        opal_show_help("help-orted.txt", "orted:usage", false,
                        argv[0], args);
         free(args);
         return 1;

@@ -42,7 +42,7 @@
 #include "util/sys_info.h"
 #include "opal/util/output.h"
 #include "util/universe_setup_file_io.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "opal/util/basename.h"
 #include "opal/threads/condition.h"
 
@@ -250,13 +250,13 @@ int main(int argc, char *argv[])
     if (0 == num_apps) {
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
-        ompi_show_help("help-orterun.txt", "orterun:nothing-to-do", 
+        opal_show_help("help-orterun.txt", "orterun:nothing-to-do", 
                        true, orterun_basename);
         exit(1);
     }
     apps = malloc(sizeof(orte_app_context_t *) * num_apps);
     if (NULL == apps) {
-        ompi_show_help("help-orterun.txt", "orterun:syscall-failed", 
+        opal_show_help("help-orterun.txt", "orterun:syscall-failed", 
                        true, orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
     }
     proc_infos = malloc(sizeof(struct proc_info_t) * j);
     if (NULL == proc_infos) {
-        ompi_show_help("help-orterun.txt", "orterun:syscall-failed", 
+        opal_show_help("help-orterun.txt", "orterun:syscall-failed", 
                        true, orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
 
     /* now call orte_init and setup the RTE */
     if (ORTE_SUCCESS != (rc = orte_init())) {
-        ompi_show_help("help-orterun.txt", "orterun:init-failure", true,
+        opal_show_help("help-orterun.txt", "orterun:init-failure", true,
                        "orte_init()", rc);
         return rc;
     }
@@ -637,7 +637,7 @@ static int parse_globals(int argc, char* argv[])
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        ompi_show_help("help-orterun.txt", "orterun:usage", false,
+        opal_show_help("help-orterun.txt", "orterun:usage", false,
                        orterun_basename, args);
         free(args);
 
@@ -880,7 +880,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* See if we have anything left */
 
     if (0 == app->argc) {
-        ompi_show_help("help-orterun.txt", "orterun:executable-not-specified",
+        opal_show_help("help-orterun.txt", "orterun:executable-not-specified",
                        true, orterun_basename, orterun_basename);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
@@ -975,7 +975,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
        really have no idea what the launch... */
 
     if (app->num_procs == 0 && !map_data) {
-        ompi_show_help("help-orterun.txt", "orterun:num-procs-unspecified",
+        opal_show_help("help-orterun.txt", "orterun:num-procs-unspecified",
                        true, orterun_basename, app->argv[0]);
         rc = ORTE_ERR_BAD_PARAM;
         goto cleanup;
@@ -993,7 +993,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     free(value);
 
     if (NULL == app->app) {
-        ompi_show_help("help-orterun.txt", "orterun:executable-not-found",
+        opal_show_help("help-orterun.txt", "orterun:executable-not-found",
                        true, orterun_basename, app->argv[0], orterun_basename);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
@@ -1035,7 +1035,7 @@ static int parse_appfile(char *filename, char ***env)
 
     fp = fopen(filename, "r");
     if (NULL == fp) {
-        ompi_show_help("help-orterun.txt", "orterun:appfile-not-found", true,
+        opal_show_help("help-orterun.txt", "orterun:appfile-not-found", true,
                        filename);
         return ORTE_ERR_NOT_FOUND;
     }
