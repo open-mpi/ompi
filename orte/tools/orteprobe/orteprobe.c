@@ -50,7 +50,7 @@
 #include "util/printf.h"
 #include "opal/util/daemon_init.h"
 #include "util/universe_setup_file_io.h"
-#include "util/malloc.h"
+#include "opal/util/malloc.h"
 
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
     /* For malloc debugging */
-    ompi_malloc_init();
+    opal_malloc_init();
 
     /*
      * Initialize the MCA framework 

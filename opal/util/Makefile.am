@@ -35,7 +35,7 @@ headers = \
         if.h \
         malloc.h \
         numtostr.h \
-        ompi_environ.h \
+        opal_environ.h \
         os_create_dirpath.h \
         os_path.h \
         output.h \
@@ -60,7 +60,7 @@ libopalutil_la_SOURCES = \
         if.c \
         malloc.c \
         numtostr.c \
-        ompi_environ.c \
+        opal_environ.c \
         os_create_dirpath.c \
         os_path.c \
         output.c \

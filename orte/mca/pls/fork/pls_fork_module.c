@@ -39,7 +39,7 @@
 #include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/univ_info.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "util/session_dir.h"
 #include "runtime/orte_wait.h"
 #include "mca/errmgr/errmgr.h"
@@ -227,12 +227,12 @@ static int orte_pls_fork_proc(
         /* setup base environment: copy the current environ and merge
            in the app context environ */
         if (NULL != context->env) {
-            environ_copy = ompi_environ_merge(environ, context->env);
+            environ_copy = opal_environ_merge(environ, context->env);
         } else {
             environ_copy = opal_argv_copy(environ);
         }
         param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
-        ompi_unsetenv(param, &environ_copy);
+        opal_unsetenv(param, &environ_copy);
 
         /* setup universe info */
         if (NULL != orte_universe_info.name) {
@@ -240,7 +240,7 @@ static int orte_pls_fork_proc(
             asprintf(&uri, "%s@%s:%s", orte_universe_info.uid,
                                        orte_universe_info.host,
                                        orte_universe_info.name);
-            ompi_setenv(param, uri, true, &environ_copy);
+            opal_setenv(param, uri, true, &environ_copy);
             free(param);
             free(uri);
         }
@@ -252,7 +252,7 @@ static int orte_pls_fork_proc(
             uri = orte_rml.get_uri();
         }
         param = mca_base_param_environ_variable("ns","replica","uri");
-        ompi_setenv(param, uri, true, &environ_copy);
+        opal_setenv(param, uri, true, &environ_copy);
         free(param);
         free(uri);
 
@@ -263,13 +263,13 @@ static int orte_pls_fork_proc(
             uri = orte_rml.get_uri();
         }
         param = mca_base_param_environ_variable("gpr","replica","uri");
-        ompi_setenv(param, uri, true, &environ_copy);
+        opal_setenv(param, uri, true, &environ_copy);
         free(param);
         free(uri);
 
         /* use same nodename as the starting daemon (us) */
         param = mca_base_param_environ_variable("orte", "base", "nodename");
-        ompi_setenv(param, orte_system_info.nodename, true, &environ_copy);
+        opal_setenv(param, orte_system_info.nodename, true, &environ_copy);
         free(param);
 
         /* push name into environment */

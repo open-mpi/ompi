@@ -23,14 +23,14 @@
 #include "include/constants.h"
 #include "util/printf.h"
 #include "opal/util/argv.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 
 
 /*
  * Merge two environ-like char arrays, ensuring that there are no
  * duplicate entires
  */
-char **ompi_environ_merge(char **minor, char **major)
+char **opal_environ_merge(char **minor, char **major)
 {
     int i;
     char **ret = NULL;
@@ -56,13 +56,13 @@ char **ompi_environ_merge(char **minor, char **major)
         return ret;
     }
 
-    /* Now go through minor and call ompi_setenv(), but with overwrite
+    /* Now go through minor and call opal_setenv(), but with overwrite
        as false */
 
     for (i = 0; NULL != minor[i]; ++i) {
         value = strchr(minor[i], '=');
         if (NULL == value) {
-            ompi_setenv(minor[i], NULL, false, &ret);
+            opal_setenv(minor[i], NULL, false, &ret);
         } else {
 
             /* strdup minor[i] in case it's a constat string */
@@ -70,7 +70,7 @@ char **ompi_environ_merge(char **minor, char **major)
             name = strdup(minor[i]);
             value = name + (value - minor[i]);
             *value = '\0';
-            ompi_setenv(name, value + 1, false, &ret);
+            opal_setenv(name, value + 1, false, &ret);
             free(name);
         }
     }
@@ -85,7 +85,7 @@ char **ompi_environ_merge(char **minor, char **major)
  * Portable version of setenv(), allowing editing of any environ-like
  * array
  */
-int ompi_setenv(const char *name, const char *value, bool overwrite,
+int opal_setenv(const char *name, const char *value, bool overwrite,
                 char ***env)
 {
     int i;
@@ -119,8 +119,8 @@ int ompi_setenv(const char *name, const char *value, bool overwrite,
     if (*env == environ) {
         /* THIS IS POTENTIALLY A MEMORY LEAK!  But I am doing it
            because so that we don't violate the law of least
-           astonishmet for OMPI developers (i.e., those that don't
-           check the return code of ompi_setenv() and notice that we
+           astonishmet for OPAL developers (i.e., those that don't
+           check the return code of opal_setenv() and notice that we
            returned an error if you passed in the real environ) */
         putenv(newvalue);
         return OMPI_SUCCESS;
@@ -169,7 +169,7 @@ int ompi_setenv(const char *name, const char *value, bool overwrite,
  * Portable version of unsetenv(), allowing editing of any
  * environ-like array
  */
-int ompi_unsetenv(const char *name, char ***env)
+int opal_unsetenv(const char *name, char ***env)
 {
     int i;
     char *compare;

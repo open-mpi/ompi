@@ -15,14 +15,14 @@
  */
 
 #include "ompi_config.h"
-#include "util/numtostr.h"
+#include "opal/util/numtostr.h"
 #include "util/printf.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 
 char*
-ompi_ltostr(long num)
+opal_ltostr(long num)
 {
     /* waste a little bit of space, but always have a big enough buffer */
     int buflen = sizeof(long) * 8;
@@ -43,7 +43,7 @@ ompi_ltostr(long num)
 
 
 char*
-ompi_dtostr(double num)
+opal_dtostr(double num)
 {
     /* waste a little bit of space, but always have a big enough buffer */
     int buflen = sizeof(long) * 8;

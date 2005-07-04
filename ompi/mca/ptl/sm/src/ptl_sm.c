@@ -25,7 +25,7 @@
 #include <sched.h>
 
 #include "opal/util/output.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"

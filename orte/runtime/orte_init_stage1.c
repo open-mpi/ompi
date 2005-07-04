@@ -40,7 +40,7 @@
 #include "mca/rmaps/base/base.h"
 #include "mca/schema/base/base.h"
 #include "mca/soh/base/base.h"
-#include "util/malloc.h"
+#include "opal/util/malloc.h"
 #include "util/univ_info.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"

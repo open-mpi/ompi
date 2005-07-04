@@ -26,7 +26,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "util/proc_info.h"
 #include "opal/event/event.h"
 #include "runtime/orte_wait.h"
@@ -382,11 +382,11 @@ static int orte_pls_bproc_launch_app(
 
     /* overwrite seed setting */
     var = mca_base_param_environ_variable("seed",NULL,NULL);
-    ompi_setenv(var, "0", true, &map->app->env);
+    opal_setenv(var, "0", true, &map->app->env);
 
     /* set name discovery mode */
     var = mca_base_param_environ_variable("ns","nds",NULL);
-    ompi_setenv(var, "pipe", true, &map->app->env);
+    opal_setenv(var, "pipe", true, &map->app->env);
     free(var);
 
     /* ns replica contact info */
@@ -399,7 +399,7 @@ static int orte_pls_bproc_launch_app(
         orte_process_info.ns_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("ns","replica","uri");
-    ompi_setenv(var,orte_process_info.ns_replica_uri, true, &map->app->env);
+    opal_setenv(var,orte_process_info.ns_replica_uri, true, &map->app->env);
     free(var);
 
     /* gpr replica contact info */
@@ -412,7 +412,7 @@ static int orte_pls_bproc_launch_app(
         orte_process_info.gpr_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("gpr","replica","uri");
-    ompi_setenv(var,orte_process_info.gpr_replica_uri, true, &map->app->env);
+    opal_setenv(var,orte_process_info.gpr_replica_uri, true, &map->app->env);
     free(var);
 
     /* overwrite previously specified values with the above settings */

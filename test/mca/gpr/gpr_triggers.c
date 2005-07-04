@@ -41,7 +41,7 @@
 #include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
-#include "util/malloc.h"
+#include "opal/util/malloc.h"
 #include "opal/util/output.h"
 
 #include "mca/errmgr/errmgr.h"

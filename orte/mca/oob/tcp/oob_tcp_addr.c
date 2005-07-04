@@ -29,7 +29,7 @@
 #endif
 #include <string.h>
 #include "include/constants.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "oob_tcp.h"
 #include "oob_tcp_addr.h"
 
@@ -66,10 +66,10 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
     if(rc != ORTE_SUCCESS)
         return rc;
 
-    for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
+    for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_in inaddr;
-        ompi_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(ompi_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        opal_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
+        if(opal_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
         count++;
     } 
@@ -77,10 +77,10 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
     if(rc != ORTE_SUCCESS)
         return rc;
 
-    for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
+    for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_in inaddr;
-        ompi_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(ompi_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        opal_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
+        if(opal_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
         inaddr.sin_port = mca_oob_tcp_component.tcp_listen_port;
         orte_dps.pack(buffer,&inaddr,sizeof(inaddr),ORTE_BYTE);

@@ -37,11 +37,11 @@
 
 #include "include/orte_constants.h"
 #include "opal/util/argv.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "util/univ_info.h"
 #include "util/session_dir.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "util/path.h"
 #include "opal/event/event.h"
 #include "runtime/orte_wait.h"
@@ -50,7 +50,7 @@
 
 #include "mca/ns/ns.h"
 #include "util/sys_info.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "mca/pls/pls.h"
 #include "mca/rml/rml.h"
 #include "mca/gpr/gpr.h"
@@ -458,7 +458,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
              * match, check using ifislocal().
              */
             if (0 == strcmp(node->node_name, orte_system_info.nodename) ||
-                ompi_ifislocal(node->node_name)) {
+                opal_ifislocal(node->node_name)) {
                 exec_argv = &argv[local_exec_index];
                 exec_path = ompi_path_findv(exec_argv[0], 0, environ, NULL);
             } else {
@@ -518,7 +518,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             /* setup environment */
             env = opal_argv_copy(environ);
             var = mca_base_param_environ_variable("seed",NULL,NULL);
-            ompi_setenv(var, "0", true, &env);
+            opal_setenv(var, "0", true, &env);
 
             /* set the progress engine schedule for this node.
              * if node_slots is set to zero, then we default to
@@ -527,10 +527,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (node->node_slots > 0 &&
                 node->node_slots_inuse > node->node_slots) {
                 var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-                ompi_setenv(var, "1", true, &env);
+                opal_setenv(var, "1", true, &env);
             } else {
                 var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-                ompi_setenv(var, "0", true, &env);
+                opal_setenv(var, "0", true, &env);
             }
             free(var);
     

@@ -33,7 +33,7 @@
 #include "include/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
 #include "mca/base/mca_base_param.h"

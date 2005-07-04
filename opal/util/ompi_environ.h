@@ -20,8 +20,8 @@
  * Generic helper routines for environment manipulation.
  */
 
-#ifndef OMPI_ENVIRON_H
-#define OMPI_ENVIRON_H
+#ifndef OPAL_ENVIRON_H
+#define OPAL_ENVIRON_H
 
 #include "ompi_config.h"
 
@@ -51,7 +51,7 @@ extern "C" {
      * one of the two is NULL, the other list is simply copied to the
      * output.  If both are NULL, NULL is returned.
      */
-    OMPI_DECLSPEC char **ompi_environ_merge(char **minor, char **major);
+    OMPI_DECLSPEC char **opal_environ_merge(char **minor, char **major);
 
     /**
      * Portable version of setenv(3), allowing editing of any
@@ -74,7 +74,7 @@ extern "C" {
      * (argv-style).  Note that unlike some implementations of
      * putenv(3), if \em value is insertted in \em env, it is copied.
      * So the caller can modify/free both \em name and \em value after
-     * ompi_setenv() returns.
+     * opal_setenv() returns.
      *
      * The \em env array will be grown if necessary.
      *
@@ -83,10 +83,10 @@ extern "C" {
      *
      * \code
      *   extern char **environ;
-     *   ompi_setenv("foo", "bar", true, &environ);
+     *   opal_setenv("foo", "bar", true, &environ);
      * \endcode
      *
-     * NOTE: If you use the real environ, ompi_setenv() will turn
+     * NOTE: If you use the real environ, opal_setenv() will turn
      * around and perform putenv() to put the value in the
      * environment.  This may very well lead to a memory leak, so its
      * use is strongly discouraged.
@@ -96,10 +96,10 @@ extern "C" {
      *
      * \code
      *   char **my_env = NULL;
-     *   ompi_setenv("foo", "bar", true, &my_env);
+     *   opal_setenv("foo", "bar", true, &my_env);
      * \endcode
      */
-    OMPI_DECLSPEC int ompi_setenv(const char *name, const char *value,
+    OMPI_DECLSPEC int opal_setenv(const char *name, const char *value,
                                   bool overwrite, char ***env);
 
     /**
@@ -116,15 +116,15 @@ extern "C" {
      * If \em name is found in \em env, the string corresponding to
      * that entry is freed and its entry is eliminated from the array.
      */
-    OMPI_DECLSPEC int ompi_unsetenv(const char *name, char ***env);
+    OMPI_DECLSPEC int opal_unsetenv(const char *name, char ***env);
 
     /**
      * So that others don't have to declare it
      */
-    OMPI_DECLSPEC extern char **ompi_environ;
+    OMPI_DECLSPEC extern char **opal_environ;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* OMPI_ARGV_H */
+#endif /* OPAL_ENVIRON */
