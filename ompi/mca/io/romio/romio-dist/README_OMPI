@@ -18,5 +18,5 @@ Local modifications:
   versions of the GNU auto tools -- see comments in file.
 - Added a full set of Makefile.am files; removed all prior Makefile's;
   replaced most Makefile.in's.  Ignore mpi2-other and man directories.
-- Not all systems have snprintf(); include "util/printf.h" in
+- Not all systems have snprintf(); include "opal/util/printf.h" in
   test/noncontig_coll.c

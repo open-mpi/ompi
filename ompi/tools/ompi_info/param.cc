@@ -31,7 +31,7 @@
 #endif
 
 #include "opal/class/opal_value_array.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "util/show_help.h"
 #include "mca/base/mca_base_param.h"
 #include "tools/ompi_info/ompi_info.h"

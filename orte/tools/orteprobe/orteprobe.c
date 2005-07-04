@@ -47,7 +47,7 @@
 #include "util/proc_info.h"
 #include "util/univ_info.h"
 #include "util/session_dir.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "opal/util/daemon_init.h"
 #include "util/universe_setup_file_io.h"
 #include "opal/util/malloc.h"

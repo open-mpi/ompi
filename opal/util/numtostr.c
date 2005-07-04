@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "opal/util/numtostr.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include <stdio.h>
 #include <stdlib.h>
 

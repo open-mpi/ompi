@@ -19,8 +19,8 @@
  * Buffer safe printf functions for portability to archaic platforms.
  */
 
-#ifndef OMPI_PRINTF_H
-#define OMPI_PRINTF_H
+#ifndef OPAL_PRINTF_H
+#define OPAL_PRINTF_H
 
 #include "ompi_config.h"
 
@@ -52,7 +52,7 @@ extern "C" {
  *
  * THIS IS A PORTABILITY FEATURE: USE snprintf() in CODE.
  */
-OMPI_DECLSPEC int  ompi_snprintf(char *str, size_t size, const char *fmt, ...);
+OMPI_DECLSPEC int  opal_snprintf(char *str, size_t size, const char *fmt, ...);
 
 
 /**
@@ -77,7 +77,7 @@ OMPI_DECLSPEC int  ompi_snprintf(char *str, size_t size, const char *fmt, ...);
  *
  * THIS IS A PORTABILITY FEATURE: USE vsnprintf() in CODE.
  */
-OMPI_DECLSPEC int  ompi_vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
+OMPI_DECLSPEC int  opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
 
 /**
  * Allocates and writes to a string under the control of a format
@@ -98,7 +98,7 @@ OMPI_DECLSPEC int  ompi_vsnprintf(char *str, size_t size, const char *fmt, va_li
  *
  * THIS IS A PORTABILITY FEATURE: USE asprintf() in CODE.
  */
-OMPI_DECLSPEC int  ompi_asprintf(char **ptr, const char *fmt, ...);
+OMPI_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...);
 
 
 /**
@@ -122,12 +122,12 @@ OMPI_DECLSPEC int  ompi_asprintf(char **ptr, const char *fmt, ...);
  *
  * THIS IS A PORTABILITY FEATURE: USE vasprintf() in CODE.
  */
-OMPI_DECLSPEC int  ompi_vasprintf(char **ptr, const char *fmt, va_list ap);
+OMPI_DECLSPEC int  opal_vasprintf(char **ptr, const char *fmt, va_list ap);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* OMPI_PRINTF_H */
+#endif /* OPAL_PRINTF_H */
 

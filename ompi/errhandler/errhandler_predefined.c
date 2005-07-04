@@ -26,7 +26,7 @@
 #include "file/file.h"
 #include "win/win.h"
 #include "runtime/runtime.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 
 /*
  * Local functions

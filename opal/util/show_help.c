@@ -23,7 +23,7 @@
 #include "include/constants.h"
 #include "util/show_help.h"
 #include "util/show_help_lex.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "opal/util/argv.h"
 
 static int open_file(const char *base, const char *topic);
