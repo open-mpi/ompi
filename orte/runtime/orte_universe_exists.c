@@ -33,7 +33,7 @@
 #include "util/univ_info.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "util/session_dir.h"
 #include "util/universe_setup_file_io.h"
 
@@ -66,7 +66,7 @@ int orte_universe_exists(orte_universe_t *univ)
     }
 
 	/* check for "contact-info" file. if present, read it in. */
-	if (NULL == (contact_file = orte_os_path(false, orte_process_info.universe_session_dir,
+	if (NULL == (contact_file = opal_os_path(false, orte_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL))) {
         /* NOTE: NOT FINDING THE FILE IS NOT AN ERROR - DON'T ERROR_LOG IT */
         return ORTE_ERR_NOT_FOUND;

@@ -38,11 +38,11 @@
 #include "dps/dps.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "opal/util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "opal/util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/univ_info.h"
@@ -370,7 +370,7 @@ fprintf(stderr, "using %s for orted command\n", orted);
         }
         
         /* setup the path */
-        path = ompi_path_findv(ortedargv[0], 0, environ, NULL);
+        path = opal_path_findv(ortedargv[0], 0, environ, NULL);
     
 fprintf(stderr, "path setup as %s\n", path);
 

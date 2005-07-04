@@ -40,7 +40,7 @@
 #include "opal/util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "opal/util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/univ_info.h"
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
         /* define a log file name in the session directory */
         sprintf(log_file, "output-orted-%s-%s.log", 
                 jobidstring, orte_system_info.nodename);
-        log_path = orte_os_path(false, 
+        log_path = opal_os_path(false, 
                                 orte_process_info.tmpdir_base, 
                                 orte_process_info.top_session_dir, 
                                 log_file, 

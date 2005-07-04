@@ -46,11 +46,11 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "util/univ_info.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "util/session_dir.h"
 #include "util/universe_setup_file_io.h"
 
@@ -356,7 +356,7 @@ MOVEON:
     free(param);
     
     /* setup the path */
-    path = ompi_path_findv(argv[0], 0, environ, NULL);
+    path = opal_path_findv(argv[0], 0, environ, NULL);
 
     /* add the username and nodename */
     opal_argv_append(&argc, &argv, "-l");

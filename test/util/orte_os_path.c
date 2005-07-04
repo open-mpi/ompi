@@ -23,7 +23,7 @@
 #endif
 
 #include "util/sys_info.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "support.h"
 
 static bool test1(void);   /* trivial answer test */
@@ -36,7 +36,7 @@ static bool test5(void);   /* very long path name test */
 int main(int argc, char* argv[])
 {
 
-    test_init("orte_os_path_t");
+    test_init("opal_os_path_t");
     /* setup the system info structure */
     orte_sys_info();
     
@@ -44,35 +44,35 @@ int main(int argc, char* argv[])
         test_success();
     }
     else {
-      test_failure("orte_os_path_t test1 failed");
+      test_failure("opal_os_path_t test1 failed");
     }
 
     if (test2()) {
         test_success();
     }
     else {
-      test_failure("orte_os_path_t test2 failed");
+      test_failure("opal_os_path_t test2 failed");
     }
 
     if (test3()) {
         test_success();
     }
     else {
-      test_failure("orte_os_path_t test3 failed");
+      test_failure("opal_os_path_t test3 failed");
     }
 
     if (test4()) {
         test_success();
     }
     else {
-      test_failure("orte_os_path_t test4 failed");
+      test_failure("opal_os_path_t test4 failed");
     }
 
     if (test5()) {
         test_success();
     }
     else {
-      test_failure("orte_os_path_t test5 failed");
+      test_failure("opal_os_path_t test5 failed");
     }
 
     test_finalize();
@@ -86,13 +86,13 @@ static bool test1(void)
 
     /* Test trivial functionality. Program should return ".[separator]" when called in relative
      * mode, and the separator character when called in absolute mode. */
-    if (NULL != (out = orte_os_path(true,NULL))) {
+    if (NULL != (out = opal_os_path(true,NULL))) {
         answer = strdup(".");
         strcat(answer, orte_system_info.path_sep);
         if (0 != strcmp(answer, out))
             return(false);
     }
-    if (NULL != (out = orte_os_path(false,NULL))) {
+    if (NULL != (out = opal_os_path(false,NULL))) {
         if (0 != strcmp(orte_system_info.path_sep, out))
             return(false);
     }
@@ -115,17 +115,17 @@ static bool test2(void)
     out = strdup(".");
     out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[0]);
-    if (0 != strcmp(out, orte_os_path(true, a[0], NULL)))
+    if (0 != strcmp(out, opal_os_path(true, a[0], NULL)))
         return(false);
 
     out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[1]);
-    if (0 != strcmp(out, orte_os_path(true, a[0], a[1], NULL)))
+    if (0 != strcmp(out, opal_os_path(true, a[0], a[1], NULL)))
         return(false);
 
     out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[2]);
-    if (0 != strcmp(out, orte_os_path(true, a[0], a[1], a[2], NULL)))
+    if (0 != strcmp(out, opal_os_path(true, a[0], a[1], a[2], NULL)))
         return(false);
 
     return true;
@@ -145,17 +145,17 @@ static bool test3(void)
     /* Same as prior test, only with absolute path name */
     out = strdup(orte_system_info.path_sep);
     out = strcat(out, a[0]);
-    if (0 != strcmp(out, orte_os_path(false, a[0], NULL)))
+    if (0 != strcmp(out, opal_os_path(false, a[0], NULL)))
         return(false);
 
     out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[1]);
-    if (0 != strcmp(out, orte_os_path(false, a[0], a[1], NULL)))
+    if (0 != strcmp(out, opal_os_path(false, a[0], a[1], NULL)))
         return(false);
 
     out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[2]);
-    if (0 != strcmp(out, orte_os_path(false, a[0], a[1], a[2], NULL)))
+    if (0 != strcmp(out, opal_os_path(false, a[0], a[1], a[2], NULL)))
         return(false);
 
     return true;
@@ -174,7 +174,7 @@ static bool test4(void)
     for (i=0; i< MAXPATHLEN+5; i++) {
         a[i] = 'a';
     }
-    if (NULL != orte_os_path(false, a, NULL)) {
+    if (NULL != opal_os_path(false, a, NULL)) {
         return(false);
     }
     return (true);

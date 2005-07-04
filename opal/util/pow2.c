@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "util/pow2.h"
+#include "opal/util/pow2.h"
 
 
 /**
@@ -28,7 +28,7 @@
  *  @returnvalue power of 2 integer same or greater than the input
  *               parameter.
  */
-int ompi_round_up_to_nearest_pow2(int input_integer)
+int opal_round_up_to_nearest_pow2(int input_integer)
 {   
     int pop_count, highest_used_bit, tmp_input_integer, return_value;
 

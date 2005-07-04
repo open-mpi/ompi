@@ -28,10 +28,10 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "opal/util/argv.h"
 #include "opal/util/few.h"
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "util/show_help.h"
 #include "tools/wrappers/ompi_wrap.h"
 
@@ -429,7 +429,7 @@ ompi_wrap_exec_sv(const ompi_sv_t & sv)
     // the called app returned non-zero or if there was a failure in the
     // exec (like the file not being found).  So we look for the
     // compiler first, just to try to eliminate that case.
-    tmp = ompi_path_findv(av[0], 0, environ, NULL);
+    tmp = opal_path_findv(av[0], 0, environ, NULL);
     if (NULL == tmp) {
 	ompi_show_help("help-wrapper.txt", "no-compiler-found", true,
 		       av[0], NULL);

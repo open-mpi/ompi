@@ -21,7 +21,7 @@
 #include <unistd.h>
 #endif
 
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "opal/util/argv.h"
 
 /*
@@ -41,7 +41,7 @@ static char *list_env_get(char *var, char **list);
 /**
  *  Locates a file with certain permissions
  */
-char *ompi_path_find(char *fname, char **pathv, int mode, char **envv)
+char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
 {
     char *fullpath;  
     char *delimit;  
@@ -102,7 +102,7 @@ char *ompi_path_find(char *fname, char **pathv, int mode, char **envv)
 /*
  * Locates a file with certain permissions from a list of search paths
  */
-char *ompi_path_findv(char *fname, int mode, char **envv, char *wrkdir)
+char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 {
     char **dirv;     
     char *fullpath; 
@@ -144,7 +144,7 @@ char *ompi_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 
     if(NULL == dirv)
         return NULL;
-    fullpath = ompi_path_find(fname, dirv, mode, envv);
+    fullpath = opal_path_find(fname, dirv, mode, envv);
     opal_argv_free(dirv);
     return fullpath;
 }

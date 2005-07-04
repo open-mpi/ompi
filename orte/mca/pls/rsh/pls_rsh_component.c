@@ -28,7 +28,7 @@
 
 #include "include/orte_constants.h"
 #include "opal/util/argv.h"
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "opal/util/basename.h"
 #include "mca/pls/pls.h"
 #include "mca/pls/rsh/pls_rsh.h"
@@ -182,7 +182,7 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
     if (NULL == mca_pls_rsh_component.argv || NULL == mca_pls_rsh_component.argv[0]) {
         return NULL;
     }
-    mca_pls_rsh_component.path = ompi_path_findv(mca_pls_rsh_component.argv[0], 0, environ, NULL);
+    mca_pls_rsh_component.path = opal_path_findv(mca_pls_rsh_component.argv[0], 0, environ, NULL);
     if (NULL == mca_pls_rsh_component.path) {
         return NULL;
     }

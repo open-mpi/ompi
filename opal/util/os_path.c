@@ -14,7 +14,7 @@
  * $HEADER$
  */
 
-#include "orte_config.h"
+#include "ompi_config.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -29,12 +29,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "include/orte_constants.h"
+#include "include/constants.h"
 #include "util/sys_info.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "util/sys_info.h"
 
-char *orte_os_path(bool relative, ...)
+char *opal_os_path(bool relative, ...)
 {
     va_list ap, ap1;
     char *element, *path;

@@ -37,7 +37,7 @@
 #include "util/proc_info.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "opal/util/cmd_line.h"
 #include "util/sys_info.h"
 #include "opal/util/output.h"
@@ -986,7 +986,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     value = opal_basename(app->argv[0]);
     if (strlen(value) == strlen(app->argv[0])) {
-        app->app = ompi_path_findv(app->argv[0], 0, environ, app->cwd); 
+        app->app = opal_path_findv(app->argv[0], 0, environ, app->cwd); 
     } else {
         app->app = strdup(app->argv[0]);
     }

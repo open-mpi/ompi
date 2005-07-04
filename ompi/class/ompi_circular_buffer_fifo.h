@@ -21,7 +21,7 @@
 #include "include/sys/cache.h"
 #include "include/sys/atomic.h"
 #include "mca/mpool/mpool.h"
-#include "util/pow2.h"
+#include "opal/util/pow2.h"
 
 
 /** @file
@@ -135,7 +135,7 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
     }
 
     /* set fifo size */
-    fifo->size = ompi_round_up_to_nearest_pow2(size_of_fifo);
+    fifo->size = opal_round_up_to_nearest_pow2(size_of_fifo);
 
     /* set lazy free frequence */
     if( ( 0 >= lazy_free_freq ) || 
@@ -468,7 +468,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
     }
 
     /* set fifo size */
-    fifo->size = ompi_round_up_to_nearest_pow2(size_of_fifo);
+    fifo->size = opal_round_up_to_nearest_pow2(size_of_fifo);
 
     /* set lazy free frequence */
     if( ( 0 >= lazy_free_freq ) || 
