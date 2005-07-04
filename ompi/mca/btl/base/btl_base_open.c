@@ -57,7 +57,7 @@ OBJ_CLASS_INSTANCE(
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/btl/base/static-components.h"
+#include "ompi/mca/btl/base/static-components.h"
 
 
 /*

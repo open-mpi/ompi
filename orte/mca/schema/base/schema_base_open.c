@@ -30,7 +30,7 @@
  * component's public mca_base_module_t struct.
  */
 
-#include "mca/schema/base/static-components.h"
+#include "orte/mca/schema/base/static-components.h"
 
 /*
  * globals

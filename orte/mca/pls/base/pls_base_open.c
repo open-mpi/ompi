@@ -29,7 +29,7 @@
  * module's public mca_base_module_t struct.
  */
 
-#include "mca/pls/base/static-components.h"
+#include "orte/mca/pls/base/static-components.h"
 
 
 /*

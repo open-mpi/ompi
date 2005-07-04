@@ -31,7 +31,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/ras/base/static-components.h"
+#include "orte/mca/ras/base/static-components.h"
 
 /**
  * Local functions.

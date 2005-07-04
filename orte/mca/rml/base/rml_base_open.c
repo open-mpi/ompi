@@ -32,7 +32,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/rml/base/static-components.h"
+#include "orte/mca/rml/base/static-components.h"
 
 
 /*

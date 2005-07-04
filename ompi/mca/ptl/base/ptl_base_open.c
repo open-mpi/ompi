@@ -32,7 +32,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/ptl/base/static-components.h"
+#include "ompi/mca/ptl/base/static-components.h"
 
 
 /*

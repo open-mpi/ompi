@@ -33,7 +33,7 @@
  * component's public orte_base_component_t struct.
  */
 
-#include "mca/iof/base/static-components.h"
+#include "orte/mca/iof/base/static-components.h"
 
 
 /*
