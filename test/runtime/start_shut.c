@@ -15,7 +15,7 @@
  */
 
 #include "orte_config.h"
-#include "../src/include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 
 
 #include <stdio.h>
@@ -29,7 +29,7 @@
 #endif
 
 #include "support.h"
-#include "../src/runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 
 #define NUM_ITERS 3
 

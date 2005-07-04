@@ -27,5 +27,6 @@ TESTS = \
 test_schema_SOURCES = test_schema.c
 test_schema_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la 
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la 
 test_schema_DEPENDENCIES = $(test_schema_LDADD)

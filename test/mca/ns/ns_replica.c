@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
     /* For malloc debugging */
-    ompi_malloc_init();
+    opal_malloc_init();
 
     /* set seed to true to force replica selection */
     orte_process_info.seed = true;
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 
     orte_proc_info_finalize();
     mca_base_close();
-    ompi_malloc_finalize();
+    opal_malloc_finalize();
     opal_output_finalize();
 
     fclose( test_out );

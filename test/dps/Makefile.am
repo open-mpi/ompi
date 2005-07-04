@@ -25,6 +25,7 @@ TESTS = \
 
 dps_test_SOURCES = dps_test.c
 dps_test_LDADD = \
-        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la \
         $(top_builddir)/test/support/libsupport.a 
 dps_test_DEPENDENCIES = $(dps_test_LDADD)

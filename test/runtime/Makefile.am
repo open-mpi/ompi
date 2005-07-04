@@ -29,13 +29,15 @@ TESTS = \
 sigchld_SOURCES = \
 	sigchld.c
 sigchld_LDADD = \
-	$(top_builddir)/src/libmpi.la \
+	$(top_builddir)/orte/liborte.la \
+	$(top_builddir)/opal/libopal.la \
 	$(top_builddir)/test/support/libsupport.a
 sigchld_DEPENDENCIES = $(sigchld_LDADD)
 
 start_shut_SOURCES = \
     start_shut.c
 start_shut_LDADD = \
-    $(top_builddir)/src/libmpi.la \
-    $(top_builddir)/test/support/libsupport.a
+	$(top_builddir)/orte/liborte.la \
+	$(top_builddir)/opal/libopal.la \
+	$(top_builddir)/test/support/libsupport.a
 start_shut_DEPENDENCIES = $(start_shut_LDADD)

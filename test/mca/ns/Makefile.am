@@ -29,17 +29,20 @@ TESTS = \
 ns_replica_SOURCES = ns_replica.c
 ns_replica_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la 
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 ns_replica_DEPENDENCIES = $(ns_replica_LDADD)
 
 ns_proxy_SOURCES = ns_proxy.c
 ns_proxy_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la 
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 ns_proxy_DEPENDENCIES = $(ns_proxy_LDADD)
 
 ns_nds_SOURCES = ns_nds.c
 ns_nds_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la 
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 ns_nds_DEPENDENCIES = $(ns_nds_LDADD)
