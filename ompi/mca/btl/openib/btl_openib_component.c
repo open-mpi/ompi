@@ -18,7 +18,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "opal/event/event.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/pml/pml.h"

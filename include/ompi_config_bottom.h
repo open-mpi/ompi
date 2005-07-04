@@ -246,28 +246,28 @@ typedef long long bool;
  */
 #if OMPI_ENABLE_MEM_DEBUG
 
-/* It is safe to include util/malloc.h here because a) it will only
+/* It is safe to include opal/util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI
    source tree [including headers] available, and b) we guaranteed to
-   *not* to include anything else via util/malloc.h, so we won't
+   *not* to include anything else via opal/util/malloc.h, so we won't
    have Cascading Includes Of Death. */
-#    include "util/malloc.h"
+#    include "opal/util/malloc.h"
 #    if defined(malloc)
 #        undef malloc
 #    endif
-#    define malloc(size) ompi_malloc((size), __FILE__, __LINE__)
+#    define malloc(size) opal_malloc((size), __FILE__, __LINE__)
 #    if defined(calloc)
 #        undef calloc
 #    endif
-#    define calloc(nmembers, size) ompi_calloc((nmembers), (size), __FILE__, __LINE__)
+#    define calloc(nmembers, size) opal_calloc((nmembers), (size), __FILE__, __LINE__)
 #    if defined(realloc)
 #        undef realloc
 #    endif
-#    define realloc(ptr, size) ompi_realloc((ptr), (size), __FILE__, __LINE__)
+#    define realloc(ptr, size) opal_realloc((ptr), (size), __FILE__, __LINE__)
 #    if defined(free)
 #        undef free
 #    endif
-#    define free(ptr) ompi_free((ptr), __FILE__, __LINE__)
+#    define free(ptr) opal_free((ptr), __FILE__, __LINE__)
 
 /*
  * If we're mem debugging, make the OMPI_DEBUG_ZERO resolve to memset

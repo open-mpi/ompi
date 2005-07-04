@@ -35,7 +35,7 @@
 
 #include "include/constants.h"
 #include "opal/event/event.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/pml/pml.h"
@@ -300,8 +300,8 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
     ptl->ptl_bytes_sent = 0;
     ptl->ptl_send_handler = 0;
 #endif
-    ompi_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
-    ompi_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
+    opal_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
+    opal_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
 
     /* allow user to specify interface bandwidth */
     sprintf(param, "bandwidth_%s", if_name);
@@ -327,7 +327,7 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
 
 static int mca_ptl_tcp_component_create_instances(void)
 {
-    int if_count = ompi_ifcount();
+    int if_count = opal_ifcount();
     int if_index;
     char **include;
     char **exclude;
@@ -346,7 +346,7 @@ static int mca_ptl_tcp_component_create_instances(void)
     argv = include = opal_argv_split(mca_ptl_tcp_component.tcp_if_include,',');
     while(argv && *argv) {
         char* if_name = *argv;
-        int if_index = ompi_ifnametoindex(if_name);
+        int if_index = opal_ifnametoindex(if_name);
         if(if_index < 0) {
             opal_output(0,"mca_ptl_tcp_component_init: invalid interface \"%s\"", if_name);
         } else {
@@ -362,12 +362,12 @@ static int mca_ptl_tcp_component_create_instances(void)
      * a PTL for each interface that was not excluded.
     */
     exclude = opal_argv_split(mca_ptl_tcp_component.tcp_if_exclude,',');
-    for(if_index = ompi_ifbegin(); if_index >= 0; if_index = ompi_ifnext(if_index)) {
+    for(if_index = opal_ifbegin(); if_index >= 0; if_index = opal_ifnext(if_index)) {
         char if_name[32];
-        ompi_ifindextoname(if_index, if_name, sizeof(if_name));
+        opal_ifindextoname(if_index, if_name, sizeof(if_name));
 
         /* check to see if this interface exists in the exclude list */
-        if(ompi_ifcount() > 1) {
+        if(opal_ifcount() > 1) {
             argv = exclude;
             while(argv && *argv) {
                 if(strncmp(*argv,if_name,strlen(*argv)) == 0)

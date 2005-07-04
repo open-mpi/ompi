@@ -22,7 +22,7 @@
 #include <sys/types.h>
 
 #include "opal/util/output.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"

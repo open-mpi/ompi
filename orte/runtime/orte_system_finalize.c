@@ -28,7 +28,7 @@
 #include "mca/gpr/base/base.h"
 #include "mca/iof/base/base.h"
 #include "mca/rmgr/base/base.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "util/session_dir.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
@@ -79,7 +79,7 @@ int orte_system_finalize(void)
     orte_univ_info_finalize();
     
     /* cleanup the if data */
-    ompi_iffinalize();
+    opal_iffinalize();
     
     return ORTE_SUCCESS;
 }

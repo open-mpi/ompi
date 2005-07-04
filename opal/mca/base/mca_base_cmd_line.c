@@ -22,7 +22,7 @@
 #include "include/constants.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "mca/base/base.h"
 
 
@@ -89,7 +89,7 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 
   for (i = 0; NULL != mca_param_argv[i]; ++i) {
       name = mca_base_param_environ_variable(mca_param_argv[i], NULL, NULL);
-      ompi_setenv(name, mca_value_argv[i], true, env);
+      opal_setenv(name, mca_value_argv[i], true, env);
       free(name);
   }
 

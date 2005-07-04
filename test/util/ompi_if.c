@@ -33,7 +33,7 @@
 #endif
 
 #include "runtime/runtime.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "support.h"
 #include "include/constants.h"
 
@@ -45,7 +45,7 @@ test_ifaddrtoname(char *addr)
     char addrname[100];
     int len = 99;
 
-    ret = ompi_ifaddrtoname(addr, addrname, len);
+    ret = opal_ifaddrtoname(addr, addrname, len);
 
     if (ret == OMPI_SUCCESS) {
         return true;
@@ -60,7 +60,7 @@ main(int argc, char *argv[])
     char hostname[MAXHOSTNAMELEN];
 
     orte_init();
-    test_init("ompi_if");
+    test_init("opal_if");
 
     /* 127.0.0.1 */
     if (test_ifaddrtoname("127.0.0.1")) {
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
     } else {
         test_failure("ifaddrtoname test failed for 127.0.0.1");
     }
-    if (ompi_ifislocal("127.0.0.1")) {
+    if (opal_ifislocal("127.0.0.1")) {
         test_success();
     } else {
         test_failure("ifislocal test failed for 127.0.0.1");
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
     } else {
         test_failure("ifaddrtoname test failed for localhost");
     }
-    if (ompi_ifislocal("localhost")) {
+    if (opal_ifislocal("localhost")) {
         test_success();
     } else {
         test_failure("ifislocal test failed for localhost");
@@ -92,8 +92,8 @@ main(int argc, char *argv[])
     } else {
         test_success();
     }
-    if (ompi_ifislocal("0.0.0.0")) {
-        test_failure("ompi_ifislocal test failed for 0.0.0.0");
+    if (opal_ifislocal("0.0.0.0")) {
+        test_failure("opal_ifislocal test failed for 0.0.0.0");
     } else {
         test_success();
     }
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
     }
     printf("This should generate a warning:\n");
     fflush(stdout);
-    if (ompi_ifislocal("foo.example.com")) {
+    if (opal_ifislocal("foo.example.com")) {
         test_failure("ifislocal test failed for foo.example.com");
     } else {
         test_success();
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
     } else {
         test_failure("ifaddrtoname test failed for local host name");
     }
-    if (ompi_ifislocal(hostname)) {
+    if (opal_ifislocal(hostname)) {
         test_success();
     } else {
         test_failure("ifislocal test failed for local host name");

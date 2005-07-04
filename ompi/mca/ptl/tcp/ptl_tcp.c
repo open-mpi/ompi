@@ -18,7 +18,7 @@
 #include <string.h>
 #include "class/ompi_bitmap.h"
 #include "opal/util/output.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_header.h"

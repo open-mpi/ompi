@@ -36,7 +36,7 @@
 #include "mca/soh/soh.h"
 #include "util/univ_info.h"
 #include "opal/util/argv.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "pls_poe.h"
 
 extern char **environ;
@@ -373,7 +373,7 @@ static int __poe_create_cmd_file(
     /* setup base environment */
     environ_copy = NULL;
     param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
-    ompi_unsetenv(param, &environ_copy);
+    opal_unsetenv(param, &environ_copy);
 
     /* setup universe info */
     if(NULL != orte_universe_info.name) {
@@ -381,7 +381,7 @@ static int __poe_create_cmd_file(
         asprintf(&uri, "%s@%s:%s", orte_universe_info.uid,
                                   orte_universe_info.host,
                                   orte_universe_info.name);
-        ompi_setenv(param, uri, true, &environ_copy);
+        opal_setenv(param, uri, true, &environ_copy);
         free(param);
         free(uri);
     }
@@ -393,7 +393,7 @@ static int __poe_create_cmd_file(
         uri = orte_rml.get_uri();
     }
     param = mca_base_param_environ_variable("ns","replica","uri");
-    ompi_setenv(param, uri, true, &environ_copy);
+    opal_setenv(param, uri, true, &environ_copy);
     free(param);
     free(uri);
 
@@ -404,7 +404,7 @@ static int __poe_create_cmd_file(
         uri = orte_rml.get_uri();
     }
     param = mca_base_param_environ_variable("gpr","replica","uri");
-    ompi_setenv(param, uri, true, &environ_copy);
+    opal_setenv(param, uri, true, &environ_copy);
     free(param);
     free(uri);
 

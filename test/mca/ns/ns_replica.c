@@ -24,7 +24,7 @@
 #include "include/orte_constants.h"
 #include "mca/schema/schema.h"
 #include "util/proc_info.h"
-#include "util/malloc.h"
+#include "opal/util/malloc.h"
 #include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"

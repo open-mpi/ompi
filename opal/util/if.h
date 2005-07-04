@@ -15,8 +15,8 @@
  * $HEADER$
  */
 
-#ifndef _OMPI_IF_UTIL_
-#define _OMPI_IF_UTIL_
+#ifndef OPAL_IF_UTIL_
+#define OPAL_IF_UTIL_
 
 #include "ompi_config.h"
 #ifdef HAVE_SYS_TYPES_H
@@ -36,7 +36,7 @@ extern "C" {
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-OMPI_DECLSPEC int ompi_ifnametoaddr(const char* if_name, 
+OMPI_DECLSPEC int opal_ifnametoaddr(const char* if_name, 
                                     struct sockaddr* if_addr, int size);
 
 /**
@@ -46,7 +46,7 @@ OMPI_DECLSPEC int ompi_ifnametoaddr(const char* if_name,
  *  @param if_name (OUT)  Interface name buffer
  *  @param size    (IN)   Interface name buffer size
  */
-OMPI_DECLSPEC int ompi_ifaddrtoname(const char* if_addr, 
+OMPI_DECLSPEC int opal_ifaddrtoname(const char* if_addr, 
                                     char* if_name, int size);
 
 /**
@@ -55,17 +55,17 @@ OMPI_DECLSPEC int ompi_ifaddrtoname(const char* if_addr,
  *  @param if_name (IN)  Interface name
  *  @return              Interface index
  */
-OMPI_DECLSPEC int ompi_ifnametoindex(const char* if_name);
+OMPI_DECLSPEC int opal_ifnametoindex(const char* if_name);
 
 /**
  *  Returns the number of available interfaces.
  */
-OMPI_DECLSPEC int ompi_ifcount(void);
+OMPI_DECLSPEC int opal_ifcount(void);
 
 /**
  *  Returns the index of the first available interface.
  */
-OMPI_DECLSPEC int ompi_ifbegin(void); 
+OMPI_DECLSPEC int opal_ifbegin(void); 
 
 /**
  *  Lookup the current position in the interface list by
@@ -74,7 +74,7 @@ OMPI_DECLSPEC int ompi_ifbegin(void);
  *  @param if_index   Returns the next available index from the 
  *                    current position.
  */
-OMPI_DECLSPEC int ompi_ifnext(int if_index);
+OMPI_DECLSPEC int opal_ifnext(int if_index);
 
 /**
  *  Lookup an interface by index and return its name.
@@ -83,7 +83,7 @@ OMPI_DECLSPEC int ompi_ifnext(int if_index);
  *  @param if_name (OUT)  Interface name buffer
  *  @param size (IN)      Interface name buffer size
  */
-OMPI_DECLSPEC int ompi_ifindextoname(int if_index, char* if_name, int);
+OMPI_DECLSPEC int opal_ifindextoname(int if_index, char* if_name, int);
 
 /**
  *  Lookup an interface by index and return its primary address .
@@ -92,7 +92,7 @@ OMPI_DECLSPEC int ompi_ifindextoname(int if_index, char* if_name, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OMPI_DECLSPEC int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
+OMPI_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*, int);
 
 /**
  *  Lookup an interface by index and return its network mask.
@@ -101,7 +101,7 @@ OMPI_DECLSPEC int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OMPI_DECLSPEC int ompi_ifindextomask(int if_index, struct sockaddr*, int);
+OMPI_DECLSPEC int opal_ifindextomask(int if_index, struct sockaddr*, int);
 
 /**
  * Determine if given hostname / IP address is a local address
@@ -109,7 +109,7 @@ OMPI_DECLSPEC int ompi_ifindextomask(int if_index, struct sockaddr*, int);
  * @param hostname (IN)    Hostname (or stringified IP address)
  * @return                 true if \c hostname is local, false otherwise
  */
-OMPI_DECLSPEC bool ompi_ifislocal(char *hostname);
+OMPI_DECLSPEC bool opal_ifislocal(char *hostname);
 
 /**
  * Finalize the functions to release malloc'd data
@@ -118,7 +118,7 @@ OMPI_DECLSPEC bool ompi_ifislocal(char *hostname);
  * @return OMPI_SUCCESS if no problems encountered
  * @return OMPI_ERROR if data could not be released
  */
-OMPI_DECLSPEC int ompi_iffinalize(void);
+OMPI_DECLSPEC int opal_iffinalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

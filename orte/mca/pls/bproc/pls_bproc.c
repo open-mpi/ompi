@@ -27,7 +27,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "util/proc_info.h"
 #include "opal/event/event.h"
 #include "runtime/orte_wait.h"
@@ -282,7 +282,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
 
     /* set name discovery mode */
     var = mca_base_param_environ_variable("ns","nds",NULL);
-    ompi_setenv(var, "bproc", true, &map->app->env);
+    opal_setenv(var, "bproc", true, &map->app->env);
     free(var);
 
     /* ns replica contact info */
@@ -296,24 +296,24 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
         orte_process_info.ns_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("ns","replica","uri");
-    ompi_setenv(var,orte_process_info.ns_replica_uri, true, &map->app->env);
+    opal_setenv(var,orte_process_info.ns_replica_uri, true, &map->app->env);
     free(var);
 
     /* make sure the frontend hostname does not get pushed out to the backend */
     var = mca_base_param_environ_variable("orte", "base", "nodename");
-    ompi_unsetenv(var, &map->app->env);
+    opal_unsetenv(var, &map->app->env);
     free(var);
-    ompi_unsetenv("HOSTNAME", &map->app->env);
+    opal_unsetenv("HOSTNAME", &map->app->env);
 
     /* make sure the username used to create the bproc directory is the same on
      * the backend as the frontend */
     var = mca_base_param_environ_variable("pls","bproc","username");
-    ompi_setenv(var, orte_system_info.user, true, &map->app->env);
+    opal_setenv(var, orte_system_info.user, true, &map->app->env);
     free(var);
 
     /* tell the bootproxy to use the bproc_orted pls */
     var = mca_base_param_environ_variable("rmgr", "bootproxy", "pls");
-    ompi_setenv(var, "bproc_orted", true, &map->app->env);
+    opal_setenv(var, "bproc_orted", true, &map->app->env);
     free(var);
 
     /* gpr replica contact info */
@@ -327,12 +327,12 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
         orte_process_info.gpr_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("gpr","replica","uri");
-    ompi_setenv(var,orte_process_info.gpr_replica_uri, true, &map->app->env);
+    opal_setenv(var,orte_process_info.gpr_replica_uri, true, &map->app->env);
     free(var);
 
     asprintf(&param, "%d", (int) app_context);
     var = mca_base_param_environ_variable("pls", "bproc", "app_context");
-    ompi_setenv(var, param, true, &map->app->env);
+    opal_setenv(var, param, true, &map->app->env);
     free(param);
     free(var);
   

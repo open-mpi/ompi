@@ -21,7 +21,7 @@
 #include "include/orte_constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
-#include "util/malloc.h"
+#include "opal/util/malloc.h"
 #include "mca/base/base.h"
 #include "runtime/opal.h"
 
@@ -46,7 +46,7 @@ int opal_finalize(void)
     opal_class_finalize();
 
     /* finalize the memory allocator */
-    ompi_malloc_finalize();
+    opal_malloc_finalize();
 
     return ORTE_SUCCESS;
 }

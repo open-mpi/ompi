@@ -36,7 +36,7 @@
 #include "class/orte_pointer_array.h"
 #include "util/proc_info.h"
 #include "opal/util/argv.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "util/path.h"
 #include "opal/util/cmd_line.h"
 #include "util/sys_info.h"
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
     id = mca_base_param_register_int("orte","debug","daemons",NULL,0);
     mca_base_param_lookup_int(id,&iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_debug_daemons",
+        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug_daemons",
                                               "1", true, &environ))) {
             fprintf(stderr, "orterun: could not set orte_debug_daemons in environ\n");
             return rc;
@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
     id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
     mca_base_param_lookup_int(id,&iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_debug",
+        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug",
                                               "1", true, &environ))) {
             fprintf(stderr, "orterun: could not set orte_debug in environ\n");
             return rc;
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
     id = mca_base_param_register_int("orte","debug","daemons_file",NULL,0);
     mca_base_param_lookup_int(id,&iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_debug_daemons_file",
+        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug_daemons_file",
                                               "1", true, &environ))) {
             fprintf(stderr, "orterun: could not set orte_debug_daemons_file in environ\n");
             return rc;
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
     id = mca_base_param_register_int("orte","no_daemonize",NULL,NULL,0);
     mca_base_param_lookup_int(id,&iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_no_daemonize",
+        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_no_daemonize",
                                               "1", true, &environ))) {
             fprintf(stderr, "orterun: could not set orte_no_daemonize in environ\n");
             return rc;

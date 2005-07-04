@@ -44,7 +44,7 @@
 #include "opal/threads/condition.h"
 #include "runtime/orte_wait.h"
 #include "opal/util/argv.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "util/path.h"
 #include "util/univ_info.h"
@@ -462,21 +462,21 @@ MOVEON:
             /*
              * now set the relevant MCA parameters to point us at the remote daemon...
              */
-            if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_gpr_replica_uri",
+            if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_gpr_replica_uri",
                         orte_setup_hnp_orted_uri, true, &environ))) {
                 fprintf(stderr, "orte_setup_hnp: could not set gpr_replica_uri in environ\n");
                 return rc;
             }
             
-            if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_ns_replica_uri",
+            if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_ns_replica_uri",
                         orte_setup_hnp_orted_uri, true, &environ))) {
                 fprintf(stderr, "orte_setup_hnp: could not set ns_replica_uri in environ\n");
                 return rc;
             }
 
-            ompi_unsetenv("OMPI_MCA_seed", &environ);
+            opal_unsetenv("OMPI_MCA_seed", &environ);
             
-            if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_universe_uri",
+            if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_universe_uri",
                         orte_setup_hnp_orted_uri, true, &environ))) {
                 fprintf(stderr, "orte_setup_hnp: could not set universe_uri in environ\n");
                 return rc;

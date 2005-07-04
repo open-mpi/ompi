@@ -19,7 +19,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 check_PROGRAMS = \
 	ompi_numtostr \
-	ompi_if \
+	opal_if \
 	orte_os_path \
 	orte_sys_info \
 	orte_os_create_dirpath \
@@ -37,11 +37,11 @@ ompi_numtostr_LDADD = \
         $(top_builddir)/test/support/libsupport.a 
 ompi_numtostr_DEPENDENCIES = $(ompi_numtostr_LDADD)
 
-ompi_if_SOURCES = ompi_if.c
-ompi_if_LDADD = \
+opal_if_SOURCES = opal_if.c
+opal_if_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
-ompi_if_DEPENDENCIES = $(ompi_if_LDADD)
+opal_if_DEPENDENCIES = $(opal_if_LDADD)
 
 opal_argv_SOURCES = opal_argv.c
 opal_argv_LDADD = \

@@ -33,7 +33,7 @@
 #endif
 #include "include/ompi_socket_errno.h"
 #include "opal/util/output.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "class/ompi_proc_table.h"
 #include "mca/oob/tcp/oob_tcp.h"
 #include "mca/errmgr/errmgr.h"
@@ -492,7 +492,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     *priority = 1;
 
     /* are there any interfaces? */
-    if(ompi_ifcount() == 0)
+    if(opal_ifcount() == 0)
         return NULL;
 
     /* initialize data structures */
@@ -1047,22 +1047,22 @@ int mca_oob_tcp_process_name_compare(const orte_process_name_t* n1, const orte_p
 char* mca_oob_tcp_get_addr(void)
 {
     int i;
-    char *contact_info = (char *)malloc((ompi_ifcount()+1) * 32);
+    char *contact_info = (char *)malloc((opal_ifcount()+1) * 32);
     char *ptr = contact_info;
     *ptr = 0;
 
-    for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
+    for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_in addr;
         char name[32];
-        ompi_ifindextoname(i, name, sizeof(name));
+        opal_ifindextoname(i, name, sizeof(name));
         if (mca_oob_tcp_component.tcp_include != NULL &&
             strstr(mca_oob_tcp_component.tcp_include,name) == NULL)
             continue;
         if (mca_oob_tcp_component.tcp_exclude != NULL &&
             strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
             continue;
-        ompi_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
-        if(ompi_ifcount() > 1 && addr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        opal_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
+        if(opal_ifcount() > 1 && addr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
         if(ptr != contact_info) {
             ptr += sprintf(ptr, ";");

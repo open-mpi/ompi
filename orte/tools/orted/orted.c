@@ -36,7 +36,7 @@
 #include "opal/threads/condition.h"
 
 #include "dps/dps.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
@@ -204,12 +204,12 @@ int main(int argc, char *argv[])
      * can find it
      */
     if (orted_globals.name) {    
-        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds",
+        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
                                               "env", true, &environ))) {
             fprintf(stderr, "orted: could not set my name in environ\n");
             return ret;
         }
-        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds_name",
+        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_name",
                                   orted_globals.name, true, &environ))) {
             fprintf(stderr, "orted: could not set my name in environ\n");
             return ret;
@@ -218,12 +218,12 @@ int main(int argc, char *argv[])
          * been passed in anyway. we set them here because the nds_env component
          * requires that they be set
          */
-        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds_vpid_start",
+        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_vpid_start",
                                   orted_globals.vpid_start, true, &environ))) {
             fprintf(stderr, "orted: could not set vpid_start in environ\n");
             return ret;
         }
-        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds_num_procs",
+        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_num_procs",
                                   orted_globals.num_procs, true, &environ))) {
             fprintf(stderr, "orted: could not set num_procs in environ\n");
             return ret;

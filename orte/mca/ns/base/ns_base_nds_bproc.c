@@ -19,7 +19,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 #include "util/proc_info.h"
-#include "util/ompi_environ.h"
+#include "opal/util/opal_environ.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
@@ -153,7 +153,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_setenv(param, "bproc", true, env);
+    opal_setenv(param, "bproc", true, env);
     free(param);
 
     /* not a seed */
@@ -161,7 +161,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_unsetenv(param, env);
+    opal_unsetenv(param, env);
     free(param);
 
     /* since we want to pass the name as separate components, make sure
@@ -171,7 +171,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_unsetenv(param, env);
+    opal_unsetenv(param, env);
     free(param);
 
     /* setup the name */
@@ -179,7 +179,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_setenv(param, cellid, true, env);
+    opal_setenv(param, cellid, true, env);
     free(param);
     free(cellid);
 
@@ -187,7 +187,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_setenv(param, jobid, true, env);
+    opal_setenv(param, jobid, true, env);
     free(param);
     free(jobid);
 
@@ -200,7 +200,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_setenv(param, value, true, env);
+    opal_setenv(param, value, true, env);
     free(param);
     free(value);
 
@@ -213,7 +213,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_setenv(param, value, true, env);
+    opal_setenv(param, value, true, env);
     free(param);
     free(value);
 
@@ -223,7 +223,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    ompi_setenv(param, value, true, env);
+    opal_setenv(param, value, true, env);
     free(param);
     free(value);
 
@@ -231,7 +231,7 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
      * after the launch */
     
     putenv("BPROC_RANK=XXXXXXX");
-    ompi_setenv("BPROC_RANK", "XXXXXXX", true, env);
+    opal_setenv("BPROC_RANK", "XXXXXXX", true, env);
     
     return ORTE_SUCCESS;
 }

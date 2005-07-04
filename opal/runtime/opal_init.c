@@ -19,7 +19,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "util/malloc.h"
+#include "opal/util/malloc.h"
 #include "opal/util/output.h"
 #include "mca/base/base.h"
 
@@ -37,7 +37,7 @@ int opal_init(void)
 {
 
     /* initialize the memory allocator */
-    ompi_malloc_init();
+    opal_malloc_init();
 
     /* initialize the output system */
     opal_output_init();

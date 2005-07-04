@@ -27,7 +27,7 @@
 #include "datatype/convertor.h"
 #include "include/sys/atomic.h"
 #include "opal/util/output.h"
-#include "util/if.h"
+#include "opal/util/if.h"
 #include "util/proc_info.h"
 #include "util/printf.h"
 #include "util/sys_info.h"
