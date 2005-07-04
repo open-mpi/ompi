@@ -26,7 +26,7 @@
 #endif
 
 /**
- * Here we register the ompi_show_stackframe function for signals
+ * Here we register the opal_show_stackframe function for signals
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun
  * by the user.
  *
@@ -35,6 +35,6 @@
  *    is not a valid signal-number
  *               
  */
-OMPI_DECLSPEC int ompi_util_register_stackhandlers (void);
+OMPI_DECLSPEC int opal_util_register_stackhandlers (void);
 
 #endif /* OMPI_STACKTRACE_H */

@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_STRNCPY_H
-#define OMPI_STRNCPY_H
+#ifndef OPAL_STRNCPY_H
+#define OPAL_STRNCPY_H
 
 #include "ompi_config.h"
 #ifdef HAVE_SYS_TYPES_H
@@ -23,14 +23,14 @@
 #endif
 
 /*
- * Use ompi_strncpy() instead of strncpy()
+ * Use opal_strncpy() instead of strncpy()
  */
 #if defined(strncpy)
 #undef strncpy
 #endif
-#define strncpy ompi_strncpy
+#define strncpy opal_strncpy
 
 
-OMPI_DECLSPEC char *ompi_strncpy(char *dest, const char *src, size_t len);
+OMPI_DECLSPEC char *opal_strncpy(char *dest, const char *src, size_t len);
 
-#endif /* OMPI_STRNCPY_H */
+#endif /* OPAL_STRNCPY_H */

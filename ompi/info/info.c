@@ -183,7 +183,7 @@ int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
           if (value_length < valuelen ) {
                strcpy(value, search->ie_value);
           } else {
-               ompi_strncpy(value, search->ie_value, valuelen);
+               opal_strncpy(value, search->ie_value, valuelen);
                value[valuelen] = 0;
           }
     }

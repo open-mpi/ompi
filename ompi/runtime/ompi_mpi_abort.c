@@ -21,7 +21,7 @@
 #endif
 
 #include "communicator/communicator.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "util/proc_info.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "orte/runtime/runtime.h"

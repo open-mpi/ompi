@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include "util/strncpy.h"
+#include "opal/util/strncpy.h"
 #include "include/totalview.h"
 #include "mpi.h"
 #include "mpi/c/bindings.h"

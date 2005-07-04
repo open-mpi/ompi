@@ -28,8 +28,8 @@
 #include "communicator/communicator.h"
 #include "group/group.h"
 #include "info/info.h"
-#include "util/show_help.h"
-#include "util/stacktrace.h"
+#include "opal/util/show_help.h"
+#include "opal/util/stacktrace.h"
 #include "errhandler/errcode.h"
 #include "errhandler/errclass.h"
 #include "request/request.h"
@@ -133,7 +133,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
 #ifndef WIN32
-    if (OMPI_SUCCESS != (ret = ompi_util_register_stackhandlers ())) {
+    if (OMPI_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
 	error = "util_register_stackhandlers() failed";
 	goto error;
     }
@@ -427,7 +427,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
  error:
     if (ret != OMPI_SUCCESS) {
-        ompi_show_help("help-mpi-runtime",
+        opal_show_help("help-mpi-runtime",
                        "mpi_init:startup:internal-failure", true,
                        "MPI_INIT", "MPI_INIT", error, ret);
         return ret;

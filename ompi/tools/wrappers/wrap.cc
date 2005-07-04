@@ -32,7 +32,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/few.h"
 #include "opal/util/path.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "tools/wrappers/ompi_wrap.h"
 
 extern char **environ;
@@ -116,7 +116,7 @@ ompi_wrap_parse_args(int argc, char *argv[], bool & want_flags)
 #if !OMPI_ENABLE_MPI_PROFILING
     // Sanity check
     if (fl_profile) {
-	ompi_show_help("help-wrapper.txt", "no-profiling-support", true,
+	opal_show_help("help-wrapper.txt", "no-profiling-support", true,
 		       argv[0], NULL);
 	fl_profile = false;
     }
@@ -431,7 +431,7 @@ ompi_wrap_exec_sv(const ompi_sv_t & sv)
     // compiler first, just to try to eliminate that case.
     tmp = opal_path_findv(av[0], 0, environ, NULL);
     if (NULL == tmp) {
-	ompi_show_help("help-wrapper.txt", "no-compiler-found", true,
+	opal_show_help("help-wrapper.txt", "no-compiler-found", true,
 		       av[0], NULL);
 	errno = 0;
 	status = -1;

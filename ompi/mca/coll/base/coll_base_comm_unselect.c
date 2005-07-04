@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "communicator/communicator.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/coll/coll.h"
@@ -49,7 +49,7 @@ int mca_coll_base_comm_unselect(ompi_communicator_t *comm)
       NULL != comm->c_coll_selected_module->coll_module_finalize) {
     err = comm->c_coll_selected_module->coll_module_finalize(comm);
     if (OMPI_SUCCESS != err) {
-      ompi_show_help("help-mca-coll-base", 
+      opal_show_help("help-mca-coll-base", 
                      "comm-unselect:failed-finalize", true);
       return err;
     }
@@ -64,7 +64,7 @@ int mca_coll_base_comm_unselect(ompi_communicator_t *comm)
       NULL != comm->c_coll_basic_module->coll_module_finalize) {
     err = comm->c_coll_basic_module->coll_module_finalize(comm);
     if (OMPI_SUCCESS != err) {
-      ompi_show_help("help-mca-coll-base", 
+      opal_show_help("help-mca-coll-base", 
                      "comm-unselect:basic-failed-finalize", true);
       return err;
     }

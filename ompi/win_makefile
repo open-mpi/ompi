@@ -200,8 +200,8 @@ prebuild:
 	@/usr/bin/flex -t -Porte_rds_hostfile_ "${topdir}/src/mca/rds/hostfile/rds_hostfile_lex.l" \
                 > "${topdir}/src/mca/rds/hostfile/rds_hostfile_lex.c" 2>/dev/null
 	@echo "Creating show_help_lex.c"
-	@/usr/bin/flex -t -Pompi_show_help_yy "${topdir}/src/util/show_help_lex.l" \
-                > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
+	@/usr/bin/flex -t -Popal_show_help_yy "${topdir}/src/opal/util/show_help_lex.l" \
+                > "${topdir}/src/opal/util/show_help_lex.c" 2>/dev/null
 	@for dirs in ${STATIC_LIBS}; do \
         (dir="mca/$${dirs}/base"; echo "Making Static components in $${dirs}"; comp_name="$${dirs}_static-components.h"; cp "${topdir}/src/win32/generated_include/$${comp_name}" "$${dir}/static-components.h";); \
      done

@@ -15,7 +15,7 @@
 //
 
 #include "ompi_config.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "tools/wrappers/ompi_wrap.h"
 
 #include <iostream>
@@ -32,7 +32,7 @@ main(int argc, char *argv[])
     // language of this wrapper compiler.
 
 #if !OMPI_WANT_F77_BINDINGS
-    ompi_show_help("help-wrapper.txt", "no-fortran-support", true,
+    opal_show_help("help-wrapper.txt", "no-fortran-support", true,
 		   77, "mpif77");
     return 1;
 #else

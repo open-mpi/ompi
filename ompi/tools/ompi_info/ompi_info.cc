@@ -39,7 +39,7 @@
 #include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
-#include "util/show_help.h"
+#include "opal/util/show_help.h"
 #include "communicator/communicator.h"
 #include "mca/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
   cmd_line = OBJ_NEW(opal_cmd_line_t);
   if (NULL == cmd_line) {
     ret = errno;
-    ompi_show_help("help-ompi_info.txt", "lib-call-fail", true, 
+    opal_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                    "opal_cmd_line_create", __FILE__, __LINE__, NULL);
     exit(ret);
   }
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
   }
   if (cmd_error || want_help) {
       char *usage = opal_cmd_line_get_usage_msg(cmd_line);
-      ompi_show_help("help-ompi_info.txt", "usage", true, usage);
+      opal_show_help("help-ompi_info.txt", "usage", true, usage);
       free(usage);
       exit(cmd_error ? 1 : 0);
   }

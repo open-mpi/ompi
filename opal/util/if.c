@@ -49,7 +49,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
-#include "util/strncpy.h"
+#include "opal/util/strncpy.h"
 
 #ifndef IF_NAMESIZE
 #define IF_NAMESIZE 32

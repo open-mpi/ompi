@@ -1180,7 +1180,7 @@ AM_PROG_LEX
 
 if test -z "$LEX" -o -n "`echo $LEX | grep missing`" -o \
     "`basename $LEX`" != "flex"; then
-    if test ! -f "$srcdir/ompi/util/show_help_lex.c"; then
+    if test ! -f "$srcdir/opal/util/show_help_lex.c"; then
         AC_MSG_WARN([*** Could not find GNU Flex on your system.])
         AC_MSG_WARN([*** GNU Flex required for developer builds of Open MPI.])
         AC_MSG_WARN([*** Other versions of Lex are not supported.])
