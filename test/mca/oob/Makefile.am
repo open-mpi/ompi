@@ -29,18 +29,21 @@ TESTS = \
 oob_test_SOURCES = oob_test.c
 oob_test_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 oob_test_DEPENDENCIES = $(oob_test_LDADD)
 
 oob_test_self_SOURCES = oob_test_self.c
 oob_test_self_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 oob_test_self_DEPENDENCIES = $(oob_test_LDADD)
 
 oob_test_packed_SOURCES = oob_test_packed.c
 oob_test_packed_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 oob_test_packed_DEPENDENCIES = $(oob_test_LDADD)
 

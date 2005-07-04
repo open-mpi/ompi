@@ -80,7 +80,7 @@ main(int argc, char **argv)
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
     /* For malloc debugging */
-    ompi_malloc_init();
+    opal_malloc_init();
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (rc = orte_sys_info())) {
@@ -158,9 +158,9 @@ main(int argc, char **argv)
     orte_sys_info_finalize();
     orte_proc_info_finalize();
     mca_base_close();
-    ompi_malloc_finalize();
+    opal_malloc_finalize();
     opal_output_finalize();
-    ompi_class_finalize();
+    opal_class_finalize();
     
     fclose( test_out );
 /*    result = system( cmd_str );

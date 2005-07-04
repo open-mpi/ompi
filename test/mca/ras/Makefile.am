@@ -27,5 +27,6 @@ TESTS = \
 test_ras_SOURCES = test_ras.c
 test_ras_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la 
+        $(top_builddir)/orte/liborte.la  \
+        $(top_builddir)/opal/libopal.la 
 test_ras_DEPENDENCIES = $(test_ras_LDADD)

@@ -15,10 +15,10 @@
  */
 
 #include "orte_config.h"
-#include "../src/include/orte_constants.h"
-#include "../src/include/orte_types.h"
-#include "../../src/dps/dps.h"
-#include "../../src/dps/dps_types.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
+#include "orte/dps/dps.h"
+#include "orte/dps/dps_types.h"
 
 
 #include <stdio.h>
@@ -34,18 +34,18 @@
 #include "include/constants.h"
 
 #include "support.h"
-#include "../src/runtime/runtime.h"
-#include "../src/util/proc_info.h"
-#include "../src/util/sys_info.h"
+#include "orte/runtime/runtime.h"
+#include "orte/util/proc_info.h"
+#include "opal/util/sys_info.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
-#include "../src/mca/base/base.h"
-#include "../src/dps/dps.h"
-#include "../src/mca/ns/ns.h"
-#include "../src/mca/ns/base/base.h"
-#include "../src/mca/gpr/base/base.h"
-#include "../src/mca/rmgr/base/base.h"
-#include "../src/mca/soh/base/base.h"
+#include "opal/mca/base/base.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/soh/base/base.h"
 
 #define NUM_ITERS 3
 #define NUM_ELEMS 10
@@ -89,7 +89,7 @@ int main (int argc, char* argv[])
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
     /* For malloc debugging */
-    ompi_malloc_init();
+    opal_malloc_init();
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {

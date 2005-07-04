@@ -33,6 +33,7 @@
 #endif
 
 #include "runtime/runtime.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/if.h"
 #include "support.h"
 #include "include/constants.h"
@@ -59,7 +60,7 @@ main(int argc, char *argv[])
 {
     char hostname[MAXHOSTNAMELEN];
 
-    orte_init();
+    opal_init();
     test_init("opal_if");
 
     /* 127.0.0.1 */
@@ -128,7 +129,7 @@ main(int argc, char *argv[])
     }
 
     test_finalize();
-    orte_finalize();
+    opal_finalize();
 
     return 0;
 }

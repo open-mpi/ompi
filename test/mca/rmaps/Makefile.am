@@ -27,5 +27,6 @@ TESTS = \
 test_rmaps_SOURCES = test_rmaps.c
 test_rmaps_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la 
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la 
 test_rmaps_DEPENDENCIES = $(test_rmaps_LDADD)
