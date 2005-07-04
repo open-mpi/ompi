@@ -39,9 +39,9 @@ orte_pls_bproc_orted_component_t mca_pls_bproc_orted_component = {
         ORTE_PLS_BASE_VERSION_1_0_0,
         /* Component name and version */
         "bproc_orted",
-        1,
-        0,
-        0,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
         /* Component open and close functions */
         orte_pls_bproc_orted_component_open,
         orte_pls_bproc_orted_component_close

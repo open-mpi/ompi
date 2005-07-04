@@ -39,6 +39,8 @@ namespace ompi_info {
 
   extern const std::string type_all;
   extern const std::string type_ompi;
+  extern const std::string type_orte;
+  extern const std::string type_opal;
   extern const std::string type_base;
   extern type_vector_t mca_types;
 

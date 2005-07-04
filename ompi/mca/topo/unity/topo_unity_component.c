@@ -22,14 +22,13 @@
 
 #include "ompi_config.h"
 #include "mca/topo/unity/topo_unity.h"
-#include "mca/topo/unity/topo-unity-version.h"
 
 /*
  * Public string showing the topo unity module version number
  */
 
 const char *mca_topo_unity_component_version_string = 
-    "Open MPI unity topology MCA component version" MCA_topo_unity_VERSION;
+    "Open MPI unity topology MCA component version" OMPI_VERSION;
 
 /*
  * *******************************************************************
@@ -47,9 +46,9 @@ OMPI_COMP_EXPORT mca_topo_base_component_1_0_0_t mca_topo_unity_component =
     {
         MCA_TOPO_BASE_VERSION_1_0_0, /* version number */
         "unity",                      /* component name */
-        MCA_topo_unity_MAJOR_VERSION, /* major version */
-        MCA_topo_unity_MINOR_VERSION, /* minor version */
-        MCA_topo_unity_RELEASE_VERSION, /* release version */
+        OMPI_MAJOR_VERSION, /* major version */
+        OMPI_MINOR_VERSION, /* minor version */
+        OMPI_RELEASE_VERSION, /* release version */
         NULL,   /* fp to open the component */
         NULL    /* fp to close the component */
     },

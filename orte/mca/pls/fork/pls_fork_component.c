@@ -31,7 +31,6 @@
 #include "opal/util/path.h"
 #include "mca/pls/pls.h"
 #include "mca/pls/fork/pls_fork.h"
-#include "mca/pls/fork/pls-fork-version.h"
 #include "mca/base/mca_base_param.h"
 
 
@@ -39,7 +38,7 @@
  * Public string showing the pls ompi_fork component version number
  */
 const char *mca_pls_fork_component_version_string =
-  "Open MPI fork pls MCA component version " MCA_pls_fork_VERSION;
+  "Open MPI fork pls MCA component version " ORTE_VERSION;
 
 
 /*
@@ -61,9 +60,9 @@ orte_pls_fork_component_t mca_pls_fork_component = {
         /* Component name and version */
 
         "fork",
-        MCA_pls_fork_MAJOR_VERSION,
-        MCA_pls_fork_MINOR_VERSION,
-        MCA_pls_fork_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 

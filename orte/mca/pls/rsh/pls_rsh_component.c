@@ -32,7 +32,6 @@
 #include "opal/util/basename.h"
 #include "mca/pls/pls.h"
 #include "mca/pls/rsh/pls_rsh.h"
-#include "mca/pls/rsh/pls-rsh-version.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/rml/rml.h"
 
@@ -41,7 +40,7 @@
  * Public string showing the pls ompi_rsh component version number
  */
 const char *mca_pls_rsh_component_version_string =
-  "Open MPI rsh pls MCA component version " MCA_pls_rsh_VERSION;
+  "Open MPI rsh pls MCA component version " ORTE_VERSION;
 
 
 /*
@@ -63,9 +62,9 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
         /* Component name and version */
 
         "rsh",
-        MCA_pls_rsh_MAJOR_VERSION,
-        MCA_pls_rsh_MINOR_VERSION,
-        MCA_pls_rsh_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 

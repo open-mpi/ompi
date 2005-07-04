@@ -19,7 +19,6 @@
 #include "include/orte_constants.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/ras/tm/ras-tm-version.h"
 #include "ras_tm.h"
 
 
@@ -42,9 +41,9 @@ orte_ras_base_component_1_0_0_t mca_ras_tm_component = {
         /* Component name and version */
         
         "tm",
-        MCA_ras_tm_MAJOR_VERSION,
-        MCA_ras_tm_MINOR_VERSION,
-        MCA_ras_tm_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
         
         /* Component open and close functions */
         

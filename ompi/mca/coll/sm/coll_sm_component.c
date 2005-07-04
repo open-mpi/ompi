@@ -32,7 +32,7 @@
  * Public string showing the coll ompi_sm component version number
  */
 const char *mca_coll_sm_component_version_string =
-    "Open MPI sm collective MCA component version " MCA_coll_sm_VERSION;
+    "Open MPI sm collective MCA component version " OMPI_VERSION;
 
 
 /*
@@ -61,9 +61,9 @@ const mca_coll_base_component_1_0_0_t mca_coll_sm_component = {
         /* Component name and version */
 
         "sm",
-        MCA_coll_sm_MAJOR_VERSION,
-        MCA_coll_sm_MINOR_VERSION,
-        MCA_coll_sm_RELEASE_VERSION,
+        OMPI_MAJOR_VERSION,
+        OMPI_MINOR_VERSION,
+        OMPI_RELEASE_VERSION,
 
         /* Component open and close functions */
 

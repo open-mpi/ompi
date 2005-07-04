@@ -37,9 +37,9 @@ mca_ptl_mx_component_t mca_ptl_mx_component = {
         MCA_PTL_BASE_VERSION_1_0_0,
 
         "mx", /* MCA module name */
-        1,  /* MCA module major version */
-        0,  /* MCA module minor version */
-        0,  /* MCA module release version */
+        OMPI_MAJOR_VERSION,  /* MCA module major version */
+        OMPI_MINOR_VERSION,  /* MCA module minor version */
+        OMPI_RELEASE_VERSION,  /* MCA module release version */
         mca_ptl_mx_component_open,  /* module open */
         mca_ptl_mx_component_close  /* module close */
       },

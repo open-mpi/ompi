@@ -31,7 +31,6 @@
 #import "opal/util/basename.h"
 #import "mca/pls/pls.h"
 #import "mca/pls/base/base.h"
-#import "mca/pls/xgrid/pls-xgrid-version.h"
 #import "mca/base/mca_base_param.h"
 #import "mca/rml/rml.h"
 
@@ -43,7 +42,7 @@
  * Public string showing the pls ompi_xgrid component version number
  */
 const char *mca_pls_xgrid_component_version_string =
-  "Open MPI xgrid pls MCA component version " MCA_pls_xgrid_VERSION;
+  "Open MPI xgrid pls MCA component version " ORTE_VERSION;
 
 int orte_pls_xgrid_component_open(void);
 int orte_pls_xgrid_component_close(void);
@@ -70,9 +69,9 @@ orte_pls_xgrid_component_t mca_pls_xgrid_component = {
         /* Component name and version */
 
         "xgrid",
-        MCA_pls_xgrid_MAJOR_VERSION,
-        MCA_pls_xgrid_MINOR_VERSION,
-        MCA_pls_xgrid_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 

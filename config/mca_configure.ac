@@ -17,7 +17,7 @@
 
 
 ############################################################################
-# Initialization, version number, and other random setup/init stuff
+# Initialization and other random setup/init stuff
 ############################################################################
 
 # Init autoconf
@@ -26,38 +26,21 @@ AC_INIT(@PARAM_INIT_FILE@)
 AC_PREREQ(2.57)
 AC_CONFIG_AUX_DIR(@PARAM_CONFIG_AUX_DIR@)
 
-# Get the version of @MCA_TYPE@ @MCA_COMPONENT_NAME@ that we are installing.
-
-if test -n "@PARAM_VERSION_FILE@" -a -f "@PARAM_VERSION_FILE@"; then
-    OMPI_GET_VERSION(@PARAM_VERSION_FILE@, @PARAM_VAR_PREFIX@)
-
-    AC_SUBST(@PARAM_VAR_PREFIX@_MAJOR_VERSION)
-    AC_SUBST(@PARAM_VAR_PREFIX@_MINOR_VERSION)
-    AC_SUBST(@PARAM_VAR_PREFIX@_RELEASE_VERSION)
-    AC_SUBST(@PARAM_VAR_PREFIX@_ALPHA_VERSION)
-    AC_SUBST(@PARAM_VAR_PREFIX@_BETA_VERSION)
-    AC_SUBST(@PARAM_VAR_PREFIX@_SVN_VERSION)
-    AC_SUBST(@PARAM_VAR_PREFIX@_VERSION)
-    version_string="version $@PARAM_VAR_PREFIX@_VERSION"
-else
-    version_string=""
-fi
-
 #
 # Start it up
 #
 
 OMPI_CONFIGURE_SETUP
-ompi_show_title "Configuring MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ component $version_string"
+ompi_show_title "Configuring MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ component"
 ompi_show_subtitle "Initialization, setup" 
 
 #
 # Init automake
 # The third argument to AM_INIT_AUTOMAKE surpresses the PACKAGE and
-# VERSION macors
+# VERSION macros
 #
 
-AM_INIT_AUTOMAKE(@PARAM_AM_NAME@, $@PARAM_VAR_PREFIX@_VERSION, 'no')
+AM_INIT_AUTOMAKE(@PARAM_AM_NAME@, irrelevant-version-number, 'no')
 
 #
 # GNU C and autotools are inconsistent about whether this is defined
@@ -91,61 +74,6 @@ AH_TOP([/* -*- c -*-
 #define @PARAM_VAR_PREFIX@_CONFIG_H
 ])
 AH_BOTTOM([#endif /* _@PARAM_VAR_PREFIX@_CONFIG_H */])
-
-
-#
-# Generate the version header template -- only if we have a version
-#
-
-if test -n "$version_string"; then
-
-    # Add the version header template to AC _ CONFIG _ FILES, but only
-    # if mca_make_configure.pl found that it was listed in
-    # configure.params and the file exists, or the default file
-    # exists.  If not, then this will be blank (because
-    # "$version_string" will never be non-empty, so this block is
-    # meaningless).
-
-    # We do this weird Texas two step for two reasons:
-
-    # 1) if Autoconf see AC _ CONFIG _ FILES, it assumes that the
-    # template must exist (and will error during autoconf if it does
-    # not), even if the AC _ CONFIG _ FILES is in a conditional block
-    # (like this one)... which actually makes sense.  :-) So we only
-    # put this AC _ CONFIG _ FILES here if we actually have the
-    # template file (i.e., mca_make_configure.pl puts it here... or
-    # not).
-
-    # 2) AC _ CONFIG _ COMMANDS, on the other hand, does not require
-    # any Autoconf-compile-time specialness.  It can sit here in a
-    # conditional shell block and be executed or not at run time, so
-    # there's no need to mca_make_configure.pl to do anything special
-    # with it.
-
-    @WRITE_VERSION_HEADER_TEMPLATE@
-
-    # After config.status has run, compare the version header template
-    # to the version header.  If the version header does not exist,
-    # create it # from the template.  If it does already exist, diff
-    # it and see if # they're different.  If they're different, copy
-    # the template over the # old version.  If they're the same, leave
-    # the original alone so that # we don't distrub any dependencies.
-
-    AC_CONFIG_COMMANDS([@MCA_TYPE@-@MCA_COMPONENT_NAME@],
-[if test -f "@MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h"; then
-    diff "@MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h" "@MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h.template" > /dev/null 2>&1
-    if test "$?" != "0"; then
-        cp "@MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h.template" "@MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h"
-        echo "config.status: regenerating @MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h"
-    else
-        echo "config.state: @MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h unchanged"
-    fi
-else
-    cp "@MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h.template" "@MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h"
-    echo "config.status: creating @MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h"
-fi
-rm -f @MCA_TYPE@-@MCA_COMPONENT_NAME@-version.h.template])
-fi
 
 
 #

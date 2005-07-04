@@ -32,7 +32,7 @@
  * Public string showing the coll ompi_hierarch component version number
  */
 const char *mca_coll_hierarch_component_version_string =
-  "OMPI/MPI hierarch collective MCA component version " MCA_coll_hierarch_VERSION;
+  "OMPI/MPI hierarch collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variable
@@ -68,9 +68,9 @@ const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component = {
     /* Component name and version */
 
     "hierarch",
-    MCA_coll_hierarch_MAJOR_VERSION,
-    MCA_coll_hierarch_MINOR_VERSION,
-    MCA_coll_hierarch_RELEASE_VERSION,
+    OMPI_MAJOR_VERSION,
+    OMPI_MINOR_VERSION,
+    OMPI_RELEASE_VERSION,
 
     /* Component open and close functions */
 

@@ -19,7 +19,6 @@
 #include "include/orte_constants.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/ras/xgrid/ras-xgrid-version.h"
 #include "ras_xgrid.h"
 #include "opal/util/output.h"
 
@@ -44,9 +43,9 @@ orte_ras_base_component_1_0_0_t mca_ras_xgrid_component = {
         /* Component name and version */
         
         "xgrid",
-        MCA_ras_xgrid_MAJOR_VERSION,
-        MCA_ras_xgrid_MINOR_VERSION,
-        MCA_ras_xgrid_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
         
         /* Component open and close functions */
         

@@ -43,9 +43,9 @@ orte_ras_bjs_component_t mca_ras_bjs_component = {
         ORTE_RAS_BASE_VERSION_1_0_0,
 
         "bjs", /* MCA component name */
-        1,  /* MCA component major version */
-        0,  /* MCA component minor version */
-        0,  /* MCA component release version */
+        ORTE_MAJOR_VERSION,  /* MCA component major version */
+        ORTE_MINOR_VERSION,  /* MCA component minor version */
+        ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_ras_bjs_open,  /* component open  */
         orte_ras_bjs_close  /* component close */
       },

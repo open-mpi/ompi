@@ -36,7 +36,6 @@ my %config_param_names = (PIFILE => "PARAM_INIT_FILE",
                           PCFGAUXDIR => "PARAM_CONFIG_AUX_DIR",
                           PC => "PARAM_WANT_C",
                           PCXX => "PARAM_WANT_CXX",
-                          PVERFILE => "PARAM_VERSION_FILE",
                           PVARPREFIX => "PARAM_VAR_PREFIX",
                           PAMNAME => "PARAM_AM_NAME",
                           PCFGHDRFILE => "PARAM_CONFIG_HEADER_FILE",
@@ -147,15 +146,6 @@ if (-d "$component_topdir/config") {
 }
 $config_params{$config_param_names{PC}} = 1;
 $config_params{$config_param_names{PCXX}} = 0;
-
-# PARAM_VERSION_FILE: calculate
-
-if (-f "$component_topdir/VERSION") {
-    $config_params{$config_param_names{PVERFILE}} = "\$srcdir/VERSION";
-} elsif (-f "$component_topdir/$config_params{$config_param_names{PCFGAUXDIR}}/VERSION") {
-    $config_params{$config_param_names{PVERFILE}} = 
-        "\$srcdir/$config_params{$config_param_names{PCFGAUXDIR}}/VERSION";
-}
 
 # PARAM_VAR_PREFIX: calculate
 
@@ -271,13 +261,6 @@ if (! -f $config_params{PARAM_INIT_FILE}) {
     exit(1);
 }
 
-if ($config_params{PARAM_INIT_FILE} eq "" || 
-    ! -f $config_params{PARAM_INIT_FILE}) {
-    print "*** WARNING: PARAM_VERSION_FILE does not exit:\n";
-    print "*** WARNING:    $config_params{PARAM_VERSION_FILE} does not exist!\n";
-    print "*** WARNING: resulting configure script will not check for the version!!\n";
-}
-
 my @files = split(/ /, $config_params{PARAM_CONFIG_FILES});
 foreach my $file (@files) {
     if (! -f "$file.in" && ! -f "$file.am") {
@@ -342,17 +325,6 @@ sub make_template {
     close(TEMPLATE);
 
     # Transform the template
-
-    # If there's a PARAM_VERSION_FILE, then ensure that configure is
-    # set to write it out
-
-    $search = "\@WRITE_VERSION_HEADER_TEMPLATE\@";
-    if ($config_params{PARAM_VERSION_FILE} ne "") {
-        $replace = "AC_CONFIG_FILES([\@MCA_TYPE\@-\@MCA_COMPONENT_NAME\@-version.h.template])";
-    } else {
-        $replace = "";
-    }
-    $template =~ s/$search/$replace/g;
 
     # If we want C or C++, substitute in the right setup macros
 
