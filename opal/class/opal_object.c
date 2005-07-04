@@ -17,7 +17,7 @@
 /**
  * @file
  * 
- * Implementation of opal_object_t, the base ompi foundation class
+ * Implementation of opal_object_t, the base opal foundation class
  */
 
 #include "ompi_config.h"
