@@ -30,7 +30,7 @@
 #include "attribute/attribute.h"
 #endif
 #include "util/printf.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_param_internal.h"
@@ -540,14 +540,14 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
                 if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type) {
                     asprintf(&str, "%s=%d", array[i].mbp_env_var_name, 
                              storage.intval);
-                    ompi_argv_append(num_env, env, str);
+                    opal_argv_append(num_env, env, str);
                     free(str);
                 } else if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type) {
                     if (NULL != storage.stringval) {
                         asprintf(&str, "%s=%s", array[i].mbp_env_var_name, 
                                  storage.stringval);
                         free(storage.stringval);
-                        ompi_argv_append(num_env, env, str);
+                        opal_argv_append(num_env, env, str);
                         free(str);
                     } 
                 } else {
@@ -567,7 +567,7 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
 
  cleanup:
     if (*num_env > 0) {
-        ompi_argv_free(*env);
+        opal_argv_free(*env);
         *num_env = 0;
         *env = NULL;
     }
@@ -639,11 +639,11 @@ static int read_files(char *file_list)
        order so that we preserve unix/shell path-like semantics (i.e.,
        the entries farthest to the left get precedence) */
 
-    files = ompi_argv_split(file_list, ':');
-    for (i = ompi_argv_count(files) - 1; i >= 0; --i) {
+    files = opal_argv_split(file_list, ':');
+    for (i = opal_argv_count(files) - 1; i >= 0; --i) {
         mca_base_parse_paramfile(files[i]);
     }
-    ompi_argv_free(files);
+    opal_argv_free(files);
 
     return OMPI_SUCCESS;
 }

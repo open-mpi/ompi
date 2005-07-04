@@ -21,8 +21,8 @@
  * arrays of strings, especially when creating command lines.
  */
 
-#ifndef OMPI_ARGV_H
-#define OMPI_ARGV_H
+#ifndef OPAL_ARGV_H
+#define OPAL_ARGV_H
 #include "ompi_config.h"
 #include "include/types.h"
 
@@ -58,8 +58,8 @@ extern "C" {
    * value into the argv array; there is no need to keep the original
    * string (i.e., the arg parameter) after invoking this function.
    */
-OMPI_DECLSPEC  int ompi_argv_append(int *argc, char ***argv, const char *arg);
-OMPI_DECLSPEC  int ompi_argv_append_nosize(char ***argv, const char *arg);
+OMPI_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg);
+OMPI_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
 
   /**
    * Free a NULL-terminated argv array.
@@ -74,7 +74,7 @@ OMPI_DECLSPEC  int ompi_argv_append_nosize(char ***argv, const char *arg);
    * not safe to invoke this function with a non-NULL-terminated argv
    * array.
    */
-OMPI_DECLSPEC  void ompi_argv_free(char **argv);
+OMPI_DECLSPEC  void opal_argv_free(char **argv);
   
   /**
    * Split a string into a NULL-terminated argv array.
@@ -90,7 +90,7 @@ OMPI_DECLSPEC  void ompi_argv_free(char **argv);
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-OMPI_DECLSPEC  char **ompi_argv_split(const char *src_string, int delimiter);
+OMPI_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter);
 
   /**
    * Return the length of a NULL-terminated argv array.
@@ -102,7 +102,7 @@ OMPI_DECLSPEC  char **ompi_argv_split(const char *src_string, int delimiter);
    *
    * The argv array must be NULL-terminated.
    */
-OMPI_DECLSPEC  int ompi_argv_count(char **argv);
+OMPI_DECLSPEC  int opal_argv_count(char **argv);
 
   /**
    * Join all the elements of an argv array into a single
@@ -120,7 +120,7 @@ OMPI_DECLSPEC  int ompi_argv_count(char **argv);
    *
    * It is the callers responsibility to free the returned string.
    */
-OMPI_DECLSPEC  char *ompi_argv_join(char **argv, int delimiter);
+OMPI_DECLSPEC  char *opal_argv_join(char **argv, int delimiter);
 
   /**
    * Return the number of bytes consumed by an argv array.
@@ -131,7 +131,7 @@ OMPI_DECLSPEC  char *ompi_argv_join(char **argv, int delimiter);
    * array.  This includes the number of bytes used by each of the
    * strings as well as the pointers used in the argv array.
    */
-OMPI_DECLSPEC  size_t ompi_argv_len(char **argv);
+OMPI_DECLSPEC  size_t opal_argv_len(char **argv);
 
   /**
    * Copy a NULL-terminated argv array.
@@ -145,7 +145,7 @@ OMPI_DECLSPEC  size_t ompi_argv_len(char **argv);
    * Specifically, the output argv will be an array of the same length
    * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
    */
-OMPI_DECLSPEC  char **ompi_argv_copy(char **argv);
+OMPI_DECLSPEC  char **opal_argv_copy(char **argv);
 
     /**
      * Delete one or more tokens from the middle of an argv.
@@ -172,7 +172,7 @@ OMPI_DECLSPEC  char **ompi_argv_copy(char **argv);
      * free()ed (it is assumed that the argv "owns" the memory that
      * the pointer points to).
      */
-OMPI_DECLSPEC  int ompi_argv_delete(int *argc, char ***argv, 
+OMPI_DECLSPEC  int opal_argv_delete(int *argc, char ***argv, 
                                     int start, int num_to_delete);
 
     /**
@@ -188,7 +188,7 @@ OMPI_DECLSPEC  int ompi_argv_delete(int *argc, char ***argv,
      * This function takes one arg and inserts it in the middle of
      * another.  The first token in source will be insertted at index
      * start in the target argv; all other tokens will follow it.
-     * Similar to ompi_argv_append(), the target may be realloc()'ed
+     * Similar to opal_argv_append(), the target may be realloc()'ed
      * to accomodate the new storage requirements.
      *
      * The source array is left unaffected -- its contents are copied
@@ -196,9 +196,9 @@ OMPI_DECLSPEC  int ompi_argv_delete(int *argc, char ***argv,
      * source points to are strdup'ed into the new locations in
      * target).
      */
-OMPI_DECLSPEC  int ompi_argv_insert(char ***target, int start, char **source);
+OMPI_DECLSPEC  int opal_argv_insert(char ***target, int start, char **source);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* OMPI_ARGV_H */
+#endif /* OPAL_ARGV_H */

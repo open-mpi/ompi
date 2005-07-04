@@ -31,7 +31,7 @@
 #import <fcntl.h>
 
 #import "include/orte_constants.h"
-#import "util/argv.h"
+#import "opal/util/argv.h"
 #import "opal/util/output.h"
 #import "util/session_dir.h"
 #import "opal/event/event.h"

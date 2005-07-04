@@ -23,7 +23,7 @@
 #include "mpi.h"
 #include "file/file.h"
 #include "opal/class/opal_list.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -101,15 +101,15 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
 
     err = OMPI_ERROR;
     if (NULL != names && 0 < strlen(names)) {
-        name_array = ompi_argv_split(names, ',');
-        num_names = ompi_argv_count(name_array);
+        name_array = opal_argv_split(names, ',');
+        num_names = opal_argv_count(name_array);
         
         opal_output_verbose(10, mca_io_base_output, 
                             "io:base:delete: Checking specific modules: %s",
                             names);
         selectable = check_components(&mca_io_base_components_available, 
                                       filename, info, name_array, num_names);
-        ompi_argv_free(name_array);
+        opal_argv_free(name_array);
     }
 
     /* Nope -- a specific [set of] component[s] was not requested.  Go

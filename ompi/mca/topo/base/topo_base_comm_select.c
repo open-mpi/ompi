@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "opal/class/opal_list.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -162,8 +162,8 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     mca_base_param_lookup_string (mca_topo_base_param, &names);
 
     if (NULL != names && 0 < strlen(names)) {
-        name_array = ompi_argv_split (names, ',');
-        num_names = ompi_argv_count (name_array);
+        name_array = opal_argv_split (names, ',');
+        num_names = opal_argv_count (name_array);
 
         opal_output_verbose(10, mca_topo_base_output,
                             "topo:base:comm_Select: Checking all available module");

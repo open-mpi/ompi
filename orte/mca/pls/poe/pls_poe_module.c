@@ -35,7 +35,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "mca/soh/soh.h"
 #include "util/univ_info.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/ompi_environ.h"
 #include "pls_poe.h"
 
@@ -82,9 +82,9 @@ static inline int __poe_argv_append_int(int *argc, char ***argv, int varname, in
 {
     char *tmp_string;
     if(varname >= min) {
-        ompi_argv_append(argc, argv, argname);
+        opal_argv_append(argc, argv, argname);
         asprintf(&tmp_string, "%d", varname);
-        ompi_argv_append(argc, argv, tmp_string);
+        opal_argv_append(argc, argv, tmp_string);
         free(tmp_string);
     } else {
         return ORTE_ERR_BAD_PARAM;
@@ -146,54 +146,54 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     }
      
     /* application */
-    argv = ompi_argv_copy(ompi_argv_split(mca_pls_poe_component.orted, ' '));
-    argc = ompi_argv_count(argv);
+    argv = opal_argv_copy(opal_argv_split(mca_pls_poe_component.orted, ' '));
+    argc = opal_argv_count(argv);
     if (mca_pls_poe_component.debug) {
-         ompi_argv_append(&argc, &argv, "--debug");
+         opal_argv_append(&argc, &argv, "--debug");
     }
-    ompi_argv_append(&argc, &argv, "--debug-daemons");
+    opal_argv_append(&argc, &argv, "--debug-daemons");
      
-    ompi_argv_append(&argc, &argv, "--no-daemonize");
-    ompi_argv_append(&argc, &argv, "--bootproxy");
+    opal_argv_append(&argc, &argv, "--no-daemonize");
+    opal_argv_append(&argc, &argv, "--bootproxy");
     /* need integer value for command line parameter - NOT hex */
     asprintf(&tmp_string, "%lu", (unsigned long)jobid);
-    ompi_argv_append(&argc, &argv, tmp_string);
+    opal_argv_append(&argc, &argv, tmp_string);
     free(tmp_string);
-    ompi_argv_append(&argc, &argv, "--name");
+    opal_argv_append(&argc, &argv, "--name");
     proc_name_index = argc;
-    ompi_argv_append(&argc, &argv, "");
-    ompi_argv_append(&argc, &argv, "--nodename");
+    opal_argv_append(&argc, &argv, "");
+    opal_argv_append(&argc, &argv, "--nodename");
     node_name_index2 = argc;
-    ompi_argv_append(&argc, &argv, "");
+    opal_argv_append(&argc, &argv, "");
 
     /* pass along the universe name and location info */
-    ompi_argv_append(&argc, &argv, "--universe");
+    opal_argv_append(&argc, &argv, "--universe");
     asprintf(&tmp_string, "%s@%s:%s", orte_universe_info.uid,
     orte_universe_info.host, orte_universe_info.name);
-    ompi_argv_append(&argc, &argv, tmp_string);
+    opal_argv_append(&argc, &argv, tmp_string);
     free(tmp_string);
 
                                         
     /* setup ns contact info */
-    ompi_argv_append(&argc, &argv, "--nsreplica");
+    opal_argv_append(&argc, &argv, "--nsreplica");
     if(NULL != orte_process_info.ns_replica_uri) {
         uri = strdup(orte_process_info.ns_replica_uri);
     } else {
         uri = orte_rml.get_uri();
     }
     asprintf(&param, "\"%s\"", uri);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(uri);
                                            
     /* setup gpr contact info */
-    ompi_argv_append(&argc, &argv, "--gprreplica");
+    opal_argv_append(&argc, &argv, "--gprreplica");
     if(NULL != orte_process_info.gpr_replica_uri) {
         uri = strdup(orte_process_info.gpr_replica_uri);
     } else {
         uri = orte_rml.get_uri();
     }
     asprintf(&param, "\"%s\"", uri);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(uri);
      
     /*
@@ -233,7 +233,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
         fprintf(cfp,"\n");
 
         if (mca_pls_poe_component.verbose) {
-           opal_output(0, "%s:cmdfile %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
+           opal_output(0, "%s:cmdfile %s\n", __FUNCTION__, opal_argv_join(argv, ' '));
         }  
         vpid++;
         free(name);
@@ -242,33 +242,33 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     fclose(cfp);
     fclose(hfp);
 
-    argv = ompi_argv_copy(mca_pls_poe_component.argv);
+    argv = opal_argv_copy(mca_pls_poe_component.argv);
     argc = mca_pls_poe_component.argc;
-    ompi_argv_append(&argc, &argv, "-hostfile");
-    ompi_argv_append(&argc, &argv, mca_pls_poe_component.hostfile);
-    ompi_argv_append(&argc, &argv, "-cmdfile");
-    ompi_argv_append(&argc, &argv, mca_pls_poe_component.cmdfile);
-    ompi_argv_append(&argc, &argv, "-procs");
+    opal_argv_append(&argc, &argv, "-hostfile");
+    opal_argv_append(&argc, &argv, mca_pls_poe_component.hostfile);
+    opal_argv_append(&argc, &argv, "-cmdfile");
+    opal_argv_append(&argc, &argv, mca_pls_poe_component.cmdfile);
+    opal_argv_append(&argc, &argv, "-procs");
     asprintf(&tmp_string, "%d", num_nodes);
-    ompi_argv_append(&argc, &argv, tmp_string);
+    opal_argv_append(&argc, &argv, tmp_string);
     free(tmp_string);
-    ompi_argv_append(&argc, &argv, "-pgmmodel");
-    ompi_argv_append(&argc, &argv, "mpmd");
-    ompi_argv_append(&argc, &argv, "-resd");
-    ompi_argv_append(&argc, &argv, "no");
-    ompi_argv_append(&argc, &argv, "-labelio");
-    ompi_argv_append(&argc, &argv, "yes");
-    ompi_argv_append(&argc, &argv, "-infolevel");
-    ompi_argv_append(&argc, &argv, "6");
-    ompi_argv_append(&argc, &argv, "-stdoutmode");
-    ompi_argv_append(&argc, &argv, "ordered");
+    opal_argv_append(&argc, &argv, "-pgmmodel");
+    opal_argv_append(&argc, &argv, "mpmd");
+    opal_argv_append(&argc, &argv, "-resd");
+    opal_argv_append(&argc, &argv, "no");
+    opal_argv_append(&argc, &argv, "-labelio");
+    opal_argv_append(&argc, &argv, "yes");
+    opal_argv_append(&argc, &argv, "-infolevel");
+    opal_argv_append(&argc, &argv, "6");
+    opal_argv_append(&argc, &argv, "-stdoutmode");
+    opal_argv_append(&argc, &argv, "ordered");
     rc=__poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retry, 0, "-retry");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
     rc=__poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retrycount, 0, "-retrycount");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
     if (mca_pls_poe_component.verbose) {
-       opal_output(0, "%s:cmdline %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
+       opal_output(0, "%s:cmdline %s\n", __FUNCTION__, opal_argv_join(argv, ' '));
     }  
 
     pid = fork();
@@ -422,7 +422,7 @@ static int __poe_create_cmd_file(
     while(environ_copy[i]!=NULL) {
         fprintf(cfp," %s",environ_copy[i++]);
     } 
-    ompi_argv_free(environ_copy);
+    opal_argv_free(environ_copy);
     fprintf(cfp," %s",context->app);
     i=1;
     while(context->argv[i]!=NULL) {
@@ -516,26 +516,26 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
 
     /* Generate POE command line */
 
-    argv = ompi_argv_copy(mca_pls_poe_component.argv);
+    argv = opal_argv_copy(mca_pls_poe_component.argv);
     argc = mca_pls_poe_component.argc;
 
     if(num_nodes > 0) {
-       ompi_argv_append(&argc, &argv, "-hostfile");
-       ompi_argv_append(&argc, &argv, mca_pls_poe_component.hostfile);
-       ompi_argv_append(&argc, &argv, "-resd");
-       ompi_argv_append(&argc, &argv, "no");
+       opal_argv_append(&argc, &argv, "-hostfile");
+       opal_argv_append(&argc, &argv, mca_pls_poe_component.hostfile);
+       opal_argv_append(&argc, &argv, "-resd");
+       opal_argv_append(&argc, &argv, "no");
        rc=__poe_argv_append_int(&argc, &argv, num_nodes, 1, "-nodes");
        if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
     }
 
-    ompi_argv_append(&argc, &argv, "-pgmmodel");
-    ompi_argv_append(&argc, &argv, "mpmd");
-    ompi_argv_append(&argc, &argv, "-cmdfile");
-    ompi_argv_append(&argc, &argv, mca_pls_poe_component.cmdfile);
-    ompi_argv_append(&argc, &argv, "-labelio");
-    ompi_argv_append(&argc, &argv, mca_pls_poe_component.mp_labelio);
-    ompi_argv_append(&argc, &argv, "-stdoutmode");
-    ompi_argv_append(&argc, &argv, mca_pls_poe_component.mp_stdoutmode);
+    opal_argv_append(&argc, &argv, "-pgmmodel");
+    opal_argv_append(&argc, &argv, "mpmd");
+    opal_argv_append(&argc, &argv, "-cmdfile");
+    opal_argv_append(&argc, &argv, mca_pls_poe_component.cmdfile);
+    opal_argv_append(&argc, &argv, "-labelio");
+    opal_argv_append(&argc, &argv, mca_pls_poe_component.mp_labelio);
+    opal_argv_append(&argc, &argv, "-stdoutmode");
+    opal_argv_append(&argc, &argv, mca_pls_poe_component.mp_stdoutmode);
 
     rc=__poe_argv_append_int(&argc, &argv, num_procs, 1, "-procs");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
@@ -547,7 +547,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
     if(mca_pls_poe_component.verbose>10) {
-        opal_output(0, "%s:POE cmdline %s\n", __FUNCTION__, ompi_argv_join(argv, ' '));
+        opal_output(0, "%s:POE cmdline %s\n", __FUNCTION__, opal_argv_join(argv, ' '));
     }  
 
     /* Start job with POE */

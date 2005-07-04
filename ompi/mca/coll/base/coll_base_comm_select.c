@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "communicator/communicator.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
@@ -188,15 +188,15 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
      in the MCA parameter; parse them and check them all */
 
   else if (NULL != names && 0 < strlen(names)) {
-    name_array = ompi_argv_split(names, ',');
-    num_names = ompi_argv_count(name_array);
+    name_array = opal_argv_split(names, ',');
+    num_names = opal_argv_count(name_array);
 
     opal_output_verbose(10, mca_coll_base_output, 
                        "coll:base:comm_select: Checking specific modules: %s",
                        names);
     selectable = check_components(&mca_coll_base_components_available, 
                                   comm, name_array, num_names);
-    ompi_argv_free(name_array);
+    opal_argv_free(name_array);
   }
 
   /* Nope -- a specific [set of] component[s] was not requested.  Go

@@ -23,7 +23,7 @@
 #include "runtime/runtime.h"
 #include "opal/util/output.h"
 #include "util/proc_info.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/errmgr/errmgr.h"
@@ -81,7 +81,7 @@ int mca_oob_parse_contact_info(
 
     if (NULL != uri) {
 	/* parse the remainder of the string into an array of uris */
-	*uri = ompi_argv_split(ptr, ';');
+	*uri = opal_argv_split(ptr, ';');
     }
     free(cinfo);
     return ORTE_SUCCESS;
@@ -104,8 +104,8 @@ int mca_oob_base_init(void)
     mca_oob_t *s_module = NULL;
     int  s_priority = -1;
 
-    char** include = ompi_argv_split(mca_oob_base_include, ',');
-    char** exclude = ompi_argv_split(mca_oob_base_exclude, ',');
+    char** include = opal_argv_split(mca_oob_base_include, ',');
+    char** exclude = opal_argv_split(mca_oob_base_exclude, ',');
 
     /* Traverse the list of available modules; call their init functions. */
     for (item = opal_list_get_first(&mca_oob_base_components);
@@ -238,7 +238,7 @@ int mca_oob_set_contact_info(const char* contact_info)
     }
 
     if(uri != NULL) {
-        ompi_argv_free(uri);
+        opal_argv_free(uri);
     }
     return ORTE_SUCCESS;
 }

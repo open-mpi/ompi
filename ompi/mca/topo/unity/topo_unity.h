@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 #include "opal/threads/condition.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "request/request.h"
 #include "mca/topo/topo.h"
 

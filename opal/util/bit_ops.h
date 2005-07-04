@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_BIT_OPS_H
-#define OMPI_BIT_OPS_H
+#ifndef OPAL_BIT_OPS_H
+#define OPAL_BIT_OPS_H
 
 /**
  * Calculates the highest bit in an integer
@@ -32,7 +32,7 @@
  * WARNING: *NO* error checking is performed.  This is meant to be a
  * fast inline function.
  */
-static inline int ompi_hibit(int value, int start)
+static inline int opal_hibit(int value, int start)
 {
   unsigned int mask;
 
@@ -62,7 +62,7 @@ static inline int ompi_hibit(int value, int start)
  * WARNING: *NO* error checking is performed.  This is meant to be a
  * fast inline function.
  */
-static inline int ompi_cube_dim(int value) 
+static inline int opal_cube_dim(int value) 
 {
     int dim, size;
 
@@ -73,4 +73,4 @@ static inline int ompi_cube_dim(int value)
     return dim;
 }
 
-#endif /* OMPI_BIT_OPS_H */
+#endif /* OPAL_BIT_OPS_H */

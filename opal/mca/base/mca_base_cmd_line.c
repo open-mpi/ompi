@@ -20,8 +20,8 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "util/cmd_line.h"
-#include "util/argv.h"
+#include "opal/util/cmd_line.h"
+#include "opal/util/argv.h"
 #include "util/ompi_environ.h"
 #include "mca/base/base.h"
 
@@ -38,9 +38,9 @@ static char **mca_value_argv = NULL;
 /*
  * Add -mca to the possible command line options list
  */
-int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd)
+int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 {
-  return ompi_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
+  return opal_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
                                  "General mechanism to pass MCA parameters");
 }
 
@@ -48,7 +48,7 @@ int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd)
 /*
  * Look for and handle any -mca options on the command line
  */
-int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd,
+int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
                                    char ***env)
 {
   int i, num_insts;
@@ -57,24 +57,24 @@ int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd,
   /* First, wipe out any previous results */
 
   if (mca_param_argc > 0) {
-      ompi_argv_free(mca_param_argv);
-      ompi_argv_free(mca_value_argv);
+      opal_argv_free(mca_param_argv);
+      opal_argv_free(mca_value_argv);
       mca_param_argv = mca_value_argv = NULL;
       mca_param_argc = mca_value_argc = 0;
   }
 
   /* If no "-mca" parameters were given, just return */
 
-  if (!ompi_cmd_line_is_taken(cmd, "mca")) {
+  if (!opal_cmd_line_is_taken(cmd, "mca")) {
       return OMPI_SUCCESS;
   }
 
   /* Otherwise, assemble them into an argc/argv */
 
-  num_insts = ompi_cmd_line_get_ninsts(cmd, "mca");
+  num_insts = opal_cmd_line_get_ninsts(cmd, "mca");
   for (i = 0; i < num_insts; ++i) {
-      mca_base_cmd_line_process_arg(ompi_cmd_line_get_param(cmd, "mca", i, 0), 
-                                    ompi_cmd_line_get_param(cmd, "mca", i, 1));
+      mca_base_cmd_line_process_arg(opal_cmd_line_get_param(cmd, "mca", i, 0), 
+                                    opal_cmd_line_get_param(cmd, "mca", i, 1));
   }
 
   /* Now put that argc/argv in the environment */
@@ -124,8 +124,8 @@ int mca_base_cmd_line_process_arg(const char *param, const char *value)
   /* If we didn't already have an value for the same param, save this
      one away */
   
-  ompi_argv_append(&mca_param_argc, &mca_param_argv, param);
-  ompi_argv_append(&mca_value_argc, &mca_value_argv, value);
+  opal_argv_append(&mca_param_argc, &mca_param_argv, param);
+  opal_argv_append(&mca_value_argc, &mca_value_argv, value);
 
   return OMPI_SUCCESS;
 }

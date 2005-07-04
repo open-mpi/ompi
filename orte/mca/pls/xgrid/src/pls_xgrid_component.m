@@ -26,9 +26,9 @@
 #import <unistd.h>
 
 #import "include/orte_constants.h"
-#import "util/argv.h"
+#import "opal/util/argv.h"
 #import "util/path.h"
-#import "util/basename.h"
+#import "opal/util/basename.h"
 #import "mca/pls/pls.h"
 #import "mca/pls/base/base.h"
 #import "mca/pls/xgrid/pls-xgrid-version.h"

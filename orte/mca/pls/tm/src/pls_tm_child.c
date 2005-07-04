@@ -29,7 +29,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "runtime/runtime.h"
@@ -217,14 +217,14 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
 
         free(app->argv[0]);
         app->argv[0] = strdup(app->app);
-        flat = ompi_argv_join(app->argv, ' ');
+        flat = opal_argv_join(app->argv, ' ');
 
         /* Make a global env for the app */
 
         tmp_env = ompi_environ_merge(app->env, mca_env);
         local_env = ompi_environ_merge(environ, tmp_env);
         if (NULL != tmp_env) {
-            ompi_argv_free(tmp_env);
+            opal_argv_free(tmp_env);
         }
 
         /* Ensure "." is in the PATH.  If it's not there, add it at
@@ -334,7 +334,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
 
         /* Free things from the last app */
 
-        ompi_argv_free(local_env);
+        opal_argv_free(local_env);
         free(flat);
     }
 
@@ -345,7 +345,7 @@ int orte_pls_tm_child_launch(orte_jobid_t jobid)
                 "pls:tm:launch:child: launched %d processes", num_spawned);
 
     if (NULL != mca_env) {
-        ompi_argv_free(mca_env);
+        opal_argv_free(mca_env);
     }
     if (mapping_valid) {
         while (NULL != (item = opal_list_remove_first(&mapping))) {
@@ -452,7 +452,7 @@ int orte_pls_tm_child_wait(orte_jobid_t jobid)
 int orte_pls_tm_child_finalize(void)
 {
     if (NULL != tm_hostnames) {
-        ompi_argv_free(tm_hostnames);
+        opal_argv_free(tm_hostnames);
         tm_hostnames = NULL;
     }
     if (NULL != tm_node_ids) {
@@ -536,7 +536,7 @@ static int query_tm_hostnames(void)
     num_tm_hostnames = 0;
     for (i = 0; i < num_node_ids; ++i) {
         h = get_tm_hostname(tm_node_ids[i]);
-        ompi_argv_append(&num_tm_hostnames, &tm_hostnames, h);
+        opal_argv_append(&num_tm_hostnames, &tm_hostnames, h);
         free(h);
     }
 
@@ -577,12 +577,12 @@ static char* get_tm_hostname(tm_node_id node)
        trick to get it. */
 
     buffer[sizeof(buffer) - 1] = '\0';
-    argv = ompi_argv_split(buffer, ' ');
+    argv = opal_argv_split(buffer, ' ');
     if (NULL == argv) {
         return NULL;
     }
     hostname = strdup(argv[1]);
-    ompi_argv_free(argv);
+    opal_argv_free(argv);
 
     /* All done */
 

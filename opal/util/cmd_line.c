@@ -24,8 +24,8 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "util/argv.h"
-#include "util/cmd_line.h"
+#include "opal/util/argv.h"
+#include "opal/util/cmd_line.h"
 #include "util/strncpy.h"
 #include "opal/util/output.h"
 #include "mca/base/mca_base_param.h"
@@ -56,7 +56,7 @@ struct cmd_line_option_t {
     int clo_num_params;
     char *clo_description;
 
-    ompi_cmd_line_type_t clo_type;
+    opal_cmd_line_type_t clo_type;
     char *clo_mca_param_env_var;
     void *clo_variable_dest;
     bool clo_variable_set;
@@ -100,11 +100,11 @@ static OBJ_CLASS_INSTANCE(cmd_line_param_t,
                           param_constructor, param_destructor);
 
 /*
- * Instantiate the ompi_cmd_line_t class
+ * Instantiate the opal_cmd_line_t class
  */
-static void cmd_line_constructor(ompi_cmd_line_t *cmd);
-static void cmd_line_destructor(ompi_cmd_line_t *cmd);
-OBJ_CLASS_INSTANCE(ompi_cmd_line_t,
+static void cmd_line_constructor(opal_cmd_line_t *cmd);
+static void cmd_line_destructor(opal_cmd_line_t *cmd);
+OBJ_CLASS_INSTANCE(opal_cmd_line_t,
                    opal_object_t,
                    cmd_line_constructor,
                    cmd_line_destructor);
@@ -119,13 +119,13 @@ static char special_empty_token[] = {
 /*
  * Private functions
  */
-static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e);
-static void free_parse_results(ompi_cmd_line_t *cmd);
-static int split_shorts(ompi_cmd_line_t *cmd,
+static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e);
+static void free_parse_results(opal_cmd_line_t *cmd);
+static int split_shorts(opal_cmd_line_t *cmd,
                         char *token, char **args, 
                         int *output_argc, char ***output_argv, 
                         int *num_args_used, bool ignore_unknown);
-static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd, 
+static cmd_line_option_t *find_option(opal_cmd_line_t *cmd, 
                                       const char *option_name);
 static void set_dest(cmd_line_option_t *option, char *sval);
 
@@ -133,8 +133,8 @@ static void set_dest(cmd_line_option_t *option, char *sval);
 /*
  * Create an entire command line handle from a table
  */
-int ompi_cmd_line_create(ompi_cmd_line_t *cmd,
-                         ompi_cmd_line_init_t *table)
+int opal_cmd_line_create(opal_cmd_line_t *cmd,
+                         opal_cmd_line_init_t *table)
 {
     int i, ret;
 
@@ -143,7 +143,7 @@ int ompi_cmd_line_create(ompi_cmd_line_t *cmd,
     if (NULL == cmd) {
         return OMPI_ERR_BAD_PARAM;
     }
-    OBJ_CONSTRUCT(cmd, ompi_cmd_line_t);
+    OBJ_CONSTRUCT(cmd, opal_cmd_line_t);
 
     /* Ensure we got a table */
 
@@ -175,11 +175,11 @@ int ompi_cmd_line_create(ompi_cmd_line_t *cmd,
 /*
  * Create a command line option, --long-name and/or -s (short name).
  */
-int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name, 
+int opal_cmd_line_make_opt(opal_cmd_line_t *cmd, char short_name, 
                           const char *long_name, int num_params, 
                           const char *desc)
 {
-    ompi_cmd_line_init_t e;
+    opal_cmd_line_init_t e;
 
     e.ocl_mca_type_name = NULL;
     e.ocl_mca_component_name = NULL;
@@ -192,7 +192,7 @@ int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name,
     e.ocl_num_params = num_params;
 
     e.ocl_variable_dest = NULL;
-    e.ocl_variable_type = OMPI_CMD_LINE_TYPE_NULL;
+    e.ocl_variable_type = OPAL_CMD_LINE_TYPE_NULL;
 
     e.ocl_description = desc;
 
@@ -203,11 +203,11 @@ int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name,
 /*
  * Create a command line option, --long-name and/or -s (short name).
  */
-int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name, 
+int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name, 
                             const char *sd_name, const char *long_name, 
                             int num_params, const char *desc)
 {
-    ompi_cmd_line_init_t e;
+    opal_cmd_line_init_t e;
 
     e.ocl_mca_type_name = NULL;
     e.ocl_mca_component_name = NULL;
@@ -220,7 +220,7 @@ int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name,
     e.ocl_num_params = num_params;
 
     e.ocl_variable_dest = NULL;
-    e.ocl_variable_type = OMPI_CMD_LINE_TYPE_NULL;
+    e.ocl_variable_type = OPAL_CMD_LINE_TYPE_NULL;
 
     e.ocl_description = desc;
 
@@ -229,10 +229,10 @@ int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name,
 
 
 /*
- * Parse a command line according to a pre-built OMPI command line
+ * Parse a command line according to a pre-built OPAL command line
  * handle.
  */
-int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
+int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                         int argc, char **argv)
 {
     int i, j, orig, ret;
@@ -261,7 +261,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
     /* Analyze each token */
 
     cmd->lcl_argc = argc;
-    cmd->lcl_argv = ompi_argv_copy(argv);
+    cmd->lcl_argv = opal_argv_copy(argv);
 
     /* Now traverse the easy-to-parse sequence of tokens.  Note that
        incrementing i must happen elsehwere; it can't be the third
@@ -280,7 +280,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
         if (0 == strcmp(cmd->lcl_argv[i], "--")) {
             ++i;
             while (i < cmd->lcl_argc) {
-                ompi_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
+                opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
                                  cmd->lcl_argv[i]);
                 ++i;
             }
@@ -325,15 +325,15 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                     option = find_option(cmd, shortsv[0] + 1);
 
                     if (NULL != option) {
-                        ompi_argv_delete(&cmd->lcl_argc,
+                        opal_argv_delete(&cmd->lcl_argc,
 			                 &cmd->lcl_argv, i,
                                          1 + num_args_used);
-                        ompi_argv_insert(&cmd->lcl_argv, i, shortsv);
-                        cmd->lcl_argc = ompi_argv_count(cmd->lcl_argv);
+                        opal_argv_insert(&cmd->lcl_argv, i, shortsv);
+                        cmd->lcl_argc = opal_argv_count(cmd->lcl_argv);
                     } else {
                         is_unknown = true;
                     }
-                    ompi_argv_free(shortsv);
+                    opal_argv_free(shortsv);
                 } else {
                     is_unknown = true;
                 }
@@ -392,7 +392,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                                         cmd->lcl_argv[orig],
                                         option->clo_num_params);
                             if (NULL != param->clp_argv)
-                                ompi_argv_free(param->clp_argv);
+                                opal_argv_free(param->clp_argv);
                             OBJ_RELEASE(param);
                             i = cmd->lcl_argc;
                             break;
@@ -403,7 +403,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                         else {
                             /* Save in the argv on the param entry */
 
-                            ompi_argv_append(&param->clp_argc,
+                            opal_argv_append(&param->clp_argc,
                                              &param->clp_argv, 
                                              cmd->lcl_argv[i]);
 
@@ -427,7 +427,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                 }
 
                 /* If we succeeded in all that, save the param to the
-                   list on the ompi_cmd_line_t handle */
+                   list on the opal_cmd_line_t handle */
 
                 if (NULL != param) {
                     opal_list_append(&cmd->lcl_params, &param->super);
@@ -446,7 +446,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                             cmd->lcl_argv[i]);
             }
             while (i < cmd->lcl_argc) {
-                ompi_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
+                opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
                                  cmd->lcl_argv[i]);
                 ++i;
             }
@@ -464,9 +464,9 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
 
 
 /*
- * Return a consolidated "usage" message for a OMPI command line handle.
+ * Return a consolidated "usage" message for a OPAL command line handle.
  */
-char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
+char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 {
     int i, len=MAX_WIDTH * 2, prev_len;
     int argc;
@@ -537,7 +537,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
                and start adding the description on the next line. */
 
             if (strlen(line) > PARAM_WIDTH) {
-                ompi_argv_append(&argc, &argv, line);
+                opal_argv_append(&argc, &argv, line);
 
                 /* Now reset the line to be all blanks up to
                    PARAM_WIDTH so that we can start adding the
@@ -584,7 +584,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
 
                 if (strlen(start) < (MAX_WIDTH - PARAM_WIDTH)) {
                     strcat(line, start);
-                    ompi_argv_append(&argc, &argv, line);
+                    opal_argv_append(&argc, &argv, line);
                     break;
                 }
 
@@ -597,7 +597,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
                     if (isspace(*ptr)) {
                         *ptr = '\0';
                         strcat(line, start);
-                        ompi_argv_append(&argc, &argv, line);
+                        opal_argv_append(&argc, &argv, line);
 
                         start = ptr + 1;
                         memset(line, ' ', PARAM_WIDTH);
@@ -617,7 +617,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
                             *ptr = '\0';
 
                             strcat(line, start);
-                            ompi_argv_append(&argc, &argv, line);
+                            opal_argv_append(&argc, &argv, line);
                             
                             start = ptr + 1;
                             memset(line, ' ', PARAM_WIDTH);
@@ -631,7 +631,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
 
                     if (ptr >= start + len) {
                         strcat(line, start);
-                        ompi_argv_append(&argc, &argv, line);
+                        opal_argv_append(&argc, &argv, line);
                         start = desc + len + 1;
                     }
                 }
@@ -640,8 +640,8 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
         }
     }
     if (NULL != argv) {
-        ret = ompi_argv_join(argv, '\n');
-        ompi_argv_free(argv);
+        ret = opal_argv_join(argv, '\n');
+        opal_argv_free(argv);
     } else {
         ret = strdup("");
     }
@@ -659,16 +659,16 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
 /*
  * Test if a given option was taken on the parsed command line.
  */
-bool ompi_cmd_line_is_taken(ompi_cmd_line_t *cmd, const char *opt)
+bool opal_cmd_line_is_taken(opal_cmd_line_t *cmd, const char *opt)
 {
-    return (ompi_cmd_line_get_ninsts(cmd, opt) > 0);
+    return (opal_cmd_line_get_ninsts(cmd, opt) > 0);
 }
 
 
 /*
  * Return the number of instances of an option found during parsing.
  */
-int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt)
+int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, const char *opt)
 {
     int ret;
     opal_list_item_t *item;
@@ -709,7 +709,7 @@ int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt)
  * Return a specific parameter for a specific instance of a option
  * from the parsed command line.
  */
-char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst, 
+char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst, 
                               int idx)
 {
     int num_found;
@@ -758,18 +758,18 @@ char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst,
 
 
 /*
- * Return the number of arguments parsed on a OMPI command line handle.
+ * Return the number of arguments parsed on a OPAL command line handle.
  */
-int ompi_cmd_line_get_argc(ompi_cmd_line_t *cmd)
+int opal_cmd_line_get_argc(opal_cmd_line_t *cmd)
 {
     return (NULL != cmd) ? cmd->lcl_argc : OMPI_ERROR;
 }
 
 
 /*
- * Return a string argument parsed on a OMPI command line handle.
+ * Return a string argument parsed on a OPAL command line handle.
  */
-char *ompi_cmd_line_get_argv(ompi_cmd_line_t *cmd, int index)
+char *opal_cmd_line_get_argv(opal_cmd_line_t *cmd, int index)
 {
     return (NULL == cmd) ? NULL :
         (index >= cmd->lcl_argc || index < 0) ? NULL : cmd->lcl_argv[index];
@@ -777,15 +777,15 @@ char *ompi_cmd_line_get_argv(ompi_cmd_line_t *cmd, int index)
 
 
 /*
- * Return the entire "tail" of unprocessed argv from a OMPI command
+ * Return the entire "tail" of unprocessed argv from a OPAL command
  * line handle.
  */
-int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, char ***tailv)
+int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc, char ***tailv)
 {
     if (NULL != cmd) {
         opal_mutex_lock(&cmd->lcl_mutex);
         *tailc = cmd->lcl_tail_argc;
-        *tailv = ompi_argv_copy(cmd->lcl_tail_argv);
+        *tailv = opal_argv_copy(cmd->lcl_tail_argv);
         opal_mutex_unlock(&cmd->lcl_mutex);
         return OMPI_SUCCESS;
     } else {
@@ -806,7 +806,7 @@ static void option_constructor(cmd_line_option_t *o)
     o->clo_num_params = 0;
     o->clo_description = NULL;
 
-    o->clo_type = OMPI_CMD_LINE_TYPE_NULL;
+    o->clo_type = OPAL_CMD_LINE_TYPE_NULL;
     o->clo_mca_param_env_var = NULL;
     o->clo_variable_dest = NULL;
     o->clo_variable_set = false;
@@ -842,12 +842,12 @@ static void param_constructor(cmd_line_param_t *p)
 static void param_destructor(cmd_line_param_t *p)
 {
     if (NULL != p->clp_argv) {
-        ompi_argv_free(p->clp_argv);
+        opal_argv_free(p->clp_argv);
     }
 }
 
 
-static void cmd_line_constructor(ompi_cmd_line_t *cmd)
+static void cmd_line_constructor(opal_cmd_line_t *cmd)
 {
     /* Initialize the mutex.  Since we're creating (and therefore the
        only thread that has this instance), there's no need to lock it
@@ -869,7 +869,7 @@ static void cmd_line_constructor(ompi_cmd_line_t *cmd)
 }
 
 
-static void cmd_line_destructor(ompi_cmd_line_t *cmd)
+static void cmd_line_destructor(opal_cmd_line_t *cmd)
 {
     opal_list_item_t *item;
 
@@ -897,7 +897,7 @@ static void cmd_line_destructor(ompi_cmd_line_t *cmd)
 }
 
 
-static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e)
+static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
 {
     cmd_line_option_t *option;
 
@@ -953,7 +953,7 @@ static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e)
 }
 
 
-static void free_parse_results(ompi_cmd_line_t *cmd)
+static void free_parse_results(opal_cmd_line_t *cmd)
 {
     opal_list_item_t *item;
 
@@ -969,13 +969,13 @@ static void free_parse_results(ompi_cmd_line_t *cmd)
     /* Free the argv's */
 
     if (NULL != cmd->lcl_argv) {
-        ompi_argv_free(cmd->lcl_argv);
+        opal_argv_free(cmd->lcl_argv);
     }
     cmd->lcl_argv = NULL;
     cmd->lcl_argc = 0;
 
     if (NULL != cmd->lcl_tail_argv) {
-        ompi_argv_free(cmd->lcl_tail_argv);
+        opal_argv_free(cmd->lcl_tail_argv);
     }
     cmd->lcl_tail_argv = NULL;
     cmd->lcl_tail_argc = 0;
@@ -988,7 +988,7 @@ static void free_parse_results(ompi_cmd_line_t *cmd)
  * short name).  Ensure to differentiate the resulting options from
  * "single dash" names.
  */
-static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args, 
+static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args, 
                         int *output_argc, char ***output_argv, 
                         int *num_args_used, bool ignore_unknown)
 {
@@ -999,7 +999,7 @@ static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args,
 
     /* Setup that we didn't use any of the args */
 
-    num_args = ompi_argv_count(args);
+    num_args = opal_argv_count(args);
     *num_args_used = 0;
 
     /* Traverse the token.  If it's empty (e.g., if someone passes a
@@ -1024,7 +1024,7 @@ static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args,
             if (!ignore_unknown) {
                 return OMPI_ERR_BAD_PARAM;
             } else {
-                ompi_argv_append(output_argc, output_argv, fake_token);
+                opal_argv_append(output_argc, output_argv, fake_token);
             }
         } 
 
@@ -1034,14 +1034,14 @@ static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args,
            handled at a higher level) */
 
         else {
-            ompi_argv_append(output_argc, output_argv, fake_token);
+            opal_argv_append(output_argc, output_argv, fake_token);
             for (j = 0; j < option->clo_num_params; ++j) {
                 if (*num_args_used < num_args) {
-                    ompi_argv_append(output_argc, output_argv,
+                    opal_argv_append(output_argc, output_argv,
                                      args[*num_args_used]);
                     ++(*num_args_used);
                 } else {
-                    ompi_argv_append(output_argc, output_argv, 
+                    opal_argv_append(output_argc, output_argv, 
                                      special_empty_token);
                 }
             }
@@ -1054,14 +1054,14 @@ static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args,
 }
 
 
-static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd, 
+static cmd_line_option_t *find_option(opal_cmd_line_t *cmd, 
                                       const char *option_name)
 {
     opal_list_item_t *item;
     cmd_line_option_t *option;
 
     /* Iterate through the list of options hanging off the
-       ompi_cmd_line_t and see if we find a match in either the short
+       opal_cmd_line_t and see if we find a match in either the short
        or long names */
 
     for (item = opal_list_get_first(&cmd->lcl_options);
@@ -1102,12 +1102,12 @@ static void set_dest(cmd_line_option_t *option, char *sval)
     
     if (NULL != option->clo_mca_param_env_var) {
         switch(option->clo_type) {
-        case OMPI_CMD_LINE_TYPE_STRING:
-        case OMPI_CMD_LINE_TYPE_INT:
-        case OMPI_CMD_LINE_TYPE_SIZE_T:
+        case OPAL_CMD_LINE_TYPE_STRING:
+        case OPAL_CMD_LINE_TYPE_INT:
+        case OPAL_CMD_LINE_TYPE_SIZE_T:
             asprintf(&str, "%s=%s", option->clo_mca_param_env_var, sval);
             break;
-        case OMPI_CMD_LINE_TYPE_BOOL:
+        case OPAL_CMD_LINE_TYPE_BOOL:
             asprintf(&str, "%s=1", option->clo_mca_param_env_var);
             break;
         default:
@@ -1122,16 +1122,16 @@ static void set_dest(cmd_line_option_t *option, char *sval)
 
     if (NULL != option->clo_variable_dest) {
         switch(option->clo_type) {
-        case OMPI_CMD_LINE_TYPE_STRING:
+        case OPAL_CMD_LINE_TYPE_STRING:
             *((char**) option->clo_variable_dest) = strdup(sval);
             break;
-        case OMPI_CMD_LINE_TYPE_INT:
+        case OPAL_CMD_LINE_TYPE_INT:
             *((int*) option->clo_variable_dest) = ival;
             break;
-        case OMPI_CMD_LINE_TYPE_SIZE_T:
+        case OPAL_CMD_LINE_TYPE_SIZE_T:
             *((size_t*) option->clo_variable_dest) = lval;
             break;
-        case OMPI_CMD_LINE_TYPE_BOOL:
+        case OPAL_CMD_LINE_TYPE_BOOL:
             *((bool*) option->clo_variable_dest) = 1;
             break;
         default:

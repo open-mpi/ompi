@@ -22,7 +22,7 @@
 #endif
 
 #include "util/path.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 
 /*
  * PATH environment variable separator
@@ -139,13 +139,13 @@ char *ompi_path_findv(char *fname, int mode, char **envv, char *wrkdir)
        the wrkdir to the end of the path */
 
     if (!found_dot && NULL != wrkdir) {
-        ompi_argv_append(&dirc, &dirv, wrkdir);
+        opal_argv_append(&dirc, &dirv, wrkdir);
     }
 
     if(NULL == dirv)
         return NULL;
     fullpath = ompi_path_find(fname, dirv, mode, envv);
-    ompi_argv_free(dirv);
+    opal_argv_free(dirv);
     return fullpath;
 }
 
@@ -229,7 +229,7 @@ static void path_env_load(char *path, int *pargc, char ***pargv)
         if (p != path) {
             saved = *p;
             *p = '\0';
-            ompi_argv_append(pargc, pargv, path);
+            opal_argv_append(pargc, pargv, path);
             *p = saved;
             path = p;
         }

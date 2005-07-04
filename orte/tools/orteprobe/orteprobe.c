@@ -37,18 +37,18 @@
 
 #include "dps/dps.h"
 #include "opal/event/event.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/path.h"
 #include "opal/util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/univ_info.h"
 #include "util/session_dir.h"
 #include "util/printf.h"
-#include "util/daemon_init.h"
+#include "opal/util/daemon_init.h"
 #include "util/universe_setup_file_io.h"
 #include "util/malloc.h"
 
@@ -72,55 +72,55 @@ orteprobe_globals_t orteprobe_globals;
 /*
  * define the orteprobe context table for obtaining parameters
  */
-ompi_cmd_line_init_t orte_cmd_line_opts[] = {
+opal_cmd_line_init_t orte_cmd_line_opts[] = {
     /* Various "obvious" options */
     { NULL, NULL, NULL, 'h', NULL, "help", 0, 
-      &orteprobe_globals.help, OMPI_CMD_LINE_TYPE_BOOL,
+      &orteprobe_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL, NULL, NULL, '\0', NULL, "version", 0,
-      &orteprobe_globals.version, OMPI_CMD_LINE_TYPE_BOOL,
+      &orteprobe_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
       "Show the orteprobe version" },
 
     { NULL, NULL, NULL, 'd', NULL, "debug", 0,
-      &orteprobe_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
+      &orteprobe_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Run in debug mode (not generally intended for users)" },
 
     { NULL, NULL, NULL, '\0', NULL, "name", 1,
-      &orteprobe_globals.name_string, OMPI_CMD_LINE_TYPE_STRING,
+      &orteprobe_globals.name_string, OPAL_CMD_LINE_TYPE_STRING,
       "Set the orte process name"},
 
     { NULL, NULL, NULL, '\0', NULL, "nsreplica", 1,
-      &orte_process_info.ns_replica_uri, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_process_info.ns_replica_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Name service contact information."},
 
     { NULL, NULL, NULL, '\0', NULL, "gprreplica", 1,
-      &orte_process_info.gpr_replica_uri, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_process_info.gpr_replica_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Registry contact information."},
 
     { NULL, NULL, NULL, '\0', NULL, "nodename", 1,
-      &orte_system_info.nodename, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_system_info.nodename, OPAL_CMD_LINE_TYPE_STRING,
       "Node name as specified by host/resource description." },
 
     { NULL, NULL, NULL, '\0', NULL, "requestor", 1,
-      &orteprobe_globals.requestor_string, OMPI_CMD_LINE_TYPE_STRING,
+      &orteprobe_globals.requestor_string, OPAL_CMD_LINE_TYPE_STRING,
       "Set the orte process name"},
 
     { "seed", NULL, NULL, '\0', NULL, "seed", 0,
-      &orte_process_info.seed, OMPI_CMD_LINE_TYPE_BOOL,
+      &orte_process_info.seed, OPAL_CMD_LINE_TYPE_BOOL,
       "seed"},
 
     { "universe", "persistence", NULL, '\0', NULL, "persistent", 0,
-      &orte_universe_info.persistence, OMPI_CMD_LINE_TYPE_BOOL,
+      &orte_universe_info.persistence, OPAL_CMD_LINE_TYPE_BOOL,
       "persistent"},
 
     { "universe", "scope", NULL, '\0', NULL, "scope", 1,
-      &orte_universe_info.scope, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_universe_info.scope, OPAL_CMD_LINE_TYPE_STRING,
       "scope"},
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
-      NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
+      NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
 extern char **environ;
@@ -128,7 +128,7 @@ extern char **environ;
 int main(int argc, char *argv[])
 {
     int ret = 0, ortedargc;
-    ompi_cmd_line_t *cmd_line = NULL;
+    opal_cmd_line_t *cmd_line = NULL;
     char *contact_path = NULL, *orted=NULL;
     char *log_path = NULL, **ortedargv;
     char *universe, orted_uri[256], **orted_uri_ptr, *path, *param;
@@ -140,9 +140,9 @@ int main(int argc, char *argv[])
 
     /* setup to check common command line options that just report and die */
     memset(&orteprobe_globals, 0, sizeof(orteprobe_globals));
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
-    ompi_cmd_line_create(cmd_line, orte_cmd_line_opts);
-    if (OMPI_SUCCESS != (ret = ompi_cmd_line_parse(cmd_line, true, 
+    cmd_line = OBJ_NEW(opal_cmd_line_t);
+    opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
+    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, true, 
                                                    argc, argv))) {
         return ret;
     }
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
     /* check for help and version requests */
     if (orteprobe_globals.help) {
         char *args = NULL;
-        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        args = opal_cmd_line_get_usage_msg(cmd_line);
         ompi_show_help("help-orteprobe.txt", "orteprobe:usage", false,
                        argv[0], args);
         free(args);
@@ -362,8 +362,8 @@ fprintf(stderr, "existing universe did not respond\n");
 fprintf(stderr, "using %s for orted command\n", orted);
 
         /* Initialize the argv array */
-        ortedargv = ompi_argv_split(orted, ' ');
-        ortedargc = ompi_argv_count(ortedargv);
+        ortedargv = opal_argv_split(orted, ' ');
+        ortedargc = opal_argv_count(ortedargv);
         if (ortedargc <= 0) {
             fprintf(stderr, "orteprobe: could not initialize argv array for daemon\n");
             exit(1);
@@ -375,21 +375,21 @@ fprintf(stderr, "using %s for orted command\n", orted);
 fprintf(stderr, "path setup as %s\n", path);
 
         /* tell the daemon it's the seed */
-        ompi_argv_append(&ortedargc, &ortedargv, "--seed");
+        opal_argv_append(&ortedargc, &ortedargv, "--seed");
     
         /* tell the daemon it's scope */
-        ompi_argv_append(&ortedargc, &ortedargv, "--scope");
-        ompi_argv_append(&ortedargc, &ortedargv, orte_universe_info.scope);
+        opal_argv_append(&ortedargc, &ortedargv, "--scope");
+        opal_argv_append(&ortedargc, &ortedargv, orte_universe_info.scope);
         
         /* tell the daemon if it's to be persistent */
         if (orte_universe_info.persistence) {
-            ompi_argv_append(&ortedargc, &ortedargv, "--persistent");
+            opal_argv_append(&ortedargc, &ortedargv, "--persistent");
         }
         
         /* tell the daemon to report its uri to us */
         asprintf(&param, "%d", orted_pipe[1]);
-        ompi_argv_append(&ortedargc, &ortedargv, "--report-uri");
-        ompi_argv_append(&ortedargc, &ortedargv, param);
+        opal_argv_append(&ortedargc, &ortedargv, "--report-uri");
+        opal_argv_append(&ortedargc, &ortedargv, param);
         free(param);
  
 fprintf(stderr, "forking now\n");

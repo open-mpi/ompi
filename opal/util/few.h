@@ -14,9 +14,9 @@
  * $HEADER$
  */
 
-#ifndef OMPI_FEW_H
-#define OMPI_FEW_H
-#include "ompi_config.h"
+#ifndef OPAL_FEW_H
+#define OPAL_FEW_H
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -37,7 +37,7 @@ extern "C" {
  *
  * This function forks, execs, and waits for an executable to
  * complete.  The input argv must be a NULL-terminated array (perhaps
- * built with the ompi_arr_*() interface).  Upon success, OMPI_SUCCESS
+ * built with the opal_arr_*() interface).  Upon success, OMPI_SUCCESS
  * is returned.  This function will wait either until the child
  * process has exited or waitpid() returns an error other than EINTR.
  *
@@ -46,12 +46,12 @@ extern "C" {
  * process exited.  The WIF* macros (see waitpid(2)) should be used to
  * examine the status to see hold the child exited.
  *
- * \warning This function should not be called if \c ompi_rte_init()
+ * \warning This function should not be called if \c orte_init()
  *          or \c MPI_Init() have been called.  This function is not
  *          safe in a multi-threaded environment in which a handler
  *          for \c SIGCHLD has been registered.
  */
-OMPI_DECLSPEC int ompi_few(char *argv[], int *status);
+OMPI_DECLSPEC int opal_few(char *argv[], int *status);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

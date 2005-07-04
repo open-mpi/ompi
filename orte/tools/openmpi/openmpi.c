@@ -40,12 +40,12 @@
 #include "opal/event/event.h"
 #include "include/constants.h"
 
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "util/os_path.h"
 #include "util/sys_info.h"
 #include "util/univ_info.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
 #include "util/universe_setup_file_io.h"
@@ -61,7 +61,7 @@
 int main(int argc, char **argv)
 {
 #if 0
-    ompi_cmd_line_t *cmd_line = NULL;
+    opal_cmd_line_t *cmd_line = NULL;
     char *universe = NULL;
     pid_t pid;
     bool multi_thread = false;
@@ -78,12 +78,12 @@ int main(int argc, char **argv)
     }
 
     /* setup to read common command line options that span all Open MPI programs */
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+    cmd_line = OBJ_NEW(opal_cmd_line_t);
 
-    ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
+    opal_cmd_line_make_opt(cmd_line, 'v', "version", 0,
 			   "Show version of Open MPI and this program");
 
-    ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0,
+    opal_cmd_line_make_opt(cmd_line, 'h', "help", 0,
 			   "Show help for this function");
 
 
@@ -106,18 +106,18 @@ int main(int argc, char **argv)
     }
 
     /* parse the local commands */
-    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
+    if (OMPI_SUCCESS != opal_cmd_line_parse(cmd_line, true, argc, argv)) {
 	exit(ret);
     }
 
-    if (ompi_cmd_line_is_taken(cmd_line, "help") || 
-        ompi_cmd_line_is_taken(cmd_line, "h")) {
+    if (opal_cmd_line_is_taken(cmd_line, "help") || 
+        opal_cmd_line_is_taken(cmd_line, "h")) {
         printf("...showing ompi_info help message...\n");
         exit(1);
     }
 
-    if (ompi_cmd_line_is_taken(cmd_line, "version") ||
-	ompi_cmd_line_is_taken(cmd_line, "v")) {
+    if (opal_cmd_line_is_taken(cmd_line, "version") ||
+	opal_cmd_line_is_taken(cmd_line, "v")) {
 	printf("...showing off my version!\n");
 	exit(1);
     }

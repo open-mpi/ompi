@@ -20,7 +20,7 @@
 #include "mpi.h"
 #include "include/constants.h"
 #include "communicator/communicator.h"
-#include "util/bit_ops.h"
+#include "opal/util/bit_ops.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
@@ -106,7 +106,7 @@ int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm)
      root (rank 0). */
 
   dim = comm->c_cube_dim;
-  hibit = ompi_hibit(rank, dim);
+  hibit = opal_hibit(rank, dim);
   --dim;
 
   /* Receive from children. */

@@ -25,7 +25,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "util/proc_info.h"
@@ -337,7 +337,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
     free(var);
   
     /* overwrite previously specified values with the above settings */
-    map->app->num_env = ompi_argv_count(map->app->env);
+    map->app->num_env = opal_argv_count(map->app->env);
 
     /* allocate a range of vpids for the daemons */
     rc = orte_ns_base_get_jobid(&daemon_jobid, orte_process_info.my_name);
@@ -365,23 +365,23 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
     }
 
     argc = 0;
-    ompi_argv_append(&argc, &argv, mca_pls_bproc_component.orted);
+    opal_argv_append(&argc, &argv, mca_pls_bproc_component.orted);
     /* check for debug flags */
     if (mca_pls_bproc_component.debug) {
-         ompi_argv_append(&argc, &argv, "--debug");
-         ompi_argv_append(&argc, &argv, "--debug-daemons");
+         opal_argv_append(&argc, &argv, "--debug");
+         opal_argv_append(&argc, &argv, "--debug-daemons");
     }
 
-    ompi_argv_append(&argc, &argv, "--bootproxy");
+    opal_argv_append(&argc, &argv, "--bootproxy");
     orte_ns.convert_jobid_to_string(&param, jobid);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(param);
 
     /* pass along the universe name and location info */
-    ompi_argv_append(&argc, &argv, "--universe");
+    opal_argv_append(&argc, &argv, "--universe");
     asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
                 orte_universe_info.host, orte_universe_info.name);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(param);
 
     if(0 < mca_pls_bproc_component.debug) {
@@ -489,7 +489,7 @@ cleanup:
         free(node_array);
     }
     if(NULL != argv) {
-        ompi_argv_free(argv);
+        opal_argv_free(argv);
     }
     if(NULL != pids) {
         free(pids);

@@ -41,12 +41,12 @@
 #include "util/show_help.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/univ_info.h"
 #include "util/session_dir.h"
 #include "util/printf.h"
-#include "util/daemon_init.h"
+#include "opal/util/daemon_init.h"
 #include "util/universe_setup_file_io.h"
 
 #include "mca/base/base.h"
@@ -72,87 +72,87 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
 /*
  * define the orted context table for obtaining parameters
  */
-ompi_cmd_line_init_t orte_cmd_line_opts[] = {
+opal_cmd_line_init_t orte_cmd_line_opts[] = {
     /* Various "obvious" options */
     { NULL, NULL, NULL, 'h', NULL, "help", 0, 
-      &orted_globals.help, OMPI_CMD_LINE_TYPE_BOOL,
+      &orted_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL, NULL, NULL, '\0', NULL, "version", 0,
-      &orted_globals.version, OMPI_CMD_LINE_TYPE_BOOL,
+      &orted_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
       "Show the orted version" },
 
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
-      &orted_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
+      &orted_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Debug the OpenRTE" },
 
     { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
-      &orted_globals.no_daemonize, OMPI_CMD_LINE_TYPE_BOOL,
+      &orted_globals.no_daemonize, OPAL_CMD_LINE_TYPE_BOOL,
       "Don't daemonize into the background" },
 
     { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
-      &orted_globals.debug_daemons, OMPI_CMD_LINE_TYPE_BOOL,
+      &orted_globals.debug_daemons, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE daemons" },
 
     { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
-      &orted_globals.debug_daemons_file, OMPI_CMD_LINE_TYPE_BOOL,
+      &orted_globals.debug_daemons_file, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE daemons, storing output in files" },
 
     { "rmgr", "bootproxy", "jobid", '\0', NULL, "bootproxy", 1,
-      &orted_globals.bootproxy, OMPI_CMD_LINE_TYPE_INT,
+      &orted_globals.bootproxy, OPAL_CMD_LINE_TYPE_INT,
       "Run as boot proxy for <job-id>" },
 
     { NULL, NULL, NULL, '\0', NULL, "name", 1,
-      &orted_globals.name, OMPI_CMD_LINE_TYPE_STRING,
+      &orted_globals.name, OPAL_CMD_LINE_TYPE_STRING,
       "Set the orte process name"},
 
     { NULL, NULL, NULL, '\0', NULL, "vpid_start", 1,
-      &orted_globals.vpid_start, OMPI_CMD_LINE_TYPE_STRING,
+      &orted_globals.vpid_start, OPAL_CMD_LINE_TYPE_STRING,
       "Set the starting vpid for this job"},
 
     { NULL, NULL, NULL, '\0', NULL, "num_procs", 1,
-      &orted_globals.num_procs, OMPI_CMD_LINE_TYPE_STRING,
+      &orted_globals.num_procs, OPAL_CMD_LINE_TYPE_STRING,
       "Set the number of process in this job"},
 
     { NULL, NULL, NULL, '\0', NULL, "nsreplica", 1,
-      &orte_process_info.ns_replica_uri, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_process_info.ns_replica_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Name service contact information."},
 
     { NULL, NULL, NULL, '\0', NULL, "gprreplica", 1,
-      &orte_process_info.gpr_replica_uri, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_process_info.gpr_replica_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Registry contact information."},
 
     { NULL, NULL, NULL, '\0', NULL, "nodename", 1,
-      &orte_system_info.nodename, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_system_info.nodename, OPAL_CMD_LINE_TYPE_STRING,
       "Node name as specified by host/resource description." },
 
     { "universe", NULL, NULL, '\0', NULL, "universe", 1,
-      &orted_globals.universe, OMPI_CMD_LINE_TYPE_STRING,
+      &orted_globals.universe, OPAL_CMD_LINE_TYPE_STRING,
       "Set the universe name as username@hostname:universe_name for this application" },
 
     { "tmpdir", "base", NULL, '\0', NULL, "tmpdir", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree" },
 
     { "seed", NULL, NULL, '\0', NULL, "seed", 0,
-      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Host replicas for the core universe services"},
 
     { "universe", "persistence", NULL, '\0', NULL, "persistent", 0,
-      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Remain alive after the application process completes"},
 
     { "universe", "scope", NULL, '\0', NULL, "scope", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Set restrictions on who can connect to this universe"},
 
     { NULL, NULL, NULL, '\0', NULL, "report-uri", 1,
-      &orted_globals.uri_pipe, OMPI_CMD_LINE_TYPE_INT,
+      &orted_globals.uri_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Report this process' uri on indicated pipe"},
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
-      NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
+      NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
 extern char **environ;
@@ -162,16 +162,16 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
     int fd;
-    ompi_cmd_line_t *cmd_line = NULL;
+    opal_cmd_line_t *cmd_line = NULL;
     char *log_path = NULL;
     char log_file[PATH_MAX];
     char *jobidstring;
     
     /* setup to check common command line options that just report and die */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
-    ompi_cmd_line_create(cmd_line, orte_cmd_line_opts);
-    if (OMPI_SUCCESS != (ret = ompi_cmd_line_parse(cmd_line, true, 
+    cmd_line = OBJ_NEW(opal_cmd_line_t);
+    opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
+    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, true, 
                                                    argc, argv))) {
         return ret;
     }
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
     /* check for help and version requests */
     if (orted_globals.help) {
         char *args = NULL;
-        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        args = opal_cmd_line_get_usage_msg(cmd_line);
         ompi_show_help("help-orted.txt", "orted:usage", false,
                        argv[0], args);
         free(args);
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
     if(orted_globals.debug == false &&
        orted_globals.debug_daemons == false && 
        orted_globals.no_daemonize == false) {
-        orte_daemon_init(NULL);
+        opal_daemon_init(NULL);
     }
 
     /* Intialize the Open RTE */

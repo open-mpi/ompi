@@ -24,7 +24,7 @@
 #include "util/show_help.h"
 #include "util/show_help_lex.h"
 #include "util/printf.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 
 static int open_file(const char *base, const char *topic);
 static int find_topic(const char *base, const char *topic);
@@ -222,7 +222,7 @@ static int read_message(char ***array)
             if (NULL == tmp) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            ompi_argv_append_nosize(array, tmp);
+            opal_argv_append_nosize(array, tmp);
             break;
 
         default:
@@ -251,7 +251,7 @@ static int output(bool want_error_header, char **lines,
     /* See how much space we need */
 
     len = want_error_header ? 2 * strlen(dash_line) : 0;
-    count = ompi_argv_count(lines);
+    count = opal_argv_count(lines);
     for (i = 0; i < count; ++i) {
         if (NULL == lines[i]) {
             break;
@@ -310,7 +310,7 @@ static int destroy_message(char **lines)
 {
     int i, count;
 
-    count = ompi_argv_count(lines);
+    count = opal_argv_count(lines);
     for (i = 0; i < count; ++i) {
         if (NULL == lines[i]) {
             break;

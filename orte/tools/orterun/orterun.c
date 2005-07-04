@@ -35,15 +35,15 @@
 #include "opal/event/event.h"
 #include "class/orte_pointer_array.h"
 #include "util/proc_info.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/ompi_environ.h"
 #include "util/path.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "util/sys_info.h"
 #include "opal/util/output.h"
 #include "util/universe_setup_file_io.h"
 #include "util/show_help.h"
-#include "util/basename.h"
+#include "opal/util/basename.h"
 #include "opal/threads/condition.h"
 
 #include "mca/base/base.h"
@@ -107,105 +107,105 @@ struct proc_info_t {
 struct proc_info_t *proc_infos = NULL;
 
 
-ompi_cmd_line_init_t cmd_line_init[] = {
+opal_cmd_line_init_t cmd_line_init[] = {
     /* Various "obvious" options */
     { NULL, NULL, NULL, 'h', NULL, "help", 0, 
-      &orterun_globals.help, OMPI_CMD_LINE_TYPE_BOOL,
+      &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
     { NULL, NULL, NULL, '\0', NULL, "version", 0,
-      &orterun_globals.version, OMPI_CMD_LINE_TYPE_BOOL,
+      &orterun_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
       "Show the orterun version" },
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
-      &orterun_globals.verbose, OMPI_CMD_LINE_TYPE_BOOL,
+      &orterun_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
 
     /* Use an appfile */
     { NULL, NULL, NULL, '\0', NULL, "app", 1,
-      &orterun_globals.appfile, OMPI_CMD_LINE_TYPE_STRING,
+      &orterun_globals.appfile, OPAL_CMD_LINE_TYPE_STRING,
       "Provide an appfile; ignore all other command line options" },
 
     /* Number of processes; -c, -n, --n, -np, and --np are all
        synonyms */
     { NULL, NULL, NULL, 'c', "np", "np", 1,
-      &orterun_globals.num_procs, OMPI_CMD_LINE_TYPE_SIZE_T,
+      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_SIZE_T,
       "Number of processes to run" },
     { NULL, NULL, NULL, '\0', "n", "n", 1,
-      &orterun_globals.num_procs, OMPI_CMD_LINE_TYPE_SIZE_T,
+      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_SIZE_T,
       "Number of processes to run" },
 
     /* Set a hostfile */
     { "rds", "hostfile", "path", '\0', "hostfile", "hostfile", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile" },
     { "rds", "hostfile", "path", '\0', "machinefile", "machinefile", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile" },
 
     /* Don't wait for the process to finish before exiting */
     { NULL, NULL, NULL, '\0', "nw", "nw", 0,
-      &orterun_globals.no_wait_for_job_completion, OMPI_CMD_LINE_TYPE_BOOL,
+      &orterun_globals.no_wait_for_job_completion, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch the processes and do not wait for their completion (i.e., let orterun complete as soon a successful launch occurs)" },
 
     /* Set the max number of aborted processes to show */
     { NULL, NULL, NULL, '\0', "aborted", "aborted", 1,
-      &max_display_aborted, OMPI_CMD_LINE_TYPE_INT,
+      &max_display_aborted, OPAL_CMD_LINE_TYPE_INT,
       "The maximum number of aborted processes to display" },
 
     /* Export environment variables; potentially used multiple times,
        so it does not make sense to set into a variable */
     { NULL, NULL, NULL, 'x', NULL, NULL, 1,
-      NULL, OMPI_CMD_LINE_TYPE_NULL,
+      NULL, OPAL_CMD_LINE_TYPE_NULL,
       "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)" },
 
     /* Specific mapping (C, cX, N, nX) */
     { NULL, NULL, NULL, '\0', NULL, "map", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Mapping of processes to nodes / CPUs" },
     { NULL, NULL, NULL, '\0', "bynode", "bynode", 0,
-      &orterun_globals.by_node, OMPI_CMD_LINE_TYPE_BOOL,
+      &orterun_globals.by_node, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by node" },
     { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
-      &orterun_globals.by_slot, OMPI_CMD_LINE_TYPE_BOOL,
+      &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by slot (the default)" },
 
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
-      &orterun_globals.wdir, OMPI_CMD_LINE_TYPE_STRING,
+      &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Set the working directory of the started processes" },
     { NULL, NULL, NULL, '\0', "path", "path", 1,
-      &orterun_globals.path, OMPI_CMD_LINE_TYPE_STRING,
+      &orterun_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
     /* These arguments can be specified multiple times */
     { NULL, NULL, NULL, '\0', "arch", "arch", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Architecture to start processes on" },
     { NULL, NULL, NULL, 'H', "host", "host", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
 
     /* OpenRTE arguments */
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
-      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
     { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
-      NULL, OMPI_CMD_LINE_TYPE_INT,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
       "Enable debugging of any OpenRTE daemons used by this application" },
     { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
-      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
     { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
-      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not detach OpenRTE daemons used by this application" },
     { "universe", NULL, NULL, '\0', NULL, "universe", 1,
-      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Set the universe name as username@hostname:universe_name for this application" },
     { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
-      &orte_process_info.tmpdir_base, OMPI_CMD_LINE_TYPE_STRING,
+      &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
-      NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
+      NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
 
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 
     /* Setup the abort message (for use in the signal handler) */
 
-    orterun_basename = ompi_basename(argv[0]);
+    orterun_basename = opal_basename(argv[0]);
     asprintf(&abort_msg, "%s: killing job...\n", orterun_basename);
     abort_msg_len = strlen(abort_msg);
 
@@ -623,20 +623,20 @@ static int init_globals(void)
 
 static int parse_globals(int argc, char* argv[])
 {
-    ompi_cmd_line_t cmd_line;
+    opal_cmd_line_t cmd_line;
     int ras;
 
     /* Setup and parse the command line */
 
     init_globals();
-    ompi_cmd_line_create(&cmd_line, cmd_line_init);
-    ompi_cmd_line_parse(&cmd_line, true, argc, argv);
+    opal_cmd_line_create(&cmd_line, cmd_line_init);
+    opal_cmd_line_parse(&cmd_line, true, argc, argv);
 
     /* Check for help and version requests */
 
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
-        args = ompi_cmd_line_get_usage_msg(&cmd_line);
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
         ompi_show_help("help-orterun.txt", "orterun:usage", false,
                        orterun_basename, args);
         free(args);
@@ -690,7 +690,7 @@ static int parse_locals(int argc, char* argv[])
 
     temp_argc = 0;
     temp_argv = NULL;
-    ompi_argv_append(&temp_argc, &temp_argv, argv[0]);
+    opal_argv_append(&temp_argc, &temp_argv, argv[0]);
     orte_pointer_array_init(&apps_pa, 1, argc + 1, 2);
 
     env = NULL;
@@ -699,9 +699,9 @@ static int parse_locals(int argc, char* argv[])
             
             /* Make an app with this argv */
 
-            if (ompi_argv_count(temp_argv) > 1) {
+            if (opal_argv_count(temp_argv) > 1) {
                 if (NULL != env) {
-                    ompi_argv_free(env);
+                    opal_argv_free(env);
                     env = NULL;
                 }
 
@@ -724,14 +724,14 @@ static int parse_locals(int argc, char* argv[])
             
                 temp_argc = 0;
                 temp_argv = NULL;
-                ompi_argv_append(&temp_argc, &temp_argv, argv[0]);
+                opal_argv_append(&temp_argc, &temp_argv, argv[0]);
             }
         } else {
-            ompi_argv_append(&temp_argc, &temp_argv, argv[i]);
+            opal_argv_append(&temp_argc, &temp_argv, argv[i]);
         }
     }
 
-    if (ompi_argv_count(temp_argv) > 1) {
+    if (opal_argv_count(temp_argv) > 1) {
         app = OBJ_NEW(orte_app_context_t);
         rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
         if (ORTE_SUCCESS != rc) {
@@ -747,9 +747,9 @@ static int parse_locals(int argc, char* argv[])
         }
     }
     if (NULL != env) {
-        ompi_argv_free(env);
+        opal_argv_free(env);
     }
-    ompi_argv_free(temp_argv);
+    opal_argv_free(temp_argv);
 
     /* All done */
 
@@ -760,7 +760,7 @@ static int parse_locals(int argc, char* argv[])
 static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                       bool *made_app, char ***env)
 {
-    ompi_cmd_line_t cmd_line;
+    opal_cmd_line_t cmd_line;
     char cwd[OMPI_PATH_MAX];
     int i, j, rc;
     char *param, *value, *value2;
@@ -818,8 +818,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         else if (0 == strcmp("-arch", argv[i])) {
             char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_ARCH, '\0' };
 
-            ompi_argv_append(&new_argc, &new_argv, "-rawmap");
-            ompi_argv_append(&new_argc, &new_argv, str);
+            opal_argv_append(&new_argc, &new_argv, "-rawmap");
+            opal_argv_append(&new_argc, &new_argv, str);
             save_arg = false;
         }
 
@@ -828,8 +828,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         else if (0 == strcmp("-host", argv[i])) {
             char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_HOSTNAME, '\0' };
 
-            ompi_argv_append(&new_argc, &new_argv, "-rawmap");
-            ompi_argv_append(&new_argc, &new_argv, str);
+            opal_argv_append(&new_argc, &new_argv, "-rawmap");
+            opal_argv_append(&new_argc, &new_argv, str);
             save_arg = false;
         }
 
@@ -838,12 +838,12 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         if (map_data) {
             char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_CN, '\0' };
 
-            ompi_argv_append(&new_argc, &new_argv, "-rawmap");
-            ompi_argv_append(&new_argc, &new_argv, str);
+            opal_argv_append(&new_argc, &new_argv, "-rawmap");
+            opal_argv_append(&new_argc, &new_argv, str);
         }
 
         if (save_arg) {
-            ompi_argv_append(&new_argc, &new_argv, argv[i]);
+            opal_argv_append(&new_argc, &new_argv, argv[i]);
         }
     }
 
@@ -852,13 +852,13 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
        message. */
 
     init_globals();
-    ompi_cmd_line_create(&cmd_line, cmd_line_init);
+    opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
     cmd_line_made = true;
-    ompi_cmd_line_make_opt3(&cmd_line, '\0', NULL, "rawmap", 2,
+    opal_cmd_line_make_opt3(&cmd_line, '\0', NULL, "rawmap", 2,
                             "Hidden / internal parameter -- users should not use this!");
-    rc = ompi_cmd_line_parse(&cmd_line, true, new_argc, new_argv);
-    ompi_argv_free(new_argv);
+    rc = opal_cmd_line_parse(&cmd_line, true, new_argc, new_argv);
+    opal_argv_free(new_argv);
     new_argv = NULL;
     if (OMPI_SUCCESS != rc) {
         goto cleanup;
@@ -875,7 +875,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* Setup application context */
 
     app = OBJ_NEW(orte_app_context_t);
-    ompi_cmd_line_get_tail(&cmd_line, &app->argc, &app->argv);
+    opal_cmd_line_get_tail(&cmd_line, &app->argc, &app->argv);
 
     /* See if we have anything left */
 
@@ -888,31 +888,31 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     /* Grab all OMPI_* environment variables */
 
-    app->env = ompi_argv_copy(*env);
-    app->num_env = ompi_argv_count(*env);
+    app->env = opal_argv_copy(*env);
+    app->num_env = opal_argv_count(*env);
     for (i = 0; NULL != environ[i]; ++i) {
         if (0 == strncmp("OMPI_", environ[i], 5)) {
-            ompi_argv_append_nosize(&app->env, environ[i]);
+            opal_argv_append_nosize(&app->env, environ[i]);
         }
     }
 
     /* Did the user request to export any environment variables? */
 
-    if (ompi_cmd_line_is_taken(&cmd_line, "x")) {
-        j = ompi_cmd_line_get_ninsts(&cmd_line, "x");
+    if (opal_cmd_line_is_taken(&cmd_line, "x")) {
+        j = opal_cmd_line_get_ninsts(&cmd_line, "x");
         for (i = 0; i < j; ++i) {
-            param = ompi_cmd_line_get_param(&cmd_line, "x", i, 0);
+            param = opal_cmd_line_get_param(&cmd_line, "x", i, 0);
 
             if (NULL != strchr(param, '=')) {
-                ompi_argv_append_nosize(&app->env, param);
+                opal_argv_append_nosize(&app->env, param);
             } else {
                 value = getenv(param);
                 if (NULL != value) {
                     if (NULL != strchr(value, '=')) {
-                        ompi_argv_append_nosize(&app->env, value);
+                        opal_argv_append_nosize(&app->env, value);
                     } else {
                         asprintf(&value2, "%s=%s", param, value);
-                        ompi_argv_append_nosize(&app->env, value2);
+                        opal_argv_append_nosize(&app->env, value2);
                         free(value2);
                     }
                 } else {
@@ -921,13 +921,13 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             }
         }
     }
-    app->num_env = ompi_argv_count(app->env);
+    app->num_env = opal_argv_count(app->env);
 
     /* Did the user request a specific path? */
 
     if (NULL != orterun_globals.path) {
         asprintf(&value, "PATH=%s", orterun_globals.path);
-        ompi_argv_append_nosize(&app->env, value);
+        opal_argv_append_nosize(&app->env, value);
         free(value);
     }
 
@@ -943,8 +943,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* Did the user request any mappings?  They were all converted to
        --rawmap items, above. */
 
-    if (ompi_cmd_line_is_taken(&cmd_line, "rawmap")) {
-        j = ompi_cmd_line_get_ninsts(&cmd_line, "rawmap");
+    if (opal_cmd_line_is_taken(&cmd_line, "rawmap")) {
+        j = opal_cmd_line_get_ninsts(&cmd_line, "rawmap");
         app->map_data = malloc(sizeof(orte_app_context_map_t*) * j);
         if (NULL == app->map_data) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -955,8 +955,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             app->map_data[i] = NULL;
         }
         for (i = 0; i < j; ++i) {
-            value = ompi_cmd_line_get_param(&cmd_line, "rawmap", i, 0);
-            value2 = ompi_cmd_line_get_param(&cmd_line, "rawmap", i, 1);
+            value = opal_cmd_line_get_param(&cmd_line, "rawmap", i, 0);
+            value2 = opal_cmd_line_get_param(&cmd_line, "rawmap", i, 1);
             app->map_data[i] = OBJ_NEW(orte_app_context_map_t);
             if (NULL == app->map_data[i]) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -984,7 +984,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* Find the argv[0] in the path, but only if not absolute or
        relative pathname was specified */
 
-    value = ompi_basename(app->argv[0]);
+    value = opal_basename(app->argv[0]);
     if (strlen(value) == strlen(app->argv[0])) {
         app->app = ompi_path_findv(app->argv[0], 0, environ, app->cwd); 
     } else {
@@ -1010,7 +1010,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         OBJ_RELEASE(app);
     }
     if (NULL != new_argv) {
-        ompi_argv_free(new_argv);
+        opal_argv_free(new_argv);
     }
     if (cmd_line_made) {
         OBJ_DESTRUCT(&cmd_line);
@@ -1096,8 +1096,8 @@ static int parse_appfile(char *filename, char ***env)
 
         /* We got a line with *something* on it.  So process it */
 
-        argv = ompi_argv_split(line, ' ');
-        argc = ompi_argv_count(argv);
+        argv = opal_argv_split(line, ' ');
+        argc = opal_argv_count(argv);
         if (argc > 0) {
 
             /* Create a temporary env to play with in the recursive
@@ -1105,7 +1105,7 @@ static int parse_appfile(char *filename, char ***env)
                we can have a consistent global env */
 
             if (NULL != *env) {
-                tmp_env = ompi_argv_copy(*env);
+                tmp_env = opal_argv_copy(*env);
                 if (NULL == tmp_env) {
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
@@ -1120,7 +1120,7 @@ static int parse_appfile(char *filename, char ***env)
                 exit(1);
             }
             if (NULL != tmp_env) {
-                ompi_argv_free(tmp_env);
+                opal_argv_free(tmp_env);
             }
             if (made_app) {
                 size_t dummy;

@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -42,8 +42,8 @@ int mca_ptl_base_select(bool enable_progress_threads,
   mca_ptl_base_module_t **modules;
   mca_ptl_base_selected_module_t *sm;
 
-  char** include = ompi_argv_split(mca_ptl_base_include, ',');
-  char** exclude = ompi_argv_split(mca_ptl_base_exclude, ',');
+  char** include = opal_argv_split(mca_ptl_base_include, ',');
+  char** exclude = opal_argv_split(mca_ptl_base_exclude, ',');
 
   /* Traverse the list of opened modules; call their init
      functions. */

@@ -29,7 +29,7 @@
 #endif
 
 #include "mca/gpr/gpr_types.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 
 #include "runtime/runtime_types.h"
 #include "util/univ_info.h"

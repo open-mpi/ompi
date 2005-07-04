@@ -21,7 +21,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
@@ -72,7 +72,7 @@ static size_t orte_ras_bjs_node_slots(char* node_name)
     char** ptr;
     size_t count = 0;
     if(nodelist == NULL)
-        nodelist = ompi_argv_split(getenv("NODELIST"), ',');
+        nodelist = opal_argv_split(getenv("NODELIST"), ',');
     ptr = nodelist;
     while(ptr && *ptr) {
         if(strcmp(*ptr, node_name) == 0)

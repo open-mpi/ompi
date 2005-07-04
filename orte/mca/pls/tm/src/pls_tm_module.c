@@ -31,7 +31,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "runtime/runtime.h"

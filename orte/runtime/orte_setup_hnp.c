@@ -43,7 +43,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "runtime/orte_wait.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/ompi_environ.h"
 #include "opal/util/output.h"
 #include "util/path.h"
@@ -346,8 +346,8 @@ MOVEON:
     mca_base_param_lookup_string(id, &param);
 
     /* Initialize the argv array */
-    argv = ompi_argv_split(param, ' ');
-    argc = ompi_argv_count(argv);
+    argv = opal_argv_split(param, ' ');
+    argc = opal_argv_count(argv);
     if (argc <= 0) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         rc = ORTE_ERR_BAD_PARAM;
@@ -359,46 +359,46 @@ MOVEON:
     path = ompi_path_findv(argv[0], 0, environ, NULL);
 
     /* add the username and nodename */
-    ompi_argv_append(&argc, &argv, "-l");
-    ompi_argv_append(&argc, &argv, uid);
-    ompi_argv_append(&argc, &argv, hn);
+    opal_argv_append(&argc, &argv, "-l");
+    opal_argv_append(&argc, &argv, uid);
+    opal_argv_append(&argc, &argv, hn);
 
     /* add the probe application */
-    ompi_argv_append(&argc, &argv, orteprobe);
+    opal_argv_append(&argc, &argv, orteprobe);
     
     /* tell the probe it's name */
-    ompi_argv_append(&argc, &argv, "--name");
-    ompi_argv_append(&argc, &argv, name_string);
+    opal_argv_append(&argc, &argv, "--name");
+    opal_argv_append(&argc, &argv, name_string);
 
     /* setup probe's ns contact info */
-    ompi_argv_append(&argc, &argv, "--nsreplica");
+    opal_argv_append(&argc, &argv, "--nsreplica");
     if(NULL != orte_process_info.ns_replica_uri) {
         uri = strdup(orte_process_info.ns_replica_uri);
     } else {
         uri = orte_rml.get_uri();
     }
     asprintf(&param, "\"%s\"", uri);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(param);
     free(uri);
 
     /* setup probe's gpr contact info */
-    ompi_argv_append(&argc, &argv, "--gprreplica");
+    opal_argv_append(&argc, &argv, "--gprreplica");
     if(NULL != orte_process_info.gpr_replica_uri) {
         uri = strdup(orte_process_info.gpr_replica_uri);
     } else {
         uri = orte_rml.get_uri();
     }
     asprintf(&param, "\"%s\"", uri);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(param);
     free(uri);
 
     /* tell the probe who to report to */
     uri = orte_rml.get_uri();
     asprintf(&param, "\"%s\"", uri);
-    ompi_argv_append(&argc, &argv, "--requestor");
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, "--requestor");
+    opal_argv_append(&argc, &argv, param);
     free(param);
     free(uri);
     
@@ -407,14 +407,14 @@ MOVEON:
      */
     id = mca_base_param_register_string("scope",NULL,NULL,NULL,"private");
     mca_base_param_lookup_string(id, &param);
-    ompi_argv_append(&argc, &argv, "--scope");
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, "--scope");
+    opal_argv_append(&argc, &argv, param);
     free(param);
     
     id = mca_base_param_register_int("persistent",NULL,NULL,NULL,(int)false);
     mca_base_param_lookup_int(id, &intparam);
     if (intparam) {
-        ompi_argv_append(&argc, &argv, "--persistent");
+        opal_argv_append(&argc, &argv, "--persistent");
     }
     
     /* issue the non-blocking recv to get the probe's findings */

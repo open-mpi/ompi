@@ -68,7 +68,7 @@ extern "C" {
      * This function is intented to be used in the MPI F77 bindings to
      * convert arrays of fortran strings to argv-style arrays of C
      * strings.  The argv array will be allocated and returned; it is
-     * the caller's responsibility to invoke ompi_argv_free() to free
+     * the caller's responsibility to invoke opal_argv_free() to free
      * it later (or equivalent).
      */
     int ompi_fortran_argv_f2c(char *farray, int len, char ***cargv);
@@ -83,7 +83,7 @@ extern "C" {
      * This function is intented to be used in the MPI F77 bindings to
      * convert arrays of fortran strings to argv-style arrays of C
      * strings.  The argv array will be allocated and returned; it is
-     * the caller's responsibility to invoke ompi_argv_free() to free
+     * the caller's responsibility to invoke opal_argv_free() to free
      * each content of argv array and call free to deallocate the argv
      * array itself
      */

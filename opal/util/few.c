@@ -16,6 +16,7 @@
 
 
 #include "ompi_config.h"
+
 #include <stdio.h>
 #include <errno.h>
 #ifdef HAVE_SYS_WAIT_H
@@ -27,9 +28,9 @@
 #endif
 
 #include "include/constants.h"
-#include "util/few.h"
+#include "opal/util/few.h"
 
-int ompi_few(char *argv[], int *status)
+int opal_few(char *argv[], int *status)
 {
 #ifndef WIN32
     pid_t pid, ret;

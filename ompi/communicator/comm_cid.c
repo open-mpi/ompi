@@ -18,7 +18,7 @@
 #include "mpi.h"
 
 #include "dps/dps.h"
-#include "util/convert.h"
+#include "opal/util/convert.h"
 #include "mca/ns/ns_types.h"
 #include "communicator/communicator.h"
 #include "proc/proc.h"
@@ -658,7 +658,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         }
         OBJ_RELEASE(sbuf);
         OBJ_RELEASE(rbuf);
-        if (ORTE_SUCCESS != (rc = ompi_sizet2int(size_count, &count, true))) {
+        if (ORTE_SUCCESS != (rc = opal_size2int(size_count, &count, true))) {
             goto exit;
         }
 
