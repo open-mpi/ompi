@@ -185,7 +185,7 @@ for type in $found_types; do
     #
     project=""
     for tmp_project in $found_projects; do
-        if test -d "$tmp_project/mca/$type" ; then
+        if test -d "$srcdir/$tmp_project/mca/$type" ; then
              project="$tmp_project"
         fi
     done
