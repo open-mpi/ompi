@@ -18,6 +18,7 @@ include $(top_ompi_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = \
         -DOMPI_BUILDING=1 \
+        -I$(top_ompi_srcdir) \
         -I$(top_ompi_srcdir)/include \
         -I$(top_ompi_builddir)/include \
         -I$(top_ompi_builddir)/opal \
