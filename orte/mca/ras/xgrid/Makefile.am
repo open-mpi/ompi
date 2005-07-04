@@ -20,8 +20,7 @@ include $(top_ompi_srcdir)/config/Makefile.options
 
 EXTRA_DIST = VERSION
 
-AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
-    -I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include
+AM_CPPFLAGS = -I$(top_ompi_builddir)/include
 
 xgrid_sources = \
 	src/ras_xgrid.h \
