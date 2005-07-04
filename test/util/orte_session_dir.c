@@ -33,8 +33,8 @@
 #include "mca/ns/ns_types.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
-#include "util/os_path.h"
-#include "util/os_create_dirpath.h"
+#include "opal/util/os_path.h"
+#include "opal/util/os_create_dirpath.h"
 #include "util/session_dir.h"
 #include "util/proc_info.h"
 #include "runtime/runtime.h"
@@ -159,7 +159,7 @@ static bool test1(void)
 
     clear_proc_info();
 
-    prefix = orte_os_path(false, "tmp", NULL);
+    prefix = opal_os_path(false, "tmp", NULL);
     if (OMPI_ERROR == orte_session_dir(true, prefix, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	fprintf(test_out, "test1 - couldn't create specified path\n");
         free(prefix);
@@ -303,17 +303,17 @@ static bool test7(void)
 
     /* create some files */
 
-    filenm[0] = orte_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
+    filenm[0] = opal_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
     fp = fopen(filenm[0], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[1] = orte_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
+    filenm[1] = opal_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
     fp = fopen(filenm[1], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[2] = orte_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
+    filenm[2] = opal_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
     fp = fopen(filenm[2], "w");
     fprintf(fp, "ss");
     fclose(fp);
@@ -348,17 +348,17 @@ static bool test8(void)
 
     /* create some files */
 
-    filenm[0] = orte_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
+    filenm[0] = opal_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
     fp = fopen(filenm[0], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[1] = orte_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
+    filenm[1] = opal_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
     fp = fopen(filenm[1], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[2] = orte_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
+    filenm[2] = opal_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
     fp = fopen(filenm[2], "w");
     fprintf(fp, "ss");
     fclose(fp);

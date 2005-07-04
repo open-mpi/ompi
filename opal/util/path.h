@@ -16,8 +16,8 @@
  * @file
  */
 
-#ifndef OMPI_PATH_H
-#define OMPI_PATH_H
+#ifndef OPAL_PATH_H
+#define OPAL_PATH_H
 
 #include "ompi_config.h"
 
@@ -42,7 +42,7 @@ extern "C" {
      *  Environment variables must be followed by a path delimiter or
      *  end-of-string.
      */
-    OMPI_DECLSPEC char *ompi_path_find(char *fname, char **pathv, int mode,
+    OMPI_DECLSPEC char *opal_path_find(char *fname, char **pathv, int mode,
                                        char **envv);
 
     /**
@@ -61,10 +61,10 @@ extern "C" {
      *  given by the $PATH environment variable.  Replaces "." in the
      *  path with the working dir.
      */
-    OMPI_DECLSPEC char *ompi_path_findv(char *fname, int mode, 
+    OMPI_DECLSPEC char *opal_path_findv(char *fname, int mode, 
                                         char **envv, char *wrkdir);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif /* OMPI_PATH_H */
+#endif /* OPAL_PATH_H */

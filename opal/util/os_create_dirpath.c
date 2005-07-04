@@ -15,7 +15,7 @@
  */
 
 
-#include "orte_config.h"
+#include "ompi_config.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -27,11 +27,11 @@
 #include <stdlib.h>
 
 #include "include/constants.h"
-#include "util/os_create_dirpath.h"
+#include "opal/util/os_create_dirpath.h"
 #include "util/sys_info.h"
 #include "opal/util/argv.h"
 
-int orte_os_create_dirpath(const char *path, const mode_t mode)
+int opal_os_create_dirpath(const char *path, const mode_t mode)
 {
     struct stat buf;
     char **parts, *tmp;

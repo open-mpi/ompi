@@ -32,7 +32,7 @@
 #import "mca/ras/base/ras_base_node.h"
 #import "mca/gpr/gpr.h"
 #import "mca/rml/rml.h"
-#import "util/path.h"
+#import "opal/util/path.h"
 
 #import "pls_xgrid_client.h"
 
@@ -247,7 +247,7 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
     char *orted_path;
 
     /* find orted */
-    orted_path = ompi_path_findv((char*) [orted cString], 0, environ, NULL); 
+    orted_path = opal_path_findv((char*) [orted cString], 0, environ, NULL); 
 
     /* query the list of nodes allocated to the job */
     OBJ_CONSTRUCT(&nodes, opal_list_t);

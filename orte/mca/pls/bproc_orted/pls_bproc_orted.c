@@ -37,9 +37,9 @@
 #include "mca/rmaps/base/rmaps_base_map.h"
 #include "pls_bproc_orted.h"
 #include "mca/ns/base/base.h"
-#include "util/os_create_dirpath.h"
+#include "opal/util/os_create_dirpath.h"
 #include "mca/oob/base/base.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "opal/runtime/opal_progress.h"
 #include "pls_bproc_orted.h"
 
@@ -74,7 +74,7 @@ static int pls_bproc_orted_make_dir(char *directory)
         pls_bproc_orted_delete_dir_tree(directory);
     }
     /* try to create it with proper mode */
-    return(orte_os_create_dirpath(directory, my_mode)); 
+    return(opal_os_create_dirpath(directory, my_mode)); 
 }
 
 /**
@@ -289,7 +289,7 @@ static void pls_bproc_orted_delete_dir_tree(char * path) {
     while (NULL != (ep = readdir(dp)) ) {
         /* skip: . and ..  */
         if ((0 != strcmp(ep->d_name, ".")) && (0 != strcmp(ep->d_name, ".."))) {
-            filenm = orte_os_path(false, path, ep->d_name, NULL);
+            filenm = opal_os_path(false, path, ep->d_name, NULL);
             ret = stat(filenm, &buf);
             if (ret < 0 || S_ISDIR(buf.st_mode)) {
                 pls_bproc_orted_delete_dir_tree(filenm);

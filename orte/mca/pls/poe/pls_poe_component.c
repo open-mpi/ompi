@@ -25,7 +25,7 @@
 #include "include/orte_constants.h"
 #include "mca/pls/pls.h"
 #include "pls_poe.h"
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "opal/util/argv.h"
 #include "mca/pls/poe/pls-poe-version.h"
 #include "mca/base/mca_base_param.h"
@@ -157,11 +157,11 @@ orte_pls_poe_component_init - initialize component, check if we can run on this 
 orte_pls_base_module_t *orte_pls_poe_component_init(int *priority)
 {
     extern char **environ;
-    mca_pls_poe_component.path = ompi_path_findv(mca_pls_poe_component.argv[0], 0, environ, NULL);
+    mca_pls_poe_component.path = opal_path_findv(mca_pls_poe_component.argv[0], 0, environ, NULL);
     if (NULL == mca_pls_poe_component.path) {
         return NULL;
     }
-    mca_pls_poe_component.env = ompi_path_findv(mca_pls_poe_component.env, 0, environ, NULL);
+    mca_pls_poe_component.env = opal_path_findv(mca_pls_poe_component.env, 0, environ, NULL);
     if (NULL == mca_pls_poe_component.env) {
         return NULL;
     }

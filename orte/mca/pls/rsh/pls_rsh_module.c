@@ -42,7 +42,7 @@
 #include "util/univ_info.h"
 #include "util/session_dir.h"
 #include "opal/util/if.h"
-#include "util/path.h"
+#include "opal/util/path.h"
 #include "opal/event/event.h"
 #include "runtime/orte_wait.h"
 
@@ -460,7 +460,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (0 == strcmp(node->node_name, orte_system_info.nodename) ||
                 opal_ifislocal(node->node_name)) {
                 exec_argv = &argv[local_exec_index];
-                exec_path = ompi_path_findv(exec_argv[0], 0, environ, NULL);
+                exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
             } else {
                 exec_argv = argv;
                 exec_path = strdup(mca_pls_rsh_component.path);

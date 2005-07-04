@@ -20,7 +20,7 @@
 #include "mca/base/mca_base_param.h"
 #include "util/proc_info.h"
 #include "opal/util/output.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "mca/rds/hostfile/rds_hostfile.h"
 
 /*
@@ -97,7 +97,7 @@ static int orte_rds_hostfile_open(void)
    printf("Unimplemented feature for windows\n");
    return ORTE_ERROR;
 #else
-    char *path = orte_os_path(false, ORTE_SYSCONFDIR, "openmpi-default-hostfile", NULL);
+    char *path = opal_os_path(false, ORTE_SYSCONFDIR, "openmpi-default-hostfile", NULL);
     OBJ_CONSTRUCT(&mca_rds_hostfile_component.lock, opal_mutex_t);
     mca_rds_hostfile_component.debug = orte_rds_hostfile_param_register_int("debug",1);
     mca_rds_hostfile_component.path = orte_rds_hostfile_param_register_string("path", path);

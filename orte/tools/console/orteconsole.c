@@ -31,7 +31,7 @@
 #include "util/proc_info.h"
 #include "util/session_dir.h"
 #include "opal/util/output.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 #include "util/show_help.h"
 #include "util/universe_setup_file_io.h"
 #include "runtime/runtime.h"

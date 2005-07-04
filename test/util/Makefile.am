@@ -20,9 +20,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 check_PROGRAMS = \
 	ompi_numtostr \
 	opal_if \
-	orte_os_path \
+	opal_os_path \
 	orte_sys_info \
-	orte_os_create_dirpath \
+	opal_os_create_dirpath \
     orte_session_dir \
 	opal_argv \
     opal_basename \
@@ -55,11 +55,11 @@ opal_basename_LDADD = \
         $(top_builddir)/test/support/libsupport.a 
 opal_basename_DEPENDENCIES = $(opal_basename_LDADD)
 
-orte_os_path_SOURCES = orte_os_path.c
-orte_os_path_LDADD = \
+opal_os_path_SOURCES = opal_os_path.c
+opal_os_path_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
-orte_os_path_DEPENDENCIES = $(orte_os_path_LDADD)
+opal_os_path_DEPENDENCIES = $(opal_os_path_LDADD)
 
 
 orte_sys_info_SOURCES = orte_sys_info.c
@@ -68,11 +68,11 @@ orte_sys_info_LDADD = \
         $(top_builddir)/test/support/libsupport.a 
 orte_sys_info_DEPENDENCIES = $(orte_sys_info_LDADD)
 
-orte_os_create_dirpath_SOURCES = orte_os_create_dirpath.c
-orte_os_create_dirpath_LDADD = \
+opal_os_create_dirpath_SOURCES = opal_os_create_dirpath.c
+opal_os_create_dirpath_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
-orte_os_create_dirpath_DEPENDENCIES = $(orte_os_create_dirpath_LDADD)
+opal_os_create_dirpath_DEPENDENCIES = $(opal_os_create_dirpath_LDADD)
 
 orte_session_dir_SOURCES = orte_session_dir.c
 orte_session_dir_LDADD = \

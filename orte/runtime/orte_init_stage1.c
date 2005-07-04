@@ -47,7 +47,7 @@
 #include "util/sys_info.h"
 #include "opal/util/cmd_line.h"
 #include "util/universe_setup_file_io.h"
-#include "util/os_path.h"
+#include "opal/util/os_path.h"
 
 #include "runtime/runtime.h"
 #include "runtime/runtime_internal.h"
@@ -329,7 +329,7 @@ int orte_init_stage1(void)
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        contact_path = orte_os_path(false, orte_process_info.universe_session_dir,
+        contact_path = opal_os_path(false, orte_process_info.universe_session_dir,
                     "universe-setup.txt", NULL);
         if (orte_debug_flag) {
             opal_output(0, "[%lu,%lu,%lu] contact_file %s",

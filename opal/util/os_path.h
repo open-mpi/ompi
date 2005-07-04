@@ -17,7 +17,7 @@
 /** @file:
  * Creates an operating system-acceptable path name.
  *
- * The orte_os_path() function takes a variable number of string arguments and
+ * The opal_os_path() function takes a variable number of string arguments and
  * concatenates them into a path name using the path separator character appropriate
  * to the local operating system. NOTE: the string returned by this function has been
  * malloc'd - thus, the user is responsible for free'ing the memory used by
@@ -36,9 +36,13 @@
  *
  */
 
-#include "orte_config.h"
+#include "ompi_config.h"
+
 #include <stdio.h>
 #include <stdarg.h>
+
+#ifndef OPAL_OS_PATH_H
+#define OPAL_OS_PATH_H
 
 /** 
  * @param relative A boolean that specifies if the path name is to be constructed
@@ -55,4 +59,6 @@
  * appropriate to the local operating system. The path_name string has been malloc'd
  * and therefore the user is responsible for free'ing the field.
 */
-ORTE_DECLSPEC char *orte_os_path(bool relative, ...);
+OMPI_DECLSPEC char *opal_os_path(bool relative, ...);
+
+#endif /* OPAL_OS_PATH_H */

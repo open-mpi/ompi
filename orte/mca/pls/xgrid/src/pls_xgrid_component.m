@@ -27,7 +27,7 @@
 
 #import "include/orte_constants.h"
 #import "opal/util/argv.h"
-#import "util/path.h"
+#import "opal/util/path.h"
 #import "opal/util/basename.h"
 #import "mca/pls/pls.h"
 #import "mca/pls/base/base.h"
