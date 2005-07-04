@@ -26,7 +26,7 @@ AC_MSG_CHECKING([for max fortran MPI handle index])
 # have a Fortran compiler (e.g., if --disable-f77 was given)
 
 if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
-    ompi_fint_max=-1
+    ompi_fint_max=0
 else
     ompi_sizeof_fint=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 8 - 1`
     ompi_fint_max=1
@@ -37,23 +37,36 @@ else
     ompi_fint_max=`expr $ompi_fint_max - 1`
 fi
 
-# Compare to C MAX_INT.
-
+# Get INT_MAX.  Compute a SWAG if we are cross compiling or something
+# goes wrong.
 rm -f conftest.out > /dev/null 2>&1
 AC_RUN_IFELSE(AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <limits.h>
 ]],[[FILE *fp = fopen("conftest.out", "w");
-long fint = $ompi_fint_max;
 long cint = INT_MAX;
-if (-1 == fint) fint = cint;
-fprintf(fp, "%ld", (cint < fint) ? cint : fint);
-fclose(fp);]]), HAPPY=1, HAPPY=0)
-if test "$HAPPY" = "1"; then
-    OMPI_FORTRAN_HANDLE_MAX=`cat conftest.out`
-else
-    # Something went wrong, so be conservative
+fprintf(fp, "%ld", cint);
+fclose(fp);]]), [ompi_cint_max=`cat conftest.out`], 
+                [ompi_cint_max=0], [ #cross compiling is fun
+ompi_sizeof_cint=`expr $ac_cv_sizeof_int \* 8 - 1`
+ompi_cint_max=1
+while test "$ompi_sizeof_cint" != "0" ; do
+    ompi_cint_max=`expr $ompi_cint_max \* 2`
+    ompi_sizeof_cint=`expr $ompi_sizeof_cint - 1`
+done
+ompi_cint_max=`expr $ompi_cint_max - 1`])
+
+if test "$ompi_cint_max" = "0" ; then
+    # wow - something went really wrong.  Be conservative
     OMPI_FORTRAN_HANDLE_MAX=32767
+elif test "$ompi_fint_max" = "0" ; then
+    OMPI_FORTRAN_HANDLE_MAX=$ompi_cint_max
+else
+    if expr $ompi_cint_max < $ompi_fint_max ; then
+        OMPI_FORTRAN_HANDLE_MAX=$ompi_cint_max
+    else
+        OMPI_FORTRAN_HANDLE_MAX=$ompi_fint_max
+    fi
 fi
 rm -f conftest.out > /dev/null 2>&1
 
