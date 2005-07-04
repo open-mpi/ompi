@@ -23,7 +23,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
@@ -273,13 +273,13 @@ static int get_tm_hostname(tm_node_id node, char **hostname, char **arch)
     opal_output(orte_ras_base.ras_output, 
                 "ras:tm:hostname: got back %s", buffer);
     buffer[sizeof(buffer) - 1] = '\0';
-    argv = ompi_argv_split(buffer, ' ');
+    argv = opal_argv_split(buffer, ' ');
     if (NULL == argv) {
         return ORTE_ERROR;
     }
     *hostname = strdup(argv[1]);
     *arch = strdup(buffer);
-    ompi_argv_free(argv);
+    opal_argv_free(argv);
 
     /* All done */
 

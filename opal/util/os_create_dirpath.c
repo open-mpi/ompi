@@ -29,7 +29,7 @@
 #include "include/constants.h"
 #include "util/os_create_dirpath.h"
 #include "util/sys_info.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 
 int orte_os_create_dirpath(const char *path, const mode_t mode)
 {
@@ -62,7 +62,7 @@ int orte_os_create_dirpath(const char *path, const mode_t mode)
 
     /* Split the requested path up into its individual parts */
 
-    parts = ompi_argv_split(path, orte_system_info.path_sep[0]);
+    parts = opal_argv_split(path, orte_system_info.path_sep[0]);
 
     /* Ensure to allocate enough space for tmp: the strlen of the
        incoming path + 1 (for \0) */
@@ -89,7 +89,7 @@ int orte_os_create_dirpath(const char *path, const mode_t mode)
        guaranteed to exist on valid POSIX filesystems, and is
        therefore not worth checking for). */
 
-    len = ompi_argv_count(parts);
+    len = opal_argv_count(parts);
     for (i = 0; i < len; ++i) {
         if (i == 0) {
 
@@ -137,7 +137,7 @@ int orte_os_create_dirpath(const char *path, const mode_t mode)
 
         if (0 != stat(tmp, &buf)) {
             if (0 != mkdir(tmp, mode) && 0 != stat(tmp, &buf)) { 
-                ompi_argv_free(parts);
+                opal_argv_free(parts);
                 free(tmp);
                 return OMPI_ERROR;
             }
@@ -146,7 +146,7 @@ int orte_os_create_dirpath(const char *path, const mode_t mode)
 
     /* All done */
 
-    ompi_argv_free(parts);
+    opal_argv_free(parts);
     free(tmp);
     return OMPI_SUCCESS;
 }

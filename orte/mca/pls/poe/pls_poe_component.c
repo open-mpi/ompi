@@ -26,7 +26,7 @@
 #include "mca/pls/pls.h"
 #include "pls_poe.h"
 #include "util/path.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "mca/pls/poe/pls-poe-version.h"
 #include "mca/base/mca_base_param.h"
 
@@ -138,8 +138,8 @@ int orte_pls_poe_component_open(void)
     mca_pls_poe_component.env = orte_pls_poe_param_reg_string("progenv","env");
 
     param = orte_pls_poe_param_reg_string("progpoe","poe");
-    mca_pls_poe_component.argv = ompi_argv_split(param, ' ');
-    mca_pls_poe_component.argc = ompi_argv_count(mca_pls_poe_component.argv);
+    mca_pls_poe_component.argv = opal_argv_split(param, ' ');
+    mca_pls_poe_component.argc = opal_argv_count(mca_pls_poe_component.argv);
     if (mca_pls_poe_component.argc > 0) {
         mca_pls_poe_component.path = strdup(mca_pls_poe_component.argv[0]);
         return ORTE_SUCCESS;

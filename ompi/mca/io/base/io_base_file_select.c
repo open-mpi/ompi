@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "file/file.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
@@ -141,15 +141,15 @@ int mca_io_base_file_select(ompi_file_t *file,
        listed in the MCA parameter; parse them and check them all */
 
     else if (NULL != names && 0 < strlen(names)) {
-        name_array = ompi_argv_split(names, ',');
-        num_names = ompi_argv_count(name_array);
+        name_array = opal_argv_split(names, ',');
+        num_names = opal_argv_count(name_array);
         
         opal_output_verbose(10, mca_io_base_output, 
                             "io:base:file_select: Checking specific modules: %s",
                             names);
         selectable = check_components(&mca_io_base_components_available, 
                                       file, name_array, num_names);
-        ompi_argv_free(name_array);
+        opal_argv_free(name_array);
     }
 
     /* Nope -- a specific [set of] component[s] was not requested.  Go

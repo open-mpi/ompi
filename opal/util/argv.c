@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/strncpy.h"
 
 #define ARGSIZE 128
@@ -28,21 +28,21 @@
 /*
  * Append a string to the end of a new or existing argv array.
  */
-int ompi_argv_append(int *argc, char ***argv, const char *arg)
+int opal_argv_append(int *argc, char ***argv, const char *arg)
 {
     int rc;
     
     /* add the new element */
-    if (OMPI_SUCCESS != (rc = ompi_argv_append_nosize(argv, arg))) {
+    if (OMPI_SUCCESS != (rc = opal_argv_append_nosize(argv, arg))) {
         return rc;
     }
     
-    *argc = ompi_argv_count(*argv);
+    *argc = opal_argv_count(*argv);
     
     return OMPI_SUCCESS;
 }
 
-int ompi_argv_append_nosize(char ***argv, const char *arg)
+int opal_argv_append_nosize(char ***argv, const char *arg)
 {
     int argc;
     
@@ -60,7 +60,7 @@ int ompi_argv_append_nosize(char ***argv, const char *arg)
   /* Extend existing argv. */
   else {
         /* count how many entries currently exist */
-        argc = ompi_argv_count(*argv);
+        argc = opal_argv_count(*argv);
         
         *argv = (char**) realloc(*argv, (argc + 2) * sizeof(char *));
         if (NULL == *argv)
@@ -83,7 +83,7 @@ int ompi_argv_append_nosize(char ***argv, const char *arg)
 /*
  * Free a NULL-terminated argv array.
  */
-void ompi_argv_free(char **argv)
+void opal_argv_free(char **argv)
 {
   char **p;
 
@@ -101,7 +101,7 @@ void ompi_argv_free(char **argv)
 /*
  * Split a string into a NULL-terminated argv array.
  */
-char **ompi_argv_split(const char *src_string, int delimiter)
+char **opal_argv_split(const char *src_string, int delimiter)
 {
   char arg[ARGSIZE];
   char **argv = NULL;
@@ -128,7 +128,7 @@ char **ompi_argv_split(const char *src_string, int delimiter)
     /* tail argument, add straight from the original string */
 
     else if ('\0' == *p) {
-      if (OMPI_ERROR == ompi_argv_append(&argc, &argv, src_string))
+      if (OMPI_ERROR == opal_argv_append(&argc, &argv, src_string))
 	return NULL;
     }
 
@@ -142,7 +142,7 @@ char **ompi_argv_split(const char *src_string, int delimiter)
       strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
-      if (OMPI_ERROR == ompi_argv_append(&argc, &argv, argtemp)) {
+      if (OMPI_ERROR == opal_argv_append(&argc, &argv, argtemp)) {
 	free(argtemp);
 	return NULL;
       }
@@ -156,7 +156,7 @@ char **ompi_argv_split(const char *src_string, int delimiter)
       strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
-      if (OMPI_ERROR == ompi_argv_append(&argc, &argv, arg))
+      if (OMPI_ERROR == opal_argv_append(&argc, &argv, arg))
 	return NULL;
     }
 
@@ -172,7 +172,7 @@ char **ompi_argv_split(const char *src_string, int delimiter)
 /*
  * Return the length of a NULL-terminated argv array.
  */
-int ompi_argv_count(char **argv)
+int opal_argv_count(char **argv)
 {
   char **p;
   int i;
@@ -191,7 +191,7 @@ int ompi_argv_count(char **argv)
  * Join all the elements of an argv array into a single
  * newly-allocated string.
  */
-char *ompi_argv_join(char **argv, int delimiter)
+char *opal_argv_join(char **argv, int delimiter)
 {
   char **p;
   char *pp;
@@ -246,7 +246,7 @@ char *ompi_argv_join(char **argv, int delimiter)
 /*
  * Return the number of bytes consumed by an argv array.
  */
-size_t ompi_argv_len(char **argv)
+size_t opal_argv_len(char **argv)
 {
   char **p;
   size_t length;
@@ -267,7 +267,7 @@ size_t ompi_argv_len(char **argv)
 /*
  * Copy a NULL-terminated argv array.
  */
-char **ompi_argv_copy(char **argv)
+char **opal_argv_copy(char **argv)
 {
   char **dupv = NULL;
   int dupc = 0;
@@ -276,8 +276,8 @@ char **ompi_argv_copy(char **argv)
     return NULL;
 
   while (NULL != *argv) {
-    if (OMPI_ERROR == ompi_argv_append(&dupc, &dupv, *argv)) {
-      ompi_argv_free(dupv);
+    if (OMPI_ERROR == opal_argv_append(&dupc, &dupv, *argv)) {
+      opal_argv_free(dupv);
       return NULL;
     }
 
@@ -290,7 +290,7 @@ char **ompi_argv_copy(char **argv)
 }
 
 
-int ompi_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
+int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
 {
     int i;
     int count;
@@ -301,7 +301,7 @@ int ompi_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
     if (NULL == argv || NULL == *argv || 0 == num_to_delete) {
         return OMPI_SUCCESS;
     }
-    count = ompi_argv_count(*argv);
+    count = opal_argv_count(*argv);
     if (start > count) {
         return OMPI_SUCCESS;
     } else if (start < 0 || num_to_delete < 0) {
@@ -340,7 +340,7 @@ int ompi_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
 }
 
 
-int ompi_argv_insert(char ***target, int start, char **source)
+int opal_argv_insert(char ***target, int start, char **source)
 {
     int i, source_count, target_count;
     int suffix_count;
@@ -355,11 +355,11 @@ int ompi_argv_insert(char ***target, int start, char **source)
 
     /* Easy case: appending to the end */
 
-    target_count = ompi_argv_count(*target);
-    source_count = ompi_argv_count(source);
+    target_count = opal_argv_count(*target);
+    source_count = opal_argv_count(source);
     if (start > target_count) {
         for (i = 0; i < source_count; ++i) {
-            ompi_argv_append(&target_count, target, source[i]);
+            opal_argv_append(&target_count, target, source[i]);
         }
     }
 

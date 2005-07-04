@@ -23,9 +23,9 @@
 #include "dps/dps.h"
 #include "proc/proc.h"
 #include "opal/threads/mutex.h"
-#include "util/bit_ops.h"
+#include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
-#include "util/convert.h"
+#include "opal/util/convert.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
 #include "mca/ns/ns.h"
@@ -861,7 +861,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        if (OMPI_SUCCESS != (rc = ompi_sizet2int(size_len, &int_len, true))) {
+        if (OMPI_SUCCESS != (rc = opal_size2int(size_len, &int_len, true))) {
             goto err_exit;
         }
         printf("Got sizet len: %ld, int %d\n", size_len, int_len);
@@ -1380,7 +1380,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
               comm->c_contextid);
 
     /* determine the cube dimensions */
-    comm->c_cube_dim = ompi_cube_dim(comm->c_local_group->grp_proc_count);
+    comm->c_cube_dim = opal_cube_dim(comm->c_local_group->grp_proc_count);
 
     /* initialize PML stuff on the communicator */
     if (OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(comm)))) {

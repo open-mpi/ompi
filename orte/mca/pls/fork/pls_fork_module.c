@@ -35,7 +35,7 @@
 
 #include "include/orte_constants.h"
 #include "opal/event/event.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/univ_info.h"
@@ -163,7 +163,7 @@ static int orte_pls_fork_proc(
     return ORTE_ERROR;
 #if 0
  {
-    /* Do fork the windows way: see ompi_few() for example */
+    /* Do fork the windows way: see opal_few() for example */
     HANDLE new_process;
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -229,7 +229,7 @@ static int orte_pls_fork_proc(
         if (NULL != context->env) {
             environ_copy = ompi_environ_merge(environ, context->env);
         } else {
-            environ_copy = ompi_argv_copy(environ);
+            environ_copy = opal_argv_copy(environ);
         }
         param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
         ompi_unsetenv(param, &environ_copy);
@@ -313,7 +313,7 @@ static int orte_pls_fork_proc(
 
         execve(context->app, context->argv, environ_copy);
         opal_output(0, "orte_pls_fork: %s - %s\n", context->app, 
-            ompi_argv_join(context->argv, ' '));
+            opal_argv_join(context->argv, ' '));
         opal_output(0, "orte_pls_fork: execv failed with errno=%d\n", errno);
         exit(-1);
 

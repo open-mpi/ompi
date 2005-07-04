@@ -24,7 +24,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "util/ompi_environ.h"
 #include "util/proc_info.h"
@@ -416,7 +416,7 @@ static int orte_pls_bproc_launch_app(
     free(var);
 
     /* overwrite previously specified values with the above settings */
-    map->app->num_env = ompi_argv_count(map->app->env);
+    map->app->num_env = opal_argv_count(map->app->env);
 
     /* read process image */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_dump(map->app, &image, &image_len))) {

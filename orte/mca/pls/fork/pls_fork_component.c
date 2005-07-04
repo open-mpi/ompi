@@ -27,7 +27,7 @@
 #endif
 
 #include "include/orte_constants.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/path.h"
 #include "mca/pls/pls.h"
 #include "mca/pls/fork/pls_fork.h"

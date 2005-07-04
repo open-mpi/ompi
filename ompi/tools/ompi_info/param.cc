@@ -76,9 +76,9 @@ void ompi_info::do_params(bool want_all, bool want_internal)
   // See if the special param "all" was givin to --param; that
   // superceeds any individual type
 
-  count = ompi_cmd_line_get_ninsts(cmd_line, "param");
+  count = opal_cmd_line_get_ninsts(cmd_line, "param");
   for (i = 0; i < count; ++i) {
-    type = ompi_cmd_line_get_param(cmd_line, "param", i, 0);
+    type = opal_cmd_line_get_param(cmd_line, "param", i, 0);
     if (type_all == type) {
       want_all = true;
       break;
@@ -93,8 +93,8 @@ void ompi_info::do_params(bool want_all, bool want_internal)
     }
   } else {
     for (i = 0; i < count; ++i) {
-      type = ompi_cmd_line_get_param(cmd_line, "param", i, 0);
-      component = ompi_cmd_line_get_param(cmd_line, "param", i, 1);
+      type = opal_cmd_line_get_param(cmd_line, "param", i, 0);
+      component = opal_cmd_line_get_param(cmd_line, "param", i, 1);
 
       for (found = false, i = 0; i < mca_types.size(); ++i) {
         if (mca_types[i] == type) {
@@ -104,7 +104,7 @@ void ompi_info::do_params(bool want_all, bool want_internal)
       }
 
       if (!found) {
-          char *usage = ompi_cmd_line_get_usage_msg(cmd_line);
+          char *usage = opal_cmd_line_get_usage_msg(cmd_line);
           ompi_show_help("help-ompi_info.txt", "usage", true, usage);
           free(usage);
           exit(1);
@@ -222,7 +222,7 @@ void ompi_info::show_mca_params(const string& type, const string& component,
 }
 
 
-void ompi_info::do_path(bool want_all, ompi_cmd_line_t *cmd_line)
+void ompi_info::do_path(bool want_all, opal_cmd_line_t *cmd_line)
 {
   int i, count;
   string scope;
@@ -235,9 +235,9 @@ void ompi_info::do_path(bool want_all, ompi_cmd_line_t *cmd_line)
     show_path(path_pkglibdir, OMPI_PKGLIBDIR);
     show_path(path_sysconfdir, OMPI_SYSCONFDIR);
   } else {
-    count = ompi_cmd_line_get_ninsts(cmd_line, "path");
+    count = opal_cmd_line_get_ninsts(cmd_line, "path");
     for (i = 0; i < count; ++i) {
-      scope = ompi_cmd_line_get_param(cmd_line, "path", i, 0);
+      scope = opal_cmd_line_get_param(cmd_line, "path", i, 0);
 
       if (path_prefix == scope)
         show_path(path_prefix, OMPI_PREFIX);
@@ -252,7 +252,7 @@ void ompi_info::do_path(bool want_all, ompi_cmd_line_t *cmd_line)
       else if (path_sysconfdir == scope)
         show_path(path_sysconfdir, OMPI_SYSCONFDIR);
       else {
-          char *usage = ompi_cmd_line_get_usage_msg(cmd_line);
+          char *usage = opal_cmd_line_get_usage_msg(cmd_line);
           ompi_show_help("help-ompi_info.txt", "usage", true, usage);
           free(usage);
           exit(1);
@@ -271,12 +271,12 @@ void ompi_info::show_path(const string& type, const string& value)
 }
 
 
-void ompi_info::do_arch(ompi_cmd_line_t *cmd_line)
+void ompi_info::do_arch(opal_cmd_line_t *cmd_line)
 {
   string prefix;
   char hostname[MAXHOSTNAMELEN];
 
-  if (ompi_cmd_line_is_taken(cmd_line, "hostname")) {
+  if (opal_cmd_line_is_taken(cmd_line, "hostname")) {
     gethostname(hostname, MAXHOSTNAMELEN);
     prefix = hostname + string(":");
   }

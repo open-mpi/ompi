@@ -22,7 +22,7 @@
 
 #include "opal/class/opal_list.h"
 #include "util/strncpy.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -113,7 +113,7 @@ int mca_base_components_open(const char *type_name, int output_id,
     OBJ_RELEASE(item);
   }
   if (NULL != requested_component_names) {
-    ompi_argv_free(requested_component_names);
+    opal_argv_free(requested_component_names);
   }
 
   /* All done */
@@ -136,7 +136,7 @@ static int parse_requested(int mca_param, char ***requested_component_names)
   if (NULL == requested) {
     return OMPI_SUCCESS;
   }
-  *requested_component_names = ompi_argv_split(requested, ',');
+  *requested_component_names = opal_argv_split(requested, ',');
 
   /* All done */
 

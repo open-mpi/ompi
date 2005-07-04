@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 
-#include "util/bit_ops.h"
+#include "opal/util/bit_ops.h"
 #include "include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/base/base.h"
@@ -81,7 +81,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.c_my_rank      = group->grp_my_rank;
     ompi_mpi_comm_world.c_local_group  = group;
     ompi_mpi_comm_world.c_remote_group = group;
-    ompi_mpi_comm_world.c_cube_dim     = ompi_cube_dim(size);
+    ompi_mpi_comm_world.c_cube_dim     = opal_cube_dim(size);
     ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
@@ -178,7 +178,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
     }
 
     /* fill in the inscribing hyper-cube dimensions */
-    new_comm->c_cube_dim = ompi_cube_dim(local_size);
+    new_comm->c_cube_dim = opal_cube_dim(local_size);
     if ( OMPI_ERROR == new_comm->c_cube_dim ) {
         OBJ_RELEASE(new_comm);
         new_comm = NULL;

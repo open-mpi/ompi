@@ -27,9 +27,9 @@
 #endif
 
 #include "include/orte_constants.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/path.h"
-#include "util/basename.h"
+#include "opal/util/basename.h"
 #include "mca/pls/pls.h"
 #include "mca/pls/rsh/pls_rsh.h"
 #include "mca/pls/rsh/pls-rsh-version.h"
@@ -142,13 +142,13 @@ int orte_pls_rsh_component_open(void)
     mca_pls_rsh_component.reap = orte_pls_rsh_param_register_int("reap",1);
 
     param = orte_pls_rsh_param_register_string("agent","ssh");
-    mca_pls_rsh_component.argv = ompi_argv_split(param, ' ');
-    mca_pls_rsh_component.argc = ompi_argv_count(mca_pls_rsh_component.argv);
+    mca_pls_rsh_component.argv = opal_argv_split(param, ' ');
+    mca_pls_rsh_component.argc = opal_argv_count(mca_pls_rsh_component.argv);
     if (mca_pls_rsh_component.argc > 0) {
         /* If the agent is ssh, and debug was not selected, then
            automatically add "-x" */
 
-        bname = ompi_basename(mca_pls_rsh_component.argv[0]);
+        bname = opal_basename(mca_pls_rsh_component.argv[0]);
         if (NULL != bname && 0 == strcmp(bname, "ssh") &&
             mca_pls_rsh_component.debug == 0) {
             for (i = 1; NULL != mca_pls_rsh_component.argv[i]; ++i) {
@@ -157,7 +157,7 @@ int orte_pls_rsh_component_open(void)
                 }
             }
             if (NULL == mca_pls_rsh_component.argv[i]) {
-                ompi_argv_append(&mca_pls_rsh_component.argc, 
+                opal_argv_append(&mca_pls_rsh_component.argc, 
                                  &mca_pls_rsh_component.argv, "-x");
             }
         }
@@ -197,7 +197,7 @@ int orte_pls_rsh_component_close(void)
     OBJ_DESTRUCT(&mca_pls_rsh_component.lock);
     OBJ_DESTRUCT(&mca_pls_rsh_component.cond);
     if(NULL != mca_pls_rsh_component.argv)
-        ompi_argv_free(mca_pls_rsh_component.argv);
+        opal_argv_free(mca_pls_rsh_component.argv);
     if(NULL != mca_pls_rsh_component.path)
         free(mca_pls_rsh_component.path);
     return ORTE_SUCCESS;

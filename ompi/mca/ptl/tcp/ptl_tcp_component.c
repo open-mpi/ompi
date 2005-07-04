@@ -36,7 +36,7 @@
 #include "include/constants.h"
 #include "opal/event/event.h"
 #include "util/if.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
@@ -343,7 +343,7 @@ static int mca_ptl_tcp_component_create_instances(void)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* if the user specified an interface list - use these exclusively */
-    argv = include = ompi_argv_split(mca_ptl_tcp_component.tcp_if_include,',');
+    argv = include = opal_argv_split(mca_ptl_tcp_component.tcp_if_include,',');
     while(argv && *argv) {
         char* if_name = *argv;
         int if_index = ompi_ifnametoindex(if_name);
@@ -354,14 +354,14 @@ static int mca_ptl_tcp_component_create_instances(void)
         }
         argv++;
     }
-    ompi_argv_free(include);
+    opal_argv_free(include);
     if(mca_ptl_tcp_component.tcp_num_ptl_modules)
         return OMPI_SUCCESS;
 
     /* if the interface list was not specified by the user, create 
      * a PTL for each interface that was not excluded.
     */
-    exclude = ompi_argv_split(mca_ptl_tcp_component.tcp_if_exclude,',');
+    exclude = opal_argv_split(mca_ptl_tcp_component.tcp_if_exclude,',');
     for(if_index = ompi_ifbegin(); if_index >= 0; if_index = ompi_ifnext(if_index)) {
         char if_name[32];
         ompi_ifindextoname(if_index, if_name, sizeof(if_name));
@@ -382,7 +382,7 @@ static int mca_ptl_tcp_component_create_instances(void)
             mca_ptl_tcp_create(if_index, if_name);
         }
     }
-    ompi_argv_free(exclude);
+    opal_argv_free(exclude);
     return OMPI_SUCCESS;
 }
 

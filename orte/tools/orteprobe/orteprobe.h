@@ -25,7 +25,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "mca/mca.h"
 
 /*

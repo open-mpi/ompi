@@ -22,7 +22,7 @@
 
 #include "include/constants.h"
 #include "util/printf.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/ompi_environ.h"
 
 
@@ -42,13 +42,13 @@ char **ompi_environ_merge(char **minor, char **major)
         if (NULL == minor) {
             return NULL;
         } else {
-            return ompi_argv_copy(minor);
+            return opal_argv_copy(minor);
         }
     }
 
     /* First, copy major */
 
-    ret = ompi_argv_copy(major);
+    ret = opal_argv_copy(major);
 
     /* Do we have something in minor? */
 
@@ -110,7 +110,7 @@ int ompi_setenv(const char *name, const char *value, bool overwrite,
         return OMPI_ERR_BAD_PARAM;
     } else if (NULL == *env) {
         i = 0;
-        ompi_argv_append(&i, env, newvalue);
+        opal_argv_append(&i, env, newvalue);
         return OMPI_SUCCESS;
     }
 
@@ -154,8 +154,8 @@ int ompi_setenv(const char *name, const char *value, bool overwrite,
 
     /* If we found no match, append this value */
 
-    i = ompi_argv_count(*env);
-    ompi_argv_append(&i, env, newvalue);
+    i = opal_argv_count(*env);
+    opal_argv_append(&i, env, newvalue);
 
     /* All done */
 

@@ -37,8 +37,8 @@
 #include "opal/class/opal_object.h"
 #include "runtime/runtime.h"
 #include "opal/util/output.h"
-#include "util/cmd_line.h"
-#include "util/argv.h"
+#include "opal/util/cmd_line.h"
+#include "opal/util/argv.h"
 #include "util/show_help.h"
 #include "communicator/communicator.h"
 #include "mca/base/base.h"
@@ -54,7 +54,7 @@ using namespace ompi_info;
 //
 
 bool ompi_info::pretty = true;
-ompi_cmd_line_t *ompi_info::cmd_line = NULL;
+opal_cmd_line_t *ompi_info::cmd_line = NULL;
 
 const string ompi_info::type_all = "all";
 const string ompi_info::type_ompi = "ompi";
@@ -74,38 +74,38 @@ int main(int argc, char *argv[])
 
   // Initialize the argv parsing handle
 
-  cmd_line = OBJ_NEW(ompi_cmd_line_t);
+  cmd_line = OBJ_NEW(opal_cmd_line_t);
   if (NULL == cmd_line) {
     ret = errno;
     ompi_show_help("help-ompi_info.txt", "lib-call-fail", true, 
-                   "ompi_cmd_line_create", __FILE__, __LINE__, NULL);
+                   "opal_cmd_line_create", __FILE__, __LINE__, NULL);
     exit(ret);
   }
 
-  ompi_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
+  opal_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
                          "Show version of Open MPI or a component");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
                          "Show MCA parameters");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "internal", 0, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "internal", 0, 
                          "Show internal MCA parameters (not meant to be modified by users)");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
                          "Show paths that Open MPI was configured with");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "arch", 0, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "arch", 0, 
                          "Show architecture Open MPI was compiled on");
-  ompi_cmd_line_make_opt(cmd_line, 'c', "config", 0, 
+  opal_cmd_line_make_opt(cmd_line, 'c', "config", 0, 
                          "Show configuration options");
-  ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
+  opal_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
                          "Show this help message");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "pretty", 0, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "pretty", 0, 
                          "Display output in 'prettyprint' format (default)");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "parsable", 0, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "parsable", 0, 
                          "Display output in parsable format");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "parseable", 0, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "parseable", 0, 
                          "Synonym for --parsable");
-  ompi_cmd_line_make_opt(cmd_line, '\0', "hostname", 0, 
+  opal_cmd_line_make_opt(cmd_line, '\0', "hostname", 0, 
                          "Show the hostname that Open MPI was configured "
                          "and built on");
-  ompi_cmd_line_make_opt(cmd_line, 'a', "all", 0, 
+  opal_cmd_line_make_opt(cmd_line, 'a', "all", 0, 
                          "Show all configuration options and MCA parameters");
 
   // Call some useless functions in order to guarantee to link in some
@@ -129,15 +129,15 @@ int main(int argc, char *argv[])
 
   // Do the parsing
 
-  if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv)) {
+  if (OMPI_SUCCESS != opal_cmd_line_parse(cmd_line, false, argc, argv)) {
       cmd_error = true;
   }
-  if (!cmd_error && ompi_cmd_line_is_taken(cmd_line, "help") || 
-      ompi_cmd_line_is_taken(cmd_line, "h")) {
+  if (!cmd_error && opal_cmd_line_is_taken(cmd_line, "help") || 
+      opal_cmd_line_is_taken(cmd_line, "h")) {
       want_help = true;
   }
   if (cmd_error || want_help) {
-      char *usage = ompi_cmd_line_get_usage_msg(cmd_line);
+      char *usage = opal_cmd_line_get_usage_msg(cmd_line);
       ompi_show_help("help-ompi_info.txt", "usage", true, usage);
       free(usage);
       exit(cmd_error ? 1 : 0);
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
   // creates a memory leak, but that's unfortunately how putenv()
   // works.  :-(
 
-  len = ompi_argv_count(env);
+  len = opal_argv_count(env);
   for (i = 0; i < len; ++i) {
       putenv(env[i]);
   }
@@ -181,31 +181,31 @@ int main(int argc, char *argv[])
 
   // Execute the desired action(s)
 
-  if (ompi_cmd_line_is_taken(cmd_line, "pretty")) {
+  if (opal_cmd_line_is_taken(cmd_line, "pretty")) {
     ompi_info::pretty = true;
-  } else if (ompi_cmd_line_is_taken(cmd_line, "parsable")) {
+  } else if (opal_cmd_line_is_taken(cmd_line, "parsable")) {
     ompi_info::pretty = false;
   }
 
-  want_all = ompi_cmd_line_is_taken(cmd_line, "all");
-  if (want_all || ompi_cmd_line_is_taken(cmd_line, "version")) {
+  want_all = opal_cmd_line_is_taken(cmd_line, "all");
+  if (want_all || opal_cmd_line_is_taken(cmd_line, "version")) {
     do_version(want_all, cmd_line);
     acted = true;
   }
-  if (want_all || ompi_cmd_line_is_taken(cmd_line, "path")) {
+  if (want_all || opal_cmd_line_is_taken(cmd_line, "path")) {
     do_path(want_all, cmd_line);
     acted = true;
   }
-  if (want_all || ompi_cmd_line_is_taken(cmd_line, "arch")) {
+  if (want_all || opal_cmd_line_is_taken(cmd_line, "arch")) {
     do_arch(cmd_line);
     acted = true;
   }
-  if (want_all || ompi_cmd_line_is_taken(cmd_line, "config")) {
+  if (want_all || opal_cmd_line_is_taken(cmd_line, "config")) {
     do_config(true);
     acted = true;
   }
-  if (want_all || ompi_cmd_line_is_taken(cmd_line, "param")) {
-    do_params(want_all, ompi_cmd_line_is_taken(cmd_line, "internal"));
+  if (want_all || opal_cmd_line_is_taken(cmd_line, "param")) {
+    do_params(want_all, opal_cmd_line_is_taken(cmd_line, "internal"));
     acted = true;
   }
 
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
   // All done
 
   if (NULL != env) {
-      ompi_argv_free(env);
+      opal_argv_free(env);
   }
   ompi_info::close_components();
   OBJ_RELEASE(cmd_line);

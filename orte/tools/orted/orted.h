@@ -25,7 +25,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "mca/mca.h"
 
 /*
@@ -78,7 +78,7 @@ extern orted_globals_t orted_globals;
 /* extern const char *ver_beta; */
 /* extern const char *ver_svn; */
 
-/* void do_version(bool want_all, ompi_cmd_line_t *cmd_line); */
+/* void do_version(bool want_all, opal_cmd_line_t *cmd_line); */
 /* void show_ompi_version(const char *scope); */
 
 /*

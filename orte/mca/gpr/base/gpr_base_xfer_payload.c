@@ -18,7 +18,7 @@
 #include "include/orte_constants.h"
 #include "include/constants.h"
 
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 
 #include "mca/errmgr/errmgr.h"
@@ -142,9 +142,9 @@ int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
             }
             dest->app_context->num_procs = src->app_context->num_procs;
             dest->app_context->argc = src->app_context->argc;
-            dest->app_context->argv = ompi_argv_copy(src->app_context->argv);
+            dest->app_context->argv = opal_argv_copy(src->app_context->argv);
             dest->app_context->num_env = src->app_context->num_env;
-            dest->app_context->env = ompi_argv_copy(src->app_context->env);
+            dest->app_context->env = opal_argv_copy(src->app_context->env);
             if(NULL != src->app_context->cwd) {
                 dest->app_context->cwd = strdup(src->app_context->cwd);
             } else {

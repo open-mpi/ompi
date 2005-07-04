@@ -37,7 +37,7 @@
 #include "include/constants.h"
 #include "class/ompi_bitmap.h"
 #include "opal/event/event.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "datatype/datatype.h"
 #include "mca/pml/pml.h"

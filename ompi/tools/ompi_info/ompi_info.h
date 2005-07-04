@@ -22,7 +22,7 @@
 #include <map>
 
 #include "opal/class/opal_list.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "mca/mca.h"
 
 
@@ -35,7 +35,7 @@ namespace ompi_info {
   typedef std::vector<std::string> type_vector_t;
 
   extern bool pretty;
-  extern ompi_cmd_line_t *cmd_line;
+  extern opal_cmd_line_t *cmd_line;
 
   extern const std::string type_all;
   extern const std::string type_ompi;
@@ -54,7 +54,7 @@ namespace ompi_info {
   extern const std::string ver_beta;
   extern const std::string ver_svn;
 
-  void do_version(bool want_all, ompi_cmd_line_t *cmd_line);
+  void do_version(bool want_all, opal_cmd_line_t *cmd_line);
   void show_ompi_version(const std::string& scope);
   void show_component_version(const std::string& type_name, 
                            const std::string& component_name,
@@ -79,10 +79,10 @@ namespace ompi_info {
   void show_mca_params(const std::string& type, const std::string& component, 
                        const std::string& param, bool want_internal);
 
-  void do_path(bool want_all, ompi_cmd_line_t *cmd_line);
+  void do_path(bool want_all, opal_cmd_line_t *cmd_line);
   void show_path(const std::string& type, const std::string& value);
 
-  void do_arch(ompi_cmd_line_t *cmd_line);
+  void do_arch(opal_cmd_line_t *cmd_line);
   void do_config(bool want_all);
 
   //

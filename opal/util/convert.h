@@ -68,6 +68,6 @@
  * On platforms where sizeof(size_t) <= sizeof(int), this function
  * will aways return OMPI_SUCCESS.
  */
-int ompi_sizet2int(size_t in, int *out, bool want_check);
+int opal_size2int(size_t in, int *out, bool want_check);
 
 #endif

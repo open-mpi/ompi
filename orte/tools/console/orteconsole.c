@@ -27,7 +27,7 @@
 #include "dps/dps.h"
 
 #include "util/sys_info.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
 #include "opal/util/output.h"
@@ -54,7 +54,7 @@ static void orte_console_sendcmd(orte_daemon_cmd_flag_t usercmd);
 int main(int argc, char *argv[])
 {
     int ret=0;
-    ompi_cmd_line_t *cmd_line;
+    opal_cmd_line_t *cmd_line;
     bool exit_cmd;
     char *usercmd, *str_response;
     orte_buffer_t *buffer = NULL;
@@ -62,19 +62,19 @@ int main(int argc, char *argv[])
     size_t n;
 
     /* setup to check common command line options that just report and die */
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+    cmd_line = OBJ_NEW(opal_cmd_line_t);
 
-    ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
+    opal_cmd_line_make_opt(cmd_line, 'v', "version", 0,
             "Show version of this program");
 
-    ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0,
+    opal_cmd_line_make_opt(cmd_line, 'h', "help", 0,
             "Show help for this function");
 
 
     /* parse the local commands */
-    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
+    if (OMPI_SUCCESS != opal_cmd_line_parse(cmd_line, true, argc, argv)) {
         char *args = NULL;
-        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        args = opal_cmd_line_get_usage_msg(cmd_line);
         ompi_show_help("help-console.txt", "console:usage", false,
                        argv[0], args);
         free(args);
@@ -82,18 +82,18 @@ int main(int argc, char *argv[])
     }
 
     /* check for help and version requests */
-    if (ompi_cmd_line_is_taken(cmd_line, "help") || 
-        ompi_cmd_line_is_taken(cmd_line, "h")) {
+    if (opal_cmd_line_is_taken(cmd_line, "help") || 
+        opal_cmd_line_is_taken(cmd_line, "h")) {
         char *args = NULL;
-        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        args = opal_cmd_line_get_usage_msg(cmd_line);
         ompi_show_help("help-console.txt", "console:usage", false,
                        argv[0], args);
         free(args);
         return 1;
     }
 
-    if (ompi_cmd_line_is_taken(cmd_line, "version") ||
-        ompi_cmd_line_is_taken(cmd_line, "v")) {
+    if (opal_cmd_line_is_taken(cmd_line, "version") ||
+        opal_cmd_line_is_taken(cmd_line, "v")) {
         printf("...showing off my version!\n");
         exit(1);
     }

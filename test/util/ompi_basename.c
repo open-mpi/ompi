@@ -22,7 +22,7 @@
 
 #include "support.h"
 #include "include/constants.h"
-#include "util/basename.h"
+#include "opal/util/basename.h"
 
 
 static void test(const char* in, const char* out);
@@ -30,7 +30,7 @@ static void test(const char* in, const char* out);
 
 int main(int argc, char* argv[])
 {
-  test_init("ompi_basename()");
+  test_init("opal_basename()");
 
   test("foo.txt", "foo.txt");
   test("/foo/bar/baz", "baz");
@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 void test(const char* in, const char* out)
 {
     char *msg;
-    char *ret = ompi_basename(in);
+    char *ret = opal_basename(in);
 
     if (0 == strcmp(ret, out)) {
         test_success();

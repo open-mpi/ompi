@@ -36,7 +36,7 @@
 #include <signal.h>
 
 #include "include/orte_constants.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "util/ompi_environ.h"
 #include "opal/util/output.h"
 #include "util/univ_info.h"
@@ -299,79 +299,79 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /*
      * Build argv array
      */
-    argv = ompi_argv_copy(mca_pls_rsh_component.argv);
+    argv = opal_argv_copy(mca_pls_rsh_component.argv);
     argc = mca_pls_rsh_component.argc;
     node_name_index1 = argc;
-    ompi_argv_append(&argc, &argv, "");  /* placeholder for node name */
+    opal_argv_append(&argc, &argv, "");  /* placeholder for node name */
 
     /* add the daemon command (as specified by user) */
     local_exec_index = argc;
-    ompi_argv_append(&argc, &argv, mca_pls_rsh_component.orted);
+    opal_argv_append(&argc, &argv, mca_pls_rsh_component.orted);
     
     /* check for debug flags */
     id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
     mca_base_param_lookup_int(id,&rc);
     if (rc) {
-         ompi_argv_append(&argc, &argv, "--debug");
+         opal_argv_append(&argc, &argv, "--debug");
     }
     id = mca_base_param_register_int("orte","debug","daemons",NULL,0);
     mca_base_param_lookup_int(id,&rc);
     if (rc) {
-         ompi_argv_append(&argc, &argv, "--debug-daemons");
+         opal_argv_append(&argc, &argv, "--debug-daemons");
     }
     id = mca_base_param_register_int("orte","debug","daemons_file",NULL,0);
     mca_base_param_lookup_int(id,&rc);
     if (rc) {
-         ompi_argv_append(&argc, &argv, "--debug-daemons-file");
+         opal_argv_append(&argc, &argv, "--debug-daemons-file");
     }
 
-    ompi_argv_append(&argc, &argv, "--bootproxy");
-    ompi_argv_append(&argc, &argv, jobid_string);
-    ompi_argv_append(&argc, &argv, "--name");
+    opal_argv_append(&argc, &argv, "--bootproxy");
+    opal_argv_append(&argc, &argv, jobid_string);
+    opal_argv_append(&argc, &argv, "--name");
     proc_name_index = argc;
-    ompi_argv_append(&argc, &argv, "");
+    opal_argv_append(&argc, &argv, "");
 
     /* tell the daemon how many procs are in the daemon's job */
-    ompi_argv_append(&argc, &argv, "--num_procs");
+    opal_argv_append(&argc, &argv, "--num_procs");
     asprintf(&param, "%lu", (unsigned long)(vpid + num_nodes));
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(param);
     /* tell the daemon the starting vpid of the daemon's job */
-    ompi_argv_append(&argc, &argv, "--vpid_start");
-    ompi_argv_append(&argc, &argv, "0");
+    opal_argv_append(&argc, &argv, "--vpid_start");
+    opal_argv_append(&argc, &argv, "0");
     
-    ompi_argv_append(&argc, &argv, "--nodename");
+    opal_argv_append(&argc, &argv, "--nodename");
     node_name_index2 = argc;
-    ompi_argv_append(&argc, &argv, "");
+    opal_argv_append(&argc, &argv, "");
 
     /* pass along the universe name and location info */
-    ompi_argv_append(&argc, &argv, "--universe");
+    opal_argv_append(&argc, &argv, "--universe");
     asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
                 orte_universe_info.host, orte_universe_info.name);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(param);
     
     /* setup ns contact info */
-    ompi_argv_append(&argc, &argv, "--nsreplica");
+    opal_argv_append(&argc, &argv, "--nsreplica");
     if(NULL != orte_process_info.ns_replica_uri) {
         uri = strdup(orte_process_info.ns_replica_uri);
     } else {
         uri = orte_rml.get_uri();
     }
     asprintf(&param, "\"%s\"", uri);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(uri);
     free(param);
 
     /* setup gpr contact info */
-    ompi_argv_append(&argc, &argv, "--gprreplica");
+    opal_argv_append(&argc, &argv, "--gprreplica");
     if(NULL != orte_process_info.gpr_replica_uri) {
         uri = strdup(orte_process_info.gpr_replica_uri);
     } else {
         uri = orte_rml.get_uri();
     }
     asprintf(&param, "\"%s\"", uri);
-    ompi_argv_append(&argc, &argv, param);
+    opal_argv_append(&argc, &argv, param);
     free(uri);
     free(param);
 
@@ -406,7 +406,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         return;
 #if 0
  {
-    /* Do fork the windows way: see ompi_few() for example */
+    /* Do fork the windows way: see opal_few() for example */
     HANDLE new_process;
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -476,7 +476,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
             if (mca_pls_rsh_component.debug > 2) {
                 /* debug output */
-                char* cmd = ompi_argv_join(argv, ' ');  
+                char* cmd = opal_argv_join(argv, ' ');  
                 opal_output(0, "orte_pls_rsh: %s %s\n", exec_path, cmd);
                 exit(0);
             } 
@@ -516,7 +516,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 #endif
 
             /* setup environment */
-            env = ompi_argv_copy(environ);
+            env = opal_argv_copy(environ);
             var = mca_base_param_environ_variable("seed",NULL,NULL);
             ompi_setenv(var, "0", true, &env);
 

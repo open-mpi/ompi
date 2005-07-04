@@ -20,8 +20,8 @@
  * Returns an OS-independant basename() of a given filename.
  */
 
-#ifndef OMPI_OS_BASENAME_H
-#define OMPI_OS_BASENAME_H
+#ifndef OPAL_BASENAME_H
+#define OPAL_BASENAME_H
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -61,10 +61,10 @@ extern "C" {
      *
      * G:\ returns "G:"
      */
-    char *ompi_basename(const char* filename);
+    char *opal_basename(const char* filename);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* OMPI_OS_BASENAME_H */
+#endif /* OPAL_BASENAME_H */

@@ -70,7 +70,7 @@ static string make_version_str(const string& scope,
 //	- want_all: True if all components' info is required.
 //	- cmd_line: The constructed command line argument
 //
-void ompi_info::do_version(bool want_all, ompi_cmd_line_t *cmd_line)
+void ompi_info::do_version(bool want_all, opal_cmd_line_t *cmd_line)
 {
   unsigned int count;
   ompi_info::type_vector_t::size_type i;
@@ -85,10 +85,10 @@ void ompi_info::do_version(bool want_all, ompi_cmd_line_t *cmd_line)
       show_component_version(mca_types[i], component_all, ver_full, type_all);
     }
   } else {
-    count = ompi_cmd_line_get_ninsts(cmd_line, "version");
+    count = opal_cmd_line_get_ninsts(cmd_line, "version");
     for (i = 0; i < count; ++i) {
-      arg1 = ompi_cmd_line_get_param(cmd_line, "version", i, 0);
-      scope = ompi_cmd_line_get_param(cmd_line, "version", i, 1);
+      arg1 = opal_cmd_line_get_param(cmd_line, "version", i, 0);
+      scope = opal_cmd_line_get_param(cmd_line, "version", i, 1);
 
       // Version of Open MPI
  

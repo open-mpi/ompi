@@ -20,10 +20,10 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "util/basename.h"
+#include "opal/util/basename.h"
 
 
-char *ompi_basename(const char *filename)
+char *opal_basename(const char *filename)
 {
     size_t i;
     char *tmp, *ret = NULL;

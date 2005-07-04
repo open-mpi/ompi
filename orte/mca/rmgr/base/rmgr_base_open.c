@@ -24,7 +24,7 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
 #include "opal/util/output.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 
 #include "mca/rmgr/base/base.h"
 
@@ -91,11 +91,11 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
 
     /* argv and env lists created by util/argv copy functions */
     if (NULL != app_context->argv) {
-       ompi_argv_free(app_context->argv);
+       opal_argv_free(app_context->argv);
     }
 
     if (NULL != app_context->env) {
-       ompi_argv_free(app_context->env);
+       opal_argv_free(app_context->env);
     }
 
     if (NULL != app_context->cwd) {

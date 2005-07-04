@@ -21,7 +21,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"

@@ -27,7 +27,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 

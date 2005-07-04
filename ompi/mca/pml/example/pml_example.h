@@ -14,7 +14,7 @@
 #include "opal/threads/thread.h"
 #include "opal/threads/condition.h"
 #include "class/ompi_free_list.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 #include "request/request.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"

@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 #include "include/constants.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "mpi/f77/strings.h"
 
 
@@ -100,7 +100,7 @@ int ompi_fortran_argv_f2c(char *array, int len, char ***argv)
     while (1) {
 	if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, len, 
                                                            &cstr))) {
-	    ompi_argv_free(*argv);
+	    opal_argv_free(*argv);
 	    return err;
 	}
 
@@ -108,8 +108,8 @@ int ompi_fortran_argv_f2c(char *array, int len, char ***argv)
 	    break;
 	}
 
-	if (OMPI_SUCCESS != (err = ompi_argv_append(&argc, argv, cstr))) {
-	    ompi_argv_free(*argv);
+	if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
+	    opal_argv_free(*argv);
 	    return err;
 	}
 

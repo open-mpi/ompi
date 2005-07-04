@@ -24,7 +24,7 @@
 #endif
     
 #include "include/constants.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "mca/ns/ns_types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
@@ -47,7 +47,7 @@ int mca_oob_ping(const char* contact_info, struct timeval* tv)
             break;
         ptr++;
     }
-    ompi_argv_free(uris);
+    opal_argv_free(uris);
     return rc;
 }
 

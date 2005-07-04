@@ -15,7 +15,7 @@
  */
 
 
-#include "orte_config.h"
+#include "ompi_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -26,10 +26,10 @@
 #endif
 #include <stdlib.h>
 
-#include "include/orte_constants.h"
-#include "util/daemon_init.h"
+#include "include/constants.h"
+#include "opal/util/daemon_init.h"
 
-int orte_daemon_init(char *working_dir)
+int opal_daemon_init(char *working_dir)
 {
 #ifndef WIN32
     /* it seems that there is an entirely different way to write daemons in 
@@ -41,7 +41,7 @@ int orte_daemon_init(char *working_dir)
     int fd;
 
     if ((pid = fork()) < 0) {
-        return ORTE_ERROR;
+        return OMPI_ERROR;
     } else if (pid != 0) {
         exit(0);   /* parent goes bye-bye */
     }
@@ -77,10 +77,10 @@ int orte_daemon_init(char *working_dir)
            close(fd);
         }
     } else {
-        return ORTE_ERR_FATAL;
+        return OMPI_ERR_FATAL;
     }
 
-    return ORTE_SUCCESS;
+    return OMPI_SUCCESS;
 #else
     printf ("This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);
     abort();

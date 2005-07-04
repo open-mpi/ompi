@@ -26,7 +26,7 @@
 #include "include/sys/cache.h"
 #include "opal/event/event.h"
 #include "util/if.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"

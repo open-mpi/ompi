@@ -29,8 +29,8 @@
 #include <errno.h>
 
 #include "util/path.h"
-#include "util/argv.h"
-#include "util/few.h"
+#include "opal/util/argv.h"
+#include "opal/util/few.h"
 #include "util/path.h"
 #include "util/show_help.h"
 #include "tools/wrappers/ompi_wrap.h"
@@ -422,10 +422,10 @@ ompi_wrap_exec_sv(const ompi_sv_t & sv)
     // Build up a C array of the args
 
     for (i = 0; i < sv.size(); ++i) {
-	ompi_argv_append(&ac, &av, (char *) sv[i].c_str());
+	opal_argv_append(&ac, &av, (char *) sv[i].c_str());
     }
 
-    // There is no way to tell whether ompi_few returned non-zero because
+    // There is no way to tell whether opal_few returned non-zero because
     // the called app returned non-zero or if there was a failure in the
     // exec (like the file not being found).  So we look for the
     // compiler first, just to try to eliminate that case.
@@ -437,7 +437,7 @@ ompi_wrap_exec_sv(const ompi_sv_t & sv)
 	status = -1;
     } else {
 	free(tmp);
-	ret = ompi_few(av, &status);
+	ret = opal_few(av, &status);
 	status = WIFEXITED(status) ? WEXITSTATUS(status) :
 	    (WIFSIGNALED(status) ? WTERMSIG(status) :
 	     (WIFSTOPPED(status) ? WSTOPSIG(status) : 255));
@@ -448,7 +448,7 @@ ompi_wrap_exec_sv(const ompi_sv_t & sv)
     }
 
     // Free the C array
-    ompi_argv_free(av);
+    opal_argv_free(av);
 
     return status;
 }

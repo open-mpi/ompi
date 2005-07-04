@@ -19,7 +19,7 @@
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
 #include "mpi/f77/strings.h"
-#include "util/argv.h"
+#include "opal/util/argv.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_SPAWN = mpi_comm_spawn_f
@@ -103,7 +103,7 @@ void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     }
     free(c_command);
     if (MPI_ARGV_NULL != c_argv && NULL != c_argv) {
-        ompi_argv_free(c_argv);
+        opal_argv_free(c_argv);
     }
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_of_errcodes)) {
 	OMPI_ARRAY_INT_2_FINT(array_of_errcodes, size);

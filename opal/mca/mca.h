@@ -25,7 +25,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "util/cmd_line.h"
+#include "opal/util/cmd_line.h"
 
 /**
  * MCA component open function.

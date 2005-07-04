@@ -45,7 +45,7 @@ extern "C" {
      * arrays (i.e., terminated with a NULL pointer).
      *
      * The array that is returned is an unencumbered array that should
-     * later be freed with a call to ompi_argv_free().
+     * later be freed with a call to opal_argv_free().
      *
      * Either (or both) of \em major and \em minor can be NULL.  If
      * one of the two is NULL, the other list is simply copied to the

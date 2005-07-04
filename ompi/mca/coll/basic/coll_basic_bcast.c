@@ -25,7 +25,7 @@
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
 #include "mca/pml/pml.h"
-#include "util/bit_ops.h"
+#include "opal/util/bit_ops.h"
 
 
 /*
@@ -126,7 +126,7 @@ int mca_coll_basic_bcast_log_intra(void *buff, int count,
     vrank = (rank + size - root) % size;
 
     dim = comm->c_cube_dim;
-    hibit = ompi_hibit(vrank, dim);
+    hibit = opal_hibit(vrank, dim);
     --dim;
 
     /* Receive data from parent in the tree. */
