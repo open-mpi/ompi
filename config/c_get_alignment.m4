@@ -34,7 +34,20 @@ int main(int argc, char* argv[])
     diff = ((char *)&p->x) - ((char *)&p->c);
     fprintf(f, "%d\n", (diff >= 0) ? diff : -diff);
     return 0;
-}],[ompi_ac_align=`cat conftestval`],[ompi_ac_align=-1],[ompi_ac_align=-1])
+}],[ompi_ac_align=`cat conftestval`],[ompi_ac_align=-1],[ompi_ac_align=-2])
+
+if test "$ompi_ac_align" = "-2" ; then
+    # cross compile - do a non-executable test.  Trick taken from
+    # the AC CVS repository.  If only they'd get around to actually
+    # releasing something post 2.59...
+   _AC_COMPUTE_INT([offsetof (struct { char x; $1 y; }, y)],
+                   [ompi_ac_align],
+                   [AC_INCLUDES_DEFAULT()
+#ifndef offsetof
+# define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
+#endif],
+                   [ompi_ac_align=-1])
+fi
 
 if test "`expr $ompi_ac_align \<= 0`" = "1"; then
     AC_MSG_WARN([*** Problem running configure test!])
