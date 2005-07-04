@@ -29,7 +29,7 @@
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "util/proc_info.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "util/sys_info.h"
 #include "class/ompi_fifo.h"
 #include "class/ompi_free_list.h"

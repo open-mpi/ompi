@@ -289,28 +289,32 @@ typedef long long bool;
 #endif
 
 #if !defined(HAVE_ASPRINTF) || !defined(HAVE_SNPRINTF) || !defined(HAVE_VASPRINTF) || !defined(HAVE_VSNPRINTF)
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #endif
 
 #ifndef HAVE_ASPRINTF
-# define asprintf ompi_asprintf
+# define asprintf opal_asprintf
 #endif
 
 #ifndef HAVE_SNPRINTF
-# define snprintf ompi_snprintf
+# define snprintf opal_snprintf
 #endif
 
 #ifndef HAVE_VASPRINTF
-# define vasprintf ompi_vasprintf
+# define vasprintf opal_vasprintf
 #endif
 
 #ifndef HAVE_VSNPRINTF
-# define vsnprintf ompi_vsnprintf
+# define vsnprintf opal_vsnprintf
 #endif
 
 #if OMPI_HAVE_BROKEN_QSORT
-#include "util/qsort.h"
-#define qsort ompi_qsort
+#ifdef qsort
+#undef qsort
+#endif
+
+#include "opal/util/qsort.h"
+#define qsort opal_qsort
 #endif
 
 /*

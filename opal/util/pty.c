@@ -87,13 +87,13 @@ static int ptym_open(char *pts_name);
 static int ptys_open(int fdm, char *pts_name);
 
 
-int ompi_forkpty(int *amaster, char *name, struct termios *termp,
+int opal_forkpty(int *amaster, char *name, struct termios *termp,
                  struct winsize *winp)
 {
     int master, slave;
     pid_t pid;
 
-    if (ompi_openpty(&master, &slave, name, termp, winp) < 0) {
+    if (opal_openpty(&master, &slave, name, termp, winp) < 0) {
         return -1;
     }
 
@@ -105,7 +105,7 @@ int ompi_forkpty(int *amaster, char *name, struct termios *termp,
         close(slave);
     } else {                    /* child */
         close(master);
-        ompi_login_tty(slave);
+        opal_login_tty(slave);
         return 0;
     }
 
@@ -113,7 +113,7 @@ int ompi_forkpty(int *amaster, char *name, struct termios *termp,
 }
 
 
-int ompi_login_tty(int fd)
+int opal_login_tty(int fd)
 {
     setsid(2);
 #ifdef TIOCSCTTY
@@ -131,7 +131,7 @@ int ompi_login_tty(int fd)
 }
 
 
-int ompi_openpty(int *amaster, int *aslave, char *name,
+int opal_openpty(int *amaster, int *aslave, char *name,
                  struct termios *termp, struct winsize *winp)
 {
     char line[20];

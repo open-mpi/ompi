@@ -29,7 +29,7 @@
    explanation */
 #include "attribute/attribute.h"
 #endif
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"

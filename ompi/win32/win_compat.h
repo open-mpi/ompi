@@ -55,7 +55,7 @@
 #include "win32/ompi_utsname.h"
 #include "win32/ompi_util.h"
 #include "win32/ompi_misc.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 /*#endif*/
 
 #define MAXPATHLEN MAX_PATH

@@ -20,7 +20,7 @@
 
 #include "ompi_config.h"
 
-#include "util/printf.h"
+#include "opal/util/printf.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -173,20 +173,20 @@ static int guess_strlen(const char *fmt, va_list ap)
 }
 
 
-int ompi_asprintf(char **ptr, const char *fmt, ...)
+int opal_asprintf(char **ptr, const char *fmt, ...)
 {
     int length;
     va_list ap;
 
     va_start(ap, fmt);
-    length = ompi_vasprintf(ptr, fmt, ap);
+    length = opal_vasprintf(ptr, fmt, ap);
     va_end(ap);
 
     return length;
 }
 
 
-int ompi_vasprintf(char **ptr, const char *fmt, va_list ap)
+int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
 {
     int length;
 
@@ -214,25 +214,25 @@ int ompi_vasprintf(char **ptr, const char *fmt, va_list ap)
 }
 
 
-int ompi_snprintf(char *str, size_t size, const char *fmt, ...)
+int opal_snprintf(char *str, size_t size, const char *fmt, ...)
 {
     int length;
     va_list ap;
 
     va_start(ap, fmt);
-    length = ompi_vsnprintf(str, size, fmt, ap);
+    length = opal_vsnprintf(str, size, fmt, ap);
     va_end(ap);
 
     return length;
 }
 
 
-int ompi_vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
+int opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 {
     int length;
     char *buf;
 
-    length = ompi_vasprintf(&buf, fmt, ap);
+    length = opal_vasprintf(&buf, fmt, ap);
     if (length < 0) {
         return length;
     }
@@ -261,23 +261,23 @@ int main(int argc, char *argv[])
     int length;
 
     puts("test for NULL buffer in snprintf:");
-    length = ompi_snprintf(NULL, 0, "this is a string %d", 1004);
+    length = opal_snprintf(NULL, 0, "this is a string %d", 1004);
     printf("length = %d\n", length);
 
     puts("test of snprintf to an undersize buffer:");
-    length = ompi_snprintf(a, sizeof(a), "this is a string %d", 1004);
+    length = opal_snprintf(a, sizeof(a), "this is a string %d", 1004);
     printf("string = %s\n", a);
     printf("length = %d\n", length);
     printf("strlen = %d\n", (int) strlen(a));
 
     puts("test of snprintf to an oversize buffer:");
-    length = ompi_snprintf(b, sizeof(b), "this is a string %d", 1004);
+    length = opal_snprintf(b, sizeof(b), "this is a string %d", 1004);
     printf("string = %s\n", b);
     printf("length = %d\n", length);
     printf("strlen = %d\n", (int) strlen(b));
 
     puts("test of asprintf:");
-    length = ompi_asprintf(&s, "this is a string %d", 1004);
+    length = opal_asprintf(&s, "this is a string %d", 1004);
     printf("string = %s\n", s);
     printf("length = %d\n", length);
     printf("strlen = %d\n", (int) strlen(s));

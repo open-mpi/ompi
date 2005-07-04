@@ -47,7 +47,7 @@
 #include "mca/rml/rml.h"
 
 #include "runtime/runtime.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                orte_process_name_t *port, int send_first,

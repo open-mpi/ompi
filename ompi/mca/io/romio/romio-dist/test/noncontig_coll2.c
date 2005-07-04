@@ -7,7 +7,7 @@
 
 /* Open MPI: include our printf.h to ensure that we get an snprintf()
    that works on this platform */
-#include "util/printf.h"
+#include "opal/util/printf.h"
 
 /* tests noncontiguous reads/writes using collective I/O */
 

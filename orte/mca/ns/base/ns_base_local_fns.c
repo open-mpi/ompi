@@ -29,7 +29,7 @@
 
 #include "include/constants.h"
 #include "opal/util/output.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "mca/mca.h"
 #include "mca/errmgr/errmgr.h"
 

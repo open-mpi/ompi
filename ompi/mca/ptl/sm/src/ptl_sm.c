@@ -41,7 +41,7 @@
 #include "mca/ptl/sm/src/ptl_sm_peer.h"
 #include "mca/common/sm/common_sm_mmap.h"
 #include "util/proc_info.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "mca/ptl/sm/src/ptl_sm_sendreq.h"
 #include "class/ompi_fifo.h"
 #include "class/ompi_free_list.h"

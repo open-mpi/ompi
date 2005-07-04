@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "util/printf.h"
+#include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 
