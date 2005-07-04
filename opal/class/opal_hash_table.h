@@ -41,7 +41,7 @@ struct opal_hash_table_t
 {
     opal_object_t        super;          /**< subclass of opal_object_t */
     opal_list_t          ht_nodes;       /**< free list of hash nodes */
-    opal_list_t         *ht_table;       /**< each item is an array of ompi_fhnode_t nodes */
+    opal_list_t         *ht_table;       /**< each item is an array of opal_fhnode_t nodes */
     size_t              ht_table_size;  /**< size of table */
     size_t              ht_size;        /**< number of values on table */
     size_t              ht_mask;

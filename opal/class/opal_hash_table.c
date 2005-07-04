@@ -355,7 +355,7 @@ static OBJ_CLASS_INSTANCE(opal_ptr_hash_node_t,
                           opal_ptr_hash_node_destruct);
 
 
-static inline uint32_t ompi_hash_value(size_t mask, const void *key,
+static inline uint32_t opal_hash_value(size_t mask, const void *key,
                                        uint32_t keysize)
 {
     uint32_t h, i;
@@ -371,7 +371,7 @@ static inline uint32_t ompi_hash_value(size_t mask, const void *key,
 int opal_hash_table_get_value_ptr(opal_hash_table_t* ht, const void* key,
 				  size_t key_size, void **ptr)
 {
-    opal_list_t* list = ht->ht_table + ompi_hash_value(ht->ht_mask, key, 
+    opal_list_t* list = ht->ht_table + opal_hash_value(ht->ht_mask, key, 
                                                        key_size);
     opal_ptr_hash_node_t *node;
 
@@ -398,7 +398,7 @@ int opal_hash_table_get_value_ptr(opal_hash_table_t* ht, const void* key,
 int opal_hash_table_set_value_ptr(opal_hash_table_t* ht, const void* key,
                                   size_t key_size, void* value)
 {
-    opal_list_t* list = ht->ht_table + ompi_hash_value(ht->ht_mask, key,
+    opal_list_t* list = ht->ht_table + opal_hash_value(ht->ht_mask, key,
                                                        key_size);
     opal_ptr_hash_node_t *node;
 
@@ -439,7 +439,7 @@ int opal_hash_table_set_value_ptr(opal_hash_table_t* ht, const void* key,
 int opal_hash_table_remove_value_ptr(opal_hash_table_t* ht,
                                      const void* key, size_t key_size)
 {
-    opal_list_t* list = ht->ht_table + ompi_hash_value(ht->ht_mask,
+    opal_list_t* list = ht->ht_table + opal_hash_value(ht->ht_mask,
                                                        key, key_size);
     opal_ptr_hash_node_t *node;
 
