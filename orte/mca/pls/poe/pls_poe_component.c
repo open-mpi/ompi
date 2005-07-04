@@ -35,7 +35,7 @@
  * Public string showing the pls ompi_poe component version number
  */
 const char *mca_pls_poe_component_version_string =
-  "Open MPI poe pls MCA component version " MCA_pls_poe_VERSION;
+  "Open MPI poe pls MCA component version " ORTE_VERSION;
 
 
 /*
@@ -62,9 +62,9 @@ orte_pls_poe_component_t mca_pls_poe_component = {
         /* Component name and version */
 
         "poe",
-        MCA_pls_poe_MAJOR_VERSION,
-        MCA_pls_poe_MINOR_VERSION,
-        MCA_pls_poe_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 

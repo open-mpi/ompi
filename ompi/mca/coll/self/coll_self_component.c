@@ -22,7 +22,6 @@
 
 #include "ompi_config.h"
 #include "coll_self.h"
-#include "mca/coll/self/coll-self-version.h"
 
 #include "mpi.h"
 #include "mca/coll/coll.h"
@@ -32,7 +31,7 @@
  * Public string showing the coll ompi_self component version number
  */
 const char *mca_coll_self_component_version_string =
-  "Open MPI self collective MCA component version " MCA_coll_self_VERSION;
+  "Open MPI self collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variable
@@ -64,9 +63,9 @@ const mca_coll_base_component_1_0_0_t mca_coll_self_component = {
         /* Component name and version */
 
         "self",
-        MCA_coll_self_MAJOR_VERSION,
-        MCA_coll_self_MINOR_VERSION,
-        MCA_coll_self_RELEASE_VERSION,
+        OMPI_MAJOR_VERSION,
+        OMPI_MINOR_VERSION,
+        OMPI_RELEASE_VERSION,
 
         /* Component open and close functions */
 

@@ -158,7 +158,7 @@ typedef struct {
  *
  * Code that is only for when building Open MPI or utilities that are
  * using the internals of Open MPI.  It should not be included when
- * building MPI applicatiosn
+ * building MPI applications
  *
  **********************************************************************/
 #if OMPI_BUILDING

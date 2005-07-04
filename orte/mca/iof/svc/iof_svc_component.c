@@ -53,9 +53,9 @@ orte_iof_svc_component_t mca_iof_svc_component = {
         ORTE_IOF_BASE_VERSION_1_0_0,
 
         "svc", /* MCA component name */
-        1,  /* MCA component major version */
-        0,  /* MCA component minor version */
-        0,  /* MCA component release version */
+        ORTE_MAJOR_VERSION,  /* MCA component major version */
+        ORTE_MINOR_VERSION,  /* MCA component minor version */
+        ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_iof_svc_open,  /* component open  */
         orte_iof_svc_close  /* component close */
       },

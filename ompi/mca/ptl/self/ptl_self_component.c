@@ -58,9 +58,9 @@ mca_ptl_self_component_t mca_ptl_self_component = {
             MCA_PTL_BASE_VERSION_1_0_0,
             
             "self", /* MCA component name */
-            1,  /* MCA component major version */
-            0,  /* MCA component minor version */
-            0,  /* MCA component release version */
+            OMPI_MAJOR_VERSION,  /* MCA component major version */
+            OMPI_MINOR_VERSION,  /* MCA component minor version */
+            OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_ptl_self_component_open,  /* component open */
             mca_ptl_self_component_close  /* component close */
         },

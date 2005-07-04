@@ -34,7 +34,7 @@
  * Public string showing the pls ompi_tm component version number
  */
 const char *mca_pls_tm_component_version_string =
-  "Open MPI tm pls MCA component version " MCA_pls_tm_VERSION;
+  "Open MPI tm pls MCA component version " ORTE_VERSION;
 
 
 /*
@@ -69,9 +69,9 @@ orte_pls_base_component_1_0_0_t mca_pls_tm_component = {
         /* Component name and version */
 
         "tm",
-        MCA_pls_tm_MAJOR_VERSION,
-        MCA_pls_tm_MINOR_VERSION,
-        MCA_pls_tm_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 

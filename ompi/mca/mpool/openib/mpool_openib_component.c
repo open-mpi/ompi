@@ -43,9 +43,9 @@ mca_mpool_openib_component_t mca_mpool_openib_component = {
         MCA_MPOOL_BASE_VERSION_1_0_0,
 
         "vapi", /* MCA component name */
-        1,  /* MCA component major version */
-        0,  /* MCA component minor version */
-        0,  /* MCA component release version */
+        OMPI_MAJOR_VERSION,  /* MCA component major version */
+        OMPI_MINOR_VERSION,  /* MCA component minor version */
+        OMPI_RELEASE_VERSION,  /* MCA component release version */
         mca_mpool_openib_open,  /* component open  */
         NULL
       },

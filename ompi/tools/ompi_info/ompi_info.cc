@@ -58,6 +58,8 @@ opal_cmd_line_t *ompi_info::cmd_line = NULL;
 
 const string ompi_info::type_all = "all";
 const string ompi_info::type_ompi = "ompi";
+const string ompi_info::type_orte = "orte";
+const string ompi_info::type_opal = "opal";
 const string ompi_info::type_base = "base";
 ompi_info::type_vector_t ompi_info::mca_types;
 

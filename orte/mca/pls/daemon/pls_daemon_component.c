@@ -25,7 +25,6 @@
 #include "include/orte_constants.h"
 #include "mca/pls/pls.h"
 #include "pls_daemon.h"
-#include "mca/pls/daemon/pls-daemon-version.h"
 #include "mca/base/mca_base_param.h"
 
 
@@ -33,7 +32,7 @@
  * Public string showing the pls ompi_daemon component version number
  */
 const char *mca_pls_daemon_component_version_string =
-  "Open MPI daemon pls MCA component version " MCA_pls_daemon_VERSION;
+  "Open MPI daemon pls MCA component version " ORTE_VERSION;
 
 
 /*
@@ -68,9 +67,9 @@ orte_pls_base_component_1_0_0_t mca_pls_daemon_component = {
         /* Component name and version */
 
         "daemon",
-        MCA_pls_daemon_MAJOR_VERSION,
-        MCA_pls_daemon_MINOR_VERSION,
-        MCA_pls_daemon_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 

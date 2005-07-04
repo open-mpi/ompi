@@ -40,9 +40,9 @@ mca_btl_portals_component_t mca_btl_portals_component = {
         MCA_BMI_BASE_VERSION_1_0_0,
 
         "portals", /* MCA module name */
-        1,  /* MCA module major version */
-        0,  /* MCA module minor version */
-        0,  /* MCA module release version */
+        OMPI_MAJOR_VERSION,  /* MCA module major version */
+        OMPI_MINOR_VERSION,  /* MCA module minor version */
+        OMPI_RELEASE_VERSION,  /* MCA module release version */
         mca_btl_portals_component_open,  /* module open */
         mca_btl_portals_component_close  /* module close */
       },

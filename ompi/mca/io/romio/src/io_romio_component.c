@@ -21,7 +21,6 @@
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "io_romio.h"
-#include "io-romio-version.h"
 
 
 /*
@@ -68,7 +67,7 @@ opal_list_t mca_io_romio_pending_requests;
  * Public string showing the coll ompi_demo component version number
  */
 const char *mca_io_romio_component_version_string =
-  "OMPI/MPI ROMIO io MCA component version " MCA_io_romio_VERSION;
+  "OMPI/MPI ROMIO io MCA component version " OMPI_VERSION;
 
 
 mca_io_base_component_1_0_0_t mca_io_romio_component = {
@@ -80,9 +79,9 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
            specific MCA version) */
         MCA_IO_BASE_VERSION_1_0_0,
         "romio",
-        MCA_io_romio_MAJOR_VERSION,
-        MCA_io_romio_MINOR_VERSION,
-        MCA_io_romio_RELEASE_VERSION,
+        OMPI_MAJOR_VERSION,
+        OMPI_MINOR_VERSION,
+        OMPI_RELEASE_VERSION,
         open_component,
         close_component,
     },

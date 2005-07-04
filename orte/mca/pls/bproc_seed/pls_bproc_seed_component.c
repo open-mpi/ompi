@@ -38,9 +38,9 @@ orte_pls_bproc_component_t mca_pls_bproc_seed_component = {
         ORTE_PLS_BASE_VERSION_1_0_0,
 
         "bproc_seed", /* MCA component name */
-        1,  /* MCA component major version */
-        0,  /* MCA component minor version */
-        0,  /* MCA component release version */
+        ORTE_MAJOR_VERSION,  /* MCA component major version */
+        ORTE_MINOR_VERSION,  /* MCA component minor version */
+        ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_pls_bproc_seed_component_open,  /* component open */
         orte_pls_bproc_seed_component_close /* component close */
         },

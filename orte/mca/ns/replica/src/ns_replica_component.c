@@ -51,9 +51,9 @@ OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_replica_component = {
     MCA_NS_BASE_VERSION_1_0_0,
 
     "replica", /* MCA module name */
-    1,  /* MCA module major version */
-    0,  /* MCA module minor version */
-    0,  /* MCA module release version */
+    ORTE_MAJOR_VERSION,  /* MCA module major version */
+    ORTE_MINOR_VERSION,  /* MCA module minor version */
+    ORTE_RELEASE_VERSION,  /* MCA module release version */
     orte_ns_replica_open,  /* module open */
     orte_ns_replica_close /* module close */
   },

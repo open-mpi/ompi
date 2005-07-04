@@ -25,7 +25,6 @@
 #include "include/orte_constants.h"
 #include "mca/pls/pls.h"
 #include "pls_slurm.h"
-#include "mca/pls/slurm/pls-slurm-version.h"
 #include "mca/base/mca_base_param.h"
 
 
@@ -33,7 +32,7 @@
  * Public string showing the pls ompi_slurm component version number
  */
 const char *mca_pls_slurm_component_version_string =
-  "Open MPI slurm pls MCA component version " MCA_pls_slurm_VERSION;
+  "Open MPI slurm pls MCA component version " ORTE_VERSION;
 
 
 /*
@@ -68,9 +67,9 @@ orte_pls_base_component_1_0_0_t mca_pls_slurm_component = {
         /* Component name and version */
 
         "slurm",
-        MCA_pls_slurm_MAJOR_VERSION,
-        MCA_pls_slurm_MINOR_VERSION,
-        MCA_pls_slurm_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 

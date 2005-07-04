@@ -48,9 +48,9 @@ mca_gpr_base_component_t mca_gpr_proxy_component = {
 	MCA_GPR_BASE_VERSION_1_0_0,
 
 	"proxy", /* MCA module name */
-	1,  /* MCA module major version */
-	0,  /* MCA module minor version */
-	0,  /* MCA module release version */
+	ORTE_MAJOR_VERSION,  /* MCA module major version */
+	ORTE_MINOR_VERSION,  /* MCA module minor version */
+	ORTE_RELEASE_VERSION,  /* MCA module release version */
 	orte_gpr_proxy_open,  /* module open */
 	orte_gpr_proxy_close /* module close */
     },

@@ -55,9 +55,9 @@ orte_iof_proxy_component_t mca_iof_proxy_component = {
         ORTE_IOF_BASE_VERSION_1_0_0,
 
         "proxy", /* MCA component name */
-        1,  /* MCA component major version */
-        0,  /* MCA component minor version */
-        0,  /* MCA component release version */
+        ORTE_MAJOR_VERSION,  /* MCA component major version */
+        ORTE_MINOR_VERSION,  /* MCA component minor version */
+        ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_iof_proxy_open,  /* component open  */
         orte_iof_proxy_close  /* component close */
       },

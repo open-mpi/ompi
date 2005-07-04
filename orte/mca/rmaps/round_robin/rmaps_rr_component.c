@@ -43,9 +43,9 @@ orte_rmaps_round_robin_component_t mca_rmaps_round_robin_component = {
         ORTE_RMAPS_BASE_VERSION_1_0_0,
 
         "round_robin", /* MCA component name */
-        1,  /* MCA component major version */
-        0,  /* MCA component minor version */
-        0,  /* MCA component release version */
+        ORTE_MAJOR_VERSION,  /* MCA component major version */
+        ORTE_MINOR_VERSION,  /* MCA component minor version */
+        ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_rmaps_round_robin_open,  /* component open  */
         orte_rmaps_round_robin_close  /* component close */
       },

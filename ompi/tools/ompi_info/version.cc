@@ -126,8 +126,26 @@ void ompi_info::show_ompi_version(const string& scope)
                        OMPI_RELEASE_VERSION, 
                        OMPI_ALPHA_VERSION, OMPI_BETA_VERSION, 
                        OMPI_WANT_SVN, OMPI_SVN_R));
-  out("SVN revision number", type_ompi + ":version:svn",
+  out("Open MPI SVN revision", type_ompi + ":version:svn",
       OMPI_SVN_R);
+
+  out("Open RTE", type_orte + ":version:full",
+      make_version_str(scope, 
+                       ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
+                       ORTE_RELEASE_VERSION, 
+                       ORTE_ALPHA_VERSION, ORTE_BETA_VERSION, 
+                       ORTE_WANT_SVN, ORTE_SVN_R));
+  out("Open RTE SVN revision", type_orte + ":version:svn",
+      ORTE_SVN_R);
+
+  out("OPAL", type_opal + ":version:full",
+      make_version_str(scope, 
+                       OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
+                       OPAL_RELEASE_VERSION, 
+                       OPAL_ALPHA_VERSION, OPAL_BETA_VERSION, 
+                       OPAL_WANT_SVN, OPAL_SVN_R));
+  out("OPAL SVN revision", type_opal + ":version:svn",
+      OPAL_SVN_R);
 }
 
 

@@ -24,7 +24,6 @@
 
 #include "include/orte_constants.h"
 #include "mca/pls/pls.h"
-#include "mca/pls/proxy/pls-proxy-version.h"
 #include "mca/pls/proxy/pls_proxy.h"
 
 #include "mca/base/mca_base_param.h"
@@ -34,7 +33,7 @@
  * Public string showing the pls proxy component version number
  */
 const char *mca_pls_proxy_component_version_string =
-  "Open MPI proxy pls MCA component version " MCA_pls_proxy_VERSION;
+  "Open MPI proxy pls MCA component version " ORTE_VERSION;
 
 
 /*
@@ -69,9 +68,9 @@ orte_pls_base_component_1_0_0_t mca_pls_proxy_component = {
         /* Component name and version */
 
         "proxy",
-        MCA_pls_proxy_MAJOR_VERSION,
-        MCA_pls_proxy_MINOR_VERSION,
-        MCA_pls_proxy_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
 
