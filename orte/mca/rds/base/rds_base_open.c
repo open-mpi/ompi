@@ -33,7 +33,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/rds/base/static-components.h"
+#include "orte/mca/rds/base/static-components.h"
 
 /**
  * Local functions.

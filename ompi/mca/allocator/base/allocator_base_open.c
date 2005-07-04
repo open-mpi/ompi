@@ -30,7 +30,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/allocator/base/static-components.h"
+#include "ompi/mca/allocator/base/static-components.h"
 
 /*
  * Global variables

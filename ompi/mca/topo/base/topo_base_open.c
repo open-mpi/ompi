@@ -30,7 +30,7 @@
  * statements and the definition of an array of pointers to each component's
  * public mca_base_component_t struct.
  */
-#include "mca/topo/base/static-components.h"
+#include "ompi/mca/topo/base/static-components.h"
 
 /*
  * Global variables

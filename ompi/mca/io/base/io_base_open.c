@@ -36,7 +36,7 @@
 #ifdef WIN32
     const mca_base_component_t *mca_io_base_static_components[] = {NULL};
 #else 
-#include "mca/io/base/static-components.h"
+#include "ompi/mca/io/base/static-components.h"
 #endif
 
 /*

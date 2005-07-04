@@ -39,7 +39,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/soh/base/static-components.h"
+#include "orte/mca/soh/base/static-components.h"
 
 /*
  * globals

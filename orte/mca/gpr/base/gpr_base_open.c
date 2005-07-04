@@ -33,7 +33,7 @@
  * component's public mca_base_module_t struct.
  */
 
-#include "mca/gpr/base/static-components.h"
+#include "orte/mca/gpr/base/static-components.h"
 
 /*
  * globals

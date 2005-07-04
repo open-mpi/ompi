@@ -30,7 +30,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/pml/base/static-components.h"
+#include "ompi/mca/pml/base/static-components.h"
 
 int mca_pml_base_progress(void) 
 {
