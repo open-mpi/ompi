@@ -1,9 +1,0 @@
-- Need some type of template system for *_direct_call_headers.h file
-  so that it isn't touched every time it changes.
-  --> DONE
-- Error if we want direct call and the component fails to work or
-  support direct calling
-  --> DONE
-- configure way to know doing direct
-  --> DONE
-- ompi_info to know a component is direct call-able
