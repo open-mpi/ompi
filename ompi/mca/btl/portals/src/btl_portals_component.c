@@ -146,7 +146,7 @@ mca_btl_portals_component_open(void)
         opal_output_open(&portals_output_stream);
 
     /* fill default module state */
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
 
     for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
         mca_btl_portals_module.portals_eq_sizes[i] = 0;

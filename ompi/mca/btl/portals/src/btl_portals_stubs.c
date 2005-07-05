@@ -30,35 +30,6 @@
  * BWB - README - BWB - README - BWB - README - BWB - README - BWB */
 
 
-int
-mca_btl_portals_register(struct mca_btl_base_module_t* btl,
-                         mca_btl_base_tag_t tag,
-                         mca_btl_base_module_recv_cb_fn_t cbfunc,
-                         void* cbdata)
-{
-    printf("btl register\n");
-    return OMPI_SUCCESS;
-}
-
-
-mca_btl_base_descriptor_t* 
-mca_btl_portals_alloc(struct mca_btl_base_module_t* btl, 
-                      size_t size)
-{
-    printf("btl alloc: %d\n", size);
-    
-    return NULL;
-}
-
-int
-mca_btl_portals_free(struct mca_btl_base_module_t* btl, 
-                     mca_btl_base_descriptor_t* des)
-{
-    printf("btl free\n");
-    return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
 mca_btl_base_descriptor_t* 
 mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
                             struct mca_btl_base_endpoint_t* peer,
@@ -82,17 +53,6 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl,
 {
     printf("btl prepare dst\n");
     return NULL;
-}
-
-
-int
-mca_btl_portals_send(struct mca_btl_base_module_t* btl,
-                     struct mca_btl_base_endpoint_t* btl_peer,
-                     struct mca_btl_base_descriptor_t* descriptor, 
-                     mca_btl_base_tag_t tag)
-{
-    printf("btl send\n");
-    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 

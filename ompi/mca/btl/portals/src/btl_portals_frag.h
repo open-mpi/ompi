@@ -30,8 +30,9 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t);
 struct mca_btl_portals_frag_t {
     mca_btl_base_descriptor_t base; 
     mca_btl_base_segment_t segment; 
+    struct mca_btl_portals_module_t *btl;
     struct mca_btl_base_endpoint_t *endpoint; 
-    mca_btl_base_header_t *hdr;
+    mca_btl_base_header_t hdr;
     size_t size; 
 }; 
 typedef struct mca_btl_portals_frag_t mca_btl_portals_frag_t; 

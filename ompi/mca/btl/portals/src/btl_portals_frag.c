@@ -21,31 +21,45 @@
 #include "btl_portals_frag.h" 
 
 
-static void mca_btl_portals_frag_common_constructor(mca_btl_portals_frag_t* frag) 
+static void
+mca_btl_portals_frag_common_constructor(mca_btl_portals_frag_t* frag) 
 { 
-    mca_btl_portals_frag_common_constructor(frag); 
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst = NULL;
+    frag->base.des_dst = 0;
     frag->base.des_dst_cnt = 0;
+    frag->base.des_src = &frag->segment;
+    frag->base.des_src_cnt = 1;
+
+    frag->segment.seg_addr.pval = frag + sizeof(mca_btl_portals_frag_t);
+    frag->segment.seg_len = frag->size;
+    frag->segment.seg_key.key64 = 0;
 }
 
-static void mca_btl_portals_frag_eager_constructor(mca_btl_portals_frag_t* frag) 
+
+static void
+mca_btl_portals_frag_eager_constructor(mca_btl_portals_frag_t* frag) 
 { 
     frag->size = mca_btl_portals_module.super.btl_eager_limit;  
     mca_btl_portals_frag_common_constructor(frag); 
 }
 
-static void mca_btl_portals_frag_max_constructor(mca_btl_portals_frag_t* frag) 
+
+static void
+mca_btl_portals_frag_max_constructor(mca_btl_portals_frag_t* frag) 
 { 
     frag->size = mca_btl_portals_module.super.btl_max_send_size; 
     mca_btl_portals_frag_common_constructor(frag); 
 }
 
-static void mca_btl_portals_frag_user_constructor(mca_btl_portals_frag_t* frag) 
+
+static void
+mca_btl_portals_frag_user_constructor(mca_btl_portals_frag_t* frag) 
 { 
+    frag->base.des_flags = 0;
+    frag->base.des_dst = 0;
+    frag->base.des_dst_cnt = 0;
+    frag->base.des_src = 0;
+    frag->base.des_src_cnt = 0;
     frag->size = 0; 
-    mca_btl_portals_frag_common_constructor(frag); 
 }
 
 

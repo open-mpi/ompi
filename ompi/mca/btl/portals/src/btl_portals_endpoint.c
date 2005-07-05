@@ -14,15 +14,32 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_PORTALS_RECV_H
-#define MCA_BTL_PORTALS_RECV_H
 
-int mca_btl_portals_recv_enable(mca_btl_portals_module_t *module);
+#include "ompi_config.h"
+#include "portals_config.h"
 
-int mca_btl_portals_recv_disable(mca_btl_portals_module_t *module);
-
-int mca_btl_portals_process_recv(mca_btl_portals_module_t *module, 
-                                 ptl_event_t *ev);
+#include "btl_portals.h"
+#include "btl_portals_endpoint.h" 
 
 
-#endif /* MCA_BTL_PORTALS_RECV_H */
+/*
+ * Initialize state of the endpoint instance.
+ *
+ */
+
+static void mca_btl_portals_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
+{
+    endpoint->endpoint_btl = NULL;
+    endpoint->endpoint_proc = NULL;
+
+    endpoint->endpoint_ptl_id.nid = 0;
+    endpoint->endpoint_ptl_id.pid = 0;
+}
+
+
+OBJ_CLASS_INSTANCE(
+    mca_btl_portals_endpoint_t, 
+    opal_object_t, 
+    mca_btl_portals_endpoint_construct, 
+    NULL);
+
