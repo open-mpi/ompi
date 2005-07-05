@@ -129,6 +129,7 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_TAG_BTL  0
 #define MCA_BTL_TAG_PML  1
 #define MCA_BTL_TAG_USR  2
+#define MCA_BTL_TAG_MAX  256 /* 1 + highest allowed tag num */
 
 /* prefered protocol */
 #define MCA_BTL_FLAGS_SEND  1
