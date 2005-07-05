@@ -15,23 +15,18 @@
  */
 
 
-#ifndef BTL_PORTALS_COMPAT_H
-#define BTL_PORTALS_COMPAT_H
+#include "ompi_config.h"
+#include "portals_config.h"
 
-#if BTL_PORTALS_UTCP
+#include "include/constants.h"
 
-#include <p3nal_utcp.h>
-#include <p3rt/p3rt.h>
-#include <p3api/debug.h>
+#include "btl_portals.h"
+#include "btl_portals_rdma.h"
 
-#elif BTL_PORTALS_REDSTORM
 
-#error "Red Storm Compatibility not implemented"
-
-#else
-
-#error "Unknown Portals library configuration"
-
-#endif
-
-#endif /* BTL_PORTALS_NAL_H */
+int
+mca_btl_portals_process_rdma(mca_btl_portals_module_t *module, 
+                             ptl_event_t *ev)
+{
+    return OMPI_SUCCESS;
+}

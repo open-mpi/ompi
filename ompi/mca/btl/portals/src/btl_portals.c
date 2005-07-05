@@ -94,7 +94,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl,
         if (curr_proc == local_proc) continue;
 
         /* make sure we can reach the process */
-        ret = PtlNIDist(mybtl->ni_handle,
+        ret = PtlNIDist(mybtl->portals_ni_h,
                         portals_procs[i],
                         &distance);
         if (ret != PTL_OK) {
@@ -134,8 +134,8 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
         (struct mca_btl_portals_module_t *) btl_base;
     int ret;
 
-    if (PTL_INVALID_HANDLE != btl->ni_handle) {
-        ret = PtlNIFini(btl->ni_handle);
+    if (PTL_INVALID_HANDLE != btl->portals_ni_h) {
+        ret = PtlNIFini(btl->portals_ni_h);
         if (PTL_OK != ret) {
             opal_output_verbose(20, mca_btl_portals_component.portals_output,
                                 "PtlNIFini returned %d", ret);

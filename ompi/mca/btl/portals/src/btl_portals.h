@@ -16,23 +16,24 @@
 /*
  * @file
  */
-#ifndef MCA_BMI_PORTALS_H
-#define MCA_BMI_PORTALS_H
+#ifndef MCA_BTL_PORTALS_H
+#define MCA_BTL_PORTALS_H
 
 #include <portals3.h>
 
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_free_list.h"
 #include "class/ompi_proc_table.h"
 
 
 /*
- * Portals BMI component.
+ * Portals BTL component.
  */
 struct mca_btl_portals_component_t {
-    /* base BMI component */
+    /* base BTL component */
     mca_btl_base_component_1_0_0_t super;
 
     /* output channel for debugging.  Value settings when using
@@ -47,7 +48,7 @@ struct mca_btl_portals_component_t {
      */
     int portals_output;
 
-#if BMI_PORTALS_UTCP
+#if BTL_PORTALS_UTCP
     /* ethernet interface to use - only has meaning with utcp
         reference */
     char *portals_ifname;
@@ -73,17 +74,17 @@ struct mca_btl_portals_component_t {
 typedef struct mca_btl_portals_component_t mca_btl_portals_component_t;
 
 
-#define MCA_BMI_PORTALS_EQ_RECV  0
-#define MCA_BMI_PORTALS_EQ_SEND  1
-#define MCA_BMI_PORTALS_EQ_RDMA  2
-#define MCA_BMI_PORTALS_EQ_SIZE  3
+#define MCA_BTL_PORTALS_EQ_RECV  0
+#define MCA_BTL_PORTALS_EQ_SEND  1
+#define MCA_BTL_PORTALS_EQ_RDMA  2
+#define MCA_BTL_PORTALS_EQ_SIZE  3
 
 struct mca_btl_portals_module_t {
-    /* base BMI module interface */
+    /* base BTL module interface */
     mca_btl_base_module_t super;
 
     /* registered callbacks */
-    mca_btl_base_recv_reg_t portals_reg[MCA_BMI_TAG_MAX];
+    mca_btl_base_recv_reg_t portals_reg[MCA_BTL_TAG_MAX];
 
     ompi_free_list_t portals_frag_eager;
     ompi_free_list_t portals_frag_max;
@@ -95,9 +96,9 @@ struct mca_btl_portals_module_t {
     int portals_recv_mds_size;
 
     /* size for event queue */
-    int portals_eq_sizes[MCA_BMI_PORTALS_EQ_SIZE];
+    int portals_eq_sizes[MCA_BTL_PORTALS_EQ_SIZE];
     /* frag receive event queue */
-    ptl_handle_eq_t portals_eq_handles[MCA_BMI_PORTALS_EQ_SIZE];
+    ptl_handle_eq_t portals_eq_handles[MCA_BTL_PORTALS_EQ_SIZE];
 
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;
@@ -125,7 +126,7 @@ int mca_btl_portals_component_progress(void);
 /*
  * Compatibility functions (btl_portals_compat_{}.c)
  *
- * Not part of the BMI interface.  Need to be implemented for every
+ * Not part of the BTL interface.  Need to be implemented for every
  * version of Portals
  */
 int mca_btl_portals_init(mca_btl_portals_component_t *comp);

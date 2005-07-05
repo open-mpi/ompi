@@ -44,7 +44,8 @@ int
 mca_btl_portals_init(mca_btl_portals_component_t *comp)
 {
     ptl_process_id_t info;
-    int ret, i;
+    int ret;
+    uint32_t i;
 #if 0
     FILE *output;
     char *tmp;
@@ -90,7 +91,7 @@ mca_btl_portals_init(mca_btl_portals_component_t *comp)
        Portals-specific entries */
     for (i = 0 ; i < comp->portals_num_modules ; ++i) {
         memcpy(&(comp->portals_modules[i]), 
-               mca_btl_portals_module,
+               &mca_btl_portals_module,
                sizeof(mca_btl_portals_module_t));
         /* the defaults are good enough for the rest */
     }
@@ -205,7 +206,7 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
     ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
-                    &(btl->portals_limits),    /* save our limits somewhere */
+                    &(btl->portals_ni_limits),    /* save our limits somewhere */
                     &(btl->portals_ni_h)  /* our interface handle */
                     );
     if (PTL_OK != ret) {

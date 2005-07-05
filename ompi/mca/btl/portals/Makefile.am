@@ -37,8 +37,16 @@ EXTRA_DIST = \
 portals_SOURCES = \
 	src/btl_portals.h \
 	src/btl_portals_compat.h \
+	src/btl_portals_frag.h \
+	src/btl_portals_send.h \
+	src/btl_portals_recv.h \
+	src/btl_portals_rdma.h \
 	src/btl_portals.c \
 	src/btl_portals_component.c \
+	src/btl_portals_frag.c \
+	src/btl_portals_send.c \
+	src/btl_portals_recv.c \
+	src/btl_portals_rdma.c \
 	src/btl_portals_stubs.c \
 	src/btl_portals_compat_utcp.c
 

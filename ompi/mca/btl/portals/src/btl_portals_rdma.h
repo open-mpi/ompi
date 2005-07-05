@@ -14,24 +14,11 @@
  * $HEADER$
  */
 
+#ifndef MCA_BTL_PORTALS_RDMA_H
+#define MCA_BTL_PORTALS_RDMA_H
 
-#ifndef BTL_PORTALS_COMPAT_H
-#define BTL_PORTALS_COMPAT_H
+int mca_btl_portals_process_rdma(mca_btl_portals_module_t *module, 
+                                 ptl_event_t *ev);
 
-#if BTL_PORTALS_UTCP
 
-#include <p3nal_utcp.h>
-#include <p3rt/p3rt.h>
-#include <p3api/debug.h>
-
-#elif BTL_PORTALS_REDSTORM
-
-#error "Red Storm Compatibility not implemented"
-
-#else
-
-#error "Unknown Portals library configuration"
-
-#endif
-
-#endif /* BTL_PORTALS_NAL_H */
+#endif /* MCA_BTL_PORTALS_RDMA_H */
