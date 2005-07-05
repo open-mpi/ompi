@@ -21,8 +21,6 @@ include $(top_ompi_srcdir)/config/Makefile.options
 sources =
 include src/Makefile.extra
 
-EXTRA_DIST = VERSION
-
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).

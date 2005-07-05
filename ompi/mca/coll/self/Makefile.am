@@ -18,8 +18,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-EXTRA_DIST = VERSION
-
 sources = \
         coll_self.h \
         coll_self_allgather.c \

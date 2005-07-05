@@ -18,10 +18,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-EXTRA_DIST = VERSION
-
-include $(top_ompi_srcdir)/config/Makefile.options
-
 AM_CPPFLAGS = -I$(top_ompi_builddir)/include
 
 xgrid_sources = \

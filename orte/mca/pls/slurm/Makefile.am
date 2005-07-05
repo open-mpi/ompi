@@ -18,8 +18,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-EXTRA_DIST = VERSION
-
 sources = \
         pls_slurm.h \
         pls_slurm_component.c \
