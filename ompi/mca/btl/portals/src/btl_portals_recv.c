@@ -25,6 +25,20 @@
 
 
 int
+mca_btl_portals_recv_enable(mca_btl_portals_module_t *module)
+{
+    return OMPI_SUCCESS;
+}
+
+
+int
+mca_btl_portals_recv_disable(mca_btl_portals_module_t *module)
+{
+    return OMPI_SUCCESS;
+}
+
+
+int
 mca_btl_portals_process_recv(mca_btl_portals_module_t *module, 
                              ptl_event_t *ev)
 {

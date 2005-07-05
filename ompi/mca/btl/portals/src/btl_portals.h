@@ -28,6 +28,8 @@
 #include "class/ompi_free_list.h"
 #include "class/ompi_proc_table.h"
 
+#include "btl_portals_endpoint.h"
+
 
 /*
  * Portals BTL component.
@@ -86,6 +88,9 @@ struct mca_btl_portals_module_t {
     /* registered callbacks */
     mca_btl_base_recv_reg_t portals_reg[MCA_BTL_TAG_MAX];
 
+    /* list of connected procs */
+    opal_list_t portals_endpoint_list;
+
     ompi_free_list_t portals_frag_eager;
     ompi_free_list_t portals_frag_max;
     ompi_free_list_t portals_frag_user;
@@ -107,6 +112,9 @@ struct mca_btl_portals_module_t {
 
     /* number of dropped messages */
     ptl_sr_value_t portals_sr_dropped;
+
+    /* lock for accessing module */
+    opal_mutex_t portals_lock;
 };
 typedef struct mca_btl_portals_module_t mca_btl_portals_module_t;
 
@@ -131,9 +139,11 @@ int mca_btl_portals_component_progress(void);
  */
 int mca_btl_portals_init(mca_btl_portals_component_t *comp);
 
+/* 4th argument is a ptl_peers array, as that's what we'll get back
+   from many of the access functions... */
 int mca_btl_portals_add_procs_compat(mca_btl_portals_module_t* btl,
                                      size_t nprocs, struct ompi_proc_t **procs,
-                                     ptl_process_id_t **portals_procs);
+                                     ptl_process_id_t **ptl_peers);
 
 /*
  * Module configuration functions (btl_portals.c)

@@ -41,6 +41,7 @@ portals_SOURCES = \
 	src/btl_portals_send.h \
 	src/btl_portals_recv.h \
 	src/btl_portals_rdma.h \
+	src/btl_portals_endpoint.h \
 	src/btl_portals.c \
 	src/btl_portals_component.c \
 	src/btl_portals_frag.c \
@@ -48,6 +49,7 @@ portals_SOURCES = \
 	src/btl_portals_recv.c \
 	src/btl_portals_rdma.c \
 	src/btl_portals_stubs.c \
+	src/btl_portals_endpoint.c \
 	src/btl_portals_compat_utcp.c
 
 

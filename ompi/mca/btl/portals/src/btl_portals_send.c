@@ -28,5 +28,24 @@ int
 mca_btl_portals_process_send(mca_btl_portals_module_t *module, 
                              ptl_event_t *ev)
 {
+    opal_output_verbose(99, mca_btl_portals_component.portals_output,
+                        "process_send");
     return OMPI_SUCCESS;
+}
+
+
+
+int
+mca_btl_portals_send(struct mca_btl_base_module_t* btl,
+                     struct mca_btl_base_endpoint_t* endpoint,
+                     struct mca_btl_base_descriptor_t* descriptor, 
+                     mca_btl_base_tag_t tag)
+{
+    mca_btl_portals_module_t *ptl_btl = (mca_btl_portals_module_t*) btl;
+    mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*) descriptor;
+    frag->endpoint = endpoint;
+    frag->hdr.tag = tag;
+    frag->btl = ptl_btl;
+
+    return mca_btl_portals_send_frag(frag);
 }
