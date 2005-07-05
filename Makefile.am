@@ -17,7 +17,7 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = config include etc opal orte ompi test
-EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE README.alpha
+EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
 
 dist-hook:
 	csh "$(top_srcdir)/config/distscript.csh" $(PACKAGE)-$(OMPI_VERSION) $(OMPI_VERSION) $(OMPI_SVN_VERSION)
