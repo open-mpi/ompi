@@ -18,8 +18,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-EXTRA_DIST = VERSION
-
 # According to the MCA spec, we have to make the output library here
 # in the top-level directory, and it has to be named
 # libompi_ssi_coll_ompi_basic.la

@@ -18,8 +18,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-EXTRA_DIST = VERSION
-
 sources = \
         pls_rsh.h \
         pls_rsh_component.c \

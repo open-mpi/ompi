@@ -22,8 +22,6 @@
 
 AUTOMAKE_OPTIONS	= foreign dist-bzip2
 
-EXTRA_DIST = VERSION
-
 # Source files
 
 sources = \
