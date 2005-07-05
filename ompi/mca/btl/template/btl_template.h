@@ -86,7 +86,7 @@ extern mca_btl_template_component_t mca_btl_template_component;
  */
 struct mca_btl_template_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
-    mca_btl_base_recv_reg_t template_reg[256]; 
+    mca_btl_base_recv_reg_t template_reg[MCA_BTL_TAG_MAX]; 
 
     /* free list of fragment descriptors */
     ompi_free_list_t template_frag_eager;
