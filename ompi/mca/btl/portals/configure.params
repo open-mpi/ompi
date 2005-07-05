@@ -18,5 +18,5 @@
 # Specific to this module
 
 PARAM_INIT_FILE=src/btl_portals.h
-PARAM_CONFIG_HEADER_FILE="portals_config.h"
+PARAM_CONFIG_HEADER_FILE="src/portals_config.h"
 PARAM_CONFIG_FILES="Makefile"

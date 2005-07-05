@@ -27,6 +27,10 @@
 
 #include "btl_portals.h"
 #include "btl_portals_compat.h"
+#include "btl_portals_frag.h"
+#include "btl_portals_send.h"
+#include "btl_portals_recv.h"
+#include "btl_portals_rdma.h"
 
 
 mca_btl_portals_component_t mca_btl_portals_component = {
@@ -37,7 +41,7 @@ mca_btl_portals_component_t mca_btl_portals_component = {
         /* Indicate that we are a pml v1.0.0 module (which also
            implies a specific MCA version) */
 
-        MCA_BMI_BASE_VERSION_1_0_0,
+        MCA_BTL_BASE_VERSION_1_0_0,
 
         "portals", /* MCA module name */
         OMPI_MAJOR_VERSION,  /* MCA module major version */
@@ -116,23 +120,23 @@ mca_btl_portals_component_open(void)
                   opal_mutex_t);
 
     /* get configured state for component */
-#if PTL_PORTALS_UTCP
-    mca_ptl_portals_component.portals_ifname = 
+#if BTL_PORTALS_UTCP
+    mca_btl_portals_component.portals_ifname = 
         param_register_string("ifname", "eth0");
 #endif
     portals_output_stream.lds_verbose_level = 
         param_register_int("debug_level",
-                           PTL_PORTALS_DEFAULT_DEBUG_LEVEL);
+                           BTL_PORTALS_DEFAULT_DEBUG_LEVEL);
 
-    mca_ptl_portals_component.portals_free_list_init_num = 
+    mca_btl_portals_component.portals_free_list_init_num = 
         param_register_int("free_list_init_num",
-                           PTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
-    mca_ptl_portals_component.portals_free_list_max_num = 
+                           BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
+    mca_btl_portals_component.portals_free_list_max_num = 
         param_register_int("free_list_max_num",
-                           PTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
-    mca_ptl_portals_component.portals_free_list_inc_num = 
+                           BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
+    mca_btl_portals_component.portals_free_list_inc_num = 
         param_register_int("free_list_inc_num",
-                           PTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM);
+                           BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM);
 
     /* start up debugging output */
     asprintf(&(portals_output_stream.lds_prefix), 
@@ -142,13 +146,9 @@ mca_btl_portals_component_open(void)
         opal_output_open(&portals_output_stream);
 
     /* fill default module state */
-    mca_ptl_portals_module.super.btl_flags = MCA_BMI_FLAGS_RDMA;
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
 
-    for (i = 0 ; i < MCA_BMI_TAG_MAX ; ++i) {
-        mca_btl_portals_module.portals_reg = NULL;
-    }
-
-    for (i = 0 ; i < MCA_BMI_PORTALS_EQ_SIZE ; ++i) {
+    for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
         mca_btl_portals_module.portals_eq_sizes[i] = 0;
         mca_btl_portals_module.portals_eq_handles[i] = PTL_EQ_NONE;
     }
@@ -157,26 +157,26 @@ mca_btl_portals_component_open(void)
     mca_btl_portals_module.portals_sr_dropped = 0;
 
     /* get configured state for default module */
-    mca_ptl_portals_module.super.btl_eager_limit = 
+    mca_btl_portals_module.super.btl_eager_limit = 
         param_register_int("eager_limit",
-                           PTL_PORTALS_DEFAULT_EAGER_LIMIT);
-    mca_ptl_portals_module.super.btl_min_send_size = 
+                           BTL_PORTALS_DEFAULT_EAGER_LIMIT);
+    mca_btl_portals_module.super.btl_min_send_size = 
         param_register_int("min_send_size",
-                           PTL_PORTALS_DEFAULT_MIN_SEND_SIZE);
-    mca_ptl_portals_module.super.btl_max_send_size = 
+                           BTL_PORTALS_DEFAULT_MIN_SEND_SIZE);
+    mca_btl_portals_module.super.btl_max_send_size = 
         param_register_int("max_send_size",
-                           PTL_PORTALS_DEFAULT_MAX_SEND_SIZE);
-    mca_ptl_portals_module.super.btl_min_rdma_size = 
+                           BTL_PORTALS_DEFAULT_MAX_SEND_SIZE);
+    mca_btl_portals_module.super.btl_min_rdma_size = 
         param_register_int("min_rdma_size",
-                           PTL_PORTALS_DEFAULT_MIN_RDMA_SIZE);
-    mca_ptl_portals_module.super.btl_max_rdma_size = 
+                           BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE);
+    mca_btl_portals_module.super.btl_max_rdma_size = 
         param_register_int("max_rdma_size",
-                           PTL_PORTALS_DEFAULT_MAX_RDMA_SIZE);
-    mca_ptl_portals_module.super.btl_exclusivity = 
+                           BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE);
+    mca_btl_portals_module.super.btl_exclusivity = 
         param_register_int("exclusivity", 60);
-    mca_ptl_portals_module.super.btl_latency = 
+    mca_btl_portals_module.super.btl_latency = 
         param_register_int("latency", 0);
-    mca_ptl_portals_module.super.btl_bandwidth = 
+    mca_btl_portals_module.super.btl_bandwidth = 
         param_register_int("bandwidth", 1000);
 
     return OMPI_SUCCESS;
@@ -214,9 +214,9 @@ mca_btl_portals_component_init(int *num_btls,
                                bool enable_mpi_threads)
 {
     mca_btl_base_module_t** btls;
+    uint32_t i;
+
     *num_btls = 0;
-    int i;
-    uint32_t length;
 
     if (enable_progress_threads) {
         opal_output_verbose(20, mca_btl_portals_component.portals_output,
@@ -232,41 +232,50 @@ mca_btl_portals_component_init(int *num_btls,
         return NULL;
     }
 
+    /* create an array of btl* to return */
     btls = malloc(mca_btl_portals_component.portals_num_modules *
                   sizeof(mca_btl_portals_module_t*));
-    for (i = 0 ; i < mca_btl_portals_component.portals_num_modules ; ++i) {
-        btls[i] = (mca_btl_base_module_t*) 
-            (mca_btl_portals_component.portals_modules + i);
 
-        OBJ_CONSTRUCT(&btls[i]->portals_frag_eager, ompi_free_list_t);
-        OBJ_CONSTRUCT(&btls[i]->portals_frag_max, ompi_free_list_t);
-        OBJ_CONSTRUCT(&btls[i]->portals_frag_user, ompi_free_list_t);
+    /* fill in all the portable parts of the module structs - the
+       compat code filled in the other bits already */
+    for (i = 0 ; i < mca_btl_portals_component.portals_num_modules ; ++i) {
+        mca_btl_portals_module_t* ptl_btl = 
+            (mca_btl_portals_component.portals_modules + i);
+        btls[i] = (mca_btl_base_module_t*) ptl_btl;
+        
+
+        OBJ_CONSTRUCT(&(ptl_btl->portals_frag_eager), ompi_free_list_t);
+        OBJ_CONSTRUCT(&(ptl_btl->portals_frag_max), ompi_free_list_t);
+        OBJ_CONSTRUCT(&(ptl_btl->portals_frag_user), ompi_free_list_t);
 
         /* eager frags */
-        ompi_free_list_init(&(btls[i].send_free_eager),
-                            sizeof(mca_btl_portals_btls[i].super.btl_eager_limit,
-                            OBJ_CLASS(mca_btl_portals_send_frag_eager_t),
+        ompi_free_list_init(&(ptl_btl->portals_frag_eager),
+                            sizeof(mca_btl_portals_frag_eager_t) + 
+                            ptl_btl->super.btl_eager_limit,
+                            OBJ_CLASS(mca_btl_portals_frag_eager_t),
                             mca_btl_portals_component.portals_free_list_init_num,
                             mca_btl_portals_component.portals_free_list_max_num,
-                            mca_btl_portals_component.portals_free_list_inc_num);
+                            mca_btl_portals_component.portals_free_list_inc_num,
+                            NULL);
 
         /* send frags */
-        ompi_free_list_init(&(btls[i].send_free_eager),
-                            btls[i].super.btl_max_sender_size,
-                            OBJ_CLASS(mca_btl_portals_send_frag_eager_t),
+        ompi_free_list_init(&(ptl_btl->portals_frag_max),
+                            sizeof(mca_btl_portals_frag_max_t) + 
+                            ptl_btl->super.btl_max_send_size,
+                            OBJ_CLASS(mca_btl_portals_frag_max_t),
                             mca_btl_portals_component.portals_free_list_init_num,
                             mca_btl_portals_component.portals_free_list_max_num,
-                            mca_btl_portals_component.portals_free_list_inc_num);
+                            mca_btl_portals_component.portals_free_list_inc_num,
+                            NULL);
 
         /* user frags */
-        ompi_free_list_init(&(btls[i].send_free_eager),
-                            btls[i].super.btl_max_sender_size,
-                            OBJ_CLASS(mca_btl_portals_send_frag_eager_t),
+        ompi_free_list_init(&(ptl_btl->portals_frag_user),
+                            sizeof(mca_btl_portals_frag_user_t),
+                            OBJ_CLASS(mca_btl_portals_frag_user_t),
                             mca_btl_portals_component.portals_free_list_init_num,
                             mca_btl_portals_component.portals_free_list_max_num,
-                            mca_btl_portals_component.portals_free_list_inc_num);
-                            
-
+                            mca_btl_portals_component.portals_free_list_inc_num,
+                            NULL);
     }
     *num_btls = mca_btl_portals_component.portals_num_modules;
 
@@ -286,30 +295,30 @@ mca_btl_portals_component_progress(void)
 
     for (i = 0 ; i < mca_btl_portals_component.portals_num_modules ; ++i) {
         struct mca_btl_portals_module_t *module = 
-            mca_btl_portals_component.portals_modules[i];
+            &(mca_btl_portals_component.portals_modules)[i];
         ptl_event_t ev;
         ptl_sr_value_t numdropped;
         int which;
         int ret;
 
-        if (module->eq_handles[MCA_BMI_PORTALS_EQ_SIZE - 1] == 
+        if (module->portals_eq_handles[MCA_BTL_PORTALS_EQ_SIZE - 1] == 
             PTL_EQ_NONE) continue; /* they are all initialized at once */
 
 #if OMPI_ENABLE_DEBUG
         /* BWB - this is going to kill performance */
-        PtlNIStatus(module->ni_handle,
+        PtlNIStatus(module->portals_ni_h,
                     PTL_SR_DROP_COUNT,
                     &numdropped);
-        if (numdropped != module->dropped) {
+        if (numdropped != module->portals_sr_dropped) {
             opal_output_verbose(30, mca_btl_portals_component.portals_output,
                                 "*** Dropped message count changed.  %lld, %lld",
-                                module->dropped, numdropped);
-            module->dropped = numdropped;
+                                module->portals_sr_dropped, numdropped);
+            module->portals_sr_dropped = numdropped;
         }
 #endif
 
-        ret = PtlEQPoll(module->eq_handles,
-                        MCA_BMI_PORTALS_EQ_SIZE, /* number of eq handles */
+        ret = PtlEQPoll(module->portals_eq_handles,
+                        MCA_BTL_PORTALS_EQ_SIZE, /* number of eq handles */
                         10,
                         &ev,
                         &which);
@@ -326,7 +335,7 @@ mca_btl_portals_component_progress(void)
                                 "*** Event queue entries were dropped");
         }
 
-#if BMI_PORTALS_HAVE_EVENT_UNLINK
+#if BTL_PORTALS_HAVE_EVENT_UNLINK && OMPI_ENABLE_DEBUG
         /* not everyone has UNLINK.  Use it only to print the event,
            so we can make sure we properly re-initialize the ones that
            need to be re-initialized */
@@ -336,6 +345,20 @@ mca_btl_portals_component_progress(void)
             continue;
         }
 #endif
+
+        switch (which) {
+        case MCA_BTL_PORTALS_EQ_RECV:
+            mca_btl_portals_process_recv(module, &ev);
+            break;
+        case MCA_BTL_PORTALS_EQ_SEND:
+            mca_btl_portals_process_send(module, &ev);
+            break;
+        case MCA_BTL_PORTALS_EQ_RDMA:
+            mca_btl_portals_process_rdma(module, &ev);
+            break;
+        default:
+            abort();
+        }
 
         num_progressed++;
     }
