@@ -614,6 +614,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     
     local_leader  = (*((int*)lleader));
     remote_leader = (orte_process_name_t*)rleader;
+    size_count = count;
 
     if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
          &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
