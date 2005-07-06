@@ -24,7 +24,7 @@
 
 static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr);
 
-static void* mca_ptl_mx_mem_alloc( size_t* size )
+static void* mca_ptl_mx_mem_alloc( size_t* size, void* userdata )
 {
     return malloc(*size);
 }
@@ -50,11 +50,8 @@ int mca_ptl_mx_module_init(void)
     }
 
     /* determine the number of NICs */
-    if((status = mx_get_info(
-        NULL,
-        MX_NIC_COUNT,
-        &mca_ptl_mx_component.mx_num_ptls,
-        sizeof(uint32_t))) != MX_SUCCESS) {
+    if((status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
+                              &mca_ptl_mx_component.mx_num_ptls, sizeof(uint32_t))) != MX_SUCCESS) {
         opal_output(0, "mca_ptl_mx_init: mx_get_info(MX_NIC_COUNT) failed with status=%d\n", status);
         return OMPI_ERROR;
     }
@@ -63,11 +60,10 @@ int mca_ptl_mx_module_init(void)
     size = sizeof(uint64_t) * (mca_ptl_mx_component.mx_num_ptls+1);
     if(NULL == (nic_addrs = (uint64_t*)malloc(size)))
         return OMPI_ERR_OUT_OF_RESOURCE;
-    if((status = mx_get_info(
-        NULL,
-        MX_NIC_IDS,
-        nic_addrs,
-        size)) != MX_SUCCESS) {
+    if((status = mx_get_info( NULL,
+                              MX_NIC_IDS, NULL, 0,
+                              nic_addrs,
+                              size)) != MX_SUCCESS) {
         free(nic_addrs);
         return OMPI_ERROR;
     }
@@ -178,11 +174,11 @@ static void* mca_ptl_mx_thread(opal_object_t *arg)
 static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
 {
     mca_ptl_mx_module_t* ptl = (mca_ptl_mx_module_t*)context;
-	mca_ptl_base_recv_request_t* request;
+    mca_ptl_base_recv_request_t* request;
     mca_ptl_mx_recv_frag_t *frag;
     mx_return_t mx_return;
     ompi_ptr_t match;
-    uint32_t offset;
+    size_t offset;
     ompi_proc_t* proc;
     ompi_convertor_t* convertor;
     int rc;
@@ -193,9 +189,9 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
 
     /* otherwise extract request pointer and offset */
     match.lval = match_value;
-    request = (mca_ptl_base_recv_request_t*)match.sval.uval;
+    request = (mca_ptl_base_recv_request_t*)match.pval;
     offset = match.sval.lval;
-    proc = ompi_comm_peer_lookup(request->req_base.req_comm,
+    proc = ompi_comm_peer_lookup(request->req_recv.req_base.req_comm,
     	request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
 
     /* allocate a fragment for receive */
@@ -215,16 +211,9 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     frag->frag_recv.frag_base.frag_header.hdr_common.hdr_flags = 0;
     convertor = &frag->frag_recv.frag_base.frag_convertor;
 
-    /* initialize convertor */
-    ompi_convertor_copy(proc->proc_convertor, convertor);
-    ompi_convertor_init_for_recv(
-    	convertor,
-    	0,                              /* flags */
-    	request->req_recv.req_base.req_datatype, /* datatype */
-    	request->req_recv.req_base.req_count,    /* count elements */
-    	request->req_recv.req_base.req_addr,     /* users buffer */
-    	offset,                         /* offset in bytes into packed buffer */
-    	mca_ptl_mx_mem_alloc );         /* not allocating memory */
+    ompi_convertor_clone( &(request->req_recv.req_convertor),
+                          convertor, 1 );
+    ompi_convertor_personalize( convertor, 0, &offset, mca_ptl_mx_mem_alloc, NULL );
                                                       
     /* non-contiguous - allocate buffer for receive */
     if( 1 == ompi_convertor_need_buffers( convertor )  ||
@@ -313,11 +302,9 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
     }
 
     /* breakup the endpoint address */
-    if((status = mx_decompose_endpoint_addr(
-        ptl->mx_endpoint_addr,
-        &ptl->mx_nic_addr,
-        &ptl->mx_endpoint_id,
-        &ptl->mx_filter)) != MX_SUCCESS) {
+    if((status = mx_decompose_endpoint_addr( ptl->mx_endpoint_addr,
+                                             &ptl->mx_nic_addr,
+                                             &ptl->mx_endpoint_id)) != MX_SUCCESS) {
         opal_output(0, "mca_ptl_mx_init: mx_decompose_endpoint_addr() failed with status=%d\n", status);
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
