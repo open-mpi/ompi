@@ -56,6 +56,7 @@ ompi_automake=""
 mca_no_configure_components_file="config/mca_no_configure_components.m4"
 mca_no_config_list_file="mca_no_config_list"
 mca_no_config_amc_file="mca_no_config_amc"
+mca_no_config_env_file="mca_no_config_env"
 autogen_subdir_file="autogen.subdirs"
 
 # locations to look for mca modules
@@ -402,6 +403,83 @@ EOF
 }
 
 
+
+##############################################################################
+#
+# run_no_configure_component
+#   Prepares the non-configure component
+#
+# INPUT:
+#    - OMPI top directory
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#
+##############################################################################
+run_no_configure_component() {
+    noconf_dir="$1"
+    noconf_ompi_topdir="$2"
+    noconf_project="$3"
+    noconf_framework="$4"
+    noconf_component="$5"
+
+    # Write out to two files (they're merged at the end)
+    noconf_list_file="$noconf_ompi_topdir/$mca_no_config_list_file"
+    noconf_amc_file="$noconf_ompi_topdir/$mca_no_config_amc_file"
+    noconf_env_file="$noconf_ompi_topdir/$mca_no_config_env_file"
+
+    cat >> "$noconf_list_file" <<EOF
+dnl ----------------------------------------------------------------
+
+dnl No-configure component: 
+dnl    $noconf_dir
+
+EOF
+
+    cat >> "$noconf_amc_file" <<EOF
+dnl ----------------------------------------------------------------
+
+dnl No-configure component: 
+dnl    $noconf_dir
+
+EOF
+    # Tell configure to add all the PARAM_CONFIG_FILES to
+    # the AC_CONFIG_FILES list.
+    for file in $PARAM_CONFIG_FILES; do
+        echo "AC_CONFIG_FILES([$noconf_dir/$file])" >> "$noconf_list_file"
+    done
+
+    # Add this component directory to the list of
+    # subdirectories to traverse when building.
+    cat >> "$noconf_list_file" <<EOF
+
+dnl Add this component directory to the list of directories to
+dnl traverse for this component framework
+
+MCA_${noconf_framework}_NO_CONFIGURE_SUBDIRS="$noconf_dir \$MCA_${noconf_framework}_NO_CONFIGURE_SUBDIRS"
+
+EOF
+
+    # Setup the AM_CONDITIONAL to build this component
+    cat >> "$noconf_amc_file" <<EOF
+AM_CONDITIONAL(OMPI_BUILD_${noconf_framework}_${noconf_component}_DSO,
+    test "\$BUILD_${noconf_framework}_${noconf_component}_DSO" = "1")
+
+EOF
+
+    cat <<EOF
+--> Adding to top-level configure no-configure subdirs:
+-->   $noconf_dir
+--> Adding to top-level configure AC_CONFIG_FILES list:
+-->   $PARAM_CONFIG_FILES
+EOF
+
+    echo "component_list=\"\$component_list $noconf_component\"" >> "$noconf_env_file"
+}
+
+
 ##############################################################################
 #
 # process_dir - look at the files present in a given directory, and do
@@ -426,6 +504,10 @@ EOF
 process_dir() {
     pd_dir="$1"
     pd_ompi_topdir="$2"
+    pd_project="$3"
+    pd_framework="$4"
+    pd_component="$5"
+
     pd_cur_dir="`pwd`"
 
     # Convert to absolutes
@@ -534,177 +616,8 @@ EOF
 *** Nothing to do -- skipping this directory
 EOF
             else
-                pd_component_name="`basename \"$pd_abs_dir\"`"
-                pd_component_type="`dirname \"$pd_abs_dir\"`"
-                pd_component_type="`basename \"$pd_component_type\"`"
-
-                # Write out to two files (they're merged at the end)
-
-                pd_list_file="$pd_ompi_topdir/$mca_no_config_list_file"
-                pd_amc_file="$pd_ompi_topdir/$mca_no_config_amc_file"
-
-                cat >> "$pd_list_file" <<EOF
-dnl ----------------------------------------------------------------
-
-dnl No-configure component: 
-dnl    $pd_dir
-
-EOF
-                cat >> "$pd_amc_file" <<EOF
-dnl ----------------------------------------------------------------
-
-dnl No-configure component: 
-dnl    $pd_dir
-
-EOF
-                # Tell configure to add all the PARAM_CONFIG_FILES to
-                # the AC_CONFIG_FILES list.
-
-                for file in $PARAM_CONFIG_FILES; do
-                    echo "AC_CONFIG_FILES([$pd_dir/$file])" >> "$pd_list_file"
-                done
-
-                # Add this component directory to the list of
-                # subdirectories to traverse when building.
-
-                cat >> "$pd_list_file" <<EOF
-
-dnl Add this component directory to the list of directories to
-dnl traverse for this component framework
-
-MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS="$pd_dir \$MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS"
-
-EOF
-
-                # See if we have a VERSION file
-
-                if test -z "$PARAM_VERSION_FILE"; then
-                    if test -f "VERSION"; then
-                        PARAM_VERSION_FILE="VERSION"
-                    fi
-                else
-                    if test ! -f "$PARAM_VERSION_FILE"; then
-                        PARAM_VERSION_FILE=
-                    fi
-                fi
-
-                # If we have the VERSION file, save the version
-                # numbers in a .h file.  Ignore this for the
-                # mca/common tree -- they're not components, so they
-                # don't have version numbers.
-
-                if test -n "$PARAM_VERSION_FILE" -a \
-                    -f "$PARAM_VERSION_FILE" -a \
-                    "$pd_component_type" != "common"; then
-                    pd_ver_header="$pd_dir/$pd_component_type-$pd_component_name-version.h"
-                    pd_ver_header_base="`basename $pd_ver_header`"
-
-                    # Get all the version numbers
-
-                    pd_get_ver="$pd_ompi_topdir/config/ompi_get_version.sh"
-                    pd_ver="`sh \"$pd_get_ver\" \"$PARAM_VERSION_FILE\" \"--all\"`"
-                    pd_ver_full="`echo $pd_ver | awk '{ print $1 }'`"
-                    pd_ver_major="`echo $pd_ver | awk '{ print $2 }'`"
-                    pd_ver_minor="`echo $pd_ver | awk '{ print $3 }'`"
-                    pd_ver_release="`echo $pd_ver | awk '{ print $4 }'`"
-                    pd_ver_alpha="`echo $pd_ver | awk '{ print $5 }'`"
-                    pd_ver_beta="`echo $pd_ver | awk '{ print $6 }'`"
-                    pd_ver_svn="`echo $pd_ver | awk '{ print $7 }'`"
-
-                    # Because autoconf does not handle selectively
-                    # sending some AC_DEFINE's to one file and not to
-                    # all others, we have to do a bizarre multi-step
-                    # thing to make this work.  :-(
-
-                    # 1. make a template header file
-                    # <type>-<name>-version.h.template.in.  In there,
-                    # have #define's with values that are @foo@ (i.e.,
-                    # the result of AC_SUBST)
-
-                    make_version_header_template "$pd_ver_header_base" "$pd_component_type" "$pd_component_name"
-
-                    # 2. Add the template header file to the list of
-                    # AC_CONFIG_FILES so that AC_SUBST'ed things will
-                    # be substituted in.
-
-                    cat >> "$pd_list_file" <<EOF
-dnl Generate the version header template
-
-AC_CONFIG_FILES([$pd_ver_header.template])
-
-EOF
-
-                    # 3. Hard-code the version numbers (obtained
-                    # above) into variable assignments so that they
-                    # can be written out to the [templated] version
-                    # header file.  Setup commands to run after
-                    # config.status has run.  Compare the resulting
-                    # template header version file with the existing
-                    # version header file.  If they're different (or
-                    # if the version header file does not yet exist),
-                    # replace it with the template version header
-                    # file.  Otherwise, leave it alone.  This leaves
-                    # the <type>-<name>-version.h file unchanged (and
-                    # therefore its timestamp unaltered) if nothing
-                    # changed.
-
-                    cat >> "$pd_list_file" <<EOF
-dnl Assign and AC_SUBST all the version number components
-
-MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION=$pd_ver_major
-AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION)
-MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION=$pd_ver_minor
-AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION)
-MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION=$pd_ver_release
-AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION)
-MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION=$pd_ver_alpha
-AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION)
-MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION=$pd_ver_beta
-AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION)
-MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION="$pd_ver_svn"
-AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION)
-MCA_${pd_component_type}_${pd_component_name}_VERSION="$pd_ver_full"
-AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_VERSION)
-
-dnl After config.status has run, compare the version header template to
-dnl the version header.  If the version header does not exist, create it
-dnl from the template.  If it does already exist, diff it and see if
-dnl they're different.  If they're different, copy the template over the
-dnl old version.  If they're the same, leave the original alone so that
-dnl we don't distrub any dependencies.
-
-AC_CONFIG_COMMANDS([${pd_component_type}-${pd_component_name}],
-[if test -f "$pd_ver_header"; then
-  diff "$pd_ver_header" "$pd_ver_header.template" > /dev/null 2>&1
-  if test "\$?" != "0"; then
-    cp "$pd_ver_header.template" "$pd_ver_header"
-    echo "config.status: regenerating $pd_ver_header"
-  else
-    echo "config.status: $pd_ver_header unchanged"
-  fi
-else
-  cp "$pd_ver_header.template" "$pd_ver_header"
-  echo "config.status: creating $pd_ver_header"
-fi
-rm $pd_ver_header.template])
-
-EOF
-                fi
-
-                # Setup the AM_CONDITIONAL to build this component
-
-                cat >> "$pd_amc_file" <<EOF
-AM_CONDITIONAL(OMPI_BUILD_${pd_component_type}_${pd_component_name}_DSO,
-    test "\$BUILD_${pd_component_type}_${pd_component_name}_DSO" = "1")
-
-EOF
-
-                cat <<EOF
---> Adding to top-level configure no-configure subdirs:
--->   $pd_dir
---> Adding to top-level configure AC_CONFIG_FILES list:
--->   $PARAM_CONFIG_FILES
-EOF
+                run_no_configure_component "$pd_dir" "$pd_ompi_topdir" \
+                    "$pd_project" "$pd_framework" "$pd_component"
             fi
         else
 	    cat <<EOF
@@ -829,33 +742,11 @@ run_global() {
     # [Re-]Create the mca_component_list file
 
     rm -f "$mca_no_configure_components_file" "$mca_no_config_list_file" \
-        "$mca_no_config_amc_file"
+        "$mca_no_config_amc_file" "$mca_no_config_env_file"
     touch "$mca_no_configure_components_file" "$mca_no_config_list_file" \
         "$mca_no_config_amc_file"
 
-    # Now run the config in every directory in <location>/mca/*/*
-    # that has a configure.in or configure.ac script
-
-    rg_cwd="`pwd`"
-    echo $rg_cwd
-    for project in $mca_locations; do 
-        for type in $project/mca/*; do
-	    if test -d "$type"; then
-	        for component in "$type"/*; do
-		    if test -d "$component"; then
-		        if test -f "$component/configure.in" -o \
-			    -f "$component/configure.params" -o \
-			    -f "$component/configure.ac"; then
-			    process_dir "$component" "$rg_cwd"
-		        fi
-		    fi
-	        done
-	    fi
-        done
-    done
-
-    # Fill in the final m4 file
-
+    #create header for the component config file
     cat > "$mca_no_configure_components_file" <<EOF
 dnl
 dnl \$HEADER
@@ -864,23 +755,110 @@ dnl
 dnl This file is automatically created by autogen.sh; it should not
 dnl be edited by hand!!
 
+EOF
+
+    # Now run the config in every directory in <location>/mca/*/*
+    # that has a configure.in or configure.ac script
+    #
+    # In order to deal with components that have .m4 files, we need to
+    # build up m4_defined lists along the way.  Unfortunately, there
+    # is no good way to do this at the end (stupid sh), so we have to
+    # do it as we are going through the lists of frameworks and
+    # components.  Use a file to keep the list of components (we don't
+    # want every component in a framework included, as the
+    # determination about skipping components or whether the component
+    # has its own configure script are made later on in the process.
+
+    rg_cwd="`pwd`"
+    echo $rg_cwd
+    project_list=""
+    for project_path in $mca_locations; do 
+        project="`basename \"$project_path\"`"
+        project_list="$project_list $project"
+
+        framework_list=""
+        for framework_path in $project_path/mca/*; do
+            framework="`basename \"$framework_path\"`"
+
+	    if test "$framework" != "base" -a \
+                -d "$framework_path" -a \
+                -r "${framework_path}/${framework}.h" ; then
+                framework_list="$framework_list $framework"
+
+                rm -f "$mca_no_config_env_file"
+                touch "$mca_no_config_env_file"
+                echo "component_list=" >> "$mca_no_config_env_file"
+
+	        for component_path in "$framework_path"/*; do
+		    if test -d "$component_path"; then
+		        if test -f "$component_path/configure.in" -o \
+			    -f "$component_path/configure.params" -o \
+			    -f "$component_path/configure.ac"; then
+
+                            component="`basename \"$component_path\"`"
+
+			    process_dir "$component_path" "$rg_cwd" \
+                                        "$project" "$framework" "$component"
+		        fi
+		    fi
+	        done
+
+                # make list of components for this framework
+                . "$mca_no_config_env_file"
+                component_list_define="m4_define(mca_${framework}_no_config_component_list, ["
+                component_list_define_first="1"
+                for component in $component_list ; do
+                    if test "$component_list_define_first" = "1"; then
+                        component_list_define="${component_list_define}${component}"
+                        component_list_define_first="0"
+                    else
+                        component_list_define="${component_list_define}, ${component}"
+                    fi
+                done
+                component_list_define="${component_list_define}])"
+                echo "$component_list_define" >> "$mca_no_configure_components_file"
+                
+	    fi
+        done
+
+        # make list of frameworks for this project
+        framework_list_define="m4_define(mca_${project}_framework_list, ["
+        framework_list_define_first="1"
+        for framework in $framework_list ; do
+            if test "$framework_list_define_first" = "1"; then
+                framework_list_define="${framework_list_define}${framework}"
+                framework_list_define_first="0"
+            else
+                framework_list_define="${framework_list_define}, ${framework}"
+            fi
+        done
+        framework_list_define="${framework_list_define}])"
+        echo "$framework_list_define" >> "$mca_no_configure_components_file"
+
+    done
+
+    # create the m4 defines for the list of projects.  The list of
+    # frameworks for each project is already created and in the file.
+    project_list_define="m4_define(mca_project_list, ["
+    project_list_define_first="1"
+    for project in $project_list ; do
+        if test "$project_list_define_first" = "1"; then
+            project_list_define="${project_list_define}${project}"
+            project_list_define_first="0"
+        else
+            project_list_define="${project_list_define}, ${project}"
+        fi
+    done
+    project_list_define="${project_list_define}])"
+    echo "$project_list_define" >> "$mca_no_configure_components_file"
+
+
+    cat >> "$mca_no_configure_components_file" <<EOF
+
 dnl List all the no-configure components that we found, and AC_DEFINE
 dnl their versions
 
 AC_DEFUN([MCA_FIND_NO_CONFIGURE_COMPONENTS],[
-MCA_cofs_NO_CONFIGURE_SUBDIRS=""
-MCA_pcm_NO_CONFIGURE_SUBDIRS=""
-MCA_gpr_NO_CONFIGURE_SUBDIRS=""
-MCA_ns_NO_CONFIGURE_SUBDIRS=""
-MCA_soh_NO_CONFIGURE_SUBDIRS=""
-
-MCA_allocator_NO_CONFIGURE_SUBDIRS=""
-MCA_btl_NO_CONFIGURE_SUBDIRS=""
-MCA_coll_NO_CONFIGURE_SUBDIRS=""
-MCA_io_NO_CONFIGURE_SUBDIRS=""
-MCA_pml_NO_CONFIGURE_SUBDIRS=""
-MCA_ptl_NO_CONFIGURE_SUBDIRS=""
-MCA_topo_NO_CONFIGURE_SUBDIRS=""
 
 `cat $mca_no_config_list_file`
 ])dnl
@@ -896,14 +874,14 @@ AC_DEFUN([MCA_AMC_NO_CONFIGURE_COMPONENTS],[
 EOF
     # Remove temp files
 
-    rm -f $mca_no_config_list_file $mca_no_config_amc_file
+    rm -f $mca_no_config_list_file $mca_no_config_amc_file $mca_no_config_env_file
 
     # Finally, after we found all the no-configure MCA components, run
     # the config in the top-level directory
 
-    process_dir . .
+    process_dir . . "" "" ""
 
-    unset type component
+    unset project project_path framework framework_path component component_path
 }
 
 
