@@ -62,7 +62,7 @@ struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base)
     mca_mpool_base_chunk_t* copy;
 
     OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock);
-    if(NULL != (found = mca_mpool_base_find(base))) {
+    if(NULL != (found = mca_mpool_base_find_nl(base))) {
         mca_mpool_base_reg_mpool_t* reg;
         copy = OBJ_NEW(mca_mpool_base_chunk_t);
         *copy = *found;
