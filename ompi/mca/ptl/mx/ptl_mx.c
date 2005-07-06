@@ -18,11 +18,11 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
 #include "ptl_mx.h"
 #include "ptl_mx_peer.h"
 #include "ptl_mx_sendfrag.h"
@@ -62,7 +62,7 @@ mca_ptl_mx_module_t mca_ptl_mx_module = {
  * Allocate memory for use by the convert.
  */
 
-static void *mca_ptl_mx_alloc(size_t *size)
+static void *mca_ptl_mx_alloc( size_t *size, void* user )
 {
     return malloc(*size);
 }
@@ -172,21 +172,13 @@ int mca_ptl_mx_send(
     if(size > 0) {
        ompi_convertor_t *convertor;
        struct iovec iov;
-       unsigned int iov_count;
-       unsigned int max_data;
+       uint32_t iov_count;
+       size_t max_data;
        int rc;
 
-       convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-       ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
-       ompi_convertor_init_for_send(
-                    convertor,
-                    0,
-                    sendreq->req_send.req_datatype,
-                    sendreq->req_send.req_count,
-                    sendreq->req_send.req_addr,
-                    offset,
-                    mca_ptl_mx_alloc );
-                                                                                                                      
+       convertor = &sendreq->req_send.req_convertor;
+       ompi_convertor_personalize( convertor, 0, &offset, mca_ptl_mx_alloc, NULL );
+
         /* if data is contigous convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer
          * that holds the packed data
@@ -195,12 +187,11 @@ int mca_ptl_mx_send(
         iov.iov_len = size;
         iov_count = 1;
         max_data = size;
-        if((rc = ompi_convertor_pack(
-            convertor,
-            &iov,
-            &iov_count,
-            &max_data,
-            &(sendfrag->frag_free))) < 0) {
+        if((rc = ompi_convertor_pack( convertor,
+                                      &iov,
+                                      &iov_count,
+                                      &max_data,
+                                      &(sendfrag->frag_free))) < 0) {
             return OMPI_ERROR;
         }
         sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
@@ -340,8 +331,8 @@ int mca_ptl_mx_send_continue(
     ompi_ptr_t match;
     ompi_convertor_t *convertor;
     struct iovec iov;
-    unsigned int iov_count;
-    unsigned int max_data;
+    uint32_t iov_count;
+    size_t max_data;
     int rc;
 
     /* allocate fragment */
@@ -353,16 +344,9 @@ int mca_ptl_mx_send_continue(
 
     /* initialize convertor */
     convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-    ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
-    ompi_convertor_init_for_send(
-        convertor,
-        0,
-        sendreq->req_send.req_datatype,
-        sendreq->req_send.req_count,
-        sendreq->req_send.req_addr,
-        offset,
-        mca_ptl_mx_alloc );
-                                                                                                                      
+    ompi_convertor_clone( &(sendreq->req_send.req_convertor), convertor, 1 );
+    ompi_convertor_personalize( convertor, 0, &offset, mca_ptl_mx_alloc, NULL );
+
     /* if data is contigous convertor will return an offset
      * into users buffer - otherwise will return an allocated buffer
      * that holds the packed data
@@ -371,12 +355,11 @@ int mca_ptl_mx_send_continue(
     iov.iov_len = size;
     iov_count = 1;
     max_data = size;
-    if((rc = ompi_convertor_pack(
-        convertor,
-        &iov,
-        &iov_count,
-        &max_data,
-        &(sendfrag->frag_free))) < 0) {
+    if((rc = ompi_convertor_pack( convertor,
+                                  &iov,
+                                  &iov_count,
+                                  &max_data,
+                                  &(sendfrag->frag_free))) < 0) {
         return OMPI_ERROR;
     }
 
@@ -449,7 +432,7 @@ void mca_ptl_mx_matched(
     mca_ptl_base_recv_request_t* request = frag->frag_request;
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mca_ptl_mx_recv_frag_t* mx_frag = (mca_ptl_mx_recv_frag_t*)frag;
-    unsigned int bytes_delivered = mx_frag->frag_size;
+    size_t bytes_delivered = mx_frag->frag_size;
     bool ack_pending = false;
 
     /* generate an acknowledgment if required */
@@ -491,35 +474,21 @@ void mca_ptl_mx_matched(
     /* copy data into users buffer */
     if(mx_frag->frag_size > 0) {
         struct iovec iov;
-        unsigned int iov_count = 1;
+        uint32_t iov_count = 1;
         int free_after = 0;
-        ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_recv.req_base.req_comm,
-            request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
-        ompi_convertor_t* convertor = &frag->frag_base.frag_convertor;
+        ompi_convertor_t* convertor = &(request->req_recv.req_convertor);
 
-        /* initialize receive convertor */
-        ompi_convertor_copy(proc->proc_convertor, convertor);
-        ompi_convertor_init_for_recv(
-            convertor,                      /* convertor */
-            0,                              /* flags */
-            request->req_recv.req_base.req_datatype, /* datatype */
-            request->req_recv.req_base.req_count,    /* count elements */
-            request->req_recv.req_base.req_addr,     /* users buffer */
-            0,                              /* offset in bytes into packed buffer */
-            NULL );                         /* not allocating memory */
-        /*ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed); */
-
+        /* we do not attach a memory allocation function so the personalization of
+         * the convertor is not necessary.
+         */
         iov.iov_base = mx_frag->frag_data;
         iov.iov_len = mx_frag->frag_size;
         ompi_convertor_unpack(convertor, &iov, &iov_count, &bytes_delivered, &free_after );
     }
 
     /* update request status */
-    ptl->ptl_recv_progress(
-        ptl,
-        request,
-        mx_frag->frag_size,
-        bytes_delivered);
+    ptl->ptl_recv_progress( ptl, request,
+                            mx_frag->frag_size, bytes_delivered);
 
     /* release resources */
     if(ack_pending == false)

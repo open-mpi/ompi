@@ -135,7 +135,7 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
  * Look for an existing MX process instance based on the globally unique 
  * process identifier.
  */
-mca_ptl_mx_proc_t* mca_ptl_mx_proc_lookup(const ompi_process_name_t *name)
+mca_ptl_mx_proc_t* mca_ptl_mx_proc_lookup(const orte_process_name_t *name)
 {
     mca_ptl_mx_proc_t* proc;
     OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
@@ -165,17 +165,9 @@ int mca_ptl_mx_proc_insert(mca_ptl_mx_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl
     /* breakup the endpoint address and reconstruct - otherwise it doesn't
      * appear to be initialized correctly for this proc
      */
-    mx_decompose_endpoint_addr(
-        ptl_peer->peer_addr,
-        &mx_nic_addr,
-        &mx_endpoint_id,
-        &mx_filter);
-    memset(&ptl_peer->peer_addr, 0, sizeof(ptl_peer->peer_addr));
-    mx_compose_endpoint_addr(
-        mx_nic_addr,
-        mx_endpoint_id,
-        mx_filter,
-        &ptl_peer->peer_addr);
+    mx_decompose_endpoint_addr( ptl_peer->peer_addr,
+                                &mx_nic_addr,
+                                &mx_endpoint_id );
     return OMPI_SUCCESS;
 }
 

@@ -30,20 +30,9 @@ component_noinst = libmca_ptl_mx.la
 component_install =
 endif
 
-mx_SOURCES = \
-    ptl_mx.c \
-    ptl_mx.h \
-    ptl_mx_component.c \
-    ptl_mx_module.c \
-    ptl_mx_module.h \
-    ptl_mx_peer.c \
-    ptl_mx_peer.h \
-    ptl_mx_proc.c \
-    ptl_mx_proc.h \
-    ptl_mx_recvfrag.c \
-    ptl_mx_recvfrag.h \
-    ptl_mx_sendfrag.c \
-    ptl_mx_sendfrag.h
+mx_SOURCES = ptl_mx.c ptl_mx.h ptl_mx_component.c ptl_mx_module.c ptl_mx_module.h \
+    ptl_mx_peer.c ptl_mx_peer.h ptl_mx_proc.c ptl_mx_proc.h \
+    ptl_mx_recvfrag.c ptl_mx_recvfrag.h ptl_mx_sendfrag.c ptl_mx_sendfrag.h
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
