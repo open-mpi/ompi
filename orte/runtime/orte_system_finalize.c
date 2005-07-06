@@ -26,6 +26,8 @@
 #include "dps/dps.h"
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
+#include "mca/errmgr/base/base.h"
+#include "mca/schema/base/base.h"
 #include "mca/iof/base/base.h"
 #include "mca/rmgr/base/base.h"
 #include "opal/util/if.h"
@@ -62,9 +64,11 @@ int orte_system_finalize(void)
 
     orte_ns_base_close();
     orte_gpr_base_close();
+    orte_schema_base_close();
     orte_rml_base_close();
     orte_dps_close();
-
+    orte_errmgr_base_close();
+    
     opal_progress_finalize();
 
     opal_event_fini();
