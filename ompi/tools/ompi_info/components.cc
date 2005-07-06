@@ -210,7 +210,7 @@ void ompi_info::close_components()
         // them generally "in order", but it doesn't really matter.
 
         mca_topo_base_close();
-        mca_ptl_base_close();
+        // the PMl has to call the base PTL close function.
         mca_pml_base_close();
         mca_mpool_base_close();
         mca_io_base_close();
