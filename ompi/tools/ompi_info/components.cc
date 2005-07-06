@@ -188,7 +188,9 @@ void ompi_info::open_components()
   mca_pml_base_open();
   component_map["pml"] = &mca_pml_base_components_available;
 
-  mca_ptl_base_open();
+  /* mca_ptl_base_open() should not be called directly. This call is performed
+   * in the PML base open.
+   */
   component_map["ptl"] = &mca_ptl_base_components_opened;
 
   mca_topo_base_open();
