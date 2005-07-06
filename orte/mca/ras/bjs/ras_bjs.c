@@ -118,15 +118,17 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
     }
 
     /* validate that any user supplied nodes actually exist, etc. */
-    for(item =  opal_list_get_first(nodelist);
-        item != opal_list_get_end(nodelist);
-        item =  opal_list_get_next(item)) {
+    item =  opal_list_get_first(nodelist);
+    while(item != opal_list_get_end(nodelist)) {
+        opal_list_item_t* next = opal_list_get_next(item);
         int node_num;
 
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         if(ORTE_SUCCESS != orte_ras_bjs_node_resolve(node->node_name, &node_num)) {
-            opal_output(0, "error: a specified node (%s) is invalid.\n", node->node_name);
-            return ORTE_NODE_ERROR;
+            opal_list_remove_item(nodelist,item);
+            OBJ_DESTRUCT(item);
+            item = next;
+            continue;
         }
 
         if(orte_ras_bjs_node_state(node_num) != ORTE_NODE_STATE_UP) {
@@ -147,6 +149,7 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
             node->node_slots_max = 0;
             node->node_slots = orte_ras_bjs_node_slots(node->node_name);
         }
+        item = next;
     }
 
     /* parse the node list and check node status/access */
