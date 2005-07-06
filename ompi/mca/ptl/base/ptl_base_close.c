@@ -59,10 +59,14 @@ int mca_ptl_base_close(void)
   }
 
   /* cleanup */
-  if(NULL != mca_ptl_base_include)
+  if( NULL != mca_ptl_base_include ) {
      free(mca_ptl_base_include);
-  if(NULL != mca_ptl_base_exclude)
+     mca_ptl_base_include = NULL;
+  }
+  if( NULL != mca_ptl_base_exclude ) {
      free(mca_ptl_base_exclude);
+     mca_ptl_base_exclude = NULL;
+  }
 
   /* restore event processing */
   opal_event_enable();
