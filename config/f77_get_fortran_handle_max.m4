@@ -48,6 +48,7 @@ long cint = INT_MAX;
 fprintf(fp, "%ld", cint);
 fclose(fp);]]), [ompi_cint_max=`cat conftest.out`], 
                 [ompi_cint_max=0], [ #cross compiling is fun
+# try to compute INT_MAX the same way we computed Fortran INTEGER max.
 ompi_sizeof_cint=`expr $ac_cv_sizeof_int \* 8 - 1`
 ompi_cint_max=1
 while test "$ompi_sizeof_cint" != "0" ; do
@@ -60,9 +61,12 @@ if test "$ompi_cint_max" = "0" ; then
     # wow - something went really wrong.  Be conservative
     OMPI_FORTRAN_HANDLE_MAX=32767
 elif test "$ompi_fint_max" = "0" ; then
+    # we aren't compiling Fortran - just set it to C INT_MAX
     OMPI_FORTRAN_HANDLE_MAX=$ompi_cint_max
 else
-    if expr $ompi_cint_max < $ompi_fint_max ; then
+    # take the lesser of C INT_MAX and Fortran INTEGER max.  
+    # The resulting value will then be storable in either type.
+    if test $ompi_cint_max -lt $ompi_fint_max ; then
         OMPI_FORTRAN_HANDLE_MAX=$ompi_cint_max
     else
         OMPI_FORTRAN_HANDLE_MAX=$ompi_fint_max
