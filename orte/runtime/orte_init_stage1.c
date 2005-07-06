@@ -27,6 +27,7 @@
 #include "opal/event/event.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
+#include "opal/runtime/opal.h"
 #include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -202,6 +203,20 @@ int orte_init_stage1(void)
                 return rc;
             }
             if (exit_if_not_exist) {
+                /* cleanup the subsystems that were already opened */
+                orte_wait_finalize();
+                orte_ns_base_close();
+                orte_gpr_base_close();
+                orte_schema_base_close();
+                orte_rml_base_close();
+                orte_dps_close();
+                orte_errmgr_base_close();
+                opal_progress_finalize();
+                opal_event_fini();
+                orte_sys_info_finalize();
+                orte_proc_info_finalize();
+                orte_univ_info_finalize();
+                opal_finalize();
                 return ORTE_ERR_UNREACH;
             }
             if (ORTE_ERR_NOT_FOUND != ret) {
