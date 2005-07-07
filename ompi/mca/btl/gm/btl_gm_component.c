@@ -155,14 +155,14 @@ int mca_btl_gm_component_open(void)
 
     /* compute the eager frag size */
     mca_btl_gm_component.gm_eager_frag_size =
-        gm_min_size_for_length(mca_btl_gm_module.super.btl_eager_limit) -
-        sizeof(mca_btl_base_header_t);
+        gm_min_size_for_length(mca_btl_gm_module.super.btl_eager_limit) - 1;
     mca_btl_gm_module.super.btl_eager_limit = 
-        gm_max_length_for_size(mca_btl_gm_component.gm_eager_frag_size);
+        gm_max_length_for_size(mca_btl_gm_component.gm_eager_frag_size) -
+        sizeof(mca_btl_base_header_t);
  
     /* compute the max frag size */
     mca_btl_gm_component.gm_max_frag_size = 
-        gm_min_size_for_length(mca_btl_gm_module.super.btl_max_send_size);
+        gm_min_size_for_length(mca_btl_gm_module.super.btl_max_send_size) - 1;
     mca_btl_gm_module.super.btl_max_send_size = 
         gm_max_length_for_size(mca_btl_gm_component.gm_max_frag_size) -
         sizeof(mca_btl_base_header_t);
