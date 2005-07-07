@@ -781,27 +781,29 @@ EOF
             framework="`basename \"$framework_path\"`"
 
 	    if test "$framework" != "base" -a \
-                -d "$framework_path" -a \
-                -r "${framework_path}/${framework}.h" ; then
-                framework_list="$framework_list $framework"
+                -d "$framework_path" ; then
+                if test "$framework" = "common" -o \
+                    -r "${framework_path}/${framework}.h" ; then
+                    framework_list="$framework_list $framework"
 
-                rm -f "$mca_no_config_env_file"
-                touch "$mca_no_config_env_file"
-                echo "component_list=" >> "$mca_no_config_env_file"
+                    rm -f "$mca_no_config_env_file"
+                    touch "$mca_no_config_env_file"
+                    echo "component_list=" >> "$mca_no_config_env_file"
 
-	        for component_path in "$framework_path"/*; do
-		    if test -d "$component_path"; then
-		        if test -f "$component_path/configure.in" -o \
-			    -f "$component_path/configure.params" -o \
-			    -f "$component_path/configure.ac"; then
+                    for component_path in "$framework_path"/*; do
+                        if test -d "$component_path"; then
+                            if test -f "$component_path/configure.in" -o \
+                                -f "$component_path/configure.params" -o \
+                                -f "$component_path/configure.ac"; then
 
-                            component="`basename \"$component_path\"`"
+                                component="`basename \"$component_path\"`"
 
-			    process_dir "$component_path" "$rg_cwd" \
-                                        "$project" "$framework" "$component"
-		        fi
-		    fi
-	        done
+                                process_dir "$component_path" "$rg_cwd" \
+                                    "$project" "$framework" "$component"
+                            fi
+                        fi
+                    done
+                fi
 
                 # make list of components for this framework
                 . "$mca_no_config_env_file"
