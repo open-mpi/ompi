@@ -780,6 +780,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
         else
             convertor->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
     }
+    convertor->fAdvance = ompi_convertor_generic_simple_pack;
     return OMPI_SUCCESS;
 }
 
