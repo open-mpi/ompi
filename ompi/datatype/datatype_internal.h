@@ -214,7 +214,8 @@ typedef struct {
 extern const ompi_datatype_t* ompi_ddt_basicDatatypes[];
 #define BASIC_DDT_FROM_ELEM( ELEM ) (ompi_ddt_basicDatatypes[(ELEM).elem.common.type])
 
-extern int32_t ompi_ddt_external32_init( void );
+extern int32_t ompi_ddt_default_convertors_init( void );
+extern int32_t ompi_ddt_default_convertors_fini( void );
 
 #define SAVE_STACK( PSTACK, INDEX, TYPE, COUNT, DISP, END_LOOP) \
 do { \
