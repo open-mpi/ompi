@@ -88,7 +88,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                 if( loop->extent == (long)end_loop->size ) {
                     /* the whole loop is contiguous */
                     if( (last_disp + last_length) != (total_disp + loop_disp) ) {
-                        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
+                        CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                         pElemDesc++; nbElems++;
                         last_length = 0;
                         last_disp = total_disp + loop_disp;
@@ -103,7 +103,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                             last_length += end_loop->size;
                             counter--;
                         }
-                        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
+                        CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                         pElemDesc++; nbElems++;
                         last_disp += last_length;
                         last_length = 0;
@@ -113,7 +113,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                      */
                     CREATE_LOOP_START( pElemDesc, counter, (long)2, loop->extent, loop->common.flags );
                     pElemDesc++; nbElems++;
-                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, end_loop->size, loop_disp, last_extent );
+                    CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, end_loop->size, loop_disp, last_extent );
                     pElemDesc++; nbElems++;
                     CREATE_LOOP_END( pElemDesc, 2, end_loop->total_extent, end_loop->size,
                                      end_loop->common.flags );
@@ -124,7 +124,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                 changes++;
             } else {
                 if( last_length != 0 ) {
-                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
+                    CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                     pElemDesc++; nbElems++;
                     last_disp += last_length;
                     last_length = 0;
@@ -155,18 +155,19 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                         last_length = last_length * ompi_ddt_basicDatatypes[last_type]->size + 
                             pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
                         last_type = DT_BYTE;
+                        last_extent = 1;
                         optimized++;
                     }
                 }
                 last_flags &= pData->desc.desc[pos_desc].elem.common.flags;
             } else {
                 if( last_length != 0 ) {
-                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
+                    CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                     pElemDesc++; nbElems++;
                 }
                 last_disp = total_disp + pData->desc.desc[pos_desc].elem.disp;
                 last_length = pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
-                last_extent = 1;
+                last_extent = pData->desc.desc[pos_desc].elem.extent;
             }
             pos_desc++;  /* advance to the next data */
         }
