@@ -46,7 +46,7 @@ inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
         convertor->stack_size = 0;
     }
     if( !(CONVERTOR_CLONE & convertor->flags) )
-        OBJ_RELEASE( datatype );
+        if( NULL != datatype ) OBJ_RELEASE( datatype );
     convertor->pDesc = NULL;
     return OMPI_SUCCESS;
 }
