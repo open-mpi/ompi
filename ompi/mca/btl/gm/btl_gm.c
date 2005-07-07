@@ -57,6 +57,7 @@ mca_btl_gm_module_t mca_btl_gm_module = {
     }
 };
 
+
 /**
  *
  */
@@ -76,6 +77,9 @@ int mca_btl_gm_add_procs(
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_gm_proc_t* gm_proc;
         mca_btl_base_endpoint_t* gm_endpoint;
+
+        if(ompi_proc == ompi_proc_local()) 
+            continue;
 
         if(NULL == (gm_proc = mca_btl_gm_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -106,7 +110,6 @@ int mca_btl_gm_add_procs(
             OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             continue;
         }
-
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
         peers[i] = gm_endpoint;
@@ -189,11 +192,12 @@ int mca_btl_gm_free(
     if(frag->size == 0) {
         OBJ_RELEASE(frag->registration);
         MCA_BTL_GM_FRAG_RETURN_USER(btl, frag); 
-    } else if(frag->size == btl->btl_eager_limit){ 
+    } else if(frag->size == mca_btl_gm_component.gm_eager_frag_size) {
         MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag); 
-    } else if(frag->size == btl->btl_max_send_size) {
-        MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag); 
+    } else if(frag->size == mca_btl_gm_component.gm_max_frag_size) {
+        MCA_BTL_GM_FRAG_RETURN_MAX(btl, frag); 
     }  else {
+        opal_output(0, "[%s:%d] mca_btl_gm_free: invalid descriptor\n", __FILE__,__LINE__);
         return OMPI_ERR_BAD_PARAM;
     }
     return OMPI_SUCCESS; 
@@ -223,7 +227,8 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     int32_t free_after;
     int rc;
 
-#if OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT
+#if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && \
+    (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
     /*
      * If the data has already been pinned and is contigous than we can
      * use it in place.
@@ -345,6 +350,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     */
     else 
 #endif
+
     if (max_data+reserve <= btl->btl_eager_limit) {
                                                                                                     
         MCA_BTL_GM_FRAG_ALLOC_EAGER(btl, frag, rc);
@@ -374,8 +380,8 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         if(NULL == frag) {
             return NULL;
         }
-        if(max_data + reserve > frag->size){
-            max_data = frag->size - reserve;
+        if(max_data + reserve > btl->btl_max_send_size){
+            max_data = btl->btl_max_send_size - reserve;
         }
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
@@ -421,7 +427,8 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     size_t reserve,
     size_t* size)
 {
-#if OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT
+#if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && \
+    (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
     mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
     mca_btl_gm_frag_t* frag;
     int rc;
@@ -543,9 +550,9 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
         case GM_TIMED_OUT:
             /* drop all sends to this destination port */
             gm_drop_sends(
-                btl->gm_port,
+                btl->port,
                 (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ? GM_HIGH_PRIORITY : GM_LOW_PRIORITY,
-                frag->endpoint->endpoint_addr.local_id,
+                frag->endpoint->endpoint_addr.node_id,
                 frag->endpoint->endpoint_addr.port_id,
                 mca_btl_gm_drop_callback,
                 btl
@@ -630,6 +637,7 @@ int mca_btl_gm_send(
 
     frag->btl = gm_btl;
     frag->endpoint = endpoint; 
+    frag->hdr->tag = tag;
 
     /* queue the descriptor if there are no send tokens */
     if(OPAL_THREAD_ADD32(&gm_btl->gm_num_send_tokens, -1) < 0) {
@@ -640,14 +648,13 @@ int mca_btl_gm_send(
         return OMPI_SUCCESS;
     }
     
-    /* initiate the send */
     gm_send_with_callback(
-        gm_btl->gm_port,
+        gm_btl->port,
         frag->hdr,
         frag->size,
         frag->segment.seg_len + sizeof(mca_btl_base_header_t),
-        (des->des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ? GM_HIGH_PRIORITY : GM_LOW_PRIORITY,
-        endpoint->endpoint_addr.local_id,
+        GM_LOW_PRIORITY,
+        endpoint->endpoint_addr.node_id,
         endpoint->endpoint_addr.port_id,
         mca_btl_gm_send_callback,
         frag);
@@ -675,12 +682,12 @@ int mca_btl_gm_put(
     frag->btl = gm_btl;
     frag->endpoint = endpoint;
 
-    gm_put(gm_btl->gm_port,
+    gm_put(gm_btl->port,
         des->des_src->seg_addr.pval,
         des->des_dst->seg_addr.lval,
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
-        endpoint->endpoint_addr.local_id,
+        endpoint->endpoint_addr.node_id,
         endpoint->endpoint_addr.port_id,
         mca_btl_gm_rdma_callback,
         frag);
@@ -712,12 +719,12 @@ int mca_btl_gm_get(
     frag->btl = gm_btl;
     frag->endpoint = endpoint;
 
-    gm_put(gm_btl->gm_port,
+    gm_put(gm_btl->port,
         des->des_src->seg_addr.pval,
         des->des_dst->seg_addr.lval,
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
-        endpoint->endpoint_addr.local_id,
+        endpoint->endpoint_addr.node_id,
         endpoint->endpoint_addr.port_id,
         mca_btl_gm_rdma_callback,
         frag);

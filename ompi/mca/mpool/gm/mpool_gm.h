@@ -32,11 +32,10 @@ extern "C" {
 #endif
 
 
+#define MCA_MPOOL_GM_HAVE_REGISTER
+
 struct mca_mpool_gm_component_t {
     mca_mpool_base_component_t super;
-    char*  gm_allocator_name;
-    long page_size; 
-    long page_size_log; 
 };
 
 typedef struct mca_mpool_gm_component_t mca_mpool_gm_component_t;
@@ -46,14 +45,13 @@ OMPI_COMP_EXPORT extern mca_mpool_gm_component_t mca_mpool_gm_component;
 
 
 struct mca_mpool_base_resources_t {
-  struct gm_port *gm_port;   /* the gm NIC handle */
+  struct gm_port *port;   /* the gm NIC handle */
 }; 
 typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;  
 
 struct mca_mpool_gm_module_t {
     mca_mpool_base_module_t super;
-    mca_allocator_base_module_t *gm_allocator; 
-    struct gm_port* gm_port;
+    struct gm_port* port;
 }; 
 typedef struct mca_mpool_gm_module_t mca_mpool_gm_module_t; 
 

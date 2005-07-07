@@ -116,7 +116,6 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
     gm_proc->proc_guid = ompi_proc->proc_name;
 
     /* query for the peer address info */
-
     rc = mca_base_modex_recv(
         &mca_btl_gm_component.super.btl_version,
         ompi_proc,
@@ -152,14 +151,43 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
  * already held.  Insert a btl instance into the proc array and assign 
  * it an address.
  */
-int mca_btl_gm_proc_insert(mca_btl_gm_proc_t* gm_proc, 
-        mca_btl_base_endpoint_t* gm_endpoint)
+int mca_btl_gm_proc_insert(
+    mca_btl_gm_proc_t* gm_proc, 
+    mca_btl_base_endpoint_t* gm_endpoint)
 {
+    mca_btl_gm_module_t* gm_btl = gm_endpoint->endpoint_btl;
+
     /* insert into endpoint array */
     if(gm_proc->proc_addr_count <= gm_proc->proc_endpoint_count)
         return OMPI_ERR_OUT_OF_RESOURCE;
     gm_endpoint->endpoint_proc = gm_proc;
     gm_endpoint->endpoint_addr = gm_proc->proc_addrs[gm_proc->proc_endpoint_count];
+
+#if GM_API_VERSION > 0x200
+    if (GM_SUCCESS != gm_global_id_to_node_id(
+        gm_btl->port,
+        gm_endpoint->endpoint_addr.global_id,
+        &gm_endpoint->endpoint_addr.node_id)) {
+        opal_output( 0, "[%s:%d] error in converting global to local id \n",
+            __FILE__, __LINE__ );
+        return OMPI_ERROR;
+    }
+    if(mca_btl_gm_component.gm_debug > 0) {
+        opal_output(0, "[%d,%d,%d] mapped global id %lu to node id %lu\n", 
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            gm_endpoint->endpoint_addr.global_id,
+            gm_endpoint->endpoint_addr.node_id);
+    }
+#else
+    gm_endpoint->gm_addr.node_id = gm_host_name_to_node_id( gm_btl->gm_port,
+        gm_endpoint->gm_addr.global_id);
+    if( GM_NO_SUCH_NODE_ID == gm_endpoint->gm_addr.node_id ) {
+        ompi_output( 0, "[%s:%d] unable to convert the remote host name (%s) to a host id",
+            __FILE__, __LINE__, gm_endpoint->gm_addr.global_id);
+        return OMPI_ERROR;
+    }
+#endif  /* GM_API_VERSION > 0x200 */
+
     gm_proc->proc_endpoints[gm_proc->proc_endpoint_count] = gm_endpoint;
     gm_proc->proc_endpoint_count++;
     return OMPI_SUCCESS;

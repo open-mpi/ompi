@@ -41,8 +41,11 @@
 extern "C" {
 #endif
 
+#define GM_BUFFER_SIZE   7
+#define GM_BUFFER_LENGTH gm_max_length_for_size(GM_BUFFER_SIZE)
+
 /**
- * Infiniband (GM) BTL component.
+ * Myrinet (GM) BTL component.
  */
 
 struct mca_btl_gm_component_t {
@@ -54,12 +57,14 @@ struct mca_btl_gm_component_t {
     size_t gm_max_ports;  /**< maximum number of ports per board */
     size_t gm_max_boards; /**< maximum number of boards */
     size_t gm_num_high_priority; /**< number of receive descriptors at high priority */
-    char* gm_port_name; 
+    size_t gm_eager_frag_size;
+    size_t gm_max_frag_size;
+    char*  gm_port_name; 
+    int    gm_debug;        /**< turn on debug output */
 
     int gm_free_list_num;   /**< initial size of free lists */
     int gm_free_list_max;   /**< maximum size of free lists */
     int gm_free_list_inc;   /**< number of elements to alloc when growing free lists */
-
     opal_list_t gm_procs;   /**< list of gm proc structures */
     opal_mutex_t gm_lock;   /**< lock for accessing module state */
     char* gm_mpool_name;    /**< name of memory pool */ 
@@ -81,7 +86,7 @@ struct mca_btl_gm_module_t {
     mca_btl_base_recv_reg_t gm_reg[256]; 
 
     /* local port handle/address */
-    struct gm_port *gm_port;
+    struct gm_port *port;
     mca_btl_gm_addr_t gm_addr;
 
     /* free list of fragment descriptors */
