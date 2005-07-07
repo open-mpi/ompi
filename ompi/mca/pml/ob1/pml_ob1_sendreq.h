@@ -231,6 +231,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         mca_mpool_base_reg_mpool_t* reg = (sendreq)->req_chunk->mpools;     \
         while(NULL != reg->mpool) {                                         \
             OBJ_RELEASE(reg->mpool_registration);                           \
+            reg++;                                                          \
         }                                                                   \
         OBJ_RELEASE((sendreq)->req_chunk);                                  \
     }                                                                       \

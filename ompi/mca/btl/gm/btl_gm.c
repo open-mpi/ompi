@@ -507,6 +507,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
              * insert the registration into the tree and bump the reference
              * count so that it doesn't go away on completion.
             */
+            OBJ_RETAIN(registration);
             rc = mca_mpool_base_insert(
                 frag->segment.seg_addr.pval,
                 frag->segment.seg_len,
@@ -515,10 +516,11 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
                 registration);
             if(rc != OMPI_SUCCESS) {
                 MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
+                /* release twice */
+                OBJ_RELEASE(registration); 
                 OBJ_RELEASE(registration);
                 return NULL;
             }
-            OBJ_RETAIN(registration);
         }
         frag->registration = registration;
     }

@@ -101,6 +101,8 @@ static inline int mca_btl_gm_param_register_int(
 
 int mca_btl_gm_component_open(void)
 {  
+    int param, value;
+
     /* initialize state */
     mca_btl_gm_component.gm_num_btls=0;
     mca_btl_gm_component.gm_btls=NULL;
@@ -141,9 +143,9 @@ int mca_btl_gm_component_open(void)
     mca_btl_gm_module.super.btl_max_send_size =
         mca_btl_gm_param_register_int ("max_send_size", 64*1024);
     mca_btl_gm_module.super.btl_min_rdma_size = 
-        mca_btl_gm_param_register_int("min_rdma_size", 1024*1024); 
+        mca_btl_gm_param_register_int("min_rdma_size", 256*1024); 
     mca_btl_gm_module.super.btl_max_rdma_size = 
-        mca_btl_gm_param_register_int("max_rdma_size", 1024*1024); 
+        mca_btl_gm_param_register_int("max_rdma_size", 256*1024); 
 #if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && OMPI_MCA_BTL_GM_HAVE_RDMA_PUT 
     mca_btl_gm_module.super.btl_flags  = 
         mca_btl_gm_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
@@ -164,6 +166,12 @@ int mca_btl_gm_component_open(void)
     mca_btl_gm_module.super.btl_max_send_size = 
         gm_max_length_for_size(mca_btl_gm_component.gm_max_frag_size) -
         sizeof(mca_btl_base_header_t);
+
+    /* leave pinned option */
+    value = 0;
+    param = mca_base_param_find("mpi", NULL, "leave_pinned");
+    mca_base_param_lookup_int(param, &value);
+    mca_btl_gm_component.leave_pinned = value;
     return OMPI_SUCCESS;
 }
 
