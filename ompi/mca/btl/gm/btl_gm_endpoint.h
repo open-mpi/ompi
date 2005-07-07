@@ -37,7 +37,7 @@ struct mca_btl_gm_addr_t {
 #else
     char global_id[GM_MAX_HOST_NAME_LEN];
 #endif  /* GM_API_VERSION > 0x200 */
-    unsigned int local_id;
+    unsigned int node_id;
     unsigned int port_id;
 };
 typedef struct mca_btl_gm_addr_t mca_btl_gm_addr_t;

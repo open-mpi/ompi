@@ -48,7 +48,7 @@ mca_btl_gm_component_t mca_btl_gm_component = {
 
             MCA_BTL_BASE_VERSION_1_0_0,
 
-            "ib", /* MCA component name */
+            "gm", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
@@ -79,7 +79,7 @@ static inline char* mca_btl_gm_param_register_string(
                                                      const char* default_value)
 {
     char *param_value;
-    int id = mca_base_param_register_string("btl","ib",param_name,NULL,default_value);
+    int id = mca_base_param_register_string("btl","gm",param_name,NULL,default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
@@ -88,7 +88,7 @@ static inline int mca_btl_gm_param_register_int(
         const char* param_name, 
         int default_value)
 {
-    int id = mca_base_param_register_int("btl","ib",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("btl","gm",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
@@ -100,11 +100,10 @@ static inline int mca_btl_gm_param_register_int(
  */
 
 int mca_btl_gm_component_open(void)
-{
+{  
     /* initialize state */
     mca_btl_gm_component.gm_num_btls=0;
     mca_btl_gm_component.gm_btls=NULL;
-    mca_btl_gm_component.gm_port_name=NULL;
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_gm_component.gm_procs, opal_list_t);
@@ -114,9 +113,11 @@ int mca_btl_gm_component_open(void)
     mca_btl_gm_component.gm_free_list_num =
         mca_btl_gm_param_register_int ("free_list_num", 8);
     mca_btl_gm_component.gm_free_list_max =
-        mca_btl_gm_param_register_int ("free_list_max", 1024);
+        mca_btl_gm_param_register_int ("free_list_max", -1);
     mca_btl_gm_component.gm_free_list_inc =
-        mca_btl_gm_param_register_int ("free_list_inc", 32);
+        mca_btl_gm_param_register_int ("free_list_inc", 8);
+    mca_btl_gm_component.gm_debug = 
+        mca_btl_gm_param_register_int("debug", 0); 
     mca_btl_gm_component.gm_mpool_name = 
         mca_btl_gm_param_register_string("mpool", "gm"); 
     mca_btl_gm_component.gm_max_ports = 
@@ -127,27 +128,42 @@ int mca_btl_gm_component_open(void)
         mca_btl_gm_param_register_int("max_modules", 4); 
     mca_btl_gm_component.gm_num_high_priority = 
         mca_btl_gm_param_register_int("num_high_priority", 8); 
+    mca_btl_gm_component.gm_port_name=
+        mca_btl_gm_param_register_string("port_name", "OMPI"); 
 
     /* register gm module parameters */
     mca_btl_gm_module.super.btl_exclusivity =
         mca_btl_gm_param_register_int ("exclusivity", 0);
     mca_btl_gm_module.super.btl_eager_limit = 
-        mca_btl_gm_param_register_int ("eager_limit", 64*1024) - sizeof(mca_btl_base_header_t);
+        mca_btl_gm_param_register_int ("eager_limit", 32*1024);
     mca_btl_gm_module.super.btl_min_send_size =
-        mca_btl_gm_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
+        mca_btl_gm_param_register_int ("min_send_size", 32*1024);
     mca_btl_gm_module.super.btl_max_send_size =
-        mca_btl_gm_param_register_int ("max_send_size", 128*1024) - sizeof(mca_btl_base_header_t);
+        mca_btl_gm_param_register_int ("max_send_size", 64*1024);
     mca_btl_gm_module.super.btl_min_rdma_size = 
         mca_btl_gm_param_register_int("min_rdma_size", 1024*1024); 
     mca_btl_gm_module.super.btl_max_rdma_size = 
         mca_btl_gm_param_register_int("max_rdma_size", 1024*1024); 
-#if OMPI_MCA_BTL_GM_HAVE_RDMA_PUT
+#if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && OMPI_MCA_BTL_GM_HAVE_RDMA_PUT 
     mca_btl_gm_module.super.btl_flags  = 
         mca_btl_gm_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
 #else
-    mca_btl_gm_module.super.btl_flags  = 
-        mca_btl_gm_param_register_int("flags", MCA_BTL_FLAGS_SEND); 
+    mca_btl_gm_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
 #endif
+
+    /* compute the eager frag size */
+    mca_btl_gm_component.gm_eager_frag_size =
+        gm_min_size_for_length(mca_btl_gm_module.super.btl_eager_limit) -
+        sizeof(mca_btl_base_header_t);
+    mca_btl_gm_module.super.btl_eager_limit = 
+        gm_max_length_for_size(mca_btl_gm_component.gm_eager_frag_size);
+ 
+    /* compute the max frag size */
+    mca_btl_gm_component.gm_max_frag_size = 
+        gm_min_size_for_length(mca_btl_gm_module.super.btl_max_send_size);
+    mca_btl_gm_module.super.btl_max_send_size = 
+        gm_max_length_for_size(mca_btl_gm_component.gm_max_frag_size) -
+        sizeof(mca_btl_base_header_t);
     return OMPI_SUCCESS;
 }
 
@@ -182,20 +198,19 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_lock, opal_mutex_t);
                                                                                                   
     /* query nic tokens */
-    btl->gm_num_send_tokens = gm_num_send_tokens (btl->gm_port);
+    btl->gm_num_send_tokens = gm_num_send_tokens (btl->port);
     btl->gm_max_send_tokens = btl->gm_num_send_tokens;
-    btl->gm_num_recv_tokens = gm_num_receive_tokens (btl->gm_port);
+    btl->gm_num_recv_tokens = gm_num_receive_tokens (btl->port);
     btl->gm_max_recv_tokens = btl->gm_num_recv_tokens;
 
-    /* dont allow high priority to exceed 1/2 of available send tokens */
-    
+    /* dont allow high priority to exceed 1/2 of available recv tokens */
     num_high_priority = mca_btl_gm_component.gm_num_high_priority;
-    if(num_high_priority > (btl->gm_num_send_tokens >> 1)) {
-        num_high_priority = btl->gm_num_send_tokens >> 1;
+    if(num_high_priority > (btl->gm_num_recv_tokens >> 1)) {
+        num_high_priority = btl->gm_num_recv_tokens >> 1;
     }
                                                                                                   
     /* initialize memory pool */
-    resources.gm_port = btl->gm_port;
+    resources.port = btl->port;
     btl->gm_mpool = mca_mpool_base_module_create(
         mca_btl_gm_component.gm_mpool_name,
         &btl->super,
@@ -207,17 +222,17 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
  
     /* initialize free lists */
     ompi_free_list_init( &btl->gm_frag_eager,
-                         sizeof (mca_btl_gm_frag_eager_t),
+                         sizeof (mca_btl_gm_frag_eager_t) + (1 << mca_btl_gm_component.gm_eager_frag_size),
                          OBJ_CLASS (mca_btl_gm_frag_eager_t),
-                         mca_btl_gm_component.gm_free_list_num,  
+                         btl->gm_max_send_tokens,  
                          mca_btl_gm_component.gm_free_list_max, 
                          mca_btl_gm_component.gm_free_list_inc,
                          btl->gm_mpool ); 
 
     ompi_free_list_init( &btl->gm_frag_max,
-                         sizeof (mca_btl_gm_frag_max_t),
+                         sizeof (mca_btl_gm_frag_max_t) + (1 << mca_btl_gm_component.gm_max_frag_size),
                          OBJ_CLASS (mca_btl_gm_frag_max_t),
-                         mca_btl_gm_component.gm_free_list_num,  
+                         btl->gm_max_recv_tokens,
                          mca_btl_gm_component.gm_free_list_max, 
                          mca_btl_gm_component.gm_free_list_inc,
                          btl->gm_mpool ); 
@@ -228,7 +243,8 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
                          mca_btl_gm_component.gm_free_list_num,  
                          mca_btl_gm_component.gm_free_list_max, 
                          mca_btl_gm_component.gm_free_list_inc,
-                         btl->gm_mpool ); 
+                         NULL );
+
 
     /* post receive buffers */
     for(i=0; i<num_high_priority; i++) {
@@ -237,19 +253,28 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         if(NULL == frag) {
             return rc;
         }
-        gm_provide_receive_buffer(btl->gm_port, frag->hdr, frag->size, GM_HIGH_PRIORITY);
+        frag->base.des_src = NULL;
+        frag->base.des_src_cnt = 0;
+        frag->base.des_dst = &frag->segment;
+        frag->base.des_dst_cnt = 1;
+        gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, GM_LOW_PRIORITY);
     }
+
     for(i=mca_btl_gm_component.gm_num_high_priority; i<btl->gm_max_recv_tokens; i++) {
         mca_btl_gm_frag_t* frag;
         MCA_BTL_GM_FRAG_ALLOC_MAX(btl, frag, rc);
         if(NULL == frag) {
             return rc;
         }
-        gm_provide_receive_buffer(btl->gm_port, frag->hdr, frag->size, GM_LOW_PRIORITY);
+        frag->base.des_src = NULL;
+        frag->base.des_src_cnt = 0;
+        frag->base.des_dst = &frag->segment;
+        frag->base.des_dst_cnt = 1;
+        gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, GM_LOW_PRIORITY);
     }
 
     /* enable rdma */
-    if( GM_SUCCESS != gm_allow_remote_memory_access (btl->gm_port) ) {
+    if( GM_SUCCESS != gm_allow_remote_memory_access (btl->port) ) {
         opal_output (0, "[%s:%d] unable to allow remote memory access", __FILE__, __LINE__);
         return OMPI_ERROR;
     }
@@ -265,8 +290,8 @@ static int mca_btl_gm_discover( void )
 {
     uint32_t board_no;
     uint32_t  port_no;
-    uint32_t local_id;
-    struct gm_port* gm_port;
+    uint32_t node_id;
+    struct gm_port* port;
 #if GM_API_VERSION > 0x200
     uint32_t global_id;
 #else
@@ -278,14 +303,12 @@ static int mca_btl_gm_discover( void )
         mca_btl_gm_module_t *btl;
 
         /* open the first available gm port for this board  */
-        for( port_no = 2; port_no < mca_btl_gm_component.gm_max_ports; port_no++ ) {
+        for( port_no = 4; port_no < mca_btl_gm_component.gm_max_ports; port_no++ ) {
             if (3 == port_no) {
                 continue;  /* port 0,1,3 reserved  */
-            } else if (GM_SUCCESS ==
-                       gm_open(&gm_port, board_no, port_no,
-                               mca_btl_gm_component.gm_port_name,
-                               GM_API_VERSION) ) {
-            break;
+            } else if (GM_SUCCESS == gm_open(&port, board_no, port_no,
+                mca_btl_gm_component.gm_port_name, GM_API_VERSION) ) {
+                break;
             }
         }
         if( port_no == mca_btl_gm_component.gm_max_ports ) {
@@ -293,18 +316,18 @@ static int mca_btl_gm_discover( void )
         }
 
         /*  Get node local Id */
-        if( GM_SUCCESS != gm_get_node_id( gm_port, &local_id) ) {
-            opal_output (0, " failure to get local_id \n");
+        if( GM_SUCCESS != gm_get_node_id( port, &node_id) ) {
+            opal_output (0, " failure to get node_id \n");
             continue;
         }
         /* Gather an unique id for the node */
 #if GM_API_VERSION > 0x200
-        if (GM_SUCCESS != gm_node_id_to_global_id( gm_port, local_id, &global_id) ) {
+        if (GM_SUCCESS != gm_node_id_to_global_id( port, node_id, &global_id) ) {
             opal_output (0, "[%s:%d] Unable to get my GM global unique id", __FILE__, __LINE__);
             continue;
         }
 #else
-        if( GM_SUCCESS != gm_get_host_name( gm_port, global_id ) ) {
+        if( GM_SUCCESS != gm_get_host_name( port, global_id ) ) {
             opal_output( 0, "[%s:%d] Unable to get the GM host name\n", __FILE__, __LINE__);
             continue;
         }
@@ -320,14 +343,19 @@ static int mca_btl_gm_discover( void )
         memcpy (btl, &mca_btl_gm_module, sizeof(mca_btl_gm_module_t));
 
         /* setup local address */
-        btl->gm_port           = gm_port;
-        btl->gm_addr.port_id   = port_no;
-        btl->gm_addr.local_id  = local_id;
+        btl->port = port;
+        btl->gm_addr.port_id  = port_no;
+        btl->gm_addr.node_id = node_id;
 #if GM_API_VERSION > 0x200
         btl->gm_addr.global_id = global_id;
 #else
         strncpy( btl->gm_addr.global_id, global_id, GM_MAX_HOST_NAME_LEN );
 #endif  /* GM_API_VERSION > 0x200 */
+
+        if(mca_btl_gm_component.gm_debug > 0) {
+            opal_output(0, "[%d,%d,%d] gm_port %08X, board %lu, global %lu node %lu port %lu\n", 
+                ORTE_NAME_ARGS(orte_process_info.my_name), port, board_no, global_id, node_id, port_no);
+        }
 
         if((rc = mca_btl_gm_module_init(btl)) != OMPI_SUCCESS) {
             opal_output(0, "[%s:%d] unable to initialze gm port", __FILE__, __LINE__);
@@ -335,8 +363,8 @@ static int mca_btl_gm_discover( void )
         }
 
         /* everything is OK let's mark it as usable and go to the next one */
-        mca_btl_gm_component.gm_btls[mca_btl_gm_component.gm_num_btls++] = btl;
-        if(mca_btl_gm_component.gm_num_btls >= mca_btl_gm_component.gm_max_btls ) {
+        mca_btl_gm_component.gm_btls[mca_btl_gm_component.gm_num_btls] = btl;
+        if(++mca_btl_gm_component.gm_num_btls >= mca_btl_gm_component.gm_max_btls ) {
             break;
         }
     }
@@ -387,7 +415,7 @@ mca_btl_gm_component_init (int *num_btl_modules,
     mca_btl_base_module_t **btls;
     *num_btl_modules = 0;
 
-    /* s try to initialize GM */
+    /* try to initialize GM */
     if( GM_SUCCESS != gm_init() ) {
         opal_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
         return NULL;
@@ -434,12 +462,12 @@ mca_btl_gm_component_init (int *num_btl_modules,
 
 int mca_btl_gm_component_progress()
 {
-   int count = 0;
-   size_t i;
-
+    int count = 0;
+    size_t i;
+    
     for( i = 0; i < mca_btl_gm_component.gm_num_btls; ) {
         mca_btl_gm_module_t* btl = mca_btl_gm_component.gm_btls[i];
-        gm_recv_event_t* event = gm_receive(btl->gm_port);
+        gm_recv_event_t* event = gm_receive(btl->port);
         unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
         mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
         mca_btl_base_header_t* hdr;
@@ -455,9 +483,11 @@ int mca_btl_gm_component_progress()
                 {
                 mca_btl_base_recv_reg_t* reg;
                 hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
+                frag->segment.seg_addr.pval = (hdr+1);
+                frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
-                gm_provide_receive_buffer(btl->gm_port, buffer, frag->size, priority);
+                gm_provide_receive_buffer(btl->port, buffer, frag->size, priority);
                 count++;
                 break;
                 }
@@ -469,9 +499,11 @@ int mca_btl_gm_component_progress()
                 {
                 mca_btl_base_recv_reg_t* reg;
                 hdr = (mca_btl_base_header_t*)buffer;
+                frag->segment.seg_addr.pval = (hdr+1);
+                frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
-                gm_provide_receive_buffer(btl->gm_port, buffer, frag->size, priority);
+                gm_provide_receive_buffer(btl->port, buffer, frag->size, priority);
                 count++;
                 break;
                 }
@@ -479,7 +511,7 @@ int mca_btl_gm_component_progress()
                 i++;
                 break;
             default:
-                gm_unknown(btl->gm_port, event);
+                gm_unknown(btl->port, event);
                 break;
         }
     }

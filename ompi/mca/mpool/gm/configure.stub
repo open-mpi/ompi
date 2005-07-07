@@ -37,11 +37,11 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                  [enable_gm_cache="no"])
 
     if test "$enable_gm_cache" = "yes"; then
-        AC_DEFINE_UNQUOTED( OMPI_MCA_BMI_GM_CACHE_ENABLE, 1,
-                            [Enable GM BMI internal cache for registered memory])
+        AC_DEFINE_UNQUOTED( OMPI_MCA_MPOOL_GM_CACHE_ENABLE, 1,
+                            [Enable GM MPOOL internal cache for registered memory])
     else
-        AC_DEFINE_UNQUOTED( OMPI_MCA_BMI_GM_CACHE_ENABLE, 0,
-                            [Disable GM BMI internal cache for registered memory])
+        AC_DEFINE_UNQUOTED( OMPI_MCA_MPOOL_GM_CACHE_ENABLE, 0,
+                            [Disable GM MPOOL internal cache for registered memory])
     fi
     AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "$enable_gm_cache" = "yes" )
 
@@ -121,7 +121,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         AC_MSG_WARN([*** Could not find a supported GM_API_VERSION])
         AC_MSG_ERROR([*** Cannot continue])
     fi
-    AC_DEFINE_UNQUOTED(OMPI_MCA_BMI_GM_API_VERSION, $gm_api_ver,
+    AC_DEFINE_UNQUOTED(OMPI_MCA_MPOOL_GM_API_VERSION, $gm_api_ver,
         [Version of the GM API to use])
     unset gm_api_ver have_gm_api_ver_msg found val msg
 
@@ -138,7 +138,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     [[gm_put(0, 0, 0, 0, 0, 0, 0, 0, 0);]])], 
         [HAVE_RDMA_PUT=1 MSG=yes], 
         [HAVE_RDMA_PUT=0 MSG="no, use gm_directed_send_with_callback()"])
-    AC_DEFINE_UNQUOTED(OMPI_MCA_BMI_GM_HAVE_RDMA_PUT, $HAVE_RDMA_PUT,
+    AC_DEFINE_UNQUOTED(OMPI_MCA_MPOOL_GM_HAVE_RDMA_PUT, $HAVE_RDMA_PUT,
         [Whether we have gm_put() or gm_directed_send_with_callback()])
     AC_MSG_RESULT([$MSG])
 
@@ -153,7 +153,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     [[gm_get(0, 0, 0, 0, 0, 0, 0, 0, 0);]])], 
         [HAVE_RDMA_GET=1 MSG=yes], 
         [HAVE_RDMA_GET=0 MSG=no])
-    AC_DEFINE_UNQUOTED(OMPI_MCA_BMI_GM_HAVE_RDMA_GET, $HAVE_RDMA_GET,
+    AC_DEFINE_UNQUOTED(OMPI_MCA_MPOOL_GM_HAVE_RDMA_GET, $HAVE_RDMA_GET,
         [Whether we have get_get() or not])
     AC_MSG_RESULT([$MSG])
 
@@ -170,11 +170,11 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
        [ mca_btl_gm_broken=0 gm_build_broken=no ],
        [ mca_btl_gm_broken=1 gm_build_broken=yes ]) 
     AC_MSG_RESULT( [$gm_build_broken] )
-    AC_DEFINE_UNQUOTED( OMPI_MCA_BMI_GM_GET_BROKEN, $mca_btl_gm_broken,
+    AC_DEFINE_UNQUOTED( OMPI_MCA_MPOOL_GM_GET_BROKEN, $mca_btl_gm_broken,
                         [The GM build has or not a broker gm_get function] )
     unset gm_build_broken mca_btl_gm_broken
 
-    AC_DEFINE_UNQUOTED( OMPI_MCA_BMI_GM_SUPPORT_REGISTERING, 1,
+    AC_DEFINE_UNQUOTED( OMPI_MCA_MPOOL_GM_SUPPORT_REGISTERING, 1,
                         [The OS support or not the virtal page registration] )
 
     #
