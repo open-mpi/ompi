@@ -383,7 +383,9 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
         do {
             /* allocate remaining bytes to BTLs */
             size_t bytes_remaining = sendreq->req_rdma_offset - sendreq->req_send_offset;
-            while(bytes_remaining > 0 && sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth) {
+            while(bytes_remaining > 0 && 
+                  (sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth ||
+                   sendreq->req_rdma_offset < sendreq->req_send.req_bytes_packed)) {
                 mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->btl_send);
                 mca_pml_ob1_frag_hdr_t* hdr;
                 mca_btl_base_descriptor_t* des;
