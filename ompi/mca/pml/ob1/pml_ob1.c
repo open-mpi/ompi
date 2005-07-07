@@ -363,9 +363,12 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 
             /* check flags - is rdma prefered */
             if(endpoint->btl->btl_flags & MCA_BTL_FLAGS_RDMA &&
-               proc->proc_arch == ompi_proc_local_proc->proc_arch) {
+                proc->proc_arch == ompi_proc_local_proc->proc_arch) {
                 mca_pml_ob1_endpoint_t* rdma_ep = mca_pml_ob1_ep_array_insert(&proc_pml->btl_rdma);
                 *rdma_ep = *endpoint;
+                if(proc_pml->proc_rdma_offset < rdma_ep->btl_min_rdma_size) {
+                    proc_pml->proc_rdma_offset = rdma_ep->btl_min_rdma_size;
+                }
             }
         }
     }
