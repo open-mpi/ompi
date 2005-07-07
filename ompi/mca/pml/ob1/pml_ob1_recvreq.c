@@ -165,12 +165,12 @@ static void mca_pml_ob1_recv_request_ack(
      * - rdma devices are available
     */
     if(NULL == recvreq->req_mpool && !mca_pml_ob1.leave_pinned) {
-        if(recvreq->req_recv.req_bytes_packed > mca_pml_ob1.rdma_offset &&
+        if(recvreq->req_recv.req_bytes_packed > proc->proc_rdma_offset &&
            mca_pml_ob1_ep_array_get_size(&proc->btl_rdma) &&
            ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
     
             /* use convertor to figure out the rdma offset for this request */
-            recvreq->req_rdma_offset = mca_pml_ob1.rdma_offset;
+            recvreq->req_rdma_offset = proc->proc_rdma_offset;
             ompi_convertor_set_position(
                 &recvreq->req_recv.req_convertor,
                 &recvreq->req_rdma_offset);

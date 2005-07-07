@@ -41,6 +41,7 @@ struct mca_pml_proc_t {
    mca_pml_ob1_ep_array_t btl_eager;   /**< array of endpoints to use for first fragments */
    mca_pml_ob1_ep_array_t btl_send;    /**< array of endpoints to use for remaining fragments */
    mca_pml_ob1_ep_array_t btl_rdma;    /**< array of endpoints that support (prefer) rdma */
+   size_t proc_rdma_offset;            /**< max of min rdma size for available rmda btls */
 };
 typedef struct mca_pml_proc_t mca_pml_ob1_proc_t;
 
