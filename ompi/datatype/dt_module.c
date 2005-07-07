@@ -522,7 +522,7 @@ int32_t ompi_ddt_init( void )
     }
 #endif  /* VERBOSE */
 
-    ompi_ddt_external32_init();
+    ompi_ddt_default_convertors_init();
     return OMPI_SUCCESS;
 }
 
@@ -549,6 +549,9 @@ int32_t ompi_ddt_finalize( void )
         opal_output_close( ompi_ddt_dfd );
     ompi_ddt_dfd = -1;
 #endif  /* VERBOSE */
+
+    /* release the local convertors (external32 and local) */
+    ompi_ddt_default_convertors_fini();
 
     return OMPI_SUCCESS;
 }
