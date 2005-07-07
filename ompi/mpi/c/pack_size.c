@@ -53,8 +53,9 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
         }
     }
 
+    OBJ_CONSTRUCT( &local_convertor, ompi_convertor_t );
     /* the resulting convertor will be set to the position ZERO */
-    ompi_convertor_copy_and_prepare_for_send( NULL, datatype, incount, NULL, &local_convertor );
+    ompi_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, datatype, incount, NULL, &local_convertor );
 
     ret = ompi_convertor_get_packed_size( &local_convertor, &length );
     *size = (int)length;

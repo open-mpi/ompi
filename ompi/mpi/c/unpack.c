@@ -65,8 +65,9 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
         }
     }
 
+    OBJ_CONSTRUCT( &local_convertor, ompi_convertor_t );
     /* the resulting convertor will be set the the position ZERO */
-    ompi_convertor_copy_and_prepare_for_recv( NULL, datatype, outcount, outbuf, &local_convertor );
+    ompi_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, datatype, outcount, outbuf, &local_convertor );
 
     /* Check for truncation */
     ompi_convertor_get_packed_size( &local_convertor, &size );
