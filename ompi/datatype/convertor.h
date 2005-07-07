@@ -93,6 +93,7 @@ OBJ_CLASS_DECLARATION( ompi_convertor_t );
 
 /* Base convertor for all external32 operations */
 extern ompi_convertor_t* ompi_mpi_external32_convertor;
+extern ompi_convertor_t* ompi_mpi_local_convertor;
 extern conversion_fct_t ompi_ddt_copy_functions[];
 
 /*
