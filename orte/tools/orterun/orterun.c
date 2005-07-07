@@ -691,7 +691,7 @@ static int parse_locals(int argc, char* argv[])
     temp_argc = 0;
     temp_argv = NULL;
     opal_argv_append(&temp_argc, &temp_argv, argv[0]);
-    orte_pointer_array_init(&apps_pa, 1, argc + 1, 2);
+    orte_pointer_array_init(&apps_pa, 1, argc + 1, 1);
 
     env = NULL;
     for (app_num = 0, i = 1; i < argc; ++i) {
