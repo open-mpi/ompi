@@ -393,6 +393,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
+    /*
+     * Dump all MCA parameters if requested
+     */
+    if (ompi_mpi_show_mca_params) {
+       ompi_show_all_mca_params(ompi_mpi_comm_world.c_my_rank, 
+                                nprocs, 
+                                orte_system_info.nodename);
+    }
+
     /* Let system know we are at STG2 Barrier */
 
     if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
