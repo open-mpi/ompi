@@ -864,7 +864,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if (OMPI_SUCCESS != (rc = opal_size2int(size_len, &int_len, true))) {
             goto err_exit;
         }
-        printf("Got sizet len: %ld, int %d\n", size_len, int_len);
+        
         rc = MCA_PML_CALL(send (&int_len, 1, MPI_INT, remote_leader, tag, 
                                 MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
         if ( OMPI_SUCCESS != rc ) {
