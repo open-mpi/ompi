@@ -226,7 +226,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
 int main(int argc, char *argv[])
 {
     orte_app_context_t **apps;
-    int rc, i, num_apps, j;
+    int rc, i, num_apps, array_size, j;
     int id, iparam;
 
     /* Setup the abort message (for use in the signal handler) */
@@ -245,25 +245,28 @@ int main(int argc, char *argv[])
 
     /* Convert the list of apps to an array of orte_app_context_t
        pointers */
-
-    num_apps = orte_pointer_array_get_size(apps_pa);
+    array_size = orte_pointer_array_get_size(apps_pa);
+    apps = malloc(sizeof(orte_app_context_t *) * array_size);
+    if (NULL == apps) {
+        opal_show_help("help-orterun.txt", "orterun:syscall-failed", 
+                       true, orterun_basename, "malloc returned NULL", errno);
+        exit(1);
+    }
+    num_apps = 0;
+    for (j = i = 0; i < array_size; ++i) {
+        apps[num_apps] = (orte_app_context_t *) 
+            orte_pointer_array_get_item(apps_pa, i);
+        if(NULL != apps[num_apps]) {
+            j += apps[num_apps]->num_procs;
+            num_apps++;
+        }
+    }
     if (0 == num_apps) {
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
         opal_show_help("help-orterun.txt", "orterun:nothing-to-do", 
                        true, orterun_basename);
         exit(1);
-    }
-    apps = malloc(sizeof(orte_app_context_t *) * num_apps);
-    if (NULL == apps) {
-        opal_show_help("help-orterun.txt", "orterun:syscall-failed", 
-                       true, orterun_basename, "malloc returned NULL", errno);
-        exit(1);
-    }
-    for (j = i = 0; i < num_apps; ++i) {
-        apps[i] = (orte_app_context_t *) 
-            orte_pointer_array_get_item(apps_pa, i);
-        j += apps[i]->num_procs;
     }
     proc_infos = malloc(sizeof(struct proc_info_t) * j);
     if (NULL == proc_infos) {
@@ -691,7 +694,7 @@ static int parse_locals(int argc, char* argv[])
     temp_argc = 0;
     temp_argv = NULL;
     opal_argv_append(&temp_argc, &temp_argv, argv[0]);
-    orte_pointer_array_init(&apps_pa, 1, argc + 1, 1);
+    orte_pointer_array_init(&apps_pa, 1, argc + 1, 2);
 
     env = NULL;
     for (app_num = 0, i = 1; i < argc; ++i) {
