@@ -46,3 +46,6 @@ orte_HEADERS = $(headers)
 else
 ortedir = $(includedir)
 endif
+
+distclean-local:
+	rm -f static-components.h
