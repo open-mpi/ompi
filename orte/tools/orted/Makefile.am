@@ -39,14 +39,23 @@ libs = \
         $(top_builddir)/orte/liborte.la \
         $(top_builddir)/opal/libopal.la
 
+headers = orted.h
+
 bin_PROGRAMS = orted
 orted_SOURCES = \
-        orted.h \
+	$(headers) \
         orted.c 
 
 orted_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS)
 orted_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
 orted_DEPENDENCIES = $(libs)
 
-clean-local:
-	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ortedir = $(includedir)/openmpi/orte/tools/orted
+orte_HEADERS = $(headers)
+else
+ortedir = $(includedir)
+endif
