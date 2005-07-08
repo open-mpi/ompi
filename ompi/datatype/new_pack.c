@@ -26,7 +26,7 @@
 #endif
 #include <stdlib.h>
 
-#define DO_DEBUG(INST)  /* output not activated */
+#define DO_DEBUG(INST)  /* output disabled */
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
  * all basic functionalities, hence using them as basic blocks for all conversion functions.
@@ -204,6 +204,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
             }
             while( pElem->elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
+                if( 0 == iov_len_local ) goto complete_loop;
                 type = pElem->elem.common.type;
                 source = source_base + disp_desc;
                 PACK_PREDEFINED_DATATYPE( pConvertor, type, count_desc, pElem->elem.extent,
