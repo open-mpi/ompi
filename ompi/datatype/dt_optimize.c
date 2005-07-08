@@ -38,9 +38,6 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
     long total_disp = 0;
     int32_t optimized = 0;
 
-    /* Contiguous datatypes does not have to get optimized */
-    assert( (pData->flags & DT_FLAG_CONTIGUOUS) == 0 );
-
     /* If there is no datatype description how can we have an optimized description ? */
     if( (count == 0) || (pData->desc.used == 0) ) {
         pTypeDesc->length = 0;
@@ -48,6 +45,9 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
         pTypeDesc->used = 0;
         return 1;
     }
+
+    /* Contiguous datatypes does not have to get optimized */
+    assert( (pData->flags & DT_FLAG_CONTIGUOUS) == 0 );
 
     pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
     SAVE_STACK( pStack, -1, 0, count, 0, pData->desc.used );
