@@ -214,7 +214,13 @@ ompi_wrap_build_xppflags(const ompi_sv_t & env_list,
 	xppflags.push_back("-I" + incdir);
     }
 
-#if OMPI_WANT_CXX_BINDINGS
+#if OMPI_WANT_DEVEL_HEADERS
+    xppflags.push_back("-I" + incdir + "/openmpi");
+    xppflags.push_back("-I" + incdir + "/openmpi/opal");
+    xppflags.push_back("-I" + incdir + "/openmpi/orte");
+#endif
+
+#if OMPI_WANT_CXX_BINDINGS || OMPI_WANT_DEVEL_HEADERS
     xppflags.push_back("-I" + incdir + "/openmpi/ompi");
 #endif
 

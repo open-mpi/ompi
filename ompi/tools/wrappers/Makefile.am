@@ -26,6 +26,10 @@ AM_CPPFLAGS   = \
       -DOMPI_LIBDIR="\"$(libdir)\"" \
       -DOMPI_FC_MODULE_FLAG="\"$(OMPI_FC_MODULE_FLAG)\""
 
+if WANT_INSTALL_HEADERS
+AM_CPPFLAGS += -DOMPI_WANT_DEVEL_HEADERS=1
+endif
+
 EXTRA_DIST = wrap.cc wrap_engine.cc $(pkgdata_DATA)
 
 pkgdata_DATA = help-wrapper.txt
