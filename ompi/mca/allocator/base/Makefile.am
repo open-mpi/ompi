@@ -41,3 +41,6 @@ else
 ompidir = $(includedir)
 endif
 
+
+distclean-local:
+	rm -f static-components.h
