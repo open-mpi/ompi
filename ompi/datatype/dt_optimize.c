@@ -100,7 +100,9 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                     /* if the previous data is contiguous with this piece and it has a length not ZERO */
                     if( last_length != 0 ) {
                         if( (last_disp + last_length) == (total_disp + loop_disp) ) {
+                            last_length *= ompi_ddt_basicDatatypes[last_type]->size;
                             last_length += end_loop->size;
+                            last_type = DT_BYTE;
                             counter--;
                         }
                         CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
@@ -147,10 +149,12 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                 (pData->desc.desc[pos_desc].elem.extent == (int32_t)ompi_ddt_basicDatatypes[type]->size) ) {
                 if( type == last_type ) {
                     last_length += pData->desc.desc[pos_desc].elem.count;
+                    last_extent = pData->desc.desc[pos_desc].elem.extent;
                 } else {
                     if( last_length == 0 ) {
                         last_type = type;
                         last_length = pData->desc.desc[pos_desc].elem.count;
+                        last_extent = pData->desc.desc[pos_desc].elem.extent;
                     } else {
                         last_length = last_length * ompi_ddt_basicDatatypes[last_type]->size + 
                             pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
@@ -166,8 +170,9 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                     pElemDesc++; nbElems++;
                 }
                 last_disp = total_disp + pData->desc.desc[pos_desc].elem.disp;
-                last_length = pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
+                last_length = pData->desc.desc[pos_desc].elem.count;
                 last_extent = pData->desc.desc[pos_desc].elem.extent;
+                last_type = type;
             }
             pos_desc++;  /* advance to the next data */
         }
