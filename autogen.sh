@@ -55,8 +55,9 @@ ompi_automake=""
 
 mca_no_configure_components_file="config/mca_no_configure_components.m4"
 mca_no_config_list_file="mca_no_config_list"
-mca_no_config_amc_file="mca_no_config_amc"
 mca_no_config_env_file="mca_no_config_env"
+mca_m4_include_file="mca_m4_config_include.m4"
+mca_m4_config_env_file="mca_m4_config_env"
 autogen_subdir_file="autogen.subdirs"
 
 # locations to look for mca modules
@@ -427,7 +428,6 @@ run_no_configure_component() {
 
     # Write out to two files (they're merged at the end)
     noconf_list_file="$noconf_ompi_topdir/$mca_no_config_list_file"
-    noconf_amc_file="$noconf_ompi_topdir/$mca_no_config_amc_file"
     noconf_env_file="$noconf_ompi_topdir/$mca_no_config_env_file"
 
     cat >> "$noconf_list_file" <<EOF
@@ -438,36 +438,11 @@ dnl    $noconf_dir
 
 EOF
 
-    cat >> "$noconf_amc_file" <<EOF
-dnl ----------------------------------------------------------------
-
-dnl No-configure component: 
-dnl    $noconf_dir
-
-EOF
     # Tell configure to add all the PARAM_CONFIG_FILES to
     # the AC_CONFIG_FILES list.
     for file in $PARAM_CONFIG_FILES; do
         echo "AC_CONFIG_FILES([$noconf_dir/$file])" >> "$noconf_list_file"
     done
-
-    # Add this component directory to the list of
-    # subdirectories to traverse when building.
-    cat >> "$noconf_list_file" <<EOF
-
-dnl Add this component directory to the list of directories to
-dnl traverse for this component framework
-
-MCA_${noconf_framework}_NO_CONFIGURE_SUBDIRS="$noconf_dir \$MCA_${noconf_framework}_NO_CONFIGURE_SUBDIRS"
-
-EOF
-
-    # Setup the AM_CONDITIONAL to build this component
-    cat >> "$noconf_amc_file" <<EOF
-AM_CONDITIONAL(OMPI_BUILD_${noconf_framework}_${noconf_component}_DSO,
-    test "\$BUILD_${noconf_framework}_${noconf_component}_DSO" = "1")
-
-EOF
 
     cat <<EOF
 --> Adding to top-level configure no-configure subdirs:
@@ -477,6 +452,63 @@ EOF
 EOF
 
     echo "component_list=\"\$component_list $noconf_component\"" >> "$noconf_env_file"
+}
+
+
+##############################################################################
+#
+# run_m4_configure_component
+#   Prepares the component with an .m4 file that should be used to
+#   configure the component.
+#
+# INPUT:
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#
+##############################################################################
+run_m4_configure_component() {
+    m4conf_dir="$1"
+    m4conf_ompi_topdir="$2"
+    m4conf_project="$3"
+    m4conf_framework="$4"
+    m4conf_component="$5"
+
+    # Write out to two files (they're merged at the end)
+    m4conf_list_file="$m4conf_ompi_topdir/$mca_no_config_list_file"
+    m4conf_env_file="$m4conf_ompi_topdir/$mca_m4_config_env_file"
+
+    cat >> "$m4conf_list_file" <<EOF
+dnl ----------------------------------------------------------------
+
+dnl m4-configure component: 
+dnl    $m4conf_dir
+
+EOF
+
+    # Tell configure to add all the PARAM_CONFIG_FILES to
+    # the AC_CONFIG_FILES list.
+    for file in $PARAM_CONFIG_FILES; do
+        echo "AC_CONFIG_FILES([$m4conf_dir/$file])" >> "$m4conf_list_file"
+    done
+
+    # add the sinclude of the m4 file into the mca .m4 file directly.  It shouldn't
+    # be in a macro, so this is fairly safe to do.  By this point, there should
+    # already be a header and all that.
+    # sincludes are relative to the currently included file, so need the .. to get us
+    # from config/ to the topsrcdir again.
+    echo "sinclude(${m4conf_project}/mca/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$mca_m4_include_file"
+
+    cat <<EOF
+--> Adding to top-level configure m4-configure subdirs:
+-->   $m4conf_dir
+--> Adding to top-level configure AC_CONFIG_FILES list:
+-->   $PARAM_CONFIG_FILES
+EOF
+
+    echo "component_list=\"\$component_list $m4conf_component\"" >> "$m4conf_env_file"
 }
 
 
@@ -581,6 +613,27 @@ EOF
 
 EOF
 	    ./autogen.sh
+        elif test -f configure.params -a -f configure.m4 ; then
+            cat <<EOF
+
+*** Found configure.params and configure.m4
+***   `pwd`
+
+EOF
+            . ./configure.params
+            if test -z "$PARAM_CONFIG_FILES"; then
+                cat <<EOF
+*** No PARAM_CONFIG_FILES!
+*** Nothing to do -- skipping this directory
+EOF
+            else
+                # temporary workaround - remove possibly there configure code
+                rm -f "configure" "configure.ac*" "acinclude*" "aclocal.m4"
+
+                run_m4_configure_component "$pd_dir" "$pd_ompi_topdir" \
+                    "$pd_project" "$pd_framework" "$pd_component"
+            fi
+
         elif test -f configure.ac -o -f configure.in; then
             # If we have configure.ac or configure.in, run the GNU
             # tools here
@@ -742,9 +795,20 @@ run_global() {
     # [Re-]Create the mca_component_list file
 
     rm -f "$mca_no_configure_components_file" "$mca_no_config_list_file" \
-        "$mca_no_config_amc_file" "$mca_no_config_env_file"
+        "$mca_no_config_env_file" "$mca_m4_config_env_file" "$mca_m4_include_file"
     touch "$mca_no_configure_components_file" "$mca_no_config_list_file" \
-        "$mca_no_config_amc_file"
+        "$mca_m4_config_env_file" "$mca_m4_include_file"
+
+    # create header for the component m4 include file
+    cat > "$mca_m4_include_file" <<EOF
+dnl
+dnl \$HEADER
+dnl
+
+dnl This file is automatically created by autogen.sh; it should not
+dnl be edited by hand!!
+
+EOF
 
     #create header for the component config file
     cat > "$mca_no_configure_components_file" <<EOF
@@ -786,9 +850,10 @@ EOF
                     -r "${framework_path}/${framework}.h" ; then
                     framework_list="$framework_list $framework"
 
-                    rm -f "$mca_no_config_env_file"
-                    touch "$mca_no_config_env_file"
+                    rm -f "$mca_no_config_env_file" "$mca_m4_config_env_file"
+                    touch "$mca_no_config_env_file" "$mca_m4_config_env_file"
                     echo "component_list=" >> "$mca_no_config_env_file"
+                    echo "component_list=" >> "$mca_m4_config_env_file"
 
                     for component_path in "$framework_path"/*; do
                         if test -d "$component_path"; then
@@ -805,9 +870,24 @@ EOF
                     done
                 fi
 
-                # make list of components for this framework
+                # make list of components that are "no configure"
                 . "$mca_no_config_env_file"
                 component_list_define="m4_define(mca_${framework}_no_config_component_list, ["
+                component_list_define_first="1"
+                for component in $component_list ; do
+                    if test "$component_list_define_first" = "1"; then
+                        component_list_define="${component_list_define}${component}"
+                        component_list_define_first="0"
+                    else
+                        component_list_define="${component_list_define}, ${component}"
+                    fi
+                done
+                component_list_define="${component_list_define}])"
+                echo "$component_list_define" >> "$mca_no_configure_components_file"
+
+                # make list of components that are "m4 configure"
+                . "$mca_m4_config_env_file"
+                component_list_define="m4_define(mca_${framework}_m4_config_component_list, ["
                 component_list_define_first="1"
                 for component in $component_list ; do
                     if test "$component_list_define_first" = "1"; then
@@ -860,23 +940,15 @@ EOF
 dnl List all the no-configure components that we found, and AC_DEFINE
 dnl their versions
 
-AC_DEFUN([MCA_FIND_NO_CONFIGURE_COMPONENTS],[
+AC_DEFUN([MCA_NO_CONFIG_CONFIG_FILES],[
 
 `cat $mca_no_config_list_file`
 ])dnl
-
-dnl Separately have the AM_CONDITIONALS as to whether we build the
-dnl components static or shared.  This must be done separately from the
-dnl list because we have to do it late in the configure script, after
-dnl all the test variable values have been set.
-
-AC_DEFUN([MCA_AMC_NO_CONFIGURE_COMPONENTS],[
-`cat $mca_no_config_amc_file`
-])dnl
 EOF
+
     # Remove temp files
 
-    rm -f $mca_no_config_list_file $mca_no_config_amc_file $mca_no_config_env_file
+    rm -f $mca_no_config_list_file $mca_no_config_env_file $mca_m4_config_env_file
 
     # Finally, after we found all the no-configure MCA components, run
     # the config in the top-level directory

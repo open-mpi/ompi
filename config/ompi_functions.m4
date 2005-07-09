@@ -37,6 +37,22 @@ ompi_show_subtitle() {
 *** ${1}
 EOF
 }
+
+
+ompi_show_subsubtitle() {
+  cat <<EOF
+
++++ ${1}
+EOF
+}
+
+ompi_show_subsubsubtitle() {
+  cat <<EOF
+
+--- ${1}
+EOF
+}
+
 #
 # Save some stats about this build
 #

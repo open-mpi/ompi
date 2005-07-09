@@ -40,8 +40,10 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_ras_tm_la_SOURCES = $(component_sources)
-mca_ras_tm_la_LDFLAGS = -module -avoid-version
+mca_ras_tm_la_LDFLAGS = -module -avoid-version $(ras_tm_LDFLAGS)
+mca_ras_tm_la_LIBADD = $(ras_tm_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_ras_tm_la_SOURCES = $(lib_sources)
-libmca_ras_tm_la_LDFLAGS = -module -avoid-version
+libmca_ras_tm_la_LDFLAGS = -module -avoid-version $(ras_tm_LDFLAGS)
+libmca_ras_tm_la_LIBADD = $(ras_tm_LIBS)

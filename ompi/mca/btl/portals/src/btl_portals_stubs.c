@@ -16,7 +16,6 @@
 
 
 #include "ompi_config.h"
-#include "portals_config.h"
 
 #include "btl_portals.h"
 

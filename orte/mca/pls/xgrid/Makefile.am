@@ -18,7 +18,8 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS = -I$(top_ompi_builddir)/include
+AM_CPPFLAGS = -I$(top_ompi_builddir)/include 
+AM_OBJCFLAGS = $(pls_xgrid_OBJCFLAGS)
 
 xgrid_sources = \
 	src/pls_xgrid.h \
@@ -43,9 +44,9 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_xgrid_la_SOURCES = $(xgrid_sources)
 mca_pls_xgrid_la_LIBADD = 
-mca_pls_xgrid_la_LDFLAGS = -module -avoid-version
+mca_pls_xgrid_la_LDFLAGS = -module -avoid-version $(pls_xgrid_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pls_xgrid_la_SOURCES = $(xgrid_sources)
 libmca_pls_xgrid_la_LIBADD = 
-libmca_pls_xgrid_la_LDFLAGS = -module -avoid-version
+libmca_pls_xgrid_la_LDFLAGS = -module -avoid-version $(pls_xgrid_LDFLAGS)

@@ -16,8 +16,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = data_type_support
-
 noinst_LTLIBRARIES = libmca_soh_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found
@@ -38,7 +36,9 @@ libmca_soh_base_la_SOURCES = \
         soh_base_local_functions.c \
         soh_base_get_proc_soh.c \
         soh_base_set_proc_soh.c \
-        soh_base_open.c
+        soh_base_open.c \
+	data_type_support/soh_data_type_packing_fns.c \
+        data_type_support/soh_data_type_unpacking_fns.c
 
 
 # Conditionally install the header files

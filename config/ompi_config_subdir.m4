@@ -105,16 +105,19 @@ if test "$subdir_dir" != ":" -a -d $srcdir/$subdir_dir; then
     # Construct the --cache-file argument
     #
 
-    case $cache_file in
-    [[\\/]* | ?:[\\/]*] )
-	# Absolute path
-	subdir_cache_file="$cache_file"
-	;;
-    *)
-	# Relative path
-        subdir_cache_file="$subdir_dots$cache_file"
-	;;
-    esac
+dnl    case $cache_file in
+dnl    [[\\/]* | ?:[\\/]*] )
+dnl	# Absolute path
+dnl	subdir_cache_file="$cache_file"
+dnl	;;
+dnl    *)
+dnl	# Relative path
+dnl        subdir_cache_file="$subdir_dots$cache_file"
+dnl	;;
+dnl    esac
+    # BWB - subdir caching is a pain since we change CFLAGS and all that.  
+    # Just disable it for now
+    subdir_cache_file="/dev/null"
 
     #
     # Invoke the configure script in the subdirectory

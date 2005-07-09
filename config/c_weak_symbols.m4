@@ -15,32 +15,22 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_C_WEAK_SYMBOLS()
+# ---------------------
+# sets OMPI_C_WEAK_SYMBOLS=1 if C compiler has support for weak symbols
 define([OMPI_C_WEAK_SYMBOLS],[
-#
-# Arguments: None
-#
-# Depdencies: None
-#
-# Check to see if the C compiler can handle weak symbols
-#
-# Sets OMPI_C_WEAK_SYMBOLS=1 if the C compiler has support for weak
-# symbols.
-#
-
-AC_MSG_CHECKING([for weak symbols])
-AC_LINK_IFELSE(AC_LANG_SOURCE([[#pragma weak fake = real
+    AC_CACHE_CHECK([for weak symbols],
+                    [ompi_cv_c_weak_symbols],
+                    [AC_LINK_IFELSE([AC_LANG_SOURCE([[#pragma weak fake = real
 extern int fake(int i);
 int real(int i);
 int real(int i) { return i; }
 int main(int argc, char* argv[]) {
   return fake(3);
-}]]), ompi_happy=1, ompi_happy=0)
-if test "$ompi_happy" = "1"; then
-    AC_MSG_RESULT([yes])
-    OMPI_C_HAVE_WEAK_SYMBOLS=1
-else
-    AC_MSG_RESULT([no])
-    OMPI_C_HAVE_WEAK_SYMBOLS=0
-fi
+}]])],
+                                    [ompi_cv_c_weak_symbols="yes"],
+                                    [ompi_cv_c_weak_symbols="no"])])
 
-unset ompi_happy])dnl
+    AS_IF([test "$ompi_cv_c_weak_symbols" = "yes"],
+          [OMPI_C_HAVE_WEAK_SYMBOLS=1], [OMPI_C_HAVE_WEAK_SYMBOLS=0])
+]) dnl

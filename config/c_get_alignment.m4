@@ -15,15 +15,17 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_C_GET_ALIGNMENT],[
+# OMPI_C_GET_ALIGN(type, config_var)
+# ----------------------------------
 # Determine datatype alignment. 
 # First arg is type, 2nd arg is config var to define.
-AC_MSG_CHECKING([alignment of $1])
-AC_TRY_RUN([
+AC_DEFUN([OMPI_C_GET_ALIGNMENT],[
+    AC_CACHE_CHECK([alignment of $1],
+                   [AS_TR_SH([ompi_cv_c_align_$1])],
+                   [AC_TRY_RUN([
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 struct foo { char c; $1 x; };
 int main(int argc, char* argv[])
 {
@@ -34,30 +36,25 @@ int main(int argc, char* argv[])
     diff = ((char *)&p->x) - ((char *)&p->c);
     fprintf(f, "%d\n", (diff >= 0) ? diff : -diff);
     return 0;
-}],[ompi_ac_align=`cat conftestval`],[ompi_ac_align=-1],[ompi_ac_align=-2])
-
-if test "$ompi_ac_align" = "-2" ; then
-    # cross compile - do a non-executable test.  Trick taken from
-    # the AC CVS repository.  If only they'd get around to actually
-    # releasing something post 2.59...
-   _AC_COMPUTE_INT([offsetof (struct { char x; $1 y; }, y)],
-                   [ompi_ac_align],
-                   [AC_INCLUDES_DEFAULT()
+}],                            [AS_TR_SH([ompi_cv_c_align_$1])=`cat conftestval`],
+                               [AC_MSG_WARN([*** Problem running configure test!])
+                                AC_MSG_WARN([*** See config.log for details.])
+                                AC_MSG_ERROR([*** Cannot continue.])],
+                               [ # cross compile - do a non-executable test.  Trick 
+                                 # taken from the AC CVS repository.  If only they'd
+                                 # get around to actually releasing something post 2.59...
+                                 _AC_COMPUTE_INT([offsetof (struct { char x; $1 y; }, y)],
+                                                 [AS_TR_SH([ompi_cv_c_align_$1])],
+                                                 [AC_INCLUDES_DEFAULT()
 #ifndef offsetof
 # define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
-#endif],
-                   [ompi_ac_align=-1])
-fi
+#endif
+],
+                                                 [AC_MSG_WARN([*** Problem running configure test!])
+                                                  AC_MSG_WARN([*** See config.log for details.])
+                                                  AC_MSG_ERROR([*** Cannot continue.])])])])
 
-if test "`expr $ompi_ac_align \<= 0`" = "1"; then
-    AC_MSG_WARN([*** Problem running configure test!])
-    AC_MSG_WARN([*** See config.log for details.])
-    AC_MSG_ERROR([*** Cannot continue.])
-fi
+AC_DEFINE_UNQUOTED([$2], [$AS_TR_SH([ompi_cv_c_align_$1])], [Alignment of type $1])
+eval "$2=$AS_TR_SH([ompi_cv_c_align_$1])"
 
-AC_MSG_RESULT([$ompi_ac_align])
-AC_DEFINE_UNQUOTED($2, $ompi_ac_align, [Alignment of type $1])
-eval "$2=$ompi_ac_align"
-unset ompi_ac_align
-
-/bin/rm -f conftest*])dnl
+/bin/rm -f conftest* ]) dnl

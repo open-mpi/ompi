@@ -26,7 +26,6 @@
 #include "mca/pls/pls.h"
 #include "mca/pls/base/base.h"
 #include "pls_tm.h"
-#include "mca/pls/tm/pls-tm-version.h"
 #include "mca/base/mca_base_param.h"
 
 

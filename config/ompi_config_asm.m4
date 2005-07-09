@@ -79,12 +79,11 @@ dnl assembles and does not leave a label in the output of nm.  Fall
 dnl back to L if nothing else seems to work :/
 dnl
 dnl #################################################################
-AC_DEFUN([OMPI_CHECK_ASM_LSYM],[
-    AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
-    AC_REQUIRE([AC_PROG_NM])
 
-    AC_MSG_CHECKING([prefix for lsym labels])
-    ompi_cv_asm_lsym="L"
+# _OMPI_CHECK_ASM_LSYM([variable-to-set])
+# ---------------------------------------
+AC_DEFUN([_OMPI_CHECK_ASM_LSYM],[
+    $1="L"
 
     for sym in L .L $ L$ ; do
         asm_result=0
@@ -96,12 +95,12 @@ ${sym}mytestlabel$ompi_cv_asm_label_suffix],
             if $NM conftest.$OBJEXT > conftest.out 2>&AC_FD_CC ; then
                 if test "`grep mytestlabel conftest.out`" = "" ; then
                     # there was no symbol...  looks promising to me
-                    ompi_cv_asm_lsym="$sym"
+                    $1="$sym"
                     asm_result=1
                 elif test ["`grep ' [Nt] .*mytestlabel' conftest.out`"] = "" ; then
                     # see if we have a non-global-ish symbol
                     # but we should see if we can do better.
-                    ompi_cv_asm_lsym="$sym"
+                    $1="$sym"
                 fi
             else
                 # not so much on the NM goodness :/
@@ -115,13 +114,22 @@ ${sym}mytestlabel$ompi_cv_asm_label_suffix],
         fi
     done
     rm -f conftest.out
+    unset asm_result sym
+])
 
-    AC_MSG_RESULT([$ompi_cv_asm_lsym])
+# OMPI_CHECK_ASM_LSYM()
+# ---------------------
+AC_DEFUN([OMPI_CHECK_ASM_LSYM],[
+    AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
+    AC_REQUIRE([AC_PROG_NM])
+
+    AC_CACHE_CHECK([prefix for lsym labels],
+                   [ompi_cv_asm_lsym],
+                   [_OMPI_CHECK_ASM_LSYM([ompi_cv_asm_lsym])])
     AC_DEFINE_UNQUOTED([OMPI_ASM_LSYM], ["$ompi_cv_asm_lsym"],
                        [Assembly prefix for lsym labels])
     OMPI_ASM_LSYM="$ompi_cv_asm_lsym"
     AC_SUBST(OMPI_ASM_LSYM)
-    unset asm_result sym
 ])dnl
 
 
