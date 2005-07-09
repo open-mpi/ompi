@@ -16,8 +16,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = data_type_support
-
 noinst_LTLIBRARIES = libmca_orte_rmgr_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found
@@ -40,7 +38,9 @@ libmca_orte_rmgr_base_la_SOURCES = \
         rmgr_base_unpack.c \
         rmgr_base_select.c \
         rmgr_base_stage_gate.c \
-        rmgr_base_stubs.c
+        rmgr_base_stubs.c \
+        data_type_support/rmgr_data_type_packing_fns.c \
+        data_type_support/rmgr_data_type_unpacking_fns.c
 
 
 # Conditionally install the header files

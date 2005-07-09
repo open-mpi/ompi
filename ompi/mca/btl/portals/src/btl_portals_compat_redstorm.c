@@ -15,7 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include "portals_config.h"
 
 #include "include/constants.h"
 #include "opal/util/output.h"

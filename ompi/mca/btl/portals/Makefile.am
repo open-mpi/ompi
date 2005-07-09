@@ -52,14 +52,15 @@ portals_SOURCES = \
 	src/btl_portals_endpoint.c \
 	src/btl_portals_compat_utcp.c
 
+AM_CPPFLAGS = $(btl_portals_CPPFLAGS)
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_portals_la_SOURCES = $(portals_SOURCES)
-mca_btl_portals_la_LIBADD = 
-mca_btl_portals_la_LDFLAGS = -module -avoid-version
+mca_btl_portals_la_LIBADD = $(btl_portals_LIBS)
+mca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_portals_la_SOURCES = $(portals_SOURCES)
-libmca_btl_portals_la_LIBADD =
-libmca_btl_portals_la_LDFLAGS = -module -avoid-version
+libmca_btl_portals_la_LIBADD = $(btl_portals_LIBS)
+libmca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)

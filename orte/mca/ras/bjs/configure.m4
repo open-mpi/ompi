@@ -15,24 +15,18 @@
 # $HEADER$
 #
 
-sinclude(ompi_objc.m4)
+AC_DEFUN([MCA_ras_bjs_CONFIG],[
+    OMPI_CHECK_BPROC([ras_bjs], [ras_bjs_good=1], [ras_bjs_good=0])
 
-AC_DEFUN([MCA_CONFIGURE_STUB],[
+    # For very dumb reasons involving linking, it's near impossible
+    # to build the XGrid components as static libraries.  Disable if that's
+    # the case.
+    AS_IF([test "$ras_bjs_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+          [ras_bjs_WRAPPER_EXTRA_LDFLAGS="$ras_bjs_LDFLAGS"
+           ras_bjs_WRAPPER_EXTRA_LIBS="$ras_bjs_LIBS"
+           $1])
 
-AC_PROG_OBJC
-
-AC_MSG_CHECKING([For XGridFoundation framework])
-save_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -framework XGridFoundation"
-AC_TRY_LINK([],[;],[HAPPY="yes"],[HAPPY="no"])
-CFLAGS="$save_CFLAGS"
-AC_MSG_RESULT([$HAPPY])
-
-if test "$HAPPY" = "no" ; then
-    AC_MSG_ERROR([*** Can not build xgrid pls])
-fi
-
-OBJCFLAGS="-F XGridFoundation"
-LDFLAGS="-framework XGridFoundation -framework Foundation"
-
+    AC_SUBST([ras_bjs_OBJCFLAGS])
+    AC_SUBST([ras_bjs_LDFLAGS])
+    AC_SUBST([ras_bjs_LIBS])
 ])dnl

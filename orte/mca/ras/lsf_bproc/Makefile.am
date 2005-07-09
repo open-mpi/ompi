@@ -30,6 +30,8 @@ component_noinst = libmca_ras_lsf_bproc.la
 component_install =
 endif
 
+AM_CPPFLAGS= $(ras_lsf_bproc_CPPFLAGS)
+
 proxy_SOURCES = \
     ras_lsf_bproc.c \
     ras_lsf_bproc.h \
@@ -38,10 +40,10 @@ proxy_SOURCES = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_lsf_bproc_la_SOURCES = $(proxy_SOURCES)
-mca_ras_lsf_bproc_la_LIBADD = 
-mca_ras_lsf_bproc_la_LDFLAGS = -module -avoid-version
+mca_ras_lsf_bproc_la_LIBADD = $(ras_lsf_bproc_LIBS)
+mca_ras_lsf_bproc_la_LDFLAGS = -module -avoid-version $(ras_lsf_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ras_lsf_bproc_la_SOURCES = $(proxy_SOURCES)
-libmca_ras_lsf_bproc_la_LIBADD =
-libmca_ras_lsf_bproc_la_LDFLAGS = -module -avoid-version
+libmca_ras_lsf_bproc_la_LIBADD = $(ras_lsf_bproc_LIBS)
+libmca_ras_lsf_bproc_la_LDFLAGS = -module -avoid-version $(ras_lsf_bproc_LDFLAGS)

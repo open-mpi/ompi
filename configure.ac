@@ -991,6 +991,9 @@ AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX16, $OMPI_RANGE_F90_COMPLEX16,
 AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX32, $OMPI_RANGE_F90_COMPLEX32,
     [range of fortran complex*32])
 
+# checkpoint results
+AC_CACHE_SAVE
+
 ##################################
 # Header files
 ##################################
@@ -1064,6 +1067,9 @@ AC_DEFINE_UNQUOTED(OMPI_USE_STDBOOL_H, $OMPI_USE_STDBOOL_H,
     [Whether to use <stdbool.h> or not])
 AC_MSG_RESULT([$MSG])
 
+# checkpoint results
+AC_CACHE_SAVE
+
 
 ##################################
 # Libraries
@@ -1130,6 +1136,9 @@ AC_MSG_RESULT([$MSG])
 #
 
 AC_CHECK_LIB([m], [ceil])
+
+# checkpoint results
+AC_CACHE_SAVE
 
 
 ##################################
@@ -1273,6 +1282,9 @@ OMPI_CASE_SENSITIVE_FS_SETUP
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
 
+# checkpoint results
+AC_CACHE_SAVE
+
 
 ##################################
 # MCA
@@ -1285,6 +1297,9 @@ OMPI_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
 AC_MSG_RESULT([$ompi_subdir_args])
 
 OMPI_MCA
+
+# checkpoint results
+AC_CACHE_SAVE
 
 
 ############################################################################
@@ -1553,53 +1568,6 @@ AC_CONFIG_FILES([
     orte/mca/Makefile
     orte/dynamic-mca/Makefile
 
-    orte/mca/errmgr/Makefile
-    orte/mca/errmgr/base/Makefile
-    orte/mca/iof/Makefile
-    orte/mca/iof/base/Makefile
-    orte/mca/gpr/Makefile
-    orte/mca/gpr/base/Makefile
-    orte/mca/gpr/base/data_type_support/Makefile
-    orte/mca/gpr/base/pack_api_cmd/Makefile
-    orte/mca/gpr/base/unpack_api_response/Makefile
-    orte/mca/ns/Makefile
-    orte/mca/ns/base/Makefile
-    orte/mca/ns/base/data_type_support/Makefile
-    orte/mca/oob/Makefile
-    orte/mca/oob/base/Makefile
-    orte/mca/pls/Makefile
-    orte/mca/pls/base/Makefile
-    orte/mca/ras/Makefile
-    orte/mca/ras/base/Makefile
-    orte/mca/rds/Makefile
-    orte/mca/rds/base/Makefile
-    orte/mca/rmaps/Makefile
-    orte/mca/rmaps/base/Makefile
-    orte/mca/rmgr/Makefile
-    orte/mca/rmgr/base/Makefile
-    orte/mca/rmgr/base/data_type_support/Makefile
-    orte/mca/rml/Makefile
-    orte/mca/rml/base/Makefile
-    orte/mca/schema/Makefile
-    orte/mca/schema/base/Makefile
-    orte/mca/soh/Makefile
-    orte/mca/soh/base/Makefile
-    orte/mca/soh/base/data_type_support/Makefile
-
-    orte/dynamic-mca/errmgr/Makefile
-    orte/dynamic-mca/iof/Makefile
-    orte/dynamic-mca/gpr/Makefile
-    orte/dynamic-mca/ns/Makefile
-    orte/dynamic-mca/oob/Makefile
-    orte/dynamic-mca/pls/Makefile
-    orte/dynamic-mca/ras/Makefile
-    orte/dynamic-mca/rds/Makefile
-    orte/dynamic-mca/rmaps/Makefile
-    orte/dynamic-mca/rmgr/Makefile
-    orte/dynamic-mca/rml/Makefile
-    orte/dynamic-mca/schema/Makefile
-    orte/dynamic-mca/soh/Makefile
-
     ompi/Makefile
     ompi/include/Makefile
     ompi/class/Makefile
@@ -1633,37 +1601,7 @@ AC_CONFIG_FILES([
     ompi/tools/wrappers/Makefile
 
     ompi/mca/Makefile
-    ompi/mca/common/Makefile
-
-    ompi/mca/allocator/Makefile
-    ompi/mca/allocator/base/Makefile
-    ompi/mca/btl/Makefile
-    ompi/mca/btl/base/Makefile
-    ompi/mca/coll/Makefile
-    ompi/mca/coll/base/Makefile
-    ompi/mca/io/Makefile
-    ompi/mca/io/base/Makefile
-    ompi/mca/mpool/Makefile
-    ompi/mca/mpool/base/Makefile
-    ompi/mca/pml/Makefile
-    ompi/mca/pml/base/Makefile
-    ompi/mca/ptl/Makefile
-    ompi/mca/ptl/base/Makefile
-    ompi/mca/topo/Makefile
-    ompi/mca/topo/base/Makefile
-
     ompi/dynamic-mca/Makefile
-    ompi/dynamic-mca/common/Makefile
-
-
-    ompi/dynamic-mca/allocator/Makefile
-    ompi/dynamic-mca/btl/Makefile
-    ompi/dynamic-mca/coll/Makefile
-    ompi/dynamic-mca/io/Makefile
-    ompi/dynamic-mca/mpool/Makefile
-    ompi/dynamic-mca/pml/Makefile
-    ompi/dynamic-mca/ptl/Makefile
-    ompi/dynamic-mca/topo/Makefile
 
     test/Makefile
     test/asm/Makefile

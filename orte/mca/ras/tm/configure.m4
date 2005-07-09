@@ -15,17 +15,15 @@
 # $HEADER$
 #
 
-AC_DEFUN([MCA_CONFIGURE_STUB],[
+AC_DEFUN([MCA_ras_tm_CONFIG],[
+    OMPI_CHECK_TM([ras_tm], [ras_tm_good=1], [ras_tm_good=0])
+         
+    AS_IF([test "$ras_tm_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+          [ras_tm_WRAPPER_EXTRA_LDFLAGS="$ras_tm_LDFLAGS"
+           ras_tm_WRAPPER_EXTRA_LIBS="$ras_tm_LIBS"
+           $1])
 
-AC_MSG_CHECKING([For XGridFoundation framework])
-save_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -framework XGridFoundation"
-AC_TRY_LINK([],[;],[HAPPY="yes"],[HAPPY="no"])
-CFLAGS="$save_CFLAGS"
-AC_MSG_RESULT([$HAPPY])
-
-if test "$HAPPY" = "no" ; then
-    AC_MSG_ERROR([*** Can not build xgrid ras])
-fi
-
+    AC_SUBST([ras_tm_CPPFLAGS])
+    AC_SUBST([ras_tm_LDFLAGS])
+    AC_SUBST([ras_tm_LIBS])
 ])dnl

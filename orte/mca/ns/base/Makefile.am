@@ -16,8 +16,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = data_type_support
-
 noinst_LTLIBRARIES = libmca_ns_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found
@@ -41,7 +39,9 @@ libmca_ns_base_la_SOURCES = \
         ns_base_nds_bproc.c \
         ns_base_nds_env.c \
         ns_base_nds_pipe.c \
-        ns_base_local_fns.c
+        ns_base_local_fns.c \
+	data_type_support/ns_data_type_packing_fns.c \
+	data_type_support/ns_data_type_unpacking_fns.c
 
 
 # Conditionally install the header files

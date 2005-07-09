@@ -16,8 +16,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = pack_api_cmd unpack_api_response data_type_support
-
 noinst_LTLIBRARIES = libmca_gpr_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found
@@ -34,7 +32,22 @@ libmca_gpr_base_la_SOURCES = \
         gpr_base_open.c \
         gpr_base_close.c \
         gpr_base_select.c \
-        gpr_base_xfer_payload.c
+        gpr_base_xfer_payload.c \
+	data_type_support/gpr_data_type_packing_fns.c \
+        data_type_support/gpr_data_type_unpacking_fns.c \
+        unpack_api_response/gpr_base_unpack_cleanup.c \
+        unpack_api_response/gpr_base_unpack_del_index.c \
+        unpack_api_response/gpr_base_print_dump.c \
+        unpack_api_response/gpr_base_dump_notify.c \
+        unpack_api_response/gpr_base_unpack_arithmetic_ops.c \
+        unpack_api_response/gpr_base_unpack_put_get.c \
+        unpack_api_response/gpr_base_unpack_subscribe.c \
+        pack_api_cmd/gpr_base_pack_cleanup.c \
+        pack_api_cmd/gpr_base_pack_del_index.c \
+        pack_api_cmd/gpr_base_pack_dump.c \
+        pack_api_cmd/gpr_base_pack_arithmetic_ops.c \
+        pack_api_cmd/gpr_base_pack_put_get.c \
+        pack_api_cmd/gpr_base_pack_subscribe.c
 
 # Conditionally install the header files
 

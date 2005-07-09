@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,25 +15,15 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+AC_DEFUN([MCA_pls_tm_CONFIG],[
+    OMPI_CHECK_TM([pls_tm], [pls_tm_good=1], [pls_tm_good=0])
+         
+    AS_IF([test "$pls_tm_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+          [pls_tm_WRAPPER_EXTRA_LDFLAGS="$pls_tm_LDFLAGS"
+           pls_tm_WRAPPER_EXTRA_LIBS="$pls_tm_LIBS"
+           $1])
 
-noinst_LTLIBRARIES = libmca_soh_base_data_type.la
-
-# Source code files
-
-headers =
-
-libmca_soh_base_data_type_la_SOURCES = \
-        $(headers) \
-        soh_data_type_packing_fns.c \
-        soh_data_type_unpacking_fns.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/soh/base/data_type_support
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
+    AC_SUBST([pls_tm_CPPFLAGS])
+    AC_SUBST([pls_tm_LDFLAGS])
+    AC_SUBST([pls_tm_LIBS])
+])dnl

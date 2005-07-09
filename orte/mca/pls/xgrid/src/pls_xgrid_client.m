@@ -21,7 +21,6 @@
  */
 
 #import "ompi_config.h"
-#import "pls_xgrid_config.h"
 
 #import <stdio.h>
 

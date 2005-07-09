@@ -30,6 +30,8 @@ component_noinst = libmca_ras_bjs.la
 component_install =
 endif
 
+AM_CPPFLAGS= $(ras_bjs_CPPFLAGS)
+
 proxy_SOURCES = \
     ras_bjs.c \
     ras_bjs.h \
@@ -38,10 +40,10 @@ proxy_SOURCES = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_bjs_la_SOURCES = $(proxy_SOURCES)
-mca_ras_bjs_la_LIBADD = 
-mca_ras_bjs_la_LDFLAGS = -module -avoid-version
+mca_ras_bjs_la_LIBADD = $(ras_bjs_LIBS)
+mca_ras_bjs_la_LDFLAGS = -module -avoid-version $(ras_bjs_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ras_bjs_la_SOURCES = $(proxy_SOURCES)
-libmca_ras_bjs_la_LIBADD =
-libmca_ras_bjs_la_LDFLAGS = -module -avoid-version
+libmca_ras_bjs_la_LIBADD = $(ras_bjs_LIBS)
+libmca_ras_bjs_la_LDFLAGS = -module -avoid-version $(ras_bjs_LDFLAGS)

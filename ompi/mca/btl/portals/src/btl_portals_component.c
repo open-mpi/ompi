@@ -15,7 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include "portals_config.h"
 
 #include <sys/types.h>
 #include <unistd.h>
