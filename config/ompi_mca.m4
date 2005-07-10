@@ -425,22 +425,24 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=1], [should_build=0])
     MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)
 
-    if test "$should_build" = "1" ; then
-        MCA_$2_$3_CONFIG([should_build=1], [should_build=0])
-    fi
+    # special case - if we are doing a dist, add the component to 
+    # the list of all components, even if the build failed.  The
+    # makefiles are going to be there no matter what, so no reason
+    # to make the components have to "artificially succeed"
+    AS_IF([test "$should_build" = "1"],
+          [MCA_$2_$3_CONFIG([should_build=1], 
+                            [should_build=0
+                             # add component to all component list
+                             $4="$$4 $3"])])
 
-    if test "$should_build" = "1" ; then
-        MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)
-    else
-        MCA_PROCESS_DEAD_COMPONENT($1, $2, $3)
-    fi
+    AS_IF([test "$should_build" = "1"],
+          [MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)],
+          [MCA_PROCESS_DEAD_COMPONENT($1, $2, $3)])
 
     # set the AM_CONDITIONAL on how we should build
-    if test "$compile_mode" = "dso" ; then
-        BUILD_$2_$3_DSO=1
-    else
-        BUILD_$2_$3_DSO=0
-    fi
+    AS_IF([test "$compile_mode" = "dso"], 
+          [BUILD_$2_$3_DSO=1],
+          [BUILD_$2_$3_DSO=0])
     AM_CONDITIONAL(OMPI_BUILD_$2_$3_DSO, test "$BUILD_$2_$3_DSO" = "1")
 
     unset compile_mode
