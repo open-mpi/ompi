@@ -22,7 +22,7 @@ AC_DEFUN([MCA_ras_xgrid_CONFIG],[
     # component.  For very dumb reasons involving linking, it's near impossible
     # to build the XGrid components as static libraries.  Disable if that's
     # the case.
-    AS_IF([test "$ras_xgrid_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+    AS_IF([test "$ras_xgrid_good" = "0"], [$2],
           [AS_IF([test "$compile_mode" = "dso"], [$1], 
                  [AC_MSG_WARN([XGrid components must be built as DSOs.  Disabling])
                   $2])])

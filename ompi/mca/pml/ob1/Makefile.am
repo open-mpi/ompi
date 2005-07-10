@@ -20,10 +20,12 @@ ob1_sources  = \
 	pml_ob1.c \
 	pml_ob1.h \
 	pml_ob1_comm.c \
+	pml_ob1_comm.h \
 	pml_ob1_component.c \
 	pml_ob1_component.h \
 	pml_ob1_endpoint.c \
 	pml_ob1_endpoint.h \
+	pml_ob1_hdr.h \
 	pml_ob1_iprobe.c \
 	pml_ob1_irecv.c \
 	pml_ob1_isend.c \

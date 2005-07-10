@@ -21,7 +21,7 @@ AC_DEFUN([MCA_ras_lsf_bproc_CONFIG],[
     # For very dumb reasons involving linking, it's near impossible
     # to build the XGrid components as static libraries.  Disable if that's
     # the case.
-    AS_IF([test "$ras_lsf_bproc_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+    AS_IF([test "$ras_lsf_bproc_good" = "0"], [$2],
           [ras_lsf_bproc_WRAPPER_EXTRA_LDFLAGS="$ras_lsf_bproc_LDFLAGS"
            ras_lsf_bproc_WRAPPER_EXTRA_LIBS="$ras_lsf_bproc_LIBS"
            $1])

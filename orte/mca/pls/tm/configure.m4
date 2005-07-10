@@ -18,7 +18,7 @@
 AC_DEFUN([MCA_pls_tm_CONFIG],[
     OMPI_CHECK_TM([pls_tm], [pls_tm_good=1], [pls_tm_good=0])
          
-    AS_IF([test "$pls_tm_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+    AS_IF([test "$pls_tm_good" = "0"], [$2],
           [pls_tm_WRAPPER_EXTRA_LDFLAGS="$pls_tm_LDFLAGS"
            pls_tm_WRAPPER_EXTRA_LIBS="$pls_tm_LIBS"
            $1])

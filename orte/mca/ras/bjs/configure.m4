@@ -21,7 +21,7 @@ AC_DEFUN([MCA_ras_bjs_CONFIG],[
     # For very dumb reasons involving linking, it's near impossible
     # to build the XGrid components as static libraries.  Disable if that's
     # the case.
-    AS_IF([test "$ras_bjs_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+    AS_IF([test "$ras_bjs_good" = "0"], [$2],
           [ras_bjs_WRAPPER_EXTRA_LDFLAGS="$ras_bjs_LDFLAGS"
            ras_bjs_WRAPPER_EXTRA_LIBS="$ras_bjs_LIBS"
            $1])

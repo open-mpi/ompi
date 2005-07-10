@@ -27,8 +27,7 @@ AC_DEFUN([MCA_iof_null_CONFIG],[
 
     OMPI_CHECK_TM([iof_null], [iof_null_good=1], [iof_null_good=0])
          
-    # don't need to set any flags - there's no XGrid-using code in this
+    # don't need to set any flags - there's no TM-using code in this
     # component
-    AS_IF([test "$iof_null_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
-          [$1])
+    AS_IF([test "$iof_null_good" = "1"], [$1], [$2])
 ])dnl

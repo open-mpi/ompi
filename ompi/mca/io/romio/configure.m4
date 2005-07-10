@@ -54,6 +54,5 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                   $1],
                  [LIBS="$io_romio_LIBS"
                   AC_MSG_WARN([ROMIO distribution did not configure successfully])
-                  AS_IF([test "$OMPI_WANT_DIST" != "no"], [AC_MSG_ERROR([can not continue])])
                   $2])])
 ])

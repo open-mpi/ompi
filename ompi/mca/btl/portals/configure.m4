@@ -15,16 +15,11 @@
 # $HEADER$
 #
 
-#
-# quicky function to set #defines based on argument values
-#
-# ARGUMENTS:
-#  1    configure name (first argument to ARG_WITH, minus the btl-portals-)
-#  2    define name
-#  3    default value
-#  4    description (used for both ARG_WITH and DEFINE)
-AC_DEFUN([MCA_BTL_PORTALS_CONFIG_VAL],
-[
+
+# _MCA_btl_portals_config_val(config_name, define_name, 
+#                             default_val, descrtiption)
+# -----------------------------------------------------
+AC_DEFUN([MCA_btl_portals_CONFIG_VAL], [
     AC_ARG_WITH([btl-portals-$1], AC_HELP_STRING([--with-btl-portals-$1], 
                 [$4 (default: $3)]))
     AC_MSG_CHECKING([for $1 value])
@@ -43,28 +38,65 @@ AC_DEFUN([MCA_BTL_PORTALS_CONFIG_VAL],
             ;;
     esac
     AC_DEFINE_UNQUOTED([$2], [[$]$2], [$4])
-])dnl
+])
 
 
-AC_DEFUN([MCA_btl_portals_CONFIG],[
+# _MCA_btl_portals_CONFIG_VALS()
+# ------------------------------
+AC_DEFUN([MCA_btl_portals_CONFIG_VALS], [
+    # User configuration options
+    MCA_btl_portals_CONFIG_VAL([send-table-id],
+        [BTL_PORTALS_SEND_TABLE_ID], [3],
+        [Portals table id to use for send/recv ])
 
-    btl_portals_save_CPPFLAGS="$CPPFLAGS"
-    btl_portals_save_LDFLAGS="$LDFLAGS"
-    btl_portals_save_LIBS="$LIBS"
+    MCA_btl_portals_CONFIG_VAL([rdma-table-id],
+        [BTL_PORTALS_RDMA_TABLE_ID], [4],
+        [Portals table id to use for RDMA request])
 
-    # allow user a way to say where the Portals installation is
-    AC_ARG_WITH(btl-portals, 
-        AC_HELP_STRING([--with-btl-portals=DIR],
-                       [Specify the installation directory of PORTALS]))
+    MCA_btl_portals_CONFIG_VAL([debug-level],
+        [BTL_PORTALS_DEFAULT_DEBUG_LEVEL], [100],
+        [debugging level for portals btl])
 
-    AS_IF([test -n "$with_btl_portals"],
-          [AS_IF([test -d "$with_btl_portals/include"],
-                 [btl_portals_CPPFLAGS="-I$with_btl_portals/include"
-                  CPPFLAGS="$CPPFLAGS $btl_portals_CPPFLAGS"], [])
-           AS_IF([test -d "$with_btl_portals/lib"],
-                 [btl_portals_LDFLAGS="-L$with_btl_portals/lib"
-                  LDFLAGS="$LDFLAGS $btl_portals_LDFLAGS"], [])])
+    MCA_btl_portals_CONFIG_VAL([eager-limit],
+        [BTL_PORTALS_DEFAULT_EAGER_LIMIT], [16384],
+        [max size for eager sends])
 
+    MCA_btl_portals_CONFIG_VAL([min-send-size],
+        [BTL_PORTALS_DEFAULT_MIN_SEND_SIZE], [0],
+        [min size for send fragments])
+    MCA_btl_portals_CONFIG_VAL([max-send-size],
+        [BTL_PORTALS_DEFAULT_MAX_SEND_SIZE], [32768],
+        [max size for send fragments])
+
+    MCA_btl_portals_CONFIG_VAL([min-rdma-size],
+        [BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE], [0],
+        [min size for rdma fragments])
+    MCA_btl_portals_CONFIG_VAL([max-rdma-size],
+        [BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE], [2147483647],
+        [max size for rdma fragments])
+
+    MCA_btl_portals_CONFIG_VAL([max-sends-pending],
+        [BTL_PORTALS_MAX_SENDS_PENDING], [128],
+        [max number of sends pending at any time])
+    MCA_btl_portals_CONFIG_VAL([recv-queue-size],
+        [BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE], [512],
+        [size of event queue for receiving frags])
+
+    MCA_btl_portals_CONFIG_VAL([free-list-init-num],
+        [BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM], [8],
+        [starting size of free lists])
+    MCA_btl_portals_CONFIG_VAL([free-list-max-num],
+        [BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM], [1024],
+        [maximum size of free lists])
+    MCA_btl_portals_CONFIG_VAL([free-list-inc-num],
+        [BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM], [32],
+        [grow size for freelists])
+])
+
+
+# _MCA_btl_portals_CONFIG_PLATFORM()
+# ----------------------------------
+AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
     # Configure Portals for our local environment
     BTL_PORTALS_UTCP=0
     BTL_PORTALS_REDSTORM=0
@@ -120,61 +152,43 @@ AC_DEFUN([MCA_btl_portals_CONFIG],[
     AC_DEFINE_UNQUOTED([BTL_PORTALS_REDSTORM], [$BTL_PORTALS_REDSTORM],
                        [Use the Red Storm implementation or Portals])
     AM_CONDITIONAL([BTL_PORTALS_REDSTORM], [test "$BTL_PORTALS_REDSTORM" = "1"])
+])
 
+
+# MCA_btl_portals_CONFIG(action-if-can-compile, 
+#                        [action-if-cant-compile])
+# ------------------------------------------------
+AC_DEFUN([MCA_btl_portals_CONFIG],[
+    # save compiler flags so that we don't alter them for later
+    # components.
+    btl_portals_save_CPPFLAGS="$CPPFLAGS"
+    btl_portals_save_LDFLAGS="$LDFLAGS"
+    btl_portals_save_LIBS="$LIBS"
+
+    # allow user a way to say where the Portals installation is
+    AC_ARG_WITH(btl-portals, 
+        AC_HELP_STRING([--with-btl-portals=DIR],
+                       [Specify the installation directory of PORTALS]))
+
+    AS_IF([test -n "$with_btl_portals"],
+          [AS_IF([test -d "$with_btl_portals/include"],
+                 [btl_portals_CPPFLAGS="-I$with_btl_portals/include"
+                  CPPFLAGS="$CPPFLAGS $btl_portals_CPPFLAGS"], [])
+           AS_IF([test -d "$with_btl_portals/lib"],
+                 [btl_portals_LDFLAGS="-L$with_btl_portals/lib"
+                  LDFLAGS="$LDFLAGS $btl_portals_LDFLAGS"], [])])
+
+    # try to get our platform configuration
+    MCA_btl_portals_CONFIG_PLATFORM()
+
+    # check for portals
     LIBS="$LIBS $btl_portals_LIBS"
     AC_CHECK_HEADERS([portals3.h],
         [AC_MSG_CHECKING([if possible to link Portals application])
          AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <portals3.h>], 
                                          [int i; PtlInit(&i);])],
               [AC_MSG_RESULT([yes])
-               # User configuration options
-               MCA_BTL_PORTALS_CONFIG_VAL([send-table-id],
-                   [BTL_PORTALS_SEND_TABLE_ID], [3],
-                   [Portals table id to use for send/recv ])
-
-               MCA_BTL_PORTALS_CONFIG_VAL([rdma-table-id],
-                   [BTL_PORTALS_RDMA_TABLE_ID], [4],
-                   [Portals table id to use for RDMA request])
-
-               MCA_BTL_PORTALS_CONFIG_VAL([debug-level],
-                   [BTL_PORTALS_DEFAULT_DEBUG_LEVEL], [100],
-                   [debugging level for portals btl])
-
-               MCA_BTL_PORTALS_CONFIG_VAL([eager-limit],
-                   [BTL_PORTALS_DEFAULT_EAGER_LIMIT], [16384],
-                   [max size for eager sends])
-
-               MCA_BTL_PORTALS_CONFIG_VAL([min-send-size],
-                   [BTL_PORTALS_DEFAULT_MIN_SEND_SIZE], [0],
-                   [min size for send fragments])
-               MCA_BTL_PORTALS_CONFIG_VAL([max-send-size],
-                   [BTL_PORTALS_DEFAULT_MAX_SEND_SIZE], [32768],
-                   [max size for send fragments])
-
-               MCA_BTL_PORTALS_CONFIG_VAL([min-rdma-size],
-                   [BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE], [0],
-                   [min size for rdma fragments])
-               MCA_BTL_PORTALS_CONFIG_VAL([max-rdma-size],
-                   [BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE], [2147483647],
-                   [max size for rdma fragments])
-
-               MCA_BTL_PORTALS_CONFIG_VAL([max-sends-pending],
-                   [BTL_PORTALS_MAX_SENDS_PENDING], [128],
-                   [max number of sends pending at any time])
-               MCA_BTL_PORTALS_CONFIG_VAL([recv-queue-size],
-                   [BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE], [512],
-                   [size of event queue for receiving frags])
-
-               MCA_BTL_PORTALS_CONFIG_VAL([free-list-init-num],
-                   [BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM], [8],
-                   [starting size of free lists])
-               MCA_BTL_PORTALS_CONFIG_VAL([free-list-max-num],
-                   [BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM], [1024],
-                   [maximum size of free lists])
-               MCA_BTL_PORTALS_CONFIG_VAL([free-list-inc-num],
-                   [BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM], [32],
-                   [grow size for freelists])
-          
+               MCA_btl_portals_CONFIG_VALS()          
                btl_portals_WRAPPER_EXTRA_LDFLAGS="$btl_portals_LDFLAGS"
                btl_portals_WRAPPER_EXTRA_LIBS="$btl_portals_LIBS"
                $1],
@@ -182,10 +196,12 @@ AC_DEFUN([MCA_btl_portals_CONFIG],[
                $2])],
         [$2])
 
+    # substitute in the things needed to build Portals
     AC_SUBST([btl_portals_CPPFLAGS])
     AC_SUBST([btl_portals_LDFLAGS])
     AC_SUBST([btl_portals_LIBS])
 
+    # reset the flags for the next test
     CPPFLAGS="$btl_portals_save_CPPFLAGS"
     LDFLAGS="$btl_portals_save_LDFLAGS"
     LIBS="$btl_portals_save_LIBS"

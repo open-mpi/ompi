@@ -21,7 +21,7 @@ AC_DEFUN([MCA_pls_xgrid_CONFIG],[
     # For very dumb reasons involving linking, it's near impossible
     # to build the XGrid components as static libraries.  Disable if that's
     # the case.
-    AS_IF([test "$pls_xgrid_good" = "0" -a "$OMPI_WANT_DIST" = "no"], [$2],
+    AS_IF([test "$pls_xgrid_good" = "0"], [$2],
           [AS_IF([test "$compile_mode" = "dso"],
                   [ # pls_xgrid_LDFLAGS will be set by OMPI_CHECK_XGRID
                    pls_xgrid_WRAPPER_EXTRA_LDFLAGS="$pls_xgrid_LDFLAGS"
