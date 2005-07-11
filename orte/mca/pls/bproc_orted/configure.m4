@@ -15,7 +15,16 @@
 # $HEADER$
 #
 
-# Specific to this module
+AC_DEFUN([MCA_pls_bproc_orted_CONFIG],[
+    OMPI_CHECK_BPROC([pls_bproc_orted], [pls_bproc_orted_good=1], 
+                     [pls_bproc_orted_good=0])
 
-PARAM_INIT_FILE=pls_bproc_orted.c
-PARAM_CONFIG_FILES="Makefile"
+    AS_IF([test "$pls_bproc_orted_good" = "0"], [$2],
+          [pls_bproc_orted_WRAPPER_EXTRA_LDFLAGS="$pls_bproc_orted_LDFLAGS"
+           pls_bproc_orted_WRAPPER_EXTRA_LIBS="$pls_bproc_orted_LIBS"
+           $1])
+
+    AC_SUBST([pls_bproc_orted_OBJCFLAGS])
+    AC_SUBST([pls_bproc_orted_LDFLAGS])
+    AC_SUBST([pls_bproc_orted_LIBS])
+])dnl
