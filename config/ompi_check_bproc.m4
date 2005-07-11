@@ -21,13 +21,13 @@
 AC_DEFUN([OMPI_CHECK_BPROC],[
     AC_ARG_WITH([bproc],
                 [AC_HELP_STRING([--with-bproc],
-                                [Directory where the bproc software is installed])])
+                                [Directory where the BProc software is installed])])
 
     ompi_check_bproc_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_bproc_save_LDFLAGS="$LDFLAGS"
     ompi_check_bproc_save_LIBS="$LIBS"
 
-    AS_IF([test ! -z "$with_bproc"], 
+    AS_IF([test ! -z "$with_bproc" -a "$with_bproc" != "yes"], 
           [CPPFLAGS="$CPPFLAGS -I$with_bproc/include"
            LDFLAGS="$LDFLAGS -L$with_bproc/lib"])
     AC_CHECK_HEADERS([sys/bproc.h],
@@ -44,8 +44,11 @@ AC_DEFUN([OMPI_CHECK_BPROC],[
     AS_IF([test "$ompi_check_bproc_happy" = "yes"], 
           [AS_IF([test ! -z "$with_bproc"], 
                  [$1_CPPFLAGS="$$1_CPPFLAGS -I$with_bproc/include"
-                  $1_LDFLAGS="$$1_LDFLAGS -L$with_bproc/lib"
-                  $1_LIBS="$$1_LIBS -lbproc"])
+                  $1_LDFLAGS="$$1_LDFLAGS -L$with_bproc/lib"])
+           $1_LIBS="$$1_LIBS -lbproc"
            $2], 
-          [$3])
+          [AS_IF([test ! -z "$with_bproc"],
+                 [AC_MSG_ERROR([BProc support request but not found.  Perhaps
+you need to specify the location of the BProc libraries.])])
+           $3])
 ])
