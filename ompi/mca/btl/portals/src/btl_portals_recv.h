@@ -17,6 +17,8 @@
 #ifndef MCA_BTL_PORTALS_RECV_H
 #define MCA_BTL_PORTALS_RECV_H
 
+#include "btl_portals_frag.h"
+
 struct mca_btl_portals_recv_chunk_t {
     opal_list_item_t base;
 
@@ -44,20 +46,28 @@ int mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
 /**
  * Create a chunk of memory for receiving send messages.  Must call
  * activate_chunk on the returned chunk of memory before it will be
- * active with the POrtals library */
+ * active with the POrtals library 
+ *
+ * Module lock must be held before calling this function
+ */
 mca_btl_portals_recv_chunk_t* 
 mca_btl_portals_recv_chunk_init(mca_btl_portals_module_t *module);
+
 
 /**
  * Free a chunk of memory.  Will remove the match entry, then progress
  * Portals until the pending count is returned to 0.  Will then free
  * all resources associated with chunk.
+ *
+ * Module lock must be held before calling this function
  */
 int mca_btl_portals_recv_chunk_free(mca_btl_portals_recv_chunk_t *chunk);
 
-/*
+
+/**
  * activate a chunk.  Chunks that are full (have gone inactive) can be
- * re-activated with this call
+ * re-activated with this call.  There is no need to hold the lock
+ * before calling this function
  */
 static inline int
 mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
@@ -92,7 +102,10 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
     md.user_ptr = chunk;
     md.eq_handle = chunk->btl->portals_eq_handles[MCA_BTL_PORTALS_EQ_RECV];
 
+    chunk->pending = 0;
     chunk->full = false;
+    /* make sure that everyone sees the update on full value */
+    opal_atomic_mb();
 
     ret = PtlMDAttach(chunk->me_h,
                       md,
@@ -107,6 +120,25 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
                          "new receive buffer posted"));
 
     return OMPI_SUCCESS;
+}
+
+
+static inline void
+mca_btl_portals_return_chunk_part(mca_btl_portals_module_t *module,
+                                  mca_btl_portals_frag_t *frag) 
+{
+    mca_btl_portals_recv_chunk_t *chunk = frag->u.recv_frag.chunk;
+    int ret;
+
+    if (chunk->full == true) {
+        OPAL_THREAD_ADD32(&(chunk->pending), -1);
+        if (chunk->pending == 0) {
+            ret = mca_btl_portals_activate_chunk(chunk);
+            if (OMPI_SUCCESS != ret) {
+                /* BWB - now what? */
+            }
+        }
+    }    
 }
 
 #endif /* MCA_BTL_PORTALS_RECV_H */

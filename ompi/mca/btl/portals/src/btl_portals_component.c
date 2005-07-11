@@ -123,10 +123,6 @@ mca_btl_portals_component_open(void)
     mca_btl_portals_component.portals_ifname = 
         param_register_string("ifname", "eth0");
 #endif
-    portals_output_stream.lds_verbose_level = 
-        param_register_int("debug_level",
-                           BTL_PORTALS_DEFAULT_DEBUG_LEVEL);
-
     mca_btl_portals_component.portals_free_list_init_num = 
         param_register_int("free_list_init_num",
                            BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
@@ -138,24 +134,15 @@ mca_btl_portals_component_open(void)
                            BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM);
 
     /* start up debugging output */
+    portals_output_stream.lds_verbose_level = 
+        param_register_int("debug_level",
+                           BTL_PORTALS_DEFAULT_DEBUG_LEVEL);
     asprintf(&(portals_output_stream.lds_prefix), 
              "btl: portals (%5d): ", getpid());
-
     mca_btl_portals_component.portals_output = 
         opal_output_open(&portals_output_stream);
 
     /* fill default module state */
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
-
-    for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
-        mca_btl_portals_module.portals_eq_sizes[i] = 0;
-        mca_btl_portals_module.portals_eq_handles[i] = PTL_EQ_NONE;
-    }
-
-    mca_btl_portals_module.portals_ni_h = PTL_INVALID_HANDLE;
-    mca_btl_portals_module.portals_sr_dropped = 0;
-
-    /* get configured state for default module */
     mca_btl_portals_module.super.btl_eager_limit = 
         param_register_int("eager_limit",
                            BTL_PORTALS_DEFAULT_EAGER_LIMIT);
@@ -177,6 +164,36 @@ mca_btl_portals_component_open(void)
         param_register_int("latency", 0);
     mca_btl_portals_module.super.btl_bandwidth = 
         param_register_int("bandwidth", 1000);
+
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
+
+    bzero(&(mca_btl_portals_module.portals_reg),
+          sizeof(mca_btl_portals_module.portals_reg));
+
+    for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
+        mca_btl_portals_module.portals_eq_sizes[i] = 0;
+        mca_btl_portals_module.portals_eq_handles[i] = PTL_EQ_NONE;
+    }
+    /* eq handles will be created when the module is instantiated.
+       Set sizes here */
+    mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_RECV] =
+        param_register_int("eq_recv_size", BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE);
+    /* sends_pending * 3 for start, end, ack */
+    mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_SEND] = 
+        param_register_int("eq_send_max_pending", BTL_PORTALS_MAX_SENDS_PENDING) * 3;
+    mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_RDMA] =
+        param_register_int("eq_rdma_size", 512); /* BWB - FIXME - make param */
+
+    mca_btl_portals_module.portals_recv_reject_me_h = PTL_INVALID_HANDLE;
+
+    mca_btl_portals_module.portals_recv_mds_num = 
+        param_register_int("recv_md_num", 3); /* BWB - FIXME - make param */
+    mca_btl_portals_module.portals_recv_mds_size =
+        param_register_int("recv_md_size", 524288); /* BWB - FIXME - make param */
+
+    mca_btl_portals_module.portals_ni_h = PTL_INVALID_HANDLE;
+    mca_btl_portals_module.portals_sr_dropped = 0;
+    mca_btl_portals_module.portals_outstanding_sends = 0;
 
     return OMPI_SUCCESS;
 }
@@ -200,6 +217,7 @@ mca_btl_portals_component_close(void)
         free(portals_output_stream.lds_prefix);
     }
 
+    /* close debugging stream */
     opal_output_close(mca_btl_portals_component.portals_output);
     mca_btl_portals_component.portals_output = -1;
 
@@ -217,15 +235,15 @@ mca_btl_portals_component_init(int *num_btls,
 
     *num_btls = 0;
 
-    if (enable_progress_threads) {
+    if (enable_progress_threads || enable_mpi_threads) {
         opal_output_verbose(20, mca_btl_portals_component.portals_output,
-                            "disabled because progress threads enabled");
+                            "disabled because threads enabled");
         return NULL;
     }
 
     /* initialize portals btl.  note that this is in the compat code because
        it's fairly non-portable between implementations */
-    if (OMPI_SUCCESS != mca_btl_portals_init(&mca_btl_portals_component)) {
+    if (OMPI_SUCCESS != mca_btl_portals_init_compat(&mca_btl_portals_component)) {
         opal_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because compatibility init failed");
         return NULL;
@@ -275,6 +293,15 @@ mca_btl_portals_component_init(int *num_btls,
                             mca_btl_portals_component.portals_free_list_max_num,
                             mca_btl_portals_component.portals_free_list_inc_num,
                             NULL);
+
+        /* endpoint list */
+        OBJ_CONSTRUCT(&(ptl_btl->portals_endpoint_list), opal_list_t);
+
+        /* receive chunk list */
+        OBJ_CONSTRUCT(&(ptl_btl->portals_recv_chunks), opal_list_t);
+
+        /* lock */
+        OBJ_CONSTRUCT(&(ptl_btl->portals_lock), opal_mutex_t);
     }
     *num_btls = mca_btl_portals_component.portals_num_modules;
 
@@ -304,7 +331,8 @@ mca_btl_portals_component_progress(void)
             PTL_EQ_NONE) continue; /* they are all initialized at once */
 
 #if OMPI_ENABLE_DEBUG
-        /* BWB - this is going to kill performance */
+        /* check for dropped packets.  In theory, our protocol covers
+           this, but it can't hurt to check while we're debugging */
         PtlNIStatus(module->portals_ni_h,
                     PTL_SR_DROP_COUNT,
                     &numdropped);
@@ -318,7 +346,7 @@ mca_btl_portals_component_progress(void)
 
         ret = PtlEQPoll(module->portals_eq_handles,
                         MCA_BTL_PORTALS_EQ_SIZE, /* number of eq handles */
-                        10,
+                        10, /* poll time */
                         &ev,
                         &which);
         if (PTL_EQ_EMPTY == ret) {
@@ -333,17 +361,6 @@ mca_btl_portals_component_progress(void)
             opal_output_verbose(10, mca_btl_portals_component.portals_output,
                                 "*** Event queue entries were dropped");
         }
-
-#if BTL_PORTALS_HAVE_EVENT_UNLINK && OMPI_ENABLE_DEBUG
-        /* not everyone has UNLINK.  Use it only to print the event,
-           so we can make sure we properly re-initialize the ones that
-           need to be re-initialized */
-        if (PTL_EVENT_UNLINK == ev.type) {
-            OPAL_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,
-                                 "unlink event occurred"));
-            continue;
-        }
-#endif
 
         switch (which) {
         case MCA_BTL_PORTALS_EQ_RECV:

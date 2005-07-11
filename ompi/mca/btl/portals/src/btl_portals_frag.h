@@ -22,6 +22,22 @@ extern "C" {
 #endif
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t);
 
+typedef enum {
+    MCA_BTL_PORTALS_FRAG_SEND,
+    MCA_BTL_PORTALS_FRAG_RECV
+} mca_btl_portals_frag_type_t;
+
+struct mca_btl_portals_send_frag_t {
+    struct mca_btl_portals_module_t *btl;
+    struct mca_btl_base_endpoint_t *endpoint; 
+    mca_btl_base_header_t hdr;
+};
+typedef struct mca_btl_portals_send_frag_t mca_btl_portals_send_frag_t;
+
+struct mca_btl_portals_recv_frag_t {
+    struct mca_btl_portals_recv_chunk_t *chunk;
+};
+typedef struct mca_btl_portals_recv_frag_t mca_btl_portals_recv_frag_t;
 
 
 /**
@@ -30,10 +46,13 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t);
 struct mca_btl_portals_frag_t {
     mca_btl_base_descriptor_t base; 
     mca_btl_base_segment_t segment; 
-    struct mca_btl_portals_module_t *btl;
-    struct mca_btl_base_endpoint_t *endpoint; 
-    mca_btl_base_header_t hdr;
+    mca_btl_portals_frag_type_t type;
     size_t size; 
+
+    union {
+        mca_btl_portals_send_frag_t send_frag;
+        mca_btl_portals_recv_frag_t recv_frag;
+    } u;
 }; 
 typedef struct mca_btl_portals_frag_t mca_btl_portals_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t); 
