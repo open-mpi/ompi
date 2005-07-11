@@ -33,7 +33,7 @@ AC_DEFUN([MCA_btl_portals_CONFIG_VAL], [
             AC_MSG_ERROR([--without-btl-portals-$1 is invalid argument])
             ;;
         *)
-            $2="$with_m4_bpatsubst([btl-portals-$1], -, _)"
+            $2="[$with_]m4_bpatsubst([btl-portals-$1], -, _)"
             AC_MSG_RESULT([[$]$2])
             ;;
     esac

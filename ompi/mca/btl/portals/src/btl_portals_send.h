@@ -30,7 +30,6 @@ mca_btl_portals_send_frag(mca_btl_portals_frag_t *frag)
     ptl_handle_md_t md_h;
     int ret;
 
-    
     /* setup the send */
     md.start = frag->segment.seg_addr.pval;
     md.length = frag->segment.seg_len;
@@ -38,10 +37,10 @@ mca_btl_portals_send_frag(mca_btl_portals_frag_t *frag)
     md.max_size = 0;
     md.options = 0; /* BWB - can we optimize? */
     md.user_ptr = frag; /* keep a pointer to ourselves */
-    md.eq_handle = frag->btl->portals_eq_handles[MCA_BTL_PORTALS_EQ_SEND];
+    md.eq_handle = frag->u.send_frag.btl->portals_eq_handles[MCA_BTL_PORTALS_EQ_SEND];
 
     /* make a free-floater */
-    ret = PtlMDBind(frag->btl->portals_ni_h,
+    ret = PtlMDBind(frag->u.send_frag.btl->portals_ni_h,
                     md,
                     PTL_UNLINK,
                     &md_h);
@@ -53,12 +52,12 @@ mca_btl_portals_send_frag(mca_btl_portals_frag_t *frag)
 
     ret = PtlPut(md_h,
                  PTL_ACK_REQ,
-                 frag->endpoint->endpoint_ptl_id,
+                 frag->u.send_frag.endpoint->endpoint_ptl_id,
                  BTL_PORTALS_SEND_TABLE_ID,
-                 0, /* ac_index */
-                 0, /* match bits */
+                 0, /* ac_index - not used*/
+                 frag->segment.seg_key.key64, /* match bits */
                  0, /* remote offset - not used */
-                 frag->hdr.tag); /* hdr_data - tag */
+                 frag->u.send_frag.hdr.tag); /* hdr_data - tag */
     if (ret != PTL_OK) {
         opal_output(mca_btl_portals_component.portals_output,
                     "PtlPut failed with error %d", ret);

@@ -40,7 +40,7 @@ FILE* utcp_api_out;
 FILE* utcp_lib_out;
 
 int
-mca_btl_portals_init(mca_btl_portals_component_t *comp)
+mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
 {
     ptl_process_id_t info;
     int ret;

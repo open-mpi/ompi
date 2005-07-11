@@ -99,11 +99,19 @@ struct mca_btl_portals_module_t {
     int portals_recv_mds_num;
     /* size of each md for first frags */
     int portals_recv_mds_size;
+    /* list of recv chunks */
+    opal_list_t portals_recv_chunks;
 
     /* size for event queue */
     int portals_eq_sizes[MCA_BTL_PORTALS_EQ_SIZE];
     /* frag receive event queue */
     ptl_handle_eq_t portals_eq_handles[MCA_BTL_PORTALS_EQ_SIZE];
+
+    /* "reject" entry for recv match list */
+    ptl_handle_me_t portals_recv_reject_me_h;
+
+    /* number outstanding sends */
+    volatile int32_t portals_outstanding_sends;
 
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;
@@ -137,7 +145,7 @@ int mca_btl_portals_component_progress(void);
  * Not part of the BTL interface.  Need to be implemented for every
  * version of Portals
  */
-int mca_btl_portals_init(mca_btl_portals_component_t *comp);
+int mca_btl_portals_init_compat(mca_btl_portals_component_t *comp);
 
 /* 4th argument is a ptl_peers array, as that's what we'll get back
    from many of the access functions... */
