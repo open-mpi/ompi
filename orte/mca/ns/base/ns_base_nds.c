@@ -93,7 +93,12 @@ int orte_ns_base_set_my_name(void)
     
     orte_process_info.num_procs = 1;
     orte_process_info.vpid_start = vpid;
-    orte_process_info.singleton = true;
+    /* only set the singleton flag is we are NOT infrastructure */
+    id = mca_base_param_register_int("orte", "base", "infrastructure", NULL, (int)false);
+    mca_base_param_lookup_int(id, &flag);
+    if (!flag) {
+        orte_process_info.singleton = true;
+    }
     
     return ORTE_SUCCESS;
 }
