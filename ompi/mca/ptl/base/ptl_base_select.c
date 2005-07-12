@@ -50,14 +50,15 @@ int mca_ptl_base_select(bool enable_progress_threads,
        functions. */
 
     while( NULL != (item = opal_list_remove_first(&mca_ptl_base_components_opened)) ) {
-        bool keep_me = false;
+        bool keep_me = true;
 
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_ptl_base_component_t *) cli->cli_component;
 
         /* if there is an include list - item must be in the list to be included */
         if ( NULL != include ) {
-            char** argv = include; 
+            char** argv = include;
+            keep_me = false;  /* all PTLs not in the include list cannot be selected */
             while(argv && *argv) {
                 if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
                     keep_me = true;
@@ -68,7 +69,7 @@ int mca_ptl_base_select(bool enable_progress_threads,
             /* otherwise - check the exclude list to see if this item has been specifically excluded */
         } else if ( NULL != exclude ) {
             char** argv = exclude;
-            keep_me = true;
+            keep_me = true;  /* all PTL's not in except list should be keeped */
             while(argv && *argv) {
                 if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
                     keep_me = false;
