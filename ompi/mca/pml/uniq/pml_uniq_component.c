@@ -77,7 +77,7 @@ int mca_pml_uniq_component_open(void)
 #ifdef WIN32
      WSADATA win_sock_data;
      if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-         opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: %d\n", WSAGetLastError());
+         opal_output (0, "failed to initialise windows sockets: %d\n", WSAGetLastError());
          return OMPI_ERROR;
       }
 #endif
@@ -103,15 +103,20 @@ int mca_pml_uniq_component_open(void)
     mca_pml_uniq.uniq_poll_iterations =
         mca_pml_uniq_param_register_int("poll_iterations", 100000);
 
-    /* attempt to open ptls */
-    return mca_ptl_base_open();
+    mca_pml_uniq.uniq_priority = 
+        mca_pml_uniq_param_register_int("priority", 50);
+    return OMPI_SUCCESS;
 }
 
 
 int mca_pml_uniq_component_close(void)
 {
     int rc;
-    if(OMPI_SUCCESS != (rc = mca_ptl_base_close()))
+
+    if( NULL == mca_pml_uniq.uniq_ptl_components )  /* I was not enabled */
+        return OMPI_SUCCESS;
+
+    if( OMPI_SUCCESS != (rc = mca_ptl_base_close()) )
         return rc;
                                                                                                                    
 #ifdef WIN32
@@ -129,12 +134,17 @@ int mca_pml_uniq_component_close(void)
 
     if(NULL != mca_pml_uniq.uniq_ptl_components) {
         free(mca_pml_uniq.uniq_ptl_components);
+        mca_pml_uniq.uniq_ptl_components = NULL;
     }
+    mca_pml_uniq.uniq_num_ptl_components = 0;
     if(NULL != mca_pml_uniq.uniq_ptl_modules) {
         free(mca_pml_uniq.uniq_ptl_modules);
+        mca_pml_uniq.uniq_ptl_modules = NULL;
     }
+    mca_pml_uniq.uniq_num_ptl_modules = 0;
     if(NULL != mca_pml_uniq.uniq_ptl_progress) {
         free(mca_pml_uniq.uniq_ptl_progress);
+        mca_pml_uniq.uniq_ptl_progress = NULL;
     }
     OBJ_DESTRUCT(&mca_pml_uniq.uniq_send_pending);
     OBJ_DESTRUCT(&mca_pml_uniq.uniq_send_requests);
@@ -149,38 +159,19 @@ mca_pml_base_module_t* mca_pml_uniq_component_init(int* priority,
                                                   bool enable_progress_threads,
                                                   bool enable_mpi_threads)
 {
-    uint32_t proc_arch;
     int rc;
-    *priority = 0;
-
-    /* recv requests */
-    ompi_free_list_init(
-        &mca_pml_uniq.uniq_recv_requests,
-        sizeof(mca_pml_uniq_recv_request_t),
-        OBJ_CLASS(mca_pml_uniq_recv_request_t), 
-        mca_pml_uniq.uniq_free_list_num,
-        mca_pml_uniq.uniq_free_list_max,
-        mca_pml_uniq.uniq_free_list_inc,
-        NULL);
+    *priority = mca_pml_uniq.uniq_priority;
 
     /* buffered send */
-    if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
+    if( OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads) ) {
         opal_output(0, "mca_pml_uniq_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
 
-    /* post this processes datatype */
-    proc_arch = ompi_proc_local()->proc_arch;
-    proc_arch = htonl(proc_arch);
-    rc = mca_base_modex_send(&mca_pml_uniq_component.pmlm_version, &proc_arch, sizeof(proc_arch));
-    if(rc != OMPI_SUCCESS)
+    rc = mca_ptl_base_select( enable_progress_threads, enable_mpi_threads );
+    if( rc != OMPI_SUCCESS )
         return NULL;
-    
-    rc = mca_ptl_base_select(enable_progress_threads,enable_mpi_threads);
-    if(rc != OMPI_SUCCESS)
-        return NULL;
-                                                                                                                   
-    mca_pml_uniq_add_ptls();
+
     return &mca_pml_uniq.super;
 }
 

@@ -35,114 +35,110 @@
 int mca_ptl_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
-  int i, num_ptls;
-  opal_list_item_t *item;
-  mca_base_component_list_item_t *cli;
-  mca_ptl_base_component_t *component;
-  mca_ptl_base_module_t **modules;
-  mca_ptl_base_selected_module_t *sm;
+    int i, num_ptls;
+    opal_list_item_t *item;
+    opal_list_t* useless = OBJ_NEW(opal_list_t);
+    mca_base_component_list_item_t *cli;
+    mca_ptl_base_component_t *component;
+    mca_ptl_base_module_t **modules;
+    mca_ptl_base_selected_module_t *sm;
 
-  char** include = opal_argv_split(mca_ptl_base_include, ',');
-  char** exclude = opal_argv_split(mca_ptl_base_exclude, ',');
+    char** include = opal_argv_split(mca_ptl_base_include, ',');
+    char** exclude = opal_argv_split(mca_ptl_base_exclude, ',');
 
-  /* Traverse the list of opened modules; call their init
-     functions. */
+    /* Traverse the list of opened modules; call their init
+       functions. */
 
-  item  = opal_list_get_first(&mca_ptl_base_components_opened);
-  while(item != opal_list_get_end(&mca_ptl_base_components_opened)) {
-    opal_list_item_t *next = opal_list_get_next(item);
-    cli = (mca_base_component_list_item_t *) item;
+    while( NULL != (item = opal_list_remove_first(&mca_ptl_base_components_opened)) ) {
+        bool keep_me = false;
 
-    component = (mca_ptl_base_component_t *) cli->cli_component;
+        cli = (mca_base_component_list_item_t *) item;
+        component = (mca_ptl_base_component_t *) cli->cli_component;
 
-    /* if there is an include list - item must be in the list to be included */
-    if ( NULL != include ) {
-        char** argv = include; 
-        bool found = false;
-        while(argv && *argv) {
-            if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
-                found = true;
-                break;
+        /* if there is an include list - item must be in the list to be included */
+        if ( NULL != include ) {
+            char** argv = include; 
+            while(argv && *argv) {
+                if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
+                    keep_me = true;
+                    break;
+                }
+                argv++;
             }
-            argv++;
+            /* otherwise - check the exclude list to see if this item has been specifically excluded */
+        } else if ( NULL != exclude ) {
+            char** argv = exclude;
+            keep_me = true;
+            while(argv && *argv) {
+                if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
+                    keep_me = false;
+                    break;
+                }
+                argv++;
+            }
         }
-        if(found == false) {
-            item = next;
+        if( keep_me == false) {
+            opal_list_append( useless, item );
             continue;
         }
 
-    /* otherwise - check the exclude list to see if this item has been specifically excluded */
-    } else if ( NULL != exclude ) {
-        char** argv = exclude; 
-        bool found = false;
-        while(argv && *argv) {
-            if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
-                found = true;
-                break;
-            }
-            argv++;
-        }
-        if(found == true) {
-            item = next;
-            continue;
-        }
-    }
-
-    opal_output_verbose(10, mca_ptl_base_output, 
-                       "select: initializing %s component %s",
-                       component->ptlm_version.mca_type_name,
-                       component->ptlm_version.mca_component_name);
-    if (NULL == component->ptlm_init) {
-      opal_output_verbose(10, mca_ptl_base_output,
-                         "select: no init function; ignoring component");
-    } else {
-      modules = component->ptlm_init(&num_ptls, enable_progress_threads,
-                                     enable_mpi_threads);
-
-      /* If the component didn't initialize, remove it from the opened
-         list and remove it from the component repository */
-
-      if (NULL == modules) {
-        opal_output_verbose(10, mca_ptl_base_output,
-                           "select: init returned failure");
-        opal_output_verbose(10, mca_ptl_base_output,
-                            "select: module %s unloaded",
+        opal_output_verbose(10, mca_ptl_base_output, 
+                            "select: initializing %s component %s",
+                            component->ptlm_version.mca_type_name,
                             component->ptlm_version.mca_component_name);
+        if (NULL == component->ptlm_init) {
+            opal_output_verbose(10, mca_ptl_base_output,
+                                "select: no init function; ignoring component");
+            opal_list_append( useless, item );
+            continue;
+        } else {
+            modules = component->ptlm_init(&num_ptls, enable_progress_threads,
+                                           enable_mpi_threads);
 
-        mca_base_component_repository_release((mca_base_component_t *) component);
-        opal_list_remove_item(&mca_ptl_base_components_opened, item);
-      } 
+            /* If the component didn't initialize, remove it from the opened
+               list and remove it from the component repository */
 
-      /* Otherwise, it initialized properly.  Save it. */
+            if (NULL == modules) {
+                opal_output_verbose( 10, mca_ptl_base_output,
+                                     "select: %s PTL init returned failure",
+                                     component->ptlm_version.mca_component_name);
+                opal_list_append( useless, item );
+                continue;
+            } 
 
-      else {
-        opal_output_verbose(10, mca_ptl_base_output,
-                           "select: init returned success");
+            /* Otherwise, it initialized properly.  Save it. */
 
-        for (i = 0; i < num_ptls; ++i) {
-          sm = malloc(sizeof(mca_ptl_base_selected_module_t));
-          if (NULL == sm) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-          }
-          OBJ_CONSTRUCT(sm, opal_list_item_t);
-          sm->pbsm_component = component;
-          sm->pbsm_module = modules[i];
-          opal_list_append(&mca_ptl_base_modules_initialized,
-                          (opal_list_item_t*) sm);
+            else {
+                opal_output_verbose(10, mca_ptl_base_output,
+                                    "select: init returned success");
+                opal_list_append( &mca_ptl_base_components_initialized, item );
+                for (i = 0; i < num_ptls; ++i) {
+                    sm = malloc(sizeof(mca_ptl_base_selected_module_t));
+                    if (NULL == sm) {
+                        return OMPI_ERR_OUT_OF_RESOURCE;
+                    }
+                    OBJ_CONSTRUCT(sm, opal_list_item_t);
+                    sm->pbsm_component = component;
+                    sm->pbsm_module = modules[i];
+                    opal_list_append(&mca_ptl_base_modules_initialized,
+                                     (opal_list_item_t*) sm);
+                }
+                free(modules);
+            }
         }
-        free(modules);
-      }
     }
-    item = next;
-  }
 
-  /* Finished querying all components.  Check for the bozo case. */
+    /* All useless components have to be cleanly removed */
+    mca_base_components_close( mca_ptl_base_output, useless, NULL );
+    OBJ_RELEASE( useless );
 
-  if (0 == opal_list_get_size(&mca_ptl_base_modules_initialized)) {
-    /* JMS Replace with show_help */
-    orte_abort(1, "No ptl components available.  This shouldn't happen.");
-  }
+    /* Finished querying all components.  Check for the bozo case. */
 
-  /* All done */
-  return OMPI_SUCCESS;
+    if (0 == opal_list_get_size(&mca_ptl_base_modules_initialized)) {
+        /* JMS Replace with show_help */
+        orte_abort(1, "No ptl components available.  This shouldn't happen.");
+    }
+
+    /* All done */
+    return OMPI_SUCCESS;
 }

@@ -91,12 +91,13 @@ static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
 }
 
 
-int mca_pml_uniq_add_ptls( void )
+static int mca_pml_uniq_add_ptls( void )
 {
     /* build an array of ptls and ptl modules */
     mca_ptl_base_selected_module_t* selected_ptl;
     size_t num_ptls = opal_list_get_size(&mca_ptl_base_modules_initialized);
     size_t cache_bytes = 0;
+
     mca_pml_uniq.uniq_num_ptl_modules = 0;
     mca_pml_uniq.uniq_num_ptl_progress = 0;
     mca_pml_uniq.uniq_num_ptl_components = 0;
@@ -118,12 +119,12 @@ int mca_pml_uniq_add_ptls( void )
         size_t i;
 
         mca_pml_uniq.uniq_ptl_modules[mca_pml_uniq.uniq_num_ptl_modules++] = ptl;
-        for(i=0; i<mca_pml_uniq.uniq_num_ptl_components; i++) {
+        for( i = 0; i < mca_pml_uniq.uniq_num_ptl_components; i++ ) {
             if(mca_pml_uniq.uniq_ptl_components[i] == ptl->ptl_component) {
                 break;
             }
         }
-        if(i == mca_pml_uniq.uniq_num_ptl_components) {
+        if( i == mca_pml_uniq.uniq_num_ptl_components ) {
             mca_pml_uniq.uniq_ptl_components[mca_pml_uniq.uniq_num_ptl_components++] = ptl->ptl_component;
         }
 
@@ -141,20 +142,18 @@ int mca_pml_uniq_add_ptls( void )
         ptl->ptl_base = NULL;
 
         /* find maximum required size for cache */
-        if(ptl->ptl_cache_bytes > cache_bytes) {
+        if(ptl->ptl_cache_bytes > cache_bytes)
             cache_bytes = ptl->ptl_cache_bytes;
-        }
     }
 
     /* setup send fragments based on largest required send request */
-    ompi_free_list_init(
-                        &mca_pml_uniq.uniq_send_requests,
-                        sizeof(mca_pml_uniq_send_request_t) + cache_bytes,
-                        OBJ_CLASS(mca_pml_uniq_send_request_t),
-                        mca_pml_uniq.uniq_free_list_num,
-                        mca_pml_uniq.uniq_free_list_max,
-                        mca_pml_uniq.uniq_free_list_inc,
-                        NULL);
+    ompi_free_list_init( &mca_pml_uniq.uniq_send_requests,
+                         sizeof(mca_pml_uniq_send_request_t) + cache_bytes,
+                         OBJ_CLASS(mca_pml_uniq_send_request_t),
+                         mca_pml_uniq.uniq_free_list_num,
+                         mca_pml_uniq.uniq_free_list_max,
+                         mca_pml_uniq.uniq_free_list_inc,
+                         NULL );
 
     /* sort ptl list by exclusivity */
     qsort(mca_pml_uniq.uniq_ptl_modules, mca_pml_uniq.uniq_num_ptl_modules, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
@@ -162,13 +161,41 @@ int mca_pml_uniq_add_ptls( void )
 }
 
 /*
- * Pass control information through to all PTL modules.
+ * Called by the base PML in order to notify the PMLs about their selected status. After the init pass,
+ * the base module will choose one PML (depending on informations provided by the init function) and then
+ * it will call the pml_enable function with true (for the selected one) and with false for all the
+ * others. The selected one can then pass control information through to all PTL modules.
  */
 
 int mca_pml_uniq_enable( bool enable )
 {
     size_t i;
-    int value = enable;
+    int value = enable, rc;
+    uint32_t proc_arch;
+
+    /* If I'm not selected then prepare for close */
+    if( false == enable ) return OMPI_SUCCESS;
+
+    /* recv requests */
+    ompi_free_list_init( &mca_pml_uniq.uniq_recv_requests,
+                         sizeof(mca_pml_uniq_recv_request_t),
+                         OBJ_CLASS(mca_pml_uniq_recv_request_t), 
+                         mca_pml_uniq.uniq_free_list_num,
+                         mca_pml_uniq.uniq_free_list_max,
+                         mca_pml_uniq.uniq_free_list_inc,
+                         NULL );
+
+    /* I get selected. Publish my informations */
+    proc_arch = ompi_proc_local()->proc_arch;
+    proc_arch = htonl(proc_arch);
+    rc = mca_base_modex_send(&mca_pml_uniq_component.pmlm_version, &proc_arch, sizeof(proc_arch));
+    if( rc != OMPI_SUCCESS )
+        return rc;
+
+
+    /* Grab all the PTLs and prepare them */
+    mca_pml_uniq_add_ptls();
+
     for( i = 0; i < mca_pml_uniq.uniq_num_ptl_components; i++ ) {
         if(NULL != mca_pml_uniq.uniq_ptl_components[i]->ptlm_control) {
             int rc = mca_pml_uniq.uniq_ptl_components[i]->ptlm_control(MCA_PTL_ENABLE,&value,sizeof(value));

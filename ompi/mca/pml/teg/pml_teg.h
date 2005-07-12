@@ -113,8 +113,6 @@ extern int mca_pml_teg_del_procs(
     size_t nprocs
 );
 
-extern int mca_pml_teg_add_ptls(void);
-
 extern int mca_pml_teg_enable(
     bool enable
 );
