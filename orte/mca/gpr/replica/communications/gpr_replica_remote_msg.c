@@ -66,7 +66,6 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
             return rc;
         }
     }
-    OBJ_RELEASE(message);
     
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
