@@ -27,18 +27,21 @@
 
 int orte_abort(int status, char *fmt, ...)
 {
-  va_list arglist;
+    va_list arglist;
 
-  /* If there was a message, output it */
+    /* If there was a message, output it */
 
-  va_start(arglist, fmt);
-  if (NULL != fmt) {
-    opal_output(0, fmt);
-  }
-  va_end(arglist);
+    va_start(arglist, fmt);
+    if( NULL != fmt ) {
+        char* buffer = NULL;
+        vasprintf( &buffer, fmt, arglist );
+        opal_output( 0, buffer );
+        free( buffer );
+    }
+    va_end(arglist);
 
-  /* Shut down and exit */
+    /* Shut down and exit */
 
-  orte_finalize();
-  exit(status);
+    orte_finalize();
+    exit(status);
 }
