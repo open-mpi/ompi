@@ -17,18 +17,12 @@
 #ifndef MCA_BTL_IB_ERROR_H
 #define MCA_BTL_IB_ERROR_H
 
-#include <vapi.h>
-#include <mtl_common.h>
-#include <vapi_common.h>
+#include <infiniband/verbs.h>
 
 /* 
  * 
  * 
  */ 
-#define MCA_BTL_IB_VAPI_ERROR(vapi_ret, func_name) {                  \
-    opal_output(0,"[%s:%d] ", __FILE__, __LINE__);                  \
-    opal_output(0,"%s : %s",func_name,VAPI_strerror(vapi_ret));     \
-}
 
 /* Debug Print */
 #if 0

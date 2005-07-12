@@ -17,8 +17,8 @@
 #include "ompi_config.h"
 #include <string.h>
 #include "opal/util/output.h"
-#include "mca/mpool/mvapi/mpool_openib.h"
-
+#include "mca/mpool/openib/mpool_openib.h"
+#include <infiniband/verbs.h> 
 
 /* 
  *  Initializes the mpool module.
@@ -54,51 +54,30 @@ void* mca_mpool_openib_alloc(
  * register memory 
  */ 
 int mca_mpool_openib_register(mca_mpool_base_module_t* mpool, 
-                            void *addr, 
-                            size_t size, 
-                            mca_mpool_base_registration_t** registration){
-    
-    
+                              void *addr, 
+                              size_t size, 
+                              mca_mpool_base_registration_t** registration){
     mca_mpool_openib_module_t * mpool_module = (mca_mpool_openib_module_t*) mpool; 
     mca_mpool_openib_registration_t * vapi_reg; 
-    VAPI_mrw_t mr_in, mr_out;
-    
-    VAPI_ret_t ret; 
-    
-    memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
-    memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
-    
+        
     *registration = (mca_mpool_base_registration_t*) OBJ_NEW(mca_mpool_openib_registration_t);    /* (void*) malloc(sizeof(mca_mpool_base_registration_t));  */
     vapi_reg = (mca_mpool_openib_registration_t*) *registration; 
     vapi_reg->base_reg.mpool = mpool;
+        
     
+    vapi_reg->mr = ibv_reg_mr(
+                              mpool_module->resources->ib_pd, 
+                              addr, 
+                              size, 
+                              IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE
+                              ); 
+   
     
-    vapi_reg->hndl = VAPI_INVAL_HNDL; 
-    
-    
-    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
-    mr_in.l_key = 0;
-    mr_in.r_key = 0;
-    mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
-    mr_in.size = size;
-    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
-    mr_in.type = VAPI_MR;
-    
-
-    ret = VAPI_register_mr(
-                           mpool_module->hca_pd.hca, 
-                           &mr_in, 
-                           &vapi_reg->hndl, 
-                           &mr_out
-                           ); 
-    
-    if(VAPI_OK != ret){ 
-        opal_output(0, "error pinning vapi memory\n"); 
+    if(NULL == vapi_reg->mr){ 
+        opal_output(0, "%s: error registering openib memory\n", __func__); 
         return OMPI_ERROR; 
     }
     
-    vapi_reg->l_key = mr_out.l_key; 
-    vapi_reg->r_key = mr_out.r_key; 
     vapi_reg->base_reg.base = addr; 
     vapi_reg->base_reg.bound = (void*) ((char*) addr + size - 1); 
     
