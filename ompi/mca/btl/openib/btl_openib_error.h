@@ -26,7 +26,7 @@
 
 /* Debug Print */
 #if 0
-#define DEBUG_OUT(fmt, args...) {                                     \
+#define DEBUG_OUT(fmt, args...) {                                   \
     opal_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
         ##args);                                                    \
 }

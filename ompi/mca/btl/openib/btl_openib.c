@@ -219,7 +219,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 {
     mca_btl_openib_module_t* openib_btl; 
     mca_btl_openib_frag_t* frag; 
-    mca_mpool_openib_registration_t * vapi_reg; 
+    mca_mpool_openib_registration_t * openib_reg; 
     struct iovec iov; 
     int32_t iov_count = 1; 
     size_t max_data = *size; 
@@ -228,15 +228,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     
     
     openib_btl = (mca_btl_openib_module_t*) btl; 
-    vapi_reg = (mca_mpool_openib_registration_t*) registration; 
+    openib_reg = (mca_mpool_openib_registration_t*) registration; 
 
     /** if the data fits in the eager limit and we aren't told to pinn then we 
         simply pack, if the data fits in the eager limit and the data is non contiguous 
         then we pack **/ 
 
     
-    if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        bool is_leave_pinned = vapi_reg->is_leave_pinned; 
+    if(NULL != openib_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
+        bool is_leave_pinned = openib_reg->is_leave_pinned; 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -253,38 +253,38 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base; 
         
         size_t reg_len; 
-        reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
+        reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
         if(frag->segment.seg_len > reg_len) { 
-            size_t new_len = vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1 
+            size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
                 + frag->segment.seg_len - reg_len; 
-            void * base_addr = vapi_reg->base_reg.base; 
+            void * base_addr = openib_reg->base_reg.base; 
             
-            rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
+            rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
                 opal_output(0, "%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             } 
 
             if(is_leave_pinned) { 
-                if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)){ 
+                if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)){ 
                     opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                     return NULL; 
                 }
             } 
-            OBJ_RELEASE(vapi_reg); 
+            OBJ_RELEASE(openib_reg); 
             
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool, 
                                             base_addr, 
                                             new_len, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg);
+                                            (mca_mpool_base_registration_t**) &openib_reg);
             
             
             
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base, 
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
+            rc = mca_mpool_base_insert(openib_reg->base_reg.base, 
+                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
                                        openib_btl->ib_pool, 
                                        (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*) vapi_reg); 
+                                       (mca_mpool_base_registration_t*) openib_reg); 
             
             
             if(rc != OMPI_SUCCESS) { 
@@ -292,34 +292,34 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                 return NULL; 
             } 
 
-            OBJ_RETAIN(vapi_reg); 
+            OBJ_RETAIN(openib_reg); 
             if(is_leave_pinned) {
-                vapi_reg->is_leave_pinned = is_leave_pinned; 
-                opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
+                openib_reg->is_leave_pinned = is_leave_pinned; 
+                opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             } 
         }   
         else if(is_leave_pinned) { 
-            if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
+            if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
                 opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
+            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
         }
         
-        frag->mem_hndl = vapi_reg->hndl; 
-        frag->sg_entry.len = max_data; 
-        frag->sg_entry.lkey = vapi_reg->l_key; 
-        frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
+        frag->mr = openib_reg->mr; 
+        frag->sg_entry.length = max_data; 
+        frag->sg_entry.lkey = frag->mr->lkey; 
+        frag->sg_entry.addr = (uintptr_t) iov.iov_base; 
         
-        frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->l_key; 
+        frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
         
         frag->base.des_src = &frag->segment;
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0; 
-        frag->vapi_reg = vapi_reg; 
-        OBJ_RETAIN(vapi_reg); 
+        frag->openib_reg= openib_reg; 
+        OBJ_RETAIN(openib_reg); 
 
         return &frag->base;
         
@@ -369,42 +369,42 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
                                             iov.iov_base, 
                                             max_data, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg); 
+                                            (mca_mpool_base_registration_t**) &openib_reg); 
             
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base, 
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
+            rc = mca_mpool_base_insert(openib_reg->base_reg.base, 
+                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
                                        openib_btl->ib_pool, 
                                        (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*) vapi_reg); 
+                                       (mca_mpool_base_registration_t*) openib_reg); 
             if(rc != OMPI_SUCCESS) 
                 return NULL; 
-            OBJ_RETAIN(vapi_reg); 
+            OBJ_RETAIN(openib_reg); 
             
-            vapi_reg->is_leave_pinned = true; 
+            openib_reg->is_leave_pinned = true; 
                     
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
+            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             
         } else { 
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
                                             iov.iov_base, 
                                             max_data, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg); 
+                                            (mca_mpool_base_registration_t**) &openib_reg); 
             
-            vapi_reg->is_leave_pinned = false; 
+            openib_reg->is_leave_pinned = false; 
         } 
-        frag->mem_hndl = vapi_reg->hndl; 
-        frag->sg_entry.len = max_data; 
-        frag->sg_entry.lkey = vapi_reg->l_key; 
-        frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
+        frag->mr = openib_reg->mr; 
+        frag->sg_entry.length = max_data; 
+        frag->sg_entry.lkey = openib_reg->l_key; 
+        frag->sg_entry.addr = (uintptr_t) iov.iov_base; 
         
-        frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->l_key; 
+        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->l_key; 
             
         frag->base.des_src = &frag->segment;
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
-        frag->vapi_reg = vapi_reg; 
-        OBJ_RETAIN(vapi_reg); 
+        frag->openib_reg = openib_reg; 
+        OBJ_RETAIN(openib_reg); 
         return &frag->base;
 
     } else if (max_data+reserve <=  btl->btl_eager_limit) { 
@@ -487,12 +487,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 {
     mca_btl_openib_module_t* openib_btl; 
     mca_btl_openib_frag_t* frag; 
-    mca_mpool_openib_registration_t * vapi_reg; 
+    mca_mpool_openib_registration_t * openib_reg; 
     int rc; 
     size_t reg_len; 
 
     openib_btl = (mca_btl_openib_module_t*) btl; 
-    vapi_reg = (mca_mpool_openib_registration_t*) registration; 
+    openib_reg = (mca_mpool_openib_registration_t*) registration; 
     
     MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
 
@@ -505,59 +505,59 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
     frag->base.des_flags = 0; 
 
-    if(NULL!= vapi_reg){ 
-        reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
-        bool is_leave_pinned = vapi_reg->is_leave_pinned; 
+    if(NULL!= openib_reg){ 
+        reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
+        bool is_leave_pinned = openib_reg->is_leave_pinned; 
 
         if(frag->segment.seg_len > reg_len ) { 
-            size_t new_len = vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1 
+            size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
                 + frag->segment.seg_len - reg_len; 
-            void * base_addr = vapi_reg->base_reg.base; 
+            void * base_addr = openib_reg->base_reg.base; 
 
-            rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
+            rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
                 opal_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             } 
 
             if(is_leave_pinned) { 
-                if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
+                if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
                     opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                     return NULL; 
                 }
             }
-            OBJ_RELEASE(vapi_reg); 
+            OBJ_RELEASE(openib_reg); 
             
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool, 
                                             base_addr, 
                                             new_len,
-                                            (mca_mpool_base_registration_t**) &vapi_reg);
+                                            (mca_mpool_base_registration_t**) &openib_reg);
             
         
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base, 
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
+            rc = mca_mpool_base_insert(openib_reg->base_reg.base, 
+                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
                                        openib_btl->ib_pool, 
                                        (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*) vapi_reg); 
+                                       (mca_mpool_base_registration_t*) openib_reg); 
             
             if(OMPI_SUCCESS != rc) {
                 opal_output(0,"%s:%d:%s error inserting memory region into memory pool tree", __FILE__, __LINE__,  __func__); 
                 return NULL;
             }
-            OBJ_RETAIN(vapi_reg); 
+            OBJ_RETAIN(openib_reg); 
             
             if(is_leave_pinned) { 
-                vapi_reg->is_leave_pinned = is_leave_pinned; 
-                opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
+                openib_reg->is_leave_pinned = is_leave_pinned; 
+                opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             } 
 
         } 
         else if(is_leave_pinned){ 
-            if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
+            if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
                 opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }    
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg); 
+            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg); 
         }
     }  else { 
            
@@ -587,49 +587,48 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
                                         frag->segment.seg_addr.pval,
                                         *size, 
-                                        (mca_mpool_base_registration_t**) &vapi_reg);
+                                        (mca_mpool_base_registration_t**) &openib_reg);
             
-            vapi_reg->is_leave_pinned = true;
+            openib_reg->is_leave_pinned = true;
             
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base,  
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
+            rc = mca_mpool_base_insert(openib_reg->base_reg.base,  
+                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
                                        openib_btl->ib_pool, 
                                        (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*)  vapi_reg); 
+                                       (mca_mpool_base_registration_t*)  openib_reg); 
             if(OMPI_SUCCESS != rc){ 
                 opal_output(0,"%s:%d:%s error inserting memory region into memory pool", __FILE__, __LINE__,  __func__); 
                 return NULL;
             } 
 
-            OBJ_RETAIN(vapi_reg); 
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
+            OBJ_RETAIN(openib_reg); 
+            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             
         } else { 
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
                                             frag->segment.seg_addr.pval,
                                             *size, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg);
-            vapi_reg->is_leave_pinned=false; 
+                                            (mca_mpool_base_registration_t**) &openib_reg);
+            openib_reg->is_leave_pinned=false; 
         }
         
         
     }
 
     
-    frag->mem_hndl = vapi_reg->hndl; 
-    
+    frag->mr = openib_reg->mr; 
     frag->sg_entry.len = *size; 
-    frag->sg_entry.lkey = vapi_reg->l_key; 
-    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
+    frag->sg_entry.lkey = openib_reg->mr->lkey; 
+    frag->sg_entry.addr = (uintptr_t) frag->segment.seg_addr.pval; 
     
-    frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->l_key; 
+    frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
     
     frag->base.des_dst = &frag->segment; 
     frag->base.des_dst_cnt = 1; 
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
-    frag->vapi_reg = vapi_reg; 
-    OBJ_RETAIN(vapi_reg); 
+    frag->openib_reg = openib_reg; 
+    OBJ_RETAIN(openib_reg); 
     return &frag->base; 
     
 }
@@ -712,7 +711,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; 
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     frag->endpoint = endpoint;
-    frag->sr_desc.opcode = IB_WC_RDMA_WRITE; 
+    frag->sr_desc.opcode = IBV_WR_RDMA_WRITE; 
     frag->sr_desc.rdma.remote_addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
     frag->sr_desc.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
     frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
@@ -786,14 +785,13 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
 
     /* Allocate Protection Domain */ 
     struct ibv_context *ctx; 
+    
+    
     ctx = openib_btl->ib_dev_context; 
-    
-    uint32_t cqe_cnt = 0;
-    
     openib_btl->ib_pd = ibv_alloc_pd(ctx); 
     
     
-    if(NULL == openib->ib_pd) {
+    if(NULL == openib_btl->ib_pd) {
         ompi_output(0, "%s: error allocating pd for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
         return OMPI_ERROR;
     }

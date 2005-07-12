@@ -29,7 +29,7 @@ static void mca_btl_openib_frag_common_constructor( mca_btl_openib_frag_t* frag)
     frag->mr = registration->mr; 
     frag->segment.seg_len = frag->size;
     frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
-    frag->sg_entry.addr = (uintprt_t) frag->hdr; 
+    frag->sg_entry.addr = (uintptr_t) frag->hdr; 
     frag->sg_entry.length = frag->size; 
     frag->sg_entry.lkey = frag->mr->lkey; 
     frag->base.des_flags = 0; 

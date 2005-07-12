@@ -59,7 +59,7 @@ struct mca_btl_openib_frag_t {
     struct ibv_sge sg_entry;  
     struct ibv_mr *mr; 
     mca_btl_openib_header_t *hdr;
-    mca_mpool_openib_registration_t * vapi_reg; 
+    mca_mpool_openib_registration_t * openib_reg; 
 }; 
 typedef struct mca_btl_openib_frag_t mca_btl_openib_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t); 
