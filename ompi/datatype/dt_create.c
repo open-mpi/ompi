@@ -57,7 +57,7 @@ static void __destroy_ddt_struct( ompi_datatype_t* pData )
     pData->opt_desc.desc   = NULL;
     pData->opt_desc.length = 0;
     pData->opt_desc.used   = 0;
-    if( pData->args != NULL ) free( pData->args );
+    if( pData->args != NULL ) ompi_ddt_release_args( pData );
     pData->args = NULL;
     if( NULL != ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, pData->d_f_to_c_index) ){
         ompi_pointer_array_set_item( ompi_datatype_f_to_c_table, pData->d_f_to_c_index, NULL );
