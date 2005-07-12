@@ -51,7 +51,7 @@ mca_btl_openib_component_t mca_btl_openib_component = {
 
             MCA_BTL_BASE_VERSION_1_0_0,
 
-            "ib", /* MCA component name */
+            "openib", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
@@ -82,7 +82,7 @@ static inline char* mca_btl_openib_param_register_string(
                                                      const char* default_value)
 {
     char *param_value;
-    int id = mca_base_param_register_string("btl","ib",param_name,NULL,default_value);
+    int id = mca_base_param_register_string("btl","openib",param_name,NULL,default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
@@ -91,7 +91,7 @@ static inline int mca_btl_openib_param_register_int(
         const char* param_name, 
         int default_value)
 {
-    int id = mca_base_param_register_int("btl","ib",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("btl","openib",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
