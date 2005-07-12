@@ -26,51 +26,57 @@
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 
+extern int mca_ptl_base_open_called;
 
 int mca_ptl_base_close(void)
 {
-  opal_list_item_t *item;
-  mca_ptl_base_selected_module_t *sm;
+    opal_list_item_t *item;
+    mca_ptl_base_selected_module_t *sm;
 
-  /* disable event processing while cleaning up ptls */
-  opal_event_disable();
+    if( 0 == mca_ptl_base_open_called ) return OMPI_ERROR;
+    mca_ptl_base_open_called = 0;
 
-  /* Finalize all the ptl components and free their list items */
+    /* disable event processing while cleaning up ptls */
+    opal_event_disable();
 
-  for (item = opal_list_remove_first(&mca_ptl_base_modules_initialized);
-       NULL != item; 
-       item = opal_list_remove_first(&mca_ptl_base_modules_initialized)) {
-    sm = (mca_ptl_base_selected_module_t *) item;
+    /* Finalize all the ptl components and free their list items */
 
-    /* Blatently ignore the return code (what would we do to recover,
-       anyway?  This component is going away, so errors don't matter
-       anymore) */
+    for (item = opal_list_remove_first(&mca_ptl_base_modules_initialized);
+         NULL != item; 
+         item = opal_list_remove_first(&mca_ptl_base_modules_initialized)) {
+        sm = (mca_ptl_base_selected_module_t *) item;
 
-    sm->pbsm_module->ptl_finalize(sm->pbsm_module);
-    free(sm);
-  }
+        /* Blatently ignore the return code (what would we do to recover,
+           anyway?  This component is going away, so errors don't matter
+           anymore) */
 
-  /* Close all remaining opened components (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
+        sm->pbsm_module->ptl_finalize(sm->pbsm_module);
+        free(sm);
+    }
 
-  if (0 != opal_list_get_size(&mca_ptl_base_components_opened)) {
-    mca_base_components_close(mca_ptl_base_output, 
-                              &mca_ptl_base_components_opened, NULL);
-  }
+    /* Close all remaining opened components (may be one if this is a
+       OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  /* cleanup */
-  if( NULL != mca_ptl_base_include ) {
-     free(mca_ptl_base_include);
-     mca_ptl_base_include = NULL;
-  }
-  if( NULL != mca_ptl_base_exclude ) {
-     free(mca_ptl_base_exclude);
-     mca_ptl_base_exclude = NULL;
-  }
+    if (0 != opal_list_get_size(&mca_ptl_base_components_initialized)) {
+        mca_base_components_close(mca_ptl_base_output, 
+                                  &mca_ptl_base_components_initialized, NULL);
+    }
+    OBJ_DESTRUCT( &mca_ptl_base_components_initialized );
+    OBJ_DESTRUCT( &mca_ptl_base_components_opened );
 
-  /* restore event processing */
-  opal_event_enable();
+    /* cleanup */
+    if( NULL != mca_ptl_base_include ) {
+        free(mca_ptl_base_include);
+        mca_ptl_base_include = NULL;
+    }
+    if( NULL != mca_ptl_base_exclude ) {
+        free(mca_ptl_base_exclude);
+        mca_ptl_base_exclude = NULL;
+    }
 
-  /* All done */
-  return OMPI_SUCCESS;
+    /* restore event processing */
+    opal_event_enable();
+
+    /* All done */
+    return OMPI_SUCCESS;
 }

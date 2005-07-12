@@ -55,6 +55,7 @@ OMPI_DECLSPEC extern int mca_ptl_base_output;
 OMPI_DECLSPEC extern char* mca_ptl_base_include;
 OMPI_DECLSPEC extern char* mca_ptl_base_exclude;
 OMPI_DECLSPEC extern opal_list_t mca_ptl_base_components_opened;
+OMPI_DECLSPEC extern opal_list_t mca_ptl_base_components_initialized;
 OMPI_DECLSPEC extern opal_list_t mca_ptl_base_modules_initialized;
 
 #if defined(c_plusplus) || defined(__cplusplus)

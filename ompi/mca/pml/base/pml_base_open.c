@@ -22,7 +22,7 @@
 #include "mca/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
-
+#include "ompi/mca/ptl/base/base.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -70,24 +70,23 @@ char *mca_pml_base_pml;
  */
 int mca_pml_base_open(void)
 {
-  /* Open up all available components */
+    /* Open up all available components */
 
-  if (OMPI_SUCCESS != 
-      mca_base_components_open("pml", 0, mca_pml_base_static_components, 
-                               &mca_pml_base_components_available,
-                               !MCA_pml_DIRECT_CALL)) {
-    return OMPI_ERROR;
-  }
+    if (OMPI_SUCCESS != 
+        mca_base_components_open("pml", 0, mca_pml_base_static_components, 
+                                 &mca_pml_base_components_available,
+                                 !MCA_pml_DIRECT_CALL)) {
+        return OMPI_ERROR;
+    }
 
-  /* Set a sentinel in case we don't select any components (e.g.,
-     ompi_info) */
+    /* Set a sentinel in case we don't select any components (e.g.,
+       ompi_info) */
 
-  mca_pml_base_selected_component.pmlm_finalize = NULL;
+    mca_pml_base_selected_component.pmlm_finalize = NULL;
 
-  mca_base_param_lookup_string(
-      mca_base_param_register_string("pml",NULL,NULL,NULL,NULL), &mca_pml_base_pml);
+    mca_base_param_lookup_string(
+        mca_base_param_register_string("pml",NULL,NULL,NULL,NULL), &mca_pml_base_pml);
 
-  /* All done */
-
-  return OMPI_SUCCESS;
+    /* All done, now let's start the PTLs */
+    return mca_ptl_base_open();
 }

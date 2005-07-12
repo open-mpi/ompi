@@ -320,26 +320,27 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	    goto error;
     }
 
+    /* start PTL's */
+    ret = MCA_PML_CALL(enable(true));
+    if( OMPI_SUCCESS != ret ) {
+        error = "PML control failed";
+        goto error;
+    }
+
     /* add all ompi_proc_t's to PML */
     if (NULL == (procs = ompi_proc_world(&nprocs))) {
         error = "ompi_proc_world() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_pml.pml_add_procs(procs, nprocs))) {
-        free(procs);
+    ret = MCA_PML_CALL(add_procs(procs, nprocs));
+    free(procs);
+    if( OMPI_SUCCESS != ret ) {
         error = "PML add procs failed";
         goto error;
     }
-    free(procs);
 
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self));
-
-    /* start PTL's */
-    if (OMPI_SUCCESS != (ret = mca_pml.pml_enable(true))) {
-        error = "PML control failed";
-        goto error;
-    }
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow

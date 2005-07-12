@@ -122,8 +122,6 @@ extern int mca_pml_ob1_del_procs(
     size_t nprocs
 );
 
-extern int mca_pml_ob1_add_btls(void);
-
 extern int mca_pml_ob1_enable(
     bool enable
 );

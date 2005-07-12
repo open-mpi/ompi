@@ -58,6 +58,7 @@ struct mca_pml_uniq_t {
     int uniq_free_list_max;   /* maximum size of free list */
     int uniq_free_list_inc;   /* number of elements to grow free list */
     int uniq_poll_iterations; /* number of iterations to poll for completion */
+    int uniq_priority;        /* the PML priority */
 
     /* free list of requests */
     ompi_free_list_t uniq_send_requests;
@@ -110,8 +111,6 @@ extern int mca_pml_uniq_del_procs(
     struct ompi_proc_t **procs,
     size_t nprocs
 );
-
-extern int mca_pml_uniq_add_ptls(void);
 
 extern int mca_pml_uniq_enable(
     bool enable

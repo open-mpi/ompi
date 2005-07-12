@@ -77,7 +77,7 @@ int mca_pml_teg_component_open(void)
 #ifdef WIN32
      WSADATA win_sock_data;
      if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-         opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: %d\n", WSAGetLastError());
+         opal_output (0, "failed to initialise windows sockets: %d\n", WSAGetLastError());
          return OMPI_ERROR;
       }
 #endif
@@ -105,14 +105,18 @@ int mca_pml_teg_component_open(void)
     mca_pml_teg.teg_priority =
         mca_pml_teg_param_register_int("priority", 1);
 
-    /* attempt to open all ptls */
-    return mca_ptl_base_open();
+    return OMPI_SUCCESS;
 }
 
 
 int mca_pml_teg_component_close(void)
 {
     int rc;
+
+    /* I was not enabled */
+    if( NULL ==  mca_pml_teg.teg_ptl_components )
+        return OMPI_SUCCESS;
+
     if(OMPI_SUCCESS != (rc = mca_ptl_base_close()))
         return rc;
 
@@ -131,12 +135,15 @@ int mca_pml_teg_component_close(void)
 
     if(NULL != mca_pml_teg.teg_ptl_components) {
         free(mca_pml_teg.teg_ptl_components);
+        mca_pml_teg.teg_ptl_components = NULL;
     }
     if(NULL != mca_pml_teg.teg_ptl_modules) {
         free(mca_pml_teg.teg_ptl_modules);
+        mca_pml_teg.teg_ptl_modules = NULL;
     }
     if(NULL != mca_pml_teg.teg_ptl_progress) {
         free(mca_pml_teg.teg_ptl_progress);
+        mca_pml_teg.teg_ptl_progress = NULL;
     }
     OBJ_DESTRUCT(&mca_pml_teg.teg_send_pending);
     OBJ_DESTRUCT(&mca_pml_teg.teg_send_requests);
@@ -147,23 +154,12 @@ int mca_pml_teg_component_close(void)
 }
 
 
-mca_pml_base_module_t* mca_pml_teg_component_init(int* priority, 
-                                                  bool enable_progress_threads,
-                                                  bool enable_mpi_threads)
+mca_pml_base_module_t* mca_pml_teg_component_init( int* priority, 
+                                                   bool enable_progress_threads,
+                                                   bool enable_mpi_threads )
 {
-    uint32_t proc_arch;
     int rc;
     *priority = mca_pml_teg.teg_priority;
-
-    /* recv requests */
-    ompi_free_list_init(
-        &mca_pml_teg.teg_recv_requests,
-        sizeof(mca_pml_teg_recv_request_t),
-        OBJ_CLASS(mca_pml_teg_recv_request_t), 
-        mca_pml_teg.teg_free_list_num,
-        mca_pml_teg.teg_free_list_max,
-        mca_pml_teg.teg_free_list_inc,
-        NULL);
 
     /* buffered send */
     if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
@@ -171,18 +167,10 @@ mca_pml_base_module_t* mca_pml_teg_component_init(int* priority,
         return NULL;
     }
 
-    /* post this processes datatype */
-    proc_arch = ompi_proc_local()->proc_arch;
-    proc_arch = htonl(proc_arch);
-    rc = mca_base_modex_send(&mca_pml_teg_component.pmlm_version, &proc_arch, sizeof(proc_arch));
-    if(rc != OMPI_SUCCESS)
-        return NULL;
-    
-    rc = mca_ptl_base_select(enable_progress_threads,enable_mpi_threads);
-    if(rc != OMPI_SUCCESS)
+    rc = mca_ptl_base_select( enable_progress_threads, enable_mpi_threads );
+    if( rc != OMPI_SUCCESS )
         return NULL;
 
-    mca_pml_teg_add_ptls();
     return &mca_pml_teg.super;
 }
 

@@ -90,7 +90,7 @@ static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
 }
 
 
-int mca_pml_teg_add_ptls(void)
+static int mca_pml_teg_add_ptls(void)
 {
     /* build an array of ptls and ptl modules */
     mca_ptl_base_selected_module_t* selected_ptl;
@@ -161,13 +161,41 @@ int mca_pml_teg_add_ptls(void)
 }
 
 /*
- * Pass control information through to all PTL modules.
+ * Called by the base PML in order to notify the PMLs about their selected status. After the init pass,
+ * the base module will choose one PML (depending on informations provided by the init function) and then
+ * it will call the pml_enable function with true (for the selected one) and with false for all the 
+ * others. The selected one can then pass control information through to all PTL modules.
  */
 
 int mca_pml_teg_enable(bool enable) 
 {
     size_t i=0;
-    int value = enable;
+    int value = enable, rc;
+    uint32_t proc_arch;
+
+    /* If I'm not selected then prepare for close */
+    if( false == enable ) return OMPI_SUCCESS;
+
+    /* recv requests */
+    ompi_free_list_init( &mca_pml_teg.teg_recv_requests,
+                         sizeof(mca_pml_teg_recv_request_t),
+                         OBJ_CLASS(mca_pml_teg_recv_request_t), 
+                         mca_pml_teg.teg_free_list_num,
+                         mca_pml_teg.teg_free_list_max,
+                         mca_pml_teg.teg_free_list_inc,
+                         NULL );
+
+    /* I get selected. Publish my information */
+    proc_arch = ompi_proc_local()->proc_arch;
+    proc_arch = htonl(proc_arch);
+    rc = mca_base_modex_send(&mca_pml_teg_component.pmlm_version, &proc_arch, sizeof(proc_arch));
+    if(rc != OMPI_SUCCESS)
+        return rc;
+
+    /* Grab all the PTLs and prepare them */
+    mca_pml_teg_add_ptls();
+
+    /* and now notify them about the status */
     for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
         if(NULL != mca_pml_teg.teg_ptl_components[i]->ptlm_control) {
             int rc = mca_pml_teg.teg_ptl_components[i]->ptlm_control(MCA_PTL_ENABLE,&value,sizeof(value));
