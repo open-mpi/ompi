@@ -67,7 +67,6 @@ static void __destroy_ddt_struct( ompi_datatype_t* pData )
         ompi_attr_delete_all( TYPE_ATTR, pData, pData->d_keyhash );
         OBJ_RELEASE( pData->d_keyhash );
     }
-
 }
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_object_t, __get_free_dt_struct, __destroy_ddt_struct );
