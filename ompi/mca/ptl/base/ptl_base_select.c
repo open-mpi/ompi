@@ -134,8 +134,9 @@ int mca_ptl_base_select(bool enable_progress_threads,
     mca_base_components_close( mca_ptl_base_output, useless, NULL );
     OBJ_RELEASE( useless );
 
+    opal_argv_free( include );
+    opal_argv_free( exclude );
     /* Finished querying all components.  Check for the bozo case. */
-
     if (0 == opal_list_get_size(&mca_ptl_base_modules_initialized)) {
        opal_show_help("help-mca-base.txt", "find-available:none-found", true,
                       "ptl");
