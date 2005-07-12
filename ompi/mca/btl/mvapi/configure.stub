@@ -103,9 +103,10 @@ mca_btl_mvapi_try_find_libvapi() {
 		      [pthread=yes LIBS="$LIBS -lpthread"],
 		      [pthread=no])
 	 if test "$pthread" = "yes"; then
-	     AC_CHECK_LIB([vapi], [$func2], [], [],
-                          [-lmtl_common -lmpga -lmosal])
-	fi
+	     AC_TRY_LINK([#include <pthread.h>], [pthread_create(0,0,0,0);], 
+		 [pthreads="yes"], 
+		 [pthreads="no"])
+	 fi
     fi    
 }
 
