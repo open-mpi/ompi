@@ -59,7 +59,7 @@ static void* mca_pml_bsend_alloc_segment(
     addr = mca_pml_bsend_addr;
     mca_pml_bsend_addr += size;
     *size_inout = size;
-    *registration = NULL;
+    if (NULL != registration) *registration = NULL;
     return addr;
 }
 
