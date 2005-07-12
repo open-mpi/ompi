@@ -28,7 +28,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                        [Specify the installation directory of IB (should enable the correct automatic determination of using the 32 or 64 bit library, if both are present under IBDIR/lib and IBDIR/lib64)]))
     AC_ARG_WITH(btl-openib-libdir,
         AC_HELP_STRING([--with-btl-openib-libdir=IBLIBDIR],
-                       [directory where the IB library can be found, if it is not in $IBDIR/lib or $IBDIR/lib64]))
+                       [directory where the IB library can be found, if it is not in $IBDIR/lib or $IBDIR/lib/infiniband]))
 
     # Quick sanity check
 
@@ -56,21 +56,27 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
             EXTRA_CPPFLAGS="-I$IBDIR/include"
         else
             AC_MSG_WARN([*** Warning: cannot find $IBDIR/include])
-            AC_MSG_WARN([*** Will still try to configure ib btl anyway...])
-        fi
-        if test "$IBDIR" != "" -a -d "$IBDIR/wrap"; then
-            EXTRA_CPPFLAGS="-I$IBDIR/wrap $EXTRA_CPPFLAGS"
-        else
-            AC_MSG_WARN([*** Warning: cannot find $IBDIR/wrap])
-            AC_MSG_WARN([*** Will still try to configure ib btl anyway...])
+            AC_MSG_WARN([*** Will still try to configure openib btl anyway...])
         fi
     fi
 
-    # See if we can find vapi.h
+    # See if we can find vapi.h.  First try without any additional
+    # -I's to see if we can find it easily.  If we don't find it, then
+    # try again with the EXTRA_CPPFLAGS.  This prevents us from adding
+    # things like -I/usr/local if we don't need to.
 
-    CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
-    AC_CHECK_HEADERS(vapi.h,,
-        AC_MSG_ERROR([*** Cannot find working vapi.h]))
+    AC_CHECK_HEADERS(infiniband/vapi.h,,
+        [CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
+         eval "unset ac_cv_header_vapi_h"
+         AC_CHECK_HEADERS(infiniband/vapi.h,,
+             AC_MSG_ERROR([*** Cannot find working infiniband/vapi.h]))])
+
+    # Many vapi.h's have horrid semantics and don't obey ISOC99
+    # standards.  So we have to turn off flags like -pedantic.  Sigh.
+
+# Galen: is this true for Open IB?
+
+    #CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
 
     # Note that it is possible to find the library even if -L is not
     # specified, if the LD_LIBRARY_PATH includes the directory where
@@ -80,69 +86,60 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     LD_LIBRARY_PATH_save="$LD_LIBRARY_PATH"
     unset LD_LIBRARY_PATH
 
-    # Helpfer function to try to find libvapi (called from below).  In
-    # some versions of Mellanox (v3.1), we need to expliitly link in
-    # the thread libraries.  #$%#@$%@%#$!!!
+    # Helper function to try to find libvapi (called from below).
 
-    
-    # Many vapi.h's have horrid semantics and don't obey ISOC99
-    # standards.  So we have to turn off flags like -pedantic.  Sigh.
-
-    #CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
-
-
-
-mca_btl_openib_try_find_libvapi() {
+mca_btl_openib_try_find_lib() {
     func1=[$]1
     func2=[$]2
 
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
     vapi_badness=
     AC_CHECK_LIB([vapi], [$func1], [], [vapi_badness=true],
-                 [-libcm -lmthca])
+	[-lmthca -libcm])
     if test "$vapi_badness" != ""; then
-         AC_CHECK_LIB([pthread], [pthread_create], 
-		      [pthread=yes LIBS="$LIBS -lpthread"],
-		      [pthread=no])
-	 if test "$pthread" = "yes"; then
-	     AC_CHECK_LIB([vapi], [$func2], [], [],
-                          [-libcm -lmthca])
+	AC_TRY_LINK([#include <pthread.h>], [pthread_create(0,0,0,0);], 
+	    [pthreads="yes"], 
+	    [pthreads="no"])
+	AC_CHECK_LIB(sysfs, sysfs_open_class, 
+	    [sysfs=yes LIBS="$LIBS -lsysfs"], 
+	    [sysfs=no])
+	if test "$pthread" = "yes" && test "$sysfs" = "yes"; then
+	    AC_CHECK_LIB([vapi], [$func2], [], [],
+		[-lmthca -libcm])
 	fi
+	
+	
     fi    
 }
 
-    # The libraries may be in $IBDIR/lib or $IBDIR/lib64.  Try them
-    # both.
+    # Open IB does not appear to make lib64 variants -- just try the
+    # normal "lib" directory.
 
     LIBS_save="$LIBS"
     LDFLAGS_save="$LDFLAGS"
-    LIBS="$LIBS -lmosal -lmpga -lmtl_common"
+# Galen: Are these the right extra libs?
+    LIBS="$LIBS -lmthca -libcm"
     LIBS_orig="$LIBS"
 
     EXTRA_LDFLAGS=
-    if test -d "$IBLIBDIR/lib"; then
-        EXTRA_LDFLAGS="-L$IBLIBDIR/lib"
+    if test -d "$IBLIBDIR/lib/infiniband"; then
+        EXTRA_LDFLAGS="-L$IBLIBDIR/lib/infiniband"
         LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-        mca_btl_openib_try_find_libvapi VAPI_open_hca VAPI_query_hca_cap
+# Galen: are these the right symbol names?
+        mca_btl_openib_try_find_lib ibv_get_devices ibv_open_device
         if test "$LIBS" != "$LIBS_orig"; then
-            echo "--> found libvapi in $IBLIBDIR/lib"
-        fi
-    fi
-
-    if test "$LIBS" = "$LIBS_orig" -a -d "$IBLIBDIR/lib64"; then
-        EXTRA_LDFLAGS="-L$IBLIBDIR/lib64"
-        LDFLAGS="$LDFLAGS_save $EXTRA_LDFLAGS"
-        mca_btl_openib_try_find_libvapi EVAPI_list_hcas EVAPI_open_hca
-        if test "$LIBS" != "$LIBS_orig"; then
-            echo "--> found libvapi in $IBLIBDIR/lib64"
+# Galen: Are we looking for "libvapi"?
+            echo "--> found libibverbs libs in $IBLIBDIR/lib"
         fi
     fi
 
     if test "$LIBS" = "$LIBS_orig"; then
-      AC_MSG_ERROR([*** Cannot find working libvapi.])
+# Galen: Are we looking for "libvapi"?
+      AC_MSG_ERROR([*** Cannot find working libibverbs.])
     fi
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH_save"
-    LIBS="$LIBS -lmtl_common -lmpga"
+# Galen: Are these the right extra libs?
+    LIBS="$LIBS -lmthca -libcm"
 
     #
     # Save extra compiler/linker flags so that they can be added in
@@ -150,8 +147,6 @@ mca_btl_openib_try_find_libvapi() {
     #
 
     WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-    WRAPPER_EXTRA_LIBS="-lvapi -lmtl_common -lmpga -lmosal"
+# Galen: Are these the right extra libs?
+    WRAPPER_EXTRA_LIBS="-libibverbs -lmmthca -libcm"
 ])dnl
-
-
-
