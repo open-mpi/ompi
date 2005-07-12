@@ -338,6 +338,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
 {
     opal_list_t map;
     orte_rmaps_base_map_t * mapping;
+    orte_rmaps_base_proc_t * proc;
     opal_list_item_t* item;
     int rc, id;
     int master[3];
@@ -390,15 +391,17 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
         if(mapping->app->idx != app_context) {
             continue;
         }
-        for(i = 0; i < mapping->num_procs; i++) {
+        for(i = mapping->num_procs; i > 0; i--) {
+            proc = mapping->procs[i - 1];
             if(0 < mca_pls_bproc_orted_component.debug) {
                 opal_output(0, "orte_pls_bproc_orted_launch: setting up io for "
-                               "[%lu,%lu,%lu]\n",
-                               ORTE_NAME_ARGS((&mapping->procs[i]->proc_name)));
+                               "[%lu,%lu,%lu] proc rank %lu\n",
+                               ORTE_NAME_ARGS((&proc->proc_name)),
+                               proc->proc_rank);
             }
             /* only setup to forward stdin if it is rank 0, otherwise connect
              * to /dev/null */
-            if(0 == mapping->procs[i]->proc_rank) {
+            if(0 == proc->proc_rank) {
                 connect_stdin = true;
             } else {
                 connect_stdin = false;
@@ -426,13 +429,13 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
             }
 
             if(connect_stdin) {
-                orte_iof.iof_publish(&(mapping->procs[i]->proc_name), 
-                                     ORTE_IOF_SINK, ORTE_IOF_STDIN, master[0]);
+                orte_iof.iof_publish(&(proc->proc_name), ORTE_IOF_SINK, 
+                                     ORTE_IOF_STDIN, master[0]);
             }
             /* set up io forwarding connections */
-            orte_iof.iof_publish(&(mapping->procs[i]->proc_name), ORTE_IOF_SOURCE, 
+            orte_iof.iof_publish(&(proc->proc_name), ORTE_IOF_SOURCE, 
                                  ORTE_IOF_STDOUT, master[1]);
-            orte_iof.iof_publish(&(mapping->procs[i]->proc_name), ORTE_IOF_SOURCE, 
+            orte_iof.iof_publish(&(proc->proc_name), ORTE_IOF_SOURCE, 
                                  ORTE_IOF_STDERR, master[2]);
                 
             num_procs++;
