@@ -139,8 +139,11 @@ int ompi_attr_create_predefined(void)
         return ret;
     }
 
-    /* Set default values for everything except UNIVERSE_SIZE and
-       APPNUM. */
+    /* Set default values for everything except APPNUM.  Set UNIVERSE
+       size to comm_world size.  It might grow later, it might not
+       (tiggers are not fired in all environments.  In environments
+       where triggers aren't set, there won't be COMM_SPAWN, so APPNUM
+       probably isn't a big deal. */
 
     if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, MPI_TAG_UB_VALUE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
@@ -148,6 +151,8 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE, 
                                      ompi_errclass_lastused)) ||
+        OMPI_SUCCESS != (ret = set_f(MPI_UNIVERSE_SIZE,
+                                    ompi_comm_size(MPI_COMM_WORLD))) ||
 #if 0
         /* JMS For when we implement IMPI */
         OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_SIZE,
