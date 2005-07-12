@@ -60,16 +60,16 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         fi
     fi
 
-    # See if we can find vapi.h.  First try without any additional
+    # See if we can find verbs.h.  First try without any additional
     # -I's to see if we can find it easily.  If we don't find it, then
     # try again with the EXTRA_CPPFLAGS.  This prevents us from adding
     # things like -I/usr/local if we don't need to.
 
-    AC_CHECK_HEADERS(infiniband/vapi.h,,
+    AC_CHECK_HEADERS(infiniband/verbs.h,,
         [CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
          eval "unset ac_cv_header_vapi_h"
-         AC_CHECK_HEADERS(infiniband/vapi.h,,
-             AC_MSG_ERROR([*** Cannot find working infiniband/vapi.h]))])
+         AC_CHECK_HEADERS(infiniband/verbs.h,,
+             AC_MSG_ERROR([*** Cannot find working infiniband/verbs.h]))])
 
     # Many vapi.h's have horrid semantics and don't obey ISOC99
     # standards.  So we have to turn off flags like -pedantic.  Sigh.
