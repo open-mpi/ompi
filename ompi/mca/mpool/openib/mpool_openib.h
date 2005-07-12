@@ -24,7 +24,6 @@
 #include "opal/event/event.h"
 #include "mca/mpool/mpool.h"
 #include "mca/allocator/allocator.h"
-#include "mca/common/vapi/vapi_mem_reg.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -32,11 +31,11 @@ extern "C" {
 
 
 static inline  void * DOWN_ALIGN_ADDR(void * addr, uint32_t cnt) { 
-    return (void*)((MT_virt_addr_t)(addr) & (~((MT_virt_addr_t)0) << (cnt))); 
+    return (void*)((uintptr_t)(addr) & (~((uintptr_t)0) << (cnt))); 
 }
 
 static inline void*  ALIGN_ADDR(void* addr, uint32_t cnt ) { 
-    DOWN_ALIGN_ADDR(((addr) +  ~(~((MT_virt_addr_t)0) << (cnt))), (cnt)); 
+    DOWN_ALIGN_ADDR(((addr) +  ~(~((uintptr_t)0) << (cnt))), (cnt)); 
     return addr;
 } 
 

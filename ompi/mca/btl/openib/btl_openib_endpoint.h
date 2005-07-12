@@ -136,7 +136,8 @@ static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt,
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
     struct ibv_recv_wr* bad_wr; 
-    
+    struct ibv_recv_wr** rr_desc_post = openib_btl->rr_desc_post; 
+
     /* prepare frags and post receive requests, given, this is ugly, 
      * if openib doesn't plan on supporting a post_list method than 
      * this should be changed to simply loop through and post receives 
@@ -176,12 +177,11 @@ static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * e
     if(openib_btl->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && openib_btl->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ 
         
         rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - openib_btl->rr_posted_high, 
-                                             endpoint, 
-                                             &openib_btl->recv_free_eager, 
-                                             &openib_btl->rr_posted_high, 
-                                             openib_btl->nic, 
-                                             endpoint->lcl_qp_hndl_high
-                                             ); 
+                                                 endpoint, 
+                                                 &openib_btl->recv_free_eager, 
+                                                 &openib_btl->rr_posted_high, 
+                                                 endpoint->lcl_qp_high
+                                                 ); 
         if(rc != OMPI_SUCCESS){ 
             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
             return rc; 
@@ -190,11 +190,10 @@ static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * e
     if(openib_btl->rr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && openib_btl->rr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ 
         
         rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - openib_btl->rr_posted_low, 
-                                             endpoint, 
-                                             &openib_btl->recv_free_max, 
-                                             &openib_btl->rr_posted_low, 
-                                             openib_btl->nic, 
-                                             endpoint->lcl_qp_hndl_low
+                                                 endpoint, 
+                                                 &openib_btl->recv_free_max, 
+                                                 &openib_btl->rr_posted_low, 
+                                                 endpoint->lcl_qp_low
                                              ); 
         if(rc != OMPI_SUCCESS) {
             OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
