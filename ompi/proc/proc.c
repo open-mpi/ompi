@@ -64,6 +64,7 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 {
     if(proc->proc_modex != NULL)
         OBJ_RELEASE(proc->proc_modex);
+    OBJ_RELEASE( proc->proc_convertor );
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -106,9 +107,9 @@ int ompi_proc_finalize (void)
 
     OBJ_RELEASE(proc);
     while ( nextproc != endproc ) {
-	proc = nextproc;
-	nextproc = (ompi_proc_t *)opal_list_get_next(proc);
-	OBJ_RELEASE(proc);
+        proc = nextproc;
+        nextproc = (ompi_proc_t *)opal_list_get_next(proc);
+        OBJ_RELEASE(proc);
     }
     OBJ_DESTRUCT(&ompi_proc_list);
 
