@@ -29,4 +29,3 @@ libromio_dist_la_LIBADD  = \
 	$(MCA_io_romio_STATIC_LTLIBS)
 libromio_dist_la_DEPENDENCIES = \
 	$(libromio_dist_la_LIBADD)
-libromio_dist_la_LDFLAGS = -module -avoid-version
