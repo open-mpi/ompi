@@ -174,7 +174,6 @@ OMPI_DECLSPEC int32_t ompi_ddt_get_element_count( const ompi_datatype_t* pData, 
 OMPI_DECLSPEC int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* pData, int32_t count,
                                                       char* pDestBuf, const char* pSrcBuf );
 
-OMPI_DECLSPEC int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count, dt_type_desc_t* pTypeDesc );
 OMPI_DECLSPEC const ompi_datatype_t* ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang );
 
 /*
