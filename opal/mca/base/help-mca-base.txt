@@ -27,3 +27,9 @@ output of the "ompi_info" command and ensure that components of this
 type are available on your system.  You may also wish to check the
 value of the "component_path" MCA parameter and ensure that it has at
 least one directory that contains valid MCA components.
+
+[find-available:not-valid]
+The %s component was not found!
+
+This means that this component is either not installed, or unable to be 
+used on your system.
