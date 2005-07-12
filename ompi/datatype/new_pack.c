@@ -192,8 +192,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
                     }
                     /* Save the stack with the correct last_count value. */
                 }
-                PUSH_STACK( pStack, pConvertor->stack_pos,
-                            pos_desc, DT_LOOP, count_desc,
+                PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_LOOP, count_desc,
                             pStack->disp, pos_desc + pElem->elem.disp + 1);
                 pos_desc++;
             update_loop_description:

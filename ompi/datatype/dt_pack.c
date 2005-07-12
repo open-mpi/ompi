@@ -329,7 +329,6 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     destination = iov[0].iov_base;
     source = (char*)pConv->pBaseBuf + pStack->disp;
    
-
     /* retrieve the context of the last call */
     pos_desc = pStack->index;
     pack_elem.count = pStack->count;
