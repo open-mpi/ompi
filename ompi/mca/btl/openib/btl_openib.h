@@ -53,7 +53,7 @@ struct mca_btl_openib_component_t {
     uint32_t                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
-    struct mca_btl_openib_module_t             *mvapi_btls;
+    struct mca_btl_openib_module_t             *openib_btls;
     /**< array of available PTLs */
 
     int ib_free_list_num;
@@ -111,19 +111,16 @@ struct mca_btl_openib_module_t {
     mca_btl_base_module_t  super;  /**< base PTL interface */
     bool btl_inited; 
     mca_btl_openib_recv_reg_t ib_reg[256]; 
-    VAPI_hca_id_t   hca_id;        /**< ID of HCA */
-    
-    int port;           /**< ID of the PORT */ 
-    struct ibv_device;  /* the ib device */ 
-    
-    VAPI_hca_hndl_t nic;           /**< NIC handle */
-    VAPI_pd_hndl_t  ptag;          /**< Protection Domain tag */
-    
-    VAPI_cq_hndl_t cq_hndl_high;    /**< High Priority Completion Queue handle */ 
-    VAPI_cq_hndl_t  cq_hndl_low;       /**< Low Priority Completion Queue handle */
-    
-    EVAPI_async_handler_hndl_t async_handler;
-    /**< Async event handler used to detect weird/unknown events */
+        
+    uint8_t port_num;           /**< ID of the PORT */ 
+    struct ibv_device *ib_dev;  /* the ib device */ 
+    struct ibv_context *ib_dev_context; 
+    struct ibv_pd *ib_pd; 
+    struct ibv_cq *ib_cq_high;
+    struct ibv_cq *ib_cq_low; 
+    struct ibv_port_attr* ib_port_attr; 
+    struct ibv_recv_wr* rr_desc_post;
+
     
     ompi_free_list_t send_free_eager;    /**< free list of eager buffer descriptors */
     ompi_free_list_t send_free_max; /**< free list of max buffer descriptors */ 
@@ -132,7 +129,7 @@ struct mca_btl_openib_module_t {
     ompi_free_list_t recv_free_eager;    /**< High priority free list of buffer descriptors */
     ompi_free_list_t recv_free_max;      /**< Low priority free list of buffer descriptors */ 
 
-    opal_list_t reg_mru_list;   /**< a most recently used list of mca_mpool_mvapi_registration_t 
+    opal_list_t reg_mru_list;   /**< a most recently used list of mca_mpool_openib_registration_t 
                                        entries, this allows us to keep a working set of memory pinned */ 
     
     opal_list_t repost;            /**< list of buffers to repost */
@@ -146,7 +143,7 @@ struct mca_btl_openib_module_t {
     uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
     
     
-    VAPI_rr_desc_t*                          rr_desc_post;
+    
   
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
@@ -171,7 +168,7 @@ struct mca_btl_openib_module_t {
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
     
 
-    struct mca_btl_openib_frag_t; 
+struct mca_btl_openib_frag_t; 
 extern mca_btl_openib_module_t mca_btl_openib_module;
 
 /**
@@ -208,8 +205,8 @@ extern mca_btl_base_module_t** mca_btl_openib_component_init(
  * IB component progress.
  */
 extern int mca_btl_openib_component_progress(
-                                         void
-);
+                                             void
+                                             );
 
 
 /**
@@ -322,9 +319,9 @@ extern int mca_btl_openib_put(
  * @param size (IN)     Requested descriptor size.
  */
 extern mca_btl_base_descriptor_t* mca_btl_openib_alloc(
-    struct mca_btl_base_module_t* btl, 
-    size_t size); 
-
+                                                       struct mca_btl_base_module_t* btl, 
+                                                       size_t size); 
+    
 
 /**
  * Return a segment allocated by this BTL.
@@ -333,8 +330,8 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_alloc(
  * @param descriptor (IN)  Allocated descriptor.
  */
 extern int mca_btl_openib_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des); 
+                               struct mca_btl_base_module_t* btl, 
+                               mca_btl_base_descriptor_t* des); 
     
 
 /**
@@ -345,13 +342,13 @@ extern int mca_btl_openib_free(
  * @param peer (IN)     BTL peer addressing
  */
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* peer,
-    mca_mpool_base_registration_t* registration, 
-    struct ompi_convertor_t* convertor,
-    size_t reserve,
-    size_t* size
-);
+                                                      struct mca_btl_base_module_t* btl,
+                                                      struct mca_btl_base_endpoint_t* peer,
+                                                      mca_mpool_base_registration_t* registration, 
+                                                      struct ompi_convertor_t* convertor,
+                                                      size_t reserve,
+                                                      size_t* size
+                                                      );
 
 /**
  * Allocate a descriptor initialized for RDMA write.
@@ -360,12 +357,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
  * @param peer (IN)     BTL peer addressing
  */
 extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst( 
-                                                         struct mca_btl_base_module_t* btl, 
-                                                         struct mca_btl_base_endpoint_t* peer,
-                                                         mca_mpool_base_registration_t* registration, 
-                                                         struct ompi_convertor_t* convertor,
-                                                         size_t reserve,
-                                                         size_t* size); 
+                                                             struct mca_btl_base_module_t* btl, 
+                                                             struct mca_btl_base_endpoint_t* peer,
+                                                             mca_mpool_base_registration_t* registration, 
+                                                             struct ompi_convertor_t* convertor,
+                                                             size_t reserve,
+                                                             size_t* size); 
 /**
  * Return a send fragment to the modules free list.
  *
@@ -374,12 +371,12 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
  *
  */
 extern void mca_btl_openib_send_frag_return(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_openib_frag_t*
-);
+                                            struct mca_btl_base_module_t* btl,
+                                            struct mca_btl_openib_frag_t*
+                                            );
 
 
-int mca_btl_openib_module_init(mca_btl_openib_module_t* mvapi_btl); 
+int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl); 
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

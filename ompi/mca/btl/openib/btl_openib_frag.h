@@ -22,10 +22,8 @@
 #include "ompi_config.h"
 #include "btl_openib.h" 
 
-#include <vapi.h> 
-#include <mtl_common.h> 
-#include <vapi_common.h> 
-#include "mca/mpool/mvapi/mpool_mvapi.h" 
+#include <infiniband/verbs.h> 
+#include "mca/mpool/openib/mpool_openib.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -55,14 +53,13 @@ struct mca_btl_openib_frag_t {
     int rc; 
     
     union{ 
-        VAPI_rr_desc_t rr_desc; 
-        VAPI_sr_desc_t sr_desc; 
+        struct ibv_recv_wr rr_desc; 
+        struct ibv_send_wr sr_desc; 
     }; 
-    VAPI_sg_lst_entry_t sg_entry;  
-    VAPI_mr_hndl_t mem_hndl; 
-    VAPI_ret_t ret;
+    struct ibv_sge sg_entry;  
+    struct ibv_mr *mr; 
     mca_btl_openib_header_t *hdr;
-    mca_mpool_mvapi_registration_t * vapi_reg; 
+    mca_mpool_openib_registration_t * vapi_reg; 
 }; 
 typedef struct mca_btl_openib_frag_t mca_btl_openib_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t); 

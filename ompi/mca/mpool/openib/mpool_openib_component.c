@@ -168,8 +168,7 @@ static mca_mpool_base_module_t* mca_mpool_openib_init(
     mpool_module = (mca_mpool_openib_module_t*)malloc(sizeof(mca_mpool_openib_module_t)); 
     mca_mpool_openib_module_init(mpool_module); 
     
-    /* setup allocator  TODO fix up */
-    mpool_module->hca_pd = *resources;
+    mpool_module->resources = *resources;
     mpool_module->vapi_allocator = 
         allocator_component->allocator_init(true, mca_common_vapi_segment_alloc, NULL, &mpool_module->super);
     if(NULL == mpool_module->vapi_allocator) {

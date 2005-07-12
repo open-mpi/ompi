@@ -26,7 +26,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-#define MAX_POST_RR (16) 
 OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
 /**
@@ -87,28 +86,31 @@ struct mca_btl_base_endpoint_t {
 
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpoint */
-
-    VAPI_qp_num_t               rem_qp_num_high;
-    /* High priority remote side QP number */
-
-    VAPI_qp_num_t               rem_qp_num_low; 
-    /* Low prioirty remote size QP number */ 
-
-    IB_lid_t                    rem_lid;
-    /* Local identifier of the remote process */
-
-    VAPI_qp_hndl_t              lcl_qp_hndl_high;
-    /* High priority local QP handle */
     
-    VAPI_qp_hndl_t              lcl_qp_hndl_low;
-    /* Low priority local QP handle */
+    uint32_t                    rem_qp_num_high;
+    uint32_t                    rem_qp_num_low; 
+    /* Remote QP number  (Low and High priority) */ 
 
-    VAPI_qp_prop_t              lcl_qp_prop_high;
-    /* High priority local QP properties */
+    uint16_t                    rem_lid;
+    /* Local identifier of the remote process */
+    
+    
+    uint32_t                    rem_psn_high; 
+    uint32_t                    rem_psn_low; 
+    /* Remote processes port sequence number (Low and High) */ 
+    
+    uint32_t                    lcl_psn_high; 
+    uint32_t                    lcl_psn_low; 
+    /* Local processes port sequence number (Low and High) */
+ 
+    struct ibv_qp*              lcl_qp_high;
+    struct ibv_qp*              lcl_qp_low;
+    /* Local QP (Low and High) */
 
-    VAPI_qp_prop_t              lcl_qp_prop_low;
-    /* Low priority local QP properties */
-
+    struct ibv_qp_attr*         lcl_qp_attr_high; 
+    struct ibv_qp_attr*         lcl_qp_attr_low; 
+    /* Local QP attributes (Low and High) */
+    
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -122,77 +124,85 @@ void mca_btl_openib_post_recv(void);
 void mca_btl_openib_progress_send_frags(mca_btl_openib_endpoint_t*);
 
 static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt, 
-                                              mca_btl_openib_endpoint_t* endpoint, 
-                                              ompi_free_list_t* frag_list, 
-                                              uint32_t* rr_posted, 
-                                              VAPI_hca_hndl_t nic, 
-                                              VAPI_qp_hndl_t qp_hndl
-                                              )
+                                                      mca_btl_openib_endpoint_t* endpoint, 
+                                                      ompi_free_list_t* frag_list, 
+                                                      uint32_t* rr_posted, 
+                                                      struct ibv_qp*  qp
+                                                      )
 {
     
     int rc, i; 
     opal_list_item_t* item; 
     mca_btl_openib_frag_t* frag; 
-    mca_btl_openib_module_t *mvapi_btl = endpoint->endpoint_btl;
-    VAPI_rr_desc_t* rr_desc_post = mvapi_btl->rr_desc_post; 
+    mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
+    struct ibv_recv_wr* bad_wr; 
     
-    /* prepare frags and post receive requests */
+    /* prepare frags and post receive requests, given, this is ugly, 
+     * if openib doesn't plan on supporting a post_list method than 
+     * this should be changed to simply loop through and post receives 
+     * without bothering with the rr_desc_post array as it is not needed
+     */
     for(i = 0; i < cnt; i++) {
         OMPI_FREE_LIST_WAIT(frag_list, item, rc); 
         frag = (mca_btl_openib_frag_t*) item; 
         frag->endpoint = endpoint; 
-        frag->sg_entry.len = frag->size + ((unsigned char*) frag->segment.seg_addr.pval- (unsigned char*) frag->hdr);  /* sizeof(mca_btl_openib_header_t);     */ 
-        rr_desc_post[i] = frag->rr_desc; 
+        frag->sg_entry.length = frag->size + 
+            ((unsigned char*) frag->segment.seg_addr.pval- 
+             (unsigned char*) frag->hdr);  
         
+        rr_desc_post[i] = frag->rr_desc; 
     }
     
-    frag->ret = EVAPI_post_rr_list(nic,
-                                   qp_hndl,
-                                   cnt, 
-                                   rr_desc_post);
-    if(VAPI_OK != frag->ret) {
-        MCA_BTL_IB_VAPI_ERROR(frag->ret, "EVAPI_post_rr_list");
-        return OMPI_ERROR; 
+    for(i=0; i< cnt; i++){ 
+        
+        if(ibv_post_recv(qp, 
+                         rr_desc_post[i], 
+                         &bad_wr)) { 
+            opal_output(0, "%s: error posting receive\n", __func__); 
+            return OMPI_ERROR; 
+    }
+    
+    return OMPI_SUCCESS; 
     }
     OPAL_THREAD_ADD32(rr_posted, cnt); 
     return OMPI_SUCCESS; 
 }
 
 static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * endpoint, int additional){ 
-    mca_btl_openib_module_t * mvapi_btl = endpoint->endpoint_btl; 
+    mca_btl_openib_module_t * openib_btl = endpoint->endpoint_btl; 
     int rc; 
-    OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); 
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock); 
 
-    if(mvapi_btl->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && mvapi_btl->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ 
+    if(openib_btl->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && openib_btl->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ 
         
-        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - mvapi_btl->rr_posted_high, 
+        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - openib_btl->rr_posted_high, 
                                              endpoint, 
-                                             &mvapi_btl->recv_free_eager, 
-                                             &mvapi_btl->rr_posted_high, 
-                                             mvapi_btl->nic, 
+                                             &openib_btl->recv_free_eager, 
+                                             &openib_btl->rr_posted_high, 
+                                             openib_btl->nic, 
                                              endpoint->lcl_qp_hndl_high
                                              ); 
         if(rc != OMPI_SUCCESS){ 
-            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
+            OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
             return rc; 
         }
     }
-    if(mvapi_btl->rr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && mvapi_btl->rr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ 
+    if(openib_btl->rr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && openib_btl->rr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ 
         
-        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - mvapi_btl->rr_posted_low, 
+        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - openib_btl->rr_posted_low, 
                                              endpoint, 
-                                             &mvapi_btl->recv_free_max, 
-                                             &mvapi_btl->rr_posted_low, 
-                                             mvapi_btl->nic, 
+                                             &openib_btl->recv_free_max, 
+                                             &openib_btl->rr_posted_low, 
+                                             openib_btl->nic, 
                                              endpoint->lcl_qp_hndl_low
                                              ); 
         if(rc != OMPI_SUCCESS) {
-            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
+            OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
             return rc; 
         }
 
     }
-    OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
     return OMPI_SUCCESS; 
     
     

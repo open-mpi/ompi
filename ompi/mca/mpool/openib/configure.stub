@@ -88,7 +88,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     # Many vapi.h's have horrid semantics and don't obey ISOC99
     # standards.  So we have to turn off flags like -pedantic.  Sigh.
 
-    CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
+    #CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
 
 
 
@@ -99,14 +99,14 @@ mca_btl_openib_try_find_libvapi() {
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
     vapi_badness=
     AC_CHECK_LIB([vapi], [$func1], [], [vapi_badness=true],
-                 [-lmtl_common -lmpga -lmosal])
+                 [-libcm -lmthca])
     if test "$vapi_badness" != ""; then
          AC_CHECK_LIB([pthread], [pthread_create], 
 		      [pthread=yes LIBS="$LIBS -lpthread"],
 		      [pthread=no])
 	 if test "$pthread" = "yes"; then
 	     AC_CHECK_LIB([vapi], [$func2], [], [],
-                          [-lmtl_common -lmpga -lmosal])
+                          [-libcm -lmthca])
 	fi
     fi    
 }
