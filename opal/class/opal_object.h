@@ -256,6 +256,19 @@ static inline opal_object_t *opal_obj_new_debug(size_t obj_size, opal_class_t* t
         assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
     } while (0)
 
+/**
+ * Helper macro for the debug mode to store the locations where the status of
+ * an object change.
+ */
+#if OMPI_ENABLE_DEBUG
+#define OBJ_REMEMBER_FILE_AND_LINENO( OBJECT, FILE, LINENO )    \
+    do {                                                        \
+        ((opal_object_t*)(OBJECT))->cls_init_file_name = FILE;  \
+        ((opal_object_t*)(OBJECT))->cls_init_lineno = LINENO;   \
+    } while(0)
+#else
+#define OBJ_REMEMBER_FILE_AND_LINENO( OBJECT, FILE, LINENO )
+#endif  /* OMPI_ENABLE_DEBUG */
 
 /**
  * Release an object (by decrementing its reference count).  If the
@@ -273,6 +286,7 @@ static inline opal_object_t *opal_obj_new_debug(size_t obj_size, opal_class_t* t
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
             opal_obj_run_destructors((opal_object_t *) (object));       \
+            OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
             free(object);                                               \
             object = NULL;                                              \
         }                                                               \
@@ -286,17 +300,11 @@ static inline opal_object_t *opal_obj_new_debug(size_t obj_size, opal_class_t* t
  * @param type          The object type
  */
 
-#if OMPI_ENABLE_DEBUG
 #define OBJ_CONSTRUCT(object, type)                             \
 do {                                                            \
     OBJ_CONSTRUCT_INTERNAL((object), OBJ_CLASS(type));          \
-    ((opal_object_t *)(object))->cls_init_file_name = __FILE__; \
-    ((opal_object_t *)(object))->cls_init_lineno = __LINE__;    \
+    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
 } while (0)
-#else
-#define OBJ_CONSTRUCT(object, type)                             \
-    OBJ_CONSTRUCT_INTERNAL(object, OBJ_CLASS(type))
-#endif  /* OMPI_ENABLE_DEBUG */
 
 #define OBJ_CONSTRUCT_INTERNAL(object, type)                            \
     do {                                                                \
@@ -316,11 +324,12 @@ do {                                                            \
  *
  * @param object        Pointer to the object
  */
-#define OBJ_DESTRUCT(object)                                      \
-    do {                                                          \
-        if (NULL != object) {                                     \
-            opal_obj_run_destructors((opal_object_t *) (object)); \
-        }                                                         \
+#define OBJ_DESTRUCT(object)                                            \
+    do {                                                                \
+        if (NULL != object) {                                           \
+            opal_obj_run_destructors((opal_object_t *) (object));       \
+            OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
+        }                                                               \
     } while (0)
 
 BEGIN_C_DECLS
