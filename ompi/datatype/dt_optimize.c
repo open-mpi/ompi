@@ -25,8 +25,10 @@
 #endif
 #include <stdlib.h>
 
-int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count, 
-                                 dt_type_desc_t* pTypeDesc )
+static int32_t
+ompi_ddt_optimize_short( ompi_datatype_t* pData,
+                         int32_t count, 
+                         dt_type_desc_t* pTypeDesc )
 {
     dt_elem_desc_t* pElemDesc;
     long last_disp = 0;
@@ -37,17 +39,6 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
     uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
     long total_disp = 0;
     int32_t optimized = 0;
-
-    /* If there is no datatype description how can we have an optimized description ? */
-    if( (count == 0) || (pData->desc.used == 0) ) {
-        pTypeDesc->length = 0;
-        pTypeDesc->desc = NULL;
-        pTypeDesc->used = 0;
-        return 1;
-    }
-
-    /* Contiguous datatypes does not have to get optimized */
-    assert( (pData->flags & DT_FLAG_CONTIGUOUS) == 0 );
 
     pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
     SAVE_STACK( pStack, -1, 0, count, 0, pData->desc.used );
@@ -328,20 +319,28 @@ int32_t ompi_ddt_commit( ompi_datatype_t** data )
     pLast->total_extent = pData->ub - pData->lb;
     pLast->size         = pData->size;
 
+    /* If there is no datatype description how can we have an optimized description ? */
+    if( 0 == pData->desc.used ) {
+        pData->opt_desc.length = 0;
+        pData->opt_desc.desc   = NULL;
+        pData->opt_desc.used   = 0;
+        return OMPI_SUCCESS;
+    }
+
     /* If the data is contiguous is useless to generate an optimized version. */
-    if( (long)pData->size != (pData->true_ub - pData->true_lb) ) {
-        (void)ompi_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
-        if( 0 < pData->opt_desc.used ) {
-            /* let's add a fake element at the end just to avoid useless comparaisons
-             * in pack/unpack functions.
-             */
-            pLast = &(pData->opt_desc.desc[pData->opt_desc.used].end_loop);
-            pLast->common.type  = DT_END_LOOP;
-            pLast->common.flags = 0;
-            pLast->items        = pData->opt_desc.used;
-            pLast->total_extent = pData->ub - pData->lb;
-            pLast->size         = pData->size;
-        }
+    /*if( (long)pData->size == (pData->true_ub - pData->true_lb) ) return OMPI_SUCCESS; */
+
+    (void)ompi_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
+    if( 0 != pData->opt_desc.used ) {
+        /* let's add a fake element at the end just to avoid useless comparaisons
+         * in pack/unpack functions.
+         */
+        pLast = &(pData->opt_desc.desc[pData->opt_desc.used].end_loop);
+        pLast->common.type  = DT_END_LOOP;
+        pLast->common.flags = 0;
+        pLast->items        = pData->opt_desc.used;
+        pLast->total_extent = pData->ub - pData->lb;
+        pLast->size         = pData->size;
     }
     return OMPI_SUCCESS;
 }
