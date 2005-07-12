@@ -18,6 +18,7 @@
 
 #include "opal/util/argv.h"
 #include "runtime/runtime.h"
+#include "opal/util/show_help.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pml/pml.h"
@@ -136,8 +137,9 @@ int mca_ptl_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if (0 == opal_list_get_size(&mca_ptl_base_modules_initialized)) {
-        /* JMS Replace with show_help */
-        orte_abort(1, "No ptl components available.  This shouldn't happen.");
+       opal_show_help("help-mca-base.txt", "find-available:none-found", true,
+                      "ptl");
+       orte_abort(1, "");
     }
 
     /* All done */

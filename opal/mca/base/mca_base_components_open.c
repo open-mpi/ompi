@@ -24,6 +24,7 @@
 #include "opal/util/strncpy.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "include/constants.h"
@@ -161,6 +162,7 @@ static int open_components(const char *type_name, int output_id,
   const mca_base_component_t *component;
   mca_base_component_list_item_t *cli;
   bool acceptable;
+  bool any_acceptable = true;
   bool called_open;
   bool opened;
 
@@ -178,6 +180,47 @@ static int open_components(const char *type_name, int output_id,
       opal_output_verbose(10, output_id, "mca: base: components_open:   %s", 
                           requested_component_names[i]);
     }
+  }
+
+  /*
+   * Check requested components for validity
+   */
+  if (NULL != requested_component_names) {
+     any_acceptable = false;
+
+     /* For every requested component ... */
+     for (i = 0; NULL != requested_component_names[i]; ++i) {
+        acceptable     = false;
+        
+        /* Try to match it to an item in the list */
+        for (item = opal_list_get_first(components_found);
+             opal_list_get_end(components_found) != item;
+             item = opal_list_get_next(item)) {
+
+           cli = (mca_base_component_list_item_t *) item;
+           component = cli->cli_component;
+           
+           if (0 == strcmp(requested_component_names[i],
+                           component->mca_component_name)) {
+              acceptable     = true;
+              any_acceptable = true;
+              break;
+           }
+        }
+
+        /* Didn't find it in the list, warn the user */
+        if (!acceptable) {
+           opal_show_help("help-mca-base.txt", "find-available:not-valid", true,
+                          requested_component_names[i]);
+        }
+     }
+
+     /* None of the listed components were acceptable :( */
+     if(!any_acceptable) {
+        opal_show_help("help-mca-base.txt", "find-available:none-found", true, 
+                       type_name);
+        return OMPI_ERROR;
+     }
   }
 
   /* Traverse the list of found components */

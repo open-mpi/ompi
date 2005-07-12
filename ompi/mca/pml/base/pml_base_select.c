@@ -18,6 +18,7 @@
 
 #include "opal/class/opal_list.h"
 #include "runtime/runtime.h"
+#include "opal/util/show_help.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pml/pml.h"
@@ -110,8 +111,9 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if( NULL == best_component ) {
-        /* JMS Replace with show_help */
-        orte_abort(1, "No pml component available.  This shouldn't happen.");
+       opal_show_help("help-mca-base.txt", "find-available:none-found", true,
+                      "pml");
+       orte_abort(1, "");
     } 
 
     /* Finalize all non-selected components */
