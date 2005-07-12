@@ -764,7 +764,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
      */
     if( (datatype->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
         long extent = (datatype->ub - datatype->lb);
-        if( (long)datatype->size == extent ) {  /* all contiguous */
+        if( (long)datatype->size == (datatype->true_ub - datatype->true_lb) ) {  /* all contiguous */
             int total_length = datatype->size * count;
             lastLength = 128 * 1024;
             if( lastLength > total_length ) lastLength = total_length;
