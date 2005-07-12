@@ -65,8 +65,8 @@ int mca_pml_base_select(bool enable_progress_threads,
         component = (mca_pml_base_component_t *) cli->cli_component;
 
         /* if there is an include list - item must be in the list to be included */
-        if ( NULL != mca_pml_base_pml &&
-             strcmp(component->pmlm_version.mca_component_name, mca_pml_base_pml) != 0) {
+        if( (NULL != mca_pml_base_pml) &&
+            (strcmp(component->pmlm_version.mca_component_name, mca_pml_base_pml) != 0) ) {
             opal_output_verbose( 10, mca_pml_base_output,
                                  "select: component %s not in the include list",
                                  component->pmlm_version.mca_component_name );
@@ -111,9 +111,12 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if( NULL == best_component ) {
-       opal_show_help("help-mca-base.txt", "find-available:none-found", true,
-                      "pml");
-       orte_abort(1, "");
+        opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
+        if( NULL !=  mca_pml_base_pml ) {
+            orte_abort( 1, "PML %s cannot be selected", mca_pml_base_pml );
+        } else {
+            orte_abort(1, "No pml component available.  This shouldn't happen.");
+        }
     } 
 
     /* Finalize all non-selected components */
