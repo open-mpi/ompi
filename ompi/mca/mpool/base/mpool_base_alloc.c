@@ -144,14 +144,16 @@ int mca_mpool_base_insert(void * addr, size_t size,
     OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, rc);
     if(rc != OMPI_SUCCESS) 
         return rc; 
-
+    memset( ((mca_mpool_base_chunk_t *) item)->mpools, 0, sizeof(mca_mpool_base_reg_mpool_t) * MCA_MPOOL_BASE_MAX_REG); 
+    
     ((mca_mpool_base_chunk_t *) item)->key.bottom = addr;
     ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
         ((char *) addr + size - 1);
     ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool = mpool; 
     ((mca_mpool_base_chunk_t *) item)->mpools[0].user_data = user_data;
     ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool_registration = registration;
-
+    
+    
     OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
     rc = ompi_rb_tree_insert(&mca_mpool_base_tree, 
                         &((mca_mpool_base_chunk_t *)item)->key, item);
@@ -286,6 +288,8 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     }
     
     OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, i);
+    memset( ((mca_mpool_base_chunk_t *) item)->mpools, 0, sizeof(mca_mpool_base_reg_mpool_t) * MCA_MPOOL_BASE_MAX_REG); 
+
     if(NULL == no_reg_function && 0 == reg_module_num)
     {
         free(has_reg_function);

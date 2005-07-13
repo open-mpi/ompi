@@ -186,11 +186,8 @@ int mca_btl_mvapi_free(
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)des; 
 
     if(frag->size == 0) {
-        MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
-     
         OBJ_RELEASE(frag->vapi_reg); 
-        
-            
+        MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
     } 
     else if(frag->size == mca_btl_mvapi_component.max_send_size){ 
         MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
@@ -349,7 +346,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                 
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
-                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
+                    opal_list_remove_first(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
@@ -405,7 +402,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->vapi_reg = vapi_reg; 
-        OBJ_RETAIN(vapi_reg); 
+        
         return &frag->base;
 
     } else if (max_data+reserve <=  btl->btl_eager_limit) { 
