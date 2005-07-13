@@ -55,7 +55,7 @@
  *
  * FIXME: Should distinguish for systems, which don't have siginfo...
  */
-#ifndef WIN32
+#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(WIN32)
 static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 {   
 #ifdef __GLIBC__
@@ -259,7 +259,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     fflush(stderr);
 }
 
-#endif /* WIN32 */
+#endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(WIN32) */
 
 
 /**
@@ -274,7 +274,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
  */
 int opal_util_register_stackhandlers (void)
 {
-#ifndef WIN32
+#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(WIN32)
     struct sigaction act;
     char * string_value;
     char * tmp;
@@ -319,7 +319,8 @@ int opal_util_register_stackhandlers (void)
         return OMPI_ERR_IN_ERRNO;
       }
     }
-#endif /* WIN32 */
+#endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(WIN32) */
+
     return OMPI_SUCCESS;
 }
 

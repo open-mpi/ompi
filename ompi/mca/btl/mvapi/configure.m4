@@ -16,8 +16,8 @@
 #
 
 
-# MCA_btl_mvapi_CONFIG(action-if-can-compile, 
-#                        [action-if-cant-compile])
+# MCA_btl_mvapi_CONFIG([action-if-can-compile], 
+#                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_btl_mvapi_CONFIG],[
     OMPI_CHECK_MVAPI([btl_mvapi],
@@ -30,12 +30,15 @@ AC_DEFUN([MCA_btl_mvapi_CONFIG],[
            $1],
           [$2])
 
-    # Many vapi.h's have horrid semantics and don't obey ISOC99
-    # standards.  So we have to turn off flags like -pedantic.  Sigh.
+    # Many of the vapi.h files floating around don't obey ISO99 C
+    # standard, so cause oodles of warnings with -pedantic and
+    # -Wundef.  Remove them from CFLAGS, which is then used to
+    # forcefully override CFLAGS in the makefile for MVAPI
+    # components
     btl_mvapi_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
     btl_mvapi_CFLAGS="`echo $btl_mvapi_CFLAGS | sed 's/-Wundef//g'`"
 
-    # substitute in the things needed to build Portals
+    # substitute in the things needed to build mvapi
     AC_SUBST([btl_mvapi_CFLAGS])
     AC_SUBST([btl_mvapi_CPPFLAGS])
     AC_SUBST([btl_mvapi_LDFLAGS])

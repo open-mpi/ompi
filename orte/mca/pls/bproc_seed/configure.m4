@@ -15,18 +15,21 @@
 # $HEADER$
 #
 
+# MCA_pls_bproc_seed_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
 AC_DEFUN([MCA_pls_bproc_seed_CONFIG],[
     OMPI_CHECK_BPROC([pls_bproc_seed], [pls_bproc_seed_good=1], 
                      [pls_bproc_seed_good=0])
 
-    # For very dumb reasons involving linking, it's near impossible
-    # to build the XGrid components as static libraries.  Disable if that's
-    # the case.
-    AS_IF([test "$pls_bproc_seed_good" = "0"], [$2],
+    # if check worked, set wrapper flags if so.  
+    # Evaluate succeed / fail
+    AS_IF([test "$pls_bproc_seed_good" = "1"],
           [pls_bproc_seed_WRAPPER_EXTRA_LDFLAGS="$pls_bproc_seed_LDFLAGS"
            pls_bproc_seed_WRAPPER_EXTRA_LIBS="$pls_bproc_seed_LIBS"
-           $1])
+           $1],
+          [$2])
 
+    # set build flags to use in makefile
     AC_SUBST([pls_bproc_seed_OBJCFLAGS])
     AC_SUBST([pls_bproc_seed_LDFLAGS])
     AC_SUBST([pls_bproc_seed_LIBS])

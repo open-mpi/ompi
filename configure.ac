@@ -256,15 +256,6 @@ AC_CHECK_TYPES(intptr_t)
 AC_CHECK_TYPES(uintptr_t)
 AC_CHECK_TYPES(mode_t)
 
-# socklen_t needs <sys/socket.h>, which will not be covered by the
-# standard includes for AC_CHECK_TYPES
-
-AC_CHECK_TYPES(socklen_t, [AC_DEFINE(HAVE_SOCKLEN_T, 1, 
-                                     [Whether we have socklen_t or not])],
-               [], [AC_INCLUDES_DEFAULT
-#include <sys/socket.h>])
-
-
 
 #
 # Check for type sizes
@@ -1011,33 +1002,6 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h])
 
-# SA_RESTART in signal.h
-AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
-AC_EGREP_CPP(yes, [
-#include <signal.h>
-#ifdef SA_RESTART
-    yes
-#endif ], [MSG=yes VALUE=1], [MSG=no VALUE=0])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_RESTART, $VALUE, 
-    [Whether we have SA_RESTART in <signal.h> or not])
-AC_MSG_RESULT([$MSG])
-
-# sa_len in struct sockaddr
-AC_MSG_CHECKING([for sa_len in struct sockaddr])
-AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/socket.h>], [struct sockaddr s; s.sa_len;],
-[MSG=yes VALUE=1], [MSG=no VALUE=0])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_LEN, $VALUE,
-    [Whether we have the sa_len struct in <sys/socket.h> or not])
-AC_MSG_RESULT([$MSG])
-
-AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
-#include <sys/types.h>
-#include <dirent.h>])
-
-AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
-
-
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
 # have both Portland and GNU installed; using pgcc will find GNU's
 # <stdbool.h>, which all it does -- by standard -- is define "bool" to
@@ -1066,6 +1030,56 @@ fi
 AC_DEFINE_UNQUOTED(OMPI_USE_STDBOOL_H, $OMPI_USE_STDBOOL_H,
     [Whether to use <stdbool.h> or not])
 AC_MSG_RESULT([$MSG])
+
+# checkpoint results
+AC_CACHE_SAVE
+
+
+##################################
+# Types
+##################################
+
+ompi_show_title "Type tests"
+
+# Size of pid_t
+AC_CHECK_SIZEOF(pid_t)
+
+AC_CHECK_TYPES([socklen_t], [AC_DEFINE([HAVE_SOCKLEN_T], [1], 
+                                       [Whether we have socklen_t or not])],
+               [], [AC_INCLUDES_DEFAULT
+#include <sys/socket.h>])
+
+AC_CHECK_TYPES([struct sockaddr_in], [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+
+# SA_RESTART in signal.h
+AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
+AC_EGREP_CPP(yes, [
+#include <signal.h>
+#ifdef SA_RESTART
+    yes
+#endif ], [MSG=yes VALUE=1], [MSG=no VALUE=0])
+AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_RESTART, $VALUE, 
+    [Whether we have SA_RESTART in <signal.h> or not])
+AC_MSG_RESULT([$MSG])
+
+# sa_len in struct sockaddr
+AC_MSG_CHECKING([for sa_len in struct sockaddr])
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/socket.h>], [struct sockaddr s; s.sa_len;],
+[MSG=yes VALUE=1], [MSG=no VALUE=0])
+AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_LEN, $VALUE,
+    [Whether we have the sa_len struct in <sys/socket.h> or not])
+AC_MSG_RESULT([$MSG])
+
+AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
+#include <sys/types.h>
+#include <dirent.h>])
+
+AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
+
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -1202,10 +1216,6 @@ AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype cor
 # all: endian
 
 AC_WORDS_BIGENDIAN
-
-# Size of pid_t
-
-AC_CHECK_SIZEOF(pid_t)
 
 OMPI_CHECK_BROKEN_QSORT
 

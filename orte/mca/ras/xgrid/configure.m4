@@ -15,6 +15,8 @@
 # $HEADER$
 #
 
+# MCA_ras_xgrid_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
 AC_DEFUN([MCA_ras_xgrid_CONFIG],[
     OMPI_CHECK_XGRID([ras_xgrid], [ras_xgrid_good=1], [ras_xgrid_good=0])
          

@@ -15,6 +15,8 @@
 # $HEADER$
 #
 
+# MCA_iof_null_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
 AC_DEFUN([MCA_iof_null_CONFIG],[
 
     # README README README README README README README README README
