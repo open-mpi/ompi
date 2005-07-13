@@ -16,17 +16,16 @@
  *
  */
 
-#include "ompi_config.h"
-
-#include "include/orte_constants.h"
-#include "include/types.h"
-#include "opal/class/opal_list.h"
-#include "util/proc_info.h"
-#include "mca/mca.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/pls/base/base.h"
-
+#include "orte_config.h"
 #include <sys/bproc.h>
+
+#include "opal/class/opal_list.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/include/orte_constants.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/pls/base/base.h"
+
 #include "pls_bproc.h"
 
 /*
@@ -82,12 +81,16 @@ int orte_pls_bproc_component_open(void) {
     mca_pls_bproc_component.terminate_sig = 
                             orte_pls_bproc_param_register_int("terminate_sig", 9);
     
+    mca_pls_bproc_component.num_procs = 0; 
+    mca_pls_bproc_component.done_launching = false; 
+    OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
 
     return ORTE_SUCCESS;
 }
 
 
 int orte_pls_bproc_component_close(void) {
+    OBJ_DESTRUCT(&mca_pls_bproc_component.lock);
     return ORTE_SUCCESS;
 }
 

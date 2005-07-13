@@ -80,6 +80,8 @@ int orte_ns_nds_bproc_get(void) {
 
         vpid_string = getenv("BPROC_RANK");
         if (NULL == vpid_string) {
+            opal_output(0, "orte_ns_nds_bproc_get: Error: Environment variable "
+                           "BPROC_RANK not found.\n");
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
