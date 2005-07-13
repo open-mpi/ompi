@@ -67,11 +67,11 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 
     AC_CHECK_HEADERS(infiniband/verbs.h,,
         [CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
-         eval "unset ac_cv_header_vapi_h"
+         eval "unset ac_cv_header_verbs_h"
          AC_CHECK_HEADERS(infiniband/verbs.h,,
              AC_MSG_ERROR([*** Cannot find working infiniband/verbs.h]))])
 
-    # Many vapi.h's have horrid semantics and don't obey ISOC99
+    # Many verbs.h's have horrid semantics and don't obey ISOC99
     # standards.  So we have to turn off flags like -pedantic.  Sigh.
 
 # Galen: is this true for Open IB?
@@ -86,17 +86,17 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     LD_LIBRARY_PATH_save="$LD_LIBRARY_PATH"
     unset LD_LIBRARY_PATH
 
-    # Helper function to try to find libvapi (called from below).
+    # Helper function to try to find libibverbs (called from below).
 
 mca_btl_openib_try_find_lib() {
     func1=[$]1
     func2=[$]2
 
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-    vapi_badness=
-    AC_CHECK_LIB([vapi], [$func1], [], [vapi_badness=true],
-	[-lmthca -libcm])
-    if test "$vapi_badness" != ""; then
+    ibverbs_badness=
+    AC_CHECK_LIB([ibverbs], [$func1], [], [ibverbs_badness=true],
+	[-libcm])
+    if test "$ibverbs_badness" != ""; then
 	AC_TRY_LINK([#include <pthread.h>], [pthread_create(0,0,0,0);], 
 	    [pthreads="yes"], 
 	    [pthreads="no"])
@@ -104,8 +104,8 @@ mca_btl_openib_try_find_lib() {
 	    [sysfs=yes LIBS="$LIBS -lsysfs"], 
 	    [sysfs=no])
 	if test "$pthread" = "yes" && test "$sysfs" = "yes"; then
-	    AC_CHECK_LIB([vapi], [$func2], [], [],
-		[-lmthca -libcm])
+	    AC_CHECK_LIB([ibverbs], [$func2], [], [],
+		[-libcm])
 	fi
 	
 	
@@ -118,28 +118,28 @@ mca_btl_openib_try_find_lib() {
     LIBS_save="$LIBS"
     LDFLAGS_save="$LDFLAGS"
 # Galen: Are these the right extra libs?
-    LIBS="$LIBS -lmthca -libcm"
+    LIBS="$LIBS -libcm"
     LIBS_orig="$LIBS"
 
     EXTRA_LDFLAGS=
     if test -d "$IBLIBDIR/lib/infiniband"; then
-        EXTRA_LDFLAGS="-L$IBLIBDIR/lib/infiniband"
+        EXTRA_LDFLAGS="-L$IBLIBDIR/lib/infiniband -L$IBLIBDIR/lib -L$IBLIBDIR/lib/sysfs"
         LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
 # Galen: are these the right symbol names?
         mca_btl_openib_try_find_lib ibv_get_devices ibv_open_device
         if test "$LIBS" != "$LIBS_orig"; then
-# Galen: Are we looking for "libvapi"?
+# Galen: Are we looking for "libibverbs"?
             echo "--> found libibverbs libs in $IBLIBDIR/lib"
         fi
     fi
 
     if test "$LIBS" = "$LIBS_orig"; then
-# Galen: Are we looking for "libvapi"?
+# Galen: Are we looking for "libibverbs"?
       AC_MSG_ERROR([*** Cannot find working libibverbs.])
     fi
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH_save"
 # Galen: Are these the right extra libs?
-    LIBS="$LIBS -lmthca -libcm"
+    LIBS="$LIBS -libcm"
 
     #
     # Save extra compiler/linker flags so that they can be added in
@@ -148,5 +148,5 @@ mca_btl_openib_try_find_lib() {
 
     WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
 # Galen: Are these the right extra libs?
-    WRAPPER_EXTRA_LIBS="-libibverbs -lmmthca -libcm"
+    WRAPPER_EXTRA_LIBS="-libverbs -libcm"
 ])dnl

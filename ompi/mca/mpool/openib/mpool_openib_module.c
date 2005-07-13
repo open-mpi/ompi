@@ -66,7 +66,7 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
         
     
     vapi_reg->mr = ibv_reg_mr(
-                              mpool_module->resources->ib_pd, 
+                              mpool_module->resources.ib_pd, 
                               addr, 
                               size, 
                               IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE
@@ -91,17 +91,11 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
 int mca_mpool_openib_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size, 
                               mca_mpool_base_registration_t* registration){
     
-    VAPI_ret_t ret; 
     mca_mpool_openib_module_t * mpool_openib = (mca_mpool_openib_module_t*) mpool; 
-    mca_mpool_openib_registration_t * vapi_reg; 
-    vapi_reg = (mca_mpool_openib_registration_t*) registration; 
-    ret = VAPI_deregister_mr(
-                             mpool_openib->hca_pd.hca, 
-                             vapi_reg->hndl 
-                             ); 
-    
-    if(VAPI_OK != ret){ 
-        opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
+    mca_mpool_openib_registration_t * openib_reg; 
+    openib_reg = (mca_mpool_openib_registration_t*) registration; 
+    if(! ibv_dereg_mr(openib_reg->mr)){   
+        opal_output(0, "%s: error unpinning openib memory\n", __func__); 
         return OMPI_ERROR; 
     }
     free(registration); 

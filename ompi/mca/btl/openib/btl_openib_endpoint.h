@@ -136,7 +136,7 @@ static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt,
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
     struct ibv_recv_wr* bad_wr; 
-    struct ibv_recv_wr** rr_desc_post = openib_btl->rr_desc_post; 
+    struct ibv_recv_wr* rr_desc_post = openib_btl->rr_desc_post; 
 
     /* prepare frags and post receive requests, given, this is ugly, 
      * if openib doesn't plan on supporting a post_list method than 
@@ -157,7 +157,7 @@ static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt,
     for(i=0; i< cnt; i++){ 
         
         if(ibv_post_recv(qp, 
-                         rr_desc_post[i], 
+                         &rr_desc_post[i], 
                          &bad_wr)) { 
             opal_output(0, "%s: error posting receive\n", __func__); 
             return OMPI_ERROR; 

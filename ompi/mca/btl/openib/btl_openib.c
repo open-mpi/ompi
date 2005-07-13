@@ -16,6 +16,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
+#include <inttypes.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "mca/pml/pml.h"
@@ -187,7 +188,7 @@ int mca_btl_openib_free(
     if(frag->size == 0) {
         MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
      
-        OBJ_RELEASE(frag->vapi_reg); 
+        OBJ_RELEASE(frag->openib_reg); 
         
             
     } 
@@ -394,10 +395,10 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         } 
         frag->mr = openib_reg->mr; 
         frag->sg_entry.length = max_data; 
-        frag->sg_entry.lkey = openib_reg->l_key; 
+        frag->sg_entry.lkey = openib_reg->mr->lkey;
         frag->sg_entry.addr = (uintptr_t) iov.iov_base; 
         
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->l_key; 
+        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
             
         frag->base.des_src = &frag->segment;
         frag->base.des_src_cnt = 1;
@@ -617,7 +618,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     
     frag->mr = openib_reg->mr; 
-    frag->sg_entry.len = *size; 
+    frag->sg_entry.length = *size; 
     frag->sg_entry.lkey = openib_reg->mr->lkey; 
     frag->sg_entry.addr = (uintptr_t) frag->segment.seg_addr.pval; 
     
@@ -708,17 +709,16 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_descriptor_t* descriptor)
 {
     struct ibv_send_wr* bad_wr; 
-    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; 
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     frag->endpoint = endpoint;
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE; 
-    frag->sr_desc.rdma.remote_addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
-    frag->sr_desc.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
+    frag->sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
+    frag->sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
     frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
     frag->sg_entry.length  = frag->base.des_src->seg_len; 
 
     if(ibv_post_send(endpoint->lcl_qp_low, 
-                     frag->sr_desc, 
+                     &frag->sr_desc, 
                      &bad_wr)){ 
         opal_output(0, "%s: error posting send request\n", __func__); 
         return OMPI_ERROR; 
@@ -792,14 +792,21 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     
     
     if(NULL == openib_btl->ib_pd) {
-        ompi_output(0, "%s: error allocating pd for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
+        opal_output(0, "%s: error allocating pd for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
         return OMPI_ERROR;
     }
     
-    openib_btl->ib_cq = ibv_create_cq(ctx, openib_btl->ib_cq_size, NULL); 
+    openib_btl->ib_cq_low = ibv_create_cq(ctx, openib_btl->ib_cq_size, NULL); 
     
-    if(NULL == openib_btl->ib_cq) {
-        ompi_output(0, "%s: error creating cq for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
+    if(NULL == openib_btl->ib_cq_low) {
+        opal_output(0, "%s: error creating low priority cq for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
+        return OMPI_ERROR;
+    }
+
+    openib_btl->ib_cq_high = ibv_create_cq(ctx, openib_btl->ib_cq_size, NULL); 
+    
+    if(NULL == openib_btl->ib_cq_high) {
+        opal_output(0, "%s: error creating high priority cq for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
         return OMPI_ERROR;
     }
         
