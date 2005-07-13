@@ -25,6 +25,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/base/base.h"
 #include "mca/ns/base/ns_base_nds.h"
+#include "opal/util/output.h"
 
 
 static orte_ns_nds_t orte_ns_nds[] = {

@@ -18,9 +18,17 @@
 AC_DEFUN([MCA_io_romio_CONFIG],[
     io_romio_LIBS="$LIBS"
 
+    AC_ARG_ENABLE([io-romio],
+                  [AC_HELP_STRING([--disable-io-romio],
+                                  [Disable the ROMIO MPI-IO component])])
     AC_ARG_WITH([io-romio-flags], 
                 [AC_HELP_STRING([--with-io-romio-flags=FLAGS],
                                 [Pass FLAGS to the ROMIO distribution configuration script])])
+    AC_MSG_CHECKING([if want ROMIO component])
+    AS_IF([test "$enable_io_romio" = "no"],
+           [AC_MSG_RESULT([no])
+            $2], 
+           [AC_MSG_RESULT([yes])
 
     AC_MSG_CHECKING([if MPI profiling is enabled])
     AS_IF([test "$enable_mpi_profile" = "no"],
@@ -54,5 +62,5 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                   $1],
                  [LIBS="$io_romio_LIBS"
                   AC_MSG_WARN([ROMIO distribution did not configure successfully])
-                  $2])])
+                  $2])])])
 ])

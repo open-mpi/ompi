@@ -78,7 +78,7 @@ elif test "$THREAD_TYPE" = "posix"; then
     fi
 elif test "$THREAD_TYPE" = "no"; then
     THREAD_TYPE="none"
-elif test "$THREAD_TYPE" = "yes"; then
+elif test -z "$THREAD_TYPE" -o "$THREAD_TYPE" = "yes"; then
 
     # Actual logic here - properly set THREAD_TYPE - we go for system
     # optimized where ever possible
@@ -100,8 +100,6 @@ elif test "$THREAD_TYPE" = "yes"; then
 	    fi
 	    ;;
     esac
-elif test -z "$THREAD_TYPE" ; then
-    THREAD_TYPE="none"
 else
 
     AC_MSG_WARN(["*** You have specified a thread type that I do not"])
@@ -180,18 +178,22 @@ fi
 AC_MSG_CHECKING([if want MPI thread support])
 AC_ARG_ENABLE([mpi-threads],
     AC_HELP_STRING([--enable-mpi-threads],
-        [Enable threads for MPI applications (default: enabled)]),
+        [Enable threads for MPI applications (default: disabled)]),
     [enable_mpi_threads="$enableval"])
 
 if test "$enable_mpi_threads" = "" ; then 
-    # no argument given either way.  Default to whether we have threads or not
-    if test "$THREAD_TYPE" != "none" ; then
-        OMPI_ENABLE_MPI_THREADS=1
-        enable_mpi_threads="yes"
-    else
-        OMPI_ENABLE_MPI_THREADS=0
-        enable_mpi_threads="no"
-    fi
+dnl    # no argument given either way.  Default to whether
+dnl    # we have threads or not
+dnl    if test "$THREAD_TYPE" != "none" ; then
+dnl        OMPI_ENABLE_MPI_THREADS=1
+dnl        enable_mpi_threads="yes"
+dnl    else
+dnl        OMPI_ENABLE_MPI_THREADS=0
+dnl        enable_mpi_threads="no"
+dnl    fi
+    # no argument - default to no
+    OMPI_ENABLE_MPI_THREADS=0
+    enable_mpi_threads="no"
 elif test "$enable_mpi_threads" = "no" ; then
     OMPI_ENABLE_MPI_THREADS=0
 else
