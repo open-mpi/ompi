@@ -36,9 +36,6 @@ extern "C" {
  */
 struct mca_ptl_self_component_t {
    mca_ptl_base_component_1_0_0_t super;              /**< base PTL component */
-   struct mca_ptl_base_module_t** self_ptl_modules;   /**< array of available PTL modules */
-   uint32_t            self_num_ptl_modules;  /**< number of ptl modules actually used */
-   uint32_t            self_max_ptl_modules;  /**< maximum number of ptl modules */
    uint32_t            self_buf_size;         /**< the size of the internal buffer used to pack/unpack the data */
    uint32_t            self_is_non_blocking;  /**< how the memcopy operations are done segmented or not */
    int32_t             self_free_list_num;    /**< initial size of free lists */
