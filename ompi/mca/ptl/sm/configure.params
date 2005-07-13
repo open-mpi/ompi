@@ -19,4 +19,4 @@
 
 PARAM_INIT_FILE=src/ptl_sm.c
 PARAM_CONFIG_HEADER_FILE="src/sm_config.h"
-PARAM_CONFIG_FILES="Makefile src/Makefile"
+PARAM_CONFIG_FILES="Makefile"
