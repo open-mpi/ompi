@@ -122,7 +122,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_component.ib_mem_registry_hints_log_size = 
         mca_btl_mvapi_param_register_int ("hints_log_size", 8);
     mca_btl_mvapi_component.ib_mpool_name = 
-        mca_btl_mvapi_param_register_string("mpool", "ib"); 
+        mca_btl_mvapi_param_register_string("mpool", "mvapi"); 
     mca_btl_mvapi_component.ib_rr_buf_max = 
         mca_btl_mvapi_param_register_int("rr_buf_max", 16); 
     mca_btl_mvapi_component.ib_rr_buf_min = 

@@ -125,7 +125,7 @@ int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_
         opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
         return OMPI_ERROR; 
     }
-    free(registration); 
+   
     return OMPI_SUCCESS; 
 }
 

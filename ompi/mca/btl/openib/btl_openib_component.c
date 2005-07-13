@@ -124,7 +124,7 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_component.ib_mem_registry_hints_log_size = 
         mca_btl_openib_param_register_int ("hints_log_size", 8);
     mca_btl_openib_component.ib_mpool_name = 
-        mca_btl_openib_param_register_string("mpool", "ib"); 
+        mca_btl_openib_param_register_string("mpool", "openib"); 
     mca_btl_openib_component.ib_rr_buf_max = 
         mca_btl_openib_param_register_int("rr_buf_max", 16); 
     mca_btl_openib_component.ib_rr_buf_min = 

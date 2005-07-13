@@ -40,14 +40,14 @@ mca_mpool_mvapi_component_t mca_mpool_mvapi_component = {
         /* Indicate that we are a mpool v1.0.0 component (which also
            implies a specific MCA version) */
 
-        MCA_MPOOL_BASE_VERSION_1_0_0,
-
-        "vapi", /* MCA component name */
-        OMPI_MAJOR_VERSION,  /* MCA component major version */
-        OMPI_MINOR_VERSION,  /* MCA component minor version */
-        OMPI_RELEASE_VERSION,  /* MCA component release version */
-        mca_mpool_mvapi_open,  /* component open  */
-        NULL
+          MCA_MPOOL_BASE_VERSION_1_0_0,
+          
+          "mvapi", /* MCA component name */
+          OMPI_MAJOR_VERSION,  /* MCA component major version */
+          OMPI_MINOR_VERSION,  /* MCA component minor version */
+          OMPI_RELEASE_VERSION,  /* MCA component release version */
+          mca_mpool_mvapi_open,  /* component open  */
+          NULL
       },
 
       /* Next the MCA v1.0.0 component meta data */
