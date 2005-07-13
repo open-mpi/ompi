@@ -51,7 +51,7 @@
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
 
-#ifdef HAVE_STRUCT_SOCKADDR_IN
+#ifdef HAVE_STRUCT_SOCKADDR_IN && 0
 
 #ifndef IF_NAMESIZE
 #define IF_NAMESIZE 32
@@ -659,55 +659,55 @@ opal_ifaddrtoname(const char* if_addr,
 }
 
 int
-opal_ifnametoindex(const char* if_name);
+opal_ifnametoindex(const char* if_name)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifcount(void);
+opal_ifcount(void)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifbegin(void); 
+opal_ifbegin(void)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifnext(int if_index);
+opal_ifnext(int if_index)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifindextoname(int if_index, char* if_name, int);
+opal_ifindextoname(int if_index, char* if_name, int length)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifindextoaddr(int if_index, struct sockaddr*, int);
+opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, int length)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifindextomask(int if_index, struct sockaddr*, int);
+opal_ifindextomask(int if_index, struct sockaddr* if_addr, int length)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
 bool
-opal_ifislocal(char *hostname);
+opal_ifislocal(char *hostname)
 {
     return false;
 }
 
 int
-opal_iffinalize(void);
+opal_iffinalize(void)
 {
     return OMPI_SUCCESS;
 }
