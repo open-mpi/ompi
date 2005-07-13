@@ -14,7 +14,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -24,23 +24,22 @@
 #include <sys/bproc.h>
 #include <dirent.h>
 
-#include "include/orte_constants.h"
-#include "opal/util/output.h"
-#include "util/sys_info.h"
-#include "util/univ_info.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/iof_base_setup.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/pls/base/base.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
-#include "pls_bproc_orted.h"
-#include "mca/ns/base/base.h"
-#include "opal/util/os_create_dirpath.h"
-#include "mca/oob/base/base.h"
-#include "opal/util/os_path.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
+#include "opal/util/os_create_dirpath.h"
+#include "opal/util/os_path.h"
+#include "opal/util/output.h"
+#include "opal/util/sys_info.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/iof_base_setup.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/util/univ_info.h"
 #include "pls_bproc_orted.h"
 
 orte_pls_base_module_1_0_0_t orte_pls_bproc_orted_module = {

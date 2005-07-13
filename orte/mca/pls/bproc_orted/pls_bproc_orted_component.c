@@ -15,14 +15,15 @@
  *
  */
 
-#include "ompi_config.h"
-#include "mca/pls/pls.h"
-#include "pls_bproc_orted.h"
-#include "mca/base/mca_base_param.h"
-#include "include/orte_constants.h"
-#include "util/proc_info.h"
+#include "orte_config.h"
+
 #include <sys/bproc.h>
 
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/util/proc_info.h"
+#include "pls_bproc_orted.h"
 
 /*
  * Instantiate the public struct with all of our public information

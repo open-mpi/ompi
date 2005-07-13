@@ -17,12 +17,11 @@
 #ifndef ORTE_PLS_BPROC_ORTED_H_
 #define ORTE_PLS_BPROC_ORTED_H_
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
+#include "opal/mca/mca.h"
 #include "opal/threads/condition.h"
-#include "mca/mca.h"
-#include "mca/pls/pls.h"
-#include "class/orte_value_array.h"
+#include "orte/mca/pls/pls.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

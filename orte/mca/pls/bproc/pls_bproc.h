@@ -35,8 +35,8 @@
 #ifndef ORTE_PLS_BPROC_H_
 #define ORTE_PLS_BPROC_H_
 
-#include "ompi_config.h"
-#include "mca/pls/base/base.h"
+#include "orte_config.h"
+#include "orte/mca/pls/base/base.h"
 #include "opal/threads/condition.h"
 #include <sys/bproc.h>
 
@@ -72,6 +72,9 @@ struct orte_pls_bproc_component_t {
     int priority;
     char * orted;
     int terminate_sig;
+    int num_procs;
+    opal_mutex_t lock;
+    bool done_launching;
 };
 typedef struct orte_pls_bproc_component_t orte_pls_bproc_component_t;
 
