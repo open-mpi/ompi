@@ -80,8 +80,6 @@ int mca_ptl_self_add_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, stru
 {
     size_t i, count;
 
-    mca_ptl_self_component.self_local = ompi_proc_local();
-
     for( i = 0, count = 0; i < nprocs; i++ ) {
         if( ompi_proc[i] == mca_ptl_self_component.self_local ) {
             ompi_bitmap_set_bit( reachable, i );

@@ -117,12 +117,6 @@ static inline int mca_ptl_self_param_register_int(
 
 int mca_ptl_self_component_open(void)
 {
-    /* initialize state */
-    mca_ptl_self_component.self_ptl_modules = NULL;
-    mca_ptl_self_component.self_num_ptl_modules = 0;
-    
-    /* initialize objects */
-
     /* register SELF component parameters */
     mca_ptl_self_component.self_buf_size =
         mca_ptl_self_param_register_int("buffer_size", 64*1024);
@@ -133,6 +127,9 @@ int mca_ptl_self_component_open(void)
 
 int mca_ptl_self_component_close(void)
 {
+    if( NULL == mca_ptl_self_component.self_local )
+        return OMPI_SUCCESS;
+
     if (mca_ptl_self_component.self_send_requests.fl_num_allocated != 
         mca_ptl_self_component.self_send_requests.super.opal_list_length) {
         opal_output(0, "self send requests: %d allocated %d returned\n",
@@ -140,15 +137,8 @@ int mca_ptl_self_component_close(void)
             mca_ptl_self_component.self_send_requests.super.opal_list_length);
     }
 
-#if 0
-    /* JMS debug */
-    if (NULL != mca_ptl_self_component.self_ptl_modules) {
-        free(mca_ptl_self_component.self_ptl_modules);
-        mca_ptl_self_component.self_ptl_modules = NULL;
-        OBJ_DESTRUCT( &(mca_ptl_self_component.self_send_requests) );
-    }
-    mca_ptl_self_component.self_num_ptl_modules = 0;
-#endif
+    OBJ_DESTRUCT( &(mca_ptl_self_component.self_send_requests) );
+
     return OMPI_SUCCESS;
 }
 
@@ -158,17 +148,21 @@ mca_ptl_base_module_t** mca_ptl_self_component_init(int *num_ptl_modules,
                                                     bool enable_mpi_threads)
 {
     *num_ptl_modules = 0;
+    mca_ptl_base_module_t** modules = NULL;
 
-    mca_ptl_self_component.self_ptl_modules = (mca_ptl_base_module_t **)
-                                                malloc(sizeof(mca_ptl_base_module_t*));
-    if( NULL == mca_ptl_self_component.self_ptl_modules )
+    modules = (mca_ptl_base_module_t **)malloc(sizeof(mca_ptl_base_module_t*));
+    if( NULL == modules )
         return NULL;
-    mca_ptl_self_component.self_ptl_modules[0] = &mca_ptl_self_module;
-    mca_ptl_self_component.self_num_ptl_modules = 1;
-    mca_ptl_self_component.self_max_ptl_modules = 1;
+
+    modules[0] = &mca_ptl_self_module;
+
     mca_ptl_self_component.self_free_list_num = 4;
     mca_ptl_self_component.self_free_list_max = -1;
     mca_ptl_self_component.self_free_list_inc = 4;
+
+    /* Initialize the local pointer to the processor */
+    mca_ptl_self_component.self_local = ompi_proc_local();
+
     *num_ptl_modules = 1;
 
     OBJ_CONSTRUCT(&mca_ptl_self_component.self_send_requests, ompi_free_list_t);
@@ -180,5 +174,5 @@ mca_ptl_base_module_t** mca_ptl_self_component_init(int *num_ptl_modules,
                         mca_ptl_self_component.self_free_list_inc,
                         NULL); /* use default allocator */
 
-    return mca_ptl_self_component.self_ptl_modules;
+    return modules;
 }
