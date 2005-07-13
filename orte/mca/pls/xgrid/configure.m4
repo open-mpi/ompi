@@ -15,6 +15,8 @@
 # $HEADER$
 #
 
+# MCA_pls_xgrid_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
 AC_DEFUN([MCA_pls_xgrid_CONFIG],[
     OMPI_CHECK_XGRID([pls_xgrid], [pls_xgrid_good=1], [pls_xgrid_good=0])
 
@@ -29,6 +31,7 @@ AC_DEFUN([MCA_pls_xgrid_CONFIG],[
                   [AC_MSG_WARN([XGrid components must be built as DSOs.  Disabling])
                    $2])])
 
+    # set build flags to use in makefile
     AC_SUBST([pls_xgrid_OBJCFLAGS])
     AC_SUBST([pls_xgrid_LDFLAGS])
 ])dnl

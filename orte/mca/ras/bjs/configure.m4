@@ -15,17 +15,20 @@
 # $HEADER$
 #
 
+# MCA_ras_bjs_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
 AC_DEFUN([MCA_ras_bjs_CONFIG],[
     OMPI_CHECK_BPROC([ras_bjs], [ras_bjs_good=1], [ras_bjs_good=0])
 
-    # For very dumb reasons involving linking, it's near impossible
-    # to build the XGrid components as static libraries.  Disable if that's
-    # the case.
-    AS_IF([test "$ras_bjs_good" = "0"], [$2],
+    # if check worked, set wrapper flags if so.  
+    # Evaluate succeed / fail
+    AS_IF([test "$ras_bjs_good" = "1"],
           [ras_bjs_WRAPPER_EXTRA_LDFLAGS="$ras_bjs_LDFLAGS"
            ras_bjs_WRAPPER_EXTRA_LIBS="$ras_bjs_LIBS"
-           $1])
+           $1],
+          [$2])
 
+    # set build flags to use in makefile
     AC_SUBST([ras_bjs_OBJCFLAGS])
     AC_SUBST([ras_bjs_LDFLAGS])
     AC_SUBST([ras_bjs_LIBS])

@@ -272,6 +272,24 @@ else
 fi
 AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 
+#
+# Do we want the pretty-print stack trace feature?
+#
+AC_MSG_CHECKING([if want pretty-print stacktrace])
+AC_ARG_ENABLE([pretty-print-stacktrace],
+    [AC_HELP_STRING([--enable-pretty-print-stacktrace],
+                    [Pretty print stacktrace on process signal])])
+if test "$enable_pretty_print_stacktrace" = "no" ; then
+    AC_MSG_RESULT([no])
+    WANT_PRETTY_PRINT_STACKTRACE=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_PRETTY_PRINT_STACKTRACE=1
+fi
+AC_DEFINE_UNQUOTED([OMPI_WANT_PRETTY_PRINT_STACKTRACE],
+                   [$WANT_PRETTY_PRINT_STACKTRACE],
+                   [if want pretty-print stack trace feature])
+
 # --enable-dist
 # ...?
 

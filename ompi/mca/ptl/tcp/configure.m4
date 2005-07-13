@@ -15,21 +15,15 @@
 # $HEADER$
 #
 
-# MCA_ras_tm_CONFIG([action-if-found], [action-if-not-found])
+# MCA_ptl_tcp_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ras_tm_CONFIG],[
-    OMPI_CHECK_TM([ras_tm], [ras_tm_good=1], [ras_tm_good=0])
-
-    # if check worked, set wrapper flags if so.  
-    # Evaluate succeed / fail
-    AS_IF([test "$ras_tm_good" = "1"],
-          [ras_tm_WRAPPER_EXTRA_LDFLAGS="$ras_tm_LDFLAGS"
-           ras_tm_WRAPPER_EXTRA_LIBS="$ras_tm_LIBS"
-           $1],
-          [$2])
-
-    # set build flags to use in makefile
-    AC_SUBST([ras_tm_CPPFLAGS])
-    AC_SUBST([ras_tm_LDFLAGS])
-    AC_SUBST([ras_tm_LIBS])
+AC_DEFUN([MCA_ptl_tcp_CONFIG],[
+    # check for sockaddr_in (a good sign we have TCP)
+    AC_CHECK_TYPES([struct sockaddr_in], 
+                   [$1],
+                   [$2], 
+                   [AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
 ])dnl
