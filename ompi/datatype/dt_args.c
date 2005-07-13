@@ -55,9 +55,6 @@ typedef struct __dt_args {
         (PDATA)->args = (void*)pArgs;					\
     } while(0)
 
-#define FREE_ARGS(PDATA) \
-if( (PDATA)->args != NULL ) free( (PDATA)->args );
-
 int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
                            int32_t ci, int32_t** i, 
                            int32_t ca, MPI_Aint* a,
@@ -236,7 +233,8 @@ int32_t ompi_ddt_release_args( ompi_datatype_t* pData )
             OBJ_RELEASE( pArgs->d[i] );
         }
     }
-    FREE_ARGS( pData );
+    free( pData->args );
+    pData->args = NULL;
 
     return OMPI_SUCCESS;
 }
