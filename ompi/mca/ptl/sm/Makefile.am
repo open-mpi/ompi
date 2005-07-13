@@ -40,13 +40,13 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ptl_sm_la_SOURCES = $(sm_SOURCES)
 mca_ptl_sm_la_DEPENDENCIES = librecompile.la
-mca_ptl_sm_la_LIBADD = 
+mca_ptl_sm_la_LIBADD = librecompile.la
 mca_ptl_sm_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst) librecompile.la
 libmca_ptl_sm_la_SOURCES = $(sm_SOURCES)
 libmca_ptl_sm_la_DEPENDENCIES = librecompile.la
-libmca_ptl_sm_la_LIBADD = 
+libmca_ptl_sm_la_LIBADD = librecompile.la
 libmca_ptl_sm_la_LDFLAGS = -module -avoid-version
 
 nodist_librecompile_la_SOURCES = src/ptl_sm_send_alternate.c
