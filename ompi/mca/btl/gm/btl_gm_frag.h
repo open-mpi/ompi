@@ -40,6 +40,7 @@ struct mca_btl_gm_frag_t {
     struct mca_mpool_base_registration_t* registration;
     mca_btl_base_header_t *hdr;
     size_t size; 
+    enum gm_priority priority;
 }; 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t); 
@@ -104,6 +105,22 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
     OMPI_FREE_LIST_RETURN(&((mca_btl_gm_module_t*)btl)->gm_frag_user, \
         (opal_list_item_t*)(frag)); \
 }
+
+                                                                                                       
+#define MCA_BTL_GM_FRAG_POST(btl,frag) \
+do { \
+    if(opal_list_get_size(&btl->gm_repost) < btl->gm_num_repost) { \
+        OPAL_THREAD_LOCK(&btl->gm_lock);  \
+        opal_list_append(&btl->gm_repost, (opal_list_item_t*)frag); \
+        OPAL_THREAD_UNLOCK(&btl->gm_lock);  \
+    } else { \
+        OPAL_THREAD_LOCK(&btl->gm_lock);  \
+        do { \
+            gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, priority); \
+        } while (NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&btl->gm_repost)));  \
+        OPAL_THREAD_UNLOCK(&btl->gm_lock);  \
+    } \
+} while(0) 
 
 
 
