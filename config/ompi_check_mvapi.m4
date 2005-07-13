@@ -23,10 +23,10 @@
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_MVAPI],[
     AC_ARG_WITH([mvapi],
-                [AC_HELP_STRING([--with-mvapi=MVAPI_DIR],
+                [AC_HELP_STRING([--with-btl-mvapi=MVAPI_DIR],
                                 [Additional directory to search for MVAPI installation])])
     AC_ARG_WITH([mvapi-libdir],
-       [AC_HELP_STRING([--with-mvapi-libdir=IBLIBDIR],
+       [AC_HELP_STRING([--with-btl-mvapi-libdir=IBLIBDIR],
                        [directory where the IB library can be found, if it is not in MVAPI_DIR/lib or MVAPI_DIR/lib64])])
 
     AS_IF([test ! -z "$with_mvapi" -a "$with_mvapi" != "yes"],
