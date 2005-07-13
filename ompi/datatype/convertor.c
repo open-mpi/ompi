@@ -31,7 +31,6 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 
     convertor->remoteArch  = remote_arch;
     convertor->pFunctions  = ompi_ddt_copy_functions;
-    convertor->flags       = 0;
 
     return convertor;
 }
@@ -53,6 +52,7 @@ inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
+    convertor->flags             = 0;
     convertor->pDesc             = NULL;
     convertor->pStack            = convertor->static_stack;
     convertor->stack_size        = DT_STATIC_STACK_SIZE;
