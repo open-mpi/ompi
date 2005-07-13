@@ -57,5 +57,5 @@ mca_btl_mvapi_la_LIBADD = $(btl_mvapi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_mvapi_la_SOURCES = $(lib_sources)
-libmca_btl_mvapi_la_LDFLAGS = -module -avoid-version$ (btl_mvapi_LDFLAGS)
+libmca_btl_mvapi_la_LDFLAGS = -module -avoid-version$ $(btl_mvapi_LDFLAGS)
 libmca_btl_mvapi_la_LIBADD = $(btl_mvapi_LIBS)
