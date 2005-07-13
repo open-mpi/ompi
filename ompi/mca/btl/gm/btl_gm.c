@@ -341,7 +341,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
             OBJ_RETAIN(registration);
         } 
         frag->registration = registration;
-
     } 
 
     /*
@@ -650,6 +649,7 @@ int mca_btl_gm_send(
         return OMPI_SUCCESS;
     }
     
+    /* post the send request */
     gm_send_with_callback(
         gm_btl->port,
         frag->hdr,
@@ -660,6 +660,15 @@ int mca_btl_gm_send(
         endpoint->endpoint_addr.port_id,
         mca_btl_gm_send_callback,
         frag);
+
+    if(opal_list_get_size(&gm_btl->gm_repost)) {
+        mca_btl_gm_frag_t* frag;
+        OPAL_THREAD_LOCK(&btl->gm_lock);
+        while(NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&gm_btl->gm_repost))) {
+            gm_provide_receive_buffer(gm_btl->port, frag->hdr, frag->size, frag->priority);
+        }
+        OPAL_THREAD_UNLOCK(&btl->gm_lock);
+    }
     return OMPI_SUCCESS;
 }
 

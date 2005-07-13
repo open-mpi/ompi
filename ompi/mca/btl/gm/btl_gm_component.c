@@ -130,6 +130,8 @@ int mca_btl_gm_component_open(void)
         mca_btl_gm_param_register_int("max_modules", 4); 
     mca_btl_gm_component.gm_num_high_priority = 
         mca_btl_gm_param_register_int("num_high_priority", 8); 
+    mca_btl_gm_component.gm_num_repost = 
+        mca_btl_gm_param_register_int("num_repost", 4); 
     mca_btl_gm_component.gm_port_name=
         mca_btl_gm_param_register_string("port_name", "OMPI"); 
 
@@ -203,6 +205,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_frag_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->gm_frag_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->gm_pending, opal_list_t);
+    OBJ_CONSTRUCT(&btl->gm_repost, opal_list_t);
     OBJ_CONSTRUCT(&btl->gm_lock, opal_mutex_t);
                                                                                                   
     /* query nic tokens */
@@ -215,6 +218,11 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     num_high_priority = mca_btl_gm_component.gm_num_high_priority;
     if(num_high_priority > (btl->gm_num_recv_tokens >> 1)) {
         num_high_priority = btl->gm_num_recv_tokens >> 1;
+    }
+    if(mca_btl_gm_component.gm_num_repost > num_high_priority >> 1) {
+        btl->gm_num_repost = (num_high_priority >> 1);
+    } else {
+        btl->gm_num_repost = mca_btl_gm_component.gm_num_repost;
     }
                                                                                                   
     /* initialize memory pool */
@@ -265,6 +273,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         frag->base.des_src_cnt = 0;
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
+        frag->priority = GM_LOW_PRIORITY;
         gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, GM_LOW_PRIORITY);
     }
 
@@ -278,6 +287,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         frag->base.des_src_cnt = 0;
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
+        frag->priority = GM_LOW_PRIORITY;
         gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, GM_LOW_PRIORITY);
     }
 
@@ -495,7 +505,7 @@ int mca_btl_gm_component_progress()
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
-                gm_provide_receive_buffer(btl->port, buffer, frag->size, priority);
+                MCA_BTL_GM_FRAG_POST(btl,frag);
                 count++;
                 break;
                 }
@@ -511,7 +521,7 @@ int mca_btl_gm_component_progress()
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
-                gm_provide_receive_buffer(btl->port, buffer, frag->size, priority);
+                MCA_BTL_GM_FRAG_POST(btl,frag);
                 count++;
                 break;
                 }
