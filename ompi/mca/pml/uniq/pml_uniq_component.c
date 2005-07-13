@@ -104,7 +104,7 @@ int mca_pml_uniq_component_open(void)
         mca_pml_uniq_param_register_int("poll_iterations", 100000);
 
     mca_pml_uniq.uniq_priority = 
-        mca_pml_uniq_param_register_int("priority", 50);
+        mca_pml_uniq_param_register_int("priority", 0);
     return OMPI_SUCCESS;
 }
 
