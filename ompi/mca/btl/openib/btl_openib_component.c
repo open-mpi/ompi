@@ -26,7 +26,6 @@
 
 #include "mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
-#include "mca/common/vapi/vapi_mem_reg.h"
 #include "mca/mpool/base/base.h" 
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
@@ -109,7 +108,7 @@ int mca_btl_openib_component_open(void)
     
     /* initialize state */
     mca_btl_openib_component.ib_num_btls=0;
-    mca_btl_openib_component.mvapi_btls=NULL;
+    mca_btl_openib_component.openib_btls=NULL;
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
@@ -169,7 +168,7 @@ int mca_btl_openib_component_open(void)
                                       1); 
     mca_btl_openib_module.ib_mtu = 
         mca_btl_openib_param_register_int("ib_mtu", 
-                                      MTU1024); 
+                                          IBV_MTU_1024); 
     mca_btl_openib_module.ib_min_rnr_timer = 
         mca_btl_openib_param_register_int("ib_min_rnr_timer", 
                                       5);
@@ -249,7 +248,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     uint32_t i,j, length;
     struct mca_mpool_base_resources_t mpool_resources; 
     opal_list_t btl_list; 
-    mca_btl_openib_module_t * mvapi_btl; 
+    mca_btl_openib_module_t * openib_btl; 
     mca_btl_base_selected_module_t* ib_selected; 
     opal_list_item_t* item; 
     /* initialization */
@@ -273,7 +272,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         
     
     /* Allocate space for the ib devices */ 
-    ib_devs = (struct ibv_dev**) malloc(num_devs * sizeof(struct ibv_dev*));
+    ib_devs = (struct ibv_device**) malloc(num_devs * sizeof(struct ibv_dev*));
         if(NULL == ib_devs) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
@@ -281,7 +280,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
     dlist_start(dev_list); 
 
-    int i = 0; 
+    i = 0; 
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
         ib_devs[i++] =  ib_dev; 
     
@@ -295,7 +294,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
 
     for(i = 0; i < num_devs; i++){  
-        struct ibv_device_attr* ib_attr; 
+        struct ibv_device_attr ib_dev_attr; 
         struct ibv_context* ib_dev_context; 
         ib_dev = ib_devs[i]; 
         
@@ -305,7 +304,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
             return NULL; 
         } 
         
-        if(ibv_query_device(context, &ib_attr)){ 
+        if(ibv_query_device(ib_dev_context, &ib_dev_attr)){ 
             opal_output(0, "%s: error obtaining device attributes for %s\n", __func__, ibv_get_device_name(ib_dev)); 
             return NULL; 
         } 
@@ -315,7 +314,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         
         for(j = 1; j <= ib_dev_attr.phys_port_cnt; j++){ 
             struct ibv_port_attr* ib_port_attr; 
-            if(ibv_query_port(ib_dev_context, (uint8_t) j, &ib_port_attr)){ 
+            ib_port_attr = (struct ibv_port_attr*) malloc(sizeof(struct ibv_port_attr)); 
+            if(ibv_query_port(ib_dev_context, (uint8_t) j, ib_port_attr)){ 
                 opal_output(0, "%s: error getting port attributes for device %s port number %d", 
                             __func__, ibv_get_device_name(ib_dev), j); 
                 return NULL; 
@@ -323,8 +323,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
             if( IBV_PORT_ACTIVE == ib_port_attr->state ){ 
                 
-                 openib_btl = (mca_btl_openib_module_t*) malloc(sizeof(mca_btl_openib_module_t)); 
-                 memcpy(openib_btl, &mca_btl_openib_module, sizeof(mca_btl_openib_module));
+                openib_btl = (mca_btl_openib_module_t*) malloc(sizeof(mca_btl_openib_module_t)); 
+                memcpy(openib_btl, &mca_btl_openib_module, sizeof(mca_btl_openib_module));
                  
                  ib_selected = OBJ_NEW(mca_btl_base_selected_module_t); 
                  ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl; 
@@ -468,8 +468,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         
         
         /* Initialize the rr_desc_post array for posting of rr*/ 
-        openib_btl->rr_desc_post = (struct ibv_recv_wr **) 
-            malloc((mca_btl_openib_component.ib_rr_buf_max * sizeof(struct ibv_recv_wr*))); 
+        openib_btl->rr_desc_post = (struct ibv_recv_wr *) 
+            malloc((mca_btl_openib_component.ib_rr_buf_max * sizeof(struct ibv_recv_wr))); 
         
         btls[i] = &openib_btl->super;
     }
@@ -478,7 +478,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_post_recv();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;
-    free(hca_ids);
+    free(ib_devs);  
     return btls;
 }
 
@@ -489,105 +489,128 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
 int mca_btl_openib_component_progress()
 {
-    uint32_t i;
+    uint32_t i, ne;
     int count = 0;
     mca_btl_openib_frag_t* frag; 
     /* Poll for completions */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        VAPI_ret_t ret; 
-        VAPI_wc_desc_t comp; 
+        
+        struct ibv_wc wc; 
         mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
         
-        do{ 
-        ret = VAPI_poll_cq(openib_btl->nic, openib_btl->cq_hndl_high, &comp); 
-        if(VAPI_OK == ret) { 
-            if(comp.status != VAPI_SUCCESS) { 
-                opal_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
-                            VAPI_wc_status_sym(comp.status), 
-                            comp.vendor_err_syndrome, comp.id);  
+        do{
+            ne=ibv_poll_cq(openib_btl->ib_cq_high, 1, &wc );
+            if(ne < 0 ){ 
+                opal_output(0, "%s: error polling CQ with %d \n", __func__, ne); 
+                return OMPI_ERROR; 
+            } 
+            else if(wc.status != IBV_WC_SUCCESS) { 
+                opal_output(0, "%s: error polling CQ with status %d for wr_id %d\n", 
+                            __func__, 
+                            wc.status, wc.wr_id); 
                 return OMPI_ERROR; 
             }
-            
-            /* Handle n/w completions */
-            switch(comp.opcode) {
-            case VAPI_CQE_RQ_RDMA_WITH_IMM: 
-                if(comp.imm_data_valid){ 
-                    opal_output(0, "Got an RQ_RDMA_WITH_IMM!\n"); 
-                    
+            else if(1 == ne) {             
+                /* Handle n/w completions */
+                switch(wc.opcode) {
+                case IBV_WC_RECV_RDMA_WITH_IMM: 
+                    opal_output(0, "Got an RDMA with Immediate data Not supported!\n"); 
+                    return OMPI_ERROR; 
+                
+                case IBV_WC_RDMA_WRITE: 
+                case IBV_WC_SEND :
+                    if(wc.opcode & IBV_WC_RECV){ 
+                        /* process a recv completion (this should only occur for a send not an rdma) */ 
+                        DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                        frag = (mca_btl_openib_frag_t*) wc.wr_id;
+                        frag->rc=OMPI_SUCCESS; 
+                        frag->segment.seg_len =  
+                            wc.byte_len-
+                            ((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
+                
+                        /* advance the segment address past the header and subtract from the length..*/ 
+                        openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, 
+                                                                  frag->hdr->tag, 
+                                                                  &frag->base, 
+                                                                  openib_btl->ib_reg[frag->hdr->tag].cbdata);         
+                
+                        OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
+                        OPAL_THREAD_ADD32(&openib_btl->rr_posted_high, -1); 
+                
+                        mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
+                
+                        count++; 
+                    }
+                    else {
+                        /* Process a completed send */
+                        frag = (mca_btl_openib_frag_t*) wc.wr_id; 
+                        frag->rc = OMPI_SUCCESS; 
+                        frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
+                        count++;
+               
+                    }
+
+                    break;
+                
+                default:
+                    opal_output(0, "Errorneous network completion");
+                    break;
                 }
-                break; 
-            case VAPI_CQE_SQ_RDMA_WRITE:
-            case VAPI_CQE_SQ_SEND_DATA :
-                
-                /* Process a completed send */
-                frag = (mca_btl_openib_frag_t*) comp.id; 
-                frag->rc = OMPI_SUCCESS; 
-                frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
-                count++;
-                break;
-                
-            case VAPI_CQE_RQ_SEND_DATA:
-                
-                DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
-                frag = (mca_btl_openib_frag_t*) comp.id;
-                frag->rc=OMPI_SUCCESS; 
-                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
-                /* advance the segment address past the header and subtract from the length..*/ 
-                openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, frag->hdr->tag, &frag->base, openib_btl->ib_reg[frag->hdr->tag].cbdata);         
-                
-                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
-                OPAL_THREAD_ADD32(&openib_btl->rr_posted_high, -1); 
-                
-                mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)comp.id)->endpoint, 0); 
-                
-                count++; 
-                break;
-                
-            default:
-                opal_output(0, "Errorneous network completion");
-                break;
             }
         }
+        while(ne > 0); 
+        
+        ne=ibv_poll_cq(openib_btl->ib_cq_low, 1, &wc );
+        if(ne < 0){ 
+            opal_output(0, "%s: error polling CQ with %d \n", __func__, ne); 
+            return OMPI_ERROR; 
+        } 
+        else if(wc.status != IBV_WC_SUCCESS) { 
+            opal_output(0, "%s: error polling CQ with status %d for wr_id %d\n", 
+                        __func__, 
+                        wc.status, wc.wr_id); 
+            return OMPI_ERROR; 
         }
-        while(VAPI_OK == ret); 
-
-        ret = VAPI_poll_cq(openib_btl->nic, openib_btl->cq_hndl_low, &comp); 
-        if(VAPI_OK == ret) { 
-            if(comp.status != VAPI_SUCCESS) { 
-                opal_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
-                            VAPI_wc_status_sym(comp.status), 
-                            comp.vendor_err_syndrome, comp.id);  
-                return OMPI_ERROR; 
-            }
-            
+        else if(1 == ne) {             
             /* Handle n/w completions */
-            switch(comp.opcode) {
-            case VAPI_CQE_SQ_RDMA_WRITE:
-            case VAPI_CQE_SQ_SEND_DATA :
+            switch(wc.opcode) {
+            case IBV_WC_RECV_RDMA_WITH_IMM: 
+                opal_output(0, "Got an RDMA with Immediate data Not supported!\n"); 
+                return OMPI_ERROR; 
                 
-                /* Process a completed send */
-                frag = (mca_btl_openib_frag_t*) comp.id; 
-                frag->rc = OMPI_SUCCESS; 
-                frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
-                count++;
-                break;
+            case IBV_WC_RDMA_WRITE: 
+            case IBV_WC_SEND :
+                if(wc.opcode & IBV_WC_RECV){ 
+                    /* process a recv completion (this should only occur for a send not an rdma) */ 
+                    DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                    frag = (mca_btl_openib_frag_t*) wc.wr_id;
+                    frag->rc=OMPI_SUCCESS; 
+                    frag->segment.seg_len =  
+                        wc.byte_len-
+                        ((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 
-            case VAPI_CQE_RQ_SEND_DATA:
+                    /* advance the segment address past the header and subtract from the length..*/ 
+                    openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, 
+                                                              frag->hdr->tag, 
+                                                              &frag->base, 
+                                                              openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
-                DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
-                frag = (mca_btl_openib_frag_t*) comp.id;
-                frag->rc=OMPI_SUCCESS; 
-                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
-                /* advance the segment address past the header and subtract from the length..*/ 
-                openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, frag->hdr->tag, &frag->base, openib_btl->ib_reg[frag->hdr->tag].cbdata);         
+                    OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
+                    OPAL_THREAD_ADD32(&openib_btl->rr_posted_high, -1); 
                 
-                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_max), (opal_list_item_t*) frag); 
-                OPAL_THREAD_ADD32(&openib_btl->rr_posted_low, -1); 
-                
+                    mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
+                    
+                    count++; 
+                }
+                else  {
+                    /* Process a completed send */
+                    frag = (mca_btl_openib_frag_t*) wc.wr_id; 
+                    frag->rc = OMPI_SUCCESS; 
+                    frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
+                    count++;
+               
+                }
 
-                mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)comp.id)->endpoint, 0); 
-                
-                count++; 
                 break;
                 
             default:
