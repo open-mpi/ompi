@@ -51,7 +51,7 @@
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
 
-#ifdef HAVE_STRUCT_SOCKADDR_IN && 0
+#ifdef HAVE_STRUCT_SOCKADDR_IN
 
 #ifndef IF_NAMESIZE
 #define IF_NAMESIZE 32
