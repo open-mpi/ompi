@@ -18,6 +18,9 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+CFLAGS = $(mpool_mvapi_CFLAGS)
+AM_CPPFLAGS = $(mpool_mvapi_CPPFLAGS)
+
 sources = \
 	mpool_mvapi.h \
 	mpool_mvapi_module.c \
@@ -41,10 +44,12 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_mvapi_la_SOURCES = $(sources)
-mca_mpool_mvapi_la_LDFLAGS = -module -avoid-version
+mca_mpool_mvapi_la_LDFLAGS = -module -avoid-version $(mpool_mvapi_LDFLAGS)
+mca_mpool_mvapi_la_LIBADD = $(mpool_mvapi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpool_mvapi_la_SOURCES = $(sources)
-libmca_mpool_mvapi_la_LDFLAGS = -module -avoid-version
+libmca_mpool_mvapi_la_LDFLAGS = -module -avoid-version $(mpool_mvapi_LDFLAGS)
+libmca_mpool_mvapi_la_LIBADD = $(mpool_mvapi_LIBS)
 
 

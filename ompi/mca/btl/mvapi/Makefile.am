@@ -18,6 +18,9 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+CFLAGS = $(btl_mvapi_CFLAGS)
+AM_CPPFLAGS = $(btl_mvapi_CPPFLAGS)
+
 sources = \
     btl_mvapi.c \
     btl_mvapi.h \
@@ -29,7 +32,7 @@ sources = \
     btl_mvapi_proc.c \
     btl_mvapi_proc.h \
     btl_mvapi_error.h
-     
+
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
@@ -49,8 +52,10 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_mvapi_la_SOURCES = $(component_sources)
-mca_btl_mvapi_la_LDFLAGS = -module -avoid-version
+mca_btl_mvapi_la_LDFLAGS = -module -avoid-version $(btl_mvapi_LDFLAGS)
+mca_btl_mvapi_la_LIBADD = $(btl_mvapi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_mvapi_la_SOURCES = $(lib_sources)
-libmca_btl_mvapi_la_LDFLAGS = -module -avoid-version
+libmca_btl_mvapi_la_LDFLAGS = -module -avoid-version$ (btl_mvapi_LDFLAGS)
+libmca_btl_mvapi_la_LIBADD = $(btl_mvapi_LIBS)
