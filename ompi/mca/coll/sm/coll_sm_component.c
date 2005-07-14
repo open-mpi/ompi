@@ -25,7 +25,6 @@
 #include "include/constants.h"
 #include "mca/coll/coll.h"
 #include "coll_sm.h"
-#include "mca/coll/sm/coll-sm-version.h"
 
 
 /*
