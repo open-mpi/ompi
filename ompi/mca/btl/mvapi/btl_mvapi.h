@@ -96,6 +96,24 @@ struct mca_btl_mvapi_component_t {
     uint32_t reg_mru_len; 
     
     
+    uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
+    uint32_t ib_wq_size;   /**< Max outstanding WR on the WQ */ 
+    uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/ 
+    uint32_t ib_pkey_ix; 
+    uint32_t ib_psn; 
+    uint32_t ib_qp_ous_rd_atom; 
+    uint32_t ib_mtu; 
+    uint32_t ib_min_rnr_timer; 
+    uint32_t ib_timeout; 
+    uint32_t ib_retry_count; 
+    uint32_t ib_rnr_retry; 
+    uint32_t ib_max_rdma_dst_ops; 
+    uint32_t ib_service_level; 
+    uint32_t ib_static_rate; 
+    uint32_t ib_src_path_bits; 
+
+    
+
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
 
 extern mca_btl_mvapi_component_t mca_btl_mvapi_component;
@@ -148,24 +166,7 @@ struct mca_btl_mvapi_module_t {
   
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
-    size_t ib_pin_min;  /**< min size to pin memory*/ 
-    uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
-    uint32_t ib_wq_size;   /**< Max outstanding WR on the WQ */ 
-    uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/ 
-    uint32_t ib_pkey_ix; 
-    uint32_t ib_psn; 
-    uint32_t ib_qp_ous_rd_atom; 
-    uint32_t ib_mtu; 
-    uint32_t ib_min_rnr_timer; 
-    uint32_t ib_timeout; 
-    uint32_t ib_retry_count; 
-    uint32_t ib_rnr_retry; 
-    uint32_t ib_max_rdma_dst_ops; 
-    uint32_t ib_service_level; 
-    uint32_t ib_static_rate; 
-    uint32_t ib_src_path_bits; 
 
-    
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
     
 

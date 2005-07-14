@@ -793,7 +793,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         return OMPI_ERROR;
     }
     
-    ret = VAPI_create_cq(mvapi_btl->nic, mvapi_btl->ib_cq_size,
+    ret = VAPI_create_cq(mvapi_btl->nic, mca_btl_mvapi_component.ib_cq_size,
                          &mvapi_btl->cq_hndl_low, &cqe_cnt);
 
     
@@ -802,7 +802,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         return OMPI_ERROR;
     }
     
-    ret = VAPI_create_cq(mvapi_btl->nic, mvapi_btl->ib_cq_size,
+    ret = VAPI_create_cq(mvapi_btl->nic, mca_btl_mvapi_component.ib_cq_size,
                          &mvapi_btl->cq_hndl_high, &cqe_cnt);
 
     

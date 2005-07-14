@@ -129,6 +129,53 @@ int mca_btl_mvapi_component_open(void)
         mca_btl_mvapi_param_register_int("rr_buf_min", 8); 
     mca_btl_mvapi_component.reg_mru_len = 
         mca_btl_mvapi_param_register_int("reg_mru_len",  16); 
+    mca_btl_mvapi_component.ib_cq_size = 
+        mca_btl_mvapi_param_register_int("ib_cq_size", 
+                                      40000); 
+    mca_btl_mvapi_component.ib_wq_size = 
+        mca_btl_mvapi_param_register_int("ib_wq_size", 
+                                      10000); 
+    mca_btl_mvapi_component.ib_sg_list_size = 
+        mca_btl_mvapi_param_register_int("ib_sg_list_size", 
+                                      1); 
+    mca_btl_mvapi_component.ib_pkey_ix = 
+        mca_btl_mvapi_param_register_int("ib_pkey_ix", 
+                                      0); 
+    mca_btl_mvapi_component.ib_psn = 
+        mca_btl_mvapi_param_register_int("ib_psn", 
+                                      0); 
+    mca_btl_mvapi_component.ib_qp_ous_rd_atom = 
+        mca_btl_mvapi_param_register_int("ib_qp_ous_rd_atom", 
+                                      1); 
+    mca_btl_mvapi_component.ib_mtu = 
+        mca_btl_mvapi_param_register_int("ib_mtu", 
+                                      MTU1024); 
+    mca_btl_mvapi_component.ib_min_rnr_timer = 
+        mca_btl_mvapi_param_register_int("ib_min_rnr_timer", 
+                                      5);
+    mca_btl_mvapi_component.ib_timeout = 
+        mca_btl_mvapi_param_register_int("ib_timeout", 
+                                      10); 
+    mca_btl_mvapi_component.ib_retry_count = 
+        mca_btl_mvapi_param_register_int("ib_retry_count", 
+                                      7); 
+    mca_btl_mvapi_component.ib_rnr_retry = 
+        mca_btl_mvapi_param_register_int("ib_rnr_retry", 
+                                      7); 
+    mca_btl_mvapi_component.ib_max_rdma_dst_ops = 
+        mca_btl_mvapi_param_register_int("ib_max_rdma_dst_ops", 
+                                      16); 
+
+    mca_btl_mvapi_component.ib_service_level = 
+        mca_btl_mvapi_param_register_int("ib_service_level", 
+                                      0); 
+    mca_btl_mvapi_component.ib_static_rate = 
+        mca_btl_mvapi_param_register_int("ib_static_rate", 
+                                      0); 
+    mca_btl_mvapi_component.ib_src_path_bits = 
+        mca_btl_mvapi_param_register_int("ib_src_path_bits", 
+                                      0); 
+
     
     mca_btl_mvapi_module.super.btl_exclusivity =
         mca_btl_mvapi_param_register_int ("exclusivity", 0);
@@ -144,54 +191,6 @@ int mca_btl_mvapi_component_open(void)
         mca_btl_mvapi_param_register_int ("max_send_size", (128*1024)) 
         - sizeof(mca_btl_mvapi_header_t);
 
-    mca_btl_mvapi_module.ib_pin_min = 
-        mca_btl_mvapi_param_register_int("ib_pin_min", 128*1024);                                    
-    mca_btl_mvapi_module.ib_cq_size = 
-        mca_btl_mvapi_param_register_int("ib_cq_size", 
-                                      40000); 
-    mca_btl_mvapi_module.ib_wq_size = 
-        mca_btl_mvapi_param_register_int("ib_wq_size", 
-                                      10000); 
-    mca_btl_mvapi_module.ib_sg_list_size = 
-        mca_btl_mvapi_param_register_int("ib_sg_list_size", 
-                                      1); 
-    mca_btl_mvapi_module.ib_pkey_ix = 
-        mca_btl_mvapi_param_register_int("ib_pkey_ix", 
-                                      0); 
-    mca_btl_mvapi_module.ib_psn = 
-        mca_btl_mvapi_param_register_int("ib_psn", 
-                                      0); 
-    mca_btl_mvapi_module.ib_qp_ous_rd_atom = 
-        mca_btl_mvapi_param_register_int("ib_qp_ous_rd_atom", 
-                                      1); 
-    mca_btl_mvapi_module.ib_mtu = 
-        mca_btl_mvapi_param_register_int("ib_mtu", 
-                                      MTU1024); 
-    mca_btl_mvapi_module.ib_min_rnr_timer = 
-        mca_btl_mvapi_param_register_int("ib_min_rnr_timer", 
-                                      5);
-    mca_btl_mvapi_module.ib_timeout = 
-        mca_btl_mvapi_param_register_int("ib_timeout", 
-                                      10); 
-    mca_btl_mvapi_module.ib_retry_count = 
-        mca_btl_mvapi_param_register_int("ib_retry_count", 
-                                      7); 
-    mca_btl_mvapi_module.ib_rnr_retry = 
-        mca_btl_mvapi_param_register_int("ib_rnr_retry", 
-                                      7); 
-    mca_btl_mvapi_module.ib_max_rdma_dst_ops = 
-        mca_btl_mvapi_param_register_int("ib_max_rdma_dst_ops", 
-                                      16); 
-
-    mca_btl_mvapi_module.ib_service_level = 
-        mca_btl_mvapi_param_register_int("ib_service_level", 
-                                      0); 
-    mca_btl_mvapi_module.ib_static_rate = 
-        mca_btl_mvapi_param_register_int("ib_static_rate", 
-                                      0); 
-    mca_btl_mvapi_module.ib_src_path_bits = 
-        mca_btl_mvapi_param_register_int("ib_src_path_bits", 
-                                      0); 
     mca_btl_mvapi_module.super.btl_min_rdma_size = 
         mca_btl_mvapi_param_register_int("min_rdma_size", 
                                       1024*1024); 
