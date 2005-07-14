@@ -541,4 +541,5 @@ void ompi_info::do_config(bool want_all)
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
+  out("libltdl support", "option:dlopen", OMPI_WANT_LIBLTDL);
 }

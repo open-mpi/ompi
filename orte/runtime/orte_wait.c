@@ -38,6 +38,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
+#ifdef HAVE_WAITPID
 
 /*********************************************************************
  *
@@ -609,4 +610,55 @@ internal_waitpid_callback(int fd, short event, void *arg)
     data->done = true;
     opal_condition_signal(&(data->cond));
 }
+#endif
+
+#else /* HAVE_WAITPID */
+
+int
+orte_wait_init(void) {
+    return OMPI_SUCCESS;
+}
+
+int
+orte_wait_finalize(void)
+{
+    return OMPI_SUCCESS;
+}
+
+pid_t
+orte_waitpid(pid_t wpid, int *status, int options)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb_cancel(pid_t wpid)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb_disable(void)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb_enable(void)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_kill(int sig)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
 #endif

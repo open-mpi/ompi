@@ -68,19 +68,39 @@
 
 #if defined(HAVE_SELECT) && HAVE_SELECT
 extern const struct opal_eventop opal_selectops;
+#ifndef OPAL_HAVE_WORKING_EVENTOPS
+#define OPAL_HAVE_WORKING_EVENTOPS 1
 #endif
+#endif
+
 #if defined(HAVE_POLL) && HAVE_POLL && HAVE_WORKING_POLL
 extern const struct opal_eventop opal_pollops;
+#ifndef OPAL_HAVE_WORKING_EVENTOPS
+#define OPAL_HAVE_WORKING_EVENTOPS 1
 #endif
+#endif
+
 #if defined(HAVE_RTSIG) && HAVE_RTSIG
 extern const struct opal_eventop opal_rtsigops;
+#ifndef OPAL_HAVE_WORKING_EVENTOPS
+#define OPAL_HAVE_WORKING_EVENTOPS 1
 #endif
+#endif
+
 #if defined(HAVE_EPOLL) && HAVE_EPOLL
 extern const struct opal_eventop opal_epollops;
+#ifndef OPAL_HAVE_WORKING_EVENTOPS
+#define OPAL_HAVE_WORKING_EVENTOPS 1
 #endif
+#endif
+
 #if defined(HAVE_WORKING_KQUEUE) && HAVE_WORKING_KQUEUE
 extern const struct opal_eventop opal_kqops;
+#ifndef OPAL_HAVE_WORKING_EVENTOPS
+#define OPAL_HAVE_WORKING_EVENTOPS 1
 #endif
+#endif
+
 #if 0
 /* This is to prevent event library from picking up the win32_ops since this will 
    be picked up over select(). By using select, we can pretty much use the OOB and
@@ -88,7 +108,14 @@ extern const struct opal_eventop opal_kqops;
    this to work */
 #if defined(WIN32) && WIN32
 extern const struct opal_eventop opal_win32ops;
+#ifndef OPAL_HAVE_WORKING_EVENTOPS
+#define OPAL_HAVE_WORKING_EVENTOPS 1
 #endif
+#endif
+#endif
+
+#ifndef OPAL_HAVE_WORKING_EVENTOPS
+#define OPAL_HAVE_WORKING_EVENTOPS 0
 #endif
 
 /* In order of preference */
@@ -248,6 +275,8 @@ opal_event_init(void)
     if(opal_event_inited++ != 0)
         return OMPI_SUCCESS;
 
+#if OPAL_HAVE_WORKING_EVENTOPS
+
     opal_event_sigcb = NULL;
     opal_event_gotsig = 0;
     gettimeofday(&opal_event_tv, NULL);
@@ -275,6 +304,8 @@ opal_event_init(void)
     log_to(stderr);
     log_debug_cmd(LOG_MISC, 80);
 #endif
+#endif /* HAVE_WORKING_EVENTOPS */
+
     return OMPI_SUCCESS;
 }
 
@@ -364,6 +395,7 @@ int opal_event_enable(void)
 
 int opal_event_restart(void)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     int rc;
 #if OMPI_ENABLE_PROGRESS_THREADS
     opal_mutex_lock(&opal_event_lock);
@@ -383,18 +415,26 @@ int opal_event_restart(void)
     if((rc = opal_evsignal_restart()) != 0)
         return OMPI_ERROR;
     return (OMPI_SUCCESS);
+#else /* OPAL_HAVE_WORKING_EVENTOPS */
+    return OMPI_ERR_NOT_SUPPORTED;
+#endif
 }
 
 
 int opal_event_haveevents(void)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     return (RB_ROOT(&opal_timetree) || TAILQ_FIRST(&opal_eventqueue) ||
         TAILQ_FIRST(&opal_signalqueue) || TAILQ_FIRST(&opal_activequeue));
+#else
+    return 0;
+#endif
 }
 
 static void
 opal_event_process_active(void)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     struct opal_event *ev;
     short ncalls;
 
@@ -417,6 +457,7 @@ opal_event_process_active(void)
             }
         }
     }
+#endif
 }
 
 int
@@ -435,6 +476,7 @@ opal_event_loop(int flags)
     if (opal_event_inited == false)
         return(0);
 
+#if OPAL_HAVE_WORKING_EVENTOPS
     if(opal_using_threads()) {
         opal_mutex_lock(&opal_event_lock);
     } 
@@ -511,6 +553,7 @@ opal_event_loop(int flags)
         }
     }
     opal_mutex_unlock(&opal_event_lock);
+#endif /* OPAL_HAVE_WORKING_EVENTOPS */
     return (num_active);
 }
 
@@ -519,6 +562,8 @@ int
 opal_event_add_i(struct opal_event *ev, struct timeval *tv)
 {
     int rc = 0;
+
+#if OPAL_HAVE_WORKING_EVENTOPS
     LOG_DBG((LOG_MISC, 55,
          "event_add: event: %p, %s%s%scall %p",
          ev,
@@ -579,6 +624,10 @@ opal_event_add_i(struct opal_event *ev, struct timeval *tv)
         opal_event_pipe_signalled++;
     }
 #endif
+#else /* OPAL_HAVE_WORKING_EVENTOPS */
+    rc = OMPI_ERR_NOT_SUPPORTED;
+#endif /* OPAL_HAVE_WORKING_EVENTOPS */
+
     return rc;
 }
 
@@ -586,6 +635,8 @@ opal_event_add_i(struct opal_event *ev, struct timeval *tv)
 int opal_event_del_i(struct opal_event *ev)
 {
     int rc = 0;
+
+#if OPAL_HAVE_WORKING_EVENTOPS
     assert(!(ev->ev_flags & ~OPAL_EVLIST_ALL));
 
     /* See if we are just active executing this event in a loop */
@@ -616,6 +667,10 @@ int opal_event_del_i(struct opal_event *ev)
         opal_event_pipe_signalled++;
     }
 #endif
+#else /* OPAL_HAVE_WORKING_EVENTOPS */
+    rc = OMPI_ERR_NOT_SUPPORTED;
+#endif /* OPAL_HAVE_WORKING_EVENTOPS */
+
     return (rc);
 }
 
@@ -623,6 +678,7 @@ int opal_event_del_i(struct opal_event *ev)
 static void
 opal_timeout_correct(struct timeval *off)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     struct opal_event *ev;
 
     /* We can modify the key element of the node without destroying
@@ -630,12 +686,14 @@ opal_timeout_correct(struct timeval *off)
      */
     RB_FOREACH(ev, opal_event_tree, &opal_timetree)
         timersub(&ev->ev_timeout, off, &ev->ev_timeout);
+#endif
 }
 
 
 static void
 opal_timeout_process(void)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     struct timeval now;
     struct opal_event *ev, *next;
 
@@ -655,11 +713,13 @@ opal_timeout_process(void)
              ev->ev_callback));
         opal_event_active_i(ev, OPAL_EV_TIMEOUT, 1);
     }
+#endif
 }
 
 static void
 opal_timeout_insert(struct opal_event *ev)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     struct opal_event *tmp;
 
     tmp = RB_FIND(opal_event_tree, &opal_timetree, ev);
@@ -680,11 +740,13 @@ opal_timeout_insert(struct opal_event *ev)
 
     tmp = RB_INSERT(opal_event_tree, &opal_timetree, ev);
     assert(tmp == NULL);
+#endif
 }
 
 static void
 opal_event_queue_remove(struct opal_event *ev, int queue)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     if (!(ev->ev_flags & queue))
         errx(1, "%s: %p(fd %d) not on queue %x", __func__,
              (void *) ev, ev->ev_fd, queue);
@@ -706,11 +768,13 @@ opal_event_queue_remove(struct opal_event *ev, int queue)
     default:
         errx(1, "%s: unknown queue %x", __func__, queue);
     }
+#endif
 }
 
 static void
 opal_event_queue_insert(struct opal_event *ev, int queue)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     if (ev->ev_flags & queue)
         errx(1, "%s: %p(fd %d) already on queue %x", __func__,
              (void *) ev, ev->ev_fd, queue);
@@ -732,10 +796,12 @@ opal_event_queue_insert(struct opal_event *ev, int queue)
     default:
         errx(1, "%s: unknown queue %x", __func__, queue);
     }
+#endif
 }
 
 void opal_event_active_i(struct opal_event * ev, int res, short ncalls)
 {
+#if OPAL_HAVE_WORKING_EVENTOPS
     /* We get different kinds of events, add them together */
     if (ev->ev_flags & OPAL_EVLIST_ACTIVE) {
         ev->ev_res |= res;
@@ -746,6 +812,5 @@ void opal_event_active_i(struct opal_event * ev, int res, short ncalls)
     ev->ev_ncalls = ncalls;
     ev->ev_pncalls = NULL;
     opal_event_queue_insert(ev, OPAL_EVLIST_ACTIVE);
+#endif
 }
-                                                                                              
-

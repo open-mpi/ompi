@@ -31,6 +31,7 @@
 
 int opal_daemon_init(char *working_dir)
 {
+#if defined(HAVE_FORK)
 #ifndef WIN32
     /* it seems that there is an entirely different way to write daemons in 
        WINDOWS land. Firstly, they are called services and the way to 
@@ -47,7 +48,9 @@ int opal_daemon_init(char *working_dir)
     }
     
     /* child continues */
+#if defined(HAVE_SETSID)
     setsid();  /* become session leader */
+#endif
 
     if (NULL != working_dir) {
         chdir(working_dir);  /* change working directory */
@@ -84,5 +87,9 @@ int opal_daemon_init(char *working_dir)
 #else
     printf ("This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);
     abort();
+#endif
+
+#else /* HAVE_FORK */
+    return OMPI_ERR_NOT_SUPPORTED;
 #endif
 }

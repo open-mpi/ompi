@@ -77,6 +77,9 @@ int mca_base_open(void)
   mca_base_param_register_int("base", NULL, "component_show_load_errors", 
                               "component_show_load_errors", 0);
 
+  mca_base_param_register_int("base", NULL, "component_disable_dlopen",
+                              "component_disable_dlopen", 0);
+
   /* What verbosity level do we want? */
 
   mca_base_param_lookup_string(param_index, &value);
