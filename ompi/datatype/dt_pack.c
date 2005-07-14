@@ -770,6 +770,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
     convertor->fAdvance = ompi_convertor_pack_general;
     convertor->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
     convertor->fAdvance = ompi_convertor_pack_no_conversion;
+    convertor->fAdvance = ompi_convertor_generic_simple_pack;
     
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         convertor->flags |= DT_FLAG_CONTIGUOUS;
@@ -779,8 +780,6 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
         else
             convertor->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
     }
-    convertor->fAdvance = ompi_convertor_generic_simple_pack;
-
     return OMPI_SUCCESS;
 }
 
