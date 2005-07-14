@@ -235,7 +235,7 @@ void orte_iof_proxy_svc_recv(
         orte_iof_proxy_svc_recv,
         NULL
     );
-    if(rc != OMPI_SUCCESS) {
+    if(rc < 0) {
         ORTE_ERROR_LOG(rc);
         return;
     }
