@@ -19,6 +19,9 @@
 #                            [action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
+    # This is stolen from autoconf to peek under the covers to get the
+    # cache variable for the library check.  one should not copy this
+    # code into other places unless you want much pain and suffering
     AS_VAR_PUSHDEF([ompi_Header], [ac_cv_header_$2])
 
     # so this sucks, but there's no way to get through the progression
@@ -53,6 +56,9 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
 #                         [action-if-found], [action-if-not-found]])
 # --------------------------------------------------------------------
 AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
+    # This is stolen from autoconf to peek under the covers to get the
+    # cache variable for the library check.  one should not copy this
+    # code into other places unless you want much pain and suffering
     AS_LITERAL_IF([$2],
                   [AS_VAR_PUSHDEF([ompi_Lib], [ac_cv_lib_$2_$3])],
                   [AS_VAR_PUSHDEF([ompi_Lib], [ac_cv_lib_$2''_$3])])dnl

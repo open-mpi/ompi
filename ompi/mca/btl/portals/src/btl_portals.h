@@ -19,7 +19,7 @@
 #ifndef MCA_BTL_PORTALS_H
 #define MCA_BTL_PORTALS_H
 
-#include <portals3.h>
+#include "btl_portals_compat.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"

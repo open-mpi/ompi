@@ -209,9 +209,11 @@ mca_btl_portals_component_close(void)
         free(mca_btl_portals_component.portals_modules);
     }
 
+#if BTL_PORTALS_UTCP
     if (NULL != mca_btl_portals_component.portals_ifname) {
         free(mca_btl_portals_component.portals_ifname);
     }
+#endif
 
     if (NULL != portals_output_stream.lds_prefix) {
         free(portals_output_stream.lds_prefix);

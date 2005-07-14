@@ -70,7 +70,7 @@ int orte_sys_info(void)
     }
 
     if (0 > uname(&sys_info)) {  /* have an error - set utsname values to indicate */
-        if (NULL != orte_system_info.sysname) {
+       if (NULL != orte_system_info.sysname) {
             free(orte_system_info.sysname);
             orte_system_info.sysname = NULL;
         }
@@ -109,7 +109,12 @@ int orte_sys_info(void)
 	/* get the name of the user */
 #ifndef WIN32
     uid = getuid();
-    if ((pwdent = getpwuid(uid)) != 0) {
+#ifdef HAVE_GETPWUID
+    pwdent = getpwuid(uid);
+#else
+    pwdent = NULL;
+#endif
+    if (NULL != pwdent) {
         orte_system_info.user = strdup(pwdent->pw_name);
     } else {
         if (0 > asprintf(&(orte_system_info.user), "%d", uid)) {

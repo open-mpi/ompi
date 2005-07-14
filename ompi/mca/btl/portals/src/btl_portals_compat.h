@@ -20,13 +20,18 @@
 
 #if BTL_PORTALS_UTCP
 
+#include <portals3.h>
+
+#include <stdio.h>
 #include <p3nal_utcp.h>
 #include <p3rt/p3rt.h>
 #include <p3api/debug.h>
 
 #elif BTL_PORTALS_REDSTORM
 
-#error "Red Storm Compatibility not implemented"
+#include <portals/portals3.h>
+
+#define PTL_EQ_HANDLER_NONE PTL_HANDLE_NONE
 
 #else
 

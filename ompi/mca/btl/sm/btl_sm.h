@@ -23,7 +23,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include "class/ompi_free_list.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_fifo.h"

@@ -27,6 +27,7 @@ int
 mca_btl_portals_init(mca_btl_portals_component_t *comp)
 {
     int ret, max_interfaces;
+    uint32_t i;
     struct mca_btl_portals_module_t *btl;
 
     /*
@@ -44,21 +45,24 @@ mca_btl_portals_init(mca_btl_portals_component_t *comp)
      */
     comp->portals_num_modules = 1;
     comp->portals_modules = calloc(comp->portals_num_modules,
-                                   sizeof(mca_btl_portals_module_t *));
+                                   sizeof(mca_btl_portals_module_t));
     if (NULL == comp->portals_modules) {
         opal_output_verbose(10, mca_btl_portals_component.portals_output,
                             "malloc failed in mca_btl_portals_init");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
-    comp->portals_modules[0] = malloc(sizeof(mca_btl_portals_module_t));
-    if (NULL == comp->portals_modules) {
-        opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                            "malloc failed in mca_btl_portals_init");
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
-    btl = comp->portals_modules[0];
+    btl = &(comp->portals_modules[0]);
 
-    *btl = = mca_btl_portals_module;
+    /* compat code is responsible for copying over the "template" onto
+       each module instance.  The calling code will create the free
+       lists and the like - we're only responsible for the
+       Portals-specific entries */
+    for (i = 0 ; i < comp->portals_num_modules ; ++i) {
+        memcpy(&(comp->portals_modules[i]),
+               &mca_btl_portals_module,
+               sizeof(mca_btl_portals_module_t));
+        /* the defaults are good enough for the rest */
+    }
 
     /*
      * Initialize a network device
@@ -66,11 +70,11 @@ mca_btl_portals_init(mca_btl_portals_component_t *comp)
     ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
-                    &(btl->limits),    /* save our limits somewhere */
-                    &(btl->ni_handle)  /* our interface handle */
+                    &(btl->portals_ni_limits),    /* save our limits somewhere */
+                    &(btl->portals_ni_h)  /* our interface handle */
                     );
     if (PTL_OK != ret) {
-        opal_output_verbose(10, mca_ptl_portals_component.portals_output,
+        opal_output_verbose(10, mca_btl_portals_component.portals_output,
                             "PtlNIInit failed, returning %d\n", ret);
         return OMPI_ERR_FATAL;
     }
@@ -83,7 +87,7 @@ mca_btl_portals_init(mca_btl_portals_component_t *comp)
 int
 mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
                                  size_t nprocs, struct ompi_proc_t **procs,
-                                 btl_process_id_t **portals_procs)
+                                 ptl_process_id_t **portals_procs)
 {
     int nptl_procs = 0;
 

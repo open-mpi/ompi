@@ -102,6 +102,8 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
     BTL_PORTALS_REDSTORM=0
     BTL_PORTALS_COMPAT=""
     BTL_PORTALS_HAVE_EVENT_UNLINK=0
+    btl_portals_compat="none"
+    btl_portals_header_prefix=
     AC_ARG_WITH([btl-portals-config],
             AC_HELP_STRING([--with-btl-portals-config],
                            [configuration to use for Portals support.
@@ -115,12 +117,16 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
             BTL_PORTALS_UTCP=1
             BTL_PORTALS_HAVE_EVENT_UNLINK=1
             btl_portals_LIBS="-lutcpapi -lutcplib -lp3api -lp3lib -lp3rt"
+            btl_portals_compat="utcp"
+            btl_portals_header_prefix=
             AC_MSG_RESULT([utcp])
             ;;
         "redstorm")
             BTL_PORTALS_REDSTORM=1
             BTL_PORTALS_HAVE_EVENT_UNLINK=0
-            btl_portals_LIBS="-lp3api -lp3lib -lp3rt"
+            btl_portals_LIBS=
+            btl_portals_compat="redstorm"
+            btl_portals_header_prefix="portals/"
             AC_MSG_RESULT([red storm])
             ;;
         *)
@@ -147,11 +153,10 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
 
     AC_DEFINE_UNQUOTED([BTL_PORTALS_UTCP], [$BTL_PORTALS_UTCP],
                        [Use the UTCP reference implementation or Portals])
-    AM_CONDITIONAL([BTL_PORTALS_UTCP], [test "$BTL_PORTALS_UTCP" = "1"])
-
     AC_DEFINE_UNQUOTED([BTL_PORTALS_REDSTORM], [$BTL_PORTALS_REDSTORM],
                        [Use the Red Storm implementation or Portals])
-    AM_CONDITIONAL([BTL_PORTALS_REDSTORM], [test "$BTL_PORTALS_REDSTORM" = "1"])
+
+    AC_CONFIG_LINKS([ompi/mca/btl/portals/src/btl_portals_compat.c:ompi/mca/btl/portals/src/btl_portals_compat_${btl_portals_compat}.c])
 ])
 
 
@@ -183,9 +188,9 @@ AC_DEFUN([MCA_btl_portals_CONFIG],[
 
     # check for portals
     LIBS="$LIBS $btl_portals_LIBS"
-    AC_CHECK_HEADERS([portals3.h],
+    AC_CHECK_HEADERS([${btl_portals_header_prefix}portals3.h],
         [AC_MSG_CHECKING([if possible to link Portals application])
-         AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <portals3.h>], 
+         AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <${btl_portals_header_prefix}portals3.h>], 
                                          [int i; PtlInit(&i);])],
               [AC_MSG_RESULT([yes])
                MCA_btl_portals_CONFIG_VALS()          
