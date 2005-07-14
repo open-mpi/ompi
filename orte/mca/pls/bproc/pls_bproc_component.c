@@ -53,7 +53,7 @@ orte_pls_bproc_component_t mca_pls_bproc_component = {
 /**
  *  Convience functions to lookup MCA parameter values.
  */
-static  int orte_pls_bproc_param_register_int(const char* param_name,
+static int orte_pls_bproc_param_register_int(const char* param_name,
                                               int default_value) {
     int id = mca_base_param_register_int("pls", "bproc", param_name, NULL, 
                                          default_value);
@@ -88,7 +88,6 @@ int orte_pls_bproc_component_open(void) {
     return ORTE_SUCCESS;
 }
 
-
 int orte_pls_bproc_component_close(void) {
     OBJ_DESTRUCT(&mca_pls_bproc_component.lock);
     return ORTE_SUCCESS;
@@ -101,7 +100,6 @@ int orte_pls_bproc_component_close(void) {
 orte_pls_base_module_t* orte_pls_bproc_init(int *priority) {
     int ret;
     struct bproc_version_t version;
-
  
     /* are we the seed */
     if(orte_process_info.seed == false)
