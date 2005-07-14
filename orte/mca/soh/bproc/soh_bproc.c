@@ -76,7 +76,7 @@ static void update_registry(struct bproc_node_info_t *ni)
     value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
     value->segment = strdup(ORTE_NODE_SEGMENT);
 
-    value->cnt = 4;
+    value->cnt = 5;
     value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt*sizeof(orte_gpr_keyval_t*));
     
     value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
@@ -110,6 +110,11 @@ static void update_registry(struct bproc_node_info_t *ni)
 
     asprintf(&node_name, "%d", ni->node);
 
+    value->keyvals[4] = OBJ_NEW(orte_gpr_keyval_t);
+    value->keyvals[4]->key = strdup(ORTE_NODE_NAME_KEY);
+    value->keyvals[4]->type = ORTE_STRING;
+    value->keyvals[4]->value.strptr = strdup(node_name);
+
     ret = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, 
 	    mca_soh_bproc_component.cellid, node_name);
 
@@ -122,6 +127,7 @@ static void update_registry(struct bproc_node_info_t *ni)
     if ((ret = orte_gpr.put(1, &value)) != ORTE_SUCCESS)
 	ORTE_ERROR_LOG(ret);
 
+    free(node_name);
     OBJ_RELEASE(value);
 }
 
