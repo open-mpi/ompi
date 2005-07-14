@@ -29,10 +29,10 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
        [AC_HELP_STRING([--with-btl-mvapi-libdir=IBLIBDIR],
                        [directory where the IB library can be found, if it is not in MVAPI_DIR/lib or MVAPI_DIR/lib64])])
 
-    AS_IF([test ! -z "$with_mvapi" -a "$with_mvapi" != "yes"],
-          [ompi_check_mvapi_dir="$with_mvapi"])
-    AS_IF([test ! -z "$with_mvapi_libdir" -a "$with_mvapi_libdir" != "yes"],
-          [ompi_check_mvapi_libdir="$with_mvapi_libdir"])
+    AS_IF([test ! -z "$with_btl_mvapi" -a "$with_btl_mvapi" != "yes"],
+          [ompi_check_mvapi_dir="$with_btl_mvapi"])
+    AS_IF([test ! -z "$with_btl_mvapi_libdir" -a "$with_btl_mvapi_libdir" != "yes"],
+          [ompi_check_mvapi_libdir="$with_btl_mvapi_libdir"])
 
     # check for pthreads and emit a warning that things might go south...
     AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
@@ -50,7 +50,7 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
 
     AS_IF([test "$ompi_check_mvapi_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_mvapi" -a "$with_mvapi" != "no"],
+          [AS_IF([test ! -z "$with_btl_mvapi" -a "$with_btl_mvapi" != "no"],
                  [AC_MSG_ERROR([MVAPI support requested but not found.  Aborting])])
            $3])
 ])
