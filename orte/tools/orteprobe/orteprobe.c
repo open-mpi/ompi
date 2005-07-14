@@ -138,6 +138,8 @@ int main(int argc, char *argv[])
     int id, orted_pipe[2];
     pid_t pid;
 
+#if defined(HAVE_FORK) && defined(HAVE_PIPE)
+
     /* setup to check common command line options that just report and die */
     memset(&orteprobe_globals, 0, sizeof(orteprobe_globals));
     cmd_line = OBJ_NEW(opal_cmd_line_t);
@@ -443,4 +445,8 @@ fprintf(stderr, "attempting to read from daemon\n");
     orte_finalize();
 
     exit(0);
+#else /* HAVE_FORK && HAVE_PIPE */
+    fprintf(stderr, "orteprobe: system appears to not support remote probes\n");
+    exit(1);
+#endif
 }

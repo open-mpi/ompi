@@ -21,8 +21,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#if OMPI_WANT_LIBLTDL
 /* Ensure to get the right <ltdl.h> */ 
 #include "libltdl/ltdl.h"
+#endif
 
 #include "include/constants.h"
 #include "opal/util/output.h"
@@ -72,6 +74,7 @@ struct ltfn_data_holder_t {
 typedef struct ltfn_data_holder_t ltfn_data_holder_t;
 
 
+#if OMPI_WANT_LIBLTDL
 /*
  * Private functions
  */
@@ -96,7 +99,7 @@ static const char *ompi_info_suffix = ".ompi_info";
 static const char *key_dependency = "dependency=";
 static const char component_template[] = "mca_%s_";
 static opal_list_t found_files;
-
+#endif /* OMPI_WANT_LIBLTDL */
 
 /*
  * Function to find as many components of a given type as possible.  This
@@ -127,20 +130,29 @@ int mca_base_component_find(const char *directory, const char *type,
     opal_list_append(found_components, (opal_list_item_t *) cli);
   }
 
+#if OMPI_WANT_LIBLTDL
   /* Find any available dynamic components in the specified directory */
   if (open_dso_components) {
-      find_dyn_components(directory, type, NULL, found_components);
+      int param, param_disable_dlopen;
+      param = mca_base_param_find("base", NULL, "component_disable_dlopen");
+      mca_base_param_lookup_int(param, &param_disable_dlopen);
+
+      if (0 == param_disable_dlopen) {
+          find_dyn_components(directory, type, NULL, found_components);
+      }
   } else {
     opal_output_verbose(40, 0, 
                         "mca: base: component_find: dso loading for %s MCA components disabled", 
                         type);
   }
+#endif
 
   /* All done */
 
   return OMPI_SUCCESS;
 }
 
+#if OMPI_WANT_LIBLTDL
 
 /*
  * Open up all directories in a given path and search for components of
@@ -695,3 +707,5 @@ static void free_dependency_list(opal_list_t *dependencies)
   }
   OBJ_DESTRUCT(dependencies);
 }
+
+#endif /* OMPI_WANT_LIBLTDL */

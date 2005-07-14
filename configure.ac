@@ -1101,7 +1101,7 @@ ompi_show_title "Library and Function tests"
 # vscanf
 
 AC_CHECK_LIB([util], [openpty], [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lutil" LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lutil" LIBS="$LIBS -lutil]")
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe setsid])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
@@ -1340,11 +1340,11 @@ ompi_show_subtitle "Libtool configuration"
 # use of the newest libltdl (i.e., the one that ships with libtool
 # 1.5) because it has support for a lot more things than older
 # versions of libtool (which are generally installed by default).
-
-AC_LIBLTDL_CONVENIENCE(opal/libltdl)
+AS_IF([test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1"], 
+       [AC_LIBLTDL_CONVENIENCE(opal/libltdl)
+        AC_LIBTOOL_DLOPEN])
 AC_SUBST(LTDLINCL)
 AC_SUBST(LIBLTDL)
-AC_LIBTOOL_DLOPEN
 AM_PROG_LIBTOOL
 
 # AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
@@ -1366,39 +1366,48 @@ AM_PROG_LIBTOOL
 
 ompi_show_subtitle "GNU libltdl setup" 
 
-ompi_subdir_args="$ompi_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
-if test "$enable_shared" = "yes"; then
-    ompi_subdir_args="$ompi_subdir_args --enable-shared"
-else
-    ompi_subdir_args="$ompi_subdir_args --disable-shared"
-fi
-if test "$enable_static" = "yes"; then
-    ompi_subdir_args="$ompi_subdir_args --enable-static"
-else
-    ompi_subdir_args="$ompi_subdir_args --disable-static"
-fi
+if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
+    ompi_subdir_args="$ompi_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
+    if test "$enable_shared" = "yes"; then
+        ompi_subdir_args="$ompi_subdir_args --enable-shared"
+    else
+        ompi_subdir_args="$ompi_subdir_args --disable-shared"
+    fi
+    if test "$enable_static" = "yes"; then
+        ompi_subdir_args="$ompi_subdir_args --enable-static"
+    else
+        ompi_subdir_args="$ompi_subdir_args --disable-static"
+    fi
 
-CFLAGS_save="$CFLAGS"
-CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
-OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], [HAPPY=1], [HAPPY=0])
-if test "$HAPPY" = "1"; then
-    LIBLTDL_SUBDIR=libltdl
-    LIBLTDL_LTLIB=libltdl/libltdlc.la
-    WANT_LIBLTDL=1
+    CFLAGS_save="$CFLAGS"
+    CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
+    OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], [HAPPY=1], [HAPPY=0])
+    if test "$HAPPY" = "1"; then
+        LIBLTDL_SUBDIR=libltdl
+        LIBLTDL_LTLIB=libltdl/libltdlc.la
+        WANT_LIBLTDL=1
 
-    # Arrgh.  This is gross.  But I can't think of any other way to do
-    # it.  :-(
+        # Arrgh.  This is gross.  But I can't think of any other way to do
+        # it.  :-(
 
-    flags="`egrep ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`"
-    OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], [-export-dynamic $flags])
-    WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
-    LDFLAGS="-export-dynamic $LDFLAGS"
+        flags="`egrep ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`"
+        OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], [-export-dynamic $flags])
+        WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
+        LDFLAGS="-export-dynamic $LDFLAGS"
+    else
+        LIBLTDL_SUBDIR=
+        LIBLTDL_LTLIB=
+        WANT_LIBLTDL=0
+    fi
+    CFLAGS="$CFLAGS_save"
 else
+    AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
+
     LIBLTDL_SUBDIR=
     LIBLTDL_LTLIB=
     WANT_LIBLTDL=0
 fi
-CFLAGS="$CFLAGS_save"
+
 AC_SUBST(LIBLTDL_SUBDIR)
 AC_SUBST(LIBLTDL_LTLIB)
 AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")

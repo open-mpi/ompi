@@ -33,6 +33,7 @@
 int opal_few(char *argv[], int *status)
 {
 #ifndef WIN32
+#if defined(HAVE_FORK) && defined(HAVE_EXECVE) && defined(HAVE_WAITPID)
     pid_t pid, ret;
 
     if ((pid = fork()) < 0) {
@@ -73,6 +74,10 @@ int opal_few(char *argv[], int *status)
     /* Return the status to the caller */
 
     return OMPI_SUCCESS;
+#else
+    return OMPI_ERR_NOT_SUPPORTED;
+#endif
+
 #else
 
     /* Welcome to windows land. This is apparently a simple fork() exec() 

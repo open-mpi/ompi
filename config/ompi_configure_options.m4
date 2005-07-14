@@ -398,4 +398,26 @@ fi
 AC_DEFINE_UNQUOTED([OMPI_ENABLE_PTY_SUPPORT], [$OMPI_ENABLE_PTY_SUPPORT],
                    [Whether user wants PTY support or not])
 
+#
+# Do we want to allow DLOPEN?
+#
+AC_MSG_CHECKING([if user wants dlopen support])
+AC_ARG_ENABLE([dlopen],
+    [AC_HELP_STRING([--enable-dlopen],
+                    [Whether build should attempt to use dlopen (or
+                     similar) to dynamically load components.
+                     Disabling dlopen implies --disable-mca-dso.
+                     (default=enabled)])])
+if test "$enable_dlopen" = "no" ; then
+    enable_mca_dso="no"
+    enable_mca_static="yes"
+    OMPI_ENABLE_DLOPEN_SUPPORT=0
+    AC_MSG_RESULT([no])
+else
+    OMPI_ENABLE_DLOPEN_SUPPORT=1
+    AC_MSG_RESULT([yes])
+fi
+# this doesn't define anything in the makefiles or ompi_config.h.
+# Only provides a variable that the MCA and ltdl stuff keys off.
+
 ])

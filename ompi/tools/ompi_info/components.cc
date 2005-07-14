@@ -39,6 +39,8 @@
 #include "mca/pml/base/base.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
+#include "mca/btl/btl.h"
+#include "mca/btl/base/base.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
 
@@ -193,6 +195,11 @@ void ompi_info::open_components()
    */
   component_map["ptl"] = &mca_ptl_base_components_opened;
 
+  /* mca_btl_base_open() should not be called directly. This call is performed
+   * in the PML base open.
+   */
+  component_map["btl"] = &mca_btl_base_components_opened;
+
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
 
@@ -212,7 +219,8 @@ void ompi_info::close_components()
         // them generally "in order", but it doesn't really matter.
 
         mca_topo_base_close();
-        // the PMl has to call the base PTL close function.
+        // the PML has to call the base PTL close function.
+        // the PML has to call the base BTL close function.
         mca_pml_base_close();
         mca_mpool_base_close();
         mca_io_base_close();

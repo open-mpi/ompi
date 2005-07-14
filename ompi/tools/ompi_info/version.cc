@@ -185,16 +185,18 @@ void ompi_info::show_component_version(const string& type_name,
 
   components = component_map[type_name];
   if (NULL != components) {
-    for (item = opal_list_get_first(components);
-         opal_list_get_end(components) != item;
-         item = opal_list_get_next(item)) {
-      cli = (mca_base_component_list_item_t *) item;
-      component = cli->cli_component;
-      if (want_all_components || 
-          component->mca_component_name == component_name) {
-        show_mca_version(component, scope, ver_type);
+      if (opal_list_get_size(components) > 0){
+          for (item = opal_list_get_first(components);
+               opal_list_get_end(components) != item;
+               item = opal_list_get_next(item)) {
+              cli = (mca_base_component_list_item_t *) item;
+              component = cli->cli_component;
+              if (want_all_components || 
+                  component->mca_component_name == component_name) {
+                  show_mca_version(component, scope, ver_type);
+              }
+          }
       }
-    }
   }
 }
 
