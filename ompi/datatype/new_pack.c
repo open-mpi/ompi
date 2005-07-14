@@ -52,6 +52,7 @@
          if( (_copy_count * ompi_ddt_basicDatatypes[(TYPE)]->size) > (SPACE) ) \
              _copy_count = (SPACE) / ompi_ddt_basicDatatypes[type]->size; \
          _copy_blength = _copy_count * ompi_ddt_basicDatatypes[type]->size; \
+         if( 0 == _copy_count ) break;  /* nothing to do */             \
                                                                         \
          if( ompi_ddt_basicDatatypes[type]->size == (uint32_t)(EXTENT) ) { \
              /* the extent and the size of the basic datatype are equals */ \
@@ -143,9 +144,11 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]); 
-    source_base = pConvertor->pBaseBuf;
+    source_base = pConvertor->pBaseBuf + pStack->disp;
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
+        if( pConvertor->bConverted == (pData->size * pConvertor->count) )
+            break;  /* do not pack over the boundaries even if there are more iovecs */
         if( iov[iov_count].iov_base == NULL ) {
             /*
              *  ALLOCATE SOME MEMORY ...
@@ -175,7 +178,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
                     if( pStack->index == -1 ) {
                         pStack->disp += (pData->ub - pData->lb);
                     } else {
-                        assert( DT_LOOP == description[pStack->index].elem.common.type );
+                        assert( DT_LOOP == description[pStack->index].loop.common.type );
                         pStack->disp += description[pStack->index].loop.extent;
                     }
                 }
@@ -223,7 +226,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     if( pConvertor->bConverted != (pData->size * pConvertor->count) ) {
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
-                    source_base - pConvertor->pBaseBuf, pos_desc );
+                    source - source_base, pos_desc );
         return 0;
     }
     return 1;
