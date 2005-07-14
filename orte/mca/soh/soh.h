@@ -113,11 +113,10 @@ typedef int (*orte_soh_base_component_finalize_fn_t)(void);
  */
 
 struct orte_soh_base_component_1_0_0_t {
-    mca_base_component_t 							soh_version;
-    mca_base_component_data_1_0_0_t 				soh_data;
-
-    orte_soh_base_component_init_fn_t 				soh_init;
-    orte_soh_base_component_finalize_fn_t          soh_finalize;
+    mca_base_component_t soh_version;
+    mca_base_component_data_1_0_0_t soh_data;
+    orte_soh_base_component_init_fn_t  soh_init;
+    orte_soh_base_component_finalize_fn_t soh_finalize;
 };
 
 typedef struct orte_soh_base_component_1_0_0_t orte_soh_base_component_1_0_0_t;
@@ -129,7 +128,7 @@ typedef orte_soh_base_component_1_0_0_t orte_soh_base_component_t;
 /*
  * Macro for use in components that are of type ns v1.0.0
  */
-#define MCA_SOH_BASE_VERSION_1_0_0 \
+#define ORTE_SOH_BASE_VERSION_1_0_0 \
   /* soh v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
   /* soh v1.0 */ \
