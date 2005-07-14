@@ -123,7 +123,9 @@ do {                                                                            
     if(NULL != (recvreq)->req_chunk) {                                               \
         mca_mpool_base_reg_mpool_t* reg = (recvreq)->req_chunk->mpools;              \
         while(NULL != reg->mpool) {                                                  \
-            OBJ_RELEASE(reg->mpool_registration);                                    \
+            if(NULL != reg->mpool_registration) {                                    \
+                OBJ_RELEASE(reg->mpool_registration);                                \
+            }                                                                        \
             reg++;                                                                   \
         }                                                                            \
         OBJ_RELEASE((recvreq)->req_chunk);                                           \
