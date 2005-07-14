@@ -147,8 +147,9 @@ mca_ptl_base_module_t** mca_ptl_self_component_init(int *num_ptl_modules,
                                                     bool enable_progress_threads,
                                                     bool enable_mpi_threads)
 {
+    mca_ptl_base_module_t** modules;
+
     *num_ptl_modules = 0;
-    mca_ptl_base_module_t** modules = NULL;
 
     modules = (mca_ptl_base_module_t **)malloc(sizeof(mca_ptl_base_module_t*));
     if( NULL == modules )
