@@ -1101,7 +1101,7 @@ ompi_show_title "Library and Function tests"
 # vscanf
 
 AC_CHECK_LIB([util], [openpty], [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lutil" LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lutil" LIBS="$LIBS -lutil]")
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
