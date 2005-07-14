@@ -62,6 +62,7 @@ static void pls_bproc_orted_delete_dir_tree(char * path);
 static int pls_bproc_orted_remove_dir(void);
 static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
                                     orte_buffer_t* buffer, int tag, void* cbdata);
+
 /**
  * Creates the passed directory. If the directory already exists, it and its
  * contents will be deleted then the directory will be created.
@@ -94,7 +95,7 @@ static char * pls_bproc_orted_get_base_dir_name(int proc_rank, orte_jobid_t jobi
     orte_sys_info();
 
     if (NULL == orte_universe_info.name) {  /* error condition */
-        ORTE_ERROR_LOG(OMPI_ERROR);
+        ORTE_ERROR_LOG(ORTE_ERROR);
         return NULL;
     }
     
@@ -117,7 +118,7 @@ static char * pls_bproc_orted_get_base_dir_name(int proc_rank, orte_jobid_t jobi
                      orte_system_info.path_sep, orte_universe_info.name,
                      orte_system_info.path_sep, job, (int) app_context,
                      orte_system_info.path_sep, proc_rank)) {
-        ORTE_ERROR_LOG(OMPI_ERROR);
+        ORTE_ERROR_LOG(ORTE_ERROR);
         path = NULL;
     }
     free(user);
@@ -143,13 +144,13 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
 
     frontend = pls_bproc_orted_get_base_dir_name(proc_rank, jobid, app_context);
     if(NULL == frontend) {
-        rc = OMPI_ERROR;
+        rc = ORTE_ERROR;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
     /* check for existence and access, or create it */
-    if (OMPI_SUCCESS != (rc = pls_bproc_orted_make_dir(frontend))) { 
+    if (ORTE_SUCCESS != (rc = pls_bproc_orted_make_dir(frontend))) { 
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -158,7 +159,7 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
     {
         if(0 > asprintf(&link_path, "%s%s%d", frontend, 
                         orte_system_info.path_sep, i)) {
-            rc = OMPI_ERROR;
+            rc = ORTE_ERROR;
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -169,13 +170,13 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
         if(0 != i || connect_stdin) {
             if(0 != symlink(pty_path, link_path)) {
                 perror("pls_bproc_orted could not create symlink");
-                rc = OMPI_ERROR;
+                rc = ORTE_ERROR;
                 goto cleanup;
             }
         } else { /* otherwise connect stdin to /dev/null */
             if(0 != symlink("/dev/null", link_path)) {
                 perror("pls_bproc_orted could not create symlink");
-                rc = OMPI_ERROR;
+                rc = ORTE_ERROR;
                 goto cleanup;
             }
         }
@@ -196,7 +197,7 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
 /**
  * creates pipes for the io in the filesystem in the directory 
  * /tmp/openmpi-bproc-<user>/<universe>/<jobid>-<app_context>/<proc_rank>/
- * and returns their file dexcriptors
+ * and returns their file descriptors
  * @param proc_rank   the process's rank on the node
  * @param jobid       the jobid the proc belongs to
  * @param fd          a pointer to an array of file descriptors 3 long
@@ -211,13 +212,13 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
 
     frontend = pls_bproc_orted_get_base_dir_name(proc_rank, jobid, app_context);
     if(NULL == frontend) {
-        rc = OMPI_ERROR;
+        rc = ORTE_ERROR;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
     /* check for existence and access, or create it */
-    if (OMPI_SUCCESS != (rc = pls_bproc_orted_make_dir(frontend))) { 
+    if (ORTE_SUCCESS != (rc = pls_bproc_orted_make_dir(frontend))) { 
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -226,7 +227,7 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
     {
         if(0 > asprintf(&link_path, "%s%s%d", frontend, 
                         orte_system_info.path_sep, i)) {
-            rc = OMPI_ERROR;
+            rc = ORTE_ERROR;
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -237,10 +238,9 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
         if(0 != i || connect_stdin) {
             if(0 != mkfifo(link_path, S_IRWXU)) {
                 perror("pls_bproc_orted mkfifo failed");
-                rc = OMPI_ERROR;
+                rc = ORTE_ERROR;
                 goto cleanup;
             }
-            /* for stdin, open write only */
             if(0 == i) {
                 fd[i] = open(link_path, O_RDWR);
             } else {
@@ -248,13 +248,13 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
             }
             if(-1 == fd[i]) {
                 perror("pls_bproc_orted open failed");
-                rc = OMPI_ERROR;
+                rc = ORTE_ERROR;
                 goto cleanup;
             }
         } else { /* otherwise connect stdin to /dev/null */
             if(0 != symlink("/dev/null", link_path)) {
                 perror("pls_bproc_orted could not create symlink");
-                rc = OMPI_ERROR;
+                rc = ORTE_ERROR;
                 goto cleanup;
             }
         }
@@ -323,13 +323,14 @@ static int pls_bproc_orted_remove_dir() {
                      orte_system_info.path_sep, orte_system_info.path_sep, user)) {
         free(frontend);
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERROR;
+        return ORTE_ERROR;
     }
     /* we do our best to clean up the directory tree, but we ignore errors*/
     pls_bproc_orted_delete_dir_tree(frontend);
     free(frontend);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
+
 /**
  * Callback function for when mpirun sends us a message saying all the child 
  * procs are done */
@@ -342,8 +343,7 @@ static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
  * Setup io for the current node, then tell orterun we are ready for the actual
  * processes.
  */
-int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
-{
+int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
     opal_list_t map;
     orte_rmaps_base_map_t * mapping;
     orte_rmaps_base_proc_t * proc;
@@ -418,7 +418,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
                 master[2] = master[1] = master[0];
                 rc = pls_bproc_orted_link_pty(num_procs, pty_name, jobid, 
                                               connect_stdin, app_context);
-                if(OMPI_SUCCESS != rc) {
+                if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
@@ -430,7 +430,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
                 }
                 rc = pls_bproc_orted_link_pipes(num_procs, jobid, master,
                                                 connect_stdin, app_context);
-                if(OMPI_SUCCESS != rc) {
+                if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
@@ -466,7 +466,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    rc = OMPI_SUCCESS;
+    rc = ORTE_SUCCESS;
 
 cleanup:
     while(NULL != (item = opal_list_remove_first(&map))) {
@@ -484,21 +484,16 @@ cleanup:
  *  Query for all processes allocated to the job and terminate
  *  those on the current node.
  */
-
-int orte_pls_bproc_orted_terminate_job(orte_jobid_t jobid)
-{
+int orte_pls_bproc_orted_terminate_job(orte_jobid_t jobid) {
     orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
 
-
-int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc)
-{
+int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc) {
     return ORTE_SUCCESS;
 }
 
-int orte_pls_bproc_orted_finalize(void)
-{
+int orte_pls_bproc_orted_finalize(void) {
     OPAL_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
     opal_condition_wait(&mca_pls_bproc_orted_component.condition, 
                         &mca_pls_bproc_orted_component.lock);
