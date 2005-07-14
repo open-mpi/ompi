@@ -25,7 +25,7 @@ static void mca_btl_mvapi_frag_common_constructor( mca_btl_mvapi_frag_t* frag)
     }
 #endif 
     
-    frag->mem_hndl = mem_hndl->hndl; 
+    /* frag->mem_hndl = mem_hndl->hndl;  */
     frag->segment.seg_len = frag->size;
     frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl->l_key; 
     frag->sg_entry.lkey = mem_hndl->l_key; 

@@ -304,7 +304,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
         }
         
-        frag->mem_hndl = vapi_reg->hndl; 
+        /* frag->mem_hndl = vapi_reg->hndl; */ 
         frag->sg_entry.len = max_data; 
         frag->sg_entry.lkey = vapi_reg->l_key; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
@@ -390,7 +390,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             
             vapi_reg->is_leave_pinned = false; 
         } 
-        frag->mem_hndl = vapi_reg->hndl; 
+        /* frag->mem_hndl = vapi_reg->hndl;  */
         frag->sg_entry.len = max_data; 
         frag->sg_entry.lkey = vapi_reg->l_key; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
@@ -614,7 +614,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     }
 
     
-    frag->mem_hndl = vapi_reg->hndl; 
+/*     frag->mem_hndl = vapi_reg->hndl;  */
     
     frag->sg_entry.len = *size; 
     frag->sg_entry.lkey = vapi_reg->l_key; 
@@ -692,7 +692,6 @@ int mca_btl_mvapi_send(
     frag->endpoint = endpoint; 
         
     frag->hdr->tag = tag; 
-    frag->type = MCA_BTL_IB_FRAG_SEND; 
     frag->rc = mca_btl_mvapi_endpoint_send(endpoint, frag);
            
     return frag->rc;
