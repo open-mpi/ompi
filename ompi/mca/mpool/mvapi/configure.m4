@@ -37,6 +37,9 @@ AC_DEFUN([MCA_mpool_mvapi_CONFIG],[
     # components
     mpool_mvapi_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
     mpool_mvapi_CFLAGS="`echo $mpool_mvapi_CFLAGS | sed 's/-Wundef//g'`"
+    AS_IF([test "$mpool_mvapi_CFLAGS" != "$CFLAGS"],
+          [AC_MSG_WARN([Removed -pedantic and -Wundef from CFLAGS for
+mvapi component because some vapi.h files are not really ANSI C])])
 
     # substitute in the things needed to build Portals
     AC_SUBST([mpool_mvapi_CFLAGS])

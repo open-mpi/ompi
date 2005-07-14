@@ -49,18 +49,26 @@ portals_SOURCES = \
 	src/btl_portals_recv.c \
 	src/btl_portals_rdma.c \
 	src/btl_portals_stubs.c \
-	src/btl_portals_endpoint.c \
-	src/btl_portals_compat_utcp.c
+	src/btl_portals_endpoint.c
 
-AM_CPPFLAGS = $(btl_portals_CPPFLAGS)
+portals_nodist_SOURCES = \
+	src/btl_portals_compat.c
+
+AM_CPPFLAGS = $(btl_portals_CPPFLAGS) \
+	      -I$(top_srcdir)/ompi/mca/btl/portals/src
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_portals_la_SOURCES = $(portals_SOURCES)
+nodist_mca_btl_portals_la_SOURCES = $(portals_nodist_SOURCES)
 mca_btl_portals_la_LIBADD = $(btl_portals_LIBS)
 mca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_portals_la_SOURCES = $(portals_SOURCES)
+nodist_libmca_btl_portals_la_SOURCES = $(portals_nodist_SOURCES)
 libmca_btl_portals_la_LIBADD = $(btl_portals_LIBS)
 libmca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
+
+dist-clean-local:
+	rm -f src/btl_portals_compat.c

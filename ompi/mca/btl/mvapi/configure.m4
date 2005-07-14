@@ -37,6 +37,9 @@ AC_DEFUN([MCA_btl_mvapi_CONFIG],[
     # components
     btl_mvapi_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
     btl_mvapi_CFLAGS="`echo $btl_mvapi_CFLAGS | sed 's/-Wundef//g'`"
+    AS_IF([test "$btl_mvapi_CFLAGS" != "$CFLAGS"],
+          [AC_MSG_WARN([Removed -pedantic and -Wundef from CFLAGS for
+mvapi component because some vapi.h files are not really ANSI C])])
 
     # substitute in the things needed to build mvapi
     AC_SUBST([btl_mvapi_CFLAGS])
