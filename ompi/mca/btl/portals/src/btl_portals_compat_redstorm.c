@@ -24,7 +24,7 @@
 
 
 int
-mca_btl_portals_init(mca_btl_portals_component_t *comp)
+mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
 {
     int ret, max_interfaces;
     uint32_t i;
