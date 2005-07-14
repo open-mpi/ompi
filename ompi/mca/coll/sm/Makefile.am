@@ -51,7 +51,7 @@ else
 component_noinst += libmca_coll_sm.la
 endif
 
-# See src/mca/ptl/sm/Makefile.am for an explanation of
+# See ompi/mca/ptl/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
 mcacomponentdir = $(libdir)/openmpi
@@ -59,7 +59,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_sm_la_SOURCES = $(sources)
 mca_coll_sm_la_LDFLAGS = -module -avoid-version
 mca_coll_sm_la_LIBADD = \
-        $(top_ompi_builddir)/src/mca/common/sm/libmca_common_sm.la
+        $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_sm_la_SOURCES =$(sources)
