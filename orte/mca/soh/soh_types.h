@@ -61,4 +61,11 @@ typedef int8_t orte_node_state_t;
     orte_node_state_t) */
 #define ORTE_NODE_STATE_REBOOT   0x03
 
+/**
+ * Bproc specific keys
+ */
+#define ORTE_SOH_BPROC_NODE_MODE        "orte-node-bproc-mode"
+#define ORTE_SOH_BPROC_NODE_USER        "orte-node-bproc-user"
+#define ORTE_SOH_BPROC_NODE_GROUP       "orte-node-bproc-group"
+
 #endif
