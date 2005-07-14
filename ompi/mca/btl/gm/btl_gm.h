@@ -58,6 +58,7 @@ struct mca_btl_gm_component_t {
     size_t gm_max_boards; /**< maximum number of boards */
     size_t gm_num_high_priority; /**< number of receive descriptors at high priority */
     size_t gm_num_repost;
+    size_t gm_num_mru;
     size_t gm_eager_frag_size;
     size_t gm_max_frag_size;
     char*  gm_port_name; 
@@ -103,6 +104,7 @@ struct mca_btl_gm_module_t {
     /* lock for accessing module state */
     opal_list_t gm_pending; /**< list of pending send descriptors */
     opal_list_t gm_repost; /**< list of pending fragments */
+    opal_list_t gm_mru_reg; /**< list of most recently used registrations */
     opal_mutex_t gm_lock;
     struct mca_mpool_base_module_t* gm_mpool;
 }; 
