@@ -230,6 +230,8 @@ void* mca_common_sm_mmap_seg_alloc(
         addr = map->data_addr + seg->seg_offset;
         seg->seg_offset += *size;
     }
+    if(NULL != registration)
+        *registration = NULL;
     opal_atomic_unlock(&seg->seg_lock);
     return addr;
 }
