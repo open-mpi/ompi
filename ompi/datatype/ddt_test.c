@@ -769,6 +769,7 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
             }
             {
                 int i;
+                printf( "print the packed buffer as ints:\n" );
                 for( i = 0; i < 7; i++ )
                     printf( "%x\n", ((int*)ptemp)[i] );
             }
@@ -958,7 +959,7 @@ int main( int argc, char* argv[] )
 
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
-    OBJ_RELEASE( pdt3 ); /*assert( pdt3 == NULL );*/
+    OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
 
     pdt = test_struct_char_double();
     if( outputFlags & CHECK_PACK_UNPACK ) {
