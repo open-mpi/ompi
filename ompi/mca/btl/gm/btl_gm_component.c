@@ -145,9 +145,9 @@ int mca_btl_gm_component_open(void)
     mca_btl_gm_module.super.btl_max_send_size =
         mca_btl_gm_param_register_int ("max_send_size", 64*1024);
     mca_btl_gm_module.super.btl_min_rdma_size = 
-        mca_btl_gm_param_register_int("min_rdma_size", 256*1024); 
+        mca_btl_gm_param_register_int("min_rdma_size", 128*1024); 
     mca_btl_gm_module.super.btl_max_rdma_size = 
-        mca_btl_gm_param_register_int("max_rdma_size", 256*1024); 
+        mca_btl_gm_param_register_int("max_rdma_size", 128*1024); 
 #if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && OMPI_MCA_BTL_GM_HAVE_RDMA_PUT 
     mca_btl_gm_module.super.btl_flags  = 
         mca_btl_gm_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
@@ -273,8 +273,8 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         frag->base.des_src_cnt = 0;
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
-        frag->priority = GM_LOW_PRIORITY;
-        gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, GM_LOW_PRIORITY);
+        frag->priority = GM_HIGH_PRIORITY;
+        gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, frag->priority);
     }
 
     for(i=mca_btl_gm_component.gm_num_high_priority; i<btl->gm_max_recv_tokens; i++) {
@@ -288,7 +288,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
         frag->priority = GM_LOW_PRIORITY;
-        gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, GM_LOW_PRIORITY);
+        gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, frag->priority);
     }
 
     /* enable rdma */
@@ -489,13 +489,11 @@ int mca_btl_gm_component_progress()
         unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
         mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
         mca_btl_base_header_t* hdr;
-        uint32_t priority = GM_HIGH_PRIORITY;
 
         /* If there are no receive events just skip the function call */
         switch(gm_ntohc(event->recv.type)) {
             case GM_FAST_RECV_EVENT:
             case GM_FAST_PEER_RECV_EVENT:
-                priority = GM_LOW_PRIORITY;
             case GM_FAST_HIGH_RECV_EVENT:
             case GM_FAST_HIGH_PEER_RECV_EVENT:
                 {
@@ -511,7 +509,6 @@ int mca_btl_gm_component_progress()
                 }
             case GM_RECV_EVENT:
             case GM_PEER_RECV_EVENT:
-                priority = GM_LOW_PRIORITY;
             case GM_HIGH_RECV_EVENT:
             case GM_HIGH_PEER_RECV_EVENT:
                 {

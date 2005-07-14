@@ -650,16 +650,30 @@ int mca_btl_gm_send(
     }
     
     /* post the send request */
-    gm_send_with_callback(
-        gm_btl->port,
-        frag->hdr,
-        frag->size,
-        frag->segment.seg_len + sizeof(mca_btl_base_header_t),
-        GM_LOW_PRIORITY,
-        endpoint->endpoint_addr.node_id,
-        endpoint->endpoint_addr.port_id,
-        mca_btl_gm_send_callback,
-        frag);
+    if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&  
+       frag->size == mca_btl_gm_component.gm_eager_frag_size) {
+        gm_send_with_callback(
+            gm_btl->port,
+            frag->hdr,
+            mca_btl_gm_component.gm_eager_frag_size,
+            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+            GM_HIGH_PRIORITY,
+            endpoint->endpoint_addr.node_id,
+            endpoint->endpoint_addr.port_id,
+            mca_btl_gm_send_callback,
+            frag);
+    } else {
+        gm_send_with_callback(
+            gm_btl->port,
+            frag->hdr,
+            mca_btl_gm_component.gm_max_frag_size,
+            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+            GM_LOW_PRIORITY,
+            endpoint->endpoint_addr.node_id,
+            endpoint->endpoint_addr.port_id,
+            mca_btl_gm_send_callback,
+            frag);
+    }
 
     if(opal_list_get_size(&gm_btl->gm_repost)) {
         mca_btl_gm_frag_t* frag;

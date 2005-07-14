@@ -116,7 +116,7 @@ do { \
     } else { \
         OPAL_THREAD_LOCK(&btl->gm_lock);  \
         do { \
-            gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, priority); \
+            gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, frag->priority); \
         } while (NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&btl->gm_repost)));  \
         OPAL_THREAD_UNLOCK(&btl->gm_lock);  \
     } \
