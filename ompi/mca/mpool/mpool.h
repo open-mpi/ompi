@@ -29,6 +29,7 @@ struct mca_mpool_base_resources_t;
 struct mca_mpool_base_registration_t { 
     opal_list_item_t super; 
     struct mca_mpool_base_module_t *mpool; 
+    bool is_leave_pinned;
     unsigned char* base;
     unsigned char* bound; 
 };  
