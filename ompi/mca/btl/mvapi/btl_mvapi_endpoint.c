@@ -651,10 +651,10 @@ int mca_btl_mvapi_endpoint_create_qp(
     switch(transport_type) {
 
     case VAPI_TS_RC: /* Set up RC qp parameters */
-        qp_init_attr.cap.max_oust_wr_rq = mvapi_btl->ib_wq_size;
-        qp_init_attr.cap.max_oust_wr_sq = mvapi_btl->ib_wq_size;
-        qp_init_attr.cap.max_sg_size_rq = mvapi_btl->ib_sg_list_size;
-        qp_init_attr.cap.max_sg_size_sq = mvapi_btl->ib_sg_list_size;
+        qp_init_attr.cap.max_oust_wr_rq = mca_btl_mvapi_component.ib_wq_size;
+        qp_init_attr.cap.max_oust_wr_sq = mca_btl_mvapi_component.ib_wq_size;
+        qp_init_attr.cap.max_sg_size_rq = mca_btl_mvapi_component.ib_sg_list_size;
+        qp_init_attr.cap.max_sg_size_sq = mca_btl_mvapi_component.ib_sg_list_size;
         qp_init_attr.pd_hndl            = ptag;
         /* We don't have Reliable Datagram Handle right now */
         qp_init_attr.rdd_hndl           = 0;
@@ -712,7 +712,7 @@ int mca_btl_mvapi_endpoint_qp_init_query(
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_INIT;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
-    qp_attr.pkey_ix = mvapi_btl->ib_pkey_ix;
+    qp_attr.pkey_ix = mca_btl_mvapi_component.ib_pkey_ix;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
     qp_attr.port = port_id; 
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PORT);
@@ -733,21 +733,21 @@ int mca_btl_mvapi_endpoint_qp_init_query(
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTR;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
-    qp_attr.qp_ous_rd_atom = mvapi_btl->ib_qp_ous_rd_atom;
+    qp_attr.qp_ous_rd_atom = mca_btl_mvapi_component.ib_qp_ous_rd_atom;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_OUS_RD_ATOM);
-    qp_attr.path_mtu = mvapi_btl->ib_mtu;
+    qp_attr.path_mtu = mca_btl_mvapi_component.ib_mtu;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PATH_MTU);
-    qp_attr.rq_psn = mvapi_btl->ib_psn;
+    qp_attr.rq_psn = mca_btl_mvapi_component.ib_psn;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RQ_PSN);
-    qp_attr.pkey_ix = mvapi_btl->ib_pkey_ix;
+    qp_attr.pkey_ix = mca_btl_mvapi_component.ib_pkey_ix;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
-    qp_attr.min_rnr_timer = mvapi_btl->ib_min_rnr_timer;
+    qp_attr.min_rnr_timer = mca_btl_mvapi_component.ib_min_rnr_timer;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_MIN_RNR_TIMER);
 
-    qp_attr.av.sl = mvapi_btl->ib_service_level;
+    qp_attr.av.sl = mca_btl_mvapi_component.ib_service_level;
     qp_attr.av.grh_flag = FALSE;
-    qp_attr.av.static_rate = mvapi_btl->ib_static_rate;
-    qp_attr.av.src_path_bits = mvapi_btl->ib_src_path_bits;
+    qp_attr.av.static_rate = mca_btl_mvapi_component.ib_static_rate;
+    qp_attr.av.src_path_bits = mca_btl_mvapi_component.ib_src_path_bits;
 
     qp_attr.dest_qp_num = remote_qp_num;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_DEST_QP_NUM);
@@ -768,15 +768,15 @@ int mca_btl_mvapi_endpoint_qp_init_query(
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTS;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
-    qp_attr.sq_psn = mvapi_btl->ib_psn;
+    qp_attr.sq_psn = mca_btl_mvapi_component.ib_psn;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_SQ_PSN);
-    qp_attr.timeout = mvapi_btl->ib_timeout;
+    qp_attr.timeout = mca_btl_mvapi_component.ib_timeout;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_TIMEOUT);
-    qp_attr.retry_count = mvapi_btl->ib_retry_count;
+    qp_attr.retry_count = mca_btl_mvapi_component.ib_retry_count;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RETRY_COUNT);
-    qp_attr.rnr_retry = mvapi_btl->ib_rnr_retry;
+    qp_attr.rnr_retry = mca_btl_mvapi_component.ib_rnr_retry;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RNR_RETRY);
-    qp_attr.ous_dst_rd_atom = mvapi_btl->ib_max_rdma_dst_ops;
+    qp_attr.ous_dst_rd_atom = mca_btl_mvapi_component.ib_max_rdma_dst_ops;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_OUS_DST_RD_ATOM);
 
     ret = VAPI_modify_qp(nic, qp_hndl,
