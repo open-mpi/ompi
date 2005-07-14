@@ -88,6 +88,7 @@ static void mca_mpool_base_registration_constructor( mca_mpool_base_registration
     reg->mpool = NULL;
     reg->base = NULL;
     reg->bound = NULL;
+    reg->is_leave_pinned = false;
 }
 
 static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_t * reg )
