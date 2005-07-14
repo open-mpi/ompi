@@ -124,6 +124,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 
     pStack = pConvertor->pStack;
 
+    pStack[0].type     = DT_LOOP;  /* the first one is always the loop */
     pStack[0].count    = pConvertor->count;
     pStack[0].index    = -1;
 
@@ -143,13 +144,20 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 
     /* now compute the number of pending bytes */
     count = starting_point - count * pData->size;
-    pStack[1].index    = 0;  /* useless */
-    pStack[1].count    = pData->size - count;
-    pStack[1].end_loop = 0;  /* useless */
     /* we save the current displacement starting from the begining
      * of this data.
      */
-    pStack[1].disp     = pData->true_lb + count;
+    if( 0 == count ) {
+        pStack[1].type     = pElems->elem.common.type;
+        pStack[1].count    = pElems->elem.count;
+        pStack[1].disp     = pElems->elem.disp;
+    } else {
+        pStack[1].type  = DT_BYTE;
+        pStack[1].count = pData->size - count;
+        pStack[1].disp  = pData->true_lb + count;
+    }
+    pStack[1].index    = 0;  /* useless */
+    pStack[1].end_loop = 0;  /* useless */
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
