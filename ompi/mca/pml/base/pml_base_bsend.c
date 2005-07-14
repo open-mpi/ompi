@@ -227,8 +227,8 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
          * using the user buffers. Otherwise at the end of this function we replace
          * it with a convertor using the allocator buffer !!!
          */
-        ompi_convertor_prepare_for_send( &sendreq->req_convertor, sendreq->req_datatype,
-                                         sendreq->req_count, sendreq->req_base.req_addr );
+        ompi_convertor_prepare_for_send( &sendreq->req_convertor, sendreq->req_base.req_datatype,
+                                         sendreq->req_base.req_count, sendreq->req_base.req_addr );
 
         /* increment count of pending requests */
         mca_pml_bsend_count++;
