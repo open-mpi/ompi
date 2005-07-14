@@ -30,21 +30,37 @@ extern "C" {
 OMPI_DECLSPEC extern opal_class_t ompi_proc_t_class;
 
 struct ompi_proc_t {
-    opal_list_item_t          super;       /* allow proc to be placed on a list */
+    /** allow proc to be placed on a list */
+    opal_list_item_t          super;
+    /** this process' name */
     orte_process_name_t       proc_name;
-    struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
-    opal_object_t*            proc_modex;  /* MCA module exchange data */
+    /** PML specific proc data */
+    struct mca_pml_proc_t*    proc_pml;
+    /** MCA module exchange data */
+    opal_object_t*            proc_modex;
+    /** architecture of this process */
     uint32_t                  proc_arch;
+    /** process-wide convertor */
     struct ompi_convertor_t*  proc_convertor;
+    /** process-wide lock */
     opal_mutex_t              proc_lock;
-
-  /* JMS: need to have the following information:
-     - how am i [mpi] connected (bitmap): spawn (parent/child), 
-                                          connect, accept, joint
-  */
+    /** flags for this proc */
+    uint8_t                   proc_flags;
 };
+/**
+ * Convenience typedef
+ */
 typedef struct ompi_proc_t ompi_proc_t;
 OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
+
+/* 
+ * Flags 
+ */
+
+/**
+ * Flag to indicate that the proc is on the same node as the local proc
+ */
+#define OMPI_PROC_FLAG_LOCAL  0x01
 
 
 /**
