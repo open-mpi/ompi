@@ -59,7 +59,7 @@ orte_pls_base_module_t orte_pls_bproc_module = {
     orte_pls_bproc_finalize
 };
 
-static int * orte_pls_bproc_daemon_pids = NULL;
+static orte_process_name_t ** orte_pls_bproc_daemon_names = NULL;
 static int orte_pls_bproc_num_daemons = 0;
 static int orte_pls_bproc_node_array(orte_rmaps_base_map_t* map, 
                                      int ** node_array, int * node_array_len);
@@ -262,14 +262,20 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
         opal_output(0, "pls_bproc_waitpid_cb: error: process count is less than 0.\n");
     } else if(0 == mca_pls_bproc_component.num_procs && 
               mca_pls_bproc_component.done_launching) {
+        orte_buffer_t ack;
+        OBJ_CONSTRUCT(&ack, orte_buffer_t);
+        rc = orte_dps.pack(&ack, &i, 1, ORTE_BYTE);
+        if(rc != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(rc);
+        }
         for(i = 0; i < orte_pls_bproc_num_daemons; i++) {
-            if(0 < mca_pls_bproc_component.debug) {
-                printf("killing daemon pid %d\n", orte_pls_bproc_daemon_pids[i]);
-            }
-            if(0 != kill(orte_pls_bproc_daemon_pids[i], 15)) {
-                perror("kill of orted failed");
+            rc = mca_oob_send_packed(orte_pls_bproc_daemon_names[i], &ack, 
+                                     MCA_OOB_TAG_BPROC, 0);
+            if (0 > rc) {
+                ORTE_ERROR_LOG(rc);
             }
         }
+        OBJ_DESTRUCT(&ack);
     }
     OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
 }
@@ -323,8 +329,9 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
-    if(NULL == (orte_pls_bproc_daemon_pids = (int*)malloc(sizeof(int) * num_daemons))) {
+    orte_pls_bproc_daemon_names = (orte_process_name_t **)
+                                  malloc(sizeof(orte_process_name_t*)*num_daemons);
+    if(NULL == orte_pls_bproc_daemon_names) {
         ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         goto cleanup;
     }
@@ -475,8 +482,8 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
     }
     
     /* launch the daemons */
-    rc = bproc_vexecmove(num_daemons, node_list, orte_pls_bproc_daemon_pids, 
-                         exec_path, argv, map->app->env);
+    rc = bproc_vexecmove(num_daemons, node_list, pids, exec_path, argv, 
+                         map->app->env);
 
     if(rc != num_daemons) {
         opal_output(0, "Failed to launch proper number of daemons.");
@@ -484,15 +491,22 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
         goto cleanup;
     }
     for(i = 0; i < num_daemons; i++) {
-        if(0 >= orte_pls_bproc_daemon_pids[i]) {
+        if(0 >= pids[i]) {
             opal_output(0, "pls_bproc: failed to launch all daemons. " 
                         "Daemon pid was %d on node %d and errno %d\n"
                         "You may need to set the pls_bproc_orted paramater to "
                         "point to where orted is installed", 
-                        orte_pls_bproc_daemon_pids[i], node_list[i], errno);
+                        pids[i], node_list[i], errno);
             rc = ORTE_ERROR;
             ORTE_ERROR_LOG(rc);
             goto cleanup;
+        } else {
+            rc = orte_ns.create_process_name(&orte_pls_bproc_daemon_names[i],
+                                      cellid, daemon_jobid, daemon_vpid_start + j);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
         }
     }
     orte_pls_bproc_num_daemons = num_daemons;
@@ -501,7 +515,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
 
     if(0 < mca_pls_bproc_component.debug) {
         opal_output(0, "PLS_BPROC DEBUG: %d daemons launched. First pid: %d\n", 
-                    rc, *orte_pls_bproc_daemon_pids);
+                    rc, *pids);
     }
     
     /* wait for communication back */

@@ -26,6 +26,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
+#include "opal/threads/condition.h"
 #include "opal/util/os_create_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
@@ -59,7 +60,8 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
                                       bool connect_stdin, size_t app_context);
 static void pls_bproc_orted_delete_dir_tree(char * path);
 static int pls_bproc_orted_remove_dir(void);
-
+static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
+                                    orte_buffer_t* buffer, int tag, void* cbdata);
 /**
  * Creates the passed directory. If the directory already exists, it and its
  * contents will be deleted then the directory will be created.
@@ -328,6 +330,13 @@ static int pls_bproc_orted_remove_dir() {
     free(frontend);
     return OMPI_SUCCESS;
 }
+/**
+ * Callback function for when mpirun sends us a message saying all the child 
+ * procs are done */
+static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
+                                    orte_buffer_t* buffer, int tag, void* cbdata) {
+    opal_condition_signal(&mca_pls_bproc_orted_component.condition);
+}
 
 /**
  * Setup io for the current node, then tell orterun we are ready for the actual
@@ -442,7 +451,14 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid)
     }
 
     mca_pls_bproc_orted_component.num_procs = num_procs;
-
+    
+    /* post recieve for termination signal */
+    rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_SEED, MCA_OOB_TAG_BPROC, 0, 
+                                pls_bproc_orted_kill_cb, NULL);
+    if (0 > rc) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
     /* do callback to say we are ready */
     orte_dps.pack(&ack, &src, 1, ORTE_INT32);
     rc = mca_oob_send_packed(MCA_OOB_NAME_SEED, &ack, MCA_OOB_TAG_BPROC, 0);
