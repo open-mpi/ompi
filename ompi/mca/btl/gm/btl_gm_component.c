@@ -132,6 +132,8 @@ int mca_btl_gm_component_open(void)
         mca_btl_gm_param_register_int("num_high_priority", 8); 
     mca_btl_gm_component.gm_num_repost = 
         mca_btl_gm_param_register_int("num_repost", 4); 
+    mca_btl_gm_component.gm_num_mru = 
+        mca_btl_gm_param_register_int("num_mru", 64); 
     mca_btl_gm_component.gm_port_name=
         mca_btl_gm_param_register_string("port_name", "OMPI"); 
 
@@ -206,6 +208,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_frag_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->gm_pending, opal_list_t);
     OBJ_CONSTRUCT(&btl->gm_repost, opal_list_t);
+    OBJ_CONSTRUCT(&btl->gm_mru_reg, opal_list_t);
     OBJ_CONSTRUCT(&btl->gm_lock, opal_mutex_t);
                                                                                                   
     /* query nic tokens */
