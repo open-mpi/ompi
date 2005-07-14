@@ -74,7 +74,28 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
         goto RETURN_ERROR;
     }
     
-    if (0 < n) {
+    /* if the original command did not provide any triggers, then we put a size_t value in the buffer of "zero"
+     * to avoid causing buffer problems. thus, we need to check to see if the type is size_t vs trigger vs
+     * something else. if it is trigger, then we need the number to be greater than 0, which should always
+     * be true (we check it just to be safe). if it is size_t, then the value should be zero - anything else
+     * generates an error.
+     */
+    if (ORTE_SIZE == type) {
+        /* this case means that there were no triggers, so we need to clear the value from the buffer
+         * and continue on
+         */
+        n=1;
+        if (ORTE_SUCCESS != orte_dps.unpack(input_buffer, &num_trigs, &n, ORTE_SIZE)) {
+            ORTE_ERROR_LOG(rc);
+            goto RETURN_ERROR;
+        }
+        /* if the returned number of triggers isn't zero, then we have a problem */
+        if (0 != num_trigs) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            rc = ORTE_ERR_COMM_FAILURE;
+            goto RETURN_ERROR;
+        }
+    } else if (ORTE_GPR_TRIGGER == type && 0 < n) {
         /* create the space for the triggers */
         trigs = (orte_gpr_trigger_t**)malloc(n * sizeof(orte_gpr_trigger_t*));
         if (NULL == trigs) {
@@ -87,8 +108,15 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
+        num_trigs = n;
+    } else {
+        /* we must have an error condition - it either wasn't the right type, or we had the type okay
+         * but don't have a good number of elements. report the error and move on
+         */
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        rc = ORTE_ERR_COMM_FAILURE;
+        goto RETURN_ERROR;
     }
-    num_trigs = n;
 
 
     /* register subscriptions */
