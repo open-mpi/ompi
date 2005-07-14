@@ -50,7 +50,6 @@ struct mca_btl_mvapi_frag_t {
     mca_btl_base_descriptor_t base; 
     mca_btl_base_segment_t segment; 
     struct mca_btl_base_endpoint_t *endpoint; 
-    mca_btl_mvapi_frag_type_t type; 
     size_t size; 
     int rc; 
     
@@ -59,7 +58,7 @@ struct mca_btl_mvapi_frag_t {
         VAPI_sr_desc_t sr_desc; 
     }; 
     VAPI_sg_lst_entry_t sg_entry;  
-    VAPI_mr_hndl_t mem_hndl; 
+    /* VAPI_mr_hndl_t mem_hndl;  */
     VAPI_ret_t ret;
     mca_btl_mvapi_header_t *hdr;
     mca_mpool_mvapi_registration_t * vapi_reg; 
