@@ -90,7 +90,7 @@ static size_t orte_ras_bjs_node_slots(char* node_name)
 static int orte_ras_bjs_node_resolve(char* node_name, int* node_num)
 {
     /* for now we expect this to be the node number */
-    if(sscanf(node_name, "%d", node_num) != 1)
+    if(NULL == node_name || sscanf(node_name, "%d", node_num) != 1)
         return ORTE_NODE_ERROR;
     return ORTE_SUCCESS;
 }
@@ -132,15 +132,17 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
         }
 
         if(orte_ras_bjs_node_state(node_num) != ORTE_NODE_STATE_UP) {
-            opal_output(0, "error: a specified node (%s) is not up.\n", 
-                node->node_name);
-            return ORTE_NODE_DOWN;
+            opal_list_remove_item(nodelist,item);
+            OBJ_DESTRUCT(item);
+            item = next;
+            continue;
         }
 
         if(bproc_access(node_num, BPROC_X_OK) != 0) {
-            opal_output(0, "error: a specified node (%s) is not accessible.\n", 
-                node->node_name);
-            return ORTE_NODE_ERROR;
+            opal_list_remove_item(nodelist,item);
+            OBJ_DESTRUCT(item);
+            item = next;
+            continue;
         }
 
         /* try and determine the number of available slots */

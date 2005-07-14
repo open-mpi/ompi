@@ -103,9 +103,11 @@ static int orte_ras_bjs_open(void)
 
 static orte_ras_base_module_t *orte_ras_bjs_init(int* priority)
 {
+#if 0
     if(getenv("NODES") == NULL) {
         return NULL;
     }
+#endif
     *priority = mca_ras_bjs_component.priority;
     return &orte_ras_bjs_module;
 }
