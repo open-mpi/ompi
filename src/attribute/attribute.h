@@ -51,10 +51,10 @@ enum ompi_attribute_type_t {
     COMM_ATTR = 1, /**< The attribute belongs to a comm object. Starts
 		      with 1 so that we can have it initialized to 0
 		      using memset in the constructor */
+    TYPE_ATTR /**< The attribute belongs to datatype object */
 #if OMPI_WANT_MPI2_ONE_SIDED
     WIN_ATTR, /**< The attribute belongs to a win object */
 #endif
-    TYPE_ATTR /**< The attribute belongs to datatype object */
 };
 typedef enum ompi_attribute_type_t ompi_attribute_type_t;
 
