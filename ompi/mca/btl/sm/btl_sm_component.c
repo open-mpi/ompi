@@ -40,11 +40,6 @@
 #include "btl_sm_fifo.h"
 
 
-/*
- * Local utility functions.
- */
-
-static int mca_btl_sm_component_exchange(void);
 
 /*
  * Shared Memory (SM) component instance. 
@@ -228,11 +223,6 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     /* lookup/create shared memory pool only when used */
     mca_btl_sm_component.sm_mpool = NULL;
     mca_btl_sm_component.sm_mpool_base = NULL;
-
-    /* publish shared memory parameters with the MCA framework */
-    if (OMPI_SUCCESS != mca_btl_sm_component_exchange()) {
-        return NULL;
-    }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
@@ -499,45 +489,3 @@ int mca_btl_sm_component_progress(void)
     }  /* end peer_local_smp_rank loop */
     return rc;
 }
-
-
-/*
- *
- */
-
-static int mca_btl_sm_component_exchange()
-{
-    mca_btl_sm_exchange_t mca_btl_sm_setup_info;
-    size_t len,size;
-    char *ptr;
-    int rc;
-
-    /* determine length of host name */
-    len=strlen(orte_system_info.nodename);
-    /* check if string is zero length or there is an error */
-    if( 0 >= len) {
-        return OMPI_ERROR;
-    }
-    /* check if string is too long */
-    if( MCA_BTL_SM_MAX_HOSTNAME_LEN < (len+1) ){
-        return OMPI_ERROR;
-    }
-
-    /* copy string into structure that will be used to send data around */
-    ptr=NULL;
-    ptr=strncpy(&(mca_btl_sm_setup_info.host_name[0]),
-            orte_system_info.nodename, len);
-    if( NULL == ptr ) {
-        return OMPI_ERROR;
-    }
-    mca_btl_sm_setup_info.host_name[len]='\0';
-
-
-    /* exchange setup information */
-    size=sizeof(mca_btl_sm_exchange_t);
-    rc =  mca_base_modex_send(&mca_btl_sm_component.super.btl_version, 
-            &mca_btl_sm_setup_info, size);
-    
-    return OMPI_SUCCESS;
-}
-
