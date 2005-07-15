@@ -29,6 +29,15 @@ extern "C" {
 #endif
 
 /**
+ * Bproc node registry keys
+ */
+#define ORTE_SOH_BPROC_NODE_STATUS      "orte-node-bproc-status"
+#define ORTE_SOH_BPROC_NODE_MODE        "orte-node-bproc-mode"
+#define ORTE_SOH_BPROC_NODE_USER        "orte-node-bproc-user"
+#define ORTE_SOH_BPROC_NODE_GROUP       "orte-node-bproc-group"
+
+
+/**
  * Module init/fini
  */
 int orte_soh_bproc_module_init(void);
