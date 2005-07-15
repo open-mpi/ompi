@@ -60,7 +60,8 @@ int mca_coll_sm_param_priority = -1;
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
- * this module to indicate what level of thread support it provides.
+ * this component to disqualify itself if it doesn't support the
+ * required level of thread support.
  */
 int mca_coll_sm_init_query(bool enable_progress_threads,
                            bool enable_mpi_threads)
@@ -80,6 +81,8 @@ const mca_coll_base_module_1_0_0_t *
 mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
                        struct mca_coll_base_comm_t **data)
 {
+    int i;
+
     /* If we're intercomm, or if there's only one process in the
        communicator, we don't want to run */
 
@@ -97,6 +100,13 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
     
     /* We only want to run if all the processes in the communicator
        are on the same node */
+
+    for (i = 0; i < ompi_comm_size(comm); ++i) {
+        if (0 == (comm->c_local_group->grp_proc_pointers[i]->proc_flags &
+                  OMPI_PROC_FLAG_LOCAL)) {
+            return NULL;
+        }
+    }
 
     /* Can we get an mpool allocation? */
 
