@@ -23,6 +23,11 @@
 #include "mca/btl/btl.h"
 #include "btl_openib_frag.h"
 #include "btl_openib.h"
+#include <errno.h> 
+#include <string.h> 
+
+extern int errno; 
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -159,7 +164,7 @@ static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt,
         if(ibv_post_recv(qp, 
                          &rr_desc_post[i], 
                          &bad_wr)) { 
-            opal_output(0, "%s: error posting receive\n", __func__); 
+            opal_output(0, "%s: error posting receive errno says %s\n", __func__, strerror(errno)); 
             return OMPI_ERROR; 
     }
     
