@@ -90,7 +90,8 @@ static const mca_coll_base_module_1_0_0_t inter = {
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
- * this module to indicate what level of thread support it provides.
+ * this component to disqualify itself if it doesn't support the
+ * required level of thread support.
  */
 int mca_coll_demo_init_query(bool enable_progress_threads,
                              bool enable_mpi_threads)
