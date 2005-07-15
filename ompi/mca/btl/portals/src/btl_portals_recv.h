@@ -73,7 +73,7 @@ static inline int
 mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
 {
     int ret;
-    ptl_process_id_t proc = { PTL_NID_ANY, PTL_PID_ANY };
+    ptl_process_id_t any_proc = { PTL_NID_ANY, PTL_PID_ANY };
     ptl_md_t md;
 
     /* if we have pending operations, something very, very, very bad
@@ -83,13 +83,12 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
     if (NULL == chunk->start) return OMPI_ERROR;
 
     /* create match entry */
-    ret = PtlMEAttach(chunk->btl->portals_ni_h,
-                      BTL_PORTALS_SEND_TABLE_ID,
-                      proc,
+    ret = PtlMEInsert(chunk->btl->portals_recv_reject_me_h,
+                      any_proc,
                       0, /* match bits */
                       0, /* ignore bits */
                       PTL_UNLINK,
-                      PTL_INS_AFTER,
+                      PTL_INS_BEFORE,
                       &(chunk->me_h));
     if (PTL_OK != ret) return OMPI_ERROR;
 

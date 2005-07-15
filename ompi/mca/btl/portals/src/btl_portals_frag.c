@@ -28,7 +28,7 @@ mca_btl_portals_frag_common_send_constructor(mca_btl_portals_frag_t* frag)
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
 
-    frag->segment.seg_addr.pval = frag + sizeof(mca_btl_portals_frag_t);
+    frag->segment.seg_addr.pval = frag + 1;
     frag->segment.seg_len = frag->size;
     frag->segment.seg_key.key64 = 0;
 
@@ -61,6 +61,8 @@ mca_btl_portals_frag_user_constructor(mca_btl_portals_frag_t* frag)
     frag->base.des_src = 0;
     frag->base.des_src_cnt = 0;
     frag->size = 0; 
+
+    frag->type = MCA_BTL_PORTALS_FRAG_SEND;
 }
 
 

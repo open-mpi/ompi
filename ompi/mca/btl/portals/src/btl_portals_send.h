@@ -68,4 +68,25 @@ mca_btl_portals_send_frag(mca_btl_portals_frag_t *frag)
     return OMPI_SUCCESS;
 }
 
+
+static inline int
+mca_btl_portals_progress_queued_sends(struct mca_btl_portals_module_t *module)
+{
+    if ((0 != opal_list_get_size(&(module->portals_queued_sends))) &&
+        (module->portals_outstanding_sends < 
+         module->portals_max_outstanding_sends)) {
+        mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*)
+            opal_list_remove_first(&(module->portals_queued_sends));
+        opal_output_verbose(90, mca_btl_portals_component.portals_output,
+                            "retransmit for frag 0x%x, 0x%x", 
+                            frag, frag->base.des_cbfunc);
+        return mca_btl_portals_send(&module->super,
+                                    frag->u.send_frag.endpoint,
+                                    &(frag->base),
+                                    frag->u.send_frag.hdr.tag);
+    }
+    return OMPI_SUCCESS;
+}
+
+
 #endif /* MCA_BTL_PORTALS_SEND_H */

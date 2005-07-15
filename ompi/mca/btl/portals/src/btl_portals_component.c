@@ -178,9 +178,13 @@ mca_btl_portals_component_open(void)
        Set sizes here */
     mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_RECV] =
         param_register_int("eq_recv_size", BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE);
+
+    mca_btl_portals_module.portals_max_outstanding_sends = 
+        param_register_int("eq_send_max_pending", BTL_PORTALS_MAX_SENDS_PENDING) * 3;
     /* sends_pending * 3 for start, end, ack */
     mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_SEND] = 
-        param_register_int("eq_send_max_pending", BTL_PORTALS_MAX_SENDS_PENDING) * 3;
+        mca_btl_portals_module.portals_max_outstanding_sends * 3;
+
     mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_RDMA] =
         param_register_int("eq_rdma_size", 512); /* BWB - FIXME - make param */
 
@@ -302,6 +306,9 @@ mca_btl_portals_component_init(int *num_btls,
         /* receive chunk list */
         OBJ_CONSTRUCT(&(ptl_btl->portals_recv_chunks), opal_list_t);
 
+        /* pending sends */
+        OBJ_CONSTRUCT(&(ptl_btl->portals_queued_sends), opal_list_t);
+
         /* lock */
         OBJ_CONSTRUCT(&(ptl_btl->portals_lock), opal_mutex_t);
     }
@@ -353,6 +360,7 @@ mca_btl_portals_component_progress(void)
                         &which);
         if (PTL_EQ_EMPTY == ret) {
             /* nothing to see here - move along */
+            mca_btl_portals_progress_queued_sends(module);
             continue;
         } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
             /* BWB - how can we report errors? */
@@ -366,6 +374,7 @@ mca_btl_portals_component_progress(void)
 
         switch (which) {
         case MCA_BTL_PORTALS_EQ_RECV:
+            mca_btl_portals_progress_queued_sends(module);
             mca_btl_portals_process_recv(module, &ev);
             break;
         case MCA_BTL_PORTALS_EQ_SEND:

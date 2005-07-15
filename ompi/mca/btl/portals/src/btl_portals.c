@@ -25,6 +25,7 @@
 #include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
+#include "ompi/datatype/convertor.h"
 
 #include "btl_portals.h"
 #include "btl_portals_compat.h"
@@ -239,9 +240,8 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl,
     }
     
     frag->base.des_flags = 0; 
-    frag->type = MCA_BTL_PORTALS_FRAG_SEND;
 
-    return (mca_btl_base_descriptor_t*) frag;
+    return &frag->base;
 }
 
 
@@ -271,6 +271,76 @@ mca_btl_portals_free(struct mca_btl_base_module_t* btl,
 }
 
 
+/* BWB - fix me - this needs to do RDMA when we get there... */
+mca_btl_base_descriptor_t* 
+mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
+                            struct mca_btl_base_endpoint_t* peer,
+                            mca_mpool_base_registration_t* registration, 
+                            struct ompi_convertor_t* convertor,
+                            size_t reserve,
+                            size_t* size)
+{
+    mca_btl_portals_frag_t* frag;
+    size_t max_data = *size;
+    struct iovec iov;
+    uint32_t iov_count = 1;
+    int32_t free_after;
+    int rc;
+
+    if (max_data+reserve <= btl->btl_eager_limit) {
+        /*
+         * if we aren't pinning the data and the requested size is less
+         * than the eager limit pack into a fragment from the eager pool
+         */
+        MCA_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc);
+        if (NULL == frag) {
+            return NULL;
+        }
+
+        iov.iov_len = max_data;
+        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, 
+                                 &max_data, &free_after);
+        *size  = max_data;
+        if (rc < 0) {
+            MCA_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag);
+            return NULL;
+        }
+        frag->segment.seg_len = max_data + reserve;
+    } else {
+        /* 
+         * otherwise pack as much data as we can into a fragment
+         * that is the max send size.
+         */
+        MCA_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc);
+        if (NULL == frag) {
+            return NULL;
+        }
+        if (max_data + reserve > btl->btl_max_send_size){
+            max_data = btl->btl_max_send_size - reserve;
+        }
+        iov.iov_len = max_data;
+        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, 
+                                 &max_data, &free_after);
+        *size  = max_data;
+        if ( rc < 0 ) {
+            MCA_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag);
+            return NULL;
+        }
+        frag->segment.seg_len = max_data + reserve;
+    }
+
+    frag->base.des_src = &frag->segment;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    frag->base.des_flags = 0;
+
+    return &frag->base;
+}
+
+
 int
 mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
 {
@@ -278,6 +348,17 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
         (struct mca_btl_portals_module_t *) btl_base;
     int ret, i;
     opal_list_item_t *item;
+
+    /* finalize all communication */
+    while (btl->portals_outstanding_sends > 0) {
+        mca_btl_portals_component_progress();
+    }
+
+    if (0 != opal_list_get_size(&(btl->portals_queued_sends))) {
+        opal_output(mca_btl_portals_component.portals_output,
+                    "Warning: there were %d queued sends not sent",
+                    opal_list_get_size(&(btl->portals_queued_sends)));
+    }
 
     OPAL_THREAD_LOCK(&ptl_btl->portals_lock);
 
@@ -306,7 +387,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
 
     OBJ_DESTRUCT(&btl->portals_endpoint_list);
     OBJ_DESTRUCT(&btl->portals_recv_chunks);
-
+    OBJ_DESTRUCT(&btl->portals_queued_sends);
 
     OPAL_THREAD_UNLOCK(&btl->portals_lock);
 

@@ -112,6 +112,10 @@ struct mca_btl_portals_module_t {
 
     /* number outstanding sends */
     volatile int32_t portals_outstanding_sends;
+    int32_t portals_max_outstanding_sends;
+
+    /* queued sends */
+    opal_list_t portals_queued_sends;
 
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;

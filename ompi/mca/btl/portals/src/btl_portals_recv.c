@@ -42,7 +42,7 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *module)
     md.length = 0;
     md.threshold = PTL_MD_THRESH_INF;
     md.max_size = 0;
-    md.options = PTL_MD_TRUNCATE;
+    md.options = PTL_MD_TRUNCATE | PTL_MD_OP_PUT;
     md.user_ptr = NULL;
     md.eq_handle = PTL_EQ_NONE;
 
@@ -211,7 +211,7 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
         frag->u.recv_frag.chunk = chunk;
 
         if (ev->md.length - (ev->offset + ev->mlength) < ev->md.max_size) {
-            /* the chunk is full.  It's deactivated, automagically but we
+            /* the chunk is full.  It's deactivated automagically, but we
                can't start it up again until everyone is done with it.
                The actual reactivation and all that will happen after the
                free completes the last operation... */
