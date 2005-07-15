@@ -19,9 +19,11 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "communicator/communicator.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
 #include "coll_sm.h"
 
 
@@ -54,8 +56,6 @@ static const mca_coll_base_module_1_0_0_t module = {
     NULL,
     NULL
 };
-
-int mca_coll_sm_param_priority = -1;
 
 
 /*
@@ -92,11 +92,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
 
     /* Get our priority */
 
-    if (OMPI_SUCCESS != 
-        mca_base_param_lookup_int(mca_coll_sm_param_priority,
-                                  priority)) {
-        return NULL;
-    }
+    *priority = mca_coll_sm_component.sm_priority;
     
     /* We only want to run if all the processes in the communicator
        are on the same node */
@@ -108,15 +104,23 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
         }
     }
 
-    /* Can we get an mpool allocation? */
+    /* Can we get an mpool allocation?  See if there was one created
+       already.  If not, try to make one. */
 
-    /* JMS ... */
+    mca_coll_sm_component.sm_mpool = 
+        mca_mpool_base_module_lookup(mca_coll_sm_component.sm_mpool_name);
+    if (NULL == mca_coll_sm_component.sm_mpool) {
+        mca_coll_sm_component.sm_mpool = 
+            mca_mpool_base_module_create(mca_coll_sm_component.sm_mpool_name,
+                                         NULL, NULL);
+        if (NULL == mca_coll_sm_component.sm_mpool) {
+            return NULL;
+        }
+    }
 
-#if 1
-    return NULL;
-#else
+    /* All is good -- return a module */
+
     return &module;
-#endif
 }
 
 
@@ -154,5 +158,3 @@ int mca_coll_sm_module_finalize(struct ompi_communicator_t *comm)
 
     return OMPI_SUCCESS;
 }
-
-

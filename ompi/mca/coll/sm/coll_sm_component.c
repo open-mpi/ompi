@@ -39,6 +39,7 @@ const char *mca_coll_sm_component_version_string =
  */
 
 static int sm_open(void);
+static int sm_close(void);
 
 
 /*
@@ -46,43 +47,56 @@ static int sm_open(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_1_0_0_t mca_coll_sm_component = {
+mca_coll_sm_component_t mca_coll_sm_component = {
 
-    /* First, the mca_component_t struct containing meta information
-       about the component itself */
-
-    {
-        /* Indicate that we are a coll v1.0.0 component (which also
-           implies a specific MCA version) */
-
-        MCA_COLL_BASE_VERSION_1_0_0,
-
-        /* Component name and version */
-
-        "sm",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
-
-        /* Component open and close functions */
-
-        sm_open,
-        NULL
-    },
-
-    /* Next the MCA v1.0.0 component meta data */
+    /* First, fill in the super (mca_coll_base_component_1_0_0_t) */
 
     {
-        /* Whether the component is checkpointable or not */
+        /* First, the mca_component_t struct containing meta
+           information about the component itself */
+        
+        {
+            /* Indicate that we are a coll v1.0.0 component (which
+               also implies a specific MCA version) */
 
-        true
+            MCA_COLL_BASE_VERSION_1_0_0,
+
+            /* Component name and version */
+
+            "sm",
+            OMPI_MAJOR_VERSION,
+            OMPI_MINOR_VERSION,
+            OMPI_RELEASE_VERSION,
+
+            /* Component open and close functions */
+
+            sm_open,
+            sm_close,
+        },
+        
+        /* Next the MCA v1.0.0 component meta data */
+
+        {
+            /* Whether the component is checkpointable or not */
+            
+            true
+        },
+
+        /* Initialization / querying functions */
+        
+        mca_coll_sm_init_query,
+        mca_coll_sm_comm_query,
+        mca_coll_sm_comm_unquery,
     },
 
-    /* Initialization / querying functions */
+    /* sm-component specifc information */
 
-    mca_coll_sm_init_query,
-    mca_coll_sm_comm_query,
-    mca_coll_sm_comm_unquery,
+    /* priority */
+    75,
+
+    /* mpool name and instance */
+    "sm",
+    NULL
 };
 
 
@@ -91,11 +105,33 @@ const mca_coll_base_component_1_0_0_t mca_coll_sm_component = {
  */
 static int sm_open(void)
 {
+    int p, ival;
+    char *sval;
+
     /* If we want to be selected (i.e., all procs on one node), then
        we should have a high priority */
-    
-    mca_coll_sm_param_priority = 
-        mca_base_param_register_int("coll", "sm", "priority", NULL, 75);
+
+    p = mca_base_param_register_int("coll", "sm", "priority", NULL, 75);
+    mca_base_param_lookup_int(p, &ival);
+    mca_coll_sm_component.sm_priority = ival;
+
+    p = mca_base_param_register_string("coll", "sm", "mpool", NULL, "sm");
+    mca_base_param_lookup_string(p, &sval);
+    mca_coll_sm_component.sm_mpool_name = sval;
+
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ * Close the component
+ */
+static int sm_close(void)
+{
+    if (NULL != mca_coll_sm_component.sm_mpool_name) {
+        free(mca_coll_sm_component.sm_mpool_name);
+        mca_coll_sm_component.sm_mpool_name = NULL;
+    }
 
     return OMPI_SUCCESS;
 }
