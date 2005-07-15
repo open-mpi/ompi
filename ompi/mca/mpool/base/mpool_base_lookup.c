@@ -62,13 +62,14 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
            (mca_base_component_list_item_t *) item;
          component = 
            (mca_mpool_base_component_t *) cli->cli_component;
-         if(strcmp(component->mpool_version.mca_component_name, name) == 0) {
+         if(0 == strcmp(component->mpool_version.mca_component_name, name)) {
              break;
          }
     }
 
-    if(NULL == component)  
+    if (NULL == component) {
         return NULL;
+    }
     module = component->mpool_init(resources); 
     sm = OBJ_NEW(mca_mpool_base_selected_module_t); 
     sm->mpool_component = component; 
@@ -77,4 +78,23 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     sm->mpool_resources = resources;
     opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
     return module; 
+}
+
+
+mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
+{
+    opal_list_item_t* item;
+
+    for (item = opal_list_get_first(&mca_mpool_base_modules);
+         item != opal_list_get_end(&mca_mpool_base_modules);
+         item = opal_list_get_next(item)) {
+        mca_mpool_base_selected_module_t *mli =
+            (mca_mpool_base_selected_module_t *) item;
+        if(0 == strcmp(mli->mpool_component->mpool_version.mca_component_name,
+                       name)) {
+            return mli->mpool_module;
+        }
+    }
+
+    return NULL;
 }

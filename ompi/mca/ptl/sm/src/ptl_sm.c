@@ -203,8 +203,12 @@ int mca_ptl_sm_add_procs_same_base_addr(
     /* lookup shared memory pool */
     if(NULL == mca_ptl_sm_component.sm_mpool) {
         mca_ptl_sm_component.sm_mpool =
-            mca_mpool_base_module_create(mca_ptl_sm_component.sm_mpool_name,NULL,NULL);
-                                                                                                                     
+            mca_mpool_base_module_lookup(mca_ptl_sm_component.sm_mpool_name);
+        if (NULL == mca_ptl_sm_component.sm_mpool) {
+            mca_ptl_sm_component.sm_mpool =
+                mca_mpool_base_module_create(mca_ptl_sm_component.sm_mpool_name,NULL,NULL);
+        }
+
         /* Sanity check to ensure that we found it */
         if (NULL == mca_ptl_sm_component.sm_mpool) {
            return_code = OMPI_ERR_OUT_OF_RESOURCE;

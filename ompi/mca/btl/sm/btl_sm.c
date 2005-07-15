@@ -199,7 +199,11 @@ int mca_btl_sm_add_procs_same_base_addr(
     /* lookup shared memory pool */
     if(NULL == mca_btl_sm_component.sm_mpool) {
         mca_btl_sm_component.sm_mpool =
-            mca_mpool_base_module_create(mca_btl_sm_component.sm_mpool_name,btl,NULL);
+            mca_mpool_base_module_lookup(mca_btl_sm_component.sm_mpool_name);
+        if (NULL == mca_btl_sm_component.sm_mpool) {
+            mca_btl_sm_component.sm_mpool =
+                mca_mpool_base_module_create(mca_btl_sm_component.sm_mpool_name,btl,NULL);
+        }
 
         /* Sanity check to ensure that we found it */
         if (NULL == mca_btl_sm_component.sm_mpool) {

@@ -13,6 +13,9 @@
  * 
  * $HEADER$
  */
+/**
+ * @file
+ */
 
 #ifndef MCA_COLL_SM_EXPORT_H
 #define MCA_COLL_SM_EXPORT_H
@@ -20,8 +23,9 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "mca/mca.h"
-#include "mca/coll/coll.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/mpool/mpool.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -29,14 +33,33 @@ extern "C" {
 
 #define PUB(foo) mca_coll_sm##foo
 
-    /* Structure for sm collective module, per communicator. The
-       structure mainly stores memory pointers to the specific
-       poritions in the shared memory area. Each shared memory area is
-       reserved for special functions.  The shared memory is split
-       between two types of areas. One is control section that stores
-       shared flags used during synchronization, while other section
-       is purely used to pass messages from one process to other. */
+    /** 
+     * Structure to hold the sm coll component.  First it holds the
+     * base coll component, and then holds a bunch of
+     * sm-coll-component-specific stuff (e.g., current MCA param
+     * values). 
+     */
+    typedef struct mca_coll_sm_component_t {
+        /** Base coll component */
+        mca_coll_base_component_1_0_0_t super;
 
+        /** Priority of this component */
+        int sm_priority;
+        /** Name of the mpool that this component will look for */
+        char *sm_mpool_name;
+        /** Mpool that will be used */
+        mca_mpool_base_module_t *sm_mpool;
+    } mca_coll_sm_component_t;
+
+    /** 
+     * Structure for sm collective module, per communicator. The
+     * structure mainly stores memory pointers to the specific
+     * poritions in the shared memory area. Each shared memory area is
+     * reserved for special functions.  The shared memory is split
+     * between two types of areas. One is control section that stores
+     * shared flags used during synchronization, while other section
+     * is purely used to pass messages from one process to other. 
+     */
     typedef struct mca_coll_base_module_comm_t {
 
         /* JMS fill in here */
@@ -45,12 +68,10 @@ extern "C" {
     } mca_coll_base_module_comm_t;
 
     
-    /*
-     * Globally exported variables
+    /**
+     * Global component instance
      */
-
-    extern const mca_coll_base_component_1_0_0_t mca_coll_sm_component;
-    extern int mca_coll_sm_param_priority;
+    extern mca_coll_sm_component_t mca_coll_sm_component;
 
 
     /*
@@ -157,7 +178,3 @@ extern "C" {
 #endif
 
 #endif /* MCA_COLL_SM_EXPORT_H */
-
-
-
-
