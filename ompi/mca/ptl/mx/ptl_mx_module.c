@@ -49,6 +49,9 @@ int mca_ptl_mx_module_init(void)
         return OMPI_ERROR;
     }
 
+    /* Do not abort on errors */
+    mx_set_error_handler(MX_ERRORS_RETURN);
+
     /* determine the number of NICs */
     if((status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
                               &mca_ptl_mx_component.mx_num_ptls, sizeof(uint32_t))) != MX_SUCCESS) {
@@ -60,10 +63,8 @@ int mca_ptl_mx_module_init(void)
     size = sizeof(uint64_t) * (mca_ptl_mx_component.mx_num_ptls+1);
     if(NULL == (nic_addrs = (uint64_t*)malloc(size)))
         return OMPI_ERR_OUT_OF_RESOURCE;
-    if((status = mx_get_info( NULL,
-                              MX_NIC_IDS, NULL, 0,
-                              nic_addrs,
-                              size)) != MX_SUCCESS) {
+    if( (status = mx_get_info( NULL, MX_NIC_IDS, NULL, 0,
+                               nic_addrs, size)) != MX_SUCCESS) {
         free(nic_addrs);
         return OMPI_ERROR;
     }
@@ -81,7 +82,7 @@ int mca_ptl_mx_module_init(void)
     }
 
     /* create a ptl for each NIC */
-    for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
+    for( i = 0; i < mca_ptl_mx_component.mx_num_ptls; i++ ) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_create(nic_addrs[i]);
         if(NULL == ptl) {
             return OMPI_ERROR;
@@ -101,10 +102,10 @@ int mca_ptl_mx_module_init(void)
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
         endpoint_addrs[i] = ptl->mx_endpoint_addr;
     }
-    if((rc = mca_base_modex_send(
-        &mca_ptl_mx_component.super.ptlm_version, 
-        endpoint_addrs, 
-        mca_ptl_mx_component.mx_num_ptls * sizeof(mx_endpoint_addr_t))) != OMPI_SUCCESS)
+    if((rc = mca_base_modex_send( &mca_ptl_mx_component.super.ptlm_version, 
+                                  endpoint_addrs, 
+                                  mca_ptl_mx_component.mx_num_ptls * sizeof(mx_endpoint_addr_t)))
+       != OMPI_SUCCESS)
         return rc;
     return OMPI_SUCCESS;
 }
@@ -271,21 +272,23 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 {
     mca_ptl_mx_module_t* ptl = malloc(sizeof(mca_ptl_mx_module_t));
     mx_return_t status;
-    if(NULL == ptl)
+    uint32_t nic_id;
+
+    if(NULL == ptl) return NULL;
+
+    status = mx_nic_id_to_board_number( addr, &nic_id );
+    if( MX_SUCCESS != status ) {
         return NULL;
+    }
 
     /* copy over default settings */
     memcpy(ptl, &mca_ptl_mx_module, sizeof(mca_ptl_mx_module_t));
     OBJ_CONSTRUCT(&ptl->mx_peers, opal_list_t);
                         	    
     /* open local endpoint */
-    status = mx_open_endpoint(
-        addr,
-        MX_ANY_ENDPOINT,
-        mca_ptl_mx_component.mx_filter,
-        NULL,
-        0,
-        &ptl->mx_endpoint);
+    status = mx_open_endpoint( nic_id, MX_ANY_ENDPOINT,
+                               mca_ptl_mx_component.mx_filter,
+                               NULL, 0, &ptl->mx_endpoint);
     if(status != MX_SUCCESS) {
         opal_output(0, "mca_ptl_mx_init: mx_open_endpoint() failed with status=%d\n", status);
         mca_ptl_mx_finalize(&ptl->super);
@@ -293,9 +296,8 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
     }
                         	    
     /* query the endpoint address */
-    if((status = mx_get_endpoint_addr(
-        ptl->mx_endpoint,
-        &ptl->mx_endpoint_addr)) != MX_SUCCESS) {
+    if((status = mx_get_endpoint_addr( ptl->mx_endpoint,
+                                       &ptl->mx_endpoint_addr)) != MX_SUCCESS) {
         opal_output(0, "mca_ptl_mx_init: mx_get_endpoint_addr() failed with status=%d\n", status);
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
@@ -312,10 +314,10 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 
     if(mca_ptl_mx_component.mx_debug) {
         opal_output(0, "mca_ptl_mx_create: opened %08X:%08X:%08X:%08X\n", 
-            (uint32_t)(ptl->mx_nic_addr >> 32), 
-            (uint32_t)ptl->mx_nic_addr,
-            ptl->mx_endpoint_id,
-            ptl->mx_filter);
+                    (uint32_t)(ptl->mx_nic_addr >> 32), 
+                    (uint32_t)ptl->mx_nic_addr,
+                    ptl->mx_endpoint_id,
+                    ptl->mx_filter);
     }
 
     /* prepost a receive buffer */
@@ -407,7 +409,7 @@ int mca_ptl_mx_add_procs(
 
         /* Dont let mx register for self */
         if( proc_self == procs[n] ) continue;
-                                                                                                                 
+
         if((ptl_proc = mca_ptl_mx_proc_create(procs[n])) == NULL)
             return OMPI_ERR_OUT_OF_RESOURCE;
 
