@@ -241,7 +241,7 @@ do {                                                                            
     bytes_received,                                                               \
     bytes_delivered)                                                              \
 do {                                                                              \
-    if(request->req_recv.req_base.req_count > 0) {                                \
+    if(request->req_recv.req_bytes_packed > 0) {                                  \
         struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = 0;                                                   \
         size_t max_data = bytes_received;                                         \
@@ -268,6 +268,8 @@ do {                                                                            
             &max_data,                                                            \
             &free_after);                                                         \
         bytes_delivered = max_data;                                               \
+    } else {                                                                      \
+        bytes_delivered = 0;                                                      \
     }                                                                             \
 } while (0)
 

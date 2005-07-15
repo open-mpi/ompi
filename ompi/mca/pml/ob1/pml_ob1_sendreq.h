@@ -170,15 +170,17 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     mca_pml_ob1_endpoint_t* endpoint;                                                     \
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                         \
                                                                                           \
+    MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
+                                                                                          \
     /* select next endpoint */                                                            \
     endpoint = mca_pml_ob1_ep_array_get_next(&proc->btl_eager);                           \
     sendreq->req_lock = 0;                                                                \
-    MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
     sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
     sendreq->req_chunk = NULL;                                                            \
     sendreq->req_send_offset = 0;                                                         \
     sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
+    sendreq->req_send.req_base.req_pml_complete = false;                                  \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->proc_sequence,1);  \
