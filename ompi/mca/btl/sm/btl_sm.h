@@ -210,7 +210,7 @@ extern int mca_btl_sm_add_procs(
     struct ompi_bitmap_t* reachability
 );
 
-                                                                                                               
+
 /**
  * PML->BTL notification of change in the process list.
  * PML->BTL Notification that a receive fragment has been matched.
@@ -269,7 +269,7 @@ extern int mca_btl_sm_register(
     mca_btl_base_module_recv_cb_fn_t cbfunc,
     void* cbdata
 );
-                                                                                                                   
+
 
 /**
  * Allocate a segment.
@@ -292,7 +292,8 @@ extern int mca_btl_sm_free(
     struct mca_btl_base_module_t* btl,
     mca_btl_base_descriptor_t* segment
 );
-                                                                                                                   
+
+
 /**
  * Pack data
  *
@@ -307,7 +308,8 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     size_t reserve,
     size_t* size
 );
-                                                                                                            
+
+
 /**
  * Initiate a send to the peer.
  *
@@ -321,20 +323,11 @@ extern int mca_btl_sm_send(
     mca_btl_base_tag_t tag
 );
 
-/**
- * Data structure used to hold information that will be exchanged with
- * all other procs at startup.  !!!!! This is only temporary, until the
- * registry is complete
- */
-#define MCA_BTL_SM_MAX_HOSTNAME_LEN  128
-typedef struct mca_btl_sm_exchange{
-    char host_name[MCA_BTL_SM_MAX_HOSTNAME_LEN];
-}mca_btl_sm_exchange_t;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_sm_component_event_thread(opal_object_t*);
 #endif
-                                                                                                              
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 1 
 #define MCA_BTL_SM_SIGNAL_PEER(peer) \
 { \
