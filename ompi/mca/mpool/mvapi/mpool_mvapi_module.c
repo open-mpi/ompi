@@ -19,6 +19,9 @@
 #include "opal/util/output.h"
 #include "mca/mpool/mvapi/mpool_mvapi.h"
 
+uint32_t mca_mpool_mvapi_registered_cnt=0; 
+uint32_t mca_mpool_mvapi_unregistered_cnt=0; 
+
 
 /* 
  *  Initializes the mpool module.
@@ -65,7 +68,7 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
                             size_t size, 
                             mca_mpool_base_registration_t** registration){
     
-    
+    mca_mpool_mvapi_registered_cnt++; 
     mca_mpool_mvapi_module_t * mpool_module = (mca_mpool_mvapi_module_t*) mpool; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
     VAPI_mrw_t mr_in, mr_out;
@@ -100,7 +103,9 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
                            ); 
     
     if(VAPI_OK != ret){ 
-        opal_output(0, "error pinning vapi memory\n"); 
+        opal_output(0, "error pinning vapi memory registered called %d times unregistered called %d times\n", 
+                    mca_mpool_mvapi_registered_cnt, 
+                    mca_mpool_mvapi_unregistered_cnt); 
         return OMPI_ERROR; 
     }
     
@@ -119,6 +124,7 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
 int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size, 
                               mca_mpool_base_registration_t* registration){
     
+    mca_mpool_mvapi_unregistered_cnt++; 
     VAPI_ret_t ret; 
     mca_mpool_mvapi_module_t * mpool_mvapi = (mca_mpool_mvapi_module_t*) mpool; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
@@ -132,7 +138,7 @@ int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_
         opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
         return OMPI_ERROR; 
     }
-   
+    
     return OMPI_SUCCESS; 
 }
 

@@ -301,7 +301,9 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                 opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }
+        
             opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
+            
         }
         
         /* frag->mem_hndl = vapi_reg->hndl; */ 
@@ -317,8 +319,8 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0; 
         frag->vapi_reg = vapi_reg; 
+        
         OBJ_RETAIN(vapi_reg); 
-
         return &frag->base;
         
     } else if((mca_btl_mvapi_component.leave_pinned || max_data > btl->btl_max_send_size) && 
@@ -555,8 +557,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                 opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }    
-            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg); 
+            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
+        
         }
+        OBJ_RETAIN(vapi_reg); 
     }  else { 
            
         if(mca_btl_mvapi_component.leave_pinned) { 
@@ -566,7 +570,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
-                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
+                    opal_list_remove_first(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
@@ -627,7 +631,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
     frag->vapi_reg = vapi_reg; 
-    OBJ_RETAIN(vapi_reg); 
+    
     return &frag->base; 
     
 }
