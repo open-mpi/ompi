@@ -29,18 +29,6 @@
  * BWB - README - BWB - README - BWB - README - BWB - README - BWB */
 
 
-mca_btl_base_descriptor_t* 
-mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
-                            struct mca_btl_base_endpoint_t* peer,
-                            mca_mpool_base_registration_t* registration, 
-                            struct ompi_convertor_t* convertor,
-                            size_t reserve,
-                            size_t* size)
-{
-    printf("btl prepare src\n");
-    return NULL;
-}
-
 
 mca_btl_base_descriptor_t* 
 mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl, 
