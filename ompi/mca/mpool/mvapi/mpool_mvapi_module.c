@@ -45,8 +45,15 @@ void* mca_mpool_mvapi_alloc(
     size_t align, 
     mca_mpool_base_registration_t** registration)
 {
-    mca_mpool_mvapi_module_t* mpool_mvapi = (mca_mpool_mvapi_module_t*)mpool; 
-    return mpool_mvapi->vapi_allocator->alc_alloc(mpool_mvapi->vapi_allocator, size, align, registration);
+    
+    void* addr_malloc = (void*)malloc(size + mca_mpool_mvapi_component.page_size); 
+    void* addr = (void*)  ALIGN_ADDR(addr_malloc, mca_mpool_mvapi_component.page_size_log); 
+    if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, registration)) { 
+        free(addr_malloc);
+        return NULL; 
+    }
+    (*registration)->alloc_base = addr_malloc; 
+    return addr; 
 }
 
 
@@ -139,7 +146,12 @@ void* mca_mpool_mvapi_realloc(
     mca_mpool_base_registration_t** registration)
 {
     mca_mpool_mvapi_module_t* mpool_mvapi = (mca_mpool_mvapi_module_t*)mpool; 
-    return mpool_mvapi->vapi_allocator->alc_realloc( mpool_mvapi->vapi_allocator, addr, size, registration);
+    mca_mpool_base_registration_t* old_reg  = *registration; 
+    
+    void* new_mem = mpool->mpool_alloc(mpool, size, 0, registration); 
+    memcpy(new_mem, addr, old_reg->bound - old_reg->base); 
+    mpool->mpool_free(mpool, addr, &old_reg); 
+    return new_mem; 
 }
 
 /**
@@ -151,7 +163,7 @@ void mca_mpool_mvapi_free(mca_mpool_base_module_t* mpool, void * addr,
     
     mca_mpool_mvapi_module_t* mpool_mvapi = (mca_mpool_mvapi_module_t*)mpool; 
     mpool_mvapi->super.mpool_deregister(mpool, addr, 0, registration); 
-    mpool_mvapi->vapi_allocator->alc_free(mpool_mvapi->vapi_allocator, addr);
+    free(registration->alloc_base); 
     
     
 }
