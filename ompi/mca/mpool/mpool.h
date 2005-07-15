@@ -32,6 +32,7 @@ struct mca_mpool_base_registration_t {
     bool is_leave_pinned;
     unsigned char* base;
     unsigned char* bound; 
+    unsigned char* alloc_base; 
 };  
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 
 

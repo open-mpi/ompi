@@ -234,7 +234,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
 
     
     if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        bool is_leave_pinned = vapi_reg->is_leave_pinned; 
+        bool is_leave_pinned = vapi_reg->base_reg.is_leave_pinned; 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -292,7 +292,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
 
             OBJ_RETAIN(vapi_reg); 
             if(is_leave_pinned) {
-                vapi_reg->is_leave_pinned = is_leave_pinned; 
+                vapi_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             } 
         }   
@@ -378,7 +378,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                 return NULL; 
             OBJ_RETAIN(vapi_reg); 
             
-            vapi_reg->is_leave_pinned = true; 
+            vapi_reg->base_reg.is_leave_pinned = true; 
                     
             opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             
@@ -388,7 +388,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                                             max_data, 
                                             (mca_mpool_base_registration_t**) &vapi_reg); 
             
-            vapi_reg->is_leave_pinned = false; 
+            vapi_reg->base_reg.is_leave_pinned = false; 
         } 
         /* frag->mem_hndl = vapi_reg->hndl;  */
         frag->sg_entry.len = max_data; 
@@ -505,7 +505,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
 
     if(NULL!= vapi_reg){ 
         reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
-        bool is_leave_pinned = vapi_reg->is_leave_pinned; 
+        bool is_leave_pinned = vapi_reg->base_reg.is_leave_pinned; 
 
         if(frag->segment.seg_len > reg_len ) { 
             size_t new_len = vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1 
@@ -545,7 +545,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
             OBJ_RETAIN(vapi_reg); 
             
             if(is_leave_pinned) { 
-                vapi_reg->is_leave_pinned = is_leave_pinned; 
+                vapi_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             } 
 
@@ -587,7 +587,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                                         *size, 
                                         (mca_mpool_base_registration_t**) &vapi_reg);
             
-            vapi_reg->is_leave_pinned = true;
+            vapi_reg->base_reg.is_leave_pinned = true;
             
             rc = mca_mpool_base_insert(vapi_reg->base_reg.base,  
                                        vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
@@ -607,7 +607,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                                             frag->segment.seg_addr.pval,
                                             *size, 
                                             (mca_mpool_base_registration_t**) &vapi_reg);
-            vapi_reg->is_leave_pinned=false; 
+            vapi_reg->base_reg.is_leave_pinned=false; 
         }
         
         
