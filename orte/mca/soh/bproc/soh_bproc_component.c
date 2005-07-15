@@ -67,7 +67,7 @@ static int orte_soh_bproc_param_register_int(
     const char* param_name,
     int default_value)
 {
-    int id = mca_base_param_register_int("soh","bproc_soh",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("soh","bproc",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
@@ -80,7 +80,7 @@ static int orte_soh_bproc_param_register_int(
 static int orte_soh_bproc_open(void)
 {
     mca_soh_bproc_component.debug =
-        orte_soh_bproc_param_register_int("debug", 1);
+        orte_soh_bproc_param_register_int("debug", 0);
     mca_soh_bproc_component.priority =
         orte_soh_bproc_param_register_int("priority", 1);
     return OMPI_SUCCESS;
