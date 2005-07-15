@@ -198,8 +198,8 @@ static int
 mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
 {
     mca_mpool_base_resources_t resources;
-    size_t num_high_priority;
-    size_t i;
+    int32_t num_high_priority;
+    int32_t i;
     int rc;
 
     /* initialize objects */
