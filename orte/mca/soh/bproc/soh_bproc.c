@@ -33,32 +33,31 @@
 #include "mca/soh/base/base.h"
 #include "mca/soh/bproc/soh_bproc.h"
 
-static int orte_soh_bproc_get_proc_soh(orte_proc_state_t *, int *, orte_process_name_t *);
-static int orte_soh_bproc_set_proc_soh(orte_process_name_t *, orte_proc_state_t, int);
-static int orte_soh_bproc_get_node_soh(orte_node_state_t *, orte_cellid_t, char *);
-static int orte_soh_bproc_set_node_soh(orte_cellid_t, char *, orte_node_state_t);
-static int orte_soh_bproc_finalize(void);
-static void update_node_info(struct bproc_node_info_t *);
-
-#define EMPTY_SET		0
+#define BIT_MASK(bit)		(bit_set)(1 << (bit))
+#define EMPTY_SET		(bit_set)0
 #define BIT_NODE_NAME		0
 #define BIT_NODE_STATE		1
 #define BIT_NODE_BPROC_STATUS	2
 #define BIT_NODE_BPROC_MODE	3
 #define BIT_NODE_BPROC_USER	4
 #define BIT_NODE_BPROC_GROUP	5
-#define BIT_SET_ALL		0x3f
+#define BIT_SET_ALL		( BIT_MASK(BIT_NODE_NAME) \
+				| BIT_MASK(BIT_NODE_STATE) \
+				| BIT_MASK(BIT_NODE_BPROC_STATUS) \
+				| BIT_MASK(BIT_NODE_BPROC_MODE) \
+				| BIT_MASK(BIT_NODE_BPROC_USER) \
+				| BIT_MASK(BIT_NODE_BPROC_GROUP))
 
-typedef int bit_set;
+typedef unsigned int bit_set;
 
 static inline void set_bit(bit_set *set, int bit)
 {
-    *set |= (1 << bit);
+    *set |= BIT_MASK(bit);
 }
 
 static inline int is_set(bit_set set, int bit)
 {
-    return (set & (1 << bit)) == (1 << bit);
+    return (set & BIT_MASK(bit)) == BIT_MASK(bit);
 }
 
 static inline int num_bits(bit_set set)
@@ -77,6 +76,10 @@ static inline int empty_set(bit_set set)
 {
 	return set == EMPTY_SET;
 }
+
+static int orte_soh_bproc_get_proc_soh(orte_proc_state_t *, int *, orte_process_name_t *);
+static int orte_soh_bproc_set_proc_soh(orte_process_name_t *, orte_proc_state_t, int);
+static int orte_soh_bproc_finalize(void);
 
 /** 
  * Query the bproc node status
@@ -137,7 +140,6 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     value = OBJ_NEW(orte_gpr_value_t);
     value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
     value->segment = strdup(ORTE_NODE_SEGMENT);
-
     
     value->cnt = num_bits(changes);
 
