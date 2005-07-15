@@ -287,14 +287,13 @@ int mca_ptl_mx_send(
         sendfrag->frag_send.frag_base.frag_size);
 
     /* start the fragment */
-    mx_return = mx_isend(
-        mx_ptl->mx_endpoint,
-        segments,
-        sendfrag->frag_segment_count,
-        ptl_peer->peer_addr,
-        match.lval,
-        sendfrag,
-        &sendfrag->frag_request);
+    mx_return = mx_isend( mx_ptl->mx_endpoint,
+                          segments,
+                          sendfrag->frag_segment_count,
+                          ptl_peer->peer_addr,
+                          match.lval,
+                          sendfrag,
+                          &sendfrag->frag_request );
     if(mx_return != MX_SUCCESS) {
         opal_output(0, "mca_ptl_mx_send: mx_isend() failed with return value=%d\n", mx_return);
         return OMPI_ERROR;

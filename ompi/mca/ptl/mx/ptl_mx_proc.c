@@ -114,11 +114,11 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
-    if(0 != (size % sizeof(mx_endpoint_addr_t))) {
+    if(0 != (size % sizeof(mca_ptl_mx_endpoint_t))) {
         opal_output(0, "mca_ptl_mx_proc_create: mca_base_modex_recv: invalid size %d\n", size);
         return NULL;
     }
-    ptl_proc->proc_addr_count = size / sizeof(mx_endpoint_addr_t);
+    ptl_proc->proc_addr_count = size / sizeof(mca_ptl_mx_endpoint_t);
 
     /* allocate space for peer array - one for each exported address */
     ptl_proc->proc_peers = (mca_ptl_mx_peer_t**)
@@ -152,12 +152,28 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_lookup(const orte_process_name_t *name)
  */
 int mca_ptl_mx_proc_insert(mca_ptl_mx_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
+    mx_return_t mx_status;
+    mca_ptl_mx_endpoint_t* remote = &(ptl_proc->proc_addrs[ptl_proc->proc_peer_count]);
+    int num_retry = 0;
     /* insert into peer array */ 
     ptl_peer->peer_proc = ptl_proc;
-    ptl_peer->peer_addr = ptl_proc->proc_addrs[ptl_proc->proc_peer_count];
     ptl_proc->proc_peers[ptl_proc->proc_peer_count] = ptl_peer;
-    ptl_proc->proc_peer_count++;
 
+    /* construct the remote endpoint addr */
+ retry_connect:
+    mx_status = mx_connect( ptl_peer->peer_ptl->mx_endpoint, remote->nic_id, remote->endpoint_id,
+                            mca_ptl_mx_component.mx_filter, 1, &(ptl_peer->peer_addr) );
+    if( OMPI_SUCCESS != mx_status ) {
+        if( MX_TIMEOUT == mx_status )
+            if( num_retry++ < 5 )
+                goto retry_connect;
+        opal_output( 0, "mx_connect fail for peer %d remote %lx %d filter %x with error %s\n",
+                     ptl_proc->proc_peer_count,
+                     remote->nic_id, remote->endpoint_id, mca_ptl_mx_component.mx_filter,
+                     mx_strerror(mx_status) );
+        return OMPI_ERROR;
+    }
+    ptl_proc->proc_peer_count++;
     return OMPI_SUCCESS;
 }
 

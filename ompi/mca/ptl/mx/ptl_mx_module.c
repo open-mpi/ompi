@@ -40,7 +40,7 @@ int mca_ptl_mx_module_init(void)
     uint32_t i;
     int rc;
     uint64_t *nic_addrs;
-    mx_endpoint_addr_t *endpoint_addrs;
+    mca_ptl_mx_endpoint_t *endpoint_addrs;
     mx_return_t status;
 
     /* intialize MX library */
@@ -92,20 +92,19 @@ int mca_ptl_mx_module_init(void)
     free(nic_addrs);
 
     /* post local endpoint addresses */
-    size = mca_ptl_mx_component.mx_num_ptls * sizeof(mx_endpoint_addr_t);
-    endpoint_addrs = (mx_endpoint_addr_t*)malloc(size);
+    size = mca_ptl_mx_component.mx_num_ptls * sizeof(mca_ptl_mx_endpoint_t);
+    endpoint_addrs = (mca_ptl_mx_endpoint_t*)malloc(size);
     if(NULL == endpoint_addrs) {
         opal_output(0, "mca_ptl_mx_module_init: malloc() failed\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
+    for( i = 0; i < mca_ptl_mx_component.mx_num_ptls; i++ ) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
-        endpoint_addrs[i] = ptl->mx_endpoint_addr;
+        mx_decompose_endpoint_addr( ptl->mx_endpoint_addr,
+                                    &(endpoint_addrs[i].nic_id), &(endpoint_addrs[i].endpoint_id) );
     }
     if((rc = mca_base_modex_send( &mca_ptl_mx_component.super.ptlm_version, 
-                                  endpoint_addrs, 
-                                  mca_ptl_mx_component.mx_num_ptls * sizeof(mx_endpoint_addr_t)))
-       != OMPI_SUCCESS)
+                                  endpoint_addrs, size )) != OMPI_SUCCESS )
         return rc;
     return OMPI_SUCCESS;
 }
@@ -294,30 +293,13 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
     }
-                        	    
+
     /* query the endpoint address */
     if((status = mx_get_endpoint_addr( ptl->mx_endpoint,
                                        &ptl->mx_endpoint_addr)) != MX_SUCCESS) {
         opal_output(0, "mca_ptl_mx_init: mx_get_endpoint_addr() failed with status=%d\n", status);
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
-    }
-
-    /* breakup the endpoint address */
-    if((status = mx_decompose_endpoint_addr( ptl->mx_endpoint_addr,
-                                             &ptl->mx_nic_addr,
-                                             &ptl->mx_endpoint_id)) != MX_SUCCESS) {
-        opal_output(0, "mca_ptl_mx_init: mx_decompose_endpoint_addr() failed with status=%d\n", status);
-        mca_ptl_mx_finalize(&ptl->super);
-        return NULL;
-    }
-
-    if(mca_ptl_mx_component.mx_debug) {
-        opal_output(0, "mca_ptl_mx_create: opened %08X:%08X:%08X:%08X\n", 
-                    (uint32_t)(ptl->mx_nic_addr >> 32), 
-                    (uint32_t)ptl->mx_nic_addr,
-                    ptl->mx_endpoint_id,
-                    ptl->mx_filter);
     }
 
     /* prepost a receive buffer */
@@ -376,6 +358,7 @@ int mca_ptl_mx_finalize(struct mca_ptl_base_module_t* ptl)
     opal_thread_join(&mx_ptl->mx_thread, NULL);
 #endif
     mx_close_endpoint(mx_ptl->mx_endpoint);
+    mx_ptl->mx_endpoint = NULL;
     free(mx_ptl);
     return OMPI_SUCCESS;
 }

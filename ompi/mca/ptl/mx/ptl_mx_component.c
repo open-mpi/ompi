@@ -150,11 +150,11 @@ int mca_ptl_mx_component_close(void)
 #endif
 
     /* release resources */
-    OBJ_DESTRUCT(&mca_ptl_mx_component.mx_lock);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_send_frags);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_recv_frags);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_procs);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_pending_acks);
+    OBJ_DESTRUCT(&mca_ptl_mx_component.mx_lock);
     return OMPI_SUCCESS;
 }
 
@@ -171,44 +171,42 @@ mca_ptl_base_module_t** mca_ptl_mx_component_init(
     *num_ptls = 0;
 
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_recv_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_procs, opal_hash_table_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_pending_acks, opal_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, opal_mutex_t);
 
-    ompi_free_list_init(&mca_ptl_mx_component.mx_send_frags, 
-        sizeof(mca_ptl_mx_send_frag_t),
-        OBJ_CLASS(mca_ptl_mx_send_frag_t),
-        mca_ptl_mx_component.mx_free_list_num,
-        mca_ptl_mx_component.mx_free_list_max,
-        mca_ptl_mx_component.mx_free_list_inc,
-        NULL); /* use default allocator */
+    ompi_free_list_init( &mca_ptl_mx_component.mx_send_frags, 
+                         sizeof(mca_ptl_mx_send_frag_t),
+                         OBJ_CLASS(mca_ptl_mx_send_frag_t),
+                         mca_ptl_mx_component.mx_free_list_num,
+                         mca_ptl_mx_component.mx_free_list_max,
+                         mca_ptl_mx_component.mx_free_list_inc,
+                         NULL ); /* use default allocator */
 
-    ompi_free_list_init(&mca_ptl_mx_component.mx_recv_frags, 
-        sizeof(mca_ptl_mx_recv_frag_t),
-        OBJ_CLASS(mca_ptl_mx_recv_frag_t),
-        mca_ptl_mx_component.mx_free_list_num,
-        mca_ptl_mx_component.mx_free_list_max,
-        mca_ptl_mx_component.mx_free_list_inc,
-        NULL); /* use default allocator */
+    ompi_free_list_init( &mca_ptl_mx_component.mx_recv_frags, 
+                         sizeof(mca_ptl_mx_recv_frag_t),
+                         OBJ_CLASS(mca_ptl_mx_recv_frag_t),
+                         mca_ptl_mx_component.mx_free_list_num,
+                         mca_ptl_mx_component.mx_free_list_max,
+                         mca_ptl_mx_component.mx_free_list_inc,
+                         NULL ); /* use default allocator */
 
     /* intialize process hash table */
-    opal_hash_table_init(&mca_ptl_mx_component.mx_procs, 256);
+    opal_hash_table_init( &mca_ptl_mx_component.mx_procs, 256 );
 
     /* initialize mx ptls */
     if(OMPI_SUCCESS != mca_ptl_mx_module_init())
         return NULL;
 
     /* allocate and return a copy of the ptl array */
-    ptls = malloc(mca_ptl_mx_component.mx_num_ptls * 
-                  sizeof(mca_ptl_base_module_t*));
+    ptls = malloc( mca_ptl_mx_component.mx_num_ptls * sizeof(mca_ptl_base_module_t*) );
     if(NULL == ptls)
         return NULL;
 
-    memcpy(ptls, 
-        mca_ptl_mx_component.mx_ptls, 
-        mca_ptl_mx_component.mx_num_ptls*sizeof(mca_ptl_mx_module_t*));
+    memcpy( ptls,  mca_ptl_mx_component.mx_ptls, 
+            mca_ptl_mx_component.mx_num_ptls*sizeof(mca_ptl_mx_module_t*) );
     *num_ptls = mca_ptl_mx_component.mx_num_ptls;
     return ptls;
 }
