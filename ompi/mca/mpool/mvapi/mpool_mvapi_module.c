@@ -145,9 +145,7 @@ void* mca_mpool_mvapi_realloc(
     size_t size, 
     mca_mpool_base_registration_t** registration)
 {
-    mca_mpool_mvapi_module_t* mpool_mvapi = (mca_mpool_mvapi_module_t*)mpool; 
     mca_mpool_base_registration_t* old_reg  = *registration; 
-    
     void* new_mem = mpool->mpool_alloc(mpool, size, 0, registration); 
     memcpy(new_mem, addr, old_reg->bound - old_reg->base); 
     mpool->mpool_free(mpool, addr, &old_reg); 
@@ -161,8 +159,7 @@ void mca_mpool_mvapi_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
     
-    mca_mpool_mvapi_module_t* mpool_mvapi = (mca_mpool_mvapi_module_t*)mpool; 
-    mpool_mvapi->super.mpool_deregister(mpool, addr, 0, registration); 
+    mpool->mpool_deregister(mpool, addr, 0, registration); 
     free(registration->alloc_base); 
     
     

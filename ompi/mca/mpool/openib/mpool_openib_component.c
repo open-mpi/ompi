@@ -65,7 +65,7 @@ mca_mpool_openib_component_t mca_mpool_openib_component = {
 
 static void mca_mpool_openib_registration_constructor( mca_mpool_openib_registration_t * registration ) 
 { 
-    registration->is_leave_pinned = false; 
+    registration->base_reg.is_leave_pinned = false; 
 }
 
 static void mca_mpool_openib_registration_destructor( mca_mpool_openib_registration_t * registration ) 
@@ -79,7 +79,7 @@ static void mca_mpool_openib_registration_destructor( mca_mpool_openib_registrat
     
     registration->base_reg.base = NULL; 
     registration->base_reg.bound = NULL; 
-    registration->is_leave_pinned=false; 
+    registration->base_reg.is_leave_pinned=false; 
 
 } 
 
