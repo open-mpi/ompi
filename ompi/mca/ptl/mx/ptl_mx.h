@@ -42,7 +42,7 @@ struct mca_ptl_mx_component_t {
     uint32_t mx_filter;                    /**< filter assigned to application */
     uint32_t mx_num_ptls;                  /**< number of MX NICs available to app */
     uint32_t mx_max_ptls;                  /**< max number  of MX NICs to use */
-    struct mca_ptl_mx_module_t** mx_ptls;  /**< array of available PTL moduless */
+    struct mca_ptl_mx_module_t** mx_ptls;  /**< array of available PTL modules */
     ompi_free_list_t mx_send_frags;        /**< free list of mx send fragments */
     ompi_free_list_t mx_recv_frags;        /**< free list of mx recv fragments */
     opal_hash_table_t mx_procs;            /**< hash table of procs */
@@ -133,9 +133,6 @@ extern int mca_ptl_mx_component_progress(
 struct mca_ptl_mx_module_t {
     mca_ptl_base_module_t super;         /**< base PTL module interface */
     opal_list_t mx_peers;                /**< list of peers */
-    uint64_t mx_nic_addr;                /**< NIC MAC address */
-    uint32_t mx_filter;                  /**< endpoint filter */
-    uint32_t mx_endpoint_id;             /**< endpoint ID */
     bool mx_enabled;                     /**< flag to indicate if endpoint enabled */
     mx_endpoint_t mx_endpoint;           /**< endpoint */
     mx_endpoint_addr_t mx_endpoint_addr; /**< endpoint address */

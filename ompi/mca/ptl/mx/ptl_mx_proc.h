@@ -30,6 +30,11 @@
 extern "C" {
 #endif
 
+typedef struct mca_ptl_mx_endpoint_t {
+    uint64_t nic_id;
+    uint32_t endpoint_id;
+} mca_ptl_mx_endpoint_t;
+
 /**
  *  Represents the state of a remote process and the set of addresses
  *  that it exports. Also cache an instance of mca_ptl_base_peer_t for each
@@ -39,7 +44,7 @@ struct mca_ptl_mx_proc_t {
     opal_list_item_t super;             /**< allow proc to be placed on a list */
     ompi_proc_t *proc_ompi;             /**< pointer to corresponding ompi_proc_t */
     orte_process_name_t proc_name;      /**< globally unique identifier for the process */
-    mx_endpoint_addr_t *proc_addrs;     /**< peer endpoint address */
+    mca_ptl_mx_endpoint_t *proc_addrs;     /**< peer endpoint address */
     size_t proc_addr_count;             /**< number of addresses published by peer */
     mca_ptl_mx_peer_t **proc_peers;     /**< array of peers that have been created to access this proc */
     size_t proc_peer_count;             /**< number of peers */
