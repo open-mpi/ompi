@@ -240,7 +240,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     
     if(NULL != openib_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        bool is_leave_pinned = openib_reg->is_leave_pinned; 
+        bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -296,7 +296,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
             OBJ_RETAIN(openib_reg); 
             if(is_leave_pinned) {
-                openib_reg->is_leave_pinned = is_leave_pinned; 
+                openib_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             } 
         }   
@@ -382,7 +382,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                 return NULL; 
             OBJ_RETAIN(openib_reg); 
             
-            openib_reg->is_leave_pinned = true; 
+            openib_reg->base_reg.is_leave_pinned = true; 
                     
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             
@@ -392,7 +392,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                                             max_data, 
                                             (mca_mpool_base_registration_t**) &openib_reg); 
             
-            openib_reg->is_leave_pinned = false; 
+            openib_reg->base_reg.is_leave_pinned = false; 
         } 
         frag->mr = openib_reg->mr; 
         frag->sg_entry.length = max_data; 
@@ -508,7 +508,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     if(NULL!= openib_reg){ 
         reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
-        bool is_leave_pinned = openib_reg->is_leave_pinned; 
+        bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
 
         if(frag->segment.seg_len > reg_len ) { 
             size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
@@ -548,7 +548,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
             OBJ_RETAIN(openib_reg); 
             
             if(is_leave_pinned) { 
-                openib_reg->is_leave_pinned = is_leave_pinned; 
+                openib_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             } 
 
@@ -590,7 +590,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                         *size, 
                                         (mca_mpool_base_registration_t**) &openib_reg);
             
-            openib_reg->is_leave_pinned = true;
+            openib_reg->base_reg.is_leave_pinned = true;
             
             rc = mca_mpool_base_insert(openib_reg->base_reg.base,  
                                        openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
@@ -610,7 +610,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                             frag->segment.seg_addr.pval,
                                             *size, 
                                             (mca_mpool_base_registration_t**) &openib_reg);
-            openib_reg->is_leave_pinned=false; 
+            openib_reg->base_reg.is_leave_pinned=false; 
         }
         
         

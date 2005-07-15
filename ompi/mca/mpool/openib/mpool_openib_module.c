@@ -123,8 +123,12 @@ void* mca_mpool_openib_realloc(
     size_t size, 
     mca_mpool_base_registration_t** registration)
 {
-    mca_mpool_openib_module_t* mpool_openib = (mca_mpool_openib_module_t*)mpool; 
-    return mpool_openib->vapi_allocator->alc_realloc( mpool_openib->vapi_allocator, addr, size, registration);
+    mca_mpool_base_registration_t* old_reg  = *registration; 
+    void* new_mem = mpool->mpool_alloc(mpool, size, 0, registration); 
+    memcpy(new_mem, addr, old_reg->bound - old_reg->base); 
+    mpool->mpool_free(mpool, addr, &old_reg); 
+    return new_mem; 
+
 }
 
 /**
@@ -134,9 +138,8 @@ void mca_mpool_openib_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
     
-    mca_mpool_openib_module_t* mpool_openib = (mca_mpool_openib_module_t*)mpool; 
-    mpool_openib->super.mpool_deregister(mpool, addr, 0, registration); 
-    mpool_openib->vapi_allocator->alc_free(mpool_openib->vapi_allocator, addr);
+    mpool->mpool_deregister(mpool, addr, 0, registration); 
+    free(registration->alloc_base); 
     
     
 }

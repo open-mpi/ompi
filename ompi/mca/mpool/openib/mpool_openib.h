@@ -67,8 +67,7 @@ struct mca_mpool_openib_module_t {
 struct mca_mpool_openib_registration_t {
     mca_mpool_base_registration_t base_reg; 
     struct ibv_mr *mr;
-    bool is_leave_pinned; 
-
+    
 };
 typedef struct mca_mpool_openib_registration_t mca_mpool_openib_registration_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_openib_registration_t); 
