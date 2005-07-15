@@ -121,12 +121,20 @@ static void mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_rendezvous_hdr_t* hdr)
 {
     mca_pml_ob1_proc_t* proc = recvreq->req_proc;
-    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->btl_eager);
+    mca_pml_ob1_endpoint_t* ep;
     mca_btl_base_descriptor_t* des;
     mca_pml_ob1_recv_frag_t* frag;
     mca_pml_ob1_ack_hdr_t* ack;
     int rc;
 
+    /* if this hasn't been initialized yet - this is a synchronous send */
+    if(NULL == proc) {
+        ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(
+                recvreq->req_recv.req_base.req_comm, hdr->hdr_match.hdr_src);
+        proc = recvreq->req_proc = ompi_proc->proc_pml;
+    }
+    ep = mca_pml_ob1_ep_array_get_next(&proc->btl_eager);
+    
     /* allocate descriptor */
     MCA_PML_OB1_ENDPOINT_DES_ALLOC(ep, des, sizeof(mca_pml_ob1_ack_hdr_t));
     if(NULL == des) {
@@ -145,42 +153,49 @@ static void mca_pml_ob1_recv_request_ack(
      * registered. if registered on both sides - do one rdma for
      * the entire message.
      */
+    if(hdr->hdr_match.hdr_msg_length > 0) {
 
-    recvreq->req_chunk = mca_mpool_base_find(recvreq->req_recv.req_base.req_addr);
-    if( NULL != recvreq->req_chunk &&
-        ((hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN)
-         || mca_pml_ob1.leave_pinned)) {  /* BUG here! hdr_flags are 0! */ 
-        struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
-        while(reg->mpool != NULL) {
-            if(NULL != mca_pml_ob1_ep_array_find(&proc->btl_rdma,(mca_btl_base_module_t*) reg->user_data)) {
-                recvreq->req_mpool = reg;
-                break;
+        recvreq->req_chunk = mca_mpool_base_find(recvreq->req_recv.req_base.req_addr);
+        if( NULL != recvreq->req_chunk &&
+            ((hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN)
+             || mca_pml_ob1.leave_pinned)) {  /* BUG here! hdr_flags are 0! */ 
+            struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
+            while(reg->mpool != NULL) {
+                if(NULL != mca_pml_ob1_ep_array_find(&proc->btl_rdma,(mca_btl_base_module_t*) reg->user_data)) {
+                    recvreq->req_mpool = reg;
+                    break;
+                }
+                reg++;
             }
-            reg++;
-        }
-    } 
+        } 
     
-    /* use the longer rdma protocol for this request if:
-     * - size is larger than the rdma threshold
-     * - rdma devices are available
-    */
-    if(NULL == recvreq->req_mpool && !mca_pml_ob1.leave_pinned) {
-        if(recvreq->req_recv.req_bytes_packed > proc->proc_rdma_offset &&
-           mca_pml_ob1_ep_array_get_size(&proc->btl_rdma) &&
-           ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
-    
-            /* use convertor to figure out the rdma offset for this request */
-            recvreq->req_rdma_offset = proc->proc_rdma_offset;
-            ompi_convertor_set_position(
-                &recvreq->req_recv.req_convertor,
-                &recvreq->req_rdma_offset);
-            ack->hdr_rdma_offset = recvreq->req_rdma_offset;
-        } else {
-            recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
-            ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
+        /* use the longer rdma protocol for this request if:
+         * - size is larger than the rdma threshold
+         * - rdma devices are available
+        */
+        if(NULL == recvreq->req_mpool && !mca_pml_ob1.leave_pinned) {
+            if(recvreq->req_recv.req_bytes_packed > proc->proc_rdma_offset &&
+               mca_pml_ob1_ep_array_get_size(&proc->btl_rdma) &&
+               ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
+        
+                /* use convertor to figure out the rdma offset for this request */
+                recvreq->req_rdma_offset = proc->proc_rdma_offset;
+                ompi_convertor_set_position(
+                    &recvreq->req_recv.req_convertor,
+                    &recvreq->req_rdma_offset);
+                ack->hdr_rdma_offset = recvreq->req_rdma_offset;
+            } else {
+                recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
+                ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
+            }
+        } else { 
+            recvreq->req_rdma_offset = hdr->hdr_frag_length;
+            ack->hdr_rdma_offset = hdr->hdr_frag_length;
         }
     }
-    else{ 
+
+    /* zero byte message */
+    else { 
         recvreq->req_rdma_offset = hdr->hdr_frag_length;
         ack->hdr_rdma_offset = hdr->hdr_frag_length;
     }
