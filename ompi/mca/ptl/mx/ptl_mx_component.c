@@ -94,13 +94,6 @@ int mca_ptl_mx_component_open(void)
     mca_ptl_mx_component.mx_ptls = NULL;
     mca_ptl_mx_component.mx_num_ptls = 0;
 
-    /* initialize objects */
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_send_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_recv_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_procs, opal_hash_table_t);
-    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_pending_acks, opal_hash_table_t);
-
     /* register MX module parameters */
     mca_ptl_mx_component.mx_filter =
         (uint32_t)mca_ptl_mx_param_register_int("filter", 0xdeadbeef);
@@ -134,6 +127,9 @@ int mca_ptl_mx_component_open(void)
 
 int mca_ptl_mx_component_close(void)
 {
+    if( NULL == mca_ptl_mx_component.mx_ptls )
+        return OMPI_SUCCESS;
+
     mx_finalize();
 #if OMPI_ENABLE_DEBUG
     if (mca_ptl_mx_component.mx_send_frags.fl_num_allocated &&
@@ -154,9 +150,10 @@ int mca_ptl_mx_component_close(void)
 #endif
 
     /* release resources */
+    OBJ_DESTRUCT(&mca_ptl_mx_component.mx_lock);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_send_frags);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_recv_frags);
-    OBJ_DESTRUCT(&mca_ptl_mx_component.mx_lock);
+    OBJ_DESTRUCT(&mca_ptl_mx_component.mx_procs);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_pending_acks);
     return OMPI_SUCCESS;
 }
@@ -172,6 +169,13 @@ mca_ptl_base_module_t** mca_ptl_mx_component_init(
 {
     mca_ptl_base_module_t** ptls;
     *num_ptls = 0;
+
+    /* initialize objects */
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_send_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_recv_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_procs, opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_pending_acks, opal_list_t);
 
     ompi_free_list_init(&mca_ptl_mx_component.mx_send_frags, 
         sizeof(mca_ptl_mx_send_frag_t),

@@ -66,8 +66,8 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
 
 #define MCA_PTL_MX_SEND_FRAG_INIT_ACK(ack,ptl,frag) \
 { \
-    mca_ptl_base_header_t* hdr = &(ack)->frag_send.frag_base.frag_header; \
-    mca_pml_base_recv_request_t* request = (frag)->frag_recv.frag_request; \
+    mca_ptl_base_header_t* hdr = &((ack)->frag_send.frag_base.frag_header); \
+    mca_pml_base_recv_request_t* request = &((frag)->frag_recv.frag_request->req_recv); \
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK; \
     hdr->hdr_common.hdr_flags = 0; \
     hdr->hdr_ack.hdr_src_ptr = (frag)->frag_recv.frag_base.frag_header.hdr_rndv.hdr_src_ptr; \
@@ -85,7 +85,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
     (ack)->frag_segment_count = 1; \
     (ack)->frag_free = 0; \
 }
-                                                                                                                  
+
 #define MCA_PTL_MX_SEND_FRAG_PROGRESS(frag) \
 do { \
     mca_ptl_base_send_request_t* request = frag->frag_send.frag_request; \

@@ -92,9 +92,9 @@ do { \
     /* copy into user space */ \
     if(frag->frag_recv.frag_is_buffered) { \
         struct iovec iov; \
-        unsigned int iov_count; \
-        unsigned int max_data; \
-        int free_after; \
+        uint32_t iov_count; \
+        size_t max_data; \
+        int32_t free_after; \
   \
         iov.iov_base = frag->frag_recv.frag_base.frag_addr; \
         iov.iov_len = frag->frag_recv.frag_base.frag_size; \
