@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
+#include "win/win.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_SET_ATTR = mpi_win_set_attr_f
@@ -70,5 +72,7 @@ void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
                                        OMPI_FINT_2_INT(*win_keyval), 
                                        *attribute_val,
                                        false, true);
+
+    c_err = MPI_SUCCESS;
     *ierr = OMPI_INT_2_FINT(c_err);
 }

@@ -67,9 +67,9 @@ void mpi_win_get_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
        the top of src/attributes/attributes.c. */
 
     c_err = ompi_attr_get_fortran_mpi2(c_win->w_keyhash,
-                                       OMPI_FINT_2_INT(*keyhash),
+                                       OMPI_FINT_2_INT(*win_keyval),
                                        attribute_val,
-                                       &c_flag)
+                                       &c_flag);
     *ierr = OMPI_INT_2_FINT(c_err);
     *flag = OMPI_INT_2_FINT(c_flag);
 }

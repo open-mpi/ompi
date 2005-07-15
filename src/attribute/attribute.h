@@ -53,7 +53,7 @@ enum ompi_attribute_type_t {
 		      using memset in the constructor */
     TYPE_ATTR /**< The attribute belongs to datatype object */
 #if OMPI_WANT_MPI2_ONE_SIDED
-    WIN_ATTR, /**< The attribute belongs to a win object */
+    , WIN_ATTR /**< The attribute belongs to a win object */
 #endif
 };
 typedef enum ompi_attribute_type_t ompi_attribute_type_t;

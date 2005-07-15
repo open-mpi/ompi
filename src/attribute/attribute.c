@@ -644,7 +644,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
 		
 #if OMPI_WANT_MPI2_ONE_SIDED
         case WIN_ATTR:
-            DELETE_ATTR_CALLBACKS(win, attre, key_item);
+            DELETE_ATTR_CALLBACKS(win, attr, key_item);
             break;
 #endif
 		
