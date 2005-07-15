@@ -30,6 +30,9 @@
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/openib/mpool_openib.h" 
+#include <errno.h> 
+#include <string.h> 
+extern int errno; 
 
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
@@ -275,11 +278,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             OBJ_RELEASE(openib_reg); 
             
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool, 
-                                            base_addr, 
-                                            new_len, 
-                                            (mca_mpool_base_registration_t**) &openib_reg);
-            
-            
+                                                base_addr, 
+                                                new_len, 
+                                                (mca_mpool_base_registration_t**) &openib_reg);
             
             rc = mca_mpool_base_insert(openib_reg->base_reg.base, 
                                        openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
@@ -405,7 +406,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->openib_reg = openib_reg; 
-        OBJ_RETAIN(openib_reg); 
         return &frag->base;
 
     } else if (max_data+reserve <=  btl->btl_eager_limit) { 
@@ -720,7 +720,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     if(ibv_post_send(endpoint->lcl_qp_low, 
                      &frag->sr_desc, 
                      &bad_wr)){ 
-        opal_output(0, "%s: error posting send request\n", __func__); 
+        opal_output(0, "%s: error posting send request errno says %s\n", __func__, strerror(errno)); 
         return OMPI_ERROR; 
     }  
 
@@ -792,21 +792,30 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     
     
     if(NULL == openib_btl->ib_pd) {
-        opal_output(0, "%s: error allocating pd for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
+        opal_output(0, "%s: error allocating pd for %s errno says %s\n", 
+                    __func__, 
+                    ibv_get_device_name(openib_btl->ib_dev), 
+                    strerror(errno)); 
         return OMPI_ERROR;
     }
     
-    openib_btl->ib_cq_low = ibv_create_cq(ctx, openib_btl->ib_cq_size, NULL); 
+    openib_btl->ib_cq_low = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
     
     if(NULL == openib_btl->ib_cq_low) {
-        opal_output(0, "%s: error creating low priority cq for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
+        opal_output(0, "%s: error creating low priority cq for %s errno says %s\n",
+                    __func__, 
+                    ibv_get_device_name(openib_btl->ib_dev), 
+                    strerror(errno)); 
         return OMPI_ERROR;
     }
 
-    openib_btl->ib_cq_high = ibv_create_cq(ctx, openib_btl->ib_cq_size, NULL); 
+    openib_btl->ib_cq_high = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
     
     if(NULL == openib_btl->ib_cq_high) {
-        opal_output(0, "%s: error creating high priority cq for %s\n", __func__, ibv_get_device_name(openib_btl->ib_dev)); 
+        opal_output(0, "%s: error creating high priority cq for %s errno says %s\n", 
+                    __func__, 
+                    ibv_get_device_name(openib_btl->ib_dev), 
+                    strerror(errno)); 
         return OMPI_ERROR;
     }
         

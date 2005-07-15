@@ -23,7 +23,6 @@
 #include "class/ompi_free_list.h"
 #include "opal/event/event.h"
 #include "mca/mpool/mpool.h"
-#include "mca/allocator/allocator.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -42,7 +41,6 @@ static inline void*  ALIGN_ADDR(void* addr, uint32_t cnt ) {
 
 struct mca_mpool_openib_component_t {
     mca_mpool_base_component_t super;
-    char*  vapi_allocator_name;
     long page_size; 
     long page_size_log; 
 };
@@ -62,7 +60,6 @@ typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;
 
 struct mca_mpool_openib_module_t {
     mca_mpool_base_module_t super;
-    mca_allocator_base_module_t * vapi_allocator; 
     struct mca_mpool_base_resources_t  resources;
 }; typedef struct mca_mpool_openib_module_t mca_mpool_openib_module_t; 
     
@@ -130,11 +127,6 @@ int mca_mpool_openib_deregister(
 void mca_mpool_openib_free(mca_mpool_base_module_t* mpool, 
                          void * addr, 
                          mca_mpool_base_registration_t* registration);
-
-void* mca_common_vapi_segment_alloc(
-                                    struct mca_mpool_base_module_t* module, 
-                                    size_t* size, 
-                                    mca_mpool_base_registration_t** registration);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

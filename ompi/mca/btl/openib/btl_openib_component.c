@@ -37,8 +37,10 @@
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 #include <sysfs/libsysfs.h>  
 #include <infiniband/verbs.h> 
+#include <errno.h> 
+#include <string.h>   /* for strerror()*/ 
 
-
+extern int errno; 
 mca_btl_openib_component_t mca_btl_openib_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -132,6 +134,55 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_component.reg_mru_len = 
         mca_btl_openib_param_register_int("reg_mru_len",  16); 
     
+    mca_btl_openib_component.ib_cq_size = 
+        mca_btl_openib_param_register_int("ib_cq_size", 
+                                      500); 
+    mca_btl_openib_component.ib_wq_size =
+        mca_btl_openib_param_register_int("ib_wq_size", 
+                                      500); 
+    mca_btl_openib_component.ib_sg_list_size = 
+        mca_btl_openib_param_register_int("ib_sg_list_size", 
+                                      1); 
+    mca_btl_openib_component.ib_pkey_ix = 
+        mca_btl_openib_param_register_int("ib_pkey_ix", 
+                                      0); 
+    mca_btl_openib_component.ib_psn = 
+        mca_btl_openib_param_register_int("ib_psn", 
+                                      0); 
+    mca_btl_openib_component.ib_qp_ous_rd_atom = 
+        mca_btl_openib_param_register_int("ib_qp_ous_rd_atom", 
+                                      1); 
+    mca_btl_openib_component.ib_mtu = 
+        mca_btl_openib_param_register_int("ib_mtu", 
+                                          IBV_MTU_1024); 
+    mca_btl_openib_component.ib_min_rnr_timer = 
+        mca_btl_openib_param_register_int("ib_min_rnr_timer", 
+                                      5);
+    mca_btl_openib_component.ib_timeout = 
+        mca_btl_openib_param_register_int("ib_timeout", 
+                                      10); 
+    mca_btl_openib_component.ib_retry_count = 
+        mca_btl_openib_param_register_int("ib_retry_count", 
+                                      7); 
+    mca_btl_openib_component.ib_rnr_retry = 
+        mca_btl_openib_param_register_int("ib_rnr_retry", 
+                                      7); 
+    mca_btl_openib_component.ib_max_rdma_dst_ops = 
+        mca_btl_openib_param_register_int("ib_max_rdma_dst_ops", 
+                                      16); 
+
+    mca_btl_openib_component.ib_service_level = 
+        mca_btl_openib_param_register_int("ib_service_level", 
+                                      0); 
+    mca_btl_openib_component.ib_static_rate = 
+        mca_btl_openib_param_register_int("ib_static_rate", 
+                                      0); 
+    mca_btl_openib_component.ib_src_path_bits = 
+        mca_btl_openib_param_register_int("ib_src_path_bits", 
+                                          0); 
+
+
+
     mca_btl_openib_module.super.btl_exclusivity =
         mca_btl_openib_param_register_int ("exclusivity", 0);
     mca_btl_openib_module.super.btl_eager_limit = 
@@ -145,55 +196,6 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_module.super.btl_max_send_size =
         mca_btl_openib_param_register_int ("max_send_size", (128*1024)) 
         - sizeof(mca_btl_openib_header_t);
-
-    mca_btl_openib_module.ib_pin_min = 
-        mca_btl_openib_param_register_int("ib_pin_min", 128*1024);                                    
-    mca_btl_openib_module.ib_cq_size = 
-        mca_btl_openib_param_register_int("ib_cq_size", 
-                                      40000); 
-    mca_btl_openib_module.ib_wq_size = 
-        mca_btl_openib_param_register_int("ib_wq_size", 
-                                      10000); 
-    mca_btl_openib_module.ib_sg_list_size = 
-        mca_btl_openib_param_register_int("ib_sg_list_size", 
-                                      1); 
-    mca_btl_openib_module.ib_pkey_ix = 
-        mca_btl_openib_param_register_int("ib_pkey_ix", 
-                                      0); 
-    mca_btl_openib_module.ib_psn = 
-        mca_btl_openib_param_register_int("ib_psn", 
-                                      0); 
-    mca_btl_openib_module.ib_qp_ous_rd_atom = 
-        mca_btl_openib_param_register_int("ib_qp_ous_rd_atom", 
-                                      1); 
-    mca_btl_openib_module.ib_mtu = 
-        mca_btl_openib_param_register_int("ib_mtu", 
-                                          IBV_MTU_1024); 
-    mca_btl_openib_module.ib_min_rnr_timer = 
-        mca_btl_openib_param_register_int("ib_min_rnr_timer", 
-                                      5);
-    mca_btl_openib_module.ib_timeout = 
-        mca_btl_openib_param_register_int("ib_timeout", 
-                                      10); 
-    mca_btl_openib_module.ib_retry_count = 
-        mca_btl_openib_param_register_int("ib_retry_count", 
-                                      7); 
-    mca_btl_openib_module.ib_rnr_retry = 
-        mca_btl_openib_param_register_int("ib_rnr_retry", 
-                                      7); 
-    mca_btl_openib_module.ib_max_rdma_dst_ops = 
-        mca_btl_openib_param_register_int("ib_max_rdma_dst_ops", 
-                                      16); 
-
-    mca_btl_openib_module.ib_service_level = 
-        mca_btl_openib_param_register_int("ib_service_level", 
-                                      0); 
-    mca_btl_openib_module.ib_static_rate = 
-        mca_btl_openib_param_register_int("ib_static_rate", 
-                                      0); 
-    mca_btl_openib_module.ib_src_path_bits = 
-        mca_btl_openib_param_register_int("ib_src_path_bits", 
-                                      0); 
     mca_btl_openib_module.super.btl_min_rdma_size = 
         mca_btl_openib_param_register_int("min_rdma_size", 
                                       1024*1024); 
@@ -296,16 +298,50 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     for(i = 0; i < num_devs; i++){  
         struct ibv_device_attr ib_dev_attr; 
         struct ibv_context* ib_dev_context; 
+        struct ibv_pd *my_pd; 
+        struct ibv_mr *mr; 
+        void*  my_addr; 
+        uint32_t my_size; 
+        uint32_t my_indx; 
+        uint32_t my_mult; 
+        my_mult = 4096; 
+        
         ib_dev = ib_devs[i]; 
         
         ib_dev_context = ibv_open_device(ib_dev); 
         if(!ib_dev_context) { 
-            opal_output(0, "%s: error obtaining device context for %s\n", __func__, ibv_get_device_name(ib_dev)); 
+            opal_output(0, "%s: error obtaining device context for %s errno says %s\n", __func__, ibv_get_device_name(ib_dev), strerror(errno)); 
             return NULL; 
         } 
         
+        my_pd = ibv_alloc_pd(ib_dev_context); 
+        for(my_indx = 1; my_indx <= 8192; my_indx++){ 
+            my_size = my_mult * my_indx; 
+            my_addr = memalign(4096, my_size); 
+            
+            memset(my_addr, 0, my_size); 
+            mr = ibv_reg_mr(
+                            my_pd, 
+                            my_addr, 
+                            my_size, 
+                            IBV_ACCESS_REMOTE_WRITE
+                            /* IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE */ 
+                            );
+            
+            
+            if(NULL == mr){ 
+                opal_output(0, "%s: error on mr test! can't register %lu bytes, errno says %s \n", __func__, my_size, strerror(errno)); 
+                break; 
+            } 
+            else { 
+                opal_output(0, "%s: successfully registerted %lu bytes", __func__, my_size); 
+                ibv_dereg_mr(mr); 
+            }
+        }
+    
+
         if(ibv_query_device(ib_dev_context, &ib_dev_attr)){ 
-            opal_output(0, "%s: error obtaining device attributes for %s\n", __func__, ibv_get_device_name(ib_dev)); 
+            opal_output(0, "%s: error obtaining device attributes for %s errno says %s\n", __func__, ibv_get_device_name(ib_dev), strerror(errno)); 
             return NULL; 
         } 
         
@@ -316,8 +352,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
             struct ibv_port_attr* ib_port_attr; 
             ib_port_attr = (struct ibv_port_attr*) malloc(sizeof(struct ibv_port_attr)); 
             if(ibv_query_port(ib_dev_context, (uint8_t) j, ib_port_attr)){ 
-                opal_output(0, "%s: error getting port attributes for device %s port number %d", 
-                            __func__, ibv_get_device_name(ib_dev), j); 
+                opal_output(0, "%s: error getting port attributes for device %s port number %d errno says %s", 
+                            __func__, ibv_get_device_name(ib_dev), j, strerror(errno)); 
                 return NULL; 
             }
 
@@ -336,6 +372,9 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
                  mca_btl_openib_component.ib_num_btls ++; 
                  
+            } 
+            else{
+                free(ib_port_attr); 
             } 
         }
  
@@ -501,7 +540,7 @@ int mca_btl_openib_component_progress()
         do{
             ne=ibv_poll_cq(openib_btl->ib_cq_high, 1, &wc );
             if(ne < 0 ){ 
-                opal_output(0, "%s: error polling CQ with %d \n", __func__, ne); 
+                opal_output(0, "%s: error polling CQ with %d errno says %s\n", __func__, ne, strerror(errno)); 
                 return OMPI_ERROR; 
             } 
             else if(wc.status != IBV_WC_SUCCESS) { 
@@ -562,7 +601,7 @@ int mca_btl_openib_component_progress()
         
         ne=ibv_poll_cq(openib_btl->ib_cq_low, 1, &wc );
         if(ne < 0){ 
-            opal_output(0, "%s: error polling CQ with %d \n", __func__, ne); 
+            opal_output(0, "%s: error polling CQ with %d errno says %s\n", __func__, ne, strerror(errno)); 
             return OMPI_ERROR; 
         } 
         else if(wc.status != IBV_WC_SUCCESS) { 

@@ -30,6 +30,9 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_frag.h"
 #include "class/ompi_free_list.h" 
+#include <errno.h> 
+#include <string.h> 
+extern int errno; 
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
@@ -82,7 +85,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     if(ibv_post_send(ib_qp, 
                      &frag->sr_desc, 
                      &bad_wr)) { 
-        opal_output(0, "%s: error posting send request\n", __func__); 
+        opal_output(0, "%s: error posting send request errno says %s\n", __func__, strerror(errno)); 
         return OMPI_ERROR; 
     }
     mca_btl_openib_endpoint_post_rr(endpoint, 1); 
@@ -686,17 +689,17 @@ int mca_btl_openib_endpoint_create_qp(
         struct ibv_qp_init_attr qp_init_attr; 
         qp_init_attr.send_cq = cq; 
         qp_init_attr.recv_cq = cq; 
-        qp_init_attr.cap.max_send_wr = openib_btl->ib_wq_size;
-        qp_init_attr.cap.max_recv_wr = openib_btl->ib_wq_size; 
-        qp_init_attr.cap.max_send_sge = openib_btl->ib_sg_list_size;
-        qp_init_attr.cap.max_recv_sge = openib_btl->ib_sg_list_size;
+        qp_init_attr.cap.max_send_wr = mca_btl_openib_component.ib_wq_size;
+        qp_init_attr.cap.max_recv_wr = mca_btl_openib_component.ib_wq_size; 
+        qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
+        qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.qp_type = IBV_QPT_RC; 
         
     
         (*qp) = ibv_create_qp(pd, &qp_init_attr); 
     
         if(NULL == (*qp)) { 
-            opal_output(0, "%s: error creating qp \n", __func__); 
+            opal_output(0, "%s: error creating qp errno says %s\n", __func__, strerror(errno)); 
             return OMPI_ERROR; 
         }
             
@@ -706,7 +709,7 @@ int mca_btl_openib_endpoint_create_qp(
     
     {
         qp_attr->qp_state = IBV_QPS_INIT; 
-        qp_attr->pkey_index = openib_btl->ib_pkey_ix; 
+        qp_attr->pkey_index = mca_btl_openib_component.ib_pkey_ix; 
         qp_attr->port_num = openib_btl->port_num; 
         qp_attr->qp_access_flags = 0; 
         
@@ -715,7 +718,7 @@ int mca_btl_openib_endpoint_create_qp(
                          IBV_QP_PKEY_INDEX | 
                          IBV_QP_PORT | 
                          IBV_QP_ACCESS_FLAGS )) { 
-            opal_output(0, "%s: error modifying qp to INIT\n"); 
+            opal_output(0, "%s: error modifying qp to INIT errno says %s\n", __func__, strerror(errno)); 
             return OMPI_ERROR; 
         } 
     } 
@@ -737,15 +740,15 @@ int mca_btl_openib_endpoint_qp_init_query(
      
 {
     attr->qp_state = IBV_QPS_RTR; 
-    attr->path_mtu = openib_btl->ib_mtu; 
+    attr->path_mtu = mca_btl_openib_component.ib_mtu; 
     attr->dest_qp_num = rem_qp_num; 
     attr->rq_psn = rem_psn; 
-    attr->max_dest_rd_atomic = openib_btl->ib_max_rdma_dst_ops; 
-    attr->min_rnr_timer = openib_btl->ib_min_rnr_timer; 
+    attr->max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops; 
+    attr->min_rnr_timer = mca_btl_openib_component.ib_min_rnr_timer; 
     attr->ah_attr.is_global = 0; 
     attr->ah_attr.dlid = rem_lid; 
-    attr->ah_attr.sl = openib_btl->ib_service_level; 
-    attr->ah_attr.src_path_bits = openib_btl->ib_src_path_bits; 
+    attr->ah_attr.sl = mca_btl_openib_component.ib_service_level; 
+    attr->ah_attr.src_path_bits = mca_btl_openib_component.ib_src_path_bits; 
     attr->ah_attr.port_num = port_num; 
     
     if(ibv_modify_qp(qp, attr, 
@@ -756,15 +759,15 @@ int mca_btl_openib_endpoint_qp_init_query(
                      IBV_QP_RQ_PSN             |
                      IBV_QP_MAX_DEST_RD_ATOMIC |
                      IBV_QP_MIN_RNR_TIMER)) {
-        opal_output(0, "%s: error modifing QP to RTR\n", __func__); 
+        opal_output(0, "%s: error modifing QP to RTR errno says %s\n", __func__, strerror(errno)); 
         return OMPI_ERROR; 
     }
     attr->qp_state 	    = IBV_QPS_RTS;
-    attr->timeout 	    = openib_btl->ib_timeout;
-    attr->retry_cnt 	    = openib_btl->ib_retry_count;
-    attr->rnr_retry 	    = openib_btl->ib_rnr_retry;
+    attr->timeout 	    = mca_btl_openib_component.ib_timeout;
+    attr->retry_cnt 	    = mca_btl_openib_component.ib_retry_count;
+    attr->rnr_retry 	    = mca_btl_openib_component.ib_rnr_retry;
     attr->sq_psn 	    = lcl_psn;
-    attr->max_rd_atomic  = openib_btl->ib_max_rdma_dst_ops;
+    attr->max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
     if (ibv_modify_qp(qp, attr,
                       IBV_QP_STATE              |
                       IBV_QP_TIMEOUT            |
@@ -772,7 +775,7 @@ int mca_btl_openib_endpoint_qp_init_query(
                       IBV_QP_RNR_RETRY          |
                       IBV_QP_SQ_PSN             |
                       IBV_QP_MAX_QP_RD_ATOMIC)) {
-        opal_output(0, "%s: error modifying QP to RTS\n", __func__); 
+        opal_output(0, "%s: error modifying QP to RTS errno says %s\n", __func__, strerror(errno)); 
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
