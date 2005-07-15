@@ -169,6 +169,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 {                                                                                         \
     mca_pml_ob1_endpoint_t* endpoint;                                                     \
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                         \
+    mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;           \
                                                                                           \
     MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
                                                                                           \
@@ -183,7 +184,8 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_pml_complete = false;                                  \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
-    sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->proc_sequence,1);  \
+    sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(                          \
+        &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);               \
     sendreq->req_endpoint = endpoint;                                                     \
                                                                                           \
     /* handle buffered send */                                                            \

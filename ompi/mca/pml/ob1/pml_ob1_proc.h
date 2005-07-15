@@ -37,7 +37,6 @@ struct mca_pml_proc_t {
    ompi_proc_t *proc_ompi;             /**< back-pointer to ompi_proc_t */
    opal_mutex_t proc_lock;             /**< lock to protect against concurrent access */
    int proc_flags;                     /**< prefered method of accessing this peer */
-   volatile uint32_t proc_sequence;    /**< sequence number for send */
    mca_pml_ob1_ep_array_t btl_eager;   /**< array of endpoints to use for first fragments */
    mca_pml_ob1_ep_array_t btl_send;    /**< array of endpoints to use for remaining fragments */
    mca_pml_ob1_ep_array_t btl_rdma;    /**< array of endpoints that support (prefer) rdma */
