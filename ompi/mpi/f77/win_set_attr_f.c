@@ -17,6 +17,9 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
+#include "win/win.h"
+
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_SET_ATTR = mpi_win_set_attr_f

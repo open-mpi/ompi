@@ -60,7 +60,7 @@ static char FUNC_NAME[] = "MPI_Win_create_keyval";
 
 void mpi_win_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn,
                              ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn,
-                             MPI_F_int *win_keyval, MPI_F_int *extra_state, MPI_F_int *ierr)
+                             MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr)
 {
     int ret, c_err;
     ompi_attribute_fn_ptr_union_t copy_fn;
