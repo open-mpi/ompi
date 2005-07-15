@@ -40,6 +40,44 @@ static int orte_soh_bproc_set_node_soh(orte_cellid_t, char *, orte_node_state_t)
 static int orte_soh_bproc_finalize(void);
 static void update_node_info(struct bproc_node_info_t *);
 
+#define EMPTY_SET		0
+#define BIT_NODE_NAME		0
+#define BIT_NODE_STATE		1
+#define BIT_NODE_BPROC_STATUS	2
+#define BIT_NODE_BPROC_MODE	3
+#define BIT_NODE_BPROC_USER	4
+#define BIT_NODE_BPROC_GROUP	5
+#define BIT_SET_ALL		0x3f
+
+typedef int bit_set;
+
+static inline void set_bit(bit_set *set, int bit)
+{
+    *set |= (1 << bit);
+}
+
+static inline int is_set(bit_set set, int bit)
+{
+    return (set & (1 << bit)) == (1 << bit);
+}
+
+static inline int num_bits(bit_set set)
+{
+    int cnt = 0;
+    int bit;
+
+    for (bit = sizeof(bit_set) * 8 - 1; bit >= 0; bit--)
+	if (is_set(set, bit))
+	    cnt++;
+
+    return cnt;
+}
+
+static inline int empty_set(bit_set set)
+{
+	return set == EMPTY_SET;
+}
+
 /** 
  * Query the bproc node status
  */     
@@ -55,12 +93,39 @@ static int orte_soh_bproc_node_state(char *status)
     return ORTE_NODE_STATE_UNKNOWN;
 }
 
+static bit_set find_changes(struct bproc_node_info_t *old, struct bproc_node_info_t *new)
+{
+    bit_set changes = EMPTY_SET;
+
+    if (orte_soh_bproc_node_state(old->status) 
+	    != orte_soh_bproc_node_state(new->status))
+	set_bit(&changes, BIT_NODE_STATE);
+
+    if (strcmp(old->status, new->status) != 0)
+	set_bit(&changes, BIT_NODE_BPROC_STATUS);
+
+    if (old->mode != new->mode)
+	set_bit(&changes, BIT_NODE_BPROC_MODE);
+
+    if (old->group != new->group)
+	set_bit(&changes, BIT_NODE_BPROC_GROUP);
+
+    if (old->user != new->user)
+	set_bit(&changes, BIT_NODE_BPROC_USER);
+
+    if (old->node != new->node)
+	set_bit(&changes, BIT_NODE_NAME);
+
+    return changes;
+}
+
 /**
  *  Process a BProc update notice
  */
 
-static void update_registry(struct bproc_node_info_t *ni)
+static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
 {
+    int idx;
     int ret;
     char *node_name;
     char *user;
@@ -69,51 +134,76 @@ static void update_registry(struct bproc_node_info_t *ni)
     struct group *grp;
     orte_gpr_value_t *value;
 
-    if (mca_soh_bproc_component.debug)
-    	opal_output(0, "updating node %d\n", ni->node);
-
     value = OBJ_NEW(orte_gpr_value_t);
     value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
     value->segment = strdup(ORTE_NODE_SEGMENT);
 
-    value->cnt = 5;
-    value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt*sizeof(orte_gpr_keyval_t*));
     
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    value->keyvals[0]->key = strdup(ORTE_NODE_STATE_KEY);
-    value->keyvals[0]->type = ORTE_NODE_STATE;
-    value->keyvals[0]->value.node_state = orte_soh_bproc_node_state(ni->status);
+    value->cnt = num_bits(changes);
 
-    value->keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    value->keyvals[1]->key = strdup(ORTE_SOH_BPROC_NODE_MODE);
-    value->keyvals[1]->type = ORTE_UINT32;
-    value->keyvals[1]->value.ui32 = ni->mode;
+    /*
+     * Check if there's anything to do
+     */
+    if (value->cnt == 0) {
+	OBJ_RELEASE(value);
+	return;
+    }
 
-    value->keyvals[2] = OBJ_NEW(orte_gpr_keyval_t);
-    value->keyvals[2]->key = strdup(ORTE_SOH_BPROC_NODE_USER);
-    value->keyvals[2]->type = ORTE_STRING;
-    if ((pwd = getpwuid(ni->user)))
-	user = strdup(pwd->pw_name);
-    else
-	asprintf(&user, "%d\n", ni->user);
-    value->keyvals[2]->value.strptr = user;
+    value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
 
+    idx = 0;
 
-    value->keyvals[3] = OBJ_NEW(orte_gpr_keyval_t);
-    value->keyvals[3]->key = strdup(ORTE_SOH_BPROC_NODE_GROUP);
-    value->keyvals[3]->type = ORTE_STRING;
-    if ((grp = getgrgid(ni->group)))
-	group = strdup(grp->gr_name);
-    else
-	asprintf(&group, "%d\n", ni->group);
-    value->keyvals[3]->value.strptr = group;
+    if (is_set(changes, BIT_NODE_STATE)) {
+	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
+	value->keyvals[idx]->key = strdup(ORTE_NODE_STATE_KEY);
+	value->keyvals[idx]->type = ORTE_NODE_STATE;
+	value->keyvals[idx++]->value.node_state = orte_soh_bproc_node_state(ni->status);
+    }
+
+    if (is_set(changes, BIT_NODE_BPROC_STATUS)) {
+	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
+	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_STATUS);
+	value->keyvals[idx]->type = ORTE_STRING;
+	value->keyvals[idx++]->value.strptr = strdup(ni->status);
+    }
+
+    if (is_set(changes, BIT_NODE_BPROC_MODE)) {
+	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
+	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_MODE);
+	value->keyvals[idx]->type = ORTE_UINT32;
+	value->keyvals[idx++]->value.ui32 = ni->mode;
+    }
+
+    if (is_set(changes, BIT_NODE_BPROC_USER)) {
+	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
+	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_USER);
+	value->keyvals[idx]->type = ORTE_STRING;
+	if ((pwd = getpwuid(ni->user)))
+	    user = strdup(pwd->pw_name);
+	else
+	    asprintf(&user, "%d\n", ni->user);
+	value->keyvals[idx++]->value.strptr = user;
+    }
+
+    if (is_set(changes, BIT_NODE_BPROC_GROUP)) {
+	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
+	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_GROUP);
+	value->keyvals[idx]->type = ORTE_STRING;
+	if ((grp = getgrgid(ni->group)))
+	    group = strdup(grp->gr_name);
+	else
+	    asprintf(&group, "%d\n", ni->group);
+	value->keyvals[idx++]->value.strptr = group;
+    }
 
     asprintf(&node_name, "%d", ni->node);
 
-    value->keyvals[4] = OBJ_NEW(orte_gpr_keyval_t);
-    value->keyvals[4]->key = strdup(ORTE_NODE_NAME_KEY);
-    value->keyvals[4]->type = ORTE_STRING;
-    value->keyvals[4]->value.strptr = strdup(node_name);
+    if (is_set(changes, BIT_NODE_NAME)) {
+	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
+	value->keyvals[idx]->key = strdup(ORTE_NODE_NAME_KEY);
+	value->keyvals[idx]->type = ORTE_STRING;
+	value->keyvals[idx++]->value.strptr = strdup(node_name);
+    }
 
     ret = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, 
 	    mca_soh_bproc_component.cellid, node_name);
@@ -121,59 +211,42 @@ static void update_registry(struct bproc_node_info_t *ni)
     if (ret != ORTE_SUCCESS) {
 	ORTE_ERROR_LOG(ret);
 	OBJ_RELEASE(value);
+	free(node_name);
+	opal_event_del(&mca_soh_bproc_component.notify_event);
 	return;
     }
 
-    if ((ret = orte_gpr.put(1, &value)) != ORTE_SUCCESS)
+    if (mca_soh_bproc_component.debug)
+    	opal_output(0, "updating node %d\n", ni->node);
+
+    if ((ret = orte_gpr.put(1, &value)) != ORTE_SUCCESS) {
 	ORTE_ERROR_LOG(ret);
+	opal_event_del(&mca_soh_bproc_component.notify_event);
+    }
 
     free(node_name);
     OBJ_RELEASE(value);
-}
-
-static int node_changed(struct bproc_node_info_t *old, struct bproc_node_info_t *new)
-{
-    int res;
-
-    if (old->node != new->node) {
-	res = 1;
-    }
-
-    if (strcmp(old->status, new->status) != 0) {
-	res = 1;
-    }
-
-    if (old->user != new->user) {
-	res = 1;
-    }
-
-    if (old->group != new->group) {
-	res = 1;
-    }
-
-    if (old->mode != new->mode) {
-	res = 1;
-    }
-
-    return res;
 }
 
 static int do_update(struct bproc_node_set_t *ns)
 {
     int i;
     int changed = 0;
+    bit_set changes;
     struct bproc_node_info_t *ni;
 
     /* we assume the number of nodes does not change */
     for (i = 0; i < ns->size; i++) {
 	ni = &ns->node[i];
 
-	if (mca_soh_bproc_component.node_set.size == 0
-	    || mca_soh_bproc_component.node_set.size != ns->size
-	    || node_changed(&mca_soh_bproc_component.node_set.node[i], ni)) {
-	    update_registry(ni);
-	    changed = 1;
-	}
+	if (mca_soh_bproc_component.node_set.size > 0
+		&& mca_soh_bproc_component.node_set.size == ns->size)
+	    changes = find_changes(&mca_soh_bproc_component.node_set.node[i], ni);
+	else
+	    changes = BIT_SET_ALL;
+
+	update_registry(changes, ni);
+	changed |= !empty_set(changes);
     }
 
     if (changed) {
