@@ -615,7 +615,9 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
                 OPAL_THREAD_LOCK(&btl->gm_lock);
                 frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&btl->gm_pending);
                 OPAL_THREAD_UNLOCK(&btl->gm_lock);
-                mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
+                if(NULL != frag) {
+                    mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
+                }
             }
             break;
  

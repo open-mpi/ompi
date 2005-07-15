@@ -51,18 +51,18 @@ extern "C" {
 struct mca_btl_gm_component_t {
     mca_btl_base_component_1_0_0_t super;  /**< base BTL component */ 
     
-    size_t gm_num_btls; /**< number of hcas available to the GM component */
-    size_t gm_max_btls; /**< maximum number of supported hcas */
-    struct mca_btl_gm_module_t **gm_btls; /**< array of available BTL modules */
-    size_t gm_max_ports;  /**< maximum number of ports per board */
-    size_t gm_max_boards; /**< maximum number of boards */
-    size_t gm_num_high_priority; /**< number of receive descriptors at high priority */
-    size_t gm_num_repost;
-    size_t gm_num_mru;
-    size_t gm_eager_frag_size;
-    size_t gm_max_frag_size;
-    char*  gm_port_name; 
-    int    gm_debug;        /**< turn on debug output */
+    size_t  gm_num_btls; /**< number of hcas available to the GM component */
+    size_t  gm_max_btls; /**< maximum number of supported hcas */
+    struct  mca_btl_gm_module_t **gm_btls; /**< array of available BTL modules */
+    size_t  gm_max_ports;  /**< maximum number of ports per board */
+    size_t  gm_max_boards; /**< maximum number of boards */
+    size_t  gm_num_mru;
+    size_t  gm_eager_frag_size;
+    size_t  gm_max_frag_size;
+    char*   gm_port_name; 
+    int32_t gm_num_repost;
+    int32_t gm_num_high_priority; /**< number of receive descriptors at high priority */
+    int     gm_debug;        /**< turn on debug output */
 
     int gm_free_list_num;   /**< initial size of free lists */
     int gm_free_list_max;   /**< maximum size of free lists */
@@ -95,11 +95,11 @@ struct mca_btl_gm_module_t {
     ompi_free_list_t gm_frag_user;
 
     /* number of send/recv tokens */
-    unsigned int gm_num_send_tokens;
-    unsigned int gm_max_send_tokens;
-    unsigned int gm_num_recv_tokens;
-    unsigned int gm_max_recv_tokens;
-    unsigned int gm_num_repost;
+    int32_t gm_num_send_tokens;
+    int32_t gm_max_send_tokens;
+    int32_t gm_num_recv_tokens;
+    int32_t gm_max_recv_tokens;
+    int32_t gm_num_repost;
 
     /* lock for accessing module state */
     opal_list_t gm_pending; /**< list of pending send descriptors */
