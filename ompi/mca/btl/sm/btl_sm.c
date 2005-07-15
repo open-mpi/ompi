@@ -109,7 +109,7 @@ int mca_btl_sm_add_procs_same_base_addr(
 {
     int return_code=OMPI_SUCCESS;
     size_t i,j,proc,size,n_to_allocate,length;
-    int n_local_procs,cnt,len, my_len;
+    int n_local_procs,cnt,len;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_btl_sm_t *btl_sm;
     ompi_fifo_t *my_fifos;
@@ -143,7 +143,6 @@ int mca_btl_sm_add_procs_same_base_addr(
         return_code=OMPI_ERR_OUT_OF_RESOURCE;
         goto CLEANUP;
     }
-    my_len=strlen(orte_system_info.nodename);
 
     /* Get unique host identifier for each process in the list,
      * and idetify procs that are on this host.  Add procs on this
