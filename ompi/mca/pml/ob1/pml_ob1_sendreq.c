@@ -301,7 +301,7 @@ int mca_pml_ob1_send_request_start(
 
             /* if the buffer is not pinned and leave pinned is false we eagerly send
                data to cover the cost of pinning the recv buffers on the peer */ 
-            if(NULL == sendreq->req_chunk && !mca_pml_ob1.leave_pinned){ 
+            if(size && NULL == sendreq->req_chunk && !mca_pml_ob1.leave_pinned){ 
                 /* pack the data into the supplied buffer */
                 iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + 
                                        sizeof(mca_pml_ob1_rendezvous_hdr_t));
