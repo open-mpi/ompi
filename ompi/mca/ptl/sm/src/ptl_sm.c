@@ -116,7 +116,6 @@ int mca_ptl_sm_add_procs_same_base_addr(
     int return_code=OMPI_SUCCESS;
     size_t i,j,proc,size,n_to_allocate,length;
     int n_local_procs,cnt,len, my_len;
-    mca_ptl_sm_exchange_t **sm_proc_info;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
     ompi_fifo_t *my_fifos;
@@ -133,21 +132,14 @@ int mca_ptl_sm_add_procs_same_base_addr(
 
     /* allocate array to hold setup shared memory from all
      * other procs */
-    sm_proc_info=(mca_ptl_sm_exchange_t **)
-        malloc(nprocs*sizeof(mca_ptl_sm_exchange_t *));
-    if( NULL == sm_proc_info ){
-        return_code=OMPI_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
     mca_ptl_sm_component.sm_proc_connect=(int *) malloc(nprocs*sizeof(int));
     if( NULL == mca_ptl_sm_component.sm_proc_connect ){
         return_code=OMPI_ERR_OUT_OF_RESOURCE;
         goto CLEANUP;
     }
 
-    /* initialize sm_proc_info and sm_proc_connect*/
+    /* initialize and sm_proc_connect*/
     for(proc=0 ; proc < nprocs ; proc++ ) {
-        sm_proc_info[proc]=0;
         mca_ptl_sm_component.sm_proc_connect[proc]=0;
     }
 
@@ -165,60 +157,43 @@ int mca_ptl_sm_add_procs_same_base_addr(
      * of local procs in the prcs list. */
     n_local_procs=0;
     for( proc=0 ; proc < nprocs; proc++ ) {
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+        char path[PATH_MAX];
+#endif
+        struct mca_ptl_base_peer_t *peer;
+
         /* check to see if this is me */
         if( my_proc == procs[proc] ) {
             mca_ptl_sm_component.my_smp_rank=n_local_procs;
         }
-        if( procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ) {
+
+        /* check to see if this proc can be reached via shmem (i.e.,
+           if they're on my local host and in my job) */
+        else if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
+                 0 == (procs[proc]->proc_flags & OMPI_PROC_FLAG_LOCAL)) {
             continue;
         }
 
-        return_code = mca_base_modex_recv(
-                &mca_ptl_sm_component.super.ptlm_version, procs[proc],
-                (void**)(&(sm_proc_info[proc])), &size);
-        if(return_code != OMPI_SUCCESS) {
-            opal_output(0, "mca_ptl_sm_add_procs: mca_base_modex_recv: failed with return value=%d", return_code);
+        /* initialize the peers information */
+        peer = peers[proc]=malloc(sizeof(struct mca_ptl_base_peer_t));
+        if( NULL == peer ){
+            return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
-
-       /* for zero length, just continue - comparison is meaningless*/
-       if( 0 >= size ) {
-           continue;
-       }
-
-       /* check to see if this proc is on my host */
-       len=strlen((char *)(sm_proc_info[proc]));
-       if( len == my_len ) {
-           if( 0 == strncmp(orte_system_info.nodename,
-                       (char *)(sm_proc_info[proc]),len) ) {
-               struct mca_ptl_base_peer_t *peer = peers[proc];
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-               char path[PATH_MAX];
-               /* int flags; */
-#endif
-
-               /* initialize the peers information */
-               peer = peers[proc]=malloc(sizeof(struct mca_ptl_base_peer_t));
-               if( NULL == peer ){
-                   return_code=OMPI_ERR_OUT_OF_RESOURCE;
-                   goto CLEANUP;
-               }
-               peer->peer_smp_rank=n_local_procs+
-                   mca_ptl_sm_component.num_smp_procs;
+        peer->peer_smp_rank=n_local_procs+
+            mca_ptl_sm_component.num_smp_procs;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-               sprintf(path, "%s/sm_fifo.%d", orte_process_info.job_session_dir, 
-                   procs[proc]->proc_name.vpid);
-               peer->fifo_fd = open(path, O_WRONLY);
-               if(peer->fifo_fd < 0) {
-                   opal_output(0, "mca_ptl_sm_add_procs: open(%s) failed with errno=%d\n", path, errno);
-                   goto CLEANUP;
-               }
+        sprintf(path, "%s/sm_fifo.%d", orte_process_info.job_session_dir, 
+                procs[proc]->proc_name.vpid);
+        peer->fifo_fd = open(path, O_WRONLY);
+        if(peer->fifo_fd < 0) {
+            opal_output(0, "mca_ptl_sm_add_procs: open(%s) failed with errno=%d\n", path, errno);
+            goto CLEANUP;
+        }
 #endif
-               n_local_procs++;
-               mca_ptl_sm_component.sm_proc_connect[proc]=SM_CONNECTED;
-           }
-       }
+        n_local_procs++;
+        mca_ptl_sm_component.sm_proc_connect[proc]=SM_CONNECTED;
     }
     if( n_local_procs == 0) {
         return_code = OMPI_SUCCESS;
@@ -611,19 +586,6 @@ int mca_ptl_sm_add_procs_same_base_addr(
     mca_ptl_sm_component.num_smp_procs+=n_local_procs;
 
 CLEANUP:
-    /* free local memory */
-    if(sm_proc_info){
-       /* free the memory allocated by mca_base_modex_recv */
-        for( proc=0 ; proc < nprocs; proc++ ) {
-            if(sm_proc_info[proc]){
-                free(sm_proc_info[proc]);
-                sm_proc_info[proc]=NULL;
-            }
-        }
-        free(sm_proc_info);
-        sm_proc_info=NULL;
-    }
-
     return return_code;
 }
 

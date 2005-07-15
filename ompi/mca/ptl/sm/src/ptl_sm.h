@@ -229,7 +229,7 @@ extern int mca_ptl_sm_add_procs(
     struct ompi_bitmap_t* reachability
 );
 
-                                                                                                               
+
 /**
  * PML->PTL notification of change in the process list.
  * PML->PTL Notification that a receive fragment has been matched.
@@ -252,7 +252,7 @@ extern int mca_ptl_sm_add_procs_same_base_addr(
     ompi_bitmap_t* reachability
 );
 
-                                                                                                               
+
 /**
  * PML->PTL notification of change in the process list.
  *
@@ -418,20 +418,12 @@ extern int mca_ptl_sm_send_continue(
     int flags
 );
 
-/**
- * Data structure used to hold information that will be exchanged with
- * all other procs at startup.  !!!!! This is only temporary, until the
- * registry is complete
- */
-#define MCA_PTL_SM_MAX_HOSTNAME_LEN  128
-typedef struct mca_ptl_sm_exchange{
-    char host_name[MCA_PTL_SM_MAX_HOSTNAME_LEN];
-}mca_ptl_sm_exchange_t;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_ptl_sm_component_event_thread(opal_object_t*);
 #endif
-                                                                                                              
+
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 1 
 #define MCA_PTL_SM_SIGNAL_PEER(peer) \
 { \
