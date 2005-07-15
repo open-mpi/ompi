@@ -16,12 +16,24 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+headers = \
+	soh_bproc.h
+
 if OMPI_BUILD_soh_bproc_DSO
 component_noinst =
 component_install = mca_soh_bproc.la
 else
 component_noinst = libmca_soh_bproc.la
 component_install =
+endif
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ortedir = $(includedir)/openmpi/orte/mca/soh/bproc
+orte_HEADERS = $(headers)
+else
+ortedir = $(includedir)
 endif
 
 host_SOURCES = \
