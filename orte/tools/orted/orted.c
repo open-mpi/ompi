@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
     memset(&orted_globals, 0, sizeof(orted_globals_t));
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
-    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, true, 
+    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false, 
                                                    argc, argv))) {
         return ret;
     }

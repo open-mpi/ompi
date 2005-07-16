@@ -155,7 +155,8 @@ int orte_gpr_replica_add_keyval(orte_gpr_replica_itagval_t **ivalptr,
                                 orte_gpr_replica_container_t *cptr,
                                 orte_gpr_keyval_t *kptr);
 
-int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
+int orte_gpr_replica_update_keyval(orte_gpr_replica_itagval_t **iptr,
+                                   orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_keyval_t *kptr);
 

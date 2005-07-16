@@ -244,6 +244,13 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
         }
         orte_gpr_replica_globals.num_srch_cptr = 0;
         
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.overwritten),
+                                20, orte_gpr_replica_globals.max_size, 20))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        orte_gpr_replica_globals.num_overwritten = 0;
+
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.srch_ival),
                                 100, orte_gpr_replica_globals.max_size, 100))) {
             ORTE_ERROR_LOG(rc);
@@ -335,6 +342,10 @@ int orte_gpr_replica_finalize(void)
     
     if (NULL != orte_gpr_replica_globals.srch_cptr) {
         OBJ_RELEASE(orte_gpr_replica_globals.srch_cptr);
+    }
+    
+    if (NULL != orte_gpr_replica_globals.overwritten) {
+        OBJ_RELEASE(orte_gpr_replica_globals.overwritten);
     }
     
     if (NULL != orte_gpr_replica_globals.srch_ival) {

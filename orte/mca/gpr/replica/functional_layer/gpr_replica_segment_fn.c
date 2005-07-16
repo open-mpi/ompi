@@ -194,6 +194,17 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
         return rc;
     }
     
+    /* remove the itag value from the container's list */
+    for (i=0; i < orte_value_array_get_size(&(cptr->itaglist)); i++) {
+        if (iptr->itag == ORTE_VALUE_ARRAY_GET_ITEM(&(cptr->itaglist), orte_gpr_replica_itag_t, i)) {
+            orte_value_array_remove_item(&(cptr->itaglist), i);
+            goto MOVEON;
+        }
+    }
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    return ORTE_ERR_NOT_FOUND;
+    
+MOVEON:
     /* release the data storage */
     i = iptr->index;
     OBJ_RELEASE(iptr);
@@ -206,35 +217,45 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
 }
 
 
-int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
+int orte_gpr_replica_update_keyval(orte_gpr_replica_itagval_t **iptr2,
+                                   orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_keyval_t *kptr)
 {
-    size_t i;
+    size_t i, j, k;
     int rc;
     orte_pointer_array_t *ptr;
     orte_gpr_replica_itagval_t *iptr;
 
     ptr = orte_gpr_replica_globals.srch_ival;
     
+    /* record the error value */
+    *iptr2 = NULL;
+    
     /* for each item in the search array, delete it */
     for (i=0; i < ptr->size; i++) {
         if (NULL != ptr->addr[i]) {
             iptr = (orte_gpr_replica_itagval_t*)ptr->addr[i];
             /* release the data storage */
-            i = iptr->index;
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr, iptr,
-                                    ORTE_GPR_REPLICA_ENTRY_CHANGED |
-                                    ORTE_GPR_REPLICA_ENTRY_CHG_FRM))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* MUST DO THE RELEASE AFTER RECORDING THE ACTION SO THAT
-             * THE OBJECT DOESN'T ACTUALLY LEAVE UNTIL THE ACTION IS PROCESSED
+            j = iptr->index;
+            /* DON'T RECORD THE ACTION - THIS WILL PREVENT US FROM SENDING
+             * BOTH THE OLD AND THE NEW DATA BACK ON A SUBSCRIPTION
+             * REQUEST
              */
+            /* remove the itag value from the container's list */
+            for (k=0; k < orte_value_array_get_size(&(cptr->itaglist)); k++) {
+                if (iptr->itag == ORTE_VALUE_ARRAY_GET_ITEM(&(cptr->itaglist), orte_gpr_replica_itag_t, k)) {
+                    orte_value_array_remove_item(&(cptr->itaglist), k);
+                    goto MOVEON;
+                }
+            }
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+    
+MOVEON:
             OBJ_RELEASE(iptr);
             /* remove the entry from the container's itagval array */
-            orte_pointer_array_set_item(cptr->itagvals, i, NULL);
+            orte_pointer_array_set_item(cptr->itagvals, j, NULL);
             (cptr->num_itagvals)--;
         }
     }
@@ -259,6 +280,9 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
        ORTE_ERROR_LOG(rc);
        return rc;
    }
+   
+   /* return the location of the new iptr */
+   *iptr2 = iptr;
    
    return ORTE_SUCCESS;
 }
