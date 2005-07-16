@@ -102,6 +102,8 @@ typedef struct {
     size_t trig_cntr;
     size_t num_srch_cptr;
     orte_pointer_array_t *srch_cptr;
+    size_t num_overwritten;
+    orte_pointer_array_t *overwritten;
     orte_pointer_array_t *sub_ptrs;
     size_t num_srch_ival;
     orte_pointer_array_t *srch_ival;

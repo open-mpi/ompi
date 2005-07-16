@@ -129,12 +129,11 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_container_t **cptr, *cptr2;
     orte_gpr_replica_itag_t itag;
     orte_gpr_replica_addr_mode_t tok_mode;
-    orte_gpr_keyval_t **kptr;
-    orte_gpr_replica_itagval_t *iptr;
-    bool overwrite;
+    orte_gpr_replica_itagval_t *iptr, **iptrs;
+    bool overwrite, overwritten;
     char *tmp=NULL;
     int rc;
-    size_t i, j, k;
+    size_t i, j, k, m, n, index;
 
     if (orte_gpr_replica_globals.debug) {
 	    opal_output(0, "[%lu,%lu,%lu] gpr replica: put entered on segment %s\nValues:",
@@ -152,6 +151,8 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     /* initialize storage for actions taken */
     orte_pointer_array_clear(orte_gpr_replica_globals.acted_upon);
     orte_gpr_replica_globals.num_acted_upon = 0;
+    orte_pointer_array_clear(orte_gpr_replica_globals.overwritten);
+    orte_gpr_replica_globals.num_overwritten = 0;
     
     /* extract the token address mode and overwrite permissions */
     overwrite = false;
@@ -183,7 +184,6 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
         }
  
         /* ok, store all the keyvals in the container */
-        kptr = keyvals;
         for (i=0; i < cnt; i++) {
             if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr2, keyvals[i]))) {
                 ORTE_ERROR_LOG(rc);
@@ -199,6 +199,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     } else {  /* otherwise, go through list of containers. For each one,
                  see if entry already exists in container - overwrite if allowed */
         cptr = (orte_gpr_replica_container_t**)(orte_gpr_replica_globals.srch_cptr)->addr;
+        iptrs = (orte_gpr_replica_itagval_t**)(orte_gpr_replica_globals.overwritten)->addr;
         for (j=0, k=0; k < orte_gpr_replica_globals.num_srch_cptr &&
                        j < (orte_gpr_replica_globals.srch_cptr)->size; j++) {
             if (NULL != cptr[j]) {
@@ -213,14 +214,44 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                              * else add this keyval to the container as a new entry
                              */
                              if (overwrite) {
-                                if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr[j], keyvals[i]))) {
-                                    return rc;
-                                }
-                                /* action is recorded in update function - don't do it here */
-                                /* turn off the overwrite flag so that any subsequent entries are
-                                 * added - otherwise, only the last value provided would be retained!
+                                /* check to see if we have already overwritten this keyval. if so,
+                                 * then we add the remaining values - otherwise, only the
+                                 * last value provided would be retained!
                                  */
-                                overwrite = false;
+                                overwritten = false;
+                                for (m=0, n=0; !overwritten &&
+                                               n < orte_gpr_replica_globals.num_overwritten &&
+                                               m < (orte_gpr_replica_globals.overwritten)->size; m++) {
+                                    if (NULL != iptrs[m]) {
+                                        n++;
+                                        if (iptrs[m]->itag == itag) {
+                                            /* keyval was previously overwritten */
+                                            if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
+                                                return rc;
+                                            }
+                                            /* record that we did this */
+                                            if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr[j], iptr, ORTE_GPR_REPLICA_ENTRY_CHANGED))) {
+                                                ORTE_ERROR_LOG(rc);
+                                                return rc;
+                                            }
+                                            overwritten = true;
+                                        }
+                                    }
+                                }
+                                if (!overwritten) {
+                                    /* must not have been previously overwritten - go
+                                     * ahead and overwrite it now
+                                     */
+                                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
+                                        return rc;
+                                    }
+                                    /* record the ival so we don't do it again */
+                                    if (0 > orte_pointer_array_add(&index, orte_gpr_replica_globals.overwritten, (void*)iptr)) {
+                                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                                        return ORTE_ERR_OUT_OF_RESOURCE;
+                                    }
+                                    (orte_gpr_replica_globals.num_overwritten)++;
+                                }
                              } else {
                                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
                                     return rc;
