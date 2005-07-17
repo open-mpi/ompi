@@ -195,10 +195,12 @@ void ompi_info::open_components()
    */
   component_map["ptl"] = &mca_ptl_base_components_opened;
 
+#if 0
   /* mca_btl_base_open() should not be called directly. This call is performed
    * in the PML base open.
    */
   component_map["btl"] = &mca_btl_base_components_opened;
+#endif
 
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
