@@ -408,11 +408,14 @@ sub try_build {
     # save the compile warnings
     my $make_all_stderr = $ret->{stderr};
 
-    # and check it, if the user does not disable it
+    # and check it, if the user does not disable it.  Save and restore
+    # TMPDIR.
     if ( $nocheck == 0 ) {
+      my $foo = $ENV{TMPDIR};
       $ENV{TMPDIR} = "$installdir/tmp";
       mkdir($ENV{TMPDIR}, 0777);
       $ret = do_command($merge_output, "make check");
+      $ENV{TMPDIR} = $foo;
       if ($ret->{status} != 0) {
           $ret->{make_all_stderr} = $make_all_stderr;
           $ret->{message} = "Failed to \"make check\"";
