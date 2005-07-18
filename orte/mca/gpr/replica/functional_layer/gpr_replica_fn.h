@@ -201,6 +201,10 @@ int orte_gpr_replica_enter_local_subscription(size_t cnt, orte_gpr_subscription_
 
 int orte_gpr_replica_enter_local_trigger(size_t cnt, orte_gpr_trigger_t **trigs);
 
+int orte_gpr_replica_remove_local_subscription(orte_gpr_subscription_id_t id);
+
+int orte_gpr_proxy_remove_local_trigger(orte_gpr_trigger_id_t id);
+
 int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_replica_itagval_t *iptr,
@@ -241,15 +245,16 @@ int
 orte_gpr_replica_remove_trigger(orte_process_name_t *requestor,
                                      orte_gpr_trigger_id_t id);
 
-int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
+int orte_gpr_replica_register_callback(orte_gpr_replica_trigger_t *trig,
+                                       orte_gpr_replica_subscription_t *sub,
                                        orte_gpr_value_t *value);
+
+int orte_gpr_replica_define_callback(orte_gpr_replica_callbacks_t **cbptr,
+                                     orte_process_name_t *recipient);
 
 int orte_gpr_replica_process_callbacks(void);
 
 int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc);
-
-int orte_gpr_replica_add_values_from_registry(orte_gpr_notify_message_t *msg,
-                                   orte_gpr_replica_subscription_t *sptr);
 
 int orte_gpr_replica_store_value_in_msg(orte_gpr_subscription_id_t id,
                                         orte_gpr_notify_message_t *msg,

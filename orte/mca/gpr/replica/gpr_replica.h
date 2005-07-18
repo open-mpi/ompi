@@ -45,13 +45,6 @@ extern "C" {
  * typedefs needed in replica component
  */
 
-/* JMS: This is only INT_MAX until bug 1345 is fixed, because this
-   value is used to set an MAC parameter, which can [currently] only
-   take an int. */
-#define ORTE_GPR_REPLICA_MAX_SIZE INT_MAX
-#define ORTE_GPR_REPLICA_BLOCK_SIZE 100
-
-
 typedef size_t orte_gpr_replica_itag_t;
 #define ORTE_GPR_REPLICA_ITAG_MAX SIZE_MAX
 
@@ -91,15 +84,28 @@ typedef struct {
 OBJ_CLASS_DECLARATION(orte_gpr_replica_local_subscriber_t);
 
 
+/*
+ * Local trigger tracker for use by processes
+ * that are operating on the same node as the replica
+ */
+typedef struct {
+     opal_object_t super;                   /**< Allows this to be an object */
+     orte_gpr_trigger_id_t id;              /**< id of this trigger */
+     orte_gpr_trigger_cb_fn_t callback;      /**< Function to be called for notification */
+     void *user_tag;                        /**< User-provided tag for callback function */
+} orte_gpr_replica_local_trigger_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_local_trigger_t);
+
+
 typedef struct {
     int debug;
     int isolate;
-    size_t block_size;
-    size_t max_size;
     opal_mutex_t mutex;
     size_t num_local_subs;
     orte_pointer_array_t *local_subscriptions;
-    size_t trig_cntr;
+    size_t num_local_trigs;
+    orte_pointer_array_t *local_triggers;
     size_t num_srch_cptr;
     orte_pointer_array_t *srch_cptr;
     size_t num_overwritten;
@@ -315,6 +321,11 @@ struct orte_gpr_replica_trigger_t {
     /* array of requestors that have "attached" themselves to this trigger */
     size_t num_attached;
     orte_pointer_array_t *attached;
+    /* the "master" requestor - if someone asks to have all
+     * output routed through them, we record their info here
+     * so we can comply
+     */
+    orte_gpr_replica_trigger_requestor_t *master;
     /* the action that causes the trigger to be fired */
     orte_gpr_notify_action_t action;
     /* flag that indicates this trigger is a one-shot, has fired and

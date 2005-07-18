@@ -43,6 +43,16 @@ OBJ_CLASS_INSTANCE(
           NULL); /* destructor */
 
 
+/*  LOCAL_TRIGGER */
+/* no constructor or destructor needed, so just
+ * define instance */
+OBJ_CLASS_INSTANCE(
+          orte_gpr_replica_local_trigger_t,  /* type name */
+          opal_object_t, /* parent "class" name */
+          NULL, /* constructor */
+          NULL); /* destructor */
+
+
 /*  SEGMENT */
 /* constructor - used to initialize state of segment instance */
 static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
@@ -51,14 +61,14 @@ static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
     seg->itag = ORTE_GPR_REPLICA_ITAG_MAX;
     
     seg->num_dict_entries = 0;
-    orte_pointer_array_init(&(seg->dict), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(seg->dict), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 
     seg->num_containers = 0;
-    orte_pointer_array_init(&(seg->containers), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(seg->containers), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 
 }
 
@@ -117,9 +127,9 @@ static void orte_gpr_replica_container_construct(orte_gpr_replica_container_t* r
     reg->itags = NULL;
     reg->num_itags = 0;
 
-    orte_pointer_array_init(&(reg->itagvals), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(reg->itagvals), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
     reg->num_itagvals = 0;
     
     OBJ_CONSTRUCT(&(reg->itaglist), orte_value_array_t);
@@ -282,14 +292,14 @@ static void orte_gpr_replica_subscription_construct(orte_gpr_replica_subscriptio
     sub->action = ORTE_GPR_REPLICA_NO_ACTION;
     
     sub->num_values = 0;
-    orte_pointer_array_init(&(sub->values), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(sub->values), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 
     sub->num_requestors = 0;
-    orte_pointer_array_init(&(sub->requestors), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(sub->requestors), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 }
 
 /* destructor - used to free any resources held by instance */
@@ -365,22 +375,24 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_trigger_t* trig)
     trig->index = 0;
 
     trig->num_attached = 0;
-    orte_pointer_array_init(&(trig->attached), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(trig->attached), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 
+    trig->master = NULL;;
+    
     trig->action = ORTE_GPR_REPLICA_NO_ACTION;
     trig->one_shot_fired = false;
     
     trig->num_counters = 0;
-    orte_pointer_array_init(&(trig->counters), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(trig->counters), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 
     trig->num_subscriptions = 0;
-    orte_pointer_array_init(&(trig->subscriptions), orte_gpr_replica_globals.block_size,
-                            orte_gpr_replica_globals.max_size,
-                            orte_gpr_replica_globals.block_size);
+    orte_pointer_array_init(&(trig->subscriptions), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 
 }
 

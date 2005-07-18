@@ -48,8 +48,8 @@ int orte_gpr_replica_preallocate_segment(char *name, size_t num_slots)
     }
     
     rc = orte_pointer_array_init(&(seg->containers), num_slots,
-                                            orte_gpr_replica_globals.max_size,
-                                            orte_gpr_replica_globals.block_size);
+                                            orte_gpr_array_max_size,
+                                            orte_gpr_array_block_size);
                                             
      OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
      

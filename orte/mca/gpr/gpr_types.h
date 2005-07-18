@@ -37,6 +37,7 @@
 
 #include "mca/schema/schema.h"
 #include "opal/class/opal_object.h"
+#include "class/orte_pointer_array.h"
 #include "dps/dps_types.h"
 #include "mca/ns/ns_types.h"
 #include "mca/rmgr/rmgr_types.h"
@@ -58,8 +59,7 @@ extern "C" {
 #define ORTE_GPR_NOTIFY_ALL                 (uint8_t)0x0f   /**< Notifies subscriber upon any action */
 #define ORTE_GPR_NOTIFY_PRE_EXISTING        (uint8_t)0x10   /**< Provide list of all pre-existing data */
 #define ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG   (uint8_t)0x20   /**< Notifies are off when subscription entered - turned on when trigger fires */
-#define ORTE_GPR_NOTIFY_NO_DATA_WITH_TRIG   (uint8_t)0x40   /**< Do not include subscription data when initial trigger fires */
-#define ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG   (uint8_t)0x80
+#define ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG   (uint8_t)0x40   /**< Delete this subscription after associated trigger fires */
 #define ORTE_GPR_NOTIFY_ANY                 (uint8_t)0xff   /**< Used to test if any action flags set */
 
 typedef uint8_t orte_gpr_notify_action_t;
@@ -70,8 +70,9 @@ typedef size_t orte_gpr_subscription_id_t;
 #define ORTE_GPR_SUBSCRIPTION_ID_MAX SIZE_MAX
 
 
-#define ORTE_GPR_TRIG_ONE_SHOT              (uint8_t)0x01   /**< Only trigger once - then delete subscription */
-#define ORTE_GPR_TRIG_INCLUDE_DATA          (uint8_t)0x02   /**< Include the trigger data in the notification msg */
+#define ORTE_GPR_TRIG_INCLUDE_TRIG_CNTRS    (uint8_t)0x01   /**< Include the trigger data in the notification msg */
+#define ORTE_GPR_TRIG_ONE_SHOT              (uint8_t)0x02   /**< Only trigger once - then delete trigger */
+#define ORTE_GPR_TRIG_ROUTE_DATA_THRU_ME    (uint8_t)0x04   /**< send all associated data to trigger callback fn */
 #define ORTE_GPR_TRIG_AT_LEVEL              (uint8_t)0x08   /**< Trigger whenever count reaches specified level */
 #define ORTE_GPR_TRIG_CMP_LEVELS            (uint8_t)0x80   /**< Trigger when all the specified values are equal */
 #define ORTE_GPR_TRIG_ALL_AT                (uint8_t)0x7f   /**< Use all trig defs except include trig data with AT - a typical situation */
@@ -135,6 +136,7 @@ typedef union {                             /* shared storage for the value */
     orte_process_name_t proc;
     orte_vpid_t vpid;
     orte_jobid_t jobid;
+/*    orte_jobgrp_t jobgrp; */
     orte_cellid_t cellid;
     orte_node_state_t node_state;
     orte_proc_state_t proc_state;
@@ -185,9 +187,11 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
  */
 typedef struct {
     opal_object_t super;            /**< Makes this an object */
+    char *name;                     /**< Name of the associated subscripton, if provided */
     orte_gpr_subscription_id_t id;  /**< Number of the associated subscription */
+    bool remove;                    /**< Remove this subscription from recipient's tracker */
     size_t cnt;                     /**< Number of value objects returned, one per container */
-    orte_gpr_value_t **values;      /**< Array of value objects returned */
+    orte_pointer_array_t *values;   /**< Array of value objects returned */
 } orte_gpr_notify_data_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
@@ -196,8 +200,11 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
  */
 typedef struct {
     opal_object_t super;                        /**< Make this an object */
-    size_t cnt;                                 /**< number of data objects */
-    orte_gpr_notify_data_t **data;              /**< Contiguous array of pointers to data objects */
+    char *name;                 /**< Name of the associated trigger, if provided */
+    orte_gpr_trigger_id_t id;   /**< trigger id, if message comes from trigger (ORTE_GPR_TRIGGER_ID_MAX otherwise) */
+    bool remove;                /**< Remove this trigger from recipient's tracker */
+    size_t cnt;                 /**< number of data objects */
+    orte_pointer_array_t *data; /**< Contiguous array of pointers to data objects */
 } orte_gpr_notify_message_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_message_t);
@@ -208,6 +215,13 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_message_t);
  * user_tag = whatever tag data the user provided when filing the subscription
  */
 typedef void (*orte_gpr_notify_cb_fn_t)(orte_gpr_notify_data_t *notify_data, void *user_tag);
+
+/** Trigger callback function 
+ * notify_msg = message containing multiple blocks of data provided by trigger
+ * 
+ * user_tag = whatever tag data the user provided when filing the subscription
+ */
+typedef void (*orte_gpr_trigger_cb_fn_t)(orte_gpr_notify_message_t *msg, void *user_tag);
 
 /** Structure for registering subscriptions
  * A request to be notified when certain events occur, or when counters reach specified
@@ -226,7 +240,7 @@ typedef struct {
     size_t cnt;                             /**< Number of values included */
     orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
                                                  describing the data to be returned */
-    orte_gpr_notify_cb_fn_t cbfunc;         /**< Function to be called with this data */
+    orte_gpr_notify_cb_fn_t cbfunc;         /**< the callback function */
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_subscription_t;
 
@@ -246,6 +260,8 @@ typedef struct {
     size_t cnt;                             /**< Number of values included */
     orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
                                                  describing the objects to be monitored */
+    orte_gpr_trigger_cb_fn_t cbfunc;        /**< the callback function */
+    void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_trigger_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);

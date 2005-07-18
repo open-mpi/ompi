@@ -534,7 +534,13 @@ void mca_oob_tcp_registry_callback(
     orte_gpr_notify_data_t* data,
     void* cbdata)
 {
-    size_t i;
+    size_t i, j, k;
+    orte_gpr_value_t **values, *value;
+    orte_gpr_keyval_t *keyval;
+    orte_buffer_t buffer;
+    mca_oob_tcp_addr_t* addr, *existing;
+    mca_oob_tcp_peer_t* peer;
+
     if(mca_oob_tcp_component.tcp_debug > 1) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
@@ -542,60 +548,60 @@ void mca_oob_tcp_registry_callback(
 
     /* process the callback */
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    for(i = 0; i < data->cnt; i++) {
-        orte_gpr_value_t* value = data->values[i];
-        orte_buffer_t buffer;
-        mca_oob_tcp_addr_t* addr, *existing;
-        mca_oob_tcp_peer_t* peer;
-        size_t j;
-
-        for(j = 0; j < value->cnt; j++) {
-
-            /* check to make sure this is the requested key */
-            orte_gpr_keyval_t* keyval = value->keyvals[j];
-            if(strcmp(keyval->key,"oob-tcp") != 0)
-                continue;
-
-            /* transfer ownership of registry object to buffer and unpack */
-            OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-            if(orte_dps.load(&buffer, 
-                             keyval->value.byteobject.bytes, 
-                             keyval->value.byteobject.size) != ORTE_SUCCESS) {
-                /* TSW - throw ERROR */
-                continue;
+    values = (orte_gpr_value_t**)(data->values)->addr;
+    for(i = 0, k=0; k < data->cnt &&
+                    i < (data->values)->size; i++) {
+        if (NULL != values[i]) {
+            k++;
+            value = values[i];
+            for(j = 0; j < value->cnt; j++) {
+    
+                /* check to make sure this is the requested key */
+                keyval = value->keyvals[j];
+                if(strcmp(keyval->key,"oob-tcp") != 0)
+                    continue;
+    
+                /* transfer ownership of registry object to buffer and unpack */
+                OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+                if(orte_dps.load(&buffer, 
+                                 keyval->value.byteobject.bytes, 
+                                 keyval->value.byteobject.size) != ORTE_SUCCESS) {
+                    /* TSW - throw ERROR */
+                    continue;
+                }
+                keyval->type = ORTE_NULL;
+                keyval->value.byteobject.bytes = NULL;
+                keyval->value.byteobject.size = 0;
+                addr = mca_oob_tcp_addr_unpack(&buffer);
+                OBJ_DESTRUCT(&buffer);
+                if(NULL == addr) {
+                    opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: unable to unpack peer address\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+                    continue;
+                }
+    
+                if(mca_oob_tcp_component.tcp_debug > 1) {
+                    opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: received peer [%lu,%lu,%lu]\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(addr->addr_name)));
+                }
+    
+                /* check for existing cache entry */
+                existing = (mca_oob_tcp_addr_t *)opal_hash_table_get_proc(
+                    &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
+                if(NULL != existing) {
+                    /* TSW - need to update existing entry */
+                    OBJ_RELEASE(addr);
+                    continue;
+                }
+    
+                /* insert into cache and notify peer */
+                opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
+                peer = (mca_oob_tcp_peer_t *)opal_hash_table_get_proc(
+                    &mca_oob_tcp_component.tcp_peers, &addr->addr_name);
+                if(NULL != peer)
+                    mca_oob_tcp_peer_resolved(peer, addr);
             }
-            keyval->type = ORTE_NULL;
-            keyval->value.byteobject.bytes = NULL;
-            keyval->value.byteobject.size = 0;
-            addr = mca_oob_tcp_addr_unpack(&buffer);
-            OBJ_DESTRUCT(&buffer);
-            if(NULL == addr) {
-                opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: unable to unpack peer address\n",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
-                continue;
-            }
-
-            if(mca_oob_tcp_component.tcp_debug > 1) {
-                opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: received peer [%lu,%lu,%lu]\n",
-                    ORTE_NAME_ARGS(orte_process_info.my_name),
-                    ORTE_NAME_ARGS(&(addr->addr_name)));
-            }
-
-            /* check for existing cache entry */
-            existing = (mca_oob_tcp_addr_t *)opal_hash_table_get_proc(
-                &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
-            if(NULL != existing) {
-                /* TSW - need to update existing entry */
-                OBJ_RELEASE(addr);
-                continue;
-            }
-
-            /* insert into cache and notify peer */
-            opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
-            peer = (mca_oob_tcp_peer_t *)opal_hash_table_get_proc(
-                &mca_oob_tcp_component.tcp_peers, &addr->addr_name);
-            if(NULL != peer)
-                mca_oob_tcp_peer_resolved(peer, addr);
         }
     }
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -760,6 +766,7 @@ int mca_oob_tcp_init(void)
     orte_gpr_subscription_t sub, *subs;
     int rc;
     opal_list_item_t* item;
+    char *tmp, *tmp2, *tmp3;
 
     /* random delay to stagger connections back to seed */
 #if defined(WIN32)
@@ -930,14 +937,19 @@ int mca_oob_tcp_init(void)
         return rc;
     }
 
-    value->cnt = 1;
-    value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    value->cnt = 2;
+    value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
     if(NULL == value->keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
     if (NULL == value->keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value->keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == value->keyvals[1]) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -959,6 +971,15 @@ int mca_oob_tcp_init(void)
         return rc;
     }
 
+    (value->keyvals[1])->type = ORTE_STRING;
+    (value->keyvals[1])->key = strdup(ORTE_PROC_RML_IP_ADDRESS_KEY);
+    tmp = mca_oob.oob_get_addr();
+    tmp2 = strrchr(tmp, '/');
+    tmp3 = strrchr(tmp, ':');
+    *tmp3 = '\0';
+    (value->keyvals[1])->value.strptr = strdup(tmp2);
+    free(tmp);
+    
     if(mca_oob_tcp_component.tcp_debug > 2) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.put(%s)\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),

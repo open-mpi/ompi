@@ -54,7 +54,7 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        sub->id = (orte_gpr_subscription_id_t)id;
+        sub->id = orte_gpr_proxy_globals.num_subs;
         subscriptions[i]->id = sub->id;
         (orte_gpr_proxy_globals.num_subs)++;
     }
@@ -66,16 +66,35 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
 int
 orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
 {
-    size_t i;
+    orte_gpr_proxy_trigger_t *trig;
+    size_t i, id;
     
     for (i=0; i < cnt; i++) {
-        if (ORTE_GPR_TRIGGER_ID_MAX-1 > orte_gpr_proxy_globals.trig_cntr) {
-            trigs[i]->id = orte_gpr_proxy_globals.trig_cntr;
-            (orte_gpr_proxy_globals.trig_cntr)++;
-        } else {
+        trig = OBJ_NEW(orte_gpr_proxy_trigger_t);
+        if (NULL == trig) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        /* ensure that the proper routing flag is set
+         * in the action field to match the trigger callback
+         * function
+         */
+        if (NULL != trigs[i]->cbfunc) {
+            trigs[i]->action = trigs[i]->action |
+                    ORTE_GPR_TRIG_ROUTE_DATA_THRU_ME;
+        } else {
+            trigs[i]->action = trigs[i]->action &
+                    ~ORTE_GPR_TRIG_ROUTE_DATA_THRU_ME;
+        }
+        trig->callback = trigs[i]->cbfunc;
+        trig->user_tag = trigs[i]->user_tag;
+        if (0 > orte_pointer_array_add(&id, orte_gpr_proxy_globals.triggers, trig)) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        trig->id = orte_gpr_proxy_globals.num_trigs;
+        trigs[i]->id = trig->id;
+        (orte_gpr_proxy_globals.num_trigs)++;
     }
     
     return ORTE_SUCCESS;
@@ -88,6 +107,17 @@ orte_gpr_proxy_remove_subscription(orte_gpr_subscription_id_t id)
     if (NULL != (orte_gpr_proxy_globals.subscriptions)->addr[id]) {
         OBJ_RELEASE((orte_gpr_proxy_globals.subscriptions)->addr[id]);
         orte_pointer_array_set_item(orte_gpr_proxy_globals.subscriptions, (size_t)id, NULL);
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+int
+orte_gpr_proxy_remove_trigger(orte_gpr_trigger_id_t id)
+{
+    if (NULL != (orte_gpr_proxy_globals.triggers)->addr[id]) {
+        OBJ_RELEASE((orte_gpr_proxy_globals.triggers)->addr[id]);
+        orte_pointer_array_set_item(orte_gpr_proxy_globals.triggers, (size_t)id, NULL);
     }
     
     return ORTE_SUCCESS;

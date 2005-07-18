@@ -346,7 +346,7 @@ static int setup_registry_callback(void)
        process-independent message and broadcast to all processes */
     if (ORTE_SUCCESS != 
         (rc = orte_schema.get_std_subscription_name(&(sub.name),
-                                                    OMPI_ATTRIBUTE_SUBSCRIPTION, jobid))) {
+                                                    OMPI_PROC_SUBSCRIPTION, jobid))) {
         return rc;
     }
 
@@ -429,7 +429,7 @@ static int setup_registry_callback(void)
  */ 
 static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
-    size_t i, j;
+    size_t i, j, k;
     char *str;
     bool found_name;
     orte_ns_cmp_bitmask_t mask;
@@ -448,36 +448,40 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 
     /* loop over the data returned in the subscription */
     mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-    value = data->values;
-    for (i = 0; i < data->cnt; ++i) {
-        str = NULL;
-        found_name = false;
-        keyval = value[i]->keyvals;
-
-        /* find the 2 keys that we're looking for */
-        for (j = 0; j < value[i]->cnt; ++j) {
-            if (strcmp(keyval[j]->key, ORTE_PROC_NAME_KEY) == 0) {
-                orte_ns.get_proc_name_string(&str, &keyval[j]->value.proc);
-                name = keyval[j]->value.proc;
-                found_name = true;
-            } else if (strcmp(keyval[j]->key, ORTE_NODE_NAME_KEY) == 0) {
-                if (NULL != str) {
-                    free(str);
+    value = (orte_gpr_value_t**)(data->values)->addr;
+    for (i = 0, k=0; k < data->cnt &&
+                     i < (data->values)->size; ++i) {
+        if (NULL != value[i]) {
+            k++;
+            str = NULL;
+            found_name = false;
+            keyval = value[i]->keyvals;
+    
+            /* find the 2 keys that we're looking for */
+            for (j = 0; j < value[i]->cnt; ++j) {
+                if (strcmp(keyval[j]->key, ORTE_PROC_NAME_KEY) == 0) {
+                    orte_ns.get_proc_name_string(&str, &keyval[j]->value.proc);
+                    name = keyval[j]->value.proc;
+                    found_name = true;
+                } else if (strcmp(keyval[j]->key, ORTE_NODE_NAME_KEY) == 0) {
+                    if (NULL != str) {
+                        free(str);
+                    }
+                    str = strdup(keyval[j]->value.strptr);
                 }
-                str = strdup(keyval[j]->value.strptr);
             }
-        }
-
-        /* if we found both keys and the proc is on my local host,
-           find it in the master proc list and set the "local" flag */
-        if (NULL != str && found_name &&
-            0 == strcmp(str, orte_system_info.nodename)) {
-            for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
-                 proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
-                 proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-                if (0 == orte_ns.compare(mask, &name, 
-                                         &proc->proc_name)) {
-                    proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+    
+            /* if we found both keys and the proc is on my local host,
+               find it in the master proc list and set the "local" flag */
+            if (NULL != str && found_name &&
+                0 == strcmp(str, orte_system_info.nodename)) {
+                for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
+                     proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
+                     proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
+                    if (0 == orte_ns.compare(mask, &name, 
+                                             &proc->proc_name)) {
+                        proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+                    }
                 }
             }
         }

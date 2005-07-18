@@ -277,7 +277,7 @@ void ompi_attr_create_predefined_callback(
     orte_gpr_notify_data_t *data,
     void *cbdata)
 {
-    size_t i, j;
+    size_t i, j, k;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
     orte_jobid_t job;
@@ -320,17 +320,21 @@ void ompi_attr_create_predefined_callback(
     if (0 == data->cnt) {  /* no data returned */
         universe_size = ompi_comm_size(MPI_COMM_WORLD);
     } else {
-        value = data->values;
-        for (i=0; i < data->cnt; i++) {
-            if (0 < value[i]->cnt) {  /* make sure some data was returned here */
-                keyval = value[i]->keyvals;
-                for (j=0; j < value[i]->cnt; j++) {
-                    /* make sure we don't get confused - all slot counts
-                     * are in size_t fields
-                     */
-                    if (ORTE_SIZE == keyval[j]->type) {
-                        /* Process slot count */
-                        universe_size += keyval[j]->value.size;
+        value = (orte_gpr_value_t**)(data->values)->addr;
+        for (i=0, k=0; k < data->cnt &&
+                       i < (data->values)->size; i++) {
+            if (NULL != value[i]) {
+                k++;
+                if (0 < value[i]->cnt) {  /* make sure some data was returned here */
+                    keyval = value[i]->keyvals;
+                    for (j=0; j < value[i]->cnt; j++) {
+                        /* make sure we don't get confused - all slot counts
+                         * are in size_t fields
+                         */
+                        if (ORTE_SIZE == keyval[j]->type) {
+                            /* Process slot count */
+                            universe_size += keyval[j]->value.size;
+                        }
                     }
                 }
             }

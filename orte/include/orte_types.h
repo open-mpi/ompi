@@ -17,7 +17,6 @@
 
 #ifndef ORTE_TYPES_H
 #define ORTE_TYPES_H
-#include "opal/class/opal_object.h"
 
 /**
  * Supported datatypes for messaging and storage operations.
@@ -65,26 +64,28 @@ typedef uint8_t orte_data_type_t ;
 #define    ORTE_NAME                (orte_data_type_t)   26 /**< an ompi_process_name_t */
 #define    ORTE_VPID                (orte_data_type_t)   27 /**< a vpid */
 #define    ORTE_JOBID               (orte_data_type_t)   28 /**< a jobid */
-#define    ORTE_CELLID              (orte_data_type_t)   29 /**< a cellid */
+#define    ORTE_JOBGRP              (orte_data_type_t)   29 /**< a job group */
+#define    ORTE_CELLID              (orte_data_type_t)   30 /**< a cellid */
     /* SOH types */
-#define    ORTE_NODE_STATE          (orte_data_type_t)   30 /**< node status flag */
-#define    ORTE_PROC_STATE          (orte_data_type_t)   31 /**< process/resource status */
-#define    ORTE_EXIT_CODE           (orte_data_type_t)   32 /**< process exit code */
+#define    ORTE_NODE_STATE          (orte_data_type_t)   31 /**< node status flag */
+#define    ORTE_PROC_STATE          (orte_data_type_t)   32 /**< process/resource status */
+#define    ORTE_EXIT_CODE           (orte_data_type_t)   33 /**< process exit code */
     /* GPR types */
-#define    ORTE_KEYVAL              (orte_data_type_t)   33 /**< registry key-value pair */
-#define    ORTE_GPR_NOTIFY_ACTION   (orte_data_type_t)   34 /**< registry notify action */
-#define    ORTE_GPR_TRIGGER_ACTION  (orte_data_type_t)   35 /**< registry trigger action */
-#define    ORTE_GPR_CMD             (orte_data_type_t)   36 /**< registry command */
-#define    ORTE_GPR_SUBSCRIPTION_ID (orte_data_type_t)   37 /**< registry notify id tag */
-#define    ORTE_GPR_TRIGGER_ID      (orte_data_type_t)   38 /**< registry notify id tag */
-#define    ORTE_GPR_VALUE           (orte_data_type_t)   39 /**< registry return value */
-#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   40 /**< Addressing mode for registry cmds */
-#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   41 /**< describes data returned by subscription */
-#define    ORTE_GPR_TRIGGER         (orte_data_type_t)   42 /**< describes trigger conditions */
-#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   43 /**< data returned from a subscription */
+#define    ORTE_KEYVAL              (orte_data_type_t)   34 /**< registry key-value pair */
+#define    ORTE_GPR_NOTIFY_ACTION   (orte_data_type_t)   35 /**< registry notify action */
+#define    ORTE_GPR_TRIGGER_ACTION  (orte_data_type_t)   36 /**< registry trigger action */
+#define    ORTE_GPR_CMD             (orte_data_type_t)   37 /**< registry command */
+#define    ORTE_GPR_SUBSCRIPTION_ID (orte_data_type_t)   38 /**< registry notify id tag */
+#define    ORTE_GPR_TRIGGER_ID      (orte_data_type_t)   39 /**< registry notify id tag */
+#define    ORTE_GPR_VALUE           (orte_data_type_t)   40 /**< registry return value */
+#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   41 /**< Addressing mode for registry cmds */
+#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   42 /**< describes data returned by subscription */
+#define    ORTE_GPR_TRIGGER         (orte_data_type_t)   43 /**< describes trigger conditions */
+#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   44 /**< data returned from a subscription */
+#define    ORTE_GPR_NOTIFY_MSG      (orte_data_type_t)   45 /**< notify message containing notify_data objects */
     /* Resource Manager types */
-#define    ORTE_APP_CONTEXT         (orte_data_type_t)   44 /**< argv and enviro arrays */
-#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   45 /**< application context mapping array */
+#define    ORTE_APP_CONTEXT         (orte_data_type_t)   46 /**< argv and enviro arrays */
+#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   47 /**< application context mapping array */
 
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DPS_ID_DYNAMIC 50

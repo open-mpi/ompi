@@ -39,9 +39,10 @@ int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
                                   size_t num_trigs,
                                   orte_gpr_trigger_t **trigs)
 {
-    orte_gpr_replica_subscription_t *sub=NULL, **subs;
+    orte_gpr_replica_subscription_t *sub=NULL, **subs, **trigsubs;
     orte_gpr_replica_trigger_t *trig=NULL;
-    size_t i, j, k, index;
+    size_t i, j, k, m, n, index;
+    bool ignore;
     int rc=ORTE_SUCCESS;
 
     if (orte_gpr_replica_globals.debug) {
@@ -78,19 +79,37 @@ int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* link the subscriptions to the new trigger
+        /* link the subscriptions to the new trigger. only do this if the
+         * subscription doesn't already exist on this trigger - otherwise,
+         * we'd just be duplicating things.
          */
+        trigsubs = (orte_gpr_replica_subscription_t**)(trig->subscriptions)->addr;
         for (j=0, k=0; k < num_subs &&
                        j < (orte_gpr_replica_globals.sub_ptrs)->size; j++) {
             if (NULL != subs[j]) {
                 k++;
-                if (0 > orte_pointer_array_add(&index, trig->subscriptions, subs[j])) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
+                /* check to see if this subscription is already attached
+                 * to this trigger - if not, add it
+                 */
+                ignore = false;
+                for (m=0, n=0; n < trig->num_subscriptions &&
+                               m < (trig->subscriptions)->size; m++) {
+                    if (NULL != trigsubs[m]) {
+                        n++;
+                        if (subs[j] == trigsubs[m]) { /* already present */
+                            ignore = true;
+                        }
+                    }
+                }
+                if (!ignore) { /* new sub for this trig - add it */
+                    if (0 > orte_pointer_array_add(&index, trig->subscriptions, subs[j])) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                    (trig->num_subscriptions)++;
                 }
             }
         }
-        trig->num_subscriptions += num_subs;
     }
     
     return rc;
