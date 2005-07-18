@@ -78,7 +78,7 @@ static inline char* mca_btl_self_param_register_string(
     const char* default_value)
 {
     char *param_value;
-    int id = mca_base_param_register_string("ptl","self",param_name,NULL,default_value);
+    int id = mca_base_param_register_string("btl","self",param_name,NULL,default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
@@ -87,7 +87,7 @@ static inline int mca_btl_self_param_register_int(
     const char* param_name, 
     int default_value)
 {
-    int id = mca_base_param_register_int("ptl","self",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("btl","self",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
@@ -109,7 +109,7 @@ int mca_btl_self_component_open(void)
     mca_btl_self_component.free_list_inc =
         mca_btl_self_param_register_int("free_list_inc", 256);
     mca_btl_self.btl_eager_limit = 
-        mca_btl_self_param_register_int("eager_limit", 64*1024);
+        mca_btl_self_param_register_int("eager_limit", 128*1024);
     mca_btl_self.btl_min_send_size = 
     mca_btl_self.btl_max_send_size = 
         mca_btl_self_param_register_int("max_send_size", 256*1024);
@@ -148,17 +148,17 @@ int mca_btl_self_component_close(void)
  *  SELF component initialization
  */
 mca_btl_base_module_t** mca_btl_self_component_init(
-    int *num_ptls, 
+    int *num_btls, 
     bool enable_progress_threads,
     bool enable_mpi_threads)
 {
-    mca_btl_base_module_t **ptls = NULL;
-    *num_ptls = 0;
+    mca_btl_base_module_t **btls = NULL;
+    *num_btls = 0;
 
     /* allocate the Shared Memory PTL */
-    *num_ptls = 1;
-    ptls = malloc((*num_ptls)*sizeof(mca_btl_base_module_t*));
-    if (NULL == ptls) {
+    *num_btls = 1;
+    btls = malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
+    if (NULL == btls) {
         return NULL;
     }
 
@@ -185,8 +185,8 @@ mca_btl_base_module_t** mca_btl_self_component_init(
         mca_btl_self_component.free_list_inc,
         NULL);
 
-    /* get pointer to the ptls */
-    ptls[0] = (mca_btl_base_module_t *)(&mca_btl_self);
-    return ptls;
+    /* get pointer to the btls */
+    btls[0] = (mca_btl_base_module_t *)(&mca_btl_self);
+    return btls;
 }
 
