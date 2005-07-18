@@ -77,13 +77,12 @@ void mca_pml_ob1_recv_frag_callback(
             {
             mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)
                 hdr->hdr_ack.hdr_src_req.pval;
-            sendreq->req_state = MCA_PML_OB1_SR_ACKED;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
             sendreq->req_rdma_offset = hdr->hdr_ack.hdr_rdma_offset;
 #if MCA_PML_OB1_TIMESTAMPS
             sendreq->t_send1 = get_profiler_timestamp();
 #endif
-            mca_pml_ob1_send_request_schedule(sendreq);
+            MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq);
             break;
             }
         case MCA_PML_OB1_HDR_TYPE_FRAG:

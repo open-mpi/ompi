@@ -184,10 +184,18 @@ static void mca_pml_ob1_recv_request_ack(
                     &recvreq->req_recv.req_convertor,
                     &recvreq->req_rdma_offset);
                 ack->hdr_rdma_offset = recvreq->req_rdma_offset;
+                if(recvreq->req_rdma_offset < hdr->hdr_frag_length) {
+                    opal_output(0, "[%s:%d] rdma offset %lu frag length %lu\n",
+                        recvreq->req_rdma_offset, hdr->hdr_frag_length);
+                    ack->hdr_rdma_offset = hdr->hdr_frag_length;
+                    recvreq->req_rdma_offset = hdr->hdr_frag_length;
+                }
             } else {
                 recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
                 ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
             }
+
+        /* start rdma at the current fragment offset */
         } else { 
             recvreq->req_rdma_offset = hdr->hdr_frag_length;
             ack->hdr_rdma_offset = hdr->hdr_frag_length;
@@ -196,8 +204,8 @@ static void mca_pml_ob1_recv_request_ack(
 
     /* zero byte message */
     else { 
-        recvreq->req_rdma_offset = hdr->hdr_frag_length;
-        ack->hdr_rdma_offset = hdr->hdr_frag_length;
+        recvreq->req_rdma_offset = 0;
+        ack->hdr_rdma_offset = 0;
     }
 
     /* initialize descriptor */

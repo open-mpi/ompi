@@ -31,19 +31,12 @@
 extern "C" {
 #endif
 
-typedef enum {
-    MCA_PML_OB1_SR_INIT,
-    MCA_PML_OB1_SR_START,
-    MCA_PML_OB1_SR_ACKED,
-    MCA_PML_OB1_SR_COMPLETE
-} mca_pml_ob1_send_request_state_t;
-
 
 struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_pml_ob1_proc_t* req_proc;
     mca_pml_ob1_endpoint_t* req_endpoint;
-    mca_pml_ob1_send_request_state_t req_state;
+    volatile int32_t req_state;
     struct mca_mpool_base_chunk_t* req_chunk;
     ompi_ptr_t req_recv;
     int32_t req_lock;
@@ -102,7 +95,6 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendmode,                                                              \
     persistent)                                                            \
 {                                                                          \
-    sendreq->req_state = MCA_PML_OB1_SR_INIT;                              \
     MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                     \
         buf,                                                               \
         count,                                                             \
@@ -179,8 +171,8 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
     sendreq->req_chunk = NULL;                                                            \
+    sendreq->req_state = 0;                                                               \
     sendreq->req_send_offset = 0;                                                         \
-    sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
     sendreq->req_send.req_base.req_pml_complete = false;                                  \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
@@ -211,7 +203,6 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         (sendreq)->req_send.req_base.req_ompi.req_status._count =                         \
             (sendreq)->req_send.req_bytes_packed;                                         \
         (sendreq)->req_send.req_base.req_ompi.req_complete = true;                        \
-        (sendreq)->req_state = MCA_PML_OB1_SR_COMPLETE;                                   \
         MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq);                                   \
         if(ompi_request_waiting) {                                                        \
             opal_condition_broadcast(&ompi_request_cond);                                 \
@@ -220,14 +211,40 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         MCA_PML_OB1_FREE((ompi_request_t**)&sendreq);                                     \
     } else if ((sendreq)->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {         \
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                        \
-        sendreq->req_state = MCA_PML_OB1_SR_COMPLETE;                                     \
     }                                                                                     \
 }
 
+
 /*
- * Advance a request
+ * Advance a pending send request. Note that the initial descriptor must complete
+ * and the acknowledment received before the request can complete or be scheduled.
+ * However, these events may occur in either order.
  */
 
+#define MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq)                                         \
+do {                                                                                      \
+    bool schedule = false;                                                                \
+                                                                                          \
+    /* has an acknowledgment been received */                                             \
+    if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {                                  \
+        OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
+        if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {          \
+            MCA_PML_OB1_SEND_REQUEST_COMPLETE(sendreq);                                   \
+        } else {                                                                          \
+            schedule = true;                                                              \
+        }                                                                                 \
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
+    }                                                                                     \
+                                                                                          \
+    /* additional data to schedule */                                                     \
+    if(schedule == true) {                                                                \
+        mca_pml_ob1_send_request_schedule(sendreq);                                       \
+    }                                                                                     \
+} while (0)
+
+/*
+ * Release resources associated with a request
+ */
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                            \
 {                                                                           \
@@ -248,6 +265,38 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         &mca_pml_ob1.send_requests, (opal_list_item_t*)sendreq);            \
 }
                                                                                                                       
+
+/*
+ * Update bytes delivered on request based on supplied descriptor
+ */
+
+#define MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor)           \
+do {                                                                                \
+   size_t i;                                                                        \
+   mca_btl_base_segment_t* segments = descriptor->des_src;                          \
+                                                                                    \
+   for(i=0; i<descriptor->des_src_cnt; i++) {                                       \
+       sendreq->req_bytes_delivered += segments[i].seg_len;                         \
+   }                                                                                \
+                                                                                    \
+   /* adjust for message header */                                                  \
+   switch(((mca_pml_ob1_common_hdr_t*)segments->seg_addr.pval)->hdr_type) {         \
+       case MCA_PML_OB1_HDR_TYPE_MATCH:                                             \
+           sendreq->req_bytes_delivered -= sizeof(mca_pml_ob1_match_hdr_t);         \
+           break;                                                                   \
+       case MCA_PML_OB1_HDR_TYPE_RNDV:                                              \
+           sendreq->req_bytes_delivered -= sizeof(mca_pml_ob1_rendezvous_hdr_t);    \
+           break;                                                                   \
+       case MCA_PML_OB1_HDR_TYPE_FRAG:                                              \
+           sendreq->req_bytes_delivered -= sizeof(mca_pml_ob1_frag_hdr_t);          \
+           break;                                                                   \
+       default:                                                                     \
+           opal_output(0, "[%s:%d]: invalid header type\n", __FILE__,__LINE__);     \
+           break;                                                                   \
+   }                                                                                \
+} while(0)
+                                                                                                                          
+
 /**
  *  
  */
