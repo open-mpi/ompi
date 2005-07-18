@@ -525,19 +525,6 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
         }
     }
 
-    /* find the user's executeable */
-    if(0 == stat(map->app->app, &buf)) {
-        exec_path = strdup(map->app->app);
-    } else {
-        exec_path = opal_path_findv(map->app->app, 0, environ, NULL);
-        if(NULL == exec_path) {
-            opal_output(0, "pls_bproc: Unable to find app %s\n", map->app->app);
-            rc = ORTE_ERROR;
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-
     /* launch the processes */
     i = 1;
     rc = orte_pls_bproc_node_list(node_array, node_array_len, &node_list,
