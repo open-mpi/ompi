@@ -296,9 +296,28 @@ do {                                                                            
    }                                                                                \
 } while(0)
                                                                                                                           
+/*
+ * Attempt to process any pending requests
+ */
+
+#define MCA_PML_OB1_SEND_REQUEST_PROCESS_PENDING()                    \
+do {                                                                  \
+    /* advance pending requests */                                    \
+    while(opal_list_get_size(&mca_pml_ob1.send_pending)) {            \
+        mca_pml_ob1_send_request_t* sendreq;                          \
+        OPAL_THREAD_LOCK(&mca_pml_ob1.ob1_lock);                      \
+        sendreq = (mca_pml_ob1_send_request_t*)                       \
+            opal_list_remove_first(&mca_pml_ob1.send_pending);        \
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.ob1_lock);                    \
+        if(NULL == sendreq)                                           \
+            break;                                                    \
+        mca_pml_ob1_send_request_schedule(sendreq);                   \
+    }                                                                 \
+} while (0)
+
 
 /**
- *  
+ *  Start the specified request
  */
 
 int mca_pml_ob1_send_request_start(
@@ -306,13 +325,13 @@ int mca_pml_ob1_send_request_start(
     mca_pml_ob1_endpoint_t* endpoint);
 
 /**
- *
+ *  Schedule additional fragments 
  */
 int mca_pml_ob1_send_request_schedule(
     mca_pml_ob1_send_request_t* sendreq);
 
 /**
- *
+ *  Initiate a put scheduled by the receiver.
  */
 
 void mca_pml_ob1_send_request_put(
