@@ -300,7 +300,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
     int argc;
     char ** argv = NULL;
     char * var, * param;
-    char * exec_path;
+    char * orted_path;
     orte_buffer_t ack;
     orte_jobid_t daemon_jobid;
     orte_cellid_t cellid;
@@ -458,10 +458,10 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
 
     /* find orted */
     if(0 == stat(mca_pls_bproc_component.orted, &buf)) {
-        exec_path = strdup(mca_pls_bproc_component.orted);
+        orted_path = strdup(mca_pls_bproc_component.orted);
     } else {
-        exec_path = opal_path_findv(mca_pls_bproc_component.orted, 0, environ, NULL);
-        if(NULL == exec_path) {
+        orted_path = opal_path_findv(mca_pls_bproc_component.orted, 0, environ, NULL);
+        if(NULL == orted_path) {
             opal_output(0, "pls_bproc: Unable to find orted\n");
             rc = ORTE_ERROR;
             ORTE_ERROR_LOG(rc);
@@ -471,11 +471,11 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
 
     if(0 < mca_pls_bproc_component.debug) {
         opal_output(0, "PLS_BPROC DEBUG: launching %d daemons. cmd: %s ", 
-                    num_daemons, exec_path);
+                    num_daemons, orted_path);
     }
     
     /* launch the daemons */
-    rc = bproc_vexecmove(num_daemons, node_list, pids, exec_path, argv, 
+    rc = bproc_vexecmove(num_daemons, node_list, pids, orted_path, argv, 
                          map->app->env);
     if(rc != num_daemons) {
         opal_output(0, "Failed to launch proper number of daemons.");
@@ -508,8 +508,6 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
         }
     }
     orte_pls_bproc_num_daemons += num_daemons;
-    free(exec_path);
-    exec_path = NULL;
 
     if(0 < mca_pls_bproc_component.debug) {
         opal_output(0, "PLS_BPROC DEBUG: %d daemons launched. First pid: %d\n", 
@@ -551,7 +549,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
             opal_output(0, "pls_bproc: launching %d processes", num_nodes);
         }
         rc = bproc_vexecmove_io(num_nodes, node_list, pids, bproc_io, 3, 
-                                exec_path, map->app->argv, map->app->env);
+                                map->app->app, map->app->argv, map->app->env);
         if(0 < mca_pls_bproc_component.debug) {
             opal_output(0, "pls_bproc: %d processes launched. First pid: %d",
                         rc, *pids);
@@ -564,7 +562,8 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
         for(j = 0; j < num_nodes; j++) {
             if(0 >= pids[j]) {
                 opal_output(0, "pls_bproc: failed to launch all processes. Process"
-                            " pid was %d on node %d\n", pids[j], node_list[j]);
+                            " pid was %d on node %d trying to launch %s\n", 
+                            pids[j], node_list[j], map->app->app);
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -612,8 +611,8 @@ cleanup:
     if(NULL != pids) {
         free(pids);
     }
-    if(NULL != exec_path) {
-        free(exec_path);
+    if(NULL != orted_path) {
+        free(orted_path);
     }
     OBJ_DESTRUCT(&ack);
     return rc;
