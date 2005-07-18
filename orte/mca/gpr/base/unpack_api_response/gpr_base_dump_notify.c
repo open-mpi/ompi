@@ -40,7 +40,8 @@ int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
                                   orte_gpr_notify_message_t *msg)
 {
     char *tmp_out;
-    size_t i;
+    orte_gpr_notify_data_t **data;
+    size_t i, j;
     
     asprintf(&tmp_out, "\nDUMP OF NOTIFY MESSAGE STRUCTURE");
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
@@ -51,16 +52,31 @@ int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
         return ORTE_SUCCESS;
     }
     
-    asprintf(&tmp_out, "%lu Notify data structures in message",
+    if (NULL == msg->name) {
+        asprintf(&tmp_out, "\tTrigger name: NULL");
+    } else {
+        asprintf(&tmp_out, "\tTrigger name: %s", msg->name);
+    }
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    
+    asprintf(&tmp_out, "\tTrigger id: %d", msg->id);
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    
+    asprintf(&tmp_out, "\t%lu Notify data structures in message",
              (unsigned long) msg->cnt);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
-    if (0 < msg->cnt && NULL != msg->data) {
-        for (i=0; i < msg->cnt; i++) {
-            asprintf(&tmp_out, "\nDump of notify data structure number %lu", 
-                     (unsigned long) i);
-            orte_gpr_base_dump_load_string(buffer, &tmp_out);
-            orte_gpr_base_dump_data(buffer, msg->data[i]);
+    if (0 < msg->cnt) {
+        data = (orte_gpr_notify_data_t**)(msg->data)->addr;
+        for (i=0, j=0; j < msg->cnt &&
+                       i < (msg->data)->size; i++) {
+            if (NULL != data[i]) {
+                asprintf(&tmp_out, "\nDump of notify data structure number %lu", 
+                         (unsigned long) j);
+                orte_gpr_base_dump_load_string(buffer, &tmp_out);
+                orte_gpr_base_dump_data(buffer, data[i]);
+                j++;
+            }
         }
     }
 
@@ -80,7 +96,7 @@ int orte_gpr_base_dump_notify_data(orte_buffer_t *buffer,
         orte_gpr_base_dump_load_string(buffer, &tmp_out);
         return ORTE_SUCCESS;
     }
-    
+        
     orte_gpr_base_dump_data(buffer, data);
     return ORTE_SUCCESS;
 }
@@ -90,21 +106,25 @@ static void orte_gpr_base_dump_data(orte_buffer_t *buffer,
 {
     char *tmp_out;
     orte_gpr_value_t **values;
-    size_t i;
+    size_t i, j;
 
-    asprintf(&tmp_out, "%lu values going to subscription num %lu", 
+    if (NULL != data->name) {
+        asprintf(&tmp_out, "%lu values going to subscription name %s", 
+             (unsigned long) data->cnt, data->name);
+    } else {
+        asprintf(&tmp_out, "%lu values going to subscription num %lu", 
              (unsigned long) data->cnt, (unsigned long) data->id);
+    }
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
-    if (0 < data->cnt && NULL != data->values) {
-        values = data->values;
-        for (i=0; i < data->cnt; i++) {
-            asprintf(&tmp_out, "\nData for value %lu", (unsigned long) i);
-            orte_gpr_base_dump_load_string(buffer, &tmp_out);
-            if (NULL == values[i]) {
-                asprintf(&tmp_out, "\tError encountered: NULL value pointer");
+    values = (orte_gpr_value_t**)(data->values)->addr;
+    if (0 < data->cnt) {
+        for (i=0, j=0; j < data->cnt &&
+                       i < (data->values)->size; i++) {
+            if (NULL != values[i]) {
+                j++;
+                asprintf(&tmp_out, "\nData for value %lu", (unsigned long) j);
                 orte_gpr_base_dump_load_string(buffer, &tmp_out);
-            } else {
                 orte_gpr_base_dump_value(buffer, values[i]);
             }
         }
@@ -117,8 +137,13 @@ int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
     orte_gpr_addr_mode_t addr;
     size_t j;
 
-    asprintf(&tmp_out, "\tValue from segment %s with %lu keyvals",
-             value->segment, (unsigned long) value->cnt);
+    if (NULL == value->segment) {
+        asprintf(&tmp_out, "\tNULL segment name in value - %lu keyvals",
+                (unsigned long) value->cnt);
+    } else {
+        asprintf(&tmp_out, "\tValue from segment %s with %lu keyvals",
+                 value->segment, (unsigned long) value->cnt);
+    }
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     addr = value->addr_mode;
@@ -130,8 +155,13 @@ int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
                  (unsigned long) value->num_tokens);
         orte_gpr_base_dump_load_string(buffer, &tmp_out);
         for (j=0; j < value->num_tokens; j++) {
-            asprintf(&tmp_out, "\tToken %lu: %s", (unsigned long) j, 
+            if (NULL == value->tokens[j]) {
+                asprintf(&tmp_out, "\tToken %lu: NULL token pointer",
+                    (unsigned long) j);
+            } else {
+                asprintf(&tmp_out, "\tToken %lu: %s", (unsigned long) j, 
                      value->tokens[j]);
+            }
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
         }
     }
@@ -186,8 +216,13 @@ int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
     }
     
     for (j=0; j < value->cnt; j++) {
-        asprintf(&tmp_out, "\t\tData for keyval %lu: Key: %s", 
-                 (unsigned long) j, (value->keyvals[j])->key);
+        if (NULL == (value->keyvals[j])->key) {
+            asprintf(&tmp_out, "\t\tData for keyval %lu: NULL key", 
+                 (unsigned long) j);
+        } else {
+            asprintf(&tmp_out, "\t\tData for keyval %lu: Key: %s", 
+                     (unsigned long) j, (value->keyvals[j])->key);
+        }
         orte_gpr_base_dump_load_string(buffer, &tmp_out);
         orte_gpr_base_dump_keyval_value(buffer, value->keyvals[j]);
     }

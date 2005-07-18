@@ -337,16 +337,31 @@ int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
 {
     int rc;
     orte_gpr_notify_data_t **data;
-    size_t i;
+    orte_gpr_value_t **values;
+    size_t i, j, k;
 
     /* array of pointers to notify data objects - need to pack the objects */
     data = (orte_gpr_notify_data_t**) src;
 
     for (i=0; i<num_vals; i++) {
 
+        /* pack the subscription name */
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                        (void*)(&(data[i]->name)), 1, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* pack the subscription number */
         if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
                         (void*)(&(data[i]->id)), 1, ORTE_GPR_SUBSCRIPTION_ID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the remove flag */
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                        (void*)(&(data[i]->remove)), 1, ORTE_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -360,10 +375,88 @@ int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
 
         /* if there are values, pack the values */
         if (0 < data[i]->cnt) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                            (void*)((data[i]->values)), data[i]->cnt, ORTE_GPR_VALUE))) {
+            values = (orte_gpr_value_t**)(data[i]->values)->addr;
+            for (j=0, k=0; k < data[i]->cnt &&
+                           j < (data[i]->values)->size; j++) {
+                if (NULL != values[j]) {
+                    k++;
+                    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, &values[j],
+                                1, ORTE_GPR_VALUE))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                }
+            }
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * NOTIFY MSG
+ */
+int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type)
+{
+    int rc;
+    orte_gpr_notify_message_t **msg;
+    orte_gpr_notify_data_t **data;
+    size_t i, j, k;
+
+    /* array of messages */
+    msg = (orte_gpr_notify_message_t**) src;
+    
+    for (i=0; i<num_vals; i++) {
+
+        /* pack the trigger name */
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                        (void*)(&(msg[i]->name)), 1, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the trigger number */
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                        (void*)(&(msg[i]->id)), 1, ORTE_GPR_TRIGGER_ID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the remove flag */
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                        (void*)(&(msg[i]->remove)), 1, ORTE_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the number of datagrams so we can read it for unpacking */
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                        (void*)(&(msg[i]->cnt)), 1, DPS_TYPE_SIZE_T))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* if there are datagrams, pack them */
+        if (0 < msg[i]->cnt) {
+            /* array of pointers to notify data objects - need to pack the objects.
+             * to do this, we assume that the array objects are continguous
+             * in the pointer array. the pointer array itself does not
+             * guarantee this property - we are exploiting, however, our knowledge
+             * of how these messages are constructed.
+             */
+            data = (orte_gpr_notify_data_t**)(msg[i]->data)->addr;
+            for (j=0, k=0; k < msg[i]->cnt &&
+                           j < (msg[i]->data)->size; j++) {
+            if (NULL != data[j]) {
+                k++;
+                if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, &(data[j]),
+                        1, ORTE_GPR_NOTIFY_DATA))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
+            }
+            }
             }
         }
     }

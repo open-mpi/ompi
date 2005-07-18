@@ -201,7 +201,8 @@ static void mca_base_modex_registry_callback(
     orte_gpr_notify_data_t* data,
     void* cbdata)
 {
-    size_t i, j;
+    size_t i, j, k;
+    orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t **keyval;
     ompi_proc_t *proc;
     ompi_proc_t **new_procs = NULL;
@@ -229,119 +230,123 @@ orte_gpr_base_dump_notify_data(data,0);
     }
 
     /* process the callback */
-    for (i=0; i < data->cnt; i++) {
-        orte_gpr_value_t *value = data->values[i];
-        if (0 < value->cnt) {  /* needs to be at least one keyval */
-            /*
-             * Token for the value should be the process name - look it up
-             */
-            token = value->tokens;
-            if (ORTE_SUCCESS == orte_ns.convert_string_to_process_name(&proc_name, token[0])) {
-                proc = ompi_proc_find_and_add(proc_name, &isnew);
-                if(NULL == proc)
-                    continue;
-
-                if(isnew) {
-                    new_procs[new_proc_count] = proc;
-                    new_proc_count++;
-                }
-    
+    values = (orte_gpr_value_t**)(data->values)->addr;
+    for (i=0, k=0; k < data->cnt &&
+                   i < (data->values)->size; i++) {
+        if (NULL != values[i]) {
+            k++;
+            value = values[i];
+            if (0 < value->cnt) {  /* needs to be at least one keyval */
                 /*
-                 * Lookup the modex data structure.
+                 * Token for the value should be the process name - look it up
                  */
+                token = value->tokens;
+                if (ORTE_SUCCESS == orte_ns.convert_string_to_process_name(&proc_name, token[0])) {
+                    proc = ompi_proc_find_and_add(proc_name, &isnew);
+                    if(NULL == proc)
+                        continue;
         
-                OPAL_THREAD_LOCK(&proc->proc_lock);
-                if(NULL == (modex = (mca_base_modex_t*)proc->proc_modex)) {
-                    modex = OBJ_NEW(mca_base_modex_t);
-                    if(NULL == modex) {
-                        opal_output(0, "mca_base_modex_registry_callback: unable to allocate mca_base_modex_t\n");
-                        OPAL_THREAD_UNLOCK(&proc->proc_lock);
-                        return;
-                    }
-                    proc->proc_modex = &modex->super;
-                }
-                
-                /*
-                 * Extract the component name and version from the keyval object's key
-                 * Could be multiple keyvals returned since there is one for each
-                 * component type/name/version - process them all
-                 */
-                keyval = value->keyvals;
-                for (j=0; j < value->cnt; j++) {
-                    orte_buffer_t buffer;
-                    char *ptr;
-                    void* bytes = NULL;
-                    size_t cnt;
-                    size_t num_bytes;
-                    if(strcmp(keyval[j]->key,"modex") != 0)
-                        continue;
-
-                    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-                    if (ORTE_SUCCESS != (rc = orte_dps.load(&buffer, 
-                        keyval[j]->value.byteobject.bytes, 
-                        keyval[j]->value.byteobject.size))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    strcpy(component.mca_type_name,ptr);
-                    free(ptr);
-
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    strcpy(component.mca_component_name,ptr);
-                    free(ptr);
-
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
-                        &component.mca_component_major_version, &cnt, ORTE_INT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
-                        &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    cnt = 1;
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
-                        &num_bytes, &cnt, ORTE_SIZE))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
-                    }
-                    if (num_bytes != 0) {
-                        if(NULL == (bytes = malloc(num_bytes))) {
-                            opal_output(0, "Unable to allocate memory (length %d bytes).\n", num_bytes );
-                            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                            continue;
-                        }
-                    }
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
-                        ORTE_ERROR_LOG(rc);
-                        continue;
+                    if(isnew) {
+                        new_procs[new_proc_count] = proc;
+                        new_proc_count++;
                     }
         
                     /*
-                     * Lookup the corresponding modex structure
+                     * Lookup the modex data structure.
                      */
-                    if(NULL == (modex_module = mca_base_modex_create_module(modex, &component))) {
-                        opal_output(0, "mca_base_modex_registry_callback: mca_base_modex_create_module failed\n");
-                        OBJ_RELEASE(data);
-                        OPAL_THREAD_UNLOCK(&proc->proc_lock);
-                        return;
+            
+                    OPAL_THREAD_LOCK(&proc->proc_lock);
+                    if(NULL == (modex = (mca_base_modex_t*)proc->proc_modex)) {
+                        modex = OBJ_NEW(mca_base_modex_t);
+                        if(NULL == modex) {
+                            opal_output(0, "mca_base_modex_registry_callback: unable to allocate mca_base_modex_t\n");
+                            OPAL_THREAD_UNLOCK(&proc->proc_lock);
+                            return;
+                        }
+                        proc->proc_modex = &modex->super;
                     }
-
-                    modex_module->module_data = bytes;
-                    modex_module->module_data_size = num_bytes;
-                    modex_module->module_data_avail = true;
+                    
+                    /*
+                     * Extract the component name and version from the keyval object's key
+                     * Could be multiple keyvals returned since there is one for each
+                     * component type/name/version - process them all
+                     */
+                    keyval = value->keyvals;
+                    for (j=0; j < value->cnt; j++) {
+                        orte_buffer_t buffer;
+                        char *ptr;
+                        void* bytes = NULL;
+                        size_t cnt;
+                        size_t num_bytes;
+                        if(strcmp(keyval[j]->key,"modex") != 0)
+                            continue;
+        
+                        OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+                        if (ORTE_SUCCESS != (rc = orte_dps.load(&buffer, 
+                            keyval[j]->value.byteobject.bytes, 
+                            keyval[j]->value.byteobject.size))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+                        cnt = 1;
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+                        strcpy(component.mca_type_name,ptr);
+                        free(ptr);
+        
+                        cnt = 1;
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+                        strcpy(component.mca_component_name,ptr);
+                        free(ptr);
+        
+                        cnt = 1;
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
+                            &component.mca_component_major_version, &cnt, ORTE_INT32))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+                        cnt = 1;
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
+                            &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+                        cnt = 1;
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
+                            &num_bytes, &cnt, ORTE_SIZE))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+                        if (num_bytes != 0) {
+                            if(NULL == (bytes = malloc(num_bytes))) {
+                                opal_output(0, "Unable to allocate memory (length %d bytes).\n", num_bytes );
+                                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                                continue;
+                            }
+                        }
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+            
+                        /*
+                         * Lookup the corresponding modex structure
+                         */
+                        if(NULL == (modex_module = mca_base_modex_create_module(modex, &component))) {
+                            opal_output(0, "mca_base_modex_registry_callback: mca_base_modex_create_module failed\n");
+                            OBJ_RELEASE(data);
+                            OPAL_THREAD_UNLOCK(&proc->proc_lock);
+                            return;
+                        }
+        
+                        modex_module->module_data = bytes;
+                        modex_module->module_data_size = num_bytes;
+                        modex_module->module_data_avail = true;
 #if 0
 opal_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: %s-%s-%d-%d received %d bytes\n",
     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -351,12 +356,13 @@ opal_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: %s-%s-%d-%d rece
     component.mca_component_minor_version,
     num_bytes);
 #endif
-                    opal_condition_signal(&modex_module->module_data_cond);
-                }
-                OPAL_THREAD_UNLOCK(&proc->proc_lock);
-            }  /* convert string to process name */
-        
-        }  /* if value[i]->cnt > 0 */
+                        opal_condition_signal(&modex_module->module_data_cond);
+                    }
+                    OPAL_THREAD_UNLOCK(&proc->proc_lock);
+                }  /* convert string to process name */
+            
+            }  /* if value[i]->cnt > 0 */
+        }
     }
 
     /* pml add procs */

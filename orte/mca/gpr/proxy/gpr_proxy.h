@@ -62,8 +62,14 @@ typedef struct {
 OBJ_CLASS_DECLARATION(orte_gpr_proxy_subscriber_t);
 
 
-#define ORTE_GPR_PROXY_MAX_SIZE INT32_MAX
-#define ORTE_GPR_PROXY_BLOCK_SIZE 100
+typedef struct {
+     opal_object_t super;                   /**< Allows this to be an object */
+     orte_gpr_trigger_id_t id;              /**< id of this trigger */
+     orte_gpr_trigger_cb_fn_t callback;     /**< Function to be called for notification */
+     void *user_tag;                        /**< User-provided tag for callback function */
+} orte_gpr_proxy_trigger_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_proxy_trigger_t);
 
 
 /*
@@ -71,11 +77,10 @@ OBJ_CLASS_DECLARATION(orte_gpr_proxy_subscriber_t);
  */
 typedef struct {
     int debug;
-    size_t block_size;
-    size_t max_size;
     orte_gpr_subscription_id_t num_subs;
     orte_pointer_array_t *subscriptions;
-    orte_gpr_trigger_id_t trig_cntr;
+    orte_gpr_trigger_id_t num_trigs;
+    orte_pointer_array_t *triggers;
     opal_mutex_t mutex;
     bool compound_cmd_mode;
     orte_buffer_t *compound_cmd;
@@ -208,6 +213,9 @@ orte_gpr_proxy_remove_subscription(orte_gpr_subscription_id_t id);
 int
 orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **triggers);
 
+
+int
+orte_gpr_proxy_remove_trigger(orte_gpr_trigger_id_t id);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

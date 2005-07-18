@@ -267,6 +267,13 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
 
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
+    /* remove the specified trigger from the local tracker */
+    if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_trigger(trig))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        return rc;
+    }
+    
     /* if the compound cmd mode is on, pack the command into that buffer
      * and return
      */

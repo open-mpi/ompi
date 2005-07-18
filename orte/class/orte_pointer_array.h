@@ -142,6 +142,19 @@ static inline size_t orte_pointer_array_get_size(orte_pointer_array_t *array)
 
 
 /**
+ * Set the size of the pointer array
+ *
+ * @param array Pointer to array (IN)
+ *
+ * @param size Desired size of the array
+ *
+ * Simple function to set the size of the array in order to
+ * hide the member field from external users.
+ */
+OMPI_DECLSPEC int orte_pointer_array_set_size(orte_pointer_array_t *array, size_t size);
+
+
+/**
  * Clear the pointer array
  *
  * @param array Pointer to array (IN)
@@ -153,11 +166,9 @@ static inline size_t orte_pointer_array_get_size(orte_pointer_array_t *array)
  */
 static inline void orte_pointer_array_clear(orte_pointer_array_t *array)
 {
-    size_t i;
     OPAL_THREAD_LOCK(&(array->lock));
-    for (i=0; i < array->size; i++) {
-        array->addr[i] = NULL;
-    }
+    /* set the array elements to NULL */
+    memset(array->addr, 0, array->size * sizeof(void*));
     array->lowest_free = 0;
     array->number_free = array->size;
     OPAL_THREAD_UNLOCK(&(array->lock));

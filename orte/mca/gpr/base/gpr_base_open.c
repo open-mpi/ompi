@@ -35,6 +35,14 @@
 
 #include "orte/mca/gpr/base/static-components.h"
 
+/* JMS: This is only INT_MAX until bug 1345 is fixed, because this
+   value is used to set an MAC parameter, which can [currently] only
+   take an int. */
+#define ORTE_GPR_ARRAY_MAX_SIZE INT_MAX
+#define ORTE_GPR_ARRAY_BLOCK_SIZE 512
+
+
+
 /*
  * globals
  */
@@ -129,22 +137,34 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of registry value instance */
 static void orte_gpr_notify_data_construct(orte_gpr_notify_data_t* ptr)
 {
+    ptr->name = NULL;
     ptr->id = ORTE_GPR_SUBSCRIPTION_ID_MAX;
+    ptr->remove = false;
     ptr->cnt = 0;
-    ptr->values = NULL;
+    orte_pointer_array_init(&(ptr->values), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
+
 }
 
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
 {
-    size_t i;
+    size_t i, j;
+    orte_gpr_value_t **values;
 
-    if (0 < ptr->cnt && NULL != ptr->values) {
-        for (i=0; i < ptr->cnt; i++) {
-            if (NULL != ptr->values[i])
-                OBJ_RELEASE(ptr->values[i]);
+    if (NULL != ptr->name) free(ptr->name);
+    
+    if (NULL != ptr->values) {
+        values = (orte_gpr_value_t**)(ptr->values)->addr;
+        for (i=0, j=0; j < ptr->cnt &&
+                       i < (ptr->values)->size; i++) {
+            if (NULL != values[i]) {
+                j++;
+                OBJ_RELEASE(values[i]);
+            }
         }
-       free(ptr->values);
+        OBJ_RELEASE(ptr->values);
     }
 }
 
@@ -201,6 +221,8 @@ static void orte_gpr_trigger_construct(orte_gpr_trigger_t* trig)
     trig->action = 0;
     trig->cnt = 0;
     trig->values = NULL;
+    trig->cbfunc = NULL;
+    trig->user_tag = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -229,20 +251,33 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize notify message instance */
 static void orte_gpr_notify_message_construct(orte_gpr_notify_message_t* msg)
 {
+    msg->name = NULL;
+    msg->id = ORTE_GPR_TRIGGER_ID_MAX;
+    msg->remove = false;
     msg->cnt = 0;
-    msg->data = NULL;
+    orte_pointer_array_init(&(msg->data), orte_gpr_array_block_size,
+                            orte_gpr_array_max_size,
+                            orte_gpr_array_block_size);
 }
 
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
 {
-    size_t i;
+    size_t i, j;
+    orte_gpr_notify_data_t **data;
     
-    if (0 < msg->cnt && NULL != msg->data) {
-        for (i=0; i < msg->cnt; i++) {
-            if (NULL != msg->data[i]) OBJ_RELEASE(msg->data[i]);
+    if (NULL != msg->name) free(msg->name);
+    
+    if (NULL != msg->data) {
+        data = (orte_gpr_notify_data_t**)(msg->data)->addr;
+        for (i=0, j=0; j < msg->cnt &&
+                       i < (msg->data)->size; i++) {
+            if (NULL != data[i]) {
+                j++;
+                OBJ_RELEASE(data[i]);
+            }
         }
-        free(msg->data);
+        OBJ_RELEASE(msg->data);
     }
     
 }
@@ -259,6 +294,7 @@ OBJ_CLASS_INSTANCE(
  * Global variables
  */
 int orte_gpr_base_output = -1;
+size_t orte_gpr_array_max_size, orte_gpr_array_block_size;
 orte_gpr_base_module_t orte_gpr;
 bool orte_gpr_base_selected = false;
 opal_list_t orte_gpr_base_components_available;
@@ -272,7 +308,7 @@ opal_mutex_t orte_gpr_mutex;
  */
 int orte_gpr_base_open(void)
 {
-    int param, value, rc;
+    int param, value, rc, id;
     orte_data_type_t tmp;
 
     /* Debugging / verbose output */
@@ -286,6 +322,16 @@ int orte_gpr_base_open(void)
         orte_gpr_base_output = -1;
     }
 
+    id = mca_base_param_register_int("gpr", "base", "maxsize", NULL,
+                                     ORTE_GPR_ARRAY_MAX_SIZE);
+    mca_base_param_lookup_int(id, &param);
+    orte_gpr_array_max_size = (size_t)param;
+    
+    id = mca_base_param_register_int("gpr", "base", "blocksize", NULL,
+                                     ORTE_GPR_ARRAY_BLOCK_SIZE);
+    mca_base_param_lookup_int(id, &param);
+    orte_gpr_array_block_size = (size_t)param;
+    
     /* register the base data types with the DPS */
     tmp = ORTE_GPR_CMD;
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_cmd,
@@ -371,6 +417,14 @@ int orte_gpr_base_open(void)
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_data,
                                           orte_gpr_base_unpack_notify_data,
                                           "ORTE_GPR_NOTIFY_DATA", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_NOTIFY_MSG;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_msg,
+                                          orte_gpr_base_unpack_notify_msg,
+                                          "ORTE_GPR_NOTIFY_MSG", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -33,7 +33,7 @@ libmca_gpr_base_la_SOURCES = \
         gpr_base_close.c \
         gpr_base_select.c \
         gpr_base_xfer_payload.c \
-	data_type_support/gpr_data_type_packing_fns.c \
+	    data_type_support/gpr_data_type_packing_fns.c \
         data_type_support/gpr_data_type_unpacking_fns.c \
         unpack_api_response/gpr_base_unpack_cleanup.c \
         unpack_api_response/gpr_base_unpack_del_index.c \

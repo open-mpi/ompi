@@ -395,7 +395,7 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     orte_gpr_value_t **values;
     orte_gpr_keyval_t **kvals;
     orte_process_name_t *recipients;
-    size_t i, j, n=0;
+    size_t i, j, m, n=0;
     orte_vpid_t k=0;
     int rc;
     bool found_slots=false, found_start=false;
@@ -405,7 +405,7 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     /* check to see if this came from one of the stage gates as opposed
      * to either terminate or finalize - if the latter, we ignore it
      */
-    values = data->values;
+    values = (orte_gpr_value_t**)(data->values)->addr;
     kvals = values[0]->keyvals;
     for (i=0; i < values[0]->cnt; i++) {
         if (0 == strcmp(kvals[i]->key, ORTE_PROC_NUM_FINALIZED) ||
@@ -419,7 +419,6 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
      * to us. we use that value to extract the jobid for the returned
      * data
      */
-    values = data->values;
     if (ORTE_SUCCESS != (rc =
             orte_schema.extract_jobid_from_segment_name(&job,
                     values[0]->segment))) {
@@ -430,23 +429,27 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     /* value returned will contain the counter, which contains the number of
      * procs in this job
      */
-    values = data->values;
-    for (i=0; i < data->cnt && (!found_slots || !found_start); i++) {
-        kvals = values[i]->keyvals;
-        /* check to see if ORTE_JOB_GLOBALS is the token */
-        if (NULL != values[i]->tokens &&
-            0 == strcmp(ORTE_JOB_GLOBALS, values[i]->tokens[0])) {
-            /* find the ORTE_JOB_SLOTS_KEY and the ORTE_JOB_VPID_START_KEY keyval */
-            for (j=0; j < values[i]->cnt && (!found_slots || !found_start); j++) {
-                if (NULL != kvals[j] && !found_slots &&
-                    0 == strcmp(ORTE_JOB_SLOTS_KEY, kvals[j]->key)) {
-                    n = kvals[j]->value.size;
-                    found_slots = true;
-                }
-                if (NULL != kvals[j] && !found_start &&
-                    0 == strcmp(ORTE_JOB_VPID_START_KEY, kvals[j]->key)) {
-                    k = kvals[j]->value.vpid;
-                    found_start = true;
+    for (i=0, m=0; m < data->cnt &&
+                   i < (data->values)->size &&
+                   (!found_slots || !found_start); i++) {
+        if (NULL != values[i]) {
+            m++;
+            kvals = values[i]->keyvals;
+            /* check to see if ORTE_JOB_GLOBALS is the token */
+            if (NULL != values[i]->tokens &&
+                0 == strcmp(ORTE_JOB_GLOBALS, values[i]->tokens[0])) {
+                /* find the ORTE_JOB_SLOTS_KEY and the ORTE_JOB_VPID_START_KEY keyval */
+                for (j=0; j < values[i]->cnt && (!found_slots || !found_start); j++) {
+                    if (NULL != kvals[j] && !found_slots &&
+                        0 == strcmp(ORTE_JOB_SLOTS_KEY, kvals[j]->key)) {
+                        n = kvals[j]->value.size;
+                        found_slots = true;
+                    }
+                    if (NULL != kvals[j] && !found_start &&
+                        0 == strcmp(ORTE_JOB_VPID_START_KEY, kvals[j]->key)) {
+                        k = kvals[j]->value.vpid;
+                        found_start = true;
+                    }
                 }
             }
         }
@@ -505,7 +508,7 @@ void orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_data_t *data,
      * to us. we use that value to extract the jobid for the returned
      * data
      */
-    values = data->values;
+    values = (orte_gpr_value_t**)(data->values)->addr;
     if (ORTE_SUCCESS != (rc =
             orte_schema.extract_jobid_from_segment_name(&job,
                     values[0]->segment))) {

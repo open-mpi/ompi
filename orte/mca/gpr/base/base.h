@@ -216,6 +216,9 @@ int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
 int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
                        size_t num_vals, orte_data_type_t type);
 
+int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
 /* GPR DATA TYPE UNPACKING FUNCTIONS */
 int orte_gpr_base_unpack_cmd(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type);
@@ -250,6 +253,9 @@ int orte_gpr_base_unpack_trigger(orte_buffer_t *buffer, void *dest,
 int orte_gpr_base_unpack_notify_data(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type);
 
+int orte_gpr_base_unpack_notify_msg(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
 /* general utilities */
 OMPI_DECLSPEC int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
                                orte_gpr_value_union_t *src,
@@ -259,6 +265,7 @@ OMPI_DECLSPEC int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
  * globals that might be needed inside the gpr
  */
 OMPI_DECLSPEC extern int orte_gpr_base_output;
+OMPI_DECLSPEC extern size_t orte_gpr_array_max_size, orte_gpr_array_block_size;
 OMPI_DECLSPEC extern bool orte_gpr_base_selected;
 OMPI_DECLSPEC extern opal_list_t orte_gpr_base_components_available;
 OMPI_DECLSPEC extern mca_gpr_base_component_t orte_gpr_base_selected_component;

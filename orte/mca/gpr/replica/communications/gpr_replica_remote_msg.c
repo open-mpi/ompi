@@ -41,10 +41,6 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
     orte_gpr_cmd_flag_t command;
     int rc;
 
-    if (orte_gpr_replica_globals.debug) {
-        opal_output(0, "sending trigger message");
-    }
-
     command = ORTE_GPR_NOTIFY_CMD;
 
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
@@ -54,19 +50,11 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->cnt), 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &message, 1, ORTE_GPR_NOTIFY_MSG))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-    if(message->cnt > 0) {
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, message->data,
-                                    message->cnt, ORTE_GPR_NOTIFY_DATA))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-    
+       
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
     if (0 > orte_rml.send_buffer(recipient, &buffer, ORTE_RML_TAG_GPR_NOTIFY, 0)) {

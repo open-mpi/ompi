@@ -182,17 +182,17 @@ static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
 static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     orte_rmgr_cb_fn_t cbfunc = (orte_rmgr_cb_fn_t)cbdata;
-    orte_gpr_value_t **values;
+    orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
-    size_t i, j;
+    size_t i, j, k;
     int rc;
 
     /* we made sure in the subscriptions that at least one
      * value is always returned
      * get the jobid from the segment name in the first value
      */
-    values = data->values;
+    values = (orte_gpr_value_t**)(data->values)->addr;
     if (ORTE_SUCCESS != (rc =
             orte_schema.extract_jobid_from_segment_name(&jobid,
                         values[0]->segment))) {
@@ -200,38 +200,42 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
         return;
     }
 
-    /* determine the state change */
-    for(i=0; i<data->cnt; i++) {
-        orte_gpr_value_t* value = data->values[i];
-        keyvals = value->keyvals;
-        for(j=0; j<value->cnt; j++) {
-            orte_gpr_keyval_t* keyval = keyvals[j];
-            if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG1) == 0) {
-                (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
-                /* BWB - XXX - FIX ME: this needs to happen when all
-                   are LAUNCHED, before STG1 */
-                orte_rmgr_urm_wireup_stdin(jobid);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG2) == 0) {
-                (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG3) == 0) {
-                (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG3);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_PROC_NUM_FINALIZED) == 0) {
-                (*cbfunc)(jobid,ORTE_PROC_STATE_FINALIZED);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_PROC_NUM_TERMINATED) == 0) {
-                (*cbfunc)(jobid,ORTE_PROC_STATE_TERMINATED);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_PROC_NUM_ABORTED) == 0) {
-                (*cbfunc)(jobid,ORTE_PROC_STATE_ABORTED);
-                continue;
+    for(i = 0, k=0; k < data->cnt &&
+                    i < (data->values)->size; i++) {
+        if (NULL != values[i]) {
+            k++;
+            value = values[i];
+            /* determine the state change */
+            keyvals = value->keyvals;
+            for(j=0; j<value->cnt; j++) {
+                orte_gpr_keyval_t* keyval = keyvals[j];
+                if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG1) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
+                    /* BWB - XXX - FIX ME: this needs to happen when all
+                       are LAUNCHED, before STG1 */
+                    orte_rmgr_urm_wireup_stdin(jobid);
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG2) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG3) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG3);
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_NUM_FINALIZED) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_FINALIZED);
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_NUM_TERMINATED) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_TERMINATED);
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_NUM_ABORTED) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_ABORTED);
+                    continue;
+                }
             }
         }
     }

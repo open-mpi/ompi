@@ -133,16 +133,6 @@ int orte_gpr_replica_open(void)
         orte_gpr_replica_globals.debug = false;
     }
     
-    id = mca_base_param_register_int("gpr", "replica", "maxsize", NULL,
-                                     ORTE_GPR_REPLICA_MAX_SIZE);
-    mca_base_param_lookup_int(id, &tmp);
-    orte_gpr_replica_globals.max_size = (size_t)tmp;
-    
-    id = mca_base_param_register_int("gpr", "replica", "blocksize", NULL,
-                                     ORTE_GPR_REPLICA_BLOCK_SIZE);
-    mca_base_param_lookup_int(id, &tmp);
-    orte_gpr_replica_globals.block_size = (size_t)tmp;
-    
     id = mca_base_param_register_int("gpr", "replica", "isolate", NULL, 0);
     mca_base_param_lookup_int(id, &tmp);
     if (tmp) {
@@ -188,27 +178,27 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
 
     	/* initialize the registry head */
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.segments),
-                                orte_gpr_replica_globals.block_size,
-                                orte_gpr_replica_globals.max_size,
-                                orte_gpr_replica_globals.block_size))) {
+                                orte_gpr_array_block_size,
+                                orte_gpr_array_max_size,
+                                orte_gpr_array_block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
         orte_gpr_replica.num_segs = 0;
         
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.triggers),
-                                orte_gpr_replica_globals.block_size,
-                                orte_gpr_replica_globals.max_size,
-                                orte_gpr_replica_globals.block_size))) {
+                                orte_gpr_array_block_size,
+                                orte_gpr_array_max_size,
+                                orte_gpr_array_block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
         orte_gpr_replica.num_trigs = 0;
         
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.subscriptions),
-                                orte_gpr_replica_globals.block_size,
-                                orte_gpr_replica_globals.max_size,
-                                orte_gpr_replica_globals.block_size))) {
+                                orte_gpr_array_block_size,
+                                orte_gpr_array_max_size,
+                                orte_gpr_array_block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
@@ -221,45 +211,54 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
         /* initialize the local subscription and trigger trackers */
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(
                                 &(orte_gpr_replica_globals.local_subscriptions),
-                                orte_gpr_replica_globals.block_size,
-                                orte_gpr_replica_globals.max_size,
-                                orte_gpr_replica_globals.block_size))) {
+                                orte_gpr_array_block_size,
+                                orte_gpr_array_max_size,
+                                orte_gpr_array_block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
         orte_gpr_replica_globals.num_local_subs = 0;
-        orte_gpr_replica_globals.trig_cntr = 0;
+
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_init(
+                                &(orte_gpr_replica_globals.local_triggers),
+                                orte_gpr_array_block_size,
+                                orte_gpr_array_max_size,
+                                orte_gpr_array_block_size))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        orte_gpr_replica_globals.num_local_trigs = 0;
         
         /* initialize the search arrays for temporarily storing search results */
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.sub_ptrs),
-                                100, orte_gpr_replica_globals.max_size, 100))) {
+                                100, orte_gpr_array_max_size, 100))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
 
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.srch_cptr),
-                                100, orte_gpr_replica_globals.max_size, 100))) {
+                                100, orte_gpr_array_max_size, 100))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
         orte_gpr_replica_globals.num_srch_cptr = 0;
         
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.overwritten),
-                                20, orte_gpr_replica_globals.max_size, 20))) {
+                                20, orte_gpr_array_max_size, 20))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
         orte_gpr_replica_globals.num_overwritten = 0;
 
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.srch_ival),
-                                100, orte_gpr_replica_globals.max_size, 100))) {
+                                100, orte_gpr_array_max_size, 100))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
         orte_gpr_replica_globals.num_srch_ival = 0;
 
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.acted_upon),
-                                100, orte_gpr_replica_globals.max_size, 100))) {
+                                100, orte_gpr_array_max_size, 100))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
