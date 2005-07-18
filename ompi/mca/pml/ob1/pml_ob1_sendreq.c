@@ -138,6 +138,9 @@ static void mca_pml_ob1_rndv_completion(
 
     /* advance the request */
     MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq);
+
+    /* check for pending requests */
+    MCA_PML_OB1_SEND_REQUEST_PROCESS_PENDING();
 }
 
 
@@ -189,15 +192,8 @@ static void mca_pml_ob1_frag_completion(
         mca_pml_ob1_send_request_schedule(sendreq);
     }
 
-    /* advance pending requests */
-    while(opal_list_get_size(&mca_pml_ob1.send_pending)) {
-        OPAL_THREAD_LOCK(&mca_pml_ob1.ob1_lock);
-        sendreq = (mca_pml_ob1_send_request_t*)opal_list_remove_first(&mca_pml_ob1.send_pending);
-        OPAL_THREAD_UNLOCK(&mca_pml_ob1.ob1_lock);
-        if(NULL == sendreq)
-            break;
-        mca_pml_ob1_send_request_schedule(sendreq);
-    } 
+    /* check for pending requests */
+    MCA_PML_OB1_SEND_REQUEST_PROCESS_PENDING();
 }
 
 
