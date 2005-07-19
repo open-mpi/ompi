@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -90,7 +91,7 @@ struct mca_btl_base_endpoint_t {
     /**< lock for concurrent access to endpoint state */
 
     opal_list_t                 pending_send_frags;
-    /**< list of pending send frags for this endpoint */
+    /**< list of pending send frags for this endpotint */
     
     uint32_t                    rem_qp_num_high;
     uint32_t                    rem_qp_num_low; 
@@ -115,7 +116,11 @@ struct mca_btl_base_endpoint_t {
     struct ibv_qp_attr*         lcl_qp_attr_high; 
     struct ibv_qp_attr*         lcl_qp_attr_low; 
     /* Local QP attributes (Low and High) */
+
+    uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
+    uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
     
+
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -160,16 +165,15 @@ static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt,
     }
     
     for(i=0; i< cnt; i++){ 
-        
         if(ibv_post_recv(qp, 
                          &rr_desc_post[i], 
                          &bad_wr)) { 
             opal_output(0, "%s: error posting receive errno says %s\n", __func__, strerror(errno)); 
             return OMPI_ERROR; 
+        }
+          
     }
     
-    return OMPI_SUCCESS; 
-    }
     OPAL_THREAD_ADD32(rr_posted, cnt); 
     return OMPI_SUCCESS; 
 }
@@ -179,12 +183,12 @@ static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * e
     int rc; 
     OPAL_THREAD_LOCK(&openib_btl->ib_lock); 
 
-    if(openib_btl->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && openib_btl->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ 
+    if(endpoint->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && endpoint->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ 
         
-        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - openib_btl->rr_posted_high, 
+        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - endpoint->rr_posted_high, 
                                                  endpoint, 
                                                  &openib_btl->recv_free_eager, 
-                                                 &openib_btl->rr_posted_high, 
+                                                 &endpoint->rr_posted_high, 
                                                  endpoint->lcl_qp_high
                                                  ); 
         if(rc != OMPI_SUCCESS){ 
@@ -192,12 +196,12 @@ static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * e
             return rc; 
         }
     }
-    if(openib_btl->rr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && openib_btl->rr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ 
+    if(endpoint->rr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && endpoint->rr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ 
         
-        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - openib_btl->rr_posted_low, 
+        rc = mca_btl_openib_endpoint_post_rr_sub(mca_btl_openib_component.ib_rr_buf_max - endpoint->rr_posted_low, 
                                                  endpoint, 
                                                  &openib_btl->recv_free_max, 
-                                                 &openib_btl->rr_posted_low, 
+                                                 &endpoint->rr_posted_low, 
                                                  endpoint->lcl_qp_low
                                              ); 
         if(rc != OMPI_SUCCESS) {

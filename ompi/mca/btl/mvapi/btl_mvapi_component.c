@@ -487,13 +487,19 @@ int mca_btl_mvapi_component_progress()
 {
     uint32_t i;
     int count = 0;
-    mca_btl_mvapi_frag_t* frag; 
+    mca_btl_mvapi_frag_t* frag;
+    mca_btl_mvapi_endpoint_t* endpoint; 
     /* Poll for completions */
     for(i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) {
         VAPI_ret_t ret; 
         VAPI_wc_desc_t comp; 
         mca_btl_mvapi_module_t* mvapi_btl = &mca_btl_mvapi_component.mvapi_btls[i];
         
+        
+        /* we have two completion queues, one for "high" priority and one for "low". 
+         *   we will check the high priority and process them until there are none left. 
+         *   note that low priority messages are only processed one per progress call. 
+         */ 
         do{ 
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_high, &comp); 
         if(VAPI_OK == ret) { 
@@ -504,7 +510,7 @@ int mca_btl_mvapi_component_progress()
                 return OMPI_ERROR; 
             }
             
-            /* Handle n/w completions */
+            /* Handle work completions */
             switch(comp.opcode) {
             case VAPI_CQE_RQ_RDMA_WITH_IMM: 
                 if(comp.imm_data_valid){ 
@@ -515,7 +521,7 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_SQ_RDMA_WRITE:
             case VAPI_CQE_SQ_SEND_DATA :
                 
-                /* Process a completed send */
+                /* Process a completed send or an rdma write  */
                 frag = (mca_btl_mvapi_frag_t*) comp.id; 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
@@ -524,15 +530,18 @@ int mca_btl_mvapi_component_progress()
                 
             case VAPI_CQE_RQ_SEND_DATA:
                 
-                DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                /* Process a RECV  */ 
+                DEBUG_OUT("Got an recv completion" ); 
                 frag = (mca_btl_mvapi_frag_t*) comp.id;
+                endpoint = (mca_btl_endpoint_t*) frag->endpoint; 
+
                 frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
-                OPAL_THREAD_ADD32(&mvapi_btl->rr_posted_high, -1); 
+                OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
                 
                 mca_btl_mvapi_endpoint_post_rr(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
                 
@@ -540,7 +549,7 @@ int mca_btl_mvapi_component_progress()
                 break;
                 
             default:
-                opal_output(0, "Errorneous network completion");
+                opal_output(0, "Unhandled work completion opcode is %d", comp.opcode);
                 break;
             }
         }
@@ -570,15 +579,17 @@ int mca_btl_mvapi_component_progress()
                 
             case VAPI_CQE_RQ_SEND_DATA:
                 
+                
                 DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
                 frag = (mca_btl_mvapi_frag_t*) comp.id;
+                endpoint = (mca_btl_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
-                OPAL_THREAD_ADD32(&mvapi_btl->rr_posted_low, -1); 
+                OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
                 
 
                 mca_btl_mvapi_endpoint_post_rr(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 

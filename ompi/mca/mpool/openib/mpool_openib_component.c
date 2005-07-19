@@ -70,13 +70,6 @@ static void mca_mpool_openib_registration_constructor( mca_mpool_openib_registra
 
 static void mca_mpool_openib_registration_destructor( mca_mpool_openib_registration_t * registration ) 
 { 
-    mca_mpool_base_remove((void*) registration); 
-    registration->base_reg.mpool->mpool_deregister(
-                                                   registration->base_reg.mpool, 
-                                                   registration->base_reg.base, 
-                                                   0, 
-                                                   (mca_mpool_base_registration_t*) registration); 
-    
     registration->base_reg.base = NULL; 
     registration->base_reg.bound = NULL; 
     registration->base_reg.is_leave_pinned=false; 

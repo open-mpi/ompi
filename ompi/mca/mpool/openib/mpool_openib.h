@@ -30,11 +30,11 @@ extern "C" {
 
 
 static inline  void * DOWN_ALIGN_ADDR(void * addr, uint32_t cnt) { 
-    return (void*)((uintptr_t)(addr) & (~((uintptr_t)0) << (cnt))); 
+    return (void*)((uintptr_t)((unsigned char*) addr) & (~((uintptr_t)0) << (cnt))); 
 }
 
 static inline void*  ALIGN_ADDR(void* addr, uint32_t cnt ) { 
-    DOWN_ALIGN_ADDR(((addr) +  ~(~((uintptr_t)0) << (cnt))), (cnt)); 
+    DOWN_ALIGN_ADDR((((unsigned char*) addr) +  ~(~((uintptr_t)0) << (cnt))), (cnt)); 
     return addr;
 } 
 

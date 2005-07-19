@@ -114,6 +114,10 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
+    
+    endpoint->rr_posted_high = 0;
+    endpoint->rr_posted_low = 0; 
+
 }
 
 /*
