@@ -513,7 +513,7 @@ static void orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
         orte_gpr_replica_subscription_t *sub)
 {
     char *tmp_out, *token, *tmp;
-    size_t i, j, k, m, n, p;
+    size_t j, k, n, p;
     orte_gpr_replica_requestor_t **reqs;
     orte_gpr_replica_ivalue_t **ivals;
     
