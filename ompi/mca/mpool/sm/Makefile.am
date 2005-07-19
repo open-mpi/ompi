@@ -35,7 +35,7 @@ component_noinst = libmca_mpool_sm.la
 component_install =
 endif
 
-# See src/mca/ptl/sm/Makefile.am for an explanation of
+# See ompi/mca/common/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
 mcacomponentdir = $(libdir)/openmpi
