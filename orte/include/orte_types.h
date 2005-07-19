@@ -18,6 +18,12 @@
 #ifndef ORTE_TYPES_H
 #define ORTE_TYPES_H
 
+#include "orte_config.h"
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 /**
  * Supported datatypes for messaging and storage operations.
  * 
