@@ -36,18 +36,22 @@ sm_SOURCES = src/ptl_sm.c src/ptl_sm.h src/ptl_sm_address.h src/ptl_sm_component
         src/ptl_sm_recvfrag.c src/ptl_sm_send.c src/ptl_sm_sendreq.c \
         src/ptl_sm_sendreq.h src/ptl_sm_sendfrag.c src/ptl_sm_sendfrag.h
 
+# See ompi/mca/common/sm/Makefile.am for an explanation of
+# libmca_common_sm.la.
+
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ptl_sm_la_SOURCES = $(sm_SOURCES)
 mca_ptl_sm_la_DEPENDENCIES = librecompile.la
-mca_ptl_sm_la_LIBADD = librecompile.la
+mca_ptl_sm_la_LIBADD = librecompile.la \
+        $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
 mca_ptl_sm_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst) librecompile.la
 libmca_ptl_sm_la_SOURCES = $(sm_SOURCES)
 libmca_ptl_sm_la_DEPENDENCIES = librecompile.la
-libmca_ptl_sm_la_LIBADD = librecompile.la
 libmca_ptl_sm_la_LDFLAGS = -module -avoid-version
+libmca_ptl_sm_la_LIBADD = librecompile.la
 
 nodist_librecompile_la_SOURCES = src/ptl_sm_send_alternate.c
 librecompile_la_CPPFLAGS = -DSM_COMMON_BASE_ADDR

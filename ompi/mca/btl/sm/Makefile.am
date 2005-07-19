@@ -37,11 +37,15 @@ component_noinst = libmca_btl_sm.la
 component_install =
 endif
 
+# See ompi/mca/common/sm/Makefile.am for an explanation of
+# libmca_common_sm.la.
+
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
 mca_btl_sm_la_LDFLAGS = -module -avoid-version
-mca_btl_sm_la_LIBADD = 
+mca_btl_sm_la_LIBADD = \
+        $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
