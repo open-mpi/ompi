@@ -22,14 +22,14 @@ noinst_LTLIBRARIES = libclass.la
 # Source code files
 
 headers = \
-        ompi_proc_table.h \
+        orte_proc_table.h \
         orte_bitmap.h \
         orte_pointer_array.h \
         orte_value_array.h
 
 libclass_la_SOURCES = \
 	$(headers) \
-        ompi_proc_table.c \
+        orte_proc_table.c \
         orte_bitmap.c \
         orte_pointer_array.c \
         orte_value_array.c

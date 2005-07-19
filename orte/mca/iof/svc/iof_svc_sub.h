@@ -2,7 +2,7 @@
 #define MCA_IOF_SVC_SUBSCRIPT_H
 
 #include "class/orte_pointer_array.h"
-#include "class/ompi_proc_table.h"
+#include "class/orte_proc_table.h"
 
 /**
  * A subscription routes data from a specified set

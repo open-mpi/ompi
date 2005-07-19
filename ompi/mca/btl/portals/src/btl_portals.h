@@ -26,7 +26,7 @@
 #include "ompi/mca/btl/base/base.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_free_list.h"
-#include "class/ompi_proc_table.h"
+#include "class/orte_proc_table.h"
 
 #include "btl_portals_endpoint.h"
 

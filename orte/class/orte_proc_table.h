@@ -20,11 +20,11 @@
  *  A hash table indexed by orte_process_name_t.
  */
 
-#ifndef OMPI_PROC_TABLE_H
-#define OMPI_PROC_TABLE_H
+#ifndef ORTE_PROC_TABLE_H
+#define ORTE_PROC_TABLE_H
 
 #include "class/opal_hash_table.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -40,7 +40,7 @@ extern "C" {
  *
  */
 
-OMPI_DECLSPEC void *opal_hash_table_get_proc(
+OMPI_DECLSPEC void *orte_hash_table_get_proc(
     opal_hash_table_t* table, 
     const orte_process_name_t* key);
 
@@ -54,7 +54,7 @@ OMPI_DECLSPEC void *opal_hash_table_get_proc(
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_set_proc(
+OMPI_DECLSPEC int orte_hash_table_set_proc(
     opal_hash_table_t* table, 
     const orte_process_name_t*, 
     void* value);
@@ -68,7 +68,7 @@ OMPI_DECLSPEC int opal_hash_table_set_proc(
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_remove_proc(
+OMPI_DECLSPEC int orte_hash_table_remove_proc(
     opal_hash_table_t* table, 
     const orte_process_name_t* key);
 
