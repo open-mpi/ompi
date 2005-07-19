@@ -520,7 +520,7 @@ static void orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
     tmp_out = (char*)malloc(1000);
     if (NULL == tmp_out) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        return;
     }
     tmp = tmp_out;
     
