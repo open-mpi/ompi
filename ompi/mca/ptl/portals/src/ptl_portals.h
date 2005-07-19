@@ -25,7 +25,7 @@
 #include "mca/ptl/ptl.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_free_list.h"
-#include "class/ompi_proc_table.h"
+#include "class/orte_proc_table.h"
 
 
 /*

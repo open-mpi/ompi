@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/sys/atomic.h"
-#include "class/ompi_proc_table.h"
+#include "class/orte_proc_table.h"
 #include "mca/pml/base/pml_base_module_exchange.h"
 #include "mca/ns/ns_types.h"
 #include "ptl_tcp.h"
@@ -62,7 +62,7 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    opal_hash_table_remove_proc(&mca_ptl_tcp_component.tcp_procs, &proc->proc_name);
+    orte_hash_table_remove_proc(&mca_ptl_tcp_component.tcp_procs, &proc->proc_name);
     OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* release resources */
@@ -86,7 +86,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
     mca_ptl_tcp_proc_t* ptl_proc;
 
     OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    ptl_proc = (mca_ptl_tcp_proc_t*)opal_hash_table_get_proc(
+    ptl_proc = (mca_ptl_tcp_proc_t*)orte_hash_table_get_proc(
          &mca_ptl_tcp_component.tcp_procs, &ompi_proc->proc_name);
     if(NULL != ptl_proc) {
         OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
@@ -100,7 +100,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
     ptl_proc->proc_name = ompi_proc->proc_name;
 
     /* add to hash table of all proc instance */
-    opal_hash_table_set_proc(
+    orte_hash_table_set_proc(
         &mca_ptl_tcp_component.tcp_procs, 
         &ptl_proc->proc_name, 
          ptl_proc);
@@ -143,7 +143,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const orte_process_name_t *name)
 {
     mca_ptl_tcp_proc_t* proc;
     OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    proc = (mca_ptl_tcp_proc_t*)opal_hash_table_get_proc(
+    proc = (mca_ptl_tcp_proc_t*)orte_hash_table_get_proc(
          &mca_ptl_tcp_component.tcp_procs, name);
     OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
     return proc;

@@ -21,7 +21,7 @@
 
 #include "include/constants.h"
 #include "opal/util/output.h"
-#include "class/ompi_proc_table.h"
+#include "orte/class/orte_proc_table.h"
 
 
 /*
@@ -43,7 +43,7 @@ static OBJ_CLASS_INSTANCE(
     NULL);
 
 
-void* opal_hash_table_get_proc(opal_hash_table_t* ht, 
+void* orte_hash_table_get_proc(opal_hash_table_t* ht, 
     const orte_process_name_t* proc)
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
@@ -68,7 +68,7 @@ void* opal_hash_table_get_proc(opal_hash_table_t* ht,
 }
 
 
-int opal_hash_table_set_proc(
+int orte_hash_table_set_proc(
     opal_hash_table_t* ht,
     const orte_process_name_t* proc, 
     void* value)
@@ -107,7 +107,7 @@ int opal_hash_table_set_proc(
 }
 
 
-int opal_hash_table_remove_proc(
+int orte_hash_table_remove_proc(
     opal_hash_table_t* ht, 
     const orte_process_name_t* proc)
 {

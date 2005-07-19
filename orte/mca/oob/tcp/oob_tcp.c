@@ -34,7 +34,7 @@
 #include "include/ompi_socket_errno.h"
 #include "opal/util/output.h"
 #include "opal/util/if.h"
-#include "class/ompi_proc_table.h"
+#include "orte/class/orte_proc_table.h"
 #include "mca/oob/tcp/oob_tcp.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns.h"
@@ -587,7 +587,7 @@ void mca_oob_tcp_registry_callback(
                 }
     
                 /* check for existing cache entry */
-                existing = (mca_oob_tcp_addr_t *)opal_hash_table_get_proc(
+                existing = (mca_oob_tcp_addr_t *)orte_hash_table_get_proc(
                     &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
                 if(NULL != existing) {
                     /* TSW - need to update existing entry */
@@ -596,7 +596,7 @@ void mca_oob_tcp_registry_callback(
                 }
     
                 /* insert into cache and notify peer */
-                opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
+                orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
                 peer = (mca_oob_tcp_peer_t *)opal_hash_table_get_proc(
                     &mca_oob_tcp_component.tcp_peers, &addr->addr_name);
                 if(NULL != peer)

@@ -16,7 +16,7 @@
 #include "ompi_config.h"
 #include "include/ompi_socket_errno.h"
 
-#include "class/ompi_proc_table.h"
+#include "class/orte_proc_table.h"
 #include "include/constants.h"
 #include "mca/ns/ns.h"
 #include "mca/oob/tcp/oob_tcp.h"
@@ -351,9 +351,9 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
     
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     if (orte_ns.compare(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != 0) {
-        opal_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
+        orte_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
         peer->peer_name = src;
-        opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
+        orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
     }
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
