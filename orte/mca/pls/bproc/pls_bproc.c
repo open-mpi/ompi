@@ -505,6 +505,11 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            rc = orte_pls_base_set_proc_pid(proc_name, pids[i]);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
         }
     }
     orte_pls_bproc_num_daemons += num_daemons;
@@ -571,6 +576,11 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
                 mca_pls_bproc_component.num_procs++;
                 rc = orte_ns.create_process_name(&proc_name, cellid, jobid, 
                                                  vpid_start + j);
+                if(ORTE_SUCCESS != rc) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                orte_pls_base_set_proc_pid(proc_name, pids[j]);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;

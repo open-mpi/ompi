@@ -976,6 +976,13 @@ int mca_oob_tcp_init(void)
     tmp = mca_oob.oob_get_addr();
     tmp2 = strrchr(tmp, '/');
     tmp3 = strrchr(tmp, ':');
+    if(NULL == tmp2 || NULL == tmp3) {
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: invalid address \'%s\' "
+                    "returned for selected oob interfaces.\n", 
+                    ORTE_NAME_ARGS(orte_process_info.my_name), tmp);
+        ORTE_ERROR_LOG(ORTE_ERROR);
+        return ORTE_ERROR;
+    }
     *tmp3 = '\0';
     (value->keyvals[1])->value.strptr = strdup(tmp2);
     free(tmp);
