@@ -370,7 +370,7 @@ CLEANUP:
      * otherwise, the value is coming in from the outside - when that happens,
      * only a single value is passed in, so there is no array to free
      */
-    if (cleanup_reqd) free(values);
+    if (cleanup_reqd && NULL != values) free(values);
     
     return rc;
 }
