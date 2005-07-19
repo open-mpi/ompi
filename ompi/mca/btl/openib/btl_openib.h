@@ -155,14 +155,10 @@ struct mca_btl_openib_module_t {
     mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
     
 
-    uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
-    uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
     
-    
-    
-  
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
+    bool poll_cq; 
     
     
     

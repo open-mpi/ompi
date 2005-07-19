@@ -21,7 +21,7 @@
 #include "opal/util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
-
+#include "mca/btl/base/btl_base_error.h"
 #include "btl_openib.h"
 #include "btl_openib_frag.h" 
 #include "btl_openib_proc.h"
@@ -127,6 +127,10 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
+/* 
+ *Register callback function to support send/recv semantics 
+ */ 
+
 int mca_btl_openib_register(
                         struct mca_btl_base_module_t* btl, 
                         mca_btl_base_tag_t tag, 
@@ -179,7 +183,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
 }
 
 /** 
- * 
+ * Return a segment 
  * 
  */ 
 int mca_btl_openib_free(
@@ -189,16 +193,16 @@ int mca_btl_openib_free(
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)des; 
 
     if(frag->size == 0) {
-        MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
-     
         OBJ_RELEASE(frag->openib_reg); 
-        
-            
+        MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+                 
     } 
     else if(frag->size == mca_btl_openib_component.max_send_size){ 
         MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
     } else if(frag->size == mca_btl_openib_component.eager_limit){ 
         MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
+    } else { 
+        BTL_ERROR("invalid descriptor"); 
     } 
     
     return OMPI_SUCCESS; 
@@ -265,13 +269,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             
             rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                opal_output(0, "%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error removing memory region from memory pool tree"); 
                 return NULL; 
             } 
 
             if(is_leave_pinned) { 
                 if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)){ 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
             } 
@@ -290,7 +294,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             
             
             if(rc != OMPI_SUCCESS) { 
-                opal_output(0,"%s:%d:%s error inserting memory region into memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error inserting memory region into memory pool tree"); 
                 return NULL; 
             } 
 
@@ -302,7 +306,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         }   
         else if(is_leave_pinned) { 
             if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error removing item from reg_mru_list"); 
                 return NULL; 
             }
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
@@ -399,13 +403,16 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->sg_entry.lkey = openib_reg->mr->lkey;
         frag->sg_entry.addr = (uintptr_t) iov.iov_base; 
         
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
+        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->rkey; 
             
         frag->base.des_src = &frag->segment;
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->openib_reg = openib_reg; 
+        DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr); 
+        
+
         return &frag->base;
 
     } else if (max_data+reserve <=  btl->btl_eager_limit) { 
@@ -416,7 +423,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         } 
         
         iov.iov_len = max_data; 
-        iov.iov_base = frag->segment.seg_addr.pval + reserve; 
+        iov.iov_base = frag->segment.seg_addr.lval + reserve; 
         
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 
@@ -507,8 +514,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->base.des_flags = 0; 
 
     if(NULL!= openib_reg){ 
-        reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
         bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
+        reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
+        
 
         if(frag->segment.seg_len > reg_len ) { 
             size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
@@ -560,6 +568,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
             }    
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg); 
         }
+        OBJ_RETAIN(openib_reg); 
     }  else { 
            
         if(mca_btl_openib_component.leave_pinned) { 
@@ -601,7 +610,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                 opal_output(0,"%s:%d:%s error inserting memory region into memory pool", __FILE__, __LINE__,  __func__); 
                 return NULL;
             } 
-
+            
             OBJ_RETAIN(openib_reg); 
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             
@@ -622,14 +631,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->sg_entry.lkey = openib_reg->mr->lkey; 
     frag->sg_entry.addr = (uintptr_t) frag->segment.seg_addr.pval; 
     
-    frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
+    frag->segment.seg_key.key32[0] = frag->mr->rkey; 
     
     frag->base.des_dst = &frag->segment; 
     frag->base.des_dst_cnt = 1; 
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
     frag->openib_reg = openib_reg; 
-    OBJ_RETAIN(openib_reg); 
+    DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0]); 
+
     return &frag->base; 
     
 }
@@ -712,10 +722,17 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     frag->endpoint = endpoint;
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE; 
-    frag->sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
+    frag->sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    frag->sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
     frag->sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
     frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
     frag->sg_entry.length  = frag->base.des_src->seg_len; 
+    
+    DEBUG_OUT("frag->sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
+          , frag->sr_desc.wr.rdma.remote_addr 
+          , frag->sr_desc.wr.rdma.rkey
+          , frag->sg_entry.addr
+          , frag->sg_entry.length); 
 
     if(ibv_post_send(endpoint->lcl_qp_low, 
                      &frag->sr_desc, 
@@ -785,7 +802,7 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
 
     /* Allocate Protection Domain */ 
     struct ibv_context *ctx; 
-    
+    openib_btl->poll_cq = false; 
     
     ctx = openib_btl->ib_dev_context; 
     openib_btl->ib_pd = ibv_alloc_pd(ctx); 
@@ -821,5 +838,7 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
         
     /* TODO: EVAPI_set_qsync_event_handler? */ 
 
+    
+    
     return OMPI_SUCCESS;
 }

@@ -57,6 +57,7 @@ void* mca_mpool_openib_alloc(
         free(addr_malloc);
         return NULL; 
     } 
+    (*registration)->alloc_base = addr_malloc; 
     return addr;
 }
 
@@ -80,7 +81,7 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
                               mpool_module->resources.ib_pd, 
                               addr, 
                               size, 
-                              IBV_ACCESS_REMOTE_WRITE
+                              IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE
                               /* IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE */ 
                               ); 
    
@@ -106,7 +107,7 @@ int mca_mpool_openib_deregister(mca_mpool_base_module_t* mpool, void *addr, size
     mca_mpool_openib_module_t * mpool_openib = (mca_mpool_openib_module_t*) mpool; 
     mca_mpool_openib_registration_t * openib_reg; 
     openib_reg = (mca_mpool_openib_registration_t*) registration; 
-    if(! ibv_dereg_mr(openib_reg->mr)){   
+    if(ibv_dereg_mr(openib_reg->mr)){   
         opal_output(0, "%s: error unpinning openib memory errno says %s\n", __func__, strerror(errno)); 
         return OMPI_ERROR; 
     }

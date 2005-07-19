@@ -157,11 +157,6 @@ struct mca_btl_mvapi_module_t {
 
     mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
     
-
-    uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
-    uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
-    
-    
     VAPI_rr_desc_t*                          rr_desc_post;
   
     /**< an array to allow posting of rr in one swoop */ 

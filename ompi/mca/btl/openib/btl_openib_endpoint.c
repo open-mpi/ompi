@@ -74,14 +74,17 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     } 
     
     frag->sr_desc.opcode = IBV_WR_SEND; 
-    frag->sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    
+    frag->sg_entry.length = 
+        frag->segment.seg_len + 
+        ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  
 
-    frag->sg_entry.length = frag->segment.seg_len + ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  /* sizeof(mca_btl_openib_header_t); */ 
+    
+    if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
+        /* frag->sr_desc.send_flags |= IBV_SEND_INLINE;  */
+    } 
 
-    /* TODO: should check if we can inline send,, but can't find 
-     * inline send defined in openib verbs api. 
-     * if(frag->sg_entry.len <= openib_btl->ib_inline_max) { 
-     */  
+    
     if(ibv_post_send(ib_qp, 
                      &frag->sr_desc, 
                      &bad_wr)) { 
@@ -90,7 +93,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     }
     mca_btl_openib_endpoint_post_rr(endpoint, 1); 
 
-    return OMPI_ERROR; 
+    return OMPI_SUCCESS; 
 }
 
 
@@ -114,6 +117,14 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
+    endpoint->lcl_qp_attr_high = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 
+    endpoint->lcl_qp_attr_low = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 
+    memset(endpoint->lcl_qp_attr_high, 0, sizeof(struct ibv_qp_attr)); 
+    memset(endpoint->lcl_qp_attr_low, 0, sizeof(struct ibv_qp_attr)); 
+    endpoint->rr_posted_high = 0; 
+    endpoint->rr_posted_low = 0; 
+
+    
 }
 
 /*
@@ -190,9 +201,9 @@ static int mca_btl_openib_endpoint_send_connect_req(mca_btl_base_endpoint_t* end
     
     
     DEBUG_OUT("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
-              endpoint->lcl_qp_prop_high.qp_num,
-              endpoint->lcl_qp_prop_low.qp_num,
-              endpoint->endpoint_btl->port.lid);
+              endpoint->lcl_qp_high->qp_num,
+              endpoint->lcl_qp_low->qp_num,
+              endpoint->endpoint_btl->ib_port_attr->lid);
     
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
@@ -318,6 +329,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
                     ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
+    srand48(getpid() * time(NULL));
     endpoint->lcl_psn_high = lrand48() & 0xffffff; 
     
     /* Create the Low Priority Queue Pair */
@@ -334,7 +346,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
 
     DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_high->qp_num,
-              endpoint->lcl_qp_low.qp_num, 
+              endpoint->lcl_qp_low->qp_num, 
               openib_btl->ib_port_attr->lid); 
 
     /* Send connection info over to remote endpoint */
@@ -367,6 +379,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
                     ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
+    srand48(getpid() * time(NULL));
     endpoint->lcl_psn_high = lrand48() & 0xffffff;
     
     /* Create the Low Priority Queue Pair */
@@ -383,7 +396,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
 
     DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_high->qp_num,
-              endpoint->lcl_qp_low.qp_num, 
+              endpoint->lcl_qp_low->qp_num, 
               openib_btl->ib_port_attr->lid); 
 
 
@@ -415,6 +428,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
 static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
 {
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
+    endpoint->endpoint_btl->poll_cq = true; 
     mca_btl_openib_progress_send_frags(endpoint);
 }
 
@@ -491,12 +505,13 @@ static void mca_btl_openib_endpoint_recv(
                 break;
 
             case MCA_BTL_IB_CONNECT_ACK:
+                DEBUG_OUT("Got a connect ack from %d\n", endpoint->vpid); 
 
                 mca_btl_openib_endpoint_connected(ib_endpoint);
-
                 break;
 
             case MCA_BTL_IB_CONNECTED :
+                
                 break;
             default :
                 opal_output(0, "Connected -> Connecting not possible.\n");
@@ -581,9 +596,9 @@ int mca_btl_openib_endpoint_send(
                 
                 
                 DEBUG_OUT("Send to : %d, len : %d, frag : %p", 
-                        endpoint->endpoint_proc->proc_guid.vpid,
-                        frag->ib_buf.desc.sg_entry.len,
-                        frag);
+                          endpoint->endpoint_proc->proc_guid.vpid,
+                          frag->sg_entry.length,
+                          frag);
                 
                 rc = mca_btl_openib_endpoint_post_send(openib_btl, endpoint, frag); 
                 
@@ -686,23 +701,27 @@ int mca_btl_openib_endpoint_create_qp(
                                       )
 {
     {
+        struct ibv_qp* my_qp; 
         struct ibv_qp_init_attr qp_init_attr; 
+
+        memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr)); 
+
         qp_init_attr.send_cq = cq; 
         qp_init_attr.recv_cq = cq; 
-        qp_init_attr.cap.max_send_wr = mca_btl_openib_component.ib_wq_size;
+        qp_init_attr.cap.max_send_wr =  mca_btl_openib_component.ib_wq_size; 
         qp_init_attr.cap.max_recv_wr = mca_btl_openib_component.ib_wq_size; 
-        qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
+        qp_init_attr.cap.max_send_sge =  mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.qp_type = IBV_QPT_RC; 
         
     
-        (*qp) = ibv_create_qp(pd, &qp_init_attr); 
+        my_qp = ibv_create_qp(pd, &qp_init_attr); 
     
-        if(NULL == (*qp)) { 
+        if(NULL == my_qp) { 
             opal_output(0, "%s: error creating qp errno says %s\n", __func__, strerror(errno)); 
             return OMPI_ERROR; 
         }
-            
+        (*qp) = my_qp; 
         openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data;  
     
     }
@@ -711,7 +730,7 @@ int mca_btl_openib_endpoint_create_qp(
         qp_attr->qp_state = IBV_QPS_INIT; 
         qp_attr->pkey_index = mca_btl_openib_component.ib_pkey_ix; 
         qp_attr->port_num = openib_btl->port_num; 
-        qp_attr->qp_access_flags = 0; 
+        qp_attr->qp_access_flags = IBV_ACCESS_REMOTE_WRITE; 
         
         if(ibv_modify_qp((*qp), qp_attr, 
                          IBV_QP_STATE | 

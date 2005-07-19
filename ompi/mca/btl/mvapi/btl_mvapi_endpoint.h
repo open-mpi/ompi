@@ -109,6 +109,10 @@ struct mca_btl_base_endpoint_t {
     VAPI_qp_prop_t              lcl_qp_prop_low;
     /* Low priority local QP properties */
 
+    
+    uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
+    uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
+
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -161,14 +165,14 @@ static inline int mca_btl_mvapi_endpoint_post_rr_sub(int cnt,
 static inline int mca_btl_mvapi_endpoint_post_rr( mca_btl_mvapi_endpoint_t * endpoint, int additional){ 
     mca_btl_mvapi_module_t * mvapi_btl = endpoint->endpoint_btl; 
     int rc; 
-    OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); 
+    OPAL_THREAD_LOCK(&endpoint->ib_lock); 
 
-    if(mvapi_btl->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+additional && mvapi_btl->rr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){ 
+    if(endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+additional && endpoint->rr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){ 
         
-        rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - mvapi_btl->rr_posted_high, 
+        rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - endpoint->rr_posted_high, 
                                              endpoint, 
                                              &mvapi_btl->recv_free_eager, 
-                                             &mvapi_btl->rr_posted_high, 
+                                             &endpoint->rr_posted_high, 
                                              mvapi_btl->nic, 
                                              endpoint->lcl_qp_hndl_high
                                              ); 
@@ -177,12 +181,12 @@ static inline int mca_btl_mvapi_endpoint_post_rr( mca_btl_mvapi_endpoint_t * end
             return rc; 
         }
     }
-    if(mvapi_btl->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+additional && mvapi_btl->rr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){ 
+    if(endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+additional && endpoint->rr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){ 
         
-        rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - mvapi_btl->rr_posted_low, 
+        rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - endpoint->rr_posted_low, 
                                              endpoint, 
                                              &mvapi_btl->recv_free_max, 
-                                             &mvapi_btl->rr_posted_low, 
+                                             &endpoint->rr_posted_low, 
                                              mvapi_btl->nic, 
                                              endpoint->lcl_qp_hndl_low
                                              ); 

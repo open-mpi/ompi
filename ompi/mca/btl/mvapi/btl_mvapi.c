@@ -828,5 +828,6 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         return OMPI_ERROR;
     }
     
+    
     return OMPI_SUCCESS;
 }
