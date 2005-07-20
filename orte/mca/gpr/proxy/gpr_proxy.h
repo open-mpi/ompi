@@ -124,7 +124,7 @@ int orte_gpr_proxy_delete_entries_nb(
                             char *segment, char **tokens, char **keys,
                             orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
                             
-int orte_gpr_proxy_index(char *segment, size_t *cnt, char **index);
+int orte_gpr_proxy_index(char *segment, size_t *cnt, char ***index);
 
 int orte_gpr_proxy_index_nb(char *segment,
                         orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);

@@ -178,13 +178,19 @@ int orte_gpr_proxy_delete_entries_nb(
 }
 
 
-int orte_gpr_proxy_index(char *segment, size_t *cnt, char **index)
+int orte_gpr_proxy_index(char *segment, size_t *cnt, char ***index)
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc, ret;
 
-    index = NULL;
+    if (NULL == index || NULL == cnt) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
+    *cnt = 0;
+    *index = NULL;
 
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
 	    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_index(orte_gpr_proxy_globals.compound_cmd, segment))) {

@@ -28,7 +28,8 @@
 #include "include/orte_constants.h"
 
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "gpr_replica_fn.h"
 
@@ -38,22 +39,20 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
 				     orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
                       orte_gpr_replica_itag_t *key_itags, size_t num_keys)
 {
-#if 0
-    orte_gpr_replica_container_t **ptr;
-    orte_gpr_replica_itagval_t  **valptr;
+    orte_gpr_replica_container_t **cptr;
+    orte_gpr_replica_itagval_t  **ivals;
     orte_gpr_replica_addr_mode_t tok_mode;
-    size_t i, j, num_found;
-
-    if (orte_gpr_replica_globals.debug) {
-	   opal_output(0, "[%lu,%lu,%lu] replica_delete_object entered: segment %s",
-		    ORTE_NAME_ARGS(*(orte_process_info.my_name)), seg->name);
-    }
+    size_t i, j, k, n, p;
+    int rc;
 
     /* if num_tokens == 0 and num_keys == 0, remove segment. We don't record
      * any actions when doing this so that subscriptions don't fire like mad
      */
     if (0 == num_tokens && 0 == num_keys) {
-        return orte_gpr_replica_release_segment(seg);
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_release_segment(&seg))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
     }
     
     /* initialize storage for actions taken */
@@ -67,84 +66,56 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
     }
 
     /* find the specified container(s) */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(&num_found, seg, tok_mode,
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(seg, tok_mode,
                                     token_itags, num_tokens))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    if (NULL == token_itags && 0 == num_found) { /* wildcard tokens but nothing found */
-        /* no ERROR_LOG entry created as this is not a system failure */
-        return ORTE_ERR_NOT_FOUND;
-    }
-    
-    /* if num_tokens == 0 and num_keys > 0, check every container */
-    if (0 == num_tokens) {
-        ptr = (orte_gpr_replica_container_t**)((seg->containers)->addr);
-        for (i=0; i < (seg->containers)->size; i++) {
-            if (NULL != ptr[i]) {
-                valptr = (orte_gpr_replica_itagval_t**)((ptr->itagvals)->addr);
-                for (j=0; j < (ptr[i]->itagvals)->size; j++) {
-                     if (NULL != valptr[j]) {
-                         if (orte_gpr_replica_check_itag(valptr[j]->itag, key_itags, num_keys)) {
-                             OBJ_RELEASE(valptr[j]);
-                             if (ORTE_SUCCESS != (rc = orte_pointer_array_set_item(ptr[i]->itagvals, j, NULL))) {
-                                 return rc;
-                             }
-                         }
-                     }
-                }
-            }
-        }
+    if (0 == orte_gpr_replica_globals.num_srch_cptr) {
+        /* nothing found - no ERROR_LOG entry created as this is
+         * not a system failure. Likewise, don't return an error code
+         * as this is not necessarily an error - don't want to cause
+         * somebody to abort as a result.
+         */
         return ORTE_SUCCESS;
     }
     
-
-    /* if num_tokens > 0, find the specified container and then check it */
-    ptr = (orte_gpr_replica_container_t**)((seg->containers)->addr);
-    for (i=0; i < (seg->containers)->size; i++) {
-        if (NULL != ptr[i]) {
-                if (orte_gpr_replica_check_itag_list(addr_mode, num_tokens, token_itags,
-                            ptr[i]->num_itags, ptr[i]->itags)) {
-                    /* right container - check for matching entries and delete them.
-                     * if num_keys == 0, delete entire container
-                     */
-                    if (0 == num_keys) {
-                        /* delete container */
-                    } else {
-                        /* delete entries */
+    /* go through the containers looking for the specified entries,
+     * removing those that are found
+     */
+    cptr = (orte_gpr_replica_container_t**)(orte_gpr_replica_globals.srch_cptr)->addr;
+    for (j=0, k=0; k < orte_gpr_replica_globals.num_srch_cptr &&
+                   j < (orte_gpr_replica_globals.srch_cptr)->size; j++) {
+        if (NULL != cptr[j]) {
+            k++;
+            for (i=0; i < num_keys; i++) {  /* for each provided key */
+                if (ORTE_SUCCESS == orte_gpr_replica_search_container(
+                                            ORTE_GPR_REPLICA_OR,
+                                            key_itags, 1, cptr[j])) {
+                    if (0 < orte_gpr_replica_globals.num_srch_ival) {
+                        /* found this key at least once - delete all
+                         * occurrences
+                         */
+                        ivals = (orte_gpr_replica_itagval_t**)
+                                    (orte_gpr_replica_globals.srch_ival)->addr;
+                        for (n=0, p=0; p < orte_gpr_replica_globals.num_srch_ival &&
+                                       n < (orte_gpr_replica_globals.srch_ival)->size; n++) {
+                            if (NULL != ivals[n]) {
+                                p++;
+                                if (ORTE_SUCCESS != (rc = orte_gpr_replica_delete_itagval(seg, cptr[j], ivals[n]))) {
+                                    ORTE_ERROR_LOG(rc);
+                                    return rc;
+                                }
+                            }
+                        }
                     }
                 }
-            } 
-    count = 0;
-    for (reg = (orte_gpr_replica_core_t*)opal_list_get_first(&seg->registry_entries);
-	 reg != (orte_gpr_replica_core_t*)opal_list_get_end(&seg->registry_entries);
-	 ) {
-
-	next = (orte_gpr_replica_core_t*)opal_list_get_next(reg);
-
-	/* for each registry entry, check the key list */
-	if (orte_gpr_replica_check_key_list(addr_mode, num_keys, keys,
-				       reg->num_keys, reg->keys)) { /* found the key(s) on the list */
-	    count++;
-	    opal_list_remove_item(&seg->registry_entries, &reg->item);
-	}
-	reg = next;
+            }
+        }
     }
 
-
-    /* update trigger counters */
-    for (trig = (orte_gpr_replica_trigger_list_t*)opal_list_get_first(&seg->triggers);
-	 trig != (orte_gpr_replica_trigger_list_t*)opal_list_get_end(&seg->triggers);
-	 trig = (orte_gpr_replica_trigger_list_t*)opal_list_get_next(trig)) {
-	if (orte_gpr_replica_check_key_list(trig->addr_mode, trig->num_keys, trig->keys,
-				       num_keys, keys)) {
-	    trig->count = trig->count - count;
-	}
-    }
-#endif
-
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }
 
 int orte_gpr_replica_delete_entries_nb_fn(
@@ -158,41 +129,70 @@ int orte_gpr_replica_delete_entries_nb_fn(
 
 
 int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
-                            size_t *cnt, char **index)
+                            size_t *cnt, char ***index)
 {
-#if 0
-    opal_list_t *answer;
-    orte_gpr_replica_keytable_t *ptr;
-    ompi_registry_index_value_t *ans;
+    char **ptr;
+    orte_gpr_replica_segment_t **segs;
+    orte_gpr_replica_dict_t **dict;
+    size_t i, j;
 
-    if (orte_gpr_replica_debug) {
-	opal_output(0, "[%lu,%lu,%lu] gpr replica: index entered segment: %s",
-		    ORTE_NAME_ARGS(*ompi_rte_get_self()), seg->name);
-    }
 
-    answer = OBJ_NEW(opal_list_t);
-
+    /* set default responses */
+    *index = NULL;
+    *cnt = 0;
+    
     if (NULL == seg) { /* looking for index of global registry */
-	for (ptr = (orte_gpr_replica_keytable_t*)opal_list_get_first(&orte_gpr_replica_head.segment_dict);
-	     ptr != (orte_gpr_replica_keytable_t*)opal_list_get_end(&orte_gpr_replica_head.segment_dict);
-	     ptr = (orte_gpr_replica_keytable_t*)opal_list_get_next(ptr)) {
-	    ans = OBJ_NEW(ompi_registry_index_value_t);
-	    ans->token = strdup(ptr->token);
-	    opal_list_append(answer, &ans->item);
-	}
-    } else {  /* want index of specific segment */
-	for (ptr = (orte_gpr_replica_keytable_t*)opal_list_get_first(&seg->keytable);
-	     ptr != (orte_gpr_replica_keytable_t*)opal_list_get_end(&seg->keytable);
-	     ptr = (orte_gpr_replica_keytable_t*)opal_list_get_next(ptr)) {
-	    ans = OBJ_NEW(ompi_registry_index_value_t);
-	    ans->token = strdup(ptr->token);
-	    opal_list_append(answer, &ans->item);
-	}
-
+        *index = (char**)malloc(orte_gpr_replica.num_segs * sizeof(char*));
+        if (NULL == *index) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        ptr = *index;
+        segs = (orte_gpr_replica_segment_t**) (orte_gpr_replica.segments)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_segs &&
+                       i < (orte_gpr_replica.segments)->size; i++) {
+            if (NULL != segs[i]) {
+                ptr[j] = strdup(segs[i]->name);
+                if (NULL == ptr[j]) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    *cnt = j;
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                j++;
+            }
+        }
+        *cnt = orte_gpr_replica.num_segs;
+        return ORTE_SUCCESS;
     }
-    return answer;
-#endif
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    
+    /* must have requested index of a specific segment */
+    if (0 < seg->num_dict_entries) {
+        *index = (char**)malloc(orte_gpr_replica.num_segs * sizeof(char*));
+        if (NULL == *index) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        ptr = *index;
+        dict = (orte_gpr_replica_dict_t**)(seg->dict)->addr;
+    
+        for (i=0, j=0; j < seg->num_dict_entries &&
+                       i < (seg->dict)->size; i++) {
+            if (NULL != dict[i]) {
+                ptr[j] = strdup(dict[i]->entry);
+                if (NULL == ptr[j]) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    *cnt = j;
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                j++;
+            }
+        }
+        *cnt = seg->num_dict_entries;
+        return ORTE_SUCCESS;
+    }
+
+    /* it's okay if there are no entries, so return success */
+    return ORTE_SUCCESS;
 }
 
 

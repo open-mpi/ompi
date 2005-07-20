@@ -128,14 +128,11 @@ int orte_gpr_base_pack_index(orte_buffer_t *cmd, char *segment)
 	    return rc;
     }
 
-    if (NULL == segment) {  /* no segment specified - want universe dict */
-	    return ORTE_SUCCESS;
-    }
-    
-    	if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &segment, 1, ORTE_STRING))) {
-        ORTE_ERROR_LOG(rc);
-    	    return rc;
-    	}
+    /* it's okay to pack a NULL string, so pack the segment regardless */
+	if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &segment, 1, ORTE_STRING))) {
+    ORTE_ERROR_LOG(rc);
+	    return rc;
+	}
 
     return ORTE_SUCCESS;
 }

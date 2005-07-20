@@ -136,11 +136,16 @@ int orte_gpr_replica_delete_entries_nb(
 }
 
 
-int orte_gpr_replica_index(char *segment, size_t *cnt, char **index)
+int orte_gpr_replica_index(char *segment, size_t *cnt, char ***index)
 {
     orte_gpr_replica_segment_t *seg=NULL;
     int rc;
 
+    if (NULL == index || NULL == cnt) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     if (NULL == segment) {  /* want global level index */
