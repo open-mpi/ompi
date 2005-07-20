@@ -48,7 +48,6 @@ portals_SOURCES = \
 	src/btl_portals_send.c \
 	src/btl_portals_recv.c \
 	src/btl_portals_rdma.c \
-	src/btl_portals_stubs.c \
 	src/btl_portals_endpoint.c
 
 portals_nodist_SOURCES = \

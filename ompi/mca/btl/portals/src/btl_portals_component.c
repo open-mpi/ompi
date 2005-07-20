@@ -369,7 +369,7 @@ mca_btl_portals_component_progress(void)
             continue;
         } else if (PTL_EQ_DROPPED == ret) {
             opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                "*** Event queue entries were dropped");
+                                "*** Event queue entries were dropped ***");
         }
 
         switch (which) {

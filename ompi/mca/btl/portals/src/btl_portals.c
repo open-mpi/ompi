@@ -335,6 +335,22 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
 }
 
 
+mca_btl_base_descriptor_t* 
+mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base, 
+                            struct mca_btl_base_endpoint_t* peer,
+                            mca_mpool_base_registration_t* registration, 
+                            struct ompi_convertor_t* convertor,
+                            size_t reserve,
+                            size_t* size)
+{
+    /* BWB - FIXME - Implement prepare_dst */
+    opal_output(mca_btl_portals_component.portals_output,
+                "Warning: call to unimplemented function prepare_dst");
+
+    return NULL;
+}
+
+
 int
 mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
 {

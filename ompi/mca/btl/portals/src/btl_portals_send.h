@@ -77,9 +77,9 @@ mca_btl_portals_progress_queued_sends(struct mca_btl_portals_module_t *btl)
          btl->portals_max_outstanding_sends)) {
         mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*)
             opal_list_remove_first(&(btl->portals_queued_sends));
-        opal_output_verbose(90, mca_btl_portals_component.portals_output,
-                            "retransmit for frag 0x%x, 0x%x", 
-                            frag, frag->base.des_cbfunc);
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "retransmit for frag 0x%x, 0x%x", 
+                             frag, frag->base.des_cbfunc));
         return mca_btl_portals_send(&btl->super,
                                     frag->u.send_frag.endpoint,
                                     &(frag->base),
