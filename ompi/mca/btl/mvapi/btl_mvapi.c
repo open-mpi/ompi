@@ -30,6 +30,7 @@
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
+#include "mca/btl/base/btl_base_error.h" 
 
 mca_btl_mvapi_module_t mca_btl_mvapi_module = {
     {
@@ -58,8 +59,11 @@ mca_btl_mvapi_module_t mca_btl_mvapi_module = {
     }
 };
 
-
-
+/* 
+ *  add a proc to this btl module 
+ *    creates an endpoint that is setup on the
+ *    first send to the endpoint
+ */ 
 int mca_btl_mvapi_add_procs(
     struct mca_btl_base_module_t* btl, 
     size_t nprocs, 
@@ -114,23 +118,29 @@ int mca_btl_mvapi_add_procs(
     return OMPI_SUCCESS;
 }
 
+/* 
+ * delete the proc as reachable from this btl module 
+ */
 int mca_btl_mvapi_del_procs(struct mca_btl_base_module_t* btl, 
         size_t nprocs, 
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
 {
     /* Stub */
-    DEBUG_OUT("Stub\n");
+    BTL_DEBUG_OUT("Stub\n");
     return OMPI_SUCCESS;
 }
 
+/* 
+ *Register callback function to support send/recv semantics 
+ */ 
 int mca_btl_mvapi_register(
                         struct mca_btl_base_module_t* btl, 
                         mca_btl_base_tag_t tag, 
                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
                         void* cbdata)
 {
-    /* TODO add register stuff here... */ 
+    
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     
 
@@ -142,11 +152,15 @@ int mca_btl_mvapi_register(
 }
 
 
+
 /**
  * Allocate a segment.
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
+ * 
+ * When allocating a segment we pull a pre-alllocated segment 
+ * from one of two free lists, an eager list and a max list
  */
 mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
     struct mca_btl_base_module_t* btl,
@@ -176,9 +190,11 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
 }
 
 /** 
+ * Return a segment 
  * 
- * 
- */ 
+ * Return the segment to the appropriate 
+ *  preallocated segment list 
+ */  
 int mca_btl_mvapi_free(
                     struct mca_btl_base_module_t* btl, 
                     mca_btl_base_descriptor_t* des) 
@@ -188,23 +204,38 @@ int mca_btl_mvapi_free(
     if(frag->size == 0) {
         OBJ_RELEASE(frag->vapi_reg); 
         MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
-    } 
-    else if(frag->size == mca_btl_mvapi_component.max_send_size){ 
+    } else if(frag->size == mca_btl_mvapi_component.max_send_size){ 
         MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
     } else if(frag->size == mca_btl_mvapi_component.eager_limit){ 
         MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
-    } 
-    
+    } else { 
+        BTL_ERROR("invalid descriptor"); 
+    }
     return OMPI_SUCCESS; 
 }
 
-
 /**
- * Pack data and return a descriptor that can be
+ * register user buffer or pack 
+ * data into pre-registered buffer and return a 
+ * descriptor that can be
  * used for send/put.
  *
  * @param btl (IN)      BTL module
- * @param peer (IN)     BTL peer addressing
+ * @param endpoint (IN)     BTL peer addressing
+ *  
+ * prepare source's behavior depends on the following: 
+ * Has a valid memory registration been passed to prepare_src? 
+ *    if so we attempt to use the pre-registred user-buffer, if the memory registration 
+ *    is to small (only a portion of the user buffer) then we must reregister the user buffer 
+ * Has the user requested the memory to be left pinned? 
+ *    if so we insert the memory registration into a memory tree for later lookup, we 
+ *    may also remove a previous registration if a MRU (most recently used) list of 
+ *    registions is full, this prevents resources from being exhausted.
+ * Is the requested size larger than the btl's max send size? 
+ *    if so and we aren't asked to leave the registration pinned than we register the memory if 
+ *    the users buffer is contiguous 
+ * Otherwise we choose from two free lists of pre-registered memory in which to pack the data into. 
+ * 
  */
 mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     struct mca_btl_base_module_t* btl,
@@ -227,14 +258,12 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
-
-    /** if the data fits in the eager limit and we aren't told to pinn then we 
-        simply pack, if the data fits in the eager limit and the data is non contiguous 
-        then we pack **/ 
-
     
     if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
         bool is_leave_pinned = vapi_reg->base_reg.is_leave_pinned; 
+        size_t reg_len; 
+
+        /* the memory is already pinned and we have contiguous user data */ 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -245,27 +274,27 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         
-        /* first we will try to find this address in the memory tree (from MPI_Alloc_mem) */ 
-        
         frag->segment.seg_len = max_data; 
         frag->segment.seg_addr.pval = iov.iov_base; 
         
-        size_t reg_len; 
         reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
         if(frag->segment.seg_len > reg_len) { 
+            
+            /* the pinned region is too small! we have to re-pinn it */ 
+            
             size_t new_len = vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1 
                 + frag->segment.seg_len - reg_len; 
             void * base_addr = vapi_reg->base_reg.base; 
             
             rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                opal_output(0, "%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error removing memory region from memory pool tree"); 
                 return NULL; 
             } 
-
+            
             if(is_leave_pinned) { 
                 if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)){ 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
             } 
@@ -286,19 +315,21 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             
             
             if(rc != OMPI_SUCCESS) { 
-                opal_output(0,"%s:%d:%s error inserting memory region into memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error inserting memory region into memory pool tree"); 
                 return NULL; 
             } 
 
             OBJ_RETAIN(vapi_reg); 
             if(is_leave_pinned) {
+                /* we should leave the memory pinned so put the memory on the MRU list */ 
                 vapi_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             } 
         }   
         else if(is_leave_pinned) { 
-            if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
-                opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+            /* the current memory region is large enough and we should leave the memory pinned */  
+            if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) {
+                BTL_ERROR("error removing item from reg_mru_list"); 
                 return NULL; 
             }
         
@@ -327,6 +358,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                ompi_convertor_need_buffers(convertor) == 0 && 
                reserve == 0)
     {
+        /* The user buffer is contigous and we need to leave the buffer pinned or we are asked to send 
+           more than the max send size.  Note that the memory was not already pinned because we have 
+           no registration information passed to us */ 
+
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -344,14 +379,19 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
 
         
         if(mca_btl_mvapi_component.leave_pinned) { 
+            /* so we need to leave pinned  which means we must check and see if we 
+               have room on the MRU list */
+            
             if(mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.opal_list_length  ) {
-                
+                /* we have the maximum number of entries on the MRU list, time to 
+                   pull something off and make room. */ 
+
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
                     opal_list_remove_first(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
 
@@ -359,7 +399,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 
                 if(OMPI_SUCCESS != rc) { 
-                    opal_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing memory region from memory pool tree"); 
                     return NULL; 
                 }
                 
@@ -385,6 +425,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             
         } else { 
+            /* we don't need to leave the memory pinned so just register it.. */ 
             mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
                                             iov.iov_base, 
                                             max_data, 
@@ -392,7 +433,6 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             
             vapi_reg->base_reg.is_leave_pinned = false; 
         } 
-        /* frag->mem_hndl = vapi_reg->hndl;  */
         frag->sg_entry.len = max_data; 
         frag->sg_entry.lkey = vapi_reg->l_key; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
@@ -408,7 +448,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         return &frag->base;
 
     } else if (max_data+reserve <=  btl->btl_eager_limit) { 
-           
+        /* the data is small enough to fit in the eager frag and 
+           either we received no prepinned memory or leave pinned is 
+           not set
+        */
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
@@ -434,12 +477,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         
         return &frag->base; 
         
-    }
-       /** if the data fits in the max limit and we aren't told to pinn then we 
+    } else if(max_data + reserve <= mvapi_btl->super.btl_max_send_size) { 
+        /** if the data fits in the max limit and we aren't told to pinn then we 
            simply pack, if the data  is non contiguous then we pack **/ 
        
-       else if(max_data + reserve <= mvapi_btl->super.btl_max_send_size) { 
-           
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
@@ -471,11 +512,21 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     return NULL; 
 }
 
+
+
 /**
- * Pack data
+ * Prepare the dst buffer
  *
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
+ * prepare dest's behavior depends on the following: 
+ * Has a valid memory registration been passed to prepare_src? 
+ *    if so we attempt to use the pre-registred user-buffer, if the memory registration 
+ *    is to small (only a portion of the user buffer) then we must reregister the user buffer 
+ * Has the user requested the memory to be left pinned? 
+ *    if so we insert the memory registration into a memory tree for later lookup, we 
+ *    may also remove a previous registration if a MRU (most recently used) list of 
+ *    registions is full, this prevents resources from being exhausted.
  */
 mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     struct mca_btl_base_module_t* btl,
@@ -506,23 +557,30 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     frag->base.des_flags = 0; 
 
     if(NULL!= vapi_reg){ 
+        /* the memory is already pinned try to use it if the pinned region is large enough*/ 
         reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
         bool is_leave_pinned = vapi_reg->base_reg.is_leave_pinned; 
 
         if(frag->segment.seg_len > reg_len ) { 
+            /* the pinned region is too small! we have to re-pinn it */ 
+            
             size_t new_len = vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1 
                 + frag->segment.seg_len - reg_len; 
             void * base_addr = vapi_reg->base_reg.base; 
 
             rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                opal_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error removing memory region from memory pool tree"); 
                 return NULL; 
             } 
 
             if(is_leave_pinned) { 
+                /* the memory we just un-pinned was marked as leave pinned, 
+                 * pull it off the MRU list 
+                 */ 
+     
                 if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
             }
@@ -541,20 +599,22 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             
             if(OMPI_SUCCESS != rc) {
-                opal_output(0,"%s:%d:%s error inserting memory region into memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error inserting memory region into memory pool tree"); 
                 return NULL;
             }
             OBJ_RETAIN(vapi_reg); 
             
             if(is_leave_pinned) { 
+                /* we should leave the memory pinned so put the memory on the MRU list */ 
                 vapi_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             } 
 
         } 
         else if(is_leave_pinned){ 
+            /* the current memory region is large enough and we should leave the memory pinned */  
             if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
-                opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error removing item from reg_mru_list"); 
                 return NULL; 
             }    
             opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
@@ -562,24 +622,30 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         }
         OBJ_RETAIN(vapi_reg); 
     }  else { 
-           
+        /* we didn't get a memory registration passed in, so we have to register the region
+         * ourselves 
+         */ 
+
         if(mca_btl_mvapi_component.leave_pinned) { 
-            
-        
+              /* so we need to leave pinned  which means we must check and see if we 
+               have room on the MRU list */
+          
             if( mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.opal_list_length  ) {
-               
+                /* we have the maximum number of entries on the MRU list, time to 
+                   pull something off and make room. */ 
+
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
                     opal_list_remove_first(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
                 
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 if(OMPI_SUCCESS !=rc ) { 
-                    opal_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing memory region from memory pool tree"); 
                     return NULL; 
                 } 
                 
@@ -599,7 +665,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                                        (void*) (&mvapi_btl->super), 
                                        (mca_mpool_base_registration_t*)  vapi_reg); 
             if(OMPI_SUCCESS != rc){ 
-                opal_output(0,"%s:%d:%s error inserting memory region into memory pool", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error inserting memory region into memory pool"); 
                 return NULL;
             } 
 
@@ -607,6 +673,8 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
             opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
             
         } else { 
+            /* we don't need to leave the memory pinned so just register it.. */ 
+
             mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
                                             frag->segment.seg_addr.pval,
                                             *size, 
@@ -616,9 +684,6 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         
         
     }
-
-    
-/*     frag->mem_hndl = vapi_reg->hndl;  */
     
     frag->sg_entry.len = *size; 
     frag->sg_entry.lkey = vapi_reg->l_key; 
@@ -640,7 +705,8 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_mvapi_module_t* mvapi_btl; 
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
-    
+
+#if 0     
     if(mvapi_btl->send_free_eager.fl_num_allocated != 
        mvapi_btl->send_free_eager.super.opal_list_length){ 
         opal_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
@@ -673,15 +739,13 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
                     mvapi_btl->recv_free_max.fl_num_allocated, 
                     mvapi_btl->recv_free_max.super.opal_list_length); 
     }
+#endif 
 
     return OMPI_SUCCESS;
 }
 
 /*
- *  Initiate a send. If this is the first fragment, use the fragment
- *  descriptor allocated with the send requests, otherwise obtain
- *  one from the free list. Initialize the fragment and foward
- *  on to the peer.
+ *  Initiate a send. 
  */
 
 int mca_btl_mvapi_send( 
@@ -726,7 +790,8 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     if(VAPI_OK != frag->ret){ 
         return OMPI_ERROR; 
     }
-    mca_btl_mvapi_endpoint_post_rr(endpoint, 1); 
+    MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+    MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
 
     return OMPI_SUCCESS; 
 
@@ -753,7 +818,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         case VAPI_SEND_QUEUE_DRAINED:
         case VAPI_PORT_ACTIVE:
             {
-                DEBUG_OUT("Got an asynchronous event: %s\n",
+                BTL_DEBUG_OUT("Got an asynchronous event: %s\n",
                         VAPI_event_record_sym(event_p->type));
                 break;
             }
@@ -766,22 +831,23 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         case VAPI_LOCAL_CATASTROPHIC_ERROR:
         case VAPI_PORT_ERROR:
             {
-                opal_output(0, "Got an asynchronous event: %s (%s)",
-                        VAPI_event_record_sym(event_p->type),
-                        VAPI_event_syndrome_sym(event_p->
-                            syndrome));
+                BTL_ERROR("Got an asynchronous event: %s (%s)",
+                          VAPI_event_record_sym(event_p->type),
+                          VAPI_event_syndrome_sym(event_p->syndrome));
                 break;
             }
         default:
-            opal_output(0, "Warning!! Got an undefined "
-                    "asynchronous event\n");
+            BTL_ERROR("Warning!! Got an undefined "
+                    "asynchronous event");
     }
 
 }
 
 
-
-
+/* 
+ * Initialize the btl module by allocating a protection domain 
+ *  and creating both the high and low priority completion queues 
+ */ 
 int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
 {
 
@@ -792,7 +858,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
     ret = VAPI_alloc_pd(mvapi_btl->nic, &mvapi_btl->ptag);
     
     if(ret != VAPI_OK) {
-        MCA_BTL_IB_VAPI_ERROR(ret, "VAPI_alloc_pd");
+        BTL_ERROR("error in VAPI_alloc_pd: %s", VAPI_strerror(ret));
         return OMPI_ERROR;
     }
     
@@ -801,7 +867,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
 
     
     if( VAPI_OK != ret) {  
-        MCA_BTL_IB_VAPI_ERROR(ret, "VAPI_create_cq");
+        BTL_ERROR("error in VAPI_create_cq: %s", VAPI_strerror(ret));
         return OMPI_ERROR;
     }
     
@@ -810,13 +876,13 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
 
     
     if( VAPI_OK != ret) {  
-        MCA_BTL_IB_VAPI_ERROR(ret, "VAPI_create_cq");
+        BTL_ERROR("error in VAPI_create_cq: %s", VAPI_strerror(ret));
         return OMPI_ERROR;
     }
 
     
     if(cqe_cnt <= 0) { 
-        opal_output(0, "%s: error creating completion queue ", __func__); 
+        BTL_ERROR("error creating completion queue "); 
         return OMPI_ERROR; 
     } 
 
@@ -824,7 +890,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
             async_event_handler, 0, &mvapi_btl->async_handler);
 
     if(VAPI_OK != ret) {
-        MCA_BTL_IB_VAPI_ERROR(ret, "EVAPI_set_async_event_handler");
+        BTL_ERROR("error in EVAPI_set_async_event_handler: %s", VAPI_strerror(ret));
         return OMPI_ERROR;
     }
     

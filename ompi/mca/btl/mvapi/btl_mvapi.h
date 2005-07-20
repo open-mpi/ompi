@@ -31,11 +31,16 @@
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 #include "opal/util/output.h"
-#include "mca/mpool/mpool.h" 
-#include "btl_mvapi_error.h" 
+#include "mca/mpool/mpool.h"
+#include "mca/btl/base/btl_base_error.h"
 
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h" 
+
+#include <vapi.h>
+#include <mtl_common.h>
+#include <vapi_common.h>
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

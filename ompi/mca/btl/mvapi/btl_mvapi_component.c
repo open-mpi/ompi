@@ -110,7 +110,6 @@ int mca_btl_mvapi_component_open(void)
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_mvapi_component.ib_procs, opal_list_t);
-    /* OBJ_CONSTRUCT (&mca_btl_mvapi_component.ib_recv_frags, ompi_free_list_t); */
 
     /* register IB component parameters */
     mca_btl_mvapi_component.ib_free_list_num =
@@ -206,12 +205,6 @@ int mca_btl_mvapi_component_open(void)
     mca_base_param_lookup_int(param, &value); 
     mca_btl_mvapi_component.leave_pinned = value; 
 
-
-    
-    
-    
-    
-    
     mca_btl_mvapi_component.max_send_size = mca_btl_mvapi_module.super.btl_max_send_size; 
     mca_btl_mvapi_component.eager_limit = mca_btl_mvapi_module.super.btl_eager_limit; 
     
@@ -259,7 +252,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     /* Determine the number of hca's available on the host */
     vapi_ret=EVAPI_list_hcas(0, &num_hcas, NULL);
     if( VAPI_EAGAIN != vapi_ret || 0 == num_hcas ) {
-        opal_output(0,"No hca's found on this host \n"); 
+        BTL_ERROR("No hca's found on this host!"); 
         return NULL;
     }
 
@@ -288,14 +281,14 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     for(i = 0; i < num_hcas; i++){  
         vapi_ret = EVAPI_get_hca_hndl(hca_ids[i], &hca_hndl); 
         if(VAPI_OK != vapi_ret) { 
-            opal_output(0, "%s:error getting hca handle\n", __func__); 
+            BTL_ERROR("error getting hca handle: %s", VAPI_strerror(vapi_ret)); 
             return NULL; 
         } 
         
 
         vapi_ret = VAPI_query_hca_cap(hca_hndl, &hca_vendor, &hca_cap); 
          if(VAPI_OK != vapi_ret) { 
-            opal_output(0, "%s:error getting hca properties\n", __func__); 
+            BTL_ERROR("error getting hca properties %s", VAPI_strerror(vapi_ret)); 
             return NULL; 
         } 
          
@@ -304,7 +297,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
          for(j = 1; j <= hca_cap.phys_port_num; j++){ 
              vapi_ret = VAPI_query_hca_port_prop(hca_hndl, (IB_port_t) j, &hca_port);  
              if(VAPI_OK != vapi_ret) { 
-                 opal_output(0, "%s:error getting hca port properties\n", __func__); 
+                 BTL_ERROR("error getting hca port properties %s", VAPI_strerror(vapi_ret)); 
                  return NULL; 
              } 
              
@@ -389,7 +382,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                                          &hca_pd); 
         
         if(NULL == mvapi_btl->ib_pool) { 
-            opal_output(0, "%s: error creating vapi memory pool! aborting ib btl initialization", __func__); 
+            BTL_ERROR("error creating vapi memory pool! aborting mvapi btl initialization"); 
             return NULL; 
         }
         /* Initialize pool of send fragments */ 
@@ -462,11 +455,6 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         /* Initialize the rr_desc_post array for posting of rr*/ 
         mvapi_btl->rr_desc_post = (VAPI_rr_desc_t*) malloc((mca_btl_mvapi_component.ib_rr_buf_max * sizeof(VAPI_rr_desc_t))); 
         
-        /* This is now done by the memory pool passed to free_list_init.. Initialize the send descriptors */
-        /* if(mca_btl_mvapi_send_frag_register(mvapi_btl) != OMPI_SUCCESS) { */
-        /*             free(hca_ids); */
-        /*             return NULL; */
-        /*         } */
         btls[i] = &mvapi_btl->super;
     }
 
@@ -504,20 +492,18 @@ int mca_btl_mvapi_component_progress()
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_high, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
-                opal_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
-                            VAPI_wc_status_sym(comp.status), 
-                            comp.vendor_err_syndrome, comp.id);  
+                BTL_ERROR("Got error : %s, Vendor code : %d Frag : %p", 
+                          VAPI_wc_status_sym(comp.status), 
+                          comp.vendor_err_syndrome, comp.id);  
                 return OMPI_ERROR; 
             }
             
             /* Handle work completions */
             switch(comp.opcode) {
             case VAPI_CQE_RQ_RDMA_WITH_IMM: 
-                if(comp.imm_data_valid){ 
-                    opal_output(0, "Got an RQ_RDMA_WITH_IMM!\n"); 
-                    
-                }
-                break; 
+                BTL_ERROR("Got an RDMA with Immediate data!, not supported!"); 
+                return OMPI_ERROR; 
+                
             case VAPI_CQE_SQ_RDMA_WRITE:
             case VAPI_CQE_SQ_SEND_DATA :
                 
@@ -531,9 +517,9 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_RQ_SEND_DATA:
                 
                 /* Process a RECV  */ 
-                DEBUG_OUT("Got an recv completion" ); 
+                BTL_DEBUG_OUT("Got a recv completion"); 
                 frag = (mca_btl_mvapi_frag_t*) comp.id;
-                endpoint = (mca_btl_endpoint_t*) frag->endpoint; 
+                endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
 
                 frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
@@ -542,14 +528,13 @@ int mca_btl_mvapi_component_progress()
                 
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
                 OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
-                
-                mca_btl_mvapi_endpoint_post_rr(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
+                MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
                 
                 count++; 
                 break;
                 
             default:
-                opal_output(0, "Unhandled work completion opcode is %d", comp.opcode);
+                BTL_ERROR("Unhandled work completion opcode is %d", comp.opcode);
                 break;
             }
         }
@@ -559,7 +544,7 @@ int mca_btl_mvapi_component_progress()
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_low, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
-                opal_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
+                BTL_ERROR("Got error : %s, Vendor code : %d Frag : %p", 
                             VAPI_wc_status_sym(comp.status), 
                             comp.vendor_err_syndrome, comp.id);  
                 return OMPI_ERROR; 
@@ -567,6 +552,10 @@ int mca_btl_mvapi_component_progress()
             
             /* Handle n/w completions */
             switch(comp.opcode) {
+            case VAPI_CQE_RQ_RDMA_WITH_IMM: 
+                BTL_ERROR("Got an RDMA with Immediate data!, not supported!"); 
+                return OMPI_ERROR; 
+            
             case VAPI_CQE_SQ_RDMA_WRITE:
             case VAPI_CQE_SQ_SEND_DATA :
                 
@@ -579,10 +568,9 @@ int mca_btl_mvapi_component_progress()
                 
             case VAPI_CQE_RQ_SEND_DATA:
                 
-                
-                DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                BTL_DEBUG_OUT("Got a recv completion"); 
                 frag = (mca_btl_mvapi_frag_t*) comp.id;
-                endpoint = (mca_btl_endpoint_t*) frag->endpoint; 
+                endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 /* advance the segment address past the header and subtract from the length..*/ 
@@ -591,14 +579,14 @@ int mca_btl_mvapi_component_progress()
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
                 OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
                 
-
-                mca_btl_mvapi_endpoint_post_rr(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
+                
+                MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
                 
                 count++; 
                 break;
                 
             default:
-                opal_output(0, "Errorneous network completion");
+                BTL_ERROR("Errorneous network completion");
                 break;
             }
         }

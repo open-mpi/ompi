@@ -139,14 +139,13 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
 /* 
  *Register callback function to support send/recv semantics 
  */ 
-
 int mca_btl_openib_register(
                         struct mca_btl_base_module_t* btl, 
                         mca_btl_base_tag_t tag, 
                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
                         void* cbdata)
 {
-    /* TODO add register stuff here... */ 
+    
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; 
     
 
@@ -273,7 +272,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
         size_t reg_len; 
 
-        /* the memory is already pinned and we have contiguous user data */ 
+       /* the memory is already pinned and we have contiguous user data */ o
 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
@@ -526,7 +525,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 }
 
 /**
- * Pack data
+ * Prepare the dst buffer
  *
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
@@ -568,11 +567,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->base.des_flags = 0; 
 
     if(NULL!= openib_reg){ 
+        /* the memory is already pinned try to use it if the pinned region is large enough*/ 
         bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
         reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
         
 
         if(frag->segment.seg_len > reg_len ) { 
+            /* the pinned region is too small! we have to re-pinn it */ 
             size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
                 + frag->segment.seg_len - reg_len; 
             void * base_addr = openib_reg->base_reg.base; 
@@ -584,6 +585,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
             } 
 
             if(is_leave_pinned) { 
+                /* the memory we just un-pinned was marked as leave pinned, 
+                 * pull it off the MRU list 
+                 */ 
                 if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
                     BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
@@ -610,12 +614,14 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
             OBJ_RETAIN(openib_reg); 
             
             if(is_leave_pinned) { 
+                /* we should leave the memory pinned so put the memory on the MRU list */ 
                 openib_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             } 
 
         } 
         else if(is_leave_pinned){ 
+            /* the current memory region is large enough and we should leave the memory pinned */  
             if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
                 BTL_ERROR("error removing item from reg_mru_list"); 
                 return NULL; 
@@ -624,12 +630,18 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         }
         OBJ_RETAIN(openib_reg); 
     }  else { 
-           
+        /* we didn't get a memory registration passed in, so we have to register the region
+         * ourselves 
+         */ 
+
         if(mca_btl_openib_component.leave_pinned) { 
-            
+              /* so we need to leave pinned  which means we must check and see if we 
+               have room on the MRU list */
         
             if( mca_btl_openib_component.reg_mru_len <= openib_btl->reg_mru_list.opal_list_length  ) {
-               
+                /* we have the maximum number of entries on the MRU list, time to 
+                   pull something off and make room. */ 
+
                 mca_mpool_openib_registration_t* old_reg =
                     (mca_mpool_openib_registration_t*)
                     opal_list_remove_last(&openib_btl->reg_mru_list);
@@ -669,6 +681,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             
         } else { 
+            /* we don't need to leave the memory pinned so just register it.. */ 
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
                                             frag->segment.seg_addr.pval,
                                             *size, 
@@ -801,7 +814,10 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
 
 }
 
-
+/* 
+ * Initialize the btl module by allocating a protection domain 
+ *  and creating both the high and low priority completion queues 
+ */ 
 int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
 {
 

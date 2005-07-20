@@ -115,7 +115,6 @@ int mca_btl_openib_component_open(void)
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
-    /* OBJ_CONSTRUCT (&mca_btl_openib_component.ib_recv_frags, ompi_free_list_t); */
 
     /* register IB component parameters */
     mca_btl_openib_component.ib_free_list_num =
@@ -212,12 +211,6 @@ int mca_btl_openib_component_open(void)
     mca_base_param_lookup_int(param, &value); 
     mca_btl_openib_component.leave_pinned = value; 
 
-
-    
-    
-    
-    
-    
     mca_btl_openib_component.max_send_size = mca_btl_openib_module.super.btl_max_send_size; 
     mca_btl_openib_component.eager_limit = mca_btl_openib_module.super.btl_eager_limit; 
     
@@ -409,7 +402,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                                          &mpool_resources); 
         
         if(NULL == openib_btl->ib_pool) { 
-            BTL_ERROR("error creating vapi memory pool! aborting ib btl initialization"); 
+            BTL_ERROR("error creating vapi memory pool! aborting openib btl initialization"); 
             return NULL; 
         }
 
@@ -599,7 +592,7 @@ int mca_btl_openib_component_progress()
                 
             case IBV_WC_RECV: 
                 /* process a recv completion (this should only occur for a send not an rdma) */ 
-                BTL_DEBUG_OUT( "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                BTL_DEBUG_OUT( "Got a recv completion"); 
                 frag = (mca_btl_openib_frag_t*) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 

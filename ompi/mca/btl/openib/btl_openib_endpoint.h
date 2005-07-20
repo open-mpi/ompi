@@ -195,21 +195,6 @@ void mca_btl_openib_progress_send_frags(mca_btl_openib_endpoint_t*);
     OPAL_THREAD_ADD32(post_rr_sub_rr_posted, post_rr_sub_cnt); \
 }
 
-#define DUMP_ENDPOINT(endpoint_ptr) {                                       \
-    opal_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
-    opal_output(0, "Dumping endpoint %d state",                         \
-            endpoint->endpoint_proc->proc_guid.vpid);                       \
-    opal_output(0, "Local QP hndl : %d",                            \
-            endpoint_ptr->endpoint_conn->lres->qp_hndl);                    \
-    opal_output(0, "Local QP num : %d",                             \
-            endpoint_ptr->endpoint_conn->lres->qp_prop.qp_num);             \
-    opal_output(0, "Remote QP num : %d",                            \
-            endpoint_ptr->endpoint_conn->rres->qp_num);                     \
-    opal_output(0, "Remote LID : %d",                               \
-            endpoint_ptr->endpoint_conn->rres->lid);                        \
-}
-
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
