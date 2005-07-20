@@ -31,16 +31,6 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
     struct mca_btl_portals_module_t *btl;
 
     /*
-     * Initialize Portals interface
-     */
-    ret = PtlInit(&max_interfaces);
-    if (PTL_OK != ret) {
-        opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                            "PtlInit failed, returning %d\n", ret);
-        return OMPI_ERR_FATAL;
-    }
-
-    /*
      * create module - only ever one "NIC" on red storm
      */
     comp->portals_num_modules = 1;
@@ -62,6 +52,16 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
                &mca_btl_portals_module,
                sizeof(mca_btl_portals_module_t));
         /* the defaults are good enough for the rest */
+    }
+
+    /*
+     * Initialize Portals interface
+     */
+    ret = PtlInit(&max_interfaces);
+    if (PTL_OK != ret) {
+        opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                            "PtlInit failed, returning %d\n", ret);
+        return OMPI_ERR_FATAL;
     }
 
     /*
