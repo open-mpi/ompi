@@ -355,9 +355,10 @@ typedef int (*orte_gpr_base_module_delete_entries_nb_fn_t)(
  * @param *segment (IN) A character string indicating the segment whose dictionary is to be
  * indexed. A value of NULL indicates that the global level dictionary is to be used.
  *
- * @param *cnt (OUT) A pointer to the number of tokens in the index.
- * @param **index (OUT) A char** array of strings containing an index of the
- * specified dictionary.
+ * @param *cnt (IN) A pointer to a size_t location for storing the number of
+ * tokens in the index.
+ * @param ***index (IN) The address to place a char** array of strings containing an
+ * index of the specified dictionary.
  *
  * @retval ORTE_SUCCESS Operation was successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
@@ -370,7 +371,7 @@ typedef int (*orte_gpr_base_module_delete_entries_nb_fn_t)(
  * status_code = orte_gpr.index(segment, &cnt, &index);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_index_fn_t)(char *segment, size_t *cnt, char **index);
+typedef int (*orte_gpr_base_module_index_fn_t)(char *segment, size_t *cnt, char ***index);
 
 /*
  * Obtain an index of a specified dictionary (NON-BLOCKING)

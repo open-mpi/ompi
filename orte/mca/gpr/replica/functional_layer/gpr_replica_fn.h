@@ -67,7 +67,7 @@ int orte_gpr_replica_delete_entries_nb_fn(
                     orte_gpr_replica_itag_t *key_tags, size_t num_keys);
                             
 int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
-                            size_t *cnt, char **index);
+                            size_t *cnt, char ***index);
 
 int orte_gpr_replica_index_nb_fn(orte_gpr_replica_segment_t *seg,
                         orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);

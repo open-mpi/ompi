@@ -230,7 +230,7 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
         }
     }
 
-    if (ORTE_SUCCESS != (ret = orte_gpr_replica_index_fn(seg, &cnt, index))) {
+    if (ORTE_SUCCESS != (ret = orte_gpr_replica_index_fn(seg, &cnt, &index))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }

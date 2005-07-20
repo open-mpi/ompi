@@ -123,6 +123,14 @@ int orte_gpr_replica_release_container(orte_gpr_replica_segment_t *seg,
     orte_pointer_array_set_item(seg->containers, i, NULL);
     (seg->num_containers)--;
     
+    /* if the segment is now empty of containers, release it too */
+    if (0 == seg->num_containers) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_release_segment(&seg))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
     return ORTE_SUCCESS;
 }
 
@@ -212,6 +220,14 @@ MOVEON:
     /* remove the entry from the container's itagval array */
     orte_pointer_array_set_item(cptr->itagvals, i, NULL);
     (cptr->num_itagvals)--;
+    
+    /* if the container is now empty, remove it too */
+    if (0 == cptr->num_itagvals) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_release_container(seg, cptr))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
     
     return ORTE_SUCCESS;
 }

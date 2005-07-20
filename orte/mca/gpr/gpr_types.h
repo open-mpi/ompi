@@ -75,8 +75,8 @@ typedef size_t orte_gpr_subscription_id_t;
 #define ORTE_GPR_TRIG_ROUTE_DATA_THRU_ME    (uint8_t)0x04   /**< send all associated data to trigger callback fn */
 #define ORTE_GPR_TRIG_AT_LEVEL              (uint8_t)0x08   /**< Trigger whenever count reaches specified level */
 #define ORTE_GPR_TRIG_CMP_LEVELS            (uint8_t)0x80   /**< Trigger when all the specified values are equal */
-#define ORTE_GPR_TRIG_ALL_AT                (uint8_t)0x7f   /**< Use all trig defs except include trig data with AT - a typical situation */
-#define ORTE_GPR_TRIG_ALL_CMP               (uint8_t)0xf7   /**< Use all trig defs except include trig data with CMP */
+#define ORTE_GPR_TRIG_ALL_AT                (uint8_t)0x7b   /**< Use all trig defs except include trig data with AT - a typical situation */
+#define ORTE_GPR_TRIG_ALL_CMP               (uint8_t)0xf3   /**< Use all trig defs except include trig data with CMP */
 #define ORTE_GPR_TRIG_ANY                   (uint8_t)0xff   /**< Used to test if any trigs are set */
 
 typedef uint8_t orte_gpr_trigger_action_t;

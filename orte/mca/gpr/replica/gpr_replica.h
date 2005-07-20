@@ -68,7 +68,7 @@ typedef uint8_t orte_gpr_replica_addr_mode_t;
 #define ORTE_GPR_REPLICA_ENTRY_CHG_FRM     (int8_t) 0x10
 
 
-typedef int8_t orte_gpr_replica_action_t;
+typedef uint8_t orte_gpr_replica_action_t;
 
 /*
  * Local subscription tracker for use by processes
@@ -327,7 +327,7 @@ struct orte_gpr_replica_trigger_t {
      */
     orte_gpr_replica_trigger_requestor_t *master;
     /* the action that causes the trigger to be fired */
-    orte_gpr_notify_action_t action;
+    orte_gpr_trigger_action_t action;
     /* flag that indicates this trigger is a one-shot, has fired and
      * now should be cleaned up
      */

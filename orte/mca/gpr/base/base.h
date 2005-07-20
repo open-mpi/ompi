@@ -126,7 +126,7 @@ typedef uint8_t orte_gpr_cmd_flag_t;
 
     OMPI_DECLSPEC int orte_gpr_base_pack_index(orte_buffer_t *cmd, char *segment);
     OMPI_DECLSPEC int orte_gpr_base_unpack_index(orte_buffer_t *cmd, int *ret, size_t *cnt,
-                                                 char **index);
+                                                 char ***index);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
                     size_t num_subs,
