@@ -507,10 +507,9 @@ int mca_btl_openib_component_progress()
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
         
         struct ibv_wc wc; 
-        memset(&wc, 0, sizeof(struct ibv_wc)); 
-
         mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
-      
+        memset(&wc, 0, sizeof(struct ibv_wc)); 
+        
         /* we have two completion queues, one for "high" priority and one for "low". 
          *   we will check the high priority and process them until there are none left. 
          *   note that low priority messages are only processed one per progress call. 
@@ -522,12 +521,12 @@ int mca_btl_openib_component_progress()
                 return OMPI_ERROR; 
             } 
             else if(wc.status != IBV_WC_SUCCESS) { 
-                BTL_ERROR("error polling CQ with status %d for wr_id %d\n", 
+                BTL_ERROR("error polling CQ with status %d for wr_id %llu\n", 
                           wc.status, wc.wr_id); 
                 return OMPI_ERROR; 
             }
             else if(1 == ne) { 
-                DEBUG_OUT("completion queue event says opcode is %d\n", wc.opcode); 
+                BTL_DEBUG_OUT("completion queue event says opcode is %d\n", wc.opcode); 
 
                 /* Handle work completions */
                 switch(wc.opcode) {
@@ -538,7 +537,7 @@ int mca_btl_openib_component_progress()
                 case IBV_WC_RECV: 
                     /* Process a RECV */ 
                     
-                    DEBUG_OUT("Got an  recv on the completion queue"); 
+                    BTL_DEBUG_OUT("Got an  recv on the completion queue"); 
                     frag = (mca_btl_openib_frag_t*) wc.wr_id;
                     endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                     frag->rc=OMPI_SUCCESS; 
@@ -547,9 +546,6 @@ int mca_btl_openib_component_progress()
                         ((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 
                 
-                    OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
-                        
-                    mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
                     
                     /* advance the segment address past the header and subtract from the length..*/ 
                     openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, 
@@ -557,6 +553,8 @@ int mca_btl_openib_component_progress()
                                                               &frag->base, 
                                                               openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
+                    OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
+                    MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
                     OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
                     count++; 
                     break; 
@@ -588,8 +586,8 @@ int mca_btl_openib_component_progress()
             return OMPI_ERROR; 
         } 
         else if(wc.status != IBV_WC_SUCCESS) { 
-            BTL_ERROR("error polling CQ with status %d for wr_id %d", 
-                        wc.status, wc.wr_id); 
+            BTL_ERROR("error polling CQ with status %d for wr_id %llu", 
+                      wc.status, wc.wr_id); 
             return OMPI_ERROR; 
         }
         else if(1 == ne) {             
@@ -601,7 +599,7 @@ int mca_btl_openib_component_progress()
                 
             case IBV_WC_RECV: 
                 /* process a recv completion (this should only occur for a send not an rdma) */ 
-                DEBUG_OUT( "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                BTL_DEBUG_OUT( "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
                 frag = (mca_btl_openib_frag_t*) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
@@ -611,17 +609,15 @@ int mca_btl_openib_component_progress()
                     wc.byte_len-
                     ((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
  
-                OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
-                
-                mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
                 
                 openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, 
                                                           frag->hdr->tag, 
                                                           &frag->base, 
                                                           openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
+                OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
+                MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
                 OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_max), (opal_list_item_t*) frag); 
-                
                 count++; 
                 break; 
 
