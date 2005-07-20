@@ -72,7 +72,7 @@ int mca_pml_teg_add_comm(ompi_communicator_t* comm)
 int mca_pml_teg_del_comm(ompi_communicator_t* comm)
 {
     OBJ_RELEASE(comm->c_pml_comm);
-    comm->c_pml_comm = 0;
+    comm->c_pml_comm = NULL;  /* make sure it's set to NULL */
     return OMPI_SUCCESS;
 }
 

@@ -138,7 +138,7 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
    mca_base_param_info_t *item;
    char *value_string;
    int value_int;
-   FILE *fp;
+   FILE *fp = NULL;
    time_t timestamp;
 
    if (rank != 0) {

@@ -246,7 +246,7 @@ void mca_pml_ob1_recv_request_progress(
     size_t bytes_delivered = 0;
     size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-    bool schedule;
+    bool schedule = false;
 
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PML_OB1_HDR_TYPE_MATCH:
@@ -333,7 +333,6 @@ void mca_pml_ob1_recv_request_progress(
         if(ompi_request_waiting) {
             opal_condition_broadcast(&ompi_request_cond);
         }
-        schedule = false;
     } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
         schedule = true;
     }
