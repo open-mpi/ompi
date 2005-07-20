@@ -32,9 +32,9 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
 
     switch (ev->type) {
     case PTL_EVENT_SEND_START:
-        opal_output_verbose(90, mca_btl_portals_component.portals_output,
-                            "send: PTL_EVENT_SEND_START for 0x%x",
-                            frag);
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "send: PTL_EVENT_SEND_START for 0x%x",
+                             frag));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
@@ -46,9 +46,9 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
         }
         break;
     case PTL_EVENT_SEND_END:
-        opal_output_verbose(90, mca_btl_portals_component.portals_output,
-                            "send: PTL_EVENT_SEND_END for 0x%x",
-                            frag);
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "send: PTL_EVENT_SEND_END for 0x%x",
+                             frag));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
@@ -64,9 +64,9 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
            on the other side.  If mlength == 0, that means that we hit
            the reject md and we need to try to retransmit */
 
-        opal_output_verbose(90, mca_btl_portals_component.portals_output,
-                            "send: PTL_EVENT_ACK for 0x%x, Ox%x",
-                            frag, frag->base.des_cbfunc);
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "send: PTL_EVENT_ACK for 0x%x, Ox%x",
+                             frag, frag->base.des_cbfunc));
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure to end send event\n");
@@ -102,9 +102,9 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
         }
         break;
     default:
-        opal_output_verbose(90, mca_btl_portals_component.portals_output,
-                            "send: unexpected event %d for 0x%x",
-                            ev->type, frag);
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "send: unexpected event %d for 0x%x",
+                             ev->type, frag));
 
         break;
     }
@@ -133,9 +133,9 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
     num_sends = OPAL_THREAD_ADD32(&btl->portals_outstanding_sends, 1);
 
     /* BWB - implement check for too many pending messages */
-    opal_output_verbose(90, mca_btl_portals_component.portals_output,
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                         "send called for frag 0x%x, 0x%x", 
-                        frag, frag->base.des_cbfunc);
+                        frag, frag->base.des_cbfunc));
 
     if (num_sends >= btl->portals_max_outstanding_sends) {
         opal_output(mca_btl_portals_component.portals_output,

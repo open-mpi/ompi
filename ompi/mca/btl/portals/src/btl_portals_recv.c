@@ -169,9 +169,9 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
 
     switch (ev->type) {
     case PTL_EVENT_PUT_START:
-        opal_output_verbose(90, mca_btl_portals_component.portals_output,
-                            "recv: PTL_EVENT_PUT_START for tag %d, link %d",
-                            tag, (int) ev->link);
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "recv: PTL_EVENT_PUT_START for tag %d, link %d",
+                             tag, (int) ev->link));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
@@ -181,9 +181,9 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
         }
         break;
     case PTL_EVENT_PUT_END:
-        opal_output_verbose(90, mca_btl_portals_component.portals_output,
-                            "recv: PTL_EVENT_PUT_END for tag %d, link %d",
-                            tag, (int) ev->link);
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "recv: PTL_EVENT_PUT_END for tag %d, link %d",
+                             tag, (int) ev->link));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
@@ -193,8 +193,8 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
         } 
 
         /* ok, we've got data */
-        opal_output_verbose(95, mca_btl_portals_component.portals_output,
-                            "received data for tag %d\n", tag);
+        OPAL_OUTPUT_VERBOSE((95, mca_btl_portals_component.portals_output,
+                             "received data for tag %d\n", tag));
 
         /* it's a user, so we have to manually setup the segment */
         MCA_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, ret);

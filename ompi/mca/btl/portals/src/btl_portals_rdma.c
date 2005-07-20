@@ -29,3 +29,25 @@ mca_btl_portals_process_rdma(mca_btl_portals_module_t *module,
 {
     return OMPI_SUCCESS;
 }
+
+
+int
+mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
+                    struct mca_btl_base_endpoint_t* btl_peer,
+                    struct mca_btl_base_descriptor_t* decriptor)
+{
+    opal_output(mca_btl_portals_component.portals_output,
+                "Warning: call to unimplemented function put()");
+    return OMPI_ERR_NOT_IMPLEMENTED;
+}
+
+
+int
+mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
+                    struct mca_btl_base_endpoint_t* btl_peer,
+                    struct mca_btl_base_descriptor_t* decriptor)
+{
+    opal_output(mca_btl_portals_component.portals_output,
+                "Warning: call to unimplemented function get()");
+    return OMPI_ERR_NOT_IMPLEMENTED;
+}
