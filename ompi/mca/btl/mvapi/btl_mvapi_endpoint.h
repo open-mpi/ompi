@@ -125,97 +125,154 @@ void mca_btl_mvapi_post_recv(void);
 
 void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t*);
 
-static inline int mca_btl_mvapi_endpoint_post_rr_sub(int cnt, 
-                                              mca_btl_mvapi_endpoint_t* endpoint, 
-                                              ompi_free_list_t* frag_list, 
-                                              uint32_t* rr_posted, 
-                                              VAPI_hca_hndl_t nic, 
-                                              VAPI_qp_hndl_t qp_hndl
-                                              )
-{
-    
-    int rc, i; 
-    opal_list_item_t* item; 
-    mca_btl_mvapi_frag_t* frag; 
-    mca_btl_mvapi_module_t *mvapi_btl = endpoint->endpoint_btl;
-    VAPI_rr_desc_t* rr_desc_post = mvapi_btl->rr_desc_post; 
-    
-    /* prepare frags and post receive requests */
-    for(i = 0; i < cnt; i++) {
-        OMPI_FREE_LIST_WAIT(frag_list, item, rc); 
-        frag = (mca_btl_mvapi_frag_t*) item; 
-        frag->endpoint = endpoint; 
-        frag->sg_entry.len = frag->size + ((unsigned char*) frag->segment.seg_addr.pval- (unsigned char*) frag->hdr);  /* sizeof(mca_btl_mvapi_header_t);     */ 
-        rr_desc_post[i] = frag->rr_desc; 
-        
-    }
-    
-    frag->ret = EVAPI_post_rr_list(nic,
-                                   qp_hndl,
-                                   cnt, 
-                                   rr_desc_post);
-    if(VAPI_OK != frag->ret) {
-        MCA_BTL_IB_VAPI_ERROR(frag->ret, "EVAPI_post_rr_list");
-        return OMPI_ERROR; 
-    }
-    OPAL_THREAD_ADD32(rr_posted, cnt); 
-    return OMPI_SUCCESS; 
+#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(post_rr_high_endpoint, \
+                                             post_rr_high_additional) \
+{ \
+    mca_btl_mvapi_module_t * post_rr_high_mvapi_btl = post_rr_high_endpoint->endpoint_btl; \
+    OPAL_THREAD_LOCK(&post_rr_high_mvapi_btl->ib_lock); \
+    if(post_rr_high_endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+post_rr_high_additional && \
+       post_rr_high_endpoint->rr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
+                                            post_rr_high_endpoint->rr_posted_high, \
+                                            post_rr_high_endpoint, \
+                                            &post_rr_high_mvapi_btl->recv_free_eager, \
+                                            &post_rr_high_endpoint->rr_posted_high, \
+                                            post_rr_high_mvapi_btl->nic, \
+                                            post_rr_high_endpoint->lcl_qp_hndl_high); \
+    } \
+    OPAL_THREAD_UNLOCK(&post_rr_high_mvapi_btl->ib_lock); \
 }
 
-static inline int mca_btl_mvapi_endpoint_post_rr( mca_btl_mvapi_endpoint_t * endpoint, int additional){ 
-    mca_btl_mvapi_module_t * mvapi_btl = endpoint->endpoint_btl; 
-    int rc; 
-    OPAL_THREAD_LOCK(&endpoint->ib_lock); 
-
-    if(endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+additional && endpoint->rr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){ 
-        
-        rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - endpoint->rr_posted_high, 
-                                             endpoint, 
-                                             &mvapi_btl->recv_free_eager, 
-                                             &endpoint->rr_posted_high, 
-                                             mvapi_btl->nic, 
-                                             endpoint->lcl_qp_hndl_high
-                                             ); 
-        if(rc != OMPI_SUCCESS){ 
-            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
-            return rc; 
-        }
-    }
-    if(endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+additional && endpoint->rr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){ 
-        
-        rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - endpoint->rr_posted_low, 
-                                             endpoint, 
-                                             &mvapi_btl->recv_free_max, 
-                                             &endpoint->rr_posted_low, 
-                                             mvapi_btl->nic, 
-                                             endpoint->lcl_qp_hndl_low
-                                             ); 
-        if(rc != OMPI_SUCCESS) {
-            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
-            return rc; 
-        }
-
-    }
-    OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
-    return OMPI_SUCCESS; 
-    
-    
+#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(post_rr_low_endpoint, \
+                                             post_rr_low_additional) \
+{ \
+    mca_btl_mvapi_module_t * post_rr_low_mvapi_btl = post_rr_low_endpoint->endpoint_btl; \
+    OPAL_THREAD_LOCK(&post_rr_low_mvapi_btl->ib_lock); \
+    if(post_rr_low_endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+post_rr_low_additional && \
+       post_rr_low_endpoint->rr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
+                                            post_rr_low_endpoint->rr_posted_low, \
+                                            post_rr_low_endpoint, \
+                                            &post_rr_low_mvapi_btl->recv_free_max, \
+                                            &post_rr_low_endpoint->rr_posted_low, \
+                                            post_rr_low_mvapi_btl->nic, \
+                                            post_rr_low_endpoint->lcl_qp_hndl_low); \
+    } \
+    OPAL_THREAD_UNLOCK(&post_rr_low_mvapi_btl->ib_lock); \
 }
 
-#define DUMP_ENDPOINT(endpoint_ptr) {                                       \
-    opal_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
-    opal_output(0, "Dumping endpoint %d state",                         \
-            endpoint->endpoint_proc->proc_guid.vpid);                       \
-    opal_output(0, "Local QP hndl : %d",                            \
-            endpoint_ptr->endpoint_conn->lres->qp_hndl);                    \
-    opal_output(0, "Local QP num : %d",                             \
-            endpoint_ptr->endpoint_conn->lres->qp_prop.qp_num);             \
-    opal_output(0, "Remote QP num : %d",                            \
-            endpoint_ptr->endpoint_conn->rres->qp_num);                     \
-    opal_output(0, "Remote LID : %d",                               \
-            endpoint_ptr->endpoint_conn->rres->lid);                        \
+
+#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(post_rr_sub_cnt, \
+                                            post_rr_sub_endpoint, \
+                                            post_rr_sub_frag_list, \
+                                            post_rr_sub_rr_posted, \
+                                            post_rr_sub_nic, \
+                                            post_rr_sub_qp ) \
+{\
+    uint32_t post_rr_sub_i; \
+    int post_rr_sub_rc; \
+    opal_list_item_t* post_rr_sub_item; \
+    mca_btl_mvapi_frag_t* post_rr_sub_frag; \
+    mca_btl_mvapi_module_t *post_rr_sub_mvapi_btl = post_rr_sub_endpoint->endpoint_btl; \
+    VAPI_rr_desc_t* post_rr_sub_desc_post = post_rr_sub_mvapi_btl->rr_desc_post; \
+    for(post_rr_sub_i = 0; post_rr_sub_i < post_rr_sub_cnt; post_rr_sub_i++) { \
+        OMPI_FREE_LIST_WAIT(post_rr_sub_frag_list, post_rr_sub_item, post_rr_sub_rc); \
+        post_rr_sub_frag = (mca_btl_mvapi_frag_t*) post_rr_sub_item; \
+        post_rr_sub_frag->endpoint = post_rr_sub_endpoint; \
+        post_rr_sub_frag->sg_entry.len = post_rr_sub_frag->size + \
+            ((unsigned char*) post_rr_sub_frag->segment.seg_addr.pval-  \
+             (unsigned char*) post_rr_sub_frag->hdr);  \
+       post_rr_sub_desc_post[post_rr_sub_i] = post_rr_sub_frag->rr_desc; \
+    }\
+    post_rr_sub_frag->ret = EVAPI_post_rr_list( post_rr_sub_nic, \
+                                                post_rr_sub_qp, \
+                                                post_rr_sub_cnt, \
+                                                post_rr_sub_desc_post); \
+    if(VAPI_OK != post_rr_sub_frag->ret) { \
+        BTL_ERROR("error posting receive descriptors: %s",\
+                   VAPI_strerror(post_rr_sub_frag->ret)); \
+    } else {\
+        OPAL_THREAD_ADD32(post_rr_sub_rr_posted, post_rr_sub_cnt); \
+   }\
 }
 
+/* static inline int mca_btl_mvapi_endpoint_post_rr_sub(int cnt,  */
+/*                                               mca_btl_mvapi_endpoint_t* endpoint,  */
+/*                                               ompi_free_list_t* frag_list,  */
+/*                                               uint32_t* rr_posted,  */
+/*                                               VAPI_hca_hndl_t nic,  */
+/*                                               VAPI_qp_hndl_t qp_hndl */
+/*                                               ) */
+/* { */
+    
+/*     int rc, i;  */
+/*     opal_list_item_t* item;  */
+/*     mca_btl_mvapi_frag_t* frag;  */
+
+/*     mca_btl_mvapi_module_t *mvapi_btl = endpoint->endpoint_btl; */
+/*     VAPI_rr_desc_t* rr_desc_post = mvapi_btl->rr_desc_post;  */
+    
+/*     /\* prepare frags and post receive requests *\/ */
+/*     for(i = 0; i < cnt; i++) { */
+/*         OMPI_FREE_LIST_WAIT(frag_list, item, rc);  */
+/*         frag = (mca_btl_mvapi_frag_t*) item;  */
+/*         frag->endpoint = endpoint;  */
+/*         frag->sg_entry.len = frag->size + ((unsigned char*) frag->segment.seg_addr.pval- (unsigned char*) frag->hdr);  /\* sizeof(mca_btl_mvapi_header_t);     *\/  */
+/*         rr_desc_post[i] = frag->rr_desc;  */
+        
+/*     } */
+    
+/*     frag->ret = EVAPI_post_rr_list(nic, */
+/*                                    qp_hndl, */
+/*                                    cnt,  */
+/*                                    rr_desc_post); */
+/*     if(VAPI_OK != frag->ret) { */
+/*         BTL_ERROR("error posting receive descriptors: %s", VAPI_strerror(frag->ret)); */
+/*         return OMPI_ERROR;  */
+/*     } */
+/*     OPAL_THREAD_ADD32(rr_posted, cnt);  */
+/*     return OMPI_SUCCESS;  */
+/* } */
+
+/* static inline int mca_btl_mvapi_endpoint_post_rr( mca_btl_mvapi_endpoint_t * endpoint, int additional){  */
+/*     mca_btl_mvapi_module_t * mvapi_btl = endpoint->endpoint_btl;  */
+/*     int rc;  */
+/*     OPAL_THREAD_LOCK(&endpoint->ib_lock);  */
+
+/*     if(endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+additional && endpoint->rr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){  */
+        
+/*         rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - endpoint->rr_posted_high,  */
+/*                                              endpoint,  */
+/*                                              &mvapi_btl->recv_free_eager,  */
+/*                                              &endpoint->rr_posted_high,  */
+/*                                              mvapi_btl->nic,  */
+/*                                              endpoint->lcl_qp_hndl_high */
+/*                                              );  */
+/*         if(rc != OMPI_SUCCESS){  */
+/*             OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);  */
+/*             return rc;  */
+/*         } */
+/*     } */
+/*     if(endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+additional && endpoint->rr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){  */
+        
+/*         rc = mca_btl_mvapi_endpoint_post_rr_sub(mca_btl_mvapi_component.ib_rr_buf_max - endpoint->rr_posted_low,  */
+/*                                              endpoint,  */
+/*                                              &mvapi_btl->recv_free_max,  */
+/*                                              &endpoint->rr_posted_low,  */
+/*                                              mvapi_btl->nic,  */
+/*                                              endpoint->lcl_qp_hndl_low */
+/*                                              );  */
+/*         if(rc != OMPI_SUCCESS) { */
+/*             OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);  */
+/*             return rc;  */
+/*         } */
+
+/*     } */
+/*     OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);  */
+/*     return OMPI_SUCCESS;  */
+    
+    
+/* } */
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -327,8 +327,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
                                                                openib_btl->ib_cq_high, 
                                                                endpoint->lcl_qp_attr_high, 
                                                                &endpoint->lcl_qp_high))) { 
-        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
-                    ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
+        BTL_ERROR("error creating queue pair, error code %d", rc); 
         return rc;
     }
     srand48(getpid() * time(NULL));
@@ -340,8 +339,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
                                                                openib_btl->ib_cq_low, 
                                                                endpoint->lcl_qp_attr_low, 
                                                                &endpoint->lcl_qp_low))) { 
-        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
-                    ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
+        BTL_ERROR("error creating queue pair, error code %d", rc); 
         return rc;
     }
     endpoint->lcl_psn_low = lrand48() & 0xffffff; 
@@ -354,8 +352,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_send_connect_req(endpoint))) {
-        opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
-            ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
+        BTL_ERROR("error sending connect request, error code %d", rc); 
         return rc;
     }
     return OMPI_SUCCESS;
@@ -389,7 +386,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
                                                                openib_btl->ib_cq_low, 
                                                                endpoint->lcl_qp_attr_low, 
                                                                &endpoint->lcl_qp_low))) { 
-        BTL_ERROR("error createing queue pair, error code %d", rc); 
+        BTL_ERROR("error creating queue pair, error code %d", rc); 
         return rc;
     }
     endpoint->lcl_psn_low = lrand48() & 0xffffff; 
@@ -420,7 +417,8 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
 }
 
 /*
- *
+ * called when the openib has completed setup via the 
+ *  OOB channel 
  */
 
 static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
@@ -477,8 +475,7 @@ static void mca_btl_openib_endpoint_recv(
                  * and then reply with our QP information */
                 
                 if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_reply_start_connect(ib_endpoint, buffer))) {
-                    opal_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
-                                ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
+                    BTL_ERROR("error in endpoint reply start connect"); 
                     break;
                 }
                 
