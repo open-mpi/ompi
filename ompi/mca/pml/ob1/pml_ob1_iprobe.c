@@ -24,7 +24,7 @@ int mca_pml_ob1_iprobe(int src,
                        struct ompi_communicator_t *comm,
                        int *matched, ompi_status_public_t * status)
 {
-    int rc;
+    int rc = OMPI_SUCCESS;
     mca_pml_ob1_recv_request_t recvreq;
 
     OBJ_CONSTRUCT( &recvreq, mca_pml_ob1_recv_request_t );
