@@ -29,7 +29,7 @@ OBJ_CLASS_INSTANCE(mca_btl_portals_recv_chunk_t,
                    NULL, NULL);
 
 int
-mca_btl_portals_recv_enable(mca_btl_portals_module_t *module)
+mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
 {
     ptl_md_t md;
     ptl_handle_md_t md_h;
@@ -46,40 +46,40 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *module)
     md.user_ptr = NULL;
     md.eq_handle = PTL_EQ_NONE;
 
-    ret = PtlMEAttach(module->portals_ni_h,
+    ret = PtlMEAttach(btl->portals_ni_h,
                       BTL_PORTALS_SEND_TABLE_ID,
                       any_proc,
                       0, /* match */
                       0, /* ignore */
                       PTL_RETAIN,
                       PTL_INS_AFTER,
-                      &(module->portals_recv_reject_me_h));
+                      &(btl->portals_recv_reject_me_h));
     if (PTL_OK != ret) {
         opal_output(mca_btl_portals_component.portals_output,
                     "Error creating recv reject ME: %d", ret);
         return OMPI_ERROR;
     }
 
-    ret = PtlMDAttach(module->portals_recv_reject_me_h,
+    ret = PtlMDAttach(btl->portals_recv_reject_me_h,
                       md,
                       PTL_RETAIN,
                       &md_h);
     if (PTL_OK != ret) {
         opal_output(mca_btl_portals_component.portals_output,
                     "Error attaching recv reject MD: %d", ret);
-        mca_btl_portals_recv_disable(module);
+        mca_btl_portals_recv_disable(btl);
         return OMPI_ERROR;
     }
 
     /* create the recv chunks */
-    for (i = 0 ; i < module->portals_recv_mds_num ; ++i) {
+    for (i = 0 ; i < btl->portals_recv_mds_num ; ++i) {
         mca_btl_portals_recv_chunk_t *chunk = 
-            mca_btl_portals_recv_chunk_init(module);
+            mca_btl_portals_recv_chunk_init(btl);
         if (NULL == chunk) {
-            mca_btl_portals_recv_disable(module);
+            mca_btl_portals_recv_disable(btl);
             return OMPI_ERROR;
         }
-        opal_list_append(&(module->portals_recv_chunks),
+        opal_list_append(&(btl->portals_recv_chunks),
                          (opal_list_item_t*) chunk);
         mca_btl_portals_activate_chunk(chunk);
     }
@@ -89,23 +89,23 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *module)
 
 
 int
-mca_btl_portals_recv_disable(mca_btl_portals_module_t *module)
+mca_btl_portals_recv_disable(mca_btl_portals_module_t *btl)
 {
     opal_list_item_t *item;
 
-    if (opal_list_get_size(&module->portals_recv_chunks) > 0) {
+    if (opal_list_get_size(&btl->portals_recv_chunks) > 0) {
         while (NULL != 
-               (item = opal_list_remove_first(&module->portals_recv_chunks))) {
+               (item = opal_list_remove_first(&btl->portals_recv_chunks))) {
             mca_btl_portals_recv_chunk_t *chunk = 
                 (mca_btl_portals_recv_chunk_t*) item;
             mca_btl_portals_recv_chunk_free(chunk);
         }
     }
 
-    if (PTL_INVALID_HANDLE != module->portals_recv_reject_me_h) {
+    if (PTL_INVALID_HANDLE != btl->portals_recv_reject_me_h) {
         /* destroy the reject entry */
-        PtlMEUnlink(module->portals_recv_reject_me_h);
-        module->portals_recv_reject_me_h = PTL_INVALID_HANDLE;
+        PtlMEUnlink(btl->portals_recv_reject_me_h);
+        btl->portals_recv_reject_me_h = PTL_INVALID_HANDLE;
     }
 
     return OMPI_SUCCESS;
@@ -113,13 +113,13 @@ mca_btl_portals_recv_disable(mca_btl_portals_module_t *module)
 
 
 mca_btl_portals_recv_chunk_t* 
-mca_btl_portals_recv_chunk_init(mca_btl_portals_module_t *module)
+mca_btl_portals_recv_chunk_init(mca_btl_portals_module_t *btl)
 {
     mca_btl_portals_recv_chunk_t *chunk;
 
     chunk = OBJ_NEW(mca_btl_portals_recv_chunk_t);
-    chunk->btl = module;
-    chunk->length = module->portals_recv_mds_size;
+    chunk->btl = btl;
+    chunk->length = btl->portals_recv_mds_size;
     chunk->start = malloc(chunk->length);
     if (chunk->start == NULL) return NULL;
 
@@ -158,7 +158,7 @@ mca_btl_portals_recv_chunk_free(mca_btl_portals_recv_chunk_t *chunk)
 
 
 int
-mca_btl_portals_process_recv(mca_btl_portals_module_t *module, 
+mca_btl_portals_process_recv(mca_btl_portals_module_t *btl, 
                              ptl_event_t *ev)
 {
     mca_btl_portals_frag_t *frag = NULL;
@@ -197,7 +197,7 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
                             "received data for tag %d\n", tag);
 
         /* it's a user, so we have to manually setup the segment */
-        MCA_BTL_PORTALS_FRAG_ALLOC_USER(module, frag, ret);
+        MCA_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, ret);
         frag->type = MCA_BTL_PORTALS_FRAG_RECV;
         frag->size = ev->mlength;
         frag->base.des_dst = &frag->segment;
@@ -220,12 +220,12 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
             opal_atomic_mb(); 
         }
 
-        module->portals_reg[tag].cbfunc(&module->super,
+        btl->portals_reg[tag].cbfunc(&btl->super,
                                         tag,
                                         &frag->base,
-                                        module->portals_reg[tag].cbdata);
-        mca_btl_portals_return_chunk_part(module, frag);
-        MCA_BTL_PORTALS_FRAG_RETURN_USER(&module->super, frag);
+                                        btl->portals_reg[tag].cbdata);
+        mca_btl_portals_return_chunk_part(btl, frag);
+        MCA_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
         break;
     default:
         break;
