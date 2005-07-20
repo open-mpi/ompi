@@ -130,7 +130,7 @@ int mca_pml_ob1_component_close(void)
     OBJ_DESTRUCT(&mca_pml_ob1.buffers);
     OBJ_DESTRUCT(&mca_pml_ob1.lock);
 
-#if OMPI_ENABLE_DEBUG
+#if 0
     if (mca_pml_ob1.send_requests.fl_num_allocated !=
         mca_pml_ob1.send_requests.super.opal_list_length) {
         opal_output(0, "ob1 send requests: %d allocated %d returned\n",
