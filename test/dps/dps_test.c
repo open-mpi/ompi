@@ -1603,50 +1603,52 @@ static bool test14(void)
 {
     orte_buffer_t *bufA;
     int rc;
-    size_t i, j, k, l;
+    size_t i, j, k, l, n;
+    orte_gpr_value_t *value, **sval, **dval;
     orte_gpr_notify_data_t *src[NUM_ELEMS];
     orte_gpr_notify_data_t *dst[NUM_ELEMS];
 
     for(i=0; i<NUM_ELEMS; i++) {
         src[i] = OBJ_NEW(orte_gpr_notify_data_t);
+        if (i % 2) { /* test half with a name and with remove=true */
+            src[i]->name = strdup("test-notify-data-name");
+            src[i]->remove = true;
+        }
 		src[i]->id = i; 
 
 		/* test value counts of 0 to NUM_ELEMS-1 */
 		src[i]->cnt = i; /* value count */
 
-		if (0 < src[i]->cnt) { /* if to allow testing of GPR value count of zero */
+    	for (j=0; j < src[i]->cnt; j++) {
+        	value = OBJ_NEW(orte_gpr_value_t);
+			value->addr_mode = (orte_gpr_addr_mode_t) i+j+1; 
+			value->segment = strdup("test-gpr-notify-value-segment-name");	/* ek segment name again! */
 
-        	src[i]->values = (orte_gpr_value_t**)malloc(src[i]->cnt * sizeof(orte_gpr_value_t*));
+			/* tokens */
+			value->num_tokens = j; /* test tokens within gpr values within notify message between 0-NUM_ELEMS-1 */
+			if (value->num_tokens) { /* if to allow testing of num_tokens count of zero */
+    			value->tokens = (char**)malloc(value->num_tokens * sizeof(char*));
+    			for (k=0; k < value->num_tokens; k++) {
+        			value->tokens[k] = strdup("test-grp-notify-value-token");
+    			} /* for each token */
+			} /* if tokens */
 
-        	for (j=0; j < src[i]->cnt; j++) {
-            	src[i]->values[j] = OBJ_NEW(orte_gpr_value_t);
-				src[i]->values[j]->addr_mode = (orte_gpr_addr_mode_t) i+j+1; 
-				src[i]->values[j]->segment = strdup("test-gpr-notify-value-segment-name");	/* ek segment name again! */
-
-				/* tokens */
-				src[i]->values[j]->num_tokens = j; /* test tokens within gpr values within notify message between 0-NUM_ELEMS-1 */
-				if (src[i]->values[j]->num_tokens) { /* if to allow testing of num_tokens count of zero */
-        			src[i]->values[j]->tokens = (char**)malloc(src[i]->values[j]->num_tokens * sizeof(char*));
-        			for (k=0; k < src[i]->values[j]->num_tokens; k++) {
-            			src[i]->values[j]->tokens[k] = strdup("test-grp-notify-value-token");
-        			} /* for each token */
-				} /* if tokens */
-
-				/* keyval pairs (field name is 'cnt' same as used for value count so be carefull) */
-				src[i]->values[j]->cnt = j; /* test keyval pairs within gpr values within notify message between 0-NUM_ELEMS-1 */
-				if (src[i]->values[j]->cnt) { /* if to allow testing of keyval pair count of zero */
-        			src[i]->values[j]->keyvals = (orte_gpr_keyval_t**)malloc(src[i]->values[j]->cnt * sizeof(orte_gpr_keyval_t*));
-        			for (k=0; k < src[i]->values[j]->cnt; k++) {
-            			src[i]->values[j]->keyvals[k] = OBJ_NEW (orte_gpr_keyval_t);
-            			src[i]->values[j]->keyvals[k]->key = strdup("test-grp-notify-value-key");
-            			src[i]->values[j]->keyvals[k]->type = ORTE_INT32; /* make it simplier */
-						src[i]->values[j]->keyvals[k]->value.i32 = (uint32_t) (i*100)+(j*10)+k; /* something variable */
-        			} /* for each keyval pair */
-				} /* if keyvals */
-
-        	} /* for each value */
-		}
-	}
+			/* keyval pairs (field name is 'cnt' same as used for value count so be carefull) */
+			value->cnt = j; /* test keyval pairs within gpr values within notify message between 0-NUM_ELEMS-1 */
+			if (value->cnt) { /* if to allow testing of keyval pair count of zero */
+    			value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
+    			for (k=0; k < value->cnt; k++) {
+        			value->keyvals[k] = OBJ_NEW (orte_gpr_keyval_t);
+        			value->keyvals[k]->key = strdup("test-grp-notify-value-key");
+        			value->keyvals[k]->type = ORTE_INT32; /* make it simplier */
+					value->keyvals[k]->value.i32 = (uint32_t) (i*100)+(j*10)+k; /* something variable */
+    			} /* for each keyval pair */
+			} /* if keyvals */
+            
+            /* add the value to the data object */
+            orte_pointer_array_add(&k, src[i]->values, value);
+    	} /* for each value */
+    }
 
 	/* source data set, now create buffer and pack source data */
 
@@ -1683,55 +1685,79 @@ static bool test14(void)
 
             if ( 
                 src[j]->id != dst[j]->id ||
-                src[j]->cnt != dst[j]->cnt 
+                src[j]->cnt != dst[j]->cnt ||
+                src[j]->remove != dst[j]->remove
 				) {
                 test_comment ("test14: invalid results from unpack");
                 return(false);
             }
 
-			/* now compare each value of the cnt depedant values */
-            for (k=0; k<src[j]->cnt; k++) {
+            if ((NULL == src[j]->name && NULL != dst[j]->name) ||
+                (NULL != src[j]->name && NULL == dst[j]->name)) {
+                test_comment ("orte_dps.pack failed");
+                fprintf(test_out, "test14 (ORTE_GPR_NOTIFY_DATA) failed with mismatched names");
+                return(false);
+            }
 
-				if (src[j]->values[k]->addr_mode != dst[j]->values[k]->addr_mode) {
+            if (NULL != src[j]->name && NULL != dst[j]->name &&
+                0 != strcmp(src[j]->name, dst[j]->name)) {
+                test_comment ("orte_dps.pack failed");
+                fprintf(test_out, "test14 (ORTE_GPR_NOTIFY_DATA) failed with mismatched names");
+                return(false);
+            }
+
+			/* now compare each value of the cnt depedant values */
+            sval = (orte_gpr_value_t**)(src[j]->values)->addr;
+            dval = (orte_gpr_value_t**)(dst[j]->values)->addr;
+            /* because of the way this has been done, we can safely assume
+             * that these are in the same relative order
+             */
+            for (k=0, n=0; n < src[j]->cnt &&
+                           k < (src[j]->values)->size; k++) {
+                if (NULL != sval[k]) {
+                    n++;
+                    
+				if (sval[k]->addr_mode != dval[k]->addr_mode) {
                    test_comment ("test14: invalid results (values-addr-mode) from unpack");
                     return(false);
 				}
 
-                if (0 != strcmp(src[j]->values[k]->segment, dst[j]->values[k]->segment)) {
+                if (0 != strcmp(sval[k]->segment, dval[k]->segment)) {
                    test_comment ("test14: invalid results (values-segment) from unpack");
                     return(false);
                 }
 
-				if (src[j]->values[k]->num_tokens != dst[j]->values[k]->num_tokens) {
+				if (sval[k]->num_tokens != dval[k]->num_tokens) {
                    test_comment ("test14: invalid results (values-num_tokens) from unpack");
                     return(false);
 				}
-            	for (l=0; l<src[j]->values[k]->num_tokens; l++) {
-				   if (0 != strcmp(src[j]->values[k]->tokens[l], dst[j]->values[k]->tokens[l])) {
+            	for (l=0; l<sval[k]->num_tokens; l++) {
+				   if (0 != strcmp(sval[k]->tokens[l], dval[k]->tokens[l])) {
 					  test_comment ("test14: invalid results (values-tokens) from unpack");
 					   return(false);
 				   }
 			    } /* for each token inside each grp value */
 
-				if (src[j]->values[k]->cnt != dst[j]->values[k]->cnt) {
+				if (sval[k]->cnt != dval[k]->cnt) {
                    test_comment ("test14: invalid results (values-cnt (of keyval pairs)) from unpack");
                     return(false);
 				}
-            	for (l=0; l< src[j]->values[k]->cnt; l++) { 
-                	if (0 != strcmp(src[j]->values[k]->keyvals[l]->key, dst[j]->values[k]->keyvals[l]->key)) {
+            	for (l=0; l< sval[k]->cnt; l++) { 
+                	if (0 != strcmp(sval[k]->keyvals[l]->key, dval[k]->keyvals[l]->key)) {
 					   test_comment ("test14: invalid results (values-keyvals-key) from unpack");
 					   return(false);
                 	}
-                	if (src[j]->values[k]->keyvals[l]->type != dst[j]->values[k]->keyvals[l]->type) {
+                	if (sval[k]->keyvals[l]->type != dval[k]->keyvals[l]->type) {
 					   test_comment ("test14: invalid results (values-keyvals-type) from unpack");
 					   return(false);
                 	}
-                	if (src[j]->values[k]->keyvals[l]->value.i32 != dst[j]->values[k]->keyvals[l]->value.i32) {
+                	if (sval[k]->keyvals[l]->value.i32 != dval[k]->keyvals[l]->value.i32) {
 					   test_comment ("test14: invalid results (values-keyvals-value.i32) from unpack");
 					   return(false);
                 	}
 			   }/* for each keyvalpair inside each grp value */
             } /* for each grp value */
+        }
 
         } /* for each ELEMENT */
     }
