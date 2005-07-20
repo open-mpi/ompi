@@ -24,6 +24,10 @@
 
 #include "orte_config.h"
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif  /* HAVE_STRING_H */
+
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 
