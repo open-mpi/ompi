@@ -60,7 +60,7 @@ void mca_ptl_mx_proc_destruct(mca_ptl_mx_proc_t* proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
-    opal_hash_table_remove_proc(&mca_ptl_mx_component.mx_procs, &proc->proc_name);
+    orte_hash_table_remove_proc(&mca_ptl_mx_component.mx_procs, &proc->proc_name);
     OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
 
     /* release resources */
@@ -83,7 +83,7 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
     mca_ptl_mx_proc_t* ptl_proc;
 
     OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
-    ptl_proc = (mca_ptl_mx_proc_t*)opal_hash_table_get_proc(
+    ptl_proc = (mca_ptl_mx_proc_t*)orte_hash_table_get_proc(
          &mca_ptl_mx_component.mx_procs, &ompi_proc->proc_name);
     if(NULL != ptl_proc) {
         OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
@@ -97,7 +97,7 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
     ptl_proc->proc_name = ompi_proc->proc_name;
 
     /* add to hash table of all proc instance */
-    opal_hash_table_set_proc(
+    orte_hash_table_set_proc(
         &mca_ptl_mx_component.mx_procs, 
         &ptl_proc->proc_name, 
          ptl_proc);
@@ -139,7 +139,7 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_lookup(const orte_process_name_t *name)
 {
     mca_ptl_mx_proc_t* proc;
     OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
-    proc = (mca_ptl_mx_proc_t*)opal_hash_table_get_proc(
+    proc = (mca_ptl_mx_proc_t*)orte_hash_table_get_proc(
          &mca_ptl_mx_component.mx_procs, name);
     OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
     return proc;
