@@ -110,6 +110,7 @@ static int orte_pls_bproc_dump(orte_app_context_t* app, uint8_t** image, size_t*
 
     if (pid == 0) {
         close(pfd[0]);  /* close the read end - we are write only */
+        chdir(app->cwd);
         bproc_execdump(pfd[1], BPROC_DUMP_EXEC | BPROC_DUMP_OTHER, app->app, app->argv, app->env);
         exit(0);
     }
@@ -155,6 +156,11 @@ static int orte_pls_bproc_dump(orte_app_context_t* app, uint8_t** image, size_t*
     }
     *image = image_buffer;
     *image_len = tot_offset;
+
+    if(tot_offset == 0) {
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
 
 cleanup:
     close(pfd[0]);
@@ -219,7 +225,7 @@ static int orte_pls_bproc_undump(
         }
 
         bproc_undump(p_image[0]);  /* child is now executing */
-        opal_output(0, "orte_pls_bproc: bproc_undump failed errno=%d\n", errno);
+        opal_output(0, "orte_pls_bproc: bproc_undump(%d) failed errno=%d\n", p_image[0], errno);
         exit(1);
     }
 
@@ -475,7 +481,7 @@ static int orte_pls_bproc_launch_app(
             }
         } else {
             _exit(-1); 
-        }
+        } 
 
         if(mca_pls_bproc_seed_component.debug) {
             opal_output(0, "orte_pls_bproc: rank=%d\n", rank);
