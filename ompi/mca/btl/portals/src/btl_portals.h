@@ -138,8 +138,8 @@ int mca_btl_portals_component_close(void);
 
 
 mca_btl_base_module_t** mca_btl_portals_component_init(int *num_btls, 
-                                                 bool has_progress_threads,
-                                                 bool has_mpi_threads);
+                                                       bool has_progress_threads,
+                                                       bool has_mpi_threads);
 
 int mca_btl_portals_component_progress(void);
 
@@ -160,35 +160,36 @@ int mca_btl_portals_add_procs_compat(mca_btl_portals_module_t* btl,
 /*
  * Module configuration functions (btl_portals.c)
  */
-int mca_btl_portals_finalize(struct mca_btl_base_module_t* btl);
+int mca_btl_portals_finalize(struct mca_btl_base_module_t* btl_base);
 
-int mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl,
-                                     size_t nprocs,
-                                     struct ompi_proc_t **procs,
-                                     struct mca_btl_base_endpoint_t** peers,
-                                     ompi_bitmap_t* reachable);
+int mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
+                              size_t nprocs,
+                              struct ompi_proc_t **procs,
+                              struct mca_btl_base_endpoint_t** peers,
+                              ompi_bitmap_t* reachable);
 
-int mca_btl_portals_del_procs(struct mca_btl_base_module_t* btl,
-                                     size_t nprocs,
-                                     struct ompi_proc_t **procs,
-                                     struct mca_btl_base_endpoint_t** peers);
+int mca_btl_portals_del_procs(struct mca_btl_base_module_t* btl_base,
+                              size_t nprocs,
+                              struct ompi_proc_t **procs,
+                              struct mca_btl_base_endpoint_t** peers);
+
 /*
  * stubbed functions 
  */
-int mca_btl_portals_register(struct mca_btl_base_module_t* btl,
+int mca_btl_portals_register(struct mca_btl_base_module_t* btl_base,
                              mca_btl_base_tag_t tag,
                              mca_btl_base_module_recv_cb_fn_t cbfunc,
                              void* cbdata);
 
 mca_btl_base_descriptor_t* 
-mca_btl_portals_alloc(struct mca_btl_base_module_t* btl, 
+mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base, 
                       size_t size); 
 
-int mca_btl_portals_free(struct mca_btl_base_module_t* btl, 
+int mca_btl_portals_free(struct mca_btl_base_module_t* btl_base, 
                          mca_btl_base_descriptor_t* des); 
 
 mca_btl_base_descriptor_t* 
-mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
+mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
                             struct ompi_convertor_t* convertor,
@@ -196,24 +197,24 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
                             size_t* size);
 
 mca_btl_base_descriptor_t* 
-mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl, 
+mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base, 
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
                             struct ompi_convertor_t* convertor,
                             size_t reserve,
                             size_t* size); 
 
-int mca_btl_portals_send(struct mca_btl_base_module_t* btl,
+int mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                          struct mca_btl_base_endpoint_t* btl_peer,
                          struct mca_btl_base_descriptor_t* descriptor, 
                          mca_btl_base_tag_t tag);
 
-int mca_btl_portals_put(struct mca_btl_base_module_t* btl,
+int mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
                         struct mca_btl_base_endpoint_t* btl_peer,
                         struct mca_btl_base_descriptor_t* decriptor);
 
 
-int mca_btl_portals_get(struct mca_btl_base_module_t* btl,
+int mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
                         struct mca_btl_base_endpoint_t* btl_peer,
                         struct mca_btl_base_descriptor_t* decriptor);
 

@@ -147,19 +147,21 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
                                  size_t nprocs, struct ompi_proc_t **procs,
                                  ptl_process_id_t **portals_procs)
 {
-    int ret, my_rid;
-    ptl_process_id_t *info;
-    char *nidmap = NULL;
-    char *pidmap = NULL;
-    char *nid_str;
-    char *pid_str;
-    const size_t map_size = nprocs * 12 + 1; /* 12 is max length of long in decimal */
-    size_t size, i;
-    char *tmp;
-    ompi_proc_t* proc_self = ompi_proc_local();
-    int max_interfaces;
+    int ret;
 
     if (use_modex) {
+        int my_rid;
+        ptl_process_id_t *info;
+        char *nidmap = NULL;
+        char *pidmap = NULL;
+        char *nid_str;
+        char *pid_str;
+        const size_t map_size = nprocs * 12 + 1; /* 12 is max length of long in decimal */
+        size_t size, i;
+        char *tmp;
+        ompi_proc_t* proc_self = ompi_proc_local();
+        int max_interfaces;
+
         /*
          * Do all the NID/PID map setup
          */
@@ -258,19 +260,15 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
                                 "PtlNIInit failed, returning %d\n", ret);
             return OMPI_ERR_FATAL;
         }
-
-#if 0
-        PtlNIDebug(btl->portals_ni_h, PTL_DBG_ALL | PTL_DBG_NI_ALL);
-#endif
     } else { /* use_modex */
-        int nptl_procs = 0;
+        unsigned int nptl_procs, rank, i;
 
         /*
          * FIXME - XXX - FIXME 
          * BWB - implicit assumption that cnos procs list will match our
          *       procs list.  Don't know what to do about that...
          */
-        ret = PtlGetRank(&my_rid, &nptl_procs);
+        ret = PtlGetRank(&rank, &nptl_procs);
         if (ret != PTL_OK) {
             opal_output_verbose(10, mca_btl_portals_component.portals_output,
                                 "PtlGetRank() returned %d", ret);
@@ -300,6 +298,10 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
             }
         }
     }
+
+#if 0
+    PtlNIDebug(btl->portals_ni_h, PTL_DBG_ALL | PTL_DBG_NI_ALL);
+#endif
 
     return OMPI_SUCCESS;
 }

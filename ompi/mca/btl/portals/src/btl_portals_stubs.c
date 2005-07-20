@@ -31,7 +31,7 @@
 
 
 mca_btl_base_descriptor_t* 
-mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl, 
+mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base, 
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
                             struct ompi_convertor_t* convertor,
@@ -44,7 +44,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl,
 
 
 int
-mca_btl_portals_put(struct mca_btl_base_module_t* btl,
+mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
                     struct mca_btl_base_descriptor_t* decriptor)
 {
@@ -54,7 +54,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl,
 
 
 int
-mca_btl_portals_get(struct mca_btl_base_module_t* btl,
+mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
                     struct mca_btl_base_descriptor_t* decriptor)
 {

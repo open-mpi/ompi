@@ -81,7 +81,7 @@ static opal_output_stream_t portals_output_stream = {
 
 static inline char*
 param_register_string(const char* param_name, 
-                                 const char* default_value)
+                      const char* default_value)
 {
     char *param_value;
     int id = mca_base_param_register_string("btl", "portals",
@@ -94,7 +94,7 @@ param_register_string(const char* param_name,
 
 static inline int
 param_register_int(const char* param_name, 
-                              int default_value)
+                   int default_value)
 {
     int id = mca_base_param_register_int("btl", "portals", param_name,
                                          NULL, default_value);
@@ -241,7 +241,7 @@ mca_btl_portals_component_init(int *num_btls,
 
     *num_btls = 0;
 
-    if (enable_progress_threads || enable_mpi_threads) {
+    if (enable_progress_threads) {
         opal_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because threads enabled");
         return NULL;

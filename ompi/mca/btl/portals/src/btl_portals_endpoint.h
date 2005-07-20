@@ -33,7 +33,7 @@ extern "C" {
  */
 
 struct mca_btl_base_endpoint_t {
-    opal_list_item_t            super;
+    opal_list_item_t super;
 
     /** BTL instance that created this connection */
     struct mca_btl_portals_module_t* endpoint_btl;

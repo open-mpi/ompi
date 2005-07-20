@@ -36,11 +36,11 @@ typedef struct mca_btl_portals_recv_chunk_t mca_btl_portals_recv_chunk_t;
 OBJ_CLASS_DECLARATION(mca_btl_portals_recv_chunk_t);
 
 
-int mca_btl_portals_recv_enable(mca_btl_portals_module_t *module);
+int mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl);
 
-int mca_btl_portals_recv_disable(mca_btl_portals_module_t *module);
+int mca_btl_portals_recv_disable(mca_btl_portals_module_t *btl);
 
-int mca_btl_portals_process_recv(mca_btl_portals_module_t *module, 
+int mca_btl_portals_process_recv(mca_btl_portals_module_t *btl, 
                                  ptl_event_t *ev);
 
 /**
@@ -51,7 +51,7 @@ int mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
  * Module lock must be held before calling this function
  */
 mca_btl_portals_recv_chunk_t* 
-mca_btl_portals_recv_chunk_init(mca_btl_portals_module_t *module);
+mca_btl_portals_recv_chunk_init(mca_btl_portals_module_t *btl);
 
 
 /**
@@ -123,7 +123,7 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
 
 
 static inline void
-mca_btl_portals_return_chunk_part(mca_btl_portals_module_t *module,
+mca_btl_portals_return_chunk_part(mca_btl_portals_module_t *btl,
                                   mca_btl_portals_frag_t *frag) 
 {
     mca_btl_portals_recv_chunk_t *chunk = frag->u.recv_frag.chunk;
