@@ -51,11 +51,10 @@ struct mca_btl_openib_frag_t {
     mca_btl_openib_frag_type_t type; 
     size_t size; 
     int rc; 
-    
     union{ 
         struct ibv_recv_wr rr_desc; 
         struct ibv_send_wr sr_desc; 
-    }; 
+    } wr_desc;  
     struct ibv_sge sg_entry;  
     struct ibv_mr *mr; 
     mca_btl_openib_header_t *hdr;

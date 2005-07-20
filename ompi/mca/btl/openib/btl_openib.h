@@ -32,7 +32,7 @@
 #include "mca/btl/btl.h"
 #include "opal/util/output.h"
 #include "mca/mpool/mpool.h" 
-#include "btl_openib_error.h" 
+#include "mca/btl/base/btl_base_error.h" 
 
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h" 

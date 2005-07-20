@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 #include "btl_openib_frag.h" 
 #include "mca/mpool/openib/mpool_openib.h" 
 
@@ -45,12 +61,12 @@ static void mca_btl_openib_send_frag_common_constructor(mca_btl_openib_frag_t* f
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     
-    frag->sr_desc.wr_id = (uint64_t) frag; 
-    frag->sr_desc.sg_list = &frag->sg_entry; 
-    frag->sr_desc.num_sge = 1; 
-    frag->sr_desc.opcode = IBV_WR_SEND; 
-    frag->sr_desc.send_flags = IBV_SEND_SIGNALED; 
-    frag->sr_desc.next = NULL; 
+    frag->wr_desc.sr_desc.wr_id = (uint64_t) frag; 
+    frag->wr_desc.sr_desc.sg_list = &frag->sg_entry; 
+    frag->wr_desc.sr_desc.num_sge = 1; 
+    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
+    frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    frag->wr_desc.sr_desc.next = NULL; 
 }
 
 static void mca_btl_openib_recv_frag_common_constructor(mca_btl_openib_frag_t* frag) 
@@ -62,10 +78,10 @@ static void mca_btl_openib_recv_frag_common_constructor(mca_btl_openib_frag_t* f
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
    
-    frag->rr_desc.wr_id = (uint64_t) frag; 
-    frag->rr_desc.sg_list = &frag->sg_entry; 
-    frag->rr_desc.num_sge = 1; 
-    frag->rr_desc.next = NULL; 
+    frag->wr_desc.rr_desc.wr_id = (uint64_t) frag; 
+    frag->wr_desc.rr_desc.sg_list = &frag->sg_entry; 
+    frag->wr_desc.rr_desc.num_sge = 1; 
+    frag->wr_desc.rr_desc.next = NULL; 
 }
 
 static void mca_btl_openib_send_frag_eager_constructor(mca_btl_openib_frag_t* frag) 

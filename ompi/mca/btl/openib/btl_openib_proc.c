@@ -75,16 +75,12 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_ompi(ompi_proc_t* ompi_
             ib_proc != (mca_btl_openib_proc_t*)
             opal_list_get_end(&mca_btl_openib_component.ib_procs);
             ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
-
         if(ib_proc->proc_ompi == ompi_proc) {
             OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
             return ib_proc;
         }
-
     }
-
     OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
-
     return NULL;
 }
 
@@ -105,19 +101,15 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     module_proc = mca_btl_openib_proc_lookup_ompi(ompi_proc);
 
     if(module_proc != NULL) {
-
         /* Gotcha! */
         return module_proc;
     }
 
     /* Oops! First time, gotta create a new IB proc
      * out of the ompi_proc ... */
-
     module_proc = OBJ_NEW(mca_btl_openib_proc_t);
-
     /* Initialize number of peer */
     module_proc->proc_endpoint_count = 0;
-
     module_proc->proc_ompi = ompi_proc;
 
     /* build a unique identifier (of arbitrary
@@ -156,6 +148,5 @@ int mca_btl_openib_proc_insert(mca_btl_openib_proc_t* module_proc,
     /* insert into endpoint array */
     module_endpoint->endpoint_proc = module_proc;
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
-
     return OMPI_SUCCESS;
 }

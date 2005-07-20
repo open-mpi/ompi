@@ -63,6 +63,11 @@ mca_btl_openib_module_t mca_btl_openib_module = {
 
 
 
+/* 
+ *  add a proc to this btl module 
+ *    creates an endpoint that is setup on the
+ *    first send to the endpoint
+ */ 
 int mca_btl_openib_add_procs(
     struct mca_btl_base_module_t* btl, 
     size_t nprocs, 
@@ -117,13 +122,17 @@ int mca_btl_openib_add_procs(
     return OMPI_SUCCESS;
 }
 
+
+/* 
+ * delete the proc as reachable from this btl module 
+ */
 int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl, 
         size_t nprocs, 
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
 {
-    /* Stub */
-    DEBUG_OUT("Stub\n");
+    /* TODO */ 
+    BTL_DEBUG_OUT("Stub\n");
     return OMPI_SUCCESS;
 }
 
@@ -154,6 +163,9 @@ int mca_btl_openib_register(
  *
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
+ * 
+ * When allocating a segment we pull a pre-alllocated segment 
+ * from one of two free lists, an eager list and a max list
  */
 mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     struct mca_btl_base_module_t* btl,
@@ -185,6 +197,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
 /** 
  * Return a segment 
  * 
+ * Return the segment to the appropriate 
+ *  preallocated segment list 
  */ 
 int mca_btl_openib_free(
                     struct mca_btl_base_module_t* btl, 
@@ -210,11 +224,27 @@ int mca_btl_openib_free(
 
 
 /**
- * Pack data and return a descriptor that can be
+ * register user buffer or pack 
+ * data into pre-registered buffer and return a 
+ * descriptor that can be
  * used for send/put.
  *
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
+ *  
+ * prepare source's behavior depends on the following: 
+ * Has a valid memory registration been passed to prepare_src? 
+ *    if so we attempt to use the pre-registred user-buffer, if the memory registration 
+ *    is to small (only a portion of the user buffer) then we must reregister the user buffer 
+ * Has the user requested the memory to be left pinned? 
+ *    if so we insert the memory registration into a memory tree for later lookup, we 
+ *    may also remove a previous registration if a MRU (most recently used) list of 
+ *    registions is full, this prevents resources from being exhausted.
+ * Is the requested size larger than the btl's max send size? 
+ *    if so and we aren't asked to leave the registration pinned than we register the memory if 
+ *    the users buffer is contiguous 
+ * Otherwise we choose from two free lists of pre-registered memory in which to pack the data into. 
+ * 
  */
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct mca_btl_base_module_t* btl,
@@ -229,7 +259,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     mca_btl_openib_frag_t* frag; 
     mca_mpool_openib_registration_t * openib_reg; 
     struct iovec iov; 
-    int32_t iov_count = 1; 
+    uint32_t iov_count = 1; 
     size_t max_data = *size; 
     int32_t free_after; 
     int rc; 
@@ -238,13 +268,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     openib_btl = (mca_btl_openib_module_t*) btl; 
     openib_reg = (mca_mpool_openib_registration_t*) registration; 
 
-    /** if the data fits in the eager limit and we aren't told to pinn then we 
-        simply pack, if the data fits in the eager limit and the data is non contiguous 
-        then we pack **/ 
-
     
     if(NULL != openib_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
         bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
+        size_t reg_len; 
+
+        /* the memory is already pinned and we have contiguous user data */ 
+
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -254,15 +284,16 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         iov.iov_base = NULL; 
         
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
-        
-        /* first we will try to find this address in the memory tree (from MPI_Alloc_mem) */ 
-        
+                
         frag->segment.seg_len = max_data; 
         frag->segment.seg_addr.pval = iov.iov_base; 
         
-        size_t reg_len; 
+        
         reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
         if(frag->segment.seg_len > reg_len) { 
+            
+            /* the pinned region is too small! we have to re-pinn it */ 
+            
             size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
                 + frag->segment.seg_len - reg_len; 
             void * base_addr = openib_reg->base_reg.base; 
@@ -299,12 +330,14 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             } 
 
             OBJ_RETAIN(openib_reg); 
+            
             if(is_leave_pinned) {
+                /* we should leave the memory pinned so put the memory on the MRU list */ 
                 openib_reg->base_reg.is_leave_pinned = is_leave_pinned; 
                 opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             } 
-        }   
-        else if(is_leave_pinned) { 
+        } else if(is_leave_pinned) {
+            /* the current memory region is large enough and we should leave the memory pinned */  
             if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
                 BTL_ERROR("error removing item from reg_mru_list"); 
                 return NULL; 
@@ -333,6 +366,10 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                ompi_convertor_need_buffers(convertor) == 0 && 
                reserve == 0)
     {
+        /* The user buffer is contigous and we need to leave the buffer pinned or we are asked to send 
+           more than the max send size.  Note that the memory was not already pinned because we have 
+           no registration information passed to us */ 
+
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -350,14 +387,19 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
         
         if(mca_btl_openib_component.leave_pinned) { 
+            /* so we need to leave pinned  which means we must check and see if we 
+               have room on the MRU list */
+            
             if(mca_btl_openib_component.reg_mru_len <= openib_btl->reg_mru_list.opal_list_length  ) {
-                
+                /* we have the maximum number of entries on the MRU list, time to 
+                   pull something off and make room. */ 
+
                 mca_mpool_openib_registration_t* old_reg =
                     (mca_mpool_openib_registration_t*)
                     opal_list_remove_last(&openib_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
 
@@ -365,7 +407,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 
                 if(OMPI_SUCCESS != rc) { 
-                    opal_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing memory region from memory pool tree"); 
                     return NULL; 
                 }
                 
@@ -390,7 +432,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                     
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
             
-        } else { 
+        } else {
+            /* we don't need to leave the memory pinned so just register it.. */ 
             openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
                                             iov.iov_base, 
                                             max_data, 
@@ -410,20 +453,23 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->openib_reg = openib_reg; 
-        DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr); 
+        BTL_DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr); 
         
 
         return &frag->base;
 
     } else if (max_data+reserve <=  btl->btl_eager_limit) { 
-           
+        /* the data is small enough to fit in the eager frag and 
+           either we received no prepinned memory or leave pinned is 
+           not set
+        */    
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
         } 
         
         iov.iov_len = max_data; 
-        iov.iov_base = frag->segment.seg_addr.lval + reserve; 
+        iov.iov_base = (unsigned char*) frag->segment.seg_addr.lval + reserve; 
         
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 
@@ -484,6 +530,14 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
  *
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
+ * prepare dest's behavior depends on the following: 
+ * Has a valid memory registration been passed to prepare_src? 
+ *    if so we attempt to use the pre-registred user-buffer, if the memory registration 
+ *    is to small (only a portion of the user buffer) then we must reregister the user buffer 
+ * Has the user requested the memory to be left pinned? 
+ *    if so we insert the memory registration into a memory tree for later lookup, we 
+ *    may also remove a previous registration if a MRU (most recently used) list of 
+ *    registions is full, this prevents resources from being exhausted.
  */
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     struct mca_btl_base_module_t* btl,
@@ -525,13 +579,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
             rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                opal_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error removing memory region from memory pool tree"); 
                 return NULL; 
             } 
 
             if(is_leave_pinned) { 
                 if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
             }
@@ -550,7 +604,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                        (mca_mpool_base_registration_t*) openib_reg); 
             
             if(OMPI_SUCCESS != rc) {
-                opal_output(0,"%s:%d:%s error inserting memory region into memory pool tree", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error inserting memory region into memory pool tree"); 
                 return NULL;
             }
             OBJ_RETAIN(openib_reg); 
@@ -563,7 +617,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         } 
         else if(is_leave_pinned){ 
             if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error removing item from reg_mru_list"); 
                 return NULL; 
             }    
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg); 
@@ -581,13 +635,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                     opal_list_remove_last(&openib_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    opal_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing item from reg_mru_list"); 
                     return NULL; 
                 }
                 
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 if(OMPI_SUCCESS !=rc ) { 
-                    opal_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                    BTL_ERROR("error removing memory region from memory pool tree"); 
                     return NULL; 
                 } 
                 
@@ -607,7 +661,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                        (void*) (&openib_btl->super), 
                                        (mca_mpool_base_registration_t*)  openib_reg); 
             if(OMPI_SUCCESS != rc){ 
-                opal_output(0,"%s:%d:%s error inserting memory region into memory pool", __FILE__, __LINE__,  __func__); 
+                BTL_ERROR("error inserting memory region into memory pool"); 
                 return NULL;
             } 
             
@@ -638,7 +692,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
     frag->openib_reg = openib_reg; 
-    DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0]); 
+    BTL_DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0]); 
 
     return &frag->base; 
     
@@ -648,7 +702,8 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_openib_module_t* openib_btl; 
     openib_btl = (mca_btl_openib_module_t*) btl; 
-    
+
+#if 0 
     if(openib_btl->send_free_eager.fl_num_allocated != 
        openib_btl->send_free_eager.super.opal_list_length){ 
         opal_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
@@ -681,15 +736,13 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
                     openib_btl->recv_free_max.fl_num_allocated, 
                     openib_btl->recv_free_max.super.opal_list_length); 
     }
+#endif 
 
     return OMPI_SUCCESS;
 }
 
 /*
- *  Initiate a send. If this is the first fragment, use the fragment
- *  descriptor allocated with the send requests, otherwise obtain
- *  one from the free list. Initialize the fragment and foward
- *  on to the peer.
+ *  Initiate a send. 
  */
 
 int mca_btl_openib_send( 
@@ -721,80 +774,32 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     struct ibv_send_wr* bad_wr; 
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     frag->endpoint = endpoint;
-    frag->sr_desc.opcode = IBV_WR_RDMA_WRITE; 
-    frag->sr_desc.send_flags = IBV_SEND_SIGNALED; 
-    frag->sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
-    frag->sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
+    frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_WRITE; 
+    frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
+    frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
     frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
     frag->sg_entry.length  = frag->base.des_src->seg_len; 
     
-    DEBUG_OUT("frag->sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
-          , frag->sr_desc.wr.rdma.remote_addr 
-          , frag->sr_desc.wr.rdma.rkey
-          , frag->sg_entry.addr
-          , frag->sg_entry.length); 
+    BTL_DEBUG_OUT("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
+                  , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
+                  , frag->wr_desc.sr_desc.wr.rdma.rkey
+                  , frag->sg_entry.addr
+                  , frag->sg_entry.length); 
 
     if(ibv_post_send(endpoint->lcl_qp_low, 
-                     &frag->sr_desc, 
+                     &frag->wr_desc.sr_desc, 
                      &bad_wr)){ 
-        opal_output(0, "%s: error posting send request errno says %s\n", __func__, strerror(errno)); 
+        BTL_ERROR("error posting send request errno says %s", strerror(errno)); 
         return OMPI_ERROR; 
     }  
-
-    mca_btl_openib_endpoint_post_rr(endpoint, 1); 
-
+    
+    MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+    MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+    
     return OMPI_SUCCESS; 
 
 }
-
-
-
-/*
- * Asynchronous event handler to detect unforseen
- * events. Usually, such events are catastrophic.
- * Should have a robust mechanism to handle these
- * events and abort the OMPI application if necessary.
- *
- */
-/* static void async_event_handler(VAPI_hca_hndl_t hca_hndl, */
-/*         VAPI_event_record_t * event_p, */
-/*         void *priv_data) */
-/* { */
-/*     switch (event_p->type) { */
-/*         case VAPI_QP_PATH_MIGRATED: */
-/*         case VAPI_EEC_PATH_MIGRATED: */
-/*         case VAPI_QP_COMM_ESTABLISHED: */
-/*         case VAPI_EEC_COMM_ESTABLISHED: */
-/*         case VAPI_SEND_QUEUE_DRAINED: */
-/*         case VAPI_PORT_ACTIVE: */
-/*             { */
-/*                 DEBUG_OUT("Got an asynchronous event: %s\n", */
-/*                         VAPI_event_record_sym(event_p->type)); */
-/*                 break; */
-/*             } */
-/*         case VAPI_CQ_ERROR: */
-/*         case VAPI_LOCAL_WQ_INV_REQUEST_ERROR: */
-/*         case VAPI_LOCAL_WQ_ACCESS_VIOL_ERROR: */
-/*         case VAPI_LOCAL_WQ_CATASTROPHIC_ERROR: */
-/*         case VAPI_PATH_MIG_REQ_ERROR: */
-/*         case VAPI_LOCAL_EEC_CATASTROPHIC_ERROR: */
-/*         case VAPI_LOCAL_CATASTROPHIC_ERROR: */
-/*         case VAPI_PORT_ERROR: */
-/*             { */
-/*                 opal_output(0, "Got an asynchronous event: %s (%s)", */
-/*                         VAPI_event_record_sym(event_p->type), */
-/*                         VAPI_event_syndrome_sym(event_p-> */
-/*                             syndrome)); */
-/*                 break; */
-/*             } */
-/*         default: */
-/*             opal_output(0, "Warning!! Got an undefined " */
-/*                     "asynchronous event\n"); */
-/*     } */
-
-/* } */
-
-
 
 
 int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
@@ -809,36 +814,30 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     
     
     if(NULL == openib_btl->ib_pd) {
-        opal_output(0, "%s: error allocating pd for %s errno says %s\n", 
-                    __func__, 
-                    ibv_get_device_name(openib_btl->ib_dev), 
-                    strerror(errno)); 
+        BTL_ERROR("error allocating pd for %s errno says %s\n", 
+                  ibv_get_device_name(openib_btl->ib_dev), 
+                  strerror(errno)); 
         return OMPI_ERROR;
     }
-    
+
+    /* Create the low and high priority queue pairs */ 
     openib_btl->ib_cq_low = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
     
     if(NULL == openib_btl->ib_cq_low) {
-        opal_output(0, "%s: error creating low priority cq for %s errno says %s\n",
-                    __func__, 
-                    ibv_get_device_name(openib_btl->ib_dev), 
-                    strerror(errno)); 
+        BTL_ERROR("error creating low priority cq for %s errno says %s\n",
+                  ibv_get_device_name(openib_btl->ib_dev), 
+                  strerror(errno)); 
         return OMPI_ERROR;
     }
 
     openib_btl->ib_cq_high = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
     
     if(NULL == openib_btl->ib_cq_high) {
-        opal_output(0, "%s: error creating high priority cq for %s errno says %s\n", 
-                    __func__, 
-                    ibv_get_device_name(openib_btl->ib_dev), 
-                    strerror(errno)); 
+        BTL_ERROR("error creating high priority cq for %s errno says %s\n", 
+                  ibv_get_device_name(openib_btl->ib_dev), 
+                  strerror(errno)); 
         return OMPI_ERROR;
     }
         
-    /* TODO: EVAPI_set_qsync_event_handler? */ 
-
-    
-    
     return OMPI_SUCCESS;
 }
