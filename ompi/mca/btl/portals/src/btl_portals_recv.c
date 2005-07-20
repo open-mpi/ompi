@@ -176,7 +176,7 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure to start event\n");
-
+        } else {
             OPAL_THREAD_ADD32(&(chunk->pending), 1);
         }
         break;
@@ -187,7 +187,8 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
 
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
-                        "Failure to start event\n");
+                        "Failure to end event\n");
+            OPAL_THREAD_ADD32(&(chunk->pending), -1);
             return OMPI_ERROR;
         } 
 
@@ -223,6 +224,8 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *module,
                                         tag,
                                         &frag->base,
                                         module->portals_reg[tag].cbdata);
+        mca_btl_portals_return_chunk_part(module, frag);
+        MCA_BTL_PORTALS_FRAG_RETURN_USER(&module->super, frag);
         break;
     default:
         break;

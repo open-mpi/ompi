@@ -252,19 +252,14 @@ mca_btl_portals_free(struct mca_btl_base_module_t* btl,
     mca_btl_portals_module_t* portals_btl = (mca_btl_portals_module_t*) btl; 
     mca_btl_portals_frag_t* frag = (mca_btl_portals_frag_t*) des; 
 
-    if (frag->type == MCA_BTL_PORTALS_FRAG_SEND) {
-        if (frag->size == 0) {
-            MCA_BTL_PORTALS_FRAG_RETURN_USER(btl, frag); 
-        } else if (frag->size == btl->btl_eager_limit){ 
-            MCA_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag); 
-        } else if (frag->size == btl->btl_max_send_size) {
-            MCA_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag); 
-        }  else {
-            return OMPI_ERR_BAD_PARAM;
-        }
-    } else {
-        mca_btl_portals_return_chunk_part(portals_btl, frag);
-        MCA_BTL_PORTALS_FRAG_RETURN_USER(btl, frag);
+    if (frag->size == 0) {
+        MCA_BTL_PORTALS_FRAG_RETURN_USER(btl, frag); 
+    } else if (frag->size == btl->btl_eager_limit){ 
+        MCA_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag); 
+    } else if (frag->size == btl->btl_max_send_size) {
+        MCA_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag); 
+    }  else {
+        return OMPI_ERR_BAD_PARAM;
     }
 
     return OMPI_SUCCESS; 

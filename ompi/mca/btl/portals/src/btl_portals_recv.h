@@ -116,7 +116,7 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
     }
 
     OPAL_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,
-                         "new receive buffer posted"));
+                         "*** new receive buffer posted ***"));
 
     return OMPI_SUCCESS;
 }
@@ -129,8 +129,11 @@ mca_btl_portals_return_chunk_part(mca_btl_portals_module_t *module,
     mca_btl_portals_recv_chunk_t *chunk = frag->u.recv_frag.chunk;
     int ret;
 
+    OPAL_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,
+                         "*** return chunk called %d %d ***", 
+                         chunk->full, chunk->pending));
+    OPAL_THREAD_ADD32(&(chunk->pending), -1);
     if (chunk->full == true) {
-        OPAL_THREAD_ADD32(&(chunk->pending), -1);
         if (chunk->pending == 0) {
             ret = mca_btl_portals_activate_chunk(chunk);
             if (OMPI_SUCCESS != ret) {
