@@ -40,6 +40,7 @@
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/util/session_dir.h"
 #include "orte/util/univ_info.h"
 #include "pls_bproc_orted.h"
 
@@ -480,16 +481,13 @@ cleanup:
     return rc;
 }
 
-/**
- *  Query for all processes allocated to the job and terminate
- *  those on the current node.
- */
 int orte_pls_bproc_orted_terminate_job(orte_jobid_t jobid) {
     orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
 
 int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc) {
+    orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
 
@@ -497,9 +495,10 @@ int orte_pls_bproc_orted_finalize(void) {
     OPAL_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
     opal_condition_wait(&mca_pls_bproc_orted_component.condition, 
                         &mca_pls_bproc_orted_component.lock);
-    OPAL_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
-
+    orte_iof.iof_flush();
     pls_bproc_orted_remove_dir();
+    orte_session_dir_finalize(orte_process_info.my_name);
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
     return ORTE_SUCCESS;
 }
 
