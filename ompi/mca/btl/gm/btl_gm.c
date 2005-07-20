@@ -803,7 +803,8 @@ int mca_btl_gm_get(
 int mca_btl_gm_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
-    
+
+#if 0
     if(gm_btl->gm_frag_eager.fl_num_allocated != 
        gm_btl->gm_frag_eager.super.opal_list_length){ 
         opal_output(0, "btl gm_frag_eager: %d allocated %d returned \n", 
@@ -822,6 +823,7 @@ int mca_btl_gm_finalize(struct mca_btl_base_module_t* btl)
                     gm_btl->gm_frag_user.fl_num_allocated, 
                     gm_btl->gm_frag_user.super.opal_list_length); 
     }
+#endif
 
     OBJ_DESTRUCT(&gm_btl->gm_lock);
     OBJ_DESTRUCT(&gm_btl->gm_frag_eager);
