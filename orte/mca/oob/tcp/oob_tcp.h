@@ -134,10 +134,11 @@ static inline uint64_t ntoh64(uint64_t val)
  *
  * @param name
  */
-#define OMPI_PROCESS_NAME_HTON(n) \
+#define OMPI_PROCESS_NAME_NTOH(n) \
     n.cellid = ntohl(n.cellid); \
     n.jobid = ntohl(n.jobid); \
     n.vpid = ntohl(n.vpid);  
+
 #endif
 
 /**
