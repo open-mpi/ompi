@@ -41,8 +41,10 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure to start send event\n");
+            /* unlink, since we don't expect to get an end or ack */
+            PtlMDUnlink(ev->md_handle);
             frag->base.des_cbfunc(&btl->super,
-                                  frag->u.send_frag.endpoint,
+                                  frag->endpoint,
                                   &frag->base,
                                   OMPI_ERROR);
         }
@@ -55,8 +57,10 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure to end send event\n");
+            /* unlink, since we don't expect to get an ack */
+            PtlMDUnlink(ev->md_handle);
             frag->base.des_cbfunc(&btl->super,
-                                  frag->u.send_frag.endpoint,
+                                  frag->endpoint,
                                   &frag->base,
                                   OMPI_ERROR);
         }
@@ -69,17 +73,17 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                              "send: PTL_EVENT_ACK for 0x%x, Ox%x",
                              frag, frag->base.des_cbfunc));
+
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
-                        "Failure to end send event\n");
+                        "Failure in send event ack\n");
             frag->base.des_cbfunc(&btl->super,
-                                  frag->u.send_frag.endpoint,
+                                  frag->endpoint,
                                   &frag->base,
                                   OMPI_ERROR);
         } else if (0 == ev->mlength) {
             /* other side did not receive the message */
 
-            /* BWB - implement check for retransmit */
             opal_output(mca_btl_portals_component.portals_output,
                         "message was dropped.  Adding to front of queue list");
             opal_list_prepend(&(btl->portals_queued_sends),
@@ -88,17 +92,12 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
         } else {
             /* the other side received the message */
             OPAL_THREAD_ADD32(&btl->portals_outstanding_sends, -1);
-            /* we're done with the md - return it.  Do this before
-               anything else in case the PML releases resources, then
-               gets more resources (ie, what's currently in this
-               md) */
-            PtlMDUnlink(ev->md_handle);
 
             assert(ev->mlength == frag->segment.seg_len);
 
             /* let the PML know we're done... */
             frag->base.des_cbfunc(&btl->super,
-                                  frag->u.send_frag.endpoint,
+                                  frag->endpoint,
                                   &frag->base,
                                   OMPI_SUCCESS);
 
@@ -131,13 +130,11 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
     int32_t num_sends;
     int ret;
 
-    frag->u.send_frag.endpoint = endpoint;
-    frag->u.send_frag.hdr.tag = tag;
-    frag->u.send_frag.btl = btl;
+    frag->endpoint = endpoint;
+    frag->hdr.tag = tag;
     
     num_sends = OPAL_THREAD_ADD32(&btl->portals_outstanding_sends, 1);
 
-    /* BWB - implement check for too many pending messages */
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                         "send called for frag 0x%x, 0x%x", 
                         frag, frag->base.des_cbfunc));

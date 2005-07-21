@@ -117,6 +117,9 @@ struct mca_btl_portals_module_t {
     /* queued sends */
     opal_list_t portals_queued_sends;
 
+    /* key to use for next rdma operation */
+    volatile int64_t portals_rdma_key;
+
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;
     /* the limits returned from PtlNIInit for interface */

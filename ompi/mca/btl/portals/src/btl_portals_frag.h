@@ -22,38 +22,19 @@ extern "C" {
 #endif
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t);
 
-typedef enum {
-    OMPI_BTL_PORTALS_FRAG_SEND,
-    OMPI_BTL_PORTALS_FRAG_RECV
-} mca_btl_portals_frag_type_t;
-
-struct mca_btl_portals_send_frag_t {
-    struct mca_btl_portals_module_t *btl;
-    struct mca_btl_base_endpoint_t *endpoint; 
-    mca_btl_base_header_t hdr;
-};
-typedef struct mca_btl_portals_send_frag_t mca_btl_portals_send_frag_t;
-
-struct mca_btl_portals_recv_frag_t {
-    struct mca_btl_portals_recv_chunk_t *chunk;
-};
-typedef struct mca_btl_portals_recv_frag_t mca_btl_portals_recv_frag_t;
-
 
 /**
- * PORTALS send fraportalsent derived type.
+ * Portals send fragment derived type
  */
 struct mca_btl_portals_frag_t {
     mca_btl_base_descriptor_t base; 
     mca_btl_base_segment_t segment; 
-    mca_btl_portals_frag_type_t type;
+    struct mca_btl_portals_module_t *btl;
+    struct mca_btl_base_endpoint_t *endpoint; 
+    mca_btl_base_header_t hdr;
     size_t size; 
 
-    union {
-        mca_btl_portals_send_frag_t send_frag;
-        mca_btl_portals_recv_frag_t recv_frag;
-    } u;
-}; 
+};
 typedef struct mca_btl_portals_frag_t mca_btl_portals_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t); 
 
@@ -76,45 +57,48 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_user_t);
  * free list(s).
  */
 
-#define OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc)           \
+#define OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl_macro, frag, rc)           \
 {                                                                  \
                                                                    \
     opal_list_item_t *item;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl)->portals_frag_eager, item, rc); \
+    OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_eager, item, rc); \
     frag = (mca_btl_portals_frag_t*) item;                        \
+    frag->btl = (mca_btl_portals_module_t*) btl_macro;                   \
 }
 
-#define OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag)              \
+#define OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(btl_macro, frag)              \
 {                                                                  \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl)->portals_frag_eager, \
+    OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_eager, \
         (opal_list_item_t*)(frag));                                \
 }
 
-#define OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc)             \
+#define OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl_macro, frag, rc)             \
 {                                                                  \
                                                                    \
     opal_list_item_t *item;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl)->portals_frag_max, item, rc); \
+    OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_max, item, rc); \
     frag = (mca_btl_portals_frag_t*) item;                        \
+    frag->btl = (mca_btl_portals_module_t*) btl_macro;                   \
 }
 
-#define OMPI_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag)                \
+#define OMPI_BTL_PORTALS_FRAG_RETURN_MAX(btl_macro, frag)                \
 {                                                                  \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl)->portals_frag_max, \
+    OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_max, \
         (opal_list_item_t*)(frag));                                \
 }
 
 
-#define OMPI_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, rc)            \
+#define OMPI_BTL_PORTALS_FRAG_ALLOC_USER(btl_macro, frag, rc)            \
 {                                                                  \
     opal_list_item_t *item;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl)->portals_frag_user, item, rc); \
+    OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_user, item, rc); \
     frag = (mca_btl_portals_frag_t*) item;                        \
+    frag->btl = (mca_btl_portals_module_t*) btl_macro;                   \
 }
 
-#define OMPI_BTL_PORTALS_FRAG_RETURN_USER(btl, frag)               \
+#define OMPI_BTL_PORTALS_FRAG_RETURN_USER(btl_macro, frag)               \
 {                                                                  \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl)->portals_frag_user, \
+    OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_user, \
         (opal_list_item_t*)(frag)); \
 }
 
