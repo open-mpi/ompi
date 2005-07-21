@@ -84,12 +84,14 @@ int orte_pls_bproc_component_open(void) {
     mca_pls_bproc_component.num_procs = 0; 
     mca_pls_bproc_component.done_launching = false; 
     OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
 
     return ORTE_SUCCESS;
 }
 
 int orte_pls_bproc_component_close(void) {
     OBJ_DESTRUCT(&mca_pls_bproc_component.lock);
+    OBJ_DESTRUCT(&mca_pls_bproc_component.condition);
     return ORTE_SUCCESS;
 }
 

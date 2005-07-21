@@ -54,9 +54,11 @@ orte_pls_base_module_1_0_0_t orte_pls_bproc_orted_module = {
 static int pls_bproc_orted_make_dir(char *directory);
 static char * pls_bproc_orted_get_base_dir_name(int proc_rank, orte_jobid_t jobid,
                                                 size_t app_context);
+#if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
 static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path, 
                                 orte_jobid_t jobid, bool connect_stdin, 
                                 size_t app_context);
+#endif
 static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * fd,
                                       bool connect_stdin, size_t app_context);
 static void pls_bproc_orted_delete_dir_tree(char * path);
@@ -137,6 +139,7 @@ static char * pls_bproc_orted_get_base_dir_name(int proc_rank, orte_jobid_t jobi
  *                      set to /dev/null
  * @param app_context the application context number within the job
  */
+#if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
 static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path, 
                                     orte_jobid_t jobid, bool connect_stdin,
                                     size_t app_context) {
@@ -194,6 +197,7 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
     }
     return rc;
 }
+#endif
 
 /**
  * creates pipes for the io in the filesystem in the directory 
@@ -351,20 +355,22 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
     opal_list_item_t* item;
     int rc, id;
     int master[3];
-    int slave;
     int num_procs = 0;
     size_t i;
     size_t app_context;
     int32_t src = 0;
-    bool connect_stdin;
-    bool pty_error_thrown = false;
     orte_buffer_t ack;
     char * param;
-    char * pty_name = malloc(256);
-    if (NULL == pty_name) {
+    bool connect_stdin;
+    char * pty_name = NULL;
+#if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
+    int slave;
+    bool pty_error_thrown = false;
+    if (NULL == (pty_name = malloc(256))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto cleanup;
     }
+#endif
 
     OBJ_CONSTRUCT(&ack, orte_buffer_t);
 
@@ -415,6 +421,18 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
             } else {
                 connect_stdin = false;
             }
+            /* if at configure time the user has requested not to use ptys then
+             * we will automatically use pipes. Otherwise, if openpty fails at
+             * runtime (which is common on bproc systems), we will print a 
+             * warning message then fall back on pipes. */
+#if (! defined(HAVE_OPENPTY)) || (OMPI_ENABLE_PTY_SUPPORT == 0)
+            rc = pls_bproc_orted_link_pipes(num_procs, jobid, master,
+                                            connect_stdin, app_context);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+#else /* the user wants to use ptys */
             if(0 == openpty(&master[0], &slave, pty_name, NULL, NULL)) {
                 master[2] = master[1] = master[0];
                 rc = pls_bproc_orted_link_pty(num_procs, pty_name, jobid, 
@@ -436,7 +454,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
                     goto cleanup;
                 }
             }
-
+#endif
             if(connect_stdin) {
                 orte_iof.iof_publish(&(proc->proc_name), ORTE_IOF_SINK, 
                                      ORTE_IOF_STDIN, master[0]);
@@ -450,7 +468,6 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
             num_procs++;
         }
     }
-
     mca_pls_bproc_orted_component.num_procs = num_procs;
     
     /* post recieve for termination signal */
@@ -498,6 +515,9 @@ int orte_pls_bproc_orted_finalize(void) {
     orte_iof.iof_flush();
     pls_bproc_orted_remove_dir();
     orte_session_dir_finalize(orte_process_info.my_name);
+    if(mca_pls_bproc_orted_component.debug) {
+        opal_output(0, "pls_bproc_orted: all cleanup routines called\n");
+    }
     OPAL_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
     return ORTE_SUCCESS;
 }

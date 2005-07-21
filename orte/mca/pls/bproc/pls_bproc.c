@@ -272,6 +272,10 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
         }
         OBJ_DESTRUCT(&ack);
         OBJ_RELEASE(orte_pls_bproc_daemon_names);
+        while(0 < orte_pls_bproc_num_daemons) {
+             opal_condition_wait(&mca_pls_bproc_component.condition,
+                                 &mca_pls_bproc_component.lock);
+        }    
     }
     OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
 }
@@ -280,27 +284,25 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
  * Callback for orte_wait_cb for the daemons. If a daemon unexpectedly dies
  * before we are done launching, we abort the job. */
 static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data) {
-    orte_process_name_t * proc = (orte_process_name_t*) data;
-    int rc;
-
-    /* set the state of this process */
     if(!mca_pls_bproc_component.done_launching) {
         /* if a daemon exits before we are done launching the user apps we send a
          * message to ourself so we will break out of the recieve loop and exit */
+        int rc;
         int32_t src = -1;
         orte_buffer_t ack;
         OBJ_CONSTRUCT(&ack, orte_buffer_t);
         orte_dps.pack(&ack, &src, 1, ORTE_INT32);
-        mca_oob_send_packed(MCA_OOB_NAME_SELF, &ack, MCA_OOB_TAG_BPROC, 0);
-        rc = orte_soh.set_proc_soh(proc, ORTE_PROC_STATE_ABORTED, status);
-    } else if (WIFEXITED(status)) {
-        rc = orte_soh.set_proc_soh(proc, ORTE_PROC_STATE_TERMINATED, status);
-    } else {
-        rc = orte_soh.set_proc_soh(proc, ORTE_PROC_STATE_ABORTED, status);
+        rc = mca_oob_send_packed(MCA_OOB_NAME_SELF, &ack, MCA_OOB_TAG_BPROC, 0);
+        if(0 > rc) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
+    OPAL_THREAD_LOCK(&mca_pls_bproc_component.lock);
+    if(0 < orte_pls_bproc_num_daemons) {
+        orte_pls_bproc_num_daemons--;
     }
+    opal_condition_signal(&mca_pls_bproc_component.condition);
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
 }
 
 /**
@@ -319,7 +321,6 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
     int num_nodes;
     int num_processes = 0;
     int num_daemons;
-    int num_env;
     int rc, i, j;
     int * pids = NULL;
     int argc;
@@ -360,9 +361,8 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid,
     }
 
     /* append mca parameters to our environment */
-    num_env = map->app->num_env;
-    rc = mca_base_param_build_env(&map->app->env, &num_env, true);
-    if(ORTE_SUCCESS != rc) { 
+    i = map->app->num_env;
+    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(&map->app->env, &i, true))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
