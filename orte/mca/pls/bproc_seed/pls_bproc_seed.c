@@ -660,6 +660,7 @@ cleanup:
 int orte_pls_bproc_seed_terminate_job(orte_jobid_t jobid)
 {
     pid_t* pids;
+    pid_t my_pid = getpid();
     size_t i, num_pids;
     int rc;
 
@@ -682,7 +683,9 @@ int orte_pls_bproc_seed_terminate_job(orte_jobid_t jobid)
         if(mca_pls_bproc_seed_component.debug) {
             opal_output(0, "orte_pls_bproc: killing daemon: %d\n", pids[i]);
         }
-        kill(pids[i], mca_pls_bproc_seed_component.terminate_sig);
+        if(pids[i] != my_pid) {
+            kill(pids[i], mca_pls_bproc_seed_component.terminate_sig);
+        }
     }
     if(NULL != pids)
         free(pids);
