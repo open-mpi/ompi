@@ -85,7 +85,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
 
     
     if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
-        frag->wr_desc.sr_desc.send_flags |= IBV_SEND_INLINE;  
+        /* frag->wr_desc.sr_desc.send_flags |= IBV_SEND_INLINE;   */
     } 
 
     
