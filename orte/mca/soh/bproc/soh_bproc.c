@@ -130,6 +130,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
 {
     int idx;
     int ret;
+    int cnt;
     char *node_name;
     char *user;
     char *group;
@@ -137,19 +138,19 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     struct group *grp;
     orte_gpr_value_t *value;
 
-    value = OBJ_NEW(orte_gpr_value_t);
-    value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
-    value->segment = strdup(ORTE_NODE_SEGMENT);
-    
-    value->cnt = num_bits(changes);
+    cnt = num_bits(changes);
 
     /*
      * Check if there's anything to do
      */
-    if (value->cnt == 0) {
-	OBJ_RELEASE(value);
+    if (cnt == 0)
 	return;
-    }
+
+    value = OBJ_NEW(orte_gpr_value_t);
+    value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
+    value->segment = strdup(ORTE_NODE_SEGMENT);
+    
+    value->cnt = cnt;
 
     value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
 
@@ -207,6 +208,14 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
 	value->keyvals[idx++]->value.strptr = strdup(node_name);
     }
 
+    if (idx != cnt) {
+    	opal_output(0, "soh_bproc: internal error %d != %d\n", idx, cnt);
+	free(node_name);
+	OBJ_RELEASE(value);
+	opal_event_del(&mca_soh_bproc_component.notify_event);
+	return;
+    }
+
     ret = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, 
 	    mca_soh_bproc_component.cellid, node_name);
 
@@ -247,8 +256,10 @@ static int do_update(struct bproc_node_set_t *ns)
 	else
 	    changes = BIT_SET_ALL;
 
-	update_registry(changes, ni);
-	changed |= !empty_set(changes);
+	if (!empty_set(changes)) {
+		update_registry(changes, ni);
+		changed = 1;
+	}
     }
 
     if (changed) {
