@@ -128,7 +128,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
     if (need_recv_setup) {
         /* create eqs */
         int i;
-        for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
+        for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
             int ptl_ret = PtlEQAlloc(btl->portals_ni_h,
                                      btl->portals_eq_sizes[i],
                                      PTL_EQ_HANDLER_NONE,
@@ -186,7 +186,7 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
         ret = mca_btl_portals_recv_disable(btl);
 
         /* destroy eqs */
-        for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
+        for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
             int ptl_ret = PtlEQFree(btl->portals_eq_handles[i]);
             if (PTL_OK != ptl_ret) {
                 opal_output(mca_btl_portals_component.portals_output,
@@ -227,12 +227,12 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl,
     int rc;
     
     if (size <= btl->btl_eager_limit) { 
-        MCA_BTL_PORTALS_FRAG_ALLOC_EAGER(portals_btl, frag, rc); 
+        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(portals_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_eager_limit ? 
             size : btl->btl_eager_limit ; 
     } else { 
-        MCA_BTL_PORTALS_FRAG_ALLOC_MAX(portals_btl, frag, rc); 
+        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(portals_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_max_send_size ? 
             size : btl->btl_max_send_size ; 
@@ -252,11 +252,11 @@ mca_btl_portals_free(struct mca_btl_base_module_t* btl_base,
     mca_btl_portals_frag_t* frag = (mca_btl_portals_frag_t*) des; 
 
     if (frag->size == 0) {
-        MCA_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag); 
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag); 
     } else if (frag->size == btl->super.btl_eager_limit){ 
-        MCA_BTL_PORTALS_FRAG_RETURN_EAGER(&btl->super, frag); 
+        OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&btl->super, frag); 
     } else if (frag->size == btl->super.btl_max_send_size) {
-        MCA_BTL_PORTALS_FRAG_RETURN_MAX(&btl->super, frag); 
+        OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&btl->super, frag); 
     }  else {
         return OMPI_ERR_BAD_PARAM;
     }
@@ -286,7 +286,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
          * if we aren't pinning the data and the requested size is less
          * than the eager limit pack into a fragment from the eager pool
          */
-        MCA_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc);
         if (NULL == frag) {
             return NULL;
         }
@@ -297,7 +297,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
                                  &max_data, &free_after);
         *size  = max_data;
         if (rc < 0) {
-            MCA_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag);
+            OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
@@ -306,7 +306,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
          * otherwise pack as much data as we can into a fragment
          * that is the max send size.
          */
-        MCA_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc);
         if (NULL == frag) {
             return NULL;
         }
@@ -319,7 +319,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
                                  &max_data, &free_after);
         *size  = max_data;
         if ( rc < 0 ) {
-            MCA_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag);
+            OMPI_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
@@ -386,7 +386,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
         ret = mca_btl_portals_recv_disable(btl);
 
         /* destroy eqs */
-        for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
+        for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
             int ptl_ret = PtlEQFree(btl->portals_eq_handles[i]);
             if (PTL_OK != ptl_ret) {
                 opal_output(mca_btl_portals_component.portals_output,

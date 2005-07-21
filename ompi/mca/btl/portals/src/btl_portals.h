@@ -16,8 +16,8 @@
 /*
  * @file
  */
-#ifndef MCA_BTL_PORTALS_H
-#define MCA_BTL_PORTALS_H
+#ifndef OMPI_BTL_PORTALS_H
+#define OMPI_BTL_PORTALS_H
 
 #include "btl_portals_compat.h"
 
@@ -50,7 +50,7 @@ struct mca_btl_portals_component_t {
      */
     int portals_output;
 
-#if BTL_PORTALS_UTCP
+#if OMPI_BTL_PORTALS_UTCP
     /* ethernet interface to use - only has meaning with utcp
         reference */
     char *portals_ifname;
@@ -76,10 +76,10 @@ struct mca_btl_portals_component_t {
 typedef struct mca_btl_portals_component_t mca_btl_portals_component_t;
 
 
-#define MCA_BTL_PORTALS_EQ_RECV  0
-#define MCA_BTL_PORTALS_EQ_SEND  1
-#define MCA_BTL_PORTALS_EQ_RDMA  2
-#define MCA_BTL_PORTALS_EQ_SIZE  3
+#define OMPI_BTL_PORTALS_EQ_RECV  0
+#define OMPI_BTL_PORTALS_EQ_SEND  1
+#define OMPI_BTL_PORTALS_EQ_RDMA  2
+#define OMPI_BTL_PORTALS_EQ_SIZE  3
 
 struct mca_btl_portals_module_t {
     /* base BTL module interface */
@@ -103,9 +103,9 @@ struct mca_btl_portals_module_t {
     opal_list_t portals_recv_chunks;
 
     /* size for event queue */
-    int portals_eq_sizes[MCA_BTL_PORTALS_EQ_SIZE];
+    int portals_eq_sizes[OMPI_BTL_PORTALS_EQ_SIZE];
     /* frag receive event queue */
-    ptl_handle_eq_t portals_eq_handles[MCA_BTL_PORTALS_EQ_SIZE];
+    ptl_handle_eq_t portals_eq_handles[OMPI_BTL_PORTALS_EQ_SIZE];
 
     /* "reject" entry for recv match list */
     ptl_handle_me_t portals_recv_reject_me_h;

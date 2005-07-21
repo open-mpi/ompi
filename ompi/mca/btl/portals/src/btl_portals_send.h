@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_PORTALS_SEND_H
-#define MCA_BTL_PORTALS_SEND_H
+#ifndef OMPI_BTL_PORTALS_SEND_H
+#define OMPI_BTL_PORTALS_SEND_H
 
 #include "btl_portals_frag.h"
 
@@ -37,7 +37,7 @@ mca_btl_portals_send_frag(mca_btl_portals_frag_t *frag)
     md.max_size = 0;
     md.options = 0; /* BWB - can we optimize? */
     md.user_ptr = frag; /* keep a pointer to ourselves */
-    md.eq_handle = frag->u.send_frag.btl->portals_eq_handles[MCA_BTL_PORTALS_EQ_SEND];
+    md.eq_handle = frag->u.send_frag.btl->portals_eq_handles[OMPI_BTL_PORTALS_EQ_SEND];
 
     /* make a free-floater */
     ret = PtlMDBind(frag->u.send_frag.btl->portals_ni_h,
@@ -53,7 +53,7 @@ mca_btl_portals_send_frag(mca_btl_portals_frag_t *frag)
     ret = PtlPut(md_h,
                  PTL_ACK_REQ,
                  frag->u.send_frag.endpoint->endpoint_ptl_id,
-                 BTL_PORTALS_SEND_TABLE_ID,
+                 OMPI_BTL_PORTALS_SEND_TABLE_ID,
                  0, /* ac_index - not used*/
                  frag->segment.seg_key.key64, /* match bits */
                  0, /* remote offset - not used */
@@ -89,4 +89,4 @@ mca_btl_portals_progress_queued_sends(struct mca_btl_portals_module_t *btl)
 }
 
 
-#endif /* MCA_BTL_PORTALS_SEND_H */
+#endif /* OMPI_BTL_PORTALS_SEND_H */

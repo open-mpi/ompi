@@ -17,6 +17,8 @@
 
 #include "ompi_config.h"
 
+#include <assert.h>
+
 #include "include/constants.h"
 
 #include "btl_portals.h"
@@ -91,6 +93,9 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
                gets more resources (ie, what's currently in this
                md) */
             PtlMDUnlink(ev->md_handle);
+
+            assert(ev->mlength == frag->segment.seg_len);
+
             /* let the PML know we're done... */
             frag->base.des_cbfunc(&btl->super,
                                   frag->u.send_frag.endpoint,

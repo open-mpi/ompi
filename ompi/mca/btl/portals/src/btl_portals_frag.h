@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_PORTALS_FRAG_H
-#define MCA_BTL_PORTALS_FRAG_H
+#ifndef OMPI_BTL_PORTALS_FRAG_H
+#define OMPI_BTL_PORTALS_FRAG_H
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -23,8 +23,8 @@ extern "C" {
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t);
 
 typedef enum {
-    MCA_BTL_PORTALS_FRAG_SEND,
-    MCA_BTL_PORTALS_FRAG_RECV
+    OMPI_BTL_PORTALS_FRAG_SEND,
+    OMPI_BTL_PORTALS_FRAG_RECV
 } mca_btl_portals_frag_type_t;
 
 struct mca_btl_portals_send_frag_t {
@@ -76,7 +76,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_user_t);
  * free list(s).
  */
 
-#define MCA_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc)           \
+#define OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc)           \
 {                                                                  \
                                                                    \
     opal_list_item_t *item;                                        \
@@ -84,13 +84,13 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_user_t);
     frag = (mca_btl_portals_frag_t*) item;                        \
 }
 
-#define MCA_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag)              \
+#define OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag)              \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl)->portals_frag_eager, \
         (opal_list_item_t*)(frag));                                \
 }
 
-#define MCA_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc)             \
+#define OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc)             \
 {                                                                  \
                                                                    \
     opal_list_item_t *item;                                        \
@@ -98,21 +98,21 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_user_t);
     frag = (mca_btl_portals_frag_t*) item;                        \
 }
 
-#define MCA_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag)                \
+#define OMPI_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag)                \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl)->portals_frag_max, \
         (opal_list_item_t*)(frag));                                \
 }
 
 
-#define MCA_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, rc)            \
+#define OMPI_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, rc)            \
 {                                                                  \
     opal_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl)->portals_frag_user, item, rc); \
     frag = (mca_btl_portals_frag_t*) item;                        \
 }
 
-#define MCA_BTL_PORTALS_FRAG_RETURN_USER(btl, frag)               \
+#define OMPI_BTL_PORTALS_FRAG_RETURN_USER(btl, frag)               \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl)->portals_frag_user, \
         (opal_list_item_t*)(frag)); \

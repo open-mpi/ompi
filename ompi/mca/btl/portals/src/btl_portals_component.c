@@ -119,24 +119,24 @@ mca_btl_portals_component_open(void)
                   opal_mutex_t);
 
     /* get configured state for component */
-#if BTL_PORTALS_UTCP
+#if OMPI_BTL_PORTALS_UTCP
     mca_btl_portals_component.portals_ifname = 
         param_register_string("ifname", "eth0");
 #endif
     mca_btl_portals_component.portals_free_list_init_num = 
         param_register_int("free_list_init_num",
-                           BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
+                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
     mca_btl_portals_component.portals_free_list_max_num = 
         param_register_int("free_list_max_num",
-                           BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
+                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
     mca_btl_portals_component.portals_free_list_inc_num = 
         param_register_int("free_list_inc_num",
-                           BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM);
+                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM);
 
     /* start up debugging output */
     portals_output_stream.lds_verbose_level = 
         param_register_int("debug_level",
-                           BTL_PORTALS_DEFAULT_DEBUG_LEVEL);
+                           OMPI_BTL_PORTALS_DEFAULT_DEBUG_LEVEL);
     asprintf(&(portals_output_stream.lds_prefix), 
              "btl: portals (%5d): ", getpid());
     mca_btl_portals_component.portals_output = 
@@ -145,19 +145,19 @@ mca_btl_portals_component_open(void)
     /* fill default module state */
     mca_btl_portals_module.super.btl_eager_limit = 
         param_register_int("eager_limit",
-                           BTL_PORTALS_DEFAULT_EAGER_LIMIT);
+                           OMPI_BTL_PORTALS_DEFAULT_EAGER_LIMIT);
     mca_btl_portals_module.super.btl_min_send_size = 
         param_register_int("min_send_size",
-                           BTL_PORTALS_DEFAULT_MIN_SEND_SIZE);
+                           OMPI_BTL_PORTALS_DEFAULT_MIN_SEND_SIZE);
     mca_btl_portals_module.super.btl_max_send_size = 
         param_register_int("max_send_size",
-                           BTL_PORTALS_DEFAULT_MAX_SEND_SIZE);
+                           OMPI_BTL_PORTALS_DEFAULT_MAX_SEND_SIZE);
     mca_btl_portals_module.super.btl_min_rdma_size = 
         param_register_int("min_rdma_size",
-                           BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE);
+                           OMPI_BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE);
     mca_btl_portals_module.super.btl_max_rdma_size = 
         param_register_int("max_rdma_size",
-                           BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE);
+                           OMPI_BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE);
     mca_btl_portals_module.super.btl_exclusivity = 
         param_register_int("exclusivity", 60);
     mca_btl_portals_module.super.btl_latency = 
@@ -170,30 +170,34 @@ mca_btl_portals_component_open(void)
     bzero(&(mca_btl_portals_module.portals_reg),
           sizeof(mca_btl_portals_module.portals_reg));
 
-    for (i = 0 ; i < MCA_BTL_PORTALS_EQ_SIZE ; ++i) {
+    for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
         mca_btl_portals_module.portals_eq_sizes[i] = 0;
         mca_btl_portals_module.portals_eq_handles[i] = PTL_EQ_NONE;
     }
     /* eq handles will be created when the module is instantiated.
        Set sizes here */
-    mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_RECV] =
-        param_register_int("eq_recv_size", BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE);
+    mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RECV] =
+        param_register_int("eq_recv_size", 
+                           OMPI_BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE);
 
     mca_btl_portals_module.portals_max_outstanding_sends = 
-        param_register_int("eq_send_max_pending", BTL_PORTALS_MAX_SENDS_PENDING) * 3;
+        param_register_int("eq_send_max_pending", 
+                           OMPI_BTL_PORTALS_MAX_SENDS_PENDING) * 3;
     /* sends_pending * 3 for start, end, ack */
-    mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_SEND] = 
+    mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_SEND] = 
         mca_btl_portals_module.portals_max_outstanding_sends * 3;
 
-    mca_btl_portals_module.portals_eq_sizes[MCA_BTL_PORTALS_EQ_RDMA] =
+    mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RDMA] =
         param_register_int("eq_rdma_size", 512); /* BWB - FIXME - make param */
 
     mca_btl_portals_module.portals_recv_reject_me_h = PTL_INVALID_HANDLE;
 
     mca_btl_portals_module.portals_recv_mds_num = 
-        param_register_int("recv_md_num", 3); /* BWB - FIXME - make param */
+        param_register_int("recv_md_num",
+                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_NUM);
     mca_btl_portals_module.portals_recv_mds_size =
-        param_register_int("recv_md_size", 524288); /* BWB - FIXME - make param */
+        param_register_int("recv_md_size", 
+                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_SIZE);
 
     mca_btl_portals_module.portals_ni_h = PTL_INVALID_HANDLE;
     mca_btl_portals_module.portals_sr_dropped = 0;
@@ -213,7 +217,7 @@ mca_btl_portals_component_close(void)
         free(mca_btl_portals_component.portals_modules);
     }
 
-#if BTL_PORTALS_UTCP
+#if OMPI_BTL_PORTALS_UTCP
     if (NULL != mca_btl_portals_component.portals_ifname) {
         free(mca_btl_portals_component.portals_ifname);
     }
@@ -336,7 +340,7 @@ mca_btl_portals_component_progress(void)
         int which;
         int ret;
 
-        if (module->portals_eq_handles[MCA_BTL_PORTALS_EQ_SIZE - 1] == 
+        if (module->portals_eq_handles[OMPI_BTL_PORTALS_EQ_SIZE - 1] == 
             PTL_EQ_NONE) continue; /* they are all initialized at once */
 
 #if OMPI_ENABLE_DEBUG
@@ -354,8 +358,8 @@ mca_btl_portals_component_progress(void)
 #endif
 
         ret = PtlEQPoll(module->portals_eq_handles,
-                        MCA_BTL_PORTALS_EQ_SIZE, /* number of eq handles */
-                        10, /* poll time */
+                        OMPI_BTL_PORTALS_EQ_SIZE, /* number of eq handles */
+                        0, /* poll time */
                         &ev,
                         &which);
         if (PTL_EQ_EMPTY == ret) {
@@ -365,7 +369,7 @@ mca_btl_portals_component_progress(void)
         } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
             /* BWB - how can we report errors? */
             opal_output(mca_btl_portals_component.portals_output,
-                        "Error calling PtlEQGet: %d", ret);
+                        "*** Error calling PtlEQGet: %d ***", ret);
             continue;
         } else if (PTL_EQ_DROPPED == ret) {
             opal_output_verbose(10, mca_btl_portals_component.portals_output,
@@ -373,14 +377,14 @@ mca_btl_portals_component_progress(void)
         }
 
         switch (which) {
-        case MCA_BTL_PORTALS_EQ_RECV:
+        case OMPI_BTL_PORTALS_EQ_RECV:
             mca_btl_portals_progress_queued_sends(module);
             mca_btl_portals_process_recv(module, &ev);
             break;
-        case MCA_BTL_PORTALS_EQ_SEND:
+        case OMPI_BTL_PORTALS_EQ_SEND:
             mca_btl_portals_process_send(module, &ev);
             break;
-        case MCA_BTL_PORTALS_EQ_RDMA:
+        case OMPI_BTL_PORTALS_EQ_RDMA:
             mca_btl_portals_process_rdma(module, &ev);
             break;
         default:

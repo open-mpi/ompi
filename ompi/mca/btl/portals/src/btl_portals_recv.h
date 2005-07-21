@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_PORTALS_RECV_H
-#define MCA_BTL_PORTALS_RECV_H
+#ifndef OMPI_BTL_PORTALS_RECV_H
+#define OMPI_BTL_PORTALS_RECV_H
 
 #include "btl_portals_frag.h"
 
@@ -99,7 +99,7 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
     md.max_size = chunk->btl->super.btl_max_send_size;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
     md.user_ptr = chunk;
-    md.eq_handle = chunk->btl->portals_eq_handles[MCA_BTL_PORTALS_EQ_RECV];
+    md.eq_handle = chunk->btl->portals_eq_handles[OMPI_BTL_PORTALS_EQ_RECV];
 
     chunk->pending = 0;
     chunk->full = false;
@@ -143,4 +143,4 @@ mca_btl_portals_return_chunk_part(mca_btl_portals_module_t *btl,
     }    
 }
 
-#endif /* MCA_BTL_PORTALS_RECV_H */
+#endif /* OMPI_BTL_PORTALS_RECV_H */
