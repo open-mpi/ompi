@@ -68,13 +68,14 @@ int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name);
  */
 struct orte_pls_bproc_component_t {
     orte_pls_base_component_t super;
-    int debug;
-    int priority;
-    char * orted;
-    int terminate_sig;
-    int num_procs;
-    opal_mutex_t lock;
     bool done_launching;
+    char * orted;
+    int debug;
+    int num_procs;
+    int priority;
+    int terminate_sig;
+    opal_mutex_t lock;
+    opal_condition_t condition;
 };
 typedef struct orte_pls_bproc_component_t orte_pls_bproc_component_t;
 
