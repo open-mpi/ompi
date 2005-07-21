@@ -383,15 +383,18 @@ static int opal_ifinit(void)
 
 int opal_iffinalize(void) 
 {
+    if (already_done) {
 #ifndef WIN32
-    opal_if_t *intf_ptr;
+        opal_if_t *intf_ptr;
     
-    while (NULL != (intf_ptr = (opal_if_t*)opal_list_remove_first(&opal_if_list))) {
-        OBJ_RELEASE(intf_ptr);
-    }
-    OBJ_DESTRUCT(&opal_if_list);
+        while (NULL != 
+               (intf_ptr = (opal_if_t*)opal_list_remove_first(&opal_if_list))) {
+            OBJ_RELEASE(intf_ptr);
+        }
+        OBJ_DESTRUCT(&opal_if_list);
 #endif
     already_done = false;
+    }
     return OMPI_SUCCESS;
 }
 
