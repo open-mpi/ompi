@@ -219,23 +219,23 @@ mca_btl_portals_register(struct mca_btl_base_module_t* btl,
 
 
 mca_btl_base_descriptor_t*
-mca_btl_portals_alloc(struct mca_btl_base_module_t* btl,
+mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
                        size_t size)
 {
-    mca_btl_portals_module_t* portals_btl = (mca_btl_portals_module_t*) btl; 
+    mca_btl_portals_module_t* btl = (mca_btl_portals_module_t*) btl_base; 
     mca_btl_portals_frag_t* frag;
     int rc;
     
-    if (size <= btl->btl_eager_limit) { 
-        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(portals_btl, frag, rc); 
+    if (size <= btl->super.btl_eager_limit) { 
+        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc); 
         frag->segment.seg_len = 
-            size <= btl->btl_eager_limit ? 
-            size : btl->btl_eager_limit ; 
+            size <= btl->super.btl_eager_limit ? 
+            size : btl->super.btl_eager_limit ; 
     } else { 
-        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(portals_btl, frag, rc); 
+        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc); 
         frag->segment.seg_len = 
-            size <= btl->btl_max_send_size ? 
-            size : btl->btl_max_send_size ; 
+            size <= btl->super.btl_max_send_size ? 
+            size : btl->super.btl_max_send_size ; 
     }
     
     frag->base.des_flags = 0; 
@@ -265,60 +265,78 @@ mca_btl_portals_free(struct mca_btl_base_module_t* btl_base,
 }
 
 
-/* BWB - fix me - this needs to do RDMA when we get there... */
 mca_btl_base_descriptor_t* 
-mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl,
+mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
                             struct ompi_convertor_t* convertor,
                             size_t reserve,
                             size_t* size)
 {
+    mca_btl_portals_module_t* btl = (mca_btl_portals_module_t*) btl_base; 
     mca_btl_portals_frag_t* frag;
     size_t max_data = *size;
     struct iovec iov;
     uint32_t iov_count = 1;
     int32_t free_after;
-    int rc;
+    int ret;
 
-    if (max_data+reserve <= btl->btl_eager_limit) {
+    if (0 == reserve && 0 == ompi_convertor_need_buffers(convertor)) {
+        /* we can send right out of the buffer (woo!).  */
+
+        OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&btl->super, frag, ret);
+        if(NULL == frag){
+            return NULL;
+        }
+        iov.iov_len = max_data;
+        iov.iov_base = NULL;
+
+        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, 
+                            &free_after);
+                                                                                                    
+        frag->segment.seg_len = max_data;
+        frag->segment.seg_addr.pval = iov.iov_base;
+
+    } else if (max_data+reserve <= btl->super.btl_eager_limit) {
         /*
-         * if we aren't pinning the data and the requested size is less
-         * than the eager limit pack into a fragment from the eager pool
+         * if we can't send out of the buffer directly and the
+         * requested size is less than the eager limit, pack into a
+         * fragment from the eager pool
          */
-        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, ret);
         if (NULL == frag) {
             return NULL;
         }
 
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, 
+        ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
                                  &max_data, &free_after);
         *size  = max_data;
-        if (rc < 0) {
+        if (ret < 0) {
             OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
+
     } else {
         /* 
          * otherwise pack as much data as we can into a fragment
          * that is the max send size.
          */
-        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, ret);
         if (NULL == frag) {
             return NULL;
         }
-        if (max_data + reserve > btl->btl_max_send_size){
-            max_data = btl->btl_max_send_size - reserve;
+        if (max_data + reserve > btl->super.btl_max_send_size){
+            max_data = btl->super.btl_max_send_size - reserve;
         }
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, 
+        ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
                                  &max_data, &free_after);
         *size  = max_data;
-        if ( rc < 0 ) {
+        if ( ret < 0 ) {
             OMPI_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag);
             return NULL;
         }
@@ -343,11 +361,74 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                             size_t reserve,
                             size_t* size)
 {
-    /* BWB - FIXME - Implement prepare_dst */
-    opal_output(mca_btl_portals_component.portals_output,
-                "Warning: call to unimplemented function prepare_dst");
+    struct mca_btl_portals_module_t *btl =
+        (struct mca_btl_portals_module_t *) btl_base;
+    mca_btl_portals_frag_t* frag;
+    ptl_md_t md;
+    ptl_handle_me_t me_h;
+    ptl_handle_md_t md_h;
+    int ret;
 
-    return NULL;
+    OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&btl->super, frag, ret);
+    if(NULL == frag) {
+        return NULL;
+    }
+
+    frag->segment.seg_len = *size;
+    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    frag->segment.seg_key.key64 = OPAL_THREAD_ADD64(&(btl->portals_rdma_key), 1);
+
+    frag->base.des_src = NULL;
+    frag->base.des_src_cnt = 0;
+    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst_cnt = 1;
+    frag->base.des_flags = 0;
+
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                         "rdma match posted for frag 0x%x, callback 0x%x, bits %lld",
+                         frag, frag->base.des_cbfunc, frag->segment.seg_key.key64));
+
+    /* create a match entry */
+    ret = PtlMEAttach(btl->portals_ni_h,
+                      OMPI_BTL_PORTALS_RDMA_TABLE_ID,
+                      peer->endpoint_ptl_id,
+                      frag->segment.seg_key.key64, /* match */
+                      0, /* ignore */
+                      PTL_UNLINK,
+                      PTL_INS_AFTER,
+                      &me_h);
+    if (PTL_OK != ret) {
+        opal_output(mca_btl_portals_component.portals_output,
+                    "Error creating recv reject ME: %d", ret);
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
+        return NULL;
+    }
+
+    /* setup the memory descriptor.  RDMA should never need to be
+       retransmitted, so we set the threshold for the 2 events it will
+       receive (PUT/GET START and END).  No need to track the unlinks
+       later :) */
+    md.start = frag->segment.seg_addr.pval;
+    md.length = frag->segment.seg_len;
+    md.threshold = 2; /* unlink after START / END */
+    md.max_size = 0;
+    md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET;
+    md.user_ptr = frag; /* keep a pointer to ourselves */
+    md.eq_handle = btl->portals_eq_handles[OMPI_BTL_PORTALS_EQ_RDMA];
+
+    ret = PtlMDAttach(me_h, 
+                      md,
+                      PTL_UNLINK,
+                      &md_h);
+    if (PTL_OK != ret) {
+        opal_output(mca_btl_portals_component.portals_output,
+                    "Error creating recv reject ME: %d", ret);
+        PtlMEUnlink(me_h);
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
+        return NULL;
+    }
+
+    return &frag->base;
 }
 
 

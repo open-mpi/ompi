@@ -165,7 +165,7 @@ mca_btl_portals_component_open(void)
     mca_btl_portals_module.super.btl_bandwidth = 
         param_register_int("bandwidth", 1000);
 
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
 
     bzero(&(mca_btl_portals_module.portals_reg),
           sizeof(mca_btl_portals_module.portals_reg));
@@ -202,6 +202,7 @@ mca_btl_portals_component_open(void)
     mca_btl_portals_module.portals_ni_h = PTL_INVALID_HANDLE;
     mca_btl_portals_module.portals_sr_dropped = 0;
     mca_btl_portals_module.portals_outstanding_sends = 0;
+    mca_btl_portals_module.portals_rdma_key = 1;
 
     return OMPI_SUCCESS;
 }

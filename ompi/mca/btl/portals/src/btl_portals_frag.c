@@ -31,8 +31,6 @@ mca_btl_portals_frag_common_send_constructor(mca_btl_portals_frag_t* frag)
     frag->segment.seg_addr.pval = frag + 1;
     frag->segment.seg_len = frag->size;
     frag->segment.seg_key.key64 = 0;
-
-    frag->type = OMPI_BTL_PORTALS_FRAG_SEND;
 }
 
 
@@ -61,8 +59,6 @@ mca_btl_portals_frag_user_constructor(mca_btl_portals_frag_t* frag)
     frag->base.des_src = 0;
     frag->base.des_src_cnt = 0;
     frag->size = 0; 
-
-    frag->type = OMPI_BTL_PORTALS_FRAG_SEND;
 }
 
 

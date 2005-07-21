@@ -124,9 +124,8 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
 
 static inline void
 mca_btl_portals_return_chunk_part(mca_btl_portals_module_t *btl,
-                                  mca_btl_portals_frag_t *frag) 
+                                  mca_btl_portals_recv_chunk_t *chunk)
 {
-    mca_btl_portals_recv_chunk_t *chunk = frag->u.recv_frag.chunk;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,

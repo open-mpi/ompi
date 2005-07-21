@@ -177,6 +177,7 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure to start event\n");
         } else {
+            /* increase reference count on the memory chunk */
             OPAL_THREAD_ADD32(&(chunk->pending), 1);
         }
         break;
@@ -188,7 +189,7 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure to end event\n");
-            OPAL_THREAD_ADD32(&(chunk->pending), -1);
+            mca_btl_portals_return_chunk_part(btl, chunk);
             return OMPI_ERROR;
         } 
 
@@ -196,9 +197,10 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
         OPAL_OUTPUT_VERBOSE((95, mca_btl_portals_component.portals_output,
                              "received data for tag %d\n", tag));
 
-        /* it's a user, so we have to manually setup the segment */
+        /* grab a user fragment (since memory is already allocated in
+           as part of the chunk), fill in the right bits, and call the
+           callback */
         OMPI_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, ret);
-        frag->type = OMPI_BTL_PORTALS_FRAG_RECV;
         frag->size = ev->mlength;
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
@@ -207,9 +209,6 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
 
         frag->segment.seg_addr.pval = (((char*) ev->md.start) + ev->offset);
         frag->segment.seg_len = frag->size;
-        frag->segment.seg_key.key64 = 0;
-
-        frag->u.recv_frag.chunk = chunk;
 
         if (ev->md.length - (ev->offset + ev->mlength) < ev->md.max_size) {
             /* the chunk is full.  It's deactivated automagically, but we
@@ -221,11 +220,11 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
         }
 
         btl->portals_reg[tag].cbfunc(&btl->super,
-                                        tag,
-                                        &frag->base,
-                                        btl->portals_reg[tag].cbdata);
-        mca_btl_portals_return_chunk_part(btl, frag);
+                                     tag,
+                                     &frag->base,
+                                     btl->portals_reg[tag].cbdata);
         OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
+        mca_btl_portals_return_chunk_part(btl, chunk);
         break;
     default:
         break;
