@@ -272,7 +272,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
         size_t reg_len; 
 
-       /* the memory is already pinned and we have contiguous user data */ o
+       /* the memory is already pinned and we have contiguous user data */ 
 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
