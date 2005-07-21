@@ -358,41 +358,43 @@ mca_btl_portals_component_progress(void)
         }
 #endif
 
-        ret = PtlEQPoll(module->portals_eq_handles,
-                        OMPI_BTL_PORTALS_EQ_SIZE, /* number of eq handles */
-                        0, /* poll time */
-                        &ev,
-                        &which);
-        if (PTL_EQ_EMPTY == ret) {
-            /* nothing to see here - move along */
-            mca_btl_portals_progress_queued_sends(module);
-            continue;
-        } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
-            /* BWB - how can we report errors? */
-            opal_output(mca_btl_portals_component.portals_output,
-                        "*** Error calling PtlEQGet: %d ***", ret);
-            continue;
-        } else if (PTL_EQ_DROPPED == ret) {
-            opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                "*** Event queue entries were dropped ***");
-        }
+        while (true) {
+            ret = PtlEQPoll(module->portals_eq_handles,
+                            OMPI_BTL_PORTALS_EQ_SIZE, /* number of eq handles */
+                            0, /* poll time */
+                            &ev,
+                            &which);
+            if (PTL_EQ_EMPTY == ret) {
+                /* nothing to see here - move along */
+                mca_btl_portals_progress_queued_sends(module);
+                break;
+            } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
+                /* BWB - how can we report errors? */
+                opal_output(mca_btl_portals_component.portals_output,
+                            "*** Error calling PtlEQGet: %d ***", ret);
+                break;
+            } else if (PTL_EQ_DROPPED == ret) {
+                opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                                    "*** Event queue entries were dropped ***");
+            }
 
-        switch (which) {
-        case OMPI_BTL_PORTALS_EQ_RECV:
-            mca_btl_portals_progress_queued_sends(module);
-            mca_btl_portals_process_recv(module, &ev);
-            break;
-        case OMPI_BTL_PORTALS_EQ_SEND:
-            mca_btl_portals_process_send(module, &ev);
-            break;
-        case OMPI_BTL_PORTALS_EQ_RDMA:
-            mca_btl_portals_process_rdma(module, &ev);
-            break;
-        default:
-            abort();
-        }
+            switch (which) {
+            case OMPI_BTL_PORTALS_EQ_RECV:
+                mca_btl_portals_progress_queued_sends(module);
+                mca_btl_portals_process_recv(module, &ev);
+                break;
+            case OMPI_BTL_PORTALS_EQ_SEND:
+                mca_btl_portals_process_send(module, &ev);
+                break;
+            case OMPI_BTL_PORTALS_EQ_RDMA:
+                mca_btl_portals_process_rdma(module, &ev);
+                break;
+            default:
+                abort();
+            }
 
-        num_progressed++;
+            num_progressed++;
+        }
     }
 
     return num_progressed;
