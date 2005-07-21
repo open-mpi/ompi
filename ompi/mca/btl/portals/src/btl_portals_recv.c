@@ -47,7 +47,7 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
     md.eq_handle = PTL_EQ_NONE;
 
     ret = PtlMEAttach(btl->portals_ni_h,
-                      BTL_PORTALS_SEND_TABLE_ID,
+                      OMPI_BTL_PORTALS_SEND_TABLE_ID,
                       any_proc,
                       0, /* match */
                       0, /* ignore */
@@ -197,8 +197,8 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
                              "received data for tag %d\n", tag));
 
         /* it's a user, so we have to manually setup the segment */
-        MCA_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, ret);
-        frag->type = MCA_BTL_PORTALS_FRAG_RECV;
+        OMPI_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, ret);
+        frag->type = OMPI_BTL_PORTALS_FRAG_RECV;
         frag->size = ev->mlength;
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
@@ -225,7 +225,7 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
                                         &frag->base,
                                         btl->portals_reg[tag].cbdata);
         mca_btl_portals_return_chunk_part(btl, frag);
-        MCA_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
         break;
     default:
         break;

@@ -15,10 +15,10 @@
  */
 
 
-#ifndef BTL_PORTALS_COMPAT_H
-#define BTL_PORTALS_COMPAT_H
+#ifndef OMPI_BTL_PORTALS_COMPAT_H
+#define OMPI_BTL_PORTALS_COMPAT_H
 
-#if BTL_PORTALS_UTCP
+#if OMPI_BTL_PORTALS_UTCP
 
 #include <portals3.h>
 
@@ -27,7 +27,7 @@
 #include <p3rt/p3rt.h>
 #include <p3api/debug.h>
 
-#elif BTL_PORTALS_REDSTORM
+#elif OMPI_BTL_PORTALS_REDSTORM
 
 #include <portals/portals3.h>
 
@@ -39,4 +39,4 @@
 
 #endif
 
-#endif /* BTL_PORTALS_NAL_H */
+#endif /* OMPI_BTL_PORTALS_NAL_H */
