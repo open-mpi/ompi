@@ -77,7 +77,8 @@ my @email_output;
 my $tarball_name;
 my $ret;
 my $last_test_version_name;
-
+my $save_tmpdir;
+my $save_tmpdir_exists;
 my $scratch_root_arg;
 my $email_arg;
 my $url_arg;
@@ -98,6 +99,16 @@ sub send_mail {
     shift;
     shift;
     my $msg = \@_;
+
+    # Restore tmpdir -- if we don't do this, for some reason (when
+    # TMPDIR has been changed), we get permission denied's from the
+    # mail command (something about a temporary file cannot be created
+    # -- shrug).
+    if ($save_tmpdir_exists) {
+        $ENV{TMPDIR} = $save_tmpdir;
+    } else {
+        delete $ENV{TMPDIR};
+    }
 
     $subject =~ s/\@version\@/$version/;
 
@@ -408,14 +419,17 @@ sub try_build {
     # save the compile warnings
     my $make_all_stderr = $ret->{stderr};
 
-    # and check it, if the user does not disable it.  Save and restore
-    # TMPDIR.
+    # and check it, if the user does not disable it.  Make sure to
+    # restore tmpdir.
     if ( $nocheck == 0 ) {
-      my $foo = $ENV{TMPDIR};
       $ENV{TMPDIR} = "$installdir/tmp";
       mkdir($ENV{TMPDIR}, 0777);
       $ret = do_command($merge_output, "make check");
-      $ENV{TMPDIR} = $foo;
+      if ($save_tmpdir_exists) {
+          $ENV{TMPDIR} = $save_tmpdir;
+      } else {
+          delete $ENV{TMPDIR};
+      }
       if ($ret->{status} != 0) {
           $ret->{make_all_stderr} = $make_all_stderr;
           $ret->{message} = "Failed to \"make check\"";
@@ -520,6 +534,9 @@ int main(int argc, char* argv[]) {
 #
 # main
 #
+
+$save_tmpdir = $ENV{TMPDIR};
+$save_tmpdir_exists = exists $ENV{TMPDIR};
 
 # parse the command line
 &Getopt::Long::Configure("bundling", "require_order");
