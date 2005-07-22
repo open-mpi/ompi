@@ -958,29 +958,8 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
     orte_gpr_replica_action_taken_t **ptr;
     size_t i, j, k;
     orte_gpr_value_t *value;
+    orte_gpr_addr_mode_t addr_mode;
     int rc=ORTE_SUCCESS;
-    
-    /* Construct the base structure for returned data so it can be
-     * sent to the user, if required
-     */
-    value = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == value) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->cnt = 1;
-    value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-    if (NULL == value->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
     
     /* When entering this function, we know that the specified
      * subscription is active since that was tested above. What we now need
@@ -1011,7 +990,7 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
                 ((sub->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
                 (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHANGED)))
                 
-                && orte_gpr_replica_check_notify_matches(value, sub, ptr[i])) {
+                && orte_gpr_replica_check_notify_matches(&addr_mode, sub, ptr[i])) {
                     
                 /* if the notify matched one of the subscription values,
                  * then the address mode will have
@@ -1019,6 +998,29 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
                  * the segment name and tokens from the container that is
                  * being addressed!
                  */
+                /* Construct the base structure for returned data so it can be
+                 * sent to the user, if required
+                 */
+                value = OBJ_NEW(orte_gpr_value_t);
+                if (NULL == value) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                value->addr_mode = addr_mode;
+                value->cnt = 1;
+                value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+                if (NULL == value->keyvals) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    OBJ_RELEASE(value);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+                if (NULL == value->keyvals[0]) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    OBJ_RELEASE(value);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+    
                 value->segment = strdup(ptr[i]->seg->name);
                 value->num_tokens = ptr[i]->cptr->num_itags;
                 value->tokens = (char **)malloc(value->num_tokens * sizeof(char*));
@@ -1063,7 +1065,7 @@ CLEANUP:
 }
 
 
-bool orte_gpr_replica_check_notify_matches(orte_gpr_value_t *value,
+bool orte_gpr_replica_check_notify_matches(orte_gpr_addr_mode_t *addr_mode,
                                            orte_gpr_replica_subscription_t *sub,
                                            orte_gpr_replica_action_taken_t *ptr)
 {
@@ -1100,11 +1102,8 @@ bool orte_gpr_replica_check_notify_matches(orte_gpr_value_t *value,
                         ORTE_VALUE_ARRAY_GET_BASE(&(ivals[i]->keytags), orte_gpr_replica_itag_t),
                         1,
                         &(ptr->iptr->itag))) {
-                /* keyval is on list - record the address mode
-                 * (since we don't have that info up above)
-                 * and return true
-                 */
-                value->addr_mode = ivals[i]->addr_mode;
+                /* keyval is on list - return the address mode */
+                *addr_mode = ivals[i]->addr_mode;
                 return true;
             }
         }

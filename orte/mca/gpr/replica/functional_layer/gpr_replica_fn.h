@@ -214,7 +214,7 @@ int orte_gpr_replica_check_events(void);
 
 int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub);
 
-bool orte_gpr_replica_check_notify_matches(orte_gpr_value_t *value,
+bool orte_gpr_replica_check_notify_matches(orte_gpr_addr_mode_t *addr_mode,
                                            orte_gpr_replica_subscription_t *sub,
                                            orte_gpr_replica_action_taken_t *ptr);
 
