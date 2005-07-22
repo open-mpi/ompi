@@ -19,7 +19,7 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_pls_bproc_orted_CONFIG],[
     OMPI_CHECK_BPROC([pls_bproc_orted], [pls_bproc_orted_good=1], 
-                     [pls_bproc_orted_good=0])
+                     [pls_bproc_orted_good=0], [pls_bproc_orted_good=0])
 
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
