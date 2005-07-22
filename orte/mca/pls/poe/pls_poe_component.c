@@ -27,7 +27,6 @@
 #include "pls_poe.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
-#include "mca/pls/poe/pls-poe-version.h"
 #include "mca/base/mca_base_param.h"
 
 
