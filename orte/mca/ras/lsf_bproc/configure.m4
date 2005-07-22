@@ -18,7 +18,8 @@
 # MCA_ras_lsf_bproc_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ras_lsf_bproc_CONFIG],[
-    OMPI_CHECK_BPROC([ras_lsf_bproc], [ras_lsf_bproc_good=1], [ras_lsf_bproc_good=0])
+    OMPI_CHECK_BPROC([ras_lsf_bproc], [ras_lsf_bproc_good=1], 
+                     [ras_lsf_bproc_good=1], [ras_lsf_bproc_good=0])
 
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail

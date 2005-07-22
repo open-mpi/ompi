@@ -19,7 +19,7 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_soh_bproc_CONFIG],[
     OMPI_CHECK_BPROC([soh_bproc], [soh_bproc_good=1], 
-                     [soh_bproc_good=0])
+                     [soh_bproc_good=0], [soh_bproc_good=0])
 
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail

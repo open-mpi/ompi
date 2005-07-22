@@ -18,7 +18,8 @@
 # MCA_ras_bjs_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ras_bjs_CONFIG],[
-    OMPI_CHECK_BPROC([ras_bjs], [ras_bjs_good=1], [ras_bjs_good=0])
+    OMPI_CHECK_BPROC([ras_bjs], [ras_bjs_good=1], [ras_bjs_good=1], 
+                     [ras_bjs_good=0])
 
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
