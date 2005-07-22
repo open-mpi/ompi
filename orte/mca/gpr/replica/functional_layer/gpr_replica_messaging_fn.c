@@ -458,16 +458,16 @@ int orte_gpr_replica_store_value_in_msg(orte_gpr_subscription_id_t id,
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                         return ORTE_ERR_OUT_OF_RESOURCE;
                     }
+                    /* must "retain" the value object to ensure that it is
+                    * there for this datagram. Since we are only storing
+                    * pointers to the object (and not actually copying it),
+                    * datagrams may wind up sharing the object. Hence, when
+                    * a datagram is released, it will release the object. Without
+                    * the retain, the next datagram that shares that object
+                    * will see trash
+                    */
+                    OBJ_RETAIN(values[j]);
                 }
-                /* must "retain" the value object to ensure that it is
-                 * there for this datagram. Since we are only storing
-                 * pointers to the object (and not actually copying it),
-                 * datagrams may wind up sharing the object. Hence, when
-                 * a datagram is released, it will release the object. Without
-                 * the retain, the next datagram that shares that object
-                 * will see trash
-                 */
-                OBJ_RETAIN(values[j]);
                 data[i]->cnt += cnt;
                 return ORTE_SUCCESS;
             }
