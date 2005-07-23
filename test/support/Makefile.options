@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,23 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/test/support/Makefile.options
+include $(top_srcdir)/config/Makefile.options
 
-EXTRA_DIST = run_tests
-
-AM_CPPFLAGS += \
-        -DBUILDDIR=\"$(OMPI_TOP_BUILDDIR)\" \
-        -DSRCDIR=\"$(OMPI_TOP_SRCDIR)\"
-
-#
-# This should be libsupport.a, not libsupport.la.  Automake doesn't
-# support check_LTLIBRARIES, as technically you have to install a
-# shared library before you can use it.
-#
-check_LIBRARIES = libsupport.a
-
-libsupport_a_SOURCES = \
-        components.h \
-        components.c \
-        support.c \
-        support.h
+AM_CFLAGS = -g
+AM_CPPFLAGS = -I$(top_srcdir)/test/support
