@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+include $(top_srcdir)/test/support/Makefile.options
 
 # support needs to be first for dependencies
 SUBDIRS = support asm class dps mca runtime threads util

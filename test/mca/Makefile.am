@@ -14,6 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+include $(top_srcdir)/test/support/Makefile.options
 
-SUBDIRS		= gpr ns oob ras rds rmaps schema
+SUBDIRS = oob schema
+DIST_SUBDIRS = gpr ns oob ras rds rmaps schema

@@ -15,8 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
-AM_CPPFLAGS = -g -I$(top_srcdir)/test/support
+include $(top_srcdir)/test/support/Makefile.options
 
 check_PROGRAMS = \
     oob_test \

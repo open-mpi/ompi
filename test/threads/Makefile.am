@@ -15,8 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
-AM_CPPFLAGS = -I$(top_srcdir)/test/support
+include $(top_srcdir)/test/support/Makefile.options
 AM_LDFLAGS = -lpthread
 
 check_PROGRAMS = \
