@@ -16,8 +16,6 @@
 
 include $(top_srcdir)/test/support/Makefile.options
 
-EXTRA_DIST = run_tests
-
 AM_CPPFLAGS += \
         -DBUILDDIR=\"$(OMPI_TOP_BUILDDIR)\" \
         -DSRCDIR=\"$(OMPI_TOP_SRCDIR)\"
