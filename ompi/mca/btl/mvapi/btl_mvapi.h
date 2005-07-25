@@ -99,7 +99,7 @@ struct mca_btl_mvapi_component_t {
 
     uint32_t leave_pinned; 
     uint32_t reg_mru_len; 
-    
+    uint32_t use_srq; 
     
     uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
     uint32_t ib_wq_size;   /**< Max outstanding WR on the WQ */ 
@@ -116,7 +116,7 @@ struct mca_btl_mvapi_component_t {
     uint32_t ib_service_level; 
     uint32_t ib_static_rate; 
     uint32_t ib_src_path_bits; 
-
+    
     
 
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
@@ -163,14 +163,92 @@ struct mca_btl_mvapi_module_t {
     mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
     
     VAPI_rr_desc_t*                          rr_desc_post;
-  
+    VAPI_srq_hndl_t srq_hndl_high; /**< A high priority shared receive queue 
+                                         runtime optional, can also use a receive queue 
+                                         per queue pair.. */ 
+    VAPI_srq_hndl_t srq_hndl_low; /**< A low priority shared receive queue */ 
+        
+    uint32_t srr_posted_high;  /**< number of high priority shared rr posted to the nic*/ 
+    uint32_t srr_posted_low;  /**< number of low priority shared rr posted to the nic*/ 
+
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
 
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
     
 
-    struct mca_btl_mvapi_frag_t; 
+
+#define MCA_BTL_MVAPI_POST_SRR_HIGH(post_srr_high_mvapi_btl, \
+                                    post_srr_high_additional) \
+{ \
+        OPAL_THREAD_LOCK(&post_srr_high_mvapi_btl->ib_lock); \
+        if(post_srr_high_mvapi_btl->srr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+post_srr_high_additional && \
+           post_srr_high_mvapi_btl->srr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){ \
+           MCA_BTL_MVAPI_POST_SRR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
+                                      post_srr_high_mvapi_btl->srr_posted_high, \
+                                      post_srr_high_mvapi_btl, \
+                                      &post_srr_high_mvapi_btl->recv_free_eager, \
+                                      &post_srr_high_mvapi_btl->srr_posted_high, \
+                                      post_srr_high_mvapi_btl->nic, \
+                                      post_srr_high_mvapi_btl->srq_hndl_high); \
+        } \
+        OPAL_THREAD_UNLOCK(&post_rr_high_mvapi_btl->ib_lock); \
+}
+
+#define MCA_BTL_MVAPI_POST_SRR_LOW(post_srr_low_mvapi_btl, \
+                                             post_srr_low_additional) \
+{ \
+    OPAL_THREAD_LOCK(&post_srr_low_mvapi_btl->ib_lock); \
+    if(post_srr_low_mvapi_btl->srr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+post_srr_low_additional && \
+       post_srr_low_mvapi_btl->srr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){ \
+        MCA_BTL_MVAPI_POST_SRR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
+                                            post_srr_low_mvapi_btl->srr_posted_low, \
+                                            post_srr_low_mvapi_btl, \
+                                            &post_srr_low_mvapi_btl->recv_free_max, \
+                                            &post_srr_low_mvapi_btl->srr_posted_low, \
+                                            post_srr_low_mvapi_btl->nic, \
+                                            post_srr_low_mvapi_btl->srq_hndl_low); \
+    } \
+    OPAL_THREAD_UNLOCK(&post_srr_low_mvapi_btl->ib_lock); \
+}
+
+
+#define MCA_BTL_MVAPI_POST_SRR_SUB(post_srr_sub_cnt, \
+                                   post_srr_sub_mvapi_btl, \
+                                   post_srr_sub_frag_list, \
+                                   post_srr_sub_srr_posted, \
+                                   post_srr_sub_nic, \
+                                   post_srr_sub_srq_hndl) \
+{\
+    uint32_t post_srr_sub_i; \
+    uint32_t post_srr_sub_rwqe_posted; \
+    int post_srr_sub_rc; \
+    opal_list_item_t* post_srr_sub_item; \
+    mca_btl_mvapi_frag_t* post_srr_sub_frag; \
+    VAPI_rr_desc_t* post_srr_sub_desc_post = post_srr_sub_mvapi_btl->rr_desc_post; \
+    for(post_srr_sub_i = 0; post_srr_sub_i < post_srr_sub_cnt; post_srr_sub_i++) { \
+        OMPI_FREE_LIST_WAIT(post_srr_sub_frag_list, post_srr_sub_item, post_srr_sub_rc); \
+        post_srr_sub_frag = (mca_btl_mvapi_frag_t*) post_srr_sub_item; \
+        post_srr_sub_frag->sg_entry.len = post_srr_sub_frag->size + \
+            ((unsigned char*) post_srr_sub_frag->segment.seg_addr.pval-  \
+             (unsigned char*) post_srr_sub_frag->hdr);  \
+       post_srr_sub_desc_post[post_srr_sub_i] = post_srr_sub_frag->rr_desc; \
+    }\
+    post_srr_sub_frag->ret = VAPI_post_srq( post_srr_sub_nic, \
+                                             post_srr_sub_srq_hndl, \
+                                             post_srr_sub_cnt, \
+                                             post_srr_sub_desc_post, \
+                                             &post_srr_sub_rwqe_posted); \
+   if(VAPI_OK != post_srr_sub_frag->ret) { \
+        BTL_ERROR("error posting receive descriptors to shared receive queue: %s",\
+                   VAPI_strerror(post_srr_sub_frag->ret)); \
+   } else if(post_srr_sub_rwqe_posted < 1) { \
+       BTL_ERROR("error posting receive descriptors to shared receive queue, number of entries posted is %d", post_srr_sub_rwqe_posted); \
+   } else {\
+        OPAL_THREAD_ADD32(post_srr_sub_srr_posted, post_srr_sub_cnt); \
+   }\
+}
+struct mca_btl_mvapi_frag_t; 
 extern mca_btl_mvapi_module_t mca_btl_mvapi_module;
 
 /**
