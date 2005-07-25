@@ -31,7 +31,7 @@
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 #include "mca/btl/base/btl_base_error.h" 
-
+#include <vapi_types.h> 
 mca_btl_mvapi_module_t mca_btl_mvapi_module = {
     {
         &mca_btl_mvapi_component.super,
@@ -790,9 +790,13 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     if(VAPI_OK != frag->ret){ 
         return OMPI_ERROR; 
     }
-    MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
-    MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
-
+    if(mca_btl_mvapi_component.use_srq) { 
+        MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
+        MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
+    } else { 
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+    }
     return OMPI_SUCCESS; 
 
 }
@@ -854,7 +858,8 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
     /* Allocate Protection Domain */ 
     VAPI_ret_t ret;
     uint32_t cqe_cnt = 0;
-      
+    VAPI_srq_attr_t srq_attr, srq_attr_out; 
+  
     ret = VAPI_alloc_pd(mvapi_btl->nic, &mvapi_btl->ptag);
     
     if(ret != VAPI_OK) {
@@ -862,6 +867,35 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         return OMPI_ERROR;
     }
     
+    if(mca_btl_mvapi_component.use_srq) { 
+        mvapi_btl->srr_posted_high = 0; 
+        mvapi_btl->srr_posted_low = 0; 
+        srq_attr.pd_hndl = mvapi_btl->ptag; 
+        srq_attr.max_outs_wr = mca_btl_mvapi_component.ib_wq_size; 
+        srq_attr.max_sentries = mca_btl_mvapi_component.ib_sg_list_size; 
+        srq_attr.srq_limit =  mca_btl_mvapi_component.ib_wq_size; 
+        
+        ret = VAPI_create_srq(mvapi_btl->nic, 
+                              &srq_attr, 
+                              &mvapi_btl->srq_hndl_high, 
+                              &srq_attr_out); 
+        if(ret != VAPI_OK) {
+            BTL_ERROR("error in VAPI_create_srq: %s", VAPI_strerror(ret));
+            return OMPI_ERROR;
+        }
+        ret = VAPI_create_srq(mvapi_btl->nic, 
+                              &srq_attr, 
+                              &mvapi_btl->srq_hndl_low, 
+                              &srq_attr_out); 
+        if(ret != VAPI_OK) {
+            BTL_ERROR("error in VAPI_create_srq: %s", VAPI_strerror(ret));
+            return OMPI_ERROR;
+        }
+        
+    } else { 
+        mvapi_btl->srq_hndl_high = VAPI_INVAL_SRQ_HNDL; 
+        mvapi_btl->srq_hndl_low = VAPI_INVAL_SRQ_HNDL; 
+    } 
     ret = VAPI_create_cq(mvapi_btl->nic, mca_btl_mvapi_component.ib_cq_size,
                          &mvapi_btl->cq_hndl_low, &cqe_cnt);
 

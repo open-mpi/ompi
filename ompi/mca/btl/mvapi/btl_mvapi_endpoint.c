@@ -39,6 +39,7 @@ int mca_btl_mvapi_endpoint_create_qp(
                                   VAPI_hca_hndl_t nic,
                                   VAPI_pd_hndl_t ptag, 
                                   VAPI_cq_hndl_t cq_hndl, 
+                                  VAPI_srq_hndl_t srq_hndl, 
                                   VAPI_qp_hndl_t* qp_hndl, 
                                   VAPI_qp_prop_t* qp_prop, 
                                   int transport_type); 
@@ -62,7 +63,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     
     VAPI_qp_hndl_t qp_hndl; 
-    if(frag->base.des_flags && MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
+    if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
         frag->sr_desc.remote_qp = endpoint->rem_qp_num_high; 
         qp_hndl = endpoint->lcl_qp_hndl_high; 
     } else {
@@ -87,9 +88,13 @@ static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi
 
     if(VAPI_OK != frag->ret)
         return OMPI_ERROR; 
-    
-    MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
-    MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+    if(mca_btl_mvapi_component.use_srq) { 
+        MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
+        MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1);
+    } else {
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+    }
 
     return OMPI_SUCCESS; 
 }
@@ -281,12 +286,13 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
     
     /* Create the High Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_qp(endpoint->endpoint_btl, 
-                                                           endpoint->endpoint_btl->nic, 
-                                                           endpoint->endpoint_btl->ptag, 
-                                                           endpoint->endpoint_btl->cq_hndl_high, 
-                                                           &endpoint->lcl_qp_hndl_high, 
-                                                           &endpoint->lcl_qp_prop_high, 
-                                                           VAPI_TS_RC))) {
+                                                              endpoint->endpoint_btl->nic, 
+                                                              endpoint->endpoint_btl->ptag, 
+                                                              endpoint->endpoint_btl->cq_hndl_high, 
+                                                              endpoint->endpoint_btl->srq_hndl_high, 
+                                                              &endpoint->lcl_qp_hndl_high, 
+                                                              &endpoint->lcl_qp_prop_high, 
+                                                              VAPI_TS_RC))) {
         BTL_ERROR("error creating queue pair, error code %d", rc); 
         return rc;
     }
@@ -294,11 +300,12 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
 
     /* Create the Low Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_qp(endpoint->endpoint_btl, 
-                                                           endpoint->endpoint_btl->nic, 
-                                                           endpoint->endpoint_btl->ptag, 
-                                                           endpoint->endpoint_btl->cq_hndl_low, 
-                                                           &endpoint->lcl_qp_hndl_low, 
-                                                           &endpoint->lcl_qp_prop_low, 
+                                                              endpoint->endpoint_btl->nic, 
+                                                              endpoint->endpoint_btl->ptag, 
+                                                              endpoint->endpoint_btl->cq_hndl_low, 
+                                                              endpoint->endpoint_btl->srq_hndl_low, 
+                                                              &endpoint->lcl_qp_hndl_low, 
+                                                              &endpoint->lcl_qp_prop_low, 
                                                               VAPI_TS_RC))) {
         
         BTL_ERROR("error creating queue pair, error code %d", rc); 
@@ -330,12 +337,13 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
     
     /* Create the High Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_qp(endpoint->endpoint_btl, 
-                                                           endpoint->endpoint_btl->nic, 
-                                                           endpoint->endpoint_btl->ptag, 
-                                                           endpoint->endpoint_btl->cq_hndl_high, 
-                                                           &endpoint->lcl_qp_hndl_high, 
-                                                           &endpoint->lcl_qp_prop_high, 
-                                                           VAPI_TS_RC))) {
+                                                              endpoint->endpoint_btl->nic, 
+                                                              endpoint->endpoint_btl->ptag, 
+                                                              endpoint->endpoint_btl->cq_hndl_high, 
+                                                              endpoint->endpoint_btl->srq_hndl_high, 
+                                                              &endpoint->lcl_qp_hndl_high, 
+                                                              &endpoint->lcl_qp_prop_high, 
+                                                              VAPI_TS_RC))) {
         BTL_ERROR("error creating queue pair, error code %d", rc); 
         return rc;
     }
@@ -343,12 +351,13 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
 
     /* Create the Low Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_qp(endpoint->endpoint_btl, 
-                                                           endpoint->endpoint_btl->nic, 
-                                                           endpoint->endpoint_btl->ptag, 
-                                                           endpoint->endpoint_btl->cq_hndl_low, 
-                                                           &endpoint->lcl_qp_hndl_low, 
-                                                           &endpoint->lcl_qp_prop_low, 
-                                                           VAPI_TS_RC))) {
+                                                              endpoint->endpoint_btl->nic, 
+                                                              endpoint->endpoint_btl->ptag, 
+                                                              endpoint->endpoint_btl->cq_hndl_low, 
+                                                              endpoint->endpoint_btl->srq_hndl_low, 
+                                                              &endpoint->lcl_qp_hndl_low, 
+                                                              &endpoint->lcl_qp_prop_low, 
+                                                              VAPI_TS_RC))) {
         BTL_ERROR("error creating queue pair, error code %d", rc); 
         return rc;
     }
@@ -619,13 +628,18 @@ int mca_btl_mvapi_endpoint_connect(
                                            endpoint->endpoint_btl->port_id); 
     
     
+
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
-
-    MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 0); 
-    MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 0); 
     
+    if(mca_btl_mvapi_component.use_srq) { 
+        MCA_BTL_MVAPI_POST_SRR_HIGH(endpoint->endpoint_btl, 1); 
+        MCA_BTL_MVAPI_POST_SRR_LOW(endpoint->endpoint_btl, 1);
+    } else {
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 0); 
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 0); 
+    }
     return OMPI_SUCCESS;
 }
 
@@ -641,6 +655,7 @@ int mca_btl_mvapi_endpoint_create_qp(
                                   VAPI_hca_hndl_t nic,
                                   VAPI_pd_hndl_t ptag, 
                                   VAPI_cq_hndl_t cq_hndl, 
+                                  VAPI_srq_hndl_t srq_hndl, 
                                   VAPI_qp_hndl_t* qp_hndl, 
                                   VAPI_qp_prop_t* qp_prop, 
                                   int transport_type)
@@ -648,7 +663,7 @@ int mca_btl_mvapi_endpoint_create_qp(
     
     VAPI_ret_t ret;
     VAPI_qp_init_attr_t qp_init_attr;
-    
+    VAPI_qp_init_attr_ext_t qp_init_attr_ext; 
     switch(transport_type) {
 
     case VAPI_TS_RC: /* Set up RC qp parameters */
@@ -679,9 +694,14 @@ int mca_btl_mvapi_endpoint_create_qp(
             return OMPI_ERR_NOT_IMPLEMENTED;
     }
     
-    ret = VAPI_create_qp(nic, &qp_init_attr, 
-            qp_hndl, qp_prop);
+    qp_init_attr_ext.srq_hndl = srq_hndl; 
     
+    ret = VAPI_create_qp_ext(nic, 
+                             &qp_init_attr, 
+                             &qp_init_attr_ext,  
+                             qp_hndl, 
+                             qp_prop);
+  
     if(VAPI_OK != ret) {
         BTL_ERROR("error creating the queue pair: %s", VAPI_strerror(ret)); 
         return OMPI_ERROR;

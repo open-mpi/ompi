@@ -128,6 +128,9 @@ int mca_btl_mvapi_component_open(void)
         mca_btl_mvapi_param_register_int("rr_buf_min", 8); 
     mca_btl_mvapi_component.reg_mru_len = 
         mca_btl_mvapi_param_register_int("reg_mru_len",  16); 
+    mca_btl_mvapi_component.use_srq = 
+        mca_btl_mvapi_param_register_int("use_srq", 0); 
+
     mca_btl_mvapi_component.ib_cq_size = 
         mca_btl_mvapi_param_register_int("ib_cq_size", 
                                       40000); 
@@ -527,9 +530,15 @@ int mca_btl_mvapi_component_progress()
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
-                OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
-                MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
                 
+                
+                if(mca_btl_mvapi_component.use_srq) { 
+                    OPAL_THREAD_ADD32(&mvapi_btl->srr_posted_high, -1); 
+                    MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 0); 
+                } else { 
+                    OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
+                    MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
+                }
                 count++; 
                 break;
                 
@@ -577,11 +586,15 @@ int mca_btl_mvapi_component_progress()
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
-                OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
                 
                 
-                MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
-                
+                if(mca_btl_mvapi_component.use_srq) { 
+                    OPAL_THREAD_ADD32(&mvapi_btl->srr_posted_low, -1); 
+                    MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 0); 
+                } else {
+                    OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
+                    MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
+                }
                 count++; 
                 break;
                 
