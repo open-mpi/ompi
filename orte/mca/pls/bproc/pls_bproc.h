@@ -36,7 +36,10 @@
 #define ORTE_PLS_BPROC_H_
 
 #include "orte_config.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/include/orte_constants.h"
 #include "orte/mca/pls/base/base.h"
+#include "orte/util/proc_info.h"
 #include "opal/threads/condition.h"
 #include <sys/bproc.h>
 
@@ -72,10 +75,12 @@ struct orte_pls_bproc_component_t {
     char * orted;
     int debug;
     int num_procs;
+    size_t num_daemons;
     int priority;
     int terminate_sig;
     opal_mutex_t lock;
     opal_condition_t condition;
+    orte_pointer_array_t * daemon_names;
 };
 typedef struct orte_pls_bproc_component_t orte_pls_bproc_component_t;
 
