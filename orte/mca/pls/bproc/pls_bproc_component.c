@@ -17,6 +17,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "pls_bproc.h"
@@ -64,6 +65,7 @@ static char* orte_pls_bproc_param_register_string(const char* param_name,
 }
 
 int orte_pls_bproc_component_open(void) {
+    int rc;
     /* init parameters */
     mca_pls_bproc_component.debug = orte_pls_bproc_param_register_int("debug", 0);
     mca_pls_bproc_component.priority = 
@@ -78,12 +80,20 @@ int orte_pls_bproc_component_open(void) {
     mca_pls_bproc_component.done_launching = false; 
     OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
+    /* init the list to hold the daemon names */
+    rc = orte_pointer_array_init(&mca_pls_bproc_component.daemon_names, 8, 200000,
+8);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+
     return ORTE_SUCCESS;
 }
 
 int orte_pls_bproc_component_close(void) {
     OBJ_DESTRUCT(&mca_pls_bproc_component.lock);
     OBJ_DESTRUCT(&mca_pls_bproc_component.condition);
+    OBJ_RELEASE(mca_pls_bproc_component.daemon_names);
     return ORTE_SUCCESS;
 }
 

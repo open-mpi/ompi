@@ -52,7 +52,7 @@ AC_DEFUN([OMPI_CHECK_BPROC],[
         LIBS="$ompi_check_bproc_save_LIBS"
 
         AS_IF([test "$ompi_check_bproc_happy" != "no"], 
-              [AS_IF([test ! -z "$with_bproc"], 
+              [AS_IF([test ! -z "$with_bproc" -a "$with_bproc" != "yes"], 
                      [$1_CPPFLAGS="$$1_CPPFLAGS -I$with_bproc/include"
                       $1_LDFLAGS="$$1_LDFLAGS -L$with_bproc/lib"])
                $1_LIBS="$$1_LIBS -lbproc"

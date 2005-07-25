@@ -266,7 +266,6 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
             free(proc);
         }
         OBJ_DESTRUCT(&ack);
-        OBJ_RELEASE(mca_pls_bproc_component.daemon_names);
         while(0 < mca_pls_bproc_component.num_daemons) {
              opal_condition_wait(&mca_pls_bproc_component.condition,
                                  &mca_pls_bproc_component.lock);
@@ -501,6 +500,11 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
         rc = ORTE_ERROR;
         goto cleanup;
     }
+    if(0 < mca_pls_bproc_component.debug) {
+        opal_output(0, "PLS_BPROC DEBUG: %d daemons launched. First pid: %d\n", 
+                    rc, *pids);
+    }
+    
     for(i = 0; i < num_daemons; i++) {
         if(0 >= pids[i]) {
             opal_output(0, "pls_bproc: failed to launch all daemons. " 
@@ -543,11 +547,6 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
     }
     mca_pls_bproc_component.num_daemons += num_daemons;
 
-    if(0 < mca_pls_bproc_component.debug) {
-        opal_output(0, "PLS_BPROC DEBUG: %d daemons launched. First pid: %d\n", 
-                    rc, *pids);
-    }
-    
     /* wait for communication back */
     for(i = 0; i < num_daemons; i++) {
         rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &ack, MCA_OOB_TAG_BPROC);
@@ -561,6 +560,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
             opal_output(0, "pls_bproc: daemon exited unexpectedly\n"); 
             rc = ORTE_ERROR;
             ORTE_ERROR_LOG(rc);
+            orte_pls_bproc_terminate_job(daemon_jobid);
             goto cleanup;
         }
     }
@@ -689,13 +689,6 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         goto cleanup;
     }
 
-    /* init the list to hold the daemon names */
-    rc = orte_pointer_array_init(&mca_pls_bproc_component.daemon_names, 8, 200000, 8);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
     /* get the cellid */
     rc = orte_ns_base_get_cellid(&cellid, orte_process_info.my_name);
     if(ORTE_SUCCESS != rc) {
