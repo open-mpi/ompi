@@ -91,10 +91,9 @@ struct mca_btl_openib_component_t {
     
     size_t eager_limit; 
     size_t max_send_size; 
-
     uint32_t leave_pinned; 
     uint32_t reg_mru_len; 
-    
+
     uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
     uint32_t ib_wq_size;   /**< Max outstanding WR on the WQ */ 
     uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/ 

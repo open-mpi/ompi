@@ -71,7 +71,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     struct ibv_send_wr* bad_wr; 
     frag->sg_entry.addr = (uintptr_t) frag->hdr; 
     
-    if(frag->base.des_flags && MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= openib_btl->super.btl_eager_limit){ 
+    if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= openib_btl->super.btl_eager_limit){ 
         ib_qp = endpoint->lcl_qp_high; 
     } else {
         ib_qp = endpoint->lcl_qp_low; 
@@ -85,9 +85,10 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
 
     
     if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
-        /* frag->wr_desc.sr_desc.send_flags |= IBV_SEND_INLINE;   */
-    } 
-
+        frag->wr_desc.sr_desc.send_flags |= IBV_SEND_INLINE;
+    } else { 
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    }
     
     if(ibv_post_send(ib_qp, 
                      &frag->wr_desc.sr_desc, 
