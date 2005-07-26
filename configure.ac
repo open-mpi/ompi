@@ -591,6 +591,9 @@ OMPI_RANGE_F90_COMPLEX8=0
 OMPI_RANGE_F90_COMPLEX16=0
 OMPI_RANGE_F90_COMPLEX32=0
 
+OMPI_MPI_OFFSET_KIND=0
+OMPI_MPI_ADDRESS_KIND=0
+
 #
 # lists of supported Fortran types
 #
@@ -770,6 +773,31 @@ else
 
     OMPI_F90_GET_SIZEOF(complex(kind(1.D0)), OMPI_SIZEOF_F90_DBLCOMPLEX)
     OMPI_F90_GET_ALIGNMENT(complex(kind(1.D0)), OMPI_ALIGNMENT_F90_DBLCOMPLEX)
+
+    #
+    # get values for Fortran MPI_OFFSET_KIND and MPI_ADDRESS_KIND
+    #
+
+    OMPI_F90_GET_INT_KIND(18, OMPI_MPI_OFFSET_KIND)
+
+    #
+    # I believe the AC_CHECK_SIZEOF(void *) is an error
+    # as the following MUST be run to get ac_cv_sizeof_voidp defined
+    #
+    AC_CHECK_SIZEOF(void*)
+
+    if test "$ac_cv_sizeof_voidp" = "2"; then
+        OMPI_F90_GET_INT_KIND(4, OMPI_MPI_ADDRESS_KIND)
+    fi
+    if test "$ac_cv_sizeof_voidp" = "4"; then
+        OMPI_F90_GET_INT_KIND(9, OMPI_MPI_ADDRESS_KIND)
+    fi
+    if test "$ac_cv_sizeof_voidp" = "8"; then
+        OMPI_F90_GET_INT_KIND(18, OMPI_MPI_ADDRESS_KIND)
+    fi
+    if test "$ac_cv_sizeof_voidp" = "16"; then
+        OMPI_F90_GET_INT_KIND(19, OMPI_MPI_ADDRESS_KIND)
+    fi
 fi
 
 #
@@ -864,6 +892,9 @@ AC_SUBST(OMPI_SIZEOF_F90_REAL16)
 AC_SUBST(OMPI_SIZEOF_F90_COMPLEX8)
 AC_SUBST(OMPI_SIZEOF_F90_COMPLEX16)
 AC_SUBST(OMPI_SIZEOF_F90_COMPLEX32)
+
+AC_SUBST(OMPI_MPI_OFFSET_KIND)
+AC_SUBST(OMPI_MPI_ADDRESS_KIND)
 
 AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_INTEGER1, $OMPI_HAVE_F90_INTEGER1,
     [support for fortran integer*1])
