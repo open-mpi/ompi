@@ -378,9 +378,14 @@ sub try_untar {
 }
     
 sub try_configure {
-    my ($name, $merge_output, $tarball, $srcroot, $installdir,
+    my ($name, $merge_output, $tarball, $srcroot, $package_dir, $installdir,
         $vpath_mode, $confargs) = @_;
     my $ret;
+
+    #
+    # Attention -- package_dir should only be one level higher...
+    #
+    chdir ($package_dir);
 
     # configure it
     my $config_command = "./configure";
@@ -389,12 +394,9 @@ sub try_configure {
         chdir("vpath_build");
         if ($vpath_mode eq "relative") {
             $config_command = "../configure";
+        } else {
+            $config_command = "$srcroot/$file_base_name-$version/$package_dir/configure";
         }
-#
-# Disable absolute for now
-#         else {
-#            $config_command = "$srcroot/$file_base_name-$version/configure";
-#        }
     }
 
     $ret = do_command(1, "$config_command $confargs --prefix=$installdir");
@@ -434,6 +436,8 @@ sub try_configure {
     if ($vpath_mode) {
       chdir ("..");
     }
+
+    chdir ("..");
 
     return {
         make_all_stderr => $make_all_stderr,
@@ -697,7 +701,6 @@ if ($outfile_arg) {
 test_abort("Could not find output file:$outfile -- aborting")
   if ( ! -f $outfile );
 
-open OUTFILE, "$outfile";
 
 # loop over all configurations
 # be lazy: if no configurations supplied, do a default
@@ -712,12 +715,18 @@ if (! $config_arg || ! -f $config_arg) {
 
     die "NOT SUPPORTED YET\n";
 
+    $install_dir="$dir/install";
+
+    if ($install_dir_arg) {
+        $install_dir="$install_dir_arg/$name";
+    }
+
     $ret = try_untar($name, 0, $tarball_name,
-                     $dir, "$dir/install", "", $config);
+                     $dir, "$install_dir", "", $config);
     $ret = try_configure($name, 0, $tarball_name,
-                         $dir, "$dir/install", "", $config);
+                         $dir, "$install_dir", "", $config);
     $ret = cleanup($name, 0, $tarball_name,
-                   $dir, "$dir/install", "", $config);
+                   $dir, "$install_dir", "", $config);
     $results->{$name} = $ret;
     $results->{$name}->{config} = $config;
     $results->{$name}->{want_stderr} = 1;
@@ -748,30 +757,32 @@ if (! $config_arg || ! -f $config_arg) {
             # stupid emacs: '"
             my $merge_output = $want_stderr ? 0 : 1;
             $ret = try_untar($name, $merge_output, $tarball_name,
-                             $dir, "$dir/install",
+                             $dir, "$install_dir",
                              $vpath_mode, $config);
 
+            open OUTFILE, "$outfile";
             while (<OUTFILE>) {
                 my $mpi_dir=$_;
                 my $added_config="$config --with-mpi-dir=$mpi_dir";
+                my @check_this = split (/\//, $mpi_dir);
+                my $mpi_installation = pop (@check_this);
+                chomp($mpi_installation);
+                # print "mpi_dir:$mpi_dir\n";
 
                 $install_dir="$dir/install";
 
                 if ($install_dir_arg) {
-                    $install_dir="$install_dir_arg/$name";
+                    $install_dir="$install_dir_arg/mpi_$mpi_installation/config_$name";
                 }
+                # printf "install_dir:$install_dir\n";
  
-                chdir ("PMB-2.2");
                 $ret = try_configure($name, $merge_output, $tarball_name,
-                                     $dir, "$install_dir",
+                                     $dir, "PMB-2.2", "$install_dir",
                                      $vpath_mode, $added_config);
-                chdir ("..");
+                $ret = try_configure($name, $merge_output, $tarball_name,
+                                     $dir, "mpich_tester", "$install_dir",
+                                     $vpath_mode, $added_config);
 
-                chdir ("mpich_tester");
-                $ret = try_configure($name, $merge_output, $tarball_name,
-                                     $dir, "$install_dir",
-                                     $vpath_mode, $added_config);
-                chdir ("..");
                 $results->{$name} = $ret;
                 $results->{$name} = $ret;
                 $results->{$name} = $ret;
@@ -779,11 +790,11 @@ if (! $config_arg || ! -f $config_arg) {
                 $results->{$name}->{want_stderr} = $want_stderr;
                 $results->{$name}->{vpath_mode} = $vpath_mode;
                 $results->{$name}->{installdir} = "$install_dir";
-
             }
-            $ret = cleanup($name, $merge_output, $tarball_name,
-                           $dir, "$install_dir",
-                           $vpath_mode, $config);
+            close OUTFILE;
+#            $ret = cleanup($name, $merge_output, $tarball_name,
+#                           $dir, "$install_dir",
+#                           $vpath_mode, $config);
             ++$i;
         }
     }
