@@ -19,19 +19,6 @@ module mpi_kinds
   include "mpif.h"
 
 !
-! kind for 4 byte integer (selected_int_kind(18) for 8 byte integer)
-! (WARNING, Compiler dependent)
-!
-  integer :: MPI_ADDRESS_KIND
-  parameter(MPI_ADDRESS_KIND = selected_int_kind(9))
-
-!
-! kind for int64_t equivalent, used for offsets
-!
-  integer :: MPI_OFFSET_KIND
-  parameter(MPI_OFFSET_KIND = selected_int_kind(18))
-
-!
 ! integer kinds
 !
 
