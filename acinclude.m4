@@ -42,6 +42,7 @@ sinclude(config/f90_get_alignment.m4)
 sinclude(config/f90_get_precision.m4)
 sinclude(config/f90_get_range.m4)
 sinclude(config/f90_get_sizeof.m4)
+sinclude(config/f90_get_int_kind.m4)
 
 m4_sinclude(config/ompi_objc.m4)
 
