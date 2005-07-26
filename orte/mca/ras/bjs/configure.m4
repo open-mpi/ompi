@@ -30,7 +30,7 @@ AC_DEFUN([MCA_ras_bjs_CONFIG],[
           [$2])
 
     # set build flags to use in makefile
-    AC_SUBST([ras_bjs_OBJCFLAGS])
+    AC_SUBST([ras_bjs_CPPFLAGS])
     AC_SUBST([ras_bjs_LDFLAGS])
     AC_SUBST([ras_bjs_LIBS])
 ])dnl

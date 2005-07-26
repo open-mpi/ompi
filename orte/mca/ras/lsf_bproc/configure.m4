@@ -30,7 +30,7 @@ AC_DEFUN([MCA_ras_lsf_bproc_CONFIG],[
           [$2])
 
     # set build flags to use in makefile
-    AC_SUBST([ras_lsf_bproc_OBJCFLAGS])
+    AC_SUBST([ras_lsf_bproc_CPPFLAGS])
     AC_SUBST([ras_lsf_bproc_LDFLAGS])
     AC_SUBST([ras_lsf_bproc_LIBS])
 ])dnl
