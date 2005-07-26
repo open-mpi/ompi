@@ -15,7 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include "gm_config.h"
 #include <string.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"

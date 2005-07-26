@@ -16,7 +16,6 @@
 
 
 #include "ompi_config.h"
-#include "gm_config.h"
 #include "include/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
