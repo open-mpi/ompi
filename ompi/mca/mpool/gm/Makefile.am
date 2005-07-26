@@ -18,6 +18,8 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+AM_CPPFLAGS = $(mpool_gm_CPPFLAGS)
+
 sources = \
 	mpool_gm.h \
 	mpool_gm_module.c \
@@ -37,14 +39,13 @@ endif
 
 # See src/mca/ptl/gm/Makefile.am for an explanation of
 # libmca_common_gm.la.
-
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_gm_la_SOURCES = $(sources)
-mca_mpool_gm_la_LDFLAGS = -module -avoid-version
+mca_mpool_gm_la_LIBADD = $(mpool_gm_LIBS)
+mca_mpool_gm_la_LDFLAGS = -module -avoid-version $(mpool_gm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpool_gm_la_SOURCES = $(sources)
-libmca_mpool_gm_la_LDFLAGS = -module -avoid-version
-
-
+libmca_mpool_gm_la_LIBADD = $(mpool_gm_LIBS)
+libmca_mpool_gm_la_LDFLAGS = -module -avoid-version $(mpool_gm_LDFLAGS)

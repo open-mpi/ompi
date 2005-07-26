@@ -18,7 +18,6 @@
 # Specific to this module
 
 PARAM_INIT_FILE=mpool_gm_module.c
-PARAM_CONFIG_HEADER_FILE="gm_config.h"
 PARAM_CONFIG_FILES="Makefile"
 
 
