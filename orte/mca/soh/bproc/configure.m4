@@ -30,7 +30,7 @@ AC_DEFUN([MCA_soh_bproc_CONFIG],[
           [$2])
 
     # set build flags to use in makefile
-    AC_SUBST([soh_bproc_OBJCFLAGS])
+    AC_SUBST([soh_bproc_CPPFLAGS])
     AC_SUBST([soh_bproc_LDFLAGS])
     AC_SUBST([soh_bproc_LIBS])
 ])dnl

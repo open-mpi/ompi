@@ -32,7 +32,7 @@ AC_DEFUN([MCA_pls_bproc_CONFIG],[
           [AC_MSG_ERROR([Scyld bproc is not supported by the launching system yet])])
 
     # set build flags to use in makefile
-    AC_SUBST([pls_bproc_OBJCFLAGS])
+    AC_SUBST([pls_bproc_CPPFLAGS])
     AC_SUBST([pls_bproc_LDFLAGS])
     AC_SUBST([pls_bproc_LIBS])
 ])dnl

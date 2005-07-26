@@ -30,7 +30,7 @@ AC_DEFUN([MCA_pls_bproc_orted_CONFIG],[
           [$2])
 
     # set build flags to use in makefile
-    AC_SUBST([pls_bproc_orted_OBJCFLAGS])
+    AC_SUBST([pls_bproc_orted_CPPFLAGS])
     AC_SUBST([pls_bproc_orted_LDFLAGS])
     AC_SUBST([pls_bproc_orted_LIBS])
 ])dnl

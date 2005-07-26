@@ -16,10 +16,32 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include
+AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include $(pls_bproc_orted_CPPFLAGS)
 
-noinst_LTLIBRARIES = libmca_pls_bproc_orted.la
-libmca_pls_bproc_orted_la_SOURCES = \
+# Make the output library in this directory, and name it either
+# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
+# (for static builds).
+
+if OMPI_BUILD_pls_bproc_orted_DSO
+component_noinst =
+component_install = mca_pls_bproc_orted.la
+else
+component_noinst = libmca_pls_bproc_orted.la
+component_install =
+endif
+
+sources = \
 	pls_bproc_orted.h \
 	pls_bproc_orted.c \
 	pls_bproc_orted_component.c
+
+mcacomponentdir = $(libdir)/openmpi
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_pls_bproc_orted_la_SOURCES = $(sources)
+mca_pls_bproc_orted_la_LIBADD = $(pls_bproc_orted_LIBS)
+mca_pls_bproc_orted_la_LDFLAGS = -module -avoid-version $(pls_bproc_orted_LDFLAGS)
+
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_pls_bproc_orted_la_SOURCES = $(sources)
+libmca_pls_bproc_orted_la_LIBADD = $(pls_bproc_orted_LIBS)
+libmca_pls_bproc_orted_la_LDFLAGS = -module -avoid-version $(pls_bproc_orted_LDFLAGS)
