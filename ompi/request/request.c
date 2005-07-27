@@ -26,6 +26,7 @@ int                   ompi_request_poll_iterations = 20000;
 OMPI_DECLSPEC opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC ompi_request_t        ompi_request_null;
+OMPI_DECLSPEC ompi_request_t        ompi_request_empty;
 ompi_status_public_t  ompi_status_empty;
 
 
@@ -67,6 +68,7 @@ int ompi_request_init(void)
     OBJ_CONSTRUCT(&ompi_request_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ompi_request_cond, opal_condition_t);
     OBJ_CONSTRUCT(&ompi_request_null, ompi_request_t);
+    OBJ_CONSTRUCT(&ompi_request_empty, ompi_request_t);
 
     ompi_request_null.req_status.MPI_SOURCE = MPI_PROC_NULL;
     ompi_request_null.req_status.MPI_TAG = MPI_ANY_TAG;
@@ -84,6 +86,33 @@ int ompi_request_init(void)
         ompi_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_null);
 
     if (0 != ompi_request_null.req_f_to_c_index) {
+        return OMPI_ERR_REQUEST;
+    }
+
+    /* We need a way to distinguish between the user provided
+     * MPI_REQUEST_NULL to MPI_Wait* and a non-active (MPI_PROC_NULL)
+     * request passed to any P2P non-blocking function.
+     *
+     * The main difference to ompi_request_null is
+     * req_state being OMPI_REQUEST_ACTIVE, so that MPI_Waitall
+     * does not set the status to ompi_status_empty.
+     */
+    ompi_request_empty.req_status.MPI_SOURCE = MPI_PROC_NULL;
+    ompi_request_empty.req_status.MPI_TAG = MPI_ANY_TAG;
+    ompi_request_empty.req_status.MPI_ERROR = MPI_SUCCESS;
+    ompi_request_empty.req_status._count = 0;
+    ompi_request_empty.req_status._cancelled = 0;
+
+    ompi_request_empty.req_state = OMPI_REQUEST_ACTIVE;
+    ompi_request_empty.req_complete = true;
+    ompi_request_empty.req_type = OMPI_REQUEST_NULL;
+    ompi_request_empty.req_fini = ompi_request_null_free;
+    ompi_request_empty.req_free = ompi_request_null_free;
+    ompi_request_empty.req_cancel = ompi_request_null_cancel;
+    ompi_request_empty.req_f_to_c_index =
+        ompi_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_empty);
+
+    if (1 != ompi_request_empty.req_f_to_c_index) {
         return OMPI_ERR_REQUEST;
     }
 
