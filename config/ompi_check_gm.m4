@@ -123,8 +123,8 @@ AC_DEFUN([OMPI_CHECK_GM],[
                 [AC_HELP_STRING([--with-btl-gm=GM_DIR],
                                 [Additional directory to search for GM installation])])
     AC_ARG_WITH([gm-libdir],
-       [AC_HELP_STRING([--with-btl-gm-libdir=IBLIBDIR],
-                       [directory where the IB library can be found, if it is not in GM_DIR/lib or GM_DIR/lib64])])
+       [AC_HELP_STRING([--with-btl-gm-libdir=GMLIBDIR],
+                       [directory where the GM library can be found, if it is not in GM_DIR/lib or GM_DIR/lib64])])
 
     AS_IF([test ! -z "$with_btl_gm" -a "$with_btl_gm" != "yes"],
           [ompi_check_gm_dir="$with_btl_gm"])
