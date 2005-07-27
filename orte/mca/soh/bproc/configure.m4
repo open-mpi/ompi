@@ -21,6 +21,16 @@ AC_DEFUN([MCA_soh_bproc_CONFIG],[
     OMPI_CHECK_BPROC([soh_bproc], [soh_bproc_good=1], 
                      [soh_bproc_good=0], [soh_bproc_good=0])
 
+    #BPROC_API_VERSION was added in bproc 4.0.0, and this component
+    #will only compile with >= bproc 4.0.0
+    AS_IF([test "$soh_bproc_good" = "1"],
+       [AC_MSG_CHECKING(for BPROC_API_VERSION)
+        AC_TRY_COMPILE([#include<bproc.h>],
+            [int foo = BPROC_API_VERSION;], 
+            have_bproc_api_ver_msg=yes soh_bproc_good=1,
+            have_bproc_api_ver_msg=no  soh_bproc_good=0)
+       AC_MSG_RESULT([$have_bproc_api_ver_msg])])
+
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$soh_bproc_good" = "1"],
