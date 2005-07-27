@@ -54,6 +54,12 @@ static int ompi_request_null_cancel(ompi_request_t* request, int flag)
     return OMPI_SUCCESS;
 }
 
+static int ompi_request_empty_free(ompi_request_t** request)
+{
+    *request = &ompi_request_null;
+    return OMPI_SUCCESS;
+}
+
 
 OBJ_CLASS_INSTANCE(
     ompi_request_t,
@@ -95,7 +101,10 @@ int ompi_request_init(void)
      *
      * The main difference to ompi_request_null is
      * req_state being OMPI_REQUEST_ACTIVE, so that MPI_Waitall
-     * does not set the status to ompi_status_empty.
+     * does not set the status to ompi_status_empty and the different
+     * req_fini and req_free function, which resets the
+     * request to MPI_REQUEST_NULL.
+     * The req_cancel function need not be changed.
      */
     ompi_request_empty.req_status.MPI_SOURCE = MPI_PROC_NULL;
     ompi_request_empty.req_status.MPI_TAG = MPI_ANY_TAG;
@@ -106,8 +115,8 @@ int ompi_request_init(void)
     ompi_request_empty.req_state = OMPI_REQUEST_ACTIVE;
     ompi_request_empty.req_complete = true;
     ompi_request_empty.req_type = OMPI_REQUEST_NULL;
-    ompi_request_empty.req_fini = ompi_request_null_free;
-    ompi_request_empty.req_free = ompi_request_null_free;
+    ompi_request_empty.req_fini = ompi_request_empty_free;
+    ompi_request_empty.req_free = ompi_request_empty_free;
     ompi_request_empty.req_cancel = ompi_request_null_cancel;
     ompi_request_empty.req_f_to_c_index =
         ompi_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_empty);
