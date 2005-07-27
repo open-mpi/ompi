@@ -31,7 +31,7 @@
 
 #include <portals/portals3.h>
 
-#define PTL_EQ_HANDLER_NONE PTL_HANDLE_NONE
+#define PTL_EQ_HANDLER_NONE NULL
 
 #else
 

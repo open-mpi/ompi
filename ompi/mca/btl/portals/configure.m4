@@ -46,11 +46,11 @@ AC_DEFUN([MCA_btl_portals_CONFIG_VAL], [
 AC_DEFUN([MCA_btl_portals_CONFIG_VALS], [
     # User configuration options
     MCA_btl_portals_CONFIG_VAL([send-table-id],
-        [OMPI_BTL_PORTALS_SEND_TABLE_ID], [3],
+        [OMPI_BTL_PORTALS_SEND_TABLE_ID], [30],
         [Portals table id to use for send/recv ])
 
     MCA_btl_portals_CONFIG_VAL([rdma-table-id],
-        [OMPI_BTL_PORTALS_RDMA_TABLE_ID], [4],
+        [OMPI_BTL_PORTALS_RDMA_TABLE_ID], [31],
         [Portals table id to use for RDMA request])
 
     MCA_btl_portals_CONFIG_VAL([debug-level],
