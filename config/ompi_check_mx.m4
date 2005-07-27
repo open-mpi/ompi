@@ -54,12 +54,13 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_MX],[
+    help_name=`
     AC_ARG_WITH([mx],
-                [AC_HELP_STRING([--with-btl-mx=MX_DIR],
+                [AC_HELP_STRING([--with-mx=MX_DIR],
                                 [Additional directory to search for MX installation])])
     AC_ARG_WITH([mx-libdir],
-       [AC_HELP_STRING([--with-btl-mx-libdir=IBLIBDIR],
-                       [directory where the MX library can be found, if it is not in MX_DIR/lib or MX_DIR/lib64])])
+                [AC_HELP_STRING([--with-mx-libdir=MXLIBDIR],
+                                [directory where the MX library can be found, if it is not in MX_DIR/lib or MX_DIR/lib64])])
 
     AS_IF([test ! -z "$with_btl_mx" -a "$with_btl_mx" != "yes"],
           [ompi_check_mx_dir="$with_btl_mx"])
