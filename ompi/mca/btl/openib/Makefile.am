@@ -18,6 +18,9 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+CFLAGS = $(btl_openib_CFLAGS)
+AM_CPPFLAGS=$(btl_openib_CPPFLAGS) 
+
 sources = \
     btl_openib.c \
     btl_openib.h \
@@ -48,8 +51,10 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
-mca_btl_openib_la_LDFLAGS = -module -avoid-version
+mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS) 
+mca_btl_openib_la_LIBADD = $(btl_openib_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_openib_la_SOURCES = $(lib_sources)
-libmca_btl_openib_la_LDFLAGS = -module -avoid-version
+libmca_btl_openib_la_LDFLAGS= -module -avoid-version $(btl_openib_LDFLAGS) 
+libmca_btl_openib_la_LIBADD=$(btl_openib_LIBS)

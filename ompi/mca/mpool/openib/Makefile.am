@@ -18,6 +18,9 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+CFLAGS = $(mpool_openib_CFLAGS)
+AM_CPPFLAGS = $(mpool_openib_CPPFLAGS)
+
 sources = \
 	mpool_openib.h \
 	mpool_openib_module.c \
@@ -41,10 +44,13 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_openib_la_SOURCES = $(sources)
-mca_mpool_openib_la_LDFLAGS = -module -avoid-version
+mca_mpool_openib_la_LDFLAGS = -module -avoid-version $(mpool_openib_LDFLAGS)
+mca_mpool_openib_la_LIBADD = $(mpool_openib_LIBS)
+
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpool_openib_la_SOURCES = $(sources)
-libmca_mpool_openib_la_LDFLAGS = -module -avoid-version
+libmca_mpool_openib_la_LDFLAGS = -module -avoid-version $(mpool_openib_LDFLAGS)
+libmca_mpool_openib_la_LIBADD = $(mpool_openib_LIBS)
 
 

@@ -27,7 +27,7 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
                                 [Additional directory to search for MVAPI installation])])
     AC_ARG_WITH([mvapi-libdir],
        [AC_HELP_STRING([--with-btl-mvapi-libdir=IBLIBDIR],
-                       [directory where the IB library can be found, if it is not in MVAPI_DIR/lib or MVAPI_DIR/lib64])])
+	       [directory where the IB library can be found, if it is not in MVAPI_DIR/lib or MVAPI_DIR/lib64])])
 
     AS_IF([test ! -z "$with_btl_mvapi" -a "$with_btl_mvapi" != "yes"],
           [ompi_check_mvapi_dir="$with_btl_mvapi"])
