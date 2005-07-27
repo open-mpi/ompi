@@ -54,7 +54,6 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_MX],[
-    help_name=`
     AC_ARG_WITH([mx],
                 [AC_HELP_STRING([--with-mx=MX_DIR],
                                 [Additional directory to search for MX installation])])
