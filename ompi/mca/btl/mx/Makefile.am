@@ -18,38 +18,30 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-sources = \
-    btl_mx.c \
-    btl_mx.h \
-    btl_mx_component.c \
-    btl_mx_endpoint.c \
-    btl_mx_endpoint.h \
-    btl_mx_frag.c \
-    btl_mx_frag.h \
-    btl_mx_proc.c \
-    btl_mx_proc.h
+AM_CPPFLAGS = $(btl_mx_CPPFLAGS)
+
+btl_mx_sources = btl_mx.c btl_mx.h btl_mx_component.c btl_mx_endpoint.c \
+    btl_mx_endpoint.h btl_mx_frag.c btl_mx_frag.h btl_mx_proc.c btl_mx_proc.h
      
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
 if OMPI_BUILD_btl_mx_DSO
-lib =
-lib_sources =
-component = mca_btl_mx.la
-component_sources = $(sources)
+component_noinst =
+component_install = mca_btl_mx.la
 else
-lib = libmca_btl_mx.la
-lib_sources = $(sources)
-component =
-component_sources =
+component_noinst = libmca_btl_mx.la
+component_install =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component)
-mca_btl_mx_la_SOURCES = $(component_sources)
-mca_btl_mx_la_LDFLAGS = -module -avoid-version
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_btl_mx_la_SOURCES = $(btl_mx_sources)
+mca_btl_mx_la_LIBADD = $(btl_mx_LIBX)
+mca_btl_mx_la_LDFLAGS = -module -avoid-version $(btl_mx_LDFLAGS)
 
-noinst_LTLIBRARIES = $(lib)
-libmca_btl_mx_la_SOURCES = $(lib_sources)
-libmca_btl_mx_la_LDFLAGS = -module -avoid-version
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_btl_mx_la_SOURCES = $(btl_mx_sources)
+libmca_btl_mx_la_LIBADD = $(btl_mx_LIBS)
+libmca_btl_mx_la_LDFLAGS = -module -avoid-version $(btl_mx_LDFLAGS)
