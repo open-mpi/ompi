@@ -18,7 +18,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-CFLAGS = $(mpool_openib_CFLAGS)
 AM_CPPFLAGS = $(mpool_openib_CPPFLAGS)
 
 sources = \
