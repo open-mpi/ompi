@@ -142,6 +142,7 @@ OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC extern int                   ompi_request_poll_iterations;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
+OMPI_DECLSPEC extern ompi_request_t        ompi_request_empty;
 OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
 
 

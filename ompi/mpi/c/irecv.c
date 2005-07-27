@@ -37,7 +37,7 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
 {
     int rc;
     if (source == MPI_PROC_NULL) {
-        *request = MPI_REQUEST_NULL;
+        *request = &ompi_request_empty;
         return OMPI_SUCCESS;
     }
 
