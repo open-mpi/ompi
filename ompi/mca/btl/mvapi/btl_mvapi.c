@@ -689,7 +689,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     frag->sg_entry.lkey = vapi_reg->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
-    frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->l_key; 
+    frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->r_key; 
     
     frag->base.des_dst = &frag->segment; 
     frag->base.des_dst_cnt = 1; 
