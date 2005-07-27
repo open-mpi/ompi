@@ -38,7 +38,7 @@ int MPI_Ibsend(void *buf, int count, MPI_Datatype type, int dest,
 {
     int rc;
     if (dest == MPI_PROC_NULL) {
-        *request = MPI_REQUEST_NULL;
+        *request = &ompi_request_empty;
         return MPI_SUCCESS;
     }
 

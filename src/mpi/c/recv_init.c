@@ -37,7 +37,7 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
 {
     int rc;
     if (source == MPI_PROC_NULL) { 
-        *request = &ompi_request_null;
+        *request = &ompi_request_empty;
         return MPI_SUCCESS;
     }
 
