@@ -237,7 +237,7 @@ opal_progress(void)
          * the processor is oversubscribed - this will result in a best-case
          * latency equivalent to the time-slice.
          */
-#ifndef WIN32
+#if !defined(WIN32) && defined(HAVE_SCHED_YIELD)
         /* TODO: Find the windows equivalent for this */
         sched_yield();
 #endif

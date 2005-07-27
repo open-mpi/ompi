@@ -65,9 +65,7 @@ int mca_pml_ob1_enable(bool enable)
     /* post this processes datatype */
     proc_arch = ompi_proc_local()->proc_arch;
     proc_arch = htonl(proc_arch);
-    rc = mca_base_modex_send(&mca_pml_ob1_component.pmlm_version, &proc_arch, sizeof(proc_arch));
-    if(rc != OMPI_SUCCESS)
-        return rc;
+    (void) mca_base_modex_send(&mca_pml_ob1_component.pmlm_version, &proc_arch, sizeof(proc_arch));
 
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
 
@@ -267,12 +265,14 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         size_t size = sizeof(uint32_t);
         rc = mca_base_modex_recv(&mca_pml_ob1_component.pmlm_version, procs[p], 
             (void**)&proc_arch, &size);
-        if(rc != OMPI_SUCCESS) 
-            return rc;
-        if(size != sizeof(uint32_t))
-            return OMPI_ERROR;
-        procs[p]->proc_arch = ntohl(*proc_arch);
-        free(proc_arch);
+        if(rc == OMPI_SUCCESS) {
+            if(size != sizeof(uint32_t))
+                return OMPI_ERROR;
+            procs[p]->proc_arch = ntohl(*proc_arch);
+            free(proc_arch);
+        } else {
+            procs[p]->proc_arch = ompi_proc_local()->proc_arch;
+        }
     }
     
     /* attempt to add all procs to each ob1 */

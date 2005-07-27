@@ -22,6 +22,13 @@
 #include "btl_portals.h"
 #include "btl_portals_compat.h"
 
+#if 0
+int cnos_get_size(void);
+int cnos_get_rank(void);
+int cnos_get_nidpid_map(ptl_process_id_t **map);
+#else
+#include <catamount/cnos_mpi_os.h>
+#endif
 
 int
 mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
@@ -73,12 +80,14 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
                     &(btl->portals_ni_limits),    /* save our limits somewhere */
                     &(btl->portals_ni_h)  /* our interface handle */
                     );
-    if (PTL_OK != ret) {
+    if (PTL_OK != ret && PTL_IFACE_DUP != ret) {
         opal_output_verbose(10, mca_btl_portals_component.portals_output,
                             "PtlNIInit failed, returning %d\n", ret);
         return OMPI_ERR_FATAL;
     }
 
+    opal_output_verbose(10, mca_btl_portals_component.portals_output,
+			"max ptl index: %d", btl->portals_ni_limits.max_pt_index);
 
     return OMPI_SUCCESS;
 }
@@ -90,6 +99,8 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
                                  ptl_process_id_t **portals_procs)
 {
     int nptl_procs = 0;
+    cnos_nidpid_map_t *map;
+    int i;
 
     /*
      * FIXME - XXX - FIXME 
@@ -97,7 +108,7 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
      *       procs list.  Don't know what to do about that...
      */
 
-    nptl_procs = cnos_get_nidpid_map(portals_procs);
+    nptl_procs = cnos_get_nidpid_map(&map);
     if (nptl_procs <= 0) {
         opal_output_verbose(10, mca_btl_portals_component.portals_output,
                             "cnos_get_nidpid_map() returned %d", nptl_procs);
@@ -109,5 +120,23 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
         return OMPI_ERR_FATAL;
     }
 
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    /* get space for the portals procs list */
+    *portals_procs = calloc(nprocs, sizeof(ptl_process_id_t));
+    if (NULL == *portals_procs) {
+	opal_output_verbose(10, mca_btl_portals_component.portals_output,
+			    "calloc(nprocs, sizeof(ptl_process_id_t)) failed");
+	return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0 ; i < nprocs ; ++i) {
+	opal_output_verbose(120, mca_btl_portals_component.portals_output,
+			    "rank %d: nid %ld, pid %ld", i,
+			    map[i].nid, map[i].pid);
+
+	/* update my local array of proc structs */
+	(*portals_procs)[i].nid = map[i].nid;
+	(*portals_procs)[i].pid = map[i].pid;
+    }
+
+    return OMPI_SUCCESS;
 }

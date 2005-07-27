@@ -1132,7 +1132,7 @@ ompi_show_title "Library and Function tests"
 # vscanf
 
 AC_CHECK_LIB([util], [openpty], [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lutil" LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lutil" LIBS="$LIBS -lutil]")
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe setsid])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe setsid mmap])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
@@ -1170,11 +1170,14 @@ if test "$MSG" = "not_found"; then
 [MSG=yes],[MSG=not_found])
     if test "$MSG" = "not_found"; then
         LIBS="$LIBS_save"
-        AC_MSG_RESULT([cannot find sched_yield])
-        AC_MSG_ERROR([Cannot continue])
     fi
 fi
 AC_MSG_RESULT([$MSG])
+
+# see if we actually have sched_yeild.  Use AC_CHECK_FUNCS so that it
+# does the glibs "not implemented" check.  Will use the current LIBS,
+# so will check in -lrt if we decided we needed it above
+AC_CHECK_FUNCS([sched_yield])
 
 #
 # See if we need the math library explicitly linked in

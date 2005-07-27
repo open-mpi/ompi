@@ -46,13 +46,15 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
     md.user_ptr = NULL;
     md.eq_handle = PTL_EQ_NONE;
 
+    opal_output_verbose(90, mca_btl_portals_component.portals_output,
+                        "About to create reject entry");
     ret = PtlMEAttach(btl->portals_ni_h,
                       OMPI_BTL_PORTALS_SEND_TABLE_ID,
                       any_proc,
                       0, /* match */
                       0, /* ignore */
                       PTL_RETAIN,
-                      PTL_INS_AFTER,
+                      PTL_INS_BEFORE,
                       &(btl->portals_recv_reject_me_h));
     if (PTL_OK != ret) {
         opal_output(mca_btl_portals_component.portals_output,

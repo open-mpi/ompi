@@ -37,6 +37,10 @@ AC_DEFUN([OMPI_MCA],[
     # --enable-mca-dso=[.+,]*COMPONENT_TYPE-COMPONENT_NAME[.+,]*
     # --disable-mca-dso
     #
+    AC_ARG_ENABLE([mca-no-build],
+        [AC_HELP_STRING([---enable-mca-no-build=LIST],
+                        [comma-separated list of type-component pairs 
+                         that will not be built.])])
     AC_ARG_ENABLE(mca-dso,
         AC_HELP_STRING([--enable-mca-dso=LIST],
                        [comma-separated list of types and/or
@@ -44,9 +48,7 @@ AC_DEFUN([OMPI_MCA],[
                         run-time loadable components (as opposed to
                         statically linked in), if supported on this
                         platform.  The default is to build all components
-                        as DSOs; the --disable-mca-dso[=LIST] form can be
-                        used to disable building all or some
-                        types/components as DSOs]))
+                        as DSOs]))
     AC_ARG_ENABLE(mca-static,
         AC_HELP_STRING([--enable-mca-static=LIST],
                        [comma-separated list of types and/or
@@ -63,6 +65,32 @@ AC_DEFUN([OMPI_MCA],[
                         overhead of the component architecture.  LIST must
                         not be empty and implies given component pairs are
                         build as static components.]))
+
+    AC_MSG_CHECKING([which components should be disabled])
+    if test "$enable_mca_no_build" = "yes"; then
+        AC_MSG_RESULT([yes])
+        AC_MSG_ERROR([*** The enable-mca-no-build flag requires an explicit list
+*** of type-component pairs.  For example, --enable-mca-direct=pml-teg])
+    else
+        ifs_save="$IFS"
+        IFS="${IFS}$PATH_SEPARATOR,"
+        msg=
+        for item in $enable_mca_no_build; do
+            type="`echo $item | cut -f1 -d-`"
+            comp="`echo $item | cut -f2- -d-`"
+            if test -z $type -o -z $comp ; then
+                AC_MSG_ERROR([*** The enable-no-build flag requires a
+*** list of type-component pairs.  Invalid input detected.])
+            else
+                str="`echo DISABLE_${type}_${comp}=1 | sed s/-/_/g`"
+                eval $str
+                msg="$item $msg"
+            fi
+        done
+        IFS="$ifs_save"
+    fi
+    AC_MSG_RESULT([$msg])
+    unset msg
 
     #
     # First, add all the mca-direct components / types into the mca-static
@@ -791,6 +819,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
     framework=$2
     component=$3
     component_path="$srcdir/$project/mca/$framework/$component"
+    want_component=0
 
     # build if:
     # - the component type is direct and we are that component
@@ -828,9 +857,16 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
                 want_component=0
             fi
         fi
-
-        AS_IF([test "$want_component" = "1"], [$4], [$5])
     fi
+
+    # if we were explicitly disabled, don't build :)
+    str="DISABLED_COMPONENT_CHECK=\$DISABLE_${framework}_$component"
+    eval $str
+    if test "$DISABLED_COMPONENT_CHECK" = "1" ; then
+        want_component=0
+    fi
+
+    AS_IF([test "$want_component" = "1"], [$4], [$5])
 ])
 
 
