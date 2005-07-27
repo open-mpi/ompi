@@ -12,22 +12,32 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
- */
-/** @file:
+ *
  */
 
 #include "orte_config.h"
+
 #include "include/orte_constants.h"
+#include "mca/sds/sds.h"
+#include "mca/sds/base/base.h"
+#include "mca/sds/env/sds_env.h"
 #include "util/proc_info.h"
 #include "opal/util/opal_environ.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/base/base.h"
-#include "mca/ns/base/ns_base_nds.h"
 
 
-int orte_ns_nds_env_get(void)
+orte_sds_base_module_t sds_env_module = {
+    orte_sds_base_basic_contact_universe,
+    orte_sds_env_set_name,
+    orte_sds_env_finalize,
+};
+
+
+int
+orte_sds_env_set_name(void)
 {
     int rc;
     int id;
@@ -36,6 +46,7 @@ int orte_ns_nds_env_get(void)
     char* name_string = NULL;
     id = mca_base_param_register_string("ns", "nds", "name", NULL, NULL);
     mca_base_param_lookup_string(id, &name_string);
+
     if(name_string != NULL) {
         if (ORTE_SUCCESS != (rc = orte_ns_base_convert_string_to_process_name(
            &(orte_process_info.my_name),
@@ -118,99 +129,8 @@ int orte_ns_nds_env_get(void)
 }
 
 
-int orte_ns_nds_env_put(const orte_process_name_t* name, 
-                        orte_vpid_t vpid_start, size_t num_procs,
-                        char ***env)
+int 
+orte_sds_env_finalize(void)
 {
-    char* param;
-    char* cellid;
-    char* jobid;
-    char* vpid;
-    char* value;
-    int rc;
-
-    if(ORTE_SUCCESS != (rc = orte_ns.get_cellid_string(&cellid, name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&jobid, name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(ORTE_SUCCESS != (rc = orte_ns.get_vpid_string(&vpid, name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* set the mode to env */
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds",NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, "env", true, env);
-    free(param);
-
-    /* not a seed */
-    if(NULL == (param = mca_base_param_environ_variable("seed",NULL,NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(param, env);
-    free(param);
-
-    /* since we want to pass the name as separate components, make sure
-     * that the "name" environmental variable is cleared!
-     */
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","name"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(param, env);
-    free(param);
-
-    /* setup the name */
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","cellid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, cellid, true, env);
-    free(param);
-    free(cellid);
-
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","jobid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, jobid, true, env);
-    free(param);
-    free(jobid);
-
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","vpid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, vpid, true, env);
-    free(param);
-    free(vpid);
-
-    asprintf(&value, "%lu", (unsigned long) vpid_start);
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","vpid_start"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, value, true, env);
-    free(param);
-    free(value);
-
-    asprintf(&value, "%lu", (unsigned long) num_procs);
-    if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_procs"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, value, true, env);
-    free(param);
-    free(value);
     return ORTE_SUCCESS;
 }
-
-

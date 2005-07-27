@@ -16,18 +16,18 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        errmgr \
-        gpr \
-        iof \
-        ns \
-        oob \
-        pls \
-        ras \
-        rds \
-        rmaps \
-        rmgr \
-        rml \
-        schema \
-	sds \
-        soh
+SUBDIRS = base $(MCA_sds_STATIC_SUBDIRS)
+DIST_SUBDIRS = base $(MCA_sds_ALL_SUBDIRS)
+
+# Source code files
+
+headers = sds.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ortedir = $(includedir)/openmpi/orte/mca/sds
+orte_HEADERS = $(headers)
+else
+ortedir = $(includedir)
+endif

@@ -46,6 +46,7 @@ liborte_la_LIBADD = \
         mca/rmgr/base/libmca_orte_rmgr_base.la $(MCA_rmgr_STATIC_LTLIBS) \
         mca/rml/base/libmca_rml_base.la $(MCA_rml_STATIC_LTLIBS) \
         mca/schema/base/libmca_schema_base.la $(MCA_schema_STATIC_LTLIBS) \
+        mca/sds/base/libmca_sds_base.la $(MCA_sds_STATIC_LTLIBS) \
         mca/soh/base/libmca_soh_base.la $(MCA_soh_STATIC_LTLIBS) \
         runtime/libruntime.la \
         util/liborteutil.la

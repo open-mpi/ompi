@@ -12,11 +12,11 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
- */
-/** @file:
+ *
  */
 
 #include "orte_config.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -27,15 +27,24 @@
 #include "util/proc_info.h"
 #include "opal/util/output.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
+#include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
-#include "mca/ns/base/ns_base_nds.h"
+#include "mca/sds/sds.h"
+#include "mca/sds/base/base.h"
+#include "mca/sds/pipe/sds_pipe.h"
+
+orte_sds_base_module_t sds_pipe_module =  {
+    orte_sds_base_basic_contact_universe,
+    orte_sds_pipe_set_name,
+    orte_sds_pipe_finalize,
+};
 
 
-int orte_ns_nds_pipe_get(void)
+int
+orte_sds_pipe_set_name(void)
 {
-    int rc, fd, id;
+        int rc, fd, id;
     orte_process_name_t name;
     size_t num_procs;
 
@@ -73,28 +82,8 @@ int orte_ns_nds_pipe_get(void)
 }
 
 
-int orte_ns_nds_pipe_put(const orte_process_name_t* name, orte_vpid_t vpid_start, size_t num_procs, int fd)
+int 
+orte_sds_pipe_finalize(void)
 {
-    int rc;
-
-    rc = write(fd,name,sizeof(orte_process_name_t));
-    if(rc != sizeof(orte_process_name_t)) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_NOT_FOUND;
-    }
-
-    rc = write(fd,&vpid_start, sizeof(vpid_start));
-    if(rc != sizeof(vpid_start)) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_NOT_FOUND;
-    }
-
-    rc = write(fd,&num_procs, sizeof(num_procs));
-    if(rc != sizeof(num_procs)) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_NOT_FOUND;
-    }
-
     return ORTE_SUCCESS;
 }
-

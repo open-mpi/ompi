@@ -16,18 +16,29 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        errmgr \
-        gpr \
-        iof \
-        ns \
-        oob \
-        pls \
-        ras \
-        rds \
-        rmaps \
-        rmgr \
-        rml \
-        schema \
-	sds \
-        soh
+noinst_LTLIBRARIES = libmca_sds_base.la
+
+# Source code files
+headers = \
+        base.h
+
+libmca_sds_base_la_SOURCES = \
+        $(headers) \
+        sds_base_close.c \
+        sds_base_open.c \
+	sds_base_select.c \
+	sds_base_interface.c \
+	sds_base_universe.c \
+	sds_base_put.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ortedir = $(includedir)/openmpi/orte/mca/sds/base
+orte_HEADERS = $(headers)
+else
+ortedir = $(includedir)
+endif
+
+distclean-local:
+	rm -f static-components.h

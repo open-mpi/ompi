@@ -147,8 +147,6 @@ OMPI_DECLSPEC    int orte_ns_base_define_data_type_not_available(
 OMPI_DECLSPEC    int orte_ns_base_create_my_name_not_available(void);
 
 /* Base functions used everywhere */
-OMPI_DECLSPEC    int orte_ns_base_set_my_name(void);
-
 OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs, 
                                   size_t *num_procs, size_t *self);
 
