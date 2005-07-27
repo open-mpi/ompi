@@ -32,7 +32,7 @@
 #include "runtime/orte_wait.h"
 #include "runtime/runtime.h"
 #include "mca/ns/base/base.h"
-#include "mca/ns/base/ns_base_nds.h"
+#include "mca/sds/base/base.h"
 #include "mca/pls/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/iof/iof.h"

@@ -35,7 +35,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ns/base/base.h"
-#include "orte/mca/ns/base/ns_base_nds.h"
+#include "orte/mca/sds/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmgr/base/base.h"

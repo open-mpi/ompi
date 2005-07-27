@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,20 +15,9 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
-
-SUBDIRS = \
-        errmgr \
-        gpr \
-        iof \
-        ns \
-        oob \
-        pls \
-        ras \
-        rds \
-        rmaps \
-        rmgr \
-        rml \
-        schema \
-	sds \
-        soh
+# MCA_sds_cnos_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
+AC_DEFUN([MCA_sds_cnos_CONFIG],[
+    # check for cnos functions
+    AC_CHECK_FUNC([cnos_get_rank], [$1], [$2])
+])dnl

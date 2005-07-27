@@ -29,4 +29,5 @@ SUBDIRS = \
         rmgr \
         rml \
         schema \
+	sds \
         soh

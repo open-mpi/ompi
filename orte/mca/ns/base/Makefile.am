@@ -25,7 +25,6 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 # Source code files
 
 headers = \
-        ns_base_nds.h \
         base.h
 
 # Library
@@ -35,10 +34,7 @@ libmca_ns_base_la_SOURCES = \
         ns_base_close.c \
         ns_base_select.c \
         ns_base_open.c \
-        ns_base_nds.c \
-        ns_base_nds_bproc.c \
-        ns_base_nds_env.c \
-        ns_base_nds_pipe.c \
+	ns_base_nds.c \
         ns_base_local_fns.c \
 	data_type_support/ns_data_type_packing_fns.c \
 	data_type_support/ns_data_type_unpacking_fns.c

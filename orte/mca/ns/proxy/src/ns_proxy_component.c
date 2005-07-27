@@ -93,7 +93,6 @@ static mca_ns_base_module_t orte_ns_proxy = {
     orte_ns_base_derive_vpid,
     orte_ns_proxy_assign_rml_tag,
     orte_ns_proxy_define_data_type,
-    orte_ns_base_set_my_name,
     orte_ns_base_get_peers
 };
 

@@ -36,6 +36,7 @@
 #include "mca/errmgr/base/base.h"
 #include "mca/iof/base/base.h"
 #include "mca/ns/base/base.h"
+#include "mca/sds/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "mca/rmgr/base/base.h"
 #include "mca/rmaps/base/base.h"
@@ -56,13 +57,10 @@
 
 int orte_init_stage1(void)
 {
-    int ret, rc, exit_if_not_exist;
-    char *universe;
+    int ret, rc;
     char *jobid_str = NULL;
     char *procid_str = NULL;
     char *contact_path = NULL;
-    pid_t pid;
-    orte_universe_t univ;
     orte_jobid_t my_jobid;
     orte_cellid_t my_cellid;
     orte_gpr_value_t value, *values;
@@ -165,98 +163,27 @@ int orte_init_stage1(void)
     /*
      * Initialize schema utilities
      */
-
     if (ORTE_SUCCESS != (ret = orte_schema_base_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
 
-    /* if we were NOT given registry and name service replicas (i.e., we
-     * weren't told a universe contact point), check for some
-     * existing universe to join */
-    if (NULL == orte_process_info.ns_replica_uri || NULL == orte_process_info.gpr_replica_uri) {
-        if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
-            /* copy universe info into our universe structure */
-            orte_universe_info.name = univ.name;
-            orte_universe_info.host = univ.host;
-            orte_universe_info.uid = univ.uid;
-            orte_universe_info.persistence = univ.persistence;
-            orte_universe_info.scope = univ.scope;
-            orte_universe_info.console = univ.console;
-            orte_universe_info.seed_uri = univ.seed_uri;
-            orte_universe_info.console_connected = univ.console_connected;
-            orte_universe_info.scriptfile = univ.scriptfile;
-            /* define the replica contact points */
-            orte_process_info.ns_replica_uri = strdup(univ.seed_uri);
-            orte_process_info.gpr_replica_uri = strdup(univ.seed_uri);
-        } else {
-            /* if an existing universe is not detected, check the
-             * relevant MCA parameter to see if the caller wants
-             * us to abort in this situation
-             */
-            if (0 > (rc =  mca_base_param_register_int("orte", "univ", "exist", NULL, 0))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            if (ORTE_SUCCESS != (rc = mca_base_param_lookup_int(rc, &exit_if_not_exist))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            if (exit_if_not_exist) {
-                /* cleanup the subsystems that were already opened */
-                orte_wait_finalize();
-                orte_ns_base_close();
-                orte_gpr_base_close();
-                orte_schema_base_close();
-                orte_rml_base_close();
-                orte_dps_close();
-                orte_errmgr_base_close();
-                opal_progress_finalize();
-                opal_event_fini();
-                orte_sys_info_finalize();
-                orte_proc_info_finalize();
-                orte_univ_info_finalize();
-                opal_finalize();
-                return ORTE_ERR_UNREACH;
-            }
-            if (ORTE_ERR_NOT_FOUND != ret) {
-                /* if it exists but no contact could be established,
-                 * define unique name based on current one.
-                 * and start new universe with me as seed
-                 */
-                universe = strdup(orte_universe_info.name);
-                free(orte_universe_info.name);
-                orte_universe_info.name = NULL;
-                pid = getpid();
-                if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, (int)pid)) {
-                    opal_output(0, "orte_init: failed to create unique universe name");
-                    return ret;
-                }
-                opal_output(0, "Could not join a running, existing universe");
-                opal_output(0, "Establishing a new one named: %s",
-                                orte_universe_info.name);
-    
-            }
-            orte_process_info.seed = true;
-            /* since we are seed, ensure that all replica info is NULL'd */
-            if (NULL != orte_process_info.ns_replica_uri) {
-                free(orte_process_info.ns_replica_uri);
-                orte_process_info.ns_replica_uri = NULL;
-            }
-            if (NULL != orte_process_info.ns_replica) {
-                    free(orte_process_info.ns_replica);
-                    orte_process_info.ns_replica = NULL;
-            }
-    
-            if (NULL != orte_process_info.gpr_replica_uri) {
-                free(orte_process_info.gpr_replica_uri);
-                orte_process_info.gpr_replica_uri = NULL;
-            }
-            if (NULL != orte_process_info.gpr_replica) {
-                    free(orte_process_info.gpr_replica);
-                    orte_process_info.gpr_replica = NULL;
-            }
-        }
+    /*
+     * Initialize and select sds
+     */
+    if (ORTE_SUCCESS != (ret = orte_sds_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    if (ORTE_SUCCESS != (ret = orte_sds_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+
+    /* Try to connect to the universe */
+    if (ORTE_SUCCESS != (ret = orte_sds_base_contact_universe())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
     }
 
     /*
@@ -283,11 +210,14 @@ int orte_init_stage1(void)
         orte_rml.set_uri(orte_process_info.gpr_replica_uri);
     }
 
-    /*****    SET MY NAME    *****/
-    if (ORTE_SUCCESS != (ret = orte_ns.set_my_name())) {
+    /* set my name and the names of the procs I was started with */
+    if (ORTE_SUCCESS != (ret = orte_sds_base_set_name())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
+
+    /* all done with sds - clean up and call it a day */
+    orte_sds_base_close();
 
     /* if I'm the seed, set the seed uri to be me! */
     if (orte_process_info.seed) {

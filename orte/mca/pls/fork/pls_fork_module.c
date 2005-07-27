@@ -47,7 +47,7 @@
 #include "mca/iof/base/iof_base_setup.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/ns/ns.h"
-#include "mca/ns/base/ns_base_nds.h"
+#include "orte/mca/sds/base/base.h"
 #include "mca/pls/pls.h"
 #include "mca/pls/base/base.h"
 #include "mca/rml/rml.h"
