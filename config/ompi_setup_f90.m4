@@ -148,7 +148,7 @@ else
     OMPI_LOG_MSG([here is the F77 program:], 1)
     OMPI_LOG_FILE([conftestf77.f])
     OMPI_LOG_MSG([here is the F90 program:], 1)
-    OMPI_LOG_FILE([conftestf90.f90])
+    OMPI_LOG_FILE([conftestf90.f])
     $2
 fi
 
