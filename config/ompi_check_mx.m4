@@ -29,7 +29,7 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
     # See if we have MX_API. OpenMPI require a MX version bigger than the first MX relase (0x300)
     #
     AC_MSG_CHECKING([for MX version 1.0 or later])
-    AC_TRY_COMPILE([#include <myriexpress.h],
+    AC_TRY_COMPILE([#include <myriexpress.h>],
         [#if MX_API < 0x300
          #error "Version less than 0x300"
          #endif],
@@ -38,14 +38,15 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
     AC_MSG_RESULT([$have_recent_api])
 
     AC_MSG_CHECKING(for MX_API)
-    if test x"$have_recent_api" = "xyes"; then
-        AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_API_VERSION], $mx_api_ver,
-            [Version of the MX API to use])
-        unset mx_api_ver have_mx_api_ver_msg found val msg
-    fi
-    CPPFLAGS="$u_OMPI_CHECK_MX_CONFIG_SAVE_CPPFLAGS"
-    LDFLAGS="$u_OMPI_CHECK_MX_CONFIG_SAVE_LDFLAGS"
-    LIBS="$u_OMPI_CHECK_MX_CONFIG_SAVE_LIBS"
+    AS_IF([test x"$have_recent_api" = "xyes"],
+          [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_API_VERSION], $mx_api_ver,
+                [Version of the MX API to use])
+                unset mx_api_ver have_mx_api_ver_msg found val msg
+                $2],
+          [CPPFLAGS="$u_OMPI_CHECK_MX_CONFIG_SAVE_CPPFLAGS"
+           LDFLAGS="$u_OMPI_CHECK_MX_CONFIG_SAVE_LDFLAGS"
+           LIBS="$u_OMPI_CHECK_MX_CONFIG_SAVE_LIBS"
+           $3])
 ])dnl
 
 # OMPI_CHECK_MX(prefix, [action-if-found], [action-if-not-found])
@@ -61,10 +62,10 @@ AC_DEFUN([OMPI_CHECK_MX],[
                 [AC_HELP_STRING([--with-mx-libdir=MXLIBDIR],
                                 [directory where the MX library can be found, if it is not in MX_DIR/lib or MX_DIR/lib64])])
 
-    AS_IF([test ! -z "$with_btl_mx" -a "$with_btl_mx" != "yes"],
-          [ompi_check_mx_dir="$with_btl_mx"])
-    AS_IF([test ! -z "$with_btl_mx_libdir" -a "$with_btl_mx_libdir" != "yes"],
-          [ompi_check_mx_libdir="$with_btl_mx_libdir"])
+    AS_IF([test ! -z "$with_mx" -a "$with_mx" != "yes"],
+          [ompi_check_mx_dir="$with_mx"])
+    AS_IF([test ! -z "$with_mx_libdir" -a "$with_mx_libdir" != "yes"],
+          [ompi_check_mx_libdir="$with_mx_libdir"])
 
     OMPI_CHECK_PACKAGE([$1],
                        [myriexpress.h],
@@ -77,9 +78,8 @@ AC_DEFUN([OMPI_CHECK_MX],[
                        [ompi_check_mx_happy="no"])
 
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_CONFIG($1)
-           $2],
-          [AS_IF([test ! -z "$with_btl_mx" -a "$with_btl_mx" != "no"],
+          [_OMPI_CHECK_MX_CONFIG($1, $2, $3)],
+          [AS_IF([test ! -z "$with_mx" -a "$with_mx" != "no"],
                  [AC_MSG_ERROR([MX support requested but not found.  Aborting])])
            $3])
 ])
