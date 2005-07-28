@@ -16,6 +16,12 @@
 
 #include "orte_config.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <stdlib.h>
+#include <errno.h>
+
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -224,6 +230,32 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
     putenv("BPROC_RANK=XXXXXXX");
     opal_setenv("BPROC_RANK", "XXXXXXX", true, env);
     
+    return ORTE_SUCCESS;
+}
+
+
+int orte_ns_nds_pipe_put(const orte_process_name_t* name, orte_vpid_t vpid_start, size_t num_procs, int fd)
+{
+    int rc;
+
+    rc = write(fd,name,sizeof(orte_process_name_t));
+    if(rc != sizeof(orte_process_name_t)) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    rc = write(fd,&vpid_start, sizeof(vpid_start));
+    if(rc != sizeof(vpid_start)) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    rc = write(fd,&num_procs, sizeof(num_procs));
+    if(rc != sizeof(num_procs)) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_NOT_FOUND;
+    }
+
     return ORTE_SUCCESS;
 }
 
