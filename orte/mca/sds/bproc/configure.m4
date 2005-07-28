@@ -18,9 +18,8 @@
 # MCA_sds_bproc_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_sds_bproc_CONFIG],[
-    # only accept newer non-Scyld bproc
     OMPI_CHECK_BPROC([sds_bproc], [sds_bproc_good=1], 
-                     [sds_bproc_good=0], [sds_bproc_good=0])
+                     [sds_bproc_good=1], [sds_bproc_good=0])
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$sds_bproc_good" = "1"],
@@ -28,9 +27,6 @@ AC_DEFUN([MCA_sds_bproc_CONFIG],[
            sds_bproc_WRAPPER_EXTRA_LIBS="$sds_bproc_LIBS"
            $1],
           [$2])
-    AS_IF([test "$sds_bproc_good" = "0" && test ! -z "$with_bproc" -a "$with_bproc" != "no"],
-          [AC_MSG_ERROR([Scyld bproc is not supported by the launching system yet])])
-
     # set build flags to use in makefile
     AC_SUBST([sds_bproc_CPPFLAGS])
     AC_SUBST([sds_bproc_LDFLAGS])

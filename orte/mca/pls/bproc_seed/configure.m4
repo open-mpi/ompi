@@ -19,18 +19,18 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_pls_bproc_seed_CONFIG],[
     # only accept newer non-Scyld bproc
-    OMPI_CHECK_BPROC([pls_bproc_seed], [pls_bproc_seed_good=1], 
-                     [pls_bproc_seed_good=0], [pls_bproc_seed_good=0])
+    OMPI_CHECK_BPROC([pls_bproc_seed], [pls_bproc_seed_good=2], 
+                     [pls_bproc_seed_good=1], [pls_bproc_seed_good=0])
 
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$pls_bproc_seed_good" = "1"],
+    AS_IF([test "$pls_bproc_seed_good" = "2"],
           [pls_bproc_seed_WRAPPER_EXTRA_LDFLAGS="$pls_bproc_seed_LDFLAGS"
            pls_bproc_seed_WRAPPER_EXTRA_LIBS="$pls_bproc_seed_LIBS"
            $1],
           [$2])
-    AS_IF([test "$pls_bproc_good" = "0" && test ! -z "$with_bproc" -a "$with_bproc" != "no"],
-          [AC_MSG_ERROR([Scyld bproc is not supported by the launching system yet])])
+    AS_IF([test "$pls_bproc_good" = "1"],
+          [AC_MSG_WARN([***Scyld bproc is not supported by this component***])])
 
     # set build flags to use in makefile
     AC_SUBST([pls_bproc_seed_CPPFLAGS])
