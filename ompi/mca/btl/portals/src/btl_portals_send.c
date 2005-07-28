@@ -38,6 +38,8 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
                              "send: PTL_EVENT_SEND_START for 0x%x",
                              frag));
 
+            opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                                "start threshold: %d", ev->md.threshold);
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure to start send event\n");
@@ -53,6 +55,8 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                              "send: PTL_EVENT_SEND_END for 0x%x",
                              frag));
+            opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                                "end threshold: %d", ev->md.threshold);
 
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
@@ -100,6 +104,9 @@ mca_btl_portals_process_send(mca_btl_portals_module_t *btl,
                                   frag->endpoint,
                                   &frag->base,
                                   OMPI_SUCCESS);
+
+            opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                                "ack threshold: %d", ev->md.threshold);
 
             /* see if we can send someone else */
             mca_btl_portals_progress_queued_sends(btl);

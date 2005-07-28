@@ -380,14 +380,14 @@ mca_btl_portals_component_progress(void)
 
             switch (which) {
             case OMPI_BTL_PORTALS_EQ_RECV:
-		opal_output_verbose(30,
+		opal_output_verbose(60,
 				    mca_btl_portals_component.portals_output,
 				    "receive event about to be processes");
                 mca_btl_portals_progress_queued_sends(module);
                 mca_btl_portals_process_recv(module, &ev);
                 break;
             case OMPI_BTL_PORTALS_EQ_SEND:
-		opal_output_verbose(30,
+		opal_output_verbose(60,
 				    mca_btl_portals_component.portals_output,
 				    "send event about to be processes");
                 mca_btl_portals_process_send(module, &ev);
@@ -396,7 +396,7 @@ mca_btl_portals_component_progress(void)
                 mca_btl_portals_process_rdma(module, &ev);
                 break;
             default:
-                opal_output_verbose(30,
+                opal_output_verbose(60,
                                     mca_btl_portals_component.portals_output,
                                     "unknown event queue returned");
                 abort();
