@@ -483,6 +483,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 if(bytes_remaining == 0)
                     sendreq->t_scheduled = get_profiler_timestamp();
 #endif
+                ep->btl_progress(); /* call progress */  
             }
         } while (OPAL_THREAD_ADD32(&sendreq->req_lock,-1) > 0);
     }
