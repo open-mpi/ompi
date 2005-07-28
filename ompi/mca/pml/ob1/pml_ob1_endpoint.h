@@ -51,6 +51,7 @@ struct mca_pml_ob1_endpoint_t {
     mca_btl_base_module_prepare_fn_t btl_prepare_dst;
     mca_btl_base_module_put_fn_t     btl_put;
     mca_btl_base_module_get_fn_t     btl_get;
+    mca_btl_base_component_progress_fn_t btl_progress; 
 };
 typedef struct mca_pml_ob1_endpoint_t mca_pml_ob1_endpoint_t;
 

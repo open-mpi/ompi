@@ -355,6 +355,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                 endpoint->btl_send = btl->btl_send;
                 endpoint->btl_put = btl->btl_put;
                 endpoint->btl_get = btl->btl_get;
+                endpoint->btl_progress = btl->btl_component->btl_progress; 
             }
         }
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {
