@@ -438,12 +438,14 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
         /* If we figured out above that this was an unknown option,
            handle it.  Copy everything (including the current token)
            into the tail.  If we're not ignoring unknowns, then print
-           an error. */
+           an error and return. 
+        */
 
         if (is_unknown) {
             if (!ignore_unknown) {
                 opal_output(0, "Error: unknown option \"%s\"", 
                             cmd->lcl_argv[i]);
+                return OMPI_ERR_BAD_PARAM;
             }
             while (i < cmd->lcl_argc) {
                 opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
