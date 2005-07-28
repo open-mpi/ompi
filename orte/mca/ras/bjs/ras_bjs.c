@@ -35,18 +35,7 @@
 
 static int orte_ras_bjs_node_state(int node)
 {
-#if (BPROC_API_VERSION <= 3)
-    switch(bproc_nodestatus(node)) {
-    case bproc_node_up:
-        return ORTE_NODE_STATE_UP;
-    case bproc_node_down:
-        return ORTE_NODE_STATE_DOWN;
-    case bproc_node_boot:
-        return ORTE_NODE_STATE_REBOOT;
-    default:
-        return ORTE_NODE_STATE_UNKNOWN;
-    }
-#else
+#if defined BPROC_API_VERSION && BPROC_API_VERSION >= 4
     char nodestatus[BPROC_STATE_LEN + 1];
 
     bproc_nodestatus(node, nodestatus, sizeof(nodestatus));
@@ -57,6 +46,17 @@ static int orte_ras_bjs_node_state(int node)
     if (strcmp(nodestatus, "boot") == 0)
         return ORTE_NODE_STATE_REBOOT;
     return ORTE_NODE_STATE_UNKNOWN;
+#else
+    switch(bproc_nodestatus(node)) {
+    case bproc_node_up:
+        return ORTE_NODE_STATE_UP;
+    case bproc_node_down:
+        return ORTE_NODE_STATE_DOWN;
+    case bproc_node_boot:
+        return ORTE_NODE_STATE_REBOOT;
+    default:
+        return ORTE_NODE_STATE_UNKNOWN;
+    }
 #endif
 }
 

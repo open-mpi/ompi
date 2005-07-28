@@ -60,7 +60,7 @@ static  int orte_pls_bproc_param_register_int(
     const char* param_name,
     int default_value)
 {
-    int id = mca_base_param_register_int("pls","bproc",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("pls","bproc_seed",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
@@ -80,7 +80,7 @@ int orte_pls_bproc_seed_component_open(void)
     mca_pls_bproc_seed_component.debug = orte_pls_bproc_param_register_int("debug", 0);
     mca_pls_bproc_seed_component.reap = orte_pls_bproc_param_register_int("reap", 1);
     mca_pls_bproc_seed_component.image_frag_size = orte_pls_bproc_param_register_int("image_frag_size", 1*1024*1024);
-    mca_pls_bproc_seed_component.priority = orte_pls_bproc_param_register_int("priority", 99);
+    mca_pls_bproc_seed_component.priority = orte_pls_bproc_param_register_int("priority", 75);
     mca_pls_bproc_seed_component.terminate_sig = orte_pls_bproc_param_register_int("terminate_sig", 9);
 
     id = mca_base_param_find("nds", "pipe", "fd");

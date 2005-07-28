@@ -64,17 +64,6 @@ orte_ras_lsf_bproc_component_t mca_ras_lsf_bproc_component = {
 /**
  *  Convience functions to lookup MCA parameters
  */
-
-static char* orte_ras_lsf_bproc_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("ras","lsf_bproc",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-                                                                                                            
 static  int orte_ras_lsf_bproc_param_register_int(
     const char* param_name,
     int default_value)

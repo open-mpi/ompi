@@ -69,6 +69,14 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
                                      orte_vpid_t vpid_range, size_t app_context);
 static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data);
 static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data);
+#ifdef MCA_pls_bproc_scyld
+/* compatibility functions for scyld bproc and pre 3.2.0 LANL bproc */
+static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids, 
+                              struct bproc_io_t *io, int iolen, const char *cmd,
+                              char * const argv[], char * envp[]);
+static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd, 
+                           char * const argv[], char * envp[]);
+#endif
 
 /**
  * creates an array that is indexed by the node number and each entry contains the
@@ -303,6 +311,42 @@ static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data)
     }
 }
 
+#ifdef MCA_pls_bproc_scyld
+/* compatibility functions for scyld bproc and pre 3.2.0 LANL bproc */
+static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids, 
+                              struct bproc_io_t *io, int iolen, const char *cmd,
+                              char * const argv[], char * envp[]) {
+    int i;
+    char * rank;
+    for(i = 0; i < nnodes; i++) {
+        pids[i] = fork();
+        if(0 == pids[i]) {
+            /* set BPROC_RANK so the proc can get its name */
+            if (0 > asprintf(&rank, "%d", i)) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                exit(-1);
+            }
+            opal_setenv("BPROC_RANK", rank, true, &envp);
+            bproc_execmove_io(nodes[i], io, iolen, cmd, argv, envp);
+            /* if we get here, there was an error */
+            opal_output(0, "Error launching %s on node %d\n", cmd, nodes[i]);
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            exit(-1);
+        } else if(-1 == pids[i]) {
+            opal_output(0, "Error launching processes: could not fork\n");
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            return -1;
+        }
+    }
+    return nnodes;
+}
+
+static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd, 
+                           char * const argv[], char * envp[]) {
+    return bproc_vexecmove_io(nnodes, nodes, pids, NULL, 0, cmd, argv, envp);
+}
+#endif
+    
 /**
  * 1. Launch the deamons on the backend nodes. 
  * 2. The daemons setup files for io forwarding then connect back to us to 
