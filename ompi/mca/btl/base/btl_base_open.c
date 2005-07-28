@@ -69,6 +69,7 @@ char* mca_btl_base_exclude = NULL;
 opal_list_t mca_btl_base_components_opened;
 opal_list_t mca_btl_base_modules_initialized;
 
+static bool already_opened = false;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -76,6 +77,9 @@ opal_list_t mca_btl_base_modules_initialized;
  */
 int mca_btl_base_open(void)
 {
+    if (already_opened) return OMPI_SUCCESS;
+    already_opened = true;
+
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
