@@ -21,7 +21,9 @@
 #include "mca/rml/base/base.h"
 #include "rml_cnos.h"
 
+#if OMPI_RML_CNOS_HAVE_BARRIER
 #include <catamount/cnos_mpi_os.h>
+#endif
 
 orte_rml_component_t mca_rml_cnos_component = {
     /* First, the mca_base_component_t struct containing meta
@@ -210,7 +212,9 @@ orte_rml_cnos_recv_cancel(orte_process_name_t * peer, orte_rml_tag_t tag)
 int
 orte_rml_cnos_barrier(void)
 {
+#if OMPI_RML_CNOS_HAVE_BARRIER
     cnos_barrier();
+#endif
 
     return ORTE_SUCCESS;
 }
