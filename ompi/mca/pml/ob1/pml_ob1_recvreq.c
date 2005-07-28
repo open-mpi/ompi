@@ -180,16 +180,13 @@ static void mca_pml_ob1_recv_request_ack(
         
                 /* use convertor to figure out the rdma offset for this request */
                 recvreq->req_rdma_offset = proc->proc_rdma_offset;
+                if(recvreq->req_rdma_offset < hdr->hdr_frag_length) {
+                    recvreq->req_rdma_offset = hdr->hdr_frag_length;
+                }
                 ompi_convertor_set_position(
                     &recvreq->req_recv.req_convertor,
                     &recvreq->req_rdma_offset);
                 ack->hdr_rdma_offset = recvreq->req_rdma_offset;
-                if(recvreq->req_rdma_offset < hdr->hdr_frag_length) {
-                    opal_output(0, "[%s:%d] rdma offset %lu frag length %lu\n",
-                        recvreq->req_rdma_offset, hdr->hdr_frag_length);
-                    ack->hdr_rdma_offset = hdr->hdr_frag_length;
-                    recvreq->req_rdma_offset = hdr->hdr_frag_length;
-                }
             } else {
                 recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
                 ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
