@@ -31,7 +31,9 @@ int
 orte_sds_base_close(void)
 {
     /* finalize running component */
-    orte_sds_base_module->finalize();
+    if (NULL != orte_sds_base_module) {
+        orte_sds_base_module->finalize();
+    }
 
     /* shutdown any remaining opened components */
     if (! opal_list_is_empty(&orte_sds_base_components_available)) {

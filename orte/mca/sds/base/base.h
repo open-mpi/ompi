@@ -81,6 +81,8 @@ extern "C" {
                                             orte_vpid_t global_vpid_start,
                                             int num_procs, char ***env);
 
+    extern opal_list_t orte_sds_base_components_available;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
