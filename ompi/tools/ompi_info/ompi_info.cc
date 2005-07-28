@@ -180,6 +180,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("rmgr");
   ompi_info::mca_types.push_back("rml");
   ompi_info::mca_types.push_back("pls");
+  ompi_info::mca_types.push_back("sds");
   ompi_info::mca_types.push_back("soh");
 
   // Execute the desired action(s)

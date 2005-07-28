@@ -68,6 +68,8 @@
 #include "mca/pls/base/base.h"
 #include "mca/soh/soh.h"
 #include "mca/soh/base/base.h"
+#include "mca/sds/sds.h"
+#include "mca/sds/base/base.h"
 
 using namespace std;
 using namespace ompi_info;
@@ -170,6 +172,9 @@ void ompi_info::open_components()
   orte_pls_base_open();
   component_map["pls"] = &orte_pls_base.pls_opened;
 
+  orte_sds_base_open();
+  component_map["sds"] = &orte_sds_base_components_available;
+
   orte_soh_base_open();
   component_map["soh"] = &orte_soh_base.soh_components;
 
@@ -230,6 +235,7 @@ void ompi_info::close_components()
         mca_allocator_base_close();
 
         orte_iof_base_close();
+        orte_sds_base_close();
         orte_soh_base_close();
         orte_pls_base_close();
         orte_rmgr_base_close();

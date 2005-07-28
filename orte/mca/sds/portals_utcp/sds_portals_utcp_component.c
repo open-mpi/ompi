@@ -82,7 +82,7 @@ orte_sds_portals_utcp_component_init(int *priority)
     /* if mode isn't NULL, then we have an ORTE starter.  Don't use
        this component */
     if (NULL != mode) return NULL;
-    if (NULL == getenv("PTL_MY_RID") return NULL;
+    if (NULL == getenv("PTL_MY_RID")) return NULL;
 
     *priority = 60;
     return &sds_portals_utcp_module;

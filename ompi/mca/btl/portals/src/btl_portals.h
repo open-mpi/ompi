@@ -30,6 +30,8 @@
 
 #include "btl_portals_endpoint.h"
 
+#define OMPI_BTL_PORTALS_SEND_TABLE_ID (OMPI_BTL_PORTALS_STARTING_TABLE_ID + 0)
+#define OMPI_BTL_PORTALS_RDMA_TABLE_ID (OMPI_BTL_PORTALS_STARTING_TABLE_ID + 1)
 
 /*
  * Portals BTL component.
