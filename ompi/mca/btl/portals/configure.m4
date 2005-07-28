@@ -45,14 +45,6 @@ AC_DEFUN([MCA_btl_portals_CONFIG_VAL], [
 # ------------------------------
 AC_DEFUN([MCA_btl_portals_CONFIG_VALS], [
     # User configuration options
-    MCA_btl_portals_CONFIG_VAL([send-table-id],
-        [OMPI_BTL_PORTALS_SEND_TABLE_ID], [30],
-        [Portals table id to use for send/recv ])
-
-    MCA_btl_portals_CONFIG_VAL([rdma-table-id],
-        [OMPI_BTL_PORTALS_RDMA_TABLE_ID], [31],
-        [Portals table id to use for RDMA request])
-
     MCA_btl_portals_CONFIG_VAL([debug-level],
         [OMPI_BTL_PORTALS_DEFAULT_DEBUG_LEVEL], [0],
         [debugging level for portals btl])
@@ -111,6 +103,7 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
     BTL_PORTALS_HAVE_EVENT_UNLINK=0
     btl_portals_compat="none"
     btl_portals_header_prefix=
+    btl_portals_starting_table_id=0
     AC_ARG_WITH([btl-portals-config],
             AC_HELP_STRING([--with-btl-portals-config],
                            [configuration to use for Portals support.
@@ -126,6 +119,7 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
             btl_portals_LIBS="-lutcpapi -lutcplib -lp3api -lp3lib -lp3rt"
             btl_portals_compat="utcp"
             btl_portals_header_prefix=
+            btl_portals_starting_table_id=0
             AC_MSG_RESULT([utcp])
             ;;
         "redstorm")
@@ -134,6 +128,7 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
             btl_portals_LIBS=
             btl_portals_compat="redstorm"
             btl_portals_header_prefix="portals/"
+            btl_portals_starting_table_id=30
             AC_MSG_RESULT([red storm])
             ;;
         *)
@@ -162,6 +157,10 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
                        [Use the UTCP reference implementation or Portals])
     AC_DEFINE_UNQUOTED([OMPI_BTL_PORTALS_REDSTORM], [$BTL_PORTALS_REDSTORM],
                        [Use the Red Storm implementation or Portals])
+
+    AC_DEFINE_UNQUOTED([OMPI_BTL_PORTALS_STARTING_TABLE_ID],
+                       [$btl_portals_starting_table_id],
+                       [first table id to use for portals btl])
 
     AC_CONFIG_LINKS([ompi/mca/btl/portals/src/btl_portals_compat.c:ompi/mca/btl/portals/src/btl_portals_compat_${btl_portals_compat}.c])
 ])
