@@ -40,6 +40,7 @@
 #include "btl_sm.h"
 #include "btl_sm_endpoint.h"
 #include "btl_sm_frag.h"
+#include "btl_sm_fifo.h"
 
 
 mca_btl_sm_t mca_btl_sm[2] = {

@@ -37,6 +37,8 @@
 #include "mca/common/sm/common_sm_mmap.h"
 #include "btl_sm.h"
 #include "btl_sm_frag.h"
+#include "btl_sm_fifo.h"
+
 
 
 /*
