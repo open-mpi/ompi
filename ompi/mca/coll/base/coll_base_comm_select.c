@@ -274,6 +274,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
      it. */
 
   comm->c_coll_selected_component = selected_component;
+  comm->c_coll_selected_module = selected_module;
   comm->c_coll_selected_data = selected_data;
   if (!using_basic) {
     comm->c_coll = *selected_module;
