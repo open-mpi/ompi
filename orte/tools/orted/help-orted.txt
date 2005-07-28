@@ -17,4 +17,7 @@
 # This is the US/English general help file for Open RTE's orted.
 #
 [orted:usage]
-Insert usage help message here
+Usage: %s [OPTION]...
+Start an Open RTE Daemon
+
+%s
