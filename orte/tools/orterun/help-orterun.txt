@@ -74,3 +74,11 @@ Specifically, the following error occurred:
 
 The only other available information that may be helpful is the errno
 that was returned: %d.
+[orterun:environ]
+%s was unable to set
+ %s = %s
+in the environment. Returned value %d instead of ORTE_SUCCESS.
+[orterun:proc-aborted]
+%s noticed that job rank %lu with PID %lu on node \"%s\" exited on signal %d.
+[orterun:abnormal-exit]
+%s encountered an abnormal exit.
