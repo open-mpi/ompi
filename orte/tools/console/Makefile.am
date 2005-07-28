@@ -16,6 +16,9 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+EXTRA_DIST = $(pkgdata_DATA)
+pkgdata_DATA = help-orteconsole.txt
+
 libs = \
         $(top_builddir)/orte/liborte.la \
         $(top_builddir)/opal/libopal.la
