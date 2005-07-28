@@ -33,7 +33,7 @@ mca_btl_portals_send_frag(mca_btl_portals_frag_t *frag)
     /* setup the send */
     md.start = frag->segment.seg_addr.pval;
     md.length = frag->segment.seg_len;
-    md.threshold = 3; /* unlink after start, end, ack */
+    md.threshold = 2; /* unlink after start, end, ack */
     md.max_size = 0;
     md.options = 0; /* BWB - can we optimize? */
     md.user_ptr = frag; /* keep a pointer to ourselves */

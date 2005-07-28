@@ -410,7 +410,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
        later :) */
     md.start = frag->segment.seg_addr.pval;
     md.length = frag->segment.seg_len;
-    md.threshold = 2; /* unlink after START / END */
+    md.threshold = 1; /* unlink after START / END */
     md.max_size = 0;
     md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET;
     md.user_ptr = frag; /* keep a pointer to ourselves */
