@@ -240,6 +240,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     cmd_line_param_t *param;
     bool is_unknown;
     bool is_option;
+    bool has_unknowns;
     char **shortsv;
     int shortsc;
     int num_args_used;
@@ -269,6 +270,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
 
     param = NULL;
     option = NULL;
+    has_unknowns = false;
     for (i = 1; i < cmd->lcl_argc; ) {
         is_unknown = false;
         is_option = false;
@@ -442,10 +444,10 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
         */
 
         if (is_unknown) {
+            has_unknowns = true;
             if (!ignore_unknown) {
                 opal_output(0, "Error: unknown option \"%s\"", 
                             cmd->lcl_argv[i]);
-                return OMPI_ERR_BAD_PARAM;
             }
             while (i < cmd->lcl_argc) {
                 opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
@@ -460,6 +462,9 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     opal_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
+    if(has_unknowns && !ignore_unknown) {
+        return OMPI_ERR_BAD_PARAM;
+    }
 
     return OMPI_SUCCESS;
 }
