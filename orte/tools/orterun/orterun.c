@@ -82,7 +82,6 @@ static int num_killed = 0;
  */
 struct globals_t {
     bool help;
-    bool version;
     bool verbose;
     bool exit;
     bool no_wait_for_job_completion;
@@ -112,9 +111,6 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'h', NULL, "help", 0, 
       &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
-    { NULL, NULL, NULL, '\0', NULL, "version", 0,
-      &orterun_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
-      "Show the orterun version" },
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
       &orterun_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
@@ -303,7 +299,8 @@ int main(int argc, char *argv[])
     if (iparam) {
         if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug_daemons",
                                               "1", true, &environ))) {
-            fprintf(stderr, "orterun: could not set orte_debug_daemons in environ\n");
+            opal_show_help("help-orterun.txt", "orterun:environ", false,
+                           orterun_basename, "OMPI_MCA_orte_debug_daemons", "1", rc);
             return rc;
         }
     }
@@ -312,7 +309,8 @@ int main(int argc, char *argv[])
     if (iparam) {
         if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug",
                                               "1", true, &environ))) {
-            fprintf(stderr, "orterun: could not set orte_debug in environ\n");
+            opal_show_help("help-orterun.txt", "orterun:environ", false,
+                           orterun_basename, "OMPI_MCA_orte_debug", "1", rc);
             return rc;
         }
     }
@@ -321,7 +319,8 @@ int main(int argc, char *argv[])
     if (iparam) {
         if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug_daemons_file",
                                               "1", true, &environ))) {
-            fprintf(stderr, "orterun: could not set orte_debug_daemons_file in environ\n");
+            opal_show_help("help-orterun.txt", "orterun:environ", false,
+                           orterun_basename, "OMPI_MCA_orte_debug_daemons_file", "1", rc);
             return rc;
         }
     }
@@ -330,7 +329,8 @@ int main(int argc, char *argv[])
     if (iparam) {
         if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_no_daemonize",
                                               "1", true, &environ))) {
-            fprintf(stderr, "orterun: could not set orte_no_daemonize in environ\n");
+            opal_show_help("help-orterun.txt", "orterun:environ", false,
+                           orterun_basename, "OMPI_MCA_orte_no_daemonize", "1", rc);
             return rc;
         }
     }
@@ -482,8 +482,9 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 ++num_killed;
             } else {
                 if (num_aborted < max_display_aborted) {
-                    fprintf(stderr, "Job rank %lu (pid %lu) on node \"%s\" exited on signal %d\n",
-                            (unsigned long)rank, (unsigned long)pid, node_name, WTERMSIG(exit_status));
+                    opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
+                                   orterun_basename, (unsigned long)rank, (unsigned long)pid, 
+                                   node_name, WTERMSIG(exit_status));
                 }
                 ++num_aborted;
             }
@@ -551,7 +552,8 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 
 static void exit_callback(int fd, short event, void *arg)
 {
-    fprintf(stderr, "%s: abnormal exit\n", orterun_basename);
+    opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
+                   true, orterun_basename);
     exit(1);
 }
 
@@ -627,31 +629,27 @@ static int init_globals(void)
 static int parse_globals(int argc, char* argv[])
 {
     opal_cmd_line_t cmd_line;
-    int ras;
+    int ras, ret;
 
     /* Setup and parse the command line */
 
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
-    opal_cmd_line_parse(&cmd_line, true, argc, argv);
-
-    /* Check for help and version requests */
-
+    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true, 
+                                                   argc, argv)) ) {
+        return ret;
+    }
+    
+    /* Check for help request */
+    
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         opal_show_help("help-orterun.txt", "orterun:usage", false,
                        orterun_basename, args);
         free(args);
-
+        
         /* If someone asks for help, that should be all we do */
-        exit(0);
-    }
-
-    if (orterun_globals.version) {
-        printf("Open MPI v%s\n", OMPI_VERSION);
-
-        /* If someone asks for version, that should be all we do */
         exit(0);
     }
 
