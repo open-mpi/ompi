@@ -16,6 +16,9 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+EXTRA_DIST = $(pkgdata_DATA)
+pkgdata_DATA = help-orted.txt
+
 AM_CPPFLAGS = \
             -DOMPI_PREFIX="\"$(prefix)\"" \
             -DOMPI_BINDIR="\"$(bindir)\"" \
