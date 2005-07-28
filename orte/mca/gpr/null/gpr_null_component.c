@@ -23,20 +23,20 @@
 
 extern orte_gpr_base_module_t orte_gpr_null_module;
 
-int
+static int
 orte_gpr_null_open(void)
 {
     return ORTE_SUCCESS;
 }
 
 
-int
+static int
 orte_gpr_null_close(void)
 {
     return ORTE_SUCCESS;
 }
 
-orte_gpr_base_module_t *
+static orte_gpr_base_module_t *
 orte_gpr_null_init(bool *allow_multi_user_threads, 
                    bool *have_hidden_threads, 
                    int *priority)
@@ -45,7 +45,7 @@ orte_gpr_null_init(bool *allow_multi_user_threads,
     return &orte_gpr_null_module;
 }
 
-int
+static int
 orte_gpr_null_finalize(void)
 {
     return ORTE_SUCCESS;
