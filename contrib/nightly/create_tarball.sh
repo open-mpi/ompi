@@ -146,7 +146,7 @@ cd "$scratch_root"
 scratch_root="`pwd`"
 
 # get the snapshot number
-svn co -N https://svn.open-mpi.org/svn/ompi > /dev/null 2>&1
+svn co -N "$svnroot" ompi > /dev/null 2>&1
 cd ompi
 svnr="r`svn info . | egrep '^Revision: [0-9]+' | awk '{ print $2 }'`"
 cd ..
