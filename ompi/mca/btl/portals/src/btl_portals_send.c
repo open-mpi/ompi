@@ -146,7 +146,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
         opal_list_append(&(btl->portals_queued_sends),
                          (opal_list_item_t*) frag);
         
-        OPAL_THREAD_ADD32(&btl->portals_outstanding_sends, 1);
+        OPAL_THREAD_ADD32(&btl->portals_outstanding_sends, -1);
 
         ret = OMPI_SUCCESS;
     } else {
