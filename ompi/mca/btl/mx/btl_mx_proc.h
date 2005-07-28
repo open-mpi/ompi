@@ -20,13 +20,13 @@
 #include "mca/ns/ns.h"
 #include "opal/class/opal_object.h"
 #include "proc/proc.h"
-#include "btl_template.h"
-#include "btl_template_endpoint.h"
+#include "btl_mx.h"
+#include "btl_mx_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OBJ_CLASS_DECLARATION(mca_btl_template_proc_t);
+OBJ_CLASS_DECLARATION(mca_btl_mx_proc_t);
 
 /**
  * Represents the state of a remote process and the set of addresses
@@ -34,7 +34,7 @@ OBJ_CLASS_DECLARATION(mca_btl_template_proc_t);
  * each
  * BTL instance that attempts to open a connection to the process.
  */
-struct mca_btl_template_proc_t {
+struct mca_btl_mx_proc_t {
     opal_list_item_t super;                  
     /**< allow proc to be placed on a list */
 
@@ -56,10 +56,10 @@ struct mca_btl_template_proc_t {
     opal_mutex_t proc_lock;                  
     /**< lock to protect against concurrent access to proc state */
 };
-typedef struct mca_btl_template_proc_t mca_btl_template_proc_t;
+typedef struct mca_btl_mx_proc_t mca_btl_mx_proc_t;
 
-mca_btl_template_proc_t* mca_btl_template_proc_create(ompi_proc_t* ompi_proc);
-int mca_btl_template_proc_insert(mca_btl_template_proc_t*, mca_btl_base_endpoint_t*);
+mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc);
+int mca_btl_mx_proc_insert(mca_btl_mx_proc_t*, mca_btl_base_endpoint_t*);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

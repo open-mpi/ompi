@@ -24,10 +24,10 @@
 #include "mca/rml/rml.h"
 #include "mca/errmgr/errmgr.h"
 #include "dps/dps.h"
-#include "btl_template.h"
-#include "btl_template_endpoint.h" 
-#include "btl_template_proc.h"
-#include "btl_template_frag.h"
+#include "btl_mx.h"
+#include "btl_mx_endpoint.h" 
+#include "btl_mx_proc.h"
+#include "btl_mx_frag.h"
 
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static void mca_btl_template_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
+static void mca_btl_mx_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
@@ -46,14 +46,14 @@ static void mca_btl_template_endpoint_construct(mca_btl_base_endpoint_t* endpoin
  *
  */
 
-static void mca_btl_template_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
+static void mca_btl_mx_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
 }
 
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_template_endpoint_t, 
+    mca_btl_mx_endpoint_t, 
     opal_list_item_t, 
-    mca_btl_template_endpoint_construct, 
-    mca_btl_template_endpoint_destruct);
+    mca_btl_mx_endpoint_construct, 
+    mca_btl_mx_endpoint_destruct);
 

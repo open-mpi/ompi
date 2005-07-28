@@ -21,18 +21,18 @@
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 
-#include "btl_template.h"
-#include "btl_template_frag.h" 
-#include "btl_template_proc.h"
-#include "btl_template_endpoint.h"
+#include "btl_mx.h"
+#include "btl_mx_frag.h" 
+#include "btl_mx_proc.h"
+#include "btl_mx_endpoint.h"
 #include "datatype/convertor.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 
 
-mca_btl_template_module_t mca_btl_template_module = {
+mca_btl_mx_module_t mca_btl_mx_module = {
     {
-        &mca_btl_template_component.super,
+        &mca_btl_mx_component.super,
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */
@@ -42,16 +42,16 @@ mca_btl_template_module_t mca_btl_template_module = {
         0, /* latency */
         0, /* bandwidth */
         0, /* flags */
-        mca_btl_template_add_procs,
-        mca_btl_template_del_procs,
-        mca_btl_template_register, 
-        mca_btl_template_finalize,
-        mca_btl_template_alloc, 
-        mca_btl_template_free, 
-        mca_btl_template_prepare_src,
-        mca_btl_template_prepare_dst,
-        mca_btl_template_send,
-        mca_btl_template_put,
+        mca_btl_mx_add_procs,
+        mca_btl_mx_del_procs,
+        mca_btl_mx_register, 
+        mca_btl_mx_finalize,
+        mca_btl_mx_alloc, 
+        mca_btl_mx_free, 
+        mca_btl_mx_prepare_src,
+        mca_btl_mx_prepare_dst,
+        mca_btl_mx_send,
+        mca_btl_mx_put,
         NULL /* get */ 
     }
 };
@@ -60,23 +60,23 @@ mca_btl_template_module_t mca_btl_template_module = {
  *
  */
 
-int mca_btl_template_add_procs(
+int mca_btl_mx_add_procs(
     struct mca_btl_base_module_t* btl, 
     size_t nprocs, 
     struct ompi_proc_t **ompi_procs, 
     struct mca_btl_base_endpoint_t** peers, 
     ompi_bitmap_t* reachable)
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*)btl;
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     int i, rc;
 
     for(i = 0; i < (int) nprocs; i++) {
 
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
-        mca_btl_template_proc_t* template_proc;
-        mca_btl_base_endpoint_t* template_endpoint;
+        mca_btl_mx_proc_t* mx_proc;
+        mca_btl_base_endpoint_t* mx_endpoint;
 
-        if(NULL == (template_proc = mca_btl_template_proc_create(ompi_proc))) {
+        if(NULL == (mx_proc = mca_btl_mx_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -86,35 +86,35 @@ int mca_btl_template_add_procs(
          * don't bind this PTL instance to the proc.
          */
 
-        OPAL_THREAD_LOCK(&template_proc->proc_lock);
+        OPAL_THREAD_LOCK(&mx_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all TEMPLATE PTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the btl_proc.
          */
-        template_endpoint = OBJ_NEW(mca_btl_template_endpoint_t);
-        if(NULL == template_endpoint) {
+        mx_endpoint = OBJ_NEW(mca_btl_mx_endpoint_t);
+        if(NULL == mx_endpoint) {
             OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        template_endpoint->endpoint_btl = template_btl;
-        rc = mca_btl_template_proc_insert(template_proc, template_endpoint);
+        mx_endpoint->endpoint_btl = mx_btl;
+        rc = mca_btl_mx_proc_insert(mx_proc, mx_endpoint);
         if(rc != OMPI_SUCCESS) {
-            OBJ_RELEASE(template_endpoint);
+            OBJ_RELEASE(mx_endpoint);
             OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
-        peers[i] = template_endpoint;
+        peers[i] = mx_endpoint;
     }
 
     return OMPI_SUCCESS;
 }
 
-int mca_btl_template_del_procs(struct mca_btl_base_module_t* btl, 
+int mca_btl_mx_del_procs(struct mca_btl_base_module_t* btl, 
         size_t nprocs, 
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
@@ -128,15 +128,15 @@ int mca_btl_template_del_procs(struct mca_btl_base_module_t* btl,
  * Register callback function to support send/recv semantics
  */
 
-int mca_btl_template_register(
+int mca_btl_mx_register(
                         struct mca_btl_base_module_t* btl, 
                         mca_btl_base_tag_t tag, 
                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
                         void* cbdata)
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
-    template_btl->template_reg[tag].cbfunc = cbfunc; 
-    template_btl->template_reg[tag].cbdata = cbdata; 
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
+    mx_btl->mx_reg[tag].cbfunc = cbfunc; 
+    mx_btl->mx_reg[tag].cbdata = cbdata; 
     return OMPI_SUCCESS;
 }
 
@@ -148,21 +148,21 @@ int mca_btl_template_register(
  * @param size (IN)     Request segment size.
  */
 
-mca_btl_base_descriptor_t* mca_btl_template_alloc(
+mca_btl_base_descriptor_t* mca_btl_mx_alloc(
     struct mca_btl_base_module_t* btl,
     size_t size)
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
-    mca_btl_template_frag_t* frag;
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
+    mca_btl_mx_frag_t* frag;
     int rc;
     
     if(size <= btl->btl_eager_limit){ 
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(template_btl, frag, rc); 
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(mx_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_eager_limit ? 
             size : btl->btl_eager_limit ; 
     } else { 
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(template_btl, frag, rc); 
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(mx_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_max_send_size ? 
             size : btl->btl_max_send_size ; 
@@ -177,11 +177,11 @@ mca_btl_base_descriptor_t* mca_btl_template_alloc(
  * Return a segment
  */
 
-int mca_btl_template_free(
+int mca_btl_mx_free(
     struct mca_btl_base_module_t* btl, 
     mca_btl_base_descriptor_t* des) 
 {
-    mca_btl_template_frag_t* frag = (mca_btl_template_frag_t*)des; 
+    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)des; 
     if(frag->size == 0) {
 #if MCA_BTL_HAS_MPOOL
         OBJ_RELEASE(frag->registration);
@@ -204,7 +204,7 @@ int mca_btl_template_free(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
+mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
@@ -213,8 +213,8 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     size_t* size
 )
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*)btl;
-    mca_btl_template_frag_t* frag;
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
+    mca_btl_mx_frag_t* frag;
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
@@ -229,7 +229,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
 
         size_t reg_len;
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(template_btl, frag, rc);
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(mx_btl, frag, rc);
         if(NULL == frag){
             return NULL;
         }
@@ -244,7 +244,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
         reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1;
         if(frag->segment.seg_len > reg_len) {
                                                                                                     
-            mca_mpool_base_module_t* mpool = template_btl->template_mpool;
+            mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
             size_t new_len = (unsigned char*)iov.iov_base - 
                 (unsigned char *) registration->base + max_data;
             void* base_addr = registration->base;
@@ -289,12 +289,12 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
      * then go ahead and pin contigous data. however, if a reserve is required 
      * then we must allocated a fragment w/ buffer space
     */
-    } else if ((mca_btl_template_component.leave_pinned || max_data > btl->btl_max_send_size) && 
+    } else if ((mca_btl_mx_component.leave_pinned || max_data > btl->btl_max_send_size) && 
                ompi_convertor_need_buffers(convertor) == 0 &&
                reserve == 0) {
 
-        mca_mpool_base_module_t* mpool = template_btl->template_mpool;
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(template_btl, frag, rc);
+        mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
+        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(mx_btl, frag, rc);
         if(NULL == frag){
             return NULL;
         }
@@ -316,7 +316,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
             return NULL;
         }
 
-        if(mca_btl_template_component.leave_pinned) {
+        if(mca_btl_mx_component.leave_pinned) {
             /*
              * insert the registration into the tree and bump the reference
              * count so that it doesn't go away on completion.
@@ -411,7 +411,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
  */
 
-mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
+mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
@@ -419,8 +419,8 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     size_t reserve,
     size_t* size)
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
-    mca_btl_template_frag_t* frag;
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
+    mca_btl_mx_frag_t* frag;
     int rc;
 
     MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag, rc);
@@ -441,7 +441,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     if(NULL != registration) {
         size_t reg_len = (unsigned char*)registration->bound - (unsigned char*)frag->segment.seg_addr.pval + 1;
         if(frag->segment.seg_len > reg_len) {
-            mca_mpool_base_module_t* mpool = template_btl->template_mpool;
+            mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
             size_t new_len = (unsigned char*)frag->segment.seg_addr.pval - 
                 (unsigned char*) registration->base + 
                 frag->segment.seg_len;
@@ -484,7 +484,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
 
     }  else {
 
-        mca_mpool_base_module_t* mpool = template_btl->template_mpool;
+        mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
         rc = mpool->mpool_register(
             mpool,
             frag->segment.seg_addr.pval,
@@ -495,7 +495,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
             return NULL;
         }
                                                                                                                    
-        if(mca_btl_template_component.leave_pinned) {
+        if(mca_btl_mx_component.leave_pinned) {
             /*
              * insert the registration into the tree and bump the reference
              * count so that it doesn't go away on completion.
@@ -529,15 +529,15 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
-int mca_btl_template_send( 
+int mca_btl_mx_send( 
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor, 
     mca_btl_base_tag_t tag)
    
 {
-    /* mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; */
-    mca_btl_template_frag_t* frag = (mca_btl_template_frag_t*)descriptor; 
+    /* mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; */
+    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
     /* TODO */
     return OMPI_ERR_NOT_IMPLEMENTED;
@@ -552,13 +552,13 @@ int mca_btl_template_send(
  * @param descriptor (IN)  Description of the data to be transferred
  */
 
-int mca_btl_template_put( 
+int mca_btl_mx_put( 
     mca_btl_base_module_t* btl,
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* descriptor)
 {
-    /* mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; */
-    mca_btl_template_frag_t* frag = (mca_btl_template_frag_t*) descriptor; 
+    /* mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; */
+    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*) descriptor; 
     frag->endpoint = endpoint;
     /* TODO */
     return OMPI_ERR_NOT_IMPLEMENTED; 
@@ -574,13 +574,13 @@ int mca_btl_template_put(
  *
  */
 
-int mca_btl_template_get( 
+int mca_btl_mx_get( 
     mca_btl_base_module_t* btl,
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* descriptor)
 {
-    /* mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; */
-    mca_btl_template_frag_t* frag = (mca_btl_template_frag_t*) descriptor; 
+    /* mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; */
+    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*) descriptor; 
     frag->endpoint = endpoint;
     /* TODO */
     return OMPI_ERR_NOT_IMPLEMENTED; 
@@ -591,34 +591,34 @@ int mca_btl_template_get(
  * Cleanup/release module resources.
  */
 
-int mca_btl_template_finalize(struct mca_btl_base_module_t* btl)
+int mca_btl_mx_finalize(struct mca_btl_base_module_t* btl)
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
     
-    if(template_btl->template_frag_eager.fl_num_allocated != 
-       template_btl->template_frag_eager.super.opal_list_length){ 
-        opal_output(0, "btl template_frag_eager: %d allocated %d returned \n", 
-                    template_btl->template_frag_eager.fl_num_allocated, 
-                    template_btl->template_frag_eager.super.opal_list_length); 
+    if(mx_btl->mx_frag_eager.fl_num_allocated != 
+       mx_btl->mx_frag_eager.super.opal_list_length){ 
+        opal_output(0, "btl mx_frag_eager: %d allocated %d returned \n", 
+                    mx_btl->mx_frag_eager.fl_num_allocated, 
+                    mx_btl->mx_frag_eager.super.opal_list_length); 
     }
-    if(template_btl->template_frag_max.fl_num_allocated != 
-      template_btl->template_frag_max.super.opal_list_length) { 
-        opal_output(0, "btl template_frag_max: %d allocated %d returned \n", 
-                    template_btl->template_frag_max.fl_num_allocated, 
-                    template_btl->template_frag_max.super.opal_list_length); 
+    if(mx_btl->mx_frag_max.fl_num_allocated != 
+      mx_btl->mx_frag_max.super.opal_list_length) { 
+        opal_output(0, "btl mx_frag_max: %d allocated %d returned \n", 
+                    mx_btl->mx_frag_max.fl_num_allocated, 
+                    mx_btl->mx_frag_max.super.opal_list_length); 
     }
-    if(template_btl->template_frag_user.fl_num_allocated != 
-       template_btl->template_frag_user.super.opal_list_length){ 
-        opal_output(0, "btl template_frag_user: %d allocated %d returned \n", 
-                    template_btl->template_frag_user.fl_num_allocated, 
-                    template_btl->template_frag_user.super.opal_list_length); 
+    if(mx_btl->mx_frag_user.fl_num_allocated != 
+       mx_btl->mx_frag_user.super.opal_list_length){ 
+        opal_output(0, "btl mx_frag_user: %d allocated %d returned \n", 
+                    mx_btl->mx_frag_user.fl_num_allocated, 
+                    mx_btl->mx_frag_user.super.opal_list_length); 
     }
 
-    OBJ_DESTRUCT(&template_btl->template_lock);
-    OBJ_DESTRUCT(&template_btl->template_frag_eager);
-    OBJ_DESTRUCT(&template_btl->template_frag_max);
-    OBJ_DESTRUCT(&template_btl->template_frag_user);
-    free(template_btl);
+    OBJ_DESTRUCT(&mx_btl->mx_lock);
+    OBJ_DESTRUCT(&mx_btl->mx_frag_eager);
+    OBJ_DESTRUCT(&mx_btl->mx_frag_max);
+    OBJ_DESTRUCT(&mx_btl->mx_frag_user);
+    free(mx_btl);
     return OMPI_SUCCESS;
 }
 
