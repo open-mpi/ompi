@@ -59,7 +59,7 @@ int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
     }
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
-    asprintf(&tmp_out, "\tTrigger id: %d", msg->id);
+    asprintf(&tmp_out, "\tTrigger id: %ld", (long)msg->id);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     asprintf(&tmp_out, "\t%lu Notify data structures in message",
