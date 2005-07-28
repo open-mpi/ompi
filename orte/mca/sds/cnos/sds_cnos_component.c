@@ -85,7 +85,7 @@ orte_sds_cnos_component_init(int *priority)
     if (NULL != mode) return NULL;
 
     *priority = 60;
-    return sds_cnos_module;
+    return &sds_cnos_module;
 }
 
 

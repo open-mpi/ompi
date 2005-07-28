@@ -21,10 +21,7 @@
 #include "mca/rml/base/base.h"
 #include "rml_cnos.h"
 
-#ifdef HAVE_CNOS
-int cnos_barrier(void);
-#endif
-
+#include <catamount/cnos_mpi_os.h>
 
 orte_rml_component_t mca_rml_cnos_component = {
     /* First, the mca_base_component_t struct containing meta
