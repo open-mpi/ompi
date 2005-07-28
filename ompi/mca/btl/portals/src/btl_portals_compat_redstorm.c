@@ -22,13 +22,7 @@
 #include "btl_portals.h"
 #include "btl_portals_compat.h"
 
-#if 0
-int cnos_get_size(void);
-int cnos_get_rank(void);
-int cnos_get_nidpid_map(ptl_process_id_t **map);
-#else
 #include <catamount/cnos_mpi_os.h>
-#endif
 
 int
 mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
@@ -86,9 +80,6 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
         return OMPI_ERR_FATAL;
     }
 
-    opal_output_verbose(10, mca_btl_portals_component.portals_output,
-			"max ptl index: %d", btl->portals_ni_limits.max_pt_index);
-
     return OMPI_SUCCESS;
 }
 
@@ -118,6 +109,9 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
                             "nptl_procs != nprocs (%d, %d)", nptl_procs,
                             nprocs);
         return OMPI_ERR_FATAL;
+    } else {
+        opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                            "nptl_procs: %d", nptl_procs);
     }
 
     /* get space for the portals procs list */
