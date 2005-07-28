@@ -494,12 +494,12 @@ EOF
         echo "AC_CONFIG_FILES([$m4conf_dir/$file])" >> "$m4conf_list_file"
     done
 
-    # add the sinclude of the m4 file into the mca .m4 file directly.  It shouldn't
-    # be in a macro, so this is fairly safe to do.  By this point, there should
-    # already be a header and all that.
-    # sincludes are relative to the currently included file, so need the .. to get us
-    # from config/ to the topsrcdir again.
-    echo "sinclude(${m4conf_project}/mca/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$mca_m4_include_file"
+    # add the m4_include of the m4 file into the mca .m4 file
+    # directly.  It shouldn't be in a macro, so this is fairly safe to
+    # do.  By this point, there should already be a header and all
+    # that.  m4_includes are relative to the currently included file,
+    # so need the .. to get us from config/ to the topsrcdir again.
+    echo "m4_include(${m4conf_project}/mca/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$mca_m4_include_file"
 
     cat <<EOF
 --> Adding to top-level configure m4-configure subdirs:
