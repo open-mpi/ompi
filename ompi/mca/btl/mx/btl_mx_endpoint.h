@@ -21,13 +21,13 @@
 #include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
-#include "btl_template_frag.h"
-#include "btl_template.h"
+#include "btl_mx_frag.h"
+#include "btl_mx.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-OBJ_CLASS_DECLARATION(mca_btl_template_endpoint_t);
+OBJ_CLASS_DECLARATION(mca_btl_mx_endpoint_t);
 
 /**
  * An abstraction that represents a connection to a endpoint process.
@@ -39,15 +39,15 @@ OBJ_CLASS_DECLARATION(mca_btl_template_endpoint_t);
 struct mca_btl_base_endpoint_t {
     opal_list_item_t            super;
 
-    struct mca_btl_template_module_t* endpoint_btl;
+    struct mca_btl_mx_module_t* endpoint_btl;
     /**< BTL instance that created this connection */
 
-    struct mca_btl_template_proc_t*   endpoint_proc;
+    struct mca_btl_mx_proc_t*   endpoint_proc;
     /**< proc structure corresponding to endpoint */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
-typedef mca_btl_base_endpoint_t  mca_btl_template_endpoint_t;
+typedef mca_btl_base_endpoint_t  mca_btl_mx_endpoint_t;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

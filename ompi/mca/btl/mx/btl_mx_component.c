@@ -28,12 +28,12 @@
 #include "mca/pml/base/pml_base_module_exchange.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/mpool/base/base.h" 
-#include "btl_template.h"
-#include "btl_template_frag.h"
-#include "btl_template_endpoint.h" 
+#include "btl_mx.h"
+#include "btl_mx_frag.h"
+#include "btl_mx_endpoint.h" 
 #include "mca/btl/base/base.h" 
 #include "datatype/convertor.h" 
-mca_btl_template_component_t mca_btl_template_component = {
+mca_btl_mx_component_t mca_btl_mx_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
@@ -48,8 +48,8 @@ mca_btl_template_component_t mca_btl_template_component = {
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
-            mca_btl_template_component_open,  /* component open */
-            mca_btl_template_component_close  /* component close */
+            mca_btl_mx_component_open,  /* component open */
+            mca_btl_mx_component_close  /* component close */
         },
 
         /* Next the MCA v1.0.0 component meta data */
@@ -60,8 +60,8 @@ mca_btl_template_component_t mca_btl_template_component = {
             false
         },
 
-        mca_btl_template_component_init,  
-        mca_btl_template_component_progress,
+        mca_btl_mx_component_init,  
+        mca_btl_mx_component_progress,
     }
 };
 
@@ -70,7 +70,7 @@ mca_btl_template_component_t mca_btl_template_component = {
  * utility routines for parameter registration
  */
 
-static inline char* mca_btl_template_param_register_string(
+static inline char* mca_btl_mx_param_register_string(
                                                      const char* param_name, 
                                                      const char* default_value)
 {
@@ -80,7 +80,7 @@ static inline char* mca_btl_template_param_register_string(
     return param_value;
 }
 
-static inline int mca_btl_template_param_register_int(
+static inline int mca_btl_mx_param_register_int(
         const char* param_name, 
         int default_value)
 {
@@ -95,40 +95,40 @@ static inline int mca_btl_template_param_register_int(
  *  component parameters.
  */
 
-int mca_btl_template_component_open(void)
+int mca_btl_mx_component_open(void)
 {
 
     
     /* initialize state */
-    mca_btl_template_component.template_num_btls=0;
-    mca_btl_template_component.template_btls=NULL;
+    mca_btl_mx_component.mx_num_btls=0;
+    mca_btl_mx_component.mx_btls=NULL;
     
     /* initialize objects */ 
-    OBJ_CONSTRUCT(&mca_btl_template_component.template_procs, opal_list_t);
+    OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
 
     /* register TEMPLATE component parameters */
-    mca_btl_template_component.template_free_list_num =
-        mca_btl_template_param_register_int ("free_list_num", 8);
-    mca_btl_template_component.template_free_list_max =
-        mca_btl_template_param_register_int ("free_list_max", 1024);
-    mca_btl_template_component.template_free_list_inc =
-        mca_btl_template_param_register_int ("free_list_inc", 32);
-    mca_btl_template_component.template_mpool_name = 
-        mca_btl_template_param_register_string("mpool", "ib"); 
-    mca_btl_template_module.super.btl_exclusivity =
-        mca_btl_template_param_register_int ("exclusivity", 0);
-    mca_btl_template_module.super.btl_eager_limit = 
-        mca_btl_template_param_register_int ("first_frag_size", 64*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_min_send_size =
-        mca_btl_template_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_max_send_size =
-        mca_btl_template_param_register_int ("max_send_size", 128*1024) - sizeof(mca_btl_base_header_t);
-    mca_btl_template_module.super.btl_min_rdma_size = 
-        mca_btl_template_param_register_int("min_rdma_size", 1024*1024); 
-    mca_btl_template_module.super.btl_max_rdma_size = 
-        mca_btl_template_param_register_int("max_rdma_size", 1024*1024); 
-    mca_btl_template_module.super.btl_flags  = 
-        mca_btl_template_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
+    mca_btl_mx_component.mx_free_list_num =
+        mca_btl_mx_param_register_int ("free_list_num", 8);
+    mca_btl_mx_component.mx_free_list_max =
+        mca_btl_mx_param_register_int ("free_list_max", 1024);
+    mca_btl_mx_component.mx_free_list_inc =
+        mca_btl_mx_param_register_int ("free_list_inc", 32);
+    mca_btl_mx_component.mx_mpool_name = 
+        mca_btl_mx_param_register_string("mpool", "ib"); 
+    mca_btl_mx_module.super.btl_exclusivity =
+        mca_btl_mx_param_register_int ("exclusivity", 0);
+    mca_btl_mx_module.super.btl_eager_limit = 
+        mca_btl_mx_param_register_int ("first_frag_size", 64*1024) - sizeof(mca_btl_base_header_t);
+    mca_btl_mx_module.super.btl_min_send_size =
+        mca_btl_mx_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
+    mca_btl_mx_module.super.btl_max_send_size =
+        mca_btl_mx_param_register_int ("max_send_size", 128*1024) - sizeof(mca_btl_base_header_t);
+    mca_btl_mx_module.super.btl_min_rdma_size = 
+        mca_btl_mx_param_register_int("min_rdma_size", 1024*1024); 
+    mca_btl_mx_module.super.btl_max_rdma_size = 
+        mca_btl_mx_param_register_int("max_rdma_size", 1024*1024); 
+    mca_btl_mx_module.super.btl_flags  = 
+        mca_btl_mx_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
     return OMPI_SUCCESS;
 }
 
@@ -136,7 +136,7 @@ int mca_btl_template_component_open(void)
  * component cleanup - sanity checking of queue lengths
  */
 
-int mca_btl_template_component_close(void)
+int mca_btl_mx_component_close(void)
 {
     return OMPI_SUCCESS;
 }
@@ -149,7 +149,7 @@ int mca_btl_template_component_close(void)
  *  (3) register BTL parameters with the MCA
  */
 
-mca_btl_base_module_t** mca_btl_template_component_init(int *num_btl_modules, 
+mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules, 
                                                   bool enable_progress_threads,
                                                   bool enable_mpi_threads)
 {
@@ -161,7 +161,7 @@ mca_btl_base_module_t** mca_btl_template_component_init(int *num_btl_modules,
  */
 
 
-int mca_btl_template_component_progress()
+int mca_btl_mx_component_progress()
 {
     return 0;
 }

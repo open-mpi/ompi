@@ -45,74 +45,74 @@ extern "C" {
  * Infiniband (TEMPLATE) BTL component.
  */
 
-struct mca_btl_template_component_t {
+struct mca_btl_mx_component_t {
     mca_btl_base_component_1_0_0_t          super;  /**< base BTL component */ 
     
-    uint32_t                                template_num_btls;
+    uint32_t                                mx_num_btls;
     /**< number of hcas available to the TEMPLATE component */
 
-    struct mca_btl_template_module_t       *template_btls;
+    struct mca_btl_mx_module_t       *mx_btls;
     /**< array of available BTL modules */
 
-    int template_free_list_num;
+    int mx_free_list_num;
     /**< initial size of free lists */
 
-    int template_free_list_max;
+    int mx_free_list_max;
     /**< maximum size of free lists */
 
-    int template_free_list_inc;
+    int mx_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
-    opal_list_t template_procs;
-    /**< list of template proc structures */
+    opal_list_t mx_procs;
+    /**< list of mx proc structures */
 
-    opal_mutex_t template_lock;
+    opal_mutex_t mx_lock;
     /**< lock for accessing module state */
 
-    char* template_mpool_name; 
+    char* mx_mpool_name; 
     /**< name of memory pool */ 
 
     bool leave_pinned;
     /**< pin memory on first use and leave pinned */
 }; 
-typedef struct mca_btl_template_component_t mca_btl_template_component_t;
+typedef struct mca_btl_mx_component_t mca_btl_mx_component_t;
 
-extern mca_btl_template_component_t mca_btl_template_component;
+extern mca_btl_mx_component_t mca_btl_mx_component;
 
 
 
 /**
  * BTL Module Interface
  */
-struct mca_btl_template_module_t {
+struct mca_btl_mx_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
-    mca_btl_base_recv_reg_t template_reg[MCA_BTL_TAG_MAX]; 
+    mca_btl_base_recv_reg_t mx_reg[MCA_BTL_TAG_MAX]; 
 
     /* free list of fragment descriptors */
-    ompi_free_list_t template_frag_eager;
-    ompi_free_list_t template_frag_max;
-    ompi_free_list_t template_frag_user;
+    ompi_free_list_t mx_frag_eager;
+    ompi_free_list_t mx_frag_max;
+    ompi_free_list_t mx_frag_user;
 
     /* lock for accessing module state */
-    opal_mutex_t template_lock;
+    opal_mutex_t mx_lock;
 
 #if MCA_BTL_HAS_MPOOL
-    struct mca_mpool_base_module_t* template_mpool;
+    struct mca_mpool_base_module_t* mx_mpool;
 #endif
 }; 
-typedef struct mca_btl_template_module_t mca_btl_template_module_t;
-extern mca_btl_template_module_t mca_btl_template_module;
+typedef struct mca_btl_mx_module_t mca_btl_mx_module_t;
+extern mca_btl_mx_module_t mca_btl_mx_module;
 
 
 /**
  * Register TEMPLATE component parameters with the MCA framework
  */
-extern int mca_btl_template_component_open(void);
+extern int mca_btl_mx_component_open(void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int mca_btl_template_component_close(void);
+extern int mca_btl_mx_component_close(void);
 
 /**
  * TEMPLATE component initialization.
@@ -121,7 +121,7 @@ extern int mca_btl_template_component_close(void);
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
  */
-extern mca_btl_base_module_t** mca_btl_template_component_init(
+extern mca_btl_base_module_t** mca_btl_mx_component_init(
     int *num_btl_modules, 
     bool allow_multi_user_threads,
     bool have_hidden_threads
@@ -131,7 +131,7 @@ extern mca_btl_base_module_t** mca_btl_template_component_init(
 /**
  * TEMPLATE component progress.
  */
-extern int mca_btl_template_component_progress(void);
+extern int mca_btl_mx_component_progress(void);
 
 
 
@@ -142,7 +142,7 @@ extern int mca_btl_template_component_progress(void);
  * @return     OMPI_SUCCESS or error status on failure.
  */
 
-extern int mca_btl_template_finalize(
+extern int mca_btl_mx_finalize(
     struct mca_btl_base_module_t* btl
 );
 
@@ -159,7 +159,7 @@ extern int mca_btl_template_finalize(
  * 
  */
 
-extern int mca_btl_template_add_procs(
+extern int mca_btl_mx_add_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -178,7 +178,7 @@ extern int mca_btl_template_add_procs(
  *
  */
 
-extern int mca_btl_template_del_procs(
+extern int mca_btl_mx_del_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -195,7 +195,7 @@ extern int mca_btl_template_del_procs(
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
-extern int mca_btl_template_send(
+extern int mca_btl_mx_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* descriptor, 
@@ -211,7 +211,7 @@ extern int mca_btl_template_send(
  * @param descriptor (IN)  Description of the data to be transferred
  */
                                                                                                     
-extern int mca_btl_template_put(
+extern int mca_btl_mx_put(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* decriptor
@@ -226,7 +226,7 @@ extern int mca_btl_template_put(
  * @param descriptor (IN)  Description of the data to be transferred
  */
                                                                                                     
-extern int mca_btl_template_get(
+extern int mca_btl_mx_get(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* decriptor
@@ -241,7 +241,7 @@ extern int mca_btl_template_get(
  *
  */
 
-extern int mca_btl_template_register(
+extern int mca_btl_mx_register(
     struct mca_btl_base_module_t* btl, 
     mca_btl_base_tag_t tag, 
     mca_btl_base_module_recv_cb_fn_t cbfunc, 
@@ -256,7 +256,7 @@ extern int mca_btl_template_register(
  * @param size (IN)     Request segment size.
  */
 
-extern mca_btl_base_descriptor_t* mca_btl_template_alloc(
+extern mca_btl_base_descriptor_t* mca_btl_mx_alloc(
     struct mca_btl_base_module_t* btl, 
     size_t size); 
 
@@ -268,7 +268,7 @@ extern mca_btl_base_descriptor_t* mca_btl_template_alloc(
  * @param descriptor (IN)  Allocated descriptor.
  */
 
-extern int mca_btl_template_free(
+extern int mca_btl_mx_free(
     struct mca_btl_base_module_t* btl, 
     mca_btl_base_descriptor_t* des); 
     
@@ -287,7 +287,7 @@ extern int mca_btl_template_free(
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT) 
 */
 
-mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
+mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* peer,
     struct mca_mpool_base_registration_t*,
@@ -296,7 +296,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     size_t* size
 );
 
-extern mca_btl_base_descriptor_t* mca_btl_template_prepare_dst( 
+extern mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( 
     struct mca_btl_base_module_t* btl, 
     struct mca_btl_base_endpoint_t* peer,
     struct mca_mpool_base_registration_t*,
