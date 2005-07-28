@@ -18,6 +18,11 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+EXTRA_DIST = $(pkgdata_DATA)
+pkgdata_DATA = help-pls-rsh.txt
+
+AM_CPPFLAGS = -DOMPI_BINDIR="\"$(bindir)\""
+
 sources = \
         pls_rsh.h \
         pls_rsh_component.c \

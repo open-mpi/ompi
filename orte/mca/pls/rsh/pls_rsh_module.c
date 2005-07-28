@@ -35,32 +35,31 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#include "include/orte_constants.h"
-#include "opal/util/argv.h"
-#include "opal/util/opal_environ.h"
-#include "opal/util/output.h"
-#include "util/univ_info.h"
-#include "util/session_dir.h"
+#include "orte/include/orte_constants.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/runtime/orte_wait.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/pls/rsh/pls_rsh.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/util/sys_info.h"
+#include "opal/util/if.h"
 #include "opal/util/if.h"
 #include "opal/util/path.h"
 #include "opal/event/event.h"
-#include "runtime/orte_wait.h"
-
-#include "mca/base/mca_base_param.h"
-
-#include "mca/ns/ns.h"
-#include "util/sys_info.h"
-#include "opal/util/if.h"
-#include "mca/pls/pls.h"
-#include "mca/rml/rml.h"
-#include "mca/gpr/gpr.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ras/base/ras_base_node.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/soh/soh.h"
-#include "mca/soh/base/base.h"
-#include "mca/pls/rsh/pls_rsh.h"
+#include "opal/util/show_help.h"
+#include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
 
 #define NUM_CONCURRENT 128
 
@@ -461,6 +460,21 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 opal_ifislocal(node->node_name)) {
                 exec_argv = &argv[local_exec_index];
                 exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
+
+                if (NULL == exec_path) {
+                    struct stat buf;
+
+                    asprintf(&exec_path, "%s/orted", OMPI_BINDIR);
+                    if (0 != stat(exec_path, &buf)) {
+                        char *path = getenv("PATH");
+                        if (NULL == path) {
+                            path = ("PATH is empty!");
+                        }
+                        opal_show_help("help-pls-rsh.txt", "no-local-orted",
+                                       true, path, OMPI_BINDIR);
+                        return ORTE_ERR_NOT_FOUND;
+                    }
+                }
             } else {
                 exec_argv = argv;
                 exec_path = strdup(mca_pls_rsh_component.path);
