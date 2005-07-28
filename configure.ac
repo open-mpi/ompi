@@ -123,9 +123,24 @@ AC_DEFINE_UNQUOTED(OPAL_VERSION, "$OPAL_RELEASE_VERSION",
 #
 
 OMPI_CONFIGURE_SETUP
-ompi_show_title "Configuring OMPI version $OMPI_VERSION"
-ompi_show_title "Configuring ORTE version $ORTE_VERSION"
-ompi_show_title "Configuring OPAL version $OPAL_VERSION"
+ompi_show_title "Configuring Open MPI"
+
+ompi_show_subtitle "Checking versions"
+AC_MSG_CHECKING([Open MPI version])
+AC_MSG_RESULT([$OMPI_VERSION])
+AC_MSG_CHECKING([Open MPI Subversion repository version])
+AC_MSG_RESULT([$OMPI_SVN_R])
+
+AC_MSG_CHECKING([Open Run-Time Environment (ORTE) version])
+AC_MSG_RESULT([$ORTE_VERSION])
+AC_MSG_CHECKING([ORTE Subversion repository version])
+AC_MSG_RESULT([$ORTE_SVN_R])
+
+AC_MSG_CHECKING([Open Portable Access Layer (OPAL) version])
+AC_MSG_RESULT([$OPAL_VERSION])
+AC_MSG_CHECKING([OPAL Subversion repository version])
+AC_MSG_RESULT([$OPAL_SVN_R])
+
 ompi_show_subtitle "Initialization, setup"
 
 #
@@ -780,23 +795,16 @@ else
 
     OMPI_F90_GET_INT_KIND(18, OMPI_MPI_OFFSET_KIND)
 
-    #
-    # I believe the AC_CHECK_SIZEOF(void *) is an error
-    # as the following MUST be run to get ac_cv_sizeof_voidp defined
-    #
-    AC_CHECK_SIZEOF(void*)
-
-    if test "$ac_cv_sizeof_voidp" = "2"; then
+    if test "$ac_cv_sizeof_void_p" = "2"; then
         OMPI_F90_GET_INT_KIND(4, OMPI_MPI_ADDRESS_KIND)
-    fi
-    if test "$ac_cv_sizeof_voidp" = "4"; then
+    elif test "$ac_cv_sizeof_void_p" = "4"; then
         OMPI_F90_GET_INT_KIND(9, OMPI_MPI_ADDRESS_KIND)
-    fi
-    if test "$ac_cv_sizeof_voidp" = "8"; then
+    elif test "$ac_cv_sizeof_void_p" = "8"; then
         OMPI_F90_GET_INT_KIND(18, OMPI_MPI_ADDRESS_KIND)
-    fi
-    if test "$ac_cv_sizeof_voidp" = "16"; then
+    elif test "$ac_cv_sizeof_void_p" = "16"; then
         OMPI_F90_GET_INT_KIND(19, OMPI_MPI_ADDRESS_KIND)
+    else
+        AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
     fi
 fi
 
