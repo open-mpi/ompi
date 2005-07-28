@@ -26,6 +26,10 @@ AC_INIT(./ompi/mpi/c/init.c)
 AC_PREREQ(2.58)
 AC_CONFIG_AUX_DIR(./config)
 
+# Get our platform support file.  This has to be done very, very early
+# because it twiddles random bits of autoconf
+OMPI_LOAD_PLATFORM
+
 # Get the version of OMPI that we are installing
 
 OMPI_GET_VERSION($srcdir/VERSION, OMPI)
