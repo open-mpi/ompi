@@ -359,15 +359,11 @@ mca_btl_portals_component_progress(void)
 #endif
 
         while (true) {
-            opal_output_verbose(30, mca_btl_portals_component.portals_output,
-                                "PtlEQPoll about to be called");
             ret = PtlEQPoll(module->portals_eq_handles,
                             OMPI_BTL_PORTALS_EQ_SIZE, /* number of eq handles */
                             1, /* poll time */
                             &ev,
                             &which);
-            opal_output_verbose(30, mca_btl_portals_component.portals_output,
-                                "PtlEQPoll returned %d\n", ret);
             if (PTL_EQ_EMPTY == ret) {
                 /* nothing to see here - move along */
                 mca_btl_portals_progress_queued_sends(module);
@@ -400,7 +396,11 @@ mca_btl_portals_component_progress(void)
                 mca_btl_portals_process_rdma(module, &ev);
                 break;
             default:
+                opal_output_verbose(30,
+                                    mca_btl_portals_compnent.portals_output,
+                                    "unknown event queue returned");
                 abort();
+                break;
             }
 
             num_progressed++;

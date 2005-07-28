@@ -136,7 +136,6 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
                                 "PtlNIInit failed, returning %d\n", ret);
             return OMPI_ERR_FATAL;
         }
-        printf("max index: %d\n", btl->portals_ni_limits.max_pt_index);
     }
 
     return OMPI_SUCCESS;
