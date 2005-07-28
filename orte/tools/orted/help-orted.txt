@@ -21,3 +21,13 @@ Usage: %s [OPTION]...
 Start an Open RTE Daemon
 
 %s
+[orted:environ]
+Error: Could not set %s in environ.
+Open RTE Daemon was unable to set 
+ %s = %s
+in the environment. Returned value %d instead of ORTE_SUCCESS.
+
+[orted:init-failure]
+Open RTE was unable to initialize properly.  The error occured while
+attempting to %s.  Returned value %d instead of ORTE_SUCCESS.
+

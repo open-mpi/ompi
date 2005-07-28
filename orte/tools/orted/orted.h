@@ -48,7 +48,6 @@ typedef uint16_t orte_daemon_cmd_flag_t;
 
 typedef struct {
     bool help;
-    bool version;
     bool no_daemonize;
     bool debug;
     bool debug_daemons;

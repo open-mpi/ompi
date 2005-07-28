@@ -78,10 +78,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, '\0', NULL, "version", 0,
-      &orted_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
-      "Show the orted version" },
-
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
       &orted_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Debug the OpenRTE" },
@@ -173,10 +169,15 @@ int main(int argc, char *argv[])
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
     if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false, 
                                                    argc, argv))) {
+        char *args = NULL;
+        args = opal_cmd_line_get_usage_msg(cmd_line);
+        opal_show_help("help-orted.txt", "orted:usage", false,
+                       argv[0], args);
+        free(args);
         return ret;
     }
     
-    /* check for help and version requests */
+    /* check for help request */
     if (orted_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
@@ -184,12 +185,6 @@ int main(int argc, char *argv[])
                        argv[0], args);
         free(args);
         return 1;
-    }
-
-    if (orted_globals.version) {
-        /* show version message */
-        printf("...showing off my version!\n");
-        exit(1);
     }
 
     /* Okay, now on to serious business
@@ -206,12 +201,14 @@ int main(int argc, char *argv[])
     if (orted_globals.name) {    
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
                                               "env", true, &environ))) {
-            fprintf(stderr, "orted: could not set my name in environ\n");
+            opal_show_help("help-orted.txt", "orted:environ", false,
+                           "OMPI_MCA_ns_nds", "env", ret);
             return ret;
         }
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_name",
                                   orted_globals.name, true, &environ))) {
-            fprintf(stderr, "orted: could not set my name in environ\n");
+            opal_show_help("help-orted.txt", "orted:environ", false,
+                           "OMPI_MCA_ns_nds_name", orted_globals.name, ret);
             return ret;
         }
         /* the following values are meaningless to the daemon, but may have
@@ -220,12 +217,14 @@ int main(int argc, char *argv[])
          */
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_vpid_start",
                                   orted_globals.vpid_start, true, &environ))) {
-            fprintf(stderr, "orted: could not set vpid_start in environ\n");
+            opal_show_help("help-orted.txt", "orted:environ", false,
+                           "OMPI_MCA_ns_nds_vpid_start", orted_globals.vpid_start, ret);
             return ret;
         }
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_num_procs",
                                   orted_globals.num_procs, true, &environ))) {
-            fprintf(stderr, "orted: could not set num_procs in environ\n");
+            opal_show_help("help-orted.txt", "orted:environ", false,
+                           "OMPI_MCA_ns_nds_num_procs", orted_globals.num_procs, ret);
             return ret;
         }
     }
@@ -254,7 +253,8 @@ int main(int argc, char *argv[])
     mca_base_param_set_int(ret, 1);
 
     if (ORTE_SUCCESS != (ret = orte_init())) {
-        fprintf(stderr, "orted: failed to init rte\n");
+        opal_show_help("help-orted.txt", "orted:init-failure", false,
+                       "orte_init()", ret);
         return ret;
     }
    
