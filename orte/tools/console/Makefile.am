@@ -23,14 +23,24 @@ libs = \
         $(top_builddir)/orte/liborte.la \
         $(top_builddir)/opal/libopal.la
 
+headers = orteconsole.h
+
 bin_PROGRAMS = \
         orteconsole
 
 orteconsole_SOURCES = \
+		$(headers) \
         orteconsole.c 
 
 orteconsole_LDADD = $(libs) 
 orteconsole_DEPENDENCIES = $(libs)
+
+if WANT_INSTALL_HEADERS
+ortedir = $(includedir)/openmpi/orte/tools/orteconsole
+orte_HEADERS = $(headers)
+else
+ortedir = $(includedir)
+endif
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
