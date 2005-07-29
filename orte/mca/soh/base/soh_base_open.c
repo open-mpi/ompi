@@ -56,6 +56,8 @@ orte_soh_base_module_t orte_soh = {
     orte_soh_base_set_proc_soh,
 	orte_soh_base_get_node_soh_not_available,
     orte_soh_base_set_node_soh_not_available,
+    orte_soh_base_get_job_soh,
+    orte_soh_base_set_job_soh,
     orte_soh_base_begin_monitoring_not_available,
     orte_soh_base_module_finalize_not_available
 };
@@ -97,6 +99,14 @@ int orte_soh_base_open(void)
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_soh_base_pack_proc_state,
                                           orte_soh_base_unpack_proc_state,
                                           "ORTE_PROC_STATE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_JOB_STATE;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_soh_base_pack_job_state,
+                                          orte_soh_base_unpack_job_state,
+                                          "ORTE_JOB_STATE", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

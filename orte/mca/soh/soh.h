@@ -66,6 +66,18 @@ typedef int (*orte_soh_base_module_set_node_soh_fn_t)(orte_cellid_t cell,
                                                       orte_node_state_t state);
 
 /*
+ * Query the state-of-health of a job
+ */
+typedef int (*orte_soh_base_module_get_job_soh_fn_t)(orte_job_state_t *state,
+                                                      orte_jobid_t jobid);
+
+/*
+ * Set the state-of-health of a job
+ */
+typedef int (*orte_soh_base_module_set_job_soh_fn_t)(orte_jobid_t jobid,
+                                                     orte_job_state_t state);
+
+/*
  * Initiate monitoring of a job
  * This function notifies the soh that it should initiate monitoring of the specified
  * jobid. It is called by the resource manager once a job has been launched. Calling
@@ -92,6 +104,8 @@ struct orte_soh_base_module_1_0_0_t {
     orte_soh_base_module_set_proc_soh_fn_t      set_proc_soh;
     orte_soh_base_module_get_node_soh_fn_t      get_node_soh;
     orte_soh_base_module_set_node_soh_fn_t      set_node_soh;
+    orte_soh_base_module_get_job_soh_fn_t       get_job_soh;
+    orte_soh_base_module_set_job_soh_fn_t       set_job_soh;
     orte_soh_base_module_begin_monitoring_fn_t  begin_monitoring_job;
     orte_soh_base_module_finalize_fn_t          finalize;
 };

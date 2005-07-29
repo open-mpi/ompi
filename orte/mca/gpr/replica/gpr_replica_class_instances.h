@@ -288,6 +288,7 @@ static void orte_gpr_replica_subscription_construct(orte_gpr_replica_subscriptio
     sub->index = 0;
     sub->name = NULL;
     sub->active = false;
+    sub->processing = false;
     sub->cleanup = false;
     sub->action = ORTE_GPR_REPLICA_NO_ACTION;
     
@@ -383,6 +384,7 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_trigger_t* trig)
     
     trig->action = ORTE_GPR_REPLICA_NO_ACTION;
     trig->one_shot_fired = false;
+    trig->processing = false;
     
     trig->num_counters = 0;
     orte_pointer_array_init(&(trig->counters), orte_gpr_array_block_size,

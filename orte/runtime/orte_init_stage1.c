@@ -291,18 +291,33 @@ int orte_init_stage1(void)
         free(contact_path);
     }
 
-    /* open/load rmgr/soh */
+    /* 
+     * setup the resource manager 
+     */
 
     if (ORTE_SUCCESS != (ret = orte_rmgr_base_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
 
+    if (ORTE_SUCCESS != (ret = orte_rmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /*
+     * setup the state-of-health monitor
+     */
     if (ORTE_SUCCESS != (ret = orte_soh_base_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
 
+    if (ORTE_SUCCESS != (ret = orte_soh_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
      /* if we are a singleton or the seed, setup the infrastructure for our job */
  
     if(orte_process_info.singleton || orte_process_info.seed) {

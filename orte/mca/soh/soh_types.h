@@ -41,8 +41,24 @@ typedef int8_t orte_proc_state_t;
 #define ORTE_PROC_STATE_TERMINATED     0x09  /* process has terminated and is no longer running */
 #define ORTE_PROC_STATE_ABORTED        0x0A  /* process aborted */
 
+/*
+ * Job state codes
+ */
+
+typedef int8_t orte_job_state_t;
+
+#define ORTE_JOB_STATE_INIT           0x01  /* job entry has been created by rmaps */
+#define ORTE_JOB_STATE_LAUNCHED       0x02  /* job has been launched by pls */
+#define ORTE_JOB_STATE_AT_STG1        0x03  /* all processes are at Stage Gate 1 barrier in orte_init */
+#define ORTE_JOB_STATE_AT_STG2        0x04  /* all processes are at Stage Gate 2 barrier in orte_init */
+#define ORTE_JOB_STATE_RUNNING        0x06  /* all processes have exited orte_init and is running */
+#define ORTE_JOB_STATE_AT_STG3        0x07  /* all processes are at Stage Gate 3 barrier in orte_finalize */
+#define ORTE_JOB_STATE_FINALIZED      0x08  /* all processes have completed orte_finalize and is running */
+#define ORTE_JOB_STATE_TERMINATED     0x09  /* all processes have terminated and is no longer running */
+#define ORTE_JOB_STATE_ABORTED        0x0A  /* at least one process aborted, causing job to abort */
+
 /**
- * Node State, correspondinding to the ORTE_NODE_STATE_* #defines,
+ * Node State, corresponding to the ORTE_NODE_STATE_* #defines,
  * below.  These are #defines instead of an enum because the thought
  * is that we may have lots and lots of entries of these in the
  * registry and by making this an int8_t, it's only 1 byte, whereas an

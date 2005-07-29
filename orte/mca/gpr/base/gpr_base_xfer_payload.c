@@ -34,24 +34,24 @@ int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
 
     switch(type) {
 
-        case ORTE_BOOL:
-            dest->tf_flag = src->tf_flag;
-            break;
-            
-        case ORTE_SIZE:
-            dest->size = src->size;
-            break;
-            
-        case ORTE_PID:
-            dest->pid = src->pid;
-            break;
-            
         case ORTE_STRING:
             dest->strptr = strdup(src->strptr);
             if (NULL == dest->strptr) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
+            break;
+            
+        case ORTE_SIZE:
+            dest->size = src->size;
+            break;
+            
+        case ORTE_BOOL:
+            dest->tf_flag = src->tf_flag;
+            break;
+            
+        case ORTE_PID:
+            dest->pid = src->pid;
             break;
             
         case ORTE_UINT8:
@@ -90,34 +90,6 @@ int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
             break;
 #endif
 
-        case ORTE_NAME:
-            dest->proc = src->proc;;
-            break;
-            
-        case ORTE_JOBID:
-            dest->jobid = src->jobid;
-            break;
-            
-        case ORTE_CELLID:
-            dest->cellid = src->cellid;
-            break;
-            
-        case ORTE_VPID:
-            dest->vpid = src->vpid;
-            break;
-            
-        case ORTE_NODE_STATE:
-            dest->node_state = src->node_state;
-            break;
-            
-        case ORTE_PROC_STATE:
-            dest->proc_state = src->proc_state;
-            break;
-            
-        case ORTE_EXIT_CODE:
-            dest->exit_code = src->exit_code;
-            break;
-            
         case ORTE_BYTE_OBJECT:
             (dest->byteobject).size = (src->byteobject).size;
             (dest->byteobject).bytes = (uint8_t*)malloc((dest->byteobject).size);
@@ -128,6 +100,38 @@ int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
             memcpy((dest->byteobject).bytes, (src->byteobject).bytes, (dest->byteobject).size);
             break;
 
+        case ORTE_NAME:
+            dest->proc = src->proc;;
+            break;
+            
+        case ORTE_VPID:
+            dest->vpid = src->vpid;
+            break;
+            
+        case ORTE_JOBID:
+            dest->jobid = src->jobid;
+            break;
+            
+        case ORTE_CELLID:
+            dest->cellid = src->cellid;
+            break;
+            
+        case ORTE_NODE_STATE:
+            dest->node_state = src->node_state;
+            break;
+            
+        case ORTE_PROC_STATE:
+            dest->proc_state = src->proc_state;
+            break;
+            
+        case ORTE_JOB_STATE:
+            dest->job_state = src->job_state;
+            break;
+            
+        case ORTE_EXIT_CODE:
+            dest->exit_code = src->exit_code;
+            break;
+            
         case ORTE_APP_CONTEXT:
             if(NULL == src->app_context) {
                 dest->app_context = NULL;

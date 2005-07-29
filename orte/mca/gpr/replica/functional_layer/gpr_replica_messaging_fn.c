@@ -136,7 +136,9 @@ CLEANUP:
         OBJ_RELEASE(cb);
     }
 
-    /* cleanup any one-shot triggers that fired */
+    /* cleanup any one-shot triggers that fired and set processing to
+     * false on all others
+     */
     trigs = (orte_gpr_replica_trigger_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0, k=0, m=0; k < orte_gpr_replica.num_trigs &&
                    i < (orte_gpr_replica.triggers)->size; i++) {
@@ -146,13 +148,16 @@ CLEANUP:
                 OBJ_RELEASE(trigs[i]);
                 orte_pointer_array_set_item(orte_gpr_replica.triggers, i, NULL);
                 m++;
+            } else {
+                trigs[i]->processing = false;
             }
         }
     }
     orte_gpr_replica.num_trigs -= m;
     
     /* cleanup any subscriptions that are supposed to be
-     * removed based on a trigger having fired
+     * removed based on a trigger having fired - set processing to false
+     * on all others
      */
     subs = (orte_gpr_replica_subscription_t**)(orte_gpr_replica.subscriptions)->addr;
     for (i=0, k=0; k < orte_gpr_replica.num_subs &&
@@ -173,6 +178,8 @@ CLEANUP:
                         }
                     }
                 }
+            } else {
+                subs[i]->processing = false;
             }
         }
     }

@@ -140,8 +140,9 @@ typedef union {                             /* shared storage for the value */
     orte_cellid_t cellid;
     orte_node_state_t node_state;
     orte_proc_state_t proc_state;
-    orte_app_context_t *app_context;
+    orte_job_state_t job_state;
     orte_exit_code_t exit_code;
+    orte_app_context_t *app_context;
 } orte_gpr_value_union_t;
 
  /*

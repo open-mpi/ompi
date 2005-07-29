@@ -23,17 +23,18 @@
 
 #include <string.h>
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
 
 #include "opal/util/output.h"
 
-#include "dps/dps.h"
-#include "mca/gpr/gpr.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/rml/rml.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/soh/soh.h"
 
-#include "mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
 
 
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
@@ -375,6 +376,12 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    /* set the job state to "launched" */
+    if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_LAUNCHED))) {
+        ORTE_ERROR_LOG(rc);
     }
 
 CLEANUP:
@@ -394,26 +401,20 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
 {
     orte_gpr_value_t **values;
     orte_gpr_keyval_t **kvals;
-    orte_process_name_t *recipients;
+    orte_process_name_t *recipients=NULL;
     size_t i, j, m, n=0;
     orte_vpid_t k=0;
     int rc;
     bool found_slots=false, found_start=false;
+    bool found_stg1=false, found_stg2=false;
+    bool found_stg3=false, found_finalized=false;
     orte_buffer_t msg;
     orte_jobid_t job;
+    char **tokens=NULL;
+    size_t num_tokens;
     
-    /* check to see if this came from one of the stage gates as opposed
-     * to either terminate or finalize - if the latter, we ignore it
-     */
     values = (orte_gpr_value_t**)(data->values)->addr;
-    kvals = values[0]->keyvals;
-    for (i=0; i < values[0]->cnt; i++) {
-        if (0 == strcmp(kvals[i]->key, ORTE_PROC_NUM_FINALIZED) ||
-            0 == strcmp(kvals[i]->key, ORTE_PROC_NUM_TERMINATED)) {
-            return;
-        }
-    }
-    
+
     /* get the jobid from the segment name
      * we setup the stage gate triggers to return at least one value
      * to us. we use that value to extract the jobid for the returned
@@ -426,12 +427,34 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
         return;
     }
 
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&tokens, &num_tokens, job))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+    /* check to see if this came from one of the stage gates as opposed
+     * to either terminate or finalize - if the latter, we set the job
+     * state as appropriate and then return - no message needs to be
+     * sent to the processes themselves
+     */
+    kvals = values[0]->keyvals;
+    for (i=0; i < values[0]->cnt; i++) {
+        if (0 == strcmp(kvals[i]->key, ORTE_PROC_NUM_TERMINATED)) {
+            if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_TERMINATED))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            goto CLEANUP;
+        }
+    }
+    
     /* value returned will contain the counter, which contains the number of
-     * procs in this job
+     * procs in this job. We need to know which counter is included as this
+     * tells us the job state we have reached.
      */
     for (i=0, m=0; m < data->cnt &&
                    i < (data->values)->size &&
-                   (!found_slots || !found_start); i++) {
+                   (!found_slots || !found_start ||
+                   (!found_stg1 && !found_stg2 && !found_stg3 && !found_finalized)); i++) {
         if (NULL != values[i]) {
             m++;
             kvals = values[i]->keyvals;
@@ -439,7 +462,9 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
             if (NULL != values[i]->tokens &&
                 0 == strcmp(ORTE_JOB_GLOBALS, values[i]->tokens[0])) {
                 /* find the ORTE_JOB_SLOTS_KEY and the ORTE_JOB_VPID_START_KEY keyval */
-                for (j=0; j < values[i]->cnt && (!found_slots || !found_start); j++) {
+                for (j=0; j < values[i]->cnt &&
+                     (!found_slots || !found_start ||
+                     (!found_stg1 && !found_stg2 && !found_stg3 && !found_finalized)); j++) {
                     if (NULL != kvals[j] && !found_slots &&
                         0 == strcmp(ORTE_JOB_SLOTS_KEY, kvals[j]->key)) {
                         n = kvals[j]->value.size;
@@ -450,6 +475,19 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
                         k = kvals[j]->value.vpid;
                         found_start = true;
                     }
+                    if (NULL != kvals[j] && 
+                        0 == strcmp(ORTE_PROC_NUM_AT_STG1, kvals[j]->key)) {
+                        found_stg1 = true;
+                    } else if (NULL != kvals[j] && 
+                        0 == strcmp(ORTE_PROC_NUM_AT_STG2, kvals[j]->key)) {
+                        found_stg2 = true;
+                    } else if (NULL != kvals[j] && 
+                        0 == strcmp(ORTE_PROC_NUM_AT_STG3, kvals[j]->key)) {
+                        found_stg3 = true;
+                    } else if (NULL != kvals[j] && 
+                        0 == strcmp(ORTE_PROC_NUM_FINALIZED, kvals[j]->key)) {
+                        found_finalized = true;
+                    }
                 }
             }
         }
@@ -457,13 +495,37 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     
     if (!found_slots) {
         ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-        return;
+        goto CLEANUP;
     }
     
     if (!found_start) {
         ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-        return;
+        goto CLEANUP;
     }
+    
+    /* set the job state to the appropriate level */
+    if (found_stg1) {
+        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG1))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+    } else if (found_stg2) {
+        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG2))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+    } else if (found_stg3) {
+        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG3))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+    } else if (found_finalized) {
+        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_FINALIZED))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+    }
+
     /* now can generate the list of recipients */
     recipients = (orte_process_name_t*)malloc(n * sizeof(orte_process_name_t));
     for (i=0; i < n; i++) {
@@ -483,17 +545,27 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     if (ORTE_SUCCESS != (rc = orte_dps.pack(&msg, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&msg);
-        return;
+        goto CLEANUP;
     }
     
     if (ORTE_SUCCESS != (rc = orte_rml.xcast(orte_process_info.my_name, recipients,
                                         n, &msg, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&msg);
-        return;
+        goto CLEANUP;
     }
     OBJ_DESTRUCT(&msg);
-    free(recipients);
+
+
+CLEANUP:
+    for (j=0; j < num_tokens; j++) {
+        free(tokens[j]);
+        tokens[j] = NULL;
+    }
+    if (NULL != tokens) free(tokens);
+    
+    if (NULL != recipients) free(recipients);
+    return;
 }
 
 void orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_data_t *data,
@@ -514,6 +586,12 @@ void orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_data_t *data,
                     values[0]->segment))) {
         ORTE_ERROR_LOG(rc);
         return;
+    }
+
+    /* set the job status to "aborted" */
+
+    if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_ABORTED))) {
+        ORTE_ERROR_LOG(rc);
     }
     
     orte_errmgr.incomplete_start(job);
