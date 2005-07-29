@@ -661,6 +661,7 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
 {
     convertor->remoteArch      = pSrcConv->remoteArch;
     convertor->pFunctions      = pSrcConv->pFunctions;
+    convertor->flags           = pSrcConv->flags;
 
     return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
 }
