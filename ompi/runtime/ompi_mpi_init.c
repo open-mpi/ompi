@@ -139,8 +139,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
-    /* Initialize OMPI procs */
+    /* initialize datatypes. This step should be done early as it will create the local convertor
+     * and local arch used in the proc init.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
+        error = "ompi_ddt_init() failed";
+        goto error;
+    }
 
+    /* Initialize OMPI procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
         error = "mca_proc_init() failed";
         goto error;
@@ -256,12 +263,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* initialize communicators */
     if (OMPI_SUCCESS != (ret = ompi_comm_init())) {
         error = "ompi_comm_init() failed";
-        goto error;
-    }
-
-    /* initialize datatypes */
-    if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
-        error = "ompi_ddt_init() failed";
         goto error;
     }
 
