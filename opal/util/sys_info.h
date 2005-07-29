@@ -61,10 +61,6 @@ struct orte_sys_info_t {
 			    * upon the operating system
 			    */
     char *user;            /**< User id on this system. */
-    char *enviro;          /**< Computing environment employed on this system.
-			    * Indicates the local computing environment for managing
-			    * and scheduling resources - e.g., SLURM, PBS, LSF, or BProc
-			    */
     char *suffix;          /**< Automatic suffix added to file names.
 			    * Some computing environments automatically "tag" files
 			    * created by applications with a computer-generated suffix
