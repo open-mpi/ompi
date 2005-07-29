@@ -40,6 +40,7 @@ extern char *orte_error_strings[];
  */
 #define ORTE_JOB_SEGMENT        "orte-job"
 #define ORTE_NODE_SEGMENT       "orte-node"
+#define ORTE_JOBINFO_SEGMENT    "orte_active_jobs"
 #define ORTE_RESOURCE_SEGMENT   "orte-resources"
 
 /*
@@ -68,6 +69,7 @@ extern char *orte_error_strings[];
 #define ORTE_JOB_VPID_START_KEY         "orte-job-vpid-start"
 #define ORTE_JOB_VPID_RANGE_KEY         "orte-job-vpid-range"
 #define ORTE_JOB_IOF_KEY                "orte-job-iof"
+#define ORTE_JOB_STATE_KEY              "orte-job-state"
 #define ORTE_PROC_NAME_KEY              "orte-proc-name"
 #define ORTE_PROC_RANK_KEY              "orte-proc-rank"
 #define ORTE_PROC_PID_KEY               "orte-proc-pid"

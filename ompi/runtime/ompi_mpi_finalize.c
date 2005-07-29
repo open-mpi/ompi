@@ -209,6 +209,17 @@ int ompi_mpi_finalize(void)
         ORTE_ERROR_LOG(ret);
     }
 
+    /*
+     * Wait for everyone to get here. This is necessary to allow the soh
+     * to update the job state for singletons. Otherwise, we finalize
+     * the RTE while the soh is trying to do the update - which causes
+     * an ugly race condition
+     */
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
     /* Leave the RTE */
 
     if (OMPI_SUCCESS != (ret = orte_finalize())) {

@@ -807,6 +807,10 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
             sprintf(tmp, "\t\tData type: ORTE_PROC_STATE\tValue: %d", (int)iptr->value.proc_state);
             break;
             
+        case ORTE_JOB_STATE:
+            sprintf(tmp, "\t\tData type: ORTE_JOB_STATE\tValue: %d", (int)iptr->value.job_state);
+            break;
+            
         case ORTE_EXIT_CODE:
             sprintf(tmp, "\t\tData type: ORTE_EXIT_CODE\tValue: %d", (int)iptr->value.exit_code);
             break;

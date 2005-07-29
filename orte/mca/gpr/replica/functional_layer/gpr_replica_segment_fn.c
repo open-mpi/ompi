@@ -422,6 +422,10 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
             *((orte_proc_state_t*)value) = src->proc_state;
             break;
             
+        case ORTE_JOB_STATE:
+            *((orte_job_state_t*)value) = src->job_state;
+            break;
+            
         case ORTE_EXIT_CODE:
             *((orte_exit_code_t*)value) = src->exit_code;
             break;
@@ -564,9 +568,7 @@ int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
                 *cmp = 1;
             }
             break;
-            
-            break;
-            
+           
         case ORTE_CELLID:
             if (ival1->value.cellid == ival2->value.cellid) {
                 *cmp = 0;
@@ -575,8 +577,6 @@ int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
             } else {
                 *cmp = 1;
             }
-            break;
-            
             break;
             
         case ORTE_VPID:
@@ -589,8 +589,6 @@ int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
             }
             break;
             
-            break;
-            
         case ORTE_NODE_STATE:
             if (ival1->value.node_state == ival2->value.node_state) {
                 *cmp = 0;
@@ -599,8 +597,6 @@ int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
             } else {
                 *cmp = 1;
             }
-            break;
-            
             break;
             
         case ORTE_PROC_STATE:
@@ -613,6 +609,14 @@ int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
             }
             break;
             
+        case ORTE_JOB_STATE:
+            if (ival1->value.job_state == ival2->value.job_state) {
+                *cmp = 0;
+            } else if (ival1->value.job_state < ival2->value.job_state) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
             break;
             
         case ORTE_EXIT_CODE:
@@ -623,8 +627,6 @@ int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
             } else {
                 *cmp = 1;
             }
-            break;
-            
             break;
             
         case ORTE_NULL:

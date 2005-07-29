@@ -113,6 +113,38 @@ CLEANUP:
     return rc;
 }
 
+int orte_schema_base_get_job_tokens(char ***job_tokens, size_t* num_tokens, orte_jobid_t jobid)
+{
+    int rc;
+    char** tokens;
+    char* jobid_string;
+    
+    tokens = (char**)malloc(2 * sizeof(char*));
+    if (NULL == tokens) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    asprintf(&tokens[0], "%s-%s", ORTE_JOBID_KEY, jobid_string);
+    free(jobid_string);
+    tokens[1] = NULL;
+    *job_tokens = tokens;
+    if(num_tokens != NULL)
+        *num_tokens = 1;
+    return ORTE_SUCCESS;
+    
+CLEANUP:
+    if (NULL != tokens) {
+        if (NULL != tokens[0]) free(tokens[0]);
+        free(tokens);
+    }
+    return rc;
+}
+
 int orte_schema_base_get_cell_tokens(char ***cell_tokens, size_t* num_tokens, orte_cellid_t cellid)
 {
     int rc;

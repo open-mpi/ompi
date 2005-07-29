@@ -974,7 +974,7 @@ int mca_oob_tcp_init(void)
     (value->keyvals[1])->type = ORTE_STRING;
     (value->keyvals[1])->key = strdup(ORTE_PROC_RML_IP_ADDRESS_KEY);
     tmp = mca_oob.oob_get_addr();
-    tmp2 = strrchr(tmp, '/');
+    tmp2 = strrchr(tmp, '/') + 1;
     tmp3 = strrchr(tmp, ':');
     if(NULL == tmp2 || NULL == tmp3) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: invalid address \'%s\' "

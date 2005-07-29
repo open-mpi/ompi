@@ -60,6 +60,12 @@ int orte_soh_base_set_node_soh_not_available(orte_cellid_t cell,
                                              char *nodename,
                                              orte_node_state_t state);
 
+int orte_soh_base_get_job_soh(orte_job_state_t *state,
+                              orte_jobid_t jobid);
+
+int orte_soh_base_set_job_soh(orte_jobid_t jobid,
+                              orte_job_state_t state);
+
 int orte_soh_base_begin_monitoring_not_available(orte_jobid_t job);
 
 
@@ -77,6 +83,9 @@ int orte_soh_base_pack_node_state(orte_buffer_t *buffer, void *src,
 int orte_soh_base_pack_proc_state(orte_buffer_t *buffer, void *src,
                                   size_t num_vals, orte_data_type_t type);
 
+int orte_soh_base_pack_job_state(orte_buffer_t *buffer, void *src,
+                                  size_t num_vals, orte_data_type_t type);
+
 /*
  * DATA TYPE UNPACKING FUNCTIONS
  */
@@ -87,6 +96,9 @@ int orte_soh_base_unpack_node_state(orte_buffer_t *buffer, void *dest,
                                   size_t *num_vals, orte_data_type_t type);
 
 int orte_soh_base_unpack_proc_state(orte_buffer_t *buffer, void *dest,
+                                  size_t *num_vals, orte_data_type_t type);
+
+int orte_soh_base_unpack_job_state(orte_buffer_t *buffer, void *dest,
                                   size_t *num_vals, orte_data_type_t type);
 
 /*

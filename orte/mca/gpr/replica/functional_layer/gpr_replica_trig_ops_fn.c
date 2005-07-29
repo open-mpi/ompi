@@ -814,7 +814,7 @@ int orte_gpr_replica_check_events(void)
     trigs = (orte_gpr_replica_trigger_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
               i < (orte_gpr_replica.triggers)->size; i++) {
-        if (NULL != trigs[i]) {
+        if (NULL != trigs[i] && !trigs[i]->processing) {
             j++;
             /* check the trigger */
             if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_trig(trigs[i]))) {
@@ -939,6 +939,11 @@ FIRED:
         }
     }
 
+    /* set the processing flag so we don't go into infinite loop if
+     * any callback functions modify the registry
+     */
+    trig->processing = true;
+    
     /* if this trigger was a one-shot, set flag to indicate it has fired
      * so it can be cleaned up later
      */
@@ -1056,6 +1061,10 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
+                /* register that this subscription is being processed
+                 * to avoid potential infinite loops
+                 */
+                sub->processing = true;
             }
         }
     }

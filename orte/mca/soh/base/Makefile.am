@@ -36,8 +36,10 @@ libmca_soh_base_la_SOURCES = \
         soh_base_local_functions.c \
         soh_base_get_proc_soh.c \
         soh_base_set_proc_soh.c \
+        soh_base_get_job_soh.c \
+        soh_base_set_job_soh.c \
         soh_base_open.c \
-	data_type_support/soh_data_type_packing_fns.c \
+        data_type_support/soh_data_type_packing_fns.c \
         data_type_support/soh_data_type_unpacking_fns.c
 
 

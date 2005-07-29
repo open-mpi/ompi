@@ -70,3 +70,18 @@ int orte_soh_base_pack_proc_state(orte_buffer_t *buffer, void *src,
     
     return rc;
 }
+
+/*
+ * JOB STATE
+ */
+int orte_soh_base_pack_job_state(orte_buffer_t *buffer, void *src,
+                                  size_t num_vals, orte_data_type_t type)
+{
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_INT8))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}

@@ -340,6 +340,8 @@ orte_soh_base_module_t orte_soh_bproc_module = {
     orte_soh_bproc_set_proc_soh,
     orte_soh_base_get_node_soh_not_available,
     orte_soh_base_set_node_soh_not_available,
+    orte_soh_base_get_job_soh_not_available,
+    orte_soh_base_set_job_soh_not_available,
     orte_soh_base_begin_monitoring_not_available,
     orte_soh_bproc_finalize
 };

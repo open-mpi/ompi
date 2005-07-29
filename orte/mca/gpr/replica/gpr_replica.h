@@ -273,6 +273,11 @@ typedef struct {
     char *name;
     /* boolean indicating if this subscription is active or not */
     bool active;
+    /* boolean indicating that this subscription is already being
+     * processed - required to prevent infinite loops should a
+     * callback function modify the registry
+     */
+    bool processing;
     /* boolean indicating that this subscription
      * should be removed after processing
      * is completed
@@ -328,6 +333,11 @@ struct orte_gpr_replica_trigger_t {
     orte_gpr_replica_trigger_requestor_t *master;
     /* the action that causes the trigger to be fired */
     orte_gpr_trigger_action_t action;
+    /* boolean indicating that this trigger is already being
+     * processed - required to prevent infinite loops should a
+     * callback function modify the registry
+     */
+    bool processing;
     /* flag that indicates this trigger is a one-shot, has fired and
      * now should be cleaned up
      */

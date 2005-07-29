@@ -55,23 +55,6 @@ int orte_init_stage2(void)
         return ret;
     }
 
-    /* 
-     * setup the resource manager 
-     */
-
-    if (ORTE_SUCCESS != (ret = orte_rmgr_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
-    
-    /*
-     * setup the state-of-health monitor
-     */
-    if (ORTE_SUCCESS != (ret = orte_soh_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
-    
     /*
      * setup I/O forwarding system
      */
