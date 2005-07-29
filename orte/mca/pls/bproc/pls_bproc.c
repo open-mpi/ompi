@@ -289,11 +289,19 @@ static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data)
     if(!mca_pls_bproc_component.done_launching) {
         /* if a daemon exits before we are done launching the user apps we send a
          * message to ourself so we will break out of the recieve loop and exit */
-        int rc;
-        int32_t src = -1;
         orte_buffer_t ack;
+        int rc;
+        int src[4] = {-1, -1};
+        src[2] = wpid;
+        src[3] = *(int *) data;
+        if(WIFSIGNALED(status)) {
+            src[1] = WTERMSIG(status);
+        }
         OBJ_CONSTRUCT(&ack, orte_buffer_t);
-        orte_dps.pack(&ack, &src, 1, ORTE_INT32);
+        rc = orte_dps.pack(&ack, &src, 4, ORTE_INT);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
         rc = mca_oob_send_packed(MCA_OOB_NAME_SELF, &ack, MCA_OOB_TAG_BPROC, 0);
         if(0 > rc) {
             ORTE_ERROR_LOG(rc);
@@ -366,7 +374,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
     int rc, i, j;
     int * pids = NULL;
     int argc;
-    int32_t src;
+    int src[4];
     char ** argv = NULL;
     char * var, * param;
     char * orted_path;
@@ -582,7 +590,9 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb,proc_name);
+            free(var);
+            rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb, 
+                              &node_list[i]);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -598,10 +608,19 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        idx = 1;
-        orte_dps.unpack(&ack, &src, &idx, ORTE_INT32);
-        if(-1 == src) {
-            opal_output(0, "pls_bproc: daemon exited unexpectedly\n"); 
+        idx = 4;
+        rc = orte_dps.unpack(&ack, &src, &idx, ORTE_INT);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+        if(-1 == src[0]) {
+            if(-1 == src[1]) {
+                opal_output(0, "pls_bproc: daemon pid %d exited unexpectedly on "
+                            "node %d\n",src[2], src[3]);
+            } else {
+                opal_output(0, "pls_bproc: daemon pid %d exited unexpectedly on "
+                            "node %d on signal %d\n",src[2], src[3], src[1]);
+            }
             rc = ORTE_ERROR;
             ORTE_ERROR_LOG(rc);
             orte_pls_bproc_terminate_job(daemon_jobid);

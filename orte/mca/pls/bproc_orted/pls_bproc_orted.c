@@ -65,6 +65,8 @@ static void pls_bproc_orted_delete_dir_tree(char * path);
 static int pls_bproc_orted_remove_dir(void);
 static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
                                     orte_buffer_t* buffer, int tag, void* cbdata);
+static void pls_bproc_orted_send_cb(int status, orte_process_name_t * peer,
+                                    orte_buffer_t* buffer, int tag, void* cbdata);
 
 /**
  * Creates the passed directory. If the directory already exists, it and its
@@ -338,10 +340,20 @@ static int pls_bproc_orted_remove_dir() {
 
 /**
  * Callback function for when mpirun sends us a message saying all the child 
- * procs are done */
+ * procs are done 
+ */
 static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
                                     orte_buffer_t* buffer, int tag, void* cbdata) {
+    OPAL_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
     opal_condition_signal(&mca_pls_bproc_orted_component.condition);
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
+}
+
+/**
+ * Callback function for when we tell mpirun we are ready
+ */
+static void pls_bproc_orted_send_cb(int status, orte_process_name_t * peer,
+                                    orte_buffer_t* buffer, int tag, void* cbdata) {
 }
 
 /**
@@ -358,7 +370,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
     int num_procs = 0;
     size_t i;
     size_t app_context;
-    int32_t src = 0;
+    int src = 0;
     orte_buffer_t ack;
     char * param;
     bool connect_stdin;
@@ -478,8 +490,12 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
         goto cleanup;
     }
     /* do callback to say we are ready */
-    orte_dps.pack(&ack, &src, 1, ORTE_INT32);
-    rc = mca_oob_send_packed(MCA_OOB_NAME_SEED, &ack, MCA_OOB_TAG_BPROC, 0);
+    rc = orte_dps.pack(&ack, &src, 1, ORTE_INT);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+    rc = mca_oob_send_packed_nb(MCA_OOB_NAME_SEED, &ack, MCA_OOB_TAG_BPROC, 0, 
+                                pls_bproc_orted_send_cb, NULL);
     if (0 > rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
