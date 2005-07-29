@@ -597,7 +597,6 @@ static int init_globals(void)
         false,
         false,
         false,
-        false,
         true,
         0,
         0,
