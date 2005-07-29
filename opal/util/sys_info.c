@@ -47,7 +47,6 @@ orte_sys_info_t orte_system_info = {
                  /* .machine =     */            NULL,
                  /* .path_sep =    */            NULL,
                  /* .user =        */            NULL,
-                 /* .enviro =      */            NULL,
                  /* .suffix =      */            NULL};
 
 int orte_sys_info(void)
@@ -170,11 +169,6 @@ int orte_sys_info_finalize(void)
     if (NULL != orte_system_info.user) {
         free(orte_system_info.user);
         orte_system_info.user = NULL;
-    }
-        
-    if (NULL != orte_system_info.enviro) {
-        free(orte_system_info.enviro);
-        orte_system_info.enviro = NULL;
     }
         
     if (NULL != orte_system_info.suffix) {
