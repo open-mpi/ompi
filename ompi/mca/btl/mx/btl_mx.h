@@ -42,7 +42,7 @@ extern "C" {
 #define MCA_BTL_HAS_MPOOL 1
 
 /**
- * Infiniband (TEMPLATE) BTL component.
+ * MX BTL component.
  */
 
 struct mca_btl_mx_component_t {
