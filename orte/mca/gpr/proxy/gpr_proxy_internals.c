@@ -25,16 +25,11 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "orte/include/orte_constants.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns_types.h"
-#include "mca/oob/oob_types.h"
-#include "mca/rml/rml.h"
-
-#include "gpr_proxy.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/mca/gpr/proxy/gpr_proxy.h"
 
 int
 orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscriptions)
@@ -47,6 +42,9 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
         if (NULL == sub) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        if (NULL != subscriptions[i]->name) {
+            sub->name = strdup(subscriptions[i]->name);
         }
         sub->callback = subscriptions[i]->cbfunc;
         sub->user_tag = subscriptions[i]->user_tag;
@@ -74,6 +72,9 @@ orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
         if (NULL == trig) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        if (NULL != trigs[i]->name) {
+            trig->name = strdup(trigs[i]->name);
         }
         /* ensure that the proper routing flag is set
          * in the action field to match the trigger callback

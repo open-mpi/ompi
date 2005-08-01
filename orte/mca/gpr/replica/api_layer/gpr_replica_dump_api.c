@@ -66,7 +66,7 @@ int orte_gpr_replica_dump_all(int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_segments(int output_id)
+int orte_gpr_replica_dump_segments(char *segment, int output_id)
 {
     orte_buffer_t *buffer;
     int rc;
@@ -84,7 +84,7 @@ int orte_gpr_replica_dump_segments(int output_id)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_segments_fn(buffer))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_segments_fn(buffer, segment))) {
         ORTE_ERROR_LOG(rc);
     }
 

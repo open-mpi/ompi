@@ -246,6 +246,19 @@ typedef int (*orte_gpr_base_module_delete_segment_nb_fn_t)(char *segment,
  */
 typedef int (*orte_gpr_base_module_put_fn_t)(size_t cnt, orte_gpr_value_t **values);
 
+/* simplified version of the put command */
+typedef int (*orte_gpr_base_module_put_1_fn_t)(orte_gpr_addr_mode_t addr_mode,
+                                               char *segment, char **tokens,
+                                               char *key, orte_data_type_t type,
+                                               orte_gpr_value_union_t value);
+
+typedef int (*orte_gpr_base_module_put_N_fn_t)(orte_gpr_addr_mode_t addr_mode,
+                                               char *segment, char **tokens,
+                                               size_t n, char **keys,
+                                               orte_data_type_t *types,
+                                               orte_gpr_value_union_t *data_values);
+
+
 /*
  * Put data on the registry (NON-BLOCKING)
  * A non-blocking version of put.
@@ -450,6 +463,41 @@ typedef int (*orte_gpr_base_module_subscribe_fn_t)(
                             size_t num_trigs,
                             orte_gpr_trigger_t **triggers);
 
+/* simplified subscription functions */
+typedef int (*orte_gpr_base_module_subscribe_1_fn_t)(orte_gpr_subscription_id_t *id,
+                                                     char *trig_name,
+                                                     char *sub_name,
+                                                     orte_gpr_notify_action_t action,
+                                                     orte_gpr_addr_mode_t addr_mode,
+                                                     char *segment,
+                                                     char **tokens,
+                                                     char *key,
+                                                     orte_gpr_notify_cb_fn_t cbfunc,
+                                                     void *user_tag);
+
+typedef int (*orte_gpr_base_module_subscribe_N_fn_t)(orte_gpr_subscription_id_t *id,
+                                                     char *trig_name,
+                                                     char *sub_name,
+                                                     orte_gpr_notify_action_t action,
+                                                     orte_gpr_addr_mode_t addr_mode,
+                                                     char *segment,
+                                                     char **tokens,
+                                                     size_t n,
+                                                     char **keys,
+                                                     orte_gpr_notify_cb_fn_t cbfunc,
+                                                     void *user_tag);
+
+typedef int (*orte_gpr_base_module_define_trigger_fn_t)(orte_gpr_trigger_id_t *id,
+                                                     char *trig_name,
+                                                     orte_gpr_trigger_action_t action,
+                                                     orte_gpr_addr_mode_t addr_mode,
+                                                     char *segment,
+                                                     char **tokens,
+                                                     size_t n,
+                                                     char **keys,
+                                                     orte_gpr_trigger_cb_fn_t cbfunc,
+                                                     void *user_tag);
+
 /*
  * Cancel a subscription.
  * Once a subscription has been entered on the registry, a caller may choose to permanently
@@ -503,11 +551,15 @@ typedef int (*orte_gpr_base_module_cancel_trigger_fn_t)(orte_gpr_trigger_id_t tr
  */
 typedef int (*orte_gpr_base_module_dump_all_fn_t)(int output_id);
 
-typedef int (*orte_gpr_base_module_dump_segments_fn_t)(int output_id);
+typedef int (*orte_gpr_base_module_dump_segment_fn_t)(char *segment, int output_id);
 
 typedef int (*orte_gpr_base_module_dump_triggers_fn_t)(int output_id);
 
 typedef int (*orte_gpr_base_module_dump_subscriptions_fn_t)(int output_id);
+
+typedef int (*orte_gpr_base_module_dump_local_triggers_fn_t)(int output_id);
+
+typedef int (*orte_gpr_base_module_dump_local_subscriptions_fn_t)(int output_id);
 
 typedef int (*orte_gpr_base_module_dump_callbacks_fn_t) (int output_id);
 
@@ -556,6 +608,8 @@ struct orte_gpr_base_module_1_0_0_t {
     /* BLOCKING OPERATIONS */
     orte_gpr_base_module_get_fn_t get;
     orte_gpr_base_module_put_fn_t put;
+    orte_gpr_base_module_put_1_fn_t put_1;
+    orte_gpr_base_module_put_N_fn_t put_N;
     orte_gpr_base_module_delete_entries_fn_t delete_entries;
     orte_gpr_base_module_delete_segment_fn_t delete_segment;
     orte_gpr_base_module_index_fn_t index;
@@ -573,6 +627,9 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_decrement_value_fn_t decrement_value;
     /* SUBSCRIBE OPERATIONS */
     orte_gpr_base_module_subscribe_fn_t subscribe;
+    orte_gpr_base_module_subscribe_1_fn_t subscribe_1;
+    orte_gpr_base_module_subscribe_N_fn_t subscribe_N;
+    orte_gpr_base_module_define_trigger_fn_t define_trigger;
     orte_gpr_base_module_unsubscribe_fn_t unsubscribe;
     orte_gpr_base_module_cancel_trigger_fn_t cancel_trigger;
     /* COMPOUND COMMANDS */
@@ -581,9 +638,11 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_exec_compound_cmd_fn_t exec_compound_cmd;
     /* DIAGNOSTIC OPERATIONS */
     orte_gpr_base_module_dump_all_fn_t dump_all;
-    orte_gpr_base_module_dump_segments_fn_t dump_segments;
+    orte_gpr_base_module_dump_segment_fn_t dump_segment;
     orte_gpr_base_module_dump_triggers_fn_t dump_triggers;
     orte_gpr_base_module_dump_subscriptions_fn_t dump_subscriptions;
+    orte_gpr_base_module_dump_local_triggers_fn_t dump_local_triggers;
+    orte_gpr_base_module_dump_local_subscriptions_fn_t dump_local_subscriptions;
     orte_gpr_base_module_dump_callbacks_fn_t dump_callbacks;
     orte_gpr_base_module_dump_notify_msg_fn_t dump_notify_msg;
     orte_gpr_base_module_dump_notify_data_fn_t dump_notify_data;

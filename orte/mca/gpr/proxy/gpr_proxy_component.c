@@ -70,6 +70,8 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
    /* BLOCKING OPERATIONS */
     orte_gpr_proxy_get,
     orte_gpr_proxy_put,
+    orte_gpr_base_put_1,
+    orte_gpr_base_put_N,
     orte_gpr_proxy_delete_entries,
     orte_gpr_proxy_delete_segment,
     orte_gpr_proxy_index,
@@ -87,6 +89,9 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_decrement_value,
     /* SUBSCRIBE OPERATIONS */
     orte_gpr_proxy_subscribe,
+    orte_gpr_base_subscribe_1,
+    orte_gpr_base_subscribe_N,
+    orte_gpr_base_define_trigger,
     orte_gpr_proxy_unsubscribe,
     orte_gpr_proxy_cancel_trigger,
     /* COMPOUND COMMANDS */
@@ -98,6 +103,8 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_dump_segments,
     orte_gpr_proxy_dump_triggers,
     orte_gpr_proxy_dump_subscriptions,
+    orte_gpr_proxy_dump_local_triggers,
+    orte_gpr_proxy_dump_local_subscriptions,
     orte_gpr_proxy_dump_callbacks,
     orte_gpr_proxy_dump_notify_msg,
     orte_gpr_proxy_dump_notify_data,
@@ -125,11 +132,13 @@ static void orte_gpr_proxy_subscriber_construct(orte_gpr_proxy_subscriber_t* req
     req->callback = NULL;
     req->user_tag = NULL;
     req->id = 0;
+    req->name = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_proxy_subscriber_destructor(orte_gpr_proxy_subscriber_t* req)
 {
+    if (NULL != req->name) free(req->name);
 }
 
 /* define instance of opal_class_t */
@@ -147,11 +156,13 @@ static void orte_gpr_proxy_trigger_construct(orte_gpr_proxy_trigger_t* req)
     req->callback = NULL;
     req->user_tag = NULL;
     req->id = 0;
+    req->name = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_proxy_trigger_destructor(orte_gpr_proxy_trigger_t* req)
 {
+    if (NULL != req->name) free(req->name);
 }
 
 /* define instance of opal_class_t */

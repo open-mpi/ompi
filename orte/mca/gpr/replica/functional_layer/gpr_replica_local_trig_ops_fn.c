@@ -48,6 +48,9 @@ orte_gpr_replica_enter_local_subscription(size_t cnt, orte_gpr_subscription_t **
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        if (NULL != subscriptions[i]->name) {
+            sub->name = strdup(subscriptions[i]->name);
+        }
         sub->callback = subscriptions[i]->cbfunc;
         sub->user_tag = subscriptions[i]->user_tag;
         if (0 > orte_pointer_array_add(&id, orte_gpr_replica_globals.local_subscriptions, sub)) {

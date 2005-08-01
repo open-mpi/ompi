@@ -68,6 +68,8 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     /* BLOCKING OPERATIONS */
     orte_gpr_replica_get,
     orte_gpr_replica_put,
+    orte_gpr_base_put_1,
+    orte_gpr_base_put_N,
     orte_gpr_replica_delete_entries,
     orte_gpr_replica_delete_segment,
     orte_gpr_replica_index,
@@ -85,6 +87,9 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_decrement_value,
     /* SUBSCRIBE OPERATIONS */
     orte_gpr_replica_subscribe,
+    orte_gpr_base_subscribe_1,
+    orte_gpr_base_subscribe_N,
+    orte_gpr_base_define_trigger,
     orte_gpr_replica_unsubscribe,
     orte_gpr_replica_cancel_trigger,
     /* COMPOUND COMMANDS */
@@ -96,6 +101,8 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_dump_segments,
     orte_gpr_replica_dump_triggers,
     orte_gpr_replica_dump_subscriptions,
+    orte_gpr_replica_dump_local_triggers,
+    orte_gpr_replica_dump_local_subscriptions,
     orte_gpr_replica_dump_callbacks,
     orte_gpr_replica_dump_notify_msg,
     orte_gpr_replica_dump_notify_data,

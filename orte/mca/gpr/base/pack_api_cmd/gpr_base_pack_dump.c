@@ -25,8 +25,9 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "dps/dps.h"
+#include "orte/include/orte_constants.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "mca/gpr/base/base.h"
 
@@ -39,13 +40,24 @@ int orte_gpr_base_pack_dump_all(orte_buffer_t *cmd)
     return orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD);
 }
 
-int orte_gpr_base_pack_dump_segments(orte_buffer_t *cmd)
+int orte_gpr_base_pack_dump_segments(orte_buffer_t *cmd, char *segment)
 {
     orte_gpr_cmd_flag_t command;
+    int rc;
 
     command = ORTE_GPR_DUMP_SEGMENTS_CMD;
 
-    return orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD);
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &segment, 1, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    return ORTE_SUCCESS;
 }
 
 int orte_gpr_base_pack_dump_triggers(orte_buffer_t *cmd)

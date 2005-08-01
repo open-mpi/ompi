@@ -49,9 +49,11 @@ int orte_gpr_replica_recv_dump_all_cmd(orte_buffer_t *answer)
     return rc;
 }
 
-int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *answer)
+int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *input_buffer, orte_buffer_t *answer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_SEGMENTS_CMD;
+    char *segment;
+    size_t n;
     int rc;
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
@@ -59,7 +61,12 @@ int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *answer)
         return rc;
     }
     
-    rc = orte_gpr_replica_dump_segments_fn(answer);
+    n=1;
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &segment, &n, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    rc = orte_gpr_replica_dump_segments_fn(answer, segment);
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);

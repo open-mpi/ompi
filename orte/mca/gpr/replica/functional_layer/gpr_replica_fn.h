@@ -122,7 +122,9 @@ int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
  */
 int orte_gpr_replica_dump_all_fn(orte_buffer_t *buffer);
 
-int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer);
+int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer, char *segment);
+
+int orte_gpr_replica_dump_a_segment_fn(orte_buffer_t *buffer, orte_gpr_replica_segment_t *seg);
 
 int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer);
 
