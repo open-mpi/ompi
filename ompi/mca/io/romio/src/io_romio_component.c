@@ -121,10 +121,15 @@ static int open_component(void)
     /* Use a low priority, but allow other components to be lower */
     
     priority_param = 
-        mca_base_param_register_int("io", "romio", "priority", NULL, 10);
+        mca_base_param_reg_int(&mca_io_romio_component.io_version, 
+                               "priority",
+                               "Priority of the io romio component",
+                               false, false, 10, NULL);
     delete_priority_param = 
-        mca_base_param_register_int("io", "romio", "delete_priority", 
-                                    NULL, 10);
+        mca_base_param_reg_int(&mca_io_romio_component.io_version,
+                               "delete_priority", 
+                               "Delete priority of the io romio component",
+                               false, false, 10, NULL);
 
     /* Create the list of pending requests */
 

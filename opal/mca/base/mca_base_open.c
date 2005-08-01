@@ -68,17 +68,21 @@ int mca_base_open(void)
   asprintf(&value, "%s:~/.openmpi/components", OMPI_PKGLIBDIR);
 #endif
   mca_base_param_component_path = 
-    mca_base_param_register_string("base", NULL, "component_path",
-                                   "component_path", value);
+    mca_base_param_reg_string_name("mca", "component_path",
+                                   "Path where to look for Open MPI and ORTE components", 
+                                   false, false, value, NULL);
   free(value);
-  param_index = mca_base_param_register_string("base", NULL, "verbose",
-                                               "verbose", NULL);
+  param_index = mca_base_param_reg_string_name("mca", "verbose", 
+                                               "Top-level verbosity parameter",
+                                               false, false, NULL, NULL);
 
-  mca_base_param_register_int("base", NULL, "component_show_load_errors", 
-                              "component_show_load_errors", 0);
+  mca_base_param_reg_int_name("mca", "component_show_load_errors", 
+                              "Whether to show errors for components that failed to load or not", 
+                              false, false, 1, NULL);
 
-  mca_base_param_register_int("base", NULL, "component_disable_dlopen",
-                              "component_disable_dlopen", 0);
+  mca_base_param_reg_int_name("mca", "component_disable_dlopen",
+                              "Whether to attempt to disable opening dynamic components or not",
+                              false, false, 0, NULL);
 
   /* What verbosity level do we want? */
 

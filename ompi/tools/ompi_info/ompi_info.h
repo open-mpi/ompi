@@ -79,7 +79,7 @@ namespace ompi_info {
 
   void do_params(bool want_all, bool want_internal);
   void show_mca_params(const std::string& type, const std::string& component, 
-                       const std::string& param, bool want_internal);
+                       bool want_internal);
 
   void do_path(bool want_all, opal_cmd_line_t *cmd_line);
   void show_path(const std::string& type, const std::string& value);

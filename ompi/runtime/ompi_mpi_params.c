@@ -17,10 +17,11 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
-#include "opal/util/output.h"
-#include "mca/base/mca_base_param.h"
 #include <time.h>
 
 /*
@@ -40,19 +41,13 @@ char *ompi_mpi_show_mca_params_file = NULL;
 
 int ompi_mpi_register_params(void)
 {
-    int param_check_param;
-    int show_leaks_param;
-    int no_free_param;
-    int show_mca_params;
-    int show_mca_params_file;
     int value;
 
     /* Whether we want MPI API function parameter checking or not */
-    
-    param_check_param = 
-        mca_base_param_register_int("mpi", NULL, "param_check", NULL,
-                                    MPI_PARAM_CHECK);
-    mca_base_param_lookup_int(param_check_param, &value);
+
+    mca_base_param_reg_int_name("mpi", "param_check", 
+                                "Whether you want MPI API parameters checked at run-time or not.  Possible values are 0 (no checking) and 1 (perform checking at run-time)",
+                                false, false, MPI_PARAM_CHECK, &value);
     ompi_mpi_param_check = (bool) value;
     if (ompi_mpi_param_check) {
         value = 0;
@@ -60,42 +55,49 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            opal_output(0, "WARNING: MCA parameter mpi_param_check set to true, but parameter checking");
-            opal_output(0, "WARNING: has been compiled out of Open MPI.  mpi_param_check value ignored.");
+            opal_show_help("help-ompi-runtime.txt", 
+                           "mpi-param-check-enabled-but-compiled-out",
+                           true);
             ompi_mpi_param_check = false;
         }
     }
 
     /*
-     * This string is going to be used in src/util/showstackframe.c
+     * This string is going to be used in opal/util/stacktrace.c
      */
-    mca_base_param_register_string("mpi", NULL, "signal", NULL, NULL);
+    mca_base_param_reg_string_name("mpi", "signal", 
+                                   "If a signal is received, display the stack trace frame",
+                                   false, false, NULL, NULL);
     
-
     /*
      * opal_progress: decide whether to yield and the event library
      * tick rate
      */
-    mca_base_param_register_int("mpi", NULL, "yield_when_idle", NULL, -1);
-    mca_base_param_register_int("mpi", NULL, "event_tick_rate", NULL, -1);
-
+    /* JMS: Need ORTE data here -- set this to 0 when
+       exactly/under-subscribed, or 1 when oversubscribed */
+    mca_base_param_reg_int_name("mpi", "yield_when_idle", 
+                                "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
+                                false, false, 0, NULL);
+    mca_base_param_reg_int_name("mpi", "event_tick_rate", 
+                                "How often to progress TCP communications (0 = never, all positive integers [N] indicate a fraction of progression time that is devoted to TCP progression [i.e., 1/N])",
+                                false, false, -1, NULL);
 
     /* Whether or not to show MPI handle leaks */
     
-    show_leaks_param = 
-        mca_base_param_register_int("mpi", NULL, "show_handle_leaks", NULL,
-                                    (int) ompi_debug_show_handle_leaks);
-    mca_base_param_lookup_int(show_leaks_param, &value);
+    mca_base_param_reg_int_name("mpi", "show_handle_leaks",
+                                "Whether MPI_FINALIZE shows all MPI handles that were not freed or not",
+                                false, false, 
+                                (int) ompi_debug_show_handle_leaks, &value);
     ompi_debug_show_handle_leaks = (bool) value;
     
     /* Whether or not to free MPI handles.  Useless without run-time
        param checking, so implicitly set that to true if we don't want
        to free the handles. */
     
-    no_free_param =
-        mca_base_param_register_int("mpi", NULL, "no_free_handles", NULL,
-                                    (int) ompi_debug_no_free_handles);
-    mca_base_param_lookup_int(no_free_param, &value);
+    mca_base_param_reg_int_name("mpi", "no_free_handles", 
+                                "Whether to actually free MPI objects when their handles are freed",
+                                false, false, 
+                                (int) ompi_debug_no_free_handles, &value);
     ompi_debug_no_free_handles = (bool) value;
     if (ompi_debug_no_free_handles) {
         ompi_mpi_param_check = true;
@@ -111,21 +113,17 @@ int ompi_mpi_register_params(void)
     }
 
     /* Whether or not to print all MCA parameters in MPI_INIT */
-    show_mca_params =
-       mca_base_param_register_int("mpi", NULL, 
-                                   "show_mca_params", NULL,
-                                   (int) ompi_mpi_show_mca_params);
-    mca_base_param_lookup_int(show_mca_params, &value);
+    mca_base_param_reg_int_name("mpi", "show_mca_params",
+                                "Whether to show all MCA parameter value during MPI_INIT or not (good for reproducability of MPI jobs)",
+                                false, false, 
+                                (int) ompi_mpi_show_mca_params, &value);
     ompi_mpi_show_mca_params = (bool) value;
-    mca_base_param_set_internal(show_mca_params, false);
 
     /* File to use when dumping the parameters */
-    ompi_mpi_show_mca_params_file = strdup("");
-    show_mca_params_file =
-       mca_base_param_register_string("mpi", NULL, "show_mca_params_file", NULL,
-                                      ompi_mpi_show_mca_params_file);
-    mca_base_param_lookup_string(show_mca_params_file, &ompi_mpi_show_mca_params_file);
-    mca_base_param_set_internal(show_mca_params_file, false);
+    mca_base_param_reg_string_name("mpi", "show_mca_params_file",
+                                   "If mpi_show_mca_params is true, setting this string to a valid filename tells Open MPI to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
+                                   false, false,
+                                   "", &ompi_mpi_show_mca_params_file);
     
     /* All done */
 

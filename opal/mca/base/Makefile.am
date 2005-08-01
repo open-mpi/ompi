@@ -29,7 +29,7 @@ EXTRA_DIST = $(pkgdata_DATA)
 
 noinst_LTLIBRARIES = libmca_base.la
 
-pkgdata_DATA = help-mca-base.txt
+pkgdata_DATA = help-mca-base.txt help-mca-param.txt
 
 # Source code files
 

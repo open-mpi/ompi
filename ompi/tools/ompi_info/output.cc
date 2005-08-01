@@ -19,6 +19,10 @@
 #include <iostream>
 #include <string>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
@@ -41,6 +45,15 @@ static int screen_width = 78;
 void ompi_info::out(const string& pretty_message, const string &plain_message,
                     const string& value)
 {
+#ifdef HAVE_ISATTY
+  // If we have isatty(), if this is not a tty, then disable
+  // wrapping for grep-friendly behavior
+
+  if (0 == isatty(0)) {
+      screen_width = INT_MAX;
+  }
+#endif
+
   if (pretty) {
     string::size_type pos, max_value_width;
     string spaces;
@@ -54,7 +67,11 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
 
     max_value_width = screen_width - spaces.length() -
       pretty_message.length() - 2;
-    filler = spaces + pretty_message + ": ";
+    if (!pretty_message.empty()) {
+        filler = spaces + pretty_message + ": ";
+    } else {
+        filler = spaces + "  ";
+    }
 
     while (true) {
       if (v.length() < max_value_width) {
@@ -95,7 +112,11 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
       }
     }
   } else {
-    cout << plain_message << ":" << value << endl;
+      if (!plain_message.empty()) {
+          cout << plain_message << ":" << value << endl;
+      } else {
+          cout << value << endl;
+      }
   }
 }
 
@@ -108,8 +129,16 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
 {
   if (ompi_info::pretty) {
     string spaces(OMPI_max(centerpoint - pretty_message.length(), 0), ' ');
-    cout << spaces << pretty_message << ": " << value << endl;
+    if (!pretty_message.empty()) {
+        cout << spaces << pretty_message << ": " << value << endl;
+    } else {
+        cout << spaces << "  " << value << endl;
+    }
   } else {
-    cout << plain_message << ":" << value << endl;
+      if (!plain_message.empty()) {
+          cout << plain_message << ":" << value << endl;
+      } else {
+          cout << value << endl;
+      }
   }
 }

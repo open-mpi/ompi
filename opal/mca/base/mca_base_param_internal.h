@@ -75,6 +75,12 @@ struct mca_base_param_t {
     /** Whether this is internal (not meant to be seen / modified by
         users) or not */
     bool mbp_internal;
+    /** Whether this value is changable from the default value that
+        was registered (e.g., when true, useful for reporting values,
+        like the value of the GM library that was linked against) */
+    bool mbp_read_only;
+    /** Help message associated with this parameter */
+    char *mbp_help_msg;
 
     /** Keyval value for MPI attribute parameters */
     int mbp_keyval;

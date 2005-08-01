@@ -157,8 +157,9 @@ int main(int argc, char *argv[])
       putenv(env[i]);
   }
 
-  ompi_info::mca_types.push_back("base");
+  ompi_info::mca_types.push_back("mca");
   ompi_info::mca_types.push_back("mpi");
+  ompi_info::mca_types.push_back("orte");
 
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");

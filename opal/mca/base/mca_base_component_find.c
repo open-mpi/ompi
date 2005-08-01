@@ -134,7 +134,7 @@ int mca_base_component_find(const char *directory, const char *type,
   /* Find any available dynamic components in the specified directory */
   if (open_dso_components) {
       int param, param_disable_dlopen;
-      param = mca_base_param_find("base", NULL, "component_disable_dlopen");
+      param = mca_base_param_find("mca", NULL, "component_disable_dlopen");
       mca_base_param_lookup_int(param, &param_disable_dlopen);
 
       if (0 == param_disable_dlopen) {
@@ -342,7 +342,7 @@ static int open_component(component_file_item_t *target_file,
   opal_output_verbose(40, 0, "mca: base: component_find: examining dyanmic %s MCA component \"%s\"",
                      target_file->type, target_file->name, NULL);
   opal_output_verbose(40, 0, "mca: base: component_find: %s", target_file->filename, NULL);
-  param = mca_base_param_find("base", NULL, "component_show_load_errors");
+  param = mca_base_param_find("mca", NULL, "component_show_load_errors");
   mca_base_param_lookup_int(param, &show_errors);
 
   /* Was this component already loaded (e.g., via dependency)? */

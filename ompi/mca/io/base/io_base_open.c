@@ -66,14 +66,17 @@ int mca_io_base_open(void)
     /* Create some parameters */
 
     if (0 >
-        mca_base_param_register_int("io", "base", "freelist_initial_size",
-                                    NULL, 16) ||
+        mca_base_param_reg_int_name("io","base_freelist_initial_size",
+                                    "Initial MPI-2 IO request freelist size",
+                                    false, false, 16, NULL) ||
         0 >
-        mca_base_param_register_int("io", "base", "freelist_max_size",
-                                    NULL, 64) ||
+        mca_base_param_reg_int_name("io", "base_freelist_max_size",
+                                    "Max size of the MPI-2 IO request freelist",
+                                    false, false, 64, NULL) ||
         0 >
-        mca_base_param_register_int("io", "base", "freelist_increment",
-                                    NULL, 16)) {
+        mca_base_param_reg_int_name("io", "base_freelist_increment",
+                                    "Increment size of the MPI-2 IO request freelist",
+                                    false, false, 16, NULL)) {
         return OMPI_ERROR;
     }
 

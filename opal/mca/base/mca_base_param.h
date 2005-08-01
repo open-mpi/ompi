@@ -60,7 +60,9 @@
 
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_list.h"
-#include "class/opal_hash_table.h"
+#include "opal/class/opal_hash_table.h"
+#include "opal/mca/mca.h"
+
 
 /**
  * The types of MCA parameters.
@@ -86,19 +88,22 @@ struct mca_base_param_info_t {
 
     /** Index of this parameter */
     int mbpp_index;
-    /** String name of the type of the parameter */
+    /** Enum indicating the back-end type of the parameter */
+    mca_base_param_type_t mbpp_type;
+
+    /** String name of the type of this component */
     char *mbpp_type_name;
     /** String name of the component of the parameter */
     char *mbpp_component_name;
     /** String name of the parameter of the parameter */
     char *mbpp_param_name;
-    /** Enum indicating the back-end type of the parameter */
-    mca_base_param_type_t mbpp_type;
-
-    /** JMS To be removed? */
-    char *mbpp_env_var_name;
-    /** JMS To be removed? */
+    /** Full, assembled parameter name */
     char *mbpp_full_name;
+
+    /** Is this value changable? */
+    bool mbpp_read_only;
+    /** Help message associated with this parameter */
+    char *mbpp_help_msg;
 };
 /**
  * Convenience typedef
@@ -131,14 +136,21 @@ extern "C" {
     /**
      * Register an integer MCA parameter.
      *
-     * @param type_name[in] The MCA type (string).
-     * @param component_name[in] The name of the component (string).
-     * @param param_name[in] The name of the parameter being registered
-     * (string).
-     * @param mca_param_name[in] Optional parameter to override the
-     * user-visible name of this parameter (string).
-     * @param default_value[in] The value that is used for this
+     * @param component [in] Pointer to the componet for which the
+     * parameter is being registered (string), or NULL.
+     * @param param_name [in] The name of the parameter being
+     * registered (string).
+     * @param help_msg [in] A string describing the use and valid
+     * values of the parameter (string).
+     * @param internal [in] Indicates whether the parameter is internal
+     * (i.e., not to be shown to users) or not (bool).
+     * @param read_only [in] Indicates whether the parameter value can
+     * ever change (bool).
+     * @param default_value [in] The value that is used for this
      * parameter if the user does not supply one.
+     * @param current_value [out] After registering the parameter, look
+     * up its current value and return it unless current_value is
+     * NULL.
      *
      * @retval OMPI_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
@@ -147,46 +159,104 @@ extern "C" {
      * This function registers an integer MCA parameter and associates it
      * with a specific component.
      *
-     * The default resulting MCA parameter name is
-     * {type_name}[_{component_name}][_{param_name}].
+     * If the {component} pointer is not NULL, the type name and
+     * component name are automatically prefixed to the parameter
+     * name.  Otherwise, the {param_name} is used as the full
+     * parameter name.
      *
-     * {component_name} is only included if it is non-NULL.  All
-     * components an should include their name; component frameworks
-     * should pass "base".  It is only permissible for the MCA base
-     * itself to pass NULL for the component_name.
+     * The {help_msg} is a string of arbitrary length (verbose is
+     * good!) for explaining what the parameter is for and what its
+     * valid values are.  This message is used in help messages, such
+     * as the output from the ompi_info executable.
      *
-     * Likewise, {param_name} is also only included if it is non-NULL.
-     * Components and frameworks can pass NULL for this parameter if
-     * they wish.
+     * If {internal} is set to true, this parameter is now shown by
+     * default in the output of ompi_info.  That is, this parameter is
+     * considered internal to the Open MPI implementation and is not
+     * supposed to be viewed / changed by the user.
      *
-     * In most cases, mca_param_name should be NULL, in which case the
-     * user-visible name of this parameter will be the default form (as
-     * described above).  Only in rare cases is it necessary (or
-     * advisable) to override the default name -- its use is strongly
-     * discouraged.
+     * If {read_only} is true, then the registered {default_value}
+     * will be the only value ever returned when this parameter is
+     * looked up.  That is, command line, environment, and file
+     * overrides will be ignored.  This is useful, for example, for
+     * reporting information to the user (e.g., the version of the GM
+     * library that was linked against).
      *
-     * It is permissable to register a (type_name, component_name,
-     * param_name) triple more than once; the same index value will be
-     * returned, but the default value will be changed to reflect the
-     * last registration.
+     * If the {current_value} is not NULL, when the registration is
+     * complete, the parameter system will look up the current value
+     * of the parameter and return it in {current_value}.
      */
-    OMPI_DECLSPEC int mca_base_param_register_int(const char *type_name, 
-                                                  const char *component_name,
+    OMPI_DECLSPEC int mca_base_param_reg_int(const mca_base_component_t *component,
+                                             const char *param_name, 
+                                             const char *help_msg,
+                                             bool internal,
+                                             bool read_only,
+                                             int default_value,
+                                             int *current_value);
+
+    /**
+     * Register an integer MCA parameter that is not associated with a
+     * component.
+     *
+     * @param type [in] Although this parameter is not associated with
+     * a component, it still must have a string type name that will
+     * act as a prefix (string).
+     * @param param_name [in] The name of the parameter being
+     * registered (string).
+     * @param help_msg [in] A string describing the use and valid
+     * values of the parameter (string).
+     * @param internal [in] Indicates whether the parameter is internal
+     * (i.e., not to be shown to users) or not (bool).
+     * @param read_only [in] Indicates whether the parameter value can
+     * ever change (bool).
+     * @param default_value [in] The value that is used for this
+     * parameter if the user does not supply one.
+     * @param current_value [out] After registering the parameter, look
+     * up its current value and return it unless current_value is
+     * NULL.
+     *
+     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval index Index value that can be used with
+     * mca_base_param_lookup_string() to retrieve the value of the
+     * parameter.
+     *
+     * This function is identical to mca_base_param_reg_int() except
+     * that it registers parameters that are not associated with
+     * components.  For example, it can be used to register parameters
+     * associated with a framework base or an overall layer (e.g., the
+     * MPI layer, or the MCA base system framework itself).  Typical
+     * "type" strings are:
+     *
+     * * "mca": for the MCA base framework itself
+     * * framework name: for any given framework
+     * * "mpi": for parameters that apply to the overall MPI layer
+     * * "orte": for parameters that apply to the overall ORTE layer
+     */
+    OMPI_DECLSPEC int mca_base_param_reg_int_name(const char *type,
                                                   const char *param_name, 
-                                                  const char *mca_param_name,
-                                                  int default_value);
+                                                  const char *help_msg,
+                                                  bool internal,
+                                                  bool read_only,
+                                                  int default_value,
+                                                  int *current_value);
     
     /**
      * Register a string MCA parameter.
      *
-     * @param type_name[in] The MCA type (string).
-     * @param component_name[in] The name of the component (string).
-     * @param param_name[in] The name of the parameter being registered
-     * (string).
-     * @param mca_param_name[in] Optional parameter to override the
-     * user-visible name of this parameter (string).
-     * @param default_value[in] The value that is used for this
+     * @param component [in] Pointer to the componet for which the
+     * parameter is being registered (string), or NULL.
+     * @param param_name [in] The name of the parameter being
+     * registered (string).
+     * @param help_msg [in] A string describing the use and valid
+     * values of the parameter (string).
+     * @param internal [in] Indicates whether the parameter is internal
+     * (i.e., not to be shown to users) or not (bool).
+     * @param read_only [in] Indicates whether the parameter value can
+     * ever change (bool).
+     * @param default_value [in] The value that is used for this
      * parameter if the user does not supply one.
+     * @param current_value [out] After registering the parameter, look
+     * up its current value and return it unless current_value is
+     * NULL.
      *
      * @retval OMPI_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
@@ -197,16 +267,69 @@ extern "C" {
      * never be NULL. It will always have a value, even if that value is
      * the empty string.
      *
-     * This function is identical to mca_base_param_register_int()
-     * except that you are registering a string parameter with an
-     * associated string default value (which is \em not allowed to be NULL).
-     * See mca_base_param_register_int() for all other details.
+     * This function is identical to mca_base_param_reg_int() except
+     * that you are registering a string parameter with an associated
+     * string default value (which is \em not allowed to be NULL).
+     * See mca_base_param_reg_int() for all other details.
      */
-    OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name, 
-                                                     const char *component_name,
-                                                     const char *param_name, 
-                                                     const char *mca_param_name,
-                                                     const char *default_value);
+    OMPI_DECLSPEC int mca_base_param_reg_string(const mca_base_component_t *component,
+                                                const char *param_name,
+                                                const char *help_msg,
+                                                bool internal,
+                                                bool read_only,
+                                                const char *default_value,
+                                                char **current_value);
+
+
+    /**
+     * Register a string MCA parameter that is not associated with a
+     * component.
+     *
+     * @param type [in] Although this parameter is not associated with
+     * a component, it still must have a string type name that will
+     * act as a prefix (string).
+     * @param param_name [in] The name of the parameter being
+     * registered (string).
+     * @param help_msg [in] A string describing the use and valid
+     * values of the parameter (string).
+     * @param internal [in] Indicates whether the parameter is internal
+     * (i.e., not to be shown to users) or not (bool).
+     * @param read_only [in] Indicates whether the parameter value can
+     * ever change (bool).
+     * @param default_value [in] The value that is used for this
+     * parameter if the user does not supply one.
+     * @param current_value [out] After registering the parameter, look
+     * up its current value and return it unless current_value is
+     * NULL.
+     *
+     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval index Index value that can be used with
+     * mca_base_param_lookup_string() to retrieve the value of the
+     * parameter.
+     *
+     * Note that if a string value is read in from a file then it will
+     * never be NULL. It will always have a value, even if that value is
+     * the empty string.
+     *
+     * This function is identical to mca_base_param_reg_string()
+     * except that it registers parameters that are not associated
+     * with components.  For example, it can be used to register
+     * parameters associated with a framework base or an overall layer
+     * (e.g., the MPI layer, or the MCA base system framework itself).
+     * Typical "type" strings are:
+     *
+     * * "mca": for the MCA base framework itself
+     * * framework name: for any given framework
+     * * "mpi": for parameters that apply to the overall MPI layer
+     * * "orte": for parameters that apply to the overall ORTE layer
+     */
+    OMPI_DECLSPEC int mca_base_param_reg_string_name(const char *type,
+                                                     const char *param_name,
+                                                     const char *help_msg,
+                                                     bool internal,
+                                                     bool read_only,
+                                                     const char *default_value,
+                                                     char **current_value);
 
     /**
      * Associate a communicator/datatype/window keyval with an MCA
@@ -241,9 +364,9 @@ extern "C" {
      * @param value Pointer to int where the parameter value will be
      * stored.
      *
-     * @retvalue OMPI_ERROR Upon failure.  The contents of value are
+     * @return OMPI_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OMPI_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * The value of a specific MCA parameter can be looked up using the
@@ -257,13 +380,13 @@ extern "C" {
      *
      * @param index Index previous returned from
      * mca_base_param_register_int().
-     * @param attr Object containing attributes to be searched.
+     * @param attrs Object containing attributes to be searched.
      * @param value Pointer to int where the parameter value will
      * be stored.
      *
-     * @retvalue OMPI_ERROR Upon failure.  The contents of value are
+     * @return OMPI_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OMPI_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * This function is identical to mca_base_param_lookup_int() except
@@ -283,9 +406,9 @@ extern "C" {
      * @param value Pointer to (char *) where the parameter value will be
      * stored.
      *
-     * @retvalue OMPI_ERROR Upon failure.  The contents of value are
+     * @return OMPI_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OMPI_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * Note that if a string value is read in from a file then it will
@@ -303,15 +426,15 @@ extern "C" {
     /**
      * Look up a string MCA parameter, to include looking in attributes.
      *
-     * @param index[in] Index previous returned from
+     * @param index [in] Index previous returned from
      * mca_base_param_register_string().
-     * @param attr[in] Object containing attributes to be searched.
-     * @param value[out] Pointer to (char *) where the parameter value
+     * @param attrs [in] Object containing attributes to be searched.
+     * @param value [out] Pointer to (char *) where the parameter value
      * will be stored.
      *
-     * @retvalue OMPI_ERROR Upon failure.  The contents of value are
+     * @return OMPI_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OMPI_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * This function is identical to mca_base_param_lookup_string()
@@ -326,8 +449,8 @@ extern "C" {
     /**
      * Sets an "override" value for an integer MCA parameter.
      *
-     * @param index[in] Index of MCA parameter to set
-     * @param value[in] The integer value to set
+     * @param index [in] Index of MCA parameter to set
+     * @param value [in] The integer value to set
      *
      * @retval OMPI_ERROR If the parameter was not found.
      * @retval OMPI_SUCCESS Upon success.
@@ -346,8 +469,8 @@ extern "C" {
     /**
      * Sets an "override" value for an string MCA parameter.
      *
-     * @param index[in] Index of MCA parameter to set
-     * @param value[in] The string value to set
+     * @param index [in] Index of MCA parameter to set
+     * @param value [in] The string value to set
      *
      * @retval OMPI_ERROR If the parameter was not found.
      * @retval OMPI_SUCCESS Upon success.
@@ -371,7 +494,7 @@ extern "C" {
      * Unset a parameter that was previously set by
      * mca_base_param_set_int() or mca_base_param_set_string().
      *
-     * @param index[in] Index of MCA parameter to set
+     * @param index [in] Index of MCA parameter to set
      *
      * @retval OMPI_ERROR If the parameter was not found.
      * @retval OMPI_SUCCESS Upon success.
@@ -385,9 +508,7 @@ extern "C" {
      * Get the string name corresponding to the MCA parameter
      * value in the environment.
      *
-     * @param type_name Name of the type containing the parameter.
-     * @param component_name Name of the component containing the parameter.
-     * @param param_name Name of the parameter.
+     * @param param_name Name of the type containing the parameter.
      *
      * @retval string A string suitable for setenv() or appending to
      * an environ-style string array.
@@ -396,16 +517,14 @@ extern "C" {
      * The string that is returned is owned by the caller; if
      * appropriate, it must be eventually freed by the caller.
      */
-    OMPI_DECLSPEC char *mca_base_param_environ_variable(const char *type,
-                                                        const char *component,
-                                                        const char *param);
+    OMPI_DECLSPEC char *mca_base_param_env_var(const char *param_name);
 
     /**
      * Find the index for an MCA parameter based on its names.
      *
-     * @param type_name Name of the type containing the parameter.
-     * @param component_name Name of the component containing the parameter.
-     * @param param_name Name of the parameter.
+     * @param type Name of the type containing the parameter.
+     * @param component Name of the component containing the parameter.
+     * @param param Name of the parameter.
      *
      * @retval OMPI_ERROR If the parameter was not found.
      * @retval index If the parameter was found.
@@ -426,9 +545,9 @@ extern "C" {
     /**
      * Set the "internal" flag on an MCA parameter to true or false.
      *
-     * @param index[in] Index previous returned from
+     * @param index [in] Index previous returned from
      * mca_base_param_register_string() or mca_base_param_register_int(). 
-     * @param internal[in] Boolean indicating whether the MCA
+     * @param internal [in] Boolean indicating whether the MCA
      * parameter is internal (private) or public.
      *
      * @returns OMPI_SUCCESS If it can find the parameter to reset
@@ -448,9 +567,9 @@ extern "C" {
      * Obtain a list of all the MCA parameters currently defined as
      * well as their types.  
      *
-     * @param info[out] An opal_list_t of mca_base_param_info_t
+     * @param info [out] An opal_list_t of mca_base_param_info_t
      * instances.
-     * @param internal[in] Whether to include the internal parameters
+     * @param internal [in] Whether to include the internal parameters
      * or not.
      *
      * @retval OMPI_SUCCESS Upon success.
@@ -474,11 +593,11 @@ extern "C" {
      * Obtain a list of all the MCA parameters currently defined as
      * well as their types.  
      *
-     * @param env[out] A pointer to an argv-style array of key=value
+     * @param env [out] A pointer to an argv-style array of key=value
      * strings, suitable for use in an environment
-     * @param num_env[out] A pointer to an int, containing the length
+     * @param num_env [out] A pointer to an int, containing the length
      * of the env array (not including the final NULL entry).
-     * @param internal[in] Whether to include the internal parameters
+     * @param internal [in] Whether to include the internal parameters
      * or not.
      *
      * @retval OMPI_SUCCESS Upon success.
@@ -488,13 +607,14 @@ extern "C" {
      * its output is in terms of an argv-style array of key=value
      * strings, suitable for using in an environment.
      */
-    OMPI_DECLSPEC int mca_base_param_build_env(char ***env, int *num_env, bool internal);
+    OMPI_DECLSPEC int mca_base_param_build_env(char ***env, int *num_env,
+                                               bool internal);
 
     /**
      * Release the memory associated with the info list returned from
      * mca_base_param_dump().
      *
-     * @param info[in/out] An opal_list_t previously returned from
+     * @param info [in/out] An opal_list_t previously returned from
      * mca_base_param_dump().
      *
      * @retval OMPI_SUCCESS Upon success.
@@ -524,6 +644,123 @@ extern "C" {
      * is only documented here for completeness.
      */
     OMPI_DECLSPEC int mca_base_param_finalize(void);
+
+    /***************************************************************
+     * Deprecated interface
+     ***************************************************************/
+
+    /**
+     * \deprecated
+     *
+     * Register an integer MCA parameter (deprecated).
+     *
+     * @param type_name [in] The MCA type (string).
+     * @param component_name [in] The name of the component (string).
+     * @param param_name [in] The name of the parameter being registered
+     * (string).
+     * @param mca_param_name [in] Optional parameter to override the
+     * user-visible name of this parameter (string).
+     * @param default_value [in] The value that is used for this
+     * parameter if the user does not supply one.
+     *
+     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval index Index value that can be used with
+     * mca_base_param_lookup_int() to retrieve the value of the parameter.
+     *
+     * This function is deprecated.  Use mca_base_param_reg_int() instead.
+     *
+     * This function registers an integer MCA parameter and associates it
+     * with a specific component.
+     *
+     * The default resulting MCA parameter name is
+     * {type_name}[_{component_name}][_{param_name}].
+     *
+     * {component_name} is only included if it is non-NULL.  All
+     * components an should include their name; component frameworks
+     * should pass "base".  It is only permissible for the MCA base
+     * itself to pass NULL for the component_name.
+     *
+     * Likewise, {param_name} is also only included if it is non-NULL.
+     * Components and frameworks can pass NULL for this parameter if
+     * they wish.
+     *
+     * In most cases, mca_param_name should be NULL, in which case the
+     * user-visible name of this parameter will be the default form (as
+     * described above).  Only in rare cases is it necessary (or
+     * advisable) to override the default name -- its use is strongly
+     * discouraged.
+     *
+     * It is permissable to register a (type_name, component_name,
+     * param_name) triple more than once; the same index value will be
+     * returned, but the default value will be changed to reflect the
+     * last registration.
+     */
+    OMPI_DECLSPEC int mca_base_param_register_int(const char *type_name, 
+                                                  const char *component_name,
+                                                  const char *param_name, 
+                                                  const char *mca_param_name,
+                                                  int default_value);
+    
+    /**
+     * \deprecated
+     *
+     * Register a string MCA parameter (deprecated).
+     *
+     * @param type_name [in] The MCA type (string).
+     * @param component_name [in] The name of the component (string).
+     * @param param_name [in] The name of the parameter being registered
+     * (string).
+     * @param mca_param_name [in] Optional parameter to override the
+     * user-visible name of this parameter (string).
+     * @param default_value [in] The value that is used for this
+     * parameter if the user does not supply one.
+     *
+     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval index Index value that can be used with
+     * mca_base_param_lookup_string() to retrieve the value of the
+     * parameter.
+     *
+     * This function is deprecated.  Use mca_base_param_reg_string()
+     * instead.
+     *
+     * Note that if a string value is read in from a file then it will
+     * never be NULL. It will always have a value, even if that value is
+     * the empty string.
+     *
+     * This function is identical to mca_base_param_register_int()
+     * except that you are registering a string parameter with an
+     * associated string default value (which is \em not allowed to be NULL).
+     * See mca_base_param_register_int() for all other details.
+     */
+    OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name, 
+                                                     const char *component_name,
+                                                     const char *param_name, 
+                                                     const char *mca_param_name,
+                                                     const char *default_value);
+
+    /**
+     * \deprecated
+     *
+     * Get the string name corresponding to the MCA parameter
+     * value in the environment (deprecated).
+     *
+     * @param type Name of the type containing the parameter.
+     * @param comp Name of the component containing the parameter.
+     * @param param Name of the parameter.
+     *
+     * @retval string A string suitable for setenv() or appending to
+     * an environ-style string array.
+     * @retval NULL Upon failure.
+     *
+     * This function is deprecated.  Use mca_base_param_env_var()
+     * instead.
+     *
+     * The string that is returned is owned by the caller; if
+     * appropriate, it must be eventually freed by the caller.
+     */
+    OMPI_DECLSPEC char *mca_base_param_environ_variable(const char *type,
+                                                        const char *comp,
+                                                        const char *param);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
