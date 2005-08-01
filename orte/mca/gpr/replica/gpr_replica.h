@@ -77,6 +77,7 @@ typedef uint8_t orte_gpr_replica_action_t;
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_subscription_id_t id;         /**< id of this subscription */
+     char *name;
      orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
      void *user_tag;                        /**< User-provided tag for callback function */
 } orte_gpr_replica_local_subscriber_t;
@@ -91,6 +92,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_local_subscriber_t);
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_trigger_id_t id;              /**< id of this trigger */
+     char *name;
      orte_gpr_trigger_cb_fn_t callback;      /**< Function to be called for notification */
      void *user_tag;                        /**< User-provided tag for callback function */
 } orte_gpr_replica_local_trigger_t;

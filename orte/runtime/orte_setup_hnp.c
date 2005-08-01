@@ -292,7 +292,7 @@ MOVEON:
         can_launch = true;
     }
     
-    orte_gpr.dump_segments(0);
+    orte_gpr.dump_segment(NULL, 0);
     
     if (!can_launch || ORTE_CELLID_MAX == cellid) {
         return ORTE_ERR_UNREACH;

@@ -204,7 +204,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                       opal_output(0, "\tdump segments cmd");
                   }
             
-                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_segments_cmd(answer))) {
+                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_segments_cmd(input_buffer, answer))) {
                      ORTE_ERROR_LOG(ret);
                      goto RETURN_ERROR;
                  }

@@ -70,20 +70,53 @@ int orte_gpr_replica_dump_all_fn(orte_buffer_t *buffer)
         return rc;
     }
     
-    rc = orte_gpr_replica_dump_segments_fn(buffer);
+    rc = orte_gpr_replica_dump_segments_fn(buffer, NULL);
     
     return rc;
 }
 
-int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer)
+int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer, char *segment)
 {
-    orte_gpr_replica_segment_t **seg;
+    orte_gpr_replica_segment_t **seg, *segptr;
+    size_t i, m;
+    int rc;
+
+    /* if segment = NULL, loop through all segments */
+    if (NULL == segment) {
+        seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
+        for (i=0, m=0; m < orte_gpr_replica.num_segs &&
+                       i < (orte_gpr_replica.segments)->size; i++) {
+             if (NULL != seg[i]) {
+                 m++;
+                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_a_segment_fn(buffer, seg[i]))) {
+                     ORTE_ERROR_LOG(rc);
+                     return rc;
+                 }
+             }
+         }
+         return ORTE_SUCCESS;
+     }
+     
+     /* otherwise, dump just the one specified */
+     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&segptr, false, segment))) {
+         ORTE_ERROR_LOG(rc);
+         return rc;
+     }
+     if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_a_segment_fn(buffer, segptr))) {
+         ORTE_ERROR_LOG(rc);
+         return rc;
+     }
+     return ORTE_SUCCESS;
+ }
+ 
+ int orte_gpr_replica_dump_a_segment_fn(orte_buffer_t *buffer, orte_gpr_replica_segment_t *seg)
+ {    
     orte_gpr_replica_container_t **cptr;
     orte_gpr_replica_itag_t *itaglist;
     orte_gpr_replica_itagval_t **iptr;
     char *token;
     size_t num_objects;
-    size_t i, j, k, m, n, p;
+    size_t j, k, n, p;
     char *tmp_out;
 
     tmp_out = (char*)malloc(1000);
@@ -92,84 +125,73 @@ int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    sprintf(tmp_out, "\nDUMP OF GPR SEGMENTS");
+    sprintf(tmp_out, "\nDUMP OF GPR SEGMENT %s", seg->name);
     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-
-    /* loop through all segments */
-    seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
-    for (i=0, m=0; m < orte_gpr_replica.num_segs &&
-                   i < (orte_gpr_replica.segments)->size; i++) {
-         if (NULL != seg[i]) {
-             m++;
-             sprintf(tmp_out, "\nGPR Dump for Segment: %s", seg[i]->name);
+            
+     num_objects = (seg->containers)->size - (seg->containers)->number_free;
+    
+     sprintf(tmp_out, "\tNumber of containers: %lu\n", 
+             (unsigned long) num_objects);
+     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+    
+     /* loop through all containers and print their info and contents */
+     cptr = (orte_gpr_replica_container_t**)(seg->containers)->addr;
+     for (j=0, n=0; n < seg->num_containers &&
+                    j < (seg->containers)->size; j++) {
+         if (NULL != cptr[j]) {
+             n++;
+             sprintf(tmp_out, "\n\tInfo for container %lu" 
+                              "\tNumber of keyvals: %lu"
+                              "\n\tTokens:\n",
+                     (unsigned long) j, 
+                     ((unsigned long) (cptr[j]->itagvals)->size - (cptr[j]->itagvals)->number_free));
              orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-            
-             num_objects = (seg[i]->containers)->size - (seg[i]->containers)->number_free;
-            
-             sprintf(tmp_out, "\tNumber of containers: %lu\n", 
-                     (unsigned long) num_objects);
+             
+             /* reverse lookup tokens and print them */
+             itaglist = cptr[j]->itags;
+             for (k=0; k < cptr[j]->num_itags; k++) {
+                 if (ORTE_SUCCESS != orte_gpr_replica_dict_reverse_lookup(
+                                                       &token, seg, itaglist[k])) {
+                     sprintf(tmp_out, "\t\titag num %lu"
+                             ": No entry found for itag %lu",
+                             (unsigned long) k, 
+                             (unsigned long) itaglist[k]);
+                 } else {
+                     sprintf(tmp_out, "\t\titag num %lu: itag %lu\tToken: %s",
+                             (unsigned long) k, 
+                             (unsigned long) itaglist[k], token);
+                     free(token);
+                 }
+                 orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+             }
+             
+             sprintf(tmp_out, "\n\tKeyval info:");
              orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-            
-             /* loop through all containers and print their info and contents */
-             cptr = (orte_gpr_replica_container_t**)(seg[i]->containers)->addr;
-             for (j=0, n=0; n < seg[i]->num_containers &&
-                            j < (seg[i]->containers)->size; j++) {
-                 if (NULL != cptr[j]) {
-                     n++;
-                     sprintf(tmp_out, "\n\tInfo for container %lu" 
-                                      "\tNumber of keyvals: %lu"
-                                      "\n\tTokens:\n",
-                             (unsigned long) j, 
-                             ((unsigned long) (cptr[j]->itagvals)->size - (cptr[j]->itagvals)->number_free));
-                     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-                     
-                     /* reverse lookup tokens and print them */
-                     itaglist = cptr[j]->itags;
-                     for (k=0; k < cptr[j]->num_itags; k++) {
-                         if (ORTE_SUCCESS != orte_gpr_replica_dict_reverse_lookup(
-                                                               &token, seg[i], itaglist[k])) {
-                             sprintf(tmp_out, "\t\titag num %lu"
-                                     ": No entry found for itag %lu",
-                                     (unsigned long) k, 
-                                     (unsigned long) itaglist[k]);
-                         } else {
-                             sprintf(tmp_out, "\t\titag num %lu: itag %lu\tToken: %s",
-                                     (unsigned long) k, 
-                                     (unsigned long) itaglist[k], token);
-                             free(token);
-                         }
-                         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+        
+             /* loop through all itagvals and print their info */
+             iptr = (orte_gpr_replica_itagval_t**)(cptr[j]->itagvals)->addr;
+             for (k=0, p=0; p < cptr[j]->num_itagvals &&
+                            k < (cptr[j]->itagvals)->size; k++) {
+                 if (NULL != iptr[k]) {
+                     p++;
+                     if (ORTE_SUCCESS != orte_gpr_replica_dict_reverse_lookup(
+                                                     &token, seg, iptr[k]->itag)) {
+                         sprintf(tmp_out, "\n\t\titag num %lu: No entry found for itag %lu",
+                                 (unsigned long) k, 
+                                 (unsigned long) iptr[k]->itag);
+                     } else {
+                         sprintf(tmp_out, "\n\t\tEntry %lu: itag %lu\tKey: %s",
+                                 (unsigned long) k, 
+                                 (unsigned long) iptr[k]->itag, token);
+                         free(token);
                      }
-                     
-                     sprintf(tmp_out, "\n\tKeyval info:");
                      orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-                
-                     /* loop through all itagvals and print their info */
-                     iptr = (orte_gpr_replica_itagval_t**)(cptr[j]->itagvals)->addr;
-                     for (k=0, p=0; p < cptr[j]->num_itagvals &&
-                                    k < (cptr[j]->itagvals)->size; k++) {
-                         if (NULL != iptr[k]) {
-                             p++;
-                             if (ORTE_SUCCESS != orte_gpr_replica_dict_reverse_lookup(
-                                                             &token, seg[i], iptr[k]->itag)) {
-                                 sprintf(tmp_out, "\n\t\titag num %lu: No entry found for itag %lu",
-                                         (unsigned long) k, 
-                                         (unsigned long) iptr[k]->itag);
-                             } else {
-                                 sprintf(tmp_out, "\n\t\tEntry %lu: itag %lu\tKey: %s",
-                                         (unsigned long) k, 
-                                         (unsigned long) iptr[k]->itag, token);
-                                 free(token);
-                             }
-                             orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-                             orte_gpr_replica_dump_itagval_value(buffer, iptr[k]);
-                         }
-                     }
+                     orte_gpr_replica_dump_itagval_value(buffer, iptr[k]);
                  }
              }
          }
-    }
-    
+     }
+   
     free(tmp_out);
     return ORTE_SUCCESS;
 }

@@ -55,6 +55,7 @@ int orte_gpr_proxy_finalize(void);
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_subscription_id_t id;         /**< id of this subscription */
+     char *name;
      orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
      void *user_tag;                        /**< User-provided tag for callback function */
 } orte_gpr_proxy_subscriber_t;
@@ -65,6 +66,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_proxy_subscriber_t);
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_trigger_id_t id;              /**< id of this trigger */
+     char *name;
      orte_gpr_trigger_cb_fn_t callback;     /**< Function to be called for notification */
      void *user_tag;                        /**< User-provided tag for callback function */
 } orte_gpr_proxy_trigger_t;
@@ -173,11 +175,15 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig);
  */
 int orte_gpr_proxy_dump_all(int output_id);
 
-int orte_gpr_proxy_dump_segments(int output_id);
+int orte_gpr_proxy_dump_segments(char *segment, int output_id);
 
 int orte_gpr_proxy_dump_triggers(int output_id);
 
 int orte_gpr_proxy_dump_subscriptions(int output_id);
+
+int orte_gpr_proxy_dump_local_triggers(int output_id);
+
+int orte_gpr_proxy_dump_local_subscriptions(int output_id);
 
 int orte_gpr_proxy_dump_callbacks(int output_id);
 

@@ -34,23 +34,40 @@
  */
 
 /*  LOCAL_SUBSCRIBER */
-/* no constructor or destructor needed, so just
- * define instance */
+static void orte_gpr_replica_local_subscriber_constructor(orte_gpr_replica_local_subscriber_t *ptr)
+{
+    ptr->name = NULL;
+}
+
+static void orte_gpr_replica_local_subscriber_destructor(orte_gpr_replica_local_subscriber_t *ptr)
+{
+    if (NULL != ptr->name) free(ptr->name);
+}
+
 OBJ_CLASS_INSTANCE(
           orte_gpr_replica_local_subscriber_t,  /* type name */
           opal_object_t, /* parent "class" name */
-          NULL, /* constructor */
-          NULL); /* destructor */
+          orte_gpr_replica_local_subscriber_constructor, /* constructor */
+          orte_gpr_replica_local_subscriber_destructor); /* destructor */
 
 
 /*  LOCAL_TRIGGER */
-/* no constructor or destructor needed, so just
- * define instance */
+static void orte_gpr_replica_local_trigger_constructor(orte_gpr_replica_local_trigger_t *ptr)
+{
+    ptr->name = NULL;
+}
+
+static void orte_gpr_replica_local_trigger_destructor(orte_gpr_replica_local_trigger_t *ptr)
+{
+    if (NULL != ptr->name) free(ptr->name);
+}
+
+/* define instance */
 OBJ_CLASS_INSTANCE(
           orte_gpr_replica_local_trigger_t,  /* type name */
           opal_object_t, /* parent "class" name */
-          NULL, /* constructor */
-          NULL); /* destructor */
+          orte_gpr_replica_local_trigger_constructor, /* constructor */
+          orte_gpr_replica_local_trigger_destructor); /* destructor */
 
 
 /*  SEGMENT */

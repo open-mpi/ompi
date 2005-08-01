@@ -127,11 +127,15 @@ int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig);
  */
 int orte_gpr_replica_dump_all(int output_id);
 
-int orte_gpr_replica_dump_segments(int output_id);
+int orte_gpr_replica_dump_segments(char *segment, int output_id);
 
 int orte_gpr_replica_dump_triggers(int output_id);
 
 int orte_gpr_replica_dump_subscriptions(int output_id);
+
+int orte_gpr_replica_dump_local_triggers(int output_id);
+
+int orte_gpr_replica_dump_local_subscriptions(int output_id);
 
 int orte_gpr_replica_dump_callbacks(int output_id);
 

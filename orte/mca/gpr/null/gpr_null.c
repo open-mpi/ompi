@@ -168,7 +168,7 @@ orte_gpr_null_dump_all(int output_id)
 }
 
 static int
-orte_gpr_null_dump_segments(int output_id)
+orte_gpr_null_dump_segments(char *segment, int output_id)
 {
   return ORTE_SUCCESS;
 }
@@ -181,6 +181,18 @@ orte_gpr_null_dump_triggers(int output_id)
 
 static int
 orte_gpr_null_dump_subscriptions(int output_id)
+{
+  return ORTE_SUCCESS;
+}
+
+static int
+orte_gpr_null_dump_local_triggers(int output_id)
+{
+  return ORTE_SUCCESS;
+}
+
+static int
+orte_gpr_null_dump_local_subscriptions(int output_id)
 {
   return ORTE_SUCCESS;
 }
@@ -231,6 +243,69 @@ orte_gpr_null_xfer_payload(orte_gpr_value_union_t * dest,
   return ORTE_SUCCESS;
 }
 
+static int orte_gpr_null_put_1(orte_gpr_addr_mode_t addr_mode,
+                               char *segment, char **tokens,
+                               char *key, orte_data_type_t type,
+                               orte_gpr_value_union_t value)
+{
+    return ORTE_SUCCESS;
+}
+
+
+static int orte_gpr_null_put_N(orte_gpr_addr_mode_t addr_mode,
+                               char *segment, char **tokens,
+                               size_t n, char **keys,
+                               orte_data_type_t *types,
+                               orte_gpr_value_union_t *data_values)
+{
+    return ORTE_SUCCESS;
+}
+                               
+static int orte_gpr_null_subscribe_1(orte_gpr_subscription_id_t *id,
+                                     char *trig_name,
+                                     char *sub_name,
+                                     orte_gpr_notify_action_t action,
+                                     orte_gpr_addr_mode_t addr_mode,
+                                     char *segment,
+                                     char **tokens,
+                                     char *key,
+                                     orte_gpr_notify_cb_fn_t cbfunc,
+                                     void *user_tag)
+{
+    return ORTE_SUCCESS;
+}
+
+
+static int orte_gpr_null_subscribe_N(orte_gpr_subscription_id_t *id,
+                                     char *trig_name,
+                                     char *sub_name,
+                                     orte_gpr_notify_action_t action,
+                                     orte_gpr_addr_mode_t addr_mode,
+                                     char *segment,
+                                     char **tokens,
+                                     size_t n,
+                                     char **keys,
+                                     orte_gpr_notify_cb_fn_t cbfunc,
+                                     void *user_tag)
+{
+    return ORTE_SUCCESS;
+}
+
+
+static int orte_gpr_null_define_trigger(orte_gpr_trigger_id_t *id,
+                                        char *trig_name,
+                                        orte_gpr_trigger_action_t action,
+                                        orte_gpr_addr_mode_t addr_mode,
+                                        char *segment,
+                                        char **tokens,
+                                        size_t n,
+                                        char **keys,
+                                        orte_gpr_trigger_cb_fn_t cbfunc,
+                                        void *user_tag)
+{
+    return ORTE_SUCCESS;
+}
+
 
 
 /*
@@ -242,6 +317,8 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     /* BLOCKING OPERATIONS */
     orte_gpr_null_get,
     orte_gpr_null_put,
+    orte_gpr_null_put_1,
+    orte_gpr_null_put_N,
     orte_gpr_null_delete_entries,
     orte_gpr_null_delete_segment,
     orte_gpr_null_index,
@@ -259,6 +336,9 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     orte_gpr_null_decrement_value,
     /* SUBSCRIBE OPERATIONS */
     orte_gpr_null_subscribe,
+    orte_gpr_null_subscribe_1,
+    orte_gpr_null_subscribe_N,
+    orte_gpr_null_define_trigger,
     orte_gpr_null_unsubscribe,
     orte_gpr_null_cancel_trigger,
     /* COMPOUND COMMANDS */
@@ -270,6 +350,8 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     orte_gpr_null_dump_segments,
     orte_gpr_null_dump_triggers,
     orte_gpr_null_dump_subscriptions,
+    orte_gpr_null_dump_local_triggers,
+    orte_gpr_null_dump_local_subscriptions,
     orte_gpr_null_dump_callbacks,
     orte_gpr_null_dump_notify_msg,
     orte_gpr_null_dump_notify_data,

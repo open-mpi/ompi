@@ -114,6 +114,54 @@ typedef uint8_t orte_gpr_cmd_flag_t;
    OMPI_DECLSPEC int orte_gpr_base_select(void);
    OMPI_DECLSPEC int orte_gpr_base_close(void);
 
+   OMPI_DECLSPEC int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
+                               char *segment, char **tokens,
+                               char *key, orte_data_type_t type,
+                               orte_gpr_value_union_t value);
+
+
+   OMPI_DECLSPEC int orte_gpr_base_put_N(orte_gpr_addr_mode_t addr_mode,
+                               char *segment, char **tokens,
+                               size_t n, char **keys,
+                               orte_data_type_t *types,
+                               orte_gpr_value_union_t *data_values);
+                               
+   OMPI_DECLSPEC int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
+                                     char *trig_name,
+                                     char *sub_name,
+                                     orte_gpr_notify_action_t action,
+                                     orte_gpr_addr_mode_t addr_mode,
+                                     char *segment,
+                                     char **tokens,
+                                     char *key,
+                                     orte_gpr_notify_cb_fn_t cbfunc,
+                                     void *user_tag);
+
+
+   OMPI_DECLSPEC int orte_gpr_base_subscribe_N(orte_gpr_subscription_id_t *id,
+                                     char *trig_name,
+                                     char *sub_name,
+                                     orte_gpr_notify_action_t action,
+                                     orte_gpr_addr_mode_t addr_mode,
+                                     char *segment,
+                                     char **tokens,
+                                     size_t n,
+                                     char **keys,
+                                     orte_gpr_notify_cb_fn_t cbfunc,
+                                     void *user_tag);
+
+
+   OMPI_DECLSPEC int orte_gpr_base_define_trigger(orte_gpr_trigger_id_t *id,
+                                        char *trig_name,
+                                        orte_gpr_trigger_action_t action,
+                                        orte_gpr_addr_mode_t addr_mode,
+                                        char *segment,
+                                        char **tokens,
+                                        size_t n,
+                                        char **keys,
+                                        orte_gpr_trigger_cb_fn_t cbfunc,
+                                        void *user_tag);
+
     /* general usage functions */
     OMPI_DECLSPEC int orte_gpr_base_pack_delete_segment(orte_buffer_t *cmd,
                                                         char *segment);
@@ -153,7 +201,7 @@ typedef uint8_t orte_gpr_cmd_flag_t;
                    size_t *cnt, orte_gpr_value_t ***values);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_all(orte_buffer_t *cmd);
-    OMPI_DECLSPEC int orte_gpr_base_pack_dump_segments(orte_buffer_t *cmd);
+    OMPI_DECLSPEC int orte_gpr_base_pack_dump_segments(orte_buffer_t *cmd, char *segment);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_triggers(orte_buffer_t *cmd);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_subscriptions(orte_buffer_t *cmd);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_callbacks(orte_buffer_t *cmd);
