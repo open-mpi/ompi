@@ -37,15 +37,19 @@ bool orte_rds_hostfile_done = false;
 
 %}
 
+WHITE       [\f\t\v ]
+
 %%
 
-\n                 { orte_rds_hostfile_line++; 
+{WHITE}*\n         { orte_rds_hostfile_line++; 
+                     return ORTE_RDS_HOSTFILE_NEWLINE; }
+#.*\n              { orte_rds_hostfile_line++; 
                      return ORTE_RDS_HOSTFILE_NEWLINE; }
 
 \"[^\"]*\"         { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_QUOTED_STRING; }
 
-[\f\t\v ]          ;			/* whitespace */
+{WHITE}+           ;			/* whitespace */
 
 "="                { return ORTE_RDS_HOSTFILE_EQUAL; }
 
