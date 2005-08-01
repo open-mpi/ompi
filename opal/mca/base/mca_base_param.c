@@ -23,6 +23,7 @@
 #include "mpi.h"
 #include "include/constants.h"
 #include "opal/class/opal_value_array.h"
+#include "opal/util/show_help.h"
 #include "class/opal_hash_table.h"
 #if 0
 /* JMS commented out for now -- see lookup_keyvals() below for an
@@ -58,13 +59,17 @@ static bool initialized = false;
  * local functions
  */
 static int read_files(char *file_list);
-static int param_register(const char *type_name, const char *component_name, 
+static int param_register(const char *type_name,
+                          const char *component_name,
                           const char *param_name,
-                          const char *mca_param_name,
+                          const char *help_msg,
                           mca_base_param_type_t type,
+                          bool internal,
+                          bool read_only,
                           mca_base_param_storage_t *default_value,
                           mca_base_param_storage_t *file_value,
-                          mca_base_param_storage_t *override_value);
+                          mca_base_param_storage_t *override_value,
+                          mca_base_param_storage_t *current_value);
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
                          opal_hash_table_t *attrs);
 static bool param_set_override(size_t index, 
@@ -136,8 +141,9 @@ int mca_base_param_init(void)
         asprintf(&files,
                  "~/.openmpi/mca-params.conf:%s/openmpi-mca-params.conf",
                  OMPI_SYSCONFDIR);
-        id = mca_base_param_register_string("base", NULL, "param_files",
-                                            "param_files", files);
+        id = mca_base_param_reg_string_name("mca", "param_files",
+                                            "Path for MCA configuration files containing default parameter values",
+                                            false, false, files, NULL);
         free(files);
 
         /* Read in MCA parameters from files */
@@ -154,22 +160,145 @@ int mca_base_param_init(void)
 /*
  * Register an integer MCA parameter 
  */
+int mca_base_param_reg_int(const mca_base_component_t *component,
+                           const char *param_name, 
+                           const char *help_msg,
+                           bool internal,
+                           bool read_only,
+                           int default_value,
+                           int *current_value)
+{
+    int ret;
+    mca_base_param_storage_t storage;
+    mca_base_param_storage_t lookup;
+
+    storage.intval = default_value;
+    ret = param_register(component->mca_type_name, 
+                         component->mca_component_name, 
+                         param_name, help_msg, 
+                         MCA_BASE_PARAM_TYPE_INT, internal, read_only,
+                         &storage, NULL, NULL, &lookup);
+    if (ret >= 0 && NULL != current_value) {
+        *current_value = lookup.intval;
+    }
+    return ret;
+}
+
+
+/*
+ * Register an integer MCA parameter that is not associated with a
+ * component
+ */
+int mca_base_param_reg_int_name(const char *type,
+                                const char *param_name, 
+                                const char *help_msg,
+                                bool internal,
+                                bool read_only,
+                                int default_value,
+                                int *current_value)
+{
+    int ret;
+    mca_base_param_storage_t storage;
+    mca_base_param_storage_t lookup;
+
+    storage.intval = default_value;
+    ret = param_register(type, NULL, param_name, help_msg, 
+                         MCA_BASE_PARAM_TYPE_INT, internal, read_only,
+                         &storage, NULL, NULL, &lookup);
+    if (ret >= 0 && NULL != current_value) {
+        *current_value = lookup.intval;
+    }
+    return ret;
+}
+
+
+/*
+ * Register a string MCA parameter.
+ */
+int mca_base_param_reg_string(const mca_base_component_t *component,
+                              const char *param_name, 
+                              const char *help_msg,
+                              bool internal,
+                              bool read_only,
+                              const char *default_value,
+                              char **current_value)
+{
+    int ret;
+    mca_base_param_storage_t storage;
+    mca_base_param_storage_t lookup;
+    
+    if (NULL != default_value) {
+        storage.stringval = (char *) default_value;
+    } else {
+        storage.stringval = NULL;
+    }
+    ret = param_register(component->mca_type_name,
+                         component->mca_component_name,
+                         param_name, help_msg, 
+                         MCA_BASE_PARAM_TYPE_STRING, internal, read_only,
+                         &storage, NULL, NULL, &lookup);
+    if (ret >= 0 && NULL != current_value) {
+        *current_value = lookup.stringval;
+    }
+    return ret;
+}
+
+
+/*
+ * Register a string MCA parameter that is not associated with a
+ * component
+ */
+int mca_base_param_reg_string_name(const char *type,
+                                   const char *param_name, 
+                                   const char *help_msg,
+                                   bool internal,
+                                   bool read_only,
+                                   const char *default_value,
+                                   char **current_value)
+{
+    int ret;
+    mca_base_param_storage_t storage;
+    mca_base_param_storage_t lookup;
+    
+    if (NULL != default_value) {
+        storage.stringval = (char *) default_value;
+    } else {
+        storage.stringval = NULL;
+    }
+    ret = param_register(type, NULL, param_name, help_msg, 
+                         MCA_BASE_PARAM_TYPE_STRING, internal, read_only,
+                         &storage, NULL, NULL, &lookup);
+    if (ret >= 0 && NULL != current_value) {
+        *current_value = lookup.stringval;
+    }
+    return ret;
+}
+
+
+/*
+ * Register an integer MCA parameter 
+ * (deprecated)
+ */
 int mca_base_param_register_int(const char *type_name, 
                                 const char *component_name,
                                 const char *param_name, 
                                 const char *mca_param_name, 
                                 int default_value)
 {
-  mca_base_param_storage_t storage;
+    int ret;
+    mca_base_param_storage_t storage;
 
-  storage.intval = default_value;
-  return param_register(type_name, component_name, param_name, mca_param_name,
-                        MCA_BASE_PARAM_TYPE_INT, &storage, NULL, NULL);
+    storage.intval = default_value;
+    ret = param_register(type_name, component_name, param_name, NULL,
+                         MCA_BASE_PARAM_TYPE_INT, false, false,
+                         &storage, NULL, NULL, NULL);
+    return ret;
 }
 
 
 /*
  * Register a string MCA parameter.
+ * (deprecated)
  */
 int mca_base_param_register_string(const char *type_name, 
                                    const char *component_name,
@@ -177,15 +306,18 @@ int mca_base_param_register_string(const char *type_name,
                                    const char *mca_param_name,
                                    const char *default_value)
 {
-  mca_base_param_storage_t storage;
+    int ret;
+    mca_base_param_storage_t storage;
 
-  if (NULL != default_value) {
-    storage.stringval = (char *) default_value;
-  } else {
-    storage.stringval = NULL;
-  }
-  return param_register(type_name, component_name, param_name, mca_param_name,
-                        MCA_BASE_PARAM_TYPE_STRING, &storage, NULL, NULL);
+    if (NULL != default_value) {
+        storage.stringval = (char *) default_value;
+    } else {
+        storage.stringval = NULL;
+    }
+    ret = param_register(type_name, component_name, param_name, NULL,
+                         MCA_BASE_PARAM_TYPE_STRING, false, false,
+                         &storage, NULL, NULL, NULL);
+    return ret;
 }
 
 
@@ -411,9 +543,6 @@ int mca_base_param_find(const char *type_name, const char *component_name,
   if (!initialized) {
     return OMPI_ERROR;
   }
-  if (NULL == type_name) {
-    return OMPI_ERROR;
-  }
 
   /* Loop through looking for a parameter of a given
      type/component/param */
@@ -421,7 +550,9 @@ int mca_base_param_find(const char *type_name, const char *component_name,
   size = opal_value_array_get_size(&mca_base_params);
   array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < size; ++i) {
-    if (0 == strcmp(type_name, array[i].mbp_type_name) &&
+    if (((NULL == type_name && NULL == array[i].mbp_type_name) ||
+         (NULL != type_name && NULL != array[i].mbp_type_name &&
+          (0 == strcmp(type_name, array[i].mbp_type_name)))) &&
         ((NULL == component_name && NULL == array[i].mbp_component_name) ||
          (NULL != component_name && NULL != array[i].mbp_component_name &&
           0 == strcmp(component_name, array[i].mbp_component_name))) &&
@@ -498,11 +629,10 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
             p->mbpp_type_name = array[i].mbp_type_name;
             p->mbpp_component_name = array[i].mbp_component_name;
             p->mbpp_param_name = array[i].mbp_param_name;
-            p->mbpp_type = array[i].mbp_type;
-            
-            /* JMS to be removed? */
-            p->mbpp_env_var_name = array[i].mbp_env_var_name;
             p->mbpp_full_name = array[i].mbp_full_name;
+            p->mbpp_read_only = array[i].mbp_read_only;
+            p->mbpp_type = array[i].mbp_type;
+            p->mbpp_help_msg = array[i].mbp_help_msg;
             
             opal_list_append(*info, (opal_list_item_t*) p);
         }
@@ -649,12 +779,17 @@ static int read_files(char *file_list)
 }
 
 
-static int param_register(const char *type_name, const char *component_name, 
-                          const char *param_name, const char *mca_param_name,
+static int param_register(const char *type_name,
+                          const char *component_name,
+                          const char *param_name,
+                          const char *help_msg,
                           mca_base_param_type_t type,
+                          bool internal,
+                          bool read_only,
                           mca_base_param_storage_t *default_value,
                           mca_base_param_storage_t *file_value,
-                          mca_base_param_storage_t *override_value)
+                          mca_base_param_storage_t *override_value,
+                          mca_base_param_storage_t *current_value)
 {
   int ret;
   size_t i, len;
@@ -666,82 +801,76 @@ static int param_register(const char *type_name, const char *component_name,
       mca_base_param_init();
   }
 
-  /* Error check */
-
-  if (NULL == type_name) {
-    return OMPI_ERR_BAD_PARAM;
-  }
-
   /* Create a parameter entry.  If a keyval is to be used, it will be
      registered elsewhere.  We simply assign -1 here. */
 
   OBJ_CONSTRUCT(&param, mca_base_param_t);
   param.mbp_type = type;
   param.mbp_keyval = MPI_KEYVAL_INVALID;
-  param.mbp_internal = false;
+  param.mbp_internal = internal;
+  param.mbp_read_only = read_only;
+  if (NULL != help_msg) {
+      param.mbp_help_msg = strdup(help_msg);
+  }
 
-  param.mbp_type_name = strdup(type_name);
-  if (NULL == param.mbp_type_name) {
-    OBJ_DESTRUCT(&param);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+  if (NULL != type_name) {
+      param.mbp_type_name = strdup(type_name);
+      if (NULL == param.mbp_type_name) {
+          OBJ_DESTRUCT(&param);
+          return OMPI_ERR_OUT_OF_RESOURCE;
+      }
   }
   if (NULL != component_name) {
-    param.mbp_component_name = strdup(component_name);
-    if (NULL == param.mbp_component_name) {
-      OBJ_DESTRUCT(&param);
-      return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-  } else {
-    param.mbp_param_name = NULL;
+      param.mbp_component_name = strdup(component_name);
+      if (NULL == param.mbp_component_name) {
+          OBJ_DESTRUCT(&param);
+          return OMPI_ERR_OUT_OF_RESOURCE;
+      }
   }
+  param.mbp_param_name = NULL;
   if (NULL != param_name) {
-    param.mbp_param_name = strdup(param_name);
-    if (NULL == param.mbp_param_name) {
-      OBJ_DESTRUCT(&param);
-      return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-  } else {
-    param.mbp_param_name = NULL;
+      param.mbp_param_name = strdup(param_name);
+      if (NULL == param.mbp_param_name) {
+          OBJ_DESTRUCT(&param);
+          return OMPI_ERR_OUT_OF_RESOURCE;
+      }
   }
-
-  /* The full parameter name may have been specified by the caller.
-     If it was, use that (only for backwards compatability).
-     Otherwise, derive it from the type, component, and parameter
-     name. */
 
   param.mbp_env_var_name = NULL;
-  if (NULL != mca_param_name) {
-    param.mbp_full_name = strdup(mca_param_name);
-    if (NULL == param.mbp_full_name) {
+  len = 16;
+  if (NULL != type_name) {
+      len += strlen(type_name);
+  }
+  if (NULL != param.mbp_component_name) {
+      len += strlen(param.mbp_component_name);
+  }
+  if (NULL != param.mbp_param_name) {
+      len += strlen(param.mbp_param_name);
+  }
+  
+  param.mbp_full_name = malloc(len);
+  if (NULL == param.mbp_full_name) {
       OBJ_DESTRUCT(&param);
       return OMPI_ERROR;
-    }
-  } else {
-    len = 16 + strlen(type_name);
-    if (NULL != component_name) {
-      len += strlen(component_name);
-    }
-    if (NULL != param_name) {
-      len += strlen(param_name);
-    }
-
-    param.mbp_full_name = malloc(len);
-    if (NULL == param.mbp_full_name) {
-      OBJ_DESTRUCT(&param);
-      return OMPI_ERROR;
-    }
-
-    /* Copy the name over in parts */
-
-    strncpy(param.mbp_full_name, type_name, len);
-    if (NULL != component_name) {
-      strcat(param.mbp_full_name, "_");
+  }
+  
+  /* Copy the name over in parts */
+  
+  param.mbp_full_name[0] = '\0';
+  if (NULL != type_name) {
+      strncat(param.mbp_full_name, type_name, len);
+  }
+  if (NULL != component_name) {
+      if ('\0' != param.mbp_full_name[0]) {
+          strcat(param.mbp_full_name, "_");
+      }
       strcat(param.mbp_full_name, component_name);
-    }
-    if (NULL != param_name) {
-      strcat(param.mbp_full_name, "_");
+  }
+  if (NULL != param_name) {
+      if ('\0' != param.mbp_full_name[0]) {
+          strcat(param.mbp_full_name, "_");
+      }
       strcat(param.mbp_full_name, param_name);
-    }
   }
 
   /* Create the environment name */
@@ -942,7 +1071,19 @@ static int param_register(const char *type_name, const char *component_name,
       (ret = opal_value_array_append_item(&mca_base_params, &param))) {
     return ret;
   }
-  return opal_value_array_get_size(&mca_base_params) - 1;
+  ret = opal_value_array_get_size(&mca_base_params) - 1;
+
+  /* Finally, if we have a lookup value, look it up */
+
+  if (NULL != current_value) {
+      if (!param_lookup(ret, current_value, NULL)) {
+          return OMPI_ERR_NOT_FOUND;
+      }
+  }
+
+  /* All done */
+
+  return ret;
 }
 
 
@@ -992,6 +1133,7 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
     size_t size;
     mca_base_param_t *array;
     char *p, *q;
+    bool found;
 
     /* Lookup the index and see if it's valid */
 
@@ -1012,13 +1154,26 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
     }
 
     /* Check all the places that the param may be hiding, in priority
-       order */
-    
-    if (lookup_override(&array[index], storage) ||
-        lookup_keyvals(&array[index], storage, attrs) ||
-        lookup_env(&array[index], storage) ||
-        lookup_file(&array[index], storage) ||
-        lookup_default(&array[index], storage)) {
+       order -- but if read_only is true, then only look at the
+       default location. */
+
+    if (array[index].mbp_read_only) {
+        if (lookup_override(&array[index], storage) ||
+             lookup_keyvals(&array[index], storage, attrs) ||
+             lookup_env(&array[index], storage) ||
+             lookup_file(&array[index], storage)) {
+            opal_show_help("help-mca-param.txt", "read-only-param-set",
+                           true, array[index].mbp_full_name);
+        }
+        found = lookup_default(&array[index], storage);
+    } else {
+        found = (lookup_override(&array[index], storage) ||
+                 lookup_keyvals(&array[index], storage, attrs) ||
+                 lookup_env(&array[index], storage) ||
+                 lookup_file(&array[index], storage) ||
+                 lookup_default(&array[index], storage));
+    }
+    if (found) {
         
         /* If we're returning a string, replace all instances of "~/"
            with the user's home directory */
@@ -1243,11 +1398,13 @@ static void param_constructor(mca_base_param_t *p)
 {
     p->mbp_type = MCA_BASE_PARAM_TYPE_MAX;
     p->mbp_internal = false;
+    p->mbp_read_only = false;
 
     p->mbp_type_name = NULL;
     p->mbp_component_name = NULL;
     p->mbp_param_name = NULL;
     p->mbp_full_name = NULL;
+    p->mbp_help_msg = NULL;
 
     p->mbp_keyval = -1;
     p->mbp_env_var_name = NULL;
@@ -1279,6 +1436,9 @@ static void param_destructor(mca_base_param_t *p)
     }
     if (NULL != p->mbp_full_name) {
         free(p->mbp_full_name);
+    }
+    if (NULL != p->mbp_help_msg) {
+        free(p->mbp_help_msg);
     }
     if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type) {
         if (NULL != p->mbp_default_value.stringval) {
@@ -1318,14 +1478,15 @@ static void fv_destructor(mca_base_param_file_value_t *f)
 static void info_constructor(mca_base_param_info_t *p)
 {
     p->mbpp_index = -1;
+    p->mbpp_type = MCA_BASE_PARAM_TYPE_MAX;
+
     p->mbpp_type_name = NULL;
     p->mbpp_component_name = NULL;
     p->mbpp_param_name = NULL;
-    p->mbpp_type = MCA_BASE_PARAM_TYPE_MAX;
-
-    /* JMS to be removed? */
-    p->mbpp_env_var_name = NULL;
     p->mbpp_full_name = NULL;
+
+    p->mbpp_read_only = false;
+    p->mbpp_help_msg = NULL;
 }
 
 static void info_destructor(mca_base_param_info_t *p)

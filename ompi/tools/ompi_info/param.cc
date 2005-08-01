@@ -89,7 +89,7 @@ void ompi_info::do_params(bool want_all, bool want_internal)
 
   if (want_all) {
     for (i = 0; i < mca_types.size(); ++i) {
-      show_mca_params(mca_types[i], component_all, param_all, want_internal);
+      show_mca_params(mca_types[i], component_all, want_internal);
     }
   } else {
     for (i = 0; i < count; ++i) {
@@ -110,107 +110,129 @@ void ompi_info::do_params(bool want_all, bool want_internal)
           exit(1);
       }
 
-      show_mca_params(type, component, param_all, want_internal);
+      show_mca_params(type, component, want_internal);
     }
   }
 }
 
 
 void ompi_info::show_mca_params(const string& type, const string& component, 
-                                const string& param, bool want_internal)
+                                bool want_internal)
 {
     opal_list_t *info;
     opal_list_item_t *i;
     mca_base_param_info_t *p;
     char *value_string, empty[] = "\0";
-    string message, content;
+    string message, content, tmp;
     int value_int;
 
     mca_base_param_dump(&info, want_internal);
     for (i = opal_list_get_first(info); i != opal_list_get_last(info);
          i = opal_list_get_next(i)) {
         p = (mca_base_param_info_t*) i;
-        
-        if (type == p->mbpp_type_name) {
+
+        if (NULL != p->mbpp_type_name && type == p->mbpp_type_name) {
             if (component == component_all || 
                 NULL == p->mbpp_component_name ||
                 (NULL != p->mbpp_component_name &&
                  component == p->mbpp_component_name)) {
-                if (param == param_all || param == p->mbpp_param_name) {
 
-                    // Make a string for the default value.  Invoke a
-                    // lookup because it may transform the string
-                    // ("~/" -> "<home dir>/") or get the value from
-                    // the environment, a file, etc.
+                // Make a string for the default value.  Invoke a
+                // lookup because it may transform the string ("~/" ->
+                // "<home dir>/") or get the value from the
+                // environment, a file, etc.
 
-                    if (MCA_BASE_PARAM_TYPE_STRING == p->mbpp_type) {
-                        mca_base_param_lookup_string(p->mbpp_index,
-                                                     &value_string);
+                if (MCA_BASE_PARAM_TYPE_STRING == p->mbpp_type) {
+                    mca_base_param_lookup_string(p->mbpp_index,
+                                                 &value_string);
 
-                        // Can't let the string be NULL because we
-                        // assign it to a std::string, below
-
-                        if (NULL == value_string) {
-                            value_string = empty;
-                        }
-                    } else {
-                        mca_base_param_lookup_int(p->mbpp_index, &value_int);
-                        asprintf(&value_string, "%d", value_int);
+                    // Can't let the string be NULL because we
+                    // assign it to a std::string, below
+                    
+                    if (NULL == value_string) {
+                        value_string = empty;
                     }
+                } else {
+                    mca_base_param_lookup_int(p->mbpp_index, &value_int);
+                    asprintf(&value_string, "%d", value_int);
+                }
+                content = value_string;
+                    
+                // Build up the strings to output.
+                
+                if (pretty) {
+                    message = "MCA ";
+                    message += p->mbpp_type_name;
+                    
+                    // Put in the real, full name (which may be
+                    // different than the categorization).
+                    
+                    content = p->mbpp_read_only ?
+                        "information \"" : "parameter \"";
+                    content += p->mbpp_full_name;
+                    content += "\" (";
+                    content += p->mbpp_read_only ?
+                        "value: " : "current value: ";
+                    
+                    if (strlen(value_string) == 0) {
+                        content += "<none>)";
+                    } else {
+                        content += "\"";
+                        content += value_string;
+                        content += "\")";
+                    }
+                    out(message, message, content);
+
+                    // If we have a help message, output it
+                    if (NULL != p->mbpp_help_msg) {
+                        out("", "", p->mbpp_help_msg);
+                    }
+                } else {
+                    tmp = "mca:";
+                    tmp += p->mbpp_type_name;
+                    tmp += ":";
+                    
+                    if (p->mbpp_component_name != NULL) {
+                        tmp += p->mbpp_component_name;
+                    } else {
+                        tmp += "base";
+                    }
+                    tmp += ":param:";
+
+                    // Put in the real, full name (which may be
+                    // different than the categorization).
+                    
+                    tmp += p->mbpp_full_name;
+                    tmp += ":";
+
+                    // Output the value
+
+                    message = tmp;
+                    message += "value";
                     content = value_string;
-                    
-                    // Build up the strings to output.
-                    
-                    if (pretty) {
-                        message = "MCA ";
-                        message += p->mbpp_type_name;
-                        
-                        // Put in the real, full name (which may be
-                        // different than the categorization).
-                        
-                        content = (p->mbpp_env_var_name != NULL) ?
-                            "parameter \"" : "information \"";
-                        content += p->mbpp_full_name;
-                        content += (p->mbpp_env_var_name != NULL) ?
-                            "\" (default: " : "\" (value: ";
-                        
-                        if (strlen(value_string) == 0)
-                            content += "<none>)";
-                        else {
-                            content += "\"";
-                            content += value_string;
-                            content += "\")";
-                        }
-                        
-                        out(message, message, content);
-                    } else {
-                        message = "mca:";
-                        message += p->mbpp_type_name;
-                        message += ":";
-                        
-                        if (p->mbpp_component_name != NULL) {
-                            message += p->mbpp_component_name;
-                        } else {
-                            message += "base";
-                        }
-                        message += (p->mbpp_env_var_name != NULL) ?
-                            ":param:" : ":info:";
-                        
-                        // Put in the real, full name (which may be
-                        // different than the categorization).
-                        
-                        message += p->mbpp_full_name;
-                        
-                        content = value_string;
-                        
+                    out(message, message, content);
+
+                    // Output whether it's read only or writable
+
+                    message = tmp;
+                    message += "status";
+                    content = p->mbpp_read_only ? "read-only" : "writable";
+                    out(message, message, content);
+
+                    // If it has a help message, output that
+
+                    if (NULL != p->mbpp_help_msg) {
+                        message = tmp;
+                        message += "help";
+                        content = p->mbpp_help_msg;
                         out(message, message, content);
                     }
-                    
-                    // If we allocated the string, then free it
-                    
-                    if (value_string != empty) {
-                        free(value_string);
-                    }
+                }
+                
+                // If we allocated the string, then free it
+                
+                if (value_string != empty) {
+                    free(value_string);
                 }
             }
         }
