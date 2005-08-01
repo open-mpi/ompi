@@ -51,6 +51,37 @@ CHAR        [A-Za-z0-9_\-\.]
 
 {WHITE}*\n          { mca_base_yynewlines++; return MCA_BASE_PARSE_NEWLINE; }
 #.*\n               { mca_base_yynewlines++; return MCA_BASE_PARSE_NEWLINE; }
+"//".*\n            { mca_base_yynewlines++; return MCA_BASE_PARSE_NEWLINE; }
+"/*"               {
+                     register int c;
+                     for ( ; ; ) {
+                         /* Eat up characters till we hit the 
+                          * end of file or *
+                          */
+                         while ( (c = input()) != '*' && c != EOF){
+                             if(c == '\n')
+                                 mca_base_yynewlines++;
+                         }
+                         
+                         /* If we reach a *, then look for the
+                          * matching /
+                          */
+                         if ( c == '*') {
+                             while ( (c = input()) == '*' ) {
+                                 if(c == '\n')
+                                     mca_base_yynewlines++;
+                             }
+
+                             if ( c == '/' )
+                                 break; /* End of Comment */
+                         }
+                         else if ( c == EOF ) {
+                             /* EOF in comment :( */
+                             break;
+                         }
+                      }
+                     return MCA_BASE_PARSE_NEWLINE;
+                   }
 
 {WHITE}*"="{WHITE}* { BEGIN(VALUE); return MCA_BASE_PARSE_EQUAL; }
 {WHITE}+            ; /* whitespace */

@@ -45,6 +45,38 @@ WHITE       [\f\t\v ]
                      return ORTE_RDS_HOSTFILE_NEWLINE; }
 #.*\n              { orte_rds_hostfile_line++; 
                      return ORTE_RDS_HOSTFILE_NEWLINE; }
+"//".*\n           { orte_rds_hostfile_line++; 
+                     return ORTE_RDS_HOSTFILE_NEWLINE; }
+"/*"               {
+                     register int c;
+                     for ( ; ; ) {
+                         /* Eat up characters till we hit the 
+                          * end of file or *
+                          */
+                         while ( (c = input()) != '*' && c != EOF){
+                             if(c == '\n')
+                                 orte_rds_hostfile_line++;
+                         }
+                         
+                         /* If we reach a *, then look for the
+                          * matching /
+                          */
+                         if ( c == '*') {
+                             while ( (c = input()) == '*' ) {
+                                 if(c == '\n')
+                                     orte_rds_hostfile_line++;
+                             }
+
+                             if ( c == '/' )
+                                 break; /* End of Comment */
+                         }
+                         else if ( c == EOF ) {
+                             /* EOF in comment :( */
+                             break;
+                         }
+                      }
+                     return ORTE_RDS_HOSTFILE_NEWLINE;
+                   }
 
 \"[^\"]*\"         { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_QUOTED_STRING; }
