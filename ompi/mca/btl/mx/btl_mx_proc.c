@@ -43,7 +43,7 @@ void mca_btl_mx_proc_construct(mca_btl_mx_proc_t* proc)
 }
 
 /*
- * Cleanup ib proc instance
+ * Cleanup MX proc instance
  */
 
 void mca_btl_mx_proc_destruct(mca_btl_mx_proc_t* proc)
