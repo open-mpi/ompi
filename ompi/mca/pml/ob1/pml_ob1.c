@@ -270,7 +270,8 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         size_t size = sizeof(uint32_t);
         rc = mca_base_modex_recv(&mca_pml_ob1_component.pmlm_version, procs[p], 
             (void**)&proc_arch, &size);
-        if(rc != OMPI_SUCCESS) return rc;
+        if(rc != OMPI_SUCCESS) 
+            return rc;
         if(size != sizeof(uint32_t))
             return OMPI_ERROR;
         procs[p]->proc_arch = ntohl(*proc_arch);
