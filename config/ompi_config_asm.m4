@@ -477,7 +477,7 @@ dnl DEFINE OMPI_GCC_INLINE_ASSEMBLY to 0 or 1 depending on GCC
 dnl                support
 dnl
 dnl #################################################################
-AC_DEFUN([OMPI_CHECK_INLINE_GCC],[
+AC_DEFUN([OMPI_CHECK_INLINE_C_GCC],[
     assembly="$1"
     asm_result="unknown"
 
@@ -508,16 +508,61 @@ return ret;]]),
     AC_MSG_RESULT([$asm_result])
 
     if test "$asm_result" = "yes" ; then
-        OMPI_GCC_INLINE_ASSEMBLY=1
+        OMPI_C_GCC_INLINE_ASSEMBLY=1
     else
-        OMPI_GCC_INLINE_ASSEMBLY=0
+        OMPI_C_GCC_INLINE_ASSEMBLY=0
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_GCC_INLINE_ASSEMBLY],
-                       [$OMPI_GCC_INLINE_ASSEMBLY],
-                       [Whether compiler supports GCC style inline assembly])
+    AC_DEFINE_UNQUOTED([OMPI_C_GCC_INLINE_ASSEMBLY],
+                       [$OMPI_C_GCC_INLINE_ASSEMBLY],
+                       [Whether C compiler supports GCC style inline assembly])
 
-    unset OMPI_GCC_INLINE_ASSEMBLY assembly asm_result
+    unset OMPI_C_GCC_INLINE_ASSEMBLY assembly asm_result
+])dnl
+
+AC_DEFUN([OMPI_CHECK_INLINE_CXX_GCC],[
+    assembly="$1"
+    asm_result="unknown"
+
+    AC_LANG_PUSH([C++])
+    AC_MSG_CHECKING([if $CXX supports GCC inline assembly])
+
+    if test ! "$assembly" = "" ; then
+        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
+AC_INCLUDES_DEFAULT]],
+[[int ret = 1;
+__asm__ __volatile__ ($assembly);
+return ret;]]),
+            [asm_result="yes"], [asm_result="no"], 
+            [asm_result="unknown"])
+    else
+        assembly="test skipped - assuming no"
+    fi
+
+    # if we're cross compiling, just try to compile and figure good enough
+    if test "$asm_result" = "unknown" ; then
+        AC_LINK_IFELSE(AC_LANG_PROGRAM([[
+AC_INCLUDES_DEFAULT]],
+[[int ret = 1;
+__asm__ __volatile__ ($assembly);
+return ret;]]),
+            [asm_result="yes"], [asm_result="no"])
+    fi
+
+    AC_MSG_RESULT([$asm_result])
+
+    if test "$asm_result" = "yes" ; then
+        OMPI_CXX_GCC_INLINE_ASSEMBLY=1
+    else
+        OMPI_CXX_GCC_INLINE_ASSEMBLY=0
+    fi
+
+    AC_DEFINE_UNQUOTED([OMPI_CXX_GCC_INLINE_ASSEMBLY],
+                       [$OMPI_CXX_GCC_INLINE_ASSEMBLY],
+                       [Whether C++ compiler supports GCC style inline assembly])
+    AC_LANG_POP([C++])
+
+    unset OMPI_CXX_GCC_INLINE_ASSEMBLY assembly asm_result
 ])dnl
 
 
@@ -529,7 +574,7 @@ dnl DEFINE OMPI_DEC to 0 or 1 depending on DEC
 dnl                support
 dnl
 dnl #################################################################
-AC_DEFUN([OMPI_CHECK_INLINE_DEC],[
+AC_DEFUN([OMPI_CHECK_INLINE_C_DEC],[
 
     AC_MSG_CHECKING([if $CC supports DEC inline assembly])
 
@@ -543,16 +588,44 @@ return 0;]]),
     AC_MSG_RESULT([$asm_result])
 
     if test "$asm_result" = "yes" ; then
-        OMPI_DEC_INLINE_ASSEMBLY=1
+        OMPI_C_DEC_INLINE_ASSEMBLY=1
     else
-        OMPI_DEC_INLINE_ASSEMBLY=0
+        OMPI_C_DEC_INLINE_ASSEMBLY=0
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_DEC_INLINE_ASSEMBLY],
-                       [$OMPI_DEC_INLINE_ASSEMBLY],
-                       [Whether compiler supports DEC style inline assembly])
+    AC_DEFINE_UNQUOTED([OMPI_C_DEC_INLINE_ASSEMBLY],
+                       [$OMPI_C_DEC_INLINE_ASSEMBLY],
+                       [Whether C compiler supports DEC style inline assembly])
 
-    unset OMPI_DEC_INLINE_ASSEMBLY asm_result
+    unset OMPI_C_DEC_INLINE_ASSEMBLY asm_result
+])dnl
+
+AC_DEFUN([OMPI_CHECK_INLINE_CXX_DEC],[
+
+    AC_LANG_PUSH([C++])
+    AC_MSG_CHECKING([if $CXX supports DEC inline assembly])
+
+    AC_LINK_IFELSE(AC_LANG_PROGRAM([[
+AC_INCLUDES_DEFAULT
+#include <c_asm.h>]],
+[[asm("");
+return 0;]]),
+        [asm_result="yes"], [asm_result="no"])
+
+    AC_MSG_RESULT([$asm_result])
+
+    if test "$asm_result" = "yes" ; then
+        OMPI_CXX_DEC_INLINE_ASSEMBLY=1
+    else
+        OMPI_CXX_DEC_INLINE_ASSEMBLY=0
+    fi
+
+    AC_DEFINE_UNQUOTED([OMPI_CXX_DEC_INLINE_ASSEMBLY],
+                       [$OMPI_CXX_DEC_INLINE_ASSEMBLY],
+                       [Whether C++ compiler supports DEC style inline assembly])
+    AC_LANG_POP([C++])
+
+    unset OMPI_CXX_DEC_INLINE_ASSEMBLY asm_result
 ])dnl
 
 
@@ -564,25 +637,42 @@ dnl DEFINE OMPI_XLC to 0 or 1 depending on XLC
 dnl                support
 dnl
 dnl #################################################################
-AC_DEFUN([OMPI_CHECK_INLINE_XLC],[
+AC_DEFUN([OMPI_CHECK_INLINE_C_XLC],[
 
     AC_MSG_CHECKING([if $CC supports XLC inline assembly])
 
-    OMPI_XLC_INLINE_ASSEMBLY=0
+    OMPI_C_XLC_INLINE_ASSEMBLY=0
     asm_result="no"
     if test "$CC" = "xlc" ; then
-        if test "$CXX" = "xlC" -o "$CXX" = "xlc++" ; then
-            OMPI_XLC_INLINE_ASSEMBLY=1
-            asm_result="yes"
-        fi
+        OMPI_XLC_INLINE_ASSEMBLY=1
+        asm_result="yes"
     fi
 
     AC_MSG_RESULT([$asm_result])
-    AC_DEFINE_UNQUOTED([OMPI_XLC_INLINE_ASSEMBLY],
-                       [$OMPI_XLC_INLINE_ASSEMBLY],
-                       [Whether compiler supports XLC style inline assembly])
+    AC_DEFINE_UNQUOTED([OMPI_C_XLC_INLINE_ASSEMBLY],
+                       [$OMPI_C_XLC_INLINE_ASSEMBLY],
+                       [Whether C compiler supports XLC style inline assembly])
 
-    unset OMPI_XLC_INLINE_ASSEMBLY
+    unset OMPI_C_XLC_INLINE_ASSEMBLY
+])dnl
+
+AC_DEFUN([OMPI_CHECK_INLINE_CXX_XLC],[
+
+    AC_MSG_CHECKING([if $CXX supports XLC inline assembly])
+
+    OMPI_CXX_XLC_INLINE_ASSEMBLY=0
+    asm_result="no"
+    if test "$CXX" = "xlC" -o "$CXX" = "xlc++" ; then
+        OMPI_CXX_XLC_INLINE_ASSEMBLY=1
+        asm_result="yes"
+    fi
+
+    AC_MSG_RESULT([$asm_result])
+    AC_DEFINE_UNQUOTED([OMPI_CXX_XLC_INLINE_ASSEMBLY],
+                       [$OMPI_CXX_XLC_INLINE_ASSEMBLY],
+                       [Whether C++ compiler supports XLC style inline assembly])
+
+    unset OMPI_CXX_XLC_INLINE_ASSEMBLY
 ])dnl
 
 
@@ -740,9 +830,12 @@ esac
 
 
 # now that we know our architecture, try to inline assemble
-OMPI_CHECK_INLINE_GCC([$OMPI_GCC_INLINE_ASSIGN])
-OMPI_CHECK_INLINE_DEC
-OMPI_CHECK_INLINE_XLC
+OMPI_CHECK_INLINE_C_GCC([$OMPI_GCC_INLINE_ASSIGN])
+OMPI_CHECK_INLINE_C_DEC
+OMPI_CHECK_INLINE_C_XLC
+OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
+OMPI_CHECK_INLINE_CXX_DEC
+OMPI_CHECK_INLINE_CXX_XLC
 
 # format:
 #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit
