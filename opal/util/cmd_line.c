@@ -532,7 +532,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
             }
             strcat(line, " ");
             for (i = 0; i < option->clo_num_params; ++i) {
-                snprintf(temp, len, "<arg%d>", i);
+                snprintf(temp, len, "<arg%d> ", i);
                 strcat(line, temp);
             }
             if (option->clo_num_params > 0) {
