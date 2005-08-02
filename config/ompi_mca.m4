@@ -38,7 +38,7 @@ AC_DEFUN([OMPI_MCA],[
     # --disable-mca-dso
     #
     AC_ARG_ENABLE([mca-no-build],
-        [AC_HELP_STRING([---enable-mca-no-build=LIST],
+        [AC_HELP_STRING([--enable-mca-no-build=LIST],
                         [comma-separated list of type-component pairs 
                          that will not be built.])])
     AC_ARG_ENABLE(mca-dso,
@@ -48,7 +48,7 @@ AC_DEFUN([OMPI_MCA],[
                         run-time loadable components (as opposed to
                         statically linked in), if supported on this
                         platform.  The default is to build all components
-                        as DSOs]))
+                        as DSOs.]))
     AC_ARG_ENABLE(mca-static,
         AC_HELP_STRING([--enable-mca-static=LIST],
                        [comma-separated list of types and/or
