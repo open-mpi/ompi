@@ -26,7 +26,7 @@
 #include <unistd.h>
 #endif
 
-#if HAVE_READLINE_H
+#ifdef HAVE_READLINE_H
 #include <readline/readline.h>
 #include <readline/history.h>
 #endif
@@ -399,7 +399,7 @@ static int orte_console_send_command(orte_daemon_cmd_flag_t usercmd)
 
 char *orte_console_get_input_line()
 {
-#if HAVE_READLINE_H
+#ifdef HAVE_READLINE_H
     return readline("orteconsole>");
 #else
     char *ret, *buff;
