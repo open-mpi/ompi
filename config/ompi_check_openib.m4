@@ -1,4 +1,4 @@
-OAA# -*- shell-script -*-
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -37,20 +37,22 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     # check for pthreads and emit a warning that things might go south...
     AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
           [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with openib])])
+
+    ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
+    ompi_check_openib_$1_save_LIBS="$LIBS"
     
     AC_CHECK_LIB(sysfs, 
 	         sysfs_open_class, 
-		 [ompi_check_openib_sysfs=yes LIBS="$LIBS -lsysfs"], 
+		 [ompi_check_openib_sysfs=yes
+                  LIBS="$LIBS -lsysfs"
+                  $1_LIBS="-lsysfs"], 
 		 [ompi_check_openib_sysfs=no])
-    
+
     AS_IF([test "$ompi_check_openib_sysfs" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_btl_openib" -a "$with_btl_openib" != "no"],
                  [AC_MSG_ERROR([OPENIB support requested but required sysfs not found.  Aborting])])
            $3])
-
-   
-    ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
     
     AS_IF([test "$ompi_check_openib_libdir" = ""], 
 	  [ompi_check_openib_my_libdir=$ompi_check_openib_dir], 
@@ -62,9 +64,6 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 	[AS_IF([test -d "$ompi_check_openib_my_libdir/lib/infiniband"], 
 		[ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib/infiniband"
 		    LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib/infiniband"])])
-    
-    echo "OPENIB_LDFLAGS Says: $LDFLAGS"
-
 
     OMPI_CHECK_PACKAGE([$1],
                        [infiniband/verbs.h],
@@ -77,6 +76,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                        [ompi_check_openib_happy="no"])
 
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
+    LIBS="$ompi_check_openib_$1_save_LIBS"
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
@@ -84,6 +84,5 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                  [AC_MSG_ERROR([OPENIB support requested but not found.  Aborting])])
            $3])
     $1_LDFLAGS="$$1_LDFLAGS $ompi_check_openib_libflag"
-    echo "OPENIB_LDFLAGS 1 Says : $$1_LDFLAGS" 
 ])
 
