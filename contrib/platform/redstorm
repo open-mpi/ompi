@@ -6,4 +6,4 @@ with_threads=no
 enable_pretty_print_stacktrace=no
 enable_dlopen=no
 with_btl_portals_config=redstorm
-enable_mca_no_buuild=gpr-proxy,gpr-replica,pml-teg,pml-uniq,btl-sm
+enable_mca_no_build=gpr-proxy,gpr-replica,pml-teg,pml-uniq,rml-oob,btl-sm,mpool-sm,btl-self,ptl-sm,ptl-self
