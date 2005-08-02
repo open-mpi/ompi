@@ -305,10 +305,10 @@ do {                                                                  \
     /* advance pending requests */                                    \
     while(opal_list_get_size(&mca_pml_ob1.send_pending)) {            \
         mca_pml_ob1_send_request_t* sendreq;                          \
-        OPAL_THREAD_LOCK(&mca_pml_ob1.ob1_lock);                      \
+        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                          \
         sendreq = (mca_pml_ob1_send_request_t*)                       \
             opal_list_remove_first(&mca_pml_ob1.send_pending);        \
-        OPAL_THREAD_UNLOCK(&mca_pml_ob1.ob1_lock);                    \
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);                        \
         if(NULL == sendreq)                                           \
             break;                                                    \
         mca_pml_ob1_send_request_schedule(sendreq);                   \

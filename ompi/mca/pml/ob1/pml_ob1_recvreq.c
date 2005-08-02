@@ -294,7 +294,7 @@ void mca_pml_ob1_recv_request_progress(
         case MCA_PML_OB1_HDR_TYPE_FIN:
 
             bytes_delivered = bytes_received = hdr->hdr_fin.hdr_rdma_length; 
-            OPAL_THREAD_ADD32(&recvreq->req_pipeline_depth,-1);
+            OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
             break;
 
         default:
@@ -462,7 +462,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
 
                 /* update request state */
                 recvreq->req_rdma_offset += size;
-                OPAL_THREAD_ADD32(&recvreq->req_pipeline_depth,1);
+                OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,1);
 
                 /* send rdma request to peer */
                 rc = ep->btl_send(ep->btl, ep->btl_endpoint, ctl, MCA_BTL_TAG_PML);
@@ -472,7 +472,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     ep->btl_free(ep->btl,ctl);
                     ep->btl_free(ep->btl,dst);
                     recvreq->req_rdma_offset -= size;
-                    OPAL_THREAD_ADD32(&recvreq->req_pipeline_depth,-1);
+                    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
                     OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
                     opal_list_append(&mca_pml_ob1.recv_pending, (opal_list_item_t*)recvreq);
                     OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
@@ -543,7 +543,7 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
      * process, then an inner loop over the messages from the
      * process.
     */
-    OPAL_THREAD_LOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_LOCK(&comm->matching_lock);
 
     /* assign sequence number */
     request->req_recv.req_base.req_sequence = comm->recv_sequence++;

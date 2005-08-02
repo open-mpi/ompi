@@ -134,7 +134,7 @@ static void mca_pml_ob1_rndv_completion(
     btl_ep->btl_free(btl_ep->btl, descriptor);
 
     /* update pipeline depth */
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
 
     /* advance the request */
     MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq);
@@ -180,7 +180,7 @@ static void mca_pml_ob1_frag_completion(
 
     /* check for request completion */
     OPAL_THREAD_LOCK(&ompi_request_lock);
-    if (OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1) == 0 &&
+    if (OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1) == 0 &&
         sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
         MCA_PML_OB1_SEND_REQUEST_COMPLETE(sendreq); 
         schedule = false;
@@ -368,7 +368,7 @@ int mca_pml_ob1_send_request_start(
     }
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
 
     /* send */
 #if MCA_PML_OB1_TIMESTAMPS
@@ -464,7 +464,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
 
                 /* update state */
                 sendreq->req_send_offset += size;
-                OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
+                OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
 
                 /* initiate send - note that this may complete before the call returns */
                 rc = ep->btl_send(ep->btl, ep->btl_endpoint, des, MCA_BTL_TAG_PML);
@@ -472,7 +472,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     bytes_remaining -= size;
                 } else {
                     sendreq->req_send_offset -= size;
-                    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
+                    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
                     ep->btl_free(ep->btl,des);
                     OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
                     opal_list_append(&mca_pml_ob1.send_pending, (opal_list_item_t*)sendreq);

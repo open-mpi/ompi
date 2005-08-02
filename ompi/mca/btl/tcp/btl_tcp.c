@@ -94,7 +94,7 @@ int mca_btl_tcp_add_procs(
          */
         tcp_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
         if(NULL == tcp_endpoint) {
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -102,12 +102,12 @@ int mca_btl_tcp_add_procs(
         rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(tcp_endpoint);
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
             continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
-        OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
         peers[i] = tcp_endpoint;
         opal_list_append(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
 

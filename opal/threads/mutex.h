@@ -264,15 +264,9 @@ static inline bool opal_set_using_threads(bool have)
 #endif
 
 #if OMPI_HAVE_THREAD_SUPPORT
-#if OMPI_SIZEOF_SIZE_T == 4
 #define OPAL_THREAD_ADD_SIZE_T(x,y) \
-    ((OMPI_HAVE_THREAD_SUPPORT && opal_using_threads()) ?       \
-     opal_atomic_add_32(x,y) : (*x += y))
-#elif OMPI_SIZEOF_SIZE_T == 8
-#define OPAL_THREAD_ADD_SIZE_T(x,y) \
-    ((OMPI_HAVE_THREAD_SUPPORT && opal_using_threads()) ?       \
-     opal_atomic_add_64(x,y) : (*x += y))
-#endif
+   ((OMPI_HAVE_THREAD_SUPPORT && opal_using_threads()) ? \
+    opal_atomic_add_size_t(x,y) : (*x += y))
 #else
 #define OPAL_THREAD_ADD_SIZE_T(x,y) (*x += y)
 #endif

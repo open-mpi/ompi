@@ -293,8 +293,8 @@ int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
 #endif
 
 #if !defined(OPAL_HAVE_ATOMIC_MATH_32) && !defined(DOXYGEN)
-/* define to 0 for these tests.  WIll fix up later. */
-#define OPAL_HAVE_ATOMIC_MATH_32 0
+  /* define to 0 for these tests.  WIll fix up later. */
+  #define OPAL_HAVE_ATOMIC_MATH_32 0
 #endif
 #if defined(DOXYGEN) ||  OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_CMPSET_32
 #if ! OPAL_HAVE_ATOMIC_MATH_32
@@ -332,6 +332,45 @@ int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta);
 #define OPAL_HAVE_ATOMIC_MATH_64 OPAL_HAVE_ATOMIC_CMPSET_64
 #endif
 
+/* provide a size_t add/subtract.  When in debug mode, make it an
+ * inline function so that we don't have any casts in the
+ *  interface and can catch type errors.  When not in debug mode,
+ * just make it a macro, so that there's no performance penalty
+ */
+#if defined(DOXYGEN) || OMPI_ENABLE_DEBUG
+static inline size_t
+opal_atomic_add_size_t(volatile size_t *addr, int delta)
+{
+#if SIZEOF_SIZE_T == 4
+    return (size_t) opal_atomic_add_32((int32_t*) addr, delta);
+#elif SIZEOF_SIZE_T == 8
+    return (size_t) opal_atomic_add_64((int64_t*) addr, delta);
+#else
+#error "Unknown size_t size"
+#endif
+}
+static inline size_t
+opal_atomic_sub_size_t(volatile size_t *addr, int delta)
+{
+#if SIZEOF_SIZE_T == 4
+    return (size_t) opal_atomic_sub_32((int32_t*) addr, delta);
+#elif SIZEOF_SIZE_T == 8
+    return (size_t) opal_atomic_sub_64((int64_t*) addr, delta);
+#else
+#error "Unknown size_t size"
+#endif
+}
+#else
+#if SIZEOF_SIZE_T == 4
+#define opal_atomic_add_size_t(addr, delta) ((size_t) opal_atomic_add_32((int32_t*) addr, delta));
+#define opal_atomic_sub_size_t(addr, delta) ((size_t) opal_atomic_sub_32((int32_t*) addr, delta));
+#elif SIZEOF_SIZE_T ==8
+#define opal_atomic_add_size_t(addr, delta) ((size_t) opal_atomic_add_64((int64_t*) addr, delta));
+#define opal_atomic_sub_size_t(addr, delta) ((size_t) opal_atomic_sub_64((int64_t*) addr, delta));
+#else
+#error "Unknown size_t size"
+#endif
+#endif
 
 #if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64)
 /* these are always done with inline functions, so always mark as

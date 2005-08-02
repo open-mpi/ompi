@@ -493,7 +493,7 @@ int mca_pml_ob1_recv_frag_match(
             mca_pml_ob1_recv_frag_t* frag;
             MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
             if(OMPI_SUCCESS != rc) {
-                OPAL_THREAD_UNLOCK(&pml_comm->matching_lock);
+                OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return rc;
             }
             MCA_PML_OB1_RECV_FRAG_INIT(frag,btl,hdr,segments,num_segments);
@@ -518,14 +518,14 @@ int mca_pml_ob1_recv_frag_match(
         mca_pml_ob1_recv_frag_t* frag;
         MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
         if(OMPI_SUCCESS != rc) {
-            OPAL_THREAD_UNLOCK(&pml_comm->matching_lock);
+            OPAL_THREAD_UNLOCK(&comm->matching_lock);
             return rc;
         }
         MCA_PML_OB1_RECV_FRAG_INIT(frag,btl,hdr,segments,num_segments);
         opal_list_append(&proc->frags_cant_match, (opal_list_item_t *)frag);
 
     }
-    OPAL_THREAD_UNLOCK(&pml_comm->matching_lock);
+    OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
 
     /* release matching lock before processing fragment */
