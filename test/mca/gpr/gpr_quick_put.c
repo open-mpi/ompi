@@ -198,9 +198,11 @@ int main(int argc, char **argv)
         types[i] = ORTE_INT16;
         values[i].i16 = i * 1000;
     }
+    tokens[4] = NULL;
+    keys[4] = NULL;
     fprintf(stderr, "quick-put one value with multiple keyvals\n");
     if (ORTE_SUCCESS != (rc = orte_gpr.put_N(ORTE_GPR_TOKENS_AND,
-                            "test-put-segment23", tokens, 5,
+                            "test-put-segment23", tokens, 4,
                             keys, types, values))) {
         fprintf(test_out, "gpr_test: put 1 value/multiple keyval failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
