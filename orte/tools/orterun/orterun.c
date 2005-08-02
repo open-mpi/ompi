@@ -634,6 +634,7 @@ static int parse_globals(int argc, char* argv[])
 
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
+    mca_base_cmd_line_setup(&cmd_line);
     if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true, 
                                                    argc, argv)) ) {
         return ret;
