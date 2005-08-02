@@ -131,19 +131,8 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
                           orte_vpid_t vpid_start, orte_vpid_t global_vpid_start,
                           int num_procs, char ***env) {
     char* param;
-    char* cellid;
-    char* jobid;
     char* value;
     int rc;
-
-    if(ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&cellid, cell))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid, job))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
 
     /* set the mode to bproc */
     if(NULL == (param = mca_base_param_environ_variable("ns","nds",NULL))) {
@@ -172,21 +161,29 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
     free(param);
 
     /* setup the name */
+    if(ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&value, cell))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","cellid"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    opal_setenv(param, cellid, true, env);
+    opal_setenv(param, value, true, env);
     free(param);
-    free(cellid);
+    free(value);
 
+    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&value, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","jobid"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    opal_setenv(param, jobid, true, env);
+    opal_setenv(param, value, true, env);
     free(param);
-    free(jobid);
+    free(value);
 
     rc = orte_ns.convert_vpid_to_string(&value, vpid_start);
     if (ORTE_SUCCESS != rc) {

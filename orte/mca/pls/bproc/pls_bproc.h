@@ -75,9 +75,9 @@ struct orte_pls_bproc_component_t {
     char * orted;
     int debug;
     int num_procs;
-    size_t num_daemons;
     int priority;
     int terminate_sig;
+    size_t num_daemons;
     opal_mutex_t lock;
     opal_condition_t condition;
     orte_pointer_array_t * daemon_names;

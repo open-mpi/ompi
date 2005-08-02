@@ -43,37 +43,22 @@ orte_pls_bproc_component_t mca_pls_bproc_component = {
     }
 };
 
-/**
- *  Convience functions to lookup MCA parameter values.
- */
-static int orte_pls_bproc_param_register_int(const char* param_name,
-                                              int default_value) {
-    int id = mca_base_param_register_int("pls", "bproc", param_name, NULL, 
-                                         default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id, &param_value);
-    return param_value;
-}
-
-static char* orte_pls_bproc_param_register_string(const char* param_name,
-                                                  const char* default_value) {
-    char *param_value;
-    int id = mca_base_param_register_string("pls", "bproc", param_name, NULL, 
-                                            default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
 int orte_pls_bproc_component_open(void) {
     int rc;
     /* init parameters */
-    mca_pls_bproc_component.debug = orte_pls_bproc_param_register_int("debug", 0);
-    mca_pls_bproc_component.priority = 
-                            orte_pls_bproc_param_register_int("priority", 100);
-    mca_pls_bproc_component.orted = 
-                            orte_pls_bproc_param_register_string("orted", "orted");
-    mca_pls_bproc_component.terminate_sig = 
-                            orte_pls_bproc_param_register_int("terminate_sig", 9);
+    mca_base_param_reg_int(&mca_pls_bproc_component.super.pls_version, "priority",
+                           NULL, false, false, 100, 
+                           &mca_pls_bproc_component.priority);
+    mca_base_param_reg_int(&mca_pls_bproc_component.super.pls_version, "debug", 
+                           "If > 0 prints library debugging information",
+                           false, false, 0, &mca_pls_bproc_component.debug);
+    mca_base_param_reg_int(&mca_pls_bproc_component.super.pls_version, 
+                           "terminate_sig",
+                           "Signal sent to processes to terminate them", false,
+                           false, 9, &mca_pls_bproc_component.terminate_sig);
+    mca_base_param_reg_string(&mca_pls_bproc_component.super.pls_version, 
+                              "orted", "Path to where orted is installed", false, 
+                              false, "orted", &mca_pls_bproc_component.orted);
     
     mca_pls_bproc_component.num_procs = 0; 
     mca_pls_bproc_component.num_daemons = 0; 

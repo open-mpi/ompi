@@ -38,10 +38,8 @@ orte_sds_bproc_set_name(void)
 {
     int rc;
     int id;
-    int vpid_start;
-    int global_vpid_start;
-    int num_procs;
     char* name_string = NULL;
+
     id = mca_base_param_register_string("ns", "nds", "name", NULL, NULL);
     mca_base_param_lookup_string(id, &name_string);
     if(name_string != NULL) {
@@ -60,9 +58,11 @@ orte_sds_bproc_set_name(void)
         orte_jobid_t jobid;
         orte_vpid_t vpid;
         orte_vpid_t vpid_offset;
+        orte_vpid_t vpid_start;
         char* cellid_string;
         char* jobid_string;
         char* vpid_string;
+        int num_procs;
       
         id = mca_base_param_register_string("ns", "nds", "cellid", NULL, NULL);
         mca_base_param_lookup_string(id, &cellid_string);
@@ -98,11 +98,16 @@ orte_sds_bproc_set_name(void)
             ORTE_ERROR_LOG(rc);
             return(rc);
         }
-        id = mca_base_param_register_int("ns", "nds", "vpid_start", NULL, -1);
-        mca_base_param_lookup_int(id, &vpid_start);
-        if (vpid_start < 0) {
+        id = mca_base_param_register_string("ns", "nds", "vpid_start", NULL, NULL);
+        mca_base_param_lookup_string(id, &vpid_string);
+        if (NULL == vpid_string) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
+        }
+        rc = orte_ns.convert_string_to_vpid(&vpid_start, vpid_string);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
         }
         rc = orte_ns.derive_vpid(&vpid, vpid_offset, vpid_start);
         if (ORTE_SUCCESS != rc) {
@@ -118,24 +123,27 @@ orte_sds_bproc_set_name(void)
            ORTE_ERROR_LOG(rc);
            return rc;
         }
-    }
 
-    id = mca_base_param_register_int("ns", "nds", "num_procs", NULL, -1);
-    mca_base_param_lookup_int(id, &num_procs);
-    if (num_procs < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    orte_process_info.num_procs = (size_t)num_procs;
+        id = mca_base_param_register_int("ns", "nds", "num_procs", NULL, -1);
+        mca_base_param_lookup_int(id, &num_procs);
+        if (num_procs < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        orte_process_info.num_procs = (size_t)num_procs;
 
-    id = mca_base_param_register_int("ns", "nds", "global_vpid_start", NULL, -1);
-    mca_base_param_lookup_int(id, &global_vpid_start);
-    if (global_vpid_start < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
+        id = mca_base_param_register_string("ns", "nds", "global_vpid_start", NULL, NULL);
+        mca_base_param_lookup_string(id, &vpid_string);
+        if (NULL == vpid_string) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        rc = orte_ns.convert_string_to_vpid(&orte_process_info.vpid_start, vpid_string);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
     }
-    orte_process_info.vpid_start = (orte_vpid_t)global_vpid_start;
-
     return ORTE_SUCCESS;
 }
 
