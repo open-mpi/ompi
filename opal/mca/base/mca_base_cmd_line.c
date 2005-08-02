@@ -41,7 +41,7 @@ static char **mca_value_argv = NULL;
 int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 {
   return opal_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
-                                 "General mechanism to pass MCA parameters");
+                                 "Pass MCA parameters (arg0 is the parameter name; arg1 is the parameter value)");
 }
 
 
