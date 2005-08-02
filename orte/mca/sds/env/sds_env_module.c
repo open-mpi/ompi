@@ -29,7 +29,7 @@
 #include "mca/ns/base/base.h"
 
 
-orte_sds_base_module_t sds_env_module = {
+orte_sds_base_module_t orte_sds_env_module = {
     orte_sds_base_basic_contact_universe,
     orte_sds_env_set_name,
     orte_sds_env_finalize,

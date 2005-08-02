@@ -27,7 +27,7 @@
 #include "mca/ns/base/base.h"
 #include "mca/errmgr/base/base.h"
 
-orte_sds_base_module_t sds_cnos_module = {
+orte_sds_base_module_t orte_sds_cnos_module = {
     orte_sds_cnos_contact_universe,
     orte_sds_cnos_set_name,
     orte_sds_cnos_finalize,

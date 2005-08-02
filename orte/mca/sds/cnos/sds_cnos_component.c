@@ -27,7 +27,7 @@
 #include "mca/sds/cnos/sds_cnos.h"
 #include "mca/base/mca_base_param.h"
 
-extern orte_sds_base_module_t sds_cnos_module;
+extern orte_sds_base_module_t orte_sds_cnos_module;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -85,7 +85,7 @@ orte_sds_cnos_component_init(int *priority)
     if (NULL != mode) return NULL;
 
     *priority = 60;
-    return &sds_cnos_module;
+    return &orte_sds_cnos_module;
 }
 
 

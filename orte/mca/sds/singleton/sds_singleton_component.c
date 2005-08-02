@@ -27,7 +27,7 @@
 #include "mca/sds/singleton/sds_singleton.h"
 #include "mca/base/mca_base_param.h"
 
-extern orte_sds_base_module_t sds_singleton_module;
+extern orte_sds_base_module_t orte_sds_singleton_module;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -74,7 +74,7 @@ orte_sds_base_module_t *
 orte_sds_singleton_component_init(int *priority)
 {
     *priority = 0;
-    return &sds_singleton_module;
+    return &orte_sds_singleton_module;
 }
 
 

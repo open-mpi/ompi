@@ -28,7 +28,7 @@
 #include "opal/util/output.h"
 
 
-orte_sds_base_module_t sds_singleton_module = {
+orte_sds_base_module_t orte_sds_singleton_module = {
     orte_sds_base_basic_contact_universe,
     orte_sds_singleton_set_name,
     orte_sds_singleton_finalize,
@@ -68,5 +68,5 @@ orte_sds_singleton_set_name(void)
 int 
 orte_sds_singleton_finalize(void)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    return OMPI_SUCCESS;
 }

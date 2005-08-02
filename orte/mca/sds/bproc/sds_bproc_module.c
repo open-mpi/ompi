@@ -26,7 +26,7 @@
 #include "mca/ns/base/base.h"
 #include "mca/errmgr/base/base.h"
 
-orte_sds_base_module_t sds_bproc_module = {
+orte_sds_base_module_t orte_sds_bproc_module = {
     orte_sds_base_basic_contact_universe,
     orte_sds_bproc_set_name,
     orte_sds_bproc_finalize,

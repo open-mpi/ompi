@@ -28,7 +28,7 @@
 #include "mca/base/mca_base_param.h"
 #include "util/proc_info.h"
 
-extern orte_sds_base_module_t sds_seed_module;
+extern orte_sds_base_module_t orte_sds_seed_module;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -77,7 +77,7 @@ orte_sds_seed_component_init(int *priority)
     if (orte_process_info.seed == false) return NULL;
 
     *priority = 40;
-    return &sds_seed_module;
+    return &orte_sds_seed_module;
 }
 
 
