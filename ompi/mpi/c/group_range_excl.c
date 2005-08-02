@@ -98,8 +98,7 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
             }
 
             /* positive stride */
-            index = first_rank;
-            while (index <= last_rank) {
+            for (index = first_rank; index <= last_rank; index += stride) {
                 /* make sure rank has not already been selected */
                 if (elements_int_list[index] != -1) {
                     free(elements_int_list);
@@ -107,9 +106,8 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                                                   FUNC_NAME);
                 }
                 elements_int_list[index] = new_group_size;
-                index += stride;
                 new_group_size++;
-            }			/* end while loop */
+            }
 
         } else if (first_rank > last_rank) {
 
@@ -119,8 +117,7 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                                               FUNC_NAME);
             }
             /* negative stride */
-            index = first_rank;
-            while (index >= last_rank) {
+            for (index = first_rank; index >= last_rank; index += stride) {
                 /* make sure rank has not already been selected */
                 if (elements_int_list[index] != -1) {
                     free(elements_int_list);
@@ -128,14 +125,13 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                                                   FUNC_NAME);
                 }
                 elements_int_list[index] = new_group_size;
-                index += stride;
                 new_group_size++;
-            }			/* end while loop */
+            }
 
         } else {
             /* first_rank == last_rank */
             index = first_rank;
-            if (elements_int_list[index] != -1) {
+            if (elements_int_list[index] != -1 || stride != 1) {
                 free(elements_int_list);
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
                                               FUNC_NAME);
@@ -169,7 +165,7 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
         if (0 > elements_int_list[proc] ) {
             new_group_pointer->grp_proc_pointers[index] =
                             group_pointer->grp_proc_pointers[proc];
-        index++;
+            index++;
         }
     } /* end of proc loop */
 
