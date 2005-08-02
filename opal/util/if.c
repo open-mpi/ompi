@@ -39,7 +39,16 @@
 #include <arpa/inet.h>
 #endif
 #ifdef HAVE_NET_IF_H
+#if defined(__DARWIN_ALIGN_POWER) && __DARWIN_ALIGN_POWER
+/* Apple engineering suggested this as a workaround for a bug in OS X
+ * 10.4 (Tiger) that prevented ioctl(..., SIOCGIFCONF, ...) from
+ * working properly in 64 bit mode */
+#pragma options align=power
+#endif
 #include <net/if.h>
+#if defined(__DARWIN_ALIGN_POWER) && __DARWIN_ALIGN_POWER
+#pragma options align=reset
+#endif
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
