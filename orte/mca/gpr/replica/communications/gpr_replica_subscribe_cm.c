@@ -53,7 +53,28 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
         goto RETURN_ERROR;
     }
     
-    if (0 < n) {
+    /* if the original command did not provide any subscriptions, then we put a size_t value in the buffer of "zero"
+     * to avoid causing buffer problems. thus, we need to check to see if the type is size_t vs subscription vs
+     * something else. if it is trigger, then we need the number to be greater than 0, which should always
+     * be true (we check it just to be safe). if it is size_t, then the value should be zero - anything else
+     * generates an error.
+     */
+    if (ORTE_SIZE == type) {
+        /* this case means that there were no subscriptions, so we need to clear the value from the buffer
+         * and continue on
+         */
+        n=1;
+        if (ORTE_SUCCESS != orte_dps.unpack(input_buffer, &num_subs, &n, ORTE_SIZE)) {
+            ORTE_ERROR_LOG(rc);
+            goto RETURN_ERROR;
+        }
+        /* if the returned number of subscriptions isn't zero, then we have a problem */
+        if (0 != num_subs) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            rc = ORTE_ERR_COMM_FAILURE;
+            goto RETURN_ERROR;
+        }
+    } else if (ORTE_GPR_SUBSCRIPTION == type && 0 < n) {
         /* create the space for the subscriptions */
         subscriptions = (orte_gpr_subscription_t**)malloc(n * sizeof(orte_gpr_subscription_t*));
         if (NULL == subscriptions) {
@@ -66,8 +87,15 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
+        num_subs = n;
+    } else {
+        /* we must have an error condition - it either wasn't the right type, or we had the type okay
+         * but don't have a good number of elements. report the error and move on
+         */
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        rc = ORTE_ERR_COMM_FAILURE;
+        goto RETURN_ERROR;
     }
-    num_subs = n;
     
     if (ORTE_SUCCESS != (rc = orte_dps.peek(input_buffer, &type, &n))) {
         ORTE_ERROR_LOG(rc);

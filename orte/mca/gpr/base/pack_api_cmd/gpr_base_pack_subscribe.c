@@ -44,17 +44,28 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
 
     command = ORTE_GPR_SUBSCRIBE_CMD;
 
+    /* can't be both NULL */
+    if (NULL == subscriptions && NULL == trigs) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
 	    return rc;
     }
 
-    /* there MUST be some subscriptions, so don't have to check that here - it was checked on the API
-     * itself.
-     */
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, subscriptions, num_subs, ORTE_GPR_SUBSCRIPTION))) {
-        ORTE_ERROR_LOG(rc);
-	    return rc;
+    /* see if there are subscriptions - if so, pack them */
+    if (NULL != subscriptions) {
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, subscriptions, num_subs, ORTE_GPR_SUBSCRIPTION))) {
+            ORTE_ERROR_LOG(rc);
+    	    return rc;
+        }
+    } else {
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &zero, 1, ORTE_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     /* the API DOES allow there to be no triggers - if that happens, then trigs will be NULL and num_trigs

@@ -78,6 +78,9 @@ orte_gpr_replica_enter_local_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        if (NULL != trigs[i]->name) {
+            trig->name = strdup(trigs[i]->name);
+        }
         /* ensure that the proper routing flag is set
          * in the action field to match the trigger callback
          * function

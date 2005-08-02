@@ -41,7 +41,7 @@ orte_gpr_replica_subscribe(size_t num_subs,
     int rc;
 
     /* protect against errors */
-    if (NULL == subscriptions) {
+    if (NULL == subscriptions && NULL == trigs) { /* need at least one */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
 	    return ORTE_ERR_BAD_PARAM;
     }
@@ -53,21 +53,25 @@ orte_gpr_replica_subscribe(size_t num_subs,
      * for each subscription - the subscription id is returned
      * inside the subscription objects
      */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_subscription(
-                                        num_subs, subscriptions))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-        return rc;
+    if (NULL != subscriptions) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_subscription(
+                                            num_subs, subscriptions))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            return rc;
+        }
     }
 
     /* if any triggers were provided, get id tags for them - the
      * idtags are returned inside the trigger objects
      */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_trigger(
-                                        num_trigs, trigs))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-        return rc;
+    if (NULL != trigs) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_trigger(
+                                            num_trigs, trigs))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            return rc;
+        }
     }
 
     /* register subscriptions */

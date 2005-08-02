@@ -42,6 +42,7 @@ int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_keyval_t keyval = { {OBJ_CLASS(opal_object_t),0},
                                   NULL,
                                   0 };
+    size_t i;
     int rc;
     
     value.addr_mode = addr_mode;
@@ -54,6 +55,14 @@ int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
     keyval.value = data_value;
     
     value.tokens = tokens;
+    /* must count the number of tokens */
+    if (NULL == tokens) {
+        value.num_tokens = 0;
+    } else {
+        for (i=0; NULL != tokens[i]; i++) {
+            (value.num_tokens)++;
+        }
+    }
     values = &value;
     
     /* put the value on the registry */
@@ -102,6 +111,14 @@ int orte_gpr_base_put_N(orte_gpr_addr_mode_t addr_mode,
     }
     
     value.tokens = tokens;
+    /* must count the number of tokens */
+    if (NULL == tokens) {
+        value.num_tokens = 0;
+    } else {
+        for (i=0; NULL != tokens[i]; i++) {
+            (value.num_tokens)++;
+        }
+    }
     values = &value;
     
     /* put the value on the registry */
