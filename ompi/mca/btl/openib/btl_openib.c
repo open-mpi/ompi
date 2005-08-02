@@ -131,8 +131,7 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
 {
-    /* TODO */ 
-    BTL_DEBUG_OUT("Stub\n");
+    BTL_DEBUG(("TODO\n"));
     return OMPI_SUCCESS;
 }
 
@@ -215,7 +214,7 @@ int mca_btl_openib_free(
     } else if(frag->size == mca_btl_openib_component.eager_limit){ 
         MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
     } else { 
-        BTL_ERROR("invalid descriptor"); 
+        BTL_ERROR(("invalid descriptor")); 
     } 
     
     return OMPI_SUCCESS; 
@@ -299,13 +298,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             
             rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR("error removing memory region from memory pool tree"); 
+                BTL_ERROR(("error removing memory region from memory pool tree")); 
                 return NULL; 
             } 
 
             if(is_leave_pinned) { 
                 if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)){ 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
             } 
@@ -324,7 +323,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             
             
             if(rc != OMPI_SUCCESS) { 
-                BTL_ERROR("error inserting memory region into memory pool tree"); 
+                BTL_ERROR(("error inserting memory region into memory pool tree")); 
                 return NULL; 
             } 
 
@@ -338,7 +337,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         } else if(is_leave_pinned) {
             /* the current memory region is large enough and we should leave the memory pinned */  
             if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                BTL_ERROR("error removing item from reg_mru_list"); 
+                BTL_ERROR(("error removing item from reg_mru_list")); 
                 return NULL; 
             }
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
@@ -398,7 +397,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                     opal_list_remove_last(&openib_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
 
@@ -406,7 +405,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 
                 if(OMPI_SUCCESS != rc) { 
-                    BTL_ERROR("error removing memory region from memory pool tree"); 
+                    BTL_ERROR(("error removing memory region from memory pool tree")); 
                     return NULL; 
                 }
                 
@@ -452,8 +451,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->openib_reg = openib_reg; 
-        BTL_DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr); 
-        
+        BTL_DEBUG(("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr)); 
 
         return &frag->base;
 
@@ -580,7 +578,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
             rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR("error removing memory region from memory pool tree"); 
+                BTL_ERROR(("error removing memory region from memory pool tree")); 
                 return NULL; 
             } 
 
@@ -589,7 +587,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                  * pull it off the MRU list 
                  */ 
                 if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
             }
@@ -608,7 +606,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                        (mca_mpool_base_registration_t*) openib_reg); 
             
             if(OMPI_SUCCESS != rc) {
-                BTL_ERROR("error inserting memory region into memory pool tree"); 
+                BTL_ERROR(("error inserting memory region into memory pool tree")); 
                 return NULL;
             }
             OBJ_RETAIN(openib_reg); 
@@ -623,7 +621,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         else if(is_leave_pinned){ 
             /* the current memory region is large enough and we should leave the memory pinned */  
             if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                BTL_ERROR("error removing item from reg_mru_list"); 
+                BTL_ERROR(("error removing item from reg_mru_list")); 
                 return NULL; 
             }    
             opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg); 
@@ -647,13 +645,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                     opal_list_remove_last(&openib_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
                 
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 if(OMPI_SUCCESS !=rc ) { 
-                    BTL_ERROR("error removing memory region from memory pool tree"); 
+                    BTL_ERROR(("error removing memory region from memory pool tree")); 
                     return NULL; 
                 } 
                 
@@ -673,7 +671,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                        (void*) (&openib_btl->super), 
                                        (mca_mpool_base_registration_t*)  openib_reg); 
             if(OMPI_SUCCESS != rc){ 
-                BTL_ERROR("error inserting memory region into memory pool"); 
+                BTL_ERROR(("error inserting memory region into memory pool")); 
                 return NULL;
             } 
             
@@ -705,7 +703,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
     frag->openib_reg = openib_reg; 
-    BTL_DEBUG_OUT("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0]); 
+    BTL_DEBUG(("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0])); 
 
     return &frag->base; 
     
@@ -794,16 +792,16 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
     frag->sg_entry.length  = frag->base.des_src->seg_len; 
     
-    BTL_DEBUG_OUT("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
+    BTL_DEBUG(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
                   , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
                   , frag->wr_desc.sr_desc.wr.rdma.rkey
                   , frag->sg_entry.addr
-                  , frag->sg_entry.length); 
+                  , frag->sg_entry.length)); 
 
     if(ibv_post_send(endpoint->lcl_qp_low, 
                      &frag->wr_desc.sr_desc, 
                      &bad_wr)){ 
-        BTL_ERROR("error posting send request errno says %s", strerror(errno)); 
+        BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
         return OMPI_ERROR; 
     }  
     
@@ -830,9 +828,9 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     
     
     if(NULL == openib_btl->ib_pd) {
-        BTL_ERROR("error allocating pd for %s errno says %s\n", 
+        BTL_ERROR(("error allocating pd for %s errno says %s\n", 
                   ibv_get_device_name(openib_btl->ib_dev), 
-                  strerror(errno)); 
+                  strerror(errno))); 
         return OMPI_ERROR;
     }
 
@@ -840,18 +838,18 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     openib_btl->ib_cq_low = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
     
     if(NULL == openib_btl->ib_cq_low) {
-        BTL_ERROR("error creating low priority cq for %s errno says %s\n",
+        BTL_ERROR(("error creating low priority cq for %s errno says %s\n",
                   ibv_get_device_name(openib_btl->ib_dev), 
-                  strerror(errno)); 
+                  strerror(errno))); 
         return OMPI_ERROR;
     }
 
     openib_btl->ib_cq_high = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
     
     if(NULL == openib_btl->ib_cq_high) {
-        BTL_ERROR("error creating high priority cq for %s errno says %s\n", 
+        BTL_ERROR(("error creating high priority cq for %s errno says %s\n", 
                   ibv_get_device_name(openib_btl->ib_dev), 
-                  strerror(errno)); 
+                  strerror(errno))); 
         return OMPI_ERROR;
     }
         

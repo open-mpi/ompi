@@ -17,67 +17,49 @@
 #ifndef MCA_BTL_BASE_ERROR_H
 #define MCA_BTL_BASE_ERROR_H
 
+#include "ompi_config.h"
+#include <stdio.h>
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#   define BTL_ERROR(fmt, ...) {                                           \
-    opal_output(0, "[%s:%d:%s] my_name: [%lu,%lu,%lu] " fmt "\n", __FILE__, __LINE__, __func__, \
-               ORTE_NAME_ARGS(orte_process_info.my_name), __VA_ARGS__); \
-    }
+extern int mca_btl_base_debug;
+
+extern int mca_btl_base_err(const char*, ...);
+extern int mca_btl_base_out(const char*, ...);
+
+
+#define BTL_OUTPUT(args)                                     \
+do {                                                         \
+    mca_btl_base_out("[%lu,%lu,%lu][%s:%d:%s] ",             \
+            ORTE_NAME_ARGS(orte_process_info.my_name),       \
+            __FILE__, __LINE__, __func__);                   \
+    mca_btl_base_out args;                                   \
+    mca_btl_base_out("\n");                                  \
+} while(0);
+
+
+#define BTL_ERROR(args)                                      \
+do {                                                         \
+    mca_btl_base_err("[%lu,%lu,%lu][%s:%d:%s] ",             \
+            ORTE_NAME_ARGS(orte_process_info.my_name),       \
+            __FILE__, __LINE__, __func__);                   \
+    mca_btl_base_err args;                                   \
+    mca_btl_base_out("\n");                                  \
+} while(0);
+
+
+#if OMPI_ENABLE_DEBUG
+#define BTL_DEBUG(args)                                      \
+do {                                                         \
+   if(mca_btl_base_debug) {                                  \
+        mca_btl_base_err("[%lu,%lu,%lu][%s:%d:%s] ",         \
+                ORTE_NAME_ARGS(orte_process_info.my_name),   \
+                __FILE__, __LINE__, __func__);               \
+        mca_btl_base_err args;                               \
+        mca_btl_base_out("\n");                              \
+   }                                                         \
+} while(0); 
 #else
-# if defined(__GNUC__) && !defined(__STDC__) 
-#define BTL_ERROR(fmt, args...) {                                           \
-    opal_output(0, "[%s:%d:%s] my_name: [%lu,%lu,%lu]" fmt "\n", __FILE__, __LINE__, __func__,\
-               ORTE_NAME_ARGS(orte_process_info.my_name), ##args); \
-    }    
-#else 
-static inline void BTL_ERROR(char *fmt, ... ) 
-{ 
-    va_list list; 
-    va_start(list, fmt); 
-    fprintf(stderr,"[%s:%d:%s] my_name: [%lu,%lu,%lu]", 
-            __FILE__, __LINE__, __func__,
-            ORTE_NAME_ARGS(orte_process_info.my_name)); 
-    
-    vfprintf(stderr, fmt, list);
-    fprintf(stderr, "\n"); 
-    va_end(list); 
-}
-#endif 
-#endif 
-#if 0 
- #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)L
-  #   define BTL_DEBUG_OUT(fmt, ...) {                                           \
-       opal_output(0, "[%s:%d:%s] " fmt "\n", __FILE__, __LINE__, __func__, __VA_ARGS__); \
-       }
-  #else
-   # if defined(__GNUC__) && !defined(__STDC__) 
-     #define BTL_DEBUG_OUT(fmt, args...) {                                           \
-       opal_output(0, "[%s:%d:%s] " fmt "\n", __FILE__, __LINE__, __func__, ##args); \
-      }    
-   #else 
-    static inline void BTL_DEBUG_OUT(char *fmt, ... ) 
-    { 
-      va_list list; 
-      va_start(list, fmt); 
-      fprintf(stderr, "[%s:%d:%s]",  __FILE__, __LINE__, __func__, list);
-      vfprintf(stderr, fmt, list);
-      vfpritnf(stderr, "\n"); 
-      va_end(list); 
-    }
-   #endif 
-  #endif 
-#else 
- #if defined(ACCEPT_C99) && __STDC_VERSION__ >= 199901L
-  #   define BTL_DEBUG_OUT(fmt, ...) 
-  #else
-   # if defined(__GNUC__) && !defined(__STDC__) 
-    #define BTL_DEBUG_OUT(fmt, args...) 
-   #else 
-    static inline void BTL_DEBUG_OUT(char *fmt, ... ) 
-    { 
-    }
-  #endif 
- #endif 
-#endif 
+#define BTL_DEBUG(args) 
+#endif
+
 
 #endif

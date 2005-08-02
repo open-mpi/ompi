@@ -189,8 +189,8 @@ void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t*);
                                                 post_rr_sub_cnt, \
                                                 post_rr_sub_desc_post); \
     if(VAPI_OK != post_rr_sub_frag->ret) { \
-        BTL_ERROR("error posting receive descriptors: %s",\
-                   VAPI_strerror(post_rr_sub_frag->ret)); \
+        BTL_ERROR(("error posting receive descriptors: %s",\
+                   VAPI_strerror(post_rr_sub_frag->ret))); \
     } else {\
         OPAL_THREAD_ADD32(post_rr_sub_rr_posted, post_rr_sub_cnt); \
    }\
@@ -227,7 +227,7 @@ void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t*);
 /*                                    cnt,  */
 /*                                    rr_desc_post); */
 /*     if(VAPI_OK != frag->ret) { */
-/*         BTL_ERROR("error posting receive descriptors: %s", VAPI_strerror(frag->ret)); */
+/*         BTL_ERROR(("error posting receive descriptors: %s", VAPI_strerror(frag->ret))); */
 /*         return OMPI_ERROR;  */
 /*     } */
 /*     OPAL_THREAD_ADD32(rr_posted, cnt);  */

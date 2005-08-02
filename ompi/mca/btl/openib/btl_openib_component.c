@@ -265,7 +265,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         num_devs++; 
     
     if(0 == num_devs) { 
-        BTL_ERROR("No hca's found on this host!"); 
+        BTL_ERROR(("No hca's found on this host!")); 
         return NULL; 
     }
         
@@ -300,12 +300,12 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         
         ib_dev_context = ibv_open_device(ib_dev); 
         if(!ib_dev_context) { 
-            BTL_ERROR(" error obtaining device context for %s errno says %s\n", ibv_get_device_name(ib_dev), strerror(errno)); 
+            BTL_ERROR((" error obtaining device context for %s errno says %s\n", ibv_get_device_name(ib_dev), strerror(errno))); 
             return NULL; 
         } 
        
         if(ibv_query_device(ib_dev_context, &ib_dev_attr)){ 
-            BTL_ERROR("error obtaining device attributes for %s errno says %s\n", ibv_get_device_name(ib_dev), strerror(errno)); 
+            BTL_ERROR(("error obtaining device attributes for %s errno says %s\n", ibv_get_device_name(ib_dev), strerror(errno))); 
             return NULL; 
         } 
         
@@ -316,8 +316,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
             struct ibv_port_attr* ib_port_attr; 
             ib_port_attr = (struct ibv_port_attr*) malloc(sizeof(struct ibv_port_attr)); 
             if(ibv_query_port(ib_dev_context, (uint8_t) j, ib_port_attr)){ 
-                BTL_ERROR("error getting port attributes for device %s port number %d errno says %s", 
-                          ibv_get_device_name(ib_dev), j, strerror(errno)); 
+                BTL_ERROR(("error getting port attributes for device %s port number %d errno says %s", 
+                          ibv_get_device_name(ib_dev), j, strerror(errno))); 
                 return NULL; 
             }
 
@@ -402,7 +402,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                                          &mpool_resources); 
         
         if(NULL == openib_btl->ib_pool) { 
-            BTL_ERROR("error creating vapi memory pool! aborting openib btl initialization"); 
+            BTL_ERROR(("error creating vapi memory pool! aborting openib btl initialization")); 
             return NULL; 
         }
 
@@ -510,27 +510,27 @@ int mca_btl_openib_component_progress()
         do{
             ne=ibv_poll_cq(openib_btl->ib_cq_high, 1, &wc );
             if(ne < 0 ){ 
-                BTL_ERROR("error polling CQ with %d errno says %s\n", ne, strerror(errno)); 
+                BTL_ERROR(("error polling CQ with %d errno says %s\n", ne, strerror(errno))); 
                 return OMPI_ERROR; 
             } 
             else if(wc.status != IBV_WC_SUCCESS) { 
-                BTL_ERROR("error polling CQ with status %d for wr_id %llu\n", 
-                          wc.status, wc.wr_id); 
+                BTL_ERROR(("error polling CQ with status %d for wr_id %llu\n", 
+                          wc.status, wc.wr_id)); 
                 return OMPI_ERROR; 
             }
             else if(1 == ne) { 
-                BTL_DEBUG_OUT("completion queue event says opcode is %d\n", wc.opcode); 
+                BTL_DEBUG(("completion queue event says opcode is %d\n", wc.opcode)); 
 
                 /* Handle work completions */
                 switch(wc.opcode) {
                 case IBV_WC_RECV_RDMA_WITH_IMM: 
-                    BTL_ERROR("Got an RDMA with Immediate data Not supported!"); 
+                    BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
                     return OMPI_ERROR; 
                 
                 case IBV_WC_RECV: 
                     /* Process a RECV */ 
                     
-                    BTL_DEBUG_OUT("Got an  recv on the completion queue"); 
+                    BTL_DEBUG(("Got an  recv on the completion queue")); 
                     frag = (mca_btl_openib_frag_t*) wc.wr_id;
                     endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                     frag->rc=OMPI_SUCCESS; 
@@ -566,7 +566,7 @@ int mca_btl_openib_component_progress()
                     break;
                 
                 default:
-                    BTL_ERROR("Unhandled work completion opcode is %d", wc.opcode);
+                    BTL_ERROR(("Unhandled work completion opcode is %d", wc.opcode));
                     break;
                 }
             }
@@ -575,24 +575,24 @@ int mca_btl_openib_component_progress()
         
         ne=ibv_poll_cq(openib_btl->ib_cq_low, 1, &wc );
         if(ne < 0){ 
-            BTL_ERROR("error polling CQ with %d errno says %s", ne, strerror(errno)); 
+            BTL_ERROR(("error polling CQ with %d errno says %s", ne, strerror(errno))); 
             return OMPI_ERROR; 
         } 
         else if(wc.status != IBV_WC_SUCCESS) { 
-            BTL_ERROR("error polling CQ with status %d for wr_id %llu", 
-                      wc.status, wc.wr_id); 
+            BTL_ERROR(("error polling CQ with status %d for wr_id %llu", 
+                      wc.status, wc.wr_id)); 
             return OMPI_ERROR; 
         }
         else if(1 == ne) {             
             /* Handle n/w completions */
             switch(wc.opcode) {
             case IBV_WC_RECV_RDMA_WITH_IMM: 
-                BTL_ERROR("Got an RDMA with Immediate data Not supported!"); 
+                BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
                 return OMPI_ERROR; 
                 
             case IBV_WC_RECV: 
                 /* process a recv completion (this should only occur for a send not an rdma) */ 
-                BTL_DEBUG_OUT( "Got a recv completion"); 
+                BTL_DEBUG(( "Got a recv completion")); 
                 frag = (mca_btl_openib_frag_t*) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
@@ -624,7 +624,7 @@ int mca_btl_openib_component_progress()
                 break;
                 
             default:
-                BTL_ERROR("Unhandled work completion opcode is %d", wc.opcode);
+                BTL_ERROR(("Unhandled work completion opcode is %d", wc.opcode));
                 break;
             }
         }

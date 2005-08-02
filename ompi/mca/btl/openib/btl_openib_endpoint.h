@@ -188,7 +188,7 @@ void mca_btl_openib_progress_send_frags(mca_btl_openib_endpoint_t*);
         if(ibv_post_recv(post_rr_sub_qp, \
             &post_rr_sub_frag->wr_desc.rr_desc, \
             &post_rr_sub_bad_wr)) { \
-            BTL_ERROR("error posting receive errno says %s\n", strerror(errno)); \
+            BTL_ERROR(("error posting receive errno says %s\n", strerror(errno))); \
             return OMPI_ERROR; \
         }\
     }\

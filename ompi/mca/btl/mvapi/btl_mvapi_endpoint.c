@@ -184,10 +184,10 @@ static int mca_btl_mvapi_endpoint_send_connect_req(mca_btl_base_endpoint_t* endp
          mca_btl_mvapi_endpoint_send_cb, NULL);
     
     
-    BTL_DEBUG_OUT("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
+    BTL_DEBUG(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
-              endpoint->endpoint_btl->port.lid);
+              endpoint->endpoint_btl->port.lid));
     
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
@@ -260,10 +260,10 @@ static int mca_btl_mvapi_endpoint_set_remote_info(mca_btl_base_endpoint_t* endpo
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    BTL_DEBUG_OUT("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+    BTL_DEBUG(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
               endpoint->rem_qp_num_high,
               endpoint->rem_qp_num_low, 
-              endpoint->rem_lid);
+              endpoint->rem_lid));
 
     return ORTE_SUCCESS;
 }
@@ -293,7 +293,7 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
                                                               &endpoint->lcl_qp_hndl_high, 
                                                               &endpoint->lcl_qp_prop_high, 
                                                               VAPI_TS_RC))) {
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
 
@@ -308,19 +308,19 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
                                                               &endpoint->lcl_qp_prop_low, 
                                                               VAPI_TS_RC))) {
         
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
 
-    BTL_DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
-              endpoint->endpoint_btl->port.lid);
+              endpoint->endpoint_btl->port.lid));
 
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_req(endpoint))) {
-        BTL_ERROR("error sending connect request, error code %d", rc); 
+        BTL_ERROR(("error sending connect request, error code %d", rc)); 
         return rc;
     }
     return OMPI_SUCCESS;
@@ -344,7 +344,7 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
                                                               &endpoint->lcl_qp_hndl_high, 
                                                               &endpoint->lcl_qp_prop_high, 
                                                               VAPI_TS_RC))) {
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
 
@@ -358,14 +358,14 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
                                                               &endpoint->lcl_qp_hndl_low, 
                                                               &endpoint->lcl_qp_prop_low, 
                                                               VAPI_TS_RC))) {
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
 
-    BTL_DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
-              endpoint->endpoint_btl->port.lid);
+              endpoint->endpoint_btl->port.lid));
 
 
 
@@ -377,13 +377,13 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
 
     rc = mca_btl_mvapi_endpoint_connect(endpoint);
     if(rc != OMPI_SUCCESS) {
-        BTL_ERROR("error in endpoint connect error code is %d", rc); 
+        BTL_ERROR(("error in endpoint connect error code is %d", rc)); 
         return rc;
     }
 
     /* Send connection info over to remote endpoint */
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_req(endpoint))) {
-        BTL_ERROR("error in endpoint send connect request error code is %d", rc); 
+        BTL_ERROR(("error in endpoint send connect request error code is %d", rc)); 
         return rc;
     }
     return OMPI_SUCCESS;
@@ -446,7 +446,7 @@ static void mca_btl_mvapi_endpoint_recv(
                  * and then reply with our QP information */
 
                 if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_reply_start_connect(ib_endpoint, buffer))) {
-                    BTL_ERROR("error in endpoint reply start connect"); 
+                    BTL_ERROR(("error in endpoint reply start connect")); 
                     break;
                 }
 
@@ -458,7 +458,7 @@ static void mca_btl_mvapi_endpoint_recv(
 
                 mca_btl_mvapi_endpoint_set_remote_info(ib_endpoint, buffer);
                 if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_connect(ib_endpoint))) {
-                    BTL_ERROR("endpoint connect error: %d", rc); 
+                    BTL_ERROR(("endpoint connect error: %d", rc)); 
                     break;
                 }
 
@@ -478,7 +478,7 @@ static void mca_btl_mvapi_endpoint_recv(
             case MCA_BTL_IB_CONNECTED :
                 break;
             default :
-                BTL_ERROR("Invalid endpoint state %d", endpoint_state);
+                BTL_ERROR(("Invalid endpoint state %d", endpoint_state));
             }
 
             break;
@@ -519,7 +519,7 @@ int mca_btl_mvapi_endpoint_send(
     switch(endpoint->endpoint_state) {
         case MCA_BTL_IB_CONNECTING:
 
-            BTL_DEBUG_OUT("Queing because state is connecting");
+            BTL_DEBUG(("Queing because state is connecting"));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -529,7 +529,7 @@ int mca_btl_mvapi_endpoint_send(
 
         case MCA_BTL_IB_CONNECT_ACK:
 
-            BTL_DEBUG_OUT("Queuing because waiting for ack");
+            BTL_DEBUG(("Queuing because waiting for ack"));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -539,7 +539,7 @@ int mca_btl_mvapi_endpoint_send(
 
         case MCA_BTL_IB_CLOSED:
 
-            BTL_DEBUG_OUT("Connection to endpoint closed ... connecting ...");
+            BTL_DEBUG(("Connection to endpoint closed ... connecting ..."));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -558,10 +558,10 @@ int mca_btl_mvapi_endpoint_send(
                 mvapi_btl = endpoint->endpoint_btl;
                 
                 
-                BTL_DEBUG_OUT("Send to : %d, len : %d, frag : %p", 
+                BTL_DEBUG(("Send to : %d, len : %d, frag : %p", 
                               endpoint->endpoint_proc->proc_guid.vpid,
                               frag->sg_entry.len,
-                              frag);
+                              frag));
                 
                 rc = mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag); 
                 
@@ -598,7 +598,7 @@ void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t* endpoint)
         /* We need to post this one */
         
         if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag))
-            BTL_ERROR("error in mca_btl_mvapi_endpoint_send");
+            BTL_ERROR(("error in mca_btl_mvapi_endpoint_send"));
     }
 }
 
@@ -703,7 +703,7 @@ int mca_btl_mvapi_endpoint_create_qp(
                              qp_prop);
   
     if(VAPI_OK != ret) {
-        BTL_ERROR("error creating the queue pair: %s", VAPI_strerror(ret)); 
+        BTL_ERROR(("error creating the queue pair: %s", VAPI_strerror(ret))); 
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -749,11 +749,11 @@ int mca_btl_mvapi_endpoint_qp_init_query(
             &qp_attr, &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
-        BTL_ERROR("Error modifying the queue pair: %s", VAPI_strerror(ret));
+        BTL_ERROR(("Error modifying the queue pair: %s", VAPI_strerror(ret)));
         return OMPI_ERROR;
     }
 
-    BTL_DEBUG_OUT("Modified to init..Qp %d", qp_hndl);
+    BTL_DEBUG(("Modified to init..Qp %d", qp_hndl));
 
     /**********************  INIT --> RTR  ************************/
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -784,11 +784,11 @@ int mca_btl_mvapi_endpoint_qp_init_query(
             &qp_attr, &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
-        BTL_ERROR("Error modifying the queue pair: %s", VAPI_strerror(ret));
+        BTL_ERROR(("Error modifying the queue pair: %s", VAPI_strerror(ret)));
         return OMPI_ERROR;
     }
     
-    BTL_DEBUG_OUT("Modified to RTR..Qp %d", qp_hndl);
+    BTL_DEBUG(("Modified to RTR..Qp %d", qp_hndl));
 
     /************** RTS *******************/
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -811,11 +811,11 @@ int mca_btl_mvapi_endpoint_qp_init_query(
     if(VAPI_OK != ret) {
         return OMPI_ERROR;
     }
-    BTL_DEBUG_OUT("Modified to RTS..Qp %d", qp_hndl);
+    BTL_DEBUG(("Modified to RTS..Qp %d", qp_hndl));
     
     ret = VAPI_query_qp(nic, qp_hndl, &qp_attr, &qp_attr_mask, &qp_init_attr );          
     if (ret != VAPI_OK) {                                                   
-        BTL_ERROR("Error modifying the queue pair: %s", VAPI_strerror(ret));
+        BTL_ERROR(("Error modifying the queue pair: %s", VAPI_strerror(ret)));
         return OMPI_ERROR; 
     }                      
     

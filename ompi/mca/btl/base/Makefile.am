@@ -30,6 +30,7 @@ headers = \
 libmca_btl_base_la_SOURCES = \
         $(headers) \
         btl_base_close.c \
+        btl_base_error.c \
         btl_base_open.c \
         btl_base_select.c
 
