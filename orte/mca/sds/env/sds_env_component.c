@@ -27,7 +27,7 @@
 #include "mca/sds/env/sds_env.h"
 #include "mca/base/mca_base_param.h"
 
-extern orte_sds_base_module_t sds_env_module;
+extern orte_sds_base_module_t orte_sds_env_module;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -81,7 +81,7 @@ orte_sds_env_component_init(int *priority)
     if (NULL == mode || 0 != strcmp("env", mode)) { return NULL; }
 
     *priority = 20;
-    return &sds_env_module;
+    return &orte_sds_env_module;
 }
 
 

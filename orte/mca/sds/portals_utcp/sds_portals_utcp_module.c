@@ -25,7 +25,7 @@
 #include "mca/ns/base/base.h"
 #include "mca/errmgr/base/base.h"
 
-orte_sds_base_module_t sds_portals_utcp_module = {
+orte_sds_base_module_t orte_sds_portals_utcp_module = {
     orte_sds_portals_utcp_contact_universe,
     orte_sds_portals_utcp_set_name,
     orte_sds_portals_utcp_finalize,

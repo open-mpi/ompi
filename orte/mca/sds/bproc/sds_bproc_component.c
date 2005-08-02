@@ -27,7 +27,7 @@
 #include "mca/sds/bproc/sds_bproc.h"
 #include "mca/base/mca_base_param.h"
 
-extern orte_sds_base_module_t sds_bproc_module;
+extern orte_sds_base_module_t orte_sds_bproc_module;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -83,7 +83,7 @@ orte_sds_bproc_component_init(int *priority)
     if (NULL == mode || 0 != strcmp("bproc", mode)) { return NULL; }
 
     *priority = 20;
-    return &sds_bproc_module;
+    return &orte_sds_bproc_module;
 }
 
 

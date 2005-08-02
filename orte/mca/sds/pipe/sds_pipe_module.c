@@ -34,7 +34,7 @@
 #include "mca/sds/base/base.h"
 #include "mca/sds/pipe/sds_pipe.h"
 
-orte_sds_base_module_t sds_pipe_module =  {
+orte_sds_base_module_t orte_sds_pipe_module =  {
     orte_sds_base_basic_contact_universe,
     orte_sds_pipe_set_name,
     orte_sds_pipe_finalize,

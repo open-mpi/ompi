@@ -27,7 +27,7 @@
 #include "mca/sds/pipe/sds_pipe.h"
 #include "mca/base/mca_base_param.h"
 
-extern orte_sds_base_module_t sds_pipe_module;
+extern orte_sds_base_module_t orte_sds_pipe_module;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -83,7 +83,7 @@ orte_sds_pipe_component_init(int *priority)
     if (NULL == mode || 0 != strcmp("pipe", mode)) { return NULL; }
 
     *priority = 20;
-    return &sds_pipe_module;
+    return &orte_sds_pipe_module;
 }
 
 

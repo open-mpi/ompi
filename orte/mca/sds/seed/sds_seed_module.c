@@ -22,7 +22,7 @@
 #include "mca/sds/base/base.h"
 #include "mca/sds/seed/sds_seed.h"
 
-orte_sds_base_module_t sds_seed_module = {
+orte_sds_base_module_t orte_sds_seed_module = {
     orte_sds_base_basic_contact_universe,
     orte_sds_base_seed_set_name,
     orte_sds_seed_finalize,
