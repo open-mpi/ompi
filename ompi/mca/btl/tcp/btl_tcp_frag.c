@@ -1,4 +1,13 @@
 #include "ompi_config.h"
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+#include <unistd.h>
+
 #include "include/ompi_socket_errno.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp_frag.h" 
