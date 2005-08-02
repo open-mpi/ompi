@@ -221,7 +221,7 @@ do {                                                                            
         }                                                                                \
     } else {                                                                             \
         endpoint->btl_free(endpoint->btl,descriptor);                                    \
-    }
+    }                                                                                    \
 } while(0)
 #else
 #define MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, descriptor)                            \

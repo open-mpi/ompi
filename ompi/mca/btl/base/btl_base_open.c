@@ -25,8 +25,6 @@
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h"
 
-int mca_btl_base_debug;
-
 
 /*
  *  mca_btl_base_descriptor_t
