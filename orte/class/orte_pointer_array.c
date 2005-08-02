@@ -355,14 +355,14 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
 
 int orte_pointer_array_set_size(orte_pointer_array_t *array, size_t new_size)
 {
-    OPAL_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(array->lock));
     while (new_size > orte_pointer_array_get_size(array)) {
         if (!grow_table(array)) {
-            OPAL_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(array->lock));
             return ORTE_ERROR;
         }
     }
-    OPAL_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(array->lock));
     return ORTE_SUCCESS;
 }
 
