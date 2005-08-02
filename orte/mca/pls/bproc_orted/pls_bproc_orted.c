@@ -161,8 +161,7 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
         goto cleanup;
     }
     
-    for(i = 0; i < 3; i++)
-    {
+    for(i = 0; i < 3; i++) {
         if(0 > asprintf(&link_path, "%s%s%d", frontend, 
                         orte_system_info.path_sep, i)) {
             rc = ORTE_ERROR;
@@ -230,8 +229,7 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
         goto cleanup;
     }
     
-    for(i = 0; i < 3; i++)
-    {
+    for(i = 0; i < 3; i++) {
         if(0 > asprintf(&link_path, "%s%s%d", frontend, 
                         orte_system_info.path_sep, i)) {
             rc = ORTE_ERROR;
@@ -369,21 +367,18 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
     int master[3];
     int num_procs = 0;
     size_t i;
-    size_t app_context;
     int src = 0;
     orte_buffer_t ack;
     char * param;
     bool connect_stdin;
     char * pty_name = NULL;
 #if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
-    int slave;
     bool pty_error_thrown = false;
     if (NULL == (pty_name = malloc(256))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto cleanup;
     }
 #endif
-
     OBJ_CONSTRUCT(&ack, orte_buffer_t);
 
     rc = bproc_currnode();
@@ -404,20 +399,12 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
         goto cleanup;
     }
 
-    /* look up the app context number. This is necessary since the user
-     * can launch multiple apps on the same node, we have to have a way
-     * to keep them seperate */
-    id = mca_base_param_register_int("pls", "bproc", "app_context", NULL, 0);
-    mca_base_param_lookup_int(id, (int *) &app_context);
-
     /* figure out what processes will be on this node and set up the io files */
     for(item =  opal_list_get_first(&map);
         item != opal_list_get_end(&map);
         item =  opal_list_get_next(item)) {
         mapping = (orte_rmaps_base_map_t *) item;
-        if(mapping->app->idx != app_context) {
-            continue;
-        }
+        num_procs = 0;
         for(i = mapping->num_procs; i > 0; i--) {
             proc = mapping->procs[i - 1];
             if(0 < mca_pls_bproc_orted_component.debug) {
@@ -439,16 +426,16 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
              * warning message then fall back on pipes. */
 #if (! defined(HAVE_OPENPTY)) || (OMPI_ENABLE_PTY_SUPPORT == 0)
             rc = pls_bproc_orted_link_pipes(num_procs, jobid, master,
-                                            connect_stdin, app_context);
+                                            connect_stdin, mapping->app->idx);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 #else /* the user wants to use ptys */
-            if(0 == openpty(&master[0], &slave, pty_name, NULL, NULL)) {
+            if(0 == openpty(&master[0], &id, pty_name, NULL, NULL)) {
                 master[2] = master[1] = master[0];
                 rc = pls_bproc_orted_link_pty(num_procs, pty_name, jobid, 
-                                              connect_stdin, app_context);
+                                              connect_stdin, mapping->app->idx);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
@@ -460,7 +447,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
                     pty_error_thrown = true;
                 }
                 rc = pls_bproc_orted_link_pipes(num_procs, jobid, master,
-                                                connect_stdin, app_context);
+                                                connect_stdin, mapping->app->idx);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
@@ -480,7 +467,6 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
             num_procs++;
         }
     }
-    mca_pls_bproc_orted_component.num_procs = num_procs;
     
     /* post recieve for termination signal */
     rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_SEED, MCA_OOB_TAG_BPROC, 0, 

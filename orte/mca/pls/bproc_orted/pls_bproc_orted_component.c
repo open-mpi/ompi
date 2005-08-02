@@ -57,20 +57,6 @@ orte_pls_bproc_orted_component_t mca_pls_bproc_orted_component = {
     }
 };
 
-
-/**
- *  Convience functions to lookup MCA parameter values.
- */
-static int orte_pls_bproc_orted_param_register_int(const char* param_name, 
-                                                   int default_value)
-{
-    int id = mca_base_param_register_int("pls","bproc_orted",param_name,NULL,
-                                         default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
 /**
  *  Component open function.
  */
@@ -81,10 +67,12 @@ int orte_pls_bproc_orted_component_open(void)
     OBJ_CONSTRUCT(&mca_pls_bproc_orted_component.condition, opal_condition_t);
 
     /* lookup parameters */
-    mca_pls_bproc_orted_component.priority = 
-                           orte_pls_bproc_orted_param_register_int("priority",100);
-    mca_pls_bproc_orted_component.debug = 
-                           orte_pls_bproc_orted_param_register_int("debug",0);
+    mca_base_param_reg_int(&mca_pls_bproc_orted_component.super.pls_version, 
+                           "priority", NULL, false, false, 100,
+                           &mca_pls_bproc_orted_component.priority);
+    mca_base_param_reg_int(&mca_pls_bproc_orted_component.super.pls_version, 
+                           "debug", "If > 0 prints library debugging information",
+                           false, false, 0, &mca_pls_bproc_orted_component.debug);
     return ORTE_SUCCESS;
 }
 

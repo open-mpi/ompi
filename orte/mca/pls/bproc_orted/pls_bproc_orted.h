@@ -53,7 +53,6 @@ struct orte_pls_bproc_orted_component_t {
     orte_pls_base_component_t super;
     int debug;
     int priority;
-    int num_procs;
     opal_mutex_t lock;
     opal_condition_t condition;
 
