@@ -419,9 +419,14 @@ static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, size_t cnt,
     if (NULL == trig->master) {
         sprintf(tmp_out, "\tNO MASTER registered");
     } else {
-        sprintf(tmp_out, "\tTRIGGER MASTER: [%lu,%lu,%lu]@idtag %lu",
-            ORTE_NAME_ARGS(trig->master->requestor),
-            (unsigned long)trig->master->idtag);
+        if (NULL == trig->master->requestor) {
+            sprintf(tmp_out, "\tTRIGGER MASTER: LOCAL@idtag %lu",
+                (unsigned long)trig->master->idtag);
+        } else {
+            sprintf(tmp_out, "\tTRIGGER MASTER: [%lu,%lu,%lu]@idtag %lu",
+                ORTE_NAME_ARGS(trig->master->requestor),
+                (unsigned long)trig->master->idtag);
+        }
     }
     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
     
@@ -547,10 +552,10 @@ static void orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
     tmp = tmp_out;
     
     if (NULL == sub->name) {
-        sprintf(tmp, "\t\tSubscription %lu: UNNAMED",
+        sprintf(tmp, "\nSubscription %lu: UNNAMED",
             (unsigned long) sub->index);
     } else {
-        sprintf(tmp, "\t\tSubscription %lu name %s",
+        sprintf(tmp, "\nSubscription %lu name %s",
                 (unsigned long) sub->index,
                 sub->name);
     }

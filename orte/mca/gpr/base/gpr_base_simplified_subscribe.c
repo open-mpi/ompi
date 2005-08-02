@@ -52,6 +52,7 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
     orte_gpr_trigger_t *trigs;
     orte_gpr_trigger_t trig = { {OBJ_CLASS(opal_object_t),0},
                                  NULL, 0, 0, 0, NULL, 0, NULL };
+    size_t i;
     int rc;
     
     /* assemble the subscription object */
@@ -68,17 +69,32 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
     value.cnt = 1;
     keyvals = &keyval;
     value.keyvals = &keyvals;
+
     value.tokens = tokens;
+    /* must count the number of tokens */
+    if (NULL == tokens) {
+        value.num_tokens = 0;
+    } else {
+        for (i=0; NULL != tokens[i]; i++) {
+            (value.num_tokens)++;
+        }
+    }
 
     keyval.key = key;
 
-    /* assemble the trigger object - all we have here is the name*/
-    trigs = &trig;
-    trig.name = trig_name;
-    
     /* send the subscription */
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
-        ORTE_ERROR_LOG(rc);
+    if (NULL == trig_name) { /* no trigger provided */
+        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 0, NULL))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    
+    } else {
+        trigs = &trig;
+        trig.name = trig_name;
+        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    
     }
     
     /* no memory to cleanup since we didn't allocate anything */
@@ -146,14 +162,28 @@ int orte_gpr_base_subscribe_N(orte_gpr_subscription_id_t *id,
     }
 
     value.tokens = tokens;
+    /* must count the number of tokens */
+    if (NULL == tokens) {
+        value.num_tokens = 0;
+    } else {
+        for (i=0; NULL != tokens[i]; i++) {
+            (value.num_tokens)++;
+        }
+    }
 
-    /* assemble the trigger object - all we have here is the name */
-    trigs = &trig;
-    trig.name = trig_name;
-    
     /* send the subscription */
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
-        ORTE_ERROR_LOG(rc);
+    if (NULL == trig_name) { /* no trigger provided */
+        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 0, NULL))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    
+    } else {
+        trigs = &trig;
+        trig.name = trig_name;
+        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    
     }
     
     /* clean up memory - very carefully!
@@ -193,6 +223,7 @@ int orte_gpr_base_define_trigger(orte_gpr_trigger_id_t *id,
     int rc;
     
     /* assemble the trigger object */
+    trigs = &trig;
     trig.name = trig_name;
     trig.action = action;
     trig.cnt = 1;
@@ -222,6 +253,14 @@ int orte_gpr_base_define_trigger(orte_gpr_trigger_id_t *id,
     }
 
     value.tokens = tokens;
+    /* must count the number of tokens */
+    if (NULL == tokens) {
+        value.num_tokens = 0;
+    } else {
+        for (i=0; NULL != tokens[i]; i++) {
+            (value.num_tokens)++;
+        }
+    }
 
     /* send the subscription */
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(0, NULL, 1, &trigs))) {

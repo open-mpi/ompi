@@ -49,7 +49,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     size_t i;
    
     /* need to protect against errors */
-    if (NULL == subscriptions) {
+    if (NULL == subscriptions && NULL == trigs) { /* need at least one */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
 	    return ORTE_ERR_BAD_PARAM;
     }
@@ -60,19 +60,23 @@ orte_gpr_proxy_subscribe(size_t num_subs,
      * generate id_tag to send to replica to identify lookup entry
      * for each subscription
      */
-    if (ORTE_SUCCESS != (rc = orte_gpr_proxy_enter_subscription(
-                                        num_subs, subscriptions))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-        return rc;
+    if (NULL != subscriptions) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_proxy_enter_subscription(
+                                            num_subs, subscriptions))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+            return rc;
+        }
     }
 
     /* if any triggers were provided, get id tags for them */
-    if (ORTE_SUCCESS != (rc = orte_gpr_proxy_enter_trigger(
-                                        num_trigs, trigs))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-        return rc;
+    if (NULL != trigs) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_proxy_enter_trigger(
+                                            num_trigs, trigs))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+            return rc;
+        }
     }
 
     /* check for compound cmd mode - if on, just pack the info into the
