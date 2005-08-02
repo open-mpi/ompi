@@ -93,7 +93,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     if(ibv_post_send(ib_qp, 
                      &frag->wr_desc.sr_desc, 
                      &bad_wr)) { 
-        BTL_ERROR("error posting send request errno says %s", strerror(errno)); 
+        BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
         return OMPI_ERROR; 
     }
     MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
@@ -206,10 +206,10 @@ static int mca_btl_openib_endpoint_send_connect_req(mca_btl_base_endpoint_t* end
          mca_btl_openib_endpoint_send_cb, NULL);
     
     
-    BTL_DEBUG_OUT("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
+    BTL_DEBUG(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
               endpoint->lcl_qp_high->qp_num,
               endpoint->lcl_qp_low->qp_num,
-              endpoint->endpoint_btl->ib_port_attr->lid);
+              endpoint->endpoint_btl->ib_port_attr->lid));
     
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
@@ -297,10 +297,10 @@ static int mca_btl_openib_endpoint_set_remote_info(mca_btl_base_endpoint_t* endp
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    BTL_DEBUG_OUT("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+    BTL_DEBUG(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
               endpoint->rem_qp_num_high,
               endpoint->rem_qp_num_low, 
-              endpoint->rem_lid);
+              endpoint->rem_lid));
 
     return ORTE_SUCCESS;
 }
@@ -328,7 +328,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
                                                                openib_btl->ib_cq_high, 
                                                                endpoint->lcl_qp_attr_high, 
                                                                &endpoint->lcl_qp_high))) { 
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
     srand48(getpid() * time(NULL));
@@ -340,20 +340,20 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
                                                                openib_btl->ib_cq_low, 
                                                                endpoint->lcl_qp_attr_low, 
                                                                &endpoint->lcl_qp_low))) { 
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
     endpoint->lcl_psn_low = lrand48() & 0xffffff; 
 
-    BTL_DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_high->qp_num,
               endpoint->lcl_qp_low->qp_num, 
-              openib_btl->ib_port_attr->lid); 
+              openib_btl->ib_port_attr->lid)); 
 
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_send_connect_req(endpoint))) {
-        BTL_ERROR("error sending connect request, error code %d", rc); 
+        BTL_ERROR(("error sending connect request, error code %d", rc)); 
         return rc;
     }
     return OMPI_SUCCESS;
@@ -375,7 +375,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
                                                                openib_btl->ib_cq_high,  
                                                                endpoint->lcl_qp_attr_high, 
                                                                &endpoint->lcl_qp_high))) { 
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
     srand48(getpid() * time(NULL));
@@ -387,15 +387,15 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
                                                                openib_btl->ib_cq_low, 
                                                                endpoint->lcl_qp_attr_low, 
                                                                &endpoint->lcl_qp_low))) { 
-        BTL_ERROR("error creating queue pair, error code %d", rc); 
+        BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
     endpoint->lcl_psn_low = lrand48() & 0xffffff; 
 
-    BTL_DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_high->qp_num,
               endpoint->lcl_qp_low->qp_num, 
-              openib_btl->ib_port_attr->lid); 
+              openib_btl->ib_port_attr->lid)); 
 
 
     /* Set the remote side info */
@@ -405,13 +405,13 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
 
     rc = mca_btl_openib_endpoint_connect(endpoint);
     if(rc != OMPI_SUCCESS) {
-        BTL_ERROR("error in endpoint connect error code is %d", rc); 
+        BTL_ERROR(("error in endpoint connect error code is %d", rc)); 
         return rc;
     }
 
     /* Send connection info over to remote endpoint */
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_send_connect_req(endpoint))) {
-        BTL_ERROR("error in endpoint send connect request error code is %d", rc); 
+        BTL_ERROR(("error in endpoint send connect request error code is %d", rc)); 
         return rc;
     }
     return OMPI_SUCCESS;
@@ -476,7 +476,7 @@ static void mca_btl_openib_endpoint_recv(
                  * and then reply with our QP information */
                 
                 if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_reply_start_connect(ib_endpoint, buffer))) {
-                    BTL_ERROR("error in endpoint reply start connect"); 
+                    BTL_ERROR(("error in endpoint reply start connect")); 
                     break;
                 }
                 
@@ -488,7 +488,7 @@ static void mca_btl_openib_endpoint_recv(
 
                 mca_btl_openib_endpoint_set_remote_info(ib_endpoint, buffer);
                 if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_connect(ib_endpoint))) {
-                    BTL_ERROR("endpoint connect error: %d", rc); 
+                    BTL_ERROR(("endpoint connect error: %d", rc)); 
                     break;
                 }
                     
@@ -508,7 +508,7 @@ static void mca_btl_openib_endpoint_recv(
                 
                 break;
             default :
-                BTL_ERROR("Invalid endpoint state %d", endpoint_state);
+                BTL_ERROR(("Invalid endpoint state %d", endpoint_state));
             }
 
             break;
@@ -553,7 +553,7 @@ int mca_btl_openib_endpoint_send(
     switch(endpoint->endpoint_state) {
         case MCA_BTL_IB_CONNECTING:
 
-            BTL_DEBUG_OUT("Queing because state is connecting");
+            BTL_DEBUG(("Queing because state is connecting"));
             
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -563,7 +563,7 @@ int mca_btl_openib_endpoint_send(
 
         case MCA_BTL_IB_CONNECT_ACK:
 
-            BTL_DEBUG_OUT("Queuing because waiting for ack");
+            BTL_DEBUG(("Queuing because waiting for ack"));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -573,7 +573,7 @@ int mca_btl_openib_endpoint_send(
 
         case MCA_BTL_IB_CLOSED:
 
-            BTL_DEBUG_OUT("Connection to endpoint closed ... connecting ...");
+            BTL_DEBUG(("Connection to endpoint closed ... connecting ..."));
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
             rc = mca_btl_openib_endpoint_start_connect(endpoint);
@@ -587,10 +587,10 @@ int mca_btl_openib_endpoint_send(
         case MCA_BTL_IB_CONNECTED:
             {
                 openib_btl = endpoint->endpoint_btl;
-                BTL_DEBUG_OUT("Send to : %d, len : %lu, frag : %llu", 
+                BTL_DEBUG(("Send to : %d, len : %lu, frag : %llu", 
                               endpoint->endpoint_proc->proc_guid.vpid,
                               frag->sg_entry.length,
-                              (unsigned long long) frag);
+                              (unsigned long long) frag));
                 rc = mca_btl_openib_endpoint_post_send(openib_btl, endpoint, frag); 
                 break; 
             }
@@ -628,7 +628,7 @@ void mca_btl_openib_progress_send_frags(mca_btl_openib_endpoint_t* endpoint)
         /* We need to post this one */
         
         if(OMPI_SUCCESS !=  mca_btl_openib_endpoint_post_send(openib_btl, endpoint, frag))
-            BTL_ERROR("Error posting send"); 
+            BTL_ERROR(("Error posting send")); 
     }
 }
 
@@ -716,7 +716,7 @@ int mca_btl_openib_endpoint_create_qp(
         my_qp = ibv_create_qp(pd, &qp_init_attr); 
     
         if(NULL == my_qp) { 
-            BTL_ERROR("error creating qp errno says %s", strerror(errno)); 
+            BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
             return OMPI_ERROR; 
         }
         (*qp) = my_qp; 
@@ -735,7 +735,7 @@ int mca_btl_openib_endpoint_create_qp(
                          IBV_QP_PKEY_INDEX | 
                          IBV_QP_PORT | 
                          IBV_QP_ACCESS_FLAGS )) { 
-            BTL_ERROR("error modifying qp to INIT errno says %s", strerror(errno)); 
+            BTL_ERROR(("error modifying qp to INIT errno says %s", strerror(errno))); 
             return OMPI_ERROR; 
         } 
     } 
@@ -781,7 +781,7 @@ int mca_btl_openib_endpoint_qp_init_query(
                      IBV_QP_RQ_PSN             |
                      IBV_QP_MAX_DEST_RD_ATOMIC |
                      IBV_QP_MIN_RNR_TIMER)) {
-        BTL_ERROR("error modifing QP to RTR errno says %s",  strerror(errno)); 
+        BTL_ERROR(("error modifing QP to RTR errno says %s",  strerror(errno))); 
         return OMPI_ERROR; 
     }
     attr->qp_state 	    = IBV_QPS_RTS;
@@ -797,7 +797,7 @@ int mca_btl_openib_endpoint_qp_init_query(
                       IBV_QP_RNR_RETRY          |
                       IBV_QP_SQ_PSN             |
                       IBV_QP_MAX_QP_RD_ATOMIC)) {
-        BTL_ERROR("error modifying QP to RTS errno says %s", strerror(errno)); 
+        BTL_ERROR(("error modifying QP to RTS errno says %s", strerror(errno))); 
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;

@@ -127,7 +127,7 @@ int mca_btl_mvapi_del_procs(struct mca_btl_base_module_t* btl,
         struct mca_btl_base_endpoint_t ** peers)
 {
     /* Stub */
-    BTL_DEBUG_OUT("Stub\n");
+    BTL_DEBUG(("Stub\n"));
     return OMPI_SUCCESS;
 }
 
@@ -209,7 +209,7 @@ int mca_btl_mvapi_free(
     } else if(frag->size == mca_btl_mvapi_component.eager_limit){ 
         MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
     } else { 
-        BTL_ERROR("invalid descriptor"); 
+        BTL_ERROR(("invalid descriptor")); 
     }
     return OMPI_SUCCESS; 
 }
@@ -288,13 +288,13 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             
             rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR("error removing memory region from memory pool tree"); 
+                BTL_ERROR(("error removing memory region from memory pool tree")); 
                 return NULL; 
             } 
             
             if(is_leave_pinned) { 
                 if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)){ 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
             } 
@@ -315,7 +315,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             
             
             if(rc != OMPI_SUCCESS) { 
-                BTL_ERROR("error inserting memory region into memory pool tree"); 
+                BTL_ERROR(("error inserting memory region into memory pool tree")); 
                 return NULL; 
             } 
 
@@ -329,7 +329,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         else if(is_leave_pinned) { 
             /* the current memory region is large enough and we should leave the memory pinned */  
             if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) {
-                BTL_ERROR("error removing item from reg_mru_list"); 
+                BTL_ERROR(("error removing item from reg_mru_list")); 
                 return NULL; 
             }
         
@@ -391,7 +391,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                     opal_list_remove_first(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
 
@@ -399,7 +399,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 
                 if(OMPI_SUCCESS != rc) { 
-                    BTL_ERROR("error removing memory region from memory pool tree"); 
+                    BTL_ERROR(("error removing memory region from memory pool tree")); 
                     return NULL; 
                 }
                 
@@ -570,7 +570,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
 
             rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
             if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR("error removing memory region from memory pool tree"); 
+                BTL_ERROR(("error removing memory region from memory pool tree")); 
                 return NULL; 
             } 
 
@@ -580,7 +580,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                  */ 
      
                 if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
             }
@@ -599,7 +599,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             
             if(OMPI_SUCCESS != rc) {
-                BTL_ERROR("error inserting memory region into memory pool tree"); 
+                BTL_ERROR(("error inserting memory region into memory pool tree")); 
                 return NULL;
             }
             OBJ_RETAIN(vapi_reg); 
@@ -614,7 +614,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         else if(is_leave_pinned){ 
             /* the current memory region is large enough and we should leave the memory pinned */  
             if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
-                BTL_ERROR("error removing item from reg_mru_list"); 
+                BTL_ERROR(("error removing item from reg_mru_list")); 
                 return NULL; 
             }    
             opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
@@ -639,13 +639,13 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                     opal_list_remove_first(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
-                    BTL_ERROR("error removing item from reg_mru_list"); 
+                    BTL_ERROR(("error removing item from reg_mru_list")); 
                     return NULL; 
                 }
                 
                 rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
                 if(OMPI_SUCCESS !=rc ) { 
-                    BTL_ERROR("error removing memory region from memory pool tree"); 
+                    BTL_ERROR(("error removing memory region from memory pool tree")); 
                     return NULL; 
                 } 
                 
@@ -665,7 +665,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
                                        (void*) (&mvapi_btl->super), 
                                        (mca_mpool_base_registration_t*)  vapi_reg); 
             if(OMPI_SUCCESS != rc){ 
-                BTL_ERROR("error inserting memory region into memory pool"); 
+                BTL_ERROR(("error inserting memory region into memory pool")); 
                 return NULL;
             } 
 
@@ -822,8 +822,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         case VAPI_SEND_QUEUE_DRAINED:
         case VAPI_PORT_ACTIVE:
             {
-                BTL_DEBUG_OUT("Got an asynchronous event: %s\n",
-                        VAPI_event_record_sym(event_p->type));
+                BTL_DEBUG(("Got an asynchronous event: %s\n", VAPI_event_record_sym(event_p->type)));
                 break;
             }
         case VAPI_CQ_ERROR:
@@ -835,14 +834,14 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         case VAPI_LOCAL_CATASTROPHIC_ERROR:
         case VAPI_PORT_ERROR:
             {
-                BTL_ERROR("Got an asynchronous event: %s (%s)",
+                BTL_ERROR(("Got an asynchronous event: %s (%s)",
                           VAPI_event_record_sym(event_p->type),
-                          VAPI_event_syndrome_sym(event_p->syndrome));
+                          VAPI_event_syndrome_sym(event_p->syndrome)));
                 break;
             }
         default:
-            BTL_ERROR("Warning!! Got an undefined "
-                    "asynchronous event");
+            BTL_ERROR(("Warning!! Got an undefined "
+                    "asynchronous event"));
     }
 
 }
@@ -863,7 +862,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
     ret = VAPI_alloc_pd(mvapi_btl->nic, &mvapi_btl->ptag);
     
     if(ret != VAPI_OK) {
-        BTL_ERROR("error in VAPI_alloc_pd: %s", VAPI_strerror(ret));
+        BTL_ERROR(("error in VAPI_alloc_pd: %s", VAPI_strerror(ret)));
         return OMPI_ERROR;
     }
     
@@ -880,7 +879,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
                               &mvapi_btl->srq_hndl_high, 
                               &srq_attr_out); 
         if(ret != VAPI_OK) {
-            BTL_ERROR("error in VAPI_create_srq: %s", VAPI_strerror(ret));
+            BTL_ERROR(("error in VAPI_create_srq: %s", VAPI_strerror(ret)));
             return OMPI_ERROR;
         }
         ret = VAPI_create_srq(mvapi_btl->nic, 
@@ -888,7 +887,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
                               &mvapi_btl->srq_hndl_low, 
                               &srq_attr_out); 
         if(ret != VAPI_OK) {
-            BTL_ERROR("error in VAPI_create_srq: %s", VAPI_strerror(ret));
+            BTL_ERROR(("error in VAPI_create_srq: %s", VAPI_strerror(ret)));
             return OMPI_ERROR;
         }
         
@@ -901,7 +900,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
 
     
     if( VAPI_OK != ret) {  
-        BTL_ERROR("error in VAPI_create_cq: %s", VAPI_strerror(ret));
+        BTL_ERROR(("error in VAPI_create_cq: %s", VAPI_strerror(ret)));
         return OMPI_ERROR;
     }
     
@@ -910,13 +909,13 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
 
     
     if( VAPI_OK != ret) {  
-        BTL_ERROR("error in VAPI_create_cq: %s", VAPI_strerror(ret));
+        BTL_ERROR(("error in VAPI_create_cq: %s", VAPI_strerror(ret)));
         return OMPI_ERROR;
     }
 
     
     if(cqe_cnt <= 0) { 
-        BTL_ERROR("error creating completion queue "); 
+        BTL_ERROR(("error creating completion queue ")); 
         return OMPI_ERROR; 
     } 
 
@@ -924,7 +923,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
             async_event_handler, 0, &mvapi_btl->async_handler);
 
     if(VAPI_OK != ret) {
-        BTL_ERROR("error in EVAPI_set_async_event_handler: %s", VAPI_strerror(ret));
+        BTL_ERROR(("error in EVAPI_set_async_event_handler: %s", VAPI_strerror(ret)));
         return OMPI_ERROR;
     }
     

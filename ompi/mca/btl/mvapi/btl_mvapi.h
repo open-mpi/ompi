@@ -240,10 +240,10 @@ struct mca_btl_mvapi_module_t {
                                              post_srr_sub_desc_post, \
                                              &post_srr_sub_rwqe_posted); \
    if(VAPI_OK != post_srr_sub_frag->ret) { \
-        BTL_ERROR("error posting receive descriptors to shared receive queue: %s",\
-                   VAPI_strerror(post_srr_sub_frag->ret)); \
+        BTL_ERROR(("error posting receive descriptors to shared receive queue: %s",\
+                   VAPI_strerror(post_srr_sub_frag->ret))); \
    } else if(post_srr_sub_rwqe_posted < 1) { \
-       BTL_ERROR("error posting receive descriptors to shared receive queue, number of entries posted is %d", post_srr_sub_rwqe_posted); \
+       BTL_ERROR(("error posting receive descriptors to shared receive queue, number of entries posted is %d", post_srr_sub_rwqe_posted)); \
    } else {\
         OPAL_THREAD_ADD32(post_srr_sub_srr_posted, post_srr_sub_cnt); \
    }\
