@@ -128,6 +128,8 @@ static int split_shorts(opal_cmd_line_t *cmd,
 static cmd_line_option_t *find_option(opal_cmd_line_t *cmd, 
                                       const char *option_name);
 static void set_dest(cmd_line_option_t *option, char *sval);
+static void fill(const cmd_line_option_t *a, char result[3][BUFSIZ]);
+static int qsort_callback(const void *a, const void *b);
 
 
 /*
@@ -475,13 +477,14 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
  */
 char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 {
-    int i, len=MAX_WIDTH * 2, prev_len;
+    int i, len = MAX_WIDTH * 2, prev_len;
     int argc;
+    size_t j;
     char **argv;
     char *ret, temp[MAX_WIDTH * 2], line[MAX_WIDTH * 2];
     char *start, *desc, *ptr;
     opal_list_item_t *item;
-    cmd_line_option_t *option;
+    cmd_line_option_t *option, **sorted;
     bool filled;
 
     /* Thread serialization */
@@ -494,10 +497,25 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     argc = 0;
     argv = NULL;
     ret = NULL;
-    for (item = opal_list_get_first(&cmd->lcl_options); 
+
+    /* First, take the original list and sort it */
+
+    sorted = malloc(sizeof(cmd_line_option_t *) * 
+                    opal_list_get_size(&cmd->lcl_options));
+    if (NULL == sorted) {
+        return NULL;
+    }
+    for (i = 0, item = opal_list_get_first(&cmd->lcl_options); 
          opal_list_get_end(&cmd->lcl_options) != item;
-         item = opal_list_get_next(item)) {
-        option = (cmd_line_option_t *) item;
+         ++i, item = opal_list_get_next(item)) {
+        sorted[i] = (cmd_line_option_t *) item;
+    }
+    qsort(sorted, i, sizeof(cmd_line_option_t*), qsort_callback);
+
+    /* Now go through the sorted array and make the strings */
+
+    for (j = 0; j < opal_list_get_size(&cmd->lcl_options); ++j) {
+        option = sorted[j];
         if (NULL != option->clo_description) {
             
             /* Build up the output line */
@@ -1145,4 +1163,57 @@ static void set_dest(cmd_line_option_t *option, char *sval)
             break;
         }
     }
+}
+
+
+/*
+ * Helper function to qsort_callback
+ */
+static void fill(const cmd_line_option_t *a, char result[3][BUFSIZ])
+{
+    int i = 0;
+
+    result[0][0] = '\0';
+    result[1][0] = '\0';
+    result[2][0] = '\0';
+
+    if ('\0' != a->clo_short_name) {
+        snprintf(&result[i][0], BUFSIZ, "%c", a->clo_short_name);
+        ++i;
+    }
+    if (NULL != a->clo_single_dash_name) {
+        snprintf(&result[i][0], BUFSIZ, "%s", a->clo_single_dash_name);
+        ++i;
+    }
+    if (NULL != a->clo_long_name) {
+        snprintf(&result[i][0], BUFSIZ, "%s", a->clo_long_name);
+        ++i;
+    }
+}
+
+
+static int qsort_callback(const void *aa, const void *bb)
+{
+    int ret, i;
+    char str1[3][BUFSIZ], str2[3][BUFSIZ];
+    const cmd_line_option_t *a = *((const cmd_line_option_t**) aa);
+    const cmd_line_option_t *b = *((const cmd_line_option_t**) bb);
+
+    /* Icky comparison of command line options.  There are multiple
+       forms of each command line option, so we first have to check
+       which forms each option has.  Compare, in order: short name,
+       single-dash name, long name. */
+
+    fill(a, str1);
+    fill(b, str2);
+
+    for (i = 0; i < 3; ++i) {
+        if (0 != (ret = strcasecmp(str1[i], str2[i]))) {
+            return ret;
+        }
+    }
+
+    /* Shrug -- they must be equal */
+
+    return 0;
 }
