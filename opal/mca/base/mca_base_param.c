@@ -1061,6 +1061,17 @@ static int param_register(const char *type_name,
          value in the old entry) */
 
       OBJ_DESTRUCT(&param);
+
+      /* Finally, if we have a lookup value, look it up */
+      
+      if (NULL != current_value) {
+          if (!param_lookup(i, current_value, NULL)) {
+              return OMPI_ERR_NOT_FOUND;
+          }
+      }
+
+      /* Return the new index */
+
       return i;
     }
   }
