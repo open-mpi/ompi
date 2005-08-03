@@ -22,6 +22,15 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
+#ifndef TIOCGWINSZ
+#include <sys/ioctl.h>
+#endif
 
 #include "tools/ompi_info/ompi_info.h"
 
@@ -32,7 +41,7 @@ using namespace ompi_info;
 
 
 //
-// Private variables
+// Private variables - set some reasonable screen size defaults
 //
 
 static int centerpoint = 24;
@@ -48,9 +57,17 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
 #ifdef HAVE_ISATTY
   // If we have isatty(), if this is not a tty, then disable
   // wrapping for grep-friendly behavior
-
-  if (0 == isatty(0)) {
+  if (0 == isatty(STDOUT_FILENO)) {
       screen_width = INT_MAX;
+  }
+#endif
+
+#ifdef TIOCGWINSZ
+  if (screen_width < INT_MAX) {
+      struct winsize size;
+      if (ioctl(STDOUT_FILENO, TIOCGWINSZ, (char*) &size) >= 0) {
+          screen_width = size.ws_col;
+      }
   }
 #endif
 
