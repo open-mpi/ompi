@@ -27,8 +27,7 @@ sources = \
     btl_tcp_frag.c \
     btl_tcp_frag.h \
     btl_tcp_proc.c \
-    btl_tcp_proc.h \
-    btl_tcp_error.h
+    btl_tcp_proc.h
      
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
