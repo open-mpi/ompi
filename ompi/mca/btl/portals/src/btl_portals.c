@@ -405,7 +405,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     }
 
     /* setup the memory descriptor.  RDMA should never need to be
-       retransmitted, so we set the threshold for the 2 events it will
+       retransmitted, so we set the threshold for the event it will
        receive (PUT/GET START and END).  No need to track the unlinks
        later :) */
     md.start = frag->segment.seg_addr.pval;

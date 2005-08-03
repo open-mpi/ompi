@@ -78,37 +78,11 @@ static opal_output_stream_t portals_output_stream = {
     "btl-portals"   /* file suffix */
 };
 
-
-static inline char*
-param_register_string(const char* param_name, 
-                      const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("btl", "portals",
-                                            param_name, NULL, 
-                                            default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-
-static inline int
-param_register_int(const char* param_name, 
-                   int default_value)
-{
-    int id = mca_base_param_register_int("btl", "portals", param_name,
-                                         NULL, default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id, &param_value);
-    return param_value;
-}
-
-
-
 int
 mca_btl_portals_component_open(void)
 {
     int i;
+    int dummy;
 
     /* initialize component state */
     mca_btl_portals_component.portals_num_modules = 0;
@@ -120,50 +94,117 @@ mca_btl_portals_component_open(void)
 
     /* get configured state for component */
 #if OMPI_BTL_PORTALS_UTCP
-    mca_btl_portals_component.portals_ifname = 
-        param_register_string("ifname", "eth0");
+    mca_base_param_reg_string(&mca_btl_portals_component.super.btl_version,
+                              "ifname",
+                              "Interface name to use for communication",
+                              false,
+                              false,
+                              "eth0",
+                              &(mca_btl_portals_component.portals_ifname));
 #endif
-    mca_btl_portals_component.portals_free_list_init_num = 
-        param_register_int("free_list_init_num",
-                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
-    mca_btl_portals_component.portals_free_list_max_num = 
-        param_register_int("free_list_max_num",
-                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
-    mca_btl_portals_component.portals_free_list_inc_num = 
-        param_register_int("free_list_inc_num",
-                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM);
+
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "free_list_init_num",
+                           "Initial number of elements to initialize in free lists",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM,
+                           &(mca_btl_portals_component.portals_free_list_init_num));
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "free_list_max_num",
+                           "Max number of elements to initialize in free lists",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM,
+                           &(mca_btl_portals_component.portals_free_list_max_num));
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "free_list_inc_num",
+                           "Increment count for free lists",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM,
+                           &(mca_btl_portals_component.portals_free_list_inc_num));
 
     /* start up debugging output */
-    portals_output_stream.lds_verbose_level = 
-        param_register_int("debug_level",
-                           OMPI_BTL_PORTALS_DEFAULT_DEBUG_LEVEL);
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "debug_level",
+                           "Debugging verbosity (0 - 100)",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_DEBUG_LEVEL,
+                           &(portals_output_stream.lds_verbose_level));
     asprintf(&(portals_output_stream.lds_prefix), 
              "btl: portals (%5d): ", getpid());
     mca_btl_portals_component.portals_output = 
         opal_output_open(&portals_output_stream);
 
     /* fill default module state */
-    mca_btl_portals_module.super.btl_eager_limit = 
-        param_register_int("eager_limit",
-                           OMPI_BTL_PORTALS_DEFAULT_EAGER_LIMIT);
-    mca_btl_portals_module.super.btl_min_send_size = 
-        param_register_int("min_send_size",
-                           OMPI_BTL_PORTALS_DEFAULT_MIN_SEND_SIZE);
-    mca_btl_portals_module.super.btl_max_send_size = 
-        param_register_int("max_send_size",
-                           OMPI_BTL_PORTALS_DEFAULT_MAX_SEND_SIZE);
-    mca_btl_portals_module.super.btl_min_rdma_size = 
-        param_register_int("min_rdma_size",
-                           OMPI_BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE);
-    mca_btl_portals_module.super.btl_max_rdma_size = 
-        param_register_int("max_rdma_size",
-                           OMPI_BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE);
-    mca_btl_portals_module.super.btl_exclusivity = 
-        param_register_int("exclusivity", 60);
-    mca_btl_portals_module.super.btl_latency = 
-        param_register_int("latency", 0);
-    mca_btl_portals_module.super.btl_bandwidth = 
-        param_register_int("bandwidth", 1000);
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "eager_limit",
+                           "Maximum size for eager frag",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_EAGER_LIMIT,
+                           &dummy);
+    mca_btl_portals_module.super.btl_eager_limit = dummy;
+
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "min_send_size",
+                           "Minimum size for a send frag",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_MIN_SEND_SIZE,
+                           &dummy);
+    mca_btl_portals_module.super.btl_min_send_size = dummy;
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "max_send_size",
+                           "Maximum size for a send frag",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_MAX_SEND_SIZE,
+                           &dummy);
+    mca_btl_portals_module.super.btl_max_send_size = dummy;
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "min_rdma_size",
+                           "Minimum size for a rdma frag",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE,
+                           &dummy);
+    mca_btl_portals_module.super.btl_min_rdma_size = dummy;
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "max_rdma_size",
+                           "Maximum size for a rdma frag",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE,
+                           &dummy);
+    mca_btl_portals_module.super.btl_max_rdma_size = dummy;
+
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "exclusivity",
+                           "Exclusivity level for selection process",
+                           false,
+                           false,
+                           60,
+                           &dummy);
+    mca_btl_portals_module.super.btl_exclusivity = dummy;
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "latency",
+                           "Latency level for short message scheduling",
+                           false,
+                           false,
+                           0,
+                           &dummy);
+    mca_btl_portals_module.super.btl_latency = dummy;
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "bandwidth",
+                           "Bandwidth level for frag scheduling",
+                           false,
+                           false,
+                           1000,
+                           &dummy);
+    mca_btl_portals_module.super.btl_bandwidth = dummy;
 
     mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
 
@@ -176,28 +217,49 @@ mca_btl_portals_component_open(void)
     }
     /* eq handles will be created when the module is instantiated.
        Set sizes here */
-    mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RECV] =
-        param_register_int("eq_recv_size", 
-                           OMPI_BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE);
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "eq_recv_size",
+                           "Size of the receive event queue",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE,
+                           &(mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RECV]));
 
-    mca_btl_portals_module.portals_max_outstanding_sends = 
-        param_register_int("eq_send_max_pending", 
-                           OMPI_BTL_PORTALS_MAX_SENDS_PENDING) * 3;
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "eq_send_max_pending",
+                           "Maximum number of pending send frags",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_MAX_SENDS_PENDING,
+                           &(mca_btl_portals_module.portals_max_outstanding_sends));
     /* sends_pending * 3 for start, end, ack */
     mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_SEND] = 
         mca_btl_portals_module.portals_max_outstanding_sends * 3;
 
-    mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RDMA] =
-        param_register_int("eq_rdma_size", 512); /* BWB - FIXME - make param */
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "eq_rdma_size",
+                           "Size of the rdma event queue",
+                           false,
+                           false,
+                           512,
+                           &(mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RDMA]));
 
     mca_btl_portals_module.portals_recv_reject_me_h = PTL_INVALID_HANDLE;
 
-    mca_btl_portals_module.portals_recv_mds_num = 
-        param_register_int("recv_md_num",
-                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_NUM);
-    mca_btl_portals_module.portals_recv_mds_size =
-        param_register_int("recv_md_size", 
-                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_SIZE);
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "recv_md_num",
+                           "Number of send frag receive descriptors",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_NUM,
+                           &(mca_btl_portals_module.portals_recv_mds_num));
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "recv_md_size",
+                           "Size of send frag receive descriptors",
+                           false,
+                           false,
+                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_SIZE,
+                           &(mca_btl_portals_module.portals_recv_mds_size));
 
     mca_btl_portals_module.portals_ni_h = PTL_INVALID_HANDLE;
     mca_btl_portals_module.portals_sr_dropped = 0;
