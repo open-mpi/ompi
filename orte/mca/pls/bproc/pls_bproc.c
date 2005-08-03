@@ -268,7 +268,6 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
     if(0 == mca_pls_bproc_component.num_procs && 
             mca_pls_bproc_component.done_launching) {
         orte_buffer_t ack;
-        orte_process_name_t * proc;
         size_t i;
 
         OBJ_CONSTRUCT(&ack, orte_buffer_t);
@@ -276,7 +275,6 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
         }
-
         for(i = 0; i < mca_pls_bproc_component.num_daemons; i++) {
             proc = orte_pointer_array_get_item(mca_pls_bproc_component.daemon_names, i);
             if(NULL == proc) {
@@ -293,7 +291,9 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
         while(0 < mca_pls_bproc_component.num_daemons) {
              opal_condition_wait(&mca_pls_bproc_component.condition,
                                  &mca_pls_bproc_component.lock);
-        }    
+        } 
+        mca_pls_bproc_component.done_launching = false; 
+        orte_pointer_array_clear(mca_pls_bproc_component.daemon_names); 
     }
     OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
 }
@@ -313,7 +313,7 @@ static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data)
         int rc;
         int src[4] = {-1, -1};
         src[2] = wpid;
-        src[3] = *(int *) data;
+        src[3] = (int) data;
         if(WIFSIGNALED(status)) {
             src[1] = WTERMSIG(status);
         }
@@ -387,7 +387,6 @@ static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd,
  */
 static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) {
     char * var;
-    char * param;
     int rc;
     /* append mca parameters to our environment */
     if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, (int*)num_env, true))) {
@@ -434,9 +433,9 @@ static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) {
     /* because this is bproc, we the user might have had to place some libraries
      * in nonstandard spots on the backend node. To facilitate finding these,
      * send along their LD_LIBRARY_PATH */
-    param = getenv("LD_LIBRARY_PATH");
-    if(NULL != param) {
-        opal_setenv("LD_LIBRARY_PATH", param, true, env);
+    var = getenv("LD_LIBRARY_PATH");
+    if(NULL != var) {
+        opal_setenv("LD_LIBRARY_PATH", var, true, env);
     } 
   
     /* overwrite previously specified values with the above settings */
@@ -616,7 +615,7 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
             }
             free(param);
             rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb, 
-                              &daemon_list[i]);
+                              (int *) daemon_list[i]);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -635,9 +634,27 @@ cleanup:
     if(NULL != orted_path) {
         free(orted_path);
     }
+    if(NULL != daemon_list) {
+        free(daemon_list);
+    }
+    
     return rc;
 }
 
+/**
+ * Launches the application processes
+ * @param cellid         the cellid of the job
+ * @param jobid          the jobid of the job
+ * @param map            a pointer to the mapping of this application
+ * @param num_processes  the number of processes in this job
+ * @param vpid_start     the starting vpid for this app context
+ * @param global_vpid_start the starting vpid for the user's processes
+ * @param app_context    the application context number
+ * @param node_array     the node array for this context
+ * @param node_array_len the length of the node array
+ * @retval ORTE_SUCCESS
+ * @retval error 
+ */
 static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid, 
                                      orte_rmaps_base_map_t* map, int num_processes,
                                      orte_vpid_t vpid_start, 
@@ -754,10 +771,17 @@ cleanup:
 }
 
 /**
- * 1. Launch the deamons on the backend nodes. 
- * 2. The daemons setup files for io forwarding then connect back to us to 
- *    tells us they are ready for the actual apps.
- * 3. Launch the apps on the backend nodes
+ * The main bproc launcher. See pls_bproc.h for a high level overview of how
+ * the bproc launching works.
+ * Here we:
+ *  1. Launch the deamons on the backend nodes. 
+ *  2. The daemons setup files for io forwarding then connect back to us to 
+ *     tells us they are ready for the actual apps.
+ *  3. Launch the apps on the backend nodes
+ * 
+ * @param jobid the jobid of the job to launch
+ * @retval ORTE_SUCCESS
+ * @retval error
  */
 int orte_pls_bproc_launch(orte_jobid_t jobid) {
     opal_list_item_t* item;
@@ -770,8 +794,8 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     orte_vpid_t vpid_start;
     int rc;
     int src[4];
-    int ** node_array;
-    int *  node_array_len;
+    int ** node_array = NULL;
+    int *  node_array_len = NULL;
     int num_processes = 0;
     int context = 0;
     size_t idx, j;
@@ -870,6 +894,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+        free(node_array[context]);
         context++;
         vpid_launch = vpid_start + mca_pls_bproc_component.num_procs;
     }
@@ -879,6 +904,12 @@ cleanup:
     OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
     while(NULL != (item = opal_list_remove_first(&mapping)))
         OBJ_RELEASE(item);
+    if(NULL != node_array) {
+        free(node_array);
+    }
+    if(NULL != node_array_len) {
+        free(node_array_len);
+    }
     OBJ_DESTRUCT(&mapping);
     OBJ_DESTRUCT(&ack);
     return rc;
