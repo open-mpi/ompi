@@ -385,7 +385,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->base.des_flags = 0;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "rdma match posted for frag 0x%x, callback 0x%x, bits %lld",
+                         "rdma dest posted for frag 0x%x, callback 0x%x, bits %lld",
                          frag, frag->base.des_cbfunc, frag->segment.seg_key.key64));
 
     /* create a match entry */
