@@ -59,6 +59,22 @@ extern "C" {
    * string (i.e., the arg parameter) after invoking this function.
    */
 OMPI_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg);
+
+  /**
+   * Append to an argv-style array, but ignore the size of the array.
+   *
+   * @param argv Pointer to an argv array.
+   * @param str Pointer to the string to append.
+   *
+   * @retval OMPI_SUCCESS On success
+   * @retval OMPI_ERROR On failure
+   *
+   * This function is identical to the opal_argv_append() function
+   * except that it does not take a pointer to an argc (integer
+   * representing the size of the array).  This is handy for
+   * argv-style arrays that do not have integers that are actively
+   * maintaing their sizes.
+   */
 OMPI_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
 
   /**
