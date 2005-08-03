@@ -122,17 +122,14 @@ mca_btl_portals_process_rdma(mca_btl_portals_module_t *btl,
                                   OMPI_ERROR);
         } else {
             assert(ev->mlength == frag->segment.seg_len);
-#if 0
-            /* let the PML know we're done... */
-            frag->base.des_cbfunc(&btl->super,
-                                  frag->endpoint,
-                                  &frag->base,
-                                  OMPI_SUCCESS);
-#endif
         }
         break;
 
     default:
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "rdma: unexpected event %d for 0x%x",
+                             ev->type, frag));
+
         break;
     }
 
