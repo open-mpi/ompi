@@ -155,7 +155,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
     /* setup the send */
     md.start = frag->segment.seg_addr.pval;
     md.length = frag->segment.seg_len;
-    md.threshold = 2; /* unlink after start, end, ack */
+    md.threshold = 2; /* unlink after send, ack */
     md.max_size = 0;
     md.options = 0; 
     md.user_ptr = frag; /* keep a pointer to ourselves */
