@@ -60,6 +60,8 @@
 #include "opal/util/output.h"
 
 extern struct opal_event_list opal_signalqueue;
+extern const struct opal_eventop *opal_evsel;
+extern void *opal_evbase;
 
 static short opal_evsigcaught[NSIG];
 static int opal_needrecalc;
@@ -119,11 +121,16 @@ opal_evsignal_add(sigset_t *evsigmask, struct opal_event *ev)
 		errx(1, "%s: OPAL_EV_SIGNAL incompatible use", __func__);
 	evsignal = OPAL_EVENT_SIGNAL(ev);
 
-#if OMPI_ENABLE_PROGRESS_THREADS
-        if (!opal_using_threads()) opal_event_loop(OPAL_EVLOOP_NONBLOCK);
-#else
-        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
-#endif
+        /* force a recalc of the events we are waiting for, otherwise
+           events aren't recalculated until the next time event_loop
+           is called.  Since that might not be for some time, that
+           gives a window where a signal handler *should* be installed
+           but actually is not. */
+        if (opal_evsel->recalc && opal_evsel->recalc(opal_evbase, 0) == -1) {
+            opal_output(0, "opal_event_loop: opal_evsel->recalc() failed.");
+            opal_mutex_unlock(&opal_event_lock);
+            return (-1);
+        }
 
 #ifndef WIN32
 	sigaddset(evsigmask, evsignal);
