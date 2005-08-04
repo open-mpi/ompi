@@ -52,9 +52,10 @@ int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc_name);
  */
 struct orte_pls_rsh_component_t {
     orte_pls_base_component_t super;
-    int debug;
+    bool debug;
+    bool reap;
+    bool assume_same_shell;
     int delay;
-    int reap;
     int priority;
     char** argv;
     int argc;

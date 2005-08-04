@@ -34,6 +34,9 @@
 #endif
 #include <fcntl.h>
 #include <signal.h>
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
 
 #include "orte/include/orte_constants.h"
 #include "orte/util/univ_info.h"
@@ -60,8 +63,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-
-#define NUM_CONCURRENT 128
 
 extern char **environ;
 
@@ -126,7 +127,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
                                           info->jobid,
                                           info->node->node_name,
                                           &map);
-        if(ORTE_SUCCESS != rc) {
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -150,7 +151,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
                 rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name), 
                                            ORTE_PROC_STATE_ABORTED, status);
             }
-            if(ORTE_SUCCESS != rc) {
+            if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
             }
         }
@@ -185,8 +186,9 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-    if(mca_pls_rsh_component.num_children-- >= NUM_CONCURRENT ||
-       mca_pls_rsh_component.num_children == 0) {
+    if (mca_pls_rsh_component.num_children-- >= 
+        mca_pls_rsh_component.num_concurrent ||
+        mca_pls_rsh_component.num_children == 0) {
         opal_condition_signal(&mca_pls_rsh_component.cond);
     }
     OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
@@ -210,12 +212,12 @@ static int orte_pls_rsh_set_node_name(orte_ras_base_node_t* node, orte_jobid_t j
     size_t i;
     int rc;
                                                                                                                   
-    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
                                                                                                                   
-    if(ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens, 
+    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens, 
         node->node_cellid, node->node_name))) {
         ORTE_ERROR_LOG(rc);
         free(jobid_string);
@@ -230,12 +232,12 @@ static int orte_pls_rsh_set_node_name(orte_ras_base_node_t* node, orte_jobid_t j
     value.addr_mode = ORTE_GPR_OVERWRITE;
     value.segment = ORTE_NODE_SEGMENT;
     values[0] = &value;
-                                                                                                                  
+
     rc = orte_gpr.put(1, values);
-    if(ORTE_SUCCESS != rc) {
+    if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
-                                                                                                                  
+
     free(kv_name.key);
     free(jobid_string);
     for(i=0; i<value.num_tokens; i++)
@@ -259,14 +261,17 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int node_name_index1;
     int node_name_index2;
     int proc_name_index;
-    int local_exec_index;
+    int local_exec_index, local_exec_index_end;
     char *jobid_string;
     char *uri, *param;
-    char** argv;
+    char **argv, **tmp;
     int argc;
     int rc;
     int id;
     sigset_t sigs;
+    struct passwd *p;
+    bool remote_bash = false, remote_csh = false;
+    bool local_bash = false, local_csh = false;
     
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
@@ -275,7 +280,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     OBJ_CONSTRUCT(&nodes, opal_list_t);
 
     rc = orte_ras_base_node_query_alloc(&nodes, jobid);
-    if(ORTE_SUCCESS != rc) {
+    if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
 
@@ -284,16 +289,51 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      */
 
     num_nodes = opal_list_get_size(&nodes);
-    if(num_nodes == 0) {
+    if (num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
-    if(ORTE_SUCCESS != rc) {
+    if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
 
     /* need integer value for command line parameter */
     asprintf(&jobid_string, "%lu", (unsigned long) jobid);
+
+    /* What is our local shell? */
+    p = getpwuid(getuid());
+    if (NULL != p) {
+        local_csh = (strstr(p->pw_shell, "csh") != 0) ? true : false;  
+        if ((strstr(p->pw_shell, "bash") != 0) ||
+            (strstr(p->pw_shell, "zsh") != 0)) {
+            local_bash = true;
+        } else {
+            local_bash = false;
+        }
+        if (mca_pls_rsh_component.debug) {
+            opal_output(0, "pls:rsh: local csh: %d, local bash: %d\n", 
+                        local_csh, local_bash);
+        }
+    }
+
+    /* What is our remote shell? */
+    if (mca_pls_rsh_component.assume_same_shell) {
+        remote_bash = local_bash;
+        remote_csh = local_csh;
+        if (mca_pls_rsh_component.debug) {
+            opal_output(0, "pls:rsh: assuming same remote shell as local shell");
+        }
+    } else {
+        /* JMS to be removed/replaced when probe is implemented */
+        opal_output(0, "WARNING: assume_same_shell is false!  %s, %d",
+                    __FILE__, __LINE__);
+        remote_bash = local_bash;
+        remote_csh = local_csh;
+    }
+    if (mca_pls_rsh_component.debug) {
+        opal_output(0, "pls:rsh: remote csh: %d, remote bash: %d\n", 
+                    remote_csh, remote_bash);
+    }
 
     /*
      * Build argv array
@@ -302,6 +342,20 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     argc = mca_pls_rsh_component.argc;
     node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "");  /* placeholder for node name */
+
+    /* Do we need to source .profile on the remote side? */
+
+    if (!(remote_csh || remote_bash)) {
+        int i;
+        tmp = opal_argv_split("( ! [ -e ./.profile ] || . ./.profile;", ' ');
+        if (NULL == tmp) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        for (i = 0; NULL != tmp[i]; ++i) {
+            opal_argv_append(&argc, &argv, tmp[i]);
+        }
+        opal_argv_free(tmp);
+    }
 
     /* add the daemon command (as specified by user) */
     local_exec_index = argc;
@@ -352,7 +406,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     
     /* setup ns contact info */
     opal_argv_append(&argc, &argv, "--nsreplica");
-    if(NULL != orte_process_info.ns_replica_uri) {
+    if (NULL != orte_process_info.ns_replica_uri) {
         uri = strdup(orte_process_info.ns_replica_uri);
     } else {
         uri = orte_rml.get_uri();
@@ -364,7 +418,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
     /* setup gpr contact info */
     opal_argv_append(&argc, &argv, "--gprreplica");
-    if(NULL != orte_process_info.gpr_replica_uri) {
+    if (NULL != orte_process_info.gpr_replica_uri) {
         uri = strdup(orte_process_info.gpr_replica_uri);
     } else {
         uri = orte_rml.get_uri();
@@ -373,6 +427,19 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, param);
     free(uri);
     free(param);
+
+    local_exec_index_end = argc;
+    if (!(remote_csh || remote_bash)) {
+        opal_argv_append(&argc, &argv, ")");
+    }
+    if (mca_pls_rsh_component.debug) {
+        param = opal_argv_join(argv, ' ');
+        if (NULL != param) {
+            opal_output(0, "pls:rsh: final top-level argv:");
+            opal_output(0, "pls:rsh:     %s", param);
+            free(param);
+        }
+    }
 
     /*
      * Iterate through each of the nodes and spin
@@ -394,7 +461,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
         /* initialize daemons process name */
         rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
-        if(ORTE_SUCCESS != rc) {
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -404,49 +471,53 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         printf("Unimplemented feature for windows\n");
         return;
 #if 0
- {
-    /* Do fork the windows way: see opal_few() for example */
-    HANDLE new_process;
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    DWORD process_id;
-
-    ZeroMemory (&si, sizeof(si));
-    ZeroMemory (&pi, sizeof(pi));
-
-    GetStartupInfo (&si);
-    if (!CreateProcess (NULL,
-                        "new process",
-                        NULL,
-                        NULL,
-                        TRUE,
-                        0,
-                        NULL,
-                        NULL,
-                        &si,
-                        &pi)){
-       /* actual error can be got by simply calling GetLastError() */
-       return OMPI_ERROR;
-    }
-    /* get child pid */
-    process_id = GetProcessId(&pi);
-    pid = (int) process_id;
- }
+        {
+            /* Do fork the windows way: see opal_few() for example */
+            HANDLE new_process;
+            STARTUPINFO si;
+            PROCESS_INFORMATION pi;
+            DWORD process_id;
+            
+            ZeroMemory (&si, sizeof(si));
+            ZeroMemory (&pi, sizeof(pi));
+            
+            GetStartupInfo (&si);
+            if (!CreateProcess (NULL,
+                                "new process",
+                                NULL,
+                                NULL,
+                                TRUE,
+                                0,
+                                NULL,
+                                NULL,
+                                &si,
+                                &pi)){
+                /* actual error can be got by simply calling GetLastError() */
+                return OMPI_ERROR;
+            }
+            /* get child pid */
+            process_id = GetProcessId(&pi);
+            pid = (int) process_id;
+        }
 #endif
-
 #else
         pid = fork();
 #endif
-        if(pid < 0) {
+        if (pid < 0) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
 
         /* child */
-        if(pid == 0) {
+        if (pid == 0) {
             char* name_string;
             char** env;
             char* var;
+
+            if (mca_pls_rsh_component.debug) {
+                opal_output(0, "pls:rsh: launching on node %s\n", 
+                            node->node_name);
+            }
 
             /* Is this a local launch?
              *
@@ -458,6 +529,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
              */
             if (0 == strcmp(node->node_name, orte_system_info.nodename) ||
                 opal_ifislocal(node->node_name)) {
+                if (mca_pls_rsh_component.debug) {
+                    opal_output(0, "pls:rsh: %s is a LOCAL node\n", 
+                                node->node_name);
+                }
                 exec_argv = &argv[local_exec_index];
                 exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
 
@@ -475,27 +550,33 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         return ORTE_ERR_NOT_FOUND;
                     }
                 }
+                /* Since this is a local execution, we need to
+                   potentially whack the final ")" in the argv (if
+                   sh/csh conditionals, from above).  Note that we're
+                   modifying the argv[] in the child process, so
+                   there's no need to save this and restore it
+                   afterward -- the parent's argv[] is unmodified. */
+                if (NULL != argv[local_exec_index_end]) {
+                    argv[local_exec_index_end] = NULL;
+                }
             } else {
+                if (mca_pls_rsh_component.debug) {
+                    opal_output(0, "pls:rsh: %s is a REMOTE node\n", 
+                                node->node_name);
+                }
                 exec_argv = argv;
                 exec_path = strdup(mca_pls_rsh_component.path);
             }
         
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, name);
-            if(ORTE_SUCCESS != rc) {
+            if (ORTE_SUCCESS != rc) {
                 opal_output(0, "orte_pls_rsh: unable to create process name");
                 exit(-1);
             }
             argv[proc_name_index] = name_string;
 
-            if (mca_pls_rsh_component.debug > 2) {
-                /* debug output */
-                char* cmd = opal_argv_join(argv, ' ');  
-                opal_output(0, "orte_pls_rsh: %s %s\n", exec_path, cmd);
-                exit(0);
-            } 
-
-            if (mca_pls_rsh_component.debug == 0) {
+            if (!mca_pls_rsh_component.debug) {
                  /* setup stdin */
                 int fd = open("/dev/null", O_RDWR);
                 dup2(fd, 0);
@@ -540,25 +621,40 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
              */
             if (node->node_slots > 0 &&
                 node->node_slots_inuse > node->node_slots) {
+                if (mca_pls_rsh_component.debug) {
+                    opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1");
+                }
                 var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
                 opal_setenv(var, "1", true, &env);
             } else {
+                if (mca_pls_rsh_component.debug) {
+                    opal_output(0, "pls:rsh: not oversubscribed -- setting mpi_yield_when_idle to 0");
+                }
                 var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
                 opal_setenv(var, "0", true, &env);
             }
             free(var);
     
             /* exec the daemon */
+            if (mca_pls_rsh_component.debug) {
+                param = opal_argv_join(exec_argv, ' ');
+                if (NULL != param) {
+                    opal_output(0, "pls:rsh: executing: %s", param);
+                    free(param);
+                }
+            }
             execve(exec_path, exec_argv, env);
-            opal_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);
+            opal_output(0, "pls:rsh: execv failed with errno=%d\n", errno);
             exit(-1);
 
         } else {
             rsh_daemon_info_t *daemon_info;
 
             OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-            if(mca_pls_rsh_component.num_children++ >= NUM_CONCURRENT)
-                 opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
+            if (mca_pls_rsh_component.num_children++ >= 
+                mca_pls_rsh_component.num_concurrent) {
+                opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
+            }
             OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
             /* save the daemons name on the node */
@@ -576,7 +672,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             daemon_info->jobid = jobid;
             orte_wait_cb(pid, orte_pls_rsh_wait_daemon, daemon_info);
 
-
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
                 sleep(mca_pls_rsh_component.delay);
@@ -588,7 +683,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
 
 cleanup:
-    while(NULL != (item = opal_list_remove_first(&nodes))) {
+    while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
@@ -608,7 +703,7 @@ static void orte_pls_rsh_terminate_job_rsp(
     void* cbdata)
 {
     int rc;
-    if(ORTE_SUCCESS != (rc = orte_rmgr_base_unpack_rsp(rsp))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_unpack_rsp(rsp))) {
         ORTE_ERROR_LOG(rc);
     }
 }
@@ -623,13 +718,13 @@ static void orte_pls_rsh_terminate_job_cb(
 {
     /* wait for response */
     int rc;
-    if(status < 0) {
+    if (status < 0) {
         ORTE_ERROR_LOG(status);
         OBJ_RELEASE(req);
         return;
     }
 
-    if(0 > (rc = orte_rml.recv_buffer_nb(peer, ORTE_RML_TAG_RMGR_CLNT, 0, orte_pls_rsh_terminate_job_rsp, NULL))) {
+    if (0 > (rc = orte_rml.recv_buffer_nb(peer, ORTE_RML_TAG_RMGR_CLNT, 0, orte_pls_rsh_terminate_job_rsp, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(req);
@@ -647,7 +742,7 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
     size_t i, j, num_values = 0;
     int rc;
                                                                                                                            
-    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -663,11 +758,11 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
         &num_values,
         &values
         );
-    if(rc != ORTE_SUCCESS) {
+    if (rc != ORTE_SUCCESS) {
         free(jobid_string);
         return rc;
     }
-    if(0 == num_values) {
+    if (0 == num_values) {
         rc = ORTE_ERR_NOT_FOUND;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -679,17 +774,17 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
             orte_gpr_keyval_t* keyval = value->keyvals[j];
             orte_buffer_t *cmd = OBJ_NEW(orte_buffer_t);
             int ret;
-            if(cmd == NULL) {
+            if (cmd == NULL) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            if(strcmp(keyval->key, keys[0]) != 0) 
+            if (strcmp(keyval->key, keys[0]) != 0) 
                 continue;
 
             /* construct command */
             ret = orte_rmgr_base_pack_cmd(cmd, ORTE_RMGR_CMD_TERM_JOB, jobid);
-            if(ORTE_SUCCESS != ret) {
+            if (ORTE_SUCCESS != ret) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(cmd);
                 rc = ret;
@@ -697,7 +792,7 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
             }
 
             /* send a terminate message to the bootproxy on each node */
-            if(0 > (ret = orte_rml.send_buffer_nb(
+            if (0 > (ret = orte_rml.send_buffer_nb(
                 &keyval->value.proc, 
                 cmd, 
                 ORTE_RML_TAG_RMGR_SVC, 
@@ -718,9 +813,9 @@ cleanup:
     free(jobid_string);
     free(keys[0]);
                                                                                                                            
-    if(NULL != values) {
+    if (NULL != values) {
         for(i=0; i<num_values; i++) {
-            if(NULL != values[i]) {
+            if (NULL != values[i]) {
                 OBJ_RELEASE(values[i]);
             }
         }
@@ -736,9 +831,9 @@ int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
 
 int orte_pls_rsh_finalize(void)
 {
-    if(mca_pls_rsh_component.reap) {
+    if (mca_pls_rsh_component.reap) {
         OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-        while(mca_pls_rsh_component.num_children > 0) {
+        while (mca_pls_rsh_component.num_children > 0) {
             opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
         }
         OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
@@ -808,8 +903,9 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
     opal_evtimer_add(&event, &tv);
 
     OPAL_THREAD_LOCK(&stack.mutex);
-    while(stack.complete == false)
-         opal_condition_wait(&stack.cond, &stack.mutex);
+    while (stack.complete == false) {
+        opal_condition_wait(&stack.cond, &stack.mutex);
+    }
     OPAL_THREAD_UNLOCK(&stack.mutex);
     OBJ_DESTRUCT(&stack);
     return stack.rc;

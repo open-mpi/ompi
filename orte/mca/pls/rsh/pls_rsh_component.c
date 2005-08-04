@@ -30,6 +30,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
+#include "opal/util/show_help.h"
 #include "mca/pls/pls.h"
 #include "mca/pls/rsh/pls_rsh.h"
 #include "mca/base/mca_base_param.h"
@@ -88,37 +89,13 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
 
 
 
-/**
- *  Convience functions to lookup MCA parameter values.
- */
-
-static  int orte_pls_rsh_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("pls","rsh",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
-static char* orte_pls_rsh_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("pls","rsh",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-
 int orte_pls_rsh_component_open(void)
 {
     char* param;
     char *bname;
     size_t i;
+    int tmp;
+    mca_base_component_t *c = &mca_pls_rsh_component.super.pls_version;
 
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_pls_rsh_component.lock, opal_mutex_t);
@@ -126,21 +103,56 @@ int orte_pls_rsh_component_open(void)
     mca_pls_rsh_component.num_children = 0;
 
     /* lookup parameters */
-    mca_pls_rsh_component.debug = orte_pls_rsh_param_register_int("debug",0);
-    mca_pls_rsh_component.num_concurrent = orte_pls_rsh_param_register_int("num_concurrent",128);
-    if(mca_pls_rsh_component.debug == 0) {
-        int id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
-        int value;
-        mca_base_param_lookup_int(id,&value);
-        mca_pls_rsh_component.debug = (value > 0) ? 1 : 0;
+    mca_base_param_reg_int(c, "debug",
+                           "Whether or not to enable debugging output for the rsh pls component (0 or 1)",
+                           false, false, false, &tmp);
+    mca_pls_rsh_component.debug = tmp;
+    mca_base_param_reg_int(c, "num_concurrent",
+                           "How many pls_rsh_agent instances to invoke concurrently (must be > 0)",
+                           false, false, 128, &tmp);
+    if (tmp <= 0) {
+        opal_show_help("help-pls-rsh.txt", "concurrency-less-than-zero",
+                       true, tmp);
+        tmp = 1;
+    }
+    mca_pls_rsh_component.num_concurrent = tmp;
+    if (mca_pls_rsh_component.debug == 0) {
+        mca_base_param_reg_int_name("orte", "debug",
+                                    "Whether or not to enable debugging output for all ORTE components (0 or 1)",
+                                    false, false, false, &tmp);
+        mca_pls_rsh_component.debug = tmp;
     }
 
-    mca_pls_rsh_component.orted = orte_pls_rsh_param_register_string("orted","orted");
-    mca_pls_rsh_component.priority = orte_pls_rsh_param_register_int("priority",10);
-    mca_pls_rsh_component.delay = orte_pls_rsh_param_register_int("delay",1);
-    mca_pls_rsh_component.reap = orte_pls_rsh_param_register_int("reap",1);
+    mca_base_param_reg_string(c, "orted",
+                              "The command name that the rsh pls component will invoke for the ORTE daemon",
+                              false, false, "orted", 
+                              &mca_pls_rsh_component.orted);
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the rsh pls component",
+                           false, false, 10,
+                           &mca_pls_rsh_component.priority);
+    mca_base_param_reg_int(c, "delay",
+                           "Delay (in seconds) between invocations of the remote agent, but only used when the \"debug\" MCA parameter is true, or the top-level MCA debugging is enabled (otherwise this value is ignored)",
+                           false, false, 1,
+                           &mca_pls_rsh_component.delay);
+    mca_base_param_reg_int(c, "reap",
+                           "If set to 1, wait for all the processes to complete before exiting.  Otherwise, quit immediately -- without waiting for confirmation that all other processes in the job have completed.",
+                           false, false, 1, &tmp);
+    mca_pls_rsh_component.reap = tmp;
+    mca_base_param_reg_int(c, "assume_same_shell",
+                           "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell is (PROBE IS NOT CURRENTLY IMPLEMENTED!).",
+                           false, false, 1, &tmp);
+    mca_pls_rsh_component.assume_same_shell = tmp;
+    /* JMS: To be removed when probe is implemented */
+    if (!mca_pls_rsh_component.assume_same_shell) {
+        opal_show_help("help-pls-rsh.txt", "assume-same-shell-probe-not-implemented", true);
+        mca_pls_rsh_component.assume_same_shell = true;
+    }
 
-    param = orte_pls_rsh_param_register_string("agent","ssh");
+    mca_base_param_reg_string(c, "agent",
+                              "The command used to launch executables on remote nodes (typically either \"rsh\" or \"ssh\")",
+                              false, false, "ssh",
+                              &param);
     mca_pls_rsh_component.argv = opal_argv_split(param, ' ');
     mca_pls_rsh_component.argc = opal_argv_count(mca_pls_rsh_component.argv);
     if (mca_pls_rsh_component.argc > 0) {
