@@ -203,20 +203,21 @@ mca_btl_portals_process_recv(mca_btl_portals_module_t *btl,
            as part of the chunk), fill in the right bits, and call the
            callback */
         OMPI_BTL_PORTALS_FRAG_ALLOC_USER(btl, frag, ret);
-        frag->size = ev->mlength;
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
         frag->base.des_src = NULL;
         frag->base.des_src_cnt = 0;
 
         frag->segment.seg_addr.pval = (((char*) ev->md.start) + ev->offset);
-        frag->segment.seg_len = frag->size;
+        frag->segment.seg_len = ev->mlength;
 
         if (ev->md.length - (ev->offset + ev->mlength) < ev->md.max_size) {
             /* the chunk is full.  It's deactivated automagically, but we
                can't start it up again until everyone is done with it.
                The actual reactivation and all that will happen after the
                free completes the last operation... */
+	    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+				 "marking chunk 0x%x as full", chunk->start));
             chunk->full = true;
             opal_atomic_mb(); 
         }
