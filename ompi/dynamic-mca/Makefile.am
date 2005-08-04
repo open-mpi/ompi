@@ -17,8 +17,8 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
-        allocator \
         common \
+        allocator \
         btl \
         coll \
         io \
