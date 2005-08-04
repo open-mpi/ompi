@@ -281,8 +281,10 @@ int main(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    id = mca_base_param_register_int("orte", "base", "infrastructure", NULL, 0);
-    mca_base_param_set_int(id, 1);
+
+    mca_base_param_reg_int_name("orte_base", "infrastructure",
+                                "Whether we are ORTE infrastructure or an ORTE application",
+                                false, false, 1, NULL);
 
     /* now call orte_init and setup the RTE */
     if (ORTE_SUCCESS != (rc = orte_init())) {
@@ -294,45 +296,59 @@ int main(int argc, char *argv[])
     /* check for daemon flags and push them into the environment
      * since this isn't being automatically done
      */
-    id = mca_base_param_register_int("orte","debug","daemons",NULL,0);
-    mca_base_param_lookup_int(id,&iparam);
+    id = mca_base_param_reg_int_name("orte_debug", "daemons",
+                                     "Whether to debug the ORTE daemons or not",
+                                     false, false, 0, &iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug_daemons",
-                                              "1", true, &environ))) {
+        char *tmp = mca_base_param_environ_variable("orte", "debug", "daemons");
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, "OMPI_MCA_orte_debug_daemons", "1", rc);
+                           orterun_basename, tmp, "1", rc);
+            free(tmp);
             return rc;
         }
+        free(tmp);
     }
-    id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
-    mca_base_param_lookup_int(id,&iparam);
+    id = mca_base_param_reg_int_name("orte", "debug",
+                                     "Top-level ORTE debug switch",
+                                     false, false, 0, &iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug",
-                                              "1", true, &environ))) {
+        char *tmp = mca_base_param_environ_variable("orte", NULL, "debug");
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, "OMPI_MCA_orte_debug", "1", rc);
+                           orterun_basename, tmp, "1", rc);
+            free(tmp);
             return rc;
         }
+        free(tmp);
     }
-    id = mca_base_param_register_int("orte","debug","daemons_file",NULL,0);
-    mca_base_param_lookup_int(id,&iparam);
+    id = mca_base_param_reg_int_name("orte_debug", "daemons_file",
+                                     "Whether want stdout/stderr of daemons to go to a file or not",
+                                     false, false, 0, &iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_debug_daemons_file",
-                                              "1", true, &environ))) {
+        char *tmp = mca_base_param_environ_variable("orte", "debug", 
+                                                    "daemons_file");
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, "OMPI_MCA_orte_debug_daemons_file", "1", rc);
+                           orterun_basename, tmp, "1", rc);
+            free(tmp);
             return rc;
         }
+        free(tmp);
     }
-    id = mca_base_param_register_int("orte","no_daemonize",NULL,NULL,0);
-    mca_base_param_lookup_int(id,&iparam);
+    id = mca_base_param_reg_int_name("orte", "no_daemonize",
+                                     "Whether to properly daemonize the ORTE daemons or not",
+                                     false, false, 0, &iparam);
     if (iparam) {
-        if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_orte_no_daemonize",
-                                              "1", true, &environ))) {
+        char *tmp = mca_base_param_environ_variable("orte", NULL, 
+                                                    "no_daemonize");
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, "OMPI_MCA_orte_no_daemonize", "1", rc);
+                           orterun_basename, tmp, "1", rc);
+            free(tmp);
             return rc;
         }
+        free(tmp);
     }
     
      /* Prep to start the application */
