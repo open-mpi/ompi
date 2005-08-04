@@ -116,10 +116,6 @@ mca_btl_portals_process_rdma(mca_btl_portals_module_t *btl,
         if (ev->ni_fail_type != PTL_NI_OK) {
             opal_output(mca_btl_portals_component.portals_output,
                         "Failure in rdma put end\n");
-            frag->base.des_cbfunc(&btl->super,
-                                  frag->endpoint,
-                                  &frag->base,
-                                  OMPI_ERROR);
         } else {
             assert(ev->mlength == frag->segment.seg_len);
         }
