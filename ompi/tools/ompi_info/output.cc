@@ -28,9 +28,7 @@
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#ifndef TIOCGWINSZ
 #include <sys/ioctl.h>
-#endif
 
 #include "tools/ompi_info/ompi_info.h"
 
