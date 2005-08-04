@@ -80,6 +80,9 @@ mca_btl_portals_activate_chunk(mca_btl_portals_recv_chunk_t *chunk)
        has happened... */
     assert(chunk->pending == 0);
 
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+			 "reactivating chunk 0x%x", chunk->start));
+
     if (NULL == chunk->start) return OMPI_ERROR;
 
     /* create match entry */
