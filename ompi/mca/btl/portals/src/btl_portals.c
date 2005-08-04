@@ -399,7 +399,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                       &me_h);
     if (PTL_OK != ret) {
         opal_output(mca_btl_portals_component.portals_output,
-                    "Error creating recv reject ME: %d", ret);
+                    "Error creating rdma dest ME: %d", ret);
         OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
         return NULL;
     }
@@ -422,7 +422,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                       &md_h);
     if (PTL_OK != ret) {
         opal_output(mca_btl_portals_component.portals_output,
-                    "Error creating recv reject ME: %d", ret);
+                    "Error creating rdma dest MD: %d", ret);
         PtlMEUnlink(me_h);
         OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
         return NULL;
