@@ -221,13 +221,9 @@ MOVEON:
     orte_pointer_array_set_item(cptr->itagvals, i, NULL);
     (cptr->num_itagvals)--;
     
-    /* if the container is now empty, remove it too */
-    if (0 == cptr->num_itagvals) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_release_container(seg, cptr))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
+    /* NOTE: If the container is now empty, *don't* remove it here
+     * This is cause improper recursion if called from orte_gpr_replica_release_container
+     */
     
     return ORTE_SUCCESS;
 }
