@@ -341,23 +341,27 @@ int orte_ras_base_node_delete(opal_list_t* nodes)
 {
     opal_list_item_t* item;
     int rc;
-    
+    size_t num_values, num_tokens;
+    orte_ras_base_node_t* node;
+    char** tokens;
+
+    num_values = opal_list_get_size(nodes);
+    if (0 >= num_values) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
     for(item =  opal_list_get_first(nodes);
         item != opal_list_get_end(nodes);
-        item =  opal_list_get_next(nodes)) {
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
-        char* cellid;
-        char* tokens[3];
+        item =  opal_list_get_next(item)) {
+        node = (orte_ras_base_node_t*)item;
 
-        if(ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&cellid, node->node_cellid))) {
+        /* setup index/keys for this node */
+        rc = orte_schema.get_node_tokens(&tokens, &num_tokens, node->node_cellid, node->node_name);
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
-        /* setup index/keys for this node */
-        tokens[0] = node->node_name;
-        tokens[1] = cellid;
-        tokens[2] = NULL;
 
         rc = orte_gpr.delete_entries(
             ORTE_GPR_TOKENS_AND,

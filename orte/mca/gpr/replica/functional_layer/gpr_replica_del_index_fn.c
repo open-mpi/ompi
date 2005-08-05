@@ -89,23 +89,41 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
                    j < (orte_gpr_replica_globals.srch_cptr)->size; j++) {
         if (NULL != cptr[j]) {
             k++;
-            for (i=0; i < num_keys; i++) {  /* for each provided key */
-                if (ORTE_SUCCESS == orte_gpr_replica_search_container(
-                                            ORTE_GPR_REPLICA_OR,
-                                            key_itags, 1, cptr[j])) {
-                    if (0 < orte_gpr_replica_globals.num_srch_ival) {
-                        /* found this key at least once - delete all
-                         * occurrences
-                         */
-                        ivals = (orte_gpr_replica_itagval_t**)
-                                    (orte_gpr_replica_globals.srch_ival)->addr;
-                        for (n=0, p=0; p < orte_gpr_replica_globals.num_srch_ival &&
-                                       n < (orte_gpr_replica_globals.srch_ival)->size; n++) {
-                            if (NULL != ivals[n]) {
-                                p++;
-                                if (ORTE_SUCCESS != (rc = orte_gpr_replica_delete_itagval(seg, cptr[j], ivals[n]))) {
-                                    ORTE_ERROR_LOG(rc);
-                                    return rc;
+            /* If no keys are provided, then remove entire container  */
+            if (0 < num_tokens && 0 == num_keys){
+                rc = orte_gpr_replica_release_container(seg, cptr[j]);
+                if (ORTE_SUCCESS != rc) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+            else if( 0 < num_keys) {
+                for (i=0; i < num_keys; i++) {  /* for each provided key */
+                    if (ORTE_SUCCESS == orte_gpr_replica_search_container(
+                                                       ORTE_GPR_REPLICA_OR,
+                                                       key_itags, 1, cptr[j])) {
+                        if (0 < orte_gpr_replica_globals.num_srch_ival) {
+                            /* found this key at least once - delete all
+                             * occurrences
+                             */
+                            ivals = (orte_gpr_replica_itagval_t**)
+                                (orte_gpr_replica_globals.srch_ival)->addr;
+                            for (n=0, p=0; p < orte_gpr_replica_globals.num_srch_ival &&
+                                     n < (orte_gpr_replica_globals.srch_ival)->size; n++) {
+                                if (NULL != ivals[n]) {
+                                    p++;
+                                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_delete_itagval(seg, cptr[j], ivals[n]))) {
+                                        ORTE_ERROR_LOG(rc);
+                                        return rc;
+                                    }
+                                    if ( 0 == ((cptr[j])->itagvals)->size) {
+                                        /* If container is empty, remove it */
+                                        rc = orte_gpr_replica_release_container(seg, cptr[j]);
+                                        if (ORTE_SUCCESS != rc) {
+                                            ORTE_ERROR_LOG(rc);
+                                            return rc;
+                                        }
+                                    }
                                 }
                             }
                         }
