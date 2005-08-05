@@ -21,14 +21,16 @@ include $(top_ompi_srcdir)/config/Makefile.options
 sources = \
     btl_tcp.c \
     btl_tcp.h \
+    btl_tcp_addr.h \
     btl_tcp_component.c \
     btl_tcp_endpoint.c \
     btl_tcp_endpoint.h \
     btl_tcp_frag.c \
     btl_tcp_frag.h \
+    btl_tcp_hdr.h \
     btl_tcp_proc.c \
     btl_tcp_proc.h
-     
+
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
