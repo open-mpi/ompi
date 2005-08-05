@@ -64,7 +64,7 @@ mca_ptl_tcp_module_t mca_ptl_tcp_module = {
 /*
  * For each peer process:
  * (1) Lookup/create a parallel structure that represents the TCP state of the peer process.
- * (2) Use the mca_base_modex_recv function determine the endpoints exported by the peer.
+ * (2) Use the mca_pml_base_modex_recv function determine the endpoints exported by the peer.
  * (3) Create a data structure to represent the state of the connection to the peer.
  * (4) Select an address exported by the peer to use for this connection.
  */
