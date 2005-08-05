@@ -58,19 +58,9 @@ static int mca_pml_ob1_add_btls( void );
 int mca_pml_ob1_enable(bool enable)
 {
     int rc;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint32_t proc_arch;
-#endif
 
     if( false == enable ) return OMPI_SUCCESS;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    /* post this processes datatype */
-    proc_arch = ompi_proc_local()->proc_arch;
-    proc_arch = htonl(proc_arch);
-    rc = mca_base_modex_send(&mca_pml_ob1_component.pmlm_version, &proc_arch, sizeof(proc_arch));
-    if (OMPI_SUCCESS != rc) return rc;
-#endif
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
 
     /* requests */
@@ -263,24 +253,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    /* iterate through each of the procs and set the peers architecture */
-    for(p=0; p<nprocs; p++) {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        uint32_t* proc_arch;
-        size_t size = sizeof(uint32_t);
-        rc = mca_base_modex_recv(&mca_pml_ob1_component.pmlm_version, procs[p], 
-            (void**)&proc_arch, &size);
-        if(rc != OMPI_SUCCESS) 
-            return rc;
-        if(size != sizeof(uint32_t))
-            return OMPI_ERROR;
-        procs[p]->proc_arch = ntohl(*proc_arch);
-        free(proc_arch);
-#else
-        procs[p]->proc_arch = ompi_proc_local()->proc_arch;
-#endif
-    }
-    
     /* attempt to add all procs to each ob1 */
     btl_endpoints = (struct mca_btl_base_endpoint_t **)malloc(nprocs * sizeof(struct mca_btl_base_endpoint_t*));
     for(p_index = 0; p_index < mca_pml_ob1.num_btl_modules; p_index++) {

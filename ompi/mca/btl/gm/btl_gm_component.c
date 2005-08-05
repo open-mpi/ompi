@@ -416,7 +416,7 @@ mca_btl_gm_modex_send(void)
         mca_btl_gm_module_t *btl = mca_btl_gm_component.gm_btls[i];
         addrs[i] = btl->gm_addr;
     }
-    rc = mca_base_modex_send (&mca_btl_gm_component.super.btl_version, addrs, size);
+    rc = mca_pml_base_modex_send (&mca_btl_gm_component.super.btl_version, addrs, size);
     free (addrs);
     return rc;
 }

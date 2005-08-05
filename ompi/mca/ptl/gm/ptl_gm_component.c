@@ -223,8 +223,7 @@ mca_ptl_gm_module_store_data_toexchange (void)
 #endif  /* GM_API_VERSION > 0x200 */
         addrs[i].port_id = ptl->local_addr.port_id;
     }
-    rc = mca_base_modex_send (&mca_ptl_gm_component.super.ptlm_version, addrs,
-                              size);
+    rc = mca_pml_base_modex_send (&mca_ptl_gm_component.super.ptlm_version, addrs, size);
     free (addrs);
     return rc;
 }

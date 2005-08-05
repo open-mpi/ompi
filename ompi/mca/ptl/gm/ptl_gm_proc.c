@@ -114,13 +114,13 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
 
     
     /* Extract exposed addresses from remote proc */
-    rc = mca_base_modex_recv (&mca_ptl_gm_component.super.ptlm_version,
-                              ompi_proc, (void **) &ptl_proc->proc_addrs,
-                              &size);
+    rc = mca_pml_base_modex_recv (&mca_ptl_gm_component.super.ptlm_version,
+                                  ompi_proc, (void **) &ptl_proc->proc_addrs,
+                                  &size);
 
     if (rc != OMPI_SUCCESS) {
         opal_output (0,
-                     "[%s:%d] mca_base_modex_recv failed to recv data \n",
+                     "[%s:%d] mca_pml_base_modex_recv failed to recv data \n",
                      __FILE__, __LINE__);
         OBJ_RELEASE (ptl_proc);
         return NULL;

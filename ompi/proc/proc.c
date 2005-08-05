@@ -28,6 +28,7 @@
 #include "orte/util/proc_info.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/datatype/dt_arch.h"
 #include "ompi/datatype/convertor.h"
 
 static opal_list_t  ompi_proc_list;
@@ -53,9 +54,13 @@ void ompi_proc_construct(ompi_proc_t* proc)
     proc->proc_modex = NULL;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 
-    /* FIX - need to determine remote process architecture */
-    proc->proc_convertor = ompi_convertor_create(0, 0);
-    proc->proc_arch = 0;
+    /* By default all processors are supposelly having the same architecture as me. Thus,
+     * by default we run in a homogeneous environment. Later when the registry callback
+     * get fired we will have to set the convertors to the correct architecture.
+     */
+    proc->proc_convertor = ompi_mpi_local_convertor;
+    OBJ_RETAIN( ompi_mpi_local_convertor );
+    proc->proc_arch = ompi_mpi_local_arch;
 
     proc->proc_flags = 0;
 
@@ -70,6 +75,11 @@ void ompi_proc_destruct(ompi_proc_t* proc)
     if (proc->proc_modex != NULL) {
         OBJ_RELEASE(proc->proc_modex);
     }
+    /* As all the convertors are created with OBJ_NEW we can just call OBJ_RELEASE. All, except
+     * the local convertor, will get destroyed at some point here. If the reference count is correct
+     * the local convertor (who has the reference count increased in the datatype) will not get
+     * destroyed here. It will be destroyed later when the ompi_ddt_finalize is called.
+     */
     OBJ_RELEASE( proc->proc_convertor );
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
@@ -94,7 +104,7 @@ int ompi_proc_init(void)
     }
 
     /* find self */
-    for(i=0; i<npeers; i++) {
+    for( i = 0; i < npeers; i++ ) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         proc->proc_name = peers[i];
         if( i == self ) {
@@ -112,6 +122,10 @@ int ompi_proc_init(void)
     if (ORTE_SUCCESS != (rc = setup_registry_callback())) {
         return rc;
     }
+
+    /* Here we have to add to the GPR the information about the current architecture.
+     * TODO: george
+     */
 
     return OMPI_SUCCESS;
 }
@@ -395,6 +409,11 @@ static int setup_registry_callback(void)
         goto cleanup;
     }
 
+    /* Here we have to add another key to the registry to be able to get the information
+     * about the remote architectures.
+     * TODO: George.
+     */
+
     sub.cbfunc = callback;
     sub.user_tag = NULL;
     
@@ -485,6 +504,10 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                 }
             }
         }
+        /* And finally here we have to retrieve the remote architectures and create the convertors
+         * attached to the remote processors depending on the remote architecture.
+         * TODO: George.
+         */
     }
 
     /* unlock */

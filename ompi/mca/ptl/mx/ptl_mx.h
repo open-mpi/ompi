@@ -86,7 +86,7 @@ extern int mca_ptl_mx_component_close(void);
  * the physical devices that are available for the given transport,
  * and create a PTL instance to represent each device. Any addressing
  * information required by peers to reach the device should be published
- * during this function via the mca_base_modex_send() interface.
+ * during this function via the mca_pml_base_modex_send() interface.
  *
  */
 
@@ -177,9 +177,9 @@ extern int mca_ptl_mx_finalize(
  *
  * The mca_ptl_base_module_add_procs_fn_t() is called by the PML to
  * determine the set of PTLs that should be used to reach each process.
- * Any addressing information exported by the peer via the mca_base_modex_send()
+ * Any addressing information exported by the peer via the mca_pml_base_modex_send()
  * function should be available during this call via the corresponding
- * mca_base_modex_recv() function. The PTL may utilize this information to
+ * mca_pml_base_modex_recv() function. The PTL may utilize this information to
  * determine reachability of each peer process.
  *
  * For each process that is reachable by the PTL, the bit corresponding to the index

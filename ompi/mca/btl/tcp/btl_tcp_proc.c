@@ -99,10 +99,10 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
                                                                                                                  
     /* lookup tcp parameters exported by this proc */
-    rc = mca_base_modex_recv( &mca_btl_tcp_component.super.btl_version,
-                  ompi_proc,
-                  (void**)&btl_proc->proc_addrs,
-                  &size);
+    rc = mca_pml_base_modex_recv( &mca_btl_tcp_component.super.btl_version,
+                                  ompi_proc,
+                                  (void**)&btl_proc->proc_addrs,
+                                  &size );
     if(rc != OMPI_SUCCESS) {
         BTL_ERROR(("mca_base_modex_recv: failed with return value=%d", rc));
         OBJ_RELEASE(btl_proc);

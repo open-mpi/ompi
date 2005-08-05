@@ -75,7 +75,7 @@ extern "C" {
    * During the selection process, the MCA framework will effectively
    * perform an "allgather" operation of all modex buffers; every
    * buffer will be available to every peer process (see
-   * mca_base_modex_recv()).
+   * mca_pml_base_modex_recv()).
    *
    * Note that the buffer should not be modified after invoking this
    * fuction; the MCA framework may asynchronously send it to a
@@ -86,8 +86,8 @@ extern "C" {
    * in some format that peer processes will be able to read it,
    * regardless of pointer sizes or endian bias.
    */
-OMPI_DECLSPEC int mca_base_modex_send(mca_base_component_t *source_component, 
-                          const void *buffer, size_t size);
+OMPI_DECLSPEC int mca_pml_base_modex_send(mca_base_component_t *source_component, 
+                                          const void *buffer, size_t size);
 
   /**
    * Receive a module-specific buffer from a corresponding MCA module
@@ -108,7 +108,7 @@ OMPI_DECLSPEC int mca_base_modex_send(mca_base_component_t *source_component,
    * @retval OMPI_ERR_OUT_OF_RESOURCE If no corresponding module buffer is found,
    * or if an error occurs wil returning the buffer to the caller.
    *
-   * This is the corresponding "get" call to mca_base_modex_send().
+   * This is the corresponding "get" call to mca_pml_base_modex_send().
    * After selection, modules can call this function to receive the
    * buffer sent by their corresponding module on the process
    * source_proc.
@@ -119,27 +119,27 @@ OMPI_DECLSPEC int mca_base_modex_send(mca_base_component_t *source_component,
    * buffer.  size will be filled in with the number of instances in
    * the buffer, and count will be filled in with the number of
    * instances.  The total number of bytes in the buffer is (size *
-   * count).  See the explanation in mca_base_modex_send() for why the
+   * count).  See the explanation in mca_pml_base_modex_send() for why the
    * number of bytes is split into two parts.
    */
-OMPI_DECLSPEC int mca_base_modex_recv(mca_base_component_t *dest_component,
-                          ompi_proc_t *source_proc,
-                          void **buffer, size_t *size);
+OMPI_DECLSPEC int mca_pml_base_modex_recv(mca_base_component_t *dest_component,
+                                          ompi_proc_t *source_proc,
+                                          void **buffer, size_t *size);
 
   /*
    * Called to subscribe to registry.
    */
-OMPI_DECLSPEC int mca_base_modex_exchange(void);
+OMPI_DECLSPEC int mca_pml_base_modex_exchange(void);
 
   /**
    *
    */
-OMPI_DECLSPEC int mca_base_modex_init(void);
+OMPI_DECLSPEC int mca_pml_base_modex_init(void);
 
   /**
    *
    */
-OMPI_DECLSPEC int mca_base_modex_finalize(void);
+OMPI_DECLSPEC int mca_pml_base_modex_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -104,11 +104,11 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
                             "contact info: %u, %u", ntohl(info.nid), 
                             ntohl(info.pid));
 
-        ret = mca_base_modex_send(&mca_btl_portals_component.super.btl_version,
-                                  &info, sizeof(ptl_process_id_t));
+        ret = mca_pml_base_modex_send(&mca_btl_portals_component.super.btl_version,
+                                      &info, sizeof(ptl_process_id_t));
         if (OMPI_SUCCESS != ret) {
             opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                "mca_base_modex_send failed: %d", ret);
+                                "mca_pml_base_modex_send failed: %d", ret);
             return ret;
         }
     } else {
@@ -185,15 +185,15 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
         for (i = 0 ; i < nprocs ; ++i) {
             if (proc_self == procs[i]) my_rid = i;
 
-            ret = mca_base_modex_recv(&mca_btl_portals_component.super.btl_version, 
-                                      procs[i], (void**) &info, &size);
+            ret = mca_pml_base_modex_recv(&mca_btl_portals_component.super.btl_version, 
+                                          procs[i], (void**) &info, &size);
             if (OMPI_SUCCESS != ret) {
                 opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                    "mca_base_modex_recv failed: %d", ret);
+                                    "mca_pml_base_modex_recv failed: %d", ret);
                 return ret;
             } else if (sizeof(ptl_process_id_t) != size) {
                 opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                    "mca_base_modex_recv returned size %d, expected %d", 
+                                    "mca_pml_base_modex_recv returned size %d, expected %d", 
                                     size, sizeof(ptl_process_id_t));
                 return OMPI_ERROR;
             }
