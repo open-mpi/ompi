@@ -42,7 +42,7 @@ developer's checkout, you have two main options:
    source tree -- one where the .svn subdirectory is not present.  For
    example:
 
-     shell$ svn co https://svn.open-mpi.org/svn/ompi/trunk ompi
+     shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
      shell$ cd ompi
      shell$ ./autogen.sh
      shell$ mkdir build
