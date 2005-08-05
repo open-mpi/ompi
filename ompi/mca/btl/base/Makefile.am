@@ -25,7 +25,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 # Source code files
 
 headers = \
-        base.h
+        base.h \
+	btl_base_error.h
 
 libmca_btl_base_la_SOURCES = \
         $(headers) \
