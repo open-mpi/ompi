@@ -32,9 +32,9 @@ struct mca_pml_base_ptl_t {
     opal_mutex_t      ptl_cache_lock;  /**< lock for queue access */
     struct mca_ptl_base_module_t* ptl; /**< back pointer to ptl */
 };
-typedef struct mca_pml_base_ptl_t mca_pml_base_ptl_t;
+typedef struct mca_pml_base_ptl_t mca_pml_base_ptl_uniq_t;
 
-OBJ_CLASS_DECLARATION(mca_pml_base_ptl_t);
+OBJ_CLASS_DECLARATION(mca_pml_base_ptl_uniq_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

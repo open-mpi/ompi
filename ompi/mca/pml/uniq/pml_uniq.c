@@ -294,7 +294,7 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
                     NULL != ptl->ptl_request_init &&
                     NULL != ptl->ptl_request_fini) {
                     
-                    mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
+                    mca_pml_base_ptl_uniq_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_uniq_t);
                     ptl_base->ptl = ptl;
                     ptl_base->ptl_cache_size = ptl->ptl_cache_size;
                     ptl->ptl_base = ptl_base;
