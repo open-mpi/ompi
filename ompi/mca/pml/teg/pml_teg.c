@@ -340,7 +340,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
 
         for(n_index = 0; n_index < n_size; n_index++) {
             struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-            struct mca_ptl_base_module_t *ptl = proc_ptl->ptl;
+            mca_ptl_base_module_t *ptl = proc_ptl->ptl;
             double weight;
 
             /* compute weighting factor for this ptl */
@@ -353,17 +353,17 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
             /*
              * save/create ptl extension for use by pml
              */
-            proc_ptl->ptl_base = ptl->ptl_base;
-            if (NULL == proc_ptl->ptl_base && 
+            if (NULL == ptl->ptl_base && 
                 ptl->ptl_cache_bytes > 0 &&
                 NULL != ptl->ptl_request_init &&
                 NULL != ptl->ptl_request_fini) {
 
-                mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
+                mca_pml_teg_ptl_t* ptl_base = OBJ_NEW(mca_pml_teg_ptl_t);
                 ptl_base->ptl = ptl;
                 ptl_base->ptl_cache_size = ptl->ptl_cache_size;
-                proc_ptl->ptl_base = ptl->ptl_base = ptl_base;
+                ptl->ptl_base = (struct mca_pml_base_ptl_t*)ptl_base;
             }
+            proc_ptl->ptl_base = (mca_pml_teg_ptl_t*)ptl->ptl_base;
 
             /* check to see if this ptl is already in the array of ptls used for first
              * fragments - if not add it.

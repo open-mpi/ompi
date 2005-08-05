@@ -43,7 +43,7 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
 {                                                                          \
     mca_pml_proc_t *proc = mca_pml_teg_proc_lookup_remote(comm,dst);       \
     mca_ptl_proc_t* ptl_proc;                                              \
-    mca_pml_base_ptl_t* ptl_base;                                          \
+    mca_pml_teg_ptl_t* ptl_base;                                           \
                                                                            \
     if(NULL == proc) {                                                     \
        return OMPI_ERR_OUT_OF_RESOURCE;                                    \
@@ -125,7 +125,7 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
 #define MCA_PML_TEG_SEND_REQUEST_RETURN(sendreq)                           \
 {                                                                          \
     mca_ptl_base_module_t* ptl = (sendreq)->req_ptl;                       \
-    mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
+    mca_pml_teg_ptl_t* ptl_base = (mca_pml_teg_ptl_t*)ptl->ptl_base;       \
                                                                            \
     /*  Let the base handle the reference counts */                        \
     MCA_PML_BASE_SEND_REQUEST_FINI((&sendreq->req_send));                  \
