@@ -459,7 +459,7 @@ static int mca_btl_tcp_component_exchange(void)
              addrs[i].addr_port    = mca_btl_tcp_component.tcp_listen_port;
              addrs[i].addr_inuse   = 0;
          }
-         rc =  mca_base_modex_send(&mca_btl_tcp_component.super.btl_version, addrs, size);
+         rc =  mca_pml_base_modex_send(&mca_btl_tcp_component.super.btl_version, addrs, size);
          free(addrs);
      }
      return rc;

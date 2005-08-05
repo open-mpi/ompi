@@ -178,7 +178,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* free module exchange resources */
-    if (OMPI_SUCCESS != (ret = mca_base_modex_finalize())) {
+    if (OMPI_SUCCESS != (ret = mca_pml_base_modex_finalize())) {
 	return ret;
     }
 

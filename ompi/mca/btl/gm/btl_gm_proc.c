@@ -116,13 +116,13 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
     gm_proc->proc_guid = ompi_proc->proc_name;
 
     /* query for the peer address info */
-    rc = mca_base_modex_recv(
-        &mca_btl_gm_component.super.btl_version,
-        ompi_proc,
-        (void*)&gm_proc->proc_addrs,
-        &size); 
+    rc = mca_pml_base_modex_recv(
+                 &mca_btl_gm_component.super.btl_version,
+                 ompi_proc,
+                 (void*)&gm_proc->proc_addrs,
+                 &size); 
     if(OMPI_SUCCESS != rc) {
-        opal_output(0, "[%s:%d] mca_base_modex_recv failed for peer [%d,%d,%d]",
+        opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(gm_proc);
         return NULL;

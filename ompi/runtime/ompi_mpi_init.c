@@ -186,8 +186,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Initialize module exchange */
 
-    if (OMPI_SUCCESS != (ret = mca_base_modex_init())) {
-        error = "mca_base_modex_init() failed";
+    if (OMPI_SUCCESS != (ret = mca_pml_base_modex_init())) {
+        error = "mca_pml_base_modex_init() failed";
         goto error;
     }
 
@@ -284,8 +284,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     /* do module exchange */
-    if (OMPI_SUCCESS != (ret = mca_base_modex_exchange())) {
-        error = "ompi_base_modex_exchange() failed";
+    if (OMPI_SUCCESS != (ret = mca_pml_base_modex_exchange())) {
+        error = "mca_pml_base_modex_exchange() failed";
         goto error;
     }
 

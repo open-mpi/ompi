@@ -103,8 +103,8 @@ int mca_ptl_mx_module_init(void)
         mx_decompose_endpoint_addr( ptl->mx_endpoint_addr,
                                     &(endpoint_addrs[i].nic_id), &(endpoint_addrs[i].endpoint_id) );
     }
-    if((rc = mca_base_modex_send( &mca_ptl_mx_component.super.ptlm_version, 
-                                  endpoint_addrs, size )) != OMPI_SUCCESS )
+    if((rc = mca_pml_base_modex_send( &mca_ptl_mx_component.super.ptlm_version, 
+                                      endpoint_addrs, size )) != OMPI_SUCCESS )
         return rc;
     return OMPI_SUCCESS;
 }

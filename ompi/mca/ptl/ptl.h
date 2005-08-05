@@ -56,8 +56,8 @@
  * information required by its peers. An example would be the TCP
  * listen port opened by the TCP module for incoming connection
  * requests. This information is published to peers via the
- * mca_base_modex_send() interface. Note that peer information is not
- * guaranteed to be available via mca_base_modex_recv() during the 
+ * mca_pml_base_modex_send() interface. Note that peer information is not
+ * guaranteed to be available via mca_pml_base_modex_recv() during the 
  * module's init function. However, it will be available during 
  * PTL selection (mca_ptl_base_add_proc_fn_t()).
  *
@@ -304,7 +304,7 @@ typedef enum {
  * the physical devices that are available for the given transport,
  * and create a PTL instance to represent each device. Any addressing 
  * information required by peers to reach the device should be published 
- * during this function via the mca_base_modex_send() interface. 
+ * during this function via the mca_pml_base_modex_send() interface. 
  *
  */
 typedef struct mca_ptl_base_module_t** (*mca_ptl_base_component_init_fn_t)(
@@ -395,9 +395,9 @@ typedef int (*mca_ptl_base_module_finalize_fn_t)(
  *
  * The mca_ptl_base_module_add_procs_fn_t() is called by the PML to 
  * determine the set of PTLs that should be used to reach each process.
- * Any addressing information exported by the peer via the mca_base_modex_send()
+ * Any addressing information exported by the peer via the mca_pml_base_modex_send()
  * function should be available during this call via the corresponding 
- * mca_base_modex_recv() function. The PTL may utilize this information to 
+ * mca_pml_base_modex_recv() function. The PTL may utilize this information to 
  * determine reachability of each peer process. 
  *
  * For each process that is reachable by the PTL, the bit corresponding to the index 
