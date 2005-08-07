@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "support.h"
-#include "components.h"
 
 #include "util/proc_info.h"
 #include "util/sys_info.h"
@@ -46,9 +45,6 @@
 
 /* output files needed by the test */
 static FILE *test_out=NULL;
-
-/* GPR module used by this test */
-static orte_gpr_base_module_t *gpr_module = NULL;
 
 /**
  * Struct for holding information 
@@ -132,10 +128,6 @@ int main(int argc, char **argv)
     opal_list_t nodes;
     test_node_t *node;
     int i, rc;
-    test_component_handle_t handle;
-    mca_gpr_base_component_t *gpr_component = NULL;
-    bool allow, have;
-    int priority;
 
    /*  test_out = fopen( "test_gpr_replica_out", "w+" ); */
     test_out = stderr;
@@ -160,7 +152,7 @@ int main(int argc, char **argv)
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
     /* For malloc debugging */
-    ompi_malloc_init();
+    opal_malloc_init();
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (rc = orte_sys_info())) {
@@ -226,27 +218,23 @@ int main(int argc, char **argv)
         exit (1);
     }
 
-    /* Open the gpr replica component and initialize a module */
-    if (OMPI_SUCCESS != 
-        test_component_open("gpr", "replica", &handle, 
-                            (mca_base_component_t**) &gpr_component) ||
-        NULL == gpr_component) {
-        fprintf(test_out, "Could not open replica\n");
-        exit(1);
-    }
-    gpr_module = gpr_component->gpr_init(&allow, &have, &priority);
-    if (NULL == gpr_module) {
-        fprintf(test_out, "replica component did not return a module\n");
-        exit(1);
-    }
-
-    if (ORTE_SUCCESS == orte_dps_open()) {
-        fprintf(test_out, "DPS started\n");
+    /* startup the registry */
+    if (OMPI_SUCCESS == orte_gpr_base_open()) {
+        fprintf(test_out, "GPR started\n");
     } else {
-        fprintf(test_out, "DPS could not start\n");
+        fprintf(test_out, "GPR could not start\n");
         exit (1);
     }
-    
+
+    /* do a select on the registry components */
+    if (OMPI_SUCCESS == orte_gpr_base_select()) {
+        fprintf(test_out, "GPR selected\n");
+    } else {
+        fprintf(test_out, "GPR could not select\n");
+        exit (1);
+    }
+
+
     /* setup a node list */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     for (i=0; i < 5; i++) {
@@ -271,7 +259,7 @@ int main(int argc, char **argv)
         fprintf(test_out, "initial put of values successful\n");
     }
     
-    gpr_module->dump_all(0);
+    orte_gpr.dump_all(0);
     
     fprintf(test_out, "changing values for overwrite test\n");
     /* change the arch, state, and slots_inuse values */
@@ -294,21 +282,20 @@ int main(int argc, char **argv)
         fprintf(test_out, "second put of values successful\n");
     }
     
-    gpr_module->dump_all(0);
+    orte_gpr.dump_all(0);
     
     fprintf(stderr, "now finalize and see if all memory cleared\n");
     while (NULL != (node = (test_node_t*)opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(node);
     }
     OBJ_DESTRUCT(&nodes);
-    test_component_close(&handle);
     orte_dps_close();
     orte_sys_info_finalize();
     orte_proc_info_finalize();
     mca_base_close();
-    ompi_malloc_finalize();
+    opal_malloc_finalize();
     opal_output_finalize();
-    ompi_class_finalize();
+    opal_class_finalize();
     
     fclose( test_out );
 
@@ -426,7 +413,7 @@ int test_overwrite(opal_list_t* nodes)
     }
     
     /* try the insert */
-    rc = gpr_module->put(num_values, values);
+    rc = orte_gpr.put(num_values, values);
 
     for (j=0; j < num_values; j++) {
           OBJ_RELEASE(values[j]);
