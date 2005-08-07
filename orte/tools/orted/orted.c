@@ -249,8 +249,8 @@ int main(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    ret = mca_base_param_register_int("orte", "base", "infrastructure", NULL, 0);
-    mca_base_param_set_int(ret, 1);
+    ret = mca_base_param_register_int("orte", "base", "infrastructure", NULL, (int)false);
+    mca_base_param_set_int(ret, (int)true);
 
     if (ORTE_SUCCESS != (ret = orte_init())) {
         opal_show_help("help-orted.txt", "orted:init-failure", false,
