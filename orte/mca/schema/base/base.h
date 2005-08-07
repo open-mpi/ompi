@@ -64,6 +64,9 @@ int orte_schema_base_store_my_info(void);
 int orte_schema_base_get_std_trigger_name(char **name,
                                           char *trigger,
                                           orte_jobid_t jobid);
+bool orte_schema_base_check_std_trigger_name(char *name, char *trig);
+int orte_schema_base_extract_jobid_from_std_trigger_name(orte_jobid_t *jobid,
+                                                         char *trig);
 int orte_schema_base_get_std_subscription_name(char **name,
                                                char *subscription,
                                                orte_jobid_t jobid);
