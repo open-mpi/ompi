@@ -64,36 +64,49 @@ OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_proxy_component = {
 /*
  * setup the function pointers for the module
  */
-static mca_ns_base_module_t orte_ns_proxy = {
+static mca_ns_base_module_t orte_ns_proxy_module = {
+    /* init */
     orte_ns_proxy_module_init,
+    /* cell functions */
     orte_ns_proxy_create_cellid,
+    orte_ns_base_get_cellid,
     orte_ns_proxy_get_cell_info,
     orte_ns_base_assign_cellid_to_process,
+    orte_ns_base_get_cellid_string,
+    orte_ns_base_convert_cellid_to_string,
+    orte_ns_base_convert_string_to_cellid,
+    /* jobid functions */
     orte_ns_proxy_create_jobid,
+    orte_ns_base_get_jobid,
+    orte_ns_base_get_jobid_string,
+    orte_ns_base_convert_jobid_to_string,
+    orte_ns_base_convert_string_to_jobid,
+    /* vpid functions */
+    orte_ns_proxy_reserve_range,
+    orte_ns_base_get_vpid,
+    orte_ns_base_get_vpid_string,
+    orte_ns_base_convert_vpid_to_string,
+    orte_ns_base_convert_string_to_vpid,
+    /* name functions */
     orte_ns_base_create_process_name,
     orte_ns_proxy_create_my_name,
     orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
-    orte_ns_proxy_reserve_range,
     orte_ns_base_free_name,
     orte_ns_base_get_proc_name_string,
-    orte_ns_base_get_vpid_string,
-    orte_ns_base_convert_vpid_to_string,
-    orte_ns_base_convert_string_to_vpid,
-    orte_ns_base_get_jobid_string,
-    orte_ns_base_convert_jobid_to_string,
-    orte_ns_base_convert_string_to_jobid,
-    orte_ns_base_get_cellid_string,
-    orte_ns_base_convert_cellid_to_string,
-    orte_ns_base_convert_string_to_cellid,
-    orte_ns_base_get_vpid,
-    orte_ns_base_get_jobid,
-    orte_ns_base_get_cellid,
     orte_ns_base_compare,
-    orte_ns_base_derive_vpid,
+    /* peer functions */
+    orte_ns_base_get_peers,
+    orte_ns_proxy_get_job_peers,
+    /* tag server functions */
     orte_ns_proxy_assign_rml_tag,
+    /* data type functions */
     orte_ns_proxy_define_data_type,
-    orte_ns_base_get_peers
+    /* diagnostic functions */
+    orte_ns_proxy_dump_cells,
+    orte_ns_proxy_dump_jobs,
+    orte_ns_proxy_dump_tags,
+    orte_ns_proxy_dump_datatypes
 };
 
 /*
@@ -122,7 +135,7 @@ static void orte_ns_proxy_cell_info_destructor(orte_ns_proxy_cell_info_t* ptr)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_cell_info_t,  /* type name */
-        opal_list_item_t, /* parent "class" name */
+        opal_object_t, /* parent "class" name */
         orte_ns_proxy_cell_info_construct, /* constructor */
         orte_ns_proxy_cell_info_destructor); /* destructor */
 
@@ -144,7 +157,7 @@ static void orte_ns_proxy_tagitem_destructor(orte_ns_proxy_tagitem_t* tagitem)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_tagitem_t,  /* type name */
-        opal_list_item_t, /* parent "class" name */
+        opal_object_t, /* parent "class" name */
         orte_ns_proxy_tagitem_construct, /* constructor */
         orte_ns_proxy_tagitem_destructor); /* destructor */
 
@@ -166,7 +179,7 @@ static void orte_ns_proxy_dti_destructor(orte_ns_proxy_dti_t* dti)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_dti_t,  /* type name */
-        opal_list_item_t, /* parent "class" name */
+        opal_object_t, /* parent "class" name */
         orte_ns_proxy_dti_construct, /* constructor */
         orte_ns_proxy_dti_destructor); /* destructor */
 
@@ -174,22 +187,28 @@ OBJ_CLASS_INSTANCE(
  * globals needed within proxy component
  */
 
-orte_process_name_t* orte_ns_my_replica=NULL;
-int orte_ns_proxy_debug=0;
-opal_list_t orte_ns_proxy_cell_info_list;
-opal_list_t orte_ns_proxy_taglist;
-opal_list_t orte_ns_proxy_dtlist;
-opal_mutex_t orte_ns_proxy_mutex;
+orte_ns_proxy_globals_t orte_ns_proxy;
+
 
 /*
- * Open the proxy component and obtain the name of my replica.
+ * Open the proxy component and obtain the name of my proxy.
  */
 int orte_ns_proxy_open(void)
 {
-    int id;
+    int id, param;
 
     id = mca_base_param_register_int("ns", "proxy", "debug", NULL, 0);
-    mca_base_param_lookup_int(id, &orte_ns_proxy_debug);
+    mca_base_param_lookup_int(id, &orte_ns_proxy.debug);
+
+    id = mca_base_param_register_int("ns", "proxy", "maxsize", NULL,
+                                     ORTE_NS_ARRAY_MAX_SIZE);
+    mca_base_param_lookup_int(id, &param);
+    orte_ns_proxy.max_size = (size_t)param;
+    
+    id = mca_base_param_register_int("ns", "proxy", "blocksize", NULL,
+                                     ORTE_NS_ARRAY_BLOCK_SIZE);
+    mca_base_param_lookup_int(id, &param);
+    orte_ns_proxy.block_size = (size_t)param;
 
     return ORTE_SUCCESS;
 }
@@ -205,9 +224,9 @@ int orte_ns_proxy_close(void)
 mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
 {
     orte_process_name_t name;
-    int ret;
+    int ret, rc;
     
-    /* If we are NOT to host a replica, then we want to be selected, so do all
+    /* If we are NOT to host a proxy, then we want to be selected, so do all
        the setup and return the module */
     /*    opal_output(mca_ns_base_output, "ns_proxy: entered init\n"); */
     if (NULL != orte_process_info.ns_replica_uri) {
@@ -219,7 +238,7 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
         
         	*priority = 10;
         
-        	/* define the replica for us to use */
+        	/* define the proxy for us to use */
            if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.ns_replica_uri, &name, NULL))) {
                ORTE_ERROR_LOG(ret);
                return NULL;
@@ -228,24 +247,51 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
                ORTE_ERROR_LOG(ret);
                return NULL;
            }
-        	if (ORTE_SUCCESS != orte_ns_base_copy_process_name(&orte_ns_my_replica,
+        	if (ORTE_SUCCESS != orte_ns_base_copy_process_name(&orte_ns_proxy.my_replica,
                                 orte_process_info.ns_replica)) {  /* can't operate */
         	    return NULL;
         	}
         
-        /* initialize the cell info list */
-        OBJ_CONSTRUCT(&orte_ns_proxy_cell_info_list, opal_list_t);
+          /* initialize the cell info tracker */
+          if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.cells),
+                                    orte_ns_proxy.block_size,
+                                    orte_ns_proxy.max_size,
+                                    orte_ns_proxy.block_size))) {
+                ORTE_ERROR_LOG(rc);
+                return NULL;
+            }
+            orte_ns_proxy.num_cells = 0;
+        
     
-        /* initialize the taglist */
-        OBJ_CONSTRUCT(&orte_ns_proxy_taglist, opal_list_t);
+          /* initialize the taglist */
     
-        /* initialize the dtlist */
-        OBJ_CONSTRUCT(&orte_ns_proxy_dtlist, opal_list_t);
+          if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.tags),
+                                    orte_ns_proxy.block_size,
+                                    orte_ns_proxy.max_size,
+                                    orte_ns_proxy.block_size))) {
+                ORTE_ERROR_LOG(rc);
+                return NULL;
+            }
+            orte_ns_proxy.num_tags = 0;
     
+          /* initialize the dtlist */
+    
+          if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.dts),
+                                    orte_ns_proxy.block_size,
+                                    orte_ns_proxy.max_size,
+                                    orte_ns_proxy.block_size))) {
+                ORTE_ERROR_LOG(rc);
+                return NULL;
+            }
+            orte_ns_proxy.num_dts = 0;
+
+          /* setup the thread lock */
+          OBJ_CONSTRUCT(&orte_ns_proxy.mutex, opal_mutex_t);
+      
     	    /* Return the module */
     
     	   initialized = true;
-    	   return &orte_ns_proxy;
+    	   return &orte_ns_proxy_module;
         
     } else {
 	   return NULL;
@@ -267,24 +313,34 @@ int orte_ns_proxy_module_init(void)
  */
 int orte_ns_proxy_finalize(void)
 {
-    orte_ns_proxy_tagitem_t *tagitem;
-    orte_ns_proxy_cell_info_t *cptr;
+    orte_ns_proxy_cell_info_t **cptr;
+    orte_ns_proxy_tagitem_t **tag;
+    orte_ns_proxy_dti_t **dti;
+    size_t i;
     
-    if (orte_ns_proxy_debug) {
-	   opal_output(0, "finalizing ns proxy");
-    }
-
-    /* free the storage, but only if this component was initialized */
+  /* free all tracking storage, but only if this component was initialized */
 
     if (initialized) {
-        while (NULL != (cptr = (orte_ns_proxy_cell_info_t*)opal_list_remove_first(&orte_ns_proxy_cell_info_list))) {
-            OBJ_RELEASE(cptr);
+        cptr = (orte_ns_proxy_cell_info_t**)(orte_ns_proxy.cells)->addr;
+        for (i=0; i < (orte_ns_proxy.cells)->size; i++) {
+            if (NULL != cptr[i]) {
+                OBJ_RELEASE(cptr[i]);
+            }
         }
-        OBJ_DESTRUCT(&orte_ns_proxy_cell_info_list);
-        while (NULL != (tagitem = (orte_ns_proxy_tagitem_t*)opal_list_remove_first(&orte_ns_proxy_taglist))) {
-            OBJ_RELEASE(tagitem);
+        OBJ_RELEASE(orte_ns_proxy.cells);
+
+        tag = (orte_ns_proxy_tagitem_t**)(orte_ns_proxy.tags)->addr;
+        for (i=0; i < (orte_ns_proxy.tags)->size; i++) {
+            if (NULL != tag[i]) OBJ_RELEASE(tag[i]);
         }
-        OBJ_DESTRUCT(&orte_ns_proxy_taglist);
+        OBJ_RELEASE(orte_ns_proxy.tags);
+ 
+        dti = (orte_ns_proxy_dti_t**)(orte_ns_proxy.dts)->addr;
+        for (i=0; i < (orte_ns_proxy.dts)->size; i++) {
+            if (NULL != dti[i]) OBJ_RELEASE(dti[i]);
+        }
+        OBJ_RELEASE(orte_ns_proxy.dts);
+
         initialized = false;
     }
 

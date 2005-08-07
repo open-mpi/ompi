@@ -19,13 +19,14 @@
 #define NS_REPLICA_H
 
 #include "orte_config.h"
-#include "include/types.h"
+#include "orte/include/orte_types.h"
 #include "include/orte_constants.h"
 #include "opal/threads/mutex.h"
-#include "opal/class/opal_list.h"
-#include "dps/dps.h"
-#include "mca/oob/oob_types.h"
-#include "mca/ns/base/base.h"
+#include "opal/class/opal_object.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/oob/oob_types.h"
+#include "orte/mca/ns/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -34,7 +35,7 @@ extern "C" {
 /* list class for tracking cellid's
  */
 struct orte_ns_replica_cell_tracker_t {
-    opal_list_item_t item;
+    opal_object_t super;
     orte_cellid_t cell;
     char *site;
     char *resource;
@@ -45,21 +46,21 @@ OBJ_CLASS_DECLARATION(orte_ns_replica_cell_tracker_t);
 
 
 /*
- * list class for tracking vpids/jobid
- * This structure is used to create a linked list of jobid-max vpid pairs. Basically, we
+ * object for tracking vpids/jobids
+ * This structure is used to track jobid-max vpid pairs. Basically, we
  * are tracking the max used vpid for each jobid that has been created.
  */
-struct orte_ns_replica_name_tracker_t {
-    opal_list_item_t item;  /**< Allows this item to be placed on a list */
-    orte_jobid_t job;  /**< Job id */
-    orte_vpid_t last_used_vpid;      /**< Tracks the vpid last given out */
+struct orte_ns_replica_jobid_tracker_t {
+    opal_object_t super;
+    orte_jobid_t jobid;  /**< Job id */
+    orte_vpid_t next_vpid;
 };
-typedef struct orte_ns_replica_name_tracker_t orte_ns_replica_name_tracker_t;
+typedef struct orte_ns_replica_jobid_tracker_t orte_ns_replica_jobid_tracker_t;
 
-OBJ_CLASS_DECLARATION(orte_ns_replica_name_tracker_t);
+OBJ_CLASS_DECLARATION(orte_ns_replica_jobid_tracker_t);
 
 struct orte_ns_replica_tagitem_t {
-    opal_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_object_t super;
     orte_rml_tag_t tag;  /**< OOB tag */
     char *name;      /**< Name associated with tag */
 };
@@ -68,7 +69,7 @@ typedef struct orte_ns_replica_tagitem_t orte_ns_replica_tagitem_t;
 OBJ_CLASS_DECLARATION(orte_ns_replica_tagitem_t);
 
 struct orte_ns_replica_dti_t {
-    opal_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_object_t super;
     orte_data_type_t id;  /**< data type id */
     char *name;      /**< Name associated with data type */
 };
@@ -79,16 +80,26 @@ OBJ_CLASS_DECLARATION(orte_ns_replica_dti_t);
 /*
  * globals needed within component
  */
-extern orte_cellid_t orte_ns_replica_next_cellid;
-extern orte_jobid_t orte_ns_replica_next_jobid;
-extern opal_list_t orte_ns_replica_cell_tracker;
-extern opal_list_t orte_ns_replica_name_tracker;
-extern orte_rml_tag_t orte_ns_replica_next_rml_tag;
-extern orte_data_type_t orte_ns_replica_next_dti;
-extern opal_list_t orte_ns_replica_taglist;
-extern opal_list_t orte_ns_replica_dtlist;
-extern int orte_ns_replica_debug;
-extern opal_mutex_t orte_ns_replica_mutex;
+typedef struct {
+    size_t max_size, block_size;
+    orte_cellid_t num_cells;
+    orte_pointer_array_t *cells;
+#if 0
+    orte_jobgrp_t num_jobgrps;
+    orte_pointer_array_t *jobgrps;
+#endif
+    orte_jobid_t num_jobids;
+    orte_pointer_array_t *jobids;
+    orte_pointer_array_t *tags;
+    orte_rml_tag_t num_tags;
+    orte_pointer_array_t *dts;
+    orte_data_type_t num_dts;
+    int debug;
+    bool isolate;
+    opal_mutex_t mutex;
+} orte_ns_replica_globals_t;
+ 
+extern orte_ns_replica_globals_t orte_ns_replica;
 
 /*
  * Module open / close
@@ -134,6 +145,29 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid);
 int orte_ns_replica_reserve_range(orte_jobid_t job,
                                   orte_vpid_t range,
                                   orte_vpid_t *startvpid);
+
+/*
+ * Peer functions
+ */
+int orte_ns_replica_get_job_peers(orte_process_name_t **procs, 
+                                  size_t *num_procs, orte_jobid_t job);
+
+
+/*
+ * Diagnostic functions
+ */
+int orte_ns_replica_dump_cells(int output_id);
+int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer);
+
+int orte_ns_replica_dump_jobs(int output_id);
+int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer);
+
+int orte_ns_replica_dump_tags(int output_id);
+int orte_ns_replica_dump_tags_fn(orte_buffer_t *buffer);
+
+int orte_ns_replica_dump_datatypes(int output_id);
+int orte_ns_replica_dump_datatypes_fn(orte_buffer_t *buffer);
+
 
 /*
  * Implementation of assign rml tag

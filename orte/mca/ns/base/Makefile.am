@@ -34,10 +34,9 @@ libmca_ns_base_la_SOURCES = \
         ns_base_close.c \
         ns_base_select.c \
         ns_base_open.c \
-	ns_base_nds.c \
         ns_base_local_fns.c \
-	data_type_support/ns_data_type_packing_fns.c \
-	data_type_support/ns_data_type_unpacking_fns.c
+        data_type_support/ns_data_type_packing_fns.c \
+        data_type_support/ns_data_type_unpacking_fns.c
 
 
 # Conditionally install the header files
