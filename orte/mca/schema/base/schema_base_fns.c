@@ -300,6 +300,40 @@ int orte_schema_base_get_std_trigger_name(char **name,
     return ORTE_SUCCESS;
 }
 
+bool orte_schema_base_check_std_trigger_name(char *name, char *trig)
+{
+    if (NULL == name || NULL == trig) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return false;
+    }
+    
+    if (0 == strncmp(name, trig, strlen(trig))) return true;
+    
+    return false;
+}
+
+
+int orte_schema_base_extract_jobid_from_std_trigger_name(orte_jobid_t *jobid, char *trig)
+{
+    char *jobstring;
+    orte_jobid_t job;
+    int rc;
+    
+    jobstring = strrchr(trig, '-');
+    if (NULL == jobstring) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    jobstring++;
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_jobid(&job, jobstring))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    *jobid = job;
+    return ORTE_SUCCESS;
+}
+
+
 int orte_schema_base_get_std_subscription_name(char **name,
                     char *subscription,
                     orte_jobid_t jobid)

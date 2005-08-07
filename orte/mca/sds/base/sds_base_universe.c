@@ -124,16 +124,26 @@ orte_sds_base_basic_contact_universe(void)
 int
 orte_sds_base_seed_set_name(void)
 {
-    int id, flag;
-
+    int id, flag, rc;
+    
     /* if we're a seed and we're not infrastructure, we're also a
        singleton.  So set the singleton flag in that case */
-    id = mca_base_param_register_int("orte", "base", "infrastructure", 
-                                     NULL, (int)false);
+    id = mca_base_param_reg_int_name("orte_base", "infrastructure",
+                                "Whether we are ORTE infrastructure or an ORTE application",
+                                false, false, (int)false, NULL);;
     mca_base_param_lookup_int(id, &flag);
     if (!flag) {
         orte_process_info.singleton = true;
     }
-    return orte_ns_base_create_process_name(
-                                &(orte_process_info.my_name), 0, 0, 0);
+    /* now need to create our name in a manner that puts our job info on the name service
+     * tracker. This is necessary so that
+     * functions like get_job_peers will work. Since we are the seed, these
+     * functions will always return the proper jobid=0, vpid=0 values
+     */
+    if (ORTE_SUCCESS != (rc = orte_ns.create_my_name())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
 }
