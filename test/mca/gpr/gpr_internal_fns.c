@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
     /* For malloc debugging */
-    ompi_malloc_init();
+    opal_malloc_init();
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (rc = orte_sys_info())) {
@@ -354,7 +354,7 @@ int main(int argc, char **argv)
     kptr->key = strdup("stupid-value");
     kptr->type = ORTE_STRING;
     kptr->value.strptr = strdup("try-string-value");
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr, kptr))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(&iptr, seg, cptr, kptr))) {
         fprintf(test_out, "gpr_test: update single keyval failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: update single keyval failed");
@@ -419,7 +419,7 @@ int main(int argc, char **argv)
         test_finalize();
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr, kptr))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(&iptr, seg, cptr, kptr))) {
         fprintf(test_out, "gpr_test: update multiple keyvals failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: update multiple keyvals failed");
@@ -501,9 +501,9 @@ int main(int argc, char **argv)
     orte_sys_info_finalize();
     orte_proc_info_finalize();
     mca_base_close();
-    ompi_malloc_finalize();
+    opal_malloc_finalize();
     opal_output_finalize();
-    ompi_class_finalize();
+    opal_class_finalize();
 
     fclose( test_out );
 /*    result = system( cmd_str );
