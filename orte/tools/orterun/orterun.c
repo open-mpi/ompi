@@ -282,10 +282,11 @@ int main(int argc, char *argv[])
      * require
      */
 
-    mca_base_param_reg_int_name("orte_base", "infrastructure",
+    id = mca_base_param_reg_int_name("orte_base", "infrastructure",
                                 "Whether we are ORTE infrastructure or an ORTE application",
-                                false, false, 1, NULL);
-
+                                false, false, (int)false, NULL);
+    mca_base_param_set_int(id, (int)true);
+    
     /* now call orte_init and setup the RTE */
     if (ORTE_SUCCESS != (rc = orte_init())) {
         opal_show_help("help-orterun.txt", "orterun:init-failure", true,
@@ -298,7 +299,7 @@ int main(int argc, char *argv[])
      */
     id = mca_base_param_reg_int_name("orte_debug", "daemons",
                                      "Whether to debug the ORTE daemons or not",
-                                     false, false, 0, &iparam);
+                                     false, false, (int)false, &iparam);
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", "debug", "daemons");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
