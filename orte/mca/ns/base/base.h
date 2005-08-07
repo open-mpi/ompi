@@ -39,6 +39,9 @@
 extern "C" {
 #endif
 
+/* default limits */
+#define ORTE_NS_ARRAY_MAX_SIZE  INT_MAX
+#define ORTE_NS_ARRAY_BLOCK_SIZE    512
 /*
  * Internal definitions
  */
@@ -55,12 +58,18 @@ typedef uint8_t orte_ns_cmd_bitmask_t;
 /*
  * define flag values for remote commands - only used internally
  */
-#define ORTE_NS_CREATE_CELLID_CMD       0x01
-#define ORTE_NS_CREATE_JOBID_CMD        0x02
-#define ORTE_NS_RESERVE_RANGE_CMD       0x04
-#define ORTE_NS_ASSIGN_OOB_TAG_CMD      0x08
-#define ORTE_NS_DEFINE_DATA_TYPE_CMD    0x10
-#define ORTE_NS_CREATE_MY_NAME_CMD      0x20
+#define ORTE_NS_CREATE_CELLID_CMD       (int8_t)0x01
+#define ORTE_NS_CREATE_JOBID_CMD        (int8_t)0x02
+#define ORTE_NS_RESERVE_RANGE_CMD       (int8_t)0x04
+#define ORTE_NS_ASSIGN_OOB_TAG_CMD      (int8_t)0x08
+#define ORTE_NS_GET_JOB_PEERS_CMD       (int8_t)0x0A
+#define ORTE_NS_DEFINE_DATA_TYPE_CMD    (int8_t)0x10
+#define ORTE_NS_CREATE_MY_NAME_CMD      (int8_t)0x20
+#define ORTE_NS_DUMP_CELLS_CMD          (int8_t)0x21
+#define ORTE_NS_DUMP_JOBIDS_CMD         (int8_t)0x22
+#define ORTE_NS_DUMP_TAGS_CMD           (int8_t)0x23
+#define ORTE_NS_DUMP_DATATYPES_CMD      (int8_t)0x24
+
 
 /*
  * function definitions
@@ -119,6 +128,9 @@ OMPI_DECLSPEC    int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
 
 OMPI_DECLSPEC    int orte_ns_base_free_name(orte_process_name_t **name);
 
+OMPI_DECLSPEC    int orte_ns_base_print_dump(orte_buffer_t *buffer, int output_id);
+
+
 /* not available functions */
 OMPI_DECLSPEC    int orte_ns_base_module_init_not_available(void);
 
@@ -145,6 +157,14 @@ OMPI_DECLSPEC    int orte_ns_base_define_data_type_not_available(
                                   orte_data_type_t *type);
 
 OMPI_DECLSPEC    int orte_ns_base_create_my_name_not_available(void);
+
+OMPI_DECLSPEC    int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs, 
+                                  size_t *num_procs, orte_jobid_t job);
+
+OMPI_DECLSPEC    int orte_ns_base_dump_cells_not_available(int output_id);
+OMPI_DECLSPEC    int orte_ns_base_dump_jobs_not_available(int output_id);
+OMPI_DECLSPEC    int orte_ns_base_dump_tags_not_available(int output_id);
+OMPI_DECLSPEC    int orte_ns_base_dump_datatypes_not_available(int output_id);
 
 /* Base functions used everywhere */
 OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs, 

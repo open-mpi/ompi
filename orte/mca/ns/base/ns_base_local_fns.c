@@ -111,6 +111,43 @@ orte_ns_base_create_my_name_not_available(void)
     return ORTE_ERR_UNREACH;
 }
 
+int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs, 
+                                  size_t *num_procs, orte_jobid_t job)
+{
+    *procs = NULL;
+    *num_procs = 0;
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+ 
+int
+orte_ns_base_dump_cells_not_available(int output_id)
+{
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+int
+orte_ns_base_dump_jobs_not_available(int output_id)
+{
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+int
+orte_ns_base_dump_tags_not_available(int output_id)
+{
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+int
+orte_ns_base_dump_datatypes_not_available(int output_id)
+{
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
 
 
 /*
@@ -566,3 +603,72 @@ int orte_ns_base_free_name(orte_process_name_t **name)
     
     return ORTE_SUCCESS;
 }
+
+int orte_ns_base_get_peers(orte_process_name_t **procs, 
+                           size_t *num_procs, size_t *self)
+{
+    size_t i;
+    int rc;
+    orte_cellid_t mycellid;
+    orte_jobid_t myjobid;
+    orte_vpid_t myvpid;
+    
+    *procs = (orte_process_name_t*)malloc(orte_process_info.num_procs *
+                                            sizeof(orte_process_name_t));
+    if (NULL == *procs) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.get_cellid(&mycellid, orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (ORTE_SUCCESS != orte_ns.get_jobid(&myjobid, orte_process_info.my_name)) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (ORTE_SUCCESS != orte_ns.get_vpid(&myvpid, orte_process_info.my_name)) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    for (i=0; i < orte_process_info.num_procs; i++) {
+        (*procs)[i].cellid = mycellid;
+        (*procs)[i].jobid = myjobid;
+        (*procs)[i].vpid = orte_process_info.vpid_start + i;
+    }
+
+    *num_procs = orte_process_info.num_procs;
+    *self = (size_t)(myvpid - orte_process_info.vpid_start);
+    
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * DIAGNOSTIC FUNCTIONS
+ */
+int orte_ns_base_print_dump(orte_buffer_t *buffer, int output_id)
+{
+    char *line;
+    size_t n;
+    orte_data_type_t type;
+    int rc;
+
+    n = 1;
+    while (ORTE_SUCCESS == orte_dps.peek(buffer, &type, &n)) {
+       if (ORTE_SUCCESS != 
+           (rc = orte_dps.unpack(buffer, &line, &n, ORTE_STRING))) {
+           ORTE_ERROR_LOG(rc);
+           return rc;
+       }
+	   opal_output(output_id, "%s", line);
+	   free(line);
+       n=1;
+    }
+
+    return ORTE_SUCCESS;
+}
+

@@ -48,36 +48,50 @@ orte_process_name_t orte_name_all = {ORTE_CELLID_MAX, ORTE_JOBID_MAX, ORTE_VPID_
  */
 int mca_ns_base_output = -1;
 OMPI_DECLSPEC mca_ns_base_module_t orte_ns = {
+    /* init */
     orte_ns_base_module_init_not_available,
+    /* cell functions */
     orte_ns_base_create_cellid_not_available,
+    orte_ns_base_get_cellid,
     orte_ns_base_get_cell_info_not_available,
     orte_ns_base_assign_cellid_to_process,
+    orte_ns_base_get_cellid_string,
+    orte_ns_base_convert_cellid_to_string,
+    orte_ns_base_convert_string_to_cellid,
+    /* jobid functions */
     orte_ns_base_create_jobid_not_available,
+    orte_ns_base_get_jobid,
+    orte_ns_base_get_jobid_string,
+    orte_ns_base_convert_jobid_to_string,
+    orte_ns_base_convert_string_to_jobid,
+    /* vpid functions */
+    orte_ns_base_get_vpid_range_not_available,
+    orte_ns_base_get_vpid,
+    orte_ns_base_get_vpid_string,
+    orte_ns_base_convert_vpid_to_string,
+    orte_ns_base_convert_string_to_vpid,
+    /* name functions */
     orte_ns_base_create_process_name,
     orte_ns_base_create_my_name_not_available,
     orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
-    orte_ns_base_get_vpid_range_not_available,
     orte_ns_base_free_name,
     orte_ns_base_get_proc_name_string,
-    orte_ns_base_get_vpid_string,
-    orte_ns_base_convert_vpid_to_string,
-    orte_ns_base_convert_string_to_vpid,
-    orte_ns_base_get_jobid_string,
-    orte_ns_base_convert_jobid_to_string,
-    orte_ns_base_convert_string_to_jobid,
-    orte_ns_base_get_cellid_string,
-    orte_ns_base_convert_cellid_to_string,
-    orte_ns_base_convert_string_to_cellid,
-    orte_ns_base_get_vpid,
-    orte_ns_base_get_jobid,
-    orte_ns_base_get_cellid,
     orte_ns_base_compare,
-    orte_ns_base_derive_vpid,
+    /* peer functions */
+    orte_ns_base_get_peers,
+    orte_ns_base_get_job_peers_not_available,
+    /* tag server functions */
     orte_ns_base_assign_rml_tag_not_available,
+    /* data type functions */
     orte_ns_base_define_data_type_not_available,
-    orte_ns_base_get_peers
+    /* diagnostic functions */
+    orte_ns_base_dump_cells_not_available,
+    orte_ns_base_dump_jobs_not_available,
+    orte_ns_base_dump_tags_not_available,
+    orte_ns_base_dump_datatypes_not_available
 };
+
 bool mca_ns_base_selected = false;
 opal_list_t mca_ns_base_components_available;
 mca_ns_base_component_t mca_ns_base_selected_component;

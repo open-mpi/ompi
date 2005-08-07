@@ -67,36 +67,49 @@ OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_replica_component = {
 /*
  * setup the function pointers for the module
  */
-static mca_ns_base_module_t orte_ns_replica = {
+static mca_ns_base_module_t orte_ns_replica_module = {
+    /* init */
     orte_ns_replica_module_init,
+    /* cell functions */
     orte_ns_replica_create_cellid,
+    orte_ns_base_get_cellid,
     orte_ns_replica_get_cell_info,
     orte_ns_base_assign_cellid_to_process,
+    orte_ns_base_get_cellid_string,
+    orte_ns_base_convert_cellid_to_string,
+    orte_ns_base_convert_string_to_cellid,
+    /* jobid functions */
     orte_ns_replica_create_jobid,
+    orte_ns_base_get_jobid,
+    orte_ns_base_get_jobid_string,
+    orte_ns_base_convert_jobid_to_string,
+    orte_ns_base_convert_string_to_jobid,
+    /* vpid functions */
+    orte_ns_replica_reserve_range,
+    orte_ns_base_get_vpid,
+    orte_ns_base_get_vpid_string,
+    orte_ns_base_convert_vpid_to_string,
+    orte_ns_base_convert_string_to_vpid,
+    /* name functions */
     orte_ns_base_create_process_name,
     orte_ns_replica_create_my_name,
     orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
-    orte_ns_replica_reserve_range,
     orte_ns_base_free_name,
     orte_ns_base_get_proc_name_string,
-    orte_ns_base_get_vpid_string,
-    orte_ns_base_convert_vpid_to_string,
-    orte_ns_base_convert_string_to_vpid,
-    orte_ns_base_get_jobid_string,
-    orte_ns_base_convert_jobid_to_string,
-    orte_ns_base_convert_string_to_jobid,
-    orte_ns_base_get_cellid_string,
-    orte_ns_base_convert_cellid_to_string,
-    orte_ns_base_convert_string_to_cellid,
-    orte_ns_base_get_vpid,
-    orte_ns_base_get_jobid,
-    orte_ns_base_get_cellid,
     orte_ns_base_compare,
-    orte_ns_base_derive_vpid,
+    /* peer functions */
+    orte_ns_base_get_peers,
+    orte_ns_replica_get_job_peers,
+    /* tag server functions */
     orte_ns_replica_assign_rml_tag,
+    /* data type functions */
     orte_ns_replica_define_data_type,
-    orte_ns_base_get_peers
+    /* diagnostic functions */
+    orte_ns_replica_dump_cells,
+    orte_ns_replica_dump_jobs,
+    orte_ns_replica_dump_tags,
+    orte_ns_replica_dump_datatypes
 };
 
 /*
@@ -123,29 +136,28 @@ static void orte_ns_replica_cell_tracker_destructor(orte_ns_replica_cell_tracker
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
     orte_ns_replica_cell_tracker_t,  /* type name */
-    opal_list_item_t, /* parent "class" name */
+    opal_object_t, /* parent "class" name */
     orte_ns_replica_cell_tracker_construct, /* constructor */
     orte_ns_replica_cell_tracker_destructor); /* destructor */
 
 
-/* constructor - used to initialize state of name_tracker instance */
-static void orte_ns_replica_tracker_construct(orte_ns_replica_name_tracker_t* name_tracker)
+/* constructor - used to initialize state of jobid_tracker instance */
+static void orte_ns_replica_jobid_tracker_construct(orte_ns_replica_jobid_tracker_t* jobid_tracker)
 {
-    name_tracker->job = 0;
-    name_tracker->last_used_vpid = 0;
+    jobid_tracker->jobid = ORTE_JOBID_MAX;
+    jobid_tracker->next_vpid = 0;
 }
 
 /* destructor - used to free any resources held by instance */
-static void orte_ns_replica_tracker_destructor(orte_ns_replica_name_tracker_t* name_tracker)
-{
+static void orte_ns_replica_jobid_tracker_destructor(orte_ns_replica_jobid_tracker_t* jobid_tracker){
 }
 
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
-		   orte_ns_replica_name_tracker_t,  /* type name */
-		   opal_list_item_t, /* parent "class" name */
-		   orte_ns_replica_tracker_construct, /* constructor */
-		   orte_ns_replica_tracker_destructor); /* destructor */
+		   orte_ns_replica_jobid_tracker_t,  /* type name */
+           opal_object_t, /* parent "class" name */
+           orte_ns_replica_jobid_tracker_construct, /* constructor */
+           orte_ns_replica_jobid_tracker_destructor); /* destructor */
 
 
 /* constructor - used to initialize state of taglist instance */
@@ -166,7 +178,7 @@ static void orte_ns_replica_tagitem_destructor(orte_ns_replica_tagitem_t* tagite
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_replica_tagitem_t,  /* type name */
-        opal_list_item_t, /* parent "class" name */
+        opal_object_t, /* parent "class" name */
         orte_ns_replica_tagitem_construct, /* constructor */
         orte_ns_replica_tagitem_destructor); /* destructor */
 
@@ -189,24 +201,14 @@ static void orte_ns_replica_dti_destructor(orte_ns_replica_dti_t* dti)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_replica_dti_t,  /* type name */
-        opal_list_item_t, /* parent "class" name */
+        opal_object_t, /* parent "class" name */
         orte_ns_replica_dti_construct, /* constructor */
         orte_ns_replica_dti_destructor); /* destructor */
 
 /*
  * globals needed within replica component
  */
-orte_cellid_t orte_ns_replica_next_cellid;
-orte_jobid_t orte_ns_replica_next_jobid;
-opal_list_t orte_ns_replica_cell_tracker;
-opal_list_t orte_ns_replica_name_tracker;
-orte_rml_tag_t orte_ns_replica_next_rml_tag;
-orte_data_type_t orte_ns_replica_next_dti;
-opal_list_t orte_ns_replica_taglist;
-opal_list_t orte_ns_replica_dtlist;
-int orte_ns_replica_debug;
-opal_mutex_t orte_ns_replica_mutex;
-int orte_ns_replica_isolate;
+orte_ns_replica_globals_t orte_ns_replica;
 
 /*
  * don't really need this function - could just put NULL in the above structure
@@ -214,13 +216,28 @@ int orte_ns_replica_isolate;
  */
 int orte_ns_replica_open(void)
 {
-    int id;
+    int id, param;
 
     id = mca_base_param_register_int("ns", "replica", "debug", NULL, (int)false);
-    mca_base_param_lookup_int(id, &orte_ns_replica_debug);
+    mca_base_param_lookup_int(id, &orte_ns_replica.debug);
 
     id = mca_base_param_register_int("ns", "replica", "isolate", NULL, (int)false);
-    mca_base_param_lookup_int(id, &orte_ns_replica_isolate);
+    mca_base_param_lookup_int(id, &param);
+    if (param) {
+        orte_ns_replica.isolate = true;
+    } else {
+        orte_ns_replica.isolate = false;
+    }
+    
+    id = mca_base_param_register_int("ns", "replica", "maxsize", NULL,
+                                     ORTE_NS_ARRAY_MAX_SIZE);
+    mca_base_param_lookup_int(id, &param);
+    orte_ns_replica.max_size = (size_t)param;
+    
+    id = mca_base_param_register_int("ns", "replica", "blocksize", NULL,
+                                     ORTE_NS_ARRAY_BLOCK_SIZE);
+    mca_base_param_lookup_int(id, &param);
+    orte_ns_replica.block_size = (size_t)param;
 
     return ORTE_SUCCESS;
 }
@@ -235,15 +252,12 @@ int orte_ns_replica_close(void)
 
 mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 {
-    orte_ns_replica_name_tracker_t *new_nt;
+    int rc;
 
     /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
 
     if (NULL == orte_process_info.ns_replica_uri) {
-
-      orte_ns_replica_next_cellid = 0;
-      orte_ns_replica_next_jobid = 1;  /* jobid 0 reserved for universe */
 
       /* Return a module (choose an arbitrary, positive priority --
          it's only relevant compared to other ns components).  If
@@ -252,43 +266,55 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 
       *priority = 50;
 
-      /* initialize the cell tracker */
-
-      OBJ_CONSTRUCT(&orte_ns_replica_cell_tracker, opal_list_t);
-      orte_ns_replica_next_cellid = 0;
-
-      /* initialize the name tracker */
-
-      OBJ_CONSTRUCT(&orte_ns_replica_name_tracker, opal_list_t);
+      /* initialize the cell info tracker */
+      if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.cells),
+                                orte_ns_replica.block_size,
+                                orte_ns_replica.max_size,
+                                orte_ns_replica.block_size))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        orte_ns_replica.num_cells = 0;
+        
+      /* initialize the job id tracker */
+      if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.jobids),
+                                orte_ns_replica.block_size,
+                                orte_ns_replica.max_size,
+                                orte_ns_replica.block_size))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        orte_ns_replica.num_jobids = 0;
 
       /* initialize the taglist */
 
-      OBJ_CONSTRUCT(&orte_ns_replica_taglist, opal_list_t);
-      orte_ns_replica_next_rml_tag = ORTE_RML_TAG_DYNAMIC;
+      if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.tags),
+                                orte_ns_replica.block_size,
+                                orte_ns_replica.max_size,
+                                orte_ns_replica.block_size))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        orte_ns_replica.num_tags = 0;
 
       /* initialize the dtlist */
 
-      OBJ_CONSTRUCT(&orte_ns_replica_dtlist, opal_list_t);
-      orte_ns_replica_next_dti = ORTE_DPS_ID_DYNAMIC;
+      if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.dts),
+                                orte_ns_replica.block_size,
+                                orte_ns_replica.max_size,
+                                orte_ns_replica.block_size))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        orte_ns_replica.num_dts = 0;
 
       /* setup the thread lock */
-      OBJ_CONSTRUCT(&orte_ns_replica_mutex, opal_mutex_t);
+      OBJ_CONSTRUCT(&orte_ns_replica.mutex, opal_mutex_t);
       
-      /* setup the "0" job counter - this is the default one that belongs to
-       * all daemons. Seed must automatically have it.
-       */
-       new_nt = OBJ_NEW(orte_ns_replica_name_tracker_t);
-       if (NULL == new_nt) {  /* out of memory */
-           return NULL;
-       }
-       new_nt->job = 0;
-       new_nt->last_used_vpid = 0;
-       opal_list_append(&orte_ns_replica_name_tracker, &new_nt->item);
-    
      /* Return the module */
 
       initialized = true;
-      return &orte_ns_replica;
+      return &orte_ns_replica_module;
     } else {
       return NULL;
     }
@@ -297,7 +323,7 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 int orte_ns_replica_module_init(void)
 {
     int rc;
-    if (orte_ns_replica_isolate) {
+    if (orte_ns_replica.isolate) {
         return ORTE_SUCCESS;
     }
     
@@ -316,32 +342,48 @@ int orte_ns_replica_module_init(void)
  */
 int orte_ns_replica_finalize(void)
 {
-    orte_ns_replica_tagitem_t *tagitem;
-    orte_ns_replica_dti_t *dti;
+    orte_ns_replica_cell_tracker_t **cptr;
+    orte_ns_replica_jobid_tracker_t **jptr;
+    orte_ns_replica_tagitem_t **tag;
+    orte_ns_replica_dti_t **dti;
+    size_t i;
     
-    if (orte_ns_replica_debug) {
-	   opal_output(0, "finalizing ns replica");
-    }
-
   /* free all tracking storage, but only if this component was initialized */
 
     if (initialized) {
-/*     OBJ_DESTRUCT(&orte_ns_replica_name_tracker); */
-        while (NULL != (tagitem = (orte_ns_replica_tagitem_t*)opal_list_remove_first(&orte_ns_replica_taglist))) {
-            OBJ_RELEASE(tagitem);
+        cptr = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
+        for (i=0; i < (orte_ns_replica.cells)->size; i++) {
+            if (NULL != cptr[i]) {
+                OBJ_RELEASE(cptr[i]);
+            }
         }
-        OBJ_DESTRUCT(&orte_ns_replica_taglist);
-        while (NULL != (dti = (orte_ns_replica_dti_t*)opal_list_remove_first(&orte_ns_replica_dtlist))) {
-            OBJ_RELEASE(dti);
+        OBJ_RELEASE(orte_ns_replica.cells);
+
+        jptr = (orte_ns_replica_jobid_tracker_t**)(orte_ns_replica.jobids)->addr;
+        for (i=0; i < (orte_ns_replica.jobids)->size; i++) {
+            if (NULL != jptr[i]) {
+                OBJ_RELEASE(jptr[i]);
+            }
         }
-        OBJ_DESTRUCT(&orte_ns_replica_dtlist);
-        OBJ_DESTRUCT(&orte_ns_replica_mutex);
+        OBJ_RELEASE(orte_ns_replica.jobids);
+        
+        tag = (orte_ns_replica_tagitem_t**)(orte_ns_replica.tags)->addr;
+        for (i=0; i < (orte_ns_replica.tags)->size; i++) {
+            if (NULL != tag[i]) OBJ_RELEASE(tag[i]);
+        }
+        OBJ_RELEASE(orte_ns_replica.tags);
+ 
+        dti = (orte_ns_replica_dti_t**)(orte_ns_replica.dts)->addr;
+        for (i=0; i < (orte_ns_replica.dts)->size; i++) {
+            if (NULL != dti[i]) OBJ_RELEASE(dti[i]);
+        }
+        OBJ_RELEASE(orte_ns_replica.dts);
 
         initialized = false;
     }
 
     /* All done */
-    if (orte_ns_replica_isolate) {
+    if (orte_ns_replica.isolate) {
         return ORTE_SUCCESS;
     }
     
@@ -527,7 +569,50 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
             
         case ORTE_NS_CREATE_MY_NAME_CMD:
             /* ignore this command */
-            goto CLEANUP;
+            break;
+            
+        case ORTE_NS_DUMP_CELLS_CMD:
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_cells_fn(&answer))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                 goto RETURN_ERROR;
+            }
+            break;
+            
+        case ORTE_NS_DUMP_JOBIDS_CMD:
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_jobs_fn(&answer))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                 goto RETURN_ERROR;
+            }
+            break;
+            
+        case ORTE_NS_DUMP_TAGS_CMD:
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_tags_fn(&answer))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                 goto RETURN_ERROR;
+            }
+            break;
+            
+        case ORTE_NS_DUMP_DATATYPES_CMD:
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_datatypes_fn(&answer))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                 goto RETURN_ERROR;
+            }
             break;
             
         default:
