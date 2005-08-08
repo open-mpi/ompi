@@ -29,31 +29,6 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
 {
     int ret, max_interfaces;
     uint32_t i;
-    struct mca_btl_portals_module_t *btl;
-
-    /*
-     * create module - only ever one "NIC" on red storm
-     */
-    comp->portals_num_modules = 1;
-    comp->portals_modules = calloc(comp->portals_num_modules,
-                                   sizeof(mca_btl_portals_module_t));
-    if (NULL == comp->portals_modules) {
-        opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                            "malloc failed in mca_btl_portals_init");
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
-    btl = &(comp->portals_modules[0]);
-
-    /* compat code is responsible for copying over the "template" onto
-       each module instance.  The calling code will create the free
-       lists and the like - we're only responsible for the
-       Portals-specific entries */
-    for (i = 0 ; i < comp->portals_num_modules ; ++i) {
-        memcpy(&(comp->portals_modules[i]),
-               &mca_btl_portals_module,
-               sizeof(mca_btl_portals_module_t));
-        /* the defaults are good enough for the rest */
-    }
 
     /*
      * Initialize Portals interface
@@ -71,8 +46,8 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
     ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
-                    &(btl->portals_ni_limits),    /* save our limits somewhere */
-                    &(btl->portals_ni_h)  /* our interface handle */
+                    NULL,              /* actual limits */
+                    &(mca_btl_portals_module.portals_ni_h)  /* our interface handle */
                     );
     if (PTL_OK != ret && PTL_IFACE_DUP != ret) {
         opal_output_verbose(10, mca_btl_portals_component.portals_output,
