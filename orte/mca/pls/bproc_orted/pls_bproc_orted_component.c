@@ -14,22 +14,21 @@
  * $HEADER$
  *
  */
-
+/**
+ * @file:
+ * Takes care of the component stuff for the MCA.
+ */
 #include "orte_config.h"
-
-#include <sys/bproc.h>
-
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/include/orte_constants.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/util/proc_info.h"
 #include "pls_bproc_orted.h"
 
-/*
- * Instantiate the public struct with all of our public information
- * and pointers to our public functions in it
+/**
+ * The bproc_orted component data structure used to store all the relevent data
+ * about this component.
  */
-
 orte_pls_bproc_orted_component_t mca_pls_bproc_orted_component = {
     {
     /* First, the mca_component_t struct containing meta information
@@ -58,7 +57,8 @@ orte_pls_bproc_orted_component_t mca_pls_bproc_orted_component = {
 };
 
 /**
- *  Component open function.
+ * Opens the pls_bproc component, setting all the needed mca parameters and
+ * finishes setting up the component struct.
  */
 int orte_pls_bproc_orted_component_open(void)
 {
@@ -77,7 +77,8 @@ int orte_pls_bproc_orted_component_open(void)
 }
 
 /**
- *  Module init function.
+ * Initializes the module. We do not want to run unless we are not the seed,
+ * bproc is running, and we are not on the master node.
  */
 orte_pls_base_module_t *orte_pls_bproc_orted_init(int *priority)
 {

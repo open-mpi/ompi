@@ -32,7 +32,7 @@
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-orte_pls_bproc_component_t mca_pls_bproc_seed_component = {
+orte_pls_bproc_seed_component_t mca_pls_bproc_seed_component = {
     {
         {
         ORTE_PLS_BASE_VERSION_1_0_0,
@@ -52,36 +52,26 @@ orte_pls_bproc_component_t mca_pls_bproc_seed_component = {
 };
 
 
-/**
- *  Convience functions to lookup MCA parameter values.
- */
-                                                                                                          
-static  int orte_pls_bproc_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("pls","bproc_seed",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-                                                                                                          
-
 int orte_pls_bproc_seed_component_open(void)
 {
     int id;
-
+    mca_base_component_t *c = &mca_pls_bproc_seed_component.super.pls_version;
     /* init globals */
     OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.condition, opal_condition_t);
     mca_pls_bproc_seed_component.num_children = 0;
 
     /* init parameters */
-    mca_pls_bproc_seed_component.debug = orte_pls_bproc_param_register_int("debug", 0);
-    mca_pls_bproc_seed_component.reap = orte_pls_bproc_param_register_int("reap", 1);
-    mca_pls_bproc_seed_component.image_frag_size = orte_pls_bproc_param_register_int("image_frag_size", 1*1024*1024);
-    mca_pls_bproc_seed_component.priority = orte_pls_bproc_param_register_int("priority", 75);
-    mca_pls_bproc_seed_component.terminate_sig = orte_pls_bproc_param_register_int("terminate_sig", 9);
+    mca_base_param_reg_int(c, "debug", NULL, false, false, 0, 
+                           &mca_pls_bproc_seed_component.debug);
+    mca_base_param_reg_int(c, "reap", NULL, false, false, 1, 
+                           &mca_pls_bproc_seed_component.reap);
+    mca_base_param_reg_int(c, "image_frag_size", NULL, false, false, 1*1024*1024,
+                           (int *)&mca_pls_bproc_seed_component.image_frag_size);
+    mca_base_param_reg_int(c, "priority", NULL, false, false, 75,
+                           &mca_pls_bproc_seed_component.priority);
+    mca_base_param_reg_int(c, "terminate_sig", NULL, false, false, 9,
+                           &mca_pls_bproc_seed_component.terminate_sig);
 
     id = mca_base_param_find("nds", "pipe", "fd");
     if(id > 0) {

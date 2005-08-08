@@ -15,6 +15,10 @@
  * $HEADER$
  *
  */
+/**
+ * @file:
+ * Part of the bproc launcher. See pls_bproc.h for an overview of how it works.
+ */
 
 #include "orte_config.h"
 #include <sys/types.h>
@@ -48,8 +52,14 @@
 #include "orte/runtime/runtime.h"
 #include "pls_bproc.h"
 
+/**
+ * Our current evironment
+ */
 extern char **environ;
 
+/**
+ * Initialization of the bproc module with all the needed function pointers
+ */
 orte_pls_base_module_t orte_pls_bproc_module = {
     orte_pls_bproc_launch,
     orte_pls_bproc_terminate_job,
@@ -341,7 +351,7 @@ static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data)
 
 #ifdef MCA_pls_bproc_scyld
 /** 
- * compatibility functions for scyld bproc and pre 3.2.0 LANL bproc. See the
+ * compatibility function for scyld bproc and pre 3.2.0 LANL bproc. See the
  * bproc documentation for details
  */
 static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids, 
@@ -374,6 +384,10 @@ static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
     return nnodes;
 }
 
+/** 
+ * compatibility function for scyld bproc and pre 3.2.0 LANL bproc. See the
+ * bproc documentation for details
+ */
 static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd, 
                            char * const argv[], char * envp[]) {
     return bproc_vexecmove_io(nnodes, nodes, pids, NULL, 0, cmd, argv, envp);
@@ -382,7 +396,7 @@ static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd,
 
 /**
  * Sets up the passed environment for processes launched by the bproc launcher.
- * @param evn a pointer to the environment to setup
+ * @param env a pointer to the environment to setup
  * @param num_env a pointer to where the size f the environment is stored
  */
 static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) {
@@ -449,6 +463,7 @@ static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) {
  * @param node_arrays    an array that holds the node arrays for each app context
  * @param node_array_lens an array of lengths of the node arrays
  * @param num_contexts   the number of application contexts
+ * @param num_procs      the numer of processes in the job
  * @param global_vpid_start the starting vpid for the user's processes
  * @param jobid          the jobid for the user processes
  * @retval ORTE_SUCCESS
@@ -774,10 +789,10 @@ cleanup:
  * The main bproc launcher. See pls_bproc.h for a high level overview of how
  * the bproc launching works.
  * Here we:
- *  1. Launch the deamons on the backend nodes. 
- *  2. The daemons setup files for io forwarding then connect back to us to 
+ * -# Launch the deamons on the backend nodes. 
+ * -# The daemons setup files for io forwarding then connect back to us to 
  *     tells us they are ready for the actual apps.
- *  3. Launch the apps on the backend nodes
+ * -# Launch the apps on the backend nodes
  * 
  * @param jobid the jobid of the job to launch
  * @retval ORTE_SUCCESS
@@ -845,7 +860,8 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         num_processes += rc;
         context++;
     }
-    
+   
+    /* launch the daemons on all the nodes which have processes assign to them */ 
     rc = orte_pls_bproc_launch_daemons(cellid, &map->app->env, node_array,
                                        node_array_len, context, num_processes, 
                                        vpid_start, jobid);
@@ -853,7 +869,10 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    /* wait for communication back from the daemons */
+    
+    /* wait for communication back from the daemons, which indicates they have
+     * sucessfully set up the pty/pipes and IO forwarding which the user apps
+     * will use  */
     for(j = 0; j < mca_pls_bproc_component.num_daemons; j++) {
         rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &ack, MCA_OOB_TAG_BPROC);
         if(0 > rc) {
@@ -865,11 +884,13 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
-        if(-1 == src[0]) {
-            if(-1 == src[1]) {
+        if(-1 == src[0]) { 
+            /* one of the daemons has failed to properly launch. The error is sent
+             * by orte_pls_bproc_waitpid_daemon_cb  */
+            if(-1 == src[1]) { /* did not die on a signal */
                 opal_show_help("help-pls-bproc.txt", "daemon-died-no-signal", true,
                                src[2], src[3]); 
-            } else {
+            } else { /* died on a signal */
                 opal_show_help("help-pls-bproc.txt", "daemon-died-signal", true,
                                src[2], src[3], src[1]); 
             }
