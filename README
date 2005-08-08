@@ -12,24 +12,8 @@ Additional copyrights may follow
 
 $HEADER$
 
-The Open MPI development team is pleased to announce an beta-quality
-release of the current state of our software to the public.  The
-software is "mostly stable", but is definitely rough around the edges
--- it is not complete and not completely debugged.  Our intent with
-this release is to get the Open MPI software onto other people's
-machines and see what creative ways you can come up with to break it,
-and to send us your comments and suggestions.  
-
-However, we want to stress the following point: this is an *beta*
-quality release.  We're quite aware that there are several things
-still broken (but report them anyway!).
-
-Also note that many performance enhancements were applied to the Open
-MPI code repository *after* we forked for this beta release (in
-mid-May, 2005).  To get the most recent advancements, you'll need to
-get a checkout of the current code base (keeping in mind that that is
-the head of development, and is not always stable!).  See
-http://www.open-mpi.org/svn/ for details.
+This is a preliminary README file.  It will be scrubbed formally
+before release.
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
@@ -52,21 +36,13 @@ Thanks for your time.
 
 ===========================================================================
 
-This tarball is a beta release of Open MPI, representing the head of
-development as of mid-May 2005.  It is not yet complete.
-
-- All MPI point-to-point transports were extensively tuned for
-  performance after branching for this beta.  As result, some
-  point-to-point transports in this beta do not perform well,
-  especially for large messages (e.g,. shared memory).
+The following abbreviated list of release notes applies to this code
+base as of this writing (8 Aug 2005):
 
 - The Open MPI installation must be in your PATH on all nodes (and
   potentially LD_LIBRARY_PATH, if libmpi is a shared library).
 
 - LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
-
-- Support for Quadrics and Infiniband (both mVAPI and OpenIB) is
-  missing (see the current code base).
 
 - Shared memory support will not function properly on machines that
   have a weak memory consistency mode.  The default in this beta is to
@@ -136,17 +112,29 @@ shell$ ./configure [...options...]
 shell$ make all install
 ---------------------------------------------------------------------------
 
-There are many available configure options; a summary of the more
-important ones follows:
+There are many available configure options (see "./configure --help"
+for a full list); a summary of the more important ones follows:
 
 --prefix=<directory>
   Install Open MPI into the base directory named <directory>.  Hence,
   Open MPI will place its executables in <directory>/bin, its header
   files in <directory>/include, its libraries in <directory>/lib, etc.
 
---with-ptl-gm=<directory>
+--with-btl-gm=<directory>
   Specify the directory where the GM libraries and header files are
   located.  This enables GM support in Open MPI.
+
+--with-btl-mx=<directory>
+  Specify the directory where the MX libraries and header files are
+  located.  This enables MX support in Open MPI.
+
+--with-btl-mvapi=<directory>
+  Specify the directory where the mVAPI libraries and header files are
+  located.  This enables mVAPI support in Open MPI.
+
+--with-btl-openib=<directory>
+  Specify the directory where the Open IB libraries and header files are
+  located.  This enables mVAPI support in Open MPI.
 
 --with-mpi-param_check(=value)
   "value" can be one of: always, never, runtime.  If no value is
@@ -184,16 +172,6 @@ important ones follows:
 --enable-static
   Build libmpi as a static library, and statically link in all
   components.
-
---enable-ptl-sm
-  This beta does not support shared memory on platforms with weak
-  memory consistency models.  As such, the default in this beta is to
-  disable shared memory support for all Power PC platforms.  However,
-  some Power PC platforms have strong memory consistency models (e.g.,
-  G4 and POWER3).  On these platforms, shared memory support can be
-  enabled with the --enable-ptl-sm flag.  It is strongly discouraged
-  to enable shared memory support on other Power PC platforms (e.g.,
-  G5, POWER4).
 
 There are other options available -- see "./configure --help".
 
@@ -335,7 +313,7 @@ MPI component frameworks:
 coll    - MPI collective algorithms
 io      - MPI-2 I/O
 pml     - MPI point-to-point management layer
-ptl     - MPI point-to-point transport layer
+btl     - MPI point-to-point byte transfer layer
 topo    - MPI topology routines
 
 Back-end run-time environment component frameworks:
@@ -371,9 +349,9 @@ Each component typically has some tunable parameters that can be
 changed at run-time.  Use the ompi_info command to check a component
 to see what its tunable parameters are.  For example:
 
-shell$ ompi_info --param ptl tcp
+shell$ ompi_info --param btl tcp
 
-shows all the parameters (and default values) for the tcp ptl
+shows all the parameters (and default values) for the tcp btl
 component.
 
 These values can be overridden at run-time in several ways.  At
@@ -397,17 +375,17 @@ values of parameters:
    <value>
 
    Where <name> is the name of the parameter.  For example, set the
-   variable named OMPI_MCA_ptl_tcp_frag_size to the value 65536
+   variable named OMPI_MCA_btl_tcp_frag_size to the value 65536
    (Bourne-style shells):
 
-   shell$ OMPI_MCA_ptl_tcp_frag_size=65536
-   shell$ export OMPI_MCA_ptl_tcp_frag_size
+   shell$ OMPI_MCA_btl_tcp_frag_size=65536
+   shell$ export OMPI_MCA_btl_tcp_frag_size
 
 4. the mpirun command line: --mca <name> <value>
  
    Where <name> is the name of the parameter.  For example:
 
-   shell$ mpirun --mca ptl_tcp_frag_size 65536 -np 2 hello_world_mpi
+   shell$ mpirun --mca btl_tcp_frag_size 65536 -np 2 hello_world_mpi
 
 These locations are checked in order.  For example, a parameter value
 passed on the mpirun command line will override an environment
@@ -428,6 +406,20 @@ Common Questions
    for setting MCA parameters described above; for example:
 
    shell$ mpirun --mca pls_rsh_agent rsh -np 4 a.out
+
+2. When I run "make", it looks very much like the build system is
+   going into a loop, and I see messages similar to:
+
+       Warning: File `Makefile.am' has modification time 3.6e+04 s in
+       the future
+
+   Open MPI uses an Automake-based build system, and is therefore
+   highly dependent upon filesystem timestamps.  If building on a
+   networked file system, you *must* ensure that the time of the
+   machine that you are building on is tightly synchronized with the
+   time on your network fileserver (e.g., using ntp).  If this is not
+   possible, you will need to build Open MPI on a non-networked
+   filesystem.
 
 ...we'll add more questions here as they are asked by real users.
 
