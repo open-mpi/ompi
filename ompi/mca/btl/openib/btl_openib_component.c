@@ -492,8 +492,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
 int mca_btl_openib_component_progress()
 {
-    uint32_t i, ne;
-    int count = 0;
+    uint32_t i;
+    int count = 0,ne;
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_endpoint_t* endpoint; 
     /* Poll for completions */
