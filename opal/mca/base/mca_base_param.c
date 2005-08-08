@@ -289,7 +289,7 @@ int mca_base_param_register_int(const char *type_name,
     mca_base_param_storage_t storage;
 
     storage.intval = default_value;
-    ret = param_register(type_name, component_name, param_name, NULL,
+    ret = param_register(type_name, component_name, param_name, mca_param_name,
                          MCA_BASE_PARAM_TYPE_INT, false, false,
                          &storage, NULL, NULL, NULL);
     return ret;
@@ -314,7 +314,7 @@ int mca_base_param_register_string(const char *type_name,
     } else {
         storage.stringval = NULL;
     }
-    ret = param_register(type_name, component_name, param_name, NULL,
+    ret = param_register(type_name, component_name, param_name, mca_param_name,
                          MCA_BASE_PARAM_TYPE_STRING, false, false,
                          &storage, NULL, NULL, NULL);
     return ret;
