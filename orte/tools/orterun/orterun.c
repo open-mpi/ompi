@@ -76,6 +76,7 @@ static char *orterun_basename = NULL;
 static int max_display_aborted = 1;
 static int num_aborted = 0;
 static int num_killed = 0;
+static char **global_mca_env = NULL;
 
 /*
  * setup globals for catching orterun command line options
@@ -211,7 +212,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
 static void exit_callback(int fd, short event, void *arg);
 static void signal_callback(int fd, short flags, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
-                      bool *made_app, char ***env);
+                      bool *made_app, char ***app_env);
 static int init_globals(void);
 static int parse_globals(int argc, char* argv[]);
 static int parse_locals(int argc, char* argv[]);
@@ -252,7 +253,7 @@ int main(int argc, char *argv[])
     for (j = i = 0; i < array_size; ++i) {
         apps[num_apps] = (orte_app_context_t *) 
             orte_pointer_array_get_item(apps_pa, i);
-        if(NULL != apps[num_apps]) {
+        if (NULL != apps[num_apps]) {
             j += apps[num_apps]->num_procs;
             num_apps++;
         }
@@ -284,8 +285,7 @@ int main(int argc, char *argv[])
 
     id = mca_base_param_reg_int_name("orte_base", "infrastructure",
                                 "Whether we are ORTE infrastructure or an ORTE application",
-                                false, false, (int)false, NULL);
-    mca_base_param_set_int(id, (int)true);
+                                false, false, (int)true, NULL);
     
     /* now call orte_init and setup the RTE */
     if (ORTE_SUCCESS != (rc = orte_init())) {
@@ -645,7 +645,7 @@ static int init_globals(void)
 static int parse_globals(int argc, char* argv[])
 {
     opal_cmd_line_t cmd_line;
-    int ras, ret;
+    int id, ret;
 
     /* Setup and parse the command line */
 
@@ -674,14 +674,14 @@ static int parse_globals(int argc, char* argv[])
        MCA param. */
 
     /* JMS To be changed post-beta to LAM's C/N command line notation */
-    ras = mca_base_param_register_string("ras", "base", "schedule_policy",
+    id = mca_base_param_register_string("ras", "base", "schedule_policy",
                                          NULL, "slot");
     if (orterun_globals.by_node) {
         orterun_globals.by_slot = false;
-        mca_base_param_set_string(ras, "node");
+        mca_base_param_set_string(id, "node");
     } else {
         orterun_globals.by_slot = true;
-        mca_base_param_set_string(ras, "slot");
+        mca_base_param_set_string(id, "slot");
     }
 
     /* If we don't want to wait, we don't want to wait */
@@ -699,10 +699,10 @@ static int parse_locals(int argc, char* argv[])
 {
     int i, rc, app_num;
     int temp_argc;
-    char **temp_argv;
+    char **temp_argv, **env;
     orte_app_context_t *app;
     bool made_app;
-    char **env;
+    size_t j, size1;
 
     /* Make the apps */
 
@@ -710,6 +710,10 @@ static int parse_locals(int argc, char* argv[])
     temp_argv = NULL;
     opal_argv_append(&temp_argc, &temp_argv, argv[0]);
     orte_pointer_array_init(&apps_pa, 1, argc + 1, 2);
+
+    /* NOTE: This bogus env variable is necessary in the calls to
+       create_app(), below.  See comment immediately before the
+       create_app() function for an explanation. */
 
     env = NULL;
     for (app_num = 0, i = 1; i < argc; ++i) {
@@ -769,14 +773,95 @@ static int parse_locals(int argc, char* argv[])
     }
     opal_argv_free(temp_argv);
 
+    /* Once we've created all the apps, add the global MCA params to
+       each app's environment (checking for duplicates, of
+       course -- yay opal_environ_merge()).  */
+
+    if (NULL != global_mca_env) {
+        size1 = orte_pointer_array_get_size(apps_pa);
+        /* Iterate through all the apps */
+        for (j = 0; j < size1; ++j) {
+            app = (orte_app_context_t *) 
+                orte_pointer_array_get_item(apps_pa, j);
+            if (NULL != app) {
+                /* Use handy utility function */
+                env = opal_environ_merge(global_mca_env, app->env);
+                opal_argv_free(app->env);
+                app->env = env;
+                app->num_env = opal_argv_count(app->env);
+            }
+        }
+    }
+
+    /* Now take a subset of the MCA params and set them as MCA
+       overrides here in orterun (so that when we orte_init() later,
+       all the components see these MCA params).  Here's how we decide
+       which subset of the MCA params we set here in orterun:
+
+       1. If any global MCA params were set, use those
+       2. If no global MCA params were set and there was only one app,
+          then use its app MCA params
+       3. Otherwise, don't set any
+    */
+
+    env = NULL;
+    if (NULL != global_mca_env) {
+        env = global_mca_env;
+    } else {
+        if (orte_pointer_array_get_size(apps_pa) >= 1) {
+            /* Remember that pointer_array's can be padded with NULL
+               entries; so only use the app's env if there is exactly
+               1 non-NULL entry */
+            app = (orte_app_context_t *) 
+                orte_pointer_array_get_item(apps_pa, 0);
+            if (NULL != app) {
+                env = app->env;
+                for (j = 1; j < orte_pointer_array_get_size(apps_pa); ++j) {
+                    if (NULL != orte_pointer_array_get_item(apps_pa, j)) {
+                        env = NULL;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    if (NULL != env) {
+        size1 = opal_argv_count(env);
+        for (j = 0; j < size1; ++j) {
+            putenv(env[j]);
+        }
+    }
+
     /* All done */
 
     return ORTE_SUCCESS;
 }
 
 
+/*
+ * This function takes a "char ***app_env" parameter to handle the
+ * specific case:
+ *
+ *   orterun --mca foo bar -app appfile
+ *
+ * That is, we'll need to keep foo=bar, but the presence of the app
+ * file will cause an invocation of parse_appfile(), which will cause
+ * one or more recursive calls back to create_app().  Since the
+ * foo=bar value applies globally to all apps in the appfile, we need
+ * to pass in the "base" environment (that contains the foo=bar value)
+ * when we parse each line in the appfile.
+ *
+ * This is really just a special case -- when we have a simple case like:
+ *
+ *   orterun --mca foo bar -np 4 hostname
+ *
+ * Then the upper-level function (parse_locals()) calls create_app()
+ * with a NULL value for app_env, meaning that there is no "base"
+ * environment that the app needs to be created from.
+ */
 static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
-                      bool *made_app, char ***env)
+                      bool *made_app, char ***app_env)
 {
     opal_cmd_line_t cmd_line;
     char cwd[OMPI_PATH_MAX];
@@ -881,13 +966,13 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     if (OMPI_SUCCESS != rc) {
         goto cleanup;
     }
-    mca_base_cmd_line_process_args(&cmd_line, env);
+    mca_base_cmd_line_process_args(&cmd_line, app_env, &global_mca_env);
 
     /* Is there an appfile in here? */
 
     if (NULL != orterun_globals.appfile) {
         OBJ_DESTRUCT(&cmd_line);
-        return parse_appfile(strdup(orterun_globals.appfile), env);
+        return parse_appfile(strdup(orterun_globals.appfile), app_env);
     }
 
     /* Setup application context */
@@ -906,8 +991,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     /* Grab all OMPI_* environment variables */
 
-    app->env = opal_argv_copy(*env);
-    app->num_env = opal_argv_count(*env);
+    app->env = opal_argv_copy(*app_env);
     for (i = 0; NULL != environ[i]; ++i) {
         if (0 == strncmp("OMPI_", environ[i], 5)) {
             opal_argv_append_nosize(&app->env, environ[i]);
@@ -1118,9 +1202,17 @@ static int parse_appfile(char *filename, char ***env)
         argc = opal_argv_count(argv);
         if (argc > 0) {
 
-            /* Create a temporary env to play with in the recursive
-               call -- that is: don't disturb the original env so that
-               we can have a consistent global env */
+            /* Create a temporary env to use in the recursive call --
+               that is: don't disturb the original env so that we can
+               have a consistent global env.  This allows for the
+               case:
+
+                   orterun --mca foo bar --appfile file 
+
+               where the "file" contains multiple apps.  In this case,
+               each app in "file" will get *only* foo=bar as the base
+               environment from which its specific environment is
+               constructed. */
 
             if (NULL != *env) {
                 tmp_env = opal_argv_copy(*env);

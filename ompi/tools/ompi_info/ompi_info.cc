@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
   bool cmd_error = false;
   bool acted = false;
   bool want_all = false;
-  char **env = NULL;
+  char **app_env = NULL, **global_env = NULL;
   int i, len;
 
   // Initialize the argv parsing handle
@@ -145,16 +145,20 @@ int main(int argc, char *argv[])
       exit(cmd_error ? 1 : 0);
   }
 
-  mca_base_cmd_line_process_args(cmd_line, &env);
+  mca_base_cmd_line_process_args(cmd_line, &app_env, &global_env);
 
   // putenv() all the stuff that we got back from env (in case the
   // user specified some --mca params on the command line).  This
   // creates a memory leak, but that's unfortunately how putenv()
   // works.  :-(
 
-  len = opal_argv_count(env);
+  len = opal_argv_count(app_env);
   for (i = 0; i < len; ++i) {
-      putenv(env[i]);
+      putenv(app_env[i]);
+  }
+  len = opal_argv_count(global_env);
+  for (i = 0; i < len; ++i) {
+      putenv(global_env[i]);
   }
 
   ompi_info::mca_types.push_back("mca");
@@ -233,8 +237,11 @@ int main(int argc, char *argv[])
 
   // All done
 
-  if (NULL != env) {
-      opal_argv_free(env);
+  if (NULL != app_env) {
+      opal_argv_free(app_env);
+  }
+  if (NULL != global_env) {
+      opal_argv_free(global_env);
   }
   ompi_info::close_components();
   OBJ_RELEASE(cmd_line);
