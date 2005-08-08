@@ -421,6 +421,7 @@ int mca_pml_ob1_recv_frag_match(
     mca_pml_ob1_comm_t *comm;
     mca_pml_ob1_comm_proc_t *proc;
     bool additional_match=false;
+    bool is_probe = false;
     opal_list_t additional_matches;
     int rc;
 
@@ -479,12 +480,14 @@ int mca_pml_ob1_recv_frag_match(
 
         /* if match found, process data */
         if (match) {
-
             /*
              * update delivered sequence number information, if needed.
              */
-            if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
+            if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ||
+                 match->req_recv.req_base.req_type == MCA_PML_REQUEST_IPROBE) {
+
                 /* Match a probe, rollback the next expected sequence number */
+                is_probe = true;
                 (proc->expected_sequence)--;
             }
         } else {
@@ -531,7 +534,21 @@ int mca_pml_ob1_recv_frag_match(
     /* release matching lock before processing fragment */
     if(match != NULL) {
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
-        mca_pml_ob1_recv_request_progress(match,btl,segments,num_segments);
+        if (is_probe == false) {
+            mca_pml_ob1_recv_request_progress(match,btl,segments,num_segments);
+        } else {
+            /* mark probe as complete */
+            OPAL_THREAD_LOCK(&ompi_request_lock);
+            match->req_recv.req_base.req_ompi.req_status._count = match->req_recv.req_bytes_packed;
+            match->req_recv.req_base.req_pml_complete = true;
+            match->req_recv.req_base.req_ompi.req_complete = true;
+            if(ompi_request_waiting) {
+               opal_condition_broadcast(&ompi_request_cond);
+            }
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            /* retry the match */
+            mca_pml_ob1_recv_frag_match(btl,hdr,segments,num_segments);
+        }
     } 
     if(additional_match) {
         opal_list_item_t* item;
