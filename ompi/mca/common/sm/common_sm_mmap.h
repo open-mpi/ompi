@@ -86,7 +86,10 @@ OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
  *                             as its first segment (IN)
  *
  *  @param data_set_alignment  alignment of the data segment.  this
- *                             follows the control structure (IN)
+ *                             follows the control structure.  If this 
+ *                             value if 0, then assume that there will 
+ *                             be no data segment following the control 
+ *                             structure. (IN)
  *
  *  @returnvalue pointer to control structure at head of file.
  */
