@@ -54,23 +54,23 @@ mca_common_sm_mmap_t *mca_common_sm_mmap = NULL;
 static int mca_common_sm_mmap_open(char* path)
 {
     int fd = -1;
+    struct timespec ts;
 
     /* loop until file can be opened, or until an erro, other than
      * access error, occurs */
-    while(fd < 0) {
-        struct timespec ts;
+    while (fd < 0) {
         fd = open(path, O_CREAT|O_RDWR, 0000); 
-        if(fd < 0 && errno != EACCES) {
+        if (fd < 0 && errno != EACCES) {
             opal_output(0, 
-            "mca_ptl_sm_mmap_open: open %s failed with errno=%d\n", path, errno);
+                        "mca_ptl_sm_mmap_open: open %s failed with errno=%d\n",
+                        path, errno);
             return -1;
         }
         ts.tv_sec = 0; 
         ts.tv_nsec = 500000;
-        nanosleep(&ts,NULL);
+        nanosleep(&ts, NULL);
     }
 
-    /* return */
     return fd;
 
 }
@@ -90,7 +90,7 @@ static int mca_common_sm_mmap_open(char* path)
  *                             is assumed to have mca_common_sm_file_header_t
  *                             as its first segment (IN)
  *
- *  @param data_set_alignment  alignment of the data segment.  this
+ *  @param data_seg_alignment  alignment of the data segment.  this
  *                             follows the control structure (IN)
  */
 
@@ -114,8 +114,11 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         return NULL;
     }
 
-    /* open the backing file - only the first process accessing this
-     * file will succeed. */
+    /* open the backing file.  The first process to succeed here will
+       effectively block the others until most of the rest of the
+       setup in this function is complete because the initial perms
+       are 000 (an fchmod() is executed below, enabling the other
+       processes to get in) */
     fd=mca_common_sm_mmap_open(file_name);
     if( -1 == fd ) {
         opal_output(0, "mca_common_sm_mmap_init: mca_common_sm_mmap_open failed \n");
@@ -130,12 +133,11 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         close(fd);
         return NULL;
     }
-    if(0 < s_stat.st_size){
+    if (s_stat.st_size > 0){
         file_previously_opened=true;
     }
 
-    /* first process to open the file, so needs to
-     * initialize it */
+    /* first process to open the file, so needs to initialize it */
     if( !file_previously_opened ) {
         /* truncate the file to the requested size */
         if(ftruncate(fd, size) != 0) {
@@ -165,9 +167,14 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     map->map_seg = seg;
 
     /* allign start of data segment */
-    addr=(unsigned char *)seg+size_ctl_structure;
-    tmp=(size_t)(addr+1);
-    addr=(unsigned char *)( (tmp/data_seg_alignment)*data_seg_alignment);
+    addr = ((unsigned char *) seg) + size_ctl_structure;
+    /* calculate how far off alignment we are */
+    tmp = ((size_t) addr) % data_seg_alignment;
+    /* if we're off alignment, then move up to the next alignment */
+    if (tmp > 0) {
+        addr += (data_seg_alignment - tmp);
+    }
+
     /* is addr past end of file ? */
     if( (unsigned char*)seg+size < addr ){
         opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
@@ -230,8 +237,9 @@ void* mca_common_sm_mmap_seg_alloc(
         addr = map->data_addr + seg->seg_offset;
         seg->seg_offset += *size;
     }
-    if(NULL != registration)
+    if (NULL != registration) {
         *registration = NULL;
+    }
     opal_atomic_unlock(&seg->seg_lock);
     return addr;
 }
