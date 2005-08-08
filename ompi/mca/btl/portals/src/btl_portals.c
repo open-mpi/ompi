@@ -73,44 +73,42 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
                           struct mca_btl_base_endpoint_t** peers,
                           ompi_bitmap_t* reachable)
 {
-    struct mca_btl_portals_module_t *btl = 
-        (struct mca_btl_portals_module_t*) btl_base;
     int ret;
     struct ompi_proc_t *curr_proc = NULL;
     ptl_process_id_t *portals_procs = NULL;
     size_t i;
     unsigned long distance;
-    bool need_recv_setup = false;
+    bool need_activate = false;
+
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+    opal_output_verbose(50, mca_btl_portals_component.portals_output,
+                        "Adding %d procs (%d)", nprocs,
+                        mca_btl_portals_module.portals_num_procs);
 
     /* make sure our environment is fully initialized.  At end of this
        call, we have a working network handle on our module and
        portals_procs will have the portals process identifier for each
        proc (ordered, in theory) */
-    ret = mca_btl_portals_add_procs_compat(btl, nprocs, procs, 
+    ret = mca_btl_portals_add_procs_compat(&mca_btl_portals_module,
+                                           nprocs, procs, 
                                            &portals_procs);
     if (OMPI_SUCCESS != ret) return ret;
 
-    OPAL_THREAD_LOCK(&btl->portals_lock);
-
-    if (0 == opal_list_get_size(&btl->portals_endpoint_list)) {
-        need_recv_setup = true;
+    if (0 == mca_btl_portals_module.portals_num_procs) {
+        need_activate = true;
     }
 
     /* loop through all procs, setting our reachable flag */
     for (i= 0; i < nprocs ; ++i) {
         curr_proc = procs[i];
 
-        peers[i] = OBJ_NEW(mca_btl_portals_endpoint_t);
-        peers[i]->endpoint_btl = btl;
-        peers[i]->endpoint_proc = curr_proc;
-        peers[i]->endpoint_ptl_id = portals_procs[i];
-
-        opal_list_append(&btl->portals_endpoint_list,
-                         (opal_list_item_t*) peers[i]);
+        peers[i] = malloc(sizeof(mca_btl_base_endpoint_t));
+        if (NULL == peers[i]) return OMPI_ERROR;
+        *((mca_btl_base_endpoint_t*) peers[i]) = portals_procs[i];
 
         /* make sure we can reach the process - this is supposed to be
            a cheap-ish operation */
-        ret = PtlNIDist(btl->portals_ni_h,
+        ret = PtlNIDist(mca_btl_portals_module.portals_ni_h,
                         portals_procs[i],
                         &distance);
         if (ret != PTL_OK) {
@@ -119,35 +117,50 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
             continue;
         }
 
+        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_num_procs, 1);
         /* and here we can reach */
         ompi_bitmap_set_bit(reachable, i);
     }
 
     if (NULL != portals_procs) free(portals_procs);
 
-    if (need_recv_setup) {
+    if (need_activate && mca_btl_portals_module.portals_num_procs > 0) {
         /* create eqs */
         int i;
+
+        opal_output_verbose(50, mca_btl_portals_component.portals_output,
+                            "Enabling progress");
+
         for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
-            int ptl_ret = PtlEQAlloc(btl->portals_ni_h,
-                                     btl->portals_eq_sizes[i],
+            int ptl_ret = PtlEQAlloc(mca_btl_portals_module.portals_ni_h,
+                                     mca_btl_portals_module.portals_eq_sizes[i],
                                      PTL_EQ_HANDLER_NONE,
-                                     &(btl->portals_eq_handles[i]));
+                                     &(mca_btl_portals_module.portals_eq_handles[i]));
             if (PTL_OK != ptl_ret) {
                 opal_output(mca_btl_portals_component.portals_output,
                             "Error creating EQ %d: %d", i, ptl_ret);
-                OPAL_THREAD_UNLOCK(&btl->portals_lock);
                 /* BWB - better error code? */
                 return OMPI_ERROR;
             }
         }
 
-        ret = mca_btl_portals_recv_enable(btl);
+        ret = mca_btl_portals_recv_enable(&mca_btl_portals_module);
+
+        /* fill in send memory descriptor */
+        mca_btl_portals_module.md_send.start = NULL;
+        mca_btl_portals_module.md_send.length = 0;
+        mca_btl_portals_module.md_send.threshold = 2; /* send and ack */
+        mca_btl_portals_module.md_send.max_size = 0;
+        mca_btl_portals_module.md_send.options = PTL_MD_EVENT_START_DISABLE;
+        mca_btl_portals_module.md_send.user_ptr = NULL;
+        mca_btl_portals_module.md_send.eq_handle = 
+            mca_btl_portals_module.portals_eq_handles[OMPI_BTL_PORTALS_EQ_SEND];
     } else {
         ret = OMPI_SUCCESS;
     }
 
-    OPAL_THREAD_UNLOCK(&btl->portals_lock);
+    opal_output_verbose(50, mca_btl_portals_component.portals_output,
+                        "count: %d", mca_btl_portals_module.portals_num_procs);
 
     return ret;
 }
@@ -159,35 +172,30 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
 			  struct ompi_proc_t **procs,
 			  struct mca_btl_base_endpoint_t **peers)
 {
-    mca_btl_portals_module_t *btl =
-        (mca_btl_portals_module_t*) btl_base;
     size_t i = 0;
     int ret = OMPI_SUCCESS;
-    bool need_recv_shutdown = false;
 
-    opal_output_verbose(100, mca_btl_portals_component.portals_output,
-                        "del_procs called for %ld procs", (long) nprocs);
-
-    OPAL_THREAD_LOCK(&btl->portals_lock);
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+    opal_output_verbose(50, mca_btl_portals_component.portals_output,
+                        "Removing %d procs (%d)", nprocs,
+                        mca_btl_portals_module.portals_num_procs);
 
     for (i = 0 ; i < nprocs ; ++i) {
-        opal_list_remove_item(&btl->portals_endpoint_list,
-                              (opal_list_item_t*) peers[i]);
-        OBJ_RELEASE(peers[i]);
+        free(peers[i]);
+        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_num_procs, -1);
     }
 
-    if (0 == opal_list_get_size(&btl->portals_endpoint_list)) {
-        need_recv_shutdown = true;
-    }
-
-    if (need_recv_shutdown) {
+    if (0 == mca_btl_portals_module.portals_num_procs) {
         int i;
 
-        ret = mca_btl_portals_recv_disable(btl);
+        opal_output_verbose(50, mca_btl_portals_component.portals_output,
+                            "Disabling progress");
+
+        ret = mca_btl_portals_recv_disable(&mca_btl_portals_module);
 
         /* destroy eqs */
         for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
-            int ptl_ret = PtlEQFree(btl->portals_eq_handles[i]);
+            int ptl_ret = PtlEQFree(mca_btl_portals_module.portals_eq_handles[i]);
             if (PTL_OK != ptl_ret) {
                 opal_output(mca_btl_portals_component.portals_output,
                             "Error freeing EQ %d: %d", i, ptl_ret);
@@ -198,21 +206,20 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
         ret = OMPI_SUCCESS;
     }
 
-    OPAL_THREAD_UNLOCK(&btl->portals_lock);
-
     return ret;
 }
 
 
 int
-mca_btl_portals_register(struct mca_btl_base_module_t* btl, 
+mca_btl_portals_register(struct mca_btl_base_module_t* btl_base, 
                           mca_btl_base_tag_t tag, 
                           mca_btl_base_module_recv_cb_fn_t cbfunc, 
                           void* cbdata)
 {
-    mca_btl_portals_module_t* portals_btl = (mca_btl_portals_module_t*) btl; 
-    portals_btl->portals_reg[tag].cbfunc = cbfunc; 
-    portals_btl->portals_reg[tag].cbdata = cbdata; 
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+
+    mca_btl_portals_module.portals_reg[tag].cbfunc = cbfunc; 
+    mca_btl_portals_module.portals_reg[tag].cbdata = cbdata; 
 
     return OMPI_SUCCESS;
 }
@@ -222,20 +229,21 @@ mca_btl_base_descriptor_t*
 mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
                        size_t size)
 {
-    mca_btl_portals_module_t* btl = (mca_btl_portals_module_t*) btl_base; 
     mca_btl_portals_frag_t* frag;
     int rc;
+
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
     
-    if (size <= btl->super.btl_eager_limit) { 
-        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, rc); 
+    if (size <= mca_btl_portals_module.super.btl_eager_limit) { 
+        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, rc); 
         frag->segment.seg_len = 
-            size <= btl->super.btl_eager_limit ? 
-            size : btl->super.btl_eager_limit ; 
+            size <= mca_btl_portals_module.super.btl_eager_limit ? 
+            size : mca_btl_portals_module.super.btl_eager_limit ; 
     } else { 
-        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, rc); 
+        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, rc); 
         frag->segment.seg_len = 
-            size <= btl->super.btl_max_send_size ? 
-            size : btl->super.btl_max_send_size ; 
+            size <= mca_btl_portals_module.super.btl_max_send_size ? 
+            size : mca_btl_portals_module.super.btl_max_send_size ; 
     }
     
     frag->base.des_flags = 0; 
@@ -248,15 +256,16 @@ int
 mca_btl_portals_free(struct mca_btl_base_module_t* btl_base, 
                       mca_btl_base_descriptor_t* des) 
 {
-    mca_btl_portals_module_t* btl = (mca_btl_portals_module_t*) btl_base; 
     mca_btl_portals_frag_t* frag = (mca_btl_portals_frag_t*) des; 
 
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+
     if (frag->size == 0) {
-        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag); 
-    } else if (frag->size == btl->super.btl_eager_limit){ 
-        OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&btl->super, frag); 
-    } else if (frag->size == btl->super.btl_max_send_size) {
-        OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&btl->super, frag); 
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag); 
+    } else if (frag->size == mca_btl_portals_module.super.btl_eager_limit){ 
+        OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module.super, frag); 
+    } else if (frag->size == mca_btl_portals_module.super.btl_max_send_size) {
+        OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&mca_btl_portals_module.super, frag); 
     }  else {
         return OMPI_ERR_BAD_PARAM;
     }
@@ -273,7 +282,6 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                             size_t reserve,
                             size_t* size)
 {
-    mca_btl_portals_module_t* btl = (mca_btl_portals_module_t*) btl_base; 
     mca_btl_portals_frag_t* frag;
     size_t max_data = *size;
     struct iovec iov;
@@ -281,10 +289,12 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
     int32_t free_after;
     int ret;
 
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+
     if (0 == reserve && 0 == ompi_convertor_need_buffers(convertor)) {
         /* we can send right out of the buffer (woo!).  */
 
-        OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&btl->super, frag, ret);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&mca_btl_portals_module.super, frag, ret);
         if(NULL == frag){
             return NULL;
         }
@@ -297,13 +307,13 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
 
-    } else if (max_data+reserve <= btl->super.btl_eager_limit) {
+    } else if (max_data+reserve <= mca_btl_portals_module.super.btl_eager_limit) {
         /*
          * if we can't send out of the buffer directly and the
          * requested size is less than the eager limit, pack into a
          * fragment from the eager pool
          */
-        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(btl, frag, ret);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, ret);
         if (NULL == frag) {
             return NULL;
         }
@@ -314,7 +324,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                                  &max_data, &free_after);
         *size  = max_data;
         if (ret < 0) {
-            OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(btl, frag);
+            OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
@@ -324,12 +334,12 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
          * otherwise pack as much data as we can into a fragment
          * that is the max send size.
          */
-        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl, frag, ret);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, ret);
         if (NULL == frag) {
             return NULL;
         }
-        if (max_data + reserve > btl->super.btl_max_send_size){
-            max_data = btl->super.btl_max_send_size - reserve;
+        if (max_data + reserve > mca_btl_portals_module.super.btl_max_send_size){
+            max_data = mca_btl_portals_module.super.btl_max_send_size - reserve;
         }
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
@@ -337,7 +347,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                                  &max_data, &free_after);
         *size  = max_data;
         if ( ret < 0 ) {
-            OMPI_BTL_PORTALS_FRAG_RETURN_MAX(btl, frag);
+            OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&mca_btl_portals_module, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
@@ -361,37 +371,38 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                             size_t reserve,
                             size_t* size)
 {
-    struct mca_btl_portals_module_t *btl =
-        (struct mca_btl_portals_module_t *) btl_base;
     mca_btl_portals_frag_t* frag;
     ptl_md_t md;
     ptl_handle_me_t me_h;
     ptl_handle_md_t md_h;
     int ret;
 
-    OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&btl->super, frag, ret);
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+
+    OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&mca_btl_portals_module.super, frag, ret);
     if(NULL == frag) {
         return NULL;
     }
 
     frag->segment.seg_len = *size;
     frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
-    frag->segment.seg_key.key64 = OPAL_THREAD_ADD64(&(btl->portals_rdma_key), 1);
+    frag->segment.seg_key.key64 = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
+    frag->type = mca_btl_portals_frag_type_rdma;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "rdma dest posted for frag 0x%x, callback 0x%x, bits %lld",
                          frag, frag->base.des_cbfunc, frag->segment.seg_key.key64));
 
     /* create a match entry */
-    ret = PtlMEAttach(btl->portals_ni_h,
+    ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
                       OMPI_BTL_PORTALS_RDMA_TABLE_ID,
-                      peer->endpoint_ptl_id,
+                      *((mca_btl_base_endpoint_t*) peer),
                       frag->segment.seg_key.key64, /* match */
                       0, /* ignore */
                       PTL_UNLINK,
@@ -400,7 +411,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     if (PTL_OK != ret) {
         opal_output(mca_btl_portals_component.portals_output,
                     "Error creating rdma dest ME: %d", ret);
-        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
         return NULL;
     }
 
@@ -410,11 +421,11 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
        later :) */
     md.start = frag->segment.seg_addr.pval;
     md.length = frag->segment.seg_len;
-    md.threshold = 1; /* unlink after START / END */
+    md.threshold = 1; /* unlink after put */
     md.max_size = 0;
-    md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET;
+    md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
     md.user_ptr = frag; /* keep a pointer to ourselves */
-    md.eq_handle = btl->portals_eq_handles[OMPI_BTL_PORTALS_EQ_RDMA];
+    md.eq_handle = mca_btl_portals_module.portals_eq_handles[OMPI_BTL_PORTALS_EQ];
 
     ret = PtlMDAttach(me_h, 
                       md,
@@ -424,7 +435,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
         opal_output(mca_btl_portals_component.portals_output,
                     "Error creating rdma dest MD: %d", ret);
         PtlMEUnlink(me_h);
-        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&btl->super, frag);
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
         return NULL;
     }
 
@@ -435,63 +446,48 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
 int
 mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
 {
-    struct mca_btl_portals_module_t *btl =
-        (struct mca_btl_portals_module_t *) btl_base;
-    int ret, i;
-    opal_list_item_t *item;
+    int ret;
+
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
     /* finalize all communication */
-    while (btl->portals_outstanding_sends > 0) {
+    while (mca_btl_portals_module.portals_outstanding_sends > 0) {
         mca_btl_portals_component_progress();
     }
 
-    if (0 != opal_list_get_size(&(btl->portals_queued_sends))) {
+    if (0 != opal_list_get_size(&(mca_btl_portals_module.portals_queued_sends))) {
         opal_output(mca_btl_portals_component.portals_output,
                     "Warning: there were %d queued sends not sent",
-                    opal_list_get_size(&(btl->portals_queued_sends)));
+                    opal_list_get_size(&(mca_btl_portals_module.portals_queued_sends)));
     }
 
-    OPAL_THREAD_LOCK(&btl->portals_lock);
+    if (mca_btl_portals_module.portals_num_procs != 0) {
+        int i;
 
-    if (0 != opal_list_get_size(&btl->portals_endpoint_list)) {
-        OPAL_THREAD_LOCK(&btl->portals_lock);
-        while (NULL !=
-               (item = opal_list_remove_first(&btl->portals_endpoint_list))) {
-            OBJ_RELEASE(item);
-        }
-
-        /* only do this if there was something in the endpoint list.
-           otherwise, it has alredy been done. */
-
-        /* shut down recv queues */
-        ret = mca_btl_portals_recv_disable(btl);
+        ret = mca_btl_portals_recv_disable(&mca_btl_portals_module);
 
         /* destroy eqs */
         for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
-            int ptl_ret = PtlEQFree(btl->portals_eq_handles[i]);
+            int ptl_ret = PtlEQFree(mca_btl_portals_module.portals_eq_handles[i]);
             if (PTL_OK != ptl_ret) {
                 opal_output(mca_btl_portals_component.portals_output,
                             "Error freeing EQ %d: %d", i, ptl_ret);
             }
         }
-    }
 
-    OBJ_DESTRUCT(&btl->portals_endpoint_list);
-    OBJ_DESTRUCT(&btl->portals_recv_chunks);
-    OBJ_DESTRUCT(&btl->portals_queued_sends);
+    } 
 
-    OPAL_THREAD_UNLOCK(&btl->portals_lock);
+    OBJ_DESTRUCT(&mca_btl_portals_module.portals_recv_blocks);
+    OBJ_DESTRUCT(&mca_btl_portals_module.portals_queued_sends);
 
-    if (PTL_INVALID_HANDLE != btl->portals_ni_h) {
-        ret = PtlNIFini(btl->portals_ni_h);
+    if (PTL_INVALID_HANDLE != mca_btl_portals_module.portals_ni_h) {
+        ret = PtlNIFini(mca_btl_portals_module.portals_ni_h);
         if (PTL_OK != ret) {
             opal_output_verbose(20, mca_btl_portals_component.portals_output,
                                 "PtlNIFini returned %d", ret);
             return OMPI_ERROR;
         }
     }
-
-    OBJ_DESTRUCT(&btl->portals_lock);
 
     opal_output_verbose(20, mca_btl_portals_component.portals_output,
                         "successfully finalized module");

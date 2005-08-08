@@ -46,9 +46,7 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
 {
     ptl_process_id_t info;
     int ret, max_interfaces;
-    uint32_t i;
-    struct mca_btl_portals_module_t *btl;
-#if 0 /* send all the portals internal debug to a file or stderr */
+#if 1 /* send all the portals internal debug to a file or stderr */
     FILE *output;
     char *tmp;
 
@@ -72,28 +70,6 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
         use_modex = true;
     } else {
         use_modex = false;
-    }
-
-    /* with the utcp interface, only ever one "NIC" */
-    comp->portals_num_modules = 1;
-    comp->portals_modules = calloc(comp->portals_num_modules,
-                                   sizeof(mca_btl_portals_module_t));
-    if (NULL == comp->portals_modules) {
-        opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                            "malloc failed in mca_btl_portals_init");
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-    }
-    btl = &(comp->portals_modules[0]);
-
-    /* compat code is responsible for copying over the "template" onto
-       each module instance.  The calling code will create the free
-       lists and the like - we're only responsible for the
-       Portals-specific entries */
-    for (i = 0 ; i < comp->portals_num_modules ; ++i) {
-        memcpy(&(comp->portals_modules[i]), 
-               &mca_btl_portals_module,
-               sizeof(mca_btl_portals_module_t));
-        /* the defaults are good enough for the rest */
     }
 
     if (use_modex) {
@@ -128,8 +104,8 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
         ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                         PTL_PID_ANY,       /* let library assign our pid */
                         NULL,              /* no desired limits */
-                        &(btl->portals_ni_limits),    /* save our limits somewhere */
-                        &(btl->portals_ni_h)  /* our interface handle */
+                        NULL,              /* no need to have limits around */
+                        &mca_btl_portals_module.portals_ni_h  /* our interface handle */
                         );
         if (PTL_OK != ret) {
             opal_output_verbose(10, mca_btl_portals_component.portals_output,
@@ -252,8 +228,8 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
         ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                         PTL_PID_ANY,       /* let library assign our pid */
                         NULL,              /* no desired limits */
-                        &(btl->portals_ni_limits),    /* save our limits somewhere */
-                        &(btl->portals_ni_h)  /* our interface handle */
+                        NULL,    /* save our limits somewhere */
+                        &(mca_btl_portals_module.portals_ni_h)  /* our interface handle */
                         );
         if (PTL_OK != ret) {
             opal_output_verbose(10, mca_btl_portals_component.portals_output,
@@ -300,7 +276,7 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
     }
 
 #if 0
-    PtlNIDebug(btl->portals_ni_h, PTL_DBG_ALL | PTL_DBG_NI_ALL);
+    PtlNIDebug(mca_btl_portals_module.portals_ni_h, PTL_DBG_NI_ALL);
 #endif
 
     return OMPI_SUCCESS;

@@ -31,25 +31,8 @@ extern "C" {
  * and BTL pair at startup. However, connections to the endpoint
  * are established dynamically on an as-needed basis:
  */
-
-struct mca_btl_base_endpoint_t {
-    opal_list_item_t super;
-
-    /** BTL instance that created this connection */
-    struct mca_btl_portals_module_t* endpoint_btl;
-
-    /** proc structure corresponding to endpoint */
-    struct ompi_proc_t *endpoint_proc;
-
-    /** Portals address for endpoint */
-    ptl_process_id_t endpoint_ptl_id;
-};
-
-typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
-typedef mca_btl_base_endpoint_t  mca_btl_portals_endpoint_t;
-
-
-OBJ_CLASS_DECLARATION(mca_btl_portals_endpoint_t);
+    typedef ptl_process_id_t mca_btl_base_endpoint_t;
+    typedef mca_btl_base_endpoint_t  mca_btl_portals_endpoint_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
