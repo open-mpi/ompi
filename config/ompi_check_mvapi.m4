@@ -38,15 +38,39 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
     AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
           [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with mvapi])])
 
+    
+    ompi_check_mvapi$1_save_CFLAGS="$CFLAGS"
+    
+    #ugly hack for topspin which stores include files in include/vapi
+    AS_IF([test -d "$ompi_check_mvapi_dir/include/vapi"],  
+	[CPPFLAGS="$CPPFLAGS -I $ompi_check_mvapi_dir/include/vapi"
+	 $1_CPPFLAGS="$$1_CPPFLAGS -I $ompi_check_mvapi_dir/include/vapi"]) 
+    
+    #some mellanox vapi implemenations only need lvapi and lmosal    
     OMPI_CHECK_PACKAGE([$1],
-                       [vapi.h],
-                       [vapi],
-                       [VAPI_open_hca],
-                       [-lmosal -lmpga -lmtl_common],
-                       [$ompi_check_mvapi_dir],
-                       [$ompi_check_mvapi_libdir],
-                       [ompi_check_mvapi_happy="yes"],
-                       [ompi_check_mvapi_happy="no"])
+	[vapi.h],
+	[vapi],
+	[VAPI_open_hca],
+	[-lmosal],
+	[$ompi_check_mvapi_dir],
+	[$ompi_check_mvapi_libdir],
+	[ompi_check_mvapi_happy="yes"],
+	[ompi_check_mvapi_happy="no"])
+
+    #if needed use both lmpga and lmtl_common
+    AS_IF([test "$ompi_check_mvapi_happy" = "no"], 
+	[OMPI_CHECK_PACKAGE([$1],
+		[vapi.h],
+		[vapi],
+		[VAPI_open_hca],
+		[-lmosal -lmpga -lmtl_common],
+		[$ompi_check_mvapi_dir],
+		[$ompi_check_mvapi_libdir],
+		[ompi_check_mvapi_happy="yes"],
+		[ompi_check_mvapi_happy="no"])])
+    
+      
+    CPPFLAGS="$ompi_check_vapi$1_save_CFLAGS"
 
     AS_IF([test "$ompi_check_mvapi_happy" = "yes"],
           [$2],
