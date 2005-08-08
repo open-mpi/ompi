@@ -437,6 +437,14 @@ sub try_build {
       }
     }
 
+    # Ensure LD_LIBRARY_PATH points to our shared libraries
+
+    if (exists($ENV{LD_LIBRARY_PATH})) {
+        $ENV{LD_LIBRARY_PATH} = "$installdir/lib:" . $ENV{LD_LIBRARY_PATH};
+    } else {
+        $ENV{LD_LIBRARY_PATH};
+    }
+
     # install it
     $ret = do_command(1, "make install");
     if ($ret->{status} != 0) {
