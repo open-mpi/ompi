@@ -261,11 +261,12 @@ static int map_app_by_slot(
         if (node->node_slots_alloc == 0) {
             opal_list_remove_item(nodes, (opal_list_item_t*)node);
             OBJ_RELEASE(node);
+
+            /* Move on to the next node since we have allocated all of
+               this node's slots */
+
+            cur_node_item = next;
         }
-
-        /* Move on to the next node */
-
-        cur_node_item = next;
     } 
 
     /* Did we allocate everything? */
