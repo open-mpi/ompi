@@ -105,8 +105,8 @@ OMPI_DECLSPEC  int mca_base_close(void);
 
 OMPI_DECLSPEC  int mca_base_cmd_line_setup(opal_cmd_line_t *cmd);
 OMPI_DECLSPEC  int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
-                                                  char ***env);
-OMPI_DECLSPEC  int mca_base_cmd_line_process_arg(const char *param, const char *value);
+                                                  char ***app_env,
+                                                  char ***global_env);
 
   /* mca_base_component_compare.c */
   

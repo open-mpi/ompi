@@ -29,10 +29,13 @@
 /* 
  * Private variables
  */
-static int mca_param_argc = 0;
-static char **mca_param_argv = NULL;
-static int mca_value_argc = 0;
-static char **mca_value_argv = NULL;
+
+/*
+ * Private functions
+ */
+static int process_arg(const char *param, const char *value,
+                       char ***params, char ***values);
+static void add_to_env(char **params, char **values, char ***env);
 
 
 /*
@@ -40,8 +43,16 @@ static char **mca_value_argv = NULL;
  */
 int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
 {
-  return opal_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
-                                 "Pass MCA parameters (arg0 is the parameter name; arg1 is the parameter value)");
+    int ret;
+    ret = opal_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
+                                  "Pass context-specific MCA parameters; they are considered global if --gmca is not used and only one context is specified (arg0 is the parameter name; arg1 is the parameter value)");
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    ret = opal_cmd_line_make_opt3(cmd, '\0', "gmca", "gmca", 2,
+                                  "Pass global MCA parameters that are applicable to all contexts (arg0 is the parameter name; arg1 is the parameter value)");
+    return ret;
 }
 
 
@@ -49,83 +60,99 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
  * Look for and handle any -mca options on the command line
  */
 int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
-                                   char ***env)
+                                   char ***context_env, char ***global_env)
 {
   int i, num_insts;
-  char *name;
+  char **params;
+  char **values;
 
-  /* First, wipe out any previous results */
+  /* If no relevant parameters were given, just return */
 
-  if (mca_param_argc > 0) {
-      opal_argv_free(mca_param_argv);
-      opal_argv_free(mca_value_argv);
-      mca_param_argv = mca_value_argv = NULL;
-      mca_param_argc = mca_value_argc = 0;
-  }
-
-  /* If no "-mca" parameters were given, just return */
-
-  if (!opal_cmd_line_is_taken(cmd, "mca")) {
+  if (!opal_cmd_line_is_taken(cmd, "mca") &&
+      !opal_cmd_line_is_taken(cmd, "gmca")) {
       return OMPI_SUCCESS;
   }
 
-  /* Otherwise, assemble them into an argc/argv */
+  /* Handle app context-specific parameters */
 
   num_insts = opal_cmd_line_get_ninsts(cmd, "mca");
+  params = values = NULL;
   for (i = 0; i < num_insts; ++i) {
-      mca_base_cmd_line_process_arg(opal_cmd_line_get_param(cmd, "mca", i, 0), 
-                                    opal_cmd_line_get_param(cmd, "mca", i, 1));
+      process_arg(opal_cmd_line_get_param(cmd, "mca", i, 0), 
+                  opal_cmd_line_get_param(cmd, "mca", i, 1),
+                  &params, &values);
+  }
+  if (NULL != params) {
+      add_to_env(params, values, context_env);
+      opal_argv_free(params);
+      opal_argv_free(values);
   }
 
-  /* Now put that argc/argv in the environment */
+  /* Handle global parameters */
 
-  if (NULL == mca_param_argv) {
-      return OMPI_SUCCESS;
+  num_insts = opal_cmd_line_get_ninsts(cmd, "gmca");
+  params = values = NULL;
+  for (i = 0; i < num_insts; ++i) {
+      process_arg(opal_cmd_line_get_param(cmd, "gmca", i, 0), 
+                  opal_cmd_line_get_param(cmd, "gmca", i, 1),
+                  &params, &values);
+  }
+  if (NULL != params) {
+      add_to_env(params, values, global_env);
+      opal_argv_free(params);
+      opal_argv_free(values);
   }
 
-  /* Loop through all the -mca args that we've gotten and make env
-     vars of the form OMPI_MCA_*=value.  This is a memory leak, but
-     that's how putenv works.  :-( */
-
-  for (i = 0; NULL != mca_param_argv[i]; ++i) {
-      name = mca_base_param_environ_variable(mca_param_argv[i], NULL, NULL);
-      opal_setenv(name, mca_value_argv[i], true, env);
-      free(name);
-  }
+  /* All done */
 
   return OMPI_SUCCESS;
 }
 
 
 /*
- * Process a single MCA argument.  Done as a separate function so that
- * top-level applications can directly invoke this to effect MCA
- * command line arguments.  
+ * Process a single MCA argument.
  */
-int mca_base_cmd_line_process_arg(const char *param, const char *value)
+int static process_arg(const char *param, const char *value,
+                       char ***params, char ***values)
 {
-  int i;
-  char *new_str;
+    int i;
+    char *new_str;
 
-  /* Look to see if we've already got an -mca argument for the same
-     param.  Check against the list of MCA param's that we've already
-     saved arguments for. */
+    /* Look to see if we've already got an -mca argument for the same
+       param.  Check against the list of MCA param's that we've
+       already saved arguments for. */
 
-  for (i = 0; NULL != mca_param_argv && NULL != mca_param_argv[i]; ++i) {
-    if (0 == strcmp(param, mca_param_argv[i])) {
-      asprintf(&new_str, "%s,%s", mca_value_argv[i], value);
-      free(mca_value_argv[i]);
-      mca_value_argv[i] = new_str;
-
-      return OMPI_SUCCESS;
+    for (i = 0; NULL != *params && NULL != (*params)[i]; ++i) {
+        if (0 == strcmp(param, (*params)[i])) {
+            asprintf(&new_str, "%s,%s", (*values)[i], value);
+            free((*values)[i]);
+            (*values)[i] = new_str;
+            
+            return OMPI_SUCCESS;
+        }
     }
-  }
 
-  /* If we didn't already have an value for the same param, save this
-     one away */
+    /* If we didn't already have an value for the same param, save
+       this one away */
   
-  opal_argv_append(&mca_param_argc, &mca_param_argv, param);
-  opal_argv_append(&mca_value_argc, &mca_value_argv, value);
+    opal_argv_append_nosize(params, param);
+    opal_argv_append_nosize(values, value);
 
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
+}
+
+
+static void add_to_env(char **params, char **values, char ***env)
+{
+    int i;
+    char *name;
+
+    /* Loop through all the args that we've gotten and make env
+       vars of the form OMPI_MCA_*=value. */
+
+    for (i = 0; NULL != params && NULL != params[i]; ++i) {
+        name = mca_base_param_environ_variable(params[i], NULL, NULL);
+        opal_setenv(name, values[i], true, env);
+        free(name);
+    }
 }
