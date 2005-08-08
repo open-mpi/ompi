@@ -507,10 +507,20 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
         (frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
         OPAL_THREAD_UNLOCK(&comm->matching_lock);
         
-        mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
         if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
               (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
+            mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+        } else {
+            /* mark probe as complete */
+            OPAL_THREAD_LOCK(&ompi_request_lock);
+            request->req_recv.req_base.req_ompi.req_status._count = frag->hdr.hdr_match.hdr_msg_length;
+            request->req_recv.req_base.req_pml_complete = true;
+            request->req_recv.req_base.req_ompi.req_complete = true;
+            if(ompi_request_waiting) {
+                opal_condition_broadcast(&ompi_request_cond);
+            }
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
         }
         return; /* match found */
     }
@@ -561,10 +571,20 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
         if ((frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
-            mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
             if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
                   (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
+                mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
                 MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+            } else {
+                /* mark probe as complete */
+                OPAL_THREAD_LOCK(&ompi_request_lock);
+                request->req_recv.req_base.req_ompi.req_status._count = frag->hdr.hdr_match.hdr_msg_length;
+                request->req_recv.req_base.req_pml_complete = true;
+                request->req_recv.req_base.req_ompi.req_complete = true;
+                if(ompi_request_waiting) {
+                   opal_condition_broadcast(&ompi_request_cond);
+                }
+                OPAL_THREAD_UNLOCK(&ompi_request_lock);
             }
             return; /* match found */
         }
