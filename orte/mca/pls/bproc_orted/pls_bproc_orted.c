@@ -13,15 +13,17 @@
  * 
  * $HEADER$
  */
-
+/**
+ * @file:
+ * Part of the bproc launcher. 
+ * See pls_bproc_orted.h for an overview of how it works.
+ */
 #include "orte_config.h"
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <pty.h>
-#include <sys/bproc.h>
 #include <dirent.h>
 
 #include "opal/mca/base/mca_base_param.h"
@@ -44,6 +46,9 @@
 #include "orte/util/univ_info.h"
 #include "pls_bproc_orted.h"
 
+/**
+ * Initialization of the bproc_orted module with all the needed function pointers
+ */
 orte_pls_base_module_1_0_0_t orte_pls_bproc_orted_module = {
     orte_pls_bproc_orted_launch,
     orte_pls_bproc_orted_terminate_job,
@@ -71,6 +76,9 @@ static void pls_bproc_orted_send_cb(int status, orte_process_name_t * peer,
 /**
  * Creates the passed directory. If the directory already exists, it and its
  * contents will be deleted then the directory will be created.
+ * @param directory The directory to be created.
+ * @retval ORTE_SUCCESS
+ * @retval error
  */
 static int pls_bproc_orted_make_dir(char *directory)
 {
@@ -85,11 +93,15 @@ static int pls_bproc_orted_make_dir(char *directory)
 }
 
 /**
- * returns a path of the form:
+ * Returns a path of the form:
+ * @code
  * /tmp/openmpi-bproc-<user>/<universe>/<jobid>-<app_context>/<proc_rank>/
+ * @endcode
+ * which is used to put links to the pty/pipes in
  * @param proc_rank   the process's rank on the node
  * @param jobid       the jobid the proc belongs to
  * @param app_context the application context number within the job
+ * @retval path
  */ 
 static char * pls_bproc_orted_get_base_dir_name(int proc_rank, orte_jobid_t jobid,
                                                 size_t app_context) {
@@ -107,14 +119,13 @@ static char * pls_bproc_orted_get_base_dir_name(int proc_rank, orte_jobid_t jobi
     rc = orte_ns_base_convert_jobid_to_string(&job, jobid);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        free(job);
         return NULL;
     }
     
     /* get the username set by the bproc pls. We need to get it from here
      * because on many bproc systems the method we use to get the username
      * from the system on the backend fails and we only get the uid. */
-    rc = mca_base_param_register_string("pls", "bproc", "username", NULL, 
+    rc = mca_base_param_register_string("pls", "bproc", "username", NULL,
                                         orte_system_info.user);
     mca_base_param_lookup_string(rc,&user);
 
@@ -132,14 +143,18 @@ static char * pls_bproc_orted_get_base_dir_name(int proc_rank, orte_jobid_t jobi
 }
 
 /**
- * creates symlinks to the pty in the directory 
+ * Creates symlinks to the pty in the directory
+ * @code
  * /tmp/openmpi-bproc-<user>/<universe>/<jobid>-<app_context>/<proc_rank>/
+ * @endcode
  * @param proc_rank   the process's rank on the node
  * @param pty_path    the path that the pty is at
  * @param jobid       the jobid the proc belongs to
  * @param connect_stdin if true, stdin will be connected, otherwise it will be
  *                      set to /dev/null
  * @param app_context the application context number within the job
+ * @retval ORTE_SUCCESS
+ * @retval error
  */
 #if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
 static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path, 
@@ -202,7 +217,9 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
 
 /**
  * creates pipes for the io in the filesystem in the directory 
+ * @code
  * /tmp/openmpi-bproc-<user>/<universe>/<jobid>-<app_context>/<proc_rank>/
+ * @endcode
  * and returns their file descriptors
  * @param proc_rank   the process's rank on the node
  * @param jobid       the jobid the proc belongs to
@@ -210,6 +227,8 @@ static int pls_bproc_orted_link_pty(int proc_rank, char * pty_path,
  * @param connect_stdin if true, stdin will be connected, otherwise it will be
  *                      set to /dev/null
  * @param app_context the application context number within the job
+ * @retval ORTE_SUCCESS
+ * @retval error
  */
 static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * fd,
                                       bool connect_stdin, size_t app_context) {
@@ -311,7 +330,10 @@ static void pls_bproc_orted_delete_dir_tree(char * path) {
 }
 
 /**
- * Removes the bproc directory /tmp/openmpi-bproc-<user>/ and all of its contents
+ * Removes the bproc directory 
+ * @code /tmp/openmpi-bproc-<user>/ @endcode and all of its contents
+ * @retval ORTE_SUCCESS
+ * @retval error
  */
 static int pls_bproc_orted_remove_dir() {
     char *frontend = NULL, *user = NULL;
@@ -320,10 +342,9 @@ static int pls_bproc_orted_remove_dir() {
     /* get the username set by the bproc pls. We need to get it from here
      * because on many bproc systems the method we use to get the username
      * from the system on the backend fails and we only get the uid. */
-    id = mca_base_param_register_string("pls", "bproc", "username", NULL, 
+    id = mca_base_param_register_string("pls", "bproc", "username", NULL,
                                         orte_system_info.user);
     mca_base_param_lookup_string(id,&user);
-
     if (0 > asprintf(&frontend, "%stmp%sopenmpi-bproc-%s",
                      orte_system_info.path_sep, orte_system_info.path_sep, user)) {
         free(frontend);
@@ -338,7 +359,12 @@ static int pls_bproc_orted_remove_dir() {
 
 /**
  * Callback function for when mpirun sends us a message saying all the child 
- * procs are done 
+ * procs are done.
+ * @param status
+ * @param peer
+ * @param buffer
+ * @param tag
+ * @param cbdata 
  */
 static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
                                     orte_buffer_t* buffer, int tag, void* cbdata) {
@@ -349,6 +375,11 @@ static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
 
 /**
  * Callback function for when we tell mpirun we are ready
+ * @param status
+ * @param peer
+ * @param buffer
+ * @param tag
+ * @param cbdata 
  */
 static void pls_bproc_orted_send_cb(int status, orte_process_name_t * peer,
                                     orte_buffer_t* buffer, int tag, void* cbdata) {
@@ -357,6 +388,9 @@ static void pls_bproc_orted_send_cb(int status, orte_process_name_t * peer,
 /**
  * Setup io for the current node, then tell orterun we are ready for the actual
  * processes.
+ * @param jobid The jobid of the job to launch
+ * @retval ORTE_SUCCESS
+ * @retval error
  */
 int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
     opal_list_t map;
@@ -500,16 +534,36 @@ cleanup:
     return rc;
 }
 
+/**
+ * Function to terminate a job. Since this component only runs on remote nodes
+ * and doesn't actually launch any processes, this function is not needed
+ * so is a noop.
+ * @param jobid The job to terminate
+ * @retval ORTE_SUCCESS
+ */
 int orte_pls_bproc_orted_terminate_job(orte_jobid_t jobid) {
     orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
 
+/**
+ * Function to terminate a process. Since this component only runs on remote nodes
+ * and doesn't actually launch any processes, this function is not needed
+ * so is a noop.
+ * @param proc the process's name
+ * @retval ORTE_SUCCESS
+ */
 int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc) {
     orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
 
+/**
+ * Finalizes the bproc_orted module. This function simply blocks on a condition
+ * until we get a message from the seed telling us the user processes are done
+ * so we can now terminate.
+ * @retval ORTE_SUCCESS
+ */
 int orte_pls_bproc_orted_finalize(void) {
     OPAL_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
     opal_condition_wait(&mca_pls_bproc_orted_component.condition, 

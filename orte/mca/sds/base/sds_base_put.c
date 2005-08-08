@@ -126,7 +126,18 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     return ORTE_SUCCESS;
 }
 
-
+/**
+ * sets up the environment so that a process launched with the bproc launcher can
+ * figure out its name
+ * @param cell the cell that the process belongs to.
+ * @param job  the job the process belongs to
+ * @param vpid_start the starting vpid for the current parallel launch
+ * @param global_vpid_start the starting vpid for the job
+ * @param num_procs the number of user processes in the job
+ * @param env a pointer to the environment to setup
+ * @retval ORTE_SUCCESS
+ * @retval error
+ */
 int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job, 
                           orte_vpid_t vpid_start, orte_vpid_t global_vpid_start,
                           int num_procs, char ***env) {

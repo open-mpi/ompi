@@ -32,9 +32,13 @@ orte_sds_base_module_t orte_sds_bproc_module = {
     orte_sds_bproc_finalize,
 };
 
-
-int
-orte_sds_bproc_set_name(void)
+/**
+ * Sets up the process name from the information put into the environment
+ * by the bproc launcher and orte_ns_nds_bproc_put.
+ * @retval ORTE_SUCCESS
+ * @retval error
+ */
+int orte_sds_bproc_set_name(void)
 {
     int rc;
     int id;
@@ -86,6 +90,9 @@ orte_sds_bproc_set_name(void)
             return(rc);
         }
 
+        /* BPROC_RANK is set by bproc when we do a parallel launch. So we can
+         * find our vpid by taking the base vpid from the launch and adding to
+         * it the value of BPROC_RANK */
         vpid_string = getenv("BPROC_RANK");
         if (NULL == vpid_string) {
             opal_output(0, "orte_ns_nds_bproc_get: Error: Environment variable "
@@ -109,11 +116,7 @@ orte_sds_bproc_set_name(void)
             ORTE_ERROR_LOG(rc);
             return(rc);
         }
-        rc = orte_ns.derive_vpid(&vpid, vpid_offset, vpid_start);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
+        vpid = vpid_offset + vpid_start;
         
         if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(
            &(orte_process_info.my_name),

@@ -15,15 +15,19 @@
  * $HEADER$
  *
  */
-
+/**
+ * @file:
+ * Takes care of the component stuff for the MCA.
+ */
 #include "orte_config.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "pls_bproc.h"
 
-/*
- * Struct of function pointers and all that to let us be initialized
+/**
+ * The bproc component data structure used to store all the relevent data about
+ * this component.
  */
 orte_pls_bproc_component_t mca_pls_bproc_component = {
     {
@@ -43,26 +47,27 @@ orte_pls_bproc_component_t mca_pls_bproc_component = {
     }
 };
 
+/**
+ * Opens the pls_bproc component, setting all the needed mca parameters and 
+ * finishes setting up the component struct.
+ */
 int orte_pls_bproc_component_open(void) {
     int rc;
     /* init parameters */
-    mca_base_param_reg_int(&mca_pls_bproc_component.super.pls_version, "priority",
-                           NULL, false, false, 100, 
+    mca_base_component_t *c = &mca_pls_bproc_component.super.pls_version;
+    mca_base_param_reg_int(c, "priority", NULL, false, false, 100,
                            &mca_pls_bproc_component.priority);
-    mca_base_param_reg_int(&mca_pls_bproc_component.super.pls_version, "debug", 
+    mca_base_param_reg_int(c, "debug",
                            "If > 0 prints library debugging information",
                            false, false, 0, &mca_pls_bproc_component.debug);
-    mca_base_param_reg_int(&mca_pls_bproc_component.super.pls_version, 
-                           "terminate_sig",
+    mca_base_param_reg_int(c, "terminate_sig",
                            "Signal sent to processes to terminate them", false,
                            false, 9, &mca_pls_bproc_component.terminate_sig);
-    mca_base_param_reg_string(&mca_pls_bproc_component.super.pls_version, 
-                              "orted", "Path to where orted is installed", false, 
-                              false, "orted", &mca_pls_bproc_component.orted);
-    
-    mca_pls_bproc_component.num_procs = 0; 
-    mca_pls_bproc_component.num_daemons = 0; 
-    mca_pls_bproc_component.done_launching = false; 
+    mca_base_param_reg_string(c, "orted", "Path to where orted is installed",
+                           false, false, "orted", &mca_pls_bproc_component.orted);
+    mca_pls_bproc_component.num_procs = 0;
+    mca_pls_bproc_component.num_daemons = 0;
+    mca_pls_bproc_component.done_launching = false;
     OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
     /* init the list to hold the daemon names */
@@ -73,6 +78,9 @@ int orte_pls_bproc_component_open(void) {
     return rc;
 }
 
+/**
+ * Closes the pls_bproc component
+ */
 int orte_pls_bproc_component_close(void) {
     OBJ_DESTRUCT(&mca_pls_bproc_component.lock);
     OBJ_DESTRUCT(&mca_pls_bproc_component.condition);
@@ -81,8 +89,8 @@ int orte_pls_bproc_component_close(void) {
 }
 
 /**
- * initializes the component. We do not want to run unless we are the seed, bproc
- * is running, and we are the master node
+ * Initializes the module. We do not want to run unless we are the seed, bproc
+ * is running, and we are the master node.
  */
 orte_pls_base_module_t* orte_pls_bproc_init(int *priority) {
     int ret;

@@ -53,7 +53,7 @@ int orte_pls_bproc_seed_terminate_proc(const orte_process_name_t* proc_name);
 /**
  * PLS Component
  */
-struct orte_pls_bproc_component_t {
+struct orte_pls_bproc_seed_component_t {
     orte_pls_base_component_t super;
     int debug;
     int name_fd;
@@ -65,9 +65,9 @@ struct orte_pls_bproc_component_t {
     opal_mutex_t lock;
     opal_condition_t condition;
 };
-typedef struct orte_pls_bproc_component_t orte_pls_bproc_component_t;
+typedef struct orte_pls_bproc_seed_component_t orte_pls_bproc_seed_component_t;
                                                                                                           
-ORTE_DECLSPEC extern orte_pls_bproc_component_t mca_pls_bproc_seed_component;
+ORTE_DECLSPEC extern orte_pls_bproc_seed_component_t mca_pls_bproc_seed_component;
 ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls_bproc_seed_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
