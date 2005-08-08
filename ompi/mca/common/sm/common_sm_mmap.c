@@ -75,24 +75,6 @@ static int mca_common_sm_mmap_open(char* path)
 
 }
 
-/**
- *  This routine is used to set up a shared memory file, backed
- *  by a specified file.  It is assumed that the file does not
- *  exist before any of the current set of processes try and open
- *  it.
- *
- *  @param size - size of the file, in bytes (IN)
- *
- *  @param file_name  name of file to be opened. (IN)
- *
- *  @param size_ctl_structure  size of the control structure at
- *                             the head of the file. The control structure 
- *                             is assumed to have mca_common_sm_file_header_t
- *                             as its first segment (IN)
- *
- *  @param data_seg_alignment  alignment of the data segment.  this
- *                             follows the control structure (IN)
- */
 
 mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name, 
         size_t size_ctl_structure, size_t data_seg_alignment)
@@ -109,8 +91,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     if( (size < sizeof(mca_common_sm_file_header_t) ) ||
                 ( file_name == NULL ) || 
                 ( size_ctl_structure <
-                  sizeof(mca_common_sm_file_header_t ) ) ||
-                ( data_seg_alignment == 0 ) ) {
+                  sizeof(mca_common_sm_file_header_t ) )) {
         return NULL;
     }
 
@@ -166,27 +147,33 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
        element */
     map->map_seg = seg;
 
-    /* allign start of data segment */
-    addr = ((unsigned char *) seg) + size_ctl_structure;
-    /* calculate how far off alignment we are */
-    tmp = ((size_t) addr) % data_seg_alignment;
-    /* if we're off alignment, then move up to the next alignment */
-    if (tmp > 0) {
-        addr += (data_seg_alignment - tmp);
-    }
+    /* If we have a data segment (i.e., if 0 != data_seg_alignment),
+       then make it the first aligned address after the control
+       structure. */
+    if (0 != data_seg_alignment) {
+        addr = ((unsigned char *) seg) + size_ctl_structure;
+        /* calculate how far off alignment we are */
+        tmp = ((size_t) addr) % data_seg_alignment;
+        /* if we're off alignment, then move up to the next alignment */
+        if (tmp > 0) {
+            addr += (data_seg_alignment - tmp);
+        }
 
-    /* is addr past end of file ? */
-    if( (unsigned char*)seg+size < addr ){
-        opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
-                size,addr);
-        fchmod(fd, 0600);
-        close(fd);
-        munmap(seg,size);
-        return NULL;
+        /* is addr past end of file ? */
+        if( (unsigned char*)seg+size < addr ){
+            opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
+                        size,addr);
+            fchmod(fd, 0600);
+            close(fd);
+            munmap(seg,size);
+            return NULL;
+        }
+        map->data_addr = addr;
+    } else {
+        map->data_addr = NULL;
     }
     mem_offset=addr-(unsigned char *)seg;
     map->map_addr = (unsigned char *)seg;
-    map->data_addr = addr;
     map->map_size = size;
 
     /* initialize the segment - only the first process to open the file */

@@ -279,15 +279,12 @@ int mca_btl_sm_add_procs_same_base_addr(
             goto CLEANUP;
         }
 
-        /* Need to add in padding at end of size to account for a data
-           segment in the mmap file (even though we're not going to
-           use it; mca_common_sm_mmap_init() assumes that we will use
-           it and will error if we don't allocate enough space to at
-           least start a data segment) */
-        size = sizeof(mca_btl_sm_module_resource_t) + 8;
+        /* Pass in a data segment alignment of 0 to get no data
+           segment (only the shared control structure */
+        size = sizeof(mca_btl_sm_module_resource_t);
         if(NULL==(mca_btl_sm_component.mmap_file=mca_common_sm_mmap_init(size,
                         mca_btl_sm_component.sm_resouce_ctl_file,
-                        sizeof(mca_btl_sm_module_resource_t), 8 ))) 
+                        sizeof(mca_btl_sm_module_resource_t), 0))) 
         {
             opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory BTL coordinating strucure :: size %ld \n",
                     size);
