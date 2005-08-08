@@ -17,8 +17,7 @@
 #ifndef MCA_BTL_PORTALS_RDMA_H
 #define MCA_BTL_PORTALS_RDMA_H
 
-int mca_btl_portals_process_rdma(mca_btl_portals_module_t *module, 
-                                 ptl_event_t *ev);
+/* BWB - FIX ME - delete this file */
 
 
 #endif /* MCA_BTL_PORTALS_RDMA_H */

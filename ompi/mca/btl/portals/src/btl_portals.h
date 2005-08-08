@@ -58,30 +58,19 @@ struct mca_btl_portals_component_t {
     char *portals_ifname;
 #endif
 
-    /* Number of currently active portals modules.  We assume these
-       never change between init and finalize, so these aren't thread
-       locked */
-    uint32_t portals_num_modules;
-    /* List of currently available modules */
-    struct mca_btl_portals_module_t *portals_modules;
-
     /* initial size of free lists */
     int portals_free_list_init_num;
     /* max size of free lists */
     int portals_free_list_max_num;
     /* numer of elements to grow free lists */
     int portals_free_list_inc_num;
-
-    /* lock for accessing component */
-    opal_mutex_t portals_lock;
 };
 typedef struct mca_btl_portals_component_t mca_btl_portals_component_t;
 
 
-#define OMPI_BTL_PORTALS_EQ_RECV  0
-#define OMPI_BTL_PORTALS_EQ_SEND  1
-#define OMPI_BTL_PORTALS_EQ_RDMA  2
-#define OMPI_BTL_PORTALS_EQ_SIZE  3
+#define OMPI_BTL_PORTALS_EQ_SEND  0
+#define OMPI_BTL_PORTALS_EQ       1
+#define OMPI_BTL_PORTALS_EQ_SIZE  2
 
 struct mca_btl_portals_module_t {
     /* base BTL module interface */
@@ -90,23 +79,24 @@ struct mca_btl_portals_module_t {
     /* registered callbacks */
     mca_btl_base_recv_reg_t portals_reg[MCA_BTL_TAG_MAX];
 
-    /* list of connected procs */
-    opal_list_t portals_endpoint_list;
+    /* number of processes we're actively connected to.  Needed to
+       know when to do activation / shutdown */
+    int32_t portals_num_procs;
 
+    /* fragment free lists */
     ompi_free_list_t portals_frag_eager;
     ompi_free_list_t portals_frag_max;
     ompi_free_list_t portals_frag_user;
+    ompi_free_list_t portals_frag_recv;
 
-    /* number of mds for recv frags */
+    /* incoming send message receive memory descriptors */
     int portals_recv_mds_num;
-    /* size of each md for first frags */
     int portals_recv_mds_size;
-    /* list of recv chunks */
-    opal_list_t portals_recv_chunks;
+    opal_list_t portals_recv_blocks;
 
-    /* size for event queue */
+    /* event queues.  Keep sends on own eq, since we can't control
+       space for the ack otherwise */
     int portals_eq_sizes[OMPI_BTL_PORTALS_EQ_SIZE];
-    /* frag receive event queue */
     ptl_handle_eq_t portals_eq_handles[OMPI_BTL_PORTALS_EQ_SIZE];
 
     /* "reject" entry for recv match list */
@@ -124,14 +114,12 @@ struct mca_btl_portals_module_t {
 
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;
-    /* the limits returned from PtlNIInit for interface */
-    ptl_ni_limits_t portals_ni_limits;
 
     /* number of dropped messages */
     ptl_sr_value_t portals_sr_dropped;
 
-    /* lock for accessing module */
-    opal_mutex_t portals_lock;
+    /* descriptors for send */
+    ptl_md_t md_send;
 };
 typedef struct mca_btl_portals_module_t mca_btl_portals_module_t;
 
@@ -178,9 +166,6 @@ int mca_btl_portals_del_procs(struct mca_btl_base_module_t* btl_base,
                               struct ompi_proc_t **procs,
                               struct mca_btl_base_endpoint_t** peers);
 
-/*
- * stubbed functions 
- */
 int mca_btl_portals_register(struct mca_btl_base_module_t* btl_base,
                              mca_btl_base_tag_t tag,
                              mca_btl_base_module_recv_cb_fn_t cbfunc,
@@ -228,7 +213,6 @@ int mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
  * global structures
  */
 extern mca_btl_portals_component_t mca_btl_portals_component;
-/* don't use, except as base for creating module instances */
 extern mca_btl_portals_module_t mca_btl_portals_module;
 
 #endif

@@ -61,6 +61,18 @@ mca_btl_portals_frag_user_constructor(mca_btl_portals_frag_t* frag)
     frag->size = 0; 
 }
 
+static void
+mca_btl_portals_frag_recv_constructor(mca_btl_portals_frag_t* frag) 
+{ 
+    frag->base.des_flags = 0;
+    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst_cnt = 1;
+    frag->base.des_src = NULL;
+    frag->base.des_src_cnt = 0;
+    frag->size = 0; 
+    frag->type = mca_btl_portals_frag_type_recv;
+}
+
 
 OBJ_CLASS_INSTANCE(
     mca_btl_portals_frag_t, 
@@ -84,5 +96,11 @@ OBJ_CLASS_INSTANCE(
     mca_btl_portals_frag_user_t, 
     mca_btl_base_descriptor_t, 
     mca_btl_portals_frag_user_constructor, 
+    NULL); 
+
+OBJ_CLASS_INSTANCE(
+    mca_btl_portals_frag_recv_t, 
+    mca_btl_base_descriptor_t, 
+    mca_btl_portals_frag_recv_constructor, 
     NULL); 
 

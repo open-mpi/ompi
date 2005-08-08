@@ -20,25 +20,4 @@
 #include "btl_portals.h"
 #include "btl_portals_endpoint.h" 
 
-
-/*
- * Initialize state of the endpoint instance.
- *
- */
-
-static void mca_btl_portals_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
-{
-    endpoint->endpoint_btl = NULL;
-    endpoint->endpoint_proc = NULL;
-
-    endpoint->endpoint_ptl_id.nid = 0;
-    endpoint->endpoint_ptl_id.pid = 0;
-}
-
-
-OBJ_CLASS_INSTANCE(
-    mca_btl_portals_endpoint_t, 
-    opal_list_item_t,
-    mca_btl_portals_endpoint_construct, 
-    NULL);
-
+/* BWB - FIX ME - delete this file */
