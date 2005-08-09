@@ -184,7 +184,7 @@ static int mca_btl_mvapi_endpoint_send_connect_req(mca_btl_base_endpoint_t* endp
          mca_btl_mvapi_endpoint_send_cb, NULL);
     
     
-    BTL_DEBUG(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
+    BTL_VERBOSE(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
               endpoint->endpoint_btl->port.lid));
@@ -260,7 +260,7 @@ static int mca_btl_mvapi_endpoint_set_remote_info(mca_btl_base_endpoint_t* endpo
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    BTL_DEBUG(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
               endpoint->rem_qp_num_high,
               endpoint->rem_qp_num_low, 
               endpoint->rem_lid));
@@ -312,7 +312,7 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
         return rc;
     }
 
-    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
               endpoint->endpoint_btl->port.lid));
@@ -362,7 +362,7 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
         return rc;
     }
 
-    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
               endpoint->endpoint_btl->port.lid));
@@ -519,7 +519,7 @@ int mca_btl_mvapi_endpoint_send(
     switch(endpoint->endpoint_state) {
         case MCA_BTL_IB_CONNECTING:
 
-            BTL_DEBUG(("Queing because state is connecting"));
+            BTL_VERBOSE(("Queing because state is connecting"));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -529,7 +529,7 @@ int mca_btl_mvapi_endpoint_send(
 
         case MCA_BTL_IB_CONNECT_ACK:
 
-            BTL_DEBUG(("Queuing because waiting for ack"));
+            BTL_VERBOSE(("Queuing because waiting for ack"));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -539,7 +539,7 @@ int mca_btl_mvapi_endpoint_send(
 
         case MCA_BTL_IB_CLOSED:
 
-            BTL_DEBUG(("Connection to endpoint closed ... connecting ..."));
+            BTL_VERBOSE(("Connection to endpoint closed ... connecting ..."));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -558,7 +558,7 @@ int mca_btl_mvapi_endpoint_send(
                 mvapi_btl = endpoint->endpoint_btl;
                 
                 
-                BTL_DEBUG(("Send to : %d, len : %d, frag : %p", 
+                BTL_VERBOSE(("Send to : %d, len : %d, frag : %p", 
                               endpoint->endpoint_proc->proc_guid.vpid,
                               frag->sg_entry.len,
                               frag));
@@ -753,7 +753,7 @@ int mca_btl_mvapi_endpoint_qp_init_query(
         return OMPI_ERROR;
     }
 
-    BTL_DEBUG(("Modified to init..Qp %d", qp_hndl));
+    BTL_VERBOSE(("Modified to init..Qp %d", qp_hndl));
 
     /**********************  INIT --> RTR  ************************/
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -788,7 +788,7 @@ int mca_btl_mvapi_endpoint_qp_init_query(
         return OMPI_ERROR;
     }
     
-    BTL_DEBUG(("Modified to RTR..Qp %d", qp_hndl));
+    BTL_VERBOSE(("Modified to RTR..Qp %d", qp_hndl));
 
     /************** RTS *******************/
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -811,7 +811,7 @@ int mca_btl_mvapi_endpoint_qp_init_query(
     if(VAPI_OK != ret) {
         return OMPI_ERROR;
     }
-    BTL_DEBUG(("Modified to RTS..Qp %d", qp_hndl));
+    BTL_VERBOSE(("Modified to RTS..Qp %d", qp_hndl));
     
     ret = VAPI_query_qp(nic, qp_hndl, &qp_attr, &qp_attr_mask, &qp_init_attr );          
     if (ret != VAPI_OK) {                                                   

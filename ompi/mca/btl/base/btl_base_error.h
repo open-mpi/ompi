@@ -72,5 +72,4 @@ do {                                                         \
 #define BTL_VERBOSE(args) 
 #endif
 
-
 #endif

@@ -206,7 +206,7 @@ static int mca_btl_openib_endpoint_send_connect_req(mca_btl_base_endpoint_t* end
          mca_btl_openib_endpoint_send_cb, NULL);
     
     
-    BTL_DEBUG(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
+    BTL_VERBOSE(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
               endpoint->lcl_qp_high->qp_num,
               endpoint->lcl_qp_low->qp_num,
               endpoint->endpoint_btl->ib_port_attr->lid));
@@ -297,7 +297,7 @@ static int mca_btl_openib_endpoint_set_remote_info(mca_btl_base_endpoint_t* endp
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    BTL_DEBUG(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
               endpoint->rem_qp_num_high,
               endpoint->rem_qp_num_low, 
               endpoint->rem_lid));
@@ -345,7 +345,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
     }
     endpoint->lcl_psn_low = lrand48() & 0xffffff; 
 
-    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_high->qp_num,
               endpoint->lcl_qp_low->qp_num, 
               openib_btl->ib_port_attr->lid)); 
@@ -392,7 +392,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
     }
     endpoint->lcl_psn_low = lrand48() & 0xffffff; 
 
-    BTL_DEBUG(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
+    BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_high->qp_num,
               endpoint->lcl_qp_low->qp_num, 
               openib_btl->ib_port_attr->lid)); 
@@ -553,7 +553,7 @@ int mca_btl_openib_endpoint_send(
     switch(endpoint->endpoint_state) {
         case MCA_BTL_IB_CONNECTING:
 
-            BTL_DEBUG(("Queing because state is connecting"));
+            BTL_VERBOSE(("Queing because state is connecting"));
             
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -563,7 +563,7 @@ int mca_btl_openib_endpoint_send(
 
         case MCA_BTL_IB_CONNECT_ACK:
 
-            BTL_DEBUG(("Queuing because waiting for ack"));
+            BTL_VERBOSE(("Queuing because waiting for ack"));
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
@@ -573,7 +573,7 @@ int mca_btl_openib_endpoint_send(
 
         case MCA_BTL_IB_CLOSED:
 
-            BTL_DEBUG(("Connection to endpoint closed ... connecting ..."));
+            BTL_VERBOSE(("Connection to endpoint closed ... connecting ..."));
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
             rc = mca_btl_openib_endpoint_start_connect(endpoint);
@@ -587,7 +587,7 @@ int mca_btl_openib_endpoint_send(
         case MCA_BTL_IB_CONNECTED:
             {
                 openib_btl = endpoint->endpoint_btl;
-                BTL_DEBUG(("Send to : %d, len : %lu, frag : %llu", 
+                BTL_VERBOSE(("Send to : %d, len : %lu, frag : %llu", 
                               endpoint->endpoint_proc->proc_guid.vpid,
                               frag->sg_entry.length,
                               (unsigned long long) frag));

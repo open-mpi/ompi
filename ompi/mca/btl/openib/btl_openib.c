@@ -451,7 +451,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->openib_reg = openib_reg; 
-        BTL_DEBUG(("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr)); 
+        BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr)); 
 
         return &frag->base;
 
@@ -703,7 +703,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
     frag->openib_reg = openib_reg; 
-    BTL_DEBUG(("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0])); 
+    BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0])); 
 
     return &frag->base; 
     
@@ -792,7 +792,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
     frag->sg_entry.length  = frag->base.des_src->seg_len; 
     
-    BTL_DEBUG(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
+    BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
                   , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
                   , frag->wr_desc.sr_desc.wr.rdma.rkey
                   , frag->sg_entry.addr

@@ -59,7 +59,7 @@ OBJ_CLASS_INSTANCE(
  */
 
 #include "ompi/mca/btl/base/static-components.h"
-
+#include "btl_base_error.h"
 
 /*
  * Global variables
@@ -81,8 +81,16 @@ int mca_btl_base_open(void)
     if (already_opened) return OMPI_SUCCESS;
     already_opened = true;
 
-  /* Open up all available components */
+    mca_base_param_reg_int_name(
+                                "btl", 
+                                "base_debug", 
+                                "If btl_base_debug is 1 standard debug is output, if > 1 verbose debug is output", 
+                                false, false, 
+                                0, 
+                                &mca_btl_base_debug);
 
+  /* Open up all available components */
+    
   if (OMPI_SUCCESS != 
       mca_base_components_open("btl", 0, mca_btl_base_static_components, 
                                &mca_btl_base_components_opened, true)) {

@@ -21,10 +21,7 @@
 
 #include "btl_base_error.h"
 
-#if OMPI_ENABLE_DEBUG
-int mca_btl_base_debug = 1;
-#endif
-
+int mca_btl_base_debug;
 
 int mca_btl_base_err(const char* fmt, ...)
 {
