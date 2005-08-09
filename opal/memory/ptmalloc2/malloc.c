@@ -1,3 +1,61 @@
+/********************** BEGIN OMPI CHANGES *****************************/
+#define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
+#include "ompi_config.h"
+
+#include <unistd.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+
+#include "opal/memory/memory_internal.h"
+
+/*
+ * Not all systems have sbrk() declared, since it's technically not a
+ * POSIX function.
+ */
+#if !OMPI_HAVE_DECL_SBRK
+void *sbrk();
+#endif
+
+static void*
+opal_mem_free_ptmalloc2_sbrk(int inc)
+{
+  if (inc < 0) {
+    long oldp = (long) sbrk(0);
+    opal_mem_free_release_hook((void*) (oldp + inc), -inc);
+  }
+
+  return sbrk(inc);
+}
+
+static int
+opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
+{
+  opal_mem_free_release_hook(start, length);
+  return munmap(start, length);
+}
+
+#define MORECORE opal_mem_free_ptmalloc2_sbrk
+#define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b)
+/* easier to just not use mremap - having it makes tracking more
+   difficult */
+#define HAVE_MREMAP 0
+/* set the threshold for switching from sbrk heap to mmap higher than
+   normal so that there are more things in the heap.  mmap segments
+   are never reused, so this keeps the number of calls to munmap and
+   sbrk down significantly */
+#define DEFAULT_MMAP_THRESHOLD (2*1024*1024)
+
+/* make some non-GCC compilers happy */
+#ifndef __GNUC__
+#define __const const
+#endif
+
+/********************* BEGIN OMPI CHANGES ******************************/
+
+
+
+
 /* Malloc implementation for multiple threads without lock contention.
    Copyright (C) 1996-2002, 2003, 2004 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -852,7 +910,7 @@ Void_t*  public_mALLOc();
 #ifdef libc_hidden_proto
 libc_hidden_proto (public_mALLOc)
 #endif
-
+       static void here(void);
 /*
   free(Void_t* p)
   Releases the chunk of memory pointed to by p, that had been previously

@@ -243,8 +243,12 @@ typedef long long bool;
  * include <mpi.h>, which includes <ompi_config.h>, but after
  * setting OMPI_BUILDING to 0  For 3, it's the same as 1 -- just include
  * <ompi_config.h> first.
+ *
+ * Give code that needs to include ompi_config.h but really can't have
+ * this stuff enabled (like the memory manager code) a way to turn us
+ * off
  */
-#if OMPI_ENABLE_MEM_DEBUG
+#if OMPI_ENABLE_MEM_DEBUG && !defined(OMPI_DISABLE_ENABLE_MEM_DEBUG)
 
 /* It is safe to include opal/util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI

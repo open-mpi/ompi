@@ -14,31 +14,16 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+include $(top_srcdir)/test/support/Makefile.options
 
-noinst_LTLIBRARIES = libopalmemory.la
+check_PROGRAMS = \
+	opal_memory_basic
 
-SUBDIRS = ptmalloc2
+TESTS = \
+	$(check_PROGRAMS)
 
-# Source code files
-
-headers = \
-	memory.h \
-	memory_internal.h
-
-libopalmemory_la_SOURCES = \
-        $(headers) \
-	memory.c
-
-if OMPI_WANT_PTMALLOC2
-libopalmemory_la_LIBADD = ptmalloc2/libptmalloc2.la
-endif
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/memory
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+opal_memory_basic_SOURCES = opal_memory_basic.c
+opal_memory_basic_LDADD = \
+        $(top_builddir)/opal/libopal.la \
+        $(top_builddir)/test/support/libsupport.a 
+opal_memory_basic_DEPENDENCIES = $(opal_memory_basic_LDADD)

@@ -22,6 +22,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
+#include "opal/memory/memory.h"
 #include "mca/base/base.h"
 #include "runtime/opal.h"
 
@@ -41,6 +42,9 @@ int opal_finalize(void)
 
     /* finalize the output system */
     opal_output_finalize();
+
+    /* finalize the memory manager / tracker */
+    opal_mem_free_finalize();
     
     /* finalize the class/object system */
     opal_class_finalize();

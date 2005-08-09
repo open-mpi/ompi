@@ -172,6 +172,9 @@ EOF
     AC_MSG_ERROR(["*** Can not continue."])
 fi
 
+AM_CONDITIONAL(OMPI_HAVE_POSIX_THREADS, test "$thread_type" = "posix")
+AM_CONDITIONAL(OMPI_HAVE_SOLARIS_THREADS, test "$thread_type" = "solaris")
+
 #
 # Now configure the whole MPI and progress thread gorp
 #

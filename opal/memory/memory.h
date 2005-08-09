@@ -88,7 +88,7 @@ bool opal_mem_free_is_supported(void);
  * @retval OMPI_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be released
  */
-int opal_mem_free_register_handler(opal_memory_unpin_t *func, void *cbdata);
+int opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata);
 
 
 /**
@@ -101,6 +101,6 @@ int opal_mem_free_register_handler(opal_memory_unpin_t *func, void *cbdata);
  * @retval OMPI_SUCCESS The function was successfully deregistered
  * @retval OMPI_ERR_NOT_FOUND The function was not previously registered
  */
-int opal_mem_free_unregister_handler(opal_memory_unpin_t *func);
+int opal_mem_free_unregister_handler(opal_mem_free_unpin_fn_t *func);
 
 #endif /* OPAL_MEMORY_MEMORY_H */
