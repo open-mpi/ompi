@@ -57,8 +57,19 @@ do {                                                         \
         mca_btl_base_out("\n");                              \
    }                                                         \
 } while(0); 
+#define BTL_VERBOSE(args)                                    \
+do {                                                         \
+   if(mca_btl_base_debug > 1) {                              \
+        mca_btl_base_err("[%lu,%lu,%lu][%s:%d:%s] ",         \
+                ORTE_NAME_ARGS(orte_process_info.my_name),   \
+                __FILE__, __LINE__, __func__);               \
+        mca_btl_base_err args;                               \
+        mca_btl_base_out("\n");                              \
+   }                                                         \
+} while(0); 
 #else
 #define BTL_DEBUG(args) 
+#define BTL_VERBOSE(args) 
 #endif
 
 
