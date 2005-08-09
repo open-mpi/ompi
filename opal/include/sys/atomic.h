@@ -382,11 +382,11 @@ opal_atomic_sub_size_t(volatile size_t *addr, int delta)
 }
 #else
 #if SIZEOF_SIZE_T == 4
-#define opal_atomic_add_size_t(addr, delta) ((size_t) opal_atomic_add_32((int32_t*) addr, delta));
-#define opal_atomic_sub_size_t(addr, delta) ((size_t) opal_atomic_sub_32((int32_t*) addr, delta));
+#define opal_atomic_add_size_t(addr, delta) ((size_t) opal_atomic_add_32((int32_t*) addr, delta))
+#define opal_atomic_sub_size_t(addr, delta) ((size_t) opal_atomic_sub_32((int32_t*) addr, delta))
 #elif SIZEOF_SIZE_T ==8
-#define opal_atomic_add_size_t(addr, delta) ((size_t) opal_atomic_add_64((int64_t*) addr, delta));
-#define opal_atomic_sub_size_t(addr, delta) ((size_t) opal_atomic_sub_64((int64_t*) addr, delta));
+#define opal_atomic_add_size_t(addr, delta) ((size_t) opal_atomic_add_64((int64_t*) addr, delta))
+#define opal_atomic_sub_size_t(addr, delta) ((size_t) opal_atomic_sub_64((int64_t*) addr, delta))
 #else
 #error "Unknown size_t size"
 #endif
