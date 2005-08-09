@@ -20,6 +20,7 @@
 #include "opal/memory/memory.h"
 #include "opal/memory/memory_internal.h"
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
 
 
 /* 
@@ -27,24 +28,27 @@
  */
 struct callback_list_item_t {
     opal_list_item_t super;
-    opal_mem_free_unpin_fn_t cbfunc;
+    opal_mem_free_unpin_fn_t *cbfunc;
     void *cbdata;
 };
 typedef struct callback_list_item_t callback_list_item_t;
-static OBJ_CLASS_INSTANCE(callback_list_item_t opal_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(callback_list_item_t, opal_list_item_t, NULL, NULL);
 
 /*
  * local data
  */
 static opal_list_t callback_list;
 static opal_atomic_lock_t callback_lock;
-static bool have_free_support;
+static bool have_free_support = false;
+
 
 int
 opal_mem_free_init(void)
 {
-    OBJ_DECLARATION(&callback_list, opal_list_t);
+    OBJ_CONSTRUCT(&callback_list, opal_list_t);
     opal_atomic_init(&callback_lock, OPAL_ATOMIC_UNLOCKED);
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -57,6 +61,17 @@ opal_mem_free_finalize(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&callback_list);
+
+    return OMPI_SUCCESS;
+}
+
+
+/* called from memory manager / memory-manager specific hooks */
+void
+opal_mem_free_set_free_support(bool support)
+{
+    printf("someone set mem_free support to %d\n", (int) support);
+    have_free_support = support;
 }
 
 
@@ -88,7 +103,7 @@ opal_mem_free_is_supported(void)
 
 
 int
-opal_mem_free_register_handler(opal_memory_unpin_t *func, void *cbdata)
+opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
 {
     opal_list_item_t *item;
     callback_list_item_t *cbitem;
@@ -119,7 +134,7 @@ opal_mem_free_register_handler(opal_memory_unpin_t *func, void *cbdata)
     cbitem->cbfunc = func;
     cbitem->cbdata = cbdata;
 
-    opal_list_appemd(&callback_list, (opal_list_item_t*) cbitem);
+    opal_list_append(&callback_list, (opal_list_item_t*) cbitem);
 
  done:
     opal_atomic_unlock(&callback_lock);
@@ -129,7 +144,7 @@ opal_mem_free_register_handler(opal_memory_unpin_t *func, void *cbdata)
 
 
 int
-opal_mem_free_unregister_handler(opal_memory_unpin_t *func)
+opal_mem_free_unregister_handler(opal_mem_free_unpin_fn_t *func)
 {
     opal_list_item_t *item;
     callback_list_item_t *cbitem;

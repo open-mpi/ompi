@@ -464,6 +464,13 @@ ptmalloc_init __MALLOC_P((void))
   }
   if(__malloc_initialize_hook != NULL)
     (*__malloc_initialize_hook)();
+
+/********************** BEGIN OMPI CHANGES *****************************/
+  /* don't use __hook for this, as someone might want to use those
+     features */
+  opal_mem_free_set_free_support(true);
+/********************* BEGIN OMPI CHANGES ******************************/
+
   __malloc_initialized = 1;
 }
 

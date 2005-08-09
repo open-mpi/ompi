@@ -1338,6 +1338,11 @@ OMPI_CASE_SENSITIVE_FS_SETUP
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
 
+#
+# memory manager hooks
+#
+OMPI_MEMORY_SETUP
+
 # checkpoint results
 AC_CACHE_SAVE
 
@@ -1609,6 +1614,8 @@ AC_CONFIG_FILES([
     opal/event/Makefile
     opal/event/compat/Makefile
     opal/event/compat/sys/Makefile
+    opal/memory/Makefile
+    opal/memory/ptmalloc2/Makefile
     opal/runtime/Makefile
     opal/threads/Makefile
     opal/util/Makefile
@@ -1680,6 +1687,7 @@ AC_CONFIG_FILES([
     test/mca/rds/Makefile
     test/mca/rmaps/Makefile
     test/mca/schema/Makefile
+    test/memory/Makefile
     test/runtime/Makefile
     test/support/Makefile
     test/threads/Makefile

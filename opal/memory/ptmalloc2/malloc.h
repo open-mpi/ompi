@@ -69,6 +69,9 @@
 # if defined __cplusplus && (__GNUC__ >= 3 || __GNUC_MINOR__ >= 8)
 #  define __THROW	throw ()
 # else
+#ifdef __THROW
+#  undef __THROW
+#endif
 #  define __THROW
 # endif
 # define __MALLOC_P(args)	args __THROW

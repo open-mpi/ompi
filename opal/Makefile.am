@@ -37,6 +37,7 @@ libopal_la_LIBADD = \
         class/libclass.la \
         event/libevent.la \
         mca/base/libmca_base.la \
+	memory/libopalmemory.la \
         runtime/libruntime.la \
         threads/libthreads.la \
         util/libopalutil.la

@@ -21,6 +21,7 @@
 #include "include/orte_constants.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
+#include "opal/memory/memory.h"
 #include "mca/base/base.h"
 
 #include "runtime/opal.h"
@@ -35,9 +36,11 @@
  */
 int opal_init(void)
 {
-
     /* initialize the memory allocator */
     opal_malloc_init();
+
+    /* initialize the memory manager / tracker */
+    opal_mem_free_init();
 
     /* initialize the output system */
     opal_output_init();
