@@ -48,7 +48,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (tag < 0 || tag > MPI_TAG_UB_VALUE) {
+        } else if (tag < 0 || tag > MCA_PML_CALL(max_tag)) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;

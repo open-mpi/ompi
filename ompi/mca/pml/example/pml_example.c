@@ -30,7 +30,9 @@ mca_pml_example_t mca_pml_example = {
         mca_pml_example_send,
         mca_pml_example_iprobe,
         mca_pml_example_probe,
-        mca_pml_example_start
+        mca_pml_example_start,
+        32768,
+        (0x7fffffff)
     }
 };
 

@@ -80,14 +80,15 @@
 
 #include "attribute/attribute.h"
 
-#include "errhandler/errclass.h"
-#include "communicator/communicator.h"
-#include "util/proc_info.h"
-#include "util/sys_info.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/schema/schema.h"
+#include "ompi/errhandler/errclass.h"
+#include "ompi/communicator/communicator.h"
+#include "orte/util/proc_info.h"
+#include "opal/util/sys_info.h"
+#include "ompi/mca/pml/pml.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/schema/schema.h"
 
 
 /*
@@ -145,7 +146,7 @@ int ompi_attr_create_predefined(void)
        where triggers aren't set, there won't be COMM_SPAWN, so APPNUM
        probably isn't a big deal. */
 
-    if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, MPI_TAG_UB_VALUE)) ||
+    if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, MCA_PML_CALL(max_tag))) ||
         OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||

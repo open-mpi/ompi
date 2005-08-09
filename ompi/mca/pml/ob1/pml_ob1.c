@@ -49,7 +49,9 @@ mca_pml_ob1_t mca_pml_ob1 = {
     mca_pml_ob1_send,
     mca_pml_ob1_iprobe,
     mca_pml_ob1_probe,
-    mca_pml_ob1_start
+    mca_pml_ob1_start,
+    32768,
+    (0x7fffffff)
     }
 };
 

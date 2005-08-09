@@ -462,6 +462,10 @@ struct mca_pml_base_module_1_0_0_t {
     mca_pml_base_module_iprobe_fn_t       pml_iprobe;
     mca_pml_base_module_probe_fn_t        pml_probe;
     mca_pml_base_module_start_fn_t        pml_start;
+
+    /* maximum constant sizes */
+    uint32_t                              pml_max_contextid;
+    int                                   pml_max_tag;
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;

@@ -147,7 +147,6 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_DISTRIBUTE_CYCLIC    1       /* cyclic distribution */
 #define MPI_DISTRIBUTE_NONE      2       /* not distributed */
 #define MPI_DISTRIBUTE_DFLT_DARG (-1)    /* default distribution arg */
-#define MPI_TAG_UB_VALUE         (0x7fffffff)
 
 /*
  * Since these values are arbitrary to Open MPI, we might as well make

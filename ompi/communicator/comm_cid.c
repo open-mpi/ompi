@@ -30,8 +30,6 @@
 #include "mca/coll/base/base.h"
 #include "mca/rml/rml.h"
 
-#define OMPI_MAX_COMM 32768
-
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -166,7 +164,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
 	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
 
-	for (i=start; i<OMPI_MAX_COMM ;i++) {
+	for (i=start; i < MCA_PML_CALL(max_contextid) ; i++) {
             flag=ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, i, comm);
             if (true == flag) {
                 nextlocal_cid = i;
