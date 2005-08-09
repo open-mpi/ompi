@@ -51,7 +51,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
             rc = MPI_ERR_TYPE;
         } else if (dest != MPI_PROC_NULL && ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;
-        } else if (sendtag < 0 || sendtag > MPI_TAG_UB_VALUE) {
+        } else if (sendtag < 0 || sendtag > MCA_PML_CALL(max_tag) ) {
             rc = MPI_ERR_TAG;
         } else if (recvcount < 0) {
             rc = MPI_ERR_COUNT;
@@ -59,7 +59,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
             rc = MPI_ERR_TYPE;
         } else if (source != MPI_PROC_NULL && source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
-        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > MPI_TAG_UB_VALUE)) {
+        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > MCA_PML_CALL(max_tag))) {
             rc = MPI_ERR_TAG;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);

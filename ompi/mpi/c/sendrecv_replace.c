@@ -22,6 +22,7 @@
 #include "datatype/datatype.h"
 #include "datatype/convertor.h"
 #include "errhandler/errhandler.h"
+#include "ompi/mca/pml/pml.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Sendrecv_replace = PMPI_Sendrecv_replace
@@ -51,11 +52,11 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
             rc = MPI_ERR_TYPE;
         } else if (dest != MPI_PROC_NULL && ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;
-        } else if (sendtag < 0 || sendtag > MPI_TAG_UB_VALUE) {
+        } else if (sendtag < 0 || sendtag > MCA_PML_CALL(max_tag) ) {
             rc = MPI_ERR_TAG;
         } else if (source != MPI_PROC_NULL && source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
-        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > MPI_TAG_UB_VALUE)) {
+        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > MCA_PML_CALL(max_tag))) {
             rc = MPI_ERR_TAG;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
