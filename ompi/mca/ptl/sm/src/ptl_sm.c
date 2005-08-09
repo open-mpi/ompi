@@ -286,7 +286,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
         size=sizeof(mca_ptl_sm_module_resource_t);
         if(NULL==(mca_ptl_sm_component.mmap_file=mca_common_sm_mmap_init(size,
                         mca_ptl_sm_component.sm_resouce_ctl_file,
-                        sizeof(mca_ptl_sm_module_resource_t), 8 ))) 
+                        sizeof(mca_ptl_sm_module_resource_t), 0))) 
         {
             opal_output(0, "mca_ptl_sm_add_procs: unable to create shared memory PTL coordinating strucure :: size %ld \n",
                     size);
