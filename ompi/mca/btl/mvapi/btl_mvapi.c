@@ -127,7 +127,7 @@ int mca_btl_mvapi_del_procs(struct mca_btl_base_module_t* btl,
         struct mca_btl_base_endpoint_t ** peers)
 {
     /* Stub */
-    BTL_DEBUG(("Stub\n"));
+    BTL_VERBOSE(("Stub\n"));
     return OMPI_SUCCESS;
 }
 
@@ -388,7 +388,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
 
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
-                    opal_list_remove_first(&mvapi_btl->reg_mru_list);
+                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     BTL_ERROR(("error removing item from reg_mru_list")); 
@@ -636,7 +636,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
 
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
-                    opal_list_remove_first(&mvapi_btl->reg_mru_list);
+                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     BTL_ERROR(("error removing item from reg_mru_list")); 
@@ -822,7 +822,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         case VAPI_SEND_QUEUE_DRAINED:
         case VAPI_PORT_ACTIVE:
             {
-                BTL_DEBUG(("Got an asynchronous event: %s\n", VAPI_event_record_sym(event_p->type)));
+                BTL_VERBOSE(("Got an asynchronous event: %s\n", VAPI_event_record_sym(event_p->type)));
                 break;
             }
         case VAPI_CQ_ERROR:

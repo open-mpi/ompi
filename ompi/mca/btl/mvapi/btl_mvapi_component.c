@@ -520,7 +520,7 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_RQ_SEND_DATA:
                 
                 /* Process a RECV  */ 
-                BTL_DEBUG(("Got a recv completion")); 
+                BTL_VERBOSE(("Got a recv completion")); 
                 frag = (mca_btl_mvapi_frag_t*) comp.id;
                 endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
 
@@ -577,7 +577,7 @@ int mca_btl_mvapi_component_progress()
                 
             case VAPI_CQE_RQ_SEND_DATA:
                 
-                BTL_DEBUG(("Got a recv completion")); 
+                BTL_VERBOSE(("Got a recv completion")); 
                 frag = (mca_btl_mvapi_frag_t*) comp.id;
                 endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 

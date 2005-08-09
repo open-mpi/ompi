@@ -519,7 +519,7 @@ int mca_btl_openib_component_progress()
                 return OMPI_ERROR; 
             }
             else if(1 == ne) { 
-                BTL_DEBUG(("completion queue event says opcode is %d\n", wc.opcode)); 
+                BTL_VERBOSE(("completion queue event says opcode is %d\n", wc.opcode)); 
 
                 /* Handle work completions */
                 switch(wc.opcode) {
@@ -530,7 +530,7 @@ int mca_btl_openib_component_progress()
                 case IBV_WC_RECV: 
                     /* Process a RECV */ 
                     
-                    BTL_DEBUG(("Got an  recv on the completion queue")); 
+                    BTL_VERBOSE(("Got an  recv on the completion queue")); 
                     frag = (mca_btl_openib_frag_t*) wc.wr_id;
                     endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                     frag->rc=OMPI_SUCCESS; 
@@ -592,7 +592,7 @@ int mca_btl_openib_component_progress()
                 
             case IBV_WC_RECV: 
                 /* process a recv completion (this should only occur for a send not an rdma) */ 
-                BTL_DEBUG(( "Got a recv completion")); 
+                BTL_VERBOSE(( "Got a recv completion")); 
                 frag = (mca_btl_openib_frag_t*) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
