@@ -214,11 +214,11 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_module.super.btl_max_send_size =
         mca_btl_tcp_param_register_int ("max_send_size", 256*1024) - sizeof(mca_btl_base_header_t);
     mca_btl_tcp_module.super.btl_min_rdma_size = 
-        mca_btl_tcp_param_register_int("min_rdma_size", 1024*1024); 
+        mca_btl_tcp_param_register_int("min_rdma_size", 256*1024); 
     mca_btl_tcp_module.super.btl_max_rdma_size = 
-        mca_btl_tcp_param_register_int("max_rdma_size", 2*1024*1024); 
+        mca_btl_tcp_param_register_int("max_rdma_size", INT_MAX); 
     mca_btl_tcp_module.super.btl_flags  = 
-        mca_btl_tcp_param_register_int("flags", 0); 
+        mca_btl_tcp_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
     return OMPI_SUCCESS;
 }
 

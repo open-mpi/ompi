@@ -37,7 +37,8 @@ extern "C" {
 
 struct mca_btl_tcp_hdr_t {
     mca_btl_base_header_t base;
-    uint8_t type;
+    uint8_t  type;
+    uint16_t count;
     uint64_t size; 
 }; 
 typedef struct mca_btl_tcp_hdr_t mca_btl_tcp_hdr_t; 

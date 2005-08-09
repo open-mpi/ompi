@@ -39,7 +39,7 @@ struct mca_btl_tcp_frag_t {
     struct mca_btl_base_endpoint_t *endpoint; 
     struct mca_btl_tcp_module_t* btl;
     mca_btl_tcp_hdr_t hdr;
-    struct iovec iov[3];
+    struct iovec iov[4];
     struct iovec *iov_ptr;
     size_t iov_cnt;
     size_t iov_idx;
@@ -109,26 +109,6 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
     OMPI_FREE_LIST_RETURN(&mca_btl_tcp_component.tcp_frag_user,            \
         (opal_list_item_t*)(frag));                                        \
 }
-
-#define MCA_BTL_TCP_FRAG_INIT_SRC(frag,endpoint)                           \
-do {                                                                       \
-    size_t i;                                                              \
-    frag->rc = 0;                                                          \
-    frag->hdr.size = 0;                                                    \
-    frag->iov_idx = 0;                                                     \
-    frag->endpoint = endpoint;                                             \
-    frag->hdr.size = 0;                                                    \
-    frag->iov_cnt = 1;                                                     \
-    frag->iov_ptr = frag->iov;                                             \
-    frag->iov[0].iov_base = &frag->hdr;                                    \
-    frag->iov[0].iov_len = sizeof(frag->hdr);                              \
-    for(i=0; i<frag->base.des_src_cnt; i++) {                              \
-        frag->hdr.size += frag->segments[i].seg_len;                       \
-        frag->iov[i+1].iov_len = frag->segments[i].seg_len;                \
-        frag->iov[i+1].iov_base = frag->segments[i].seg_addr.pval;         \
-        frag->iov_cnt++;                                                   \
-    }                                                                      \
-} while(0)
 
 #define MCA_BTL_TCP_FRAG_INIT_DST(frag,ep)                                 \
 do {                                                                       \
