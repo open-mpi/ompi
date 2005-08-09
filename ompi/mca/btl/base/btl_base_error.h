@@ -54,7 +54,7 @@ do {                                                         \
                 ORTE_NAME_ARGS(orte_process_info.my_name),   \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
-        mca_btl_base_out("\n");                              \
+        mca_btl_base_err("\n");                              \
    }                                                         \
 } while(0); 
 #define BTL_VERBOSE(args)                                    \
@@ -64,7 +64,7 @@ do {                                                         \
                 ORTE_NAME_ARGS(orte_process_info.my_name),   \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
-        mca_btl_base_out("\n");                              \
+        mca_btl_base_err("\n");                              \
    }                                                         \
 } while(0); 
 #else
