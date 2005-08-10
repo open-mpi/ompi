@@ -14,36 +14,26 @@
  * $HEADER$
  */
 
-#ifndef ORTEPROBE_H
-#define ORTEPROBE_H
-
-#include "orte_config.h"
-
-#include <string.h>
-
-#include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
-
-#include "opal/util/cmd_line.h"
-#include "mca/mca.h"
-#include "tools/orted/orted.h"
-
-/*
- * Globals
+/**
+ * @file
+ *
+ * Establish a Head Node Process on a cluster's front end
  */
 
+#ifndef ORTE_SETUP_HNP_H
+#define ORTE_SETUP_HNP_H
+
+/*
+ * Local data structure
+ */
 typedef struct {
-    bool help;
-    bool verbose;
-    bool debug;
-    char* name_string;
-    char* requestor_string;
-    opal_mutex_t mutex;
-    opal_condition_t condition;
-    bool exit_condition;
-} orteprobe_globals_t;
+    char *target_cluster;
+    char *headnode;
+    orte_process_name_t *name;
+    orte_jobid_t jobid;
+} orte_setup_hnp_cb_data_t;
 
-extern orteprobe_globals_t orteprobe_globals;
 
-#endif /* ORTEPROBE_H */
+int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
+
+#endif

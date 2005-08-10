@@ -63,18 +63,9 @@
 #include "mca/errmgr/errmgr.h"
 
 #include "runtime/runtime.h"
+#include "runtime/orte_setup_hnp.h"
 
 extern char **environ;
-
-/*
- * Local data structure
- */
-typedef struct {
-    char *target_cluster;
-    char *headnode;
-    orte_process_name_t *name;
-    orte_jobid_t jobid;
-} orte_setup_hnp_cb_data_t;
 
 /* Local condition variables and mutex
  */
@@ -85,7 +76,7 @@ static int orte_setup_hnp_rc;
 /* Local uri storage */
 static char *orte_setup_hnp_orted_uri;
 
-static orte_setup_hnp_cb_data_t orte_setup_hnp_cbdata = {NULL, NULL, NULL, 0};
+static orte_setup_hnp_cb_data_t orte_setup_hnp_cbdata;
 
 /*
  * NON-BLOCKING RECEIVER
@@ -161,20 +152,24 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
         goto MOVEON;
         
     } else {  /* lookup the headnode's cellid */
-        hn = strdup(headnode);
+        hn      = strdup(headnode);
         keys[0] = ORTE_RDS_FE_NAME;
         keys[1] = ORTE_RDS_FE_SSH;
         keys[2] = ORTE_CELLID_KEY;
         keys[3] = NULL;
-        if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
-                                    ORTE_RESOURCE_SEGMENT,
-                                    NULL, keys, &cnt, &values))) {
-           ORTE_ERROR_LOG(rc);
-           return rc;
+
+        rc = orte_gpr.get(ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                          ORTE_RESOURCE_SEGMENT,
+                          NULL, keys, &cnt, &values);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
-        if (0 == cnt || 0 == values[0]->cnt) {  /* nothing found */
+        /* Nothing found */
+        if (0 == cnt || 0 == values[0]->cnt) {
             goto MOVEON;
         }
+
         on_gpr = true;
         for (i=0; i < cnt; i++) {
             keyvals = values[i]->keyvals;
@@ -202,7 +197,8 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 
 MOVEON:
     if (NULL != values) {
-        for (i=0; i < cnt; i++) OBJ_RELEASE(values[i]);
+        for (i=0; i < cnt; i++) 
+            OBJ_RELEASE(values[i]);
         free(values);
     }
     
@@ -214,6 +210,7 @@ MOVEON:
          * synonymous with the headnode name), a headnode name (on a named or
          * unnamed target_cluster), or both.
          */
+
         /* get new cellid for this site/resource */
         if (NULL != target_cluster) {
             cellname = strdup(target_cluster);
@@ -223,28 +220,33 @@ MOVEON:
              */
             cellname = strdup(headnode);
         }
+
         /* can't know the site name, so it becomes "unknown" */
-        if (ORTE_SUCCESS != (rc = orte_ns.create_cellid(&cellid, "UNKNOWN",
-                                        cellname))) {
+        rc = orte_ns.create_cellid(&cellid, "unknown", cellname);
+        if (ORTE_SUCCESS != rc ) {
             ORTE_ERROR_LOG(rc);
             free(cellname);
             return rc;
         }
-        /* now store the cell info on the resource segment of the registry */
+
+        /* 
+         * Store the cell info on the resource segment of the registry 
+         */
         value = OBJ_NEW(orte_gpr_value_t);
         if (NULL == value) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         value->addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-        value->segment = strdup(ORTE_RESOURCE_SEGMENT);
+        value->segment   = strdup(ORTE_RESOURCE_SEGMENT);
         
-        value->cnt = 4;
+        value->cnt     = 4;
         value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
         if (NULL == value->keyvals) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+
         for (i=0; i < value->cnt; i++) {
             value->keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
             if (NULL == value->keyvals[i]) {
@@ -252,21 +254,29 @@ MOVEON:
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
         }
-        value->keyvals[0]->key = strdup(ORTE_RDS_NAME);
-        value->keyvals[0]->type = ORTE_STRING;
+        
+        /* Set Cell Name */
+        value->keyvals[0]->key          = strdup(ORTE_RDS_NAME);
+        value->keyvals[0]->type         = ORTE_STRING;
         value->keyvals[0]->value.strptr = strdup(cellname);
-        value->keyvals[1]->key = strdup(ORTE_CELLID_KEY);
-        value->keyvals[1]->type = ORTE_CELLID;
+        
+        /* Set Cell ID */
+        value->keyvals[1]->key          = strdup(ORTE_CELLID_KEY);
+        value->keyvals[1]->type         = ORTE_CELLID;
         value->keyvals[1]->value.cellid = cellid;
-        value->keyvals[2]->key = strdup(ORTE_RDS_FE_NAME);
+        
+        /* Set Front End Name */
+        value->keyvals[2]->key  = strdup(ORTE_RDS_FE_NAME);
         value->keyvals[2]->type = ORTE_STRING;
         if (NULL == headnode) {
             value->keyvals[2]->value.strptr = strdup(cellname);
         } else {
             value->keyvals[2]->value.strptr = strdup(headnode);
         }
-        value->keyvals[3]->key = strdup(ORTE_RDS_FE_SSH);
-        value->keyvals[3]->type = ORTE_BOOL;
+        
+        /* Asssume ability to ssh to front end node*/
+        value->keyvals[3]->key           = strdup(ORTE_RDS_FE_SSH);
+        value->keyvals[3]->type          = ORTE_BOOL;
         value->keyvals[3]->value.tf_flag = true;
 
         value->num_tokens = 3;
@@ -275,24 +285,26 @@ MOVEON:
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        if (ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&(value->tokens[0]), cellid))) {
+
+        rc = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, cellid, cellname);
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        value->tokens[1] = strdup("UNKNOWN"); /* site name is unknown */
-        value->tokens[2] = strdup(cellname);
         
-        if (ORTE_SUCCESS != orte_gpr.put(1, &value)) {
+        /* Place tokens in GPR */
+        rc = orte_gpr.put(1, &value);
+        if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
             return rc;
         }
+
         OBJ_RELEASE(value);
         free(cellname);
+
         can_launch = true;
     }
-    
-    orte_gpr.dump_segment(NULL, 0);
     
     if (!can_launch || ORTE_CELLID_MAX == cellid) {
         return ORTE_ERR_UNREACH;
@@ -312,28 +324,40 @@ MOVEON:
     OBJ_CONSTRUCT(&orte_setup_hnp_condition, opal_condition_t);
 
     /* get a jobid for the probe */
-    if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&jobid))) {
+    rc = orte_ns.create_jobid(&jobid);
+    if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
     /* get a vpid for the probe */
-    if (ORTE_SUCCESS != (rc = orte_ns.reserve_range(jobid, 1, &vpid))) {
+    rc = orte_ns.reserve_range(jobid, 1, &vpid);
+    if (ORTE_SUCCESS != rc ) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
     /* initialize probe's process name... */
     rc = orte_ns.create_process_name(&(orte_setup_hnp_cbdata.name), cellid, jobid, vpid);
-    if(ORTE_SUCCESS != rc) {
+    if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
     /* ...and get string representation */
-    if(ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&name_string, orte_setup_hnp_cbdata.name))) {
+    rc = orte_ns.get_proc_name_string(&name_string, orte_setup_hnp_cbdata.name);
+    if (ORTE_SUCCESS != rc ) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
+
     /* setup callback data on sigchild */
-    orte_setup_hnp_cbdata.target_cluster = strdup(target_cluster);
+    if (NULL != target_cluster) {
+        orte_setup_hnp_cbdata.target_cluster = strdup(target_cluster);
+    } else {
+        orte_setup_hnp_cbdata.target_cluster = NULL;
+    }
+
     orte_setup_hnp_cbdata.headnode = strdup(headnode);
     orte_setup_hnp_cbdata.jobid = jobid;
    
@@ -405,7 +429,7 @@ MOVEON:
     /* pass along any parameters for the head node process
      * in case one needs to be created
      */
-    id = mca_base_param_register_string("scope",NULL,NULL,NULL,"private");
+    id = mca_base_param_register_string("scope",NULL,NULL,NULL,"public");
     mca_base_param_lookup_string(id, &param);
     opal_argv_append(&argc, &argv, "--scope");
     opal_argv_append(&argc, &argv, param);
@@ -459,25 +483,29 @@ MOVEON:
              * utilities, though, or we will lose all of our MCA parameters
              */
             orte_system_finalize();
+            
             /*
              * now set the relevant MCA parameters to point us at the remote daemon...
              */
-            if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_gpr_replica_uri",
-                        orte_setup_hnp_orted_uri, true, &environ))) {
+            rc = opal_setenv("OMPI_MCA_gpr_replica_uri",
+                             orte_setup_hnp_orted_uri, true, &environ);
+            if (ORTE_SUCCESS != rc) {
                 fprintf(stderr, "orte_setup_hnp: could not set gpr_replica_uri in environ\n");
                 return rc;
             }
             
-            if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_ns_replica_uri",
-                        orte_setup_hnp_orted_uri, true, &environ))) {
+            rc = opal_setenv("OMPI_MCA_ns_replica_uri",
+                             orte_setup_hnp_orted_uri, true, &environ);
+            if (ORTE_SUCCESS != rc) {
                 fprintf(stderr, "orte_setup_hnp: could not set ns_replica_uri in environ\n");
                 return rc;
             }
 
             opal_unsetenv("OMPI_MCA_seed", &environ);
-            
-            if (ORTE_SUCCESS != (rc = opal_setenv("OMPI_MCA_universe_uri",
-                        orte_setup_hnp_orted_uri, true, &environ))) {
+
+            rc = opal_setenv("OMPI_MCA_universe_uri",
+                             orte_setup_hnp_orted_uri, true, &environ);
+            if (ORTE_SUCCESS != rc) {
                 fprintf(stderr, "orte_setup_hnp: could not set universe_uri in environ\n");
                 return rc;
             }
@@ -485,10 +513,12 @@ MOVEON:
             /*
              * ...re-init ourselves...
              */
-            if (ORTE_SUCCESS != (rc = orte_system_init())) {
+            rc = orte_system_init();
+            if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+
             /*
              * ...and we are now ready to go!
              */
