@@ -78,9 +78,9 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orteprobe_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, '\0', NULL, "version", 0,
-      &orteprobe_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
-      "Show the orteprobe version" },
+    { NULL, NULL, NULL, NULL, NULL, "verbose", 0, 
+      &orteprobe_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
+      "Toggle Verbosity" },
 
     { NULL, NULL, NULL, 'd', NULL, "debug", 0,
       &orteprobe_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
@@ -139,17 +139,18 @@ int main(int argc, char *argv[])
     pid_t pid;
 
 #if defined(HAVE_FORK) && defined(HAVE_PIPE)
-
+    
     /* setup to check common command line options that just report and die */
     memset(&orteprobe_globals, 0, sizeof(orteprobe_globals));
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
-    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, true, 
-                                                   argc, argv))) {
+
+    ret = opal_cmd_line_parse(cmd_line, true, argc, argv);
+    if (OMPI_SUCCESS != ret) {
         return ret;
     }
     
-    /* check for help and version requests */
+    /* check for help request */
     if (orteprobe_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
@@ -159,12 +160,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (orteprobe_globals.version) {
-        /* show version message */
-        printf("...showing off my version!\n");
-        exit(1);
-    }
-
     /*
      * Attempt to parse the probe's name and save in proc_info
      */
@@ -172,7 +167,7 @@ int main(int argc, char *argv[])
         ret = orte_ns_base_convert_string_to_process_name(
             &orte_process_info.my_name, orteprobe_globals.name_string);
         if(ORTE_SUCCESS != ret) {
-            fprintf(stderr, "Couldn't convert environmental string to probe's process name\n");
+            fprintf(stderr, "orteprobe: Couldn't convert environmental string to probe's process name\n");
             return 1;
         }
     }
@@ -297,16 +292,16 @@ int main(int argc, char *argv[])
     if (orteprobe_globals.requestor_string) {
         if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(
                     orteprobe_globals.requestor_string, &requestor, NULL))) {
-            fprintf(stderr, "Couldn't parse environmental string for requestor's contact info\n");
+            fprintf(stderr, "orteprobe: Couldn't parse environmental string for requestor's contact info\n");
             return 1;
         }
         /* set the contact info */
         if (ORTE_SUCCESS != (ret = orte_rml.set_uri(orteprobe_globals.requestor_string))) {
-            fprintf(stderr, "Couldn't set contact info for requestor\n");
+            fprintf(stderr, "orteprobe: Couldn't set contact info for requestor\n");
             return ret;
         }
     } else {
-        fprintf(stderr, "No contact info received for requestor\n");
+        fprintf(stderr, "orteprobe: No contact info received for requestor\n");
         return 1;
     }
 
@@ -315,29 +310,37 @@ int main(int argc, char *argv[])
      */
     if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
         /* universe is here! send info back and die */
-fprintf(stderr, "contacted existing universe - sending contact info back\n");
+        if(orteprobe_globals.verbose)
+            fprintf(stderr, "orteprobe: Contacted existing universe - sending contact info back\n");
+
         OBJ_CONSTRUCT(&buffer, orte_buffer_t);
         orted_uri_ptr = &(univ.seed_uri);
+
         if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
             fprintf(stderr, "orteprobe: failed to pack contact info for existing universe\n");
             exit(1);
         }
+
         if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
             fprintf(stderr, "orteprobe: comm failure when sending contact info for existing univ back to requestor\n");
             OBJ_DESTRUCT(&buffer);
             exit(1);
         }
-        OBJ_DESTRUCT(&buffer);
 
+        OBJ_DESTRUCT(&buffer);
     } else {
         /* existing universe is not here or does not allow contact.
          * ensure we have a unique universe name, fork/exec an appropriate
          * daemon, and then tell whomever spawned us how to talk to the new
          * daemon
          */
-fprintf(stderr, "could not connect to existing universe\n");
+        if(orteprobe_globals.verbose)
+            fprintf(stderr, "orteprobe: Could not connect to existing universe\n");
+
         if (ORTE_ERR_NOT_FOUND != ret) {
-fprintf(stderr, "existing universe did not respond\n");
+            if(orteprobe_globals.verbose)
+                fprintf(stderr, "orteprobe: Existing universe did not respond\n");
+
             /* if it exists but no contact could be established,
              * define unique name based on current one.
              */
@@ -345,11 +348,13 @@ fprintf(stderr, "existing universe did not respond\n");
             free(orte_universe_info.name);
             orte_universe_info.name = NULL;
             pid = getpid();
+
             if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
                 fprintf(stderr, "orteprobe: failed to create unique universe name");
                 exit(1);
             }
         }
+
         /* setup to fork/exec the new universe */
         /* setup the pipe to get the contact info back */
         if (pipe(orted_pipe)) {
@@ -361,7 +366,8 @@ fprintf(stderr, "existing universe did not respond\n");
         id = mca_base_param_register_string("orted",NULL,NULL,NULL,"orted");
         mca_base_param_lookup_string(id, &orted);
         
-fprintf(stderr, "using %s for orted command\n", orted);
+        if(orteprobe_globals.verbose)
+            fprintf(stderr, "orteprobe: Using \"%s\" for orted command\n", orted);
 
         /* Initialize the argv array */
         ortedargv = opal_argv_split(orted, ' ');
@@ -374,7 +380,8 @@ fprintf(stderr, "using %s for orted command\n", orted);
         /* setup the path */
         path = opal_path_findv(ortedargv[0], 0, environ, NULL);
     
-fprintf(stderr, "path setup as %s\n", path);
+        if(orteprobe_globals.verbose)
+            fprintf(stderr, "orteprobe: Path setup as \"%s\"\n", path);
 
         /* tell the daemon it's the seed */
         opal_argv_append(&ortedargc, &ortedargv, "--seed");
@@ -394,7 +401,8 @@ fprintf(stderr, "path setup as %s\n", path);
         opal_argv_append(&ortedargc, &ortedargv, param);
         free(param);
  
-fprintf(stderr, "forking now\n");
+        if(orteprobe_globals.verbose)
+            fprintf(stderr, "orteprobe: Forking now\n");
 
         /* Create the child process. */
         pid = fork ();
@@ -412,7 +420,8 @@ fprintf(stderr, "forking now\n");
             /* This is the parent process.
                 Close write end first. */
 
-fprintf(stderr, "attempting to read from daemon\n");
+            if(orteprobe_globals.verbose)
+                fprintf(stderr, "orteprobe: Attempting to read from daemon\n");
 
             read(orted_pipe[0], orted_uri, 255);
             close(orted_pipe[0]);
@@ -421,26 +430,34 @@ fprintf(stderr, "attempting to read from daemon\n");
             OBJ_CONSTRUCT(&buffer, orte_buffer_t);
             param = orted_uri;
             orted_uri_ptr = &param;
-            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
+
+            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr[0], 1, ORTE_STRING))) {
                 fprintf(stderr, "orteprobe: failed to pack daemon uri\n");
                 exit(1);
             }
+
             if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
                 fprintf(stderr, "orteprobe: could not send daemon uri info back to probe\n");
                 OBJ_DESTRUCT(&buffer);
                 exit(1);
             }
+
             OBJ_DESTRUCT(&buffer);
         }
     }
-     
+
+    if(orteprobe_globals.verbose)
+        fprintf(stderr, "orteprobe: All finished!\n");
+    
     /* cleanup */
     if (NULL != contact_path) {
 	    unlink(contact_path);
     }
+
     if (NULL != log_path) {
         unlink(log_path);
     }
+
     /* finalize the system */
     orte_finalize();
 
