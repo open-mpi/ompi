@@ -46,11 +46,11 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
 
     size = ompi_comm_size(comm);
     for (i = 0; i < size; ++i) {
-	err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
-					rcounts, disps, rdtype, i, comm);
-	if (MPI_SUCCESS != err) {
-	    return err;
-	}
+        err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
+                                        rcounts, disps, rdtype, i, comm);
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     return MPI_SUCCESS;

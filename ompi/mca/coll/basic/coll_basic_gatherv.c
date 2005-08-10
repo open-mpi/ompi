@@ -50,50 +50,39 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    /* Need this test here because this function is invoked by
-     * allgatherv in addition to the top-level MPI_Gatherv */
-
-    if (0 == scount && rank != root) {
-	return MPI_SUCCESS;
-    }
-
     /* Everyone but root sends data and returns.  Note that we will only
-     * get here if scount > 0 or rank == root. */
+       get here if scount > 0 or rank == root. */
 
     if (rank != root) {
-	err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-				MCA_COLL_BASE_TAG_GATHERV,
-				MCA_PML_BASE_SEND_STANDARD, comm));
-	return err;
+        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
+                                MCA_COLL_BASE_TAG_GATHERV, 
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        return err;
     }
 
     /* I am the root, loop receiving data. */
 
     err = ompi_ddt_get_extent(rdtype, &lb, &extent);
     if (OMPI_SUCCESS != err) {
-	return OMPI_ERROR;
+        return OMPI_ERROR;
     }
 
     for (i = 0; i < size; ++i) {
-	ptmp = ((char *) rbuf) + (extent * disps[i]);
-	if (0 == rcounts[i]) {
-	    continue;
-	}
+        ptmp = ((char *) rbuf) + (extent * disps[i]);
 
-	/* simple optimization */
+        if (i == rank) {
+            if( (0 < scount) && (0 < rcounts[i]) )  /* simple optimization */
+                err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
+                                      ptmp, rcounts[i], rdtype);
+        } else {
+            err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i,
+                                    MCA_COLL_BASE_TAG_GATHERV, 
+                                    comm, MPI_STATUS_IGNORE));
+        }
 
-	if (i == rank) {
-	    err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
-				  ptmp, rcounts[i], rdtype);
-	} else {
-	    err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i,
-				    MCA_COLL_BASE_TAG_GATHERV,
-				    comm, MPI_STATUS_IGNORE));
-	}
-
-	if (MPI_SUCCESS != err) {
-	    return err;
-	}
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     /* All done */
@@ -147,10 +136,6 @@ mca_coll_basic_gatherv_inter(void *sbuf, int scount,
 	}
 
 	for (i = 0; i < size; ++i) {
-	    if (0 == rcounts[i]) {
-		continue;
-	    }
-
 	    ptmp = ((char *) rbuf) + (extent * disps[i]);
 	    err = MCA_PML_CALL(irecv(ptmp, rcounts[i], rdtype, i,
 				     MCA_COLL_BASE_TAG_GATHERV,
