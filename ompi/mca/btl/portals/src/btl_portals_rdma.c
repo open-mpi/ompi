@@ -20,7 +20,6 @@
 #include "include/constants.h"
 
 #include "btl_portals.h"
-#include "btl_portals_rdma.h"
 #include "btl_portals_frag.h"
 
 int
