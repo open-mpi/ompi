@@ -211,10 +211,9 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
         rc = OMPI_ERR_UNREACH;
         break;
     case MCA_BTL_TCP_CONNECTED:
-        if (NULL != btl_endpoint->endpoint_send_frag) {
-            opal_list_append(&btl_endpoint->endpoint_frags, (opal_list_item_t*)frag);
-        } else {
-            if(mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd)) {
+        if (btl_endpoint->endpoint_send_frag == NULL) {
+            if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&
+               mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd)) {
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
                 frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
                 return OMPI_SUCCESS;
@@ -222,6 +221,8 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
                 btl_endpoint->endpoint_send_frag = frag;
                 opal_event_add(&btl_endpoint->endpoint_send_event, 0);
             }
+        } else {
+            opal_list_append(&btl_endpoint->endpoint_frags, (opal_list_item_t*)frag);
         }
         break;
     case MCA_BTL_TCP_SHUTDOWN:
