@@ -42,9 +42,7 @@ endif
 libptmalloc2_la_SOURCES = \
 			malloc.c \
 			malloc-stats.c \
-			malloc.h \
-			thread-m.h \
-			thread-st.h
+			malloc.h
 
 # these are included directly and shouldn't be built solo
 EXTRA_libptmalloc2_la_SOURCES = \
@@ -60,5 +58,6 @@ EXTRA_DIST		= \
 			t-test1.c \
 			t-test2.c \
 			tst-mallocstate.c \
+			tst-mstats.c \
 			sysdeps \
 			$(doc_DATA)
