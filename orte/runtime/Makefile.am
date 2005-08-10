@@ -27,7 +27,8 @@ headers = \
         orte_wait.h \
         runtime.h \
         runtime_internal.h \
-        runtime_types.h
+        runtime_types.h \
+		orte_setup_hnp.h
 
 libruntime_la_SOURCES = \
 	$(headers) \
