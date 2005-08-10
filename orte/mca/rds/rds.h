@@ -116,6 +116,9 @@
 
 #include "mca/rds/rds_types.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Component functions - all MUST be provided!
@@ -189,6 +192,15 @@ typedef orte_rds_base_component_1_0_0_t orte_rds_base_component_t;
   MCA_BASE_VERSION_1_0_0, \
   /* rds v1.0 */ \
   "rds", 1, 0, 0
+
+/*
+ * global module that holds function pointers
+ */
+OMPI_DECLSPEC extern orte_rds_base_module_t orte_rds;
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

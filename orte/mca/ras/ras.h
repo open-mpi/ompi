@@ -164,6 +164,9 @@
 #include "mca/ns/ns_types.h"
 #include "ras_types.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * ras module functions
@@ -235,6 +238,15 @@ typedef orte_ras_base_component_1_0_0_t orte_ras_base_component_t;
   MCA_BASE_VERSION_1_0_0, \
   /* ras v1.0 */ \
   "ras", 1, 0, 0
+
+/*
+ * global module that holds function pointers
+ */
+OMPI_DECLSPEC extern orte_ras_base_module_t orte_ras;
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 
