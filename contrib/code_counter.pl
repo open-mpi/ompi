@@ -27,7 +27,7 @@ use Cwd;
 my $verbose = 0;
 my @skip_dirs;
 
-my @code_dirs = ( "src", "include", "test" );
+my @code_dirs = ( "ompi", "orte", "opal", "include", "test" );
 my @doc_dirs = ( "doxygen" );
 
 my @meta_dirs = ( ".svn", ".deps", ".libs", "libltdl" );
