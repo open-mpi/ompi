@@ -29,7 +29,6 @@
 #include "btl_portals_frag.h"
 #include "btl_portals_send.h"
 #include "btl_portals_recv.h"
-#include "btl_portals_rdma.h"
 
 
 mca_btl_portals_component_t mca_btl_portals_component = {
