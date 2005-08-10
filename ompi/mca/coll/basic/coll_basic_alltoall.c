@@ -35,10 +35,10 @@
  */
 int
 mca_coll_basic_alltoall_intra(void *sbuf, int scount,
-			      struct ompi_datatype_t *sdtype,
-			      void *rbuf, int rcount,
-			      struct ompi_datatype_t *rdtype,
-			      struct ompi_communicator_t *comm)
+                              struct ompi_datatype_t *sdtype,
+                              void *rbuf, int rcount,
+                              struct ompi_datatype_t *rdtype,
+                              struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -62,13 +62,13 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
-	return err;
+        return err;
     }
     sndinc *= scount;
 
     err = ompi_ddt_get_extent(rdtype, &lb, &rcvinc);
     if (OMPI_SUCCESS != err) {
-	return err;
+        return err;
     }
     rcvinc *= rcount;
 
@@ -79,13 +79,13 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     err = ompi_ddt_sndrcv(psnd, scount, sdtype, prcv, rcount, rdtype);
     if (MPI_SUCCESS != err) {
-	return err;
+        return err;
     }
 
     /* If only one process, we're done. */
 
     if (1 == size) {
-	return MPI_SUCCESS;
+        return MPI_SUCCESS;
     }
 
     /* Initiate all send/recv to/from others. */
@@ -100,28 +100,28 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     /* Post all receives first -- a simple optimization */
 
     for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++rreq) {
-	err =
-	    MCA_PML_CALL(irecv_init
-			 (prcv + (i * rcvinc), rcount, rdtype, i,
-			  MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
-	if (MPI_SUCCESS != err) {
-	    mca_coll_basic_free_reqs(req, rreq - req);
-	    return err;
-	}
+        err =
+            MCA_PML_CALL(irecv_init
+                         (prcv + (i * rcvinc), rcount, rdtype, i,
+                          MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
+        if (MPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(req, rreq - req);
+            return err;
+        }
     }
 
     /* Now post all sends */
 
     for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++sreq) {
-	err =
-	    MCA_PML_CALL(isend_init
-			 (psnd + (i * sndinc), scount, sdtype, i,
-			  MCA_COLL_BASE_TAG_ALLTOALL,
-			  MCA_PML_BASE_SEND_STANDARD, comm, sreq));
-	if (MPI_SUCCESS != err) {
-	    mca_coll_basic_free_reqs(req, sreq - req);
-	    return err;
-	}
+        err =
+            MCA_PML_CALL(isend_init
+                         (psnd + (i * sndinc), scount, sdtype, i,
+                          MCA_COLL_BASE_TAG_ALLTOALL,
+                          MCA_PML_BASE_SEND_STANDARD, comm, sreq));
+        if (MPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(req, sreq - req);
+            return err;
+        }
     }
 
     /* Start your engines.  This will never return an error. */
@@ -156,10 +156,10 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
  */
 int
 mca_coll_basic_alltoall_inter(void *sbuf, int scount,
-			      struct ompi_datatype_t *sdtype,
-			      void *rbuf, int rcount,
-			      struct ompi_datatype_t *rdtype,
-			      struct ompi_communicator_t *comm)
+                              struct ompi_datatype_t *sdtype,
+                              void *rbuf, int rcount,
+                              struct ompi_datatype_t *rdtype,
+                              struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -183,13 +183,13 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
-	return err;
+        return err;
     }
     sndinc *= scount;
 
     err = ompi_ddt_get_extent(rdtype, &lb, &rcvinc);
     if (OMPI_SUCCESS != err) {
-	return err;
+        return err;
     }
     rcvinc *= rcount;
 
@@ -203,21 +203,21 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     /* Post all receives first */
     for (i = 0; i < size; i++, ++rreq) {
-	err = MCA_PML_CALL(irecv(prcv + (i * rcvinc), rcount, rdtype, i,
-				 MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
-	if (OMPI_SUCCESS != err) {
-	    return err;
-	}
+        err = MCA_PML_CALL(irecv(prcv + (i * rcvinc), rcount, rdtype, i,
+                                 MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
+        if (OMPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     /* Now post all sends */
     for (i = 0; i < size; i++, ++sreq) {
-	err = MCA_PML_CALL(isend(psnd + (i * sndinc), scount, sdtype, i,
-				 MCA_COLL_BASE_TAG_ALLTOALL,
-				 MCA_PML_BASE_SEND_STANDARD, comm, sreq));
-	if (OMPI_SUCCESS != err) {
-	    return err;
-	}
+        err = MCA_PML_CALL(isend(psnd + (i * sndinc), scount, sdtype, i,
+                                 MCA_COLL_BASE_TAG_ALLTOALL,
+                                 MCA_PML_BASE_SEND_STANDARD, comm, sreq));
+        if (OMPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     /* Wait for them all.  If there's an error, note that we don't

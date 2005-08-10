@@ -37,9 +37,9 @@
  */
 int
 mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
-				    struct ompi_datatype_t *dtype,
-				    struct ompi_op_t *op,
-				    struct ompi_communicator_t *comm)
+                                    struct ompi_datatype_t *dtype,
+                                    struct ompi_op_t *op,
+                                    struct ompi_communicator_t *comm)
 {
     int i;
     int err;
@@ -59,58 +59,58 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
     /* Initialize reduce & scatterv info at the root (rank 0). */
 
     for (i = 0, count = 0; i < size; ++i) {
-	if (rcounts[i] < 0) {
-	    return EINVAL;
-	}
-	count += rcounts[i];
+        if (rcounts[i] < 0) {
+            return EINVAL;
+        }
+        count += rcounts[i];
     }
 
     if (0 == rank) {
-	disps = malloc((unsigned) size * sizeof(int));
-	if (NULL == disps) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+        disps = malloc((unsigned) size * sizeof(int));
+        if (NULL == disps) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-	/* There is lengthy rationale about how this malloc works in
-	 * coll_basic_reduce.c */
+        /* There is lengthy rationale about how this malloc works in
+         * coll_basic_reduce.c */
 
-	ompi_ddt_get_extent(dtype, &lb, &extent);
-	ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+        ompi_ddt_get_extent(dtype, &lb, &extent);
+        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-	free_buffer = malloc(true_extent + (count - 1) * extent);
-	if (NULL == free_buffer) {
-	    free(disps);
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	pml_buffer = free_buffer - lb;
+        free_buffer = malloc(true_extent + (count - 1) * extent);
+        if (NULL == free_buffer) {
+            free(disps);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        pml_buffer = free_buffer - lb;
 
-	disps[0] = 0;
-	for (i = 0; i < (size - 1); ++i) {
-	    disps[i + 1] = disps[i] + rcounts[i];
-	}
+        disps[0] = 0;
+        for (i = 0; i < (size - 1); ++i) {
+            disps[i + 1] = disps[i] + rcounts[i];
+        }
     }
 
     /* reduction */
 
     err =
-	comm->c_coll.coll_reduce(sbuf, pml_buffer, count, dtype, op, 0,
-				 comm);
+        comm->c_coll.coll_reduce(sbuf, pml_buffer, count, dtype, op, 0,
+                                 comm);
 
     /* scatter */
 
     if (MPI_SUCCESS == err) {
-	err = comm->c_coll.coll_scatterv(pml_buffer, rcounts, disps, dtype,
-					 rbuf, rcounts[rank], dtype, 0,
-					 comm);
+        err = comm->c_coll.coll_scatterv(pml_buffer, rcounts, disps, dtype,
+                                         rbuf, rcounts[rank], dtype, 0,
+                                         comm);
     }
 
     /* All done */
 
     if (NULL != disps) {
-	free(disps);
+        free(disps);
     }
     if (NULL != free_buffer) {
-	free(free_buffer);
+        free(free_buffer);
     }
 
     return err;
@@ -126,9 +126,9 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
  */
 int
 mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
-				    struct ompi_datatype_t *dtype,
-				    struct ompi_op_t *op,
-				    struct ompi_communicator_t *comm)
+                                    struct ompi_datatype_t *dtype,
+                                    struct ompi_op_t *op,
+                                    struct ompi_communicator_t *comm)
 {
     int err, i;
     int rank;
@@ -148,7 +148,7 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
      * that locally.
      */
     for (totalcounts = 0, i = 0; i < rsize; i++) {
-	totalcounts += rcounts[i];
+        totalcounts += rcounts[i];
     }
 
     /* determine result of the remote group, you cannot
@@ -161,61 +161,61 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
      * simultaniously. */
     /*****************************************************************/
     if (rank == root) {
-	err = ompi_ddt_get_extent(dtype, &lb, &extent);
-	if (OMPI_SUCCESS != err) {
-	    return OMPI_ERROR;
-	}
+        err = ompi_ddt_get_extent(dtype, &lb, &extent);
+        if (OMPI_SUCCESS != err) {
+            return OMPI_ERROR;
+        }
 
-	tmpbuf = (char *) malloc(totalcounts * extent);
-	tmpbuf2 = (char *) malloc(totalcounts * extent);
-	if (NULL == tmpbuf || NULL == tmpbuf2) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+        tmpbuf = (char *) malloc(totalcounts * extent);
+        tmpbuf2 = (char *) malloc(totalcounts * extent);
+        if (NULL == tmpbuf || NULL == tmpbuf2) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-	/* Do a send-recv between the two root procs. to avoid deadlock */
-	err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0,
-				 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-				 MCA_PML_BASE_SEND_STANDARD, comm, &req));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        /* Do a send-recv between the two root procs. to avoid deadlock */
+        err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0,
+                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                 MCA_PML_BASE_SEND_STANDARD, comm, &req));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = MCA_PML_CALL(recv(tmpbuf2, totalcounts, dtype, 0,
-				MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
-				MPI_STATUS_IGNORE));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = MCA_PML_CALL(recv(tmpbuf2, totalcounts, dtype, 0,
+                                MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+                                MPI_STATUS_IGNORE));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
 
-	/* Loop receiving and calling reduction function (C or Fortran)
-	 * The result of this reduction operations is then in 
-	 * tmpbuf2. 
-	 */
-	for (i = 1; i < rsize; i++) {
-	    err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i,
-				    MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
-				    MPI_STATUS_IGNORE));
-	    if (MPI_SUCCESS != err) {
-		goto exit;
-	    }
+        /* Loop receiving and calling reduction function (C or Fortran)
+         * The result of this reduction operations is then in 
+         * tmpbuf2. 
+         */
+        for (i = 1; i < rsize; i++) {
+            err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i,
+                                    MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                goto exit;
+            }
 
-	    /* Perform the reduction */
-	    ompi_op_reduce(op, tmpbuf, tmpbuf2, totalcounts, dtype);
-	}
+            /* Perform the reduction */
+            ompi_op_reduce(op, tmpbuf, tmpbuf2, totalcounts, dtype);
+        }
     } else {
-	/* If not root, send data to the root. */
-	err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root,
-				MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-				MCA_PML_BASE_SEND_STANDARD, comm));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        /* If not root, send data to the root. */
+        err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root,
+                                MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
     }
 
 
@@ -226,73 +226,73 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
      */
     /***************************************************************************/
     if (rank == root) {
-	/* sendrecv between the two roots */
-	err = MCA_PML_CALL(irecv(tmpbuf, totalcounts, dtype, 0,
-				 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-				 comm, &req));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        /* sendrecv between the two roots */
+        err = MCA_PML_CALL(irecv(tmpbuf, totalcounts, dtype, 0,
+                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                 comm, &req));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = MCA_PML_CALL(send(tmpbuf2, totalcounts, dtype, 0,
-				MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-				MCA_PML_BASE_SEND_STANDARD, comm));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = MCA_PML_CALL(send(tmpbuf2, totalcounts, dtype, 0,
+                                MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	/* distribute the data to other processes in remote group.
-	 * Note that we start from 1 (not from zero), since zero
-	 * has already the correct data AND we avoid a potential 
-	 * deadlock here. 
-	 */
-	err = MCA_PML_CALL(irecv(rbuf, rcounts[rank], dtype, root,
-				 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-				 comm, &req));
+        /* distribute the data to other processes in remote group.
+         * Note that we start from 1 (not from zero), since zero
+         * has already the correct data AND we avoid a potential 
+         * deadlock here. 
+         */
+        err = MCA_PML_CALL(irecv(rbuf, rcounts[rank], dtype, root,
+                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                 comm, &req));
 
-	tcount = 0;
-	for (i = 0; i < rsize; i++) {
-	    tbuf = (char *) tmpbuf + tcount * extent;
-	    err = MCA_PML_CALL(isend(tbuf, rcounts[i], dtype, i,
-				     MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-				     MCA_PML_BASE_SEND_STANDARD, comm,
-				     reqs++));
-	    if (OMPI_SUCCESS != err) {
-		goto exit;
-	    }
-	    tcount += rcounts[i];
-	}
+        tcount = 0;
+        for (i = 0; i < rsize; i++) {
+            tbuf = (char *) tmpbuf + tcount * extent;
+            err = MCA_PML_CALL(isend(tbuf, rcounts[i], dtype, i,
+                                     MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                     MCA_PML_BASE_SEND_STANDARD, comm,
+                                     reqs++));
+            if (OMPI_SUCCESS != err) {
+                goto exit;
+            }
+            tcount += rcounts[i];
+        }
 
-	err =
-	    ompi_request_wait_all(rsize,
-				  comm->c_coll_basic_data->mccb_reqs,
-				  MPI_STATUSES_IGNORE);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err =
+            ompi_request_wait_all(rsize,
+                                  comm->c_coll_basic_data->mccb_reqs,
+                                  MPI_STATUSES_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
     } else {
-	err = MCA_PML_CALL(recv(rbuf, rcounts[rank], dtype, root,
-				MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-				comm, MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(recv(rbuf, rcounts[rank], dtype, root,
+                                MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                comm, MPI_STATUS_IGNORE));
     }
 
   exit:
     if (NULL != tmpbuf) {
-	free(tmpbuf);
+        free(tmpbuf);
     }
 
     if (NULL != tmpbuf2) {
-	free(tmpbuf2);
+        free(tmpbuf2);
     }
 
     return err;

@@ -37,9 +37,9 @@
  */
 int
 mca_coll_basic_allreduce_intra(void *sbuf, void *rbuf, int count,
-			       struct ompi_datatype_t *dtype,
-			       struct ompi_op_t *op,
-			       struct ompi_communicator_t *comm)
+                               struct ompi_datatype_t *dtype,
+                               struct ompi_op_t *op,
+                               struct ompi_communicator_t *comm)
 {
     int err;
 
@@ -47,7 +47,7 @@ mca_coll_basic_allreduce_intra(void *sbuf, void *rbuf, int count,
 
     err = comm->c_coll.coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm);
     if (MPI_SUCCESS != err) {
-	return err;
+        return err;
     }
 
     return comm->c_coll.coll_bcast(rbuf, count, dtype, 0, comm);
@@ -63,9 +63,9 @@ mca_coll_basic_allreduce_intra(void *sbuf, void *rbuf, int count,
  */
 int
 mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
-			       struct ompi_datatype_t *dtype,
-			       struct ompi_op_t *op,
-			       struct ompi_communicator_t *comm)
+                               struct ompi_datatype_t *dtype,
+                               struct ompi_op_t *op,
+                               struct ompi_communicator_t *comm)
 {
     int err, i;
     int rank;
@@ -89,59 +89,59 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
      * simultaniously. */
     /*****************************************************************/
     if (rank == root) {
-	err = ompi_ddt_get_extent(dtype, &lb, &extent);
-	if (OMPI_SUCCESS != err) {
-	    return OMPI_ERROR;
-	}
+        err = ompi_ddt_get_extent(dtype, &lb, &extent);
+        if (OMPI_SUCCESS != err) {
+            return OMPI_ERROR;
+        }
 
-	tmpbuf = (char *) malloc(count * extent);
-	if (NULL == tmpbuf) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	pml_buffer = tmpbuf - lb;
+        tmpbuf = (char *) malloc(count * extent);
+        if (NULL == tmpbuf) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        pml_buffer = tmpbuf - lb;
 
-	/* Do a send-recv between the two root procs. to avoid deadlock */
-	err = MCA_PML_CALL(irecv(rbuf, count, dtype, 0,
-				 MCA_COLL_BASE_TAG_ALLREDUCE, comm,
-				 &(req[0])));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        /* Do a send-recv between the two root procs. to avoid deadlock */
+        err = MCA_PML_CALL(irecv(rbuf, count, dtype, 0,
+                                 MCA_COLL_BASE_TAG_ALLREDUCE, comm,
+                                 &(req[0])));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = MCA_PML_CALL(isend(sbuf, count, dtype, 0,
-				 MCA_COLL_BASE_TAG_ALLREDUCE,
-				 MCA_PML_BASE_SEND_STANDARD,
-				 comm, &(req[1])));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = MCA_PML_CALL(isend(sbuf, count, dtype, 0,
+                                 MCA_COLL_BASE_TAG_ALLREDUCE,
+                                 MCA_PML_BASE_SEND_STANDARD,
+                                 comm, &(req[1])));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
 
-	/* Loop receiving and calling reduction function (C or Fortran). */
-	for (i = 1; i < rsize; i++) {
-	    err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
-				    MCA_COLL_BASE_TAG_ALLREDUCE, comm,
-				    MPI_STATUS_IGNORE));
-	    if (MPI_SUCCESS != err) {
-		goto exit;
-	    }
+        /* Loop receiving and calling reduction function (C or Fortran). */
+        for (i = 1; i < rsize; i++) {
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
+                                    MCA_COLL_BASE_TAG_ALLREDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                goto exit;
+            }
 
-	    /* Perform the reduction */
-	    ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
-	}
+            /* Perform the reduction */
+            ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+        }
     } else {
-	/* If not root, send data to the root. */
-	err = MCA_PML_CALL(send(sbuf, count, dtype, root,
-				MCA_COLL_BASE_TAG_ALLREDUCE,
-				MCA_PML_BASE_SEND_STANDARD, comm));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        /* If not root, send data to the root. */
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
+                                MCA_COLL_BASE_TAG_ALLREDUCE,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
     }
 
 
@@ -151,58 +151,58 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
      * remote group. */
     /***************************************************************************/
     if (rank == root) {
-	/* sendrecv between the two roots */
-	err = MCA_PML_CALL(irecv(pml_buffer, count, dtype, 0,
-				 MCA_COLL_BASE_TAG_ALLREDUCE,
-				 comm, &(req[1])));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        /* sendrecv between the two roots */
+        err = MCA_PML_CALL(irecv(pml_buffer, count, dtype, 0,
+                                 MCA_COLL_BASE_TAG_ALLREDUCE,
+                                 comm, &(req[1])));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	err = MCA_PML_CALL(isend(rbuf, count, dtype, 0,
-				 MCA_COLL_BASE_TAG_ALLREDUCE,
-				 MCA_PML_BASE_SEND_STANDARD, comm,
-				 &(req[0])));
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
-	err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = MCA_PML_CALL(isend(rbuf, count, dtype, 0,
+                                 MCA_COLL_BASE_TAG_ALLREDUCE,
+                                 MCA_PML_BASE_SEND_STANDARD, comm,
+                                 &(req[0])));
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
+        err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
 
-	/* distribute the data to other processes in remote group.
-	 * Note that we start from 1 (not from zero), since zero
-	 * has already the correct data AND we avoid a potential 
-	 * deadlock here. 
-	 */
-	if (rsize > 1) {
-	    for (i = 1; i < rsize; i++) {
-		err = MCA_PML_CALL(isend(pml_buffer, count, dtype, i,
-					 MCA_COLL_BASE_TAG_ALLREDUCE,
-					 MCA_PML_BASE_SEND_STANDARD, comm,
-					 &reqs[i - 1]));
-		if (OMPI_SUCCESS != err) {
-		    goto exit;
-		}
-	    }
+        /* distribute the data to other processes in remote group.
+         * Note that we start from 1 (not from zero), since zero
+         * has already the correct data AND we avoid a potential 
+         * deadlock here. 
+         */
+        if (rsize > 1) {
+            for (i = 1; i < rsize; i++) {
+                err = MCA_PML_CALL(isend(pml_buffer, count, dtype, i,
+                                         MCA_COLL_BASE_TAG_ALLREDUCE,
+                                         MCA_PML_BASE_SEND_STANDARD, comm,
+                                         &reqs[i - 1]));
+                if (OMPI_SUCCESS != err) {
+                    goto exit;
+                }
+            }
 
-	    err =
-		ompi_request_wait_all(rsize - 1, reqs,
-				      MPI_STATUSES_IGNORE);
-	    if (OMPI_SUCCESS != err) {
-		goto exit;
-	    }
-	}
+            err =
+                ompi_request_wait_all(rsize - 1, reqs,
+                                      MPI_STATUSES_IGNORE);
+            if (OMPI_SUCCESS != err) {
+                goto exit;
+            }
+        }
     } else {
-	err = MCA_PML_CALL(recv(rbuf, count, dtype, root,
-				MCA_COLL_BASE_TAG_ALLREDUCE,
-				comm, MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(recv(rbuf, count, dtype, root,
+                                MCA_COLL_BASE_TAG_ALLREDUCE,
+                                comm, MPI_STATUS_IGNORE));
     }
 
   exit:
     if (NULL != tmpbuf) {
-	free(tmpbuf);
+        free(tmpbuf);
     }
 
 

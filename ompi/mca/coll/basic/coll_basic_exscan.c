@@ -38,9 +38,9 @@
  */
 int
 mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
-			    struct ompi_datatype_t *dtype,
-			    struct ompi_op_t *op,
-			    struct ompi_communicator_t *comm)
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            struct ompi_communicator_t *comm)
 {
     int size;
     int rank;
@@ -59,18 +59,18 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* If we're rank 0, then we send our sbuf to the next rank */
 
     if (0 == rank) {
-	return MCA_PML_CALL(send(sbuf, count, dtype, rank + 1,
-				 MCA_COLL_BASE_TAG_EXSCAN,
-				 MCA_PML_BASE_SEND_STANDARD, comm));
+        return MCA_PML_CALL(send(sbuf, count, dtype, rank + 1,
+                                 MCA_COLL_BASE_TAG_EXSCAN,
+                                 MCA_PML_BASE_SEND_STANDARD, comm));
     }
 
     /* If we're the last rank, then just receive the result from the
      * prior rank */
 
     else if ((size - 1) == rank) {
-	return MCA_PML_CALL(recv(rbuf, count, dtype, rank - 1,
-				 MCA_COLL_BASE_TAG_EXSCAN, comm,
-				 MPI_STATUS_IGNORE));
+        return MCA_PML_CALL(recv(rbuf, count, dtype, rank - 1,
+                                 MCA_COLL_BASE_TAG_EXSCAN, comm,
+                                 MPI_STATUS_IGNORE));
     }
 
     /* Otherwise, get the result from the prior rank, combine it with my
@@ -79,9 +79,9 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* Start the receive for the prior rank's answer */
 
     err = MCA_PML_CALL(irecv(rbuf, count, dtype, rank - 1,
-			     MCA_COLL_BASE_TAG_EXSCAN, comm, &req));
+                             MCA_COLL_BASE_TAG_EXSCAN, comm, &req));
     if (MPI_SUCCESS != err) {
-	goto error;
+        goto error;
     }
 
     /* Get a temporary buffer to perform the reduction into.  Rationale
@@ -92,53 +92,53 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
 
     free_buffer = malloc(true_extent + (count - 1) * extent);
     if (NULL == free_buffer) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     reduce_buffer = free_buffer - lb;
 
     if (ompi_op_is_commute(op)) {
 
-	/* If we're commutative, we can copy my sbuf into the reduction
-	 * buffer before the receive completes */
+        /* If we're commutative, we can copy my sbuf into the reduction
+         * buffer before the receive completes */
 
-	err =
-	    ompi_ddt_sndrcv(sbuf, count, dtype, reduce_buffer, count,
-			    dtype);
-	if (MPI_SUCCESS != err) {
-	    goto error;
-	}
+        err =
+            ompi_ddt_sndrcv(sbuf, count, dtype, reduce_buffer, count,
+                            dtype);
+        if (MPI_SUCCESS != err) {
+            goto error;
+        }
 
-	/* Now setup the reduction */
+        /* Now setup the reduction */
 
-	source = rbuf;
+        source = rbuf;
 
-	/* Finally, wait for the receive to complete (so that we can do
-	 * the reduction).  */
+        /* Finally, wait for the receive to complete (so that we can do
+         * the reduction).  */
 
-	err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
-	if (MPI_SUCCESS != err) {
-	    goto error;
-	}
+        err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != err) {
+            goto error;
+        }
     } else {
 
-	/* Setup the reduction */
+        /* Setup the reduction */
 
-	source = sbuf;
+        source = sbuf;
 
-	/* If we're not commutative, we have to wait for the receive to
-	 * complete and then copy it into the reduce buffer */
+        /* If we're not commutative, we have to wait for the receive to
+         * complete and then copy it into the reduce buffer */
 
-	err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
-	if (MPI_SUCCESS != err) {
-	    goto error;
-	}
+        err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != err) {
+            goto error;
+        }
 
-	err =
-	    ompi_ddt_sndrcv(rbuf, count, dtype, reduce_buffer, count,
-			    dtype);
-	if (MPI_SUCCESS != err) {
-	    goto error;
-	}
+        err =
+            ompi_ddt_sndrcv(rbuf, count, dtype, reduce_buffer, count,
+                            dtype);
+        if (MPI_SUCCESS != err) {
+            goto error;
+        }
     }
 
     /* Now reduce the received answer with my source into the answer
@@ -149,16 +149,16 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* Send my result off to the next rank */
 
     err = MCA_PML_CALL(send(reduce_buffer, count, dtype, rank + 1,
-			    MCA_COLL_BASE_TAG_EXSCAN,
-			    MCA_PML_BASE_SEND_STANDARD, comm));
+                            MCA_COLL_BASE_TAG_EXSCAN,
+                            MCA_PML_BASE_SEND_STANDARD, comm));
 
     /* Error */
 
   error:
     free(free_buffer);
     if (MPI_REQUEST_NULL != req) {
-	ompi_request_cancel(req);
-	ompi_request_wait(&req, MPI_STATUS_IGNORE);
+        ompi_request_cancel(req);
+        ompi_request_wait(&req, MPI_STATUS_IGNORE);
     }
 
     /* All done */
@@ -176,9 +176,9 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
  */
 int
 mca_coll_basic_exscan_inter(void *sbuf, void *rbuf, int count,
-			    struct ompi_datatype_t *dtype,
-			    struct ompi_op_t *op,
-			    struct ompi_communicator_t *comm)
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            struct ompi_communicator_t *comm)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

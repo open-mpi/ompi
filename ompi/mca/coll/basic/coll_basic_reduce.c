@@ -35,9 +35,9 @@
  */
 int
 mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
-				struct ompi_datatype_t *dtype,
-				struct ompi_op_t *op,
-				int root, struct ompi_communicator_t *comm)
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                int root, struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -56,10 +56,10 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     /* If not root, send data to the root. */
 
     if (rank != root) {
-	err = MCA_PML_CALL(send(sbuf, count, dtype, root,
-				MCA_COLL_BASE_TAG_REDUCE,
-				MCA_PML_BASE_SEND_STANDARD, comm));
-	return err;
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
+                                MCA_COLL_BASE_TAG_REDUCE,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        return err;
     }
 
     /* Root receives and reduces messages.  Allocate buffer to receive
@@ -188,58 +188,58 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      */
 
     if (size > 1) {
-	ompi_ddt_get_extent(dtype, &lb, &extent);
-	ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+        ompi_ddt_get_extent(dtype, &lb, &extent);
+        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-	free_buffer = malloc(true_extent + (count - 1) * extent);
-	if (NULL == free_buffer) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	pml_buffer = free_buffer - lb;
+        free_buffer = malloc(true_extent + (count - 1) * extent);
+        if (NULL == free_buffer) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        pml_buffer = free_buffer - lb;
     }
 
     /* Initialize the receive buffer. */
 
     if (rank == (size - 1)) {
-	err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
+        err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
     } else {
-	err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
-				MCA_COLL_BASE_TAG_REDUCE, comm,
-				MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
+                                MCA_COLL_BASE_TAG_REDUCE, comm,
+                                MPI_STATUS_IGNORE));
     }
     if (MPI_SUCCESS != err) {
-	if (NULL != free_buffer) {
-	    free(free_buffer);
-	}
-	return err;
+        if (NULL != free_buffer) {
+            free(free_buffer);
+        }
+        return err;
     }
 
     /* Loop receiving and calling reduction function (C or Fortran). */
 
     for (i = size - 2; i >= 0; --i) {
-	if (rank == i) {
-	    inbuf = sbuf;
-	} else {
-	    err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
-				    MCA_COLL_BASE_TAG_REDUCE, comm,
-				    MPI_STATUS_IGNORE));
-	    if (MPI_SUCCESS != err) {
-		if (NULL != free_buffer) {
-		    free(free_buffer);
-		}
-		return err;
-	    }
+        if (rank == i) {
+            inbuf = sbuf;
+        } else {
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
+                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                if (NULL != free_buffer) {
+                    free(free_buffer);
+                }
+                return err;
+            }
 
-	    inbuf = pml_buffer;
-	}
+            inbuf = pml_buffer;
+        }
 
-	/* Perform the reduction */
+        /* Perform the reduction */
 
-	ompi_op_reduce(op, inbuf, rbuf, count, dtype);
+        ompi_op_reduce(op, inbuf, rbuf, count, dtype);
     }
 
     if (NULL != free_buffer) {
-	free(free_buffer);
+        free(free_buffer);
     }
 
     /* All done */
@@ -257,9 +257,9 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
  */
 int
 mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
-				struct ompi_datatype_t *dtype,
-				struct ompi_op_t *op,
-				int root, struct ompi_communicator_t *comm)
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                int root, struct ompi_communicator_t *comm)
 {
     int i;
     int size;
@@ -282,8 +282,8 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
      * operations. */
 
     if (!ompi_op_is_commute(op)) {
-	return mca_coll_basic_reduce_lin_intra(sbuf, rbuf, count, dtype,
-					       op, root, comm);
+        return mca_coll_basic_reduce_lin_intra(sbuf, rbuf, count, dtype,
+                                               op, root, comm);
     }
 
     /* Some variables */
@@ -296,32 +296,32 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
      * rationale above. */
 
     if (size > 1) {
-	ompi_ddt_get_extent(dtype, &lb, &extent);
-	ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+        ompi_ddt_get_extent(dtype, &lb, &extent);
+        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-	free_buffer = malloc(true_extent + (count - 1) * extent);
-	if (NULL == free_buffer) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+        free_buffer = malloc(true_extent + (count - 1) * extent);
+        if (NULL == free_buffer) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-	pml_buffer = free_buffer - lb;
-	/* read the comment about commutative operations (few lines down
-	 * the page) */
-	if (ompi_op_is_commute(op)) {
-	    rcv_buffer = pml_buffer;
-	}
+        pml_buffer = free_buffer - lb;
+        /* read the comment about commutative operations (few lines down
+         * the page) */
+        if (ompi_op_is_commute(op)) {
+            rcv_buffer = pml_buffer;
+        }
 
-	if (rank != root && 0 == (vrank & 1)) {
-	    /* root is the only one required to provide a valid rbuf.
-	     * Assume rbuf is invalid for all other ranks, so fix it up
-	     * here to be valid on all non-leaf ranks */
-	    free_rbuf = malloc(true_extent + (count - 1) * extent);
-	    if (NULL == free_rbuf) {
-		free(free_buffer);
-		return OMPI_ERR_OUT_OF_RESOURCE;
-	    }
-	    rbuf = free_rbuf - lb;
-	}
+        if (rank != root && 0 == (vrank & 1)) {
+            /* root is the only one required to provide a valid rbuf.
+             * Assume rbuf is invalid for all other ranks, so fix it up
+             * here to be valid on all non-leaf ranks */
+            free_rbuf = malloc(true_extent + (count - 1) * extent);
+            if (NULL == free_rbuf) {
+                free(free_buffer);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            rbuf = free_rbuf - lb;
+        }
     }
 
     /* Loop over cube dimensions. High processes send to low ones in the
@@ -329,114 +329,114 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
 
     for (i = 0, mask = 1; i < dim; ++i, mask <<= 1) {
 
-	/* A high-proc sends to low-proc and stops. */
-	if (vrank & mask) {
-	    peer = vrank & ~mask;
-	    if (ompi_op_is_commute(op)) {
-		peer = (peer + root) % size;
-	    }
+        /* A high-proc sends to low-proc and stops. */
+        if (vrank & mask) {
+            peer = vrank & ~mask;
+            if (ompi_op_is_commute(op)) {
+                peer = (peer + root) % size;
+            }
 
-	    err = MCA_PML_CALL(send(snd_buffer, count,
-				    dtype, peer, MCA_COLL_BASE_TAG_REDUCE,
-				    MCA_PML_BASE_SEND_STANDARD, comm));
-	    if (MPI_SUCCESS != err) {
-		if (NULL != free_buffer) {
-		    free(free_buffer);
-		}
-		if (NULL != free_rbuf) {
-		    free(free_rbuf);
-		}
-		return err;
-	    }
-	    snd_buffer = rbuf;
-	    break;
-	}
+            err = MCA_PML_CALL(send(snd_buffer, count,
+                                    dtype, peer, MCA_COLL_BASE_TAG_REDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                if (NULL != free_buffer) {
+                    free(free_buffer);
+                }
+                if (NULL != free_rbuf) {
+                    free(free_rbuf);
+                }
+                return err;
+            }
+            snd_buffer = rbuf;
+            break;
+        }
 
-	/* A low-proc receives, reduces, and moves to a higher
-	 * dimension. */
+        /* A low-proc receives, reduces, and moves to a higher
+         * dimension. */
 
-	else {
-	    peer = vrank | mask;
-	    if (peer >= size) {
-		continue;
-	    }
-	    if (ompi_op_is_commute(op)) {
-		peer = (peer + root) % size;
-	    }
+        else {
+            peer = vrank | mask;
+            if (peer >= size) {
+                continue;
+            }
+            if (ompi_op_is_commute(op)) {
+                peer = (peer + root) % size;
+            }
 
-	    /* Most of the time (all except the first one for commutative
-	     * operations) we receive in the user provided buffer
-	     * (rbuf). But the exception is here to allow us to dont have
-	     * to copy from the sbuf to a temporary location. If the
-	     * operation is commutative we dont care in which order we
-	     * apply the operation, so for the first time we can receive
-	     * the data in the pml_buffer and then apply to operation
-	     * between this buffer and the user provided data. */
+            /* Most of the time (all except the first one for commutative
+             * operations) we receive in the user provided buffer
+             * (rbuf). But the exception is here to allow us to dont have
+             * to copy from the sbuf to a temporary location. If the
+             * operation is commutative we dont care in which order we
+             * apply the operation, so for the first time we can receive
+             * the data in the pml_buffer and then apply to operation
+             * between this buffer and the user provided data. */
 
-	    err = MCA_PML_CALL(recv(rcv_buffer, count, dtype, peer,
-				    MCA_COLL_BASE_TAG_REDUCE, comm,
-				    MPI_STATUS_IGNORE));
-	    if (MPI_SUCCESS != err) {
-		if (NULL != free_buffer) {
-		    free(free_buffer);
-		}
-		if (NULL != free_rbuf) {
-		    free(free_rbuf);
-		}
-		return err;
-	    }
-	    /* Perform the operation. The target is always the user
-	     * provided buffer We do the operation only if we receive it
-	     * not in the user buffer */
-	    if (snd_buffer != sbuf) {
-		/* the target buffer is the locally allocated one */
-		ompi_op_reduce(op, rcv_buffer, pml_buffer, count, dtype);
-	    } else {
-		/* If we're commutative, we don't care about the order of
-		 * operations and we can just reduce the operations now.
-		 * If we are not commutative, we have to copy the send
-		 * buffer into a temp buffer (pml_buffer) and then reduce
-		 * what we just received against it. */
-		if (!ompi_op_is_commute(op)) {
-		    ompi_ddt_sndrcv(sbuf, count, dtype, pml_buffer, count,
-				    dtype);
-		    ompi_op_reduce(op, rbuf, pml_buffer, count, dtype);
-		} else {
-		    ompi_op_reduce(op, sbuf, pml_buffer, count, dtype);
-		}
-		/* now we have to send the buffer containing the computed data */
-		snd_buffer = pml_buffer;
-		/* starting from now we always receive in the user
-		 * provided buffer */
-		rcv_buffer = rbuf;
-	    }
-	}
+            err = MCA_PML_CALL(recv(rcv_buffer, count, dtype, peer,
+                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                if (NULL != free_buffer) {
+                    free(free_buffer);
+                }
+                if (NULL != free_rbuf) {
+                    free(free_rbuf);
+                }
+                return err;
+            }
+            /* Perform the operation. The target is always the user
+             * provided buffer We do the operation only if we receive it
+             * not in the user buffer */
+            if (snd_buffer != sbuf) {
+                /* the target buffer is the locally allocated one */
+                ompi_op_reduce(op, rcv_buffer, pml_buffer, count, dtype);
+            } else {
+                /* If we're commutative, we don't care about the order of
+                 * operations and we can just reduce the operations now.
+                 * If we are not commutative, we have to copy the send
+                 * buffer into a temp buffer (pml_buffer) and then reduce
+                 * what we just received against it. */
+                if (!ompi_op_is_commute(op)) {
+                    ompi_ddt_sndrcv(sbuf, count, dtype, pml_buffer, count,
+                                    dtype);
+                    ompi_op_reduce(op, rbuf, pml_buffer, count, dtype);
+                } else {
+                    ompi_op_reduce(op, sbuf, pml_buffer, count, dtype);
+                }
+                /* now we have to send the buffer containing the computed data */
+                snd_buffer = pml_buffer;
+                /* starting from now we always receive in the user
+                 * provided buffer */
+                rcv_buffer = rbuf;
+            }
+        }
     }
 
     /* Get the result to the root if needed. */
     err = MPI_SUCCESS;
     if (0 == vrank) {
-	if (root == rank) {
-	    ompi_ddt_sndrcv(snd_buffer, count, dtype, rbuf, count, dtype);
-	} else {
-	    err = MCA_PML_CALL(send(snd_buffer, count,
-				    dtype, root, MCA_COLL_BASE_TAG_REDUCE,
-				    MCA_PML_BASE_SEND_STANDARD, comm));
-	}
+        if (root == rank) {
+            ompi_ddt_sndrcv(snd_buffer, count, dtype, rbuf, count, dtype);
+        } else {
+            err = MCA_PML_CALL(send(snd_buffer, count,
+                                    dtype, root, MCA_COLL_BASE_TAG_REDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+        }
     } else if (rank == root) {
-	err = MCA_PML_CALL(recv(rcv_buffer, count, dtype, 0,
-				MCA_COLL_BASE_TAG_REDUCE,
-				comm, MPI_STATUS_IGNORE));
-	if (rcv_buffer != rbuf) {
-	    ompi_op_reduce(op, rcv_buffer, rbuf, count, dtype);
-	}
+        err = MCA_PML_CALL(recv(rcv_buffer, count, dtype, 0,
+                                MCA_COLL_BASE_TAG_REDUCE,
+                                comm, MPI_STATUS_IGNORE));
+        if (rcv_buffer != rbuf) {
+            ompi_op_reduce(op, rcv_buffer, rbuf, count, dtype);
+        }
     }
 
     if (NULL != free_buffer) {
-	free(free_buffer);
+        free(free_buffer);
     }
     if (NULL != free_rbuf) {
-	free(free_rbuf);
+        free(free_rbuf);
     }
 
     /* All done */
@@ -454,9 +454,9 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
  */
 int
 mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
-				struct ompi_datatype_t *dtype,
-				struct ompi_op_t *op,
-				int root, struct ompi_communicator_t *comm)
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                int root, struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -471,55 +471,55 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
     size = ompi_comm_remote_size(comm);
 
     if (MPI_PROC_NULL == root) {
-	/* do nothing */
-	err = OMPI_SUCCESS;
+        /* do nothing */
+        err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
-	/* If not root, send data to the root. */
-	err = MCA_PML_CALL(send(sbuf, count, dtype, root,
-				MCA_COLL_BASE_TAG_REDUCE,
-				MCA_PML_BASE_SEND_STANDARD, comm));
+        /* If not root, send data to the root. */
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
+                                MCA_COLL_BASE_TAG_REDUCE,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
     } else {
-	/* Root receives and reduces messages  */
-	ompi_ddt_get_extent(dtype, &lb, &extent);
-	ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+        /* Root receives and reduces messages  */
+        ompi_ddt_get_extent(dtype, &lb, &extent);
+        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-	free_buffer = malloc(true_extent + (count - 1) * extent);
-	if (NULL == free_buffer) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	pml_buffer = free_buffer - lb;
+        free_buffer = malloc(true_extent + (count - 1) * extent);
+        if (NULL == free_buffer) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        pml_buffer = free_buffer - lb;
 
 
-	/* Initialize the receive buffer. */
-	err = MCA_PML_CALL(recv(rbuf, count, dtype, 0,
-				MCA_COLL_BASE_TAG_REDUCE, comm,
-				MPI_STATUS_IGNORE));
-	if (MPI_SUCCESS != err) {
-	    if (NULL != free_buffer) {
-		free(free_buffer);
-	    }
-	    return err;
-	}
+        /* Initialize the receive buffer. */
+        err = MCA_PML_CALL(recv(rbuf, count, dtype, 0,
+                                MCA_COLL_BASE_TAG_REDUCE, comm,
+                                MPI_STATUS_IGNORE));
+        if (MPI_SUCCESS != err) {
+            if (NULL != free_buffer) {
+                free(free_buffer);
+            }
+            return err;
+        }
 
-	/* Loop receiving and calling reduction function (C or Fortran). */
-	for (i = 1; i < size; i++) {
-	    err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
-				    MCA_COLL_BASE_TAG_REDUCE, comm,
-				    MPI_STATUS_IGNORE));
-	    if (MPI_SUCCESS != err) {
-		if (NULL != free_buffer) {
-		    free(free_buffer);
-		}
-		return err;
-	    }
+        /* Loop receiving and calling reduction function (C or Fortran). */
+        for (i = 1; i < size; i++) {
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
+                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                if (NULL != free_buffer) {
+                    free(free_buffer);
+                }
+                return err;
+            }
 
-	    /* Perform the reduction */
-	    ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
-	}
+            /* Perform the reduction */
+            ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+        }
 
-	if (NULL != free_buffer) {
-	    free(free_buffer);
-	}
+        if (NULL != free_buffer) {
+            free(free_buffer);
+        }
     }
 
     /* All done */
@@ -536,9 +536,9 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
  */
 int
 mca_coll_basic_reduce_log_inter(void *sbuf, void *rbuf, int count,
-				struct ompi_datatype_t *dtype,
-				struct ompi_op_t *op,
-				int root, struct ompi_communicator_t *comm)
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                int root, struct ompi_communicator_t *comm)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
