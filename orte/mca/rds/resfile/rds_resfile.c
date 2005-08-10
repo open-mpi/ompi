@@ -186,7 +186,7 @@ int orte_rds_resfile_query(void)
 {
     int fileid, rc;
     FILE *fp;
-    char *input_line, *resfile, *site;
+    char *input_line, *site;
     
     OPAL_LOCK(&mca_rds_resfile_component.lock);
 
@@ -197,16 +197,17 @@ int orte_rds_resfile_query(void)
     orte_rds_resfile_queried = true;
     
     /* get the resource filename */
-    fileid = mca_base_param_register_string("rds", "resfile", "name", NULL, NULL);
-    mca_base_param_lookup_string(fileid, &resfile);
-    if (NULL == resfile) {  /* no resource file provided */
+    fileid = mca_base_param_find("rds", "resfile", "name");
+    mca_base_param_lookup_string(fileid, &mca_rds_resfile_component.filename);
+
+    if (NULL == mca_rds_resfile_component.filename) {  /* no resource file provided */
         /* DO NOT ORTE_ERROR_LOG OR RETURN AN ERROR - THIS IS NOT AN ERROR CONDITION */
        OPAL_UNLOCK(&mca_rds_resfile_component.lock);
        return ORTE_SUCCESS;
     }
      
     /* open the resource file */
-    fp = fopen(resfile, "r");
+    fp = fopen(mca_rds_resfile_component.filename, "r");
     if (NULL == fp) {
        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
        OPAL_UNLOCK(&mca_rds_resfile_component.lock);
