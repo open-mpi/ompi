@@ -77,9 +77,6 @@ mca_btl_portals_activate_block(mca_btl_portals_recv_block_t *block)
        has happened... */
     assert(block->pending == 0);
 
-    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-			 "reactivating block 0x%x", block->start));
-
     if (NULL == block->start) return OMPI_ERROR;
 
     /* create match entry */
@@ -115,9 +112,6 @@ mca_btl_portals_activate_block(mca_btl_portals_recv_block_t *block)
         return OMPI_ERROR;
     }
 
-    OPAL_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,
-                         "*** new receive buffer posted ***"));
-
     return OMPI_SUCCESS;
 }
 
@@ -128,9 +122,6 @@ mca_btl_portals_return_block_part(mca_btl_portals_module_t *btl,
 {
     int ret;
 
-    OPAL_OUTPUT_VERBOSE((100, mca_btl_portals_component.portals_output,
-                         "*** return block called %d %d ***", 
-                         block->full, block->pending));
     OPAL_THREAD_ADD32(&(block->pending), -1);
     if (block->full == true) {
         if (block->pending == 0) {
