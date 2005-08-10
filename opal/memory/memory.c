@@ -16,6 +16,8 @@
 
 #include "ompi_config.h"
 
+#include <sys/types.h>
+
 #include "ompi/include/constants.h"
 #include "opal/memory/memory.h"
 #include "opal/memory/memory_internal.h"
