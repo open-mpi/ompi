@@ -43,6 +43,9 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
     
     num_sends = OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_sends, 1);
 
+    /* make sure that we have enough space to send.  This means that
+       there is enough space in the event queue for all the events
+       that may be deposited by outstanding sends */
     if (num_sends >= mca_btl_portals_module.portals_max_outstanding_sends) {
         opal_output_verbose(50, mca_btl_portals_component.portals_output,
                     "no space for message 0x%x.  Adding to back of queue",

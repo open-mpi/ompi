@@ -382,6 +382,11 @@ mca_btl_portals_component_progress(void)
 #if OMPI_BTL_PORTALS_REDSTORM
                         0, /* timeout */
 #else
+                        /* with a timeout of 0, the reference
+                        implementation seems to get really unhappy
+                        really fast when communication starts between
+                        all peers at the same time.  Slowing things
+                        down a bit seems to help a bunch. */
                         1, /* timeout */
 #endif
                         &ev,
@@ -393,16 +398,22 @@ mca_btl_portals_component_progress(void)
 
             switch (ev.type) {
             case PTL_EVENT_GET_START:
-                /* BWB - FIX ME - need to fill in */
+                /* generated on source (target) when a get from memory starts */
+
+                /* BWB - FIX ME - need to fill in for btl get() */
                 abort();
                 break;
 
             case PTL_EVENT_GET_END:
-                /* BWB - FIX ME - need to fill in */
+                /* generated on source (target) when a get from memory ends */
+
+                /* BWB - FIX ME - need to fill in for btl get() */
                 abort();
                 break;
 
             case PTL_EVENT_PUT_START:
+                /* generated on destination (target) when a put into memory starts */
+
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_START for 0x%x, %d",
                                      frag, (int) ev.hdr_data));
@@ -414,6 +425,7 @@ mca_btl_portals_component_progress(void)
                     return OMPI_ERROR;
                 }
 #endif
+                /* if it's a pending unexpected receive, do book keeping. */
                 if (ev.hdr_data < MCA_BTL_TAG_MAX) {
                     block = ev.md.user_ptr;
                     OPAL_THREAD_ADD32(&(block->pending), 1);
@@ -422,6 +434,7 @@ mca_btl_portals_component_progress(void)
                 break;
 
             case PTL_EVENT_PUT_END: 
+                /* generated on destination (target) when a put into memory ends */
 
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_END for 0x%x, %d",
@@ -436,6 +449,7 @@ mca_btl_portals_component_progress(void)
                     return OMPI_ERROR;
                 }
 #endif
+                /* if it's an unexpected receive, do book keeping and send to PML */
                 if (ev.hdr_data < MCA_BTL_TAG_MAX) {
                     block = ev.md.user_ptr;
                     tag = ev.hdr_data;
@@ -468,16 +482,24 @@ mca_btl_portals_component_progress(void)
                 break;
 
             case PTL_EVENT_REPLY_START:
-                /* BWB - FIX ME - need to fill in */
+                /* generated on destination (origin) when a get starts
+                   returning data */
+
+                /* BWB - FIX ME - need to fill in for get */
                 abort();
                 break;
 
             case PTL_EVENT_REPLY_END:
-                /* BWB - FIX ME - need to fill in */
+                /* generated on destination (origin) when a get is
+                   done returning data */
+
+                /* BWB - FIX ME - need to fill in for get */
                 abort();
                 break;
 
             case PTL_EVENT_SEND_START:
+                /* generated on source (origin) when put starts sending */
+
 #if OMPI_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_START for 0x%x, %d, %d",
@@ -501,6 +523,7 @@ mca_btl_portals_component_progress(void)
                 break;
 
             case PTL_EVENT_SEND_END:
+                /* generated on source (origin) when put stops sending */
 #if OMPI_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_END for 0x%x, %d, %d",
@@ -524,6 +547,8 @@ mca_btl_portals_component_progress(void)
                 break;
 
             case PTL_EVENT_ACK:
+                /* ack that a put as completed on other side */
+
                 /* ACK for either send or RDMA put.  Either way, we
                    just call the callback function on goodness.
                    Requeue the put on badness */
@@ -551,7 +576,10 @@ mca_btl_portals_component_progress(void)
 #endif
 
                 if (0 == ev.mlength) {
-                    /* other side did not receive the message */
+                    /* other side received message but truncated to 0.
+                       This should only happen for unexpected
+                       messages, and only when the other side has no
+                       buffer space available for receiving */
                     opal_output_verbose(50,
                                         mca_btl_portals_component.portals_output,
                                         "message was dropped.  Adding to front of queue list");
@@ -559,7 +587,8 @@ mca_btl_portals_component_progress(void)
                                       (opal_list_item_t*) frag);
 
                 } else {
-                    /* other side did receive the message */
+                    /* other side received the message.  should have
+                       received entire thing */
                     assert(ev.mlength == frag->segment.seg_len);
 
                     /* let the PML know we're done */
@@ -589,6 +618,7 @@ mca_btl_portals_component_progress(void)
             break;
 
         case PTL_EQ_DROPPED:
+            /* not sure how we could deal with this more gracefully */
             opal_output(mca_btl_portals_component.portals_output,
                         "WARNING: EQ events dropped.  Too many messages pending.");
             opal_output(mca_btl_portals_component.portals_output,
