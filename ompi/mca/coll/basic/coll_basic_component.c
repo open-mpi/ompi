@@ -31,7 +31,7 @@
  * Public string showing the coll ompi_basic component version number
  */
 const char *mca_coll_basic_component_version_string =
-  "Open MPI basic collective MCA component version " OMPI_VERSION;
+    "Open MPI basic collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variable
@@ -50,50 +50,49 @@ static int basic_open(void);
 
 const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
 
-  /* First, the mca_component_t struct containing meta information
-     about the component itself */
+    /* First, the mca_component_t struct containing meta information
+     * about the component itself */
 
-  {
-    /* Indicate that we are a coll v1.0.0 component (which also implies a
-       specific MCA version) */
+    {
+     /* Indicate that we are a coll v1.0.0 component (which also implies a
+      * specific MCA version) */
 
-    MCA_COLL_BASE_VERSION_1_0_0,
+     MCA_COLL_BASE_VERSION_1_0_0,
 
-    /* Component name and version */
+     /* Component name and version */
 
-    "basic",
-    OMPI_MAJOR_VERSION,
-    OMPI_MINOR_VERSION,
-    OMPI_RELEASE_VERSION,
+     "basic",
+     OMPI_MAJOR_VERSION,
+     OMPI_MINOR_VERSION,
+     OMPI_RELEASE_VERSION,
 
-    /* Component open and close functions */
+     /* Component open and close functions */
 
-    basic_open,
+     basic_open,
+     NULL},
+
+    /* Next the MCA v1.0.0 component meta data */
+
+    {
+     /* Whether the component is checkpointable or not */
+
+     true},
+
+    /* Initialization / querying functions */
+
+    mca_coll_basic_init_query,
+    mca_coll_basic_comm_query,
     NULL
-  },
-
-  /* Next the MCA v1.0.0 component meta data */
-
-  {
-   /* Whether the component is checkpointable or not */
-
-   true
-  },
-
-  /* Initialization / querying functions */
-
-  mca_coll_basic_init_query,
-  mca_coll_basic_comm_query,
-  NULL
 };
 
 
-static int basic_open(void)
+static int
+basic_open(void)
 {
     /* Use a low priority, but allow other components to be lower */
-    
-    mca_coll_basic_priority_param = 
-        mca_base_param_register_int("coll", "basic", "priority", NULL, 10);
+
+    mca_coll_basic_priority_param =
+	mca_base_param_register_int("coll", "basic", "priority", NULL, 10);
 
     return OMPI_SUCCESS;
 }

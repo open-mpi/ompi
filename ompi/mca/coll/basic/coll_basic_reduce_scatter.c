@@ -35,81 +35,85 @@
  *	Accepts:	- same as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
-                                        struct ompi_datatype_t *dtype,
-                                        struct ompi_op_t *op,
-                                        struct ompi_communicator_t *comm)
+int
+mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
+				    struct ompi_datatype_t *dtype,
+				    struct ompi_op_t *op,
+				    struct ompi_communicator_t *comm)
 {
-  int i;
-  int err;
-  int rank;
-  int size;
-  int count;
-  long true_lb, true_extent, lb, extent;
-  int *disps = NULL;
-  char *free_buffer = NULL;
-  char *pml_buffer = NULL;
+    int i;
+    int err;
+    int rank;
+    int size;
+    int count;
+    long true_lb, true_extent, lb, extent;
+    int *disps = NULL;
+    char *free_buffer = NULL;
+    char *pml_buffer = NULL;
 
-  /* Initialize */
+    /* Initialize */
 
-  rank = ompi_comm_rank(comm);
-  size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
 
-  /* Initialize reduce & scatterv info at the root (rank 0). */
+    /* Initialize reduce & scatterv info at the root (rank 0). */
 
-  for (i = 0, count = 0; i < size; ++i) {
-    if (rcounts[i] < 0) {
-      return EINVAL;
-    }
-    count += rcounts[i];
-  }
-
-  if (0 == rank) {
-    disps = malloc((unsigned) size * sizeof(int));
-    if (NULL == disps) {
-      return OMPI_ERR_OUT_OF_RESOURCE;
+    for (i = 0, count = 0; i < size; ++i) {
+	if (rcounts[i] < 0) {
+	    return EINVAL;
+	}
+	count += rcounts[i];
     }
 
-    /* There is lengthy rationale about how this malloc works in
-       coll_basic_reduce.c */
+    if (0 == rank) {
+	disps = malloc((unsigned) size * sizeof(int));
+	if (NULL == disps) {
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
 
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+	/* There is lengthy rationale about how this malloc works in
+	 * coll_basic_reduce.c */
 
-    free_buffer = malloc(true_extent + (count - 1) * extent);
-    if (NULL == free_buffer) {
-      free(disps);
-      return OMPI_ERR_OUT_OF_RESOURCE;
+	ompi_ddt_get_extent(dtype, &lb, &extent);
+	ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+
+	free_buffer = malloc(true_extent + (count - 1) * extent);
+	if (NULL == free_buffer) {
+	    free(disps);
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+	pml_buffer = free_buffer - lb;
+
+	disps[0] = 0;
+	for (i = 0; i < (size - 1); ++i) {
+	    disps[i + 1] = disps[i] + rcounts[i];
+	}
     }
-    pml_buffer = free_buffer - lb;
 
-    disps[0] = 0;
-    for (i = 0; i < (size - 1); ++i) {
-      disps[i + 1] = disps[i] + rcounts[i];
+    /* reduction */
+
+    err =
+	comm->c_coll.coll_reduce(sbuf, pml_buffer, count, dtype, op, 0,
+				 comm);
+
+    /* scatter */
+
+    if (MPI_SUCCESS == err) {
+	err = comm->c_coll.coll_scatterv(pml_buffer, rcounts, disps, dtype,
+					 rbuf, rcounts[rank], dtype, 0,
+					 comm);
     }
-  }
 
-  /* reduction */
+    /* All done */
 
-  err = comm->c_coll.coll_reduce(sbuf, pml_buffer, count, dtype, op, 0, comm);
+    if (NULL != disps) {
+	free(disps);
+    }
+    if (NULL != free_buffer) {
+	free(free_buffer);
+    }
 
-  /* scatter */
-
-  if (MPI_SUCCESS == err) {
-    err = comm->c_coll.coll_scatterv(pml_buffer, rcounts, disps, dtype,
-                                     rbuf, rcounts[rank], dtype, 0, comm);
-  }
-
-  /* All done */
-
-  if (NULL != disps) {
-    free(disps);
-  }
-  if (NULL != free_buffer) {
-    free(free_buffer);
-  }
-
-  return err;
+    return err;
 }
 
 
@@ -120,175 +124,175 @@ int mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
  *	Accepts:	- same arguments as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
-                                        struct ompi_datatype_t *dtype,
-                                        struct ompi_op_t *op,
-                                        struct ompi_communicator_t *comm)
+int
+mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
+				    struct ompi_datatype_t *dtype,
+				    struct ompi_op_t *op,
+				    struct ompi_communicator_t *comm)
 {
     int err, i;
     int rank;
-    int root=0;
+    int root = 0;
     int rsize;
     int totalcounts, tcount;
     long lb, extent;
-    char *tmpbuf=NULL, *tmpbuf2=NULL, *tbuf=NULL;
+    char *tmpbuf = NULL, *tmpbuf2 = NULL, *tbuf = NULL;
     ompi_request_t *req;
-    ompi_request_t **reqs=comm->c_coll_basic_data->mccb_reqs;
+    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
 
-    rank  = ompi_comm_rank (comm);
-    rsize = ompi_comm_remote_size (comm);
+    rank = ompi_comm_rank(comm);
+    rsize = ompi_comm_remote_size(comm);
 
     /* According to MPI-2, the total sum of elements transfered has to 
-       be identical in both groups. Thus, it is enough to calculate
-       that locally.
-    */
-    for ( totalcounts=0, i=0; i<rsize; i++ ){
-        totalcounts += rcounts[i];
+     * be identical in both groups. Thus, it is enough to calculate
+     * that locally.
+     */
+    for (totalcounts = 0, i = 0; i < rsize; i++) {
+	totalcounts += rcounts[i];
     }
 
     /* determine result of the remote group, you cannot
-       use coll_reduce for inter-communicators, since than
-       you would need to determine an order between the
-       two groups (e.g. which group is providing the data
-       and which one enters coll_reduce with providing
-       MPI_PROC_NULL as root argument etc.) Here,
-       we execute the data exchange for both groups
-       simultaniously. */
+     * use coll_reduce for inter-communicators, since than
+     * you would need to determine an order between the
+     * two groups (e.g. which group is providing the data
+     * and which one enters coll_reduce with providing
+     * MPI_PROC_NULL as root argument etc.) Here,
+     * we execute the data exchange for both groups
+     * simultaniously. */
     /*****************************************************************/
-    if ( rank == root ) {
-        err = ompi_ddt_get_extent(dtype, &lb, &extent);
-        if (OMPI_SUCCESS != err) {
-            return OMPI_ERROR;
-        }
-        
-        tmpbuf  = (char *)malloc (totalcounts * extent);
-        tmpbuf2 = (char *)malloc (totalcounts * extent);
-        if ( NULL == tmpbuf || NULL == tmpbuf2 ) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+    if (rank == root) {
+	err = ompi_ddt_get_extent(dtype, &lb, &extent);
+	if (OMPI_SUCCESS != err) {
+	    return OMPI_ERROR;
+	}
 
-        /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = MCA_PML_CALL(isend (sbuf, totalcounts, dtype, 0, 
-                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                 MCA_PML_BASE_SEND_STANDARD, 
-                                 comm, &req ));
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
+	tmpbuf = (char *) malloc(totalcounts * extent);
+	tmpbuf2 = (char *) malloc(totalcounts * extent);
+	if (NULL == tmpbuf || NULL == tmpbuf2) {
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
 
-        err = MCA_PML_CALL(recv(tmpbuf2, totalcounts, dtype, 0,
-                               MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm, 
-                               MPI_STATUS_IGNORE));
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
-        
-        err = ompi_request_wait_all (1, &req, MPI_STATUS_IGNORE);
-        if (OMPI_SUCCESS != err ) {
-            goto exit;
-        }
+	/* Do a send-recv between the two root procs. to avoid deadlock */
+	err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0,
+				 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+				 MCA_PML_BASE_SEND_STANDARD, comm, &req));
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
 
-        
-      /* Loop receiving and calling reduction function (C or Fortran)
-         The result of this reduction operations is then in 
-         tmpbuf2. 
-      */
-      for (i = 1; i < rsize; i++) {
-          err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i, 
-                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm, 
-                                 MPI_STATUS_IGNORE));
-          if (MPI_SUCCESS != err) {
-              goto exit;
-          }
+	err = MCA_PML_CALL(recv(tmpbuf2, totalcounts, dtype, 0,
+				MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+				MPI_STATUS_IGNORE));
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
 
-          /* Perform the reduction */
-          ompi_op_reduce(op, tmpbuf, tmpbuf2, totalcounts, dtype);
-      }
-    }    
-    else {
-        /* If not root, send data to the root. */
-        err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root, 
-                               MCA_COLL_BASE_TAG_REDUCE_SCATTER, 
-                               MCA_PML_BASE_SEND_STANDARD, comm));
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
+	err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
+
+
+	/* Loop receiving and calling reduction function (C or Fortran)
+	 * The result of this reduction operations is then in 
+	 * tmpbuf2. 
+	 */
+	for (i = 1; i < rsize; i++) {
+	    err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i,
+				    MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+				    MPI_STATUS_IGNORE));
+	    if (MPI_SUCCESS != err) {
+		goto exit;
+	    }
+
+	    /* Perform the reduction */
+	    ompi_op_reduce(op, tmpbuf, tmpbuf2, totalcounts, dtype);
+	}
+    } else {
+	/* If not root, send data to the root. */
+	err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root,
+				MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+				MCA_PML_BASE_SEND_STANDARD, comm));
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
     }
-    
+
 
     /* now we have on one process the result of the remote group. To distribute
-       the data to all processes in the local group, we exchange the data between
-       the two root processes. They then send it to every other process in the 
-       remote group. 
-    */
+     * the data to all processes in the local group, we exchange the data between
+     * the two root processes. They then send it to every other process in the 
+     * remote group. 
+     */
     /***************************************************************************/
-    if ( rank == root ) {
-        /* sendrecv between the two roots */
-        err = MCA_PML_CALL(irecv (tmpbuf, totalcounts, dtype, 0, 
-                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                 comm, &req));
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
-        
-        err = MCA_PML_CALL(send (tmpbuf2, totalcounts, dtype, 0, 
-                                MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                MCA_PML_BASE_SEND_STANDARD, comm ));
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
-        
-        err = ompi_request_wait_all (1, &req, MPI_STATUS_IGNORE);
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
-        
-        /* distribute the data to other processes in remote group.
-           Note that we start from 1 (not from zero), since zero
-           has already the correct data AND we avoid a potential 
-           deadlock here. 
-        */
-        err = MCA_PML_CALL(irecv (rbuf, rcounts[rank], dtype, root, 
-                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                 comm, &req));
-        
-        tcount = 0;
-        for ( i=0; i<rsize; i++ ) {
-            tbuf = (char *) tmpbuf + tcount *extent;
-            err = MCA_PML_CALL(isend (tbuf, rcounts[i], dtype,i,
-                                     MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                     MCA_PML_BASE_SEND_STANDARD, comm,
-                                     reqs++));
-            if ( OMPI_SUCCESS != err ) {
-                goto exit;
-            }
-            tcount += rcounts[i];
-        }
+    if (rank == root) {
+	/* sendrecv between the two roots */
+	err = MCA_PML_CALL(irecv(tmpbuf, totalcounts, dtype, 0,
+				 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+				 comm, &req));
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
 
-        err = ompi_request_wait_all (rsize, comm->c_coll_basic_data->mccb_reqs,
-                                     MPI_STATUSES_IGNORE);
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
+	err = MCA_PML_CALL(send(tmpbuf2, totalcounts, dtype, 0,
+				MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+				MCA_PML_BASE_SEND_STANDARD, comm));
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
 
-        err = ompi_request_wait_all (1, &req, MPI_STATUS_IGNORE);
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
-    }
-    else {
-        err = MCA_PML_CALL(recv (rbuf, rcounts[rank], dtype, root, 
-                                MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                comm, MPI_STATUS_IGNORE));
-    }
+	err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
 
- exit:
-    if ( NULL != tmpbuf ) {
-        free ( tmpbuf );
+	/* distribute the data to other processes in remote group.
+	 * Note that we start from 1 (not from zero), since zero
+	 * has already the correct data AND we avoid a potential 
+	 * deadlock here. 
+	 */
+	err = MCA_PML_CALL(irecv(rbuf, rcounts[rank], dtype, root,
+				 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+				 comm, &req));
+
+	tcount = 0;
+	for (i = 0; i < rsize; i++) {
+	    tbuf = (char *) tmpbuf + tcount * extent;
+	    err = MCA_PML_CALL(isend(tbuf, rcounts[i], dtype, i,
+				     MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+				     MCA_PML_BASE_SEND_STANDARD, comm,
+				     reqs++));
+	    if (OMPI_SUCCESS != err) {
+		goto exit;
+	    }
+	    tcount += rcounts[i];
+	}
+
+	err =
+	    ompi_request_wait_all(rsize,
+				  comm->c_coll_basic_data->mccb_reqs,
+				  MPI_STATUSES_IGNORE);
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
+
+	err = ompi_request_wait_all(1, &req, MPI_STATUS_IGNORE);
+	if (OMPI_SUCCESS != err) {
+	    goto exit;
+	}
+    } else {
+	err = MCA_PML_CALL(recv(rbuf, rcounts[rank], dtype, root,
+				MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+				comm, MPI_STATUS_IGNORE));
     }
 
-    if ( NULL != tmpbuf2 ) {
-        free ( tmpbuf2 );
+  exit:
+    if (NULL != tmpbuf) {
+	free(tmpbuf);
+    }
+
+    if (NULL != tmpbuf2) {
+	free(tmpbuf2);
     }
 
     return err;

@@ -32,27 +32,28 @@
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_allgatherv_intra(void *sbuf, int scount, 
-                                    struct ompi_datatype_t *sdtype, 
-                                    void * rbuf, int *rcounts, int *disps, 
-                                    struct ompi_datatype_t *rdtype, 
-                                    struct ompi_communicator_t *comm)
+int
+mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
+				struct ompi_datatype_t *sdtype,
+				void *rbuf, int *rcounts, int *disps,
+				struct ompi_datatype_t *rdtype,
+				struct ompi_communicator_t *comm)
 {
-  int i, size;
-  int err;
+    int i, size;
+    int err;
 
-  /* Collect all values at each process, one at a time. */
+    /* Collect all values at each process, one at a time. */
 
-  size = ompi_comm_size(comm);
-  for (i = 0; i < size; ++i) {
-    err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
-                                    rcounts, disps, rdtype, i, comm);
-    if (MPI_SUCCESS != err) {
-      return err;
+    size = ompi_comm_size(comm);
+    for (i = 0; i < size; ++i) {
+	err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
+					rcounts, disps, rdtype, i, comm);
+	if (MPI_SUCCESS != err) {
+	    return err;
+	}
     }
-  }
 
-  return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }
 
 
@@ -63,40 +64,40 @@ int mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_allgatherv_inter(void *sbuf, int scount, 
-                                    struct ompi_datatype_t *sdtype, 
-                                    void * rbuf, int *rcounts, int *disps, 
-                                    struct ompi_datatype_t *rdtype, 
-                                    struct ompi_communicator_t *comm)
+int
+mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
+				struct ompi_datatype_t *sdtype,
+				void *rbuf, int *rcounts, int *disps,
+				struct ompi_datatype_t *rdtype,
+				struct ompi_communicator_t *comm)
 {
     int size, rsize;
     int err, i;
-    int *scounts=NULL;
-    int *sdisps=NULL;
-    
-    rsize = ompi_comm_remote_size (comm);
-    size  = ompi_comm_size (comm);
+    int *scounts = NULL;
+    int *sdisps = NULL;
 
-    scounts = (int *) malloc (rsize * sizeof(int) );
-    sdisps  = (int *) calloc (rsize, sizeof(int));
-    if ( NULL == scounts || NULL == sdisps ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    
-    for ( i=0; i<rsize; i++) {
-        scounts[i] = scount;    
+    rsize = ompi_comm_remote_size(comm);
+    size = ompi_comm_size(comm);
+
+    scounts = (int *) malloc(rsize * sizeof(int));
+    sdisps = (int *) calloc(rsize, sizeof(int));
+    if (NULL == scounts || NULL == sdisps) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    err = comm->c_coll.coll_alltoallv (sbuf, scounts, sdisps, sdtype,
-                                       rbuf, rcounts, disps, rdtype,
-                                       comm );
+    for (i = 0; i < rsize; i++) {
+	scounts[i] = scount;
+    }
 
-    if (NULL != sdisps  ) {
-        free (sdisps);
+    err = comm->c_coll.coll_alltoallv(sbuf, scounts, sdisps, sdtype,
+				      rbuf, rcounts, disps, rdtype, comm);
+
+    if (NULL != sdisps) {
+	free(sdisps);
     }
-    if ( NULL != scounts ) {
-        free (scounts);
+    if (NULL != scounts) {
+	free(scounts);
     }
-    
+
     return err;
 }

@@ -33,11 +33,12 @@
  *	Accepts:	- same as MPI_Alltoall()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
-                                  struct ompi_datatype_t *sdtype, 
-                                  void *rbuf, int rcount, 
-                                  struct ompi_datatype_t *rdtype,
-                                  struct ompi_communicator_t *comm)
+int
+mca_coll_basic_alltoall_intra(void *sbuf, int scount,
+			      struct ompi_datatype_t *sdtype,
+			      void *rbuf, int rcount,
+			      struct ompi_datatype_t *rdtype,
+			      struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -61,13 +62,13 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
-      return err;
+	return err;
     }
     sndinc *= scount;
 
     err = ompi_ddt_get_extent(rdtype, &lb, &rcvinc);
     if (OMPI_SUCCESS != err) {
-      return err;
+	return err;
     }
     rcvinc *= rcount;
 
@@ -76,8 +77,7 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     psnd = ((char *) sbuf) + (rank * sndinc);
     prcv = ((char *) rbuf) + (rank * rcvinc);
 
-    err = ompi_ddt_sndrcv(psnd, scount, sdtype,
-                          prcv, rcount, rdtype);
+    err = ompi_ddt_sndrcv(psnd, scount, sdtype, prcv, rcount, rdtype);
     if (MPI_SUCCESS != err) {
 	return err;
     }
@@ -94,31 +94,33 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     req = rreq = comm->c_coll_basic_data->mccb_reqs;
     sreq = rreq + size - 1;
 
-    prcv = (char*) rbuf;
-    psnd = (char*) sbuf;
+    prcv = (char *) rbuf;
+    psnd = (char *) sbuf;
 
     /* Post all receives first -- a simple optimization */
 
-    for (i = (rank + 1) % size; i != rank; 
-	 i = (i + 1) % size, ++rreq) {
-	err = MCA_PML_CALL(irecv_init(prcv + (i * rcvinc), rcount, rdtype, i,
-				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
+    for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++rreq) {
+	err =
+	    MCA_PML_CALL(irecv_init
+			 (prcv + (i * rcvinc), rcount, rdtype, i,
+			  MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
 	if (MPI_SUCCESS != err) {
-          mca_coll_basic_free_reqs(req, rreq - req);
-          return err;
+	    mca_coll_basic_free_reqs(req, rreq - req);
+	    return err;
 	}
     }
 
     /* Now post all sends */
 
-    for (i = (rank + 1) % size; i != rank; 
-	 i = (i + 1) % size, ++sreq) {
-	err = MCA_PML_CALL(isend_init(psnd + (i * sndinc), scount, sdtype, i,
-                                     MCA_COLL_BASE_TAG_ALLTOALL, 
-                                     MCA_PML_BASE_SEND_STANDARD, comm, sreq));
+    for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++sreq) {
+	err =
+	    MCA_PML_CALL(isend_init
+			 (psnd + (i * sndinc), scount, sdtype, i,
+			  MCA_COLL_BASE_TAG_ALLTOALL,
+			  MCA_PML_BASE_SEND_STANDARD, comm, sreq));
 	if (MPI_SUCCESS != err) {
-          mca_coll_basic_free_reqs(req, sreq - req);
-          return err;
+	    mca_coll_basic_free_reqs(req, sreq - req);
+	    return err;
 	}
     }
 
@@ -127,11 +129,11 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     MCA_PML_CALL(start(nreqs, req));
 
     /* Wait for them all.  If there's an error, note that we don't
-       care what the error was -- just that there *was* an error.  The
-       PML will finish all requests, even if one or more of them fail.
-       i.e., by the end of this call, all the requests are free-able.
-       So free them anyway -- even if there was an error, and return
-       the error after we free everything. */
+     * care what the error was -- just that there *was* an error.  The
+     * PML will finish all requests, even if one or more of them fail.
+     * i.e., by the end of this call, all the requests are free-able.
+     * So free them anyway -- even if there was an error, and return
+     * the error after we free everything. */
 
     err = ompi_request_wait_all(nreqs, req, MPI_STATUSES_IGNORE);
 
@@ -152,11 +154,12 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
  *	Accepts:	- same as MPI_Alltoall()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int mca_coll_basic_alltoall_inter(void *sbuf, int scount,
-                                  struct ompi_datatype_t *sdtype, 
-                                  void *rbuf, int rcount, 
-                                  struct ompi_datatype_t *rdtype,
-                                  struct ompi_communicator_t *comm)
+int
+mca_coll_basic_alltoall_inter(void *sbuf, int scount,
+			      struct ompi_datatype_t *sdtype,
+			      void *rbuf, int rcount,
+			      struct ompi_datatype_t *rdtype,
+			      struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -180,49 +183,49 @@ int mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
-        return err;
+	return err;
     }
     sndinc *= scount;
-    
+
     err = ompi_ddt_get_extent(rdtype, &lb, &rcvinc);
     if (OMPI_SUCCESS != err) {
-        return err;
+	return err;
     }
     rcvinc *= rcount;
-    
+
     /* Initiate all send/recv to/from others. */
     nreqs = size * 2;
     req = rreq = comm->c_coll_basic_data->mccb_reqs;
     sreq = rreq + size;
-    
-    prcv = (char*) rbuf;
-    psnd = (char*) sbuf;
+
+    prcv = (char *) rbuf;
+    psnd = (char *) sbuf;
 
     /* Post all receives first */
-    for (i = 0; i < size;  i++, ++rreq) {
+    for (i = 0; i < size; i++, ++rreq) {
 	err = MCA_PML_CALL(irecv(prcv + (i * rcvinc), rcount, rdtype, i,
-				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
+				 MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
 	if (OMPI_SUCCESS != err) {
-            return err;
+	    return err;
 	}
     }
 
     /* Now post all sends */
     for (i = 0; i < size; i++, ++sreq) {
 	err = MCA_PML_CALL(isend(psnd + (i * sndinc), scount, sdtype, i,
-                                MCA_COLL_BASE_TAG_ALLTOALL, 
-                                MCA_PML_BASE_SEND_STANDARD, comm, sreq));
+				 MCA_COLL_BASE_TAG_ALLTOALL,
+				 MCA_PML_BASE_SEND_STANDARD, comm, sreq));
 	if (OMPI_SUCCESS != err) {
-            return err;
+	    return err;
 	}
     }
 
     /* Wait for them all.  If there's an error, note that we don't
-       care what the error was -- just that there *was* an error.  The
-       PML will finish all requests, even if one or more of them fail.
-       i.e., by the end of this call, all the requests are free-able.
-       So free them anyway -- even if there was an error, and return
-       the error after we free everything. */
+     * care what the error was -- just that there *was* an error.  The
+     * PML will finish all requests, even if one or more of them fail.
+     * i.e., by the end of this call, all the requests are free-able.
+     * So free them anyway -- even if there was an error, and return
+     * the error after we free everything. */
     err = ompi_request_wait_all(nreqs, req, MPI_STATUSES_IGNORE);
 
     /* All done */
