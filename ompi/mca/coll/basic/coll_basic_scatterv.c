@@ -39,59 +39,59 @@ int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
                                   struct ompi_datatype_t *rdtype, int root,
                                   struct ompi_communicator_t *comm)
 {
-  int i;
-  int rank;
-  int size;
-  int err;
-  char *ptmp;
-  long lb;
-  long extent;
+    int i;
+    int rank;
+    int size;
+    int err;
+    char *ptmp;
+    long lb;
+    long extent;
 
-  /* Initialize */
+    /* Initialize */
 
-  rank = ompi_comm_rank(comm);
-  size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
 
-  /* If not root, receive data.  Note that we will only get here if
-     rcount > 0 or rank == root. */
+    /* If not root, receive data.  Note that we will only get here if
+       rcount > 0 or rank == root. */
 
-  if (rank != root) {
-    err = MCA_PML_CALL(recv(rbuf, rcount, rdtype,
-                           root, MCA_COLL_BASE_TAG_SCATTERV, 
-                           comm, MPI_STATUS_IGNORE));
-    return err;
-  }
-
-  /* I am the root, loop sending data. */
-
-  err = ompi_ddt_get_extent(rdtype, &lb, &extent);
-  if (OMPI_SUCCESS != err) {
-    return OMPI_ERROR;
-  }
-
-  for (i = 0; i < size; ++i) {
-    if (0 == scounts[i]) {
-      continue;
+    if (rank != root) {
+        err = MCA_PML_CALL(recv(rbuf, rcount, rdtype,
+                                root, MCA_COLL_BASE_TAG_SCATTERV, 
+                                comm, MPI_STATUS_IGNORE));
+        return err;
     }
-    ptmp = ((char *) sbuf) + (extent * disps[i]);
 
-    /* simple optimization */
+    /* I am the root, loop sending data. */
 
-    if (i == rank) {
-      err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount, rdtype);
-    } else {
-      err = MCA_PML_CALL(send(ptmp, scounts[i], sdtype, i, 
-                             MCA_COLL_BASE_TAG_SCATTERV, 
-                             MCA_PML_BASE_SEND_STANDARD, comm));
+    err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+    if (OMPI_SUCCESS != err) {
+        return OMPI_ERROR;
     }
-    if (MPI_SUCCESS != err) {
-      return err;
+
+    for (i = 0; i < size; ++i) {
+        ptmp = ((char *) sbuf) + (extent * disps[i]);
+
+        /* simple optimization */
+
+        if (i == rank) {
+            if( 0 == scounts[i] ) {  /* simple optimization or a local operation */
+                continue;
+            }
+            err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount, rdtype);
+        } else {
+            err = MCA_PML_CALL(send(ptmp, scounts[i], sdtype, i, 
+                                    MCA_COLL_BASE_TAG_SCATTERV, 
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+        }
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
     }
-  }
 
-  /* All done */
+    /* All done */
 
-  return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }
 
 
