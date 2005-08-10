@@ -40,6 +40,7 @@ static OBJ_CLASS_INSTANCE(callback_list_item_t, opal_list_item_t, NULL, NULL);
 static opal_list_t callback_list;
 static opal_atomic_lock_t callback_lock;
 static bool have_free_support = false;
+static bool run_callbacks = false;
 
 
 int
@@ -47,6 +48,9 @@ opal_mem_free_init(void)
 {
     OBJ_CONSTRUCT(&callback_list, opal_list_t);
     opal_atomic_init(&callback_lock, OPAL_ATOMIC_UNLOCKED);
+
+    run_callbacks = true;
+    opal_atomic_mb();
 
     return OMPI_SUCCESS;
 }
@@ -56,11 +60,21 @@ int
 opal_mem_free_finalize(void)
 {
     opal_list_item_t *item;
+    
+    run_callbacks = false;
+    opal_atomic_mb();
+
+    /* aquire the lock, just to make sure no one is currently
+       twiddling with the list.  We know this won't last long, since
+       no new calls will come in twiddle with the list */
+    opal_atomic_lock(&callback_lock);
 
     while (NULL != (item = opal_list_remove_first(&callback_list))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&callback_list);
+
+    opal_atomic_unlock(&callback_lock);
 
     return OMPI_SUCCESS;
 }
@@ -80,6 +94,8 @@ void
 opal_mem_free_release_hook(void *buf, size_t length)
 {
     opal_list_item_t *item;
+
+    if (!run_callbacks) return;
 
     opal_atomic_lock(&callback_lock);
 

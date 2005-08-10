@@ -23,6 +23,7 @@ SUBDIRS = \
         class \
         event \
         mca \
+        memory \
         runtime \
         threads \
         util
