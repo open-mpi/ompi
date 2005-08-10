@@ -129,7 +129,7 @@ static const mca_coll_base_module_1_0_0_t inter_linear = {
  */
 int
 mca_coll_basic_init_query(bool enable_progress_threads,
-			  bool enable_mpi_threads)
+                          bool enable_mpi_threads)
 {
     /* Nothing to do */
 
@@ -144,25 +144,25 @@ mca_coll_basic_init_query(bool enable_progress_threads,
  */
 const mca_coll_base_module_1_0_0_t *
 mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority,
-			  struct mca_coll_base_comm_t **data)
+                          struct mca_coll_base_comm_t **data)
 {
     if (OMPI_SUCCESS !=
-	mca_base_param_lookup_int(mca_coll_basic_priority_param,
-				  priority)) {
-	return NULL;
+        mca_base_param_lookup_int(mca_coll_basic_priority_param,
+                                  priority)) {
+        return NULL;
     }
 
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */
 
     if (OMPI_COMM_IS_INTER(comm)) {
-	return &inter_linear;
+        return &inter_linear;
     } else {
-	if (ompi_comm_size(comm) <= mca_coll_base_crossover) {
-	    return &intra_linear;
-	} else {
-	    return &intra_log;
-	}
+        if (ompi_comm_size(comm) <= mca_coll_base_crossover) {
+            return &intra_linear;
+        } else {
+            return &intra_log;
+        }
     }
 
     /* Never reach here */
@@ -181,15 +181,15 @@ mca_coll_basic_module_init(struct ompi_communicator_t *comm)
     /* Allocate the data that hangs off the communicator */
 
     if (OMPI_COMM_IS_INTER(comm)) {
-	size = ompi_comm_remote_size(comm);
+        size = ompi_comm_remote_size(comm);
     } else {
-	size = ompi_comm_size(comm);
+        size = ompi_comm_size(comm);
     }
     data = malloc(sizeof(struct mca_coll_base_comm_t) +
-		  (sizeof(ompi_request_t *) * size * 2));
+                  (sizeof(ompi_request_t *) * size * 2));
 
     if (NULL == data) {
-	return NULL;
+        return NULL;
     }
     data->mccb_reqs = (ompi_request_t **) (data + 1);
     data->mccb_num_reqs = size * 2;
@@ -208,7 +208,7 @@ int
 mca_coll_basic_module_finalize(struct ompi_communicator_t *comm)
 {
     if (NULL == comm->c_coll_basic_module) {
-	return OMPI_SUCCESS;
+        return OMPI_SUCCESS;
     }
 
 #if OMPI_ENABLE_DEBUG

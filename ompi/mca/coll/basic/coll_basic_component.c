@@ -92,7 +92,7 @@ basic_open(void)
     /* Use a low priority, but allow other components to be lower */
 
     mca_coll_basic_priority_param =
-	mca_base_param_register_int("coll", "basic", "priority", NULL, 10);
+        mca_base_param_register_int("coll", "basic", "priority", NULL, 10);
 
     return OMPI_SUCCESS;
 }

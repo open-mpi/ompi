@@ -34,10 +34,10 @@
  */
 int
 mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
-				struct ompi_datatype_t *sdtype,
-				void *rbuf, int *rcounts, int *disps,
-				struct ompi_datatype_t *rdtype,
-				struct ompi_communicator_t *comm)
+                                struct ompi_datatype_t *sdtype,
+                                void *rbuf, int *rcounts, int *disps,
+                                struct ompi_datatype_t *rdtype,
+                                struct ompi_communicator_t *comm)
 {
     int i, size;
     int err;
@@ -66,10 +66,10 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
  */
 int
 mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
-				struct ompi_datatype_t *sdtype,
-				void *rbuf, int *rcounts, int *disps,
-				struct ompi_datatype_t *rdtype,
-				struct ompi_communicator_t *comm)
+                                struct ompi_datatype_t *sdtype,
+                                void *rbuf, int *rcounts, int *disps,
+                                struct ompi_datatype_t *rdtype,
+                                struct ompi_communicator_t *comm)
 {
     int size, rsize;
     int err, i;
@@ -82,21 +82,21 @@ mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
     scounts = (int *) malloc(rsize * sizeof(int));
     sdisps = (int *) calloc(rsize, sizeof(int));
     if (NULL == scounts || NULL == sdisps) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for (i = 0; i < rsize; i++) {
-	scounts[i] = scount;
+        scounts[i] = scount;
     }
 
     err = comm->c_coll.coll_alltoallv(sbuf, scounts, sdisps, sdtype,
-				      rbuf, rcounts, disps, rdtype, comm);
+                                      rbuf, rcounts, disps, rdtype, comm);
 
     if (NULL != sdisps) {
-	free(sdisps);
+        free(sdisps);
     }
     if (NULL != scounts) {
-	free(scounts);
+        free(scounts);
     }
 
     return err;

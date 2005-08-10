@@ -34,10 +34,10 @@
  */
 int
 mca_coll_basic_gather_intra(void *sbuf, int scount,
-			    struct ompi_datatype_t *sdtype,
-			    void *rbuf, int rcount,
-			    struct ompi_datatype_t *rdtype,
-			    int root, struct ompi_communicator_t *comm)
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype,
+                            int root, struct ompi_communicator_t *comm)
 {
     int i;
     int err;
@@ -54,33 +54,33 @@ mca_coll_basic_gather_intra(void *sbuf, int scount,
     /* Everyone but root sends data and returns. */
 
     if (rank != root) {
-	return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-				 MCA_COLL_BASE_TAG_GATHER,
-				 MCA_PML_BASE_SEND_STANDARD, comm));
+        return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
+                                 MCA_COLL_BASE_TAG_GATHER,
+                                 MCA_PML_BASE_SEND_STANDARD, comm));
     }
 
     /* I am the root, loop receiving the data. */
 
     if (OMPI_SUCCESS != (err = ompi_ddt_get_extent(rdtype, &lb, &extent))) {
-	return err;
+        return err;
     }
 
     incr = extent * rcount;
     for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
 
-	/* simple optimization */
+        /* simple optimization */
 
-	if (i == rank) {
-	    err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
-				  rcount, rdtype);
-	} else {
-	    err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
-				    MCA_COLL_BASE_TAG_GATHER,
-				    comm, MPI_STATUS_IGNORE));
-	}
-	if (MPI_SUCCESS != err) {
-	    return err;
-	}
+        if (i == rank) {
+            err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
+                                  rcount, rdtype);
+        } else {
+            err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
+                                    MCA_COLL_BASE_TAG_GATHER,
+                                    comm, MPI_STATUS_IGNORE));
+        }
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     /* All done */
@@ -98,10 +98,10 @@ mca_coll_basic_gather_intra(void *sbuf, int scount,
  */
 int
 mca_coll_basic_gather_inter(void *sbuf, int scount,
-			    struct ompi_datatype_t *sdtype,
-			    void *rbuf, int rcount,
-			    struct ompi_datatype_t *rdtype,
-			    int root, struct ompi_communicator_t *comm)
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype,
+                            int root, struct ompi_communicator_t *comm)
 {
     int i;
     int err;
@@ -117,29 +117,29 @@ mca_coll_basic_gather_inter(void *sbuf, int scount,
 
 
     if (MPI_PROC_NULL == root) {
-	/* do nothing */
-	err = OMPI_SUCCESS;
+        /* do nothing */
+        err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
-	/* Everyone but root sends data and returns. */
-	err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-				MCA_COLL_BASE_TAG_GATHER,
-				MCA_PML_BASE_SEND_STANDARD, comm));
+        /* Everyone but root sends data and returns. */
+        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
+                                MCA_COLL_BASE_TAG_GATHER,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
     } else {
-	/* I am the root, loop receiving the data. */
-	err = ompi_ddt_get_extent(rdtype, &lb, &extent);
-	if (OMPI_SUCCESS != err) {
-	    return OMPI_ERROR;
-	}
+        /* I am the root, loop receiving the data. */
+        err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+        if (OMPI_SUCCESS != err) {
+            return OMPI_ERROR;
+        }
 
-	incr = extent * rcount;
-	for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
-	    err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
-				    MCA_COLL_BASE_TAG_GATHER,
-				    comm, MPI_STATUS_IGNORE));
-	    if (MPI_SUCCESS != err) {
-		return err;
-	    }
-	}
+        incr = extent * rcount;
+        for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
+            err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
+                                    MCA_COLL_BASE_TAG_GATHER,
+                                    comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                return err;
+            }
+        }
     }
 
     /* All done */

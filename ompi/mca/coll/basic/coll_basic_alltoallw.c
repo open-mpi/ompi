@@ -34,10 +34,10 @@
  */
 int
 mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
-			       struct ompi_datatype_t **sdtypes,
-			       void *rbuf, int *rcounts, int *rdisps,
-			       struct ompi_datatype_t **rdtypes,
-			       struct ompi_communicator_t *comm)
+                               struct ompi_datatype_t **sdtypes,
+                               void *rbuf, int *rcounts, int *rdisps,
+                               struct ompi_datatype_t **rdtypes,
+                               struct ompi_communicator_t *comm)
 {
     int i;
     int size;
@@ -59,17 +59,17 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     prcv = ((char *) rbuf) + rdisps[rank];
 
     if (0 != scounts[rank]) {
-	err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtypes[rank],
-			      prcv, rcounts[rank], rdtypes[rank]);
-	if (MPI_SUCCESS != err) {
-	    return err;
-	}
+        err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtypes[rank],
+                              prcv, rcounts[rank], rdtypes[rank]);
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     /* If only one process, we're done. */
 
     if (1 == size) {
-	return MPI_SUCCESS;
+        return MPI_SUCCESS;
     }
 
     /* Initiate all send/recv to/from others. */
@@ -80,38 +80,38 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     /* Post all receives first -- a simple optimization */
 
     for (i = 0; i < size; ++i) {
-	if (i == rank || 0 == rcounts[i])
-	    continue;
+        if (i == rank || 0 == rcounts[i])
+            continue;
 
-	prcv = ((char *) rbuf) + rdisps[i];
-	err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
-				      i, MCA_COLL_BASE_TAG_ALLTOALLW, comm,
-				      preq++));
-	++nreqs;
-	if (MPI_SUCCESS != err) {
-	    mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
-				     nreqs);
-	    return err;
-	}
+        prcv = ((char *) rbuf) + rdisps[i];
+        err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
+                                      i, MCA_COLL_BASE_TAG_ALLTOALLW, comm,
+                                      preq++));
+        ++nreqs;
+        if (MPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
+                                     nreqs);
+            return err;
+        }
     }
 
     /* Now post all sends */
 
     for (i = 0; i < size; ++i) {
-	if (i == rank || 0 == scounts[i])
-	    continue;
+        if (i == rank || 0 == scounts[i])
+            continue;
 
-	psnd = ((char *) sbuf) + sdisps[i];
-	err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
-				      i, MCA_COLL_BASE_TAG_ALLTOALLW,
-				      MCA_PML_BASE_SEND_STANDARD, comm,
-				      preq++));
-	++nreqs;
-	if (MPI_SUCCESS != err) {
-	    mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
-				     nreqs);
-	    return err;
-	}
+        psnd = ((char *) sbuf) + sdisps[i];
+        err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
+                                      i, MCA_COLL_BASE_TAG_ALLTOALLW,
+                                      MCA_PML_BASE_SEND_STANDARD, comm,
+                                      preq++));
+        ++nreqs;
+        if (MPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
+                                     nreqs);
+            return err;
+        }
     }
 
     /* Start your engines.  This will never return an error. */
@@ -126,7 +126,7 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
      * error after we free everything. */
 
     err = ompi_request_wait_all(nreqs, comm->c_coll_basic_data->mccb_reqs,
-				MPI_STATUSES_IGNORE);
+                                MPI_STATUSES_IGNORE);
 
     /* Free the requests. */
 
@@ -147,10 +147,10 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
  */
 int
 mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
-			       struct ompi_datatype_t **sdtypes,
-			       void *rbuf, int *rcounts, int *rdisps,
-			       struct ompi_datatype_t **rdtypes,
-			       struct ompi_communicator_t *comm)
+                               struct ompi_datatype_t **sdtypes,
+                               void *rbuf, int *rcounts, int *rdisps,
+                               struct ompi_datatype_t **rdtypes,
+                               struct ompi_communicator_t *comm)
 {
     int i;
     int size;
@@ -171,29 +171,29 @@ mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
 
     /* Post all receives first -- a simple optimization */
     for (i = 0; i < size; ++i) {
-	prcv = ((char *) rbuf) + rdisps[i];
-	err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
-				      i, MCA_COLL_BASE_TAG_ALLTOALLW,
-				      comm, preq++));
-	if (OMPI_SUCCESS != err) {
-	    mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
-				     nreqs);
-	    return err;
-	}
+        prcv = ((char *) rbuf) + rdisps[i];
+        err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
+                                      i, MCA_COLL_BASE_TAG_ALLTOALLW,
+                                      comm, preq++));
+        if (OMPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
+                                     nreqs);
+            return err;
+        }
     }
 
     /* Now post all sends */
     for (i = 0; i < size; ++i) {
-	psnd = ((char *) sbuf) + sdisps[i];
-	err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
-				      i, MCA_COLL_BASE_TAG_ALLTOALLW,
-				      MCA_PML_BASE_SEND_STANDARD, comm,
-				      preq++));
-	if (OMPI_SUCCESS != err) {
-	    mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
-				     nreqs);
-	    return err;
-	}
+        psnd = ((char *) sbuf) + sdisps[i];
+        err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
+                                      i, MCA_COLL_BASE_TAG_ALLTOALLW,
+                                      MCA_PML_BASE_SEND_STANDARD, comm,
+                                      preq++));
+        if (OMPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs,
+                                     nreqs);
+            return err;
+        }
     }
 
     /* Start your engines.  This will never return an error. */
@@ -206,7 +206,7 @@ mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
      * So free them anyway -- even if there was an error, and return the
      * error after we free everything. */
     err = ompi_request_wait_all(nreqs, comm->c_coll_basic_data->mccb_reqs,
-				MPI_STATUSES_IGNORE);
+                                MPI_STATUSES_IGNORE);
 
     /* Free the requests. */
     mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
