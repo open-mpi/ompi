@@ -72,38 +72,21 @@ orte_rds_base_module_t orte_rds_resfile_module = {
 bool orte_rds_resfile_queried;
 
 /**
- *  Convience functions to lookup MCA parameter values.
- */
-
-static  int orte_rds_resfile_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("rds","resfile",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-                                                                                                                                                                       
-static char* orte_rds_resfile_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("rds","resfile",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-
-/**
   * component open/close/init function
   */
 static int orte_rds_resfile_open(void)
 {
     OBJ_CONSTRUCT(&mca_rds_resfile_component.lock, opal_mutex_t);
-    mca_rds_resfile_component.debug = orte_rds_resfile_param_register_int("debug",1);
-    mca_rds_resfile_component.filename = orte_rds_resfile_param_register_string("file", NULL);
+
+    mca_base_param_reg_int(&mca_rds_resfile_component.super.rds_version, "debug",
+                           "Toggle debug output for resfile RDS component",
+                           false, false, (int)false, 
+                           &mca_rds_resfile_component.debug);
+    mca_base_param_reg_string(&mca_rds_resfile_component.super.rds_version, "name",
+                              "ORTE Resource filename",
+                              false, false, NULL, 
+                              &mca_rds_resfile_component.filename);
+    
     orte_rds_resfile_queried = false;
     
     return ORTE_SUCCESS;
