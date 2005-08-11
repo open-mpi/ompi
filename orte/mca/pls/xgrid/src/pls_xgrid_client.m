@@ -42,7 +42,7 @@ char **environ;
  */
 
 static int
-mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node, 
+mca_pls_xgrid_set_node_name(orte_ras_node_t* node, 
 			    orte_jobid_t jobid, 
 			    orte_process_name_t* name)
 {
@@ -265,7 +265,7 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
     for (item =  opal_list_get_first(&nodes);
 	 item != opal_list_get_end(&nodes);
 	 item =  opal_list_get_next(item)) {
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
         orte_process_name_t* name;
 	char *name_str, *nsuri, *gpruri;
 

@@ -17,6 +17,10 @@
 #ifndef ORTECONSOLE_H
 #define ORTECONSOLE_H
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 #define ORTE_CONSOLE_MAX_LINE_LENGTH 1024
 #define ORTE_CONSOLE_MAX_ARGC 10
 
@@ -27,11 +31,13 @@
 /* Command line Structure */
 typedef struct {
     bool help;
+    char *hostfile;
 
     opal_mutex_t     lock;
     opal_condition_t cond;
 } orte_console_globals_t;
 
+/* Console Command Types */
 enum orte_console_type_t {
     ORTE_CONSOLE_TYPE_NULL,
 
@@ -40,11 +46,12 @@ enum orte_console_type_t {
 };
 typedef enum orte_console_type_t orte_console_type_t;
 
+/* Contained parsed user input */
 typedef struct {
     /* Command Name */
     char *    cmd_name;
 
-    char *    argv[ORTE_CONSOLE_MAX_ARGC];
+    char **   argv;
     int       argc;
 } orte_console_input_command_t;
 
@@ -66,13 +73,26 @@ typedef struct {
     const char *       cmd_description;
 } orte_console_command_t;
 
+/* Local list of allocated hosts */
+static opal_list_t orte_console_hosts;
+
 /*
  * Function for each command
  */
 static int orte_console_exit(orte_console_input_command_t);
 static int orte_console_help(orte_console_input_command_t);
+
+static int orte_console_boot_daemons(orte_console_input_command_t);
+static int orte_console_clean(orte_console_input_command_t);
+static int orte_console_add_host(orte_console_input_command_t);
+static int orte_console_remove_host(orte_console_input_command_t);
+static int orte_console_display_configuration(orte_console_input_command_t);
+static int orte_console_launch_job(orte_console_input_command_t);
+static int orte_console_halt_daemons(orte_console_input_command_t);
+
 static int orte_console_contactinfo(orte_console_input_command_t);
 static int orte_console_dumpvm(orte_console_input_command_t);
+
 static int orte_console_devel(orte_console_input_command_t);
 
 /*
@@ -82,5 +102,9 @@ static char *orte_console_get_input_line(void);
 static int   orte_console_send_command(orte_daemon_cmd_flag_t usercmd);
 static int   orte_console_parse_command(char * usercmd, orte_console_input_command_t *input_command); 
 static int   orte_console_execute_command(orte_console_input_command_t command);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTECONSOLE_H */

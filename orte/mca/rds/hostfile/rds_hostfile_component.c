@@ -63,32 +63,6 @@ orte_rds_hostfile_component_t mca_rds_hostfile_component = {
 
 
 /**
- *  Convience functions to lookup MCA parameter values.
- */
-
-static  int orte_rds_hostfile_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("rds","hostfile",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
-static char* orte_rds_hostfile_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("rds","hostfile",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-
-/**
   * component open/close/init function
   */
 static int orte_rds_hostfile_open(void)
@@ -99,10 +73,19 @@ static int orte_rds_hostfile_open(void)
 #else
     char *path = opal_os_path(false, ORTE_SYSCONFDIR, "openmpi-default-hostfile", NULL);
     OBJ_CONSTRUCT(&mca_rds_hostfile_component.lock, opal_mutex_t);
-    mca_rds_hostfile_component.debug = orte_rds_hostfile_param_register_int("debug",1);
-    mca_rds_hostfile_component.path = orte_rds_hostfile_param_register_string("path", path);
+
+    mca_base_param_reg_int(&mca_rds_hostfile_component.super.rds_version, "debug",
+                           "Toggle debug output for hostfile RDS component",
+                           false, false, (int)false,
+                           &mca_rds_hostfile_component.debug);
+    mca_base_param_reg_string(&mca_rds_hostfile_component.super.rds_version, "path",
+                              "ORTE Host filename",
+                              false, false, path,
+                              &mca_rds_hostfile_component.path);
+    
     mca_rds_hostfile_component.default_hostfile = (strcmp(mca_rds_hostfile_component.path,path) == 0);
     free(path);
+
     return ORTE_SUCCESS;
 #endif
 }

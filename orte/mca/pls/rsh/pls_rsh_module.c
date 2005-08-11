@@ -87,7 +87,7 @@ orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
    universe if a daemon aborts */
 struct rsh_daemon_info_t {
     opal_object_t super;
-    orte_ras_base_node_t* node;
+    orte_ras_node_t* node;
     orte_jobid_t jobid;
 };
 typedef struct rsh_daemon_info_t rsh_daemon_info_t;
@@ -202,7 +202,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
  * Set the daemons name in the registry.
  */
 
-static int orte_pls_rsh_set_node_name(orte_ras_base_node_t* node, orte_jobid_t jobid, orte_process_name_t* name)
+static int orte_pls_rsh_set_node_name(orte_ras_node_t* node, orte_jobid_t jobid, orte_process_name_t* name)
 {
     orte_gpr_value_t* values[1];
     orte_gpr_value_t value;
@@ -449,7 +449,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     for(item =  opal_list_get_first(&nodes);
         item != opal_list_get_end(&nodes);
         item =  opal_list_get_next(item)) {
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
         orte_process_name_t* name;
         pid_t pid;
         char *exec_path;

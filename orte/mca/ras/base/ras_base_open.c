@@ -71,6 +71,7 @@ static int compare(opal_list_item_t **a, opal_list_item_t **b)
 /*
  * Global variables
  */
+orte_ras_base_module_t orte_ras;
 orte_ras_base_t orte_ras_base;
 OBJ_CLASS_INSTANCE(
     orte_ras_base_cmp_t, 

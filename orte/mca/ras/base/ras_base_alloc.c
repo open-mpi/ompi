@@ -71,7 +71,7 @@ int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid,
         for (item = opal_list_get_first(nodes);
              item != opal_list_get_end(nodes) && num_allocated < num_requested;
              item = opal_list_get_next(item)) {
-            orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+            orte_ras_node_t* node = (orte_ras_node_t*)item;
             
             /* are any slots available? */
             slots = (oversubscribe ? node->node_slots_max : node->node_slots);
@@ -105,7 +105,7 @@ int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid,
     /* move all nodes w/ allocations to the allocated list */
     item = opal_list_get_first(nodes);
     while(item != opal_list_get_end(nodes)) {
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
         opal_list_item_t* next = opal_list_get_next(item);
         if(node->node_slots_alloc) {
             opal_list_remove_item(nodes, item);
@@ -155,7 +155,7 @@ int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
     for (item = opal_list_get_first(nodes);
          item != opal_list_get_end(nodes) && num_allocated < num_requested;
          item = opal_list_get_next(item)) {
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
         
         /* are any slots available? */
         if (node->node_slots_inuse < node->node_slots) {
@@ -186,7 +186,7 @@ int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
         for (item = opal_list_get_first(nodes);
              item != opal_list_get_end(nodes) && num_allocated < num_requested;
              item = opal_list_get_next(item)) {
-            orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+            orte_ras_node_t* node = (orte_ras_node_t*)item;
             
             /* are any slots available? */
             if (node->node_slots_inuse < node->node_slots_max ||
@@ -210,7 +210,7 @@ int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
     /* move all nodes w/ allocations to the allocated list */
     item = opal_list_get_first(nodes);
     while(item != opal_list_get_end(nodes)) {
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
         opal_list_item_t* next = opal_list_get_next(item);
         if(node->node_slots_alloc) {
             opal_list_remove_item(nodes, item);

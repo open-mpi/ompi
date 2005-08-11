@@ -37,7 +37,7 @@ static opal_list_item_t *cur_node_item = NULL;
 
 
 static int claim_slot(orte_rmaps_base_map_t *map, 
-                      orte_ras_base_node_t *current_node,
+                      orte_ras_node_t *current_node,
                       orte_jobid_t jobid, orte_vpid_t vpid, int proc_index)
 {
     orte_rmaps_base_proc_t *proc;
@@ -105,7 +105,7 @@ static int map_app_by_node(
     size_t num_alloc = 0;
     size_t proc_index = 0;
     opal_list_item_t *start, *next;
-    orte_ras_base_node_t *node;
+    orte_ras_node_t *node;
     bool did_alloc;
 
     /* Note that cur_node_item already points to the Right place in
@@ -138,7 +138,7 @@ static int map_app_by_node(
        been mapped yet, then it's an "out of resources" error. */
     did_alloc = false;
     while (num_alloc < app->num_procs) {
-        node = (orte_ras_base_node_t*) cur_node_item;
+        node = (orte_ras_node_t*) cur_node_item;
         next = opal_list_get_next(cur_node_item);
 
         /* If we have an available slot on this node, claim it */
@@ -217,7 +217,7 @@ static int map_app_by_slot(
     size_t num_alloc = 0;
     size_t proc_index = 0;
     opal_list_item_t *next;
-    orte_ras_base_node_t *node;
+    orte_ras_node_t *node;
 
     /* Note that cur_node_item already points to the Right place in
        the node list to start looking (i.e., if this is the first time
@@ -240,7 +240,7 @@ static int map_app_by_slot(
 
     while (opal_list_get_end(nodes) != cur_node_item &&
            num_alloc < app->num_procs) {
-        node = (orte_ras_base_node_t*) cur_node_item;
+        node = (orte_ras_node_t*) cur_node_item;
         next = opal_list_get_next(cur_node_item);
 
         /* If we have available slots on this node, claim it */

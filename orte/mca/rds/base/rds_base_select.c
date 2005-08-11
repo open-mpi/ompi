@@ -69,6 +69,8 @@ int orte_rds_base_select(void)
         return ORTE_ERROR;
     }
 
+    orte_rds = *module;
+
     return ORTE_SUCCESS;
 }
 

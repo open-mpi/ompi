@@ -84,8 +84,8 @@ OBJ_CLASS_INSTANCE(
 /*
  * Global variables
  */
+orte_rds_base_module_t orte_rds;
 orte_rds_base_t orte_rds_base;
-
 
 /**
  * Function for finding and opening either all MCA components, or the one

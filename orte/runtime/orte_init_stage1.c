@@ -38,6 +38,8 @@
 #include "mca/ns/base/base.h"
 #include "mca/sds/base/base.h"
 #include "mca/gpr/base/base.h"
+#include "mca/ras/base/base.h"
+#include "mca/rds/base/base.h"
 #include "mca/rmgr/base/base.h"
 #include "mca/rmaps/base/base.h"
 #include "mca/schema/base/base.h"
@@ -57,13 +59,12 @@
 
 int orte_init_stage1(void)
 {
-    int ret, rc;
+    int ret;
     char *jobid_str = NULL;
     char *procid_str = NULL;
     char *contact_path = NULL;
     orte_jobid_t my_jobid;
     orte_cellid_t my_cellid;
-    orte_gpr_value_t value, *values;
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
@@ -321,14 +322,38 @@ int orte_init_stage1(void)
      /* if we are a singleton or the seed, setup the infrastructure for our job */
  
     if(orte_process_info.singleton || orte_process_info.seed) {
+        char *site, *resource;
+
         if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
+        
+        /* If there is no existing cellid, create one */
+        my_cellid = 0; /* JJH Assertion/Repair until cellid's are fixed */
+        ret = orte_ns.get_cell_info(my_cellid, &site, &resource);
+        if (ORTE_ERR_NOT_FOUND == ret) {
+            /* Create a new Cell ID */
+            ret = orte_ns.create_cellid(&my_cellid, "unkonwn", orte_system_info.nodename);
+            if (ORTE_SUCCESS != ret ) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+            
+            if(my_cellid != 0) { /* JJH Assertion/Repair until cellid's are fixed */
+                my_cellid = 0;
+            }
+        }
+        else if (ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        
         if (ORTE_SUCCESS != (ret = orte_ns.get_cellid(&my_cellid, orte_process_info.my_name))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
+
         if (orte_process_info.singleton) {
             /* setup a fake node structure - this is required to support
              * the MPI attributes function that is sitting on a trigger
@@ -340,66 +365,71 @@ int orte_init_stage1(void)
              * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
              * FOR ANY OTHER CASE
              */
-            OBJ_CONSTRUCT(&value, orte_gpr_value_t);
-            values = &value;
-            /* define the addressing mode and segment */
-            value.addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
-            value.segment = strdup(ORTE_NODE_SEGMENT);
-            if (NULL == value.segment) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                OBJ_DESTRUCT(&value);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&(value.tokens),
-                    &(value.num_tokens), my_cellid, orte_system_info.nodename))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            value.cnt = 2;
+            opal_list_t single_host, rds_single_host;
+            orte_rds_cell_desc_t *rds_item;
+            orte_rds_cell_attr_t *new_attr;
+            orte_ras_node_t *ras_item;
 
-            value.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
-            if (NULL == value.keyvals) {
+            OBJ_CONSTRUCT(&single_host, opal_list_t);
+            OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
+            ras_item = OBJ_NEW(orte_ras_node_t);
+            rds_item = OBJ_NEW(orte_rds_cell_desc_t);
+            if (NULL == ras_item || NULL == rds_item) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                OBJ_DESTRUCT(&value);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-            if (NULL == value.keyvals[0]) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                OBJ_DESTRUCT(&value);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            value.keyvals[0]->key = strdup(ORTE_NODE_SLOTS_KEY);
-            if (NULL == value.keyvals[0]->key) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                OBJ_DESTRUCT(&value);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            value.keyvals[0]->type = ORTE_SIZE;
-            value.keyvals[0]->value.size = 1;
+            
+            rds_item->site   = strdup("Singleton");
+            rds_item->name   = strdup(orte_system_info.nodename);
+            rds_item->cellid = my_cellid;
+            
+            /* Set up data structure for RAS item */
+            ras_item->node_name        = strdup(rds_item->name);
+            ras_item->node_arch        = strdup("unknown");
+            ras_item->node_cellid      = rds_item->cellid;
+            ras_item->node_slots_inuse = 0;
+            ras_item->node_slots       = 1;
 
-            value.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-            if (NULL == value.keyvals[1]) {
+            opal_list_append(&single_host, &ras_item->super);
+
+            /* Set up data structure for RDS item */
+            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
+            if (NULL == new_attr) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                OBJ_DESTRUCT(&value);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            value.keyvals[1]->key = strdup(ORTE_NODE_NAME_KEY);
-            if (NULL == value.keyvals[1]->key) {
+            new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
+            new_attr->keyval.type         = ORTE_STRING;
+            new_attr->keyval.value.strptr = strdup(ras_item->node_name);
+            opal_list_append(&(rds_item->attributes), &new_attr->super);
+            
+            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
+            if (NULL == new_attr) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                OBJ_DESTRUCT(&value);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            value.keyvals[1]->type = ORTE_STRING;
-            value.keyvals[1]->value.strptr = strdup(orte_system_info.nodename);
-            /* put the value on the registry */
-            if (ORTE_SUCCESS != (ret = orte_gpr.put(1, &values))) {
+            new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
+            new_attr->keyval.type         = ORTE_CELLID;
+            new_attr->keyval.value.cellid = rds_item->cellid;
+            opal_list_append(&(rds_item->attributes), &new_attr->super);
+            
+            opal_list_append(&rds_single_host, &rds_item->super);
+
+            /* Store into registry */
+            ret = orte_rds.store_resource(&rds_single_host);
+            if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
-                OBJ_DESTRUCT(&value);
                 return ret;
             }
-            /* cleanup the mess */
-            OBJ_DESTRUCT(&value);
+
+            ret = orte_ras.node_insert(&single_host);
+            if (ORTE_SUCCESS != ret ) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+            
+            OBJ_DESTRUCT(&single_host);
+            OBJ_DESTRUCT(&rds_single_host);
         }
         
         /* set the rest of the infrastructure */

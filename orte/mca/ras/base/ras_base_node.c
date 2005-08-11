@@ -27,7 +27,7 @@
 #include "mca/ns/ns.h"
 #include "mca/ras/base/ras_base_node.h"
 
-static void orte_ras_base_node_construct(orte_ras_base_node_t* node)
+static void orte_ras_base_node_construct(orte_ras_node_t* node)
 {
     node->node_name = NULL;
     node->node_arch = NULL;
@@ -39,7 +39,7 @@ static void orte_ras_base_node_construct(orte_ras_base_node_t* node)
     node->node_slots_max = 0;
 }
 
-static void orte_ras_base_node_destruct(orte_ras_base_node_t* node)
+static void orte_ras_base_node_destruct(orte_ras_node_t* node)
 {
     if (NULL != node->node_name) {
         free(node->node_name);
@@ -51,7 +51,7 @@ static void orte_ras_base_node_destruct(orte_ras_base_node_t* node)
 
 
 OBJ_CLASS_INSTANCE(
-    orte_ras_base_node_t,
+    orte_ras_node_t,
     opal_list_item_t,
     orte_ras_base_node_construct,
     orte_ras_base_node_destruct);
@@ -83,7 +83,7 @@ int orte_ras_base_node_query(opal_list_t* nodes)
     /* parse the response */
     for(i=0; i<cnt; i++) {
         orte_gpr_value_t* value = values[i];
-        orte_ras_base_node_t* node = OBJ_NEW(orte_ras_base_node_t);
+        orte_ras_node_t* node = OBJ_NEW(orte_ras_node_t);
         size_t k;
 
         for(k=0; k<value->cnt; k++) {
@@ -165,7 +165,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
     /* parse the response */
     for(i=0; i<cnt; i++) {
         orte_gpr_value_t* value = values[i];
-        orte_ras_base_node_t* node = OBJ_NEW(orte_ras_base_node_t);
+        orte_ras_node_t* node = OBJ_NEW(orte_ras_node_t);
         size_t k;
 
         for(k=0; k<value->cnt; k++) {
@@ -219,7 +219,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     orte_gpr_value_t **values;
     int rc;
     size_t num_values, i, j;
-    orte_ras_base_node_t* node;
+    orte_ras_node_t* node;
     
     num_values = opal_list_get_size(nodes);
     if (0 >= num_values) {
@@ -274,7 +274,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         i < num_values && item != opal_list_get_end(nodes);
         i++, item =  opal_list_get_next(item)) {
         orte_gpr_value_t* value = values[i];
-        node = (orte_ras_base_node_t*)item;
+        node = (orte_ras_node_t*)item;
 
         j = 0;
         (value->keyvals[j])->key = strdup(ORTE_NODE_NAME_KEY);
@@ -342,7 +342,7 @@ int orte_ras_base_node_delete(opal_list_t* nodes)
     opal_list_item_t* item;
     int rc;
     size_t num_values, num_tokens;
-    orte_ras_base_node_t* node;
+    orte_ras_node_t* node;
     char** tokens;
 
     num_values = opal_list_get_size(nodes);
@@ -354,7 +354,7 @@ int orte_ras_base_node_delete(opal_list_t* nodes)
     for(item =  opal_list_get_first(nodes);
         item != opal_list_get_end(nodes);
         item =  opal_list_get_next(item)) {
-        node = (orte_ras_base_node_t*)item;
+        node = (orte_ras_node_t*)item;
 
         /* setup index/keys for this node */
         rc = orte_schema.get_node_tokens(&tokens, &num_tokens, node->node_cellid, node->node_name);
@@ -386,7 +386,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     orte_gpr_value_t **values;
     int rc;
     size_t num_values, i, j;
-    orte_ras_base_node_t* node;
+    orte_ras_node_t* node;
     char* jobid_str;
     
     num_values = opal_list_get_size(nodes);
@@ -440,7 +440,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
         i < num_values && item != opal_list_get_end(nodes);
         i++, item = opal_list_get_next(item)) {
         int rc;
-        node = (orte_ras_base_node_t*)item;
+        node = (orte_ras_node_t*)item;
 
         if(node->node_slots_alloc == 0)
             continue;

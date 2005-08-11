@@ -123,7 +123,7 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
         opal_list_item_t* next = opal_list_get_next(item);
         int node_num;
 
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
         if(ORTE_SUCCESS != orte_ras_bjs_node_resolve(node->node_name, &node_num)) {
             opal_list_remove_item(nodelist,item);
             OBJ_DESTRUCT(item);
@@ -162,7 +162,7 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
 
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     while(NULL != (ptr = strsep(&nodes,","))) {
-        orte_ras_base_node_t *node;
+        orte_ras_node_t *node;
         orte_node_state_t node_state;
         int node_num;
 
@@ -170,7 +170,7 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
         for(item =  opal_list_get_first(nodelist);
             item != opal_list_get_end(nodelist);
             item =  opal_list_get_next(item)) {
-            node = (orte_ras_base_node_t*)item;
+            node = (orte_ras_node_t*)item;
             if(strcmp(node->node_name, ptr) == 0)
                 break;
         }
@@ -192,7 +192,7 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
         }
 
         /* create a new node entry */
-        node = OBJ_NEW(orte_ras_base_node_t);
+        node = OBJ_NEW(orte_ras_node_t);
         node->node_name = strdup(ptr);
         node->node_state = node_state;
         node->node_cellid = 0;
@@ -252,7 +252,15 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
     return rc;
 }
 
+static int orte_ras_bjs_node_insert(opal_list_t *nodes)
+{
+    return orte_ras_base_node_insert(nodes);
+}
 
+static int orte_ras_bjs_node_query(opal_list_t *nodes)
+{
+        return orte_ras_base_node_query(nodes);
+}
 
 static int orte_ras_bjs_deallocate(orte_jobid_t jobid)
 {
@@ -268,6 +276,8 @@ static int orte_ras_bjs_finalize(void)
 
 orte_ras_base_module_t orte_ras_bjs_module = {
     orte_ras_bjs_allocate,
+    orte_ras_bjs_node_insert,
+    orte_ras_bjs_node_query,
     orte_ras_bjs_deallocate,
     orte_ras_bjs_finalize
 };
