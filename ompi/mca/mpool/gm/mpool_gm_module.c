@@ -63,7 +63,6 @@ void* mca_mpool_gm_alloc(
     mca_mpool_gm_module_t * gm_mpool = (mca_mpool_gm_module_t*) mpool; 
     mca_mpool_base_registration_t* reg;
     void *addr;
-    opal_output(0, "[%s:%d] mca_mpool_gm_alloc(%lu)\n", __FILE__,__LINE__,size+align);
     if(NULL == (addr = gm_dma_malloc(gm_mpool->port, size + align))) {
         return NULL;
     }
