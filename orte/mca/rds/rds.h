@@ -153,11 +153,17 @@ typedef int (*orte_rds_base_module_query_fn_t)(void);
 
 typedef int (*orte_rds_base_module_finalize_fn_t)(void);
 
+/**
+ * Add a list of resources to the Resource Segment
+ */
+typedef int (*orte_rds_base_module_store_resource_fn_t)(opal_list_t *);
+
 /*
  * Ver 1.0.0
  */
 struct orte_rds_base_module_1_0_0_t {
     orte_rds_base_module_query_fn_t query;
+    orte_rds_base_module_store_resource_fn_t store_resource;
     orte_rds_base_module_finalize_fn_t finalize;
 };
 

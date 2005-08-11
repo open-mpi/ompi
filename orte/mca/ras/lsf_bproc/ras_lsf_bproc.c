@@ -27,6 +27,16 @@ static int orte_ras_lsf_bproc_allocate(orte_jobid_t jobid)
     return ORTE_SUCCESS;
 }
 
+static int orte_ras_lsf_bproc_node_insert(opal_list_t *nodes)
+{
+    return orte_ras_base_node_insert(nodes);
+}
+
+static int orte_ras_lsf_bproc_node_query(opal_list_t *nodes)
+{
+    return orte_ras_base_node_query(nodes);
+}
+
 static int orte_ras_lsf_bproc_deallocate(orte_jobid_t jobid)
 {
     return ORTE_SUCCESS;
@@ -41,6 +51,8 @@ static int orte_ras_lsf_bproc_finalize(void)
 
 orte_ras_base_module_t orte_ras_lsf_bproc_module = {
     orte_ras_lsf_bproc_allocate,
+    orte_ras_lsf_bproc_node_insert,
+    orte_ras_lsf_bproc_node_query,
     orte_ras_lsf_bproc_deallocate,
     orte_ras_lsf_bproc_finalize
 };

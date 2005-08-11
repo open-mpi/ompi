@@ -188,11 +188,25 @@ typedef int (*orte_ras_base_module_deallocate_fn_t)(orte_jobid_t jobid);
 typedef int (*orte_ras_base_module_finalize_fn_t)(void);
 
 /**
+ * Add a node to the current allocation
+ */
+typedef int (*orte_ras_base_module_node_insert_fn_t)(opal_list_t *);
+
+/**
+ * Query for a list of nodes in current allocation
+ */
+typedef int (*orte_ras_base_module_node_query_fn_t)(opal_list_t *);
+
+/**
  * ras module version 1.0.0
  */
 struct orte_ras_base_module_1_0_0_t {
     /** Allocation function pointer */
     orte_ras_base_module_allocate_fn_t allocate;
+    /** Node Insertion function pointer */
+    orte_ras_base_module_node_insert_fn_t node_insert;
+    /** Node Query function pointer */
+    orte_ras_base_module_node_query_fn_t node_query;
     /** Deallocation function pointer */
     orte_ras_base_module_deallocate_fn_t deallocate;
     /** Finalization function pointer */

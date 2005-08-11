@@ -33,6 +33,8 @@
  * Local functions
  */
 static int allocate(orte_jobid_t jobid);
+static int node_insert(opal_list_t *);
+static int node_query(opal_list_t *);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
@@ -44,6 +46,8 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist);
  */
 orte_ras_base_module_t orte_ras_xgrid_module = {
     allocate,
+    node_insert,
+    node_query,
     deallocate,
     finalize
 };
@@ -87,6 +91,15 @@ static int allocate(orte_jobid_t jobid)
     return ret;
 }
 
+static int node_insert(opal_list_t *nodes)
+{
+    return orte_ras_base_node_insert(nodes);
+}
+
+static int node_query(opal_list_t *nodes)
+{
+    return orte_ras_base_node_query(nodes);
+}
 
 /*
  * There's really nothing to do here
@@ -114,7 +127,7 @@ static int finalize(void)
 static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
 {
     int ret;
-    orte_ras_base_node_t *node;
+    orte_ras_node_t *node;
     opal_list_item_t* item;
     opal_list_t new_nodes;
     size_t num_requested = 0;
@@ -130,7 +143,7 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     for (i = 0 ; i < num_requested ; ++i) {
         asprintf(&hostname, "xgrid-node-%d", (int) i);
-        node = OBJ_NEW(orte_ras_base_node_t);
+        node = OBJ_NEW(orte_ras_node_t);
         node->node_name = hostname;
         node->node_arch = strdup("unknown");
         node->node_state = ORTE_NODE_STATE_UP;

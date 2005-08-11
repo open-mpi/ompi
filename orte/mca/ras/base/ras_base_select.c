@@ -36,11 +36,14 @@ static orte_ras_base_module_t *select_any(void);
  */
 orte_ras_base_module_t* orte_ras_base_select(const char *preferred)
 {
+    orte_ras_base_module_t *module;
     if (NULL != preferred) {
-        return select_preferred(preferred);
+        module = select_preferred(preferred);
     } else {
-        return select_any();
+        module = select_any();
     }
+    orte_ras = *module;
+    return module;
 }
 
 static orte_ras_base_module_t *select_preferred(const char *name)

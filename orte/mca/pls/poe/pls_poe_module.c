@@ -204,7 +204,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     for(item =  opal_list_get_first(&nodes);
         item != opal_list_get_end(&nodes);
         item =  opal_list_get_next(item)) {
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
         orte_process_name_t* name;
         pid_t pid;
      
@@ -484,7 +484,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
         for(item =  opal_list_get_first(&nodes);
             item != opal_list_get_end(&nodes);
             item =  opal_list_get_next(item)) {
-            orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+            orte_ras_node_t* node = (orte_ras_node_t*)item;
             fprintf(hfp,"%s\n",node->node_name); 
         }
         fclose(hfp);

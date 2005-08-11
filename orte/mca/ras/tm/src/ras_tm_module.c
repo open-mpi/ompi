@@ -34,6 +34,8 @@
  * Local functions
  */
 static int allocate(orte_jobid_t jobid);
+static int node_insert(opal_list_t *);
+static int node_query(opal_list_t *);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
@@ -46,6 +48,8 @@ static int get_tm_hostname(tm_node_id node, char **hostname, char **arch);
  */
 orte_ras_base_module_t orte_ras_tm_module = {
     allocate,
+    node_insert,
+    node_query,
     deallocate,
     finalize
 };
@@ -102,6 +106,15 @@ static int allocate(orte_jobid_t jobid)
     return ret;
 }
 
+static int node_insert(opal_list_t *nodes)
+{
+    return orte_ras_base_node_insert(nodes);
+}
+
+static int node_query(opal_list_t *nodes)
+{
+    return orte_ras_base_node_query(nodes);
+}
 
 /*
  * There's really nothing to do here
@@ -137,7 +150,7 @@ static int finalize(void)
 static int discover(opal_list_t* nodelist)
 {
     int i, ret, num_node_ids;
-    orte_ras_base_node_t *node;
+    orte_ras_node_t *node;
     opal_list_item_t* item;
     opal_list_t new_nodes;
     tm_node_id *tm_node_ids;
@@ -174,7 +187,7 @@ static int discover(opal_list_t* nodelist)
         for (item = opal_list_get_first(&new_nodes);
              opal_list_get_end(&new_nodes) != item;
              item = opal_list_get_next(item)) {
-            node = (orte_ras_base_node_t*) item;
+            node = (orte_ras_node_t*) item;
             if (0 == strcmp(node->node_name, hostname)) {
                 ++node->node_slots_max;
                 ++node->node_slots;
@@ -193,7 +206,7 @@ static int discover(opal_list_t* nodelist)
 
             opal_output(orte_ras_base.ras_output, 
                         "ras:tm:allocate:discover: not found -- added to list");
-            node = OBJ_NEW(orte_ras_base_node_t);
+            node = OBJ_NEW(orte_ras_node_t);
             node->node_name = hostname;
             node->node_arch = arch;
             node->node_state = ORTE_NODE_STATE_UP;

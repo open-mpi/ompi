@@ -102,7 +102,7 @@ int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
             }
          }
      }
-    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_ERR_NOT_FOUND;
 }

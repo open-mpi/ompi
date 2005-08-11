@@ -16,11 +16,24 @@
 #
 # This is the US/English general help file for Open RTE's Console.
 #
+[orteconsole:splash-screen]
+
+Welcome to Open RTE console
+
+Type 'help' for assistance.
+
+[orteconsole:failed-boot]
+Open RTE was unable to lauch daemons on the specified list of machines.
+Returned value %d instead of ORTE_SUCCESS.
 [orteconsole:usage]
 Usage: %s [OPTION]...
 Start the Open RTE Console interface
 
 %s
+[orteconsole:invalid-num-arguments]
+Open RTE was unable to execute the %s command. This command requires 
+at least %d arguments and only %d were provided. See 'help %s' for
+usage information.
 [orteconsole:init-failure]
 Open RTE was unable to initialize properly.  The error occured while
 attempting to %s.  Returned value %d instead of ORTE_SUCCESS.
@@ -34,3 +47,8 @@ Open RTE Console did not recognize the command:
 The command "%s" is not currently implemented in the Open RTE Console.
 [orteconsole:failed-command]
 The command "%s" failed with return value %d.
+[orteconsole:no-hosts]
+Open RTE Console did not find any hosts.
+[orteconsole:no-daemon-started]
+Open RTE was unable to find a started daemon. Use the boot command
+to start a daemon on you system.

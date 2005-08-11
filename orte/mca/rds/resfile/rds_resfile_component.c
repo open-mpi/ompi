@@ -63,6 +63,7 @@ orte_rds_resfile_component_t mca_rds_resfile_component = {
 
 orte_rds_base_module_t orte_rds_resfile_module = {
     orte_rds_resfile_query,
+    orte_rds_base_store_resource,
     orte_rds_resfile_finalize
 };
 
