@@ -402,31 +402,49 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
 	    goto CLEANUP;
     }
 
-        /****    EXIT COMMAND    ****/
+    /****    EXIT COMMAND    ****/
     if (ORTE_DAEMON_EXIT_CMD == command) {
 	    orted_globals.exit_condition = true;
 	    opal_condition_signal(&orted_globals.condition);
+        
+        goto CLEANUP;
 
 	/****     CONTACT QUERY COMMAND    ****/
     } else if (ORTE_DAEMON_CONTACT_QUERY_CMD == command) {
 	   /* send back contact info */
-
 	   contact_info = orte_rml.get_uri();
 
 	   if (NULL == contact_info) {
            ORTE_ERROR_LOG(ORTE_ERROR);
-           goto DONE;
+           goto CLEANUP;
        }
        
 	   if (ORTE_SUCCESS != (ret = orte_dps.pack(answer, &contact_info, 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
-            goto DONE;
+            goto CLEANUP;
        }
 
 	    if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
               ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
 	    }
-	}
+
+        goto CLEANUP;
+
+	/****     HOSTFILE COMMAND    ****/
+    } else if (ORTE_DAEMON_HOSTFILE_CMD == command) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+        goto CLEANUP;
+
+	/****     SCRIPTFILE COMMAND    ****/
+    } else if (ORTE_DAEMON_SCRIPTFILE_CMD == command) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+        goto CLEANUP;
+
+	/****     HEARTBEAT COMMAND    ****/
+    } else if (ORTE_DAEMON_HEARTBEAT_CMD == command) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+        goto CLEANUP;
+    }
 
  CLEANUP:
     OBJ_RELEASE(answer);
