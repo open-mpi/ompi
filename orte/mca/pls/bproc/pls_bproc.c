@@ -323,7 +323,7 @@ static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data)
         int rc;
         int src[4] = {-1, -1};
         src[2] = wpid;
-        src[3] = (int) data;
+        src[3] = *(int*)data;
         if(WIFSIGNALED(status)) {
             src[1] = WTERMSIG(status);
         }
@@ -630,7 +630,7 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
             }
             free(param);
             rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb, 
-                              (int *) daemon_list[i]);
+                              &daemon_list[i]);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -648,9 +648,6 @@ cleanup:
     }
     if(NULL != orted_path) {
         free(orted_path);
-    }
-    if(NULL != daemon_list) {
-        free(daemon_list);
     }
     
     return rc;
