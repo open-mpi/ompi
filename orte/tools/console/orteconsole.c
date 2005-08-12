@@ -89,64 +89,141 @@ opal_cmd_line_init_t cmd_line_opts[] = {
  * Global structure describing valid internal commands
  */
 orte_console_command_t console_commands[] = {
-    { "quit", "q", 0, ORTE_CONSOLE_TYPE_STD, 
-      orte_console_exit,
-      "quit",
-      "Exit the console" },
+    { "add", NULL, 1, ORTE_CONSOLE_TYPE_STD,
+      orte_console_add_host,
+      "add <hostname> [<hostname> <hostname> ...]",
+      "Add a host to the current universe" },
 
-    { "help", "h", 0, ORTE_CONSOLE_TYPE_STD,
-      orte_console_help,
-      "help [command]",
-      "Print this display" },
+    { "alias", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "alias [<name> <cmd> <arg>]",
+      "Alias command" },
 
-    { "boot-daemons", "boot", 0, ORTE_CONSOLE_TYPE_STD,
+    { "boot", "b", 0, ORTE_CONSOLE_TYPE_STD,
       orte_console_boot_daemons,
-      "boot-daemons [hostname] [username]",
+      "boot [hostname] [username]",
       "Launch Persistant Daemons. This will use the specifiec host or the first host added." },
 
-    { "clean", "cl", 0, ORTE_CONSOLE_TYPE_STD,
-      orte_console_clean,
+    { "clean", "cl", 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
       "clean",
       "Kill all jobs in the universe, preserving all daemons" },
 
-    { "add", NULL, 1, ORTE_CONSOLE_TYPE_STD,
-      orte_console_add_host,
-      "add hostname [hostname1 hostname2 ...]",
-      "Add a host to the current universe" },
-
-    { "remove", "del", 1, ORTE_CONSOLE_TYPE_STD,
-      orte_console_remove_host,
-      "remove hostname [hostname1 hostname2 ...]",
-      "Remove a host from the current universe" },
-
-    { "display", "conf", 0, ORTE_CONSOLE_TYPE_STD,
+    { "conf", NULL, 0, ORTE_CONSOLE_TYPE_STD,
       orte_console_display_configuration,
-      "display",
+      "conf [-a]",
       "Diplay a list of the machines in the current universe" },
-
-    { "spawn", "run", 3, ORTE_CONSOLE_TYPE_STD,
-      orte_console_launch_job,
-      "spawn -np <number of processes> <process name>",
-      "Spawn a process" },
-
-    { "halt-daemons", "halt", 0, ORTE_CONSOLE_TYPE_STD,
-      orte_console_halt_daemons,
-      "halt_daemons",
-      "Halt the Persistant Daemons on all nodes" },
 
     { "contactinfo", "ci", 0, ORTE_CONSOLE_TYPE_STD,
       orte_console_contactinfo,
       "contactinfo",
       "Query Contact Information from Daemons" },
 
-    { "dumpvm", "vm", 0, ORTE_CONSOLE_TYPE_STD,
-      orte_console_dumpvm,
-      "dumpvm",
-      "Get VM List from daemons" },
+    { "cwd", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "cwd [name]",
+      "Set or print the current working directory" },
+
+    { "delete", "del", 1, ORTE_CONSOLE_TYPE_STD,
+      orte_console_remove_host,
+      "delete <hostid> [<hostid> <hostid> ...]",
+      "Delete a host from the current universe" },
+
+    { "exit", "e", 0, ORTE_CONSOLE_TYPE_STD, 
+      orte_console_exit,
+      "exit",
+      "Exit the console" },
+
+    { "expire", NULL, 1, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "expire <age (seconds)>",
+      "Expire process information" },
+
+    { "halt", NULL, 0, ORTE_CONSOLE_TYPE_STD,
+      orte_console_halt,
+      "halt",
+      "Halt virtual machine" },
+
+    { "haltall", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "haltall",
+      "Halt virtual machine and stop all services" },
+
+    { "help", "h", 0, ORTE_CONSOLE_TYPE_STD,
+      orte_console_help,
+      "help [command]",
+      "Print this display" },
+
+#ifdef HAVE_READLINE
+    { "history", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "history",
+      "Display list of command history" },
+#endif
+
+    { "kill", NULL, 1, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "kill <GID> [<GID> <GID> ...]",
+      "Terminate process(es)" },
+
+    { "killall", NULL, 1, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "killall <RunID> [<RunID> <RunID> ...]",
+      "Terminate all process(es) in runID" },
+
+    { "mpispawn", NULL, 3, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "mpispawn -np <number of process> [ <-option name> [option argument] ] <process name>",
+      "Spawn MPI process(es)" },
+
+    { "ps", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "ps",
+      "Display process(es) status" },
+
+    { "quit", "q", 0, ORTE_CONSOLE_TYPE_STD, 
+      orte_console_exit,
+      "quit",
+      "Quit from console" },
+
+    { "reset", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "reset",
+      "Kill all tasks" },
+
+    { "service", NULL, 2, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "service [service_name] [operation]",
+      "Service management" },
+
+    { "sig", NULL, 2, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "sig <signum> <GID> [<GID> <GID> ...]",
+      "Send signal to process(es)" },
+
+    { "sigall", NULL, 2, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "sigall <signum> <RunID> [<RunID> <RunID> ...]",
+      "Send signal to all process(es) in runID" },
+
+    { "spawn", NULL, 3, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "spawn -np <number of process> [ <-option name> [option argument] ] <process name>",
+      "Spawn process(es)" },
+
+    { "unalias", NULL, 1, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "unalias <name>",
+      "unalias command" },
+
+    { "vmname", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
+      orte_console_not_imp,
+      "vmname [name]",
+      "Set or print the current virtual machine name" },
 
     { "devel", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
       orte_console_devel,
-      "devel arg1 arg2",
+      "devel [arg1 arg2]",
       "Development Debugging function" },
 
     /* End of list */
@@ -336,6 +413,18 @@ static int   orte_console_parse_command(char * usercmd, orte_console_input_comma
 /* ===========================
  * Actual Functionality below 
  * =========================== */
+
+static int orte_console_not_imp(orte_console_input_command_t input_command) {
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+static int orte_console_devel(orte_console_input_command_t input_command) {
+    if(daemon_is_active) {
+        orte_gpr.dump_segment(NULL, 0);
+    }
+
+    return ORTE_SUCCESS;
+}
  
 static int add_hosts_to_registry(opal_list_t *updates) {
     orte_rds_cell_desc_t *rds_item;
@@ -421,25 +510,25 @@ static int add_hosts_to_registry(opal_list_t *updates) {
 
 static int remove_hosts_from_registry(opal_list_t *updates) {
     opal_list_t rds_updates;
-/*    int ret; */
+    /* int ret; */
 
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
     
-    /* Add the hosts to the registry *
+    /* Add the hosts to the registry */
+#if 0 /* This functionality needs to be written */
     orte_rds_base_convert_ras_to_rds(updates, &rds_updates);
-    */
-    /* JJH This function needs to be written
+
     ret = orte_rds_base_node_delete(&rds_updates);
     if (ORTE_SUCCESS != ret) {
         return ret;
     }
-    */
-    /* JJH Need to push this through the API
+
     ret = orte_ras.node_delete(updates);
     if (ORTE_SUCCESS != ret ) {
         return ret;
     }
-    */
+#endif
+
     opal_list_clear(&rds_updates);
     OBJ_DESTRUCT(&rds_updates);
     
@@ -575,19 +664,6 @@ static int orte_console_display_configuration(orte_console_input_command_t input
     return ORTE_SUCCESS;
 }
 
-static int orte_console_launch_job(orte_console_input_command_t input_command) {
-    if(!daemon_is_active) {
-        opal_show_help("help-orteconsole.txt", "orteconsole:no-daemon-started", false);
-    }
-    
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int orte_console_clean(orte_console_input_command_t input_command) {
-    
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
 static int orte_console_boot_daemons(orte_console_input_command_t input_command) {
     int rc, id;
     orte_ras_node_t *item;
@@ -610,7 +686,6 @@ static int orte_console_boot_daemons(orte_console_input_command_t input_command)
     }
 
     printf("Launching Remote Daemon on \"%s\"", remote_daemon);
-
 
     /* If they supplied a username then use that, 
        otherwise assume same username as on the console system */
@@ -639,26 +714,24 @@ static int orte_console_boot_daemons(orte_console_input_command_t input_command)
     return ORTE_SUCCESS;
 }
 
-static int orte_console_halt_daemons(orte_console_input_command_t input_command) {
+static int orte_console_halt(orte_console_input_command_t input_command) {
+    int ret;
+    
     if(!daemon_is_active) {
         opal_show_help("help-orteconsole.txt", "orteconsole:no-daemon-started", false);
+        return ORTE_SUCCESS;
     }
-
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int orte_console_devel(orte_console_input_command_t input_command) {
-    if(daemon_is_active) {
-        orte_gpr.dump_segment(NULL, 0);
+    
+    ret = orte_console_send_command(ORTE_DAEMON_EXIT_CMD);
+    if (ORTE_SUCCESS != ret) {
+        return ret;
     }
-
+    
     return ORTE_SUCCESS;
 }
 
 static int orte_console_exit(orte_console_input_command_t input_command) {
     exit_cmd = true;
-
-    orte_console_send_command(ORTE_DAEMON_EXIT_CMD);
 
     return ORTE_SUCCESS;
 }
@@ -703,14 +776,15 @@ static int orte_console_help(orte_console_input_command_t input_command) {
                     printf(" | %5s", cur_cmd->cmd_short_name);
                 }
                 printf("\n");
-                
-                printf("Description:\n");
-                printf("\t%s\n", cur_cmd->cmd_description);
-                
+
                 if ( NULL != cur_cmd->cmd_usage ) {
                     printf("Usage:\n");
                     printf("\t%s\n", cur_cmd->cmd_usage);
                 }
+                
+                printf("Description:\n");
+                printf("\t%s\n", cur_cmd->cmd_description);
+                
                 break;
             }
         }
@@ -730,11 +804,6 @@ static int orte_console_help(orte_console_input_command_t input_command) {
     return ORTE_SUCCESS;
 }
 
-static int orte_console_dumpvm(orte_console_input_command_t input_command) {
-
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
 /*
  * Get the contact information for the remote daemon
  */
@@ -744,6 +813,11 @@ static int orte_console_contactinfo(orte_console_input_command_t input_command) 
     orte_process_name_t seed={0,0,0};
     int ret;
     size_t n;
+
+    if(!daemon_is_active) {
+        opal_show_help("help-orteconsole.txt", "orteconsole:no-daemon-started", false);
+        return ORTE_SUCCESS;
+    }
 
     /* Start the exchange */
     ret = orte_console_send_command(ORTE_DAEMON_CONTACT_QUERY_CMD);
@@ -781,6 +855,11 @@ static int orte_console_send_command(orte_daemon_cmd_flag_t usercmd)
     orte_process_name_t    seed = {0,0,0};
     int rc;
  
+    if(!daemon_is_active) {
+        opal_show_help("help-orteconsole.txt", "orteconsole:no-daemon-started", false);
+        return ORTE_SUCCESS;
+    }
+
     cmd = OBJ_NEW(orte_buffer_t);
     if (NULL == cmd) {
         ORTE_ERROR_LOG(ORTE_ERROR);
