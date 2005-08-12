@@ -83,16 +83,14 @@ static int orte_console_exit(orte_console_input_command_t);
 static int orte_console_help(orte_console_input_command_t);
 
 static int orte_console_boot_daemons(orte_console_input_command_t);
-static int orte_console_clean(orte_console_input_command_t);
 static int orte_console_add_host(orte_console_input_command_t);
 static int orte_console_remove_host(orte_console_input_command_t);
 static int orte_console_display_configuration(orte_console_input_command_t);
-static int orte_console_launch_job(orte_console_input_command_t);
-static int orte_console_halt_daemons(orte_console_input_command_t);
+static int orte_console_halt(orte_console_input_command_t);
 
 static int orte_console_contactinfo(orte_console_input_command_t);
-static int orte_console_dumpvm(orte_console_input_command_t);
 
+static int orte_console_not_imp(orte_console_input_command_t);
 static int orte_console_devel(orte_console_input_command_t);
 
 /*
