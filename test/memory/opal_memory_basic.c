@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/mman.h>
 
 #include "ompi/include/constants.h"
 #include "opal/runtime/opal.h"
@@ -52,6 +53,9 @@ main(int argc, char *argv[])
     /* make some big malloc that should trip an unmap */
     foo = malloc(size);
     free(foo);
+
+    /* and check munmap directly */
+    munmap(NULL, 0);
 
     retval = opal_mem_free_unregister_handler(callback);
     if (retval != OMPI_SUCCESS) return retval;
