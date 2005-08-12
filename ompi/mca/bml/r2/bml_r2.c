@@ -206,34 +206,34 @@ int mca_bml_r2_add_procs(
                 mca_bml_base_btl_t* bml_btl; 
                 size_t size;
                 
-                /* check and see if this proc has already been added.. */ 
-                if(NULL != proc->proc_pml) 
-                    continue; 
-
-                if(NULL != proc && NULL != proc->proc_pml) { 
-                    bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_pml; 
-                    continue; 
-                }
-                /* this btl can be used */
                 btl_inuse++;
 
-                /* allocate bml specific proc data */
-                bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
-                if (NULL == bml_endpoint) {
-                    opal_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
-                    free(btl_endpoints);
-                    return OMPI_ERR_OUT_OF_RESOURCE;
+                if(NULL == proc->proc_pml) { 
+                    
+                    
+                    /* allocate bml specific proc data */
+                    bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
+                    if (NULL == bml_endpoint) {
+                        opal_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
+                        free(btl_endpoints);
+                        return OMPI_ERR_OUT_OF_RESOURCE;
+                    }
+                    
+                    /* preallocate space in array for max number of r2s */
+                    mca_bml_base_btl_array_reserve(&bml_endpoint->btl_eager, mca_bml_r2.num_btl_modules);
+                    mca_bml_base_btl_array_reserve(&bml_endpoint->btl_send,  mca_bml_r2.num_btl_modules);
+                    mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
+                    bml_endpoint->btl_proc =   proc;
+                    proc->proc_pml = bml_endpoint; 
+                    
                 }
-                
-                /* preallocate space in array for max number of r2s */
-                mca_bml_base_btl_array_reserve(&bml_endpoint->btl_eager, mca_bml_r2.num_btl_modules);
-                mca_bml_base_btl_array_reserve(&bml_endpoint->btl_send,  mca_bml_r2.num_btl_modules);
-                mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
-                bml_endpoint->btl_proc =   proc;
-                
-                /*proc->proc_pml = (struct mca_proc_pml_t*) bml_endpoint;*/ 
-                
+                else { 
+                    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
+                }
 
+                bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_pml; 
+                
+                
                 /* dont allow an additional PTL with a lower exclusivity ranking */
                 size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
                 if(size > 0) {
@@ -248,6 +248,8 @@ int mca_bml_r2_add_procs(
                 }
                 
                 
+                
+
                 /* cache the endpoint on the proc */
                 bml_btl = mca_bml_base_btl_array_insert(&bml_endpoint->btl_send);
                 bml_btl->btl = btl;
@@ -268,9 +270,6 @@ int mca_bml_r2_add_procs(
                 bml_btl->btl_get = btl->btl_get;
                 bml_btl->btl_progress = btl->btl_component->btl_progress; 
                 
-                
-                bml_endpoints[p]=bml_endpoint; 
-                proc->proc_pml = (struct mca_proc_pml_t*) bml_endpoint; 
             }
         }
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {
