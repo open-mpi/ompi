@@ -53,9 +53,7 @@ mca_pml_uniq_t mca_pml_uniq = {
     mca_pml_uniq_send,
     mca_pml_uniq_iprobe,
     mca_pml_uniq_probe,
-    mca_pml_uniq_start,
-    32768,
-    (0x7fffffff)
+    mca_pml_uniq_start
     }
 };
 
@@ -172,7 +170,8 @@ static int mca_pml_uniq_add_ptls( void )
 int mca_pml_uniq_enable( bool enable )
 {
     size_t i;
-    int value = enable;
+    int value = enable, rc;
+    uint32_t proc_arch;
 
     /* If I'm not selected then prepare for close */
     if( false == enable ) return OMPI_SUCCESS;
@@ -185,6 +184,14 @@ int mca_pml_uniq_enable( bool enable )
                          mca_pml_uniq.uniq_free_list_max,
                          mca_pml_uniq.uniq_free_list_inc,
                          NULL );
+
+    /* I get selected. Publish my informations */
+    proc_arch = ompi_proc_local()->proc_arch;
+    proc_arch = htonl(proc_arch);
+    rc = mca_pml_base_modex_send(&mca_pml_uniq_component.pmlm_version, &proc_arch, sizeof(proc_arch));
+    if( rc != OMPI_SUCCESS )
+        return rc;
+
 
     /* Grab all the PTLs and prepare them */
     mca_pml_uniq_add_ptls();
@@ -221,6 +228,20 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
     if( OMPI_SUCCESS != rc )
         return rc;
 
+    /* iterate through each of the procs and set the peers architecture */
+    for( p = 0; p < nprocs; p++ ) {
+        uint32_t* proc_arch;
+        size_t size = sizeof(uint32_t);
+        rc = mca_pml_base_modex_recv(&mca_pml_uniq_component.pmlm_version, procs[p], 
+                                 (void**)&proc_arch, &size);
+        if(rc != OMPI_SUCCESS) 
+            return rc;
+        if(size != sizeof(uint32_t))
+            return OMPI_ERROR;
+        procs[p]->proc_arch = ntohl(*proc_arch);
+        free(proc_arch);
+    }
+    
     /* attempt to add all procs to each ptl */
     ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
     for( p_index = 0; p_index < mca_pml_uniq.uniq_num_ptl_modules; p_index++ ) {
@@ -243,12 +264,12 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
         /* for each proc that is reachable - add the ptl to the procs array(s) */
         for( p = 0; p < nprocs; p++) {
             ompi_proc_t *proc;
-            mca_pml_proc_t* proc_pml;
+            mca_pml_uniq_proc_t* proc_pml;
 
             if( !ompi_bitmap_is_set_bit(&reachable, p) ) continue;
 
             proc = procs[p];
-            proc_pml = proc->proc_pml;
+            proc_pml = (mca_pml_uniq_proc_t*) proc->proc_pml;
 
             /* this ptl can be used */
             ptl_inuse++;
@@ -264,8 +285,8 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
                     return OMPI_ERR_OUT_OF_RESOURCE;
                 }
 
-                proc_pml->proc_ompi = proc;
-                proc->proc_pml = proc_pml;
+                proc_pml->base.proc_ompi = proc;
+                proc->proc_pml = (mca_pml_proc_t*) proc_pml;
                 /* it's the first PTL so add it to both first and next */
                 proc_pml->proc_ptl_flags |= ptl->ptl_flags;
                 if (NULL == ptl->ptl_base &&
@@ -273,10 +294,10 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
                     NULL != ptl->ptl_request_init &&
                     NULL != ptl->ptl_request_fini) {
                     
-                    mca_pml_uniq_ptl_t* ptl_base = OBJ_NEW(mca_pml_uniq_ptl_t);
+                    mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
                     ptl_base->ptl = ptl;
                     ptl_base->ptl_cache_size = ptl->ptl_cache_size;
-                    ptl->ptl_base = (struct mca_pml_base_ptl_t*)ptl_base;
+                    ptl->ptl_base = ptl_base;
                 }
                 proc_pml->proc_ptl_first.ptl_base = ptl->ptl_base;
                 proc_pml->proc_ptl_first.ptl_peer = ptl_peers[p];
@@ -339,7 +360,7 @@ int mca_pml_uniq_del_procs(ompi_proc_t** procs, size_t nprocs)
     int rc;
     for(p = 0; p < nprocs; p++) {
         ompi_proc_t *proc = procs[p];
-        mca_pml_proc_t* proc_pml = proc->proc_pml;
+        mca_pml_uniq_proc_t* proc_pml = (mca_pml_uniq_proc_t*) proc->proc_pml;
         mca_ptl_proc_t* ptl_proc;
         mca_ptl_base_module_t* ptl;
  

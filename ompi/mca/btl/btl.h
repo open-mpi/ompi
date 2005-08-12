@@ -177,6 +177,7 @@ struct mca_btl_base_descriptor_t {
     size_t des_dst_cnt;
     mca_btl_base_completion_fn_t des_cbfunc;
     void* des_cbdata;
+    void* des_context; 
     int32_t des_flags;
 };
 typedef struct mca_btl_base_descriptor_t mca_btl_base_descriptor_t;

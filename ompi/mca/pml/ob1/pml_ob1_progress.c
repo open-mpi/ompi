@@ -18,22 +18,10 @@
 
 #include "pml_ob1.h"
 #include "pml_ob1_sendreq.h"
-
+#include "mca/bml/base/base.h" 
 
 int mca_pml_ob1_progress(void)
 {
-    size_t i;
-    int count = 0;
-
-    /*
-     * Progress each of the PTL modules
-     */
-    for(i=0; i<mca_pml_ob1.num_btl_progress; i++) {
-        int rc = mca_pml_ob1.btl_progress[i]();
-        if(rc > 0) {
-            count += rc;
-        }
-    }
-    return count;
+    return mca_bml.bml_progress(); 
 }
 

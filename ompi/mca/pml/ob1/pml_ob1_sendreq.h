@@ -26,6 +26,7 @@
 #include "pml_ob1_comm.h"
 #include "pml_ob1_hdr.h"
 #include "datatype/convertor.h"
+#include "mca/bml/bml.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -34,8 +35,8 @@ extern "C" {
 
 struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
-    mca_pml_ob1_proc_t* req_proc;
-    mca_pml_ob1_endpoint_t* req_endpoint;
+    ompi_proc_t* req_proc; 
+    mca_bml_base_endpoint_t* bml_endpoint;
     volatile int32_t req_state;
     struct mca_mpool_base_chunk_t* req_chunk;
     ompi_ptr_t req_recv;
@@ -70,7 +71,8 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq,                                                               \
     rc)                                                                    \
 {                                                                          \
-    mca_pml_ob1_proc_t *proc = comm->c_pml_procs[dst];                     \
+    ompi_proc_t *proc =                                                    \
+         comm->c_pml_procs[dst]->proc_ompi;                                \
     opal_list_item_t* item;                                                \
                                                                            \
     if(NULL == proc) {                                                     \
@@ -159,14 +161,9 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
 #define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)                                       \
 {                                                                                         \
-    mca_pml_ob1_endpoint_t* endpoint;                                                     \
-    mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                         \
     mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;           \
                                                                                           \
     MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
-                                                                                          \
-    /* select next endpoint */                                                            \
-    endpoint = mca_pml_ob1_ep_array_get_next(&proc->btl_eager);                           \
     sendreq->req_lock = 0;                                                                \
     sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
@@ -178,13 +175,13 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(                          \
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);               \
-    sendreq->req_endpoint = endpoint;                                                     \
+    sendreq->bml_endpoint = (mca_bml_base_endpoint_t*) sendreq->req_proc->proc_pml;       \
                                                                                           \
     /* handle buffered send */                                                            \
     if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {                   \
         mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi);           \
     }                                                                                     \
-    rc = mca_pml_ob1_send_request_start(sendreq, endpoint);                               \
+    rc = mca_pml_ob1_send_request_start( sendreq );                                       \
 }
 
 
@@ -321,8 +318,8 @@ do {                                                                  \
  */
 
 int mca_pml_ob1_send_request_start(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_pml_ob1_endpoint_t* endpoint);
+                                   mca_pml_ob1_send_request_t* sendreq
+                                   );
 
 /**
  *  Schedule additional fragments 

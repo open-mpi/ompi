@@ -16,16 +16,20 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-EXTRA_DIST = win_makefile
+SUBDIRS = base $(MCA_bml_STATIC_SUBDIRS)
+DIST_SUBDIRS = base $(MCA_bml_ALL_SUBDIRS)
 
-SUBDIRS = \
-        common \
-        allocator \
-        bml \
-	btl \
-        coll \
-        io \
-        mpool \
-        pml \
-        ptl \
-        topo
+# Source code files
+
+headers = bml.h
+nodist_headers = bml_direct_call.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/ompi/mca/bml
+dist_ompi_HEADERS = $(headers)
+nodist_ompi_HEADERS = $(nodist_headers)
+else
+ompidir = $(includedir)
+endif

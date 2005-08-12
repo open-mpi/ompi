@@ -21,11 +21,11 @@
 #include "pml_uniq_proc.h"
 
 
-static void mca_pml_uniq_proc_construct(mca_pml_proc_t* proc)
+static void mca_pml_uniq_proc_construct(mca_pml_uniq_proc_t* proc)
 {
-    proc->proc_ompi = NULL;
+    proc->base.proc_ompi = NULL;
     proc->proc_ptl_flags = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&proc->base.proc_lock, opal_mutex_t);
 
     proc->proc_ptl_first.ptl_peer = NULL;
     proc->proc_ptl_first.ptl_base = NULL;
@@ -41,13 +41,13 @@ static void mca_pml_uniq_proc_construct(mca_pml_proc_t* proc)
 }
 
 
-static void mca_pml_uniq_proc_destruct(mca_pml_proc_t* proc)
+static void mca_pml_uniq_proc_destruct(mca_pml_uniq_proc_t* proc)
 {
     OPAL_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
     opal_list_remove_item(&mca_pml_uniq.uniq_procs, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);
 
-    OBJ_DESTRUCT(&proc->proc_lock);
+    OBJ_DESTRUCT(&proc->base.proc_lock);
 }
 
 OBJ_CLASS_INSTANCE(

@@ -29,12 +29,12 @@ extern "C" {
 
 
 struct mca_pml_ob1_comm_proc_t {
-     opal_object_t super;
-     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
+    opal_object_t super;
+    uint16_t expected_sequence;    /**< send message sequence number - receiver side */
     volatile uint32_t send_sequence; /**< send side sequence number */
-     opal_list_t frags_cant_match;  /**< out-of-order fragment queues */
-     opal_list_t specific_receives; /**< queues of unmatched specific receives */
-     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
+    opal_list_t frags_cant_match;  /**< out-of-order fragment queues */
+    opal_list_t specific_receives; /**< queues of unmatched specific receives */
+    opal_list_t unexpected_frags;  /**< unexpected fragment queues */
 };
 typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 

@@ -23,28 +23,21 @@
 
 static void mca_pml_ob1_proc_construct(mca_pml_ob1_proc_t* proc)
 {
-    proc->proc_ompi = NULL;
-    proc->proc_rdma_offset = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&proc->btl_eager, mca_pml_ob1_ep_array_t);
-    OBJ_CONSTRUCT(&proc->btl_send,  mca_pml_ob1_ep_array_t);
-    OBJ_CONSTRUCT(&proc->btl_rdma,  mca_pml_ob1_ep_array_t);
+    proc->base.proc_ompi = NULL;
+    OBJ_CONSTRUCT(&proc->base.proc_lock, opal_mutex_t);
 }
 
 
 static void mca_pml_ob1_proc_destruct(mca_pml_ob1_proc_t* proc)
 {
-    OBJ_DESTRUCT(&proc->proc_lock);
-    OBJ_DESTRUCT(&proc->btl_eager);
-    OBJ_DESTRUCT(&proc->btl_send);
-    OBJ_DESTRUCT(&proc->btl_rdma);
+    OBJ_DESTRUCT(&proc->base.proc_lock);
 }
 
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_proc_t,
-    opal_object_t,
-    mca_pml_ob1_proc_construct, 
-    mca_pml_ob1_proc_destruct 
+    opal_list_item_t,
+    mca_pml_ob1_proc_construct,
+    mca_pml_ob1_proc_destruct
 );
 

@@ -16,16 +16,11 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-EXTRA_DIST = win_makefile
+SUBDIRS			= $(MCA_bml_DSO_SUBDIRS)
+DISTCLEANFILES		= $(SUBDIRS)
 
-SUBDIRS = \
-        common \
-        allocator \
-        bml \
-	btl \
-        coll \
-        io \
-        mpool \
-        pml \
-        ptl \
-        topo
+# Every directory under here is a sym link to something in the main
+# src/mca tree.  Hence, we don't want to distribute anything under
+# here.
+
+DIST_SUBDIRS		=
