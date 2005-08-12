@@ -421,14 +421,14 @@ static int add_hosts_to_registry(opal_list_t *updates) {
 
 static int remove_hosts_from_registry(opal_list_t *updates) {
     opal_list_t rds_updates;
-    int ret;
+/*    int ret; */
 
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
     
     /* Add the hosts to the registry *
     orte_rds_base_convert_ras_to_rds(updates, &rds_updates);
-    
-    /* JJH This function needs to be written *
+    */
+    /* JJH This function needs to be written
     ret = orte_rds_base_node_delete(&rds_updates);
     if (ORTE_SUCCESS != ret) {
         return ret;
@@ -566,9 +566,10 @@ static int orte_console_display_configuration(orte_console_input_command_t input
          item != opal_list_get_end(  &orte_console_hosts);
          item  = opal_list_get_next( item), ++i) {
         tmp_host = (orte_ras_node_t *)item;
-        printf("%6d %15s %10ld %13ld %15s\n", i,
-               tmp_host->node_name, tmp_host->node_slots, 
-               tmp_host->node_slots_inuse, tmp_host->node_arch);
+        printf("%6d %15s %10lu %13lu %15s\n", i,
+               tmp_host->node_name, (unsigned long)tmp_host->node_slots, 
+               (unsigned long)tmp_host->node_slots_inuse,
+               tmp_host->node_arch);
     }
 
     return ORTE_SUCCESS;
