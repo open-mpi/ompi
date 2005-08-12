@@ -53,7 +53,9 @@ mca_pml_uniq_t mca_pml_uniq = {
     mca_pml_uniq_send,
     mca_pml_uniq_iprobe,
     mca_pml_uniq_probe,
-    mca_pml_uniq_start
+    mca_pml_uniq_start,
+    32768,
+    (0x7fffffff)
     }
 };
 
