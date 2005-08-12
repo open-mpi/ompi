@@ -163,6 +163,12 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 do {                                                                                      \
     mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;           \
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)sendreq->req_proc->proc_pml; \
+    mca_bml_base_btl_t* bml_btl;                                                          \
+                                                                                          \
+    if(endpoint == NULL) {                                                                \
+        rc = OMPI_ERR_UNREACH;                                                            \
+        break;                                                                            \
+    }                                                                                     \
                                                                                           \
     MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
     sendreq->req_lock = 0;                                                                \
@@ -178,20 +184,15 @@ do {                                                                            
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);               \
     sendreq->bml_endpoint = endpoint;                                                     \
                                                                                           \
+    /* select a btl */                                                                    \
+    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                      \
+                                                                                          \
     /* shortcut for zero byte */                                                          \
     if(sendreq->req_send.req_bytes_packed == 0 &&                                         \
        sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {                \
         mca_btl_base_descriptor_t* descriptor;                                            \
         mca_btl_base_segment_t* segment;                                                  \
-        mca_bml_base_btl_t* bml_btl;                                                      \
         mca_pml_ob1_hdr_t* hdr;                                                           \
-                                                                                          \
-        /* select a btl */                                                                \
-        bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                  \
-        if(NULL == bml_btl) {                                                             \
-            rc = OMPI_ERR_UNREACH;                                                        \
-            break;                                                                        \
-        }                                                                                 \
                                                                                           \
         /* allocate a descriptor */                                                       \
         MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_ob1_match_hdr_t)); \
@@ -232,7 +233,11 @@ do {                                                                            
         }                                                                                 \
                                                                                           \
         /* start request */                                                               \
-        rc = mca_pml_ob1_send_request_start( sendreq );                                   \
+        if(bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                             \
+            rc = mca_pml_ob1_send_request_start_prepare( sendreq, bml_btl );              \
+        } else {                                                                          \
+            rc = mca_pml_ob1_send_request_start_copy( sendreq, bml_btl );                 \
+        }                                                                                 \
     }                                                                                     \
 } while (0)
 
@@ -355,8 +360,13 @@ do {                                                                  \
  *  Start the specified request
  */
 
-int mca_pml_ob1_send_request_start(
-    mca_pml_ob1_send_request_t* sendreq);
+int mca_pml_ob1_send_request_start_copy(
+    mca_pml_ob1_send_request_t* sendreq,
+    mca_bml_base_btl_t* bml_btl);
+
+int mca_pml_ob1_send_request_start_prepare(
+    mca_pml_ob1_send_request_t* sendreq,
+    mca_bml_base_btl_t* bml_btl);
 
 /**
  *  Schedule additional fragments 
