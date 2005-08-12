@@ -22,19 +22,15 @@
 AC_DEFUN([MCA_btl_portals_CONFIG_VAL], [
     AC_ARG_WITH([btl-portals-$1], AC_HELP_STRING([--with-btl-portals-$1], 
                 [$4 (default: $3)]))
-    AC_MSG_CHECKING([for $1 value])
     case "[$with_]m4_bpatsubst([btl-portals-$1], -, _)" in
         "")
             $2=$3
-            AC_MSG_RESULT([[$]$2 (default)])
             ;;
         "no")
-            AC_MSG_RESULT([error])
             AC_MSG_ERROR([--without-btl-portals-$1 is invalid argument])
             ;;
         *)
             $2="[$with_]m4_bpatsubst([btl-portals-$1], -, _)"
-            AC_MSG_RESULT([[$]$2])
             ;;
     esac
     AC_DEFINE_UNQUOTED([$2], [[$]$2], [$4])
@@ -162,7 +158,7 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
                        [$btl_portals_starting_table_id],
                        [first table id to use for portals btl])
 
-    AC_CONFIG_LINKS([ompi/mca/btl/portals/src/btl_portals_compat.c:ompi/mca/btl/portals/src/btl_portals_compat_${btl_portals_compat}.c])
+    AC_CONFIG_LINKS([ompi/mca/btl/portals/btl_portals_compat.c:ompi/mca/btl/portals/btl_portals_compat_${btl_portals_compat}.c])
 ])
 
 
