@@ -17,6 +17,8 @@
 #ifndef OPAL_QSORT_H
 #define OPAL_QSORT_H
 
+#if OMPI_HAVE_BROKEN_QSORT
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h> /* for size_t */
 #endif
@@ -30,5 +32,9 @@ void opal_qsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const voi
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+#else
+#error "Don't include opal/qsort/qsort.h directly"
+#endif /* OMPI_HAVE_BROKEN_QSORT */
 
 #endif
