@@ -179,7 +179,7 @@ opal_progress_events(int flag)
  * This is only losely tracked, as an error return can cause the number
  * of progressed events to appear lower than it actually is.  We don't
  * care, as the cost of that happening is far outweighed by the cost
- * of the if checks (they were resulting in bad pipe stalling behabior)
+ * of the if checks (they were resulting in bad pipe stalling behavior)
  */
 void
 opal_progress(void)
@@ -187,7 +187,7 @@ opal_progress(void)
     size_t i;
     int events = 0;
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
+#if (OMPI_ENABLE_PROGRESS_THREADS == 0) && OPAL_HAVE_WORKING_EVENTOPS
     /* trip the event library if we've reached our tick rate and we are
        enabled */
     if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 && 
@@ -203,7 +203,7 @@ opal_progress(void)
         }
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
     }
-#endif /* OMPI_ENABLE_PROGRESS_THREADS == 0 */
+#endif /* OMPI_ENABLE_PROGRESS_THREADS == 0 && OPAL_HAVE_WORKING_EVENTOPS */
 
     /* progress all registered callbacks */
     for (i = 0 ; i < callbacks_len ; ++i) {

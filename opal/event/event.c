@@ -68,37 +68,22 @@
 
 #if defined(HAVE_SELECT) && HAVE_SELECT
 extern const struct opal_eventop opal_selectops;
-#ifndef OPAL_HAVE_WORKING_EVENTOPS
-#define OPAL_HAVE_WORKING_EVENTOPS 1
-#endif
 #endif
 
 #if defined(HAVE_POLL) && HAVE_POLL && HAVE_WORKING_POLL
 extern const struct opal_eventop opal_pollops;
-#ifndef OPAL_HAVE_WORKING_EVENTOPS
-#define OPAL_HAVE_WORKING_EVENTOPS 1
-#endif
 #endif
 
 #if defined(HAVE_RTSIG) && HAVE_RTSIG
 extern const struct opal_eventop opal_rtsigops;
-#ifndef OPAL_HAVE_WORKING_EVENTOPS
-#define OPAL_HAVE_WORKING_EVENTOPS 1
-#endif
 #endif
 
 #if defined(HAVE_EPOLL) && HAVE_EPOLL
 extern const struct opal_eventop opal_epollops;
-#ifndef OPAL_HAVE_WORKING_EVENTOPS
-#define OPAL_HAVE_WORKING_EVENTOPS 1
-#endif
 #endif
 
 #if defined(HAVE_WORKING_KQUEUE) && HAVE_WORKING_KQUEUE
 extern const struct opal_eventop opal_kqops;
-#ifndef OPAL_HAVE_WORKING_EVENTOPS
-#define OPAL_HAVE_WORKING_EVENTOPS 1
-#endif
 #endif
 
 #if 0
@@ -108,14 +93,7 @@ extern const struct opal_eventop opal_kqops;
    this to work */
 #if defined(WIN32) && WIN32
 extern const struct opal_eventop opal_win32ops;
-#ifndef OPAL_HAVE_WORKING_EVENTOPS
-#define OPAL_HAVE_WORKING_EVENTOPS 1
 #endif
-#endif
-#endif
-
-#ifndef OPAL_HAVE_WORKING_EVENTOPS
-#define OPAL_HAVE_WORKING_EVENTOPS 0
 #endif
 
 /* In order of preference */
