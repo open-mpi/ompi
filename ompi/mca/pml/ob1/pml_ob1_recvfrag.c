@@ -96,7 +96,6 @@ void mca_pml_ob1_recv_frag_callback(
         {
             mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)
                 hdr->hdr_rdma.hdr_src.pval;
-            mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
             mca_pml_ob1_send_request_put(sendreq,btl,&hdr->hdr_rdma);
             break;
         }

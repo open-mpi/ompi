@@ -71,9 +71,7 @@ int mca_bml_r2_component_open(void)
 
 int mca_bml_r2_component_close(void)
 {
-    int rc;
-
-    
+        
     /* OBJ_DESTRUCT(&mca_bml_r2.lock); */
 
     return OMPI_SUCCESS;

@@ -58,9 +58,8 @@ mca_pml_ob1_t mca_pml_ob1 = {
 
 int mca_pml_ob1_enable(bool enable)
 {
-    int rc;
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint32_t proc_arch;
+    
 #endif
 
     if( false == enable ) return OMPI_SUCCESS;
@@ -168,7 +167,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     ompi_bitmap_t reachable;
     struct mca_bml_base_endpoint_t ** bml_endpoints = NULL; 
     int rc;
-    size_t p_index;
     
     if(nprocs == 0)
         return OMPI_SUCCESS;
@@ -217,8 +215,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 
 int mca_pml_ob1_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
-    size_t p;
-    int rc;
     return mca_bml.bml_del_procs(nprocs, procs);
 }
 

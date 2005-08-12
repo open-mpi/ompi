@@ -22,7 +22,6 @@ DIST_SUBDIRS = base $(MCA_bml_ALL_SUBDIRS)
 # Source code files
 
 headers = bml.h
-nodist_headers = bml_direct_call.h
 
 # Conditionally install the header files
 

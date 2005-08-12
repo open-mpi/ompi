@@ -90,8 +90,9 @@ int mca_pml_uniq_send_request_schedule(mca_ptl_base_send_request_t* req)
      * the scheduling logic once for every call.
     */
     if(OPAL_THREAD_ADD32(&req->req_lock,1) == 1) {
-        mca_pml_uniq_proc_t* proc_pml = mca_pml_uniq_proc_lookup_remote( req->req_send.req_base.req_comm,
-                                                                    req->req_send.req_base.req_peer );
+        mca_pml_uniq_proc_t* proc_pml = (mca_pml_uniq_proc_t*) 
+            mca_pml_uniq_proc_lookup_remote( req->req_send.req_base.req_comm,
+                                             req->req_send.req_base.req_peer );
         
 #if PML_UNIQ_ACCEPT_NEXT_PTL
         mca_ptl_proc_t* ptl_proc = &(proc_pml->proc_ptl_next);
