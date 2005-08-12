@@ -17,7 +17,7 @@
 #ifndef OPAL_MEMORY_MEMORY_INTERNAL_H
 #define OPAL_MEMORY_MEMORY_INTERNAL_H
 
-void opal_mem_free_set_free_support(bool support);
+void opal_mem_free_set_free_support(int support);
 void opal_mem_free_release_hook(void *buf, size_t length);
 
 #endif /* OPAL_MEMORY_MEMORY_INTERNAL_H */
