@@ -14,30 +14,29 @@
  * $HEADER$
  */
 
+#ifndef MCA_BML_BASE_BTL_H
+#define MCA_BML_BASE_BTL_H
+
 #include "ompi_config.h"
 
-#include "pml_teg_ptl.h"
+#include "mca/mca.h"
+
+#include "mca/bml/bml.h"
+#include "opal/util/output.h" 
+
+/*
+ * Global functions for the BML
+ */
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 
-static void mca_pml_base_ptl_construct(mca_pml_base_ptl_t* ptl)
-{
-    OBJ_CONSTRUCT(&ptl->ptl_cache, opal_list_t);
-    OBJ_CONSTRUCT(&ptl->ptl_cache_lock, opal_mutex_t);
-    ptl->ptl = NULL;
-    ptl->ptl_cache_size = 0;
-    ptl->ptl_cache_alloc = 0;
+
+
+#if defined(c_plusplus) || defined(__cplusplus)
 }
-
-static void mca_pml_base_ptl_destruct(mca_pml_base_ptl_t* ptl)
-{
-    OBJ_DESTRUCT(&ptl->ptl_cache);
-    OBJ_DESTRUCT(&ptl->ptl_cache_lock);
-}
-
-OBJ_CLASS_INSTANCE(
-    mca_pml_base_ptl_t,
-    opal_list_t,
-    mca_pml_base_ptl_construct,
-    mca_pml_base_ptl_destruct
-);
+#endif
+#endif /* MCA_BML_BASE_H */
 

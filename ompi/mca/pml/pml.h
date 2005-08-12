@@ -76,6 +76,14 @@ extern "C" {
 struct mca_ptl_base_modulet;
 struct mca_ptl_addr_t;
 
+struct mca_pml_proc_t {
+    opal_list_item_t super;
+    ompi_proc_t *proc_ompi;           /**< back-pointer to ompi_proc_t */
+    opal_mutex_t proc_lock;           /**< lock to protect against concurrent access */
+    int proc_flags;                     /**< prefered method of accessing this peer */
+};
+    
+    typedef struct mca_pml_proc_t mca_pml_proc_t; 
 
 typedef enum {
     MCA_PML_BASE_SEND_STANDARD,

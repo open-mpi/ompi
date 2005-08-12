@@ -105,7 +105,7 @@ int mca_pml_teg_component_open(void)
     mca_pml_teg.teg_priority =
         mca_pml_teg_param_register_int("priority", 1);
 
-    return OMPI_SUCCESS;
+    return mca_ptl_base_open(); 
 }
 
 

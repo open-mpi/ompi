@@ -52,9 +52,7 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_send,
     mca_pml_teg_iprobe,
     mca_pml_teg_probe,
-    mca_pml_teg_start,
-    32768,
-    (0x7fffffff)
+    mca_pml_teg_start
     }
 };
 
@@ -172,7 +170,8 @@ static int mca_pml_teg_add_ptls(void)
 int mca_pml_teg_enable(bool enable) 
 {
     size_t i=0;
-    int value = enable;
+    int value = enable, rc;
+    uint32_t proc_arch;
 
     /* If I'm not selected then prepare for close */
     if( false == enable ) return OMPI_SUCCESS;
@@ -185,6 +184,13 @@ int mca_pml_teg_enable(bool enable)
                          mca_pml_teg.teg_free_list_max,
                          mca_pml_teg.teg_free_list_inc,
                          NULL );
+
+    /* I get selected. Publish my information */
+    proc_arch = ompi_proc_local()->proc_arch;
+    proc_arch = htonl(proc_arch);
+    rc = mca_pml_base_modex_send(&mca_pml_teg_component.pmlm_version, &proc_arch, sizeof(proc_arch));
+    if(rc != OMPI_SUCCESS)
+        return rc;
 
     /* Grab all the PTLs and prepare them */
     mca_pml_teg_add_ptls();
@@ -222,6 +228,20 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
+    /* iterate through each of the procs and set the peers architecture */
+    for(p=0; p<nprocs; p++) {
+        uint32_t* proc_arch;
+        size_t size = sizeof(uint32_t);
+        rc = mca_pml_base_modex_recv(&mca_pml_teg_component.pmlm_version, procs[p], 
+            (void**)&proc_arch, &size);
+        if(rc != OMPI_SUCCESS) 
+            return rc;
+        if(size != sizeof(uint32_t))
+            return OMPI_ERROR;
+        procs[p]->proc_arch = ntohl(*proc_arch);
+        free(proc_arch);
+    }
+    
     /* attempt to add all procs to each ptl */
     ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
     for(p_index = 0; p_index < mca_pml_teg.teg_num_ptl_modules; p_index++) {
@@ -245,7 +265,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
         for(p=0; p<nprocs; p++) {
             if(ompi_bitmap_is_set_bit(&reachable, p)) {
                 ompi_proc_t *proc = procs[p];
-                mca_pml_proc_t* proc_pml = proc->proc_pml;
+                mca_pml_teg_proc_t* proc_pml = (mca_pml_teg_proc_t*) proc->proc_pml;
                 mca_ptl_proc_t* proc_ptl;
                 size_t size;
 
@@ -266,8 +286,8 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                     /* preallocate space in array for max number of ptls */
                     mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptl_modules);
                     mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptl_modules);
-                    proc_pml->proc_ompi = proc;
-                    proc->proc_pml = proc_pml;
+                    proc_pml->base.proc_ompi = proc;
+                    proc->proc_pml = (mca_pml_proc_t*) proc_pml;
                 }
 
                 /* dont allow an additional PTL with a lower exclusivity ranking */
@@ -312,7 +332,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     /* iterate back through procs and compute metrics for registered ptls */
     for(p=0; p<nprocs; p++) {
         ompi_proc_t *proc = procs[p];
-        mca_pml_proc_t* proc_pml = proc->proc_pml;
+        mca_pml_teg_proc_t* proc_pml = (mca_pml_teg_proc_t*) proc->proc_pml;
         double total_bandwidth = 0;
         uint32_t latency = 0;
         size_t n_index;
@@ -342,7 +362,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
 
         for(n_index = 0; n_index < n_size; n_index++) {
             struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-            mca_ptl_base_module_t *ptl = proc_ptl->ptl;
+            struct mca_ptl_base_module_t *ptl = proc_ptl->ptl;
             double weight;
 
             /* compute weighting factor for this ptl */
@@ -355,17 +375,17 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
             /*
              * save/create ptl extension for use by pml
              */
-            if (NULL == ptl->ptl_base && 
+            proc_ptl->ptl_base = ptl->ptl_base;
+            if (NULL == proc_ptl->ptl_base && 
                 ptl->ptl_cache_bytes > 0 &&
                 NULL != ptl->ptl_request_init &&
                 NULL != ptl->ptl_request_fini) {
 
-                mca_pml_teg_ptl_t* ptl_base = OBJ_NEW(mca_pml_teg_ptl_t);
+                mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
                 ptl_base->ptl = ptl;
                 ptl_base->ptl_cache_size = ptl->ptl_cache_size;
-                ptl->ptl_base = (struct mca_pml_base_ptl_t*)ptl_base;
+                proc_ptl->ptl_base = ptl->ptl_base = ptl_base;
             }
-            proc_ptl->ptl_base = (mca_pml_teg_ptl_t*)ptl->ptl_base;
 
             /* check to see if this ptl is already in the array of ptls used for first
              * fragments - if not add it.
@@ -391,7 +411,7 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
     int rc;
     for(p = 0; p < nprocs; p++) {
         ompi_proc_t *proc = procs[p];
-        mca_pml_proc_t* proc_pml = proc->proc_pml;
+        mca_pml_teg_proc_t* proc_pml = (mca_pml_teg_proc_t*) proc->proc_pml;
         size_t f_index, f_size;
         size_t n_index, n_size;
  

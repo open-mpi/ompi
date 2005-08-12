@@ -40,13 +40,14 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
     sendreq,                                                               \
     rc)                                                                    \
 {                                                                          \
-    mca_pml_proc_t *proc = mca_pml_uniq_proc_lookup_remote(comm,dst);      \
-    mca_pml_uniq_ptl_t* ptl_base;                                          \
+    mca_pml_uniq_proc_t *proc =                                            \
+         (mca_pml_uniq_proc_t*) mca_pml_uniq_proc_lookup_remote(comm,dst); \
+    mca_pml_base_ptl_t* ptl_base;                                          \
                                                                            \
     if(NULL == proc) {                                                     \
        return OMPI_ERR_OUT_OF_RESOURCE;                                    \
     }                                                                      \
-    ptl_base = (mca_pml_uniq_ptl_t*)proc->proc_ptl_first.ptl_base;         \
+    ptl_base = proc->proc_ptl_first.ptl_base;                              \
     /*                                                                     \
      * check to see if there is a cache of send requests associated with   \
      * this ptl - if so try the allocation from there.                     \
@@ -119,7 +120,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
 #define MCA_PML_UNIQ_SEND_REQUEST_RETURN(sendreq)                          \
 {                                                                          \
     mca_ptl_base_module_t* ptl = (sendreq)->req_ptl;                       \
-    mca_pml_uniq_ptl_t* ptl_base = (mca_pml_uniq_ptl_t*)ptl->ptl_base;     \
+    mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
                                                                            \
     /*  Let the base handle the reference counts */                        \
     MCA_PML_BASE_SEND_REQUEST_FINI( &((sendreq)->req_send) );              \

@@ -37,7 +37,7 @@ typedef struct mca_pml_ob1_registration_t mca_pml_ob1_registration_t;
 
 struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
-    struct mca_pml_proc_t *req_proc;
+    struct ompi_proc_t *req_proc;
     struct mca_mpool_base_chunk_t* req_chunk;
     struct mca_mpool_base_reg_mpool_t* req_mpool;
     ompi_ptr_t req_send;
@@ -216,7 +216,7 @@ do {                                                                            
             ompi_comm_peer_lookup(                                                   \
                 (request)->req_recv.req_base.req_comm, (hdr)->hdr_src);              \
                                                                                      \
-        (request)->req_proc = proc->proc_pml;                                        \
+        (request)->req_proc = proc;                                                  \
         ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
@@ -280,7 +280,6 @@ do {                                                                            
 
 void mca_pml_ob1_recv_request_progress(
     mca_pml_ob1_recv_request_t* req,
-    mca_btl_base_module_t* btl,
     mca_btl_base_segment_t* segments,
     size_t num_segments);
 

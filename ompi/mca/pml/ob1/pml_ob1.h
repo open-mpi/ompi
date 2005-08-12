@@ -43,15 +43,6 @@ extern "C" {
 struct mca_pml_ob1_t {
     mca_pml_base_module_t super; 
 
-    mca_btl_base_component_t **btl_components;
-    size_t num_btl_components;
-
-    mca_btl_base_module_t** btl_modules;
-    size_t num_btl_modules;
-
-    mca_btl_base_component_progress_fn_t* btl_progress;
-    size_t num_btl_progress;
-
     int priority;
     int free_list_num;      /* initial size of free list */
     int free_list_max;      /* maximum size of free list */
@@ -76,6 +67,7 @@ struct mca_pml_ob1_t {
     opal_list_t send_pending;
     opal_list_t recv_pending;
     opal_list_t rdma_pending;
+    bool enabled; 
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
 

@@ -105,7 +105,7 @@ int mca_pml_uniq_component_open(void)
 
     mca_pml_uniq.uniq_priority = 
         mca_pml_uniq_param_register_int("priority", 0);
-    return OMPI_SUCCESS;
+    return mca_ptl_base_open(); 
 }
 
 

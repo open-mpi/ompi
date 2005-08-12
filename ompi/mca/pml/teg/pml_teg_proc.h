@@ -32,19 +32,16 @@ extern "C" {
  *  Structure associated w/ ompi_proc_t that contains data specific
  *  to the PML. Note that this name is not PML specific.
  */
-struct mca_pml_proc_t {
-   opal_list_item_t super;
-   ompi_proc_t *proc_ompi;           /**< back-pointer to ompi_proc_t */
-   opal_mutex_t proc_lock;           /**< lock to protect against concurrent access */
-   mca_ptl_array_t proc_ptl_first;   /**< array of ptls to use for first fragments */
-   mca_ptl_array_t proc_ptl_next;    /**< array of ptls to use for remaining fragments */
-   uint32_t proc_ptl_flags;          /**< aggregate ptl flags */
+struct mca_pml_teg_proc_t {
+    mca_pml_proc_t base; 
+    mca_ptl_array_t proc_ptl_first;   /**< array of ptls to use for first fragments */
+    mca_ptl_array_t proc_ptl_next;    /**< array of ptls to use for remaining fragments */
+    uint32_t proc_ptl_flags;          /**< aggregate ptl flags */
 };
-typedef struct mca_pml_proc_t mca_pml_proc_t;
+typedef struct mca_pml_teg_proc_t mca_pml_teg_proc_t;
 
 
 OMPI_COMP_EXPORT extern opal_class_t mca_pml_teg_proc_t_class;
-typedef struct mca_pml_proc_t mca_pml_teg_proc_t;
 
 /**
  * Return the mca_pml_proc_t instance cached in the communicators local group.
@@ -88,7 +85,7 @@ static inline struct mca_ptl_base_peer_t* mca_pml_teg_proc_lookup_remote_peer(
     struct mca_ptl_base_module_t* ptl)
 {
     ompi_proc_t* proc = comm->c_remote_group->grp_proc_pointers[rank];
-    mca_pml_proc_t* proc_pml = proc->proc_pml;
+    mca_pml_teg_proc_t* proc_pml =(mca_pml_teg_proc_t*)  proc->proc_pml;
     size_t i, size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
     mca_ptl_proc_t* proc_ptl = proc_pml->proc_ptl_first.ptl_procs;
     for(i = 0; i < size; i++) {

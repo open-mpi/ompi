@@ -30,6 +30,7 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvfrag.h"
+#include "mca/bml/base/base.h" 
 
 
 mca_pml_base_component_1_0_0_t mca_pml_ob1_component = {
@@ -79,13 +80,6 @@ int mca_pml_ob1_component_open(void)
 {
     int param, value; 
 
-    mca_pml_ob1.btl_components = NULL;
-    mca_pml_ob1.num_btl_components = 0;
-    mca_pml_ob1.btl_modules = NULL;
-    mca_pml_ob1.num_btl_modules = 0;
-    mca_pml_ob1.btl_progress = NULL;
-    mca_pml_ob1.num_btl_progress = 0;
-
     mca_pml_ob1.free_list_num =
         mca_pml_ob1_param_register_int("free_list_num", 256);
     mca_pml_ob1.free_list_max =
@@ -101,12 +95,14 @@ int mca_pml_ob1_component_open(void)
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
     
+    
     mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
     mca_pml_ob1.leave_pinned = value; 
-
-    return mca_btl_base_open();
+    mca_pml_ob1.enabled = false; 
+    return mca_bml_base_open(); 
+    
 }
 
 
@@ -114,10 +110,10 @@ int mca_pml_ob1_component_close(void)
 {
     int rc;
 
-    if( NULL ==  mca_pml_ob1.btl_components )  /* I was not selected */
-        return OMPI_SUCCESS;
+    if(!mca_pml_ob1.enabled)
+        return OMPI_SUCCESS; /* never selected.. return success.. */  
 
-    if(OMPI_SUCCESS != (rc = mca_btl_base_close()))
+    if(OMPI_SUCCESS != (rc = mca_bml_base_close()))
         return rc;
 
     OBJ_DESTRUCT(&mca_pml_ob1.acks_pending);
@@ -145,19 +141,6 @@ int mca_pml_ob1_component_close(void)
     }
 #endif
 
-    if(NULL != mca_pml_ob1.btl_components) {
-        free(mca_pml_ob1.btl_components);
-        mca_pml_ob1.btl_components = NULL;
-    }
-    if(NULL != mca_pml_ob1.btl_modules) {
-        free(mca_pml_ob1.btl_modules);
-        mca_pml_ob1.btl_modules = NULL;
-    }
-    if(NULL != mca_pml_ob1.btl_progress) {
-        free(mca_pml_ob1.btl_progress);
-        mca_pml_ob1.btl_progress = NULL;
-    }
-
     return OMPI_SUCCESS;
 }
 
@@ -174,10 +157,10 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
         return NULL;
     }
 
-    /* initialize NTLs */
-    if(OMPI_SUCCESS != mca_btl_base_select(enable_progress_threads,enable_mpi_threads))
-         return NULL;
-
+    
+    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, enable_mpi_threads)) 
+        return NULL; 
+    
     return &mca_pml_ob1.super;
 }
 

@@ -21,6 +21,7 @@
 #define MCA_PML_OB1_RECVFRAG_H
 
 #include "mca/btl/btl.h"
+#include "mca/bml/bml.h" 
 #include "pml_ob1_hdr.h"
 
 struct mca_pml_ob1_buffer_t {
@@ -34,7 +35,6 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_buffer_t);
 
 struct mca_pml_ob1_recv_frag_t {
     opal_list_item_t super;
-    mca_btl_base_module_t* btl;
     mca_pml_ob1_hdr_t hdr;
     struct mca_pml_ob1_recv_request_t* request;
     size_t num_segments;
@@ -46,25 +46,23 @@ typedef struct mca_pml_ob1_recv_frag_t mca_pml_ob1_recv_frag_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_frag_t);
 
 
-#define MCA_PML_OB1_RECV_FRAG_ALLOC(frag,rc)                         \
+#define MCA_PML_OB1_RECV_FRAG_ALLOC(frag,rc)                    \
 do {                                                            \
     opal_list_item_t* item;                                     \
-    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.recv_frags, item, rc);      \
-    frag = (mca_pml_ob1_recv_frag_t*)item;                       \
+    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.recv_frags, item, rc);     \
+    frag = (mca_pml_ob1_recv_frag_t*)item;                      \
 } while(0)
 
 
-#define MCA_PML_OB1_RECV_FRAG_INIT(frag,btl,hdr,segs,cnt)            \
+#define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr,segs,cnt)          \
 do {                                                            \
     size_t i;                                                   \
-    mca_btl_base_segment_t* macro_segments = frag->segments;          \
+    mca_btl_base_segment_t* macro_segments = frag->segments;    \
     mca_pml_ob1_buffer_t** buffers = frag->buffers;             \
                                                                 \
-    /* init recv_frag */                                         \
-    frag->btl = btl;                                            \
+    /* init recv_frag */                                        \
     frag->hdr = *(mca_pml_ob1_hdr_t*)hdr;                       \
     frag->num_segments = cnt;                                   \
-                                                                \
     /* copy over data */                                        \
     for(i=0; i<cnt; i++) {                                      \
         opal_list_item_t* item;                                 \
@@ -72,8 +70,8 @@ do {                                                            \
         OMPI_FREE_LIST_WAIT(&mca_pml_ob1.buffers, item, rc);    \
         buff = (mca_pml_ob1_buffer_t*)item;                     \
         buffers[i] = buff;                                      \
-        macro_segments[i].seg_addr.pval = buff->addr;                 \
-        macro_segments[i].seg_len = segs[i].seg_len;                  \
+        macro_segments[i].seg_addr.pval = buff->addr;           \
+        macro_segments[i].seg_len = segs[i].seg_len;            \
         memcpy(buff->addr,                                      \
                segs[i].seg_addr.pval,                           \
                segs[i].seg_len);                                \
@@ -82,7 +80,7 @@ do {                                                            \
 } while(0)
 
 
-#define MCA_PML_OB1_RECV_FRAG_RETURN(frag)                           \
+#define MCA_PML_OB1_RECV_FRAG_RETURN(frag)                      \
 do {                                                            \
     size_t i;                                                   \
                                                                 \
@@ -93,8 +91,8 @@ do {                                                            \
     }                                                           \
     frag->num_segments = 0;                                     \
                                                                 \
-    /* return recv_frag */                                       \
-    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_frags,               \
+    /* return recv_frag */                                      \
+    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_frags,              \
         (opal_list_item_t*)frag);                               \
 } while(0)
 
@@ -104,11 +102,11 @@ do {                                                            \
  */
 
 OMPI_DECLSPEC void mca_pml_ob1_recv_frag_callback(
-    mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_descriptor_t* descriptor,
-    void* cbdata
-);
+                                                  mca_btl_base_module_t *btl, 
+                                                  mca_btl_base_tag_t tag,
+                                                  mca_btl_base_descriptor_t* descriptor,
+                                                  void* cbdata
+                                                  );
                                                                                                                
 /**
  * Match incoming recv_frags against posted receives.  
@@ -121,10 +119,10 @@ OMPI_DECLSPEC void mca_pml_ob1_recv_frag_callback(
  * @return                          OMPI_SUCCESS or error status on failure.
  */
 OMPI_DECLSPEC int mca_pml_ob1_recv_frag_match(
-    mca_btl_base_module_t* btl,
-    mca_pml_ob1_match_hdr_t *hdr,
-    mca_btl_base_segment_t* segments,
-    size_t num_segments);
+                                              mca_btl_base_module_t* btl, 
+                                              mca_pml_ob1_match_hdr_t *hdr,
+                                              mca_btl_base_segment_t* segments,
+                                              size_t num_segments);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

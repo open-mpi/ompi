@@ -80,7 +80,7 @@ OBJ_CLASS_INSTANCE(
 int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
 {
     ompi_proc_t *proc;
-    mca_pml_proc_t* proc_pml;
+    mca_pml_teg_proc_t* proc_pml;
     int send_count = 0;
     size_t bytes_remaining;
     size_t num_ptl_avail;
@@ -94,7 +94,7 @@ int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
     */
     if(OPAL_THREAD_ADD32(&req->req_lock,1) == 1) {
         proc = ompi_comm_peer_lookup(req->req_send.req_base.req_comm, req->req_send.req_base.req_peer);
-        proc_pml = proc->proc_pml;
+        proc_pml = (mca_pml_teg_proc_t*) proc->proc_pml;
         do {
             /* allocate remaining bytes to PTLs */
             bytes_remaining = req->req_send.req_bytes_packed - req->req_offset;
