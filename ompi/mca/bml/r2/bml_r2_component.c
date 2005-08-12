@@ -89,7 +89,7 @@ mca_bml_base_module_t* mca_bml_r2_component_init(
     if(OMPI_SUCCESS != mca_btl_base_select(enable_progress_threads,enable_mpi_threads))
         return NULL;
     
-    OBJ_CONSTRUCT(&mca_bml_r2.procs, opal_hash_table_t); 
     *priority = 100; 
+    mca_bml_r2.btls_added = false; 
     return &mca_bml_r2.super;
 }

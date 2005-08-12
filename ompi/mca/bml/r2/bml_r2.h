@@ -50,8 +50,7 @@ struct mca_bml_r2_module_t {
     size_t num_btl_progress; 
     mca_btl_base_component_progress_fn_t * btl_progress; 
     mca_bml_r2_recv_reg_t r2_reg[256]; 
-    opal_hash_table_t procs; 
-
+    bool btls_added; 
 };
 
 typedef struct mca_bml_r2_module_t mca_bml_r2_module_t;
