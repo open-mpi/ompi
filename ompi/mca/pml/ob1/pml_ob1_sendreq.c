@@ -205,6 +205,7 @@ int mca_pml_ob1_send_request_start(
                                    mca_pml_ob1_send_request_t* sendreq
                                    )
 {
+    int rc;
     mca_btl_base_descriptor_t* descriptor;
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
@@ -218,7 +219,7 @@ int mca_pml_ob1_send_request_start(
     
     
     
-    int rc;
+    
     
     /* shortcut for zero byte */
     if(size == 0 && sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {
