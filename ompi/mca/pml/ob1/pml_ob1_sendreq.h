@@ -160,8 +160,9 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
  */
 
 #define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)                                       \
-{                                                                                         \
+do {                                                                                      \
     mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;           \
+    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)sendreq->req_proc->proc_pml; \
                                                                                           \
     MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
     sendreq->req_lock = 0;                                                                \
@@ -175,14 +176,65 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(                          \
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);               \
-    sendreq->bml_endpoint = (mca_bml_base_endpoint_t*) sendreq->req_proc->proc_pml;       \
+    sendreq->bml_endpoint = endpoint;                                                     \
                                                                                           \
-    /* handle buffered send */                                                            \
-    if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {                   \
-        mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi);           \
+    /* shortcut for zero byte */                                                          \
+    if(sendreq->req_send.req_bytes_packed == 0 &&                                         \
+       sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {                \
+        mca_btl_base_descriptor_t* descriptor;                                            \
+        mca_btl_base_segment_t* segment;                                                  \
+        mca_bml_base_btl_t* bml_btl;                                                      \
+        mca_pml_ob1_hdr_t* hdr;                                                           \
+                                                                                          \
+        /* select a btl */                                                                \
+        bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                  \
+        if(NULL == bml_btl) {                                                             \
+            rc = OMPI_ERR_UNREACH;                                                        \
+            break;                                                                        \
+        }                                                                                 \
+                                                                                          \
+        /* allocate a descriptor */                                                       \
+        MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_ob1_match_hdr_t)); \
+        if(NULL == descriptor) {                                                          \
+            return OMPI_ERR_OUT_OF_RESOURCE;                                              \
+        }                                                                                 \
+        segment = descriptor->des_src;                                                    \
+                                                                                          \
+        /* build hdr */                                                                   \
+        hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;                                 \
+        hdr->hdr_common.hdr_flags = 0;                                                    \
+        hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;                            \
+        hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;  \
+        hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;          \
+        hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;                     \
+        hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
+        hdr->hdr_match.hdr_msg_length = 0;                                                \
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_send.req_base.req_sequence;             \
+                                                                                          \
+        /* short message */                                                               \
+        descriptor->des_cbfunc = mca_pml_ob1_match_completion;                            \
+        descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                              \
+        descriptor->des_cbdata = sendreq;                                                 \
+                                                                                          \
+        /* request is complete at mpi level */                                            \
+        ompi_request_complete((ompi_request_t*)sendreq);                                  \
+                                                                                          \
+        /* send */                                                                        \
+        rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);                     \
+        if(OMPI_SUCCESS != rc) {                                                          \
+            mca_bml_base_free(bml_btl, descriptor );                                      \
+        }                                                                                 \
+                                                                                          \
+    } else {                                                                              \
+        /* handle buffered send */                                                        \
+        if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {               \
+            mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi);       \
+        }                                                                                 \
+                                                                                          \
+        /* start request */                                                               \
+        rc = mca_pml_ob1_send_request_start( sendreq );                                   \
     }                                                                                     \
-    rc = mca_pml_ob1_send_request_start( sendreq );                                       \
-}
+} while (0)
 
 
 /*
@@ -267,7 +319,7 @@ do {                                                                            
  * Update bytes delivered on request based on supplied descriptor
  */
 
-#define MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor)           \
+#define MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor, hdrlen)   \
 do {                                                                                \
    size_t i;                                                                        \
    mca_btl_base_segment_t* segments = descriptor->des_src;                          \
@@ -275,22 +327,8 @@ do {                                                                            
    for(i=0; i<descriptor->des_src_cnt; i++) {                                       \
        sendreq->req_bytes_delivered += segments[i].seg_len;                         \
    }                                                                                \
+   sendreq->req_bytes_delivered -= hdrlen;                                          \
                                                                                     \
-   /* adjust for message header */                                                  \
-   switch(((mca_pml_ob1_common_hdr_t*)segments->seg_addr.pval)->hdr_type) {         \
-       case MCA_PML_OB1_HDR_TYPE_MATCH:                                             \
-           sendreq->req_bytes_delivered -= sizeof(mca_pml_ob1_match_hdr_t);         \
-           break;                                                                   \
-       case MCA_PML_OB1_HDR_TYPE_RNDV:                                              \
-           sendreq->req_bytes_delivered -= sizeof(mca_pml_ob1_rendezvous_hdr_t);    \
-           break;                                                                   \
-       case MCA_PML_OB1_HDR_TYPE_FRAG:                                              \
-           sendreq->req_bytes_delivered -= sizeof(mca_pml_ob1_frag_hdr_t);          \
-           break;                                                                   \
-       default:                                                                     \
-           opal_output(0, "[%s:%d]: invalid header type\n", __FILE__,__LINE__);     \
-           break;                                                                   \
-   }                                                                                \
 } while(0)
                                                                                                                           
 /*
@@ -318,14 +356,22 @@ do {                                                                  \
  */
 
 int mca_pml_ob1_send_request_start(
-                                   mca_pml_ob1_send_request_t* sendreq
-                                   );
+    mca_pml_ob1_send_request_t* sendreq);
 
 /**
  *  Schedule additional fragments 
  */
 int mca_pml_ob1_send_request_schedule(
     mca_pml_ob1_send_request_t* sendreq);
+
+/**
+ *  Completion callback on match header
+ */
+void mca_pml_ob1_match_completion(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status);
 
 /**
  *  Initiate a put scheduled by the receiver.
