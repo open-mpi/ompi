@@ -24,7 +24,7 @@
 #define OMPI_RB_TREE_H
 
 #include <stdlib.h>
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/class/opal_object.h"
 #include "class/ompi_free_list.h"
 

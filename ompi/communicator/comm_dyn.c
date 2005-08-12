@@ -35,7 +35,7 @@
 #include "util/proc_info.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/argv.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"

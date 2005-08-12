@@ -22,7 +22,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "communicator/communicator.h"
 #include "mca/pml/pml.h"
 #include "pml_ob1.h"

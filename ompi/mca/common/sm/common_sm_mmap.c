@@ -31,7 +31,7 @@
 #include <sys/mman.h>
 #endif
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "common_sm_mmap.h"
 #include "opal/util/output.h"
 #include "util/sys_info.h"

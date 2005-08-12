@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/argv.h"
 #include "mpi/f77/strings.h"
 

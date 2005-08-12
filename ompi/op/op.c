@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "op/op.h"
 #include "op/op_predefined.h"
 #include "class/ompi_pointer_array.h"

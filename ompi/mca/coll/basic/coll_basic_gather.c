@@ -18,7 +18,7 @@
 #include "coll_basic.h"
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "coll_basic.h"
 #include "datatype/datatype.h"
 #include "mca/coll/coll.h"

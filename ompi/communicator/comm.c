@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "mpi.h"
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "dps/dps.h"
 #include "proc/proc.h"
 #include "opal/threads/mutex.h"

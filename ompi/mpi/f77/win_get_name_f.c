@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "errhandler/errhandler.h"
 #include "mpi/f77/strings.h"
 

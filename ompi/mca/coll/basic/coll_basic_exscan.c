@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "op/op.h"
 #include "datatype/datatype.h"
 #include "mca/pml/pml.h"

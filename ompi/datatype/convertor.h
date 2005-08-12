@@ -19,7 +19,7 @@
 #define CONVERTOR_H_HAS_BEEN_INCLUDED
 
 #include "ompi_config.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

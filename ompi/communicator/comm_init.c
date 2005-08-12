@@ -21,7 +21,7 @@
 #include "mpi.h"
 
 #include "opal/util/bit_ops.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/base/base.h"
 #include "mca/topo/base/base.h"

@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "group/group.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 /*
  * Set group rank in a group structure.

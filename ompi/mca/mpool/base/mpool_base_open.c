@@ -22,7 +22,7 @@
 #include "mca/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 /*
  * The following file was created by configure.  It contains extern

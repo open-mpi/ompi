@@ -19,7 +19,7 @@
 
 #include <assert.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 #include "btl_portals.h"
 #include "btl_portals_send.h"

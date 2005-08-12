@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 #include <float.h>
 #include <assert.h>
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 /***************************************************
 ** This file tries to classify the most relevant

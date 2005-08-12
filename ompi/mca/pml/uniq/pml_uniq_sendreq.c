@@ -18,7 +18,7 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "pml_uniq.h"

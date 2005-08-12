@@ -22,7 +22,7 @@
 #include "mca/ns/ns_types.h"
 #include "communicator/communicator.h"
 #include "proc/proc.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "class/ompi_pointer_array.h"
 #include "opal/class/opal_list.h"
 #include "mca/pml/pml.h"

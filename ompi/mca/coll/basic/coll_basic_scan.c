@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "op/op.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"

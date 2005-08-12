@@ -15,7 +15,7 @@
  */
 
 #include "ptl_mx.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/output.h"
 #include "ptl_mx_peer.h"
 #include "ptl_mx_proc.h"

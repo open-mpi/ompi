@@ -21,7 +21,7 @@
 #include <errno.h>
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"

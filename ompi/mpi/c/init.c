@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mpi/c/bindings.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"

@@ -22,7 +22,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>  /* for mkfifo */
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "include/sys/cache.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"

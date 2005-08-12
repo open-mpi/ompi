@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/strings.h"
 #include "communicator/communicator.h"
