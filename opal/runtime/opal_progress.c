@@ -231,17 +231,17 @@ opal_progress(void)
     opal_atomic_unlock(&progress_lock);
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
+#if !defined(WIN32) && defined(HAVE_SCHED_YIELD)
     if (call_yield && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
          * the processor is oversubscribed - this will result in a best-case
          * latency equivalent to the time-slice.
          */
-#if !defined(WIN32) && defined(HAVE_SCHED_YIELD)
         /* TODO: Find the windows equivalent for this */
         sched_yield();
-#endif
     }
+#endif
 }
 
 
