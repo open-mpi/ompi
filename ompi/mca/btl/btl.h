@@ -133,8 +133,16 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_TAG_MAX  255 /* 1 + highest allowed tag num */
 
 /* prefered protocol */
-#define MCA_BTL_FLAGS_SEND  1
-#define MCA_BTL_FLAGS_RDMA  2
+#define MCA_BTL_FLAGS_SEND  0x1
+#define MCA_BTL_FLAGS_RDMA  0x2
+
+/* btl can send directly from user buffer w/out registration */
+#define MCA_BTL_FLAGS_SEND_INPLACE  0x10000000
+
+/* Default exclusivity levels */
+#define MCA_BTL_EXCLUSIVITY_HIGH     64*1024   /* internal loopback */
+#define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
+#define MCA_BTL_EXCLUSIVITY_LOW      0         /* TCP used as a last resort */
 
 
 /**

@@ -206,7 +206,7 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_component.tcp_rcvbuf =
         mca_btl_tcp_param_register_int ("rcvbuf", 128*1024);
     mca_btl_tcp_module.super.btl_exclusivity =
-        mca_btl_tcp_param_register_int ("exclusivity", 0);
+        mca_btl_tcp_param_register_int ("exclusivity", MCA_BTL_EXCLUSIVITY_LOW);
     mca_btl_tcp_module.super.btl_eager_limit = 
         mca_btl_tcp_param_register_int ("eager_limit", 64*1024) - sizeof(mca_btl_base_header_t);
     mca_btl_tcp_module.super.btl_min_send_size =

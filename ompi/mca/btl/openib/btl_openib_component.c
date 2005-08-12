@@ -184,7 +184,7 @@ int mca_btl_openib_component_open(void)
 
 
     mca_btl_openib_module.super.btl_exclusivity =
-        mca_btl_openib_param_register_int ("exclusivity", 0);
+        mca_btl_openib_param_register_int ("exclusivity", MCA_BTL_EXCLUSIVITY_DEFAULT);
     mca_btl_openib_module.super.btl_eager_limit = 
         mca_btl_openib_param_register_int ("eager_limit", (64*1024)) 
         - sizeof(mca_btl_openib_header_t); 
