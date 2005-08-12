@@ -31,28 +31,27 @@ component_install =
 endif
 
 EXTRA_DIST = \
-	src/btl_portals_compat_utcp.c \
-	src/btl_portals_compat_redstorm.c
+	btl_portals_compat_utcp.c \
+	btl_portals_compat_redstorm.c
 
 portals_SOURCES = \
-	src/btl_portals.h \
-	src/btl_portals_compat.h \
-	src/btl_portals_endpoint.h \
-	src/btl_portals_frag.h \
-	src/btl_portals_send.h \
-	src/btl_portals_recv.h \
-	src/btl_portals.c \
-	src/btl_portals_component.c \
-	src/btl_portals_frag.c \
-	src/btl_portals_send.c \
-	src/btl_portals_recv.c \
-	src/btl_portals_rdma.c
+	btl_portals.h \
+	btl_portals_compat.h \
+	btl_portals_endpoint.h \
+	btl_portals_frag.h \
+	btl_portals_send.h \
+	btl_portals_recv.h \
+	btl_portals.c \
+	btl_portals_component.c \
+	btl_portals_frag.c \
+	btl_portals_send.c \
+	btl_portals_recv.c \
+	btl_portals_rdma.c
 
 portals_nodist_SOURCES = \
-	src/btl_portals_compat.c
+	btl_portals_compat.c
 
-AM_CPPFLAGS = $(btl_portals_CPPFLAGS) \
-	      -I$(top_srcdir)/ompi/mca/btl/portals/src
+AM_CPPFLAGS = $(btl_portals_CPPFLAGS)
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
@@ -68,4 +67,4 @@ libmca_btl_portals_la_LIBADD = $(btl_portals_LIBS)
 libmca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
 
 dist-clean-local:
-	rm -f src/btl_portals_compat.c
+	rm -f btl_portals_compat.c
