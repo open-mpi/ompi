@@ -207,7 +207,7 @@ opal_progress(void)
        enabled */
     if (event_progress_counter-- <= 0 && opal_progress_event_flag != 0) {
         event_progress_counter = 
-            (event_num_mpi_users > 0) ? 1 : event_progress_counter_reset;
+            (event_num_mpi_users > 0) ? 0 : event_progress_counter_reset;
         events += opal_event_loop(opal_progress_event_flag);
     }
 #endif
