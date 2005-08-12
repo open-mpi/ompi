@@ -14,7 +14,7 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/output.h"
 #include "opal/threads/thread.h"
 #include "ptl_mx.h"

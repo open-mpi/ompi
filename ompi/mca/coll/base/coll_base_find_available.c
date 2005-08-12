@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"

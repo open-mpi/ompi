@@ -20,7 +20,7 @@
 #include "mpi.h"
 
 #include "communicator/communicator.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/pml/pml.h"

@@ -191,7 +191,7 @@
 
 #include "attribute/attribute.h"
 #include "opal/threads/mutex.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "datatype/datatype.h"
 #include "communicator/communicator.h"
 #include "win/win.h"

@@ -15,7 +15,7 @@
  */
 
 #include "ompi_config.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mca/allocator/bucket/allocator_bucket_alloc.h"
 /**
   * The define controls the size in bytes of the 1st bucket and hence every one

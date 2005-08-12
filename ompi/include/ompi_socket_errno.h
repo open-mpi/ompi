@@ -26,7 +26,7 @@
    OF errno FOR COMPATIBILITY  */
 
 #include <errno.h>
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #ifdef WIN32
 #define ompi_socket_errno ompi_get_socket_errno()
 

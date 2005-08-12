@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "class/ompi_pointer_array.h"
 #include "opal/util/output.h"
 

@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "datatype/datatype.h"
 #include "coll_self.h"
 

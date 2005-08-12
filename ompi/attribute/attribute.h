@@ -27,7 +27,7 @@
 #include "mpi.h"
 
 #include "ompi_config.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/class/opal_object.h"
 #include "class/ompi_bitmap.h"
 #include "class/opal_hash_table.h"

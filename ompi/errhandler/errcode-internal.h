@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/class/opal_object.h"
 #include "class/ompi_pointer_array.h"
 

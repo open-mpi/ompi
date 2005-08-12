@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 #include <sched.h>
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 #include "mca/errmgr/errmgr.h"

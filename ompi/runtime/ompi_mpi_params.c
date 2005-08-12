@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"

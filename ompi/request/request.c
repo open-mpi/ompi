@@ -18,7 +18,7 @@
 
 #include "opal/class/opal_object.h"
 #include "request/request.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 ompi_pointer_array_t  ompi_request_f_to_c_table;
 OMPI_DECLSPEC volatile int          ompi_request_waiting = 0;

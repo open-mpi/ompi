@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/event/event.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"

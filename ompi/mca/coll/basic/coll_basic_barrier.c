@@ -18,7 +18,7 @@
 #include "coll_basic.h"
 
 #include "mpi.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "communicator/communicator.h"
 #include "opal/util/bit_ops.h"
 #include "mca/pml/pml.h"

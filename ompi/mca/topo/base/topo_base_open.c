@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "mca/mca.h"

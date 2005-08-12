@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "class/ompi_bitmap.h"
 
 

@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"

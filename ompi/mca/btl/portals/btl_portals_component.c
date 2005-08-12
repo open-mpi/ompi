@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 #include "opal/util/output.h"
 #include "opal/threads/thread.h"

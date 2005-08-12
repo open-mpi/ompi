@@ -20,7 +20,7 @@
 #include "mpi.h"
 
 #include "errhandler/errclass.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 
 /* Table holding all error codes */
 ompi_pointer_array_t ompi_errclasses;

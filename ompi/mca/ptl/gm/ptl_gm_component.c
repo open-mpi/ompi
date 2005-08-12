@@ -18,7 +18,7 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/util/output.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_module_exchange.h"

@@ -34,7 +34,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"

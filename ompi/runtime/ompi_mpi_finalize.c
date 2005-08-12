@@ -16,7 +16,7 @@
 
 #include "orte_config.h"
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "include/orte_constants.h"
 #include "mca/schema/schema.h"
 
