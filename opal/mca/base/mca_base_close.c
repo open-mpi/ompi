@@ -17,9 +17,9 @@
 #include "ompi_config.h"
 
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "include/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/include/constants.h"
 
 /*
  * Main MCA shutdown.

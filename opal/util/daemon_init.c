@@ -26,8 +26,9 @@
 #endif
 #include <stdlib.h>
 
-#include "include/constants.h"
 #include "opal/util/daemon_init.h"
+#include "ompi/include/constants.h"
+
 
 int opal_daemon_init(char *working_dir)
 {

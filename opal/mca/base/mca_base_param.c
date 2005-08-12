@@ -20,11 +20,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "mpi.h"
-#include "include/constants.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/show_help.h"
-#include "class/opal_hash_table.h"
+#include "opal/class/opal_hash_table.h"
 #if 0
 /* JMS commented out for now -- see lookup_keyvals() below for an
    explanation */
@@ -32,9 +30,10 @@
 #endif
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
-#include "mca/mca.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/base/mca_base_param_internal.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param_internal.h"
+#include "ompi/include/constants.h"
 
 
 /*
@@ -806,7 +805,7 @@ static int param_register(const char *type_name,
 
   OBJ_CONSTRUCT(&param, mca_base_param_t);
   param.mbp_type = type;
-  param.mbp_keyval = MPI_KEYVAL_INVALID;
+  param.mbp_keyval = -1;
   param.mbp_internal = internal;
   param.mbp_read_only = read_only;
   if (NULL != help_msg) {

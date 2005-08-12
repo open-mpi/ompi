@@ -20,7 +20,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "include/constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
@@ -28,7 +27,8 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/strncpy.h"
 #include "opal/util/output.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/include/constants.h"
 
 
 /*

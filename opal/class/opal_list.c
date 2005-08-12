@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
 #include "opal/class/opal_list.h"
+#include "ompi/include/constants.h"
 
 /*
  *  List classes

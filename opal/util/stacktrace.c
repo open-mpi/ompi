@@ -15,7 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include "include/constants.h"
 
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -35,7 +34,8 @@
 #endif
 
 #include "opal/util/stacktrace.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/include/constants.h"
 
 #ifndef _NSIG
 #define _NSIG 32

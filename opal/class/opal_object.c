@@ -24,9 +24,9 @@
 
 #include <stdio.h>
 
-#include "include/constants.h"
-#include "include/sys/atomic.h"
+#include "opal/include/sys/atomic.h"
 #include "opal/class/opal_object.h"
+#include "ompi/include/constants.h"
 
 /*
  * Instantiation of class descriptor for the base class.  This is

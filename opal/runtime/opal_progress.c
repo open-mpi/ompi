@@ -22,8 +22,8 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/event/event.h"
-#include "include/constants.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/include/constants.h"
 
 /* 
  * default parameters 

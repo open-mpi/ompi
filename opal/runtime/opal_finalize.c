@@ -18,13 +18,13 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/memory/memory.h"
-#include "mca/base/base.h"
-#include "runtime/opal.h"
+#include "opal/mca/base/base.h"
+#include "opal/runtime/opal.h"
+#include "orte/include/orte_constants.h"
 
 /**
  * Finalize the OPAL utilities

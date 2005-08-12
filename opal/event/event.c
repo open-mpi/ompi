@@ -58,13 +58,12 @@
 #define log_error(x)    perror(x)
 #endif
 
-#include "event.h"
-#include "include/types.h"
-#include "include/constants.h"
+#include "opal/event/event.h"
 #include "opal/class/opal_object.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/thread.h"
 #include "opal/util/output.h"
+#include "ompi/include/constants.h"
 
 #if defined(HAVE_SELECT) && HAVE_SELECT
 extern const struct opal_eventop opal_selectops;

@@ -19,11 +19,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "include/constants.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "mca/base/base.h"
+#include "opal/mca/base/base.h"
+#include "ompi/include/constants.h"
 
 
 /* 

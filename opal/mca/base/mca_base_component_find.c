@@ -23,14 +23,14 @@
 
 #if OMPI_WANT_LIBLTDL
 /* Ensure to get the right <ltdl.h> */ 
-#include "libltdl/ltdl.h"
+#include "opal/libltdl/ltdl.h"
 #endif
 
-#include "include/constants.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/include/constants.h"
 
 
 /*
