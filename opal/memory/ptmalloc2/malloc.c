@@ -51,6 +51,24 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
 #define __const const
 #endif
 
+/* need to intercept munmap from the user as well as the usual
+   malloc.  munmap is a weak symbol on any platform that I know of that
+   supports malloc hooks, so we can just intercept it like this... */
+int 
+munmap(void* addr, size_t len) {
+{
+    static int (*realmunmap)(void*, size_t);
+    /* dispatch about the pending release */
+    opal_mem_free_release_hook(addr, len);
+
+    if (NULL == realmunmap) {
+        realmunmap = dlsym(RTLD_NEXT, "munmap");
+    }
+
+    return realmunmap(addr, len);
+}
+
+
 /********************* BEGIN OMPI CHANGES ******************************/
 
 

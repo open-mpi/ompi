@@ -41,8 +41,8 @@ static OBJ_CLASS_INSTANCE(callback_list_item_t, opal_list_item_t, NULL, NULL);
  */
 static opal_list_t callback_list;
 static opal_atomic_lock_t callback_lock;
-static bool have_free_support = false;
-static bool run_callbacks = false;
+static int have_free_support = false;
+static int run_callbacks = false;
 
 
 int
@@ -51,7 +51,9 @@ opal_mem_free_init(void)
     OBJ_CONSTRUCT(&callback_list, opal_list_t);
     opal_atomic_init(&callback_lock, OPAL_ATOMIC_UNLOCKED);
 
-    run_callbacks = true;
+    /* delay running callbacks until there is something in the
+       registration */
+    run_callbacks = false;
     opal_atomic_mb();
 
     return OMPI_SUCCESS;
@@ -84,7 +86,7 @@ opal_mem_free_finalize(void)
 
 /* called from memory manager / memory-manager specific hooks */
 void
-opal_mem_free_set_free_support(bool support)
+opal_mem_free_set_free_support(int support)
 {
     printf("someone set mem_free support to %d\n", (int) support);
     have_free_support = support;
@@ -116,7 +118,7 @@ opal_mem_free_release_hook(void *buf, size_t length)
 bool
 opal_mem_free_is_supported(void)
 {
-    return have_free_support;
+    return (bool) have_free_support;
 }
 
 
@@ -128,6 +130,12 @@ opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
     int ret = OMPI_SUCCESS;
 
     if (!have_free_support) return OMPI_ERR_NOT_SUPPORTED;
+
+    /* we either have or are about to have a registration that needs
+       calling back.  Let the system know it needs to run callbacks
+       now */
+    run_callbacks = true;
+    opal_atomic_mb();
 
     opal_atomic_lock(&callback_lock);
 
