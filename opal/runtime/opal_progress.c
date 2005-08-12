@@ -29,7 +29,7 @@
  * default parameters 
  */
 static int opal_progress_event_flag = OPAL_EVLOOP_ONCE;
-static const int opal_progress_default_tick_rate = 100;
+static const int opal_progress_default_tick_rate = 10000;
 
 /*
  * Local variables
@@ -47,9 +47,9 @@ static size_t callbacks_size = 0;
 static int call_yield = 1;
 
 /* current count down until we tick the event library */
-static long event_progress_counter = 0;
+static int32_t event_progress_counter = 0;
 /* reset value for counter when it hits 0 */
-static long event_progress_counter_reset = 0;
+static int32_t event_progress_counter_reset = 0;
 /* users of the event library from MPI cause the tick rate to 
    be every time */
 static int32_t event_num_mpi_users = 0;
@@ -187,30 +187,23 @@ opal_progress(void)
     size_t i;
     int events = 0;
 
-#if OMPI_HAVE_THREAD_SUPPORT
-    /* NOTE: BWB - XXX - FIXME: Currently, there are some progress functions
-       (the event library, for one) that are not reentrant.  It is not known
-       if the PTL progress functions are all reentrant or not.  The I/O
-       code should all be reentrant.  Because of the uncertainty, we are
-       preventing more than one thread of execution from progressing the
-       via opal_progress (which is usually only called when there are
-       no PROGRESS_THREADS running).  This should be made more fine-grained
-       at some point in the future. */
-    if (! opal_atomic_trylock(&progress_lock)) {
-        /* someone is already progressing - return */
-        return;
-    }
-#endif
-
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     /* trip the event library if we've reached our tick rate and we are
        enabled */
-    if (event_progress_counter-- <= 0 && opal_progress_event_flag != 0) {
-        event_progress_counter = 
-            (event_num_mpi_users > 0) ? 0 : event_progress_counter_reset;
-        events += opal_event_loop(opal_progress_event_flag);
+    if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 && 
+        opal_progress_event_flag != 0) {
+#if OMPI_HAVE_THREAD_SUPPORT
+        if (opal_atomic_trylock(&progress_lock)) {
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
+            event_progress_counter = 
+                (event_num_mpi_users > 0) ? 0 : event_progress_counter_reset;
+            events += opal_event_loop(opal_progress_event_flag);
+#if OMPI_HAVE_THREAD_SUPPORT
+            opal_atomic_unlock(&progress_lock);
+        }
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
     }
-#endif
+#endif /* OMPI_ENABLE_PROGRESS_THREADS == 0 */
 
     /* progress all registered callbacks */
     for (i = 0 ; i < callbacks_len ; ++i) {
@@ -225,11 +218,6 @@ opal_progress(void)
         }  
 #endif
     }
-
-#if OMPI_HAVE_THREAD_SUPPORT
-    /* release the lock before yielding, for obvious reasons */
-    opal_atomic_unlock(&progress_lock);
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 #if !defined(WIN32) && defined(HAVE_SCHED_YIELD)
     if (call_yield && events <= 0) {
