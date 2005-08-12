@@ -97,6 +97,9 @@ int mca_bml_r2_progress( void ) {
 
 static int mca_bml_r2_add_btls( void )
 {
+    if(mca_bml_r2.btls_added == true) 
+        return OMPI_SUCCESS; 
+
     /* build an array of r2s and r2 modules */
     opal_list_t* btls = &mca_btl_base_modules_initialized;
     mca_btl_base_selected_module_t* selected_btl;
@@ -127,6 +130,7 @@ static int mca_bml_r2_add_btls( void )
           mca_bml_r2.num_btl_modules, 
           sizeof(struct mca_btl_base_module_t*), 
           btl_exclusivity_compare);
+    mca_bml_r2.btls_added = true; 
     return OMPI_SUCCESS;
 }
 
@@ -148,11 +152,22 @@ int mca_bml_r2_add_procs(
     size_t p_index;
     struct mca_bml_base_btl_t** bml_btls = NULL; 
     struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;  
+    
     if(nprocs == 0)
         return OMPI_SUCCESS;
-
+    
+    
     if(OMPI_SUCCESS != (rc = mca_bml_r2_add_btls()) )
         return rc;
+
+    for(p_index = 0; p_index < nprocs; p_index++) { 
+        struct ompi_proc_t* proc;
+        proc = procs[p_index]; 
+        if(NULL !=  proc->proc_pml) { 
+            bml_endpoints[p] = (mca_bml_base_endpoint_t*) proc->proc_pml; 
+            
+        }
+    }
     
 
     /* attempt to add all procs to each r2 */
@@ -185,14 +200,16 @@ int mca_bml_r2_add_procs(
         for(p=0; p<nprocs; p++) {
             if(ompi_bitmap_is_set_bit(reachable, p)) {
                 ompi_proc_t *proc = procs[p]; 
+                
 /*                 mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; */
                 mca_bml_base_endpoint_t * bml_endpoint; 
                 mca_bml_base_btl_t* bml_btl; 
                 size_t size;
-                /*                 proc = (ompi_proc_t*) orte_hash_table_get_proc( */
-/*                                                                &mca_bml_r2.procs,  */
-/*                                                                &proc->proc_name */
-/*                                                                );  */
+                
+                /* check and see if this proc has already been added.. */ 
+                if(NULL != proc->proc_pml) 
+                    continue; 
+
                 if(NULL != proc && NULL != proc->proc_pml) { 
                     bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_pml; 
                     continue; 
@@ -214,7 +231,7 @@ int mca_bml_r2_add_procs(
                 mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
                 bml_endpoint->btl_proc =   proc;
                 
-                /*proc->proc_pml = (struct mca_pml_proc_t*) bml_endpoint;*/ 
+                /*proc->proc_pml = (struct mca_proc_pml_t*) bml_endpoint;*/ 
                 
 
                 /* dont allow an additional PTL with a lower exclusivity ranking */
@@ -253,12 +270,7 @@ int mca_bml_r2_add_procs(
                 
                 
                 bml_endpoints[p]=bml_endpoint; 
-                proc->proc_pml = (mca_pml_proc_t*) bml_endpoint; 
-                /* orte_hash_table_set_proc(  */
-/*                                          &mca_bml_r2.procs,  */
-/*                                          &proc->proc_name,  */
-/*                                          proc);  */
-                
+                proc->proc_pml = (struct mca_proc_pml_t*) bml_endpoint; 
             }
         }
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {
