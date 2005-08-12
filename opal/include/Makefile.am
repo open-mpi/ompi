@@ -17,3 +17,15 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = sys
+
+noinst_HEADERS = \
+        constants.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/opal/include
+ompi_HEADERS = $(noinst_HEADERS)
+else
+ompidir = $(includedir)
+endif
