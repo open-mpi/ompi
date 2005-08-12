@@ -78,7 +78,7 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orteprobe_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, NULL, NULL, "verbose", 0, 
+    { NULL, NULL, NULL, '\0', NULL, "verbose", 0, 
       &orteprobe_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Toggle Verbosity" },
 
