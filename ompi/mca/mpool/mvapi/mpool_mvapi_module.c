@@ -147,7 +147,7 @@ void* mca_mpool_mvapi_realloc(
     mca_mpool_base_registration_t* old_reg  = *registration; 
     void* new_mem = mpool->mpool_alloc(mpool, size, 0, registration); 
     memcpy(new_mem, addr, old_reg->bound - old_reg->base); 
-    mpool->mpool_free(mpool, addr, &old_reg); 
+    mpool->mpool_free(mpool, addr, old_reg); 
     return new_mem; 
 }
 

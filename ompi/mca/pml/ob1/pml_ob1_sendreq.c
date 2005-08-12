@@ -209,12 +209,14 @@ int mca_pml_ob1_send_request_start(
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
     mca_bml_base_endpoint_t* bml_endpoint = sendreq->bml_endpoint; 
-    if(NULL == bml_endpoint) { 
-        opal_output("[%s:%d:%s] no endpoint found for given destination.\n", __FILE__, __LINE__, __func__); 
-    }
-    mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager); 
-    
+    mca_bml_base_btl_t* bml_btl = NULL; 
     size_t size = sendreq->req_send.req_bytes_packed;
+    if(NULL == bml_endpoint) { 
+        opal_output(0, "[%s:%d:%s] no endpoint found for given destination.\n", __FILE__, __LINE__, __func__); 
+    }
+    bml_btl=mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager); 
+    
+    
     
     int rc;
     
@@ -629,7 +631,6 @@ void mca_pml_ob1_send_request_put(
                                   mca_btl_base_module_t* btl, 
                                   mca_pml_ob1_rdma_hdr_t* hdr)
 { 
-    ompi_proc_t* proc = sendreq->req_proc;
     mca_mpool_base_registration_t* reg = NULL;
     mca_bml_base_btl_t* bml_btl; 
     mca_btl_base_descriptor_t* des;

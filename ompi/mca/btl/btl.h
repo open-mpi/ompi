@@ -120,6 +120,7 @@ struct mca_btl_base_module_t;
 struct mca_btl_base_endpoint_t;
 struct mca_btl_base_descriptor_t;
 struct mca_mpool_base_resources_t;
+struct ompi_proc_t; 
 
 
 /* send/recv operations require tag matching */
