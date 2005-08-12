@@ -52,7 +52,9 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_send,
     mca_pml_teg_iprobe,
     mca_pml_teg_probe,
-    mca_pml_teg_start
+    mca_pml_teg_start,
+    32768,
+    (0x7fffffff)
     }
 };
 
