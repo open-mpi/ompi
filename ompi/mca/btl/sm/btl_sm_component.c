@@ -263,7 +263,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
         mca_btl_sm[i].super.btl_max_send_size=mca_btl_sm_component.max_frag_size;
         mca_btl_sm[i].super.btl_min_rdma_size=mca_btl_sm_component.max_frag_size;
         mca_btl_sm[i].super.btl_max_rdma_size=mca_btl_sm_component.max_frag_size;
-        mca_btl_sm[i].super.btl_exclusivity=100;  /* always use this ptl */
+        mca_btl_sm[i].super.btl_exclusivity=MCA_BTL_EXCLUSIVITY_HIGH-1;  /* always use this ptl */
         mca_btl_sm[i].super.btl_latency=100;      /* lowest latency */
         mca_btl_sm[i].super.btl_bandwidth=900; /* not really used now since exclusivity is set to 100 */
     }
