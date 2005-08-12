@@ -284,4 +284,20 @@ opal_event_pending(struct opal_event *ev, short event, struct timeval *tv)
 }
 #endif
 
+/* #defines to allow callers to know if opal_event_loop is going to do anything */
+
+#if defined(HAVE_SELECT) && HAVE_SELECT
+#define OPAL_HAVE_WORKING_EVENTOPS 1
+#elif defined(HAVE_POLL) && HAVE_POLL && HAVE_WORKING_POLL
+#define OPAL_HAVE_WORKING_EVENTOPS 1
+#elif defined(HAVE_RTSIG) && HAVE_RTSIG
+#define OPAL_HAVE_WORKING_EVENTOPS 1
+#elif defined(HAVE_EPOLL) && HAVE_EPOLL
+#define OPAL_HAVE_WORKING_EVENTOPS 1
+#elif defined(HAVE_WORKING_KQUEUE) && HAVE_WORKING_KQUEUE
+#define OPAL_HAVE_WORKING_EVENTOPS 1
+#else
+#define OPAL_HAVE_WORKING_EVENTOPS 0
+#endif
+
 #endif /* _EVENT_H_ */
