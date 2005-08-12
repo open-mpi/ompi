@@ -51,6 +51,7 @@
 #include "opal/util/daemon_init.h"
 #include "util/universe_setup_file_io.h"
 #include "opal/util/malloc.h"
+#include "opal/memory/memory.h"
 
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -184,6 +185,9 @@ int main(int argc, char *argv[])
 
     /* For malloc debugging */
     opal_malloc_init();
+
+    /* initialize the memory manager / tracker */
+    opal_mem_free_init();
 
     /*
      * Initialize the MCA framework 
