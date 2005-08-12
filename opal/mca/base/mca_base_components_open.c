@@ -25,9 +25,9 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "include/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/include/constants.h"
 
 struct component_name_t {
   opal_list_item_t super;

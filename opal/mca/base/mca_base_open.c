@@ -22,11 +22,12 @@
 #if HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
-#include "include/constants.h"
+
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/include/constants.h"
 
 /*
  * Public variables

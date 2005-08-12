@@ -54,11 +54,11 @@
 #include <netdb.h>
 #endif
 
-#include "include/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
+#include "ompi/include/constants.h"
 
 #ifdef HAVE_STRUCT_SOCKADDR_IN
 

@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/constants.h"
 #include "opal/util/basename.h"
+#include "ompi/include/constants.h"
 
 
 char *opal_basename(const char *filename)

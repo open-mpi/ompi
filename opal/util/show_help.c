@@ -20,11 +20,11 @@
 #include <string.h>
 #include <locale.h>
 
-#include "include/constants.h"
 #include "opal/util/show_help.h"
 #include "opal/util/show_help_lex.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
+#include "ompi/include/constants.h"
 
 static int open_file(const char *base, const char *topic);
 static int find_topic(const char *base, const char *topic);

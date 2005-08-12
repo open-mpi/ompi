@@ -19,13 +19,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "include/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param_internal.h"
-#include "mca/base/mca_base_parse_paramfile_lex.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param_internal.h"
+#include "opal/mca/base/mca_base_parse_paramfile_lex.h"
+#include "ompi/include/constants.h"
 
 
 static const char *filename;

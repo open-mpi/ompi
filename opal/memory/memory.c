@@ -18,11 +18,11 @@
 
 #include <sys/types.h>
 
-#include "ompi/include/constants.h"
 #include "opal/memory/memory.h"
 #include "opal/memory/memory_internal.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
+#include "ompi/include/constants.h"
 
 
 /* 

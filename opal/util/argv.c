@@ -18,9 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/strncpy.h"
+#include "ompi/include/constants.h"
 
 #define ARGSIZE 128
 

@@ -31,9 +31,9 @@
 #include <sys/param.h>
 #endif
 
-#include "include/constants.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
+#include "ompi/include/constants.h"
 
 /*
  * Private data

@@ -27,8 +27,8 @@
 #include <unistd.h>
 #endif
 
-#include "include/constants.h"
 #include "opal/util/few.h"
+#include "ompi/include/constants.h"
 
 int opal_few(char *argv[], int *status)
 {

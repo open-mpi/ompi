@@ -20,10 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/constants.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "ompi/include/constants.h"
 
 
 /*

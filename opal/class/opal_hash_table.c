@@ -19,10 +19,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "include/constants.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
-#include "class/opal_hash_table.h"
+#include "opal/class/opal_hash_table.h"
+#include "ompi/include/constants.h"
 
 /*
  * opal_hash_table_t

@@ -18,9 +18,9 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "include/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/include/constants.h"
 
 int mca_base_components_close(int output_id, 
                               opal_list_t *components_available, 

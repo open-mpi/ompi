@@ -29,10 +29,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "include/constants.h"
-#include "util/sys_info.h"
+#include "opal/util/sys_info.h"
 #include "opal/util/os_path.h"
-#include "util/sys_info.h"
+#include "opal/util/sys_info.h"
+#include "ompi/include/constants.h"
 
 char *opal_os_path(bool relative, ...)
 {

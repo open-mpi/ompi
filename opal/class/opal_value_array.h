@@ -17,14 +17,15 @@
 #ifndef OPAL_VALUE_ARRAY_H
 #define OPAL_VALUE_ARRAY_H
 
-#include <string.h>
 #include "ompi_config.h"
-#include "include/constants.h"
-#include "include/types.h"
+
+#include <string.h>
+
 #include "opal/class/opal_object.h"
 #if OMPI_ENABLE_DEBUG
 #include "opal/util/output.h"
 #endif
+#include "ompi/include/constants.h"
 
 /*
  *  @file  Array of elements maintained by value.

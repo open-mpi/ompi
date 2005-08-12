@@ -29,11 +29,11 @@
 #include <sys/stat.h>
 
 
-#include "include/orte_constants.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/include/orte_constants.h"
 
 
 #include "util/sys_info.h"

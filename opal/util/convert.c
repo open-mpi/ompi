@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/constants.h"
 #include "opal/util/convert.h"
+#include "ompi/include/constants.h"
 
 #if SIZEOF_SIZE_T <= SIZEOF_INT
 /*

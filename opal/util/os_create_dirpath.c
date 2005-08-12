@@ -26,10 +26,10 @@
 #endif
 #include <stdlib.h>
 
-#include "include/constants.h"
 #include "opal/util/os_create_dirpath.h"
-#include "util/sys_info.h"
 #include "opal/util/argv.h"
+#include "opal/util/sys_info.h"
+#include "ompi/include/constants.h"
 
 int opal_os_create_dirpath(const char *path, const mode_t mode)
 {

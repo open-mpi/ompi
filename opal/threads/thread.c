@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
 #include "opal/threads/thread.h"
+#include "ompi/include/constants.h"
 
 
 static void opal_thread_construct(opal_thread_t *t);
