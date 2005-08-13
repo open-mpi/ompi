@@ -26,7 +26,9 @@ SUBDIRS = \
         memory \
         runtime \
         threads \
-        util
+        util \
+        . \
+        dynamic-mca
 
 # Build the main OPAL library
 
@@ -38,6 +40,7 @@ libopal_la_LIBADD = \
         class/libclass.la \
         event/libevent.la \
         mca/base/libmca_base.la \
+        mca/paffinity/base/libmca_paffinity_base.la $(MCA_paffinity_STATIC_LTLIBS) \
 	memory/libopalmemory.la \
         runtime/libruntime.la \
 	$(MCA_memory_STATIC_LTLIBS) \
