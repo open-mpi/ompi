@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,25 +15,6 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+# Specific to this module
 
-noinst_LTLIBRARIES = libopalmemory.la
-
-# Source code files
-
-headers = \
-	memory.h \
-	memory_internal.h
-
-libopalmemory_la_SOURCES = \
-        $(headers) \
-	memory.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/memory
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+PARAM_CONFIG_FILES="Makefile"

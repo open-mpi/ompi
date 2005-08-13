@@ -16,7 +16,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = base
+SUBDIRS = base \
+	memory
 
 # Source code files
 

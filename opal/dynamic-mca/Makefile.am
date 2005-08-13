@@ -16,23 +16,5 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libopalmemory.la
-
-# Source code files
-
-headers = \
-	memory.h \
-	memory_internal.h
-
-libopalmemory_la_SOURCES = \
-        $(headers) \
-	memory.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/memory
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+SUBDIRS = \
+	memory

@@ -35,17 +35,15 @@ AM_CPPFLAGS += -Isysdeps/generic
 docdir			= $(datadir)/openmpi/doc
 doc_DATA		= ptmalloc2-COPYRIGHT
 
-if OMPI_WANT_PTMALLOC2
-noinst_LTLIBRARIES	= libptmalloc2.la
-endif
+noinst_LTLIBRARIES	= libmca_memory_ptmalloc2.la
 
-libptmalloc2_la_SOURCES = \
+libmca_memory_ptmalloc2_la_SOURCES = \
 			malloc.c \
 			malloc-stats.c \
 			malloc.h
 
 # these are included directly and shouldn't be built solo
-EXTRA_libptmalloc2_la_SOURCES = \
+EXTRA_libmca_memory_ptmalloc2_la_SOURCES = \
 			arena.c \
 			hooks.c
 
