@@ -16,7 +16,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = config include etc opal orte ompi test
+SUBDIRS = config include etc $(MCA_PROJECT_SUBDIRS) test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
 
 dist-hook:

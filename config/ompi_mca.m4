@@ -200,8 +200,10 @@ AC_DEFUN([OMPI_MCA],[
 
     # now configre all the projects, frameworks, and components.  Most
     # of the hard stuff is in here
+    MCA_PROJECT_SUBDIRS=
     m4_foreach(mca_project, [mca_project_list], 
-               [MCA_CONFIGURE_PROJECT(mca_project)])
+               [MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
+                MCA_CONFIGURE_PROJECT(mca_project)])
 
     # BWB - fix me...  need to automate this somehow
     MCA_SETUP_DIRECT_CALL(pml, ompi)
@@ -209,6 +211,8 @@ AC_DEFUN([OMPI_MCA],[
     # make all the config output statements for the no configure
     # components
     MCA_NO_CONFIG_CONFIG_FILES()
+
+    AC_SUBST(MCA_PROJECT_SUBDIRS)
 ])
 
 
