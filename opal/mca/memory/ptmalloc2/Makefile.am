@@ -57,5 +57,13 @@ EXTRA_DIST		= \
 			t-test2.c \
 			tst-mallocstate.c \
 			tst-mstats.c \
-			sysdeps \
+                        sysdeps/sproc/malloc-machine.h \
+                        sysdeps/sproc/thread-st.h \
+                        sysdeps/pthread/malloc-machine.h \
+                        sysdeps/pthread/thread-st.h \
+                        sysdeps/solaris/malloc-machine.h \
+                        sysdeps/solaris/thread-st.h \
+                        sysdeps/generic/malloc-machine.h \
+                        sysdeps/generic/thread-st.h \
+                        sysdeps/generic/atomic.h \
 			$(doc_DATA)
