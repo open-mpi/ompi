@@ -400,15 +400,19 @@ mca_btl_portals_component_progress(void)
             case PTL_EVENT_GET_START:
                 /* generated on source (target) when a get from memory starts */
 
-                /* BWB - FIX ME - need to fill in for btl get() */
-                abort();
+                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                                     "PTL_EVENT_GET_START for 0x%x, %d",
+                                     frag, (int) ev.hdr_data));
+
                 break;
 
             case PTL_EVENT_GET_END:
                 /* generated on source (target) when a get from memory ends */
 
-                /* BWB - FIX ME - need to fill in for btl get() */
-                abort();
+                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                                     "PTL_EVENT_GET_END for 0x%x, %d",
+                                     frag, (int) ev.hdr_data));
+
                 break;
 
             case PTL_EVENT_PUT_START:
@@ -485,16 +489,26 @@ mca_btl_portals_component_progress(void)
                 /* generated on destination (origin) when a get starts
                    returning data */
 
-                /* BWB - FIX ME - need to fill in for get */
-                abort();
+                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                                     "PTL_EVENT_REPLY_START for 0x%x, %d, %d",
+                                     frag, (int) frag->type, (int) ev.hdr_data));
+
                 break;
 
             case PTL_EVENT_REPLY_END:
                 /* generated on destination (origin) when a get is
                    done returning data */
 
-                /* BWB - FIX ME - need to fill in for get */
-                abort();
+                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                     "PTL_EVENT_REPLY_END for 0x%x, %d",
+                                     frag, (int) frag->type));
+
+                /* let the PML know we're done */
+                frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                      frag->endpoint,
+                                      &frag->base,
+                                      OMPI_SUCCESS);
+
                 break;
 
             case PTL_EVENT_SEND_START:
