@@ -40,6 +40,7 @@ libopal_la_LIBADD = \
         mca/base/libmca_base.la \
 	memory/libopalmemory.la \
         runtime/libruntime.la \
+	$(MCA_memory_STATIC_LTLIBS) \
         threads/libthreads.la \
         util/libopalutil.la
 libopal_la_DEPENDENCIES = $(libopal_la_LIBADD)

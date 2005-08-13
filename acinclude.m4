@@ -75,7 +75,6 @@ m4_include(config/ompi_setup_cxx.m4)
 m4_include(config/ompi_setup_f77.m4)
 m4_include(config/ompi_setup_f90.m4)
 m4_include(config/ompi_setup_libevent.m4)
-m4_include(config/ompi_setup_memory.m4)
 
 m4_include(config/ompi_check_pthread_pids.m4)
 m4_include(config/ompi_config_pthreads.m4)

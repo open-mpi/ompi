@@ -451,7 +451,11 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     rm -f $1/dynamic-mca/$2/$3
 
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=1], [should_build=0])
-    MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)
+    # Allow the component to override the build mode if it really wants to.
+    # It is, of course, free to end up calling MCA_COMPONENT_COMPILE_MODE
+    m4_ifdef([MCA_$2_$3_COMPILE_MODE],
+             [MCA_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
+             [MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
 
     # special case - if we are doing a dist, add the component to 
     # the list of all components, even if the build failed.  The
@@ -538,7 +542,7 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     framework=$2
     component=$3
 
-    # Is this component going to built staic or shared?  component
+    # Is this component going to built staic or shared?  $component
     # might not be known until configure time, so have to use eval
     # tricks - can't set variable names at autogen time.
     str="SHARED_FRAMEWORK=\$DSO_$framework"

@@ -16,23 +16,11 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libopalmemory.la
+SUBDIRS			= $(MCA_memory_DSO_SUBDIRS)
+DISTCLEANFILES		= $(SUBDIRS)
 
-# Source code files
+# Every directory under here is a sym link to something in the main
+# src/mca tree.  Hence, we don't want to distribute anything under
+# here.
 
-headers = \
-	memory.h \
-	memory_internal.h
-
-libopalmemory_la_SOURCES = \
-        $(headers) \
-	memory.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/memory
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+DIST_SUBDIRS		=

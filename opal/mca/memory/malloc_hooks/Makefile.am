@@ -16,23 +16,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libopalmemory.la
+noinst_LTLIBRARIES = libmca_memory_malloc_hooks.la
 
 # Source code files
-
-headers = \
-	memory.h \
-	memory_internal.h
-
-libopalmemory_la_SOURCES = \
-        $(headers) \
-	memory.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/memory
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmca_memory_malloc_hooks_la_SOURCES = \
+	malloc_hooks.c

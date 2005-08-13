@@ -88,7 +88,6 @@ opal_mem_free_finalize(void)
 void
 opal_mem_free_set_free_support(int support)
 {
-    printf("someone set mem_free support to %d\n", (int) support);
     have_free_support = support;
 }
 
