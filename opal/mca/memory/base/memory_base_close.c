@@ -19,31 +19,17 @@
 #include "opal/include/opal_constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/paffinity/paffinity.h"
-#include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/paffinity/base/internal.h"
+#include "opal/mca/memory/memory.h"
+#include "opal/mca/memory/base/base.h"
 
 
-int opal_paffinity_base_close(void)
+int opal_memory_base_close(void)
 {
     /* Close all components that are still open (this should only
-       happen during ompi_info). */
-
-    if (opal_paffinity_base_components_opened_valid) {
-        mca_base_components_close(opal_paffinity_base_output,
-                                  &opal_paffinity_base_components_opened, NULL);
-        OBJ_DESTRUCT(&opal_paffinity_base_components_opened);
-        opal_paffinity_base_components_opened_valid = false;
-    }
-
-    /* If a selected component is open, close it */
-
-    if (opal_paffinity_base_selected) {
-        opal_paffinity_base_component->paffinityc_version.mca_close_component();
-        opal_paffinity_base_selected = false;
-    }
+       happen during laminfo). */
+    mca_base_components_close(0, &opal_memory_base_components_opened, NULL);
+    OBJ_DESTRUCT(&opal_memory_base_components_opened);
 
     /* All done */
-
     return OPAL_SUCCESS;
 }

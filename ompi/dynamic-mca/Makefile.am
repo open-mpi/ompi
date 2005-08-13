@@ -16,14 +16,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        common \
-        allocator \
-        bml \
-	btl \
-        coll \
-        io \
-        mpool \
-        pml \
-        ptl \
-        topo
+SUBDIRS = $(MCA_ompi_FRAMEWORKS)

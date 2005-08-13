@@ -240,12 +240,34 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     # first argument.  Protect against calling MCA_CONFIGURE_FRAMEWORK
     # with an empty second argument.  Grrr....
     # if there isn't a project list, abort
+    #
+    # Also setup two variables for Makefiles:
+    #  MCA_project_FRAMEWORKS     - list of frameworks in that project
+    #  MCA_project_FRAMEWORK_LIBS - list of libraries (or variables pointing
+    #                               to more libraries) that must be included
+    #                               in the project's main library
     m4_ifdef([mca_$1_framework_list], [], 
              [m4_fatal([Could not find mca_$1_framework_list - rerun autogen.sh without -l])])
 
+    MCA_$1_FRAMEWORKS=
+    MCA_$1_FRAMEWORK_LIBS=
+    
     m4_foreach(mca_framework, [mca_$1_framework_list],
                [m4_ifval(mca_framework, 
-                         [MCA_CONFIGURE_FRAMEWORK($1, mca_framework)])])
+                         [# common has to go up front
+                          if test "mca_framework" = "common" ; then
+                              MCA_$1_FRAMEWORKS="mca_framework $MCA_$1_FRAMEWORKS"
+                          else
+                              MCA_$1_FRAMEWORKS="$MCA_$1_FRAMEWORKS mca_framework"
+                          fi
+                          if test "mca_framework" != "common" ; then
+                              MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/base/libmca_]mca_framework[_base.la]"
+                          fi
+                          MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]mca_framework[_STATIC_LTLIBS)]"
+                          MCA_CONFIGURE_FRAMEWORK($1, mca_framework)])])
+
+    AC_SUBST(MCA_$1_FRAMEWORKS)
+    AC_SUBST(MCA_$1_FRAMEWORK_LIBS)
 ])
 
 ######################################################################

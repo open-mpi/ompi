@@ -18,8 +18,7 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
         base \
-        memory \
-        paffinity
+	$(MCA_opal_FRAMEWORKS)
 
 # Source code files
 
