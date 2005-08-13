@@ -60,9 +60,6 @@ mca_m4_include_file="mca_m4_config_include.m4"
 mca_m4_config_env_file="mca_m4_config_env"
 autogen_subdir_file="autogen.subdirs"
 
-# locations to look for mca modules
-mca_locations="opal orte ompi"
-
 ############################################################################
 #
 # Version check - does major,minor,release check (hopefully ignoring
@@ -836,7 +833,7 @@ EOF
     rg_cwd="`pwd`"
     echo $rg_cwd
     project_list=""
-    for project_path in $mca_locations; do 
+    for project_path in $config_project_list; do 
         project="`basename \"$project_path\"`"
         project_list="$project_list $project"
 
@@ -973,12 +970,17 @@ echo "[Checking] command line parameters"
 
 want_local=no
 ompidir=
+no_ompi=0
+no_orte=0
 for arg in $*; do
     case $arg in
     -l) want_local=yes ;;
-    -ompidir|--ompidir|-ompi|--ompi) ompidir="$1" ;;
+    -ompidir|--ompidir|-ompi|--ompi) ompidir="$2" ;;
+    -no-ompi) no_ompi=1 ;;
+    -no-orte) no_orte=1 ;;
     *) ;;
     esac
+    shift
 done
 
 # announce
@@ -995,6 +997,17 @@ tree.  Giving you 5 seconds to reconsider and kill me.
 EOF
     sleep 5
 fi
+
+
+# locations to look for mca modules
+config_project_list="opal orte ompi"
+if test "$no_ompi" = "1" ; then
+    config_project_list="opal orte"
+fi
+if test "$no_orte" = "1" ; then
+    config_project_list="opal"
+fi
+echo "Configuring projects: $config_project_list"
 
 # figure out if we're at the top level of the OMPI tree, a component's
 # top-level directory, or somewhere else.
