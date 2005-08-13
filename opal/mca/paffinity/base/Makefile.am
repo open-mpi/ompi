@@ -16,6 +16,25 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        memory \
-        paffinity
+noinst_LTLIBRARIES = libmca_paffinity_base.la
+
+headers = \
+        base.h
+
+libmca_paffinity_base_la_SOURCES = \
+        $(headers) \
+        paffinity_base_close.c \
+        paffinity_base_select.c \
+        paffinity_base_open.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/ompi/mca/paffinity/base
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif
+
+distclean-local:
+	rm -f static-components.h

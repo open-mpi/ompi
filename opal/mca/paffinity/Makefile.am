@@ -16,6 +16,18 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        memory \
-        paffinity
+SUBDIRS = base $(MCA_paffinity_STATIC_SUBDIRS)
+DIST_SUBDIRS = base $(MCA_paffinity_ALL_SUBDIRS)
+
+# Source code files
+
+headers = paffinity.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/ompi/mca/paffinity
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif
