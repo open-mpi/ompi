@@ -19,7 +19,8 @@ include $(top_srcdir)/config/Makefile.options
 noinst_LTLIBRARIES = libmca_paffinity_base.la
 
 headers = \
-        base.h
+        base.h \
+        internal.h
 
 libmca_paffinity_base_la_SOURCES = \
         $(headers) \
