@@ -119,10 +119,12 @@ cd ..
 echo "*** Now in: `pwd`"
 echo "*** Replacing config.sub/config.guess with latest from ftp.gnu.org..."
 foreach file (config.guess config.sub)
-    find src -name $file \
-	-exec chmod +w {} \; \
-	-exec cp -f $configdir/$file {} \; \
-	-print
+    foreach dir (opal orte ompi)
+        find $dir -name $file \
+            -exec chmod +w {} \; \
+            -exec cp -f $configdir/$file {} \; \
+            -print
+    end
 end
 
 
