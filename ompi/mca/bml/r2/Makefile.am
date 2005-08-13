@@ -16,7 +16,7 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-sources  = \
+r2_sources  = \
 	bml_r2.c \
 	bml_r2.h \
 	bml_r2_btl.c \
