@@ -24,52 +24,57 @@
 
 #include "ompi/runtime/params.h"
 #include "orte/runtime/runtime.h"
-#include "tools/ompi_info/ompi_info.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 
-#include "mca/base/base.h"
-#include "mca/allocator/allocator.h"
-#include "mca/allocator/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
-#include "mca/io/io.h"
-#include "mca/io/base/base.h"
-#include "mca/mpool/mpool.h"
-#include "mca/mpool/base/base.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/base.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/memory/memory.h"
+#include "opal/mca/paffinity/paffinity.h"
+#include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/paffinity/base/internal.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/errmgr/base/base.h"
-#include "mca/gpr/gpr.h"
-#include "mca/gpr/base/base.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
-#include "mca/ras/ras.h"
-#include "mca/ras/base/base.h"
-#include "mca/rds/rds.h"
-#include "mca/rds/base/base.h"
-#include "mca/rmaps/rmaps.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/rmgr/rmgr.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/base/base.h"
-#include "mca/pls/pls.h"
-#include "mca/pls/base/base.h"
-#include "mca/soh/soh.h"
-#include "mca/soh/base/base.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
+#include "ompi/mca/allocator/allocator.h"
+#include "ompi/mca/allocator/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/base.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/rds/rds.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/base.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
 
 using namespace std;
 using namespace ompi_info;
@@ -136,6 +141,11 @@ void ompi_info::open_components()
   // Find / open all components
 
   component_map["base"] = NULL;
+
+  // OPAL frameworks
+
+  opal_paffinity_base_open();
+  component_map["paffinity"] = &opal_paffinity_base_components_opened;
 
   // ORTE frameworks
 
@@ -244,6 +254,8 @@ void ompi_info::close_components()
         orte_rml_base_close();
         mca_oob_base_close();
     
+        opal_paffinity_base_close();
+
         component_map.clear();
     }
 
