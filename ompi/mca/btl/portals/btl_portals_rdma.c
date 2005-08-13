@@ -80,9 +80,51 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
 int
 mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
-                    struct mca_btl_base_descriptor_t* decriptor)
+                    struct mca_btl_base_descriptor_t* descriptor)
 {
-    opal_output(mca_btl_portals_component.portals_output,
-                "Warning: call to unimplemented function get()");
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*) descriptor;
+    ptl_md_t md;
+    ptl_handle_md_t md_h;
+    int ret;
+
+    assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+
+    frag->endpoint = btl_peer;
+    frag->hdr.tag = MCA_BTL_TAG_MAX;
+    frag->type = mca_btl_portals_frag_type_rdma;
+
+    /* setup the send */
+    md.start = frag->segment.seg_addr.pval;
+    md.length = frag->segment.seg_len;
+    md.threshold = 2; /* unlink after send & ack */
+    md.max_size = 0;
+    md.options = PTL_MD_EVENT_START_DISABLE;
+    md.user_ptr = frag; /* keep a pointer to ourselves */
+    md.eq_handle = mca_btl_portals_module.portals_eq_handles[OMPI_BTL_PORTALS_EQ];
+
+    /* make a free-floater */
+    ret = PtlMDBind(mca_btl_portals_module.portals_ni_h,
+                    md,
+                    PTL_UNLINK,
+                    &md_h);
+    if (ret != PTL_OK) {
+        opal_output(mca_btl_portals_component.portals_output,
+                    "PtlMDBind failed with error %d", ret);
+        return OMPI_ERROR;
+    }
+
+    ret = PtlGet(md_h,
+                 *((mca_btl_base_endpoint_t*) btl_peer),
+                 OMPI_BTL_PORTALS_RDMA_TABLE_ID,
+                 0, /* ac_index - not used*/
+                 frag->base.des_dst[0].seg_key.key64, /* match bits */
+                 0); /* remote offset - not used */
+    if (ret != PTL_OK) {
+        opal_output(mca_btl_portals_component.portals_output,
+                    "PtlGet failed with error %d", ret);
+        PtlMDUnlink(md_h);
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
 }
