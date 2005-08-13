@@ -16,18 +16,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        errmgr \
-        gpr \
-        iof \
-        ns \
-        oob \
-        pls \
-        ras \
-        rds \
-        rmaps \
-        rmgr \
-        rml \
-        schema \
-	sds \
-        soh
+SUBDIRS = $(MCA_orte_FRAMEWORKS)

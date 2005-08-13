@@ -28,6 +28,10 @@
 #ifndef OPAL_MEMORY_MEMORY_H
 #define OPAl_MEMORY_MEMORY_H
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 
 int opal_mem_free_init(void);
 
@@ -102,5 +106,9 @@ int opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
  * @retval OMPI_ERR_NOT_FOUND The function was not previously registered
  */
 int opal_mem_free_unregister_handler(opal_mem_free_unpin_fn_t *func);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OPAL_MEMORY_MEMORY_H */

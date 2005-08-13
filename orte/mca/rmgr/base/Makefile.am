@@ -16,7 +16,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libmca_orte_rmgr_base.la
+noinst_LTLIBRARIES = libmca_rmgr_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found
 
@@ -29,7 +29,7 @@ headers = \
 
 # Library
 
-libmca_orte_rmgr_base_la_SOURCES = \
+libmca_rmgr_base_la_SOURCES = \
         $(headers) \
         rmgr_base_context.c \
         rmgr_base_close.c \

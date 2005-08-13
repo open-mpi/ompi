@@ -16,6 +16,5 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        memory \
-        paffinity
+SUBDIRS = $(MCA_opal_FRAMEWORKS)
+

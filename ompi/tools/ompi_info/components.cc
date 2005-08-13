@@ -31,6 +31,8 @@
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/paffinity/base/internal.h"
+#include "opal/mca/memory/memory.h"
+#include "opal/mca/memory/base/base.h"
 
 #include "ompi/mca/allocator/allocator.h"
 #include "ompi/mca/allocator/base/base.h"
@@ -144,6 +146,9 @@ void ompi_info::open_components()
 
   // OPAL frameworks
 
+  opal_memory_base_open();
+  component_map["memory"] = &opal_memory_base_components_opened;
+
   opal_paffinity_base_open();
   component_map["paffinity"] = &opal_paffinity_base_components_opened;
 
@@ -254,6 +259,7 @@ void ompi_info::close_components()
         orte_rml_base_close();
         mca_oob_base_close();
     
+        opal_memory_base_close();
         opal_paffinity_base_close();
 
         component_map.clear();

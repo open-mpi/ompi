@@ -18,14 +18,4 @@ include $(top_srcdir)/config/Makefile.options
 
 EXTRA_DIST = win_makefile
 
-SUBDIRS = \
-        common \
-        allocator \
-        bml \
-	btl \
-        coll \
-        io \
-        mpool \
-        pml \
-        ptl \
-        topo
+SUBDIRS = $(MCA_ompi_FRAMEWORKS)

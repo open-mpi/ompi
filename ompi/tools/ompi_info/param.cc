@@ -33,6 +33,7 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
+#include "opal/memory/memory.h"
 #include "mca/base/mca_base_param.h"
 #include "tools/ompi_info/ompi_info.h"
 
@@ -329,6 +330,7 @@ void ompi_info::do_config(bool want_all)
   const string f90(OMPI_WANT_F90_BINDINGS ? "yes" : "no");
   const string memprofile(OMPI_ENABLE_MEM_PROFILE ? "yes" : "no");
   const string memdebug(OMPI_ENABLE_MEM_DEBUG ? "yes" : "no");
+  const string memhooks(opal_mem_free_is_supported() ? "yes" : "no");
   const string debug(OMPI_ENABLE_DEBUG ? "yes" : "no");
   const string cprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string cxxprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
@@ -341,7 +343,7 @@ void ompi_info::do_config(bool want_all)
   const string paramcheck(0 == MPI_PARAM_CHECK ? "never" :
                           1 == MPI_PARAM_CHECK ? "always" : "runtime");
   string threads;
-
+  
   if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
       threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
           OMPI_HAVE_POSIX_THREADS ? "posix" : "type unknown";
@@ -563,5 +565,6 @@ void ompi_info::do_config(bool want_all)
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
+  out("Memory hook support", "option:mem-hook", memhooks);
   out("libltdl support", "option:dlopen", OMPI_WANT_LIBLTDL);
 }
