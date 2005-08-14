@@ -52,22 +52,25 @@ main(int argc, char *argv[])
 
     /* make some big malloc that should trip an unmap */
     foo = malloc(size);
+    printf("  - free of first big buffer\n");
     free(foo);
 
     /* and check munmap directly */
+    printf("  - munmap of small buffer\n");
     munmap(NULL, 0);
 
     /* see if realloc works.  This is kind of a huristic (that going
        from a small block to a big one will fail), so don't make this
        an error */
     if (ret == 0) {
-        ret = 3;
-        foo = malloc(10);
+        ret = 2;
+        printf("  - realloc\n");
+        foo = malloc(size);
         bar = malloc(10);
-        foo = realloc(foo, size);
+        foo = realloc(foo, size * 2);
         free(bar);
         free(foo);
-        if (ret != 0) {
+        if (ret > 0) {
             printf("WARNING - It appears that realloc does not trigger a callback\n");
             printf("WARNING - this may be a problem or it may be a sign that your\n");
             printf("WARNING - memory manager is better than mine\n");
