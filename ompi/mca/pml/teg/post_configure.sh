@@ -1,1 +1,1 @@
-DIRECT_CALL_HEADER="mca/pml/teg/src/pml_teg.h"
+DIRECT_CALL_HEADER="mca/pml/teg/pml_teg.h"

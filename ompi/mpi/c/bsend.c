@@ -49,7 +49,7 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
             rc = MPI_ERR_COUNT;
         } else if (type == MPI_DATATYPE_NULL) {
             rc = MPI_ERR_TYPE;
-        } else if (tag < 0 || tag > MCA_PML_CALL(max_tag)) {
+        } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;

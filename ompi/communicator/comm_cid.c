@@ -164,7 +164,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
 	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
 
-	for (i=start; i < MCA_PML_CALL(max_contextid) ; i++) {
+	for (i=start; i < mca_pml.pml_max_contextid ; i++) {
             flag=ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, i, comm);
             if (true == flag) {
                 nextlocal_cid = i;

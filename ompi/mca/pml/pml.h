@@ -472,7 +472,7 @@ struct mca_pml_base_module_1_0_0_t {
     mca_pml_base_module_start_fn_t        pml_start;
 
     /* maximum constant sizes */
-    uint32_t                              pml_max_contextid;
+    int                                   pml_max_contextid;
     int                                   pml_max_tag;
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
@@ -498,10 +498,16 @@ typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
 #define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a,b)
 #define MCA_PML_CALL(a) MCA_PML_CALL_EXPANDER(MCA_pml_DIRECT_CALL_COMPONENT, a)
 
+#define MCA_PML_CALL_STAMP(a, b) mca_pml_ ## a ## _ ## b
+#define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a,b)
+#define MCA_PML_CALL(a) MCA_PML_CALL_EXPANDER(MCA_pml_DIRECT_CALL_COMPONENT, a)
+
 #else
 #define MCA_PML_CALL(a) mca_pml.pml_ ## a
-OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 #endif
+
+OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

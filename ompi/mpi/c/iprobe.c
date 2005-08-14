@@ -48,7 +48,7 @@ int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status *status
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > MCA_PML_CALL(max_tag))) {
+        if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > mca_pml.pml_max_tag)) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_invalid(comm)) {
             rc = MPI_ERR_COMM;

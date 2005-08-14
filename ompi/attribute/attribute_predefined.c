@@ -146,7 +146,7 @@ int ompi_attr_create_predefined(void)
        where triggers aren't set, there won't be COMM_SPAWN, so APPNUM
        probably isn't a big deal. */
 
-    if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, MCA_PML_CALL(max_tag))) ||
+    if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, mca_pml.pml_max_tag)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||

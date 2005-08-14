@@ -52,11 +52,11 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
             rc = MPI_ERR_TYPE;
         } else if (dest != MPI_PROC_NULL && ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;
-        } else if (sendtag < 0 || sendtag > MCA_PML_CALL(max_tag) ) {
+        } else if (sendtag < 0 || sendtag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
         } else if (source != MPI_PROC_NULL && source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
-        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > MCA_PML_CALL(max_tag))) {
+        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > mca_pml.pml_max_tag)) {
             rc = MPI_ERR_TAG;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
