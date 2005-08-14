@@ -3,38 +3,9 @@
 #include "ompi_config.h"
 
 #include <unistd.h>
-#include <unistd.h>
 #include <sys/mman.h>
-#include <sys/types.h>
 
-#include "opal/mca/memory/memory.h"
 #include "opal/memory/memory_internal.h"
-
-const opal_memory_base_component_1_0_0_t mca_memory_ptmalloc2_component = {
-    /* First, the mca_component_t struct containing meta information
-       about the component itself */
-    {
-        /* Indicate that we are a memory v1.0.0 component (which also
-           implies a specific MCA version) */
-        OPAL_MEMORY_BASE_VERSION_1_0_0,
-
-        /* Component name and version */
-        "ptmalloc2s",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
-
-        /* Component open and close functions */
-        NULL,
-        NULL
-    },
-
-    /* Next the MCA v1.0.0 component meta data */
-    {
-        /* Whether the component is checkpointable or not */
-        true
-    },
-};
 
 /*
  * Not all systems have sbrk() declared, since it's technically not a
@@ -55,12 +26,7 @@ opal_mem_free_ptmalloc2_sbrk(int inc)
   return sbrk(inc);
 }
 
-static int
-opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
-{
-  opal_mem_free_release_hook(start, length);
-  return munmap(start, length);
-}
+extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length);
 
 #define MORECORE opal_mem_free_ptmalloc2_sbrk
 #define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b)
@@ -77,24 +43,6 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
 #ifndef __GNUC__
 #define __const const
 #endif
-
-/* need to intercept munmap from the user as well as the usual
-   malloc.  munmap is a weak symbol on any platform that I know of that
-   supports malloc hooks, so we can just intercept it like this... */
-int 
-munmap(void* addr, size_t len) {
-{
-    static int (*realmunmap)(void*, size_t);
-    /* dispatch about the pending release */
-    opal_mem_free_release_hook(addr, len);
-
-    if (NULL == realmunmap) {
-        realmunmap = dlsym(RTLD_NEXT, "munmap");
-    }
-
-    return realmunmap(addr, len);
-}
-
 
 /********************* BEGIN OMPI CHANGES ******************************/
 
@@ -955,7 +903,7 @@ Void_t*  public_mALLOc();
 #ifdef libc_hidden_proto
 libc_hidden_proto (public_mALLOc)
 #endif
-       static void here(void);
+
 /*
   free(Void_t* p)
   Releases the chunk of memory pointed to by p, that had been previously
@@ -3729,7 +3677,7 @@ public_cALLOc(size_t n, size_t elem_size)
 #if MORECORE_CLEARS < 2
   /* Only newly allocated memory is guaranteed to be cleared.  */
   if (av == &main_arena &&
-      oldtopsize < mp_.sbrk_base + av->max_system_mem - (char *)oldtop)
+      oldtopsize < (INTERNAL_SIZE_T)(mp_.sbrk_base + av->max_system_mem - (char *)oldtop))
     oldtopsize = (mp_.sbrk_base + av->max_system_mem - (char *)oldtop);
 #endif
 #endif

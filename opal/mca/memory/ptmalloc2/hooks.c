@@ -564,9 +564,9 @@ public_sET_STATe(Void_t* msptr)
   /* There are no fastchunks.  */
   clear_fastchunks(&main_arena);
   set_max_fast(&main_arena, DEFAULT_MXFAST);
-  for (i=0; i<NFASTBINS; ++i)
+  for (i=0; i<(int)NFASTBINS; ++i)
     main_arena.fastbins[i] = 0;
-  for (i=0; i<BINMAPSIZE; ++i)
+  for (i=0; i<(int)BINMAPSIZE; ++i)
     main_arena.binmap[i] = 0;
   top(&main_arena) = ms->av[2];
   main_arena.last_remainder = 0;
@@ -576,8 +576,8 @@ public_sET_STATe(Void_t* msptr)
       assert(ms->av[2*i+3] == 0);
       first(b) = last(b) = b;
     } else {
-      if(i<NSMALLBINS || (largebin_index(chunksize(ms->av[2*i+2]))==i &&
-			  largebin_index(chunksize(ms->av[2*i+3]))==i)) {
+      if(i<(int)NSMALLBINS || ((int)largebin_index(chunksize(ms->av[2*i+2]))==i &&
+			  (int)largebin_index(chunksize(ms->av[2*i+3]))==i)) {
 	first(b) = ms->av[2*i+2];
 	last(b) = ms->av[2*i+3];
 	/* Make sure the links to the bins within the heap are correct.  */

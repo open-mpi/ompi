@@ -91,7 +91,7 @@ void public_mSTATs()
   struct malloc_global_info mgi;
   struct malloc_arena_info mai;
   unsigned long in_use_b, system_b, avail_b;
-#if THREAD_STATS
+#if defined(THREAD_STATS) && THREAD_STATS
   long stat_lock_direct = 0, stat_lock_loop = 0, stat_lock_wait = 0;
 #endif
 
@@ -120,7 +120,7 @@ void public_mSTATs()
 #endif
     system_b += mai.system_mem;
     in_use_b += mai.system_mem - avail_b;
-#if THREAD_STATS
+#if defined(THREAD_STATS) && THREAD_STATS
     stat_lock_direct += mai.stat_lock_direct;
     stat_lock_loop += mai.stat_lock_loop;
     stat_lock_wait += mai.stat_lock_wait;
@@ -142,7 +142,7 @@ void public_mSTATs()
   fprintf(stderr, "max mmap bytes   = %10lu\n",
 	  (unsigned long)mgi.max_mmapped_mem);
 #endif
-#if THREAD_STATS
+#if defined(THREAD_STATS) && THREAD_STATS
   fprintf(stderr, "heaps created    = %10d\n",  mgi.stat_n_heaps);
   fprintf(stderr, "locked directly  = %10ld\n", stat_lock_direct);
   fprintf(stderr, "locked in loop   = %10ld\n", stat_lock_loop);
