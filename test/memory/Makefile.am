@@ -24,12 +24,14 @@ TESTS = \
 	$(check_PROGRAMS)
 
 opal_memory_basic_SOURCES = opal_memory_basic.c
+opal_memory_basic_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 opal_memory_basic_LDADD = \
         $(top_builddir)/opal/libopal.la \
         $(top_builddir)/test/support/libsupport.a 
 opal_memory_basic_DEPENDENCIES = $(opal_memory_basic_LDADD)
 
 opal_memory_speed_SOURCES = opal_memory_speed.c
+opal_memory_speed_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 opal_memory_speed_LDADD = \
         $(top_builddir)/opal/libopal.la \
         $(top_builddir)/test/support/libsupport.a 
