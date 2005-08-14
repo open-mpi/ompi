@@ -24,6 +24,7 @@
 #include "opal/memory/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/memory/base/base.h"
 
 /**
  * Initialize the OPAL utilities
@@ -46,6 +47,12 @@ int opal_init(void)
     
     /* initialize the mca */
     mca_base_open();
+
+    /* open the memory manager components.  Memory hooks may be
+       triggered before this (any time after mem_free_init(),
+       actually).  This is a hook available for memory manager hooks
+       without good initialization routine support */
+    opal_memory_base_open();
 
     return ORTE_SUCCESS;
 }
