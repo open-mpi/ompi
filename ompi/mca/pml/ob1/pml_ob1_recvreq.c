@@ -122,7 +122,7 @@ static void mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_rendezvous_hdr_t* hdr)
 {
     ompi_proc_t* proc = (ompi_proc_t*) recvreq->req_proc;
-    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
+    mca_bml_base_endpoint_t* bml_endpoint = NULL; 
     mca_btl_base_descriptor_t* des;
     mca_bml_base_btl_t* bml_btl;
     mca_pml_ob1_recv_frag_t* frag;
@@ -135,6 +135,7 @@ static void mca_pml_ob1_recv_request_ack(
                 recvreq->req_recv.req_base.req_comm, hdr->hdr_match.hdr_src);
         proc = recvreq->req_proc = ompi_proc;
     }
+    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     
     /* allocate descriptor */
