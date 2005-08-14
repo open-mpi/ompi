@@ -72,7 +72,7 @@ do {                                                                            
         }                                                                                \
     } else {                                                                             \
         btl->btl_free(btl->btl,descriptor);                                    \
-    }
+    }                                                                          \
 } while(0)
 #else
 #define MCA_BML_R2_BTL_DES_RETURN(btl, descriptor)                            \
