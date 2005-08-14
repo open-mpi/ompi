@@ -98,7 +98,7 @@ int mca_btl_gm_add_procs(
          */
         gm_endpoint = OBJ_NEW(mca_btl_gm_endpoint_t);
         if(NULL == gm_endpoint) {
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&gm_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -106,11 +106,11 @@ int mca_btl_gm_add_procs(
         rc = mca_btl_gm_proc_insert(gm_proc, gm_endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(gm_endpoint);
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&gm_proc->proc_lock);
             continue;
         }
         ompi_bitmap_set_bit(reachable, i);
-        OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&gm_proc->proc_lock);
         peers[i] = gm_endpoint;
     }
     return OMPI_SUCCESS;

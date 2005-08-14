@@ -49,7 +49,7 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
     if(NULL == proc) {                                                     \
        return OMPI_ERR_OUT_OF_RESOURCE;                                    \
     }                                                                      \
-    OPAL_THREAD_SCOPED_LOCK(&proc->proc_lock,                              \
+    OPAL_THREAD_SCOPED_LOCK(&proc->base.proc_lock,                        \
        (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));        \
     ptl_base = ptl_proc->ptl_base;                                         \
     /*                                                                     \

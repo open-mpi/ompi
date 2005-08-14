@@ -150,7 +150,6 @@ int mca_bml_r2_add_procs(
     size_t p;
     int rc;
     size_t p_index;
-    struct mca_bml_base_btl_t** bml_btls = NULL; 
     struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;  
     
     if(nprocs == 0)
@@ -171,10 +170,12 @@ int mca_bml_r2_add_procs(
     
 
     /* attempt to add all procs to each r2 */
-    btl_endpoints = (struct mca_btl_base_endpoint_t **) malloc(nprocs * sizeof(struct mca_btl_base_endpoint_t*)); 
-    bml_endpoints = (struct mca_bml_base_endpoint_t **)malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
-    bml_btls = (struct mca_bml_base_btl_t **) malloc(nprocs * sizeof(struct mca_bml_base_btl_t*)); 
-
+    btl_endpoints = (struct mca_btl_base_endpoint_t **) 
+        malloc(nprocs * sizeof(struct mca_btl_base_endpoint_t*)); 
+    bml_endpoints = (struct mca_bml_base_endpoint_t **)
+        malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
+    memset(bml_endpoints, 0, nprocs * sizeof(struct mca_bml_base_endpoint_t*));
+    
     for(p_index = 0; p_index < mca_bml_r2.num_btl_modules; p_index++) {
         mca_btl_base_module_t* btl = mca_bml_r2.btl_modules[p_index];
         int btl_inuse = 0;
@@ -185,10 +186,7 @@ int mca_bml_r2_add_procs(
          * that is passed back to the r2 on data transfer calls
          */
         ompi_bitmap_clear_all_bits(reachable);
-        memset(bml_endpoints, 0, nprocs * sizeof(struct mca_bml_base_endpoint_t*));
         memset(btl_endpoints, 0, nprocs *sizeof(struct mca_btl_base_endpoint_t*)); 
-        memset(bml_btls, 0, nprocs * sizeof(struct mca_bml_base_btl_t*)); 
-
 
         rc = btl->btl_add_procs(btl, nprocs, procs, btl_endpoints, reachable);
         if(OMPI_SUCCESS != rc) {
@@ -303,8 +301,8 @@ int mca_bml_r2_add_procs(
         if(NULL == bml_endpoint)
             continue;
 
-        /* (1) determine the total bandwidth available across all r2s
-         *     note that we need to do this here, as we may already have r2s configured
+        /* (1) determine the total bandwidth available across all btls
+         *     note that we need to do this here, as we may already have btls configured
          * (2) determine the highest priority ranking for latency
          */
         n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send); 
