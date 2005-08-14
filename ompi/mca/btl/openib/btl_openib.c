@@ -102,7 +102,7 @@ int mca_btl_openib_add_procs(
          */
         ib_peer = OBJ_NEW(mca_btl_openib_endpoint_t);
         if(NULL == ib_peer) {
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&tb_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -110,12 +110,12 @@ int mca_btl_openib_add_procs(
         rc = mca_btl_openib_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ib_peer);
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
-        OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         peers[i] = ib_peer;
     }
 

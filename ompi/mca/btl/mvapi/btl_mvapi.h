@@ -192,7 +192,7 @@ struct mca_btl_mvapi_module_t {
                                       post_srr_high_mvapi_btl->nic, \
                                       post_srr_high_mvapi_btl->srq_hndl_high); \
         } \
-        OPAL_THREAD_UNLOCK(&post_rr_high_mvapi_btl->ib_lock); \
+        OPAL_THREAD_UNLOCK(&post_srr_high_mvapi_btl->ib_lock); \
 }
 
 #define MCA_BTL_MVAPI_POST_SRR_LOW(post_srr_low_mvapi_btl, \
