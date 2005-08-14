@@ -31,7 +31,7 @@
 #include "mca/pml/base/pml_base_bsend.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/btl/btl.h"
-
+#include "ompi/datatype/datatype.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

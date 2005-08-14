@@ -50,7 +50,7 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
             rc = MPI_ERR_COUNT;
         } else if (type == MPI_DATATYPE_NULL) {
             rc = MPI_ERR_TYPE;
-        } else if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > MCA_PML_CALL(max_tag))) {
+        } else if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > mca_pml.pml_max_tag)) {
             rc = MPI_ERR_TAG;
         } else if (source != MPI_ANY_SOURCE && 
                    source != MPI_PROC_NULL && 
