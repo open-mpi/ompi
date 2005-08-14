@@ -31,5 +31,33 @@ AC_DEFUN([MCA_memory_darwin7_CONFIG],[
                         [Use TYPE for intercepting memory management
                          calls to control memory pinning.])])
 
-    $2
+    # First, a mistaken user test
+    AS_IF([test "$with_memory_manager" = "darwin7"],
+          [AS_IF([test "`echo $host | grep apple-darwin`" == ""],
+                 [AC_MSG_WARN([*** Using Dawrin malloc while not on Darwin system will not work.])
+                  AC_MSG_ERROR([*** Aborting to save you the effort])])])
+
+    AS_IF([test "$with_memory_manager" = "darwin7"],
+          [memory_darwin7_happy="yes"
+           memory_darwin7_should_use=1],
+          [memory_darwin7_should_use=0
+           AS_IF([test "$with_memory_manager" = ""],
+                 [ # make this "yes" if we ever want to be default
+                  memory_darwin7_happy="no"],
+                 [memory_darwin7_happy="no"])])
+
+    # disable if we aren't on Darwin
+    AS_IF([test "$memory_darwin7_happy" = "yes"],
+          [AS_IF([test "`echo $host | grep apple-darwin`" == ""],
+                 [memory_darwin7_happy="no"])])
+
+   AS_IF([test "$memory_darwin7_happy" = "no" -a \
+               "$memory_darwin7_should_use" = "1"],
+         [AC_MSG_ERROR([Darwin7 memory management requested but not available.  Aborting.])])
+
+    AS_IF([test "$memory_darwin7_happy" = "yes"],
+          [memory_darwin7_WRAPPER_ALWAYS_EXTRA_LDFLAGS="-Wl,-u,_opal_darwin_malloc_linker_hack -Wl,-multiply_defined,suppress -Wl,-force_flat_namespace -Wl,-flat_namespace"
+           memory_darwin7_LIBMPI_ALWAYS_EXTRA_LDFLAGS="-Wl,-multiply_defined,suppress"
+           $1],
+          [$2])
 ])

@@ -25,19 +25,19 @@
 
 /*
  * Changes from original file:
- * LAM/MPI team, June 2004
+ * Open MPI team, August 2005
  *
  * - changed include files to allow building without Darwin internal
  *   source files
- * - Added hook into deallocation algorithm to call LAM/MPI
+ * - Added hook into deallocation algorithm to call Open MPI
  *   deregistration function
  *
- * Changes marked with LAM/MPI comment in source code
+ * Changes marked with Open MPI comment in source code
  */
 
 #import "scalable_malloc.h"
 
-#if 0 /* LAM/MPI */
+#if 0 /* Open MPI */
 #import <pthread_internals.h>
 #endif /* #if 0 */
 
@@ -45,13 +45,11 @@
 #import <libc.h>
 #include <mach/vm_statistics.h>
 
-/* LAM/MPI - begin changes */
+/* Open MPI - begin changes */
 #include <mach/mach_init.h>
 #include <machine/byte_order.h>
 #include "pthread_spinlock.h"
-
-#include "lam_config.h"
-#include "malloc_wrapper.h"
+#include "opal/memory/memory_internal.h"
 
 /*
  * Need to convince the linker that we need this version of this file,
@@ -59,7 +57,7 @@
  * we instruct the linker to pull in first (and is in the call stack from
  * MPI_Init().
  */
-void lam_darwin_malloc_linker_hack()
+void opal_darwin_malloc_linker_hack()
 {
   /*  need to do some work to keep us from getting optimized away */
 }
@@ -68,7 +66,7 @@ void lam_darwin_malloc_linker_hack()
 #define __PRETTY_FUNCTION__ ""
 #endif
 
-/* LAM/MPI - end changes */
+/* Open MPI - end changes */
 
 /*********************	DEFINITIONS	************************/
 
@@ -397,7 +395,9 @@ deallocate_pages(szone_t *szone, vm_address_t addr, size_t size, unsigned debug_
 	addr -= 1 << vm_page_shift;
 	size += 2 * (1 << vm_page_shift);
     }
-    lam_handle_free((void*) addr, size);
+    /* Open MPI change */
+    opal_mem_free_release_hook((void*) addr, size);
+    /* Open MPI change */
     err = vm_deallocate(mach_task_self(), addr, size);
     if (err) {
 	szone_error(szone, "Can't deallocate_pages region", (void *)addr);

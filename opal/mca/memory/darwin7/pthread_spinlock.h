@@ -51,12 +51,12 @@
 
 /*
  * Changes from original file:
- * LAM/MPI team, June 2004
+ * Open MPI team, August 2005
  *
  * - changed include files to allow building without Darwin internal
  *   source files
  *
- * Changes marked with LAM/MPI comment in source code
+ * Changes marked with Open MPI comment in source code
  */
 
 #ifndef _POSIX_PTHREAD_SPINLOCK_H
@@ -64,9 +64,9 @@
 
 #include <mach/mach.h>
 #define __APPLE_API_PRIVATE
-#if 0 /* LAM/MPI Change */
+#if 0 /* Open MPI Change */
 #include <machine/cpu_capabilities.h>
-#endif /* LAM/MPI Change */
+#endif /* Open MPI Change */
 
 #ifndef __POSIX_LIB__
 #define __POSIX_LIB__
