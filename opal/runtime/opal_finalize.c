@@ -25,6 +25,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "orte/include/orte_constants.h"
+#include "opal/mca/memory/base/base.h"
 
 /**
  * Finalize the OPAL utilities
@@ -36,6 +37,13 @@
  */
 int opal_finalize(void)
 {
+
+    /* close the memory manager components.  Registered hooks can
+       still be fired any time between now and the call to
+       opal_mem_free_finalize(), and callbacks from the memory manager
+       hooks to the bowels of the mem_free code can still occur any
+       time between now and end of application (even post main()!) */
+    opal_memory_base_close();
 
     /* finalize the mca */
     mca_base_close();
