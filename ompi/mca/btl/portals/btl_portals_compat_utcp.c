@@ -46,7 +46,7 @@ mca_btl_portals_init_compat(mca_btl_portals_component_t *comp)
 {
     ptl_process_id_t info;
     int ret, max_interfaces;
-#if 1 /* send all the portals internal debug to a file or stderr */
+#if 0 /* send all the portals internal debug to a file or stderr */
     FILE *output;
     char *tmp;
 
