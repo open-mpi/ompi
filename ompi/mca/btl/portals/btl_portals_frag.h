@@ -28,7 +28,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t);
  */
 struct mca_btl_portals_frag_t {
     mca_btl_base_descriptor_t base; 
-    mca_btl_base_segment_t segment; 
+    mca_btl_base_segment_t segments[2]; 
+    ptl_md_iovec_t iov[2];
     /* needed for retransmit case */
     struct mca_btl_base_endpoint_t *endpoint; 
     mca_btl_base_header_t hdr;

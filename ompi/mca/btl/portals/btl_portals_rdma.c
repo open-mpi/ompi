@@ -39,8 +39,10 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
     frag->type = mca_btl_portals_frag_type_rdma;
 
     /* setup the send */
-    md.start = frag->segment.seg_addr.pval;
-    md.length = frag->segment.seg_len;
+    assert(1 == frag->base.des_src_cnt);
+
+    md.start = frag->segments[0].seg_addr.pval;
+    md.length = frag->segments[0].seg_len;
     md.threshold = 2; /* unlink after send & ack */
     md.max_size = 0;
     md.options = PTL_MD_EVENT_START_DISABLE;
@@ -93,9 +95,9 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
     frag->hdr.tag = MCA_BTL_TAG_MAX;
     frag->type = mca_btl_portals_frag_type_rdma;
 
-    /* setup the send */
-    md.start = frag->segment.seg_addr.pval;
-    md.length = frag->segment.seg_len;
+    /* setup the get */
+    md.start = frag->segments[0].seg_addr.pval;
+    md.length = frag->segments[0].seg_len;
     md.threshold = 2; /* unlink after send & ack */
     md.max_size = 0;
     md.options = PTL_MD_EVENT_START_DISABLE;

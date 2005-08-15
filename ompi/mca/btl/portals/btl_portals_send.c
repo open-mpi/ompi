@@ -61,8 +61,17 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
         int ret;
 
         /* setup the send */
-        mca_btl_portals_module.md_send.start = frag->segment.seg_addr.pval;
-        mca_btl_portals_module.md_send.length = frag->segment.seg_len;
+        if (1 == frag->base.des_src_cnt) {
+            mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
+            mca_btl_portals_module.md_send.length = frag->segments[0].seg_len;
+            mca_btl_portals_module.md_send.options = PTL_MD_EVENT_START_DISABLE;
+        } else {
+            assert(2 == frag->base.des_src_cnt);
+            mca_btl_portals_module.md_send.start = frag->iov;
+            mca_btl_portals_module.md_send.length = 2;
+            mca_btl_portals_module.md_send.options = 
+                PTL_MD_EVENT_START_DISABLE | PTL_MD_IOVEC;
+        }
         mca_btl_portals_module.md_send.user_ptr = frag; /* keep a pointer to ourselves */
 
         /* make a free-floater */
