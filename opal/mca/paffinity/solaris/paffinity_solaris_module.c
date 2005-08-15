@@ -22,7 +22,7 @@
 #include <sys/processor.h>
 #include <sys/procset.h>
 
-#include "opal/include/opal_constants.h"
+#include "opal/include/constants.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"

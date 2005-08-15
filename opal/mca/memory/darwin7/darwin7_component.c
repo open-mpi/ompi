@@ -18,7 +18,7 @@
 
 #include "opal/memory/memory_internal.h"
 #include "opal/mca/memory/memory.h"
-#include "opal/include/opal_constants.h"
+#include "opal/include/constants.h"
 
 static int
 darwin7_open(void)
