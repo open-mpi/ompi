@@ -64,7 +64,7 @@ AC_DEFUN([MCA_btl_portals_CONFIG_VALS], [
         [Number of receive memory descriptors])
 
     MCA_btl_portals_CONFIG_VAL([min-rdma-size],
-        [OMPI_BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE], [0],
+        [OMPI_BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE], [65536],
         [min size for rdma fragments])
     MCA_btl_portals_CONFIG_VAL([max-rdma-size],
         [OMPI_BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE], [2147483647],
