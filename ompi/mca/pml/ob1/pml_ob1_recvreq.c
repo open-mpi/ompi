@@ -138,19 +138,6 @@ static void mca_pml_ob1_recv_request_ack(
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     
-    /* allocate descriptor */
-    MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, sizeof(mca_pml_ob1_ack_hdr_t));
-    if(NULL == des) {
-        goto retry;
-    }
-
-    /* fill out header */
-    ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
-    ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
-    ack->hdr_common.hdr_flags = 0;
-    ack->hdr_src_req = hdr->hdr_src_req;
-    ack->hdr_dst_req.pval = recvreq;
-
     /*
      * lookup request buffer to determine if the memory is already
      * registered. if registered on both sides - do one rdma for
@@ -189,24 +176,34 @@ static void mca_pml_ob1_recv_request_ack(
                 ompi_convertor_set_position(
                                             &recvreq->req_recv.req_convertor,
                                             &recvreq->req_rdma_offset);
-                ack->hdr_rdma_offset = recvreq->req_rdma_offset;
             } else {
                 recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
-                ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
             }
 
-        /* start rdma at the current fragment offset */
+        /* start rdma at the current fragment offset - no need to send an ack in this case */
         } else { 
             recvreq->req_rdma_offset = hdr->hdr_frag_length;
-            ack->hdr_rdma_offset = hdr->hdr_frag_length;
+            return;
         }
-    }
 
     /* zero byte message */
-    else { 
+    } else { 
         recvreq->req_rdma_offset = 0;
-        ack->hdr_rdma_offset = 0;
     }
+
+    /* allocate descriptor */
+    MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, sizeof(mca_pml_ob1_ack_hdr_t));
+    if(NULL == des) {
+        goto retry;
+    }
+
+    /* fill out header */
+    ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
+    ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
+    ack->hdr_common.hdr_flags = 0;
+    ack->hdr_src_req = hdr->hdr_src_req;
+    ack->hdr_dst_req.pval = recvreq;
+    ack->hdr_rdma_offset = recvreq->req_rdma_offset;
 
     /* initialize descriptor */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
