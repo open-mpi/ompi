@@ -48,8 +48,9 @@ int orte_pls_base_open(void)
 
     /* Debugging / verbose output */
 
-    param = mca_base_param_register_int("pls", "base", "verbose", NULL, 0);
-    mca_base_param_lookup_int(param, &value);
+    param = mca_base_param_reg_int_name("pls_base", "verbose",
+                                        "Verbosity level for the pls framework",
+                                        false, false, 0, &value);
     if (value != 0) {
         orte_pls_base.pls_output = opal_output_open(NULL);
     } else {
@@ -62,7 +63,8 @@ int orte_pls_base_open(void)
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 
-        mca_base_components_open("pls", 0, mca_pls_base_static_components, 
+        mca_base_components_open("pls", orte_pls_base.pls_output,
+                                 mca_pls_base_static_components, 
                                  &orte_pls_base.pls_opened, true)) {
        return ORTE_ERROR;
     }

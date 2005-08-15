@@ -102,7 +102,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
     }
 #endif
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -123,17 +123,17 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
             /* disable echo */
             struct termios term_attrs;
             if (tcgetattr(opts->p_stdout[1], &term_attrs) < 0) {
-                return OMPI_ERROR;
+                return ORTE_ERROR;
             }
             term_attrs.c_lflag &= ~ (ECHO | ECHOE | ECHOK | 
                                      ECHOCTL | ECHOKE | ECHONL);
             if (tcsetattr(opts->p_stdout[1], TCSANOW, &term_attrs) == -1) {
-                return OMPI_ERROR;
+                return ORTE_ERROR;
             }
 
             /* and connect the pty to stdin */
             ret = dup2(opts->p_stdout[1], fileno(stdin)); 
-            if (ret < 0) return OMPI_ERROR;
+            if (ret < 0) return ORTE_ERROR;
 #endif
         } else {
             int fd;
@@ -145,18 +145,18 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
             }
         }
         ret = dup2(opts->p_stdout[1], fileno(stdout));
-        if (ret < 0) return OMPI_ERROR;
+        if (ret < 0) return ORTE_ERROR;
 
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));
-            if (ret < 0) return OMPI_ERROR;
+            if (ret < 0) return ORTE_ERROR;
             close(opts->p_stdout[1]); 
         }
         if (opts->connect_stdin) {
             if(opts->p_stdin[0] != fileno(stdin)) {
                 ret = dup2(opts->p_stdin[1], fileno(stdin));
-                if (ret < 0) return OMPI_ERROR;
+                if (ret < 0) return ORTE_ERROR;
                 close(opts->p_stdin[1]); 
             }
         } else {
@@ -173,11 +173,11 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
     }
     if(opts->p_stderr[1] != fileno(stderr)) {
         ret = dup2(opts->p_stderr[1], fileno(stderr));
-        if (ret < 0) return OMPI_ERROR;
+        if (ret < 0) return ORTE_ERROR;
         close(opts->p_stderr[1]);
     }
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -223,5 +223,5 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
         return ret;
     }
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }

@@ -65,7 +65,7 @@ int orte_dps_unload(orte_buffer_t *buffer, void **payload,
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

@@ -101,13 +101,13 @@ int mca_oob_send_packed_nb(
 
     /* first build iovec from buffer information */
     rc = orte_dps.unload(buffer, &dataptr, &datalen);
-    if (rc != OMPI_SUCCESS) {
+    if (rc != ORTE_SUCCESS) {
         return rc;
     }
 
     /* allocate a struct to pass into callback */
     if(NULL == (oob_cbdata = malloc(sizeof(mca_oob_send_cbdata_t)))) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
     oob_cbdata->cbbuf = buffer;
     oob_cbdata->cbfunc = cbfunc;

@@ -29,14 +29,14 @@
 #include <sys/wait.h>
 #endif
 
-#include "runtime/orte_wait.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
-#include "include/constants.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "orte/include/orte_constants.h"
+#include "orte/runtime/orte_wait.h"
 
 #ifdef HAVE_WAITPID
 
@@ -165,7 +165,7 @@ orte_wait_init(void)
                    &handler);
 
     opal_event_add(&handler, NULL);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -190,7 +190,7 @@ orte_wait_finalize(void)
     OBJ_DESTRUCT(&pending_pids);
     OBJ_DESTRUCT(&registered_cb);
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 int 
@@ -215,7 +215,7 @@ orte_wait_kill(int sig)
         OBJ_RELEASE(item);
     } 
     OPAL_THREAD_UNLOCK(&mutex);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -228,7 +228,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
     pid_t ret;
 
     if ((wpid <= 0) || (0 != (options & WUNTRACED))) {
-        errno = OMPI_ERR_NOT_IMPLEMENTED;
+        errno = ORTE_ERR_NOT_IMPLEMENTED;
         return (pid_t) -1;
     }
 
@@ -324,8 +324,8 @@ orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
 {
     int ret;
 
-    if (wpid <= 0) return OMPI_ERR_NOT_IMPLEMENTED;
-    if (NULL == callback) return OMPI_ERR_BAD_PARAM;
+    if (wpid <= 0) return ORTE_ERR_NOT_IMPLEMENTED;
+    if (NULL == callback) return ORTE_ERR_BAD_PARAM;
 
     OPAL_THREAD_LOCK(&mutex);
     ret = register_callback(wpid, callback, data);
@@ -341,7 +341,7 @@ orte_wait_cb_cancel(pid_t wpid)
 {
     int ret;
 
-    if (wpid <= 0) return OMPI_ERR_BAD_PARAM;
+    if (wpid <= 0) return ORTE_ERR_BAD_PARAM;
 
     OPAL_THREAD_LOCK(&mutex);
     do_waitall(0);
@@ -374,7 +374,7 @@ orte_wait_cb_disable()
     cb_enabled = false;
     OPAL_THREAD_UNLOCK(&mutex);
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -386,7 +386,7 @@ orte_wait_cb_enable()
     do_waitall(0);
     OPAL_THREAD_UNLOCK(&mutex);
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -522,8 +522,8 @@ register_callback(pid_t pid, orte_wait_fn_t callback, void *data)
 
     /* register the callback */
     reg_cb = find_waiting_cb(pid, true);
-    if (NULL == reg_cb) return OMPI_ERROR;
-    if (NULL != reg_cb->callback) return OMPI_EXISTS;
+    if (NULL == reg_cb) return ORTE_ERROR;
+    if (NULL != reg_cb->callback) return ORTE_EXISTS;
 
     reg_cb->pid = pid;
     reg_cb->callback = callback;
@@ -534,7 +534,7 @@ register_callback(pid_t pid, orte_wait_fn_t callback, void *data)
     if (NULL != pending) {
         trigger_callback(reg_cb, pending);
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -545,11 +545,11 @@ unregister_callback(pid_t pid)
 
     /* register the callback */
     reg_cb = find_waiting_cb(pid, false);
-    if (NULL == reg_cb) return OMPI_ERR_BAD_PARAM;
+    if (NULL == reg_cb) return ORTE_ERR_BAD_PARAM;
 
     opal_list_remove_item(&registered_cb, (opal_list_item_t*) reg_cb);
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

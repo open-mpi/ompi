@@ -131,9 +131,9 @@ int orte_ns_base_open(void)
 
     /* Debugging / verbose output */
     
-    param = mca_base_param_register_int("ns", "base", "verbose",
-                                        NULL, 0);
-    mca_base_param_lookup_int(param, &value);
+    param = mca_base_param_reg_int_name("ns_base", "verbose",
+                                        "Verbosity level for the ns framework",
+                                        false, false, 0, &value);
     if (value != 0) {
         mca_ns_base_output = opal_output_open(NULL);
     } else {
@@ -176,7 +176,8 @@ int orte_ns_base_open(void)
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 
-        mca_base_components_open("ns", 0, mca_ns_base_static_components, 
+        mca_base_components_open("ns", mca_ns_base_output,
+                                 mca_ns_base_static_components, 
                                  &mca_ns_base_components_available, true)) {
         return ORTE_ERROR;
     }

@@ -40,7 +40,7 @@ orte_sds_base_open(void)
     OBJ_CONSTRUCT(&orte_sds_base_components_available, opal_list_t);
 
     /* Open up all available components */
-    if (ORTE_SUCCESS != 
+    if (OMPI_SUCCESS != 
         mca_base_components_open("sds", 0, mca_sds_base_static_components, 
                                  &orte_sds_base_components_available,
                                  true)) {

@@ -17,17 +17,19 @@
 /** @file **/
 
 #include "ompi_config.h"
+
 #include <string.h>
-#include "include/constants.h"
-#include "util/proc_info.h"
-#include "util/sys_info.h"
-#include "runtime/runtime.h"
+
+#include "opal/util/sys_info.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-#include "mca/ns/ns_types.h"
-#include "mca/gpr/gpr_types.h"
+#include "orte/runtime/runtime.h"
+#include "orte/include/orte_constants.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/gpr/gpr_types.h"
 
 
 static opal_mutex_t ompi_rte_mutex;
@@ -96,11 +98,11 @@ int orte_monitor_procs_registered(void)
         ompi_rte_waiting = false;
         if(ompi_rte_job_started == false) {
             opal_mutex_unlock(&ompi_rte_mutex);
-            return OMPI_ERROR;
+            return ORTE_ERROR;
         }
     }
     OPAL_THREAD_UNLOCK(&ompi_rte_mutex);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 int orte_monitor_procs_unregistered(void)
@@ -114,6 +116,6 @@ int orte_monitor_procs_unregistered(void)
     }
 
     OPAL_THREAD_UNLOCK(&ompi_rte_mutex);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

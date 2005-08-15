@@ -272,7 +272,7 @@ static int map_app_by_slot(
     /* Did we allocate everything? */
 
     if (num_alloc < app->num_procs) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     map->num_procs = num_alloc;

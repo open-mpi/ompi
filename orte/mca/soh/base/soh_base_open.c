@@ -52,9 +52,9 @@ orte_soh_base_t orte_soh_base;
 
 orte_soh_base_module_t orte_soh = {
 
-	orte_soh_base_get_proc_soh,
+    orte_soh_base_get_proc_soh,
     orte_soh_base_set_proc_soh,
-	orte_soh_base_get_node_soh_not_available,
+    orte_soh_base_get_node_soh_not_available,
     orte_soh_base_set_node_soh_not_available,
     orte_soh_base_get_job_soh,
     orte_soh_base_set_job_soh,
@@ -77,8 +77,9 @@ int orte_soh_base_open(void)
   /* setup output for debug messages */
 
     orte_soh_base.soh_output = opal_output_open(NULL);
-    param = mca_base_param_register_int("soh", "base", "verbose", NULL, 0);
-    mca_base_param_lookup_int(param, &value);
+    param = mca_base_param_reg_int_name("soh_base", "verbose", 
+                                        "Verbosity level for the soh framework",
+                                        false, false, 0, &value);
     if (value != 0) {
         orte_soh_base.soh_output = opal_output_open(NULL);
     } else {
@@ -122,15 +123,13 @@ int orte_soh_base_open(void)
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
-		mca_base_components_open("soh", 0, mca_soh_base_static_components,
-                                 &orte_soh_base.soh_components, true)) {
-
-/* fprintf(stderr,"orte_soh_base_open:failed\n"); */
-    return OMPI_ERROR;
+      mca_base_components_open("soh", orte_soh_base.soh_output,
+                               mca_soh_base_static_components,
+                               &orte_soh_base.soh_components, true)) {
+      return ORTE_ERROR;
   }
 
   /* All done */
-/* fprintf(stderr,"orte_soh_base_open:success\n"); */
 
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }
