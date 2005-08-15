@@ -84,7 +84,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     mca_common_sm_file_header_t* seg;
     mca_common_sm_mmap_t* map;
     struct stat s_stat;
-    unsigned char *addr;
+    unsigned char *addr = NULL;
     size_t tmp,mem_offset;
 
     /* input parameter error checks */
