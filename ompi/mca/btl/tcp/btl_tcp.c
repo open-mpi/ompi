@@ -289,6 +289,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
+    *size = max_data;
     return &frag->base;
 }
 

@@ -218,7 +218,7 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_module.super.btl_max_rdma_size = 
         mca_btl_tcp_param_register_int("max_rdma_size", INT_MAX); 
     mca_btl_tcp_module.super.btl_flags  = 
-        mca_btl_tcp_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
+        mca_btl_tcp_param_register_int("flags", MCA_BTL_FLAGS_RDMA|MCA_BTL_FLAGS_SEND_INPLACE); 
     return OMPI_SUCCESS;
 }
 
