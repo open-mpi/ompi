@@ -200,13 +200,13 @@ int mca_bml_r2_add_procs(
                 ompi_proc_t *proc = procs[p]; 
                 
 /*                 mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; */
-                mca_bml_base_endpoint_t * bml_endpoint; 
+                mca_bml_base_endpoint_t * bml_endpoint = proc->proc_pml; 
                 mca_bml_base_btl_t* bml_btl; 
                 size_t size;
                 
                 btl_inuse++;
 
-                if(NULL == proc->proc_pml) { 
+                if(NULL == bml_endpoint) { 
                     
                     
                     /* allocate bml specific proc data */
@@ -225,14 +225,11 @@ int mca_bml_r2_add_procs(
                     proc->proc_pml = bml_endpoint; 
                     
                 }
-                else { 
-                    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
-                }
 
                 bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_pml; 
                 
                 
-                /* dont allow an additional PTL with a lower exclusivity ranking */
+                /* dont allow an additional BTL with a lower exclusivity ranking */
                 size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
                 if(size > 0) {
                     bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, size-1);
@@ -266,7 +263,6 @@ int mca_bml_r2_add_procs(
                 bml_btl->btl_send = btl->btl_send;
                 bml_btl->btl_put = btl->btl_put;
                 bml_btl->btl_get = btl->btl_get;
-                bml_btl->btl_progress = btl->btl_component->btl_progress; 
                 
             }
         }
@@ -297,7 +293,7 @@ int mca_bml_r2_add_procs(
         size_t n_index;
         size_t n_size;
 
-        /* skip over procs w/ no ptls registered */
+        /* skip over procs w/ no btl's registered */
         if(NULL == bml_endpoint)
             continue;
 
