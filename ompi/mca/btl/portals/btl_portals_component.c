@@ -22,7 +22,7 @@
 #include "ompi/include/constants.h"
 
 #include "opal/util/output.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 
 #include "btl_portals.h"
 #include "btl_portals_compat.h"

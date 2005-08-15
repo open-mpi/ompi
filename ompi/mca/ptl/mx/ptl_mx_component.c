@@ -16,7 +16,7 @@
 #include "ompi_config.h"
 #include "ompi/include/constants.h"
 #include "opal/util/output.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 #include "ptl_mx.h"
 #include "ptl_mx_module.h"
 #include "ptl_mx_peer.h"

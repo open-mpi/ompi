@@ -21,7 +21,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Is_thread_main = PMPI_Is_thread_main
