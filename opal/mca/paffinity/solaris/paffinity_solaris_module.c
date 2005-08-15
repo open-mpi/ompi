@@ -17,12 +17,10 @@
 #include "ompi_config.h"
 
 /* This component will only be compiled on Solaris, where we are
-   guaranteed to have <unistd.h> and friends */
-#include <sched.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
+   guaranteed to have these headers */
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
 
 #include "opal/include/opal_constants.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -85,11 +83,19 @@ static int solaris_module_get_num_procs(int *num_procs)
 
 static int solaris_module_set(int id)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    if (0 != processor_bind(P_PID, P_MYID, (processorid_t) id, NULL)) {
+        return OPAL_ERR_IN_ERRNO;
+    }
+    return OPAL_SUCCESS;
 }
 
 
 static int solaris_module_get(int *id)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    processorid_t obind;
+    if (0 != processor_bind(P_PID, P_MYID, PBIND_QUERY, &obind)) {
+        return OPAL_ERR_IN_ERRNO;
+    }
+    *id = (int) obind;
+    return OPAL_SUCCESS;
 }
