@@ -77,7 +77,7 @@ int mca_base_components_open(const char *type_name, int output_id,
   param_type = mca_base_param_register_string(type_name, "base", NULL, 
                                               type_name, NULL);
 
-  param = mca_base_param_find("base", NULL, "component_show_load_errors");
+  param = mca_base_param_find("mca", NULL, "component_show_load_errors");
   mca_base_param_lookup_int(param, &ret);
   show_errors = (0 != ret) ? true : false;
 
