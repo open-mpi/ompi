@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "ompi/include/constants.h"
 

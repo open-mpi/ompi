@@ -1,7 +1,7 @@
 #include "ompi_config.h"
 #include "support.h"
 #include "include/constants.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 #include "include/sys/atomic.h"
 
 

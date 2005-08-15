@@ -3,7 +3,7 @@
 #include <time.h>
 #include "support.h"
 #include "include/constants.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "include/sys/atomic.h"
 

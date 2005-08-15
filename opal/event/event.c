@@ -61,7 +61,7 @@
 #include "opal/event/event.h"
 #include "opal/class/opal_object.h"
 #include "opal/threads/mutex.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 #include "opal/util/output.h"
 #include "ompi/include/constants.h"
 

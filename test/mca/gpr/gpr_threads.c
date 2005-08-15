@@ -25,7 +25,7 @@
 #include "support.h"
 
 #include "runtime/runtime.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "opal/util/malloc.h"

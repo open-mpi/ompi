@@ -20,7 +20,7 @@
 #ifndef MCA_PML_TEG_H
 #define MCA_PML_TEG_H
 
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "class/ompi_free_list.h"
 #include "opal/util/cmd_line.h"

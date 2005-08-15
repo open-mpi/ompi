@@ -36,7 +36,7 @@
 #include "op/op.h"
 #include "file/file.h"
 #include "attribute/attribute.h"
-#include "opal/threads/thread.h"
+#include "opal/threads/threads.h"
 
 #include "mca/base/base.h"
 #include "mca/allocator/base/base.h"
