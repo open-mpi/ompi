@@ -23,11 +23,26 @@
 #include "mca/btl/btl.h"
 #include "btl_mvapi_frag.h"
 #include "btl_mvapi.h"
+
+#include <vapi.h>
+#include <mtl_common.h>
+#include <vapi_common.h>
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 #define MAX_POST_RR (16) 
 OBJ_CLASS_DECLARATION(mca_btl_mvapi_endpoint_t);
+
+
+    struct mca_btl_mvapi_frag_t; 
+   
+struct mca_btl_mvapi_addr_t {
+    uint32_t subnet; 
+};
+typedef struct mca_btl_mvapi_addr_t mca_btl_mvapi_addr_t;
+
 
 /**
  * State of IB endpoint connection.
@@ -112,6 +127,8 @@ struct mca_btl_base_endpoint_t {
     
     uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
     uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
+
+    mca_btl_mvapi_addr_t endpoint_addr; 
 
 };
 

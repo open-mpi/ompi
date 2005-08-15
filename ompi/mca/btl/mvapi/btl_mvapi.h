@@ -36,6 +36,7 @@
 
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h" 
+#include "btl_mvapi_endpoint.h" 
 
 #include <vapi.h>
 #include <mtl_common.h>
@@ -58,7 +59,7 @@ struct mca_btl_mvapi_component_t {
     uint32_t                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
-    struct mca_btl_mvapi_module_t             *mvapi_btls;
+    struct mca_btl_mvapi_module_t            *mvapi_btls;
     /**< array of available PTLs */
 
     int ib_free_list_num;
@@ -133,7 +134,8 @@ typedef mca_btl_base_recv_reg_t mca_btl_mvapi_recv_reg_t;
 struct mca_btl_mvapi_module_t {
     mca_btl_base_module_t  super;  /**< base PTL interface */
     bool btl_inited; 
-    mca_btl_mvapi_recv_reg_t ib_reg[256]; 
+    mca_btl_mvapi_recv_reg_t ib_reg[256];
+    mca_btl_mvapi_addr_t mvapi_addr;  /* contains only the subnet right now */ 
     VAPI_hca_id_t   hca_id;        /**< ID of HCA */
     IB_port_t port_id; /**< ID of the PORT */ 
     VAPI_hca_port_t port;          /**< IB port of this PTL */
@@ -173,6 +175,7 @@ struct mca_btl_mvapi_module_t {
 
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
+
 
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
     

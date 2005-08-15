@@ -98,50 +98,76 @@ static mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_lookup_ompi(ompi_proc_t* ompi_pr
 
 mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
 {
-    mca_btl_mvapi_proc_t* module_proc = NULL;
+    mca_btl_mvapi_proc_t* mvapi_proc = NULL;
+    size_t size; 
+    int rc; 
 
+    
     /* Check if we have already created a IB proc
      * structure for this ompi process */
-    module_proc = mca_btl_mvapi_proc_lookup_ompi(ompi_proc);
+    mvapi_proc = mca_btl_mvapi_proc_lookup_ompi(ompi_proc);
 
-    if(module_proc != NULL) {
+    if(mvapi_proc != NULL) {
 
         /* Gotcha! */
-        return module_proc;
+        return mvapi_proc;
     }
 
     /* Oops! First time, gotta create a new IB proc
      * out of the ompi_proc ... */
 
-    module_proc = OBJ_NEW(mca_btl_mvapi_proc_t);
+    mvapi_proc = OBJ_NEW(mca_btl_mvapi_proc_t);
 
     /* Initialize number of peer */
-    module_proc->proc_endpoint_count = 0;
+    mvapi_proc->proc_endpoint_count = 0;
 
-    module_proc->proc_ompi = ompi_proc;
+    mvapi_proc->proc_ompi = ompi_proc;
 
     /* build a unique identifier (of arbitrary
      * size) to represent the proc */
-    module_proc->proc_guid = ompi_proc->proc_name;
+    mvapi_proc->proc_guid = ompi_proc->proc_name;
 
-    /* IB module doesn't have addresses exported at
-     * initialization, so the addr_count is set to one. */
-    module_proc->proc_addr_count = 1;
+    /* query for the peer address info */ 
+    rc = mca_pml_base_modex_recv(
+                                 &mca_btl_mvapi_component.super.btl_version, 
+                                 ompi_proc, 
+                                 (void*)&mvapi_proc->proc_addrs, 
+                                 &size
+                                 ); 
+    
+    
 
+    if(OMPI_SUCCESS != rc) {
+        opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
+            __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
+        OBJ_RELEASE(mvapi_proc);
+        return NULL;
+    }
+
+    if((size % sizeof(mca_btl_mvapi_addr_t)) != 0) {
+        opal_output(0, "[%s:%d] invalid mvapi address for peer [%d,%d,%d]",
+            __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
+        OBJ_RELEASE(mvapi_proc);
+        return NULL;
+    }
+
+
+    mvapi_proc->proc_addr_count = size/sizeof(mca_btl_mvapi_addr_t);
+    
 
     /* XXX: Right now, there can be only 1 peer associated
      * with a proc. Needs a little bit change in 
      * mca_btl_mvapi_proc_t to allow on demand increasing of
      * number of endpoints for this proc */
 
-    module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(module_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
+    mvapi_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+        malloc(mvapi_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
 
-    if(NULL == module_proc->proc_endpoints) {
-        OBJ_RELEASE(module_proc);
+    if(NULL == mvapi_proc->proc_endpoints) {
+        OBJ_RELEASE(mvapi_proc);
         return NULL;
     }
-    return module_proc;
+    return mvapi_proc;
 }
 
 
@@ -150,12 +176,18 @@ mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
  * already held.  Insert a btl instance into the proc array and assign 
  * it an address.
  */
-int mca_btl_mvapi_proc_insert(mca_btl_mvapi_proc_t* module_proc, 
-        mca_btl_base_endpoint_t* module_endpoint)
+int mca_btl_mvapi_proc_insert(mca_btl_mvapi_proc_t* mvapi_proc, 
+                              mca_btl_base_endpoint_t* mvapi_endpoint)
 {
+    mca_btl_mvapi_module_t* mvapi_btl = mvapi_endpoint->endpoint_btl; 
+    
     /* insert into endpoint array */
-    module_endpoint->endpoint_proc = module_proc;
-    module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
-
+    if(mvapi_proc->proc_addr_count <= mvapi_proc->proc_endpoint_count) 
+        return OMPI_ERR_OUT_OF_RESOURCE; 
+    
+    mvapi_endpoint->endpoint_proc = mvapi_proc;
+    mvapi_endpoint->endpoint_addr = mvapi_proc->proc_addrs[mvapi_proc->proc_endpoint_count]; 
+    mvapi_proc->proc_endpoints[mvapi_proc->proc_endpoint_count++] = mvapi_endpoint;
+    
     return OMPI_SUCCESS;
 }

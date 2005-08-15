@@ -44,6 +44,7 @@ struct mca_btl_mvapi_proc_t {
     orte_process_name_t proc_guid;           
     /**< globally unique identifier for the process */
 
+    struct mca_btl_mvapi_addr_t* proc_addrs; 
     size_t proc_addr_count;                  
     /**< number of addresses published by endpoint */
 
@@ -55,6 +56,7 @@ struct mca_btl_mvapi_proc_t {
 
     opal_mutex_t proc_lock;                  
     /**< lock to protect against concurrent access to proc state */
+
 };
 typedef struct mca_btl_mvapi_proc_t mca_btl_mvapi_proc_t;
 

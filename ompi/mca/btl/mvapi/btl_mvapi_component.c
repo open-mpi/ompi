@@ -223,6 +223,37 @@ int mca_btl_mvapi_component_close(void)
     return OMPI_SUCCESS;
 }
 
+
+
+/*
+ *  Register GM component addressing information. The MCA framework
+ *  will make this available to all peers.
+ */
+
+static int
+mca_btl_mvapi_modex_send(void)
+{
+    int         rc;
+    size_t      i;
+    size_t      size;
+    mca_btl_mvapi_addr_t *addrs;
+
+    size = mca_btl_mvapi_component.ib_num_btls * sizeof (mca_btl_mvapi_addr_t);
+    addrs = (mca_btl_mvapi_addr_t *)malloc (size);
+    if (NULL == addrs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) {
+        mca_btl_mvapi_module_t *btl = &mca_btl_mvapi_component.mvapi_btls[i];
+        addrs[i] = btl->mvapi_addr;
+    }
+    rc = mca_pml_base_modex_send (&mca_btl_mvapi_component.super.btl_version, addrs, size);
+    free (addrs);
+    return rc;
+}
+
+
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -315,6 +346,8 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                  mvapi_btl->nic = hca_hndl; 
                  mvapi_btl->port_id = (IB_port_t) j; 
                  mvapi_btl->port = hca_port; 
+                 mvapi_btl->mvapi_addr.subnet = hca_port.sm_lid;
+                 
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
                  mca_btl_mvapi_component.ib_num_btls ++; 
                  
@@ -342,6 +375,11 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     
     
     for(i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++){
+                 
+/*                  uint16_t tbl_len_in = 0;  */
+/*                  uint16_t tbl_len_out = 0;  */
+/*                  IB_gid_t *gid_tbl_p = NULL;  */
+        
         item = opal_list_remove_first(&btl_list); 
         ib_selected = (mca_btl_base_selected_module_t*)item; 
         mvapi_btl = (mca_btl_mvapi_module_t*) ib_selected->btl_module; 
@@ -374,7 +412,36 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
             free(hca_ids);
             return NULL;
         }
-  
+        
+        
+/*         vapi_ret = VAPI_query_hca_gid_tbl(mvapi_btl->nic,  */
+/*                                           mvapi_btl->port_id,  */
+/*                                           tbl_len_in,  */
+/*                                           &tbl_len_out,  */
+/*                                           gid_tbl_p);  */
+/*         if(OMPI_SUCCESS != vapi_ret) {  */
+/*             BTL_ERROR(("error querying gid table to obtain subnet mask"));  */
+/*             return NULL;  */
+/*         } */
+/*         if(tbl_len_out == 0) {  */
+/*             BTL_ERROR(("error querying gid table, table length 0!"));  */
+/*             return NULL;  */
+/*         } */
+/*         tbl_len_in = tbl_len_out;  */
+/*         gid_tbl_p = (IB_gid_t*) malloc(tbl_len_out * sizeof(IB_gid_t*));  */
+/*         vapi_ret = VAPI_query_hca_gid_tbl(mvapi_btl->nic,  */
+/*                                           mvapi_btl->port_id,  */
+/*                                           tbl_len_in,  */
+/*                                           &tbl_len_out,  */
+/*                                           gid_tbl_p);  */
+/*         if(OMPI_SUCCESS != vapi_ret) {  */
+/*             BTL_ERROR(("error querying gid table to obtain subnet mask"));  */
+/*             return NULL;  */
+/*         } */
+/*         /\* first 64 bits of the first gid entry should be the subnet mask *\/  */
+/*         memcpy(&mvapi_btl->mvapi_addr.subnet, &gid_tbl_p[0], 8);  */
+        
+                 
         hca_pd.hca = mvapi_btl->nic; 
         hca_pd.pd_tag = mvapi_btl->ptag; 
         
@@ -463,7 +530,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
 
     /* Post OOB receive to support dynamic connection setup */
     mca_btl_mvapi_post_recv();
-
+    mca_btl_mvapi_modex_send(); 
     *num_btl_modules = mca_btl_mvapi_component.ib_num_btls;
     free(hca_ids);
     return btls;
