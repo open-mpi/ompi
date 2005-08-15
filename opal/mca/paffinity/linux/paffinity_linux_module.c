@@ -162,7 +162,7 @@ static int linux_module_get(int *id)
    We do not have the CPU_ZERO(), CPU_SET(), CPU_ISSET(), etc. macros. 
  ************************************************************************/
 
-static int make_mask(unsigned int &len, unsigned long **mask)
+static int make_mask(unsigned int *len, unsigned long **mask)
 {
     int num_procs;
 
