@@ -399,13 +399,13 @@ int mca_pml_ob1_send_request_start_prepare(
         hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq = sendreq->req_send.req_base.req_sequence;
 
+        /* short message */
+        descriptor->des_cbfunc = mca_pml_ob1_match_completion;
+       
         /* update lengths */
         sendreq->req_send_offset = size;
         sendreq->req_rdma_offset = size;
 
-        /* short message */
-        descriptor->des_cbfunc = mca_pml_ob1_match_completion;
-       
         /* request is complete at mpi level */
         ompi_request_complete((ompi_request_t*)sendreq);
 
@@ -456,11 +456,9 @@ int mca_pml_ob1_send_request_start_prepare(
         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
         hdr->hdr_rndv.hdr_frag_length = size;
 
-        /* update lengths with number of bytes actually packed */
-        segment->seg_len = sizeof(mca_pml_ob1_rendezvous_hdr_t) + size;
-
         /* first fragment of a long message */
         descriptor->des_cbfunc = mca_pml_ob1_rndv_completion;
+        sendreq->req_send_offset = size;
     }
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
