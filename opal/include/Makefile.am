@@ -19,7 +19,7 @@ include $(top_srcdir)/config/Makefile.options
 SUBDIRS = sys
 
 noinst_HEADERS = \
-        opal_constants.h
+        constants.h
 
 # Conditionally install the header files
 

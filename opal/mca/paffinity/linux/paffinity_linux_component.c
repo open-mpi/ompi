@@ -22,7 +22,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/include/opal_constants.h"
+#include "opal/include/constants.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "paffinity_linux.h"
 
