@@ -25,6 +25,7 @@
 #define OPAL_ERR_IN_ERRNO -3
 #define OPAL_ERR_NOT_FOUND -4
 #define OPAL_ERR_BAD_PARAM -5
+#define OPAL_ERR_NOT_IMPLEMENTED -6
 
 #endif /* OPAL_CONSTANTS_H */
 
