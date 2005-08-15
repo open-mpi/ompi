@@ -73,9 +73,9 @@ int orte_schema_base_open(void)
     if (!orte_schema_initialized) {
         /* Debugging / verbose output */
         
-        param = mca_base_param_register_int("schema", "base", "verbose",
-                                            NULL, 0);
-        mca_base_param_lookup_int(param, &value);
+        param = mca_base_param_reg_int_name("schema_base", "verbose",
+                                            "Verbosity level for the schema framework",
+                                            false, false, 0, &value);
         if (value != 0) {
             orte_schema_base_output = opal_output_open(NULL);
         } else {
@@ -85,7 +85,8 @@ int orte_schema_base_open(void)
         /* Open up all available components */
     
         if (OMPI_SUCCESS != 
-            mca_base_components_open("schema", 0, mca_schema_base_static_components, 
+            mca_base_components_open("schema", orte_schema_base_output,
+                                     mca_schema_base_static_components, 
                                      &orte_schema_base_components_available, true)) {
             return ORTE_ERROR;
         }

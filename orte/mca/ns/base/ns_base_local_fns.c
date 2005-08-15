@@ -162,7 +162,7 @@ int orte_ns_base_assign_cellid_to_process(orte_process_name_t *name)
     }
     
     name->cellid = 0;
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

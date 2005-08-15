@@ -19,7 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "include/constants.h"
+#include "orte/include/orte_constants.h"
 #include "opal/util/output.h"
 #include "orte/class/orte_proc_table.h"
 
@@ -81,7 +81,7 @@ int orte_hash_table_set_proc(
     if(ht->ht_table_size == 0) {
         opal_output(0, "opal_hash_table_set_value_proc:"
 		   "opal_hash_table_init() has not been called");
-        return OMPI_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 #endif
     for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
@@ -89,7 +89,7 @@ int orte_hash_table_set_proc(
         node =  (ompi_proc_hash_node_t*)opal_list_get_next(node)) {
         if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
             node->hn_value = value;
-            return OMPI_SUCCESS;
+            return ORTE_SUCCESS;
         }
     } 
 
@@ -97,13 +97,13 @@ int orte_hash_table_set_proc(
     if(NULL == node) {
         node = OBJ_NEW(ompi_proc_hash_node_t);
         if(NULL == node)
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            return ORTE_ERR_OUT_OF_RESOURCE;
     }
     node->hn_key = *proc;
     node->hn_value = value;
     opal_list_append(list, (opal_list_item_t*)node);
     ht->ht_size++;
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -119,7 +119,7 @@ int orte_hash_table_remove_proc(
     if(ht->ht_table_size == 0) {
         opal_output(0, "opal_hash_table_remove_value_proc:"
 		   "opal_hash_table_init() has not been called");
-        return OMPI_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 #endif
     for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
@@ -129,9 +129,9 @@ int orte_hash_table_remove_proc(
             opal_list_remove_item(list, (opal_list_item_t*)node);
             opal_list_append(&ht->ht_nodes, (opal_list_item_t*)node);
             ht->ht_size--;
-            return OMPI_SUCCESS;
+            return ORTE_SUCCESS;
         }
     } 
-    return OMPI_ERR_NOT_FOUND;
+    return ORTE_ERR_NOT_FOUND;
 }
 

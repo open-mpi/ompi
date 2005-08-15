@@ -96,8 +96,9 @@ int orte_ras_base_open(void)
     /* Debugging / verbose output */
 
     orte_ras_base.ras_output = opal_output_open(NULL);
-    param = mca_base_param_register_int("ras", "base", "verbose", NULL, 0);
-    mca_base_param_lookup_int(param, &value);
+    param = mca_base_param_reg_int_name("ras_base", "verbose", 
+                                        "Verbosity level for the ras framework",
+                                        false, false, 0, &value);
     if (value != 0) {
         orte_ras_base.ras_output = opal_output_open(NULL);
     } else {
@@ -107,7 +108,8 @@ int orte_ras_base_open(void)
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 
-        mca_base_components_open("ras", 0, mca_ras_base_static_components, 
+        mca_base_components_open("ras", orte_ras_base.ras_output,
+                                 mca_ras_base_static_components, 
                                  &orte_ras_base.ras_opened, true)) {
         return ORTE_ERROR;
     }
@@ -135,7 +137,7 @@ int orte_ras_base_open(void)
                         "orte:base:open: component %s returns priority %d",
                         component->ras_version.mca_component_name,
                         priority);
-                                                                                                                                    
+
             cmp = OBJ_NEW(orte_ras_base_cmp_t);
             cmp->component = component;
             cmp->module = module;

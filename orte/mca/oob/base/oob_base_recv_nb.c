@@ -104,8 +104,9 @@ int mca_oob_recv_packed_nb(
     mca_oob_recv_cbdata_t *oob_cbdata = malloc(sizeof(mca_oob_recv_cbdata_t));
     int rc;
 
-    if(NULL == oob_cbdata)
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if(NULL == oob_cbdata) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
 
     memset(oob_cbdata, 0, sizeof(mca_oob_recv_cbdata_t));
     oob_cbdata->cbfunc = cbfunc;

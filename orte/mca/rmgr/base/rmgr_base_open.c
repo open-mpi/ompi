@@ -152,8 +152,9 @@ int orte_rmgr_base_open(void)
     /* Debugging / verbose output */
 
     orte_rmgr_base.rmgr_output = opal_output_open(NULL);
-    param = mca_base_param_register_int("rmgr", "base", "verbose", NULL, 0);
-    mca_base_param_lookup_int(param, &value);
+    param = mca_base_param_reg_int_name("rmgr_base", "verbose", 
+                                        "Verbosity level for the rmgr framework",
+                                        false, false, 0, &value);
     if (value != 0) {
         orte_rmgr_base.rmgr_output = opal_output_open(NULL);
     } else {
@@ -180,7 +181,8 @@ int orte_rmgr_base_open(void)
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 
-        mca_base_components_open("rmgr", 0, mca_rmgr_base_static_components, 
+        mca_base_components_open("rmgr", orte_rmgr_base.rmgr_output,
+                                 mca_rmgr_base_static_components, 
                                  &orte_rmgr_base.rmgr_components, true)) {
         return ORTE_ERROR;
     }

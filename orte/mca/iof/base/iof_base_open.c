@@ -73,8 +73,9 @@ int orte_iof_base_open(void)
  
     /* Debugging / verbose output */
 
-    id = mca_base_param_register_int("iof", "base", "verbose", NULL, 0);
-    mca_base_param_lookup_int(id, &int_value);
+    id = mca_base_param_reg_int_name("iof_base", "verbose", 
+                                     "Verbosity level for the iof framework",
+                                     false, false, 0, &int_value);
     if (int_value != 0) {
         orte_iof_base.iof_output = opal_output_open(NULL);
     } else {
@@ -92,13 +93,14 @@ int orte_iof_base_open(void)
 
     /* Open up all available components */
     if (OMPI_SUCCESS != 
-        mca_base_components_open("iof", 0, mca_iof_base_static_components, 
+        mca_base_components_open("iof", orte_iof_base.iof_output,
+                                 mca_iof_base_static_components, 
                                  &orte_iof_base.iof_components_opened,
                                  true)) {
-      return OMPI_ERROR;
+        return ORTE_ERROR;
     }
   
     /* All done */
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

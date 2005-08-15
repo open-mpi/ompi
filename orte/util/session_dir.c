@@ -86,13 +86,13 @@ static int orte_check_dir(bool create, char *directory)
     if (0 == _stat64(directory, &buf)) { /* exist -- check */
 #endif
         if ((buf.st_mode & my_mode) == my_mode) { /* okay, I can work here */
-            return(OMPI_SUCCESS);
+            return(ORTE_SUCCESS);
         }
     }
     if (create) {
 	return(opal_os_create_dirpath(directory, my_mode)); /* try to create it with proper mode */
     }
-    return(OMPI_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
+    return(ORTE_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
 }
 
 int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
@@ -108,7 +108,7 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
 
     if (NULL == usr) {  /* check if user set elsewhere */
     	if (NULL == orte_system_info.user) { /* error condition */
-    	    return OMPI_ERROR;
+    	    return ORTE_ERROR;
     	} else {
     	    user = strdup(orte_system_info.user);
     	}
@@ -118,7 +118,7 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
 
     if (NULL == univ) { /* see if universe set elsewhere */
     	if (NULL == orte_universe_info.name) {  /* error condition */
-    	    return OMPI_ERROR;
+    	    return ORTE_ERROR;
     	} else {
     	    universe = strdup(orte_universe_info.name);
     	}
@@ -127,12 +127,12 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     }
 
     if (NULL == job && NULL != proc) { /* can't give a proc without a job */
-    	return OMPI_ERROR;
+    	return ORTE_ERROR;
     }
 
     if (NULL == hostid) {  /* check if hostname set elsewhere */
     	if (NULL == orte_system_info.nodename) { /* don't have a hostname anywhere  - error */
-    	    return_code = OMPI_ERROR;
+    	    return_code = ORTE_ERROR;
     	    goto CLEANUP;
     	} else {
     	    hostname = strdup(orte_system_info.nodename);
@@ -149,7 +149,7 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
 
     if (NULL == orte_process_info.top_session_dir) {
     	if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
-    	    return_code = OMPI_ERROR;
+    	    return_code = ORTE_ERROR;
     	    goto CLEANUP;
     	}
     } else {
@@ -162,19 +162,19 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     			 orte_system_info.path_sep, universe,
     		         orte_system_info.path_sep, job,
     			 orte_system_info.path_sep, proc)) {
-    	    return_code = OMPI_ERROR;
+    	    return_code = ORTE_ERROR;
     	    goto CLEANUP;
     	}
     } else if (NULL != job) {
     	if (0 > asprintf(&sessions, "%s%s%s%s%s", frontend,
     			 orte_system_info.path_sep, universe,
     			 orte_system_info.path_sep, job)) {
-    	    return_code = OMPI_ERROR;
+    	    return_code = ORTE_ERROR;
     	    goto CLEANUP;
     	}
     } else {
     	if (0 > asprintf(&sessions, "%s%s%s", frontend, orte_system_info.path_sep, universe)) {
-    	    return_code = OMPI_ERROR;
+    	    return_code = ORTE_ERROR;
     	    goto CLEANUP;
     	}
     }
@@ -183,8 +183,8 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     if (NULL != prefix) {  /* if a prefix is specified, start looking here */
     	tmp = strdup(prefix);
     	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL)); /* make sure it's an absolute pathname */
-    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = OMPI_SUCCESS;
+    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
     	}
    }
@@ -201,8 +201,8 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     if (NULL != orte_process_info.tmpdir_base) {  /* stored value previously */
     	tmp = strdup(orte_process_info.tmpdir_base);
     	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = OMPI_SUCCESS;
+    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
     	}
         free(tmp); tmp = NULL;
@@ -210,8 +210,8 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
    } else if (NULL != getenv("OMPI_PREFIX_ENV")) {  /* we have prefix enviro var - try that next */
     	tmp = strdup(getenv("OMPI_PREFIX_ENV"));
     	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = OMPI_SUCCESS;
+    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
     	}
         free(tmp); tmp = NULL;
@@ -219,8 +219,8 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     } else if (NULL != getenv("TMPDIR")) {
     	tmp = strdup(getenv("TMPDIR"));
     	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = OMPI_SUCCESS;
+    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
     	}
         free(tmp); tmp = NULL;
@@ -228,8 +228,8 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     } else if (NULL != getenv("TMP")) {
     	tmp = strdup(getenv("TMP"));
     	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = OMPI_SUCCESS;
+    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
     	}
         free(tmp); tmp = NULL;
@@ -237,8 +237,8 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     } else {
     	tmp = strdup(OMPI_DEFAULT_TMPDIR);
     	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = OMPI_SUCCESS;
+    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
     	}
         free(tmp); tmp = NULL;
@@ -246,7 +246,7 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
    }
 
     /* couldn't find anything - return error */
-	return_code = OMPI_ERROR;
+	return_code = ORTE_ERROR;
 	goto CLEANUP;
 
 
@@ -459,7 +459,7 @@ CLEANUP:
     free(vpid);
     free(job_session_dir);
     free(proc_session_dir);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 static void

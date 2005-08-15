@@ -76,7 +76,7 @@ int orte_rmgr_base_put_app_context(
     if(NULL == value->keyvals) {
         OBJ_RELEASE(value);
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
     memset(value->keyvals, 0, num_context * sizeof(orte_gpr_keyval_t*));
 

@@ -67,9 +67,9 @@ int orte_errmgr_base_open(void)
       
         /* Debugging / verbose output */
         
-        param = mca_base_param_register_int("errmgr", "base", "verbose",
-                                            NULL, 0);
-        mca_base_param_lookup_int(param, &value);
+        param = mca_base_param_reg_int_name("errmgr_base", "verbose",
+                                            "Verbosity level for the errmgr framework",
+                                            false, false, 0, &value);
         if (value != 0) {
             orte_errmgr_base_output = opal_output_open(NULL);
         } else {
@@ -79,15 +79,16 @@ int orte_errmgr_base_open(void)
         /* Open up all available components */
     
         if (ORTE_SUCCESS != 
-            mca_base_components_open("errmgr", 0, mca_errmgr_base_static_components, 
-                                   &orte_errmgr_base_components_available, true)) {
+            mca_base_components_open("errmgr", orte_errmgr_base_output,
+                                     mca_errmgr_base_static_components, 
+                                     &orte_errmgr_base_components_available, true)) {
             return ORTE_ERROR;
         }
     
         orte_errmgr_initialized = true;
     }
     
-  /* All done */
-
-  return ORTE_SUCCESS;
+    /* All done */
+    
+    return ORTE_SUCCESS;
 }

@@ -313,9 +313,9 @@ int orte_gpr_base_open(void)
 
     /* Debugging / verbose output */
     
-    param = mca_base_param_register_int("gpr", "base", "verbose",
-                                        NULL, 0);
-    mca_base_param_lookup_int(param, &value);
+    param = mca_base_param_reg_int_name("gpr_base", "verbose",
+                                        "Verbosity level for the gpr framework",
+                                        false, false, 0, &value);
     if (value != 0) {
         orte_gpr_base_output = opal_output_open(NULL);
     } else {
@@ -432,7 +432,9 @@ int orte_gpr_base_open(void)
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 
-        mca_base_components_open("gpr", 0, mca_gpr_base_static_components, 
+        mca_base_components_open("gpr", 
+                                 orte_gpr_base_output,
+                                 mca_gpr_base_static_components, 
                                  &orte_gpr_base_components_available, true)) {
         return ORTE_ERROR;
     }

@@ -31,8 +31,9 @@ int mca_oob_barrier(void)
     int foo = 0;
 
     int rc = orte_ns.get_peers(&peers,&npeers,&self);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS) {
         return rc;
+    }
 
     iov.iov_base = (void*)&foo;
     iov.iov_len = sizeof(foo);
@@ -68,7 +69,7 @@ int mca_oob_barrier(void)
             }
         }
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

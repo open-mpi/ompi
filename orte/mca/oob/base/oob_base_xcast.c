@@ -84,7 +84,7 @@ int mca_oob_xcast(
             cbfunc(rc, root, &rbuf, tag, NULL);
         OBJ_DESTRUCT(&rbuf);
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

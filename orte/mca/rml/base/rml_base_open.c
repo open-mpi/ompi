@@ -58,15 +58,22 @@ int orte_rml_base_open(void)
     OBJ_CONSTRUCT(&orte_rml_base.rml_components, opal_list_t);
     
     /* lookup common parameters */
-    id = mca_base_param_register_int("rml","base","debug",NULL,1);
-    mca_base_param_lookup_int(id,&int_value);
+    id = mca_base_param_reg_int_name("rml_base", "debug",
+                                     "Verbosity level for the rml famework",
+                                     false, false, 0, &int_value);
     orte_rml_base.rml_debug = int_value;
+    if (int_value) {
+        orte_rml_base.rml_output = opal_output_open(NULL);
+    } else {
+        orte_rml_base.rml_output = -1;
+    }
 
     /* Open up all available components */
-    if ((rc = mca_base_components_open("rml", 0, mca_rml_base_static_components, 
+    if ((rc = mca_base_components_open("rml", orte_rml_base.rml_output,
+                                       mca_rml_base_static_components, 
             &orte_rml_base.rml_components, true)) != OMPI_SUCCESS) {
         return rc;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

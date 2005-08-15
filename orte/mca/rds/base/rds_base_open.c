@@ -98,8 +98,9 @@ int orte_rds_base_open(void)
     /* Debugging / verbose output */
 
     orte_rds_base.rds_output = opal_output_open(NULL);
-    param = mca_base_param_register_int("rds", "base", "verbose", NULL, 0);
-    mca_base_param_lookup_int(param, &value);
+    param = mca_base_param_reg_int_name("rds_base", "verbose", 
+                                        "Verbosity level for the rds framework",
+                                        false, false, 0, &value);
     if (value != 0) {
         orte_rds_base.rds_output = opal_output_open(NULL);
     } else {
@@ -109,7 +110,8 @@ int orte_rds_base_open(void)
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 
-        mca_base_components_open("rds", 0, mca_rds_base_static_components, 
+        mca_base_components_open("rds", orte_rds_base.rds_output, 
+                                 mca_rds_base_static_components, 
                                  &orte_rds_base.rds_components, true)) {
         return ORTE_ERROR;
     }

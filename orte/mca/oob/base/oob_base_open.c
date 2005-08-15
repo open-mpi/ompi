@@ -54,18 +54,21 @@ int mca_oob_base_open(void)
   OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
 
   if (OMPI_SUCCESS != 
-      mca_base_components_open("oob", 0, mca_oob_base_static_components, 
+      mca_base_components_open("oob", mca_oob_base_output,
+                               mca_oob_base_static_components, 
                                &mca_oob_base_components, true)) {
-    return OMPI_ERROR;
+    return ORTE_ERROR;
   }
 
   /* register parameters */
-  mca_base_param_lookup_string(
-      mca_base_param_register_string("oob","base","include",NULL,NULL), &mca_oob_base_include);
-  mca_base_param_lookup_string(
-      mca_base_param_register_string("oob","base","exclude",NULL,NULL), &mca_oob_base_exclude);
+  mca_base_param_reg_string_name("oob_base", "include",
+                                 "Components to include for oob framework selection",
+                                 false, false, NULL, &mca_oob_base_include);
+  mca_base_param_reg_string_name("oob_base", "exclude",
+                                 "Components to exclude for oob framework selection",
+                                 false, false, NULL, &mca_oob_base_exclude);
 
   /* All done */
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }
 
