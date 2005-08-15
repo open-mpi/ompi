@@ -97,13 +97,13 @@ int mca_bml_r2_progress( void ) {
 
 static int mca_bml_r2_add_btls( void )
 {
-    if(mca_bml_r2.btls_added == true) 
-        return OMPI_SUCCESS; 
-
     /* build an array of r2s and r2 modules */
     opal_list_t* btls = &mca_btl_base_modules_initialized;
     mca_btl_base_selected_module_t* selected_btl;
     size_t num_btls = opal_list_get_size(btls);
+
+    if(mca_bml_r2.btls_added == true) 
+        return OMPI_SUCCESS; 
 
     mca_bml_r2.num_btl_modules = 0;
     mca_bml_r2.num_btl_progress = 0;
