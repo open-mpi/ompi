@@ -459,8 +459,8 @@ mca_btl_portals_component_progress(void)
                     tag = ev.hdr_data;
 
                     OMPI_BTL_PORTALS_FRAG_ALLOC_RECV(&mca_btl_portals_module, frag, ret);
-                    frag->segment.seg_addr.pval = (((char*) ev.md.start) + ev.offset);
-                    frag->segment.seg_len = ev.mlength;
+                    frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
+                    frag->segments[0].seg_len = ev.mlength;
                 
                     if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size) {
                         /* the block is full.  It's deactivated automagically, but we
@@ -603,7 +603,6 @@ mca_btl_portals_component_progress(void)
                 } else {
                     /* other side received the message.  should have
                        received entire thing */
-                    assert(ev.mlength == frag->segment.seg_len);
 
                     /* let the PML know we're done */
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,

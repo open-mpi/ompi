@@ -236,16 +236,17 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     
     if (size <= mca_btl_portals_module.super.btl_eager_limit) { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, rc); 
-        frag->segment.seg_len = 
+        frag->segments[0].seg_len = 
             size <= mca_btl_portals_module.super.btl_eager_limit ? 
             size : mca_btl_portals_module.super.btl_eager_limit ; 
     } else { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, rc); 
-        frag->segment.seg_len = 
+        frag->segments[0].seg_len = 
             size <= mca_btl_portals_module.super.btl_max_send_size ? 
             size : mca_btl_portals_module.super.btl_max_send_size ; 
     }
     
+    frag->base.des_src_cnt = 1;
     frag->base.des_flags = 0; 
 
     return &frag->base;
@@ -291,70 +292,109 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
-    if (0 == reserve && 0 == ompi_convertor_need_buffers(convertor)) {
-        /* we can send right out of the buffer (woo!).  */
+    if (0 != ompi_convertor_need_buffers(convertor)) {
+        /* if we need to use buffers to pack the data, grab either an
+           eager or (if we need more space) max buffer, pack the data
+           into the first segment, and return */
+        if (max_data+reserve <= mca_btl_portals_module.super.btl_eager_limit) {
+            /*
+             * if we can't send out of the buffer directly and the
+             * requested size is less than the eager limit, pack into a
+             * fragment from the eager pool
+             */
+            OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, ret);
+            if (NULL == frag) {
+                return NULL;
+            }
 
-        OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&mca_btl_portals_module.super, frag, ret);
-        if(NULL == frag){
-            return NULL;
+            iov.iov_len = max_data;
+            iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
+            ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
+                                      &max_data, &free_after);
+            *size  = max_data;
+            if (ret < 0) {
+                OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module, frag);
+                return NULL;
+            }
+            frag->segments[0].seg_len = max_data + reserve;
+            frag->base.des_src_cnt = 1;
+
+        } else {
+            /* 
+             * otherwise pack as much data as we can into a fragment
+             * that is the max send size.
+             */
+            OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, ret);
+            if (NULL == frag) {
+                return NULL;
+            }
+            if (max_data + reserve > mca_btl_portals_module.super.btl_max_send_size){
+                max_data = mca_btl_portals_module.super.btl_max_send_size - reserve;
+            }
+            iov.iov_len = max_data;
+            iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
+            ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
+                                      &max_data, &free_after);
+            *size  = max_data;
+            if ( ret < 0 ) {
+                OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&mca_btl_portals_module, frag);
+                return NULL;
+            }
+            frag->segments[0].seg_len = max_data + reserve;
+            frag->base.des_src_cnt = 1;
         }
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, 
-                            &free_after);
-                                                                                                    
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-
-    } else if (max_data+reserve <= mca_btl_portals_module.super.btl_eager_limit) {
-        /*
-         * if we can't send out of the buffer directly and the
-         * requested size is less than the eager limit, pack into a
-         * fragment from the eager pool
-         */
-        OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, ret);
-        if (NULL == frag) {
-            return NULL;
-        }
-
-        iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-        ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
-                                 &max_data, &free_after);
-        *size  = max_data;
-        if (ret < 0) {
-            OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module, frag);
-            return NULL;
-        }
-        frag->segment.seg_len = max_data + reserve;
 
     } else {
-        /* 
-         * otherwise pack as much data as we can into a fragment
-         * that is the max send size.
-         */
-        OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, ret);
-        if (NULL == frag) {
-            return NULL;
+        /* no need to pack - we can send directly out of the user's
+           buffer.  If we have reserve space, use an eager fragment
+           and give the caller the eager space as reserve.  If we have
+           no reserve space needs, use a user frag */
+        if (0 == reserve) {
+            /* user frags are always setup to use only one fragment */
+            OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&mca_btl_portals_module.super, frag, ret);
+            if(NULL == frag){
+                return NULL;
+            }
+            iov.iov_len = max_data;
+            iov.iov_base = NULL;
+
+            ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, 
+                                &free_after);
+
+            frag->segments[0].seg_len = max_data;
+            frag->segments[0].seg_addr.pval = iov.iov_base;
+            frag->base.des_src_cnt = 1;
+
+        } else {
+            OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, ret);
+            if (NULL == frag) {
+                return NULL;
+            }
+
+            iov.iov_len = max_data;
+            iov.iov_base = NULL;
+            ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
+                                      &max_data, &free_after);
+
+            *size  = max_data;
+            if (ret < 0) {
+                OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module, frag);
+                return NULL;
+            }
+
+            frag->segments[0].seg_len = reserve;
+            frag->segments[1].seg_addr.pval = iov.iov_base;
+            frag->segments[1].seg_len = max_data;
+            frag->base.des_src_cnt = 2;
+
+            frag->iov[0].iov_base = frag->segments[0].seg_addr.pval;
+            frag->iov[0].iov_len = frag->segments[0].seg_len;
+            frag->iov[1].iov_base = frag->segments[1].seg_addr.pval;
+            frag->iov[1].iov_len = frag->segments[1].seg_len;
         }
-        if (max_data + reserve > mca_btl_portals_module.super.btl_max_send_size){
-            max_data = mca_btl_portals_module.super.btl_max_send_size - reserve;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-        ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
-                                 &max_data, &free_after);
-        *size  = max_data;
-        if ( ret < 0 ) {
-            OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&mca_btl_portals_module, frag);
-            return NULL;
-        }
-        frag->segment.seg_len = max_data + reserve;
     }
 
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
+    frag->base.des_src = frag->segments;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
@@ -384,26 +424,26 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
         return NULL;
     }
 
-    frag->segment.seg_len = *size;
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
-    frag->segment.seg_key.key64 = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
+    frag->segments[0].seg_len = *size;
+    frag->segments[0].seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    frag->segments[0].seg_key.key64 = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
-    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst = frag->segments;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
     frag->type = mca_btl_portals_frag_type_rdma;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "rdma dest posted for frag 0x%x, callback 0x%x, bits %lld",
-                         frag, frag->base.des_cbfunc, frag->segment.seg_key.key64));
+                         frag, frag->base.des_cbfunc, frag->segments[0].seg_key.key64));
 
     /* create a match entry */
     ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
                       OMPI_BTL_PORTALS_RDMA_TABLE_ID,
                       *((mca_btl_base_endpoint_t*) peer),
-                      frag->segment.seg_key.key64, /* match */
+                      frag->segments[0].seg_key.key64, /* match */
                       0, /* ignore */
                       PTL_UNLINK,
                       PTL_INS_AFTER,
@@ -419,8 +459,8 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
        retransmitted, so we set the threshold for the event it will
        receive (PUT/GET START and END).  No need to track the unlinks
        later :) */
-    md.start = frag->segment.seg_addr.pval;
-    md.length = frag->segment.seg_len;
+    md.start = frag->segments[0].seg_addr.pval;
+    md.length = frag->segments[0].seg_len;
     md.threshold = 1; /* unlink after put */
     md.max_size = 0;
     md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;

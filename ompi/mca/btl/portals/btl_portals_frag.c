@@ -25,12 +25,16 @@ mca_btl_portals_frag_common_send_constructor(mca_btl_portals_frag_t* frag)
 { 
     frag->base.des_dst = 0;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
+    frag->base.des_src = frag->segments;
+    frag->base.des_src_cnt = 2;
 
-    frag->segment.seg_addr.pval = frag + 1;
-    frag->segment.seg_len = frag->size;
-    frag->segment.seg_key.key64 = 0;
+    frag->segments[0].seg_addr.pval = frag + 1;
+    frag->segments[0].seg_len = frag->size;
+    frag->segments[0].seg_key.key64 = 0;
+
+    frag->segments[1].seg_addr.pval = 0;
+    frag->segments[1].seg_len = 0;
+    frag->segments[1].seg_key.key64 = 0;
 }
 
 
@@ -65,7 +69,7 @@ static void
 mca_btl_portals_frag_recv_constructor(mca_btl_portals_frag_t* frag) 
 { 
     frag->base.des_flags = 0;
-    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst = &frag->segments[0];
     frag->base.des_dst_cnt = 1;
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
