@@ -26,7 +26,7 @@ headers = \
         mutex.h \
         mutex_unix.h \
         mutex_windows.h \
-        thread.h
+        threads.h
 
 libthreads_la_SOURCES = \
         $(headers) \
