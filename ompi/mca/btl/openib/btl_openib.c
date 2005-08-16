@@ -102,7 +102,7 @@ int mca_btl_openib_add_procs(
          */
         ib_peer = OBJ_NEW(mca_btl_openib_endpoint_t);
         if(NULL == ib_peer) {
-            OPAL_THREAD_UNLOCK(&tb_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
