@@ -255,7 +255,7 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 
     /* allocate vpids for the daemons */
     num_nodes = opal_list_get_size(&nodes);
-    if (num_nodes == 0) return OMPI_ERR_BAD_PARAM;
+    if (num_nodes == 0) return ORTE_ERR_BAD_PARAM;
     ret = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != ret) goto cleanup;
 
@@ -339,12 +339,12 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 
     /* we should have a result - find out if it worked */
     if (XGActionMonitorOutcomeSuccess == [actionMonitor outcome]) {
-	ret = OMPI_SUCCESS;
+	ret = ORTE_SUCCESS;
     } else {	
 	NSError *err = [actionMonitor error];
 	fprintf(stderr, "orte:pls:xgrid: launch failed: %s\n", 
 		[[err localizedFailureReason] cString]);
-	ret = OMPI_ERROR;
+	ret = ORTE_ERROR;
     }
 
     /* save the XGJob identifier somewhere we can get to it */
@@ -375,12 +375,12 @@ cleanup:
 
     /* we should have a result - find out if it worked */
     if (XGActionMonitorOutcomeSuccess == [actionMonitor outcome]) {
-	ret = OMPI_SUCCESS;
+	ret = ORTE_SUCCESS;
     } else {	
 	NSError *err = [actionMonitor error];
 	fprintf(stderr, "orte:pls:xgrid: terminate failed: %s\n", 
 		[[err localizedFailureReason] cString]);
-	ret = OMPI_ERROR;
+	ret = ORTE_ERROR;
     }
 
     return ret;
