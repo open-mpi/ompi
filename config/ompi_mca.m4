@@ -15,6 +15,11 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_EVAL_ARG(arg)
+# ------------------
+# evaluates and returns argument
+AC_DEFUN([OMPI_EVAL_ARG], [$1])
+
 ######################################################################
 #
 # OMPI_MCA
@@ -325,6 +330,16 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     AC_MSG_CHECKING([for m4 configure components in framework $2])
     AC_MSG_RESULT([mca_$2_m4_config_component_list])
 
+    # if we only want the first successful component, set the variable
+    # happy_value to 0 so we stop on first assignment.  Otherwise, set
+    # it to zero so that components_looking_for_succeed is always 1
+    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), 
+          [STOP_AT_FIRST],
+          [happy_value=0],
+          [happy_value=1])
+
+    components_looking_for_succeed=1
+
     # configure components that don't have any component-specific
     # configuration.  See comment in CONFIGURE_PROJECT about the
     # m4_ifval
@@ -337,7 +352,8 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [all_components],
                                                      [static_components],
                                                      [dso_components],
-                                                     [static_ltlibs])])])
+                                                     [static_ltlibs],
+                                                     [$components_looking_for_succeed])])])
 
     # configure components that use built-in configuration scripts
     # see comment in CONFIGURE_PROJECT about the m4_ifval
@@ -350,13 +366,17 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [all_components],
                                                      [static_components],
                                                      [dso_components],
-                                                     [static_ltlibs])])])
+                                                     [static_ltlibs],
+                                                     [$components_looking_for_succeed],
+                                                     [components_looking_for_succeed="$happy_value"])])])
 
-
-    # configure components that provide their own configure script
-    MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
-                                        [static_components], [dso_components],
-                                        [static_ltlibs])
+    # configure components that provide their own configure script.
+    # It would be really hard to run these for "find first that
+    # works", so we don't :)
+    AS_IF([test "$happy_value" = "1"],
+          [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
+                                               [static_components], [dso_components],
+                                               [static_ltlibs])])
 
     # reminder - the dollar sign 2 substitutions are at autogen time, so
     # this will actually work in a rational way...
@@ -427,7 +447,8 @@ EOF
 #                         all_components_variable, 
 #                         static_components_variable,
 #                         dso_components_variable,
-#                         static_ltlibs_variable)
+#                         static_ltlibs_variable,
+#                         allowed_to_succeed)
 #
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
@@ -436,7 +457,8 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
     # remove any possible symlink in the mca-dynamic tree
     rm -f $1/dynamic-mca/$2/$3
 
-    MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=1], [should_build=2])
+    MCA_COMPONENT_BUILD_CHECK($1, $2, $3, 
+                              [should_build=$8], [should_build=0])
     MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)
 
     if test "$should_build" = "1" ; then
@@ -467,7 +489,10 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
 #                         all_components_variable, 
 #                         static_components_variable,
 #                         dso_components_variable,
-#                         static_ltlibs_variable)
+#                         static_ltlibs_variable,
+#                         allowed_to_succeed,
+#                         [eval if should build], 
+#                         [eval if should not build])
 #
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
@@ -476,7 +501,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     # remove any possible symlink in the mca-dynamic tree
     rm -f $1/dynamic-mca/$2/$3
 
-    MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=1], [should_build=0])
+    MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
     # It is, of course, free to end up calling MCA_COMPONENT_COMPILE_MODE
     m4_ifdef([MCA_$2_$3_COMPILE_MODE],
@@ -502,6 +527,8 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
           [BUILD_$2_$3_DSO=1],
           [BUILD_$2_$3_DSO=0])
     AM_CONDITIONAL(OMPI_BUILD_$2_$3_DSO, test "$BUILD_$2_$3_DSO" = "1")
+
+    AS_IF([test "$should_build" = "1"], [$9], [$10])
 
     unset compile_mode
 ])

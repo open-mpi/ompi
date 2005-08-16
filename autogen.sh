@@ -448,7 +448,7 @@ EOF
 -->   $PARAM_CONFIG_FILES
 EOF
 
-    echo "component_list=\"\$component_list $noconf_component\"" >> "$noconf_env_file"
+    echo "$PARAM_CONFIG_PRIORITY $noconf_component" >> "$noconf_env_file"
 }
 
 
@@ -505,7 +505,7 @@ EOF
 -->   $PARAM_CONFIG_FILES
 EOF
 
-    echo "component_list=\"\$component_list $m4conf_component\"" >> "$m4conf_env_file"
+    echo "$PARAM_CONFIG_PRIORITY $m4conf_component" >> "$m4conf_env_file"
 }
 
 
@@ -552,6 +552,10 @@ process_dir() {
         pd_ompi_topdir="`pwd`"
         cd "$pd_cur_dir"
     fi
+
+    # clean our environment a bit, since we might evaluate a configure.params
+    unset PARAM_CONFIG_FILES
+    PARAM_CONFIG_PRIORITY="0"
 
     if test -d "$pd_dir"; then
 	cd "$pd_dir"
@@ -774,6 +778,20 @@ EOF
     unset PARAM_VERSION_FILE PARAM_CONFIG_FILES_save
 }
 
+component_list_sort() {
+    cls_filename="$1"
+
+    # why, oh, why can't non-gnu sort support the -s (stable) option?
+    # Solaris sort supports -r -n and -u, so we'll assume that works everywhere
+
+    # get the list of priorities
+    component_list=
+    cls_priority_list="`sort -r -n -u \"$cls_filename\" | cut -f1 -d' ' | xargs`"
+    for cls_priority in $cls_priority_list ; do
+        component_list="$component_list `grep \"^$cls_priority \" \"$cls_filename\" | cut -f2 -d' ' | xargs`"
+    done
+}
+
 
 ##############################################################################
 #
@@ -847,10 +865,14 @@ EOF
                     -r "${framework_path}/${framework}.h" ; then
                     framework_list="$framework_list $framework"
 
+                    # Add the framework's options file into configure,
+                    # if there is one
+                    if test -r "${framework_path}/configure.options" ; then
+                        echo "m4_include(${framework_path}/configure.options)" >> "$mca_m4_include_file"
+                    fi
+
                     rm -f "$mca_no_config_env_file" "$mca_m4_config_env_file"
                     touch "$mca_no_config_env_file" "$mca_m4_config_env_file"
-                    echo "component_list=" >> "$mca_no_config_env_file"
-                    echo "component_list=" >> "$mca_m4_config_env_file"
 
                     for component_path in "$framework_path"/*; do
                         if test -d "$component_path"; then
@@ -867,8 +889,12 @@ EOF
                     done
                 fi
 
-                # make list of components that are "no configure"
-                . "$mca_no_config_env_file"
+                # make list of components that are "no configure".
+                # Sort the list by priority (stable, so things stay in
+                # alphabetical order at the same priority), then munge
+                # it into form we like
+                component_list=
+                component_list_sort $mca_no_config_env_file
                 component_list_define="m4_define(mca_${framework}_no_config_component_list, ["
                 component_list_define_first="1"
                 for component in $component_list ; do
@@ -883,7 +909,8 @@ EOF
                 echo "$component_list_define" >> "$mca_no_configure_components_file"
 
                 # make list of components that are "m4 configure"
-                . "$mca_m4_config_env_file"
+                component_list=
+                component_list_sort $mca_m4_config_env_file
                 component_list_define="m4_define(mca_${framework}_m4_config_component_list, ["
                 component_list_define_first="1"
                 for component in $component_list ; do
@@ -896,7 +923,6 @@ EOF
                 done
                 component_list_define="${component_list_define}])"
                 echo "$component_list_define" >> "$mca_no_configure_components_file"
-                
 	    fi
         done
 
@@ -944,7 +970,6 @@ AC_DEFUN([MCA_NO_CONFIG_CONFIG_FILES],[
 EOF
 
     # Remove temp files
-
     rm -f $mca_no_config_list_file $mca_no_config_env_file $mca_m4_config_env_file
 
     # Finally, after we found all the no-configure MCA components, run
