@@ -38,6 +38,8 @@ bool ompi_debug_show_handle_leaks = false;
 bool ompi_debug_no_free_handles = false;
 bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
+bool ompi_mpi_paffinity_alone = false;
+
 
 int ompi_mpi_register_params(void)
 {
@@ -125,6 +127,18 @@ int ompi_mpi_register_params(void)
                                    false, false,
                                    "", &ompi_mpi_show_mca_params_file);
     
+    /* User-level process pinning controls */
+    mca_base_param_reg_int_name("mpi", "paffinity_alone",
+                                "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
+                                false, false, 
+                                (int) ompi_mpi_paffinity_alone, &value);
+    ompi_mpi_paffinity_alone = (bool) value;
+
+    mca_base_param_reg_int_name("mpi", "paffinity_processor",
+                                "If set, pin this process to the processor number indicated by the value",
+                                true, false, 
+                                -1, NULL);
+
     /* All done */
 
     return OMPI_SUCCESS;

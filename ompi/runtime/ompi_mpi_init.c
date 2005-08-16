@@ -16,52 +16,53 @@
 
 #include "ompi_config.h"
 
+#include "mpi.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/paffinity/base/base.h"
+#include "opal/runtime/opal_progress.h"
+#include "opal/util/sys_info.h"
+#include "opal/threads/threads.h"
+#include "opal/util/show_help.h"
+#include "opal/util/stacktrace.h"
+#include "opal/runtime/opal.h"
+#include "opal/event/event.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/runtime/runtime.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/schema/schema.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "ompi/include/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
-#include "orte/runtime/runtime.h"
-#include "opal/runtime/opal_progress.h"
-#include "util/sys_info.h"
-#include "util/proc_info.h"
-#include "util/session_dir.h"
-#include "mpi.h"
-#include "communicator/communicator.h"
-#include "group/group.h"
-#include "info/info.h"
-#include "opal/util/show_help.h"
-#include "opal/util/stacktrace.h"
-#include "errhandler/errcode.h"
-#include "errhandler/errclass.h"
-#include "request/request.h"
-#include "op/op.h"
-#include "file/file.h"
-#include "attribute/attribute.h"
-#include "opal/threads/threads.h"
-
-#include "mca/base/base.h"
-#include "mca/allocator/base/base.h"
-#include "mca/allocator/allocator.h"
-#include "mca/mpool/base/base.h"
-#include "mca/mpool/mpool.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
-#include "mca/pml/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
-#include "mca/io/io.h"
-#include "mca/io/base/base.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rml/rml.h"
-#include "mca/schema/schema.h"
-#include "mca/soh/soh.h"
-#include "mca/soh/base/base.h"
-#include "mca/errmgr/errmgr.h"
-
-#include "opal/runtime/opal.h"
-#include "opal/event/event.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
+#include "ompi/info/info.h"
+#include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errclass.h"
+#include "ompi/request/request.h"
+#include "ompi/op/op.h"
+#include "ompi/file/file.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/mca/allocator/base/base.h"
+#include "ompi/mca/allocator/allocator.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/io/base/base.h"
 
 /*
  * Global variables and symbols for the MPI layer
@@ -91,10 +92,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: opal_init failed";
         goto error;
     }
+
+    /* Setup ORTE stage 1 */
     
     if (ORTE_SUCCESS != (ret = orte_init_stage1())) {
         error = "ompi_mpi_init: orte_init_stage1 failed";
-	    goto error;
+        goto error;
     }
 
     /* If we are not the seed nor a singleton, AND we have not set the
@@ -132,15 +135,30 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* Setup process affinity */
+
+    if (ompi_mpi_paffinity_alone) {
+        int param, value;
+        param = mca_base_param_find("mpi", NULL, "paffinity_processor");
+        if (param >= 0) {
+            mca_base_param_lookup_int(param, &value);
+            if (value >= 0) {
+                printf("Setting affinity! proc %d\n", value);
+                opal_paffinity_base_set(value);
+            }
+        }
+    }
+
 #ifndef WIN32
     if (OMPI_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
-	error = "util_register_stackhandlers() failed";
-	goto error;
+        error = "util_register_stackhandlers() failed";
+        goto error;
     }
 #endif
 
-    /* initialize datatypes. This step should be done early as it will create the local convertor
-     * and local arch used in the proc init.
+    /* initialize datatypes. This step should be done early as it will
+     * create the local convertor and local arch used in the proc
+     * init.
      */
     if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
         error = "ompi_ddt_init() failed";
@@ -309,16 +327,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (compound_cmd) {
         if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
             ORTE_ERROR_LOG(ret);
-    	    error = "ompi_rte_init: orte_gpr.exec_compound_cmd failed";
-    	    goto error;
+            error = "ompi_rte_init: orte_gpr.exec_compound_cmd failed";
+            goto error;
         }
     }
 
      /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
-	    error = "ompi_mpi_init: failed to see all procs register\n";
-	    goto error;
+        error = "ompi_mpi_init: failed to see all procs register\n";
+        goto error;
     }
 
     /* start PTL's */
@@ -389,8 +407,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* setup I/O forwarding */
     if (orte_process_info.seed == false) {
         if (OMPI_SUCCESS != (ret = ompi_mpi_init_io())) {
-	        error = "ompi_rte_init_io failed";
-	        goto error;
+            error = "ompi_rte_init_io failed";
+            goto error;
         }
     }
 #endif
@@ -455,8 +473,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
 
     if (orte_debug_flag) {
-	opal_output(0, "[%lu,%lu,%lu] ompi_mpi_init completed",
-		    ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "[%lu,%lu,%lu] ompi_mpi_init completed",
+                    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     return MPI_SUCCESS;
