@@ -26,7 +26,8 @@ libmca_paffinity_base_la_SOURCES = \
         $(headers) \
         paffinity_base_close.c \
         paffinity_base_select.c \
-        paffinity_base_open.c
+        paffinity_base_open.c \
+        paffinity_base_wrappers.c
 
 # Conditionally install the header files
 

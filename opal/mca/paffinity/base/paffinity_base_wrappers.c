@@ -26,9 +26,10 @@
 int opal_paffinity_base_get_num_processors(int *num_procs)
 {
     if (!opal_paffinity_base_selected) {
+        *num_procs = -1;
         return OPAL_ERR_NOT_FOUND;
     }
-    return opal_paffinity_base_module->paff_get_num_processors(num_procs);
+    return opal_paffinity_base_module->paff_module_get_num_processors(num_procs);
 }
 
 
@@ -37,14 +38,15 @@ int opal_paffinity_base_set(int id)
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_NOT_FOUND;
     }
-    return opal_paffinity_base_module->paff_set(id);
+    return opal_paffinity_base_module->paff_module_set(id);
 }
 
 
 int opal_paffinity_base_get(int *id)
 {
     if (!opal_paffinity_base_selected) {
+        *id = -1;
         return OPAL_ERR_NOT_FOUND;
     }
-    return opal_paffinity_base_module->paff_get(id);
+    return opal_paffinity_base_module->paff_module_get(id);
 }

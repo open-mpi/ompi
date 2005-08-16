@@ -101,7 +101,7 @@ extern "C" {
      *
      * If no paffinity components were available, or if the
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
-     * is returned.
+     * is returned and num_procs is set to -1.
      */
     OMPI_DECLSPEC int opal_paffinity_base_get_num_processors(int *num_procs);
 
@@ -134,9 +134,9 @@ extern "C" {
      * Get this process' CPU affinitity virtual ID number and assign
      * it to \em id.  
      *
-     *      * If no paffinity components were available, or if the
+     * If no paffinity components were available, or if the
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
-     * is returned.
+     * is returned and id is set to -1.
      */
     OMPI_DECLSPEC int opal_paffinity_base_get(int *id);
 
