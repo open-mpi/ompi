@@ -33,6 +33,7 @@
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/schema/schema.h"
@@ -139,11 +140,23 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     if (ompi_mpi_paffinity_alone) {
         int param, value;
+        bool set = false;
         param = mca_base_param_find("mpi", NULL, "paffinity_processor");
         if (param >= 0) {
-            mca_base_param_lookup_int(param, &value);
-            if (value >= 0) {
-                opal_paffinity_base_set(value);
+            if (OMPI_SUCCESS == mca_base_param_lookup_int(param, &value)) {
+                if (value >= 0) {
+                    if (OPAL_SUCCESS == opal_paffinity_base_set(value)) {
+                        set = true;
+                    }
+                }
+            }
+            if (!set) {
+                char *vpid;
+                orte_ns_base_get_vpid_string(&vpid, orte_process_info.my_name);
+                opal_show_help("help-mpi-runtime",
+                               "mpi_init:startup:paffinity-unavailable", 
+                               true, vpid);
+                free(vpid);
             }
         }
     }
