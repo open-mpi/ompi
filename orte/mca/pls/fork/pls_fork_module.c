@@ -37,26 +37,27 @@
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "util/sys_info.h"
-#include "util/univ_info.h"
+#include "opal/mca/paffinity/base/base.h"
+#include "opal/util/sys_info.h"
+#include "orte/util/univ_info.h"
 #include "opal/util/opal_environ.h"
-#include "util/session_dir.h"
-#include "runtime/orte_wait.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/iof_base_setup.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/ns/ns.h"
+#include "orte/util/session_dir.h"
+#include "orte/runtime/orte_wait.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/iof_base_setup.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/ns/ns.h"
 #include "orte/mca/sds/base/base.h"
-#include "mca/pls/pls.h"
-#include "mca/pls/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
-#include "mca/soh/soh.h"
-#include "mca/soh/base/base.h"
-#include "mca/pls/fork/pls_fork.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/pls/fork/pls_fork.h"
 
 
 extern char **environ;
@@ -127,7 +128,9 @@ static int orte_pls_fork_proc(
     orte_app_context_t* context, 
     orte_rmaps_base_proc_t* proc,
     orte_vpid_t vpid_start,
-    orte_vpid_t vpid_range)
+    orte_vpid_t vpid_range,
+    bool want_processor,
+    size_t processor)
 {
     pid_t pid;
     orte_iof_base_io_conf_t opts;
@@ -201,8 +204,8 @@ static int orte_pls_fork_proc(
     }
 
     if(pid == 0) {
-        char* param;
-        char* uri;
+        char *param, *param2;
+        char *uri;
         char **environ_copy;
 
 #if 0
@@ -233,6 +236,18 @@ static int orte_pls_fork_proc(
         }
         param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
         opal_unsetenv(param, &environ_copy);
+        free(param);
+
+        /* Set the relative vpid */
+
+        if (want_processor) {
+            param = mca_base_param_environ_variable("mpi", NULL,
+                                                    "paffinity_processor");
+            asprintf(&param2, "%lu", processor);
+            opal_setenv(param, param2, true, &environ_copy);
+            free(param);
+            free(param2);
+        }
 
         /* setup universe info */
         if (NULL != orte_universe_info.name) {
@@ -357,6 +372,7 @@ int orte_pls_fork_launch(orte_jobid_t jobid)
     orte_vpid_t vpid_start;
     orte_vpid_t vpid_range;
     int rc;
+    size_t num_processors, num_processes;
 
     /* query the allocation for this node */
     OBJ_CONSTRUCT(&map, opal_list_t);
@@ -373,15 +389,28 @@ int orte_pls_fork_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
+    /* are we oversubscribing? */
+    opal_paffinity_base_get_num_processors(&rc);
+    num_processors = (size_t) rc;
+    for (num_processes = 0, item =  opal_list_get_first(&map);
+         item != opal_list_get_end(&map);
+         item =  opal_list_get_next(item)) {
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
+        num_processes += map->num_procs;
+    }
+
     /* attempt to launch each of the apps */
-    for(item =  opal_list_get_first(&map);
-        item != opal_list_get_end(&map);
-        item =  opal_list_get_next(item)) {
+    for (item =  opal_list_get_first(&map);
+         item != opal_list_get_end(&map);
+         item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         size_t i;
-        for(i=0; i<map->num_procs; i++) {
-            rc = orte_pls_fork_proc(map->app, map->procs[i], vpid_start, vpid_range);
-            if(ORTE_SUCCESS != rc) {
+        for (i=0; i<map->num_procs; i++) {
+            rc = orte_pls_fork_proc(map->app, map->procs[i], vpid_start, 
+                                    vpid_range, 
+                                    (num_processes > num_processors) ?
+                                    false : true, i);
+            if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
