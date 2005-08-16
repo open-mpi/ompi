@@ -18,13 +18,14 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
-#include "mca/rml/base/base.h"
+#include "ompi/include/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/util/output.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/base/base.h"
 
 /*
  * The following file was created by configure.  It contains extern
