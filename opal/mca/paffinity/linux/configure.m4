@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-# MCA_ptl_tcp_CONFIG([action-if-found], [action-if-not-found])
+# MCA_paffinity_linux_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_paffinity_linux_CONFIG],[
     # check for sched_setaffinity(), which originated in Linux kernel
@@ -24,46 +24,46 @@ AC_DEFUN([MCA_paffinity_linux_CONFIG],[
                   [$1],
                   [$2])
 
-    # Linux sucks.  There are at least 3 different ways that
-    # sched_setaffinity is implemented (only one of which -- the most
-    # outdated -- is documented in the sched_setaffinity(2) man page).
-
-    # 1. int sched_setaffinity(pid_t pid, unsigned int len, unsigned
-    # long *mask);
-
-    # This originated in 2.5 kernels (which we won't worry about) and
-    # some distros back-ported it to their 2.4 kernels.  It's unknown
-    # if this appears in any 2.6 kernels.
-
-    # 2. int sched_setaffinity (pid_t __pid, size_t __cpusetsize,
-    # const cpu_set_t *__cpuset);
-
-    # This appears to be in recent 2.6 kernels (e.g., 2.6.11).  I
-    # don't know when #1 changed into #2.  However, this prototype is
-    # the nicest -- the cpu_set_t type is accompanied by fdset-like
-    # CPU_ZERO(), CPU_SET(), CPU_ISSET(), etc. macros.
-
-    # 3. int sched_setaffinity (pid_t __pid, const cpu_set_t *__mask);
-
-    # (note the missing len parameter) This may be an SGI Altix
-    # exclusive -- they appear to have a 2.4-based kernel, and
-    # therefore likely back-ported the 2.5 work but modified it for
-    # their needs.  Similar to #2, the cpu_set_t type is accompanied
-    # by fdset-like CPU_ZERO(), CPU_SET(), CPU_ISSET(), etc. macros.
-
-    # This configure script has to figure out which one to use.  :-\
+    #####################################################################
+    # See lengthy comment in paffinity_linux.h for an explanation of
+    # these tests.
+    #####################################################################
 
     AH_TEMPLATE([HAVE_cpu_set_t], [Whether we have the cpu_set_t type or not])
     AC_CHECK_TYPES([cpu_set_t],
-                   [AC_DEFINE([HAVE_cpu_set_t], [1]) have_cpu_set_t=1],
-                   [have_cpu_set_t=0],
+                   [AC_DEFINE([HAVE_cpu_set_t], [1]) 
+                    opal_paffinity_linux_have_cpu_set_t=1],
+                   [opal_paffinity_linux_have_cpu_set_t=0],
                    [#include <sched.h>])
 
-    if test "$have_cpu_set_t" = "1"; then
-        # Note: SGI Altix tests not written yet -- having other
-        # problems with that machine and awaiting expert help from SGI
-        # engineers.
-        echo > /dev/null
+    if test "$opal_paffinity_linux_have_cpu_set_t" = "1"; then
+
+        # Check to see if CPU_ZERO is functional (see comment in
+        # paffinity_linux.h)
+
+        AC_MSG_CHECKING([whether CPU_ZERO is broken])
+        AH_TEMPLATE([HAVE_CPU_ZERO], [Whether we have a functional CPU_ZERO macro or not])
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sched.h>],
+                                           [cpu_set_t foo; CPU_ZERO(&foo);])],
+                           [AC_DEFINE(HAVE_CPU_ZERO, 1)
+                            AC_MSG_RESULT([no])], [AC_MSG_RESULT([yes])])
+
+        # Now check whether sched_setaffinity() takes 2 or 3
+        # arguments (see comment in paffinity_linux.h)
+
+        AC_MSG_CHECKING([how many parameters sched_setaffinity() takes])
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sched.h>],
+                                           [cpu_set_t foo; sched_setaffinity(0, sizeof(foo), &foo);])],
+                          [opal_paffinity_linux_ssnp=3],
+                          [opal_paffinity_linux_ssnp=2])
+        AC_DEFINE_UNQUOTED(OPAL_PAFFINITY_LINUX_SCHED_SETAFF_NUM_PARAMS, 
+                           $opal_paffinity_linux_ssnp,
+                           [How many parameters sched_setaffinity() takes (!)])
+        AC_MSG_RESULT([$opal_paffinity_linux_ssnp])
     fi
-    unset have_cpu_set_t
+
+    # Clean up (not entirely necessary; just being social)
+
+    unset opal_paffinity_linux_have_cpu_set_t
+    unset opal_paffinity_linux_ssnp
 ])dnl

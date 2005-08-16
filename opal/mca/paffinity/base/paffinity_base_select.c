@@ -131,8 +131,16 @@ int opal_paffinity_base_select(void)
     opal_output_verbose(10, opal_paffinity_base_output, 
                         "paffinity:select: component %s selected",
                         best_component->paffinityc_version.mca_component_name);
-
     opal_paffinity_base_selected = true;
+
+    /* Initialize the winner */
+
+    if (NULL != opal_paffinity_base_module) {
+        if (OPAL_SUCCESS != opal_paffinity_base_module->paff_module_init()) {
+            return OPAL_ERROR;
+        }
+    }
+
     return OPAL_SUCCESS;
 }
 
