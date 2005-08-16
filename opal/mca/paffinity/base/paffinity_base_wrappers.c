@@ -23,7 +23,7 @@
 #include "opal/mca/paffinity/base/internal.h"
 
 
-int opal_paffinity_get_num_processors(int *num_procs)
+int opal_paffinity_base_get_num_processors(int *num_procs)
 {
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_NOT_FOUND;
@@ -32,7 +32,7 @@ int opal_paffinity_get_num_processors(int *num_procs)
 }
 
 
-int opal_paffinity_set(int id)
+int opal_paffinity_base_set(int id)
 {
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_NOT_FOUND;
@@ -41,7 +41,7 @@ int opal_paffinity_set(int id)
 }
 
 
-int opal_paffinity_get(int *id)
+int opal_paffinity_base_get(int *id)
 {
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_NOT_FOUND;

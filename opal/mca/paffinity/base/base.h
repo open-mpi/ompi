@@ -103,7 +103,7 @@ extern "C" {
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned.
      */
-    OMPI_DECLSPEC int opal_paffinity_get_num_processors(int *num_procs);
+    OMPI_DECLSPEC int opal_paffinity_base_get_num_processors(int *num_procs);
 
     /**
      * Set this process' affinity.
@@ -120,7 +120,7 @@ extern "C" {
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned.
      */
-    OMPI_DECLSPEC int opal_paffinity_set(int id);
+    OMPI_DECLSPEC int opal_paffinity_base_set(int id);
 
     /**
      * Get this process' affinity.
@@ -138,7 +138,7 @@ extern "C" {
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned.
      */
-    OMPI_DECLSPEC int opal_paffinity_get(int *id);
+    OMPI_DECLSPEC int opal_paffinity_base_get(int *id);
 
     /**
      * Shut down the paffinity MCA framework.
