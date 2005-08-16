@@ -143,7 +143,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         if (param >= 0) {
             mca_base_param_lookup_int(param, &value);
             if (value >= 0) {
-                printf("Setting affinity! proc %d\n", value);
                 opal_paffinity_base_set(value);
             }
         }
