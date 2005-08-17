@@ -456,9 +456,9 @@ sub try_build {
     # try compiling and linking a simple C application
     chdir("..");
     if (! -d test) {
-        mkdir("test", 0777);
+        mkdir("test-compile", 0777);
     }
-    chdir("test");
+    chdir("test-compile");
     open C, ">hello.c";
     print C "#include <mpi.h>
 int main(int argc, char* argv[]) {
@@ -466,13 +466,14 @@ int main(int argc, char* argv[]) {
   MPI_Finalize();
   return 0;
 }\n";
+    close(C);
     $ret = do_command(1, "$installdir/bin/mpicc hello.c -o hello");
     if ($ret->{status} != 0) {
         $ret->{make_all_stderr} = $make_all_stderr;
         $ret->{message} = "Failed to compile/link C \"hello world\" MPI app";
         return $ret;
     }
-    unlink("hello");
+    unlink "hello.c", "hello";
 
     # if we have a C++ compiler, try compiling and linking a simple
     # C++ application
@@ -488,6 +489,7 @@ int main(int argc, char* argv[]) {
   MPI::Finalize();
   return 0;
 }\n";
+        close(CXX);
         do_command(1, "$installdir/bin/mpic++ hello.cc -o hello");
         if ($ret->{status} != 0) {
             $ret->{make_all_stderr} = $make_all_stderr;
@@ -495,7 +497,7 @@ int main(int argc, char* argv[]) {
                 "Failed to compile/link C++ \"hello world\" MPI app";
             return $ret;
         }
-        unlink("hello");
+        unlink "hello.cc", "hello";
     }
 
     # if we have a F77 compiler, try compiling and linking a simple
@@ -513,6 +515,7 @@ int main(int argc, char* argv[]) {
         call MPI_FINALIZE(ierr)
         stop
         end\n";
+        close(F77);
         do_command(1, "$installdir/bin/mpif77 hello.f -o hello");
         if ($ret->{status} != 0) {
             $ret->{make_all_stderr} = $make_all_stderr;
@@ -520,13 +523,13 @@ int main(int argc, char* argv[]) {
                 "Failed to compile/link F77 \"hello world\" MPI app";
             return $ret;
         }
-        unlink("hello");
+        unlink "hello.f", "hello";
     }
 
     # all done -- clean up (unless user specified --leave-install)
     chdir($startdir);
     if ($leave_install_arg) {
-        system("rm -rf $srcroot/openmpi* $srcroot/test");
+        system("rm -rf $srcroot/openmpi* $srcroot/test-compile");
     } else {
         system("rm -rf $srcroot");
     }
