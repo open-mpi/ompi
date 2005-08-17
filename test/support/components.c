@@ -18,7 +18,8 @@
 
 #include <string.h>
 
-#include "include/constants.h"
+#include "ompi/include/constants.h"
+#include "opal/include/constants.h"
 #include "libltdl/ltdl.h"
 #include "components.h"
 #include "mca/mca.h"
