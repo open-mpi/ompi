@@ -71,6 +71,14 @@ int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
         }
     }
 
+    /* MPI-1, p114, says that each process must supply at least
+       one element.  But at least the Pallas benchmarks call
+       MPI_REDUCE with a count of 0.  So be sure to handle it. */
+    
+    if (0 == count) {
+        return MPI_SUCCESS;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll.coll_reduce(sendbuf, recvbuf, count,

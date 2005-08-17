@@ -38,7 +38,7 @@ static const char FUNC_NAME[] = "MPI_Reduce_scatter";
 int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) 
 {
-    int i, err, size;
+    int i, err, size, count;
 
     if (MPI_PARAM_CHECK) {
         err = MPI_SUCCESS;
@@ -67,13 +67,27 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
          get the size of the remote group here for both intra- and
          intercommunicators */
 
-        size = ompi_comm_remote_size(comm);
+        size = ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
           OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcounts[i]);
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
     }
 
+    /* MPI-1, p114, says that each process must supply at least one
+       element.  But at least the Pallas benchmarks call MPI_REDUCE
+       with a count of 0.  So be sure to handle it.  Grrr... */
+
+    size = ompi_comm_size(comm);
+    for (count = i = 0; i < size; ++i) {
+        if (0 == recvcounts[i]) {
+            ++count;
+        }
+    }
+    if (size == count) {
+        return MPI_SUCCESS;
+    }
+        
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll.coll_reduce_scatter(sendbuf, recvbuf, recvcounts,
