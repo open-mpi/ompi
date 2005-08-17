@@ -202,7 +202,7 @@ mca_btl_portals_component_open(void)
                            &dummy);
     mca_btl_portals_module.super.btl_bandwidth = dummy;
 
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND_INPLACE;
 
     mca_btl_portals_module.portals_num_procs = 0;
     bzero(&(mca_btl_portals_module.portals_reg),

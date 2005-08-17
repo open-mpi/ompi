@@ -69,6 +69,7 @@ void mca_pml_ob1_recv_frag_callback(
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_OB1_HDR_TYPE_MATCH:
     case MCA_PML_OB1_HDR_TYPE_RNDV:
+    case MCA_PML_OB1_HDR_TYPE_RGET:
         {
             mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
             break;
@@ -79,9 +80,6 @@ void mca_pml_ob1_recv_frag_callback(
                 hdr->hdr_ack.hdr_src_req.pval;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
             sendreq->req_rdma_offset = hdr->hdr_ack.hdr_rdma_offset;
-#if MCA_PML_OB1_TIMESTAMPS
-            sendreq->t_send1 = get_profiler_timestamp();
-#endif
             MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq);
             break;
         }
@@ -89,32 +87,21 @@ void mca_pml_ob1_recv_frag_callback(
         {
             mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)
                 hdr->hdr_frag.hdr_dst_req.pval;
-            mca_pml_ob1_recv_request_progress(recvreq,segments,des->des_dst_cnt);
+            mca_pml_ob1_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
             break;
         }
     case MCA_PML_OB1_HDR_TYPE_PUT:
         {
             mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)
-                hdr->hdr_rdma.hdr_src.pval;
+                hdr->hdr_rdma.hdr_req.pval;
             mca_pml_ob1_send_request_put(sendreq,btl,&hdr->hdr_rdma);
             break;
         }
     case MCA_PML_OB1_HDR_TYPE_FIN:
         {
-            mca_btl_base_descriptor_t* dst = (mca_btl_base_descriptor_t*)
-                hdr->hdr_fin.hdr_dst.pval;
-            mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)dst->des_cbdata;
-#if MCA_PML_OB1_TIMESTAMPS
-            recvreq->fin1[recvreq->fin_index] = get_profiler_timestamp();
-            btl->btl_free(btl,dst);
-            recvreq->fin2[recvreq->fin_index] = get_profiler_timestamp();
-            recvreq->fin_index++;
-            
-            mca_pml_ob1_recv_request_progress(recvreq,segments,des->des_dst_cnt);
-#else
-            mca_pml_ob1_recv_request_progress(recvreq,segments,des->des_dst_cnt);
-            btl->btl_free(btl,dst);
-#endif
+            mca_btl_base_descriptor_t* rdma = (mca_btl_base_descriptor_t*)
+                hdr->hdr_fin.hdr_des.pval;
+            rdma->des_cbfunc(btl, NULL, rdma, OMPI_SUCCESS);
             break;
         }
     default:
@@ -426,11 +413,11 @@ int mca_pml_ob1_recv_frag_match(
     int rc;
 
     /* communicator pointer */
-    comm_ptr=ompi_comm_lookup(hdr->hdr_contextid);
+    comm_ptr=ompi_comm_lookup(hdr->hdr_ctx);
     comm=(mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
 
     /* source sequence number */
-    frag_msg_seq = hdr->hdr_msg_seq;
+    frag_msg_seq = hdr->hdr_seq;
     proc = comm->procs + hdr->hdr_src;
 
     /* get next expected message sequence number - if threaded
@@ -497,7 +484,7 @@ int mca_pml_ob1_recv_frag_match(
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return rc;
             }
-            MCA_PML_OB1_RECV_FRAG_INIT(frag,hdr,segments,num_segments);
+            MCA_PML_OB1_RECV_FRAG_INIT(frag,hdr,segments,num_segments,btl);
             opal_list_append( &proc->unexpected_frags, (opal_list_item_t *)frag );
         }
 
@@ -522,7 +509,7 @@ int mca_pml_ob1_recv_frag_match(
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             return rc;
         }
-        MCA_PML_OB1_RECV_FRAG_INIT(frag,hdr,segments,num_segments);
+        MCA_PML_OB1_RECV_FRAG_INIT(frag,hdr,segments,num_segments,btl);
         opal_list_append(&proc->frags_cant_match, (opal_list_item_t *)frag);
 
     }
@@ -531,15 +518,13 @@ int mca_pml_ob1_recv_frag_match(
 
     /* release matching lock before processing fragment */
     if(match != NULL) {
-        MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
-        mca_pml_ob1_recv_request_progress(match,segments,num_segments);
+        mca_pml_ob1_recv_request_progress(match,btl,segments,num_segments);
     } 
     if(additional_match) {
         opal_list_item_t* item;
         while(NULL != (item = opal_list_remove_first(&additional_matches))) {
             mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)item;
-            MCA_PML_OB1_RECV_REQUEST_MATCHED(frag->request, hdr);
-            mca_pml_ob1_recv_request_progress(frag->request,frag->segments,frag->num_segments);
+            mca_pml_ob1_recv_request_progress(frag->request,frag->btl,frag->segments,frag->num_segments);
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
         }
     }
@@ -601,7 +586,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
             /*
              * If the message has the next expected seq from that proc...
              */
-            frag_seq=frag->hdr.hdr_match.hdr_msg_seq;
+            frag_seq=frag->hdr.hdr_match.hdr_seq;
             if (frag_seq == next_msg_seq_expected) {
                 mca_pml_ob1_match_hdr_t* hdr = &frag->hdr.hdr_match;
 

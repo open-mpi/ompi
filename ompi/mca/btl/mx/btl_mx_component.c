@@ -126,7 +126,7 @@ int mca_btl_mx_component_open(void)
     mca_btl_mx_module.super.btl_max_rdma_size = 
         mca_btl_mx_param_register_int("max_rdma_size", 1024*1024); 
     mca_btl_mx_module.super.btl_flags  = 
-        mca_btl_mx_param_register_int("flags", MCA_BTL_FLAGS_RDMA); 
+        mca_btl_mx_param_register_int("flags", MCA_BTL_FLAGS_PUT); 
     return OMPI_SUCCESS;
 }
 

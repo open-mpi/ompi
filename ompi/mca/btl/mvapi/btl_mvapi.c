@@ -55,7 +55,7 @@ mca_btl_mvapi_module_t mca_btl_mvapi_module = {
         mca_btl_mvapi_prepare_dst,
         mca_btl_mvapi_send,
         mca_btl_mvapi_put,
-        NULL /* get */ 
+        mca_btl_mvapi_get
     }
 };
 
@@ -770,8 +770,8 @@ int mca_btl_mvapi_send(
  */
 
 int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
-                    mca_btl_base_endpoint_t* endpoint,
-                    mca_btl_base_descriptor_t* descriptor)
+                       mca_btl_base_endpoint_t* endpoint,
+                       mca_btl_base_descriptor_t* descriptor)
 {
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
@@ -801,7 +801,42 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
 
 }
 
+/* 
+ * RDMA read remote buffer to local buffer address. 
+ */ 
 
+int mca_btl_mvapi_get( mca_btl_base_module_t* btl, 
+                       mca_btl_base_endpoint_t* endpoint,
+                       mca_btl_base_descriptor_t* descriptor)
+{
+    mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
+    mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
+    frag->endpoint = endpoint;
+    frag->sr_desc.opcode = VAPI_RDMA_READ; 
+    
+    frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
+    frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
+    frag->sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
+    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
+    frag->sg_entry.len  = frag->base.des_dst->seg_len; 
+
+    frag->ret = VAPI_post_sr(mvapi_btl->nic, 
+                             endpoint->lcl_qp_hndl_low, 
+                             &frag->sr_desc); 
+    if(VAPI_OK != frag->ret){ 
+        return OMPI_ERROR; 
+    }
+    if(mca_btl_mvapi_component.use_srq) { 
+        MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
+        MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
+    } else { 
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+    }
+    return OMPI_SUCCESS; 
+
+}
+                       
 
 /*
  * Asynchronous event handler to detect unforseen

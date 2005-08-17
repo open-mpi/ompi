@@ -247,6 +247,15 @@ static inline int mca_bml_base_put(mca_bml_base_btl_t* bml_btl, mca_btl_base_des
                              des);
 }
 
+static inline int mca_bml_base_get(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
+    des->des_context = (void*) bml_btl; 
+    return bml_btl->btl_get(
+                             bml_btl->btl,
+                             bml_btl->btl_endpoint, 
+                             des);
+}
+
+
 static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl, 
                                             mca_mpool_base_registration_t* reg, 
                                             struct ompi_convertor_t* conv, 

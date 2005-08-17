@@ -201,7 +201,7 @@ int mca_btl_mvapi_component_open(void)
                                       1024*1024); 
     mca_btl_mvapi_module.super.btl_flags  = 
         mca_btl_mvapi_param_register_int("flags", 
-                                      MCA_BTL_FLAGS_RDMA); 
+                                      MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET); 
     
     
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
@@ -574,6 +574,7 @@ int mca_btl_mvapi_component_progress()
                 BTL_ERROR(("Got an RDMA with Immediate data!, not supported!")); 
                 return OMPI_ERROR; 
                 
+            case VAPI_CQE_SQ_RDMA_READ:
             case VAPI_CQE_SQ_RDMA_WRITE:
             case VAPI_CQE_SQ_SEND_DATA :
                 
@@ -632,6 +633,7 @@ int mca_btl_mvapi_component_progress()
                 BTL_ERROR(("Got an RDMA with Immediate data!, not supported!")); 
                 return OMPI_ERROR; 
             
+            case VAPI_CQE_SQ_RDMA_READ:
             case VAPI_CQE_SQ_RDMA_WRITE:
             case VAPI_CQE_SQ_SEND_DATA :
                 

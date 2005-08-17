@@ -27,6 +27,7 @@ typedef enum {
     MCA_PML_OB1_RMDA_INIT,
     MCA_PML_OB1_RDMA_PREPARE,
     MCA_PML_OB1_RDMA_PUT,
+    MCA_PML_OB1_RDMA_GET,
     MCA_PML_OB1_RDMA_FIN
 } mca_pml_ob1_rdma_state_t;
 
@@ -37,7 +38,7 @@ struct mca_pml_ob1_rdma_frag_t {
     mca_pml_ob1_rdma_state_t rdma_state;
     size_t rdma_length;
     mca_btl_base_segment_t rdma_segs[MCA_BTL_DES_MAX_SEGMENTS];
-    struct mca_pml_ob1_send_request_t* rdma_req;
+    void *rdma_req;
     struct mca_bml_base_endpoint_t* rdma_ep; 
 };
 typedef struct mca_pml_ob1_rdma_frag_t mca_pml_ob1_rdma_frag_t;

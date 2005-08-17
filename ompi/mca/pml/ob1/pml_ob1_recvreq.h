@@ -28,12 +28,6 @@
 extern "C" {
 #endif
 
-struct mca_pml_ob1_registration_t {
-    struct mca_pml_ob1_endpoint_t* endpoint;
-    struct mca_mpool_base_registration_t* registration;
-};
-typedef struct mca_pml_ob1_registration_t mca_pml_ob1_registration_t;
-
 
 struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
@@ -46,18 +40,6 @@ struct  mca_pml_ob1_recv_request_t {
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;
     size_t  req_rdma_offset;
-    mca_pml_ob1_registration_t req_reg[MCA_MPOOL_BASE_MAX_REG];
-    size_t req_num_reg;
-
-#if MCA_PML_OB1_TIMESTAMPS
-    unsigned long long ack;
-    unsigned long long pin1[MCA_PML_OB1_NUM_TSTAMPS];
-    unsigned long long pin2[MCA_PML_OB1_NUM_TSTAMPS];
-    unsigned long long fin1[MCA_PML_OB1_NUM_TSTAMPS];
-    unsigned long long fin2[MCA_PML_OB1_NUM_TSTAMPS];
-    int pin_index;
-    int fin_index;
-#endif
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -154,13 +136,6 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
 /**
  *  Initialize diagnostic code for tracing rdma protocol timing
  */
-#if MCA_PML_OB1_TIMESTAMPS 
-#define MCA_PML_OB1_RECV_REQUEST_TSTAMPS_INIT(recvreq)                            \
-    (request)->fin_index = 0;                                                     \
-    (request)->pin_index = 0;                                                    
-#else
-#define MCA_PML_OB1_RECV_REQUEST_TSTAMPS_INIT(recvreq)
-#endif
 
 /**
  * Start an initialized request.
@@ -180,7 +155,6 @@ do {                                                                            
     (request)->req_recv.req_base.req_pml_complete = false;                        \
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
     (request)->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;        \
-    MCA_PML_OB1_RECV_REQUEST_TSTAMPS_INIT(request);                               \
                                                                                   \
     /* always set the req_status.MPI_TAG to ANY_TAG before starting the           \
      * request. This field is used if cancelled to find out if the request        \
@@ -207,10 +181,8 @@ do {                                                                            
     request,                                                                         \
     hdr)                                                                             \
 do {                                                                                 \
-    (request)->req_recv.req_bytes_packed = (hdr)->hdr_msg_length;                    \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;    \
-                                                                                     \
     if((request)->req_recv.req_bytes_packed != 0) {                                  \
         ompi_proc_t *proc =                                                          \
             ompi_comm_peer_lookup(                                                   \
@@ -280,6 +252,7 @@ do {                                                                            
 
 void mca_pml_ob1_recv_request_progress(
     mca_pml_ob1_recv_request_t* req,
+    struct mca_btl_base_module_t* btl,
     mca_btl_base_segment_t* segments,
     size_t num_segments);
 

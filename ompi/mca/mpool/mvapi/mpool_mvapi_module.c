@@ -82,7 +82,7 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
     vapi_reg->hndl = VAPI_INVAL_HNDL; 
     
     
-    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
+    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE | VAPI_EN_REMOTE_READ;
     mr_in.l_key = 0;
     mr_in.r_key = 0;
     mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
