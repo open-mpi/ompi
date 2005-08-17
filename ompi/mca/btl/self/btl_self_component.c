@@ -119,7 +119,7 @@ int mca_btl_self_component_open(void)
     mca_btl_self.btl_exclusivity = 
         mca_btl_self_param_register_int("exclusivity", 64*1024);
     mca_btl_self.btl_flags =
-        mca_btl_self_param_register_int("flags", MCA_BTL_FLAGS_RDMA);
+        mca_btl_self_param_register_int("flags", MCA_BTL_FLAGS_PUT);
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_self_component.self_lock, opal_mutex_t);

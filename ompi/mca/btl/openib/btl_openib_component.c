@@ -204,7 +204,7 @@ int mca_btl_openib_component_open(void)
                                       1024*1024); 
     mca_btl_openib_module.super.btl_flags  = 
         mca_btl_openib_param_register_int("flags", 
-                                      MCA_BTL_FLAGS_RDMA); 
+                                      MCA_BTL_FLAGS_PUT); 
     
     
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 

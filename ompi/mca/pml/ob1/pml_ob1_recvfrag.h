@@ -38,6 +38,7 @@ struct mca_pml_ob1_recv_frag_t {
     mca_pml_ob1_hdr_t hdr;
     struct mca_pml_ob1_recv_request_t* request;
     size_t num_segments;
+    mca_btl_base_module_t* btl;
     mca_btl_base_segment_t segments[MCA_BTL_DES_MAX_SEGMENTS];
     mca_pml_ob1_buffer_t* buffers[MCA_BTL_DES_MAX_SEGMENTS];
 };
@@ -54,13 +55,14 @@ do {                                                            \
 } while(0)
 
 
-#define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr,segs,cnt)          \
+#define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr,segs,cnt,btl)      \
 do {                                                            \
     size_t i;                                                   \
     mca_btl_base_segment_t* macro_segments = frag->segments;    \
     mca_pml_ob1_buffer_t** buffers = frag->buffers;             \
                                                                 \
     /* init recv_frag */                                        \
+    frag->btl = btl;                                            \
     frag->hdr = *(mca_pml_ob1_hdr_t*)hdr;                       \
     frag->num_segments = cnt;                                   \
     /* copy over data */                                        \

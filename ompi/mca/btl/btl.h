@@ -134,7 +134,8 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* prefered protocol */
 #define MCA_BTL_FLAGS_SEND  0x1
-#define MCA_BTL_FLAGS_RDMA  0x2
+#define MCA_BTL_FLAGS_PUT   0x2
+#define MCA_BTL_FLAGS_GET   0x4
 
 /* btl can send directly from user buffer w/out registration */
 #define MCA_BTL_FLAGS_SEND_INPLACE  0x10000000

@@ -45,19 +45,6 @@ struct mca_pml_ob1_send_request_t {
     size_t req_bytes_delivered;
     size_t req_send_offset;
     size_t req_rdma_offset;
-
-#if MCA_PML_OB1_TIMESTAMPS
-    unsigned long long t_start;
-    unsigned long long t_send1;
-    unsigned long long t_send2;
-    unsigned long long t_scheduled;
-    unsigned long long t_pin[MCA_PML_OB1_NUM_TSTAMPS];
-    unsigned long long t_put[MCA_PML_OB1_NUM_TSTAMPS];
-    unsigned long long t_fin[MCA_PML_OB1_NUM_TSTAMPS];
-    int t_pin_index;
-    int t_put_index;
-    int t_fin_index;
-#endif
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
@@ -113,47 +100,6 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
  *  Diagnostic output to trace rdma protocol timing
  */
 
-#if MCA_PML_OB1_TIMESTAMPS
-#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq) \
-{ \
- int i; \
- opal_output(0, "[%d,%d,%d] src start, %llu\n",  \
-    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_start); \
-\
- opal_output(0, "[%d,%d,%d] src send start, %llu\n",  \
-    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_send1); \
-\
- opal_output(0, "[%d,%d,%d] src scheduled, %llu\n",  \
-    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_scheduled); \
-\
- opal_output(0, "[%d,%d,%d] src send complete, %llu\n",  \
-    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_send2); \
-\
- for(i=0; i<(sendreq)->t_pin_index; i++) \
-     opal_output(0, "[%d,%d,%d] src pin, %llu %llu\n",  \
-        ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_pin[i], \
-        (sendreq)->t_put[i] - (sendreq)->t_pin[i]); \
- for(i=0; i<(sendreq)->t_put_index; i++) \
-     opal_output(0, "[%d,%d,%d] src put, %llu %llu\n",  \
-        ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_put[i], \
-        (sendreq)->t_fin[i] - (sendreq)->t_put[i]); \
- for(i=0; i<(sendreq)->t_fin_index; i++) \
-     opal_output(0, "[%d,%d,%d] src fin, %llu\n",  \
-        ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_fin[i]); \
-}
-
-#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq) \
-{                                                      \
-    sendreq->t_pin_index = 0;                          \
-    sendreq->t_put_index = 0;                          \
-    sendreq->t_fin_index = 0;                          \
-}
-
-#else
-#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq)
-#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq)
-#endif
-
 
 /**
  * Start a send request. 
@@ -170,7 +116,6 @@ do {                                                                            
         break;                                                                            \
     }                                                                                     \
                                                                                           \
-    MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
     sendreq->req_lock = 0;                                                                \
     sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
@@ -205,12 +150,11 @@ do {                                                                            
         hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;                                 \
         hdr->hdr_common.hdr_flags = 0;                                                    \
         hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;                            \
-        hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;  \
+        hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;        \
         hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;          \
         hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;                     \
         hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
-        hdr->hdr_match.hdr_msg_length = 0;                                                \
-        hdr->hdr_match.hdr_msg_seq = sendreq->req_send.req_base.req_sequence;             \
+        hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;                 \
                                                                                           \
         /* short message */                                                               \
         descriptor->des_cbfunc = mca_pml_ob1_match_completion;                            \
@@ -257,7 +201,6 @@ do {                                                                            
         (sendreq)->req_send.req_base.req_ompi.req_status._count =                         \
             (sendreq)->req_send.req_bytes_packed;                                         \
         (sendreq)->req_send.req_base.req_ompi.req_complete = true;                        \
-        MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq);                                   \
         if(ompi_request_waiting) {                                                        \
             opal_condition_broadcast(&ompi_request_cond);                                 \
         }                                                                                 \

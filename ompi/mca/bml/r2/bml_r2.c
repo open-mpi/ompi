@@ -353,7 +353,7 @@ int mca_bml_r2_add_procs(
             }
 
             /* check flags - is rdma prefered */
-            if(btl->btl_flags & MCA_BTL_FLAGS_RDMA &&
+            if(btl->btl_flags & (MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET) &&
                proc->proc_arch == ompi_proc_local_proc->proc_arch) {
                 mca_bml_base_btl_t* bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
                 *bml_btl_rdma = *bml_btl;
