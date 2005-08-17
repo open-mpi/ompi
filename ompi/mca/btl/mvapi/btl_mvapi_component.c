@@ -558,7 +558,6 @@ int mca_btl_mvapi_component_progress()
          *   we will check the high priority and process them until there are none left. 
          *   note that low priority messages are only processed one per progress call. 
          */ 
-        do{ 
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_high, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
@@ -615,9 +614,7 @@ int mca_btl_mvapi_component_progress()
                 break;
             }
         }
-        }
-        while(VAPI_OK == ret); 
-
+        
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_low, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
