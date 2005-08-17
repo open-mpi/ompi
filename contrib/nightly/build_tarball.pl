@@ -25,6 +25,7 @@
 
 use strict;
 use Getopt::Long;
+use File::Basename;
 
 # Set this to true for additional output; typically only when
 # debugging
@@ -85,6 +86,7 @@ my $url_arg;
 my $config_arg;
 my $debug_arg;
 my $file_arg;
+my $patches_arg;
 my $leave_install_arg;
 my $help_arg;
 my $force_arg;
@@ -391,6 +393,25 @@ sub try_build {
 	    if (! -d "openmpi-$version");
 
     chdir("openmpi-$version");
+
+    # In case of patch-files passed to build_tarball, patch from the root-level source-dir
+    if ($patches_arg) {
+        my $dirname;
+        $dirname = dirname("$tarball");
+        foreach my $patch_file (split(',', $patches_arg)) {
+
+            if (! -e "$dirname/$patch_file") {
+                print "Patch-File $dirname/$patch_file not available -- skipping\n" if ($debug);
+                next;
+            }
+
+            $ret = do_command($merge_output, "patch -p0 -i $dirname/$patch_file");
+            if ($ret->{status} != 0) {
+                $ret->{message} = "Failed to \"patch with $dirname/$patch_file\"";
+                return $ret;
+            }
+        }
+    }
     
     # configure it
     my $config_command = "./configure";
@@ -556,6 +577,7 @@ my $ok = Getopt::Long::GetOptions("url|u=s" => \$url_arg,
                                   "email|e=s" => \$email_arg,
                                   "config|c=s" => \$config_arg,
                                   "file|f=s" => \$file_arg,
+                                  "patches|p=s" => \$patches_arg,
                                   "debug|d" => \$debug_arg,
                                   "leave-install|l=s" => \$leave_install_arg,
                                   "install-dir=s" => \$install_dir_arg,
@@ -570,6 +592,7 @@ if (!$ok || $help_arg) {
     print "Usage: $0 [--scratch|-s scratch_directory_root] [--email|-e address]\n";
     print "  [--config|-c config_file] [--help|-h] [--debug|-d]\n";
     print "  [[--file|-f local_ompi_tarball] [--url|-u URL_base]]\n";
+    print "  [--patches|-p list_of_patch_files]\n";
     print "  [--leave-install output_filename] [--install-dir install_dir]\n";
     print "  [--nocheck]\n";
     exit(0);
