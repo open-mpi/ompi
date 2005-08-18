@@ -87,16 +87,6 @@ OBJ_CLASS_INSTANCE(
 
 
 
-static char* mca_mpool_openib_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("mpool","openib",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
 
 /**
   * component open/close/init function

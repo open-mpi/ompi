@@ -306,7 +306,24 @@ extern int mca_btl_openib_put(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* decriptor
-);
+    );
+
+/**
+ * PML->BTL Initiate a get of the specified size.
+ *
+ * @param btl (IN)               BTL instance
+ * @param btl_base_peer (IN)     BTL peer addressing
+ * @param send_request (IN/OUT)  Send request (allocated by PML via mca_btl_base_request_alloc_fn_t)
+ * @param size (IN)              Number of bytes PML is requesting BTL to deliver
+ * @param flags (IN)             Flags that should be passed to the peer via the message header.
+ * @param request (OUT)          OMPI_SUCCESS if the BTL was able to queue one or more fragments
+ */
+extern int mca_btl_openib_get(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* btl_peer,
+    struct mca_btl_base_descriptor_t* decriptor
+    );
+    
 
 /**
  * Allocate a descriptor.

@@ -32,7 +32,6 @@
 #include "mca/mpool/openib/mpool_openib.h" 
 #include <errno.h> 
 #include <string.h> 
-extern int errno; 
 
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
@@ -57,7 +56,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_prepare_dst,
         mca_btl_openib_send,
         mca_btl_openib_put,
-        NULL /* get */ 
+        mca_btl_openib_get /* get */ 
     }
 };
 
@@ -775,7 +774,7 @@ int mca_btl_openib_send(
 }
 
 /*
- * RDMA local buffer to remote buffer address.
+ * RDMA WRITE local buffer to remote buffer address.
  */
 
 int mca_btl_openib_put( mca_btl_base_module_t* btl,
@@ -791,6 +790,45 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
     frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
     frag->sg_entry.length  = frag->base.des_src->seg_len; 
+    
+    BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
+                  , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
+                  , frag->wr_desc.sr_desc.wr.rdma.rkey
+                  , frag->sg_entry.addr
+                  , frag->sg_entry.length)); 
+
+    if(ibv_post_send(endpoint->lcl_qp_low, 
+                     &frag->wr_desc.sr_desc, 
+                     &bad_wr)){ 
+        BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
+        return OMPI_ERROR; 
+    }  
+    
+    MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+    MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+    
+    return OMPI_SUCCESS; 
+
+}
+
+
+/*
+ * RDMA READ remote buffer to local buffer address.
+ */
+
+int mca_btl_openib_get( mca_btl_base_module_t* btl,
+                    mca_btl_base_endpoint_t* endpoint,
+                    mca_btl_base_descriptor_t* descriptor)
+{
+    struct ibv_send_wr* bad_wr; 
+    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
+    frag->endpoint = endpoint;
+    frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_READ; 
+    frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
+    frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
+    frag->sg_entry.addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
+    frag->sg_entry.length  = frag->base.des_dst->seg_len; 
     
     BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
                   , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
