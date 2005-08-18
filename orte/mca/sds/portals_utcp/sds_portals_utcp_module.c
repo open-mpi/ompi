@@ -55,7 +55,7 @@ orte_sds_portals_utcp_contact_universe(void)
 	orte_process_info.gpr_replica = NULL;
     }
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 int
