@@ -16,13 +16,24 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_HEADERS = atomic.h timer.h
+noinst_LTLIBRARIES = libmca_timer_base.la
+
+headers = \
+        base.h
+
+libmca_timer_base_la_SOURCES = \
+        $(headers) \
+        timer_base_close.c \
+        timer_base_open.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys/ia64
-ompi_HEADERS = $(noinst_HEADERS)
+ompidir = $(includedir)/openmpi/ompi/mca/timer/base
+ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
 endif
+
+distclean-local:
+	rm -f static-components.h

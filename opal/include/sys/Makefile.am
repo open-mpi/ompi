@@ -18,7 +18,11 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = alpha amd64 ia32 ia64 mips powerpc sparc sparcv9 win32
 
-noinst_HEADERS = atomic.h architecture.h atomic_impl.h cache.h
+noinst_HEADERS = architecture.h \
+	atomic.h \
+	atomic_impl.h \
+	cache.h \
+	timer.h
 
 # Conditionally install the header files
 

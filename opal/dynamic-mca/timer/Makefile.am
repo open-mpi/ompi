@@ -16,13 +16,11 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_HEADERS = atomic.h timer.h
+SUBDIRS			= $(MCA_timer_DSO_SUBDIRS)
+DISTCLEANFILES		= $(SUBDIRS)
 
-# Conditionally install the header files
+# Every directory under here is a sym link to something in the main
+# src/mca tree.  Hence, we don't want to distribute anything under
+# here.
 
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys/ia64
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+DIST_SUBDIRS		=

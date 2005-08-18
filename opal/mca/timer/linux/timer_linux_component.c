@@ -1,0 +1,99 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include "opal/mca/timer/timer.h"
+#include "opal/mca/timer/linux/timer_linux.h"
+#include "opal/include/constants.h"
+
+opal_timer_t opal_timer_linux_freq;
+
+static int opal_timer_linux_open(void);
+
+const opal_timer_base_component_1_0_0_t mca_timer_linux_component = {
+    /* First, the mca_component_t struct containing meta information
+       about the component itself */
+    {
+        /* Indicate that we are a timer v1.0.0 component (which also
+           implies a specific MCA version) */
+        OPAL_TIMER_BASE_VERSION_1_0_0,
+
+        /* Component name and version */
+        "linux",
+        OPAL_MAJOR_VERSION,
+        OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION,
+
+        /* Component open and close functions */
+        opal_timer_linux_open,
+        NULL
+    },
+
+    /* Next the MCA v1.0.0 component meta data */
+    {
+        /* Whether the component is checkpointable or not */
+        true
+    },
+};
+
+static char *
+find_info(FILE* fp, char *str, char *buf, size_t buflen)
+{
+    char *tmp;
+
+    while (NULL != fgets(buf, 1024, fp)) {
+        if (strncmp(buf, str, strlen(str)) == 0) {
+            /* we found the line.  Now eat everything up to,
+               including, and one past the : */
+            for (tmp = buf ; (*tmp != '\0') && (*tmp != ':') ; ++tmp) ;
+            for ( ++tmp ; *tmp == ' ' ; ++tmp);
+            if (NULL != tmp && '\0' != *tmp) {
+                return tmp;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+int
+opal_timer_linux_open(void)
+{
+    FILE *fp;
+    char *loc;
+    float cpu_f;
+    int ret;
+    char buf[1024];
+
+    fp = fopen("/proc/cpuinfo", "r");
+    if (NULL == fp) {
+        return OPAL_ERR_IN_ERRNO;
+    }
+
+    loc = find_info(fp, "cpu MHz", buf, 1024);
+    if (NULL == loc) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    ret = sscanf(loc, "%f", &cpu_f);
+    if (1 != ret) return OPAL_ERR_NOT_FOUND;
+
+    /* numer is in MHz - convert to Hz and make an integer */
+    opal_timer_linux_freq = (opal_timer_t) cpu_f * 1000000;
+
+    return OPAL_SUCCESS;
+}

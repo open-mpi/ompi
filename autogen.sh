@@ -865,10 +865,10 @@ EOF
                     -r "${framework_path}/${framework}.h" ; then
                     framework_list="$framework_list $framework"
 
-                    # Add the framework's options file into configure,
+                    # Add the framework's configure file into configure,
                     # if there is one
-                    if test -r "${framework_path}/configure.options" ; then
-                        echo "m4_include(${framework_path}/configure.options)" >> "$mca_m4_include_file"
+                    if test -r "${framework_path}/configure.m4" ; then
+                        echo "m4_include(${framework_path}/configure.m4)" >> "$mca_m4_include_file"
                     fi
 
                     rm -f "$mca_no_config_env_file" "$mca_m4_config_env_file"

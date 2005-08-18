@@ -16,13 +16,17 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_HEADERS = atomic.h timer.h
+SUBDIRS = base $(MCA_timer_STATIC_SUBDIRS)
+DIST_SUBDIRS = base $(MCA_timer_ALL_SUBDIRS)
+
+# Source code files
+headers = timer.h
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys/ia64
-ompi_HEADERS = $(noinst_HEADERS)
+ompidir = $(includedir)/openmpi/opal/mca/timer
+ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
 endif
