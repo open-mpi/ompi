@@ -72,6 +72,10 @@ orte_sds_base_select(void)
         }
     }
 
+    if (NULL == selected_component) {
+        return ORTE_ERR_NOT_FOUND;
+    }
+
     /* unload all components that were not selected */
     item = opal_list_get_first(&orte_sds_base_components_available);
     while(item != opal_list_get_end(&orte_sds_base_components_available)) {
