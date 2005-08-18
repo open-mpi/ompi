@@ -717,7 +717,7 @@ static void mca_pml_ob1_put_completion(
      */
     frag->rdma_state = MCA_PML_OB1_RDMA_FIN;
 
-    MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, fin, sizeof(mca_pml_ob1_fin_hdr_t));
+    MCA_PML_OB1_DES_ALLOC(bml_btl, fin, sizeof(mca_pml_ob1_fin_hdr_t));
     if(NULL == fin) {
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);

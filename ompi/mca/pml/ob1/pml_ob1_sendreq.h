@@ -140,7 +140,7 @@ do {                                                                            
         mca_pml_ob1_hdr_t* hdr;                                                           \
                                                                                           \
         /* allocate a descriptor */                                                       \
-        MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_ob1_match_hdr_t)); \
+        MCA_PML_OB1_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_ob1_match_hdr_t));      \
         if(NULL == descriptor) {                                                          \
             return OMPI_ERR_OUT_OF_RESOURCE;                                              \
         }                                                                                 \
