@@ -29,12 +29,12 @@ static int orte_ras_lsf_bproc_allocate(orte_jobid_t jobid)
 
 static int orte_ras_lsf_bproc_node_insert(opal_list_t *nodes)
 {
-    return orte_ras_base_node_insert(nodes);
+    return ORTE_ERROR;
 }
 
 static int orte_ras_lsf_bproc_node_query(opal_list_t *nodes)
 {
-    return orte_ras_base_node_query(nodes);
+    return ORTE_ERROR;
 }
 
 static int orte_ras_lsf_bproc_deallocate(orte_jobid_t jobid)
