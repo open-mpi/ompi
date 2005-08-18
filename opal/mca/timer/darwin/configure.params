@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,15 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+# Specific to this module
 
-noinst_HEADERS = atomic.h timer.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys/ia64
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+PARAM_CONFIG_PRIORITY=30
+PARAM_CONFIG_FILES="Makefile"

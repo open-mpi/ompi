@@ -20,6 +20,7 @@ check_PROGRAMS = \
 	ompi_numtostr \
 	opal_if \
 	opal_os_path \
+	opal_timer \
 	orte_sys_info \
 	opal_os_create_dirpath \
 	orte_session_dir \
@@ -59,6 +60,12 @@ opal_os_path_LDADD = \
         $(top_builddir)/opal/libopal.la \
         $(top_builddir)/test/support/libsupport.a 
 opal_os_path_DEPENDENCIES = $(opal_os_path_LDADD)
+
+opal_timer_SOURCES = opal_timer.c
+opal_timer_LDADD = \
+        $(top_builddir)/opal/libopal.la \
+        $(top_builddir)/test/support/libsupport.a 
+opal_timer_DEPENDENCIES = $(opal_timer_LDADD)
 
 
 orte_sys_info_SOURCES = orte_sys_info.c

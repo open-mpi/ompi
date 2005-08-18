@@ -26,6 +26,8 @@
 #include "opal/runtime/opal.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/timer/base/base.h"
+
 
 /**
  * Initialize the OPAL utilities
@@ -58,6 +60,8 @@ int opal_init(void)
        actually).  This is a hook available for memory manager hooks
        without good initialization routine support */
     opal_memory_base_open();
+
+    opal_timer_base_open();
 
     return ORTE_SUCCESS;
 }

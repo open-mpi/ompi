@@ -16,13 +16,11 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_HEADERS = atomic.h timer.h
+noinst_LTLIBRARIES	= libmca_timer_darwin.la
 
-# Conditionally install the header files
+libmca_timer_darwin_la_SOURCES = \
+			timer_darwin.h \
+			timer_darwin_component.c
 
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys/ia64
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+EXTRA_DIST		= \
+			$(doc_DATA)

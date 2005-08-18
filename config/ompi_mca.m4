@@ -273,7 +273,9 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
                               MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/base/libmca_]mca_framework[_base.la]"
                           fi
                           MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]mca_framework[_STATIC_LTLIBS)]"
-                          MCA_CONFIGURE_FRAMEWORK($1, mca_framework)])])
+                          m4_ifdef([MCA_]mca_framework[_CONFIG],
+                                   [MCA_]mca_framework[_CONFIG]($1, mca_framework),
+                                   [MCA_CONFIGURE_FRAMEWORK($1, mca_framework)])])])
 
     AC_SUBST(MCA_$1_FRAMEWORKS)
     AC_SUBST(MCA_$1_FRAMEWORK_LIBS)

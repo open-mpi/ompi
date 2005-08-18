@@ -26,6 +26,7 @@
 #include "opal/runtime/opal.h"
 #include "orte/include/orte_constants.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/timer/base/base.h"
 
 /**
  * Finalize the OPAL utilities
@@ -37,6 +38,7 @@
  */
 int opal_finalize(void)
 {
+    opal_timer_base_close();
 
     /* close the memory manager components.  Registered hooks can
        still be fired any time between now and the call to
