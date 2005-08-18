@@ -19,6 +19,10 @@
 #ifndef OPAL_H
 #define OPAL_H
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * Initialize the OPAL utilities
  *
@@ -38,5 +42,9 @@ int opal_init(void);
  * This function performs 
  */
 int opal_finalize(void);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
