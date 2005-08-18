@@ -18,7 +18,8 @@ include $(top_srcdir)/test/support/Makefile.options
 
 check_PROGRAMS = \
 	opal_memory_basic \
-	opal_memory_speed
+	opal_memory_speed \
+	opal_memory_cxx
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -36,3 +37,10 @@ opal_memory_speed_LDADD = \
         $(top_builddir)/opal/libopal.la \
         $(top_builddir)/test/support/libsupport.a 
 opal_memory_speed_DEPENDENCIES = $(opal_memory_speed_LDADD)
+
+opal_memory_cxx_SOURCES = opal_memory_cxx.cc
+opal_memory_cxx_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+opal_memory_cxx_LDADD = \
+        $(top_builddir)/opal/libopal.la \
+        $(top_builddir)/test/support/libsupport.a 
+opal_memory_cxx_DEPENDENCIES = $(opal_memory_cxx_LDADD)
