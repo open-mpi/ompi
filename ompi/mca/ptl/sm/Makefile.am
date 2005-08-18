@@ -31,10 +31,21 @@ component_install =
 endif
 
 EXTRA_DIST = 
-sm_SOURCES = src/ptl_sm.c src/ptl_sm.h src/ptl_sm_address.h src/ptl_sm_component.c \
-        src/ptl_sm_frag.h src/ptl_sm_frag.c src/ptl_sm_peer.h src/ptl_sm_recvfrag.h \
-        src/ptl_sm_recvfrag.c src/ptl_sm_send.c src/ptl_sm_sendreq.c \
-        src/ptl_sm_sendreq.h src/ptl_sm_sendfrag.c src/ptl_sm_sendfrag.h
+sm_SOURCES = \
+        ptl_sm.c \
+        ptl_sm.h \
+        ptl_sm_address.h \
+        ptl_sm_component.c \
+        ptl_sm_frag.h \
+        ptl_sm_frag.c \
+        ptl_sm_peer.h \
+        ptl_sm_recvfrag.h \
+        ptl_sm_recvfrag.c \
+        ptl_sm_send.c \
+        ptl_sm_sendreq.c \
+        ptl_sm_sendreq.h \
+        ptl_sm_sendfrag.c \
+        ptl_sm_sendfrag.h
 
 # See ompi/mca/common/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
@@ -53,15 +64,15 @@ libmca_ptl_sm_la_DEPENDENCIES = librecompile.la
 libmca_ptl_sm_la_LDFLAGS = -module -avoid-version
 libmca_ptl_sm_la_LIBADD = librecompile.la
 
-nodist_librecompile_la_SOURCES = src/ptl_sm_send_alternate.c
+nodist_librecompile_la_SOURCES = ptl_sm_send_alternate.c
 librecompile_la_CPPFLAGS = -DSM_COMMON_BASE_ADDR
 
 #
 # The "send alternate" file is really the same as the "send" file, but
 # compiled with a different #define
 #
-$(srcdir)/src/ptl_sm_send_alternate.c:
+ptl_sm_send_alternate.c:
 	if test ! -f $@; then \
-		ln -sf ptl_sm_send.c $@; \
+		ln -sf $(srcdir)/ptl_sm_send.c ptl_sm_send_alternate.c; \
 	fi
 

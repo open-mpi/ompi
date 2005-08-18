@@ -36,7 +36,7 @@
 #include "mca/ptl/ptl.h"
 #include "mca/mpool/mpool.h"
 #include "mca/common/sm/common_sm_mmap.h"
-#include "mca/ptl/sm/src/ptl_sm_peer.h"
+#include "mca/ptl/sm/ptl_sm_peer.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
