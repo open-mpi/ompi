@@ -251,6 +251,10 @@ extern int mca_pml_ob1_start(
     } \
     *(request) = MPI_REQUEST_NULL; \
 }
+
+#define MCA_PML_OB1_DES_ALLOC(bml_btl, des, size) \
+MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des,  \
+   sizeof(mca_pml_ob1_hdr_t) + (sizeof(mca_btl_base_segment_t) << 4), size)
                                                                                                                        
 #define MCA_PML_OB1_TIMESTAMPS 0
 #if MCA_PML_OB1_TIMESTAMPS

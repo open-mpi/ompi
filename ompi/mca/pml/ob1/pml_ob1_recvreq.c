@@ -126,8 +126,9 @@ static void mca_pml_ob1_put_completion(
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_cbdata;
+    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
     mca_pml_ob1_recv_request_progress(recvreq,btl,des->des_dst,des->des_dst_cnt);
-    MCA_BML_BASE_BTL_DES_RETURN(bml_btl, des);
+    mca_bml_base_free(bml_btl, des);
 }
 
 /*
@@ -209,7 +210,7 @@ static void mca_pml_ob1_recv_request_ack(
     }
 
     /* allocate descriptor */
-    MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, sizeof(mca_pml_ob1_ack_hdr_t));
+    MCA_PML_OB1_DES_ALLOC(bml_btl, des, sizeof(mca_pml_ob1_ack_hdr_t));
     if(NULL == des) {
         goto retry;
     }
@@ -296,7 +297,7 @@ static void mca_pml_ob1_rget_completion(
     MCA_BML_BASE_BTL_DES_RETURN(bml_btl, des);
 
     /* queue up a fin control message to source */
-    MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, fin, sizeof(mca_pml_ob1_fin_hdr_t));
+    MCA_PML_OB1_DES_ALLOC(bml_btl, fin, sizeof(mca_pml_ob1_fin_hdr_t));
     if(NULL == fin) {
         opal_output(0, "[%s:%d] unable to allocate descriptor", __FILE__,__LINE__);
         orte_errmgr.abort();
@@ -478,11 +479,6 @@ void mca_pml_ob1_recv_request_progress(
                 bytes_delivered);
             break;
 
-        case MCA_PML_OB1_HDR_TYPE_FIN:
-
-            OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
-            break;
-
         default:
             break;
     }
@@ -560,7 +556,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     }
     
                     /* makes sure that we don't exceed BTL max rdma size */
-                    if (mca_bml.bml_max_rdma_size != 0 && size > mca_bml.bml_max_rdma_size) {
+                    if (bml_btl->btl_max_rdma_size != 0 && size > bml_btl->btl_max_rdma_size) {
                         size = bml_btl->btl_max_rdma_size;
                     }
                     
@@ -604,7 +600,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     hdr_size += (sizeof(mca_btl_base_segment_t) * (dst->des_dst_cnt-1));
                 }
 
-                MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, ctl, hdr_size);
+                MCA_PML_OB1_DES_ALLOC(bml_btl, ctl, hdr_size);
                 if(ctl == NULL) {
                     mca_bml_base_free(bml_btl,dst);
                     OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
