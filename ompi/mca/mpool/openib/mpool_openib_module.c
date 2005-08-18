@@ -46,10 +46,7 @@ void* mca_mpool_openib_alloc(
     size_t align, 
     mca_mpool_base_registration_t** registration)
 {
-    mca_mpool_openib_module_t* mpool_openib = (mca_mpool_openib_module_t*)mpool; 
-    /* void* addr_malloc = (void*)malloc((*size) + mca_mpool_openib_component.page_size);  */
-    /* void* addr = (void*)  ALIGN_ADDR(addr_malloc, mca_mpool_openib_component.page_size_log);  */
-   
+       
     void* addr_malloc = (void*)memalign(mca_mpool_openib_component.page_size, size); 
     void* addr = addr_malloc; 
 
@@ -81,7 +78,7 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
                               mpool_module->resources.ib_pd, 
                               addr, 
                               size, 
-                              IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE
+                              IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ
                               /* IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE */ 
                               ); 
    
@@ -104,7 +101,6 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
 int mca_mpool_openib_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size, 
                               mca_mpool_base_registration_t* registration){
     
-    mca_mpool_openib_module_t * mpool_openib = (mca_mpool_openib_module_t*) mpool; 
     mca_mpool_openib_registration_t * openib_reg; 
     openib_reg = (mca_mpool_openib_registration_t*) registration; 
     if(ibv_dereg_mr(openib_reg->mr)){   
@@ -127,7 +123,7 @@ void* mca_mpool_openib_realloc(
     mca_mpool_base_registration_t* old_reg  = *registration; 
     void* new_mem = mpool->mpool_alloc(mpool, size, 0, registration); 
     memcpy(new_mem, addr, old_reg->bound - old_reg->base); 
-    mpool->mpool_free(mpool, addr, &old_reg); 
+    mpool->mpool_free(mpool, addr, old_reg); 
     return new_mem; 
 
 }

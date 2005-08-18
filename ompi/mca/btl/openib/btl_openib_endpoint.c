@@ -32,7 +32,6 @@
 #include "class/ompi_free_list.h" 
 #include <errno.h> 
 #include <string.h> 
-extern int errno; 
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
@@ -728,7 +727,7 @@ int mca_btl_openib_endpoint_create_qp(
         qp_attr->qp_state = IBV_QPS_INIT; 
         qp_attr->pkey_index = mca_btl_openib_component.ib_pkey_ix; 
         qp_attr->port_num = openib_btl->port_num; 
-        qp_attr->qp_access_flags = IBV_ACCESS_REMOTE_WRITE; 
+        qp_attr->qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ; 
         
         if(ibv_modify_qp((*qp), qp_attr, 
                          IBV_QP_STATE | 

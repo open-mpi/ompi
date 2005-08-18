@@ -41,7 +41,6 @@
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
 
-extern int errno; 
 mca_btl_openib_component_t mca_btl_openib_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -507,71 +506,67 @@ int mca_btl_openib_component_progress()
          *   we will check the high priority and process them until there are none left. 
          *   note that low priority messages are only processed one per progress call. 
          */
-        do{
-            ne=ibv_poll_cq(openib_btl->ib_cq_high, 1, &wc );
-            if(ne < 0 ){ 
-                BTL_ERROR(("error polling CQ with %d errno says %s\n", ne, strerror(errno))); 
+        ne=ibv_poll_cq(openib_btl->ib_cq_high, 1, &wc );
+        if(ne < 0 ){ 
+            BTL_ERROR(("error polling CQ with %d errno says %s\n", ne, strerror(errno))); 
+            return OMPI_ERROR; 
+        } 
+        else if(wc.status != IBV_WC_SUCCESS) { 
+            BTL_ERROR(("error polling CQ with status %d for wr_id %llu\n", 
+                       wc.status, wc.wr_id)); 
+            return OMPI_ERROR; 
+        }
+        else if(1 == ne) { 
+            BTL_VERBOSE(("completion queue event says opcode is %d\n", wc.opcode)); 
+
+            /* Handle work completions */
+            switch(wc.opcode) {
+            case IBV_WC_RECV_RDMA_WITH_IMM: 
+                BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
                 return OMPI_ERROR; 
-            } 
-            else if(wc.status != IBV_WC_SUCCESS) { 
-                BTL_ERROR(("error polling CQ with status %d for wr_id %llu\n", 
-                          wc.status, wc.wr_id)); 
-                return OMPI_ERROR; 
-            }
-            else if(1 == ne) { 
-                BTL_VERBOSE(("completion queue event says opcode is %d\n", wc.opcode)); 
+                
+            case IBV_WC_RECV: 
+                /* Process a RECV */ 
+                    
+                BTL_VERBOSE(("Got an  recv on the completion queue")); 
+                frag = (mca_btl_openib_frag_t*) wc.wr_id;
+                endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
+                frag->rc=OMPI_SUCCESS; 
+                frag->segment.seg_len =  
+                    wc.byte_len-
+                    ((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
+                
+                
+                    
+                /* advance the segment address past the header and subtract from the length..*/ 
+                openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, 
+                                                          frag->hdr->tag, 
+                                                          &frag->base, 
+                                                          openib_btl->ib_reg[frag->hdr->tag].cbdata);         
+                
+                OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
+                MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
+                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
+                count++; 
+                break; 
 
-                /* Handle work completions */
-                switch(wc.opcode) {
-                case IBV_WC_RECV_RDMA_WITH_IMM: 
-                    BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
-                    return OMPI_ERROR; 
-                
-                case IBV_WC_RECV: 
-                    /* Process a RECV */ 
+            case IBV_WC_RDMA_READ: 
+            case IBV_WC_RDMA_WRITE: 
+            case IBV_WC_SEND :
                     
-                    BTL_VERBOSE(("Got an  recv on the completion queue")); 
-                    frag = (mca_btl_openib_frag_t*) wc.wr_id;
-                    endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
-                    frag->rc=OMPI_SUCCESS; 
-                    frag->segment.seg_len =  
-                        wc.byte_len-
-                        ((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
-                
-                
+                /* Process a completed send or rdma write*/
+                frag = (mca_btl_openib_frag_t*) wc.wr_id; 
+                frag->rc = OMPI_SUCCESS; 
+                frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
+                count++;
+                break; 
                     
-                    /* advance the segment address past the header and subtract from the length..*/ 
-                    openib_btl->ib_reg[frag->hdr->tag].cbfunc(&openib_btl->super, 
-                                                              frag->hdr->tag, 
-                                                              &frag->base, 
-                                                              openib_btl->ib_reg[frag->hdr->tag].cbdata);         
-                
-                    OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
-                    MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
-                    OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
-                    count++; 
-                    break; 
-
-                case IBV_WC_RDMA_WRITE: 
-                case IBV_WC_SEND :
-                    
-                    /* Process a completed send or rdma write*/
-                    frag = (mca_btl_openib_frag_t*) wc.wr_id; 
-                    frag->rc = OMPI_SUCCESS; 
-                    frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
-                    count++;
-                    break; 
-                    
-
-                    break;
-                
-                default:
-                    BTL_ERROR(("Unhandled work completion opcode is %d", wc.opcode));
-                    break;
-                }
+                                    
+            default:
+                BTL_ERROR(("Unhandled work completion opcode is %d", wc.opcode));
+                break;
             }
         }
-        while(ne > 0); 
         
         ne=ibv_poll_cq(openib_btl->ib_cq_low, 1, &wc );
         if(ne < 0){ 
@@ -614,8 +609,10 @@ int mca_btl_openib_component_progress()
                 count++; 
                 break; 
 
+            case IBV_WC_RDMA_READ: 
             case IBV_WC_RDMA_WRITE: 
             case IBV_WC_SEND :
+
                 /* Process a completed send */
                 frag = (mca_btl_openib_frag_t*) wc.wr_id; 
                 frag->rc = OMPI_SUCCESS; 

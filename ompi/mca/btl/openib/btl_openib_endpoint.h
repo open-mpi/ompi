@@ -27,7 +27,6 @@
 #include <errno.h> 
 #include <string.h> 
 #include "mca/btl/base/btl_base_error.h"
-extern int errno; 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
