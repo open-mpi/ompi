@@ -243,7 +243,7 @@ static int orte_pls_fork_proc(
         if (want_processor) {
             param = mca_base_param_environ_variable("mpi", NULL,
                                                     "paffinity_processor");
-            asprintf(&param2, "%lu", processor);
+            asprintf(&param2, "%lu", (unsigned long) processor);
             opal_setenv(param, param2, true, &environ_copy);
             free(param);
             free(param2);
