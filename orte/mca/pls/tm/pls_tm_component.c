@@ -36,11 +36,6 @@ const char *mca_pls_tm_component_version_string =
   "Open MPI tm pls MCA component version " ORTE_VERSION;
 
 
-/*
- * Local variable
- */
-static int param_priority = -1;
-
 
 /*
  * Local function
@@ -54,48 +49,51 @@ static struct orte_pls_base_module_1_0_0_t *pls_tm_init(int *priority);
  * and pointers to our public functions in it
  */
 
-orte_pls_base_component_1_0_0_t mca_pls_tm_component = {
-
-    /* First, the mca_component_t struct containing meta information
-       about the component itself */
-
+orte_pls_tm_component_t mca_pls_tm_component = {
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
-           implies a specific MCA version) */
+        /* First, the mca_component_t struct containing meta information
+           about the component itself */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        {
+            /* Indicate that we are a pls v1.0.0 component (which also
+               implies a specific MCA version) */
+            ORTE_PLS_BASE_VERSION_1_0_0,
 
-        /* Component name and version */
+            /* Component name and version */
+            "tm",
+            ORTE_MAJOR_VERSION,
+            ORTE_MINOR_VERSION,
+            ORTE_RELEASE_VERSION,
 
-        "tm",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
+            /* Component open and close functions */
+            pls_tm_open,
+            NULL
+        },
 
-        /* Component open and close functions */
+        /* Next the MCA v1.0.0 component meta data */
+        {
+            /* Whether the component is checkpointable or not */
+            true
+        },
 
-        pls_tm_open,
-        NULL
-    },
-
-    /* Next the MCA v1.0.0 component meta data */
-
-    {
-        /* Whether the component is checkpointable or not */
-
-        true
-    },
-
-    /* Initialization / querying functions */
-
-    pls_tm_init
+        /* Initialization / querying functions */
+        pls_tm_init
+    }
 };
 
 
 static int pls_tm_open(void)
 {
-    param_priority = 
-        mca_base_param_register_int("pls", "tm", "priority", NULL, 75);
+    mca_base_component_t *comp = &mca_pls_tm_component.super.pls_version;
+
+    mca_base_param_reg_int(comp, "debug", "Enable debugging of TM pls",
+                           false, false, 0, &mca_pls_tm_component.debug);
+
+    mca_base_param_reg_int(comp, "priority", "Default selection priority",
+                           false, false, 75, &mca_pls_tm_component.priority);
+
+    mca_base_param_reg_string(comp, "orted", "Command to use to start proxy orted",
+                           false, false, "orted", &mca_pls_tm_component.orted);
 
     return ORTE_SUCCESS;
 }
@@ -107,10 +105,7 @@ static struct orte_pls_base_module_1_0_0_t *pls_tm_init(int *priority)
 
     if (NULL != getenv("PBS_ENVIRONMENT") &&
         NULL != getenv("PBS_JOBID")) {
-        mca_base_param_lookup_int(param_priority, priority);
-
-        opal_output(orte_pls_base.pls_output, 
-                    "pls:tm: available for selection, priority %d", *priority);
+        *priority = mca_pls_tm_component.priority;
         return &orte_pls_tm_module;
     }
 
