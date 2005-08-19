@@ -236,6 +236,10 @@ do { \
 
 #define MEMCPY( DST, SRC, BLENGTH ) \
 do { \
+    /* unsigned int _i; */ \
+    /* for (_i=0; _i < (BLENGTH); _i++) */ \
+      /* opal_output( 0, "index:%d src = %x dest = %x\n", _i, ((char*)(SRC))[_i] & 0xff, ((char*)(DST))[_i] & 0xff); */ \
+    /* opal_output( 0, "\n\n"); */ \
     /*opal_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
     memcpy( (DST), (SRC), (BLENGTH) ); \
 } while (0)
