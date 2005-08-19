@@ -57,8 +57,7 @@ base as of this writing (8 Aug 2005):
 
 - The only run-time systems currently supported are:
   - rsh / ssh
-  - BProc of the flavor that is used at Los Alamos National Labs (in
-    particular, it must be used with the BJS scheduler)
+  - Recent versions of BProc
 
 - Complete user and system administrator documentation is missing
   (this file comprises the majority of the current user
