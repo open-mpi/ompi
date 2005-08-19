@@ -206,11 +206,16 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
        traversing all the MCA component directories.
 
    5d. Similarly, if you only need to regenerate the configure script
-       in a single MCA component directory, cd into that component's
-       directory and run autogen.sh in there directly:
+       in a single MCA component directory (and that component has a
+       "configure.stub" file), cd into that component's directory and
+       run autogen.sh in there directly:
 
           shell$ cd src/mca/pml/teg
           shell$ ../../../../autogen.sh
+
+       This does *not* work if the component has a "configure.m4"
+       file.  If a component's configure.m4 file changes, you will
+       need to run "autogen.sh" from the top-level directory.
 
 Use of Flex
 ===========
