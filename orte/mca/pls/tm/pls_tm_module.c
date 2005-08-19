@@ -98,6 +98,7 @@ pls_tm_launch(orte_jobid_t jobid)
     int argc;
     int rc;
     int id;
+    bool connected = false;
     
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
@@ -218,6 +219,7 @@ pls_tm_launch(orte_jobid_t jobid)
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
+    connected = true;
 
     /*
      * Iterate through each of the nodes and spin
@@ -307,9 +309,12 @@ pls_tm_launch(orte_jobid_t jobid)
         free(name);
     }
 
-    rc = pls_tm_disconnect();
-
 cleanup:
+    if (connected) {
+        rc = pls_tm_disconnect();
+    }
+
+
     while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
