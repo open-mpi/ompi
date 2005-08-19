@@ -23,6 +23,12 @@
 #include "win/win.h"
 
 /*
+ * Comment to circumvent error-msg of weak-check:
+ *   We do not need #pragma weak in here, as these functions
+ *   do not have a function for the profiling interface.
+ */
+
+/*
  * Note that these are the back-end functions for MPI_DUP_FN (and
  * friends).  They have an OMPI_C_* prefix because of weird reasons
  * listed in a lengthy comment in mpi.h.
