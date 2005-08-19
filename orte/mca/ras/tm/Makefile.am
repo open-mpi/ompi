@@ -18,8 +18,13 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-sources =
-include src/Makefile.extra
+AM_CPPFLAGS = $(ras_tm_CPPFLAGS)
+
+sources = \
+        ras_tm.h \
+        ras_tm_component.c \
+        ras_tm_module.c
+
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

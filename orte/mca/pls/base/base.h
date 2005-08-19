@@ -25,6 +25,7 @@
 #include "ompi_config.h"
 #include "mca/mca.h"
 #include "mca/pls/pls.h"
+#include "orte/mca/ras/base/ras_base_node.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -106,6 +107,16 @@ extern "C" {
      * Utility routine to set progress engine schedule
      */
     OMPI_DECLSPEC int orte_pls_base_set_progress_sched(int sched);
+
+
+    /**
+     * Utilities for pls components that use proxy daemons
+     */
+    int orte_pls_base_proxy_set_node_name(orte_ras_node_t* node, 
+                                          orte_jobid_t jobid, 
+                                          orte_process_name_t* name);
+    int orte_pls_base_proxy_terminate_job(orte_jobid_t jobid);
+    int orte_pls_base_proxy_terminate_proc(const orte_process_name_t *proc);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
