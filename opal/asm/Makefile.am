@@ -29,12 +29,12 @@ generated/@OMPI_ASM_FILE@: base/@OMPI_ASSEMBLY_ARCH@.asm
 
 atomic-asm.s: generated/@OMPI_ASM_FILE@
 	rm -f atomic-asm.s
-	@ if test -f "$(top_srcdir)/opal/asm/generated/@OMPI_ASM_FILE@" ; then \
-	    cmd="ln -s \"$(top_srcdir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
+	@ if test -f "$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@" ; then \
+	    cmd="ln -s \"$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
 	    eval $$cmd ; \
 	else \
-	    cmd="ln -s \"$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
+	    cmd="ln -s \"$(top_srcdir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
 	    eval $$cmd ; \
 	fi
