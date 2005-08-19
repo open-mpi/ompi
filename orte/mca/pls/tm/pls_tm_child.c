@@ -42,7 +42,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "mca/soh/soh_types.h"
 #include "mca/gpr/gpr.h"
-#include "mca/ns/base/ns_base_nds.h"
+#include "orte/mca/sds/base/base.h"
 #include "mca/soh/soh.h"
 #include "mca/rml/rml.h"
 #include "mca/ns/ns.h"
