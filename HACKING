@@ -74,10 +74,12 @@ section.
 
 If you are building Open MPI from a developer's tree, you must first
 install fairly recent versions of the GNU tools Autoconf, Automake,
-and Libtool.  As of the initial writing of this document (early 2004),
-you needed *at least* Autoconf v2.58, Automake v1.8.5, and Libtool
-v1.5.  It is possible that since then, the lowest acceptable versions
-of these tools have increased.
+and Libtool.  As of August 2005, the following versions are known to
+work:
+
+Autoconf: v2.59
+Automake: v1.9.6
+Libtool:  v1.5.18
 
 More generally, we have never found that the most recent versions of
 these tools cause problems with our configure / build process.  When
@@ -88,18 +90,11 @@ shell$ autoconf --version
 shell$ automake --version
 shell$ libtool --version
 
-AUTOMAKE NOTE: It seems that Automake 1.7 (or better) is ok for
-               *building* Open MPI, but you really need later
-               versions for "make dist" to work properly (1.8.5 is
-               known to work; no real testing has been conducted to
-               determine the lowest version number where "make dist"
-               works).
-
 To strengthen the above point: the core Open MPI developers typically
-use very recent versions of the GNU tools.  Little checking is done to
-ensure that the code base is compatible with older versions of these
-tools.  If you have a problem, try upgrading your GNU tools to the
-latest versions and try again.
+use very, very recent versions of the GNU tools.  Little checking is
+done to ensure that the code base is compatible with older versions of
+these tools.  If you have a problem, try upgrading your GNU tools to
+the latest versions and try again.
 
 If you need newer versions, you are *strongly* encouraged to heed the
 following advice:
