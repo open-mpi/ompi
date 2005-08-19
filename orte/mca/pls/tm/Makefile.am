@@ -22,10 +22,8 @@ AM_CPPFLAGS = $(pls_tm_CPPFLAGS)
 
 sources = \
         pls_tm.h \
-        pls_tm_child.c \
         pls_tm_component.c \
-        pls_tm_module.c \
-        pls_tm_registry.c
+        pls_tm_module.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
