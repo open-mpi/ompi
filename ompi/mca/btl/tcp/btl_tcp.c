@@ -262,7 +262,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
             return NULL;
         }
 
-        frag->segments[0].seg_addr.pval = iov.iov_base;
+        frag->segments[0].seg_addr.pval = (frag + 1);
         frag->segments[0].seg_len = max_data + reserve;
         frag->base.des_src_cnt = 1;
 
