@@ -63,6 +63,8 @@
 
 #include "tools/orted/orted.h"
 
+extern char **environ;
+
 orted_globals_t orted_globals;
 
 static void orte_daemon_recv(int status, orte_process_name_t* sender,
@@ -145,6 +147,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, '\0', NULL, "report-uri", 1,
       &orted_globals.uri_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Report this process' uri on indicated pipe"},
+
+    { NULL, NULL, NULL, '\0', NULL, "mpi-call-yield", 1,
+      &orted_globals.mpi_call_yield, OPAL_CMD_LINE_TYPE_INT,
+      "Have MPI (or similar) applications call yield when idle" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
@@ -304,6 +310,12 @@ int main(int argc, char *argv[])
 
     /* check to see if I'm a bootproxy */
     if (orted_globals.bootproxy) { /* perform bootproxy-specific things */
+        if (orted_globals.mpi_call_yield > 0) {
+            char *var;
+            var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+            opal_setenv(var, "1", true, &environ);
+        }
+
         if (ORTE_SUCCESS != (ret = orte_rmgr.launch(orted_globals.bootproxy))) {
             ORTE_ERROR_LOG(ret);
         }
