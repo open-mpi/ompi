@@ -61,6 +61,7 @@ typedef struct {
     opal_mutex_t mutex;
     opal_condition_t condition;
     bool exit_condition;
+    int mpi_call_yield;
 } orted_globals_t;
 
 extern orted_globals_t orted_globals;

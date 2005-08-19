@@ -215,6 +215,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int node_name_index2;
     int proc_name_index;
     int local_exec_index, local_exec_index_end;
+    int call_yield_index;
     char *jobid_string;
     char *uri, *param;
     char **argv, **tmp;
@@ -381,6 +382,11 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     free(uri);
     free(param);
 
+    opal_argv_append(&argc, &argv, "--mpi-call-yield");
+    call_yield_index = argc;
+    opal_argv_append(&argc, &argv, "0");
+    
+
     local_exec_index_end = argc;
     if (!(remote_csh || remote_bash)) {
         opal_argv_append(&argc, &argv, ")");
@@ -470,6 +476,24 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (mca_pls_rsh_component.debug) {
                 opal_output(0, "pls:rsh: launching on node %s\n", 
                             node->node_name);
+            }
+
+            /* set the progress engine schedule for this node.
+             * if node_slots is set to zero, then we default to
+             * NOT being oversubscribed
+             */
+            if (node->node_slots > 0 &&
+                node->node_slots_inuse > node->node_slots) {
+                if (mca_pls_rsh_component.debug) {
+                    opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
+                                node->node_slots, node->node_slots_inuse);
+                }
+                argv[call_yield_index] = "1";
+            } else {
+                if (mca_pls_rsh_component.debug) {
+                    opal_output(0, "pls:rsh: not oversubscribed -- setting mpi_yield_when_idle to 0");
+                }
+                argv[call_yield_index] = "0";
             }
 
             /* Is this a local launch?
@@ -567,26 +591,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             env = opal_argv_copy(environ);
             var = mca_base_param_environ_variable("seed",NULL,NULL);
             opal_setenv(var, "0", true, &env);
-
-            /* set the progress engine schedule for this node.
-             * if node_slots is set to zero, then we default to
-             * NOT being oversubscribed
-             */
-            if (node->node_slots > 0 &&
-                node->node_slots_inuse > node->node_slots) {
-                if (mca_pls_rsh_component.debug) {
-                    opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1");
-                }
-                var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-                opal_setenv(var, "1", true, &env);
-            } else {
-                if (mca_pls_rsh_component.debug) {
-                    opal_output(0, "pls:rsh: not oversubscribed -- setting mpi_yield_when_idle to 0");
-                }
-                var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-                opal_setenv(var, "0", true, &env);
-            }
-            free(var);
     
             /* exec the daemon */
             if (mca_pls_rsh_component.debug) {
