@@ -76,6 +76,10 @@
 #include "opal/include/sys/ia32/timer.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_IA64
 #include "opal/include/sys/ia64/timer.h"
+#elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC32
+#include "include/sys/powerpc/timer.h"
+#elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64
+#include "include/sys/powerpc/timer.h"
 #endif
 
 #ifndef DOXYGEN
