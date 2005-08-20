@@ -29,6 +29,13 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
     elif test "$with_platform" = "no" ; then
         AC_MSG_ERROR([--without-platform is not a valid argument])
     elif test "$with_platform" != "" ; then
+        # if no path part, check in contrib/platform
+        if test "`basename $with_platform`" = "$with_platform" ; then
+            if test -r "${srcdir}/contrib/platform/$with_platform" ; then
+                with_platform="${srcdir}/contrib/platform/$with_platform"
+            fi
+        fi
+
         # make sure file exists
         if test ! -r "$with_platform" ; then
             AC_MSG_ERROR([platform file $with_platform not found])
@@ -46,6 +53,6 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
            platform_loaded="$with_platform"
         fi
         echo "Loaded platform arguments for $platform_loaded"
-        OMPI_LOG_MSG([Loaded platform arguments for $platform_loaded"])
+        OMPI_LOG_MSG([Loaded platform arguments for $platform_loaded])
     fi
 ])
