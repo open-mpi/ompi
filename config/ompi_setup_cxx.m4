@@ -83,7 +83,7 @@ fi
 
 OMPI_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
 if test "$TRULY_GXX" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
-    add="-g -Wall -Wundef -Wno-long-long"
+    add="-Wall -Wundef -Wno-long-long"
 
     # see if -Wno-long-double works...
     AC_LANG_PUSH(C++)

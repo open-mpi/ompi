@@ -37,7 +37,7 @@ mpi libraries])
     AC_MSG_RESULT([yes])
     WANT_COVERAGE=1
 else 
-    AC_MSG_RESULT([yes])
+    AC_MSG_RESULT([no])
     WANT_COVERAGE=0
 fi
 
