@@ -55,6 +55,7 @@ find_info(FILE* fp, char *str, char *buf, size_t buflen)
 {
     char *tmp;
 
+    rewind(fp);
     while (NULL != fgets(buf, 1024, fp)) {
         if (strncmp(buf, str, strlen(str)) == 0) {
             /* we found the line.  Now eat everything up to,
@@ -84,16 +85,36 @@ opal_timer_linux_open(void)
         return OPAL_ERR_IN_ERRNO;
     }
 
-    loc = find_info(fp, "cpu MHz", buf, 1024);
-    if (NULL == loc) {
-        return OPAL_ERR_NOT_FOUND;
+    opal_timer_linux_freq = 0;
+
+    if (0 == opal_timer_linux_freq) {
+        /* first, look for a timebase field.  probably only on PPC,
+           but one never knows */
+        loc = find_info(fp, "timebase", buf, 1024);
+        if (NULL != loc) {
+            int freq;
+            ret = sscanf(loc, "%d", &freq);
+            if (1 == ret) {
+                opal_timer_linux_freq = freq;
+            }
+        }
     }
 
-    ret = sscanf(loc, "%f", &cpu_f);
-    if (1 != ret) return OPAL_ERR_NOT_FOUND;
+    if (0 == opal_timer_linux_freq) {
+        /* find the CPU speed - most timers are 1:1 with CPU speed */
+        loc = find_info(fp, "cpu MHz", buf, 1024);
+        if (NULL != loc) {
+            ret = sscanf(loc, "%f", &cpu_f);
+            if (1 == ret) {
+                /* numer is in MHz - convert to Hz and make an integer */
+                opal_timer_linux_freq = (opal_timer_t) cpu_f * 1000000;
+            }
+        }
+    }
 
-    /* numer is in MHz - convert to Hz and make an integer */
-    opal_timer_linux_freq = (opal_timer_t) cpu_f * 1000000;
+    if (0 == opal_timer_linux_freq) {
+        return OPAL_ERR_NOT_FOUND;
+    }
 
     return OPAL_SUCCESS;
 }
