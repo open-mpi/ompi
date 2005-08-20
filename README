@@ -78,10 +78,6 @@ base as of this writing (8 Aug 2005):
   - 64 bit platforms (AMD, PPC64, Sparc); they "mostly work", but
     there are still some known issues
 
-- As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
-  in 64 bit mode due to an ioctl() bug in OS X.  Apple has been
-  notified of the problem.
-
 - There are some cases where after running MPI applications, the
   directory /tmp/openmpi-sessions-<username>@<hostname>* will exist
   (but will likely be empty).  It is safe to remove after the run is
@@ -312,6 +308,7 @@ MPI component frameworks:
 coll    - MPI collective algorithms
 io      - MPI-2 I/O
 pml     - MPI point-to-point management layer
+bml     - BTL management layer
 btl     - MPI point-to-point byte transfer layer
 topo    - MPI topology routines
 
@@ -336,6 +333,9 @@ Miscellaneous frameworks:
 
 allocator - Memory allocator
 mpool     - Memory pooling
+paffinity - Processor affinity
+timer     - High-resolution timers
+memory    - Memory subsystem hooks
 ---------------------------------------------------------------------------
 
 Each framework typically has one or more components that are used at
