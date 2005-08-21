@@ -467,6 +467,8 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
         MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)
     else
         MCA_PROCESS_DEAD_COMPONENT($1, $2, $3)
+        # add component to all component list
+        $4="$$4 $3"
     fi
 
     # set the AM_CONDITIONAL on how we should build
@@ -510,19 +512,17 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
              [MCA_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
              [MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
 
-    # special case - if we are doing a dist, add the component to 
-    # the list of all components, even if the build failed.  The
-    # makefiles are going to be there no matter what, so no reason
-    # to make the components have to "artificially succeed"
+    # try to configure the component.  pay no attention to
+    # --enable-dist, since we'll always have makefiles.
     AS_IF([test "$should_build" = "1"],
           [MCA_$2_$3_CONFIG([should_build=1], 
-                            [should_build=0
-                             # add component to all component list
-                             $4="$$4 $3"])])
+                            [should_build=0])])
 
     AS_IF([test "$should_build" = "1"],
           [MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)],
-          [MCA_PROCESS_DEAD_COMPONENT($1, $2, $3)])
+          [MCA_PROCESS_DEAD_COMPONENT($1, $2, $3)
+           # add component to all component list
+           $4="$$4 $3"])
 
     # set the AM_CONDITIONAL on how we should build
     AS_IF([test "$compile_mode" = "dso"], 

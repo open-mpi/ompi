@@ -1590,6 +1590,7 @@ AC_CONFIG_FILES([
     include/mpif.h
 
     etc/Makefile
+    contrib/Makefile
 
     opal/Makefile
     opal/include/Makefile

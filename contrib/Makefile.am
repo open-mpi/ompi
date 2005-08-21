@@ -16,8 +16,10 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = config include etc contrib $(MCA_PROJECT_SUBDIRS) test
-EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
-
-dist-hook:
-	csh "$(top_srcdir)/config/distscript.csh" $(PACKAGE)-$(OMPI_VERSION) $(OMPI_VERSION) $(OMPI_SVN_VERSION)
+EXTRA_DIST = \
+	dist/make_dist_tarball \
+	dist/linux/openmpi.spec \
+	dist/macosx-pkg/buildpackage.sh \
+	dist/macosx-pkg/ReadMe.rtf \
+	platform/optimized \
+	platform/redstorm
