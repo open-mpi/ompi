@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/processor.h>
 #include <sys/procset.h>
+#include <unistd.h>
 
 #include "opal/include/constants.h"
 #include "opal/mca/base/mca_base_param.h"
