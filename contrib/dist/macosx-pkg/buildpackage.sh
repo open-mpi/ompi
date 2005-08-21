@@ -33,7 +33,7 @@
 #
 OMPI_PREFIX="/usr/local"
 OMPI_BOOT="ssh"
-OMPI_OPTIONS="--without-fc --without-cs-fs --enable-static --enable-shared"
+OMPI_OPTIONS="--disable-f77 --without-cs-fs"
 OMPI_PACKAGE="openmpi"
 OMPI_VER_PACKAGE="openmpi"
 OMPI_OSX_README="ReadMe.rtf"
