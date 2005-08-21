@@ -149,7 +149,7 @@ cmd="tar xzf $tarball"
 echo "--> Untarring source: $cmd"
 
 eval $cmd
-srcdir="$BUILD_TMP/ompi-$version"
+srcdir="$BUILD_TMP/openmpi-$version"
 if test ! -d "$srcdir"; then
     echo "*** Didn't find $srcdir as expected - aborting"
     exit 1
@@ -202,7 +202,8 @@ fi
 #
 SPECIAL_FILES="README ${OMPI_OSX_README} LICENSE"
 echo "--> Copying in special files: $SPECIAL_FILES"
-cp $SPECIAL_FILES "${fulldistdir}/${OMPI_PREFIX}/share/ompi/doc/."
+mkdir -p  "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc"
+cp $SPECIAL_FILES "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc/."
 if [ ! $? = 0 ]; then
     echo "*** Problem copying files $SPECIAL_FILES.  Aborting!"
     exit 1
