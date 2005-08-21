@@ -68,6 +68,10 @@
  *
  *********************************************************************/
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */ 
 #elif OMPI_ASSEMBLY_ARCH == OMPI_AMD64

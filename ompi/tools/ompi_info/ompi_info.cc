@@ -167,6 +167,7 @@ int main(int argc, char *argv[])
 
   ompi_info::mca_types.push_back("memory");
   ompi_info::mca_types.push_back("paffinity");
+  ompi_info::mca_types.push_back("timer");
 
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");

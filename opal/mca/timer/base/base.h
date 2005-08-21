@@ -68,12 +68,12 @@ extern "C" {
     OMPI_DECLSPEC int opal_timer_base_close(void);
 
     extern opal_list_t opal_timer_base_components_opened;
-
-
-    /* include implementation to call */
-    #include "opal/mca/timer/base/base_impl.h"
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+/* include implementation to call */
+#include "opal/mca/timer/base/base_impl.h"
+
 #endif /* OPAL_BASE_TIMER_H */
