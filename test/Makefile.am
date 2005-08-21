@@ -18,4 +18,4 @@ include $(top_srcdir)/test/support/Makefile.options
 
 # support needs to be first for dependencies
 SUBDIRS = support asm class dps mca memory threads util
-DIST_SUBDIRS = runtime
+DIST_SUBDIRS = runtime $(SUBDIRS)
