@@ -32,11 +32,10 @@
 #include <netdb.h>
 #endif
 
-#include "runtime/runtime.h"
+#include "support.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/if.h"
-#include "support.h"
-#include "include/constants.h"
+#include "opal/include/constants.h"
 
 
 static bool
@@ -48,7 +47,7 @@ test_ifaddrtoname(char *addr)
 
     ret = opal_ifaddrtoname(addr, addrname, len);
 
-    if (ret == OMPI_SUCCESS) {
+    if (ret == OPAL_SUCCESS) {
         return true;
     } else {
         return false;

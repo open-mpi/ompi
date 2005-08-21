@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 #include "support.h"
-#include "include/constants.h"
+#include "opal/include/constants.h"
 #include "opal/util/argv.h"
 
 static bool test1(void);
@@ -100,7 +100,7 @@ static bool test1(void)
      value. */
 
   for (i = 0; a[i] != NULL; ++i) {
-    if (opal_argv_append(&argc, &argv, a[i]) != OMPI_SUCCESS) {
+    if (opal_argv_append(&argc, &argv, a[i]) != OPAL_SUCCESS) {
       return false;
     }
     for (j = 0; j <= i; ++j) {
@@ -142,7 +142,7 @@ static bool test2(void)
   b[i] = NULL;
 
   for (i = 0; b[i] != NULL; ++i) {
-    if (opal_argv_append(&argc, &argv, b[i]) != OMPI_SUCCESS) {
+    if (opal_argv_append(&argc, &argv, b[i]) != OPAL_SUCCESS) {
       return false;
     }
     ++b[i][0];
@@ -186,7 +186,7 @@ static bool test3(void)
      tries to free it, we should get a seg fault. */
 
   for (i = 0; a[i] != NULL; ++i) {
-    if (opal_argv_append(&argc, &argv, a[i]) != OMPI_SUCCESS) {
+    if (opal_argv_append(&argc, &argv, a[i]) != OPAL_SUCCESS) {
       return false;
     }
   }
@@ -202,7 +202,7 @@ static bool test3(void)
   }
   b[i] = NULL;
   for (i = 0; b[i] != NULL; ++i) {
-    if (opal_argv_append(&argc, &argv, b[i]) != OMPI_SUCCESS) {
+    if (opal_argv_append(&argc, &argv, b[i]) != OPAL_SUCCESS) {
       return false;
     }
   }
@@ -365,14 +365,14 @@ static bool test9(void)
 
     /* bozo cases */
     
-    if (OMPI_SUCCESS != opal_argv_delete(NULL, NULL, 0, 0)) {
+    if (OPAL_SUCCESS != opal_argv_delete(NULL, NULL, 0, 0)) {
         return false;
     } 
 
     a = NULL;
     argc = 0;
     opal_argv_append(&argc, &a, "foo");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 7, 1) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 7, 1) ||
         1 != opal_argv_count(a)) {
         return false;
     } 
@@ -381,7 +381,7 @@ static bool test9(void)
     a = NULL;
     argc = 0;
     opal_argv_append(&argc, &a, "foo");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 0, 0) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 0, 0) ||
         1 != opal_argv_count(a)) {
         return false;
     }
@@ -398,7 +398,7 @@ static bool test9(void)
     opal_argv_append(&argc, &a, "d");
     opal_argv_append(&argc, &a, "e");
     opal_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 0, 1) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 0, 1) ||
         5 != opal_argv_count(a) ||
         0 != strcmp(a[0], "b") ||
         0 != strcmp(a[1], "c") ||
@@ -419,7 +419,7 @@ static bool test9(void)
     opal_argv_append(&argc, &a, "d");
     opal_argv_append(&argc, &a, "e");
     opal_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 0, 2) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 0, 2) ||
         4 != opal_argv_count(a) ||
         0 != strcmp(a[0], "c") ||
         0 != strcmp(a[1], "d") ||
@@ -439,7 +439,7 @@ static bool test9(void)
     opal_argv_append(&argc, &a, "d");
     opal_argv_append(&argc, &a, "e");
     opal_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 1, 1) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 1, 1) ||
         5 != opal_argv_count(a) ||
         0 != strcmp(a[0], "a") ||
         0 != strcmp(a[1], "c") ||
@@ -460,7 +460,7 @@ static bool test9(void)
     opal_argv_append(&argc, &a, "d");
     opal_argv_append(&argc, &a, "e");
     opal_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 1, 2) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 1, 2) ||
         4 != opal_argv_count(a) ||
         0 != strcmp(a[0], "a") ||
         0 != strcmp(a[1], "d") ||
@@ -476,7 +476,7 @@ static bool test9(void)
     argc = 0;
     opal_argv_append(&argc, &a, "a");
     opal_argv_append(&argc, &a, "b");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 0, 99) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 0, 99) ||
         0 != opal_argv_count(a)) {
         return false;
     }
@@ -488,7 +488,7 @@ static bool test9(void)
     argc = 0;
     opal_argv_append(&argc, &a, "a");
     opal_argv_append(&argc, &a, "b");
-    if (OMPI_SUCCESS != opal_argv_delete(&argc, &a, 1, 99) ||
+    if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 1, 99) ||
         1 != opal_argv_count(a) ||
         0 != strcmp(a[0], "a")) {
         return false;
@@ -514,14 +514,14 @@ static bool test10(void)
     insert = NULL;
     i = 0;
     opal_argv_append(&i, &insert, "insert a");
-    if (OMPI_SUCCESS == opal_argv_insert(NULL, 0, insert)) {
+    if (OPAL_SUCCESS == opal_argv_insert(NULL, 0, insert)) {
         return false;
     } 
     opal_argv_append(&o, &orig, "orig a");
-    if (OMPI_SUCCESS != opal_argv_insert(&orig, 0, NULL)) {
+    if (OPAL_SUCCESS != opal_argv_insert(&orig, 0, NULL)) {
         return false;
     } 
-    if (OMPI_SUCCESS == opal_argv_insert(&orig, -1, insert)) {
+    if (OPAL_SUCCESS == opal_argv_insert(&orig, -1, insert)) {
         return false;
     } 
     opal_argv_free(orig);
@@ -539,7 +539,7 @@ static bool test10(void)
     opal_argv_append(&o, &orig, "orig a");
     opal_argv_append(&o, &orig, "orig b");
     opal_argv_append(&o, &orig, "orig c");
-    if (OMPI_SUCCESS != opal_argv_insert(&orig, 99, insert) ||
+    if (OPAL_SUCCESS != opal_argv_insert(&orig, 99, insert) ||
         6 != opal_argv_count(orig) ||
         0 != strcmp(orig[0], "orig a") ||
         0 != strcmp(orig[1], "orig b") ||
@@ -564,7 +564,7 @@ static bool test10(void)
     opal_argv_append(&o, &orig, "orig a");
     opal_argv_append(&o, &orig, "orig b");
     opal_argv_append(&o, &orig, "orig c");
-    if (OMPI_SUCCESS != opal_argv_insert(&orig, 0, insert) ||
+    if (OPAL_SUCCESS != opal_argv_insert(&orig, 0, insert) ||
         6 != opal_argv_count(orig) ||
         0 != strcmp(orig[3], "orig a") ||
         0 != strcmp(orig[4], "orig b") ||
@@ -589,7 +589,7 @@ static bool test10(void)
     opal_argv_append(&o, &orig, "orig a");
     opal_argv_append(&o, &orig, "orig b");
     opal_argv_append(&o, &orig, "orig c");
-    if (OMPI_SUCCESS != opal_argv_insert(&orig, 1, insert) ||
+    if (OPAL_SUCCESS != opal_argv_insert(&orig, 1, insert) ||
         6 != opal_argv_count(orig) ||
         0 != strcmp(orig[0], "orig a") ||
         0 != strcmp(orig[4], "orig b") ||
@@ -617,7 +617,7 @@ static bool test10(void)
     opal_argv_append(&o, &orig, "orig d");
     opal_argv_append(&o, &orig, "orig e");
     opal_argv_append(&o, &orig, "orig f");
-    if (OMPI_SUCCESS != opal_argv_insert(&orig, 1, insert) ||
+    if (OPAL_SUCCESS != opal_argv_insert(&orig, 1, insert) ||
         9 != opal_argv_count(orig) ||
         0 != strcmp(orig[0], "orig a") ||
         0 != strcmp(orig[4], "orig b") ||

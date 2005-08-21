@@ -1,8 +1,9 @@
 #include "ompi_config.h"
+
 #include "support.h"
-#include "include/constants.h"
+#include "opal/include/constants.h"
 #include "opal/threads/threads.h"
-#include "include/sys/atomic.h"
+#include "opal/include/sys/atomic.h"
 
 
 #if !OMPI_HAVE_THREAD_SUPPORT
@@ -50,16 +51,16 @@ int main(int argc, char** argv)
     thr2.t_run = thr2_run;
 
     rc = opal_thread_start(&thr1);
-    test_verify_int(OMPI_SUCCESS, rc);
+    test_verify_int(OPAL_SUCCESS, rc);
 
     rc = opal_thread_start(&thr2);
-    test_verify_int(OMPI_SUCCESS, rc);
+    test_verify_int(OPAL_SUCCESS, rc);
    
     rc = opal_thread_join(&thr1, NULL);
-    test_verify_int(OMPI_SUCCESS, rc);
+    test_verify_int(OPAL_SUCCESS, rc);
 
     rc = opal_thread_join(&thr2, NULL);
-    test_verify_int(OMPI_SUCCESS, rc);
+    test_verify_int(OPAL_SUCCESS, rc);
 
     test_verify_int(3, count);
     return test_finalize();

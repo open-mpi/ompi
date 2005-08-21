@@ -15,6 +15,7 @@
  */
 
 #include "orte_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -29,20 +30,20 @@
 #endif
 #include <sys/stat.h>
 
-#include "include/orte_constants.h"
-#include "mca/ns/ns_types.h"
-#include "util/proc_info.h"
-#include "util/sys_info.h"
+#include "support.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/util/proc_info.h"
+#include "opal/util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_create_dirpath.h"
-#include "util/session_dir.h"
-#include "util/proc_info.h"
-#include "runtime/runtime.h"
-#include "support.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/proc_info.h"
+#include "orte/runtime/runtime.h"
 
 
 static bool test1(void);   /* given prefix, both one that works and one that fails */
-static bool test2(void);   /* no prefix given, OMPI_PREFIX_ENV set, one good and one bad */
+static bool test2(void);   /* no prefix given, ORTE_PREFIX_ENV set, one good and one bad */
 static bool test3(void);   /* no prefix given, TMPDIR set, one good and one bad */
 static bool test4(void);   /* no prefix given, TMP set, one good and one bad */
 static bool test5(void);   /* no prefix given, HOME set, one good and one bad */
@@ -160,14 +161,14 @@ static bool test1(void)
     clear_proc_info();
 
     prefix = opal_os_path(false, "tmp", NULL);
-    if (OMPI_ERROR == orte_session_dir(true, prefix, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+    if (ORTE_ERROR == orte_session_dir(true, prefix, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	fprintf(test_out, "test1 - couldn't create specified path\n");
         free(prefix);
         return(false);
     }
     /* see if it can access an existing path */
 
-    if (OMPI_ERROR == orte_session_dir(false, prefix, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+    if (ORTE_ERROR == orte_session_dir(false, prefix, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	fprintf(test_out, "test1 - couldn't access existing path\n");
         free(prefix);
         return(false);
@@ -185,11 +186,11 @@ static bool test2(void)
 {
     clear_proc_info();
 
-    /* use the OMPI_PREFIX_ENV variable */
+    /* use the ORTE_PREFIX_ENV variable */
 
     setenv("OMPI_PREFIX_ENV", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+    if (ORTE_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("OMPI_PREFIX_ENV");
         return(false);
     }
@@ -210,7 +211,7 @@ static bool test3(void)
 
     setenv("TMPDIR", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+    if (ORTE_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("TMPDIR");
         return(false);
     }
@@ -231,7 +232,7 @@ static bool test4(void)
 
     setenv("TMP", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+    if (ORTE_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("TMP");
         return(false);
     }
@@ -252,7 +253,7 @@ static bool test5(void)
 
     setenv("HOME", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+    if (ORTE_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("HOME");
         return(false);
     }
@@ -274,7 +275,7 @@ static bool test6(void)
     * Program should turn to default of /tmp (where "/" is whatever
     * top-level directory is appropriate for given system)
     */
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+    if (ORTE_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
         return(false);
     }
 
@@ -292,7 +293,7 @@ static bool test7(void)
     clear_proc_info();
 
     /* create test proc session directory tree */
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, "localhost", NULL, "test-universe", "test-job", "test-proc")) {
+    if (ORTE_ERROR == orte_session_dir(true, NULL, orte_system_info.user, "localhost", NULL, "test-universe", "test-job", "test-proc")) {
 	return(false);
     }
 
@@ -318,7 +319,7 @@ static bool test7(void)
     fprintf(fp, "ss");
     fclose(fp);
 
-    if (OMPI_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
+    if (ORTE_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
 	return(false);
     }
 
@@ -337,7 +338,7 @@ static bool test8(void)
     clear_proc_info();
 
     /* create test proc session directory tree */
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, "localhost", NULL, "test-universe2", "test-job2", "test-proc2")) {
+    if (ORTE_ERROR == orte_session_dir(true, NULL, orte_system_info.user, "localhost", NULL, "test-universe2", "test-job2", "test-proc2")) {
 	return(false);
     }
 
@@ -364,7 +365,7 @@ static bool test8(void)
     fclose(fp);
 
 
-    if (OMPI_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
+    if (ORTE_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
 	   return(false);
     }
 

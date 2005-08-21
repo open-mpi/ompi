@@ -3,10 +3,12 @@
  */
 
 #include "ompi_config.h"
+
 #include <stdio.h>
 #include "support.h"
-#include "class/ompi_bitmap.h"
-#include "include/constants.h"
+
+#include "ompi/class/ompi_bitmap.h"
+#include "ompi/include/constants.h"
 
 #define BSIZE 26
 #define SIZE_OF_CHAR (sizeof(char) * 8)
