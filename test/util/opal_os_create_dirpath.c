@@ -15,6 +15,7 @@
  */
 
 #include "orte_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,11 +27,11 @@
 #endif
 #include <sys/stat.h>
 
-#include "include/constants.h"
-#include "util/sys_info.h"
+#include "support.h"
+#include "opal/include/constants.h"
+#include "opal/util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_create_dirpath.h"
-#include "support.h"
 
 static bool test1(void);   /* trivial test */
 static bool test2(void);   /* test existing path, both with and without correct mode */
@@ -75,9 +76,9 @@ int main(int argc, char* argv[])
 static bool test1(void)
 {
 
-    /* Test trivial functionality. Program should return OMPI_ERROR when called with NULL path. */
+    /* Test trivial functionality. Program should return OPAL_ERROR when called with NULL path. */
 
-    if (OMPI_ERROR != opal_os_create_dirpath(NULL, S_IRWXU))
+    if (OPAL_ERROR != opal_os_create_dirpath(NULL, S_IRWXU))
             return(false);
 
     return true;
@@ -99,14 +100,14 @@ static bool test2(void)
         return(false);
     }
 
-    if (OMPI_ERROR == opal_os_create_dirpath(tmp, S_IRWXU)) {
+    if (OPAL_ERROR == opal_os_create_dirpath(tmp, S_IRWXU)) {
         rmdir(tmp);
         return(false);
     }
 
     chmod(tmp, S_IRUSR);
 
-    if (OMPI_ERROR == opal_os_create_dirpath(tmp, S_IRWXU)) {
+    if (OPAL_ERROR == opal_os_create_dirpath(tmp, S_IRWXU)) {
         rmdir(tmp);
         return(false);
     }
@@ -134,7 +135,7 @@ static bool test3(void)
     }
 
     out = opal_os_path(true, a[0], a[1], a[2], NULL);
-    if (OMPI_ERROR == opal_os_create_dirpath(out, S_IRWXU)) {
+    if (OPAL_ERROR == opal_os_create_dirpath(out, S_IRWXU)) {
         out = opal_os_path(true, a[0], a[1], a[2], NULL);
         if (0 == stat(out, &buf))
             rmdir(out);
