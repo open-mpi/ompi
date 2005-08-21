@@ -28,7 +28,7 @@ AC_DEFUN([MCA_timer_darwin_COMPILE_MODE], [
 AC_DEFUN([MCA_timer_darwin_CONFIG],[
     AC_ARG_WITH([timer],
         [AC_HELP_STRING([--with-timer=TYPE],
-                        [blah blah blah])])
+                        [Build high resolution timer component TYPE])])
 
     AS_IF([test "$with_timer" = "darwin"],
           [timer_darwin_happy="yes"

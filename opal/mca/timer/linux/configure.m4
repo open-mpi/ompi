@@ -28,7 +28,7 @@ AC_DEFUN([MCA_timer_linux_COMPILE_MODE], [
 AC_DEFUN([MCA_timer_linux_CONFIG],[
     AC_ARG_WITH([timer],
         [AC_HELP_STRING([--with-timer=TYPE],
-                        [blah blah blah])])
+                        [Build high resolution timer component TYPE])])
 
     AS_IF([test "$with_timer" = "linux"],
           [timer_linux_happy="yes"

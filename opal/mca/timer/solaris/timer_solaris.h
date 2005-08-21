@@ -17,26 +17,26 @@
 #ifndef OPAL_MCA_TIMER_SOLARIS_TIMER_SOLARIS_H
 #define OPAL_MCA_TIMER_SOLARIS_TIMER_SOLARIS_H
 
-#include <mach/mach_time.h>
+#include <sys/time.h>
 
 typedef hrtime_t opal_timer_t;
 
 
 static inline opal_timer_t
-opal_timer_base_get_cycles()
+opal_timer_base_get_cycles(void)
 {
     return 0;
 }
 
 static inline opal_timer_t
-opal_timer_base_get_usec()
+opal_timer_base_get_usec(void)
 {
     /* gethrtime returns nanoseconds */
     return gethrtime() / 1000;
 }    
 
 static inline opal_timer_t
-opal_timer_base_get_freq()
+opal_timer_base_get_freq(void)
 {
     return 0;
 }

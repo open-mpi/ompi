@@ -179,7 +179,7 @@ int opal_thread_start(opal_thread_t *t)
 
 int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
-    int rc = thread_join(t->t_handle, NULL, thr_return);
+    int rc = thr_join(t->t_handle, NULL, thr_return);
     return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
 }
 

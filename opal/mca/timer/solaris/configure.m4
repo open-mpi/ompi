@@ -28,7 +28,7 @@ AC_DEFUN([MCA_timer_solaris_COMPILE_MODE], [
 AC_DEFUN([MCA_timer_solaris_CONFIG],[
     AC_ARG_WITH([timer],
         [AC_HELP_STRING([--with-timer=TYPE],
-                        [blah blah blah])])
+                        [Build high resolution timer component TYPE])])
 
     AS_IF([test "$with_timer" = "solaris"],
           [timer_solaris_happy="yes"
@@ -48,7 +48,7 @@ AC_DEFUN([MCA_timer_solaris_CONFIG],[
          [AC_MSG_ERROR([Solaris timer requested but not available.  Aborting.])])
 
     AS_IF([test "$timer_solaris_happy" = "yes"], 
-          [timer_base_include="darwin/timer_darwin.h"
+          [timer_base_include="solaris/timer_solaris.h"
            $1], 
           [$2])
 ])
