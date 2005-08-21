@@ -96,3 +96,5 @@ orte_bitmap_LDADD = \
         $(top_builddir)/test/support/libsupport.a
 orte_bitmap_DEPENDENCIES = $(orte_bitmap_LDADD)
 
+clean-local:
+	rm -f ompi_bitmap_test_out.txt opal_hash_table_test_out.txt
