@@ -94,3 +94,5 @@ orte_universe_setup_file_io_LDADD = \
         $(top_builddir)/test/support/libsupport.a 
 orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
 
+clean-local:
+	rm -f test_session_dir_out test-file

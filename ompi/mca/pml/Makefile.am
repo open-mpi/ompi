@@ -33,3 +33,6 @@ nodist_ompi_HEADERS = $(nodist_headers)
 else
 ompidir = $(includedir)
 endif
+
+distclean-local:
+	rm -f pml_direct_call.h
