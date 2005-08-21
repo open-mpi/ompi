@@ -19,7 +19,6 @@
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/solaris/timer_solaris.h"
 
-static int opal_timer_solaris_open(void);
 
 const opal_timer_base_component_1_0_0_t mca_timer_solaris_component = {
     /* First, the mca_component_t struct containing meta information
