@@ -33,6 +33,9 @@
 #include "opal/mca/paffinity/base/internal.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/timer/timer.h"
+#include "opal/mca/timer/base/base.h"
+
 
 #include "ompi/mca/allocator/allocator.h"
 #include "ompi/mca/allocator/base/base.h"
@@ -152,6 +155,10 @@ void ompi_info::open_components()
   opal_paffinity_base_open();
   component_map["paffinity"] = &opal_paffinity_base_components_opened;
 
+  opal_timer_base_open();
+  component_map["timer"] = &opal_timer_base_components_opened;
+
+
   // ORTE frameworks
 
   mca_oob_base_open();
@@ -261,6 +268,7 @@ void ompi_info::close_components()
     
         opal_memory_base_close();
         opal_paffinity_base_close();
+        opal_timer_base_close();
 
         component_map.clear();
     }
