@@ -41,12 +41,10 @@ main(int argc, char *argv[])
     int retval;
 
     opal_init();
-#if 0
     if (!opal_mem_free_is_supported()) {
         printf("no memory registration supported.  skipping\n");
         return 77;
     }
-#endif
     retval = opal_mem_free_register_handler(callback, NULL);
     if (retval != OMPI_SUCCESS) {
         printf("handler registration failed\n");
