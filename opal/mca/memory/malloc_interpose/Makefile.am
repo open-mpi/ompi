@@ -1,4 +1,3 @@
-# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -15,7 +14,11 @@
 # $HEADER$
 #
 
-# Specific to this module
+include $(top_srcdir)/config/Makefile.options
 
-PARAM_CONFIG_PRIORITY=20
-PARAM_CONFIG_FILES="Makefile"
+noinst_LTLIBRARIES = libmca_memory_malloc_interpose.la
+
+# Source code files
+libmca_memory_malloc_interpose_la_SOURCES = \
+	memory_malloc_interpose.c
+libmca_memory_malloc_interpose_la_LIBADD = $(memory_malloc_interpose_LIBS)
