@@ -43,14 +43,26 @@ AC_DEFUN([MCA_timer_aix_CONFIG],[
                          [timer_aix_happy="yes"],
                          [timer_aix_happy="no"])])
 
+    # look to see if -lpmapi is available
+    timer_aix_LIBS=
+    timer_aix_LIBS_SAVE="$LIBS"
     AS_IF([test "$timer_aix_happy" = "yes"],
-          [AC_CHECK_FUNC([pm_cycles], 
-                         [timer_aix_happy="yes"],
-                         [timer_aix_happy="no"])])
+          [AC_CHECK_LIB([pmapi],
+                        [pm_cycles],
+                        [timer_aix_LIBS="-lpmapi"],
+                        [timer_aix_LIBS=""])])
 
-   AS_IF([test "$timer_aix_happy" = "no" -a \
-               "$timer_aix_should_use" = "1"],
-         [AC_MSG_ERROR([AIX timer requested but not available.  Aborting.])])
+    # get us a HAVE_PM_CYCLES #define
+    AS_IF([test "$timer_aix_happy" = "yes"],
+          [AC_CHECK_FUNCS([pm_cycles])
+           AC_CHECK_HEADERS([pmapi.h])])
+   LIBS="$timer_aix_LIBS_SAVE"
+
+    AS_IF([test "$timer_aix_happy" = "no" -a \
+                "$timer_aix_should_use" = "1"],
+          [AC_MSG_ERROR([AIX timer requested but not available.  Aborting.])])
+
+    AC_SUBST(timer_aix_LIBS)
 
     AS_IF([test "$timer_aix_happy" = "yes"], 
           [timer_base_include="aix/timer_aix.h"

@@ -19,6 +19,15 @@
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/aix/timer_aix.h"
 
+#include <sys/time.h>
+#ifdef HAVE_PMAPI_H
+#include <pmapi.h>
+#endif
+
+opal_timer_t opal_timer_aix_freq_mhz;
+opal_timer_t opal_timer_aix_freq;
+
+static int opal_timer_aix_open(void);
 
 const opal_timer_base_component_1_0_0_t mca_timer_aix_component = {
     /* First, the mca_component_t struct containing meta information
@@ -35,7 +44,7 @@ const opal_timer_base_component_1_0_0_t mca_timer_aix_component = {
         OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
-        NULL,
+        opal_timer_aix_open,
         NULL
     },
 
@@ -45,3 +54,16 @@ const opal_timer_base_component_1_0_0_t mca_timer_aix_component = {
         true
     },
 };
+
+
+static int
+opal_timer_aix_open(void)
+{
+#ifdef HAVE_PM_CYCLES
+  opal_timer_aix_freq = pm_cycles();
+  opal_timer_aix_freq_mhz = opal_timer_aix_freq / 1000000;
+#else
+  opal_timer_aix_freq_mhz = 0;
+  opal_timer_aix_freq = 0;
+#endif
+}
