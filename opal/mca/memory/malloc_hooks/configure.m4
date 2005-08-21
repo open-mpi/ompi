@@ -64,9 +64,23 @@ AC_DEFUN([MCA_memory_malloc_hooks_CONFIG],[
                          [memory_malloc_hooks_happy="yes"],
                          [memory_malloc_hooks_happy="no"])])
 
+    memory_malloc_hooks_LIBS_SAVE="$LIBS"
+    AS_IF([test "$memory_malloc_hooks_happy" = "yes"],
+          [AC_CHECK_LIB([dl],
+                        [dlsym],
+                        [memory_malloc_hooks_happy="yes"],
+                        [memory_malloc_hooks_happy="no"])])
+   LIBS="$memory_malloc_hooks_LIBS_SAVE"
+
+    AS_IF([test "$memory_malloc_hooks_happy" = "yes"],
+          [memory_malloc_hooks_WRAPPER_EXTRA_LIBS="-ldl"
+           memory_malloc_hooks_LIBS="-ldl"])
+
    AS_IF([test "$memory_malloc_hooks_happy" = "no" -a \
                "$memory_malloc_hoooks_should_use" = "1"],
-         [AC_MSG_ERROR([malloc_hooks memory management requested but not available.  Aborting.])])
+         [AC_MSG_ERROR([malloc hooks memory management requested but not available.  Aborting.])])
+
+    AC_SUBST(memory_malloc_hooks_LIBS)
 
     AS_IF([test "$memory_malloc_hooks_happy" = "yes"],
           [$1], [$2])
