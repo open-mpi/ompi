@@ -13,6 +13,10 @@
  * 
  * $HEADER$
  */
+/**
+ * @file:
+ * Part of the rsh launcher. See pls_rsh.h for an overview of how it works.
+ */
 
 #ifndef ORTE_PLS_RSH_EXPORT_H
 #define ORTE_PLS_RSH_EXPORT_H
