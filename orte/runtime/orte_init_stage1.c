@@ -170,7 +170,7 @@ int orte_init_stage1(void)
     }
 
     /*
-     * Initialize and select sds
+     * Initialize and select the Startup Discovery Service
      */
     if (ORTE_SUCCESS != (ret = orte_sds_base_open())) {
         ORTE_ERROR_LOG(ret);

@@ -285,5 +285,3 @@ int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, size_t proc_slots)
     free(segment);
     return rc;
 }
-
-
