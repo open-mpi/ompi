@@ -66,7 +66,8 @@ AC_DEFUN([MCA_timer_aix_CONFIG],[
     AC_SUBST(timer_aix_LIBS)
 
     AS_IF([test "$timer_aix_happy" = "yes"], 
-          [timer_base_include="aix/timer_aix.h"
+          [timer_aix_WRAPPER_EXTRA_LIBS="$timer_aix_LIBS"
+           timer_base_include="aix/timer_aix.h"
            $1], 
           [$2])
 ])
