@@ -25,7 +25,7 @@ AC_DEFUN([OMPI_CHECK_BPROC],[
                 [AC_HELP_STRING([--with-bproc],
                                 [Directory where the BProc software is installed])])
 
-    AS_IF([test ! -z "$with_bproc" -a "$with_bproc" == "no"],[$4], [ 
+    AS_IF([test ! -z "$with_bproc" -a "$with_bproc" = "no"],[$4], [ 
         ompi_check_bproc_save_CPPFLAGS="$CPPFLAGS"
         ompi_check_bproc_save_LDFLAGS="$LDFLAGS"
         ompi_check_bproc_save_LIBS="$LIBS"

@@ -49,7 +49,8 @@ AC_DEFUN([MCA_timer_aix_CONFIG],[
     AS_IF([test "$timer_aix_happy" = "yes"],
           [AC_CHECK_LIB([pmapi],
                         [pm_cycles],
-                        [timer_aix_LIBS="-lpmapi"],
+                        [LIBS="$LIBS -lpmapi"
+                         timer_aix_LIBS="-lpmapi"],
                         [timer_aix_LIBS=""])])
 
     # get us a HAVE_PM_CYCLES #define

@@ -25,16 +25,6 @@ extern opal_timer_t opal_timer_aix_freq_mhz;
 extern opal_timer_t opal_timer_aix_freq;
 
 static inline opal_timer_t
-opal_timer_base_get_cycles()
-{
-#ifdef HAVE_PM_CYCLES
-    return opal_timer_base_get_usec * opal_timer_aix_freq_mhz;
-#else
-    return 0;
-#endif
-}
-
-static inline opal_timer_t
 opal_timer_base_get_usec()
 {
     timebasestruct_t t;
@@ -46,6 +36,16 @@ opal_timer_base_get_usec()
 
     return retval;
 }    
+
+static inline opal_timer_t
+opal_timer_base_get_cycles()
+{
+#ifdef HAVE_PM_CYCLES
+    return opal_timer_base_get_usec() * opal_timer_aix_freq_mhz;
+#else
+    return 0;
+#endif
+}
 
 static inline opal_timer_t
 opal_timer_base_get_freq()

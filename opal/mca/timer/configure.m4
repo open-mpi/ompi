@@ -25,7 +25,7 @@ AC_DEFUN([MCA_timer_CONFIG],[
         MCA_CONFIGURE_FRAMEWORK($1, $2)
 
         # someone should have set this...
-        if test "$timer_base_include" == "" ; then
+        if test "$timer_base_include" = "" ; then
             timer_base_include="base/base_null.h"
         fi
 
