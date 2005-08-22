@@ -61,7 +61,8 @@ echo "*** Now in distdir: $distdir"
 # See if we need VERSION.svn
 #
 
-if ("$svn_r" == "-1") then
+set cur_svn_r="`grep '^svn_r' VERSION | cut -d= -f2`"
+if ("$cur_svn_r" == "-1") then
     sed -e 's/^svn_r=.*/svn_r='$svn_r'/' VERSION > version.new
     cp version.new VERSION
     rm -f version.new
