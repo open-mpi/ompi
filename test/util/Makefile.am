@@ -18,6 +18,7 @@ include $(top_srcdir)/test/support/Makefile.options
 
 check_PROGRAMS = \
 	ompi_numtostr \
+	opal_error \
 	opal_if \
 	opal_os_path \
 	opal_timer \
@@ -36,6 +37,11 @@ ompi_numtostr_LDADD = \
         $(top_builddir)/opal/libopal.la \
         $(top_builddir)/test/support/libsupport.a 
 ompi_numtostr_DEPENDENCIES = $(ompi_numtostr_LDADD)
+
+opal_error_SOURCES = opal_error.c
+opal_error_LDADD = \
+        $(top_builddir)/opal/libopal.la
+opal_error_DEPENDENCIES = $(opal_error_LDADD)
 
 opal_if_SOURCES = opal_if.c
 opal_if_LDADD = \

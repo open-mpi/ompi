@@ -31,6 +31,7 @@ headers = \
         cmd_line.h \
         convert.h \
         daemon_init.h \
+	error.h \
         few.h \
         if.h \
         malloc.h \
@@ -56,6 +57,7 @@ libopalutil_la_SOURCES = \
         cmd_line.c \
         convert.c \
         daemon_init.c \
+	error.c \
         few.c \
         if.c \
         malloc.c \

@@ -17,65 +17,73 @@
 #ifndef ORTE_CONSTANTS_H
 #define ORTE_CONSTANTS_H
 
-/* error codes
- *
- * ANY CHANGES TO THESE DEFINITIONS MUST BE REFLECTED IN THE TEXT ARRAY
- * orte_error_strings DEFINED IN src/runtime/orte_init.c.
- * 
- */
+#include "opal/include/constants.h"
+
+#define ORTE_ERR_BASE            OPAL_ERR_MAX
+
 enum {
-    ORTE_SUCCESS = 0,
-    ORTE_ERROR = -1,
-    ORTE_ERR_OUT_OF_RESOURCE = -2, /* fatal error */
-    ORTE_ERR_TEMP_OUT_OF_RESOURCE = -3, /* try again later */
-    ORTE_ERR_RESOURCE_BUSY = -4,
-    ORTE_ERR_BAD_PARAM = -5,     /* equivalent to MPI_ERR_ARG error code */
-    ORTE_ERR_RECV_LESS_THAN_POSTED = -6,
-    ORTE_ERR_RECV_MORE_THAN_POSTED = -7,
-    ORTE_ERR_NO_MATCH_YET = -8,
-    ORTE_ERR_FATAL = -9,
-    ORTE_ERR_NOT_IMPLEMENTED = -10,
-    ORTE_ERR_NOT_SUPPORTED = -11,
-    ORTE_ERR_INTERUPTED = -12,
-    ORTE_ERR_WOULD_BLOCK = -13,
-    ORTE_ERR_IN_ERRNO = -14,
-    ORTE_ERR_UNREACH = -15,
-    ORTE_ERR_NOT_FOUND = -16,
-    ORTE_ERR_BUFFER = -17, /* equivalent to MPI_ERR_BUFFER */
-    ORTE_ERR_REQUEST = -18, /* equivalent to MPI_ERR_REQUEST */
-    ORTE_EXISTS = -19,  /* indicates that the specified object already exists */
-    ORTE_ERR_NO_CONNECTION_ALLOWED = -20, /* indicates that the receiving process does not allow connections */
-    ORTE_ERR_CONNECTION_REFUSED = -21, /* contact made with process, but it refuses any further communication */
-    ORTE_ERR_CONNECTION_FAILED = -22,  /* message sent, but delivery failed */
-    ORTE_ERR_TIMEOUT = -23,
-    ORTE_STARTUP_DETECTED = -24,
-    ORTE_SHUTDOWN_DETECTED = -25,
-    ORTE_PROC_STARTING = -26,
-    ORTE_PROC_STOPPED = -27,
-    ORTE_PROC_TERMINATING = -28,
-    ORTE_PROC_ALIVE = -29,
-    ORTE_PROC_RUNNING = -30,
-    ORTE_PROC_KILLED = -31,
-    ORTE_PROC_EXITED = -32,
-    ORTE_NODE_UP = -33,
-    ORTE_NODE_DOWN = -34,
-    ORTE_NODE_BOOTING = -35,
-    ORTE_NODE_ERROR = -36,
-    ORTE_PACK_MISMATCH = -37,
-    ORTE_ERR_PACK_FAILURE = -38,
-    ORTE_ERR_UNPACK_FAILURE = -39,
-    ORTE_ERR_COMM_FAILURE = -40,
-    ORTE_UNPACK_INADEQUATE_SPACE = -41,
-    ORTE_UNPACK_READ_PAST_END_OF_BUFFER = -42,
-    ORTE_ERR_NOT_AVAILABLE = -43,
-    ORTE_ERR_GPR_DATA_CORRUPT = -44,
-    ORTE_ERR_PERM = -45, /* no permission */
-    ORTE_ERR_TYPE_MISMATCH = -46,
-    ORTE_ERR_VALUE_OUT_OF_BOUNDS = -47,
-    ORTE_ERR_FILE_READ_FAILURE = -48,
-    ORTE_ERR_FILE_WRITE_FAILURE = -49,
-    ORTE_ERR_FILE_OPEN_FAILURE = -50
+    /* Error codes inherited from OPAL.  Still enum values so that we
+       get the nice debugger help. */
+
+    ORTE_SUCCESS                  = OPAL_SUCCESS,
+
+    ORTE_ERROR                    = OPAL_ERROR,
+    ORTE_ERR_OUT_OF_RESOURCE      = OPAL_ERR_OUT_OF_RESOURCE,
+    ORTE_ERR_TEMP_OUT_OF_RESOURCE = OPAL_ERR_TEMP_OUT_OF_RESOURCE,
+    ORTE_ERR_RESOURCE_BUSY        = OPAL_ERR_RESOURCE_BUSY,
+    ORTE_ERR_BAD_PARAM            = OPAL_ERR_BAD_PARAM,
+    ORTE_ERR_FATAL                = OPAL_ERR_FATAL,
+    ORTE_ERR_NOT_IMPLEMENTED      = OPAL_ERR_NOT_IMPLEMENTED,
+    ORTE_ERR_NOT_SUPPORTED        = OPAL_ERR_NOT_SUPPORTED,
+    ORTE_ERR_INTERUPTED           = OPAL_ERR_INTERUPTED,
+    ORTE_ERR_WOULD_BLOCK          = OPAL_ERR_WOULD_BLOCK,
+    ORTE_ERR_IN_ERRNO             = OPAL_ERR_IN_ERRNO,
+    ORTE_ERR_UNREACH              = OPAL_ERR_UNREACH,
+    ORTE_ERR_NOT_FOUND            = OPAL_ERR_NOT_FOUND,
+    ORTE_EXISTS                   = OPAL_EXISTS,
+    ORTE_ERR_TIMEOUT              = OPAL_ERR_TIMEOUT,
+    ORTE_ERR_NOT_AVAILABLE        = OPAL_ERR_NOT_AVAILABLE,
+    ORTE_ERR_PERM                 = OPAL_ERR_PERM,
+    ORTE_ERR_VALUE_OUT_OF_BOUNDS  = OPAL_ERR_VALUE_OUT_OF_BOUNDS,
+    ORTE_ERR_FILE_READ_FAILURE    = OPAL_ERR_FILE_READ_FAILURE,
+    ORTE_ERR_FILE_WRITE_FAILURE   = OPAL_ERR_FILE_WRITE_FAILURE,
+    ORTE_ERR_FILE_OPEN_FAILURE    = OPAL_ERR_FILE_OPEN_FAILURE,
+
+/* error codes specific to ORTE - don't forget to update
+   orte/rutime/orte_init.c when adding new error codes */
+    ORTE_ERR_RECV_LESS_THAN_POSTED      = (ORTE_ERR_BASE -  1),
+    ORTE_ERR_RECV_MORE_THAN_POSTED      = (ORTE_ERR_BASE -  2),
+    ORTE_ERR_NO_MATCH_YET               = (ORTE_ERR_BASE -  3),
+    ORTE_ERR_BUFFER                     = (ORTE_ERR_BASE -  4),
+    ORTE_ERR_REQUEST                    = (ORTE_ERR_BASE -  5),
+    ORTE_ERR_NO_CONNECTION_ALLOWED      = (ORTE_ERR_BASE -  6),
+    ORTE_ERR_CONNECTION_REFUSED         = (ORTE_ERR_BASE -  7),
+    ORTE_ERR_CONNECTION_FAILED          = (ORTE_ERR_BASE -  8),
+    ORTE_STARTUP_DETECTED               = (ORTE_ERR_BASE -  9),
+    ORTE_SHUTDOWN_DETECTED              = (ORTE_ERR_BASE - 10),
+    ORTE_PROC_STARTING                  = (ORTE_ERR_BASE - 11),
+    ORTE_PROC_STOPPED                   = (ORTE_ERR_BASE - 12),
+    ORTE_PROC_TERMINATING               = (ORTE_ERR_BASE - 13),
+    ORTE_PROC_ALIVE                     = (ORTE_ERR_BASE - 14),
+    ORTE_PROC_RUNNING                   = (ORTE_ERR_BASE - 15),
+    ORTE_PROC_KILLED                    = (ORTE_ERR_BASE - 16),
+    ORTE_PROC_EXITED                    = (ORTE_ERR_BASE - 17),
+    ORTE_NODE_UP                        = (ORTE_ERR_BASE - 18),
+    ORTE_NODE_DOWN                      = (ORTE_ERR_BASE - 19),
+    ORTE_NODE_BOOTING                   = (ORTE_ERR_BASE - 21),
+    ORTE_NODE_ERROR                     = (ORTE_ERR_BASE - 22),
+    ORTE_PACK_MISMATCH                  = (ORTE_ERR_BASE - 23),
+    ORTE_ERR_PACK_FAILURE               = (ORTE_ERR_BASE - 24),
+    ORTE_ERR_UNPACK_FAILURE             = (ORTE_ERR_BASE - 25),
+    ORTE_ERR_COMM_FAILURE               = (ORTE_ERR_BASE - 26),
+    ORTE_UNPACK_INADEQUATE_SPACE        = (ORTE_ERR_BASE - 27),
+    ORTE_UNPACK_READ_PAST_END_OF_BUFFER = (ORTE_ERR_BASE - 28),
+    ORTE_ERR_GPR_DATA_CORRUPT           = (ORTE_ERR_BASE - 29),
+    ORTE_ERR_TYPE_MISMATCH              = (ORTE_ERR_BASE - 30)
 };
+
+#define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 30)
+
 
 #endif /* ORTE_CONSTANTS_H */
 

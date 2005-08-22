@@ -19,18 +19,14 @@
 
 #include "orte_config.h"
 #include "mca/ns/ns_types.h"
+#include "opal/util/error.h"
 
 /*
  * This macro and array are used to output intelligible error
- * messages. It is disturbing to think that we are still outputing error numbers and
- * expecting users to look them up in the "big book" to find out what they represent.
- * This macro allows the user to output an actual string representation of the error.
- * 
- *  * THE ACTUAL ARRAY IS INSTANTIATED IN runtime/ompi_init.c
+ * messages. 
  */
 
-#define ORTE_ERROR_NAME(n)  orte_error_strings[-1*n]
-extern char *orte_error_strings[];
+#define ORTE_ERROR_NAME(n)  opal_strerror(n)
 
 /*
  * ORTE SEGMENT NAMES
