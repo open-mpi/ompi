@@ -18,7 +18,6 @@
 
 #include "orte_config.h"
 
-#include "orte/include/orte_constants.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 #include "opal/memory/memory.h"
@@ -27,13 +26,44 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/include/constants.h"
+#include "opal/util/error.h"
+
+ 
+static const char *
+opal_err2str(int errnum)
+{
+    const char *retval;
+
+    switch (errnum) {
+    case OPAL_SUCCESS:
+        retval = "Success";
+        break;
+    case OPAL_ERROR:
+        retval = "Error";
+        break;
+    case OPAL_ERR_OUT_OF_RESOURCE:
+        retval = "Out of resource";
+        break;
+    case OPAL_ERR_NOT_FOUND:
+        retval = "Not found";
+        break;
+    case OPAL_ERR_BAD_PARAM:
+        retval = "Bad parameter";
+        break;
+    default: 
+        retval = NULL;
+    }
+
+    return retval;
+}
 
 
 /**
  * Initialize the OPAL utilities
  *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
+ * @retval OPAL_SUCCESS Upon success.
+ * @retval OPAL_ERROR Upon failure.
  *
  * This function performs 
  */
@@ -47,6 +77,9 @@ int opal_init(void)
 
     /* initialize the output system */
     opal_output_init();
+
+    /* register handler for errnum -> string converstion */
+    opal_error_register(opal_err2str);
     
     /* initialize the mca */
     mca_base_open();
@@ -63,6 +96,6 @@ int opal_init(void)
 
     opal_timer_base_open();
 
-    return ORTE_SUCCESS;
+    return OPAL_SUCCESS;
 }
 

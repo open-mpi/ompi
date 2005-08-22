@@ -34,6 +34,8 @@
 /* globals used by RTE */
 int orte_debug_flag=(int)false;
 
+static const char * orte_err2str(int errnum);
+
 int orte_init(void)
 {
     int rc;
@@ -42,6 +44,9 @@ int orte_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+    /* register handler for errnum -> string converstion */
+    opal_error_register(orte_err2str);
     
     if (ORTE_SUCCESS != (rc = orte_system_init())) {
         ORTE_ERROR_LOG(rc);
@@ -51,67 +56,103 @@ int orte_init(void)
     return ORTE_SUCCESS;
 }
 
-/*
- * This array is used to output intelligible error
- * messages. It is disturbing to think that we are still outputing error numbers and
- * expecting users to look them up in the "big book" to find out what they represent.
- * This array allows the user to output an actual string representation of the error.
- *
- * THE CORRESPONDING MACRO IS DEFINED IN include/orte_schema.h
- * AS IS THE EXTERN STATEMENT FOR ACCESSING THIS ARRAY
- */
+static const char *
+orte_err2str(int errnum)
+{
+    const char *retval;
 
-char *orte_error_strings[] = {
-    "ORTE_SUCCESS",
-    "ORTE_ERROR",
-    "ORTE_ERR_OUT_OF_RESOURCE", /* fatal error */
-    "ORTE_ERR_TEMP_OUT_OF_RESOURCE", /* try again later */
-    "ORTE_ERR_RESOURCE_BUSY",
-    "ORTE_ERR_BAD_PARAM",     /* equivalent to MPI_ERR_ARG error code */
-    "ORTE_ERR_RECV_LESS_THAN_POSTED",
-    "ORTE_ERR_RECV_MORE_THAN_POSTED",
-    "ORTE_ERR_NO_MATCH_YET",
-    "ORTE_ERR_FATAL",
-    "ORTE_ERR_NOT_IMPLEMENTED",
-    "ORTE_ERR_NOT_SUPPORTED",
-    "ORTE_ERR_INTERUPTED",
-    "ORTE_ERR_WOULD_BLOCK",
-    "ORTE_ERR_IN_ERRNO",
-    "ORTE_ERR_UNREACH",
-    "ORTE_ERR_NOT_FOUND",
-    "ORTE_ERR_BUFFER", /* equivalent to MPI_ERR_BUFFER */
-    "ORTE_ERR_REQUEST", /* equivalent to MPI_ERR_REQUEST */
-    "ORTE_EXISTS",  /* indicates that the specified object already exists */
-    "ORTE_ERR_NO_CONNECTION_ALLOWED", /* indicates that the receiving process does not allow connections */
-    "ORTE_ERR_CONNECTION_REFUSED", /* contact made with process, but it refuses any further communication */
-    "ORTE_ERR_CONNECTION_FAILED",  /* message sent, but delivery failed */
-    "ORTE_ERR_TIMEOUT",
-    "ORTE_STARTUP_DETECTED",
-    "ORTE_SHUTDOWN_DETECTED",
-    "ORTE_PROC_STARTING",
-    "ORTE_PROC_STOPPED",
-    "ORTE_PROC_TERMINATING",
-    "ORTE_PROC_ALIVE",
-    "ORTE_PROC_RUNNING",
-    "ORTE_PROC_KILLED",
-    "ORTE_PROC_EXITED",
-    "ORTE_NODE_UP",
-    "ORTE_NODE_DOWN",
-    "ORTE_NODE_BOOTING",
-    "ORTE_NODE_ERROR",
-    "ORTE_PACK_MISMATCH",
-    "ORTE_ERR_PACK_FAILURE",
-    "ORTE_ERR_UNPACK_FAILURE",
-    "ORTE_ERR_COMM_FAILURE",
-    "ORTE_UNPACK_INADEQUATE_SPACE",
-    "ORTE_UNPACK_READ_PAST_END_OF_BUFFER",
-    "ORTE_ERR_NOT_AVAILABLE",
-    "ORTE_ERR_GPR_DATA_CORRUPT",
-    "ORTE_ERR_PERM",
-    "ORTE_ERR_TYPE_MISMATCH",
-    "ORTE_ERR_VALUE_OUT_OF_BOUNDS",
-    "ORTE_ERR_FILE_READ_FAILURE",
-    "ORTE_ERR_FILE_WRITE_FAILURE",
-    "ORTE_ERR_FILE_OPEN_FAILURE"
-};
+    switch (errnum) {
+    case ORTE_ERR_RECV_LESS_THAN_POSTED:
+        retval = "Receive was less than posted size";
+        break;
+    case ORTE_ERR_RECV_MORE_THAN_POSTED:
+        retval = "Receive was greater than posted size";
+        break;
+    case ORTE_ERR_NO_MATCH_YET:
+        retval = "No match for receive posted";
+        break;
+    case ORTE_ERR_BUFFER:
+        retval = "Buffer error";
+        break;
+    case ORTE_ERR_REQUEST:
+        retval = "Request error";
+        break;
+    case ORTE_ERR_NO_CONNECTION_ALLOWED:
+        retval = "No connection allowed";
+        break;
+    case ORTE_ERR_CONNECTION_REFUSED:
+        retval = "Connection refused";
+        break;
+    case ORTE_ERR_CONNECTION_FAILED:
+        retval = "Connection failed";
+        break;
+    case ORTE_STARTUP_DETECTED:
+        retval = "Startup detected";
+        break;
+    case ORTE_SHUTDOWN_DETECTED:
+        retval = "Shutdown detected";
+        break;
+    case ORTE_PROC_STARTING:
+        retval = "Proccess starting";
+        break;
+    case ORTE_PROC_STOPPED:
+        retval = "Proccess stopped";
+        break;
+    case ORTE_PROC_TERMINATING:
+        retval = "Proccess terminating";
+        break;
+    case ORTE_PROC_ALIVE:
+        retval = "Proccess alive";
+        break;
+    case ORTE_PROC_RUNNING:
+        retval = "Process running";
+        break;
+    case ORTE_PROC_KILLED:
+        retval = "Process killed";
+        break;
+    case ORTE_PROC_EXITED:
+        retval = "Process exited";
+        break;
+    case ORTE_NODE_UP:
+        retval = "Node is up";
+        break;
+    case ORTE_NODE_DOWN:
+        retval = "Node is down";
+        break;
+    case ORTE_NODE_BOOTING:
+        retval = "Node is booting";
+        break;
+    case ORTE_NODE_ERROR:
+        retval = "Node is in error condition";
+        break;
+    case ORTE_PACK_MISMATCH:
+        retval = "Pack data mismatch";
+        break;
+    case ORTE_ERR_PACK_FAILURE:
+        retval = "Data pack failed";
+        break;
+    case ORTE_ERR_UNPACK_FAILURE:
+        retval = "Data unpack failed";
+        break;
+    case ORTE_ERR_COMM_FAILURE:
+        retval = "Communication failure";
+        break;
+    case ORTE_UNPACK_INADEQUATE_SPACE:
+        retval = "Data unpack had inadequate space";
+        break;
+    case ORTE_UNPACK_READ_PAST_END_OF_BUFFER:
+        retval = "Data unpack would read past end of buffer";
+        break;
+    case ORTE_ERR_GPR_DATA_CORRUPT:
+        retval = "GPR data corruption";
+        break;
+    case ORTE_ERR_TYPE_MISMATCH:
+        retval = "Type mismatch";
+        break;
+    default: 
+        retval = NULL;
+    }
+
+    return retval;
+}
 

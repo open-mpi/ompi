@@ -16,16 +16,38 @@
 
 #ifndef OPAL_CONSTANTS_H
 #define OPAL_CONSTANTS_H
+ 
+/* error codes - don't forget to update opal/rutime/opal_init.c when 
+   adding to this list */
+#define OPAL_ERR_BASE             0 /* internal use only */
+ 
+enum {
+    OPAL_SUCCESS                  = (OPAL_ERR_BASE),
 
-/* error codes */
+    OPAL_ERROR                    = (OPAL_ERR_BASE -  1),
+    OPAL_ERR_OUT_OF_RESOURCE      = (OPAL_ERR_BASE -  2), /* fatal error */
+    OPAL_ERR_TEMP_OUT_OF_RESOURCE = (OPAL_ERR_BASE -  3), /* try again later */
+    OPAL_ERR_RESOURCE_BUSY        = (OPAL_ERR_BASE -  4),
+    OPAL_ERR_BAD_PARAM            = (OPAL_ERR_BASE -  5),  /* equivalent to MPI_ERR_ARG error code */
+    OPAL_ERR_FATAL                = (OPAL_ERR_BASE -  6),
+    OPAL_ERR_NOT_IMPLEMENTED      = (OPAL_ERR_BASE -  7),
+    OPAL_ERR_NOT_SUPPORTED        = (OPAL_ERR_BASE -  8),
+    OPAL_ERR_INTERUPTED           = (OPAL_ERR_BASE -  9),
+    OPAL_ERR_WOULD_BLOCK          = (OPAL_ERR_BASE - 10),
+    OPAL_ERR_IN_ERRNO             = (OPAL_ERR_BASE - 11),
+    OPAL_ERR_UNREACH              = (OPAL_ERR_BASE - 12),
+    OPAL_ERR_NOT_FOUND            = (OPAL_ERR_BASE - 13),
+    OPAL_EXISTS                   = (OPAL_ERR_BASE - 14), /* indicates that the specified object already exists */
+    OPAL_ERR_TIMEOUT              = (OPAL_ERR_BASE - 15),
+    OPAL_ERR_NOT_AVAILABLE        = (OPAL_ERR_BASE - 16),
+    OPAL_ERR_PERM                 = (OPAL_ERR_BASE - 17), /* no permission */
+    OPAL_ERR_VALUE_OUT_OF_BOUNDS  = (OPAL_ERR_BASE - 18),
+    OPAL_ERR_FILE_READ_FAILURE    = (OPAL_ERR_BASE - 19),
+    OPAL_ERR_FILE_WRITE_FAILURE   = (OPAL_ERR_BASE - 20),
+    OPAL_ERR_FILE_OPEN_FAILURE    = (OPAL_ERR_BASE - 21)
+};
 
-#define OPAL_SUCCESS 0
-#define OPAL_ERROR -1
-#define OPAL_ERR_OUT_OF_RESOURCE -2
-#define OPAL_ERR_IN_ERRNO -3
-#define OPAL_ERR_NOT_FOUND -4
-#define OPAL_ERR_BAD_PARAM -5
-#define OPAL_ERR_NOT_IMPLEMENTED -6
+#define OPAL_ERR_MAX                (OPAL_ERR_BASE - 21)
 
 #endif /* OPAL_CONSTANTS_H */
 
