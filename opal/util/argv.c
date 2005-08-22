@@ -275,6 +275,11 @@ char **opal_argv_copy(char **argv)
   if (NULL == argv)
     return NULL;
 
+  /* create an "empty" list, so that we return something valid if we
+     were passed a valid list with no contained elements */
+  dupv = (char**) malloc(sizeof(char*));
+  dupv[0] = NULL;
+
   while (NULL != *argv) {
     if (OMPI_ERROR == opal_argv_append(&dupc, &dupv, *argv)) {
       opal_argv_free(dupv);
@@ -335,6 +340,9 @@ int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
     /* adjust the argv array */
     tmp = realloc(*argv, sizeof(char**) * (i + 1));
     if (NULL != tmp) *argv = tmp;
+
+    /* adjust the argc */
+    (*argc) -= num_to_delete;
 
     return OMPI_SUCCESS;
 }
