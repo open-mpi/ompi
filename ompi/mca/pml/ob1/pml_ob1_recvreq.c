@@ -126,9 +126,39 @@ static void mca_pml_ob1_put_completion(
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_cbdata;
+    mca_btl_base_segment_t* segments = des->des_dst;
+    size_t i, bytes_received = 0;
+    bool schedule = false;
+
+    for(i=0; i<des->des_dst_cnt; i++)
+        bytes_received += segments[i].seg_len;
+
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
-    mca_pml_ob1_recv_request_progress(recvreq,btl,des->des_dst,des->des_dst_cnt);
     mca_bml_base_free(bml_btl, des);
+
+    /* check completion status */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    recvreq->req_bytes_received += bytes_received;
+    recvreq->req_bytes_delivered += bytes_received;
+    if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
+
+        /* initialize request status */
+        recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
+        recvreq->req_recv.req_base.req_pml_complete = true; 
+        recvreq->req_recv.req_base.req_ompi.req_complete = true;
+
+        if(ompi_request_waiting) {
+            opal_condition_broadcast(&ompi_request_cond);
+        }
+    } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
+        schedule = true;
+    }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    /* schedule additional rdma operations */
+    if(schedule) {
+        mca_pml_ob1_recv_request_schedule(recvreq);
+    }
 }
 
 /*
