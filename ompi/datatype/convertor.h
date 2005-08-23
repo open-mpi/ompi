@@ -126,7 +126,7 @@ OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int3
 /*
  *
  */
-OMPI_DECLSPEC int32_t ompi_convertor_cleanup( ompi_convertor_t* convertor );
+OMPI_DECLSPEC int ompi_convertor_cleanup( ompi_convertor_t* convertor );
 
 /*
  *
@@ -209,11 +209,11 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 /*
  *
  */
-OMPI_DECLSPEC int32_t
+OMPI_DECLSPEC int
 ompi_convertor_clone( const ompi_convertor_t* source,
                       ompi_convertor_t* destination,
                       int32_t copy_stack );
-OMPI_DECLSPEC int32_t
+OMPI_DECLSPEC int
 ompi_convertor_clone_with_position( const ompi_convertor_t* source,
                                     ompi_convertor_t* destination,
                                     int32_t copy_stack,
