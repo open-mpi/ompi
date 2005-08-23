@@ -74,7 +74,7 @@ else
     #
 
     ompi_fcflags_save="$FCFLAGS"
-    AC_PROG_FC([f95 fort xlf95 ifc efc pgf95 lf95 gfortran f90 xlf90 pgf90 epcf90])
+    AC_PROG_FC([f95 fort xlf95 ifort efc pgf95 lf95 gfortran f90 xlf90 pgf90 epcf90])
     FCFLAGS="$ompi_fcflags_save"
     if test -z "$FC"; then
         AC_MSG_WARN([*** Fortran 90/95 bindings disabled (could not find compiler)])
