@@ -19,7 +19,7 @@ CFILE=/tmp/opal_atomic_$$.c
 
 trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
 
-echo Updating atomic.s from atomic.h using gcc
+echo Updating asm.s from atomic.h and timer.h using gcc
 
 cat > $CFILE<<EOF
 #include <stdlib.h>
@@ -29,6 +29,7 @@ cat > $CFILE<<EOF
 #define OMPI_GCC_INLINE_ASSEMBLY 1
 #define OMPI_WANT_SMP_LOCKS 1
 #include "atomic.h"
+#include "timer.h"
 EOF
 
-gcc -I. -S $CFILE -o atomic.s
+gcc -O3 -I. -S $CFILE -o asm.s

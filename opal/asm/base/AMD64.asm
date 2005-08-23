@@ -72,3 +72,14 @@ START_FUNC(opal_atomic_cmpset_64)
 	leave
 	ret
 END_FUNC(opal_atomic_cmpset_64)
+
+
+START_FUNC(opal_sys_timer_get_cycles)
+#APP
+        rdtsc
+#NO_APP
+        salq    $32, %rdx
+        mov     %eax, %eax
+        orq     %rdx, %rax
+        ret
+END_FUNC(opal_sys_timer_get_cycles)
