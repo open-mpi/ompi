@@ -27,11 +27,13 @@ using namespace std;
 int ret = 1;
 int size = 10 * 1024 * 1024;
 
+extern "C" {
 static void
 callback(void *buf, size_t length, void *cbdata)
 {
     printf("\tcallback with %lx, %d\n", (unsigned long) buf, (int) length);
     ret--;
+}
 }
 
 int
@@ -41,7 +43,7 @@ main(int argc, char *argv[])
 
     opal_init();
 
-    if (!opal_mem_free_is_supported()) {
+    if (0 == (int) opal_mem_free_is_supported()) {
         printf("no memory registration supported.  skipping\n");
         return 77;
     }

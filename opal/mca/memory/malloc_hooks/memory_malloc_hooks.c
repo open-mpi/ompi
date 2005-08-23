@@ -25,22 +25,32 @@
 #include "opal/memory/memory_internal.h"
      
 /* Prototypes for our hooks.  */
-static void opal_mem_free_init_hook (void);
+void opal_memory_malloc_hooks_init(void);
 static void opal_mem_free_free_hook (void*, const void *);
 static void* opal_mem_free_realloc_hook (void*, size_t, const void *);
      
 /* Override initializing hook from the C library. */
-void (*__malloc_initialize_hook) (void) = opal_mem_free_init_hook;
+void (*__malloc_initialize_hook) (void) = opal_memory_malloc_hooks_init;
 
 
 /* local variable - next in stack of free hooks */
 static void (*old_free_hook)(void*, const void*);
 static void* (*old_realloc_hook)(void*, size_t, const void*);
 
+static int initialized = 0;
 
-static void
-opal_mem_free_init_hook (void)
+void
+opal_memory_malloc_hooks_init(void)
 {
+    /* for some dumb reason, when libopal is compiled statically a C
+       application will fire this at malloc initialization time, but a
+       C++ application will not.  So we also try to set our hooks from
+       the module initialization */
+    if (initialized != 0) {
+        return;
+    }
+
+    initialized = 1;
     opal_mem_free_set_free_support(1);
     old_free_hook = __free_hook;
     old_realloc_hook = __realloc_hook;
