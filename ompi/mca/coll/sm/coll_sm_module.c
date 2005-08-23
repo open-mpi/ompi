@@ -515,12 +515,42 @@ static int bootstrap_comm(ompi_communicator_t *comm)
        bootstrap) and fill in the values on our communicator */
 
     else {
+        int rank, parent, min_child, max_child, num_children;
+
         err = OMPI_SUCCESS;
         data->mcb_mpool_base = c->sm_data_mpool->mpool_base(c->sm_data_mpool);
         data->mcb_mpool_offset = bscs[i].smbcs_data_mpool_offset;
         data->mcb_mpool_area = data->mcb_mpool_base + data->mcb_mpool_offset;
         data->mcb_mpool_num_segments = bscs[i].smbcs_communicator_num_segments;
         data->mcb_operation_count = 0;
+
+        /* Pre-compute some identities */
+        rank = ompi_comm_rank(comm);
+        num_children = mca_coll_sm_component.sm_tree_degree;
+        parent = (rank - 1) / mca_coll_sm_component.sm_tree_degree;
+
+        /* Do we have children?  If so, how many? */
+
+        if ((rank * num_children) + 1 >= ompi_comm_size(comm)) {
+            /* Leaves */
+            min_child = -1;
+            max_child = -1;
+            num_children = 0;
+        } else {
+            /* Interior nodes */
+            min_child = rank * num_children + 1;
+            max_child = rank * num_children + num_children;
+            if (max_child >= ompi_comm_size(comm)) {
+                max_child = ompi_comm_size(comm) - 1;;
+            }
+            num_children = max_child - min_child + 1;
+        }
+
+        /* Save the values */
+        data->mcb_parent_rank = parent;
+        data->mcb_child_rank_start = min_child;
+        data->mcb_child_rank_end = max_child;
+        data->mcb_num_children = num_children;
     }
 
     /* If the count is now zero, then we're finished with this section

@@ -199,6 +199,23 @@ extern "C" {
 
         /** Operation number (i.e., which segment number to use) */
         int mcb_operation_count;
+
+        /** Parent rank, for root==0 */
+        int mcb_parent_rank;
+
+        /** First child rank, or -1 if no children (i.e., a leaf
+            node), for root==0 */
+        int mcb_child_rank_start;
+
+        /** Last child rank, or -1 if no children (i.e., a leaf
+            node), for root==0 */
+        int mcb_child_rank_end;
+
+        /** Number of children (to include 0 if leak) -- just
+            (mcb_child_rank_end - mcb_child_rank_start + 1) -- so that
+            we don't have to compute this during loops and whatnot,
+            for root==0. */
+        int mcb_num_children;
     };
     /**
      * Convenience typedef

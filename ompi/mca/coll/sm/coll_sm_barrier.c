@@ -40,37 +40,14 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
     mca_coll_base_comm_t *data = comm->c_coll_selected_data;
     uint32_t *my_control_in, *my_control_out;
     uint32_t *parent_control_in;
-    int i, rank, start_rank, parent, num_children, segment;
+    int i, rank, segment;
     char *control_in, *control_out;
+    int num_children = data->mcb_num_children;
 
+    rank = ompi_comm_rank(comm);
     segment = (++data->mcb_operation_count % data->mcb_mpool_num_segments);
     control_in = data->mcb_mpool_index[segment]->mcbmi_control_fan_in;
     control_out = data->mcb_mpool_index[segment]->mcbmi_control_fan_out;
-
-    /* THIS CAN BE PRECOMPUTED */
-    /* Figure out some identities */
-
-    rank = ompi_comm_rank(comm);
-    num_children = mca_coll_sm_component.sm_tree_degree;
-    parent = (rank - 1) / mca_coll_sm_component.sm_tree_degree;
-
-    /* Do we have children?  If so, how many? */
-
-    if ((rank * num_children) + 1 >= ompi_comm_size(comm)) {
-        /* Leaves */
-        num_children = 0;
-    } else {
-        int min_child = rank * num_children + 1;
-        int max_child = rank * num_children + num_children;
-        if (max_child >= ompi_comm_size(comm)) {
-            max_child = ompi_comm_size(comm) - 1;;
-        }
-        D(("rank %d: min child: %d, max child: %d\n", rank, min_child, max_child));
-        num_children = max_child - min_child + 1;
-    }
-    D(("rank %d: segment %d (opn count: %d), parent %d, num_children = %d\n", 
-       rank, segment, data->mcb_operation_count, parent, num_children));
-    fflush(stdout);
 
     /* Pre-calculate some pointers */
 
@@ -82,14 +59,15 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
 
     if (0 != rank) {
         parent_control_in = (uint32_t *)
-            (control_in + (parent * mca_coll_sm_component.sm_control_size));
+            (control_in + (data->mcb_parent_rank * 
+                           mca_coll_sm_component.sm_control_size));
     } else {
         parent_control_in = NULL;
     }
 
     /* Fan in: wait for my children */
 
-    if (0 != num_children) {
+    if (0 != data->mcb_num_children) {
         D(("rank %d waiting for fan in from %d children...\n", rank, num_children));
         while (*my_control_in != (uint32_t) num_children) {
             opal_atomic_wmb();
@@ -125,11 +103,11 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
 
     /* Fan out: send to my children */
 
-    start_rank = (rank * mca_coll_sm_component.sm_tree_degree) + 1;
-    for (i = 0; i < num_children; ++i) {
-        D(("rank %d writing fan out to child %d, rank %d (start %d, num_children %d)\n", rank, i, start_rank + i, start_rank, num_children));
+    for (i = data->mcb_child_rank_start; i <= data->mcb_child_rank_end; ++i) {
+        D(("rank %d sending to child %d, rank %d\n", 
+           rank, i, i - data->mcb_child_rank_start));
         *((uint32_t *) 
-          (control_out + ((start_rank + i) * mca_coll_sm_component.sm_control_size))) = 1;
+          (control_out + (i * mca_coll_sm_component.sm_control_size))) = 1;
         
     }
     D(("rank %d done with barrier\n", rank));
