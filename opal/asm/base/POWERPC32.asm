@@ -154,3 +154,17 @@ START_FUNC(opal_atomic_sub_32)
 	lwz r3,0(r3)
 	blr
 END_FUNC(opal_atomic_sub_32)
+
+START_FUNC(opal_sys_timer_get_cycles)
+	LSYM(15)
+	mftbu r0
+	mftb r11
+	mftbu r2
+	cmpw cr7,r2,r0
+	bne+ cr7,REFLSYM(14)
+	li r4,0
+	li r9,0
+	or r3,r2,r9
+	or r4,r4,r11
+	blr
+END_FUNC(opal_sys_timer_get_cycles)

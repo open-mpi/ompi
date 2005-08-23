@@ -41,7 +41,9 @@ opal_sys_timer_get_cycles(void)
 
 #else
 
-#define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
+opal_timer_t opal_sys_timer_get_cycles(void);
+
+#define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
