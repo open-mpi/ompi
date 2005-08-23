@@ -103,7 +103,7 @@ int mca_pml_teg_component_open(void)
     mca_pml_teg.teg_poll_iterations =
         mca_pml_teg_param_register_int("poll_iterations", 100000);
     mca_pml_teg.teg_priority =
-        mca_pml_teg_param_register_int("priority", 1);
+        mca_pml_teg_param_register_int("priority", 0);
 
     return mca_ptl_base_open(); 
 }
