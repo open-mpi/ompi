@@ -26,12 +26,64 @@
 #include "opal/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/common/sm/common_sm_mmap.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-#define PUB(foo) mca_coll_sm##foo
+    /**
+     * Structure used within bootstrap mmap file for setting up a coll
+     * sm component on a communicator
+     */
+    struct mca_coll_sm_bootstrap_comm_setup_t {
+        /** Offset to be used in the data mpool for this comm's
+            collective sm operations -- use this value plus the base
+            of the mpool to obtain the pointer to this comm's
+            mca_coll_sm_mpool_area_t */
+        size_t smbcs_data_mpool_offset;
+
+        /** Number of segments in the data mpool area for this
+            communicator */
+        int smbcs_communicator_num_segments;
+
+        /** Number of processes in this communicator who have seen
+            this value already. */
+        int smbcs_count;
+    };
+    /**
+     * Convenience typedef
+     */
+    typedef struct mca_coll_sm_bootstrap_comm_setup_t 
+        mca_coll_sm_bootstrap_comm_setup_t;
+
+    /**
+     * Extension to the control structure in the bootstrap mmap file
+     */
+    struct mca_coll_sm_bootstrap_header_extension_t {
+        /** upper-level control structure */
+        mca_common_sm_file_header_t super;
+
+        /** Number of segments in the bootstrap mmap file */
+        int smbhe_num_segments;
+
+        /** Pointer to the start of the segments in the bootstrap area
+            (map->seg_data only points to just beyond the
+            mca_common_sm_file_header_t) */
+        mca_coll_sm_bootstrap_comm_setup_t *smbhe_segments;
+
+        /** Pointer to array containing smhe_num_segments CIDs for use
+            in bootstrap phase -- will always point immediately after
+            the end of this struct (i.e., still within this header,
+            but since it's variable size (set by MCA param), we can't
+            just have it here in the struct.  Bonk). */
+        uint32_t *smbhe_cids;
+    };
+    /**
+     * Convenience typedef
+     */
+    typedef struct mca_coll_sm_bootstrap_header_extension_t
+        mca_coll_sm_bootstrap_header_extension_t;
 
     /** 
      * Structure to hold the sm coll component.  First it holds the
@@ -39,34 +91,120 @@ extern "C" {
      * sm-coll-component-specific stuff (e.g., current MCA param
      * values). 
      */
-    typedef struct mca_coll_sm_component_t {
+    struct mca_coll_sm_component_t {
         /** Base coll component */
         mca_coll_base_component_1_0_0_t super;
 
-        /** Priority of this component */
+        /** MCA parameter: Priority of this component */
         int sm_priority;
-        /** Name of the mpool that this component will look for */
+
+        /** MCA parameter: Length of a cache line or page (in bytes) */
+        int sm_control_size;
+
+        /** MCA parameter: Name of shared memory control / bootstrap
+            mmap file */
+        char *sm_bootstrap_filename;
+
+        /** MCA parameter: Number of segments in the bootstrap file
+            (for use with setting up multiple comm's with sm
+            components simultaneously) */
+        int sm_bootstrap_num_segments;
+
+        /** MCA parameter: Name of the mpool that this component will
+            use */
         char *sm_mpool_name;
-        /** Mpool that will be used */
-        mca_mpool_base_module_t *sm_mpool;
-    } mca_coll_sm_component_t;
 
-    /** 
-     * Structure for sm collective module, per communicator. The
-     * structure mainly stores memory pointers to the specific
-     * poritions in the shared memory area. Each shared memory area is
-     * reserved for special functions.  The shared memory is split
-     * between two types of areas. One is control section that stores
-     * shared flags used during synchronization, while other section
-     * is purely used to pass messages from one process to other. 
+        /** MCA parameter: Number of segments for each communicator in
+            the data mpool */
+        int sm_communicator_num_segments;
+
+        /** MCA parameter: Fragment size for data */
+        int sm_fragment_size;
+
+        /** MCA parameter: Degree of tree for tree-based collectives */
+        int sm_tree_degree;
+
+        /** Size of the bootstrap area -- calculated in
+            coll_sm_component.c */
+        size_t sm_bootstrap_size;
+
+        /** Size of the data mpool area -- calculated in
+            coll_sm_component.c */
+        size_t sm_data_mpool_size;
+
+        /** Data mpool that will be used */
+        mca_mpool_base_module_t *sm_data_mpool;
+
+        /** Whether we ended up creating the sm mpool or whether
+            someone else created it and we just found it */
+        bool sm_data_mpool_created;
+
+        /** Meta struct containing information about the bootstrap area */
+        mca_common_sm_mmap_t *sm_bootstrap_meta;
+    };
+    /**
+     * Convenience typedef
      */
-    typedef struct mca_coll_base_module_comm_t {
+    typedef struct mca_coll_sm_component_t mca_coll_sm_component_t;
 
-        /* JMS fill in here */
-        int foo;
+    /**
+     * Structure containing pointers to various arrays of data in the
+     * data mpool area (one of these indexes a single segment in the
+     * data mpool).  Nothing is hard-coded because all the array
+     * lengths and displacements of the pointers all depend on how
+     * many processes are in the communicator.
+     */
+    struct mca_coll_base_mpool_index_t {
+        /** Pointer to beginning of control fan-in data */
+        char *mcbmi_control_fan_in;
+        /** Pointer to beginning of control fan-out data */
+        char *mcbmi_control_fan_out;
+        /** Pointer to beginning of message data fan-in data */
+        char *mcbmi_data_fan_in;
+        /** Pointer to beginning of message data fan-out data */
+        char *mcbmi_data_fan_out;
+    };
+    typedef struct mca_coll_base_mpool_index_t mca_coll_base_mpool_index_t;
 
-    } mca_coll_base_module_comm_t;
+    /**
+     * Structure for the sm coll module to hang off the communicator.
+     * Contains communicator-specific information, including pointers
+     * into the data mpool for this comm's sm collective operations
+     * area. 
+     */
+    struct mca_coll_base_comm_t {
+        /** If this process is the one that invoked mpool_alloc() for
+            the data segment, the return value will be in here.
+            Otherwise, it will be NULL (i.e., only the allocating
+            process will call free). */
+        void *mcb_data_mpool_malloc_addr;
+        /** Base of the data mpool */
+        char *mcb_mpool_base;
+        /** Offset into the data mpool where this comm's operations
+            area is */
+        size_t mcb_mpool_offset;
+        /** Pointer in the data mpool to the beginning of this comm's
+            operations area (i.e., mcb_mpool_base +
+            mcb_mpool_offset) */
+        char *mcb_mpool_area;
+        /** Number of segments in this comm's area in the data mpool */
+        int mcb_mpool_num_segments;
 
+        /** Array of indexes into the mpool area (containing pointers
+            to each segments control and data areas).  This array will
+            be located immediately after the instance of this struct
+            in memory (i.e., so this struct and the array that this
+            member points to will be adjacent in memory). */
+        mca_coll_base_mpool_index_t **mcb_mpool_index;
+
+        /** Operation number (i.e., which segment number to use) */
+        int mcb_operation_count;
+    };
+    /**
+     * Convenience typedef
+     */
+    typedef struct mca_coll_base_comm_t mca_coll_base_comm_t;
+        
     
     /**
      * Global component instance
@@ -88,10 +226,7 @@ extern "C" {
     int mca_coll_sm_comm_unquery(struct ompi_communicator_t *comm,
                                  struct mca_coll_base_comm_t *data);
 
-    const struct mca_coll_base_module_1_0_0_t *
-    mca_coll_sm_module_init(struct ompi_communicator_t *comm);
-
-    int mca_coll_sm_module_finalize(struct ompi_communicator_t *comm);
+    int mca_coll_sm_bootstrap_finalize(void);
 
     int mca_coll_sm_allgather_intra(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype, 

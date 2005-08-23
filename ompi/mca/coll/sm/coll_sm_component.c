@@ -23,7 +23,9 @@
 #include "ompi_config.h"
 
 #include "ompi/include/constants.h"
-#include "mca/coll/coll.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/coll.h"
+#include "opal/util/show_help.h"
 #include "coll_sm.h"
 
 
@@ -91,12 +93,38 @@ mca_coll_sm_component_t mca_coll_sm_component = {
 
     /* sm-component specifc information */
 
-    /* priority */
+    /* (default) priority */
     75,
 
-    /* mpool name and instance */
+    /* (default) control unit size (bytes) */
+    64,
+
+    /* (default) bootstrap filename */
+    "coll-sm-bootstrap",
+
+    /* (default) number of segments in bootstrap file */
+    8,
+
+    /* (default) mpool name to use */
     "sm",
-    NULL
+
+    /* (default) number of segments for each communicator in the mpool
+       area */
+    2,
+
+    /* (default) fragment size */
+    8192,
+
+    /* (default) degree of tree for tree-based operations (must be <=
+       control unit size) */
+    4,
+
+    /* default values for non-MCA parameters */
+    0, /* bootstrap size -- filled in below */
+    0, /* mpool data size -- filled in below */
+    NULL, /* data mpool pointer */
+    false, /* whether this process created the data mpool */
+    NULL /* pointer to meta data about bootstrap area */
 };
 
 
@@ -105,19 +133,115 @@ mca_coll_sm_component_t mca_coll_sm_component = {
  */
 static int sm_open(void)
 {
-    int p, ival;
-    char *sval;
+    size_t size1, size2;
+    mca_base_component_t *c = &mca_coll_sm_component.super.collm_version;
+    mca_coll_sm_component_t *cs = &mca_coll_sm_component;
 
     /* If we want to be selected (i.e., all procs on one node), then
        we should have a high priority */
 
-    p = mca_base_param_register_int("coll", "sm", "priority", NULL, 75);
-    mca_base_param_lookup_int(p, &ival);
-    mca_coll_sm_component.sm_priority = ival;
+    mca_base_param_reg_int(c, "priority", 
+                           "Priority of the sm coll component",
+                           false, false, 
+                           cs->sm_priority,
+                           &cs->sm_priority);
 
-    p = mca_base_param_register_string("coll", "sm", "mpool", NULL, "sm");
-    mca_base_param_lookup_string(p, &sval);
-    mca_coll_sm_component.sm_mpool_name = sval;
+    mca_base_param_reg_int(c, "control_size",
+                           "Length of the control data -- should usually be either a cache line on most SMPs, or a page on machine where pages that support direct memory affinity placement (in bytes)",
+                           false, false,
+                           cs->sm_control_size,
+                           &cs->sm_control_size);
+
+    mca_base_param_reg_string(c, "bootstrap_filename", 
+                              "Filename (in the Open MPI session directory) of the coll sm component bootstrap rendezvous mmap file",
+                              false, false,
+                              cs->sm_bootstrap_filename,
+                              &cs->sm_bootstrap_filename);
+
+    mca_base_param_reg_int(c, "bootstrap_num_segments",
+                           "Number of segments in the bootstrap file",
+                           false, false,
+                           cs->sm_bootstrap_num_segments,
+                           &cs->sm_bootstrap_num_segments);
+
+    mca_base_param_reg_int(c, "fragment_size",
+                           "Fragment size (in bytes) used for passing data through shared memory (will be rounded up to the nearest control_size size)",
+                           false, false,
+                           cs->sm_fragment_size,
+                           &cs->sm_fragment_size);
+    if (0 != (cs->sm_fragment_size % cs->sm_control_size)) {
+        cs->sm_fragment_size += cs->sm_control_size - 
+            (cs->sm_fragment_size % cs->sm_control_size);
+    }
+
+    mca_base_param_reg_string(c, "mpool", 
+                              "Name of the mpool component to use",
+                              false, false,
+                              cs->sm_mpool_name,
+                              &cs->sm_mpool_name);
+    
+    mca_base_param_reg_int(c, "communicator_num_segments",
+                           "Number of shared memory collective segments on each communicator",
+                           false, false,
+                           cs->sm_communicator_num_segments,
+                           &cs->sm_communicator_num_segments);
+
+    mca_base_param_reg_int(c, "tree_degree",
+                           "Degree of the tree for tree-based operations (must be <= control size and <= 255)",
+                           false, false,
+                           cs->sm_tree_degree,
+                           &cs->sm_tree_degree);
+    if (cs->sm_tree_degree > cs->sm_control_size) {
+        opal_show_help("help-coll-sm.txt", 
+                       "tree-degree-larger-than-control", true,
+                       cs->sm_tree_degree, cs->sm_control_size);
+        cs->sm_tree_degree = cs->sm_control_size;
+    }
+    if (cs->sm_tree_degree > 255) {
+        opal_show_help("help-coll-sm.txt", 
+                       "tree-degree-larger-than-255", true,
+                       cs->sm_tree_degree);
+        cs->sm_tree_degree = 255;
+    }
+
+    /* Size of the bootstrap shared mb
+emory area. */
+
+    size1 = 
+        sizeof(mca_coll_sm_bootstrap_header_extension_t) +
+        (mca_coll_sm_component.sm_bootstrap_num_segments *
+         sizeof(mca_coll_sm_bootstrap_comm_setup_t)) +
+        (sizeof(uint32_t) * mca_coll_sm_component.sm_bootstrap_num_segments);
+    mca_base_param_reg_int(c, "shared_mem_used_bootstrap",
+                           "Amount of shared memory used in the shared memory bootstrap area (in bytes)",
+                           false, true,
+                           size1, NULL);
+
+    /* Calculate how much space we need in the data mpool.  There are
+       several values to add (one of these for each segment):
+
+       - size of the control data:
+           - fan-in data (num_procs * control_size size)
+           - fan-out data (num_procs * control_size size)
+       - size of message data
+           - fan-in data (num_procs * (frag_size rounded up to
+             control_size size))
+           - fan-out data (num_procs * (frag_size rounded up
+             to control_size size))
+
+       So it's:
+
+           num_segs * ((num_procs * control_size * 2) + (num_procs * frag * 2))
+
+       Which reduces to:
+
+           num_segs * num_procs * 2 * (control_size + frag)
+
+       For this example, assume num_procs = 1.
+    */
+
+    size2 = cs->sm_communicator_num_segments * 2 *
+        (cs->sm_control_size + cs->sm_fragment_size);
 
     return OMPI_SUCCESS;
 }
@@ -132,6 +256,8 @@ static int sm_close(void)
         free(mca_coll_sm_component.sm_mpool_name);
         mca_coll_sm_component.sm_mpool_name = NULL;
     }
+
+    mca_coll_sm_bootstrap_finalize();
 
     return OMPI_SUCCESS;
 }
