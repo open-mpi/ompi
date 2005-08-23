@@ -85,7 +85,7 @@ int mca_pml_base_open(void)
     mca_pml_base_selected_component.pmlm_finalize = NULL;
 
     mca_base_param_lookup_string(
-        mca_base_param_register_string("pml",NULL,NULL,NULL,NULL), &mca_pml_base_pml);
+        mca_base_param_register_string("pml",NULL,NULL,NULL,"ob1"), &mca_pml_base_pml);
 
     /* All done, now let's start the PTLs */
     return mca_ptl_base_open();
