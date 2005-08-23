@@ -308,7 +308,7 @@ static void mca_pml_ob1_rget_completion(
     mca_pml_ob1_fin_hdr_t* hdr;
     mca_btl_base_descriptor_t *fin;
     int rc;
-
+    
     /* is receive request complete */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_bytes_received += frag->rdma_length;
@@ -324,7 +324,7 @@ static void mca_pml_ob1_rget_completion(
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* return descriptor */
-    MCA_BML_BASE_BTL_DES_RETURN(bml_btl, des);
+    mca_bml_base_free(bml_btl, des); 
 
     /* queue up a fin control message to source */
     MCA_PML_OB1_DES_ALLOC(bml_btl, fin, sizeof(mca_pml_ob1_fin_hdr_t));
