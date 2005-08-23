@@ -17,6 +17,11 @@
 #include "ompi_config.h"
 
 #include "opal/mca/memory/memory.h"
+#include "opal/include/constants.h"
+
+extern void opal_memory_malloc_hooks_init(void);
+
+static int opal_memory_malloc_open(void);
 
 const opal_memory_base_component_1_0_0_t mca_memory_malloc_hooks_component = {
     /* First, the mca_component_t struct containing meta information
@@ -33,7 +38,7 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_hooks_component = {
         OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
-        NULL,
+        opal_memory_malloc_open,
         NULL
     },
 
@@ -43,3 +48,11 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_hooks_component = {
         true
     },
 };
+
+
+static int
+opal_memory_malloc_open(void)
+{
+    opal_memory_malloc_hooks_init();
+    return OPAL_SUCCESS;
+}
