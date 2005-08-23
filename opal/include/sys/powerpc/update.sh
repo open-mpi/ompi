@@ -15,11 +15,11 @@
 # $HEADER$
 #
 
-CFILE=/tmp/opal_atomic_$$.c
+CFILE=/tmp/opal_asm_$$.c
 
 trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
 
-echo Updating atomic.s from atomic.h using gcc
+echo Updating asm.s from atomic.h and timer.h using gcc
 
 cat > $CFILE<<EOF
 #include <stdlib.h>
@@ -30,8 +30,9 @@ cat > $CFILE<<EOF
 #define OMPI_WANT_SMP_LOCKS 1
 #include "../architecture.h"
 #include "atomic.h"
+#include "timer.h"
 EOF
 
-gcc -O1 -mpowerpc64 -mcpu=970 -DOMPI_ASSEMBLY_ARCH=POWERPC32 -DOMPI_ASM_SUPPORT_64BIT=1 -I. -S $CFILE -o atomic-32-64.s
-gcc -O1 -DOMPI_ASSEMBLY_ARCH=OMPI_POWERPC32 -DOMPI_ASM_SUPPORT_64BIT=0 -I. -S $CFILE -o atomic-32.s
-gcc -m64 -O1 -finline-functions -DOMPI_ASSEMBLY_ARCH=OMPI_POWERPC64 -DOMPI_ASM_SUPPORT64BIT=1 -I. -S $CFILE -o atomic-64.s
+gcc -O1 -mpowerpc64 -mcpu=970 -DOMPI_ASSEMBLY_ARCH=POWERPC32 -DOMPI_ASM_SUPPORT_64BIT=1 -I. -S $CFILE -o asm-32-64.s
+gcc -O1 -DOMPI_ASSEMBLY_ARCH=OMPI_POWERPC32 -DOMPI_ASM_SUPPORT_64BIT=0 -I. -S $CFILE -o asm-32.s
+gcc -m64 -O1 -finline-functions -DOMPI_ASSEMBLY_ARCH=OMPI_POWERPC64 -DOMPI_ASM_SUPPORT64BIT=1 -I. -S $CFILE -o asm-64.s
