@@ -22,10 +22,11 @@
 
 #include "ompi_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/pls/pls.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
 #include "pls_slurm.h"
-#include "mca/base/mca_base_param.h"
 
 
 /*
@@ -33,12 +34,6 @@
  */
 const char *mca_pls_slurm_component_version_string =
   "Open MPI slurm pls MCA component version " ORTE_VERSION;
-
-
-/*
- * Local variable
- */
-static int param_priority = -1;
 
 
 /*
@@ -53,48 +48,65 @@ static struct orte_pls_base_module_1_0_0_t *pls_slurm_init(int *priority);
  * and pointers to our public functions in it
  */
 
-orte_pls_base_component_1_0_0_t mca_pls_slurm_component = {
-
-    /* First, the mca_component_t struct containing meta information
-       about the component itself */
+orte_pls_slurm_component_t mca_pls_slurm_component = {
 
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
-           implies a specific MCA version) */
+        /* First, the mca_component_t struct containing meta
+           information about the component itself */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        {
+            /* Indicate that we are a pls v1.0.0 component (which also
+               implies a specific MCA version) */
 
-        /* Component name and version */
+            ORTE_PLS_BASE_VERSION_1_0_0,
+            
+            /* Component name and version */
+            
+            "slurm",
+            ORTE_MAJOR_VERSION,
+            ORTE_MINOR_VERSION,
+            ORTE_RELEASE_VERSION,
+            
+            /* Component open and close functions */
+            
+            pls_slurm_open,
+            NULL
+        },
+        
+        /* Next the MCA v1.0.0 component meta data */
+        
+        {
+            /* Whether the component is checkpointable or not */
+            
+            true
+        },
+        
+        /* Initialization / querying functions */
+        
+        pls_slurm_init
+    }
 
-        "slurm",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-
-        /* Component open and close functions */
-
-        pls_slurm_open,
-        NULL
-    },
-
-    /* Next the MCA v1.0.0 component meta data */
-
-    {
-        /* Whether the component is checkpointable or not */
-
-        true
-    },
-
-    /* Initialization / querying functions */
-
-    pls_slurm_init
+    /* Other orte_pls_slurm_component_t items -- left uninitialized
+       here; will be initialized in pls_slurm_open() */
 };
 
 
 static int pls_slurm_open(void)
 {
-    param_priority = 
-        mca_base_param_register_int("pls", "slurm", "priority", NULL, 75);
+    mca_base_component_t *comp = &mca_pls_slurm_component.super.pls_version;
+
+    mca_base_param_reg_int(comp, "debug", "Enable debugging of slurm pls",
+                           false, false, 0, 
+                           &mca_pls_slurm_component.debug);
+
+    mca_base_param_reg_int(comp, "priority", "Default selection priority",
+                           false, false, 75, 
+                           &mca_pls_slurm_component.priority);
+
+    mca_base_param_reg_string(comp, "orted",
+                              "Command to use to start proxy orted",
+                              false, false, "orted",
+                              &mca_pls_slurm_component.orted);
 
     return ORTE_SUCCESS;
 }
@@ -102,11 +114,12 @@ static int pls_slurm_open(void)
 
 static struct orte_pls_base_module_1_0_0_t *pls_slurm_init(int *priority)
 {
-    /* Are we runing under SLURM? */
+    /* Are we running under a SLURM job? */
 
     if (NULL != getenv("SLURM_JOBID")) {
-        mca_base_param_lookup_int(param_priority, priority);
-
+        *priority = mca_pls_slurm_component.priority;
+        opal_output(orte_pls_base.pls_output,
+                    "pls:slurm: available for selection");
         return &orte_pls_slurm_module;
     }
 

@@ -26,15 +26,22 @@
 extern "C" {
 #endif
 
+    struct orte_pls_slurm_component_t {
+        orte_pls_base_component_t super;
+        int priority;
+        int debug;
+        char *orted;
+    };
+    typedef struct orte_pls_slurm_component_t orte_pls_slurm_component_t;
+
     /*
      * Globally exported variable
      */
     
-    OMPI_COMP_EXPORT extern orte_pls_base_component_1_0_0_t 
-        orte_pls_slurm_component;
+    OMPI_COMP_EXPORT extern orte_pls_slurm_component_t 
+        mca_pls_slurm_component;
     OMPI_COMP_EXPORT extern orte_pls_base_module_1_0_0_t
         orte_pls_slurm_module;
-    OMPI_COMP_EXPORT extern int orte_pls_slurm_param_priorty;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
