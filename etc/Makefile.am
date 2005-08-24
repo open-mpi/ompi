@@ -21,10 +21,15 @@ ompi_config_files = \
 		openmpi-mca-params.conf
 
 EXTRA_DIST = $(ompi_config_files)
+
+# This has to be here, even though it's empty, so that AM thinks that
+# "something" will happen here (details fuzzy, but we remember that this
+# *needs* to be here -- you have been warned).
+
 sysconf_DATA = 
 
 # Steal a little trickery from a generated Makefile to only install
-# lam-bhost.def if one does not already exist at the target.
+# files if they do not already exist at the target.
 
 install-data-local:
 	@ p="$(ompi_config_files)"; \
