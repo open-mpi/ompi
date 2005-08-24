@@ -97,4 +97,16 @@ opal_atomic_cmpset_rel_64:
 	br.ret.sptk.many b0
 	;;
 	.endp opal_atomic_cmpset_rel_64#
+        .align 16
+        .global opal_sys_timer_get_cycles#
+        .proc opal_sys_timer_get_cycles#
+opal_sys_timer_get_cycles:
+        .prologue
+        .body
+#APP
+        mov r8=ar.itc
+#NO_APP
+        br.ret.sptk.many b0
+        ;;
+        .endp opal_sys_timer_get_cycles#
 	.ident	"GCC: (GNU) 3.2.3 20030502 (Red Hat Linux 3.2.3-49)"
