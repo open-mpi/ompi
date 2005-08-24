@@ -16,9 +16,9 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/include/orte_constants.h"
 #include "ras_tm.h"
 
 
@@ -64,16 +64,19 @@ orte_ras_base_component_1_0_0_t mca_ras_tm_component = {
 static orte_ras_base_module_t *ras_tm_init(int* priority)
 {
     /* Are we running under a TM job? */
-    int id = mca_base_param_register_int("ras","tm","priority",NULL,100);
-    mca_base_param_lookup_int(id,priority);
-
+    mca_base_param_register_int(&mca_ras_tm_component.ras_version,
+                                "priority",
+                                "Priority of the tm ras component",
+                                false, false, 100, priority);
     if (NULL != getenv("PBS_ENVIRONMENT") &&
         NULL != getenv("PBS_JOBID")) {
-        opal_output(orte_ras_base.ras_output, "ras:tm: available for selection");
+        opal_output(orte_ras_base.ras_output,
+                    "ras:tm: available for selection");
         return &orte_ras_tm_module;
     }
 
     /* Sadly, no */
-    opal_output(orte_ras_base.ras_output, "ras:tm: NOT available for selection");
+    opal_output(orte_ras_base.ras_output,
+                "ras:tm: NOT available for selection");
     return NULL;
 }
