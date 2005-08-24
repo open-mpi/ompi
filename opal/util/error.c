@@ -96,7 +96,9 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
 
     if (NULL == errmsg) {
         if (errnum == OPAL_ERR_IN_ERRNO) {
-            return strerror_r(errno, strerrbuf, buflen);
+            char *tmp = strerror(errno);
+            strncpy(strerrbuf, tmp, buflen);
+            return OPAL_SUCCESS;
         } else {
             errno = EINVAL;
             ret =  snprintf(strerrbuf, buflen, "Unknown error: %d", errnum);
