@@ -17,6 +17,9 @@
 
 #include "orte_config.h"
 
+#include "opal/util/output.h"
+#include "opal/util/argv.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/pls/base/base.h"
 #include "orte/include/orte_constants.h"
 #include "orte/mca/ns/ns.h"
@@ -26,7 +29,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/rmgr/base/base.h"
-#include "opal/util/output.h"
 
 
 int
@@ -76,6 +78,34 @@ orte_pls_base_proxy_set_node_name(orte_ras_node_t* node,
     return rc;
 }
 
+
+
+static int lookup_set(char *a, char *b, char *c, int default_val,
+                      char *token, int *argc, char ***argv)
+{
+    int id, rc;
+
+    id = mca_base_param_find(a, b, c);
+    if (id < 0) {
+        id = mca_base_param_register_int(a, b, c, NULL, default_val);
+    }
+    mca_base_param_lookup_int(id, &rc);
+    if (rc) {
+        opal_argv_append(argc, argv, token);
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
+int orte_pls_base_proxy_mca_argv(int *argc, char ***argv)
+{
+    lookup_set("orte", "debug", NULL, 0, "--debug", argc, argv);
+    lookup_set("orte", "debug", "daemons", 0, "--debug-daemons", argc, argv);
+    lookup_set("orte", "debug", "daemons_file", 0, "--debug-daemons-file", argc, argv);
+
+    return ORTE_SUCCESS;
+}
 
 
 /**

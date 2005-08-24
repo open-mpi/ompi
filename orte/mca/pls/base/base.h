@@ -115,6 +115,7 @@ extern "C" {
     int orte_pls_base_proxy_set_node_name(orte_ras_node_t* node, 
                                           orte_jobid_t jobid, 
                                           orte_process_name_t* name);
+    int orte_pls_base_proxy_mca_argv(int *argc, char ***argv);
     int orte_pls_base_proxy_terminate_job(orte_jobid_t jobid);
     int orte_pls_base_proxy_terminate_proc(const orte_process_name_t *proc);
 
