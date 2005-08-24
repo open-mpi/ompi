@@ -298,7 +298,6 @@ pls_tm_launch(orte_jobid_t jobid)
             }
         }
 
-        /* BWB - fill me in */
         rc = pls_tm_start_proc(node->node_name, argc, argv, env);
         if (ORTE_SUCCESS != rc) {
             opal_output(0, "pls:tm: start_procs returned error %d", rc);
