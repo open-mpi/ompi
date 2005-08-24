@@ -19,7 +19,7 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = scripts
 
-AM_FCFLAGS = -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG) .
+AM_FCFLAGS = -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG).
 
 # We have to EXTRA_DIST mpi_kinds.f90 because there is no explicit
 # Automake rule to compile this file.
@@ -38,56 +38,103 @@ EXTRA_DIST = mpi_kinds.f90
 .f90.obj:
 	$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) $(FCFLAGS_f90) '$<'`
 
-.f90.lo:
-	$(LTFCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
-
 # Do different things if the top-level configure decided that we're
 # going to build F90 bindings or not.
 
-lib_LTLIBRARIES =
+lib_LIBRARIES =
 if OMPI_WANT_F90_BINDINGS
 
 # Add the f90 library to the list of libraries to build
 
-lib_LTLIBRARIES += libmpi_f90.la
+lib_LIBRARIES += libmpi_f90.a
 
 # Ensure that the F90 interfaces are re-generated based on the values
 # that come in from configure
 
 mpi-f90-interfaces.h: fortran_kinds.sh
 
-# Ensure that the mpi_kinds F90 module is generated before compiling
-# any of the sources.  The *.lo file is a side-effect of generating
-# the F90 module file -- we can't know ahead of time the exact
-# filename of the generated F90 module file :-(, so we can only depend
-# on the libtool .lo file.
-
-$(libmpi_f90_la_SOURCES) $(nodist_libmpi_f90_la_SOURCES): mpi_kinds.lo
-
 # Run scripts to generate the f90 source files.  We only need to
 # generate the .f90 files once, so the "test" checks to see if the
 # file exists before running the script.  However, the
 # mpi-f90-interfaces.h file may need to be generated multiple times
 # (even if it already exists), such as if someone re-runs configure
-# and changes the value fortran_kinds.sh.
+# and changes the value fortran_kinds.sh (which is taken care of by
+# the mpi-f90-interfaces.h dependency on fortran_kinds.sh, above).
 
-$(nodist_libmpi_f90_la_SOURCES):
+mpi-f90-interfaces.h:
+	@ p="`pwd`"; \
+	echo $(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p \> $@; \
+	$(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p > $@
+
+# Ensure that the mpi_kinds F90 module is generated before compiling
+# any of the sources (because many/all of these sources "use
+# mpi_kinds").  We unfortunately can't know ahead of time the exact
+# filename of the generated F90 module file (because F90 compilers
+# have not standardized on the output filename format), so we have to
+# add our own explicit dependency to compile the module.  :-(
+
+$(libmpi_f90_a_SOURCES) $(nodist_libmpi_f90_a_SOURCES): mpi_kinds.ompi_module
+
+mpi_kinds.ompi_module: mpi_kinds.f90 
+	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
+	@ touch mpi_kinds.ompi_module
+
+# Unbelievably, some versions of sh (cough cough Solaris 9 cough
+# cough) actually seem to internally perform a "cd" into a
+# subdirectory when you run "./foo/bar", such that if you try to
+# source a script in the top-level directory in the bar script (e.g.,
+# ". some_script" in the bar script), it will try to run it in the
+# "foo" subdirectory, rather than the top-level directory!  #$@#$%#$%
+# So we have to pass in the pwd to the scripts so that they know where
+# some_script is.
+
+$(nodist_libmpi_f90_a_SOURCES):
 	@ if test ! -r $@ -o "$@" = "mpi-f90-interfaces.h"; then \
-	    echo $(srcdir)/scripts/$@.sh > $@ ; \
-	    $(srcdir)/scripts/$@.sh > $@ ; \
+	    p="`pwd`"; \
+	    echo $(srcdir)/scripts/$@.sh $$p \> $@; \
+	    $(srcdir)/scripts/$@.sh $$p > $@ ; \
 	fi
+
+# Automake doesn't know how to do F90 dependency analysis, so manually
+# list this here (i.e., "mpi-f90-interfaces.h" is included in
+# mpi.f90).
+
+# Print a warning indicating that compiling mpi.f90 can take a while.
+# The only way to do this portably is to have our own rules for mpi.o
+# and mpi.obj (having a "fake" target that just has echo statement in
+# it may trigger mpi.o|obj to be rebuilt because the fake name doesn't
+# exist; there aren't good portable ways to indicate that the target
+# name is fake and should never exist).
+
+mpi.o: mpi.f90 mpi-f90-interfaces.h
+	@echo "***************************************************************"
+	@echo "* Compiling the mpi.f90 file may take a few minutes."
+	@echo "* This is quite normal -- do not be alarmed if the compile"
+	@echo "* process seems to 'hang' at this point for several minutes."
+	@echo "***************************************************************"
+	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
+
+mpi.obj: mpi.f90 mpi-f90-interfaces.h
+	@echo "***************************************************************"
+	@echo "* Compiling the mpi.f90 file may take a few minutes."
+	@echo "* This is quite normal -- do not be alarmed if the compile"
+	@echo "* process seems to 'hang' at this point for several minutes."
+	@echo "***************************************************************"
+	$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) $(FCFLAGS_f90) '$<'`
+
 else
-lib_LTLIBRARIES +=
+lib_LIBRARIES +=
 endif
 
-#
-# Source for the f90 library
-#
+# mpi.f90 is the only f90 source file directly in libmpif90 that gets
+# distributed (mpi_kinds.f90 is also distributed, but it's only
+# indirectly included in libmpif90 -- via "use mpi_kinds").
 
-libmpi_f90_la_SOURCES = mpi.f90
+libmpi_f90_a_SOURCES = mpi.f90
 
-nodist_libmpi_f90_la_SOURCES = \
-     mpi-f90-interfaces.h \
+# These files are all generated by scripts in the scripts/ directory.
+
+nodist_libmpi_f90_a_SOURCES = \
      mpi_address_f90.f90 \
      mpi_bcast_f90.f90 \
      mpi_bsend_f90.f90 \
@@ -140,7 +187,7 @@ nodist_libmpi_f90_la_SOURCES = \
      mpi_ssend_init_f90.f90
 
 if WANT_MPI2_ONE_SIDED
-nodist_libmpi_f90_la_SOURCES += \
+nodist_libmpi_f90_a_SOURCES += \
      mpi_accumulate_f90.f90 \
      mpi_get_f90.f90 \
      mpi_put_f90.f90 \
@@ -151,20 +198,8 @@ endif
 # Clean up all F90 module files and all generated files
 #
 
-MOSTLYCLEANFILES = *.mod
-DISTCLEANFILES = $(nodist_libmpi_f90_la_SOURCES)
-
-#
-# Print a warning indicating that compiling mpi.f90 can take a while
-#
-
-mpi.lo: long-warning
-long-warning:
-	@echo "***************************************************************"
-	@echo "* Compiling the mpi.f90 file may take a few minutes."
-	@echo "* This is quite normal -- do not be alarmed if the compile"
-	@echo "* process seems to 'hang' at this point for several minutes."
-	@echo "***************************************************************"
+MOSTLYCLEANFILES = *.mod *.ompi_module
+DISTCLEANFILES = $(nodist_libmpi_f90_a_SOURCES)
 
 #
 # Install the generated .mod files.  Unfortunately, each F90 compiler

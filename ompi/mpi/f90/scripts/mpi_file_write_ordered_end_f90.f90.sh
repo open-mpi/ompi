@@ -1,6 +1,6 @@
 #! /bin/sh
 
-. fortran_kinds.sh
+. "$1/fortran_kinds.sh"
 
 procedure='MPI_File_write_ordered_end'
 
