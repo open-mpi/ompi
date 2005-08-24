@@ -37,7 +37,7 @@ int orte_rds_base_select(void)
     opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     orte_rds_base_component_t *component;
-    orte_rds_base_module_t *module;
+    orte_rds_base_module_t *module = NULL;
 
     /* Iterate through all the available components */
   
