@@ -101,15 +101,17 @@ static int mca_bml_r2_add_btls( void )
     mca_btl_base_selected_module_t* selected_btl;
     size_t num_btls = 0; 
     
-    if(mca_bml_r2.btls_added == true) 
+    if(true == mca_bml_r2.btls_added) {
         return OMPI_SUCCESS; 
+    }
 
     /* build an array of r2s and r2 modules */
     btls = &mca_btl_base_modules_initialized;
     num_btls = opal_list_get_size(btls);
 
-    if(mca_bml_r2.btls_added == true) 
+    if(true == mca_bml_r2.btls_added) {
         return OMPI_SUCCESS; 
+    }
 
     mca_bml_r2.num_btl_modules = 0;
     mca_bml_r2.num_btl_progress = 0;
@@ -117,7 +119,6 @@ static int mca_bml_r2_add_btls( void )
     mca_bml_r2.btl_modules = (mca_btl_base_module_t **)malloc(sizeof(mca_btl_base_module_t*) * num_btls);
     mca_bml_r2.btl_progress = (mca_btl_base_component_progress_fn_t*)malloc(sizeof(mca_btl_base_component_progress_fn_t) * num_btls);
    
-
     if (NULL == mca_bml_r2.btl_modules || 
         NULL == mca_bml_r2.btl_progress) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -129,7 +130,6 @@ static int mca_bml_r2_add_btls( void )
         mca_btl_base_module_t *btl = selected_btl->btl_module;
         mca_bml_r2.btl_modules[mca_bml_r2.num_btl_modules++] = btl;
     }
-
 
     /* sort r2 list by exclusivity */
     qsort(mca_bml_r2.btl_modules, 
@@ -160,20 +160,22 @@ int mca_bml_r2_add_procs(
     struct ompi_proc_t** new_procs = NULL; 
     size_t n_new_procs = 0;
 
-    if(nprocs == 0)
+    if(0 == nprocs) {
         return OMPI_SUCCESS;
+    }
     
-    
-    if(OMPI_SUCCESS != (rc = mca_bml_r2_add_btls()) )
+    if(OMPI_SUCCESS != (rc = mca_bml_r2_add_btls()) ) {
         return rc;
+    }
     
     new_procs = (struct ompi_proc_t **) 
         malloc(nprocs * sizeof(struct ompi_proc_t *)); 
-    
     bml_endpoints = (struct mca_bml_base_endpoint_t **)
         malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
+    if (NULL == new_procs || NULL == bml_endpoints) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     memset(bml_endpoints, 0, nprocs * sizeof(struct mca_bml_base_endpoint_t*));
-    
 
     for(p_index = 0; p_index < nprocs; p_index++) { 
         struct ompi_proc_t* proc;
@@ -181,16 +183,19 @@ int mca_bml_r2_add_procs(
         OBJ_RETAIN(proc); 
         
         if(NULL !=  proc->proc_pml) { 
-            bml_endpoints[p] = (mca_bml_base_endpoint_t*) proc->proc_pml; 
+            bml_endpoints[p_index] = 
+                (mca_bml_base_endpoint_t*) proc->proc_pml; 
         } else { 
             new_procs[n_new_procs++] = proc; 
         }
     }
     
-
     /* attempt to add all procs to each r2 */
     btl_endpoints = (struct mca_btl_base_endpoint_t **) 
         malloc(nprocs * sizeof(struct mca_btl_base_endpoint_t*)); 
+    if (NULL == btl_endpoints) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     
     for(p_index = 0; p_index < mca_bml_r2.num_btl_modules; p_index++) {
         mca_btl_base_module_t* btl = mca_bml_r2.btl_modules[p_index];
@@ -308,8 +313,9 @@ int mca_bml_r2_add_procs(
         size_t n_size;
 
         /* skip over procs w/ no btl's registered */
-        if(NULL == bml_endpoint)
+        if(NULL == bml_endpoint) {
             continue;
+        }
 
         /* (1) determine the total bandwidth available across all btls
          *     note that we need to do this here, as we may already have btls configured
@@ -321,8 +327,9 @@ int mca_bml_r2_add_procs(
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t* btl = bml_btl->btl;
             total_bandwidth += bml_btl->btl->btl_bandwidth; 
-            if(btl->btl_latency > latency)
+            if(btl->btl_latency > latency) {
                 latency = btl->btl_latency;
+            }
         }
 
         /* (1) set the weight of each btl as a percentage of overall bandwidth
@@ -337,10 +344,11 @@ int mca_bml_r2_add_procs(
             double weight;
 
             /* compute weighting factor for this r2 */
-            if(btl->btl_bandwidth)
+            if(btl->btl_bandwidth > 0) {
                 weight = btl->btl_bandwidth / total_bandwidth;
-            else
+            } else {
                 weight = 1.0 / n_size;
+            }
             bml_btl->btl_weight = (int)(weight * 100);
 
             /* check to see if this r2 is already in the array of r2s 
@@ -382,12 +390,15 @@ int mca_bml_r2_del_procs(size_t nprocs,
         malloc(nprocs * sizeof(struct ompi_proc_t*)); 
     size_t n_del_procs = 0; 
 
+    if (NULL == del_procs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     for(p =0; p < nprocs; p++) { 
         ompi_proc_t *proc = procs[p]; 
         if(((opal_object_t*)proc)->obj_reference_count == 1) { 
             del_procs[n_del_procs++] = proc; 
         }
-        
     }
     
     for(p = 0; p < n_del_procs; p++) {
@@ -427,8 +438,9 @@ int mca_bml_r2_del_procs(size_t nprocs,
             mca_btl_base_module_t* btl = bml_btl->btl;
             if (btl != 0) {
                 rc = btl->btl_del_procs(btl,1,&proc,&bml_btl->btl_endpoint);
-                if(OMPI_SUCCESS != rc)
+                if(OMPI_SUCCESS != rc) {
                     return rc;
+                }
             }
         }
         
@@ -457,8 +469,9 @@ int mca_bml_r2_register(
     for(i = 0; i < mca_bml_r2.num_btl_modules; i++) { 
         btl = mca_bml_r2.btl_modules[i]; 
         rc = btl->btl_register(btl, tag, cbfunc, data);  
-        if(OMPI_SUCCESS != rc)
+        if(OMPI_SUCCESS != rc) {
             return rc;
+        }
     }
     return OMPI_SUCCESS; 
 }
