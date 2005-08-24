@@ -55,14 +55,27 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+union local_type_convert {
+    void *voidp;
+    MPI_Datarep_conversion_function *convertp;
+    MPI_Datarep_extent_function *extentp;
+};
+
 void mpi_register_datarep_f(char *datarep, void *read_conversion_fn,
 			    void *write_conversion_fn,
 			    void *dtype_file_extent_fn, MPI_Fint *extra_state,
 			    MPI_Fint *ierr)
 {
-    *ierr = OMPI_INT_2_FINT(MPI_Register_datarep(datarep,
-		 (MPI_Datarep_conversion_function *) read_conversion_fn,
-		 (MPI_Datarep_conversion_function *) write_conversion_fn, 
-		 (MPI_Datarep_extent_function *) dtype_file_extent_fn, 
-		 extra_state));
+    /* Do a little type shifting so that we don't get compiler
+       warnings */
+
+    union local_type_convert a, b, c;
+
+    a.voidp = read_conversion_fn;
+    b.voidp = write_conversion_fn;
+    c.voidp = dtype_file_extent_fn;
+
+    *ierr = OMPI_INT_2_FINT(MPI_Register_datarep(datarep, a.convertp, 
+                                                 b.convertp, c.extentp,
+                                                 extra_state));
 }
