@@ -72,7 +72,6 @@ static int allocate(orte_jobid_t jobid)
 
     ret = tm_init(NULL, &root);
     if (TM_SUCCESS != ret) {
-        /* JMS May change...? */
         opal_output(orte_ras_base.ras_output, 
                     "ras:tm:allocate: tm_init failed!");
         return ORTE_ERR_RESOURCE_BUSY;
@@ -80,7 +79,6 @@ static int allocate(orte_jobid_t jobid)
 
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     if (ORTE_SUCCESS != (ret = discover(&nodes))) {
-        /* JMS May change...? */
         opal_output(orte_ras_base.ras_output,
                     "ras:tm:allocate: discover failed!");
         tm_finalize();
