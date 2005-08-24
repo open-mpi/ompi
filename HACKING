@@ -35,12 +35,23 @@ builds of Open MPI.  You should *NOT* conduct timing tests or try to
 run production performance numbers with debugging builds.
 
 If you wish to build an optimized version of Open MPI from a
-developer's checkout, you have two main options:
+developer's checkout, you have three main options:
 
-1. Use a VPATH build.  This is the preferred (and usually easiest)
-   method.  Simply build Open MPI from a different directory than the
-   source tree -- one where the .svn subdirectory is not present.  For
-   example:
+1. Use the "--with-platform=optimized" switch to configure.  This is
+   the preferred (and probably easiest) method.  For example:
+
+     shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
+     shell$ cd ompi
+     shell$ ./autogen.sh
+     shell$ mkdir build
+     shell$ cd build
+     shell$ ./configure --with-platform=optimized ...
+     [...lots of output...]
+     shell$ make all install
+
+2. Use a VPATH build.  Simply build Open MPI from a different
+   directory than the source tree -- one where the .svn subdirectory
+   is not present.  For example:
 
      shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
      shell$ cd ompi
@@ -51,13 +62,14 @@ developer's checkout, you have two main options:
      [...lots of output...]
      shell$ make all install
 
-2. Manually specify configure options to disable all the debugging
-   options.  You'll need to carefully examine the output of
-   "./configure --help" to see which options to disable.  They are all
-   listed, but some are less obvious than others (they are not listed
-   here because it is a changing set of flags; by Murphy's Law,
-   listing them here will pretty much guarnatee that this file will
-   get out of date):
+3. Manually specify configure options to disable all the debugging
+   options (note that this is exactly what "--with-platform=optimized"
+   does behind the scenes).  You'll need to carefully examine the
+   output of "./configure --help" to see which options to disable.
+   They are all listed, but some are less obvious than others (they
+   are not listed here because it is a changing set of flags; by
+   Murphy's Law, listing them here will pretty much guarnatee that
+   this file will get out of date):
 
      shell$ ./configure --disable-debug ...
      [...lots of output...]
