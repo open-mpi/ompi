@@ -46,7 +46,7 @@ ompi_show_subtitle "Fortran 77 compiler"
 # value for the Fint tests
 #
 ompi_fflags_save="$FFLAGS"
-AC_PROG_F77([g77 f77 xlf frt pgf77 fort77 fl32 af77 ifort])
+AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
 FFLAGS="$ompi_fflags_save"
 if test -z "$F77"; then
     AC_MSG_WARN([*** Fortran 77 bindings disabled (could not find compiler)])
