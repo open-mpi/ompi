@@ -63,8 +63,11 @@ base as of this writing (8 Aug 2005):
   (this file comprises the majority of the current user
   documentation).
 
+- The Fortran 90 MPI API is disabled by default (we have only be able
+  to get it to work with gfortran).  You can enable with with
+  configure options; see below.
+
 - Missing MPI functionality:
-  - The Fortran 90 MPI API is disabled (it is not complete).
   - MPI-2 one-sided functionality will not be included in the first
     few releases of Open MPI.
 
@@ -157,6 +160,17 @@ for a full list); a summary of the more important ones follows:
 --enable-progress-threads
   Allows asynchronous progress in some transports.  See
   --with-threads; this is currently disabled by default.
+
+--enable-f90
+  Enable building the Fortran 90 MPI bindings (disabled by default).
+  We have only been able to get these bindings to build with gfortran.
+  Also related to the --with-f90-max-array-dim option.
+
+--with-f90-max-array-dim=<DIM>
+  The F90 MPI bindings are stictly typed, even including the number of
+  dimensions for arrays for MPI choice buffer parameters.  Open MPI
+  generates these bindings at compile time with a maximum number of
+  dimensions as specified by this parameter.  The default value is 4.
 
 --disable-shared
   By default, libmpi is built as a shared library, and all components
