@@ -90,5 +90,6 @@ int mca_bml_r2_register(
 
 int mca_bml_r2_finalize( void ); 
 
+int mca_bml_r2_component_fini(void);
 
 #endif /* OMPI_MCA_BML_R2_H */
