@@ -113,7 +113,7 @@ OBJ_CLASS_INSTANCE(mca_base_param_info_t, opal_list_item_t,
 int mca_base_param_init(void)
 {
     int id;
-    char *files;
+    char *files, *new_files;
 
     if (!initialized) {
 
@@ -142,14 +142,10 @@ int mca_base_param_init(void)
                  OMPI_SYSCONFDIR);
         id = mca_base_param_reg_string_name("mca", "param_files",
                                             "Path for MCA configuration files containing default parameter values",
-                                            false, false, files, NULL);
+                                            false, false, files, &new_files);
+        read_files(new_files);
         free(files);
-
-        /* Read in MCA parameters from files */
-        
-        mca_base_param_lookup_string(id, &files);
-        read_files(files);
-        free(files);
+        free(new_files);
     }
 
     return OMPI_SUCCESS;
@@ -235,7 +231,8 @@ int mca_base_param_reg_string(const mca_base_component_t *component,
                          component->mca_component_name,
                          param_name, help_msg, 
                          MCA_BASE_PARAM_TYPE_STRING, internal, read_only,
-                         &storage, NULL, NULL, &lookup);
+                         &storage, NULL, NULL, 
+                         (NULL != current_value) ? &lookup : NULL);
     if (ret >= 0 && NULL != current_value) {
         *current_value = lookup.stringval;
     }
@@ -266,7 +263,8 @@ int mca_base_param_reg_string_name(const char *type,
     }
     ret = param_register(type, NULL, param_name, help_msg, 
                          MCA_BASE_PARAM_TYPE_STRING, internal, read_only,
-                         &storage, NULL, NULL, &lookup);
+                         &storage, NULL, NULL, 
+                         (NULL != current_value) ? &lookup : NULL);
     if (ret >= 0 && NULL != current_value) {
         *current_value = lookup.stringval;
     }
