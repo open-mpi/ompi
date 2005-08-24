@@ -356,10 +356,13 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
  
     }
     
-    
+    if(0 == mca_btl_mvapi_component.ib_num_btls){ 
+        BTL_ERROR(("no mvapi btl's found on this host!")); 
+        return NULL; 
+    }
     /* Allocate space for btl modules */
     mca_btl_mvapi_component.mvapi_btls = (mca_btl_mvapi_module_t*) malloc(sizeof(mca_btl_mvapi_module_t) * 
-                                                                 mca_btl_mvapi_component.ib_num_btls);
+                                                                          mca_btl_mvapi_component.ib_num_btls);
     
     if(NULL == mca_btl_mvapi_component.mvapi_btls) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
