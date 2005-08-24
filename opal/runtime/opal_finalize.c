@@ -21,6 +21,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
+#include "opal/util/if.h"
 #include "opal/memory/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -39,6 +40,10 @@
  */
 int opal_finalize(void)
 {
+    /* close interfaces code.  This is lazy opened, but protected from
+       close when not opened internally */
+    opal_iffinalize();
+
     /* close high resolution timers */
     opal_timer_base_close();
 
