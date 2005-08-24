@@ -373,11 +373,11 @@ AC_MSG_CHECKING([max supported array dimension in F90 MPI bindings])
 AC_ARG_WITH(f90-max-array-dim,
     AC_HELP_STRING([--with-f90-max-array-dim=<DIM>],
                    [The maximum array dimension supported in the F90 MPI bindings (default: $OMPI_FORTRAN_MAX_ARRAY_RANK).]))
-if test ! -z "$with_max_f90_array_dim" -a "$with_max_f90_array_dim" != "no"; then
+if test ! -z "$with_f90_max_array_dim" -a "$with_f90_max_array_dim" != "no"; then
     # Ensure it's a number; hopefully a integer...
-    expr $with_max_array_dim + 1 > /dev/null 2> /dev/null
+    expr $with_f90_max_array_dim + 1 > /dev/null 2> /dev/null
     if test "$?" = "0"; then
-        OMPI_FORTRAN_MAX_ARRAY_RANK="$with_max_f90_array_dim"
+        OMPI_FORTRAN_MAX_ARRAY_RANK="$with_f90_max_array_dim"
     fi
 fi
 AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])

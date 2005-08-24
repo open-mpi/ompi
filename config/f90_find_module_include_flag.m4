@@ -59,7 +59,7 @@ EOF
 OMPI_FC_MODULE_FLAG=
 for flag in $possible_flags; do
     if test "$OMPI_FC_MODULE_FLAG" = ""; then
-        OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 $flag subdir],
+        OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir],
                         [OMPI_FC_MODULE_FLAG="$flag"])
     fi
 done

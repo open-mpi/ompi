@@ -18,18 +18,18 @@
 
 # Do a little error checking
 
-if test ! -f fortran_kinds.sh; then
-    echo "ERROR: Cannot find fortran_kinds.sh"
+if test ! -r "$1/fortran_kinds.sh"; then
+    echo "ERROR: Cannot find $1/fortran_kinds.sh"
     exit 1
-elif test -z fortran_kinds.sh; then
-    echo "ERROR: fortran_kinds.sh appears to be empty!"
+elif test ! -s "$1/fortran_kinds.sh"; then
+    echo "ERROR: $1/fortran_kinds.sh appears to be empty!"
     exit 1
 fi
 
 # Read the setup information
 
 echo "Reading Fortran KIND information..." >&2
-. fortran_kinds.sh
+. "$1/fortran_kinds.sh"
 
 # Do the work
 
