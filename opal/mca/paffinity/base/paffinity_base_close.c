@@ -36,13 +36,6 @@ int opal_paffinity_base_close(void)
         opal_paffinity_base_components_opened_valid = false;
     }
 
-    /* If a selected component is open, close it */
-
-    if (opal_paffinity_base_selected) {
-        opal_paffinity_base_component->paffinityc_version.mca_close_component();
-        opal_paffinity_base_selected = false;
-    }
-
     /* All done */
 
     return OPAL_SUCCESS;

@@ -112,6 +112,8 @@ opal_timer_linux_open(void)
         }
     }
 
+    fclose(fp);
+
     if (0 == opal_timer_linux_freq) {
         return OPAL_ERR_NOT_FOUND;
     }

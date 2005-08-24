@@ -27,6 +27,7 @@
 #include "orte/include/orte_constants.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/paffinity/base/base.h"
 
 /**
  * Finalize the OPAL utilities
@@ -38,7 +39,11 @@
  */
 int opal_finalize(void)
 {
+    /* close high resolution timers */
     opal_timer_base_close();
+
+    /* close the processor affinity base */
+    opal_paffinity_base_close();
 
     /* close the memory manager components.  Registered hooks can
        still be fired any time between now and the call to
@@ -50,17 +55,20 @@ int opal_finalize(void)
     /* finalize the mca */
     mca_base_close();
 
-    /* finalize the output system */
-    opal_output_finalize();
-
     /* finalize the memory manager / tracker */
     opal_mem_free_finalize();
     
-    /* finalize the class/object system */
-    opal_class_finalize();
-
     /* finalize the memory allocator */
     opal_malloc_finalize();
+
+    /* finalize the output system.  This has to come *after* the
+       malloc code, as the malloc code needs to call into this, but
+       the malloc code turning off doesn't affect opal_output that
+       much */
+    opal_output_finalize();
+
+    /* finalize the class/object system */
+    opal_class_finalize();
 
     return ORTE_SUCCESS;
 }

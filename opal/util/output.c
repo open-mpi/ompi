@@ -114,6 +114,11 @@ static bool syslog_opened = false;
 bool opal_output_init(void)
 {
   int i;
+
+  if (initialized) {
+      return true;
+  }
+
   for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
     info[i].ldi_used = false;
     info[i].ldi_enabled = false;
