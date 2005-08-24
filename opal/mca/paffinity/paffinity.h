@@ -46,7 +46,12 @@
  *
  * The module has four functions:
  *
- * -
+ * - module_init: initialze the module
+ * - get_num_processors: return the maximum number N that can be used
+ *   in the set() module function (i.e., the number of available
+ *   processors)
+ * - set: set this process's affinity to a specific processor
+ * - get: get this process's processor affinity
  */
 
 #ifndef OPAL_PAFFINITY_H
