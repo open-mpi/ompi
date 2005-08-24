@@ -23,8 +23,15 @@
 
 
 /*
+ * Local variables
+ */
+static int param_priority;
+
+
+/*
  * Local functions
  */
+static int ras_tm_open(void);
 static orte_ras_base_module_t *ras_tm_init(int*);
 
 
@@ -47,7 +54,7 @@ orte_ras_base_component_1_0_0_t mca_ras_tm_component = {
         
         /* Component open and close functions */
         
-        NULL,
+        ras_tm_open,
         NULL
     },
     
@@ -61,15 +68,24 @@ orte_ras_base_component_1_0_0_t mca_ras_tm_component = {
 };
 
 
+static int ras_tm_open(void)
+{
+    param_priority = 
+        mca_base_param_reg_int(&mca_ras_tm_component.ras_version,
+                               "priority",
+                               "Priority of the tm ras component",
+                               false, false, 100, NULL);
+
+    return ORTE_SUCCESS;
+}
+
+
 static orte_ras_base_module_t *ras_tm_init(int* priority)
 {
     /* Are we running under a TM job? */
-    mca_base_param_register_int(&mca_ras_tm_component.ras_version,
-                                "priority",
-                                "Priority of the tm ras component",
-                                false, false, 100, priority);
     if (NULL != getenv("PBS_ENVIRONMENT") &&
         NULL != getenv("PBS_JOBID")) {
+        mca_base_param_lookup_int(param_priority, priority);
         opal_output(orte_ras_base.ras_output,
                     "ras:tm: available for selection");
         return &orte_ras_tm_module;
