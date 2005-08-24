@@ -72,21 +72,23 @@ int opal_init(void)
     /* initialize the memory allocator */
     opal_malloc_init();
 
-    /* initialize the memory manager / tracker */
-    opal_mem_free_init();
-
     /* initialize the output system */
     opal_output_init();
 
+    /* initialize the memory manager / tracker */
+    opal_mem_free_init();
+
     /* register handler for errnum -> string converstion */
     opal_error_register(opal_err2str);
-    
+
     /* initialize the mca */
     mca_base_open();
 
     /* open the processor affinity base */
     opal_paffinity_base_open();
+#if 0
     opal_paffinity_base_select();
+#endif
 
     /* open the memory manager components.  Memory hooks may be
        triggered before this (any time after mem_free_init(),
