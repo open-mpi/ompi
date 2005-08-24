@@ -26,8 +26,9 @@
 #endif
 #include <stdlib.h>
 
-int ompi_convertor_create_stack_with_pos( ompi_convertor_t* pConvertor,
-                                          int starting_point, const int* sizes );
+int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
+                                                  int starting_point, 
+                                                  const int* sizes );
 
 static inline size_t 
 ompi_convertor_compute_remote_size( const ompi_datatype_t* pData, const int* sizes )
