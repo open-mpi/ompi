@@ -15,6 +15,38 @@
 # $HEADER$
 #
 
+# This Makefile.am is quite complex and confusing.  Part of the
+# problem is that Libtool (v1.5.18) does not understand F90, so we
+# have to do a few things manually (and no shared libraries). Here's a
+# summary of what is happening:
+#
+# Depedencies / who generates whom:
+#
+# configure generates fortran_kinds.sh
+#       |
+#      \|/
+# fortran_kinds.sh ----> sourced by scripts/* ----> generates mpi_*.f90
+#                                 |                         |
+#                                \|/                        |
+#                    generates mpi-f90-interfaces.h         |
+#                      /                                    |
+# mpi_kinds.f90  --------> generates mpi_kinds module       |
+#                    /      (exact filename unknown)        |
+#                   \/       /                    \         |
+#  mpi-f90-interfaces.h     /                      \        |
+#                 |        /                        \       |
+#                \|/      \/                        \/     \|/
+#            used by mpi.f90                 used by mpi_*.f90
+#           /        |                               |
+#          /        \|/                             \|/
+#         /  generates mpi.o                 generates mpi_*.o
+#        \/                 \               /
+# generates mpi module      \/             \/
+# (filename unknown)      generates libmpi_f90.a
+#
+# Once you understand this diagram, this Makefile is much more clear.
+# 
+
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = scripts
