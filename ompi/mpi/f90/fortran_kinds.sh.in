@@ -21,3 +21,13 @@ lkinds="@OMPI_FORTRAN_LKINDS@"
 ikinds="@OMPI_FORTRAN_IKINDS@"
 rkinds="@OMPI_FORTRAN_RKINDS@"
 ckinds="@OMPI_FORTRAN_CKINDS@"
+
+# fix up for broken generation scripts that don't properly compute the
+# ranks variable before using it
+ranks="1"
+rank="2"
+while test "`expr $rank \\<= $max_array_rank`" = "1"; do
+    ranks="$ranks $rank"
+    rank="`expr $rank + 1`"
+done
+unset rank
