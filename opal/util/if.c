@@ -402,7 +402,7 @@ int opal_iffinalize(void)
         }
         OBJ_DESTRUCT(&opal_if_list);
 #endif
-    already_done = false;
+        already_done = false;
     }
     return OMPI_SUCCESS;
 }
