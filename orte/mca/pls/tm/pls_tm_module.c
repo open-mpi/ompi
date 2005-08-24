@@ -34,27 +34,27 @@
 #include <errno.h>
 #include <tm.h>
 
-#include "pls_tm.h"
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
-#include "runtime/runtime.h"
-#include "runtime/orte_wait.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
-#include "mca/pls/pls.h"
-#include "mca/pls/base/base.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/soh/soh_types.h"
-#include "mca/gpr/gpr.h"
-#include "orte/mca/sds/base/base.h"
-#include "mca/soh/soh.h"
-#include "mca/rml/rml.h"
-#include "mca/ns/ns.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/ns/ns.h"
+#include "pls_tm.h"
 
 
 /*
@@ -97,7 +97,6 @@ pls_tm_launch(orte_jobid_t jobid)
     char **argv;
     int argc;
     int rc;
-    int id;
     bool connected = false;
     
     /* query the list of nodes allocated to the job - don't need the entire
@@ -138,21 +137,7 @@ pls_tm_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, "--no-daemonize");
     
     /* check for debug flags */
-    id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
-    mca_base_param_lookup_int(id,&rc);
-    if (rc) {
-         opal_argv_append(&argc, &argv, "--debug");
-    }
-    id = mca_base_param_register_int("orte","debug","daemons",NULL,0);
-    mca_base_param_lookup_int(id,&rc);
-    if (rc) {
-         opal_argv_append(&argc, &argv, "--debug-daemons");
-    }
-    id = mca_base_param_register_int("orte","debug","daemons_file",NULL,0);
-    mca_base_param_lookup_int(id,&rc);
-    if (rc) {
-         opal_argv_append(&argc, &argv, "--debug-daemons-file");
-    }
+    orte_pls_base_proxy_mca_argv(&argc, &argv);
 
     /* proxy information */
     opal_argv_append(&argc, &argv, "--bootproxy");
@@ -253,7 +238,7 @@ pls_tm_launch(orte_jobid_t jobid)
         /* setup process name */
         rc = orte_ns.get_proc_name_string(&name_string, name);
         if (ORTE_SUCCESS != rc) {
-            opal_output(0, "orte_pls_tm: unable to create process name");
+            opal_output(0, "pls:tm: unable to create process name");
             exit(-1);
         }
         argv[proc_name_index] = name_string;

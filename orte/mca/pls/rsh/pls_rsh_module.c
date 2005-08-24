@@ -221,7 +221,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     char **argv, **tmp;
     int argc;
     int rc;
-    int id;
     sigset_t sigs;
     struct passwd *p;
     bool remote_bash = false, remote_csh = false;
@@ -316,21 +315,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, mca_pls_rsh_component.orted);
     
     /* check for debug flags */
-    id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
-    mca_base_param_lookup_int(id,&rc);
-    if (rc) {
-         opal_argv_append(&argc, &argv, "--debug");
-    }
-    id = mca_base_param_register_int("orte","debug","daemons",NULL,0);
-    mca_base_param_lookup_int(id,&rc);
-    if (rc) {
-         opal_argv_append(&argc, &argv, "--debug-daemons");
-    }
-    id = mca_base_param_register_int("orte","debug","daemons_file",NULL,0);
-    mca_base_param_lookup_int(id,&rc);
-    if (rc) {
-         opal_argv_append(&argc, &argv, "--debug-daemons-file");
-    }
+    orte_pls_base_proxy_mca_argv(&argc, &argv);
 
     opal_argv_append(&argc, &argv, "--bootproxy");
     opal_argv_append(&argc, &argv, jobid_string);
