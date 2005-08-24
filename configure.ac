@@ -1134,16 +1134,21 @@ AC_CACHE_SAVE
 
 ompi_show_title "Library and Function tests"
 
-# -lsocket
-# -lnsl
-# atexit
-# getcwd
-# atoll
-# strtoll
-# yield
-# vscanf
+AC_CHECK_LIB([util], [openpty], 
+             [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lutil" 
+              LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lutil"
+              LIBS="$LIBS -lutil"])
 
-AC_CHECK_LIB([util], [openpty], [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lutil" LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lutil" LIBS="$LIBS -lutil]")
+AC_CHECK_LIB([nsl], [gethostbyname],
+             [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lnsl"
+              LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lnsl"
+              LIBS="$LIBS -lnsl"])
+
+AC_CHECK_LIB([socket], [socket], 
+             [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lsocket"
+              LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lsocket"
+              LIBS="$LIBS -lsocket"])
+
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe setsid mmap])
 
 #

@@ -26,7 +26,7 @@ AC_ARG_WITH(event-rtsig,
   [usertsig=yes], [usertsig=no])
 
 dnl Checks for libraries.
-AC_CHECK_LIB(socket, socket)
+dnl AC_CHECK_LIB(socket, socket)
 
 dnl Checks for header files.
 AC_HEADER_STDC
