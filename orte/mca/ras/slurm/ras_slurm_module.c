@@ -143,8 +143,10 @@ static int finalize(void)
 
 static int discover(char *regexp, opal_list_t* nodelist)
 {
-    int i, j, len, ret;
+    int i, j, len, ret, count, reps;
     char *base, **names = NULL;
+    char *begptr, *endptr, *tasks_per_node;
+    int *slots;
     
     if (NULL == regexp) {
         return ORTE_SUCCESS;
@@ -198,6 +200,46 @@ static int discover(char *regexp, opal_list_t* nodelist)
         ret = parse_ranges(base, base + i + 1, &names);
     }
 
+    /* Find the number of slots per node */
+
+    slots = malloc(sizeof(int) * opal_argv_count(names));
+    if (NULL == slots) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    memset(slots, 0, sizeof(int) * opal_argv_count(names));
+    tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
+    if (NULL == tasks_per_node) {
+        opal_show_help("help-ras-slurm.txt", "env-var-not-found",
+                       "SLURM_TASKS_PER_NODE");
+        return ORTE_ERR_NOT_FOUND;
+    }
+    begptr = tasks_per_node;
+    j = 0;
+    while (begptr) {
+        count = strtol(begptr, &endptr, 10);
+        if ((endptr[0] == '(') && (endptr[1] == 'x')) {
+            reps = strtol((endptr+2), &endptr, 10);
+            if (endptr[0] == ')') {
+                endptr++;
+            }
+        } else {
+            reps = 1;
+        }
+        for (i = 0; i < reps; i++) {
+            slots[j++] = count;
+        }
+        
+        if (*endptr == ',') {
+            begptr = endptr + 1;
+        } else if (*endptr == '\0') {
+            break;
+        } else {
+            opal_show_help("help-ras-slurm.txt", "env-var-bad-value",
+                           "SLURM_TASKS_PER_NODE", tasks_per_node);
+            return ORTE_ERR_NOT_FOUND;
+        }
+    }
+
     /* Convert the argv of node names to a list of ras_base_node_t's */
 
     if (ORTE_SUCCESS == ret) {
@@ -205,7 +247,8 @@ static int discover(char *regexp, opal_list_t* nodelist)
             orte_ras_node_t *node;
             
             opal_output(orte_ras_base.ras_output, 
-                        "ras:slurm:allocate:discover: adding node %s", names[i]);
+                        "ras:slurm:allocate:discover: adding node %s (%d slot%s)",
+                        names[i], slots[i], (1 == slots[i]) ? "" : "s");
             node = OBJ_NEW(orte_ras_node_t);
             if (NULL == node) {
                 return ORTE_ERR_OUT_OF_RESOURCE;
@@ -218,9 +261,10 @@ static int discover(char *regexp, opal_list_t* nodelist)
             node->node_cellid = 0;
             node->node_slots_inuse = 0;
             node->node_slots_max = 0;
-            node->node_slots = 1;
+            node->node_slots = slots[i];
             opal_list_append(nodelist, &node->super);
         }
+        free(slots);
         opal_argv_free(names);
 
         /* Now add the nodes to the registry */
