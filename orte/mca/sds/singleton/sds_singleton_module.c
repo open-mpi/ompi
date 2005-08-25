@@ -53,9 +53,14 @@ orte_sds_singleton_set_name(void)
     
     orte_process_info.num_procs = 1;
     orte_process_info.vpid_start = vpid;
-    /* only set the singleton flag is we are NOT infrastructure */
-    id = mca_base_param_register_int("orte", "base", "infrastructure", 
-                                     NULL, (int)false);
+    /* only set the singleton flag is we are NOT infrastructure, 
+       and it has not been previously set. */
+    id = mca_base_param_find("orte_base", NULL, "infrastructure");
+    if (-1 == id) {
+        id = mca_base_param_reg_int_name("orte_base", "infrastructure",
+                                         "Whether we are ORTE infrastructure or an ORTE application",
+                                         false, false, (int)false, NULL);;
+    }
     mca_base_param_lookup_int(id, &flag);
     if (!flag) {
         orte_process_info.singleton = true;
