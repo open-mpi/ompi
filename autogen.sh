@@ -361,7 +361,7 @@ EOF
     # We only need the libltdl stuff for the top-level
     # configure, not any of the MCA components.
 
-    if test -f include/mpi.h; then
+    if test -f include/mpi.h.in; then
 	rm -rf libltdl opal/libltdl opal/ltdl.h
 	run_and_check $ompi_libtoolize --automake --copy --ltdl
 	mv libltdl opal
@@ -1036,7 +1036,7 @@ echo "Configuring projects: $config_project_list"
 
 # figure out if we're at the top level of the OMPI tree, a component's
 # top-level directory, or somewhere else.
-if test -f VERSION -a -f configure.ac -a -f include/mpi.h ; then
+if test -f VERSION -a -f configure.ac -a -f include/mpi.h.in ; then
     # Top level of OMPI tree
     ompidir="`pwd`"
 elif test -f configure.in -o -f configure.ac -o -f configure.params ; then

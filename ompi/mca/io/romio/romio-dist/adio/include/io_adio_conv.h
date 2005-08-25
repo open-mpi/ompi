@@ -17,6 +17,8 @@
 #ifndef MCA_IO_ADIO_CONV_H
 #define MCA_IO_ADIO_CONV_H
 
+#include "ompi_config.h"
+
 /* Prefix that we add to all ROMIO symbols */
 #ifdef ROMIO_PREFIX
 #undef ROMIO_PREFIX

@@ -1585,7 +1585,7 @@ AC_SUBST(FCFLAGS)
 
 ompi_show_subtitle "Final output" 
 
-AM_CONFIG_HEADER([include/ompi_config.h])
+AM_CONFIG_HEADER([include/ompi_config.h include/mpi.h])
 AC_CONFIG_FILES([
     Makefile
 
