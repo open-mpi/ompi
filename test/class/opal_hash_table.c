@@ -21,7 +21,8 @@
 #include <string.h>
 #include "support.h"
 #include "opal/class/opal_object.h"
-#include "class/opal_hash_table.h"
+#include "opal/class/opal_hash_table.h"
+#include "opal/runtime/opal.h"
 
 static FILE *error_out=NULL;
 
@@ -158,6 +159,8 @@ static void test_static(void)
 
 int main(int argc, char **argv)
 {
+
+    opal_init();
     /* local variables */
     test_init("opal_hash_table_t");
 
@@ -173,6 +176,8 @@ int main(int argc, char **argv)
 #ifndef STANDALONE
     fclose( error_out );
 #endif
+
+    opal_finalize();
     
     return test_finalize();
 }

@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 
 #include "support.h"
+#include "opal/runtime/opal.h"
 #include "opal/include/constants.h"
 #include "opal/util/sys_info.h"
 #include "opal/util/os_path.h"
@@ -40,9 +41,9 @@ static bool test3(void);   /* test making a directory tree */
 
 int main(int argc, char* argv[])
 {
-    test_init("opal_os_create_dirpath_t");
+    opal_init();
 
-    orte_sys_info(); /* initialize system info */
+    test_init("opal_os_create_dirpath_t");
 
     /* All done */
 
@@ -68,8 +69,9 @@ int main(int argc, char* argv[])
     }
 
     test_finalize();
-    return 0;
+    opal_finalize();
 
+    return 0;
 }
 
 
@@ -119,6 +121,8 @@ static bool test2(void)
     }
 
     rmdir(tmp);
+
+    free(tmp);
     return true;
 }
 
@@ -147,5 +151,8 @@ static bool test3(void)
             rmdir(out);
         return(false);
     }
+
+    free(out);
+
     return(true);
 }

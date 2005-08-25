@@ -26,7 +26,7 @@
 
 #include "support.h"
 #include "opal/class/opal_value_array.h"
-
+#include "opal/runtime/opal.h"
 
 #define NUM_ITEMS 10
 
@@ -35,8 +35,10 @@ int main(int argc, char **argv)
 {
     uint64_t i, val;
     uint64_t count;
-
     opal_value_array_t array;
+
+    opal_init();
+
     OBJ_CONSTRUCT(&array, opal_value_array_t);
 
     test_init("opal_value_array_t");
@@ -102,5 +104,8 @@ int main(int argc, char **argv)
     }
     
     OBJ_DESTRUCT(&array);
+
+    opal_finalize();
+
     return test_finalize();
 }

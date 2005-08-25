@@ -19,6 +19,7 @@
 
 #include "support.h"
 #include "opal/class/opal_list.h"
+#include "opal/runtime/opal.h"
 
 /*
  * Data type used for testing
@@ -42,6 +43,8 @@ int main(int argc, char **argv)
     int error_cnt;
     test_data_t *elements, *ele;
     opal_list_item_t *item;
+
+    opal_init();
 
     test_init("opal_list_t");
 
@@ -328,6 +331,10 @@ int main(int argc, char **argv)
     } else {
         test_success();
     }
+
+    if (NULL != elements) free(elements);
+
+    opal_finalize();
 
     return test_finalize();
 }
