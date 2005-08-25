@@ -52,6 +52,7 @@ typedef struct {
     bool debug;
     bool debug_daemons;
     bool debug_daemons_file;
+    char* ns_nds;
     char* name;
     char* vpid_start;
     char* num_procs;

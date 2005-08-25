@@ -82,8 +82,6 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     opal_list_item_t* item;
     size_t num_nodes;
     orte_vpid_t vpid;
-    int node_name_index;
-    int proc_name_index;
     char *jobid_string;
     char *uri, *param;
     char **argv;
@@ -92,6 +90,11 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     char *tmp;
     char** env;
     char* var;
+    char *nodelist_flat;
+    char **nodelist_argv;
+    int nodelist_argc;
+    orte_process_name_t* name;
+    char *name_string;
 
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
@@ -125,15 +128,42 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     argv = NULL;
     argc = 0;
 
+    /*
+     * SLURM srun OPTIONS
+     */
+
     /* add the srun command */
     opal_argv_append(&argc, &argv, "srun");
 
-    /* "--mpi=lam" implies the task count equals the node count */
-    opal_argv_append(&argc, &argv, "--mpi=lam");
-
-    asprintf(&tmp, "--nodes=%lu", num_nodes);
+    asprintf(&tmp, "--nodes=%lu", (unsigned long) num_nodes);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
+
+    asprintf(&tmp, "--ntasks=%lu", (unsigned long) num_nodes);
+    opal_argv_append(&argc, &argv, tmp);
+    free(tmp);
+
+    /* create nodelist */
+    nodelist_argv = NULL;
+    nodelist_argc = 0;
+
+    for (item =  opal_list_get_first(&nodes);
+         item != opal_list_get_end(&nodes);
+         item =  opal_list_get_next(item)) {
+        orte_ras_node_t* node = (orte_ras_node_t*)item;
+
+        opal_argv_append(&nodelist_argc, &nodelist_argv, node->node_name);
+    }
+    nodelist_flat = opal_argv_join(nodelist_argv, ',');
+    asprintf(&tmp, "--nodelist=%s", nodelist_flat);
+    opal_argv_append(&argc, &argv, tmp);
+    free(tmp);
+    free(nodelist_flat);
+
+
+    /*
+     * ORTED OPTIONS
+     */
 
     /* add the daemon command (as specified by user) */
     opal_argv_append(&argc, &argv, mca_pls_slurm_component.orted);
@@ -145,28 +175,39 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     /* proxy information */
     opal_argv_append(&argc, &argv, "--bootproxy");
     opal_argv_append(&argc, &argv, jobid_string);
+
+    /* force orted to use the slurm sds */
+    opal_argv_append(&argc, &argv, "--ns-nds");
+    opal_argv_append(&argc, &argv, "slurm");
+
+    /* set orte process name to be the base of the name list for the daemons */
+    rc = orte_ns.create_process_name(&name, 
+                                     orte_process_info.my_name->cellid, 
+                                     0, vpid);
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    rc = orte_ns.get_proc_name_string(&name_string, name);
+    if (ORTE_SUCCESS != rc) {
+        opal_output(0, "orte_pls_rsh: unable to create process name");
+        goto cleanup;
+    }
     opal_argv_append(&argc, &argv, "--name");
-    /* JMS: what to do here? */
-    proc_name_index = argc;
-    opal_argv_append(&argc, &argv, "BOGUS");
+    opal_argv_append(&argc, &argv, name_string);
+    free(name_string);
 
     /* tell the daemon how many procs are in the daemon's job */
-    /* JMS: what does this do -- is it necessary?  i.e., doesn't the
-       daemon pull this info from the gpr? */
     opal_argv_append(&argc, &argv, "--num_procs");
-    asprintf(&param, "%lu", (unsigned long)(vpid + num_nodes));
+    asprintf(&param, "%lu", (unsigned long) num_nodes);
     opal_argv_append(&argc, &argv, param);
     free(param);
 
     /* tell the daemon the starting vpid of the daemon's job */
-    /* JMS: ditto previous comment */
     opal_argv_append(&argc, &argv, "--vpid_start");
-    opal_argv_append(&argc, &argv, "0");
-    
-    opal_argv_append(&argc, &argv, "--nodename");
-    node_name_index = argc;
-    /* JMS: what to do here? */
-    opal_argv_append(&argc, &argv, "BOGUS");
+    asprintf(&param, "%lu", (unsigned long) 0);
+    opal_argv_append(&argc, &argv, param);
+    free(param);
 
     /* pass along the universe name and location info */
     opal_argv_append(&argc, &argv, "--universe");
@@ -214,20 +255,12 @@ static int pls_slurm_launch(orte_jobid_t jobid)
          item =  opal_list_get_next(item)) {
         orte_ras_node_t* node = (orte_ras_node_t*)item;
         orte_process_name_t* name;
-        char* name_string;
 
         /* initialize daemons process name */
         rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
-        }
-
-        /* setup process name */
-        rc = orte_ns.get_proc_name_string(&name_string, name);
-        if (ORTE_SUCCESS != rc) {
-            opal_output(0, "pls:slurm: unable to create process name");
-            exit(-1);
         }
 
         /* save the daemons name on the node */
@@ -321,7 +354,6 @@ static int pls_slurm_finalize(void)
 
 static int pls_slurm_start_proc(int argc, char **argv, char **env)
 {
-    int rc;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
     if (NULL == exec_argv) {
@@ -330,11 +362,13 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env)
 
     srun_pid = fork();
     if (-1 == srun_pid) {
-        printf("Fork failed!\n");
+        opal_output(orte_pls_base.pls_output,
+                    "pls:slurm:start_proc: fork failed");
         return ORTE_ERR_IN_ERRNO;
     } else if (0 == srun_pid) {
-        rc = execve(exec_argv, argv, env);
-        printf("execve failed! (%s)\n", argv[0]);
+        opal_output(orte_pls_base.pls_output,
+                    "pls:slurm:start_proc: exec failed");
+        execve(exec_argv, argv, env);
         return ORTE_ERR_IN_ERRNO;
     }
 
