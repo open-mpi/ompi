@@ -36,7 +36,7 @@
  */
 #define ORTE_JOB_SEGMENT        "orte-job"
 #define ORTE_NODE_SEGMENT       "orte-node"
-#define ORTE_JOBINFO_SEGMENT    "orte_active_jobs"
+#define ORTE_JOBINFO_SEGMENT    "orte-active-jobs"
 #define ORTE_RESOURCE_SEGMENT   "orte-resources"
 
 /*
