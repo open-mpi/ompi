@@ -26,7 +26,6 @@
 
 #include "mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
-#include "mca/common/vapi/vapi_mem_reg.h"
 #include "mca/mpool/base/base.h" 
 #include "btl_mvapi.h"
 #include "btl_mvapi_frag.h"

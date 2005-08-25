@@ -18,7 +18,9 @@
 #include <string.h>
 #include "opal/util/output.h"
 #include "mca/mpool/mvapi/mpool_mvapi.h"
-
+#include <vapi.h>
+#include <vapi_types.h> 
+#include <vapi_common.h> 
 
 /* 
  *  Initializes the mpool module.

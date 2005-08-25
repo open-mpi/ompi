@@ -16,7 +16,6 @@
 
 
 #include "btl_mvapi_frag.h" 
-#include "mca/common/vapi/vapi_mem_reg.h"
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 
 

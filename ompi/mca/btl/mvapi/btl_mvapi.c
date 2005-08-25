@@ -26,7 +26,6 @@
 #include "btl_mvapi_proc.h"
 #include "btl_mvapi_endpoint.h"
 #include "datatype/convertor.h" 
-#include "mca/common/vapi/vapi_mem_reg.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/mvapi/mpool_mvapi.h" 

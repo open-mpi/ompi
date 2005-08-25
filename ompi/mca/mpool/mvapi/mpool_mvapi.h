@@ -23,8 +23,8 @@
 #include "class/ompi_free_list.h"
 #include "opal/event/event.h"
 #include "mca/mpool/mpool.h"
-#include "mca/common/vapi/vapi_mem_reg.h" 
-
+#include <vapi.h> 
+#include <vapi_types.h>
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
