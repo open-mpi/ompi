@@ -96,6 +96,12 @@ base as of this writing (8 Aug 2005):
 - Threading support (both asynchronous progress and
   MPI_THREAD_MULTIPLE) is included, but is only lightly tested.
 
+- On Linux, if either the malloc_hooks or malloc_interpose memory
+  hooks are enabled, it will not be possible to link against a static
+  libc.a.  libmpi can still be built statically - it is only the final
+  application link step that can not be static.  If applications must be
+  statically linked, it is recommended you compile Open MPI with the
+  --without-memory-manager configure option.
 
 ===========================================================================
 
