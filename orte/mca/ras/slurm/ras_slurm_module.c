@@ -210,18 +210,22 @@ static int discover(char *regexp, opal_list_t* nodelist)
             if (NULL == node) {
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            node->node_name = names[i];
+            node->node_name = strdup(names[i]);
             node->node_arch = NULL;
             node->node_state = ORTE_NODE_STATE_UP;
             /* JMS: this should not be hard-wired to 0, but there's no
                other value to put it to [yet]... */
             node->node_cellid = 0;
             node->node_slots_inuse = 0;
-            node->node_slots_max = 1;
+            node->node_slots_max = 0;
             node->node_slots = 1;
             opal_list_append(nodelist, &node->super);
         }
         opal_argv_free(names);
+
+        /* Now add the nodes to the registry */
+
+        ret = orte_ras_base_node_insert(nodelist);
     }
 
     /* All done */
@@ -343,7 +347,7 @@ static int parse_range(char *base, char *range, char ***names)
         
         str[0] = '\0';
         snprintf(temp1, BUFSIZ - 1, "%s", base);
-        snprintf(temp2, BUFSIZ - 1, "%lu", i);
+        snprintf(temp2, BUFSIZ - 1, "%lu", (long) i);
         temp1[BUFSIZ - 1] = temp2[BUFSIZ - 1] = '\0';
         
         /* Do we need zero pading? */
