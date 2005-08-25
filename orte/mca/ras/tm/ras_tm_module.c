@@ -187,7 +187,6 @@ static int discover(opal_list_t* nodelist)
              item = opal_list_get_next(item)) {
             node = (orte_ras_node_t*) item;
             if (0 == strcmp(node->node_name, hostname)) {
-                ++node->node_slots_max;
                 ++node->node_slots;
                 opal_output(orte_ras_base.ras_output, 
                             "ras:tm:allocate:discover: found -- bumped slots to %d",
@@ -210,7 +209,7 @@ static int discover(opal_list_t* nodelist)
             node->node_state = ORTE_NODE_STATE_UP;
             node->node_cellid = 0;
             node->node_slots_inuse = 0;
-            node->node_slots_max = 1;
+            node->node_slots_max = 0;
             node->node_slots = 1;
             opal_list_append(&new_nodes, &node->super);
         } else {
