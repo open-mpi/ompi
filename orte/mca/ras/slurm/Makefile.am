@@ -20,6 +20,9 @@ include $(top_ompi_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = $(ras_slurm_CPPFLAGS)
 
+EXTRA_DIST = $(pkgdata_DATA)
+pkgdata_DATA = help-ras-slurm.txt
+
 sources = \
         ras_slurm.h \
         ras_slurm_component.c \

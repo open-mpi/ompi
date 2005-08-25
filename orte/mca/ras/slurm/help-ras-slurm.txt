@@ -1,0 +1,33 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI MCA error messages.
+#
+[env-var-not-found]
+An expected environment variable was not found.  Open MPI should have
+been able to read the following environment variable and was unable
+to:
+
+    %s
+
+This is a fatal error.
+[env-var-bad-value]
+The following environment variable had a value which was unexpected /
+unparsable:
+
+    %s
+
+This is a fatal error.
