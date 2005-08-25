@@ -112,6 +112,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.num_procs, OPAL_CMD_LINE_TYPE_STRING,
       "Set the number of process in this job"},
 
+    { NULL, NULL, NULL, '\0', NULL, "ns-nds", 1,
+      &orted_globals.ns_nds, OPAL_CMD_LINE_TYPE_STRING,
+      "set sds/nds component to use for daemon (normally not needed)"},
+
     { NULL, NULL, NULL, '\0', NULL, "nsreplica", 1,
       &orte_process_info.ns_replica_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Name service contact information."},
@@ -231,6 +235,15 @@ int main(int argc, char *argv[])
                                   orted_globals.num_procs, true, &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
                            "OMPI_MCA_ns_nds_num_procs", orted_globals.num_procs, ret);
+            return ret;
+        }
+    }
+    if (orted_globals.ns_nds) {
+        if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
+                                               orted_globals.ns_nds, true, 
+                                               &environ))) {
+            opal_show_help("help-orted.txt", "orted:environ", false,
+                           "OMPI_MCA_ns_nds", "env", ret);
             return ret;
         }
     }
