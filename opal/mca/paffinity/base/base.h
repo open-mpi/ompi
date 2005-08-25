@@ -41,8 +41,7 @@ extern "C" {
      * framework.  It initializes the paffinity MCA framework, finds
      * and opens paffinity components, etc.
      *
-     * This function is invoked during ompi_mpi_init() and during the
-     * initialization of the special case of the laminfo command.
+     * This function is invoked during opal_init().
      * 
      * This function fills in the internal global variable
      * opal_paffinity_base_components_opened, which is a list of all
@@ -146,10 +145,10 @@ extern "C" {
      * @retval OPAL_SUCCESS Always
      *
      * This function shuts down everything in the paffinity MCA
-     * framework, and is called during ompi_mpi_finalize() and the
-     * special case of the laminfo command.
+     * framework, and is called during opal_finalize().
      *
-     * It must be the last function invoked on the paffinity MCA framework.
+     * It must be the last function invoked on the paffinity MCA
+     * framework.
      */
     OMPI_DECLSPEC int opal_paffinity_base_close(void);
     
