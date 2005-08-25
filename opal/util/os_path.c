@@ -60,8 +60,8 @@ char *opal_os_path(bool relative, ...)
     }
 
     if (0 == num_elements) { /* must be looking for a simple answer */
-    	path = (char *)malloc(2);
-            path[0] = 0;
+    	path = (char *)malloc(3);
+            path[0] = '\0';
     	if (relative) {
     	    strcpy(path, ".");
             strcat(path, orte_system_info.path_sep);

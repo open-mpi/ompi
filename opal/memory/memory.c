@@ -172,6 +172,7 @@ int
 opal_mem_free_unregister_handler(opal_mem_free_unpin_fn_t *func)
 {
     opal_list_item_t *item;
+    opal_list_item_t *found_item = NULL;
     callback_list_item_t *cbitem;
     int ret = OMPI_ERR_NOT_FOUND;
 
@@ -185,12 +186,19 @@ opal_mem_free_unregister_handler(opal_mem_free_unpin_fn_t *func)
 
         if (cbitem->cbfunc == func) {
             opal_list_remove_item(&callback_list, item);
+            found_item = item;
             ret = OMPI_SUCCESS;
             break;
         }
     }
 
     opal_atomic_unlock(&callback_lock);
+
+    /* OBJ_RELEASE calls free, so we can't release until we get out of
+       the lock */
+    if (NULL != found_item) {
+        OBJ_RELEASE(item);
+    }
 
     return ret;
 }
