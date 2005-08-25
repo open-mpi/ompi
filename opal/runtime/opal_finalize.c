@@ -22,6 +22,7 @@
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/if.h"
+#include "opal/util/sys_info.h"
 #include "opal/memory/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -59,6 +60,9 @@ int opal_finalize(void)
 
     /* finalize the mca */
     mca_base_close();
+
+    /* free memory associated with sys_info struct */
+    orte_sys_info_finalize();
 
     /* finalize the memory manager / tracker */
     opal_mem_free_finalize();
