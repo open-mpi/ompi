@@ -23,8 +23,15 @@
 
 
 /*
+ * Local variables
+ */
+static int param_priority;
+
+
+/*
  * Local functions
  */
+static int ras_slurm_open(void);
 static orte_ras_base_module_t *ras_slurm_init(int*);
 
 
@@ -47,7 +54,7 @@ orte_ras_base_component_1_0_0_t mca_ras_slurm_component = {
         
         /* Component open and close functions */
         
-        NULL,
+        ras_slurm_open,
         NULL
     },
     
@@ -61,15 +68,24 @@ orte_ras_base_component_1_0_0_t mca_ras_slurm_component = {
 };
 
 
+static int ras_slurm_open(void)
+{
+    param_priority = 
+        mca_base_param_reg_int(&mca_ras_slurm_component.ras_version,
+                               "priority",
+                               "Priority of the slurm ras component",
+                               false, false, 100, NULL);
+
+    return ORTE_SUCCESS;
+}
+
+
 static orte_ras_base_module_t *ras_slurm_init(int* priority)
 {
     /* Are we running under a SLURM job? */
 
-    mca_base_param_reg_int(&mca_ras_slurm_component.ras_version, "priority",
-                           "Priority of the slurm ras component",
-                           false, false, 100, priority);
-
     if (NULL != getenv("SLURM_JOBID")) {
+        mca_base_param_lookup_int(param_priority, priority);
         opal_output(orte_ras_base.ras_output,
                     "ras:slurm: available for selection");
         return &orte_ras_slurm_module;
