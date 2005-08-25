@@ -144,7 +144,7 @@ START_FUNC(opal_atomic_sub_32)
 END_FUNC(opal_atomic_sub_32)
 
 START_FUNC(opal_sys_timer_get_cycles)
-	LSYM(7)
+	LSYM(11)
         mftbu r2
         rldicl r2,r2,0,32
         mftb r0
@@ -152,7 +152,7 @@ START_FUNC(opal_sys_timer_get_cycles)
         mftbu r0
         rldicl r0,r0,0,32
         cmpw cr7,r0,r2
-        bne cr7,REFLSYM(7)
+        bne cr7,REFLSYM(11)
         sldi r3,r0,32
         or r3,r3,r9
         blr
