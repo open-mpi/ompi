@@ -83,6 +83,10 @@
 /* MPI datatype corresponding to MPI_Offset */
 #undef OMPI_OFFSET_DATATYPE
 
+/* A  type that allows us to have sentinel type values that are still
+   valid */
+#undef ompi_fortran_bogus_type_t
+
 /* C type corresponding to FORTRAN INTEGER */
 #undef ompi_fortran_integer_t
 
