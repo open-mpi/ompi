@@ -3,6 +3,9 @@
 . "$1/fortran_kinds.sh"
 
 procedure='MPI_File_write_ordered_begin'
+# allow for 2 char rank, 2 char for type, 2 char for kind and
+# still be 31 characters or less
+procedure="`echo ${procedure} | cut -c1-25`"
 
 rank=0
 for kind in $lkinds
