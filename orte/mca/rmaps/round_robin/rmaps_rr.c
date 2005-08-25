@@ -35,7 +35,6 @@
  */
 static opal_list_item_t *cur_node_item = NULL;
 
-
 static int claim_slot(orte_rmaps_base_map_t *map, 
                       orte_ras_node_t *current_node,
                       orte_jobid_t jobid, orte_vpid_t vpid, int proc_index)
@@ -94,7 +93,7 @@ static int claim_slot(orte_rmaps_base_map_t *map,
  * apps.
  */
 static int map_app_by_node(
-    orte_app_context_t* app, 
+    orte_app_context_t* app,
     orte_rmaps_base_map_t* map,
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
@@ -148,6 +147,7 @@ static int map_app_by_node(
             if (ORTE_SUCCESS != rc) {
                 return rc;
             }
+
             if (node->node_slots_alloc == 0) {
                 opal_list_remove_item(nodes, (opal_list_item_t*)node);
                 OBJ_RELEASE(node);
@@ -206,7 +206,7 @@ static int map_app_by_node(
  * apps.
  */
 static int map_app_by_slot(
-    orte_app_context_t* app, 
+    orte_app_context_t* app,
     orte_rmaps_base_map_t* map,
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
@@ -251,6 +251,7 @@ static int map_app_by_slot(
             if (ORTE_SUCCESS != rc) {
                 return rc;
             }
+
             ++rank;
             ++proc_index;
 
@@ -267,7 +268,7 @@ static int map_app_by_slot(
 
             cur_node_item = next;
         }
-    } 
+    }
 
     /* Did we allocate everything? */
 
@@ -322,7 +323,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
 
     /* query for all nodes allocated to this job */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(&nodes,jobid))) {
+    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(&nodes, jobid))) {
         OBJ_DESTRUCT(&nodes);
         return rc;
     }

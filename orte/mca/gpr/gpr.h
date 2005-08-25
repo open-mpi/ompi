@@ -292,7 +292,7 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **v
  * described by the segment/token combination are to be returned.
  * 
  * @param *cnt (OUT) A pointer to the number of objects returned by the request.
- * @param **values (OUT) A pointer to an array of orte_gpr_value_t object pointers
+ * @param ***values (OUT) A pointer to an array of orte_gpr_value_t object pointers
  * containing the data
  * returned by the specified search, including the segment and container id info
  * for each keyval pair.
@@ -302,8 +302,11 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **v
  * 
  * @code
  * opal_list_t *keyval_list;
+ * size_t cnt;
+ * orte_gpr_value_t **values;
  * 
- * status_code = orte_gpr.get(addr_mode, segment, tokens, keyval_list);
+ * status_code = orte_gpr.get(addr_mode, segment, tokens, keyval_list,
+ *                            &cnt, &values);
  * @endcode
  */
 typedef int (*orte_gpr_base_module_get_fn_t)(orte_gpr_addr_mode_t addr_mode,
