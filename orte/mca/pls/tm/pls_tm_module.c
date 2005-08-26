@@ -239,7 +239,7 @@ pls_tm_launch(orte_jobid_t jobid)
         rc = orte_ns.get_proc_name_string(&name_string, name);
         if (ORTE_SUCCESS != rc) {
             opal_output(0, "pls:tm: unable to create process name");
-            exit(-1);
+            return rc;
         }
         argv[proc_name_index] = name_string;
 

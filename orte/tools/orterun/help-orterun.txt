@@ -81,4 +81,8 @@ in the environment. Returned value %d instead of ORTE_SUCCESS.
 [orterun:proc-aborted]
 %s noticed that job rank %lu with PID %lu on node "%s" exited on signal %d.
 [orterun:abnormal-exit]
-%s encountered an abnormal exit.
+WARNING: %s encountered an abnormal exit.
+
+This means that %s exited before it received notification that all
+started processes had terminated.  You should double check and ensure
+that there are no runaway processes still executing.

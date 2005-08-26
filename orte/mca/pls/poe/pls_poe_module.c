@@ -224,7 +224,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
         rc = orte_ns.get_proc_name_string(&name_string, name);
         if(ORTE_SUCCESS != rc) {
             opal_output(0, "orte_pls_poe: unable to create process name");
-            exit(-1);
+            return rc;
         }
         argv[proc_name_index] = name_string;
         for(i=0;i<argc;i++) {
