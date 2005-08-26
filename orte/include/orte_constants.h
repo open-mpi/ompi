@@ -82,7 +82,7 @@ enum {
     ORTE_ERR_TYPE_MISMATCH              = (ORTE_ERR_BASE - 30)
 };
 
-#define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 30)
+#define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
 
 
 #endif /* ORTE_CONSTANTS_H */
