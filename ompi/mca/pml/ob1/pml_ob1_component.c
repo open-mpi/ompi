@@ -95,6 +95,56 @@ int mca_pml_ob1_component_open(void)
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
     
+    OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
+                                                                                                            
+    /* requests */
+    OBJ_CONSTRUCT(&mca_pml_ob1.send_requests, ompi_free_list_t);
+    ompi_free_list_init(
+        &mca_pml_ob1.send_requests,
+        sizeof(mca_pml_ob1_send_request_t),
+        OBJ_CLASS(mca_pml_ob1_send_request_t),
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+                                                                                                            
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_requests, ompi_free_list_t);
+    ompi_free_list_init(
+        &mca_pml_ob1.recv_requests,
+        sizeof(mca_pml_ob1_recv_request_t),
+        OBJ_CLASS(mca_pml_ob1_recv_request_t),
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+                                                                                                            
+    /* fragments */
+    OBJ_CONSTRUCT(&mca_pml_ob1.rdma_frags, ompi_free_list_t);
+    ompi_free_list_init(
+        &mca_pml_ob1.rdma_frags,
+        sizeof(mca_pml_ob1_rdma_frag_t),
+        OBJ_CLASS(mca_pml_ob1_rdma_frag_t),
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+                                                                                                            
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_frags, ompi_free_list_t);
+    ompi_free_list_init(
+        &mca_pml_ob1.recv_frags,
+        sizeof(mca_pml_ob1_recv_frag_t),
+        OBJ_CLASS(mca_pml_ob1_recv_frag_t),
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+                                                                                                            
+    OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
+                                                                                                            
+    /* pending operations */
+    OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, opal_list_t);
     
     mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
