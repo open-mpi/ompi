@@ -138,7 +138,7 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_FLAGS_GET   0x4
 
 /* btl can send directly from user buffer w/out registration */
-#define MCA_BTL_FLAGS_SEND_INPLACE  0x10000000
+#define MCA_BTL_FLAGS_SEND_INPLACE  0x8
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     64*1024   /* internal loopback */
