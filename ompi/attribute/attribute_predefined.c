@@ -83,7 +83,6 @@
 #include "ompi/errhandler/errclass.h"
 #include "ompi/communicator/communicator.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/sys_info.h"
 #include "ompi/mca/pml/pml.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"

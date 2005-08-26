@@ -47,8 +47,7 @@ headers = \
         show_help.h \
         show_help_lex.h \
         stacktrace.h \
-        strncpy.h \
-        sys_info.h
+        strncpy.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
@@ -73,8 +72,7 @@ libopalutil_la_SOURCES = \
         show_help.c \
         show_help_lex.l \
         stacktrace.c \
-        strncpy.c \
-        sys_info.c
+        strncpy.c
 
 # Conditionally install the header files
 

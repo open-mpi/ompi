@@ -29,10 +29,17 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "opal/util/sys_info.h"
 #include "opal/util/os_path.h"
-#include "opal/util/sys_info.h"
 #include "ompi/include/constants.h"
+
+#ifdef WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
+static const char *path_sep = PATH_SEP;
+
 
 char *opal_os_path(bool relative, ...)
 {
@@ -43,14 +50,8 @@ char *opal_os_path(bool relative, ...)
     va_start(ap, relative);
     va_start(ap1, relative);
 
-    /* make sure system info is filled and separator is non-NULL */
-    orte_sys_info();
-    if (NULL == orte_system_info.path_sep) {
-	   return(NULL);
-    }
-
-    /* no way to protect ourselves from reading too far, so have to trust caller
-       that they ended the list with the NULL */
+    /* no way to protect ourselves from reading too far, so have to
+       trust caller that they ended the list with the NULL */
 
     num_elements = 0;
     total_length = 0;
@@ -64,11 +65,11 @@ char *opal_os_path(bool relative, ...)
             path[0] = '\0';
     	if (relative) {
     	    strcpy(path, ".");
-            strcat(path, orte_system_info.path_sep);
+            strcat(path, path_sep);
     	}
     	else {
 #ifndef WIN32
-    	    strcpy(path, orte_system_info.path_sep);
+    	    strcpy(path, path_sep);
 #endif
     	}
     	return(path);
@@ -92,8 +93,8 @@ char *opal_os_path(bool relative, ...)
     }
 
     while (NULL != (element=va_arg(ap1, char*))) {
-    	if (orte_system_info.path_sep[0] != element[0]) {
-            strcat(path, orte_system_info.path_sep);
+    	if (path_sep[0] != element[0]) {
+            strcat(path, path_sep);
         }
         strcat(path, element);
     }

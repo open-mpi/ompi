@@ -25,6 +25,7 @@ noinst_LTLIBRARIES = liborteutil.la
 headers = \
         proc_info.h \
         session_dir.h \
+        sys_info.h \
         universe_setup_file_io.h \
         univ_info.h
 
@@ -32,6 +33,7 @@ liborteutil_la_SOURCES = \
         $(headers) \
         proc_info.c \
         session_dir.c \
+        sys_info.c \
         universe_setup_file_io.c \
         univ_info.c
 

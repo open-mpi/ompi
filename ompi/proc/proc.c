@@ -20,7 +20,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/util/output.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "orte/dps/dps.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/ns/ns.h"

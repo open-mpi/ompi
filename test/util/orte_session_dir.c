@@ -34,7 +34,7 @@
 #include "orte/include/orte_constants.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_create_dirpath.h"
 #include "orte/util/session_dir.h"

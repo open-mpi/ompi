@@ -30,7 +30,7 @@
 #include "support.h"
 #include "opal/runtime/opal.h"
 #include "opal/include/constants.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_create_dirpath.h"
 

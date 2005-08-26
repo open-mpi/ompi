@@ -20,11 +20,11 @@
 
 #include <string.h>
 
-#include "opal/util/sys_info.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "orte/util/sys_info.h"
 #include "orte/runtime/runtime.h"
 #include "orte/include/orte_constants.h"
 #include "orte/util/proc_info.h"

@@ -55,7 +55,7 @@
 #include "orte/mca/soh/base/base.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "opal/util/if.h"
 #include "opal/util/if.h"
 #include "opal/util/path.h"
