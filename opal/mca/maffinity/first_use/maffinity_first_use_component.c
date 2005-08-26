@@ -12,12 +12,6 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
- *
- * These symbols are in a file by themselves to provide nice linker
- * semantics.  Since linkers generally pull in symbols by object
- * files, keeping these symbols as the only symbols in this file
- * prevents utility programs such as "ompi_info" from having to import
- * entire components just to query their version and parameters.
  */
 
 #include "ompi_config.h"
