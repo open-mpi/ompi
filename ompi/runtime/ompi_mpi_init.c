@@ -19,6 +19,7 @@
 #include "mpi.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/maffinity/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/util/sys_info.h"
 #include "opal/threads/threads.h"
@@ -77,6 +78,9 @@ int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
 int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 opal_thread_t *ompi_mpi_main_thread = NULL;
+
+bool ompi_mpi_maffinity_setup = false;
+
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
@@ -157,6 +161,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                "mpi_init:startup:paffinity-unavailable", 
                                true, vpid);
                 free(vpid);
+            }
+
+            /* If we were able to set processor affinity, try setting
+               up memory affinity */
+
+            else {
+                if (OPAL_SUCCESS == opal_maffinity_base_open() &&
+                    OPAL_SUCCESS == opal_maffinity_base_select()) {
+                    ompi_mpi_maffinity_setup = true;
+                }
             }
         }
     }
