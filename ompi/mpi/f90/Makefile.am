@@ -51,12 +51,15 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = scripts
 
-AM_FCFLAGS = -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG).
+AM_FCFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG).
 
 # We have to EXTRA_DIST mpi_kinds.f90 because there is no explicit
 # Automake rule to compile this file.
 
 EXTRA_DIST = mpi_kinds.f90
+
+# We have to build this before the other ones.
+BUILT_SOURCES = mpi_kinds.ompi_module
 
 # Override the default f90 rules because we have to insert
 # $(FCFLAGS_f90) right before the source filename.  This is necessary
@@ -68,7 +71,11 @@ EXTRA_DIST = mpi_kinds.f90
 	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
 
 .f90.obj:
-	$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) $(FCFLAGS_f90) '$<'`
+	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) `$(CYGPATH_W) '$<'`
+
+.f90.lo:
+	$(LTFCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
+
 
 # Do different things if the top-level configure decided that we're
 # going to build F90 bindings or not.
@@ -152,7 +159,7 @@ mpi.obj: mpi.f90 mpi-f90-interfaces.h
 	@echo "* This is quite normal -- do not be alarmed if the compile"
 	@echo "* process seems to 'hang' at this point for several minutes."
 	@echo "***************************************************************"
-	$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) $(FCFLAGS_f90) '$<'`
+	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) `$(CYGPATH_W) '$<'`
 
 else
 lib_LIBRARIES +=
