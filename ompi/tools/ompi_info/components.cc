@@ -141,6 +141,10 @@ void ompi_info::open_components()
 
   mca_base_open();
 
+  // Register the ORTE layer's MCA parameters
+
+  orte_register_params(false);
+
   // Register the MPI layer's MCA parameters
 
   ompi_mpi_register_params();

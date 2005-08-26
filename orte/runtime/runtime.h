@@ -82,19 +82,29 @@ OMPI_DECLSPEC    int orte_abort(int status, char *fmt, ...);
 
 
     /**
-     * Initialize the Open run time environment
+     * Initialize the Open Run Time Environment
      *
-     * Initlize the Open MPI run time environment, including process
+     * Initlize the Open Run Time Environment, including process
      * control, malloc debugging and threads, and out of band messaging.
-     * This function should be
-     * called exactly once.  This function should
+     * This function should be called exactly once.  This function should
      * be called by every application using the RTE interface, including
      * MPI applications and mpirun.
+     *
+     * @param infrastructure Whether we are ORTE infrastructure or an ORTE 
+     * application
      */
-OMPI_DECLSPEC    int orte_init(void);
-OMPI_DECLSPEC    int orte_system_init(void);
-OMPI_DECLSPEC    int orte_init_stage1(void);
+OMPI_DECLSPEC    int orte_init(bool infrastructure);
+OMPI_DECLSPEC    int orte_system_init(bool infrastructure);
+OMPI_DECLSPEC    int orte_init_stage1(bool infrastructure);
 OMPI_DECLSPEC    int orte_init_stage2(void);
+
+    /**
+     * Initialize parameters for ORTE.
+     *
+     * @retval ORTE_SUCCESS Upon success.
+     * @retval ORTE_ERROR Upon failure.
+     */
+OMPI_DECLSPEC    int orte_register_params(bool infrastructure);
 
     /**
      * Re-init the Open run time environment.

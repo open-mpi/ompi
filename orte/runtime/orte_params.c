@@ -14,36 +14,21 @@
  * $HEADER$
  */
 
-/** @file **/
-
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "mca/errmgr/errmgr.h"
 
-#include "runtime/opal.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "runtime/runtime.h"
 
-/**
- * Initialze and setup a process in the ORTE.
- *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
- */
-
-int orte_system_init(bool infrastructure)
+int orte_register_params(bool infrastructure)
 {
-    int rc;
+    int id;
 
-    if (ORTE_SUCCESS != (rc = orte_init_stage1(infrastructure))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_init_stage2())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    id = mca_base_param_reg_int_name("orte", "infrastructure",
+                                     "Whether we are ORTE infrastructure or an ORTE application",
+                                     true, true, (int)infrastructure, NULL);
+
     
     return ORTE_SUCCESS;
 }

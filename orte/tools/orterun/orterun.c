@@ -277,18 +277,12 @@ int main(int argc, char *argv[])
     }
 
     /* Intialize our Open RTE environment */
-    /* first, set the flag telling orte_init that I am NOT a
+    /* Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
      * require
      */
-
-    id = mca_base_param_reg_int_name("orte_base", "infrastructure",
-                                "Whether we are ORTE infrastructure or an ORTE application",
-                                false, false, (int)true, NULL);
-    
-    /* now call orte_init and setup the RTE */
-    if (ORTE_SUCCESS != (rc = orte_init())) {
+    if (ORTE_SUCCESS != (rc = orte_init(true))) {
         opal_show_help("help-orterun.txt", "orterun:init-failure", true,
                        "orte_init()", rc);
         return rc;

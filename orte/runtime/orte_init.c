@@ -36,7 +36,7 @@ int orte_debug_flag=(int)false;
 
 static const char * orte_err2str(int errnum);
 
-int orte_init(void)
+int orte_init(bool infrastructure)
 {
     int rc;
 
@@ -48,7 +48,7 @@ int orte_init(void)
     /* register handler for errnum -> string converstion */
     opal_error_register(orte_err2str);
     
-    if (ORTE_SUCCESS != (rc = orte_system_init())) {
+    if (ORTE_SUCCESS != (rc = orte_system_init(infrastructure))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

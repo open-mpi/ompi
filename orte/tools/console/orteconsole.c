@@ -281,19 +281,13 @@ int main(int argc, char *argv[])
     /*
      * Intialize the ORTE environment
      */
-    /* first, set the flag telling orte_init that I am NOT a
+    /* Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    ret = mca_base_param_reg_int_name("orte_base", "infrastructure",
-                                "Whether we are ORTE infrastructure or an ORTE application",
-                                false, false, (int)false, NULL);
-    mca_base_param_set_int(ret, (int)true);
-    
     daemon_is_active = false;
-
-    if (OMPI_SUCCESS != (ret = orte_init()) ) {
+    if (OMPI_SUCCESS != (ret = orte_init(true)) ) {
         opal_show_help("help-orteconsole.txt", "orteconsole:init-failure", false,
                        "orte_init()", ret);
         return ret;

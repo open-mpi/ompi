@@ -35,6 +35,7 @@ libruntime_la_SOURCES = \
         orte_abort.c \
         orte_finalize.c \
         orte_init.c \
+        orte_params.c \
         orte_init_stage1.c \
         orte_init_stage2.c \
         orte_monitor.c \
