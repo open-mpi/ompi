@@ -17,7 +17,6 @@
 #include "orte_config.h"
 
 #include "opal/event/event.h"
-#include "opal/util/sys_info.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"

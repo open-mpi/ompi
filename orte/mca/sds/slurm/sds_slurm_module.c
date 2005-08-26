@@ -31,7 +31,7 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/base/base.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "opal/util/argv.h"
 
 orte_sds_base_module_t orte_sds_slurm_module = {

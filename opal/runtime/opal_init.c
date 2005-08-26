@@ -20,7 +20,6 @@
 
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
-#include "opal/util/sys_info.h"
 #include "opal/memory/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -81,9 +80,6 @@ int opal_init(void)
 
     /* register handler for errnum -> string converstion */
     opal_error_register(opal_err2str);
-
-    /* get system information */
-    orte_sys_info();
 
     /* initialize the mca */
     mca_base_open();

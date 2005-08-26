@@ -36,7 +36,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ns/base/base.h"

@@ -36,7 +36,7 @@
 #include "support.h"
 #include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"

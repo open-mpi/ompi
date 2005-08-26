@@ -28,8 +28,16 @@
 
 #include "opal/util/os_create_dirpath.h"
 #include "opal/util/argv.h"
-#include "opal/util/sys_info.h"
 #include "ompi/include/constants.h"
+
+#ifdef WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
+static const char *path_sep = PATH_SEP;
+
 
 int opal_os_create_dirpath(const char *path, const mode_t mode)
 {
@@ -57,12 +65,9 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
     }
 
     /* didnt work, so now have to build our way down the tree */
-    /* ensure system info is valid */
-    orte_sys_info();
-
     /* Split the requested path up into its individual parts */
 
-    parts = opal_argv_split(path, orte_system_info.path_sep[0]);
+    parts = opal_argv_split(path, path_sep[0]);
 
     /* Ensure to allocate enough space for tmp: the strlen of the
        incoming path + 1 (for \0) */
@@ -101,7 +106,7 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
             if (2 == strlen(parts[0]) && isalpha(parts[0][0]) &&
                 ':' == parts[0][1]) {
                 strcat(tmp, parts[i]);
-                strcat(tmp, orte_system_info.path_sep);
+                strcat(tmp, path_sep);
             }
             
             /* Otherwise, it's a relative path.  Per the comment
@@ -116,7 +121,7 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
                name with path_sep */
 
             if ('/' == path[0]) {
-                strcat(tmp, orte_system_info.path_sep);
+                strcat(tmp, path_sep);
             }
             strcat(tmp, parts[i]);
 #endif
@@ -126,8 +131,8 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
            preceeding path_sep and then append this part */
 
         else {
-            if (orte_system_info.path_sep[0] != tmp[strlen(tmp) - 1]) {
-                strcat(tmp, orte_system_info.path_sep);
+            if (path_sep[0] != tmp[strlen(tmp) - 1]) {
+                strcat(tmp, path_sep);
             }
             strcat(tmp, parts[i]);
         }

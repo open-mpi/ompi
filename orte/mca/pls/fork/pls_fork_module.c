@@ -38,7 +38,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "orte/util/univ_info.h"
 #include "opal/util/opal_environ.h"
 #include "orte/util/session_dir.h"
