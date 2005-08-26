@@ -128,12 +128,7 @@ orte_sds_base_seed_set_name(void)
     
     /* if we're a seed and we're not infrastructure, we're also a
        singleton.  So set the singleton flag in that case */
-    id = mca_base_param_find("orte_base", NULL, "infrastructure");
-    if (-1 == id) {
-        id = mca_base_param_reg_int_name("orte_base", "infrastructure",
-                                         "Whether we are ORTE infrastructure or an ORTE application",
-                                         false, false, (int)false, NULL);;
-    }
+    id = mca_base_param_find("orte", NULL, "infrastructure");
     mca_base_param_lookup_int(id, &flag);
     if (!flag) {
         orte_process_info.singleton = true;

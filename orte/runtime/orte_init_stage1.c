@@ -57,7 +57,7 @@
 #include "runtime/runtime_internal.h"
 #include "runtime/orte_wait.h"
 
-int orte_init_stage1(void)
+int orte_init_stage1(bool infrastructure)
 {
     int ret;
     char *jobid_str = NULL;
@@ -65,6 +65,12 @@ int orte_init_stage1(void)
     char *contact_path = NULL;
     orte_jobid_t my_jobid;
     orte_cellid_t my_cellid;
+
+    /* Register all MCA Params */
+    if (ORTE_SUCCESS != (ret = orte_register_params(infrastructure))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {

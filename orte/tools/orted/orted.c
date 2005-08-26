@@ -270,15 +270,12 @@ int main(int argc, char *argv[])
     }
 
     /* Intialize the Open RTE */
-    /* first, set the flag telling orte_init that I am NOT a
+    /* Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    ret = mca_base_param_register_int("orte", "base", "infrastructure", NULL, (int)false);
-    mca_base_param_set_int(ret, (int)true);
-
-    if (ORTE_SUCCESS != (ret = orte_init())) {
+    if (ORTE_SUCCESS != (ret = orte_init(true))) {
         opal_show_help("help-orted.txt", "orted:init-failure", false,
                        "orte_init()", ret);
         return ret;

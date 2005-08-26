@@ -98,9 +98,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Setup ORTE stage 1 */
+    /* Setup ORTE stage 1, note that we are not infrastructre  */
     
-    if (ORTE_SUCCESS != (ret = orte_init_stage1())) {
+    if (ORTE_SUCCESS != (ret = orte_init_stage1(false))) {
         error = "ompi_mpi_init: orte_init_stage1 failed";
         goto error;
     }
