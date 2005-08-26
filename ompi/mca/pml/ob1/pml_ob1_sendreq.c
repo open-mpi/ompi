@@ -333,9 +333,7 @@ int mca_pml_ob1_send_request_start_copy(
             segment = descriptor->des_src;
     
             /* rdma put is supported rather than rdma get */
-            if(do_rdma) {
-                max_data = 0; /* dont eager send any data */
-            } else {
+            if (do_rdma == false && size > 0) {
                 iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + 
                                    sizeof(mca_pml_ob1_rendezvous_hdr_t));
                 iov.iov_len = size;
@@ -350,6 +348,8 @@ int mca_pml_ob1_send_request_start_copy(
                     mca_bml_base_free(bml_btl , descriptor);
                     return rc;
                 }
+            } else {
+                max_data = 0;
             }
 
             /* build hdr */
@@ -414,7 +414,7 @@ int mca_pml_ob1_send_request_start_copy(
             hdr->hdr_rndv.hdr_src_req.pval = sendreq;
             hdr->hdr_rget.hdr_des.pval = src;
             hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
-            for(i=0; i<src->des_src_cnt; i++)
+            for(i=1; i<src->des_src_cnt; i++)
                hdr->hdr_rget.hdr_segs[i] = src->des_src[i];
             descriptor->des_cbfunc = mca_pml_ob1_ctl_completion;
         }
@@ -486,9 +486,6 @@ int mca_pml_ob1_send_request_start_prepare(
         /* update lengths */
         sendreq->req_send_offset = size;
         sendreq->req_rdma_offset = size;
-
-        /* request is complete at mpi level */
-        ompi_request_complete((ompi_request_t*)sendreq);
 
     /* rendezvous header is required */
     } else {
