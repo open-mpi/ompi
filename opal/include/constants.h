@@ -47,7 +47,7 @@ enum {
     OPAL_ERR_FILE_OPEN_FAILURE    = (OPAL_ERR_BASE - 21)
 };
 
-#define OPAL_ERR_MAX                (OPAL_ERR_BASE - 21)
+#define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)
 
 #endif /* OPAL_CONSTANTS_H */
 

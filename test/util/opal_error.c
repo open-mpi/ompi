@@ -36,7 +36,8 @@
 #include "opal/util/error.h"
 #include "opal/include/constants.h"
 #include "opal/runtime/opal.h"
-
+#include "orte/runtime/runtime.h"
+#include "orte/include/orte_constants.h"
 
 int
 main(int argc, char *argv[])
@@ -52,6 +53,8 @@ main(int argc, char *argv[])
     char buf[1024];
 
     opal_init();
+    orte_init_stage1(true);
+    orte_init_stage2();
 
     for (i = 0 ; errors[i] <= 0 ; ++i) {
         printf("--> error code: %d\n", errors[i]);
@@ -70,6 +73,10 @@ main(int argc, char *argv[])
     opal_strerror_r(OPAL_ERR_IN_ERRNO, buf, sizeof(buf));
     printf("strerror_r test: %s\n", buf);
 
+    printf("--> orte error test\n");
+    opal_perror(ORTE_ERR_BUFFER, "orte test");
+
+    orte_system_finalize();
     opal_finalize();
 
     return 0;
