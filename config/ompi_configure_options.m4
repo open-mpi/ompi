@@ -165,14 +165,20 @@ fi
 AC_MSG_CHECKING([if want Fortran 90 bindings])
 AC_ARG_ENABLE(f90, 
     AC_HELP_STRING([--enable-f90],
-                   [enable f90 MPI bindings (default: disabled)]))
-if test "$enable_f90" = "yes"; then
+                   [enable f90 MPI bindings (default: enabled)]))
+if test "$enable_f90" != "no"; then
     AC_MSG_RESULT([yes])
     OMPI_WANT_F90_BINDINGS=1
 else
     AC_MSG_RESULT([no])
     OMPI_WANT_F90_BINDINGS=0
 fi
+#################### Early development override ####################
+if test "$OMPI_WANT_F90_BINDINGS" = "1" -a -z "$enable_f90" -a -d .svn; then
+    OMPI_WANT_F90_BINDINGS=0
+    echo "--> developer override: disable Fortran 90 by default"
+fi
+#################### Early development override ####################
 
 
 #

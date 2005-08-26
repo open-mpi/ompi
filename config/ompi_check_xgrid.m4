@@ -51,10 +51,12 @@ AC_DEFUN([_OMPI_CHECK_XGRID],[
     # Objective C is, so in the end, we put things in OBJCFLAGS and
     # the right things will happen.  *sigh*
 
-    ompi_check_xgrid_save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS -framework XGridFoundation"
-    AC_TRY_LINK([],[;],[ompi_check_xgrid_happy="yes"],[ompi_check_xgrid_happy="no"])
-    CFLAGS="$ompi_check_xgrid_save_CFLAGS"
-
-    AS_IF([test "$ompi_check_xgrid_happy" = "no"], [$2], [$1])
+    AS_IF([test "$ac_cv_sizeof_long" = "8"],
+          [ # can't compile in 64 bit mode
+            $2],
+          [ompi_check_xgrid_save_CFLAGS="$CFLAGS"
+           CFLAGS="$CFLAGS -framework XGridFoundation"
+           AC_TRY_LINK([],[;],[ompi_check_xgrid_happy="yes"],[ompi_check_xgrid_happy="no"])
+           CFLAGS="$ompi_check_xgrid_save_CFLAGS"
+           AS_IF([test "$ompi_check_xgrid_happy" = "no"], [$2], [$1])])
 ])
