@@ -565,7 +565,12 @@ static void exit_callback(int fd, short event, void *arg)
 {
     opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
                    true, orterun_basename);
-    exit(1);
+
+    /* Trigger the normal exit conditions */
+
+    orterun_globals.exit = true;
+    orterun_globals.exit_status = 1;
+    opal_condition_signal(&orterun_globals.cond);
 }
 
 
