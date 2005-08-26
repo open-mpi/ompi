@@ -58,9 +58,6 @@ AM_FCFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include $(OMPI_FC_MODULE_
 
 EXTRA_DIST = mpi_kinds.f90
 
-# We have to build this before the other ones.
-BUILT_SOURCES = mpi_kinds.ompi_module
-
 # Override the default f90 rules because we have to insert
 # $(FCFLAGS_f90) right before the source filename.  This is necessary
 # for cases where the compiler expects source files to end in .f, and
@@ -82,6 +79,10 @@ BUILT_SOURCES = mpi_kinds.ompi_module
 
 lib_LIBRARIES =
 if OMPI_WANT_F90_BINDINGS
+
+# We have to build this before the other ones.
+
+BUILT_SOURCES = mpi_kinds.ompi_module
 
 # Add the f90 library to the list of libraries to build
 
