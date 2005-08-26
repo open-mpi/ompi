@@ -161,11 +161,9 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     mca_btl_tcp_frag_t* frag;
     int rc;
     
-    if(size <= btl->btl_eager_limit){ 
+    if(size <= btl->btl_eager_limit) { 
         MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc); 
-        frag->segments[0].seg_len = 
-            size <= btl->btl_eager_limit ? 
-            size : btl->btl_eager_limit ; 
+        frag->segments[0].seg_len = size;
     } else { 
         MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc); 
         frag->segments[0].seg_len = 
@@ -247,7 +245,13 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
         return NULL;
     }
 
-    if(ompi_convertor_need_buffers(convertor)) {
+    if(max_data == 0) {
+
+        frag->segments[0].seg_addr.pval = (frag + 1);
+        frag->segments[0].seg_len = reserve;
+        frag->base.des_src_cnt = 1;
+
+    } else if(ompi_convertor_need_buffers(convertor)) {
 
         if (max_data + reserve > frag->size) {
             max_data = frag->size - reserve;
@@ -258,7 +262,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
         *size  = max_data;
         if( rc < 0 ) {
-            MCA_BTL_TCP_FRAG_RETURN_EAGER(frag);
+            mca_btl_tcp_free(btl, &frag->base);
             return NULL;
         }
 
@@ -274,7 +278,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
         *size  = max_data;
         if( rc < 0 ) {
-            MCA_BTL_TCP_FRAG_RETURN_EAGER(frag);
+            mca_btl_tcp_free(btl, &frag->base);
             return NULL;
         }
 
