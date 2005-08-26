@@ -49,6 +49,10 @@ extern "C" {
     /** Identifier of the main thread */
     OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
 
+    /** Did we setup maffinity in MPI_INIT (and therefore need to shut
+        it down during MPI_FINALIZE)? */
+    OMPI_DECLSPEC extern bool ompi_mpi_maffinity_setup;
+
 
   /**
    * Initialize the Open MPI MPI environment

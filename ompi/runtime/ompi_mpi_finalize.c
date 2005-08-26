@@ -16,45 +16,46 @@
 
 #include "orte_config.h"
 
-#include "ompi/include/constants.h"
-#include "include/orte_constants.h"
-#include "mca/schema/schema.h"
+#include "opal/event/event.h"
+#include "opal/util/sys_info.h"
+#include "opal/runtime/opal_progress.h"
+#include "opal/mca/maffinity/base/base.h"
+#include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/schema/schema.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/runtime.h"
 
 #include "mpi.h"
-#include "opal/event/event.h"
-#include "group/group.h"
-#include "errhandler/errcode.h"
-#include "errhandler/errclass.h"
-#include "communicator/communicator.h"
-#include "datatype/datatype.h"
-#include "op/op.h"
-#include "file/file.h"
-#include "info/info.h"
-#include "util/proc_info.h"
-#include "util/sys_info.h"
+#include "ompi/include/constants.h"
+#include "ompi/group/group.h"
+#include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errclass.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/op/op.h"
+#include "ompi/file/file.h"
+#include "ompi/info/info.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "orte/runtime/runtime.h"
-#include "opal/runtime/opal_progress.h"
-#include "attribute/attribute.h"
-
-#include "mca/base/base.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
-#include "mca/io/io.h"
-#include "mca/io/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rml/rml.h"
-#include "mca/soh/soh.h"
-#include "mca/soh/base/base.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/mpool/base/base.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/mpool/base/base.h"
 
 
 int ompi_mpi_finalize(void)
@@ -65,6 +66,10 @@ int ompi_mpi_finalize(void)
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     opal_progress_events(OPAL_EVLOOP_NONBLOCK);
 #endif
+    /* If maffinity was setup, tear it down */
+    if (ompi_mpi_maffinity_setup) {
+        opal_maffinity_base_close();
+    }
 
     /* Change progress function priority back to RTE level stuff */
     opal_progress_mpi_disable();
