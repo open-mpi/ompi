@@ -29,6 +29,7 @@
 #endif
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 #include "include/orte_constants.h"
 
@@ -40,6 +41,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "util/sys_info.h"
+#include "opal/event/event.h"
 #include "opal/util/os_path.h"
 #include "opal/util/cmd_line.h"
 #include "util/proc_info.h"
@@ -66,6 +68,11 @@
 extern char **environ;
 
 orted_globals_t orted_globals;
+
+static struct opal_event term_handler;
+static struct opal_event int_handler;
+
+static void signal_callback(int fd, short flags, void *arg);
 
 static void orte_daemon_recv(int status, orte_process_name_t* sender,
 			     orte_buffer_t *buffer, orte_rml_tag_t tag,
@@ -277,6 +284,16 @@ int main(int argc, char *argv[])
         return ret;
     }
    
+    /* Set signal handlers to catch kill signals so we can properly clean up
+     * after ourselves 
+     */
+    opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
+                   signal_callback, NULL);
+    opal_event_add(&term_handler, NULL);
+    opal_event_set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
+                   signal_callback, NULL);
+    opal_event_add(&int_handler, NULL);
+
     /* if requested, report my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
         write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
@@ -397,6 +414,12 @@ int main(int argc, char *argv[])
     }
 
     exit(0);
+}
+
+static void signal_callback(int fd, short flags, void *arg)
+{
+    orted_globals.exit_condition = true;
+    opal_condition_signal(&orted_globals.condition);
 }
 
 static void orte_daemon_recv(int status, orte_process_name_t* sender,
