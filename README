@@ -12,8 +12,10 @@ Additional copyrights may follow
 
 $HEADER$
 
+===========================================================================
 This is a preliminary README file.  It will be scrubbed formally
 before release.
+===========================================================================
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
@@ -37,7 +39,21 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (8 Aug 2005):
+base as of this writing (26 Aug 2005):
+
+- Open MPI includes support for a wide variety of supplemental
+  hardware and software package.  When configuring Open MPI, you may
+  need to supply additional flags to the "configure" script in order
+  to tell Open MPI where the header files, libraries, and any other
+  required files are located.  As such, running "configure" by itself
+  may include support for all the devices (etc.) that you expect,
+  especially if their support headers / libraries are installed in
+  non-standard locations.  Network interconnects are an easy example
+  to discuss -- Myrinet and Infiniband, for example, both have
+  supplemental headers and libraries that must be found before Open
+  MPI can build support for them.  You must specify where these files
+  are with the appropriate options to configure.  See the listing of
+  configure command-line switches, below, for more details.
 
 - The Open MPI installation must be in your PATH on all nodes (and
   potentially LD_LIBRARY_PATH, if libmpi is a shared library).
@@ -55,31 +71,29 @@ base as of this writing (8 Aug 2005):
   happens automatically when multiple networks are available), but
   needs performance tuning.
 
-- The only run-time systems currently supported are:
+- The run-time systems that are currently supported are:
   - rsh / ssh
   - Recent versions of BProc
+  - PBS Pro, Open PBS, Torque (i.e., anything who supports the TM
+    interface)
+  - SLURM
 
 - Complete user and system administrator documentation is missing
   (this file comprises the majority of the current user
   documentation).
 
-- The Fortran 90 MPI API is disabled by default (we have only be able
-  to get it to work with gfortran).  You can enable with with
-  configure options; see below.
-
-- Missing MPI functionality:
-  - MPI-2 one-sided functionality will not be included in the first
-    few releases of Open MPI.
+- MPI-2 one-sided functionality will not be included in the first few
+  releases of Open MPI.
 
 - Systems that have been tested are:
   - Linux, 32 bit, with gcc
+  - Linux, 64 bit (x86), with gcc
   - OS X (10.3), 32 bit, with gcc
   - OS X (10.4), 32 bit, with gcc
 
 - Other systems have been lightly (but not fully tested):
   - Other compilers on Linux, 32 bit
-  - 64 bit platforms (AMD, PPC64, Sparc); they "mostly work", but
-    there are still some known issues
+  - Other 64 bit platforms (PPC64, Sparc)
 
 - There are some cases where after running MPI applications, the
   directory /tmp/openmpi-sessions-<username>@<hostname>* will exist
@@ -95,6 +109,11 @@ base as of this writing (8 Aug 2005):
 
 - Threading support (both asynchronous progress and
   MPI_THREAD_MULTIPLE) is included, but is only lightly tested.
+
+- Due to limitations in the Libtool 1.5 series, Fortran 90 MPI
+  bindings support can only be built as a static library.  It is
+  expected that Libtool 2.0 will be able to support shared libraries
+  for the Fortran 90 bindings.
 
 - On Linux, if either the malloc_hooks or malloc_interpose memory
   hooks are enabled, it will not be possible to link against a static
@@ -167,10 +186,12 @@ for a full list); a summary of the more important ones follows:
   Allows asynchronous progress in some transports.  See
   --with-threads; this is currently disabled by default.
 
---enable-f90
-  Enable building the Fortran 90 MPI bindings (disabled by default).
-  We have only been able to get these bindings to build with gfortran.
-  Also related to the --with-f90-max-array-dim option.
+--disable-f77
+  Disable building the Fortran 77 MPI bindings.
+
+--disable-f90
+  Disable building the Fortran 90 MPI bindings.  Also related to the
+  --with-f90-max-array-dim option.
 
 --with-f90-max-array-dim=<DIM>
   The F90 MPI bindings are stictly typed, even including the number of
@@ -188,14 +209,14 @@ for a full list); a summary of the more important ones follows:
   Build libmpi as a static library, and statically link in all
   components.
 
-There are other options available -- see "./configure --help".
+There are several other options available -- see "./configure --help".
 
 Open MPI supports all the "make" targets that are provided by GNU
 Automake, such as:
 
-all       - build the entire package
-install   - install the package
-uninstall - remove all traces of the package from the $prefix
+all       - build the entire Open MPI package
+install   - install Open MPI
+uninstall - remove all traces of Open MPI from the $prefix
 clean     - clean out the build tree
 
 Once Open MPI has been built and installed, it is safe to run "make
@@ -325,37 +346,39 @@ component frameworks in Open MPI:
 MPI component frameworks:
 -------------------------
 
-coll    - MPI collective algorithms
-io      - MPI-2 I/O
-pml     - MPI point-to-point management layer
-bml     - BTL management layer
-btl     - MPI point-to-point byte transfer layer
-topo    - MPI topology routines
+allocator - Memory allocator
+bml       - BTL management layer
+btl       - MPI point-to-point byte transfer layer
+coll      - MPI collective algorithms
+io        - MPI-2 I/O
+mpool     - Memory pooling
+pml       - MPI point-to-point management layer
+topo      - MPI topology routines
 
 Back-end run-time environment component frameworks:
 ---------------------------------------------------
 
-errmgr  - RTE error manager
-gpr     - General purpose registry
-iof     - I/O forwarding
-ns      - Name server
-oob     - Out of band messaging
-pls     - Process launch system
-ras     - Resource allocation system
-rds     - Resource discovery system
-rmaps   - Resource mapping system
-rmgr    - Resource manager
-rml     - RTE message layer
-soh     - State of health monitor
+errmgr    - RTE error manager
+gpr       - General purpose registry
+iof       - I/O forwarding
+ns        - Name server
+oob       - Out of band messaging
+pls       - Process launch system
+ras       - Resource allocation system
+rds       - Resource discovery system
+rmaps     - Resource mapping system
+rmgr      - Resource manager
+rml       - RTE message layer
+soh       - State of health monitor
 
 Miscellaneous frameworks:
 -------------------------
 
-allocator - Memory allocator
-mpool     - Memory pooling
+maffinity - Memory affinity
+memory    - Memory subsystem hooks
 paffinity - Processor affinity
 timer     - High-resolution timers
-memory    - Memory subsystem hooks
+
 ---------------------------------------------------------------------------
 
 Each framework typically has one or more components that are used at
@@ -416,31 +439,10 @@ defaults.
 Common Questions
 ----------------
 
-1. How do I change the rsh/ssh launcher to use rsh?
+Many common questions about building and using Open MPI are answered
+on the FAQ:
 
-   The default remote shell agent for the rsh/ssh launcher is ssh, but
-   you can set an MCA parameter to change it to rsh (or use a specific
-   path for ssh, pass different parameters to rsh/ssh, etc.).  The MCA
-   parameter name is pls_rsh_agent.  You can use any of the methods
-   for setting MCA parameters described above; for example:
-
-   shell$ mpirun --mca pls_rsh_agent rsh -np 4 a.out
-
-2. When I run "make", it looks very much like the build system is
-   going into a loop, and I see messages similar to:
-
-       Warning: File `Makefile.am' has modification time 3.6e+04 s in
-       the future
-
-   Open MPI uses an Automake-based build system, and is therefore
-   highly dependent upon filesystem timestamps.  If building on a
-   networked file system, you *must* ensure that the time of the
-   machine that you are building on is tightly synchronized with the
-   time on your network fileserver (e.g., using ntp).  If this is not
-   possible, you will need to build Open MPI on a non-networked
-   filesystem.
-
-...we'll add more questions here as they are asked by real users.
+    http://www.open-mpi.org/faq/
 
 ===========================================================================
 
