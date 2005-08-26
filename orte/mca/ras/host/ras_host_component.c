@@ -76,7 +76,7 @@ static int orte_ras_host_param_register_int(
 }
 
 
-static char *orte_rmaps_round_robin_param_register_string(
+static char *orte_ras_host_param_register_string(
     const char * a, const char *b, const char *c,
     char *default_value)
 {
@@ -98,7 +98,7 @@ static int orte_ras_host_open(void)
         orte_ras_host_param_register_int("priority", 1);
     /* JMS To be changed post-beta to LAM's C/N command line notation */
     mca_ras_host_component.schedule_policy = 
-        orte_rmaps_round_robin_param_register_string("ras", "base", "schedule_policy", "slot");
+        orte_ras_host_param_register_string("ras", "base", "schedule_policy", "slot");
     return ORTE_SUCCESS;
 }
 
@@ -115,6 +115,10 @@ static orte_ras_base_module_t *orte_ras_host_init(int* priority)
 
 static int orte_ras_host_close(void)
 {
+    if (NULL != mca_ras_host_component.schedule_policy) {
+        free(mca_ras_host_component.schedule_policy);
+    }
+
     return ORTE_SUCCESS;
 }
 
