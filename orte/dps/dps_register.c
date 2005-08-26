@@ -50,7 +50,7 @@ int orte_dps_register(orte_dps_pack_fn_t pack_fn,
     }
         
     /* Add a new entry to the table */
-    info = (orte_dps_type_info_t*)malloc(sizeof(orte_dps_type_info_t));
+    info = (orte_dps_type_info_t*) OBJ_NEW(orte_dps_type_info_t);
     if (NULL == info) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;

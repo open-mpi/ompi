@@ -109,6 +109,7 @@ extern "C" {
  * Internal struct used for holding registered dps functions
  */
 struct orte_dps_type_info_t {
+    opal_object_t super;
     /* type identifier */
     orte_data_type_t odti_type;
     /** Debugging string name */
@@ -122,6 +123,7 @@ struct orte_dps_type_info_t {
  * Convenience typedef
  */
 typedef struct orte_dps_type_info_t orte_dps_type_info_t;
+OBJ_CLASS_DECLARATION(orte_dps_type_info_t);
 
 /*
  * globals needed within dps

@@ -40,6 +40,7 @@ const char *mca_pls_slurm_component_version_string =
  * Local functions
  */
 static int pls_slurm_open(void);
+static int pls_slurm_close(void);
 static struct orte_pls_base_module_1_0_0_t *pls_slurm_init(int *priority);
 
 
@@ -70,7 +71,7 @@ orte_pls_slurm_component_t mca_pls_slurm_component = {
             /* Component open and close functions */
             
             pls_slurm_open,
-            NULL
+            pls_slurm_close
         },
         
         /* Next the MCA v1.0.0 component meta data */
@@ -126,4 +127,14 @@ static struct orte_pls_base_module_1_0_0_t *pls_slurm_init(int *priority)
     /* Sadly, no */
 
     return NULL;
+}
+
+
+static int pls_slurm_close(void)
+{
+    if (NULL != mca_pls_slurm_component.orted) {
+        free(mca_pls_slurm_component.orted);
+    }
+
+    return ORTE_SUCCESS;
 }

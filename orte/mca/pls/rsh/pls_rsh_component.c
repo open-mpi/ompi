@@ -155,6 +155,7 @@ int orte_pls_rsh_component_open(void)
                               &param);
     mca_pls_rsh_component.argv = opal_argv_split(param, ' ');
     mca_pls_rsh_component.argc = opal_argv_count(mca_pls_rsh_component.argv);
+    if (NULL != param) free(param);
     if (mca_pls_rsh_component.argc > 0) {
         /* If the agent is ssh, and debug was not selected, then
            automatically add "-x" */
@@ -207,6 +208,9 @@ int orte_pls_rsh_component_close(void)
     /* cleanup state */
     OBJ_DESTRUCT(&mca_pls_rsh_component.lock);
     OBJ_DESTRUCT(&mca_pls_rsh_component.cond);
+    if (NULL != mca_pls_rsh_component.orted) {
+        free(mca_pls_rsh_component.orted);
+    }
     if(NULL != mca_pls_rsh_component.argv)
         opal_argv_free(mca_pls_rsh_component.argv);
     if(NULL != mca_pls_rsh_component.path)

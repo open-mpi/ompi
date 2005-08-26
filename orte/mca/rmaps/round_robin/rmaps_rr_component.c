@@ -117,6 +117,10 @@ orte_rmaps_round_robin_init(int *priority)
 
 static int orte_rmaps_round_robin_close(void)
 {
+    if (NULL != mca_rmaps_round_robin_component.schedule_policy) {
+        free(mca_rmaps_round_robin_component.schedule_policy);
+    }
+
     return ORTE_SUCCESS;
 }
 

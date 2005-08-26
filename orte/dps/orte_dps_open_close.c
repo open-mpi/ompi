@@ -74,6 +74,23 @@ OBJ_CLASS_INSTANCE(orte_buffer_t,
                    orte_buffer_destruct);
 
 
+static void orte_dps_type_info_construct(orte_dps_type_info_t *obj)
+{
+    obj->odti_name = NULL;
+}
+
+static void orte_dps_type_info_destruct(orte_dps_type_info_t *obj)
+{
+    if (NULL != obj->odti_name) {
+        free(obj->odti_name);
+    }
+}
+
+OBJ_CLASS_INSTANCE(orte_dps_type_info_t, opal_object_t,
+                   orte_dps_type_info_construct,
+                   orte_dps_type_info_destruct);
+
+
 int orte_dps_open(void)
 {
     char *enviro_val;
@@ -243,7 +260,18 @@ int orte_dps_open(void)
 
 int orte_dps_close(void)
 {
+    size_t i;
+
     orte_dps_initialized = false;
+
+    for (i = 0 ; i < orte_pointer_array_get_size(orte_dps_types) ; ++i) {
+        orte_dps_type_info_t *info = orte_pointer_array_get_item(orte_dps_types, i);
+        if (NULL != info) {
+            OBJ_RELEASE(info);
+        }
+    }
+
+    OBJ_RELEASE(orte_dps_types);
 
     return ORTE_SUCCESS;
 }

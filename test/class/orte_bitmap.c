@@ -7,7 +7,8 @@
 
 #include <stdio.h>
 #include "support.h"
-#include "class/orte_bitmap.h"
+#include "orte/class/orte_bitmap.h"
+#include "opal/runtime/opal.h"
 
 #define STANDALONE
 
@@ -51,6 +52,8 @@ int main(int argc, char *argv[])
     orte_bitmap_t bm;
     int err;
     
+    opal_init();
+
     /* Perform overall test initialization */
     test_init("orte_bitmap_t");
 
@@ -61,6 +64,8 @@ int main(int argc, char *argv[])
     if( error_out == NULL ) error_out = stderr;
 #endif
     /* Initialize bitmap  */
+
+    OBJ_CONSTRUCT(&bm, orte_bitmap_t);
 
     PRINT_VALID_ERR;
     err = orte_bitmap_init(NULL, 2);
@@ -97,12 +102,16 @@ int main(int argc, char *argv[])
     fprintf(error_out, "\nTesting bitmap find_size... \n");
     test_bitmap_find_size(&bm);
 
+    OBJ_DESTRUCT(&bm);
+
     fprintf(error_out, "\n~~~~~~     Testing complete     ~~~~~~ \n\n");
 
     test_finalize();
 #ifndef STANDALONE
     fclose(error_out);
 #endif
+
+    opal_finalize();
 
     return 0;
 }

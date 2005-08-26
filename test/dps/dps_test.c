@@ -46,6 +46,7 @@
 #include "orte/mca/gpr/base/base.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/soh/base/base.h"
+#include "opal/runtime/opal.h"
 
 #define NUM_ITERS 3
 #define NUM_ELEMS 10
@@ -74,27 +75,17 @@ int main (int argc, char* argv[])
 {
     int ret;
 
+    opal_init();
+
     test_init("orte_dps");
     test_out = stderr;
     
-    /* Open up the output streams */
-    if (!opal_output_init()) {
-        return OMPI_ERROR;
-    }
 
     /* 
      * If threads are supported - assume that we are using threads -
      * and reset otherwise.
      */
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-
-    /* For malloc debugging */
-    opal_malloc_init();
-
-    /* Ensure the system_info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_sys_info())) {
-        return ret;
-    }
 
     /* Ensure the process info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_proc_info())) {
@@ -106,14 +97,6 @@ int main (int argc, char* argv[])
     orte_process_info.my_name->cellid = 0;
     orte_process_info.my_name->jobid = 0;
     orte_process_info.my_name->vpid = 0;
-
-    /* startup the MCA */
-    if (OMPI_SUCCESS == mca_base_open()) {
-        fprintf(test_out, "MCA started\n");
-    } else {
-        fprintf(test_out, "MCA could not start\n");
-        exit (1);
-    }
 
     /* open the dps */
     if (ORTE_SUCCESS == orte_dps_open()) {
@@ -295,6 +278,15 @@ int main (int argc, char* argv[])
 
     ret = test_finalize();
     fclose(test_out);
+
+    orte_soh_base_close();
+    orte_rmgr_base_close();
+    orte_gpr_base_close();
+    orte_ns_base_close();
+    orte_dps_close();
+
+    opal_finalize();
+
     return ret;
 }
 
