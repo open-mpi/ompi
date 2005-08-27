@@ -22,14 +22,30 @@
 ##############################################################################
 #
 # User-definable parameters (search path and minimum supported versions)
-#
+# 
+# Note: use ';' to separate parameters
 ##############################################################################
 
 ompi_aclocal_search="aclocal"
+if test ! -z "$ACLOCAL"; then
+    ompi_aclocal_search="$ACLOCAL"
+fi
 ompi_autoheader_search="autoheader"
+if test ! -z "$AUTOHEADER"; then
+    ompi_autoheader_search="$AUTOHEADER"
+fi
 ompi_autoconf_search="autoconf"
-ompi_libtoolize_search="libtoolize glibtoolize"
+if test ! -z "$AUTOCONF"; then
+    ompi_autoconf_search="$AUTOCONF"
+fi
+ompi_libtoolize_search="libtoolize;glibtoolize"
+if test ! -z "$LIBTOOLIZE"; then
+    ompi_libtoolize_search="$LIBTOOLIZE"
+fi
 ompi_automake_search="automake"
+if test ! -z "$AUTOMAKE"; then
+    ompi_automake_search="$AUTOMAKE"
+fi
 
 ompi_automake_version="1.7"
 ompi_autoconf_version="2.58"
@@ -137,13 +153,16 @@ find_app() {
     local version="0.0.0"
     local min_version="99.99.99"
     local found=0
+    local tmpIFS=$IFS
 
     eval "min_version=\"\$ompi_${app_name}_version\""
-
     eval "search_path=\"\$ompi_${app_name}_search\""
+    IFS=";"
     for i in $search_path ; do
+        IFS="$tmpIFS"
         version="`${i} --version 2>&1`"
         if test "$?" != 0 ; then
+            IFS=";"
             continue
         fi
 
@@ -156,6 +175,8 @@ find_app() {
             break
         fi
     done
+
+    IFS="$tmpIFS"
 
     if test "$found" = "0" ; then
 	cat <<EOF
