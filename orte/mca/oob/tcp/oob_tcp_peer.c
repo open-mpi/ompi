@@ -273,7 +273,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
                                                                                                                                  
 static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 {
-    int rc,flags;
+    int rc, flags;
     struct sockaddr_in inaddr;
 
     /* create socket */
@@ -309,58 +309,73 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
                 ompi_socket_errno);
     }
 
-    /* pick an address in round-robin fashion from the list exported by the peer */
-    if((rc = mca_oob_tcp_addr_get_next(peer->peer_addr, &inaddr)) != OMPI_SUCCESS) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: mca_oob_tcp_addr_get_next failed with error=%d",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            rc);
-        return rc;
-    }
-
     if(mca_oob_tcp_component.tcp_debug > 0) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connecting port %d to: %s:%d\n",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            ntohs(mca_oob_tcp_component.tcp_listen_port),
-            inet_ntoa(inaddr.sin_addr),
-            ntohs(inaddr.sin_port));
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: trying all %d addresses\n",
+                    ORTE_NAME_ARGS(orte_process_info.my_name),
+                    ORTE_NAME_ARGS(&(peer->peer_name)), peer->peer_addr->addr_count );
     }
 
-    /* start the connect - will likely fail with EINPROGRESS */
-    if(connect(peer->peer_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        /* non-blocking so wait for completion */
-        IMPORTANT_WINDOWS_COMMENT();
-        if(ompi_socket_errno == EINPROGRESS || ompi_socket_errno == EWOULDBLOCK) {
-            opal_event_add(&peer->peer_send_event, 0);
-            return OMPI_SUCCESS;
+    /* 
+     * We should parse all the IP addresses exported by the peer and try to connect to each of them.
+     */
+    do {
+        /* pick an address in round-robin fashion from the list exported by the peer */
+        if((rc = mca_oob_tcp_addr_get_next(peer->peer_addr, &inaddr)) != OMPI_SUCCESS) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: mca_oob_tcp_addr_get_next failed with error=%d",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)),
+                        rc);
+            break;
         }
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connect to %s:%d failed with errno=%d",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            inet_ntoa(inaddr.sin_addr),
-            ntohs(inaddr.sin_port),
-            ompi_socket_errno);
-        mca_oob_tcp_peer_close(peer);
-        return OMPI_ERR_UNREACH;
-    }
-
-    /* send our globally unique process identifier to the peer */
-    if((rc = mca_oob_tcp_peer_send_connect_ack(peer)) == OMPI_SUCCESS) {
-        peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
-        opal_event_add(&peer->peer_recv_event, 0);
-    } else {
-        opal_output(0, 
-            "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: "
-            "mca_oob_tcp_peer_send_connect_ack to %s:%d failed with errno=%d",
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            inet_ntoa(inaddr.sin_addr),
-            ntohs(inaddr.sin_port),
-            rc);
-        mca_oob_tcp_peer_close(peer);
-    }
-    return rc;
+        if(mca_oob_tcp_component.tcp_debug > 0) {
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connecting port %d to: %s:%d\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)),
+                        ntohs(mca_oob_tcp_component.tcp_listen_port),
+                        inet_ntoa(inaddr.sin_addr),
+                        ntohs(inaddr.sin_port));
+        }
+        
+        /* start the connect - will likely fail with EINPROGRESS */
+        if(connect(peer->peer_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
+            /* non-blocking so wait for completion */
+            IMPORTANT_WINDOWS_COMMENT();
+            if(ompi_socket_errno == EINPROGRESS || ompi_socket_errno == EWOULDBLOCK) {
+                opal_event_add(&peer->peer_send_event, 0);
+                /* Waiting for completion in the middle of the list ?! Let's just hope we try with the
+                 * correct IP address...
+                 */
+                return OMPI_SUCCESS;
+            }
+            if(mca_oob_tcp_component.tcp_debug > 0) {
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connect to %s:%d failed with errno=%d",
+                            ORTE_NAME_ARGS(orte_process_info.my_name),
+                            ORTE_NAME_ARGS(&(peer->peer_name)),
+                            inet_ntoa(inaddr.sin_addr),
+                            ntohs(inaddr.sin_port),
+                            ompi_socket_errno);
+            }
+            continue;
+        }
+        
+        /* send our globally unique process identifier to the peer */
+        if((rc = mca_oob_tcp_peer_send_connect_ack(peer)) == OMPI_SUCCESS) {
+            peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
+            opal_event_add(&peer->peer_recv_event, 0);
+            return OMPI_SUCCESS;  /* successfully connect to the peer */
+        } else {
+            opal_output(0, 
+                        "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: "
+                        "mca_oob_tcp_peer_send_connect_ack to %s:%d failed with errno=%d",
+                        ORTE_NAME_ARGS(orte_process_info.my_name),
+                        ORTE_NAME_ARGS(&(peer->peer_name)),
+                        inet_ntoa(inaddr.sin_addr),
+                        ntohs(inaddr.sin_port),
+                        rc);
+        }
+    } while( peer->peer_addr->addr_next != 0 );
+    mca_oob_tcp_peer_close(peer);
+    return OMPI_ERR_UNREACH;
 }
 
 
