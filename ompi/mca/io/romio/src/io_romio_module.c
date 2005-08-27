@@ -17,7 +17,7 @@
 
 #include "mpi.h"
 #include "opal/threads/mutex.h"
-#include "mca/io/io.h"
+#include "ompi/mca/io/io.h"
 #include "io_romio.h"
 
 

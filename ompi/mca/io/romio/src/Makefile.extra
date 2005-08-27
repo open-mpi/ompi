@@ -30,7 +30,7 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/ompi \
         -I$(top_ompi_srcdir)/ompi/include \
         -I$(top_ompi_srcdir)/ompi/mca/io/romio \
-        -I$(top_ompi_srcdir)/ompi/mca/io/romio/romio-dist/include \
+        -I$(top_ompi_srcdir)/ompi/mca/io/romio/romio/include \
         -I$(top_builddir)
 
 sources += \

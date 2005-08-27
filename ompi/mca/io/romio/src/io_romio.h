@@ -17,13 +17,13 @@
 #ifndef MCA_IO_ROMIO_H
 #define MCA_IO_ROMIO_H
 
-#include "request/request.h"
-#include "file/file.h"
 #include "opal/threads/mutex.h"
-#include "romio-dist/adio/include/romioconf.h"
-#include "romio-dist/include/mpio.h"
-#include "mca/io/io.h"
-#include "mca/io/base/io_base_request.h"
+#include "ompi/request/request.h"
+#include "ompi/file/file.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/io/base/io_base_request.h"
+#include "romio/adio/include/romioconf.h"
+#include "romio/include/mpio.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

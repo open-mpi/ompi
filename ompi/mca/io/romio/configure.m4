@@ -54,7 +54,7 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                    AC_CHECK_LIB(aio, main)
 
                    ompi_show_subtitle "Configuring ROMIO distribution"
-                   OMPI_CONFIG_SUBDIR([ompi/mca/io/romio/romio-dist], 
+                   OMPI_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 
                                       [$io_romio_flags],
                                       [io_romio_happy=1], [io_romio_happy=0])
 
