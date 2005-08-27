@@ -564,7 +564,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 static void exit_callback(int fd, short event, void *arg)
 {
     opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
-                   true, orterun_basename);
+                   true, orterun_basename, orterun_basename);
 
     /* Trigger the normal exit conditions */
 
