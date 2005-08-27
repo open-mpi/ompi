@@ -39,7 +39,7 @@ ptl_mx_SOURCES = ptl_mx.c ptl_mx.h ptl_mx_component.c ptl_mx_module.c ptl_mx_mod
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ptl_mx_la_SOURCES = $(mx_SOURCES)
-mca_ptl_mx_la_LIBADD = $(ptl_mx_LIBX)
+mca_ptl_mx_la_LIBADD = $(ptl_mx_LIBS)
 mca_ptl_mx_la_LDFLAGS = -module -avoid-version $(ptl_mx_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
