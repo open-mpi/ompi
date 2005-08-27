@@ -366,11 +366,23 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env)
                     "pls:slurm:start_proc: fork failed");
         return ORTE_ERR_IN_ERRNO;
     } else if (0 == srun_pid) {
+        /* get the srun process out of orterun's process group so that
+           signals sent from the shell (like those resulting from
+           cntl-c) don't get sent to srun */
+        setpgid(0, 0);
+
         opal_output(orte_pls_base.pls_output,
                     "pls:slurm:start_proc: exec failed");
         execve(exec_argv, argv, env);
-        return ORTE_ERR_IN_ERRNO;
+        /* don't return - need to exit - returning would be bad -
+           we're not in the calling process anymore */
+        exit(1);
     }
+
+    /* just in case, make sure that the srun process is not in our
+       process group any more.  Stevens says always do this on both
+       sides of the fork... */
+    setpgid(srun_pid, srun_pid);
 
     return ORTE_SUCCESS;
 }
