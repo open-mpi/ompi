@@ -40,23 +40,23 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libadio_ufs.la
 libadio_ufs_la_SOURCES = \
-        mca_io_romio_dist_ad_ufs.c \
-        mca_io_romio_dist_ad_ufs_close.c \
-        mca_io_romio_dist_ad_ufs_done.c \
-        mca_io_romio_dist_ad_ufs_fcntl.c \
-        mca_io_romio_dist_ad_ufs_flush.c \
+        io_romio_ad_ufs.c \
+        io_romio_ad_ufs_close.c \
+        io_romio_ad_ufs_done.c \
+        io_romio_ad_ufs_fcntl.c \
+        io_romio_ad_ufs_flush.c \
         ad_ufs.h \
-        mca_io_romio_dist_ad_ufs_hints.c \
-        mca_io_romio_dist_ad_ufs_iread.c \
-        mca_io_romio_dist_ad_ufs_iwrite.c \
-        mca_io_romio_dist_ad_ufs_open.c \
-        mca_io_romio_dist_ad_ufs_rdcoll.c \
-        mca_io_romio_dist_ad_ufs_read.c \
-        mca_io_romio_dist_ad_ufs_resize.c \
-        mca_io_romio_dist_ad_ufs_seek.c \
-        mca_io_romio_dist_ad_ufs_wait.c \
-        mca_io_romio_dist_ad_ufs_wrcoll.c \
-        mca_io_romio_dist_ad_ufs_write.c
+        io_romio_ad_ufs_hints.c \
+        io_romio_ad_ufs_iread.c \
+        io_romio_ad_ufs_iwrite.c \
+        io_romio_ad_ufs_open.c \
+        io_romio_ad_ufs_rdcoll.c \
+        io_romio_ad_ufs_read.c \
+        io_romio_ad_ufs_resize.c \
+        io_romio_ad_ufs_seek.c \
+        io_romio_ad_ufs_wait.c \
+        io_romio_ad_ufs_wrcoll.c \
+        io_romio_ad_ufs_write.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -64,7 +64,7 @@ libadio_ufs_la_SOURCES = \
 dir=$(top_srcdir)/adio/ad_ufs
 $(libadio_ufs_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi

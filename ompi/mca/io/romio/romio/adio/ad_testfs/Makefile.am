@@ -40,26 +40,26 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libadio_testfs.la
 libadio_testfs_la_SOURCES = \
-        mca_io_romio_dist_ad_testfs.c \
+        io_romio_ad_testfs.c \
         ad_testfs.h \
-        mca_io_romio_dist_ad_testfs_close.c \
-        mca_io_romio_dist_ad_testfs_delete.c \
-        mca_io_romio_dist_ad_testfs_done.c \
-        mca_io_romio_dist_ad_testfs_fcntl.c \
-        mca_io_romio_dist_ad_testfs_flush.c \
-        mca_io_romio_dist_ad_testfs_getsh.c \
-        mca_io_romio_dist_ad_testfs_hints.c \
-        mca_io_romio_dist_ad_testfs_iread.c \
-        mca_io_romio_dist_ad_testfs_iwrite.c \
-        mca_io_romio_dist_ad_testfs_open.c \
-        mca_io_romio_dist_ad_testfs_rdcoll.c \
-        mca_io_romio_dist_ad_testfs_read.c \
-        mca_io_romio_dist_ad_testfs_resize.c \
-        mca_io_romio_dist_ad_testfs_seek.c \
-        mca_io_romio_dist_ad_testfs_setsh.c \
-        mca_io_romio_dist_ad_testfs_wait.c \
-        mca_io_romio_dist_ad_testfs_wrcoll.c \
-        mca_io_romio_dist_ad_testfs_write.c
+        io_romio_ad_testfs_close.c \
+        io_romio_ad_testfs_delete.c \
+        io_romio_ad_testfs_done.c \
+        io_romio_ad_testfs_fcntl.c \
+        io_romio_ad_testfs_flush.c \
+        io_romio_ad_testfs_getsh.c \
+        io_romio_ad_testfs_hints.c \
+        io_romio_ad_testfs_iread.c \
+        io_romio_ad_testfs_iwrite.c \
+        io_romio_ad_testfs_open.c \
+        io_romio_ad_testfs_rdcoll.c \
+        io_romio_ad_testfs_read.c \
+        io_romio_ad_testfs_resize.c \
+        io_romio_ad_testfs_seek.c \
+        io_romio_ad_testfs_setsh.c \
+        io_romio_ad_testfs_wait.c \
+        io_romio_ad_testfs_wrcoll.c \
+        io_romio_ad_testfs_write.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -67,7 +67,7 @@ libadio_testfs_la_SOURCES = \
 dir=$(top_srcdir)/adio/ad_testfs
 $(libadio_testfs_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi

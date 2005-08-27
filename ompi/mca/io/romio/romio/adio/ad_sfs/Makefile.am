@@ -40,23 +40,23 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libadio_sfs.la
 libadio_sfs_la_SOURCES = \
-        mca_io_romio_dist_ad_sfs.c \
+        io_romio_ad_sfs.c \
         ad_sfs.h \
-        mca_io_romio_dist_ad_sfs_close.c \
-        mca_io_romio_dist_ad_sfs_done.c \
-        mca_io_romio_dist_ad_sfs_fcntl.c \
-        mca_io_romio_dist_ad_sfs_flush.c \
-        mca_io_romio_dist_ad_sfs_hints.c \
-        mca_io_romio_dist_ad_sfs_iread.c \
-        mca_io_romio_dist_ad_sfs_iwrite.c \
-        mca_io_romio_dist_ad_sfs_open.c \
-        mca_io_romio_dist_ad_sfs_rdcoll.c \
-        mca_io_romio_dist_ad_sfs_read.c \
-        mca_io_romio_dist_ad_sfs_resize.c \
-        mca_io_romio_dist_ad_sfs_seek.c \
-        mca_io_romio_dist_ad_sfs_wait.c \
-        mca_io_romio_dist_ad_sfs_wrcoll.c \
-        mca_io_romio_dist_ad_sfs_write.c
+        io_romio_ad_sfs_close.c \
+        io_romio_ad_sfs_done.c \
+        io_romio_ad_sfs_fcntl.c \
+        io_romio_ad_sfs_flush.c \
+        io_romio_ad_sfs_hints.c \
+        io_romio_ad_sfs_iread.c \
+        io_romio_ad_sfs_iwrite.c \
+        io_romio_ad_sfs_open.c \
+        io_romio_ad_sfs_rdcoll.c \
+        io_romio_ad_sfs_read.c \
+        io_romio_ad_sfs_resize.c \
+        io_romio_ad_sfs_seek.c \
+        io_romio_ad_sfs_wait.c \
+        io_romio_ad_sfs_wrcoll.c \
+        io_romio_ad_sfs_write.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -64,7 +64,7 @@ libadio_sfs_la_SOURCES = \
 dir=$(top_srcdir)/adio/ad_sfs
 $(libadio_sfs_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi

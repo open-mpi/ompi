@@ -40,39 +40,39 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libadio_common.la
 libadio_common_la_SOURCES = \
-        mca_io_romio_dist_ad_aggregate.c \
-        mca_io_romio_dist_ad_close.c \
-        mca_io_romio_dist_ad_delete.c \
-        mca_io_romio_dist_ad_end.c \
-        mca_io_romio_dist_ad_flush.c \
-        mca_io_romio_dist_ad_fstype.c \
-        mca_io_romio_dist_ad_get_sh_fp.c \
-        mca_io_romio_dist_ad_hints.c \
-        mca_io_romio_dist_ad_init.c \
-        mca_io_romio_dist_ad_open.c \
-        mca_io_romio_dist_ad_read_coll.c \
-        mca_io_romio_dist_ad_read_str.c \
-        mca_io_romio_dist_ad_read_str_naive.c \
-        mca_io_romio_dist_ad_seek.c \
-        mca_io_romio_dist_ad_set_sh_fp.c \
-        mca_io_romio_dist_ad_set_view.c \
-        mca_io_romio_dist_ad_write_coll.c \
-        mca_io_romio_dist_ad_write_str.c \
-        mca_io_romio_dist_async_list.c \
-        mca_io_romio_dist_byte_offset.c \
-        mca_io_romio_dist_cb_config_list.c \
-        mca_io_romio_dist_eof_offset.c \
-        mca_io_romio_dist_error.c \
-        mca_io_romio_dist_flatten.c \
-        mca_io_romio_dist_gencheck.c \
-        mca_io_romio_dist_get_fp_posn.c \
-        mca_io_romio_dist_iscontig.c \
-        mca_io_romio_dist_lock.c \
-        mca_io_romio_dist_malloc.c \
-        mca_io_romio_dist_req_malloc.c \
-        mca_io_romio_dist_setfn.c \
-        mca_io_romio_dist_shfp_fname.c \
-        mca_io_romio_dist_status_setb.c
+        io_romio_ad_aggregate.c \
+        io_romio_ad_close.c \
+        io_romio_ad_delete.c \
+        io_romio_ad_end.c \
+        io_romio_ad_flush.c \
+        io_romio_ad_fstype.c \
+        io_romio_ad_get_sh_fp.c \
+        io_romio_ad_hints.c \
+        io_romio_ad_init.c \
+        io_romio_ad_open.c \
+        io_romio_ad_read_coll.c \
+        io_romio_ad_read_str.c \
+        io_romio_ad_read_str_naive.c \
+        io_romio_ad_seek.c \
+        io_romio_ad_set_sh_fp.c \
+        io_romio_ad_set_view.c \
+        io_romio_ad_write_coll.c \
+        io_romio_ad_write_str.c \
+        io_romio_async_list.c \
+        io_romio_byte_offset.c \
+        io_romio_cb_config_list.c \
+        io_romio_eof_offset.c \
+        io_romio_error.c \
+        io_romio_flatten.c \
+        io_romio_gencheck.c \
+        io_romio_get_fp_posn.c \
+        io_romio_iscontig.c \
+        io_romio_lock.c \
+        io_romio_malloc.c \
+        io_romio_req_malloc.c \
+        io_romio_setfn.c \
+        io_romio_shfp_fname.c \
+        io_romio_status_setb.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -80,7 +80,7 @@ libadio_common_la_SOURCES = \
 dir=$(top_srcdir)/adio/common
 $(libadio_common_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi

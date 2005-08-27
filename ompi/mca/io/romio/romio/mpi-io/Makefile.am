@@ -45,65 +45,65 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libmpi-io.la
 libmpi_io_la_SOURCES = \
-        mca_io_romio_dist_close.c \
-        mca_io_romio_dist_delete.c \
-        mca_io_romio_dist_fsync.c \
-        mca_io_romio_dist_get_amode.c \
-        mca_io_romio_dist_get_atom.c \
-        mca_io_romio_dist_get_bytoff.c \
-        mca_io_romio_dist_get_errh.c \
-        mca_io_romio_dist_get_extent.c \
-        mca_io_romio_dist_get_group.c \
-        mca_io_romio_dist_get_info.c \
-        mca_io_romio_dist_get_posn.c \
-        mca_io_romio_dist_get_posn_sh.c \
-        mca_io_romio_dist_get_size.c \
-        mca_io_romio_dist_get_view.c \
-        mca_io_romio_dist_ioreq_c2f.c \
-        mca_io_romio_dist_ioreq_f2c.c \
-        mca_io_romio_dist_iotest.c \
-        mca_io_romio_dist_iowait.c \
-        mca_io_romio_dist_iread_at.c \
-        mca_io_romio_dist_iread.c \
-        mca_io_romio_dist_iread_sh.c \
-        mca_io_romio_dist_iwrite_at.c \
-        mca_io_romio_dist_iwrite.c \
-        mca_io_romio_dist_iwrite_sh.c \
+        io_romio_close.c \
+        io_romio_delete.c \
+        io_romio_fsync.c \
+        io_romio_get_amode.c \
+        io_romio_get_atom.c \
+        io_romio_get_bytoff.c \
+        io_romio_get_errh.c \
+        io_romio_get_extent.c \
+        io_romio_get_group.c \
+        io_romio_get_info.c \
+        io_romio_get_posn.c \
+        io_romio_get_posn_sh.c \
+        io_romio_get_size.c \
+        io_romio_get_view.c \
+        io_romio_ioreq_c2f.c \
+        io_romio_ioreq_f2c.c \
+        io_romio_iotest.c \
+        io_romio_iowait.c \
+        io_romio_iread_at.c \
+        io_romio_iread.c \
+        io_romio_iread_sh.c \
+        io_romio_iwrite_at.c \
+        io_romio_iwrite.c \
+        io_romio_iwrite_sh.c \
         mpioimpl.h \
         mpioprof.h \
-        mca_io_romio_dist_open.c \
-        mca_io_romio_dist_prealloc.c \
-        mca_io_romio_dist_rd_atallb.c \
-        mca_io_romio_dist_rd_atalle.c \
-        mca_io_romio_dist_read_allb.c \
-        mca_io_romio_dist_read_all.c \
-        mca_io_romio_dist_read_alle.c \
-        mca_io_romio_dist_read_atall.c \
-        mca_io_romio_dist_read_at.c \
-        mca_io_romio_dist_read.c \
-        mca_io_romio_dist_read_ordb.c \
-        mca_io_romio_dist_read_ord.c \
-        mca_io_romio_dist_read_orde.c \
-        mca_io_romio_dist_read_sh.c \
-        mca_io_romio_dist_seek.c \
-        mca_io_romio_dist_seek_sh.c \
-        mca_io_romio_dist_set_atom.c \
-        mca_io_romio_dist_set_errh.c \
-        mca_io_romio_dist_set_info.c \
-        mca_io_romio_dist_set_size.c \
-        mca_io_romio_dist_set_view.c \
-        mca_io_romio_dist_wr_atallb.c \
-        mca_io_romio_dist_wr_atalle.c \
-        mca_io_romio_dist_write_allb.c \
-        mca_io_romio_dist_write_all.c \
-        mca_io_romio_dist_write_alle.c \
-        mca_io_romio_dist_write_atall.c \
-        mca_io_romio_dist_write_at.c \
-        mca_io_romio_dist_write.c \
-        mca_io_romio_dist_write_ordb.c \
-        mca_io_romio_dist_write_ord.c \
-        mca_io_romio_dist_write_orde.c \
-        mca_io_romio_dist_write_sh.c
+        io_romio_open.c \
+        io_romio_prealloc.c \
+        io_romio_rd_atallb.c \
+        io_romio_rd_atalle.c \
+        io_romio_read_allb.c \
+        io_romio_read_all.c \
+        io_romio_read_alle.c \
+        io_romio_read_atall.c \
+        io_romio_read_at.c \
+        io_romio_read.c \
+        io_romio_read_ordb.c \
+        io_romio_read_ord.c \
+        io_romio_read_orde.c \
+        io_romio_read_sh.c \
+        io_romio_seek.c \
+        io_romio_seek_sh.c \
+        io_romio_set_atom.c \
+        io_romio_set_errh.c \
+        io_romio_set_info.c \
+        io_romio_set_size.c \
+        io_romio_set_view.c \
+        io_romio_wr_atallb.c \
+        io_romio_wr_atalle.c \
+        io_romio_write_allb.c \
+        io_romio_write_all.c \
+        io_romio_write_alle.c \
+        io_romio_write_atall.c \
+        io_romio_write_at.c \
+        io_romio_write.c \
+        io_romio_write_ordb.c \
+        io_romio_write_ord.c \
+        io_romio_write_orde.c \
+        io_romio_write_sh.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -111,7 +111,7 @@ libmpi_io_la_SOURCES = \
 dir=$(top_srcdir)/mpi-io
 $(libmpi_io_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi
