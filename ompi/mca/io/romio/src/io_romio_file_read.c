@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "file/file.h"
-#include "request/request.h"
+#include "ompi/file/file.h"
+#include "ompi/request/request.h"
 #include "io_romio.h"
 
 

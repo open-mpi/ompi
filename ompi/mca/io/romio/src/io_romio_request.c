@@ -16,10 +16,10 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "file/file.h"
-#include "request/request.h"
+#include "ompi/file/file.h"
+#include "ompi/request/request.h"
+#include "ompi/mca/io/base/io_base_request.h"
 #include "io_romio.h"
-#include "mca/io/base/io_base_request.h"
 
 
 int mca_io_romio_request_fini(ompi_request_t **req)

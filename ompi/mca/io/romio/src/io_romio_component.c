@@ -18,8 +18,8 @@
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "mca/base/base.h"
-#include "mca/io/io.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/io/io.h"
 #include "io_romio.h"
 
 

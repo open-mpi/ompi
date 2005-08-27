@@ -16,9 +16,9 @@
 
 #include "ompi_config.h"
 
-#include "communicator/communicator.h"
-#include "info/info.h"
-#include "file/file.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/info/info.h"
+#include "ompi/file/file.h"
 
 #include "io_romio.h"
 
