@@ -40,25 +40,25 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libadio_nfs.la
 libadio_nfs_la_SOURCES = \
-        mca_io_romio_dist_ad_nfs.c \
+        io_romio_ad_nfs.c \
         ad_nfs.h \
-        mca_io_romio_dist_ad_nfs_close.c \
-        mca_io_romio_dist_ad_nfs_done.c \
-        mca_io_romio_dist_ad_nfs_fcntl.c \
-        mca_io_romio_dist_ad_nfs_flush.c \
-        mca_io_romio_dist_ad_nfs_getsh.c \
-        mca_io_romio_dist_ad_nfs_hints.c \
-        mca_io_romio_dist_ad_nfs_iread.c \
-        mca_io_romio_dist_ad_nfs_iwrite.c \
-        mca_io_romio_dist_ad_nfs_open.c \
-        mca_io_romio_dist_ad_nfs_rdcoll.c \
-        mca_io_romio_dist_ad_nfs_read.c \
-        mca_io_romio_dist_ad_nfs_resize.c \
-        mca_io_romio_dist_ad_nfs_seek.c \
-        mca_io_romio_dist_ad_nfs_setsh.c \
-        mca_io_romio_dist_ad_nfs_wait.c \
-        mca_io_romio_dist_ad_nfs_wrcoll.c \
-        mca_io_romio_dist_ad_nfs_write.c
+        io_romio_ad_nfs_close.c \
+        io_romio_ad_nfs_done.c \
+        io_romio_ad_nfs_fcntl.c \
+        io_romio_ad_nfs_flush.c \
+        io_romio_ad_nfs_getsh.c \
+        io_romio_ad_nfs_hints.c \
+        io_romio_ad_nfs_iread.c \
+        io_romio_ad_nfs_iwrite.c \
+        io_romio_ad_nfs_open.c \
+        io_romio_ad_nfs_rdcoll.c \
+        io_romio_ad_nfs_read.c \
+        io_romio_ad_nfs_resize.c \
+        io_romio_ad_nfs_seek.c \
+        io_romio_ad_nfs_setsh.c \
+        io_romio_ad_nfs_wait.c \
+        io_romio_ad_nfs_wrcoll.c \
+        io_romio_ad_nfs_write.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -66,7 +66,7 @@ libadio_nfs_la_SOURCES = \
 dir=$(top_srcdir)/adio/ad_nfs
 $(libadio_nfs_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi

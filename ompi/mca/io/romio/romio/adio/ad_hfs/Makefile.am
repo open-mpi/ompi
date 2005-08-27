@@ -41,22 +41,22 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libadio_hfs.la
 libadio_hfs_la_SOURCES = \
         ad_hfs.h \
-        mca_io_romio_dist_ad_hfs.c \
-        mca_io_romio_dist_ad_hfs_close.c \
-        mca_io_romio_dist_ad_hfs_done.c \
-        mca_io_romio_dist_ad_hfs_fcntl.c \
-        mca_io_romio_dist_ad_hfs_flush.c \
-        mca_io_romio_dist_ad_hfs_hints.c \
-        mca_io_romio_dist_ad_hfs_iread.c \
-        mca_io_romio_dist_ad_hfs_iwrite.c \
-        mca_io_romio_dist_ad_hfs_open.c \
-        mca_io_romio_dist_ad_hfs_rdcoll.c \
-        mca_io_romio_dist_ad_hfs_read.c \
-        mca_io_romio_dist_ad_hfs_resize.c \
-        mca_io_romio_dist_ad_hfs_seek.c \
-        mca_io_romio_dist_ad_hfs_wait.c \
-        mca_io_romio_dist_ad_hfs_wrcoll.c \
-        mca_io_romio_dist_ad_hfs_write.c
+        io_romio_ad_hfs.c \
+        io_romio_ad_hfs_close.c \
+        io_romio_ad_hfs_done.c \
+        io_romio_ad_hfs_fcntl.c \
+        io_romio_ad_hfs_flush.c \
+        io_romio_ad_hfs_hints.c \
+        io_romio_ad_hfs_iread.c \
+        io_romio_ad_hfs_iwrite.c \
+        io_romio_ad_hfs_open.c \
+        io_romio_ad_hfs_rdcoll.c \
+        io_romio_ad_hfs_read.c \
+        io_romio_ad_hfs_resize.c \
+        io_romio_ad_hfs_seek.c \
+        io_romio_ad_hfs_wait.c \
+        io_romio_ad_hfs_wrcoll.c \
+        io_romio_ad_hfs_write.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -64,7 +64,7 @@ libadio_hfs_la_SOURCES = \
 dir=$(top_srcdir)/adio/ad_hfs
 $(libadio_hfs_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi

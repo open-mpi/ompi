@@ -40,23 +40,23 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libadio_piofs.la
 libadio_piofs_la_SOURCES = \
-        mca_io_romio_dist_ad_piofs.c \
+        io_romio_ad_piofs.c \
         ad_piofs.h \
-        mca_io_romio_dist_ad_piofs_close.c \
-        mca_io_romio_dist_ad_piofs_done.c \
-        mca_io_romio_dist_ad_piofs_fcntl.c \
-        mca_io_romio_dist_ad_piofs_flush.c \
-        mca_io_romio_dist_ad_piofs_hints.c \
-        mca_io_romio_dist_ad_piofs_iread.c \
-        mca_io_romio_dist_ad_piofs_iwrite.c \
-        mca_io_romio_dist_ad_piofs_open.c \
-        mca_io_romio_dist_ad_piofs_rdcoll.c \
-        mca_io_romio_dist_ad_piofs_read.c \
-        mca_io_romio_dist_ad_piofs_resize.c \
-        mca_io_romio_dist_ad_piofs_seek.c \
-        mca_io_romio_dist_ad_piofs_wait.c \
-        mca_io_romio_dist_ad_piofs_wrcoll.c \
-        mca_io_romio_dist_ad_piofs_write.c
+        io_romio_ad_piofs_close.c \
+        io_romio_ad_piofs_done.c \
+        io_romio_ad_piofs_fcntl.c \
+        io_romio_ad_piofs_flush.c \
+        io_romio_ad_piofs_hints.c \
+        io_romio_ad_piofs_iread.c \
+        io_romio_ad_piofs_iwrite.c \
+        io_romio_ad_piofs_open.c \
+        io_romio_ad_piofs_rdcoll.c \
+        io_romio_ad_piofs_read.c \
+        io_romio_ad_piofs_resize.c \
+        io_romio_ad_piofs_seek.c \
+        io_romio_ad_piofs_wait.c \
+        io_romio_ad_piofs_wrcoll.c \
+        io_romio_ad_piofs_write.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -64,7 +64,7 @@ libadio_piofs_la_SOURCES = \
 dir=$(top_srcdir)/adio/ad_piofs
 $(libadio_piofs_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi

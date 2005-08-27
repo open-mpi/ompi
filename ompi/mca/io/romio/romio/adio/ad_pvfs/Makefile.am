@@ -40,24 +40,24 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libadio_pvfs.la
 libadio_pvfs_la_SOURCES = \
-        mca_io_romio_dist_ad_pvfs.c \
+        io_romio_ad_pvfs.c \
         ad_pvfs.h \
-        mca_io_romio_dist_ad_pvfs_close.c \
-        mca_io_romio_dist_ad_pvfs_delete.c \
-        mca_io_romio_dist_ad_pvfs_done.c \
-        mca_io_romio_dist_ad_pvfs_fcntl.c \
-        mca_io_romio_dist_ad_pvfs_flush.c \
-        mca_io_romio_dist_ad_pvfs_hints.c \
-        mca_io_romio_dist_ad_pvfs_iread.c \
-        mca_io_romio_dist_ad_pvfs_iwrite.c \
-        mca_io_romio_dist_ad_pvfs_open.c \
-        mca_io_romio_dist_ad_pvfs_rdcoll.c \
-        mca_io_romio_dist_ad_pvfs_read.c \
-        mca_io_romio_dist_ad_pvfs_resize.c \
-        mca_io_romio_dist_ad_pvfs_seek.c \
-        mca_io_romio_dist_ad_pvfs_wait.c \
-        mca_io_romio_dist_ad_pvfs_wrcoll.c \
-        mca_io_romio_dist_ad_pvfs_write.c
+        io_romio_ad_pvfs_close.c \
+        io_romio_ad_pvfs_delete.c \
+        io_romio_ad_pvfs_done.c \
+        io_romio_ad_pvfs_fcntl.c \
+        io_romio_ad_pvfs_flush.c \
+        io_romio_ad_pvfs_hints.c \
+        io_romio_ad_pvfs_iread.c \
+        io_romio_ad_pvfs_iwrite.c \
+        io_romio_ad_pvfs_open.c \
+        io_romio_ad_pvfs_rdcoll.c \
+        io_romio_ad_pvfs_read.c \
+        io_romio_ad_pvfs_resize.c \
+        io_romio_ad_pvfs_seek.c \
+        io_romio_ad_pvfs_wait.c \
+        io_romio_ad_pvfs_wrcoll.c \
+        io_romio_ad_pvfs_write.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule
@@ -65,7 +65,7 @@ libadio_pvfs_la_SOURCES = \
 dir=$(top_srcdir)/adio/ad_pvfs
 $(libadio_pvfs_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '19-'` ; \
+		pname=`echo $@ | cut -b '10-'` ; \
 		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi
