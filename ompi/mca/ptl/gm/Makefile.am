@@ -20,6 +20,8 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+AM_CPPFLAGS = $(ptl_gm_CPPFLAGS)
+
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
@@ -55,11 +57,11 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 
 mca_ptl_gm_la_SOURCES = $(libmca_ptl_gm_la_sources)
-mca_ptl_gm_la_LIBADD = 
-mca_ptl_gm_la_LDFLAGS = -module -avoid-version
+mca_ptl_gm_la_LIBADD = $(ptl_gm_LIBS)
+mca_ptl_gm_la_LDFLAGS = -module -avoid-version $(ptl_gm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ptl_gm_la_SOURCES = $(libmca_ptl_gm_la_sources)
-libmca_ptl_gm_la_LIBADD = 
-libmca_ptl_gm_la_LDFLAGS = -module -avoid-version
+libmca_ptl_gm_la_LIBADD = $(ptl_gm_LIBS)
+libmca_ptl_gm_la_LDFLAGS = -module -avoid-version $(ptl_gm_LDFLAGS)
 
