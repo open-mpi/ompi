@@ -33,6 +33,7 @@ dnl AC_AIX
 
 ompi_cflags_save="$CFLAGS"
 AC_PROG_CC
+OMPI_CC_ORIGINAL="$CC"
 BASECC="`basename $CC`"
 CFLAGS="$ompi_cflags_save"
 AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
@@ -42,7 +43,8 @@ AC_SUBST(OMPI_CC_ABSOLUTE)
 # Check for compilers that impersonate gcc
 
 AC_MSG_CHECKING([for compilers that impersonate gcc])
-msg=
+msg="not this one!"
+liar=
 TRULY_GCC=$GCC
 if test "$GCC" = "yes"; then
     AC_TRY_COMPILE([], [
@@ -50,17 +52,16 @@ int i = 3;
 #if __INTEL_COMPILER
 #error Yes, I am lying about being gcc.
 #endif
-], [], [msg=intel])
+], [], [msg=intel liar=yes])
 
     # If we made it through unscathed, then it really is gcc
-    if test -z "$msg"; then
+    if test -z "$liar"; then
         TRULY_GCC=yes
     else
         TRULY_GCC=no
     fi
 else
     # We never thought that this was gcc to begin with
-    msg="not applicable"
     TRULY_GCC=no
 fi
 AC_MSG_RESULT([$msg])
