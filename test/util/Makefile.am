@@ -77,6 +77,7 @@ opal_timer_DEPENDENCIES = $(opal_timer_LDADD)
 
 orte_sys_info_SOURCES = orte_sys_info.c
 orte_sys_info_LDADD = \
+        $(top_builddir)/orte/liborte.la \
         $(top_builddir)/opal/libopal.la \
         $(top_builddir)/test/support/libsupport.a 
 orte_sys_info_DEPENDENCIES = $(orte_sys_info_LDADD)

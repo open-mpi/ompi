@@ -23,15 +23,21 @@
 #endif
 
 #include "opal/runtime/opal.h"
-#include "util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "support.h"
+
+#ifdef WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
+static const char *path_sep = PATH_SEP;
 
 static bool test1(void);   /* trivial answer test */
 static bool test2(void);   /* relative path test */
 static bool test3(void);   /* absolute path test */
 static bool test4(void);   /* missing path separator test */
-static bool test5(void);   /* very long path name test */
 
 
 int main(int argc, char* argv[])
@@ -68,13 +74,6 @@ int main(int argc, char* argv[])
       test_failure("opal_os_path_t test4 failed");
     }
 
-    if (test5()) {
-        test_success();
-    }
-    else {
-      test_failure("opal_os_path_t test5 failed");
-    }
-
     opal_finalize();
 
     test_finalize();
@@ -91,13 +90,13 @@ static bool test1(void)
     if (NULL != (out = opal_os_path(true,NULL))) {
         answer[0] = '\0';
         strcat(answer, ".");
-        strcat(answer, orte_system_info.path_sep);
+        strcat(answer, path_sep);
         if (0 != strcmp(answer, out))
             return(false);
         free(out);
     }
     if (NULL != (out = opal_os_path(false,NULL))) {
-        if (0 != strcmp(orte_system_info.path_sep, out))
+        if (0 != strcmp(path_sep, out))
             return(false);
         free(out);
     }
@@ -112,7 +111,7 @@ static bool test2(void)
     char *tmp;
     char *a[] = { "aaa", "bbb", "ccc", NULL };
  
-    if (NULL == orte_system_info.path_sep) {
+    if (NULL == path_sep) {
         printf("test2 cannot be run\n");
         return(false);
     }
@@ -120,7 +119,7 @@ static bool test2(void)
     /* Construct a relative path name and see if it comes back correctly. Check multiple depths. */
     out[0] = '\0';
     strcat(out, ".");
-    strcat(out, orte_system_info.path_sep);
+    strcat(out, path_sep);
     strcat(out, a[0]);
 
     tmp = opal_os_path(true, a[0], NULL);
@@ -128,14 +127,14 @@ static bool test2(void)
         return(false);
     free(tmp);
 
-    strcat(out, orte_system_info.path_sep);
+    strcat(out, path_sep);
     strcat(out, a[1]);
     tmp = opal_os_path(true, a[0], a[1], NULL);
     if (0 != strcmp(out, tmp))
         return(false);
     free(tmp);
 
-    strcat(out, orte_system_info.path_sep);
+    strcat(out, path_sep);
     strcat(out, a[2]);
     tmp = opal_os_path(true, a[0], a[1], a[2], NULL);
     if (0 != strcmp(out, tmp))
@@ -152,28 +151,28 @@ static bool test3(void)
     char *tmp;
     char *a[] = { "aaa", "bbb", "ccc", NULL };
 
-    if (NULL == orte_system_info.path_sep) {
+    if (NULL == path_sep) {
         printf("test3 cannot be run\n");
         return(false);
     }
 
     /* Same as prior test, only with absolute path name */
     out[0] = '\0';
-    strcat(out, orte_system_info.path_sep);
+    strcat(out, path_sep);
     strcat(out, a[0]);
     tmp = opal_os_path(false, a[0], NULL);
     if (0 != strcmp(out, tmp))
         return(false);
     free(tmp);
 
-    strcat(out, orte_system_info.path_sep);
+    strcat(out, path_sep);
     strcat(out, a[1]);
     tmp = opal_os_path(false, a[0], a[1], NULL);
     if (0 != strcmp(out, tmp))
         return(false);
     free(tmp);
 
-    strcat(out, orte_system_info.path_sep);
+    strcat(out, path_sep);
     strcat(out, a[2]);
     tmp = opal_os_path(false, a[0], a[1], a[2], NULL);
     if (0 != strcmp(out, tmp))
@@ -188,7 +187,7 @@ static bool test4(void)
     char a[MAXPATHLEN + 10];
     int i;
 
-    if (NULL == orte_system_info.path_sep) {
+    if (NULL == path_sep) {
         printf("test4 cannot be run\n");
         return(false);
     }
@@ -201,16 +200,4 @@ static bool test4(void)
         return(false);
     }
     return (true);
-}
-
-static bool test5(void)
-{
-    /* test to ensure the program doesn't bomb when no separator is found.
-     * Program should try to find one, then return NULL if it can't */
-
-    if (NULL != orte_system_info.path_sep) {
-        free(orte_system_info.path_sep);
-        orte_system_info.path_sep = NULL;
-    }
-    return(test1());
 }
