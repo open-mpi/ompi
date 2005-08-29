@@ -66,8 +66,11 @@ opal_maffinity_libnuma_component_query(int *query)
 
 static int libnuma_module_init(void)
 {
-    /* Tell libnuma that we want all memory affinity to be local. */
+    /* Tell libnuma that we want all memory affinity to be local (but
+       it's not an error if we can't -- prefer running in degraded
+       mode to not running at all!). */
 
+    numa_set_strict(0);
     numa_set_localalloc();
 
     return OPAL_SUCCESS;
@@ -78,15 +81,19 @@ static int libnuma_module_set(opal_maffinity_base_segment_t *segments,
                               size_t num_segments, bool am_allocator)
 {
     size_t i;
+    pid_t mypid = getpid();
 
-    /* Only the allocator does anything */
-
-    if (!am_allocator) {
-        return OPAL_SUCCESS;
-    }
+    /* Kinda crummy that we have to allocate each portion individually
+       rather than provide a top-level function call that does it all,
+       but the libnuma() interface doesn't seem to allow that
+       flexability -- they allow "interleaving", but not fine grained
+       placement of pages. */
 
     for (i = 0; i < num_segments; ++i) {
-        /* JMS do something */
+        if (segments[i].mbs_owner_pid == mypid) {
+            numa_setlocal_memory(segments[i].mbs_start_addr,
+                                 segments[i].mbs_len);
+        }
     }
 
     return OPAL_SUCCESS;
