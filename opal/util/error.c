@@ -24,8 +24,19 @@
 #include "opal/include/constants.h"
 
 #define MAX_CONVERTERS 5
+#define MAX_CONVERTER_PROJECT_LEN 10
+
+struct converter_info_t {
+    int init;
+    char project[MAX_CONVERTER_PROJECT_LEN];
+    int err_base;
+    int err_max;
+    opal_err2str_fn_t converter;
+};
+typedef struct converter_info_t converter_info_t;
+
 /* all default to NULL */
-opal_err2str_fn_t converters[MAX_CONVERTERS];
+converter_info_t converters[MAX_CONVERTERS];
 
 static const char *
 opal_strerror_int(int errnum)
@@ -34,11 +45,36 @@ opal_strerror_int(int errnum)
     const char *ret = NULL;
 
     for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
-        if (NULL != converters[i]) {
-            ret = converters[i](errnum);
+        if (0 != converters[i].init) {
+            ret = converters[i].converter(errnum);
             if (NULL != ret) break;
         }
     }
+
+    return ret;
+}
+
+
+/* caller must free string */
+static char*
+opal_strerror_unknown(int errnum)
+{
+    int i;
+    char *ret;
+
+    for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
+        if (0 != converters[i].init) {
+            if (errnum < converters[i].err_base && 
+                errnum > converters[i].err_max) {
+                asprintf(&ret, "Unknown error: %d (%s error %d)",
+                         errnum, converters[i].project, 
+                         errnum - converters[i].err_base);
+                return ret;
+            }
+        }
+    }
+
+    asprintf(&ret, "Unknown error: %d", errnum);
 
     return ret;
 }
@@ -57,7 +93,9 @@ opal_perror(int errnum, const char *msg)
         if (errnum == OPAL_ERR_IN_ERRNO) {
             perror(msg);
         } else {
-            fprintf(stderr, "Unknown error: %d\n", errnum);
+            char *ue_msg = opal_strerror_unknown(errnum);
+            fprintf(stderr, "%s\n", ue_msg);
+            free(ue_msg);
         }
     } else {
         fprintf(stderr, "%s\n", errmsg);
@@ -66,8 +104,9 @@ opal_perror(int errnum, const char *msg)
     fflush(stderr);
 }
 
-/* size of "Unknow error: " + 3 digits of errnumber */
-static char unknown_retbuf[20];
+/* big enough to hold long version */
+#define UNKNOWN_RETBUF_LEN 50
+static char unknown_retbuf[UNKNOWN_RETBUF_LEN];
 
 const char *
 opal_strerror(int errnum)
@@ -78,8 +117,10 @@ opal_strerror(int errnum)
         if (errnum == OPAL_ERR_IN_ERRNO) {
             return strerror(errno);
         } else {
+            char *ue_msg = opal_strerror_unknown(errnum);
+            snprintf(unknown_retbuf, UNKNOWN_RETBUF_LEN, "%s", ue_msg);
+            free(ue_msg);
             errno = EINVAL;
-            snprintf(unknown_retbuf, 20, "Unknown error: %d", errnum);
             return (const char*) unknown_retbuf;
         }
     } else {
@@ -100,12 +141,14 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
             strncpy(strerrbuf, tmp, buflen);
             return OPAL_SUCCESS;
         } else {
-            errno = EINVAL;
-            ret =  snprintf(strerrbuf, buflen, "Unknown error: %d", errnum);
+            char *ue_msg = opal_strerror_unknown(errnum);
+            ret =  snprintf(strerrbuf, buflen, "%s", ue_msg);
+            free(ue_msg);
             if (ret > (int) buflen) {
                 errno = ERANGE;
                 return OPAL_ERR_OUT_OF_RESOURCE;
             } else {
+                errno = EINVAL;
                 return OPAL_SUCCESS;
             }
         }
@@ -122,13 +165,18 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
 
 
 int
-opal_error_register(opal_err2str_fn_t converter)
+opal_error_register(const char *project, int err_base, int err_max,
+                    opal_err2str_fn_t converter)
 {
     int i;
 
     for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
-        if (NULL == converters[i]) {
-            converters[i] = converter;
+        if (0 == converters[i].init) {
+            converters[i].init = 1;
+            strncpy(converters[i].project, project, MAX_CONVERTER_PROJECT_LEN);
+            converters[i].err_base = err_base;
+            converters[i].err_max = err_max;
+            converters[i].converter = converter;
             return OPAL_SUCCESS;
         }
     }

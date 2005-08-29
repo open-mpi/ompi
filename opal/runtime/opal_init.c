@@ -79,7 +79,7 @@ int opal_init(void)
     opal_mem_free_init();
 
     /* register handler for errnum -> string converstion */
-    opal_error_register(opal_err2str);
+    opal_error_register("OPAL", OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str);
 
     /* initialize the mca */
     mca_base_open();

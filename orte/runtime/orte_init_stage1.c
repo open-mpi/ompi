@@ -69,7 +69,7 @@ int orte_init_stage1(bool infrastructure)
     orte_cellid_t my_cellid;
 
     /* register handler for errnum -> string converstion */
-    opal_error_register(orte_err2str);
+    opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
 
     /* Register all MCA Params */
     if (ORTE_SUCCESS != (ret = orte_register_params(infrastructure))) {
