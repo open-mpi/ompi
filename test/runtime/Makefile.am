@@ -18,9 +18,10 @@
 include $(top_srcdir)/test/support/Makefile.options
 
 check_PROGRAMS = \
+	opal_init_finalize \
+	orte_init_finalize \
 	sigchld \
-	start_shut \
-	opal_init_finalize
+	start_shut
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -40,6 +41,14 @@ start_shut_LDADD = \
 	$(top_builddir)/opal/libopal.la \
 	$(top_builddir)/test/support/libsupport.a
 start_shut_DEPENDENCIES = $(start_shut_LDADD)
+
+orte_init_finalize_SOURCES = \
+    orte_init_finalize.c
+orte_init_finalize_LDADD = \
+	$(top_builddir)/orte/liborte.la \
+	$(top_builddir)/opal/libopal.la \
+	$(top_builddir)/test/support/libsupport.a
+orte_init_finalize_DEPENDENCIES = $(orte_init_finalize_LDADD)
 
 opal_init_finalize_SOURCES = \
     opal_init_finalize.c

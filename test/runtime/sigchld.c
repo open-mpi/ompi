@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     return 77;
 #endif
 
-    orte_init();
+    orte_init(true);
 
     pid = fork();
     if (pid > 0) {
