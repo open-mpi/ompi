@@ -53,14 +53,16 @@ mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
-    /* If not root, receive data.  Note that we will only get here if
-     * rcount > 0 or rank == root. */
+    /* If not root, receive data. */
 
     if (rank != root) {
-        err = MCA_PML_CALL(recv(rbuf, rcount, rdtype,
-                                root, MCA_COLL_BASE_TAG_SCATTERV,
-                                comm, MPI_STATUS_IGNORE));
-        return err;
+        /* Only receive if there is something to receive */
+        if (rcount > 0) {
+            return MCA_PML_CALL(recv(rbuf, rcount, rdtype,
+                                     root, MCA_COLL_BASE_TAG_SCATTERV,
+                                     comm, MPI_STATUS_IGNORE));
+        }
+        return MPI_SUCCESS;
     }
 
     /* I am the root, loop sending data. */
@@ -76,19 +78,22 @@ mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
         /* simple optimization */
 
         if (i == rank) {
-            if (0 == scounts[i]) {     /* simple optimization or a local operation */
+            /* simple optimization or a local operation */
+            if (0 == scounts[i]) {
                 continue;
             }
-            err =
-                ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
-                                rdtype);
+            err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
+                                  rdtype);
         } else {
-            err = MCA_PML_CALL(send(ptmp, scounts[i], sdtype, i,
-                                    MCA_COLL_BASE_TAG_SCATTERV,
-                                    MCA_PML_BASE_SEND_STANDARD, comm));
-        }
-        if (MPI_SUCCESS != err) {
-            return err;
+            /* Only send if there is something to send */
+            if (scounts[i] > 0) {
+                err = MCA_PML_CALL(send(ptmp, scounts[i], sdtype, i,
+                                        MCA_COLL_BASE_TAG_SCATTERV,
+                                        MCA_PML_BASE_SEND_STANDARD, comm));
+                if (MPI_SUCCESS != err) {
+                    return err;
+                }
+            }
         }
     }
 
