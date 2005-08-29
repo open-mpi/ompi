@@ -70,7 +70,8 @@ int orte_iof_base_open(void)
     id = mca_base_param_register_string("iof","base","service",NULL,"0.0.0");
     mca_base_param_lookup_string(id,&str_value);
     orte_ns.convert_string_to_process_name(&orte_iof_base.iof_service, str_value);
- 
+    free(str_value);
+
     /* Debugging / verbose output */
 
     id = mca_base_param_reg_int_name("iof_base", "verbose", 

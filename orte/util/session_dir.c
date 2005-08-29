@@ -200,7 +200,7 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     /* no prefix was specified, so check other options in order */
     if (NULL != orte_process_info.tmpdir_base) {  /* stored value previously */
     	tmp = strdup(orte_process_info.tmpdir_base);
-    	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
+    	fulldirpath = opal_os_path(false, tmp, sessions, NULL);
     	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
     	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
@@ -364,9 +364,9 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     char *job, *job_session_dir, *vpid, *proc_session_dir;
 
     /* need to setup the top_session_dir with the prefix */
-    tmp = strdup(opal_os_path(false,
-            orte_process_info.tmpdir_base,
-            orte_process_info.top_session_dir, NULL));
+    tmp = opal_os_path(false,
+                       orte_process_info.tmpdir_base,
+                       orte_process_info.top_session_dir, NULL);
     
     /* define the proc and job session directories for this process */
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&job, proc))) {
@@ -500,15 +500,18 @@ orte_dir_empty(char *pathname)
             /* make sure it's not a directory */
 #ifdef HAVE_STRUCT_DIRENT_D_TYPE
             if (DT_DIR == ep->d_type) {
+                free(filenm);
                 continue;
             }
 #else /* have dirent.d_type */
             ret = stat(filenm, &buf);
             if (ret < 0 || S_ISDIR(buf.st_mode)) {
+                free(filenm);
                 continue;
             }
 #endif /* have dirent.d_type */
             unlink(filenm);
+            free(filenm);
         }
     }
     closedir(dp);
@@ -561,6 +564,7 @@ static bool orte_is_empty(char *pathname)
     	    while ((ep = readdir(dp))) {
         		if ((0 != strcmp(ep->d_name, ".")) &&
         		    (0 != strcmp(ep->d_name, ".."))) {
+                            closedir(dp);
         		    return false;
         		}
     	    }

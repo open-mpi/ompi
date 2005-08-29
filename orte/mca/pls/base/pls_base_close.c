@@ -51,10 +51,11 @@ int orte_pls_base_close(void)
 {
     /* Close all remaining open components */
     if (orte_pls_base.pls_opened_valid) {
+        orte_pls_base.pls_opened_valid = false;
         mca_base_components_close(orte_pls_base.pls_output, 
                                   &orte_pls_base.pls_opened, NULL);
+        OBJ_DESTRUCT(&orte_pls_base.pls_opened);
     }
-    orte_pls_base.pls_opened_valid = false;
     return ORTE_SUCCESS;
 }
 

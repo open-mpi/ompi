@@ -78,6 +78,9 @@ int orte_universe_exists(orte_universe_t *univ)
 	    return ret;
 	}
 
+        /* don't need this string any more - free it */
+        free(contact_file);
+
 	if (orte_debug_flag) {
 	    opal_output(0, "connect_uni: contact info read");
 	}

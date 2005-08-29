@@ -220,6 +220,7 @@ int mca_oob_tcp_component_close(void)
     /* cleanup resources */
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_events);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_subscriptions);
