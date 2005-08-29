@@ -47,28 +47,16 @@ int main (int argc, char* argv[])
         fprintf(test_out, "couldn't complete init - error code %d\n", rc);
         exit(1);
     }
-    
-    for (i=0; i < NUM_ITERS; i++) {
-        if (ORTE_SUCCESS != (rc = orte_system_finalize())) {
-            fprintf(test_out, "iter %d: couldn't complete orte system finalize - error %d\n", i, rc);
-            exit(1);
-        }
-        fprintf(test_out, "\tfinalize successful\n");
-        if (ORTE_SUCCESS != (rc = orte_system_init(true))) {
-            fprintf(test_out, "iter %d: couldn't complete orte system init - error code %d\n", i, rc);
-            exit(1);
-        }
-    }
-    
+
     fprintf(test_out, "shut system down\n");
     if (ORTE_SUCCESS != (rc = orte_finalize())) {
         fprintf(test_out, "couldn't complete finalize - error code %d\n", rc);
         exit(1);
     }
 
-    fprintf(test_out, "orte_start_shut: successful\n");
+    fprintf(test_out, "orte_init_finalize: successful\n");
     
     rc = test_finalize();
-    fclose(test_out);
+
     return rc;
 }
