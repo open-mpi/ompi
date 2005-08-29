@@ -50,14 +50,19 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    /* Everyone but root sends data and returns.  Note that we will only
-     * get here if scount > 0 or rank == root. */
+    /* Everyone but root sends data and returns.  Don't send anything
+       for sendcounts of 0 (even though MPI_Gatherv has a guard for 0
+       counts, this routine is used elsewhere, like the implementation
+       of allgatherv, so it's possible to get here with a scount of
+       0) */
 
     if (rank != root) {
-        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-                                MCA_COLL_BASE_TAG_GATHERV,
-                                MCA_PML_BASE_SEND_STANDARD, comm));
-        return err;
+        if (scount > 0) {
+            return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
+                                     MCA_COLL_BASE_TAG_GATHERV,
+                                     MCA_PML_BASE_SEND_STANDARD, comm));
+        }
+        return MPI_SUCCESS;
     }
 
     /* I am the root, loop receiving data. */
@@ -71,10 +76,12 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
         ptmp = ((char *) rbuf) + (extent * disps[i]);
 
         if (i == rank) {
-            if ((0 < scount) && (0 < rcounts[i]))       /* simple optimization */
+            /* simple optimization */
+            if ((0 < scount) && (0 < rcounts[i]))
                 err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
                                       ptmp, rcounts[i], rdtype);
         } else {
+            /* Only receive if there is something to receive */
             if (rcounts[i] > 0) {
                 err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i,
                                         MCA_COLL_BASE_TAG_GATHERV,
