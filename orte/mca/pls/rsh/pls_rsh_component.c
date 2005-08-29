@@ -156,6 +156,7 @@ int orte_pls_rsh_component_open(void)
     mca_pls_rsh_component.argv = opal_argv_split(param, ' ');
     mca_pls_rsh_component.argc = opal_argv_count(mca_pls_rsh_component.argv);
     if (NULL != param) free(param);
+    mca_pls_rsh_component.path = NULL;
     if (mca_pls_rsh_component.argc > 0) {
         /* If the agent is ssh, and debug was not selected, then
            automatically add "-x" */
@@ -177,10 +178,8 @@ int orte_pls_rsh_component_open(void)
             free(bname);
         }
 
-        mca_pls_rsh_component.path = strdup(mca_pls_rsh_component.argv[0]);
         return ORTE_SUCCESS;
     } else {
-        mca_pls_rsh_component.path = NULL;
         return ORTE_ERR_BAD_PARAM;
     }
 }

@@ -82,8 +82,5 @@ int orte_system_finalize(void)
     orte_proc_info_finalize();
     orte_univ_info_finalize();
     
-    /* cleanup the if data */
-    opal_iffinalize();
-    
     return ORTE_SUCCESS;
 }

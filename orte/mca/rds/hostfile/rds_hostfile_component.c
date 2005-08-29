@@ -93,7 +93,6 @@ static int orte_rds_hostfile_open(void)
 
 static orte_rds_base_module_t *orte_rds_hostfile_init(void)
 {
-    OBJ_DESTRUCT(&mca_rds_hostfile_component.lock);
     return &orte_rds_hostfile_module;
 }
 
@@ -103,6 +102,11 @@ static orte_rds_base_module_t *orte_rds_hostfile_init(void)
 
 static int orte_rds_hostfile_close(void)
 {
+    OBJ_DESTRUCT(&mca_rds_hostfile_component.lock);
+    if (NULL != mca_rds_hostfile_component.path) {
+        free(mca_rds_hostfile_component.path);
+    }
+
     return ORTE_SUCCESS;
 }
 
