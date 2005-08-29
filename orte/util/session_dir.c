@@ -236,7 +236,7 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
         free(fulldirpath); fulldirpath = NULL;
     } else {
     	tmp = strdup(OMPI_DEFAULT_TMPDIR);
-    	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
+    	fulldirpath = opal_os_path(false, tmp, sessions, NULL);
     	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
     	    return_code = ORTE_SUCCESS;
     	    goto COMPLETE;
