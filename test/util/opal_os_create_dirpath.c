@@ -30,9 +30,16 @@
 #include "support.h"
 #include "opal/runtime/opal.h"
 #include "opal/include/constants.h"
-#include "orte/util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_create_dirpath.h"
+
+#ifdef WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
+static const char *path_sep = PATH_SEP;
 
 static bool test1(void);   /* trivial test */
 static bool test2(void);   /* test existing path, both with and without correct mode */
@@ -92,7 +99,7 @@ static bool test2(void)
     char *tmp;
     struct stat buf;
  
-    if (NULL == orte_system_info.path_sep) {
+    if (NULL == path_sep) {
         printf("test2 cannot be run\n");
         return(false);
     }
@@ -133,7 +140,7 @@ static bool test3(void)
     struct stat buf;
     char *a[] = { "aaa", "bbb", "ccc", NULL };
 
-    if (NULL == orte_system_info.path_sep) {
+    if (NULL == path_sep) {
         printf("test3 cannot be run\n");
         return(false);
     }
