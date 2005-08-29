@@ -76,6 +76,12 @@ main(int argc, char *argv[])
     printf("--> orte error test\n");
     opal_perror(ORTE_ERR_BUFFER, "orte test");
 
+    printf("--> orte unknown error test\n");
+    opal_perror(ORTE_ERR_MAX + 10, "orte unknown test");
+
+    printf("--> unknown error test\n");
+    opal_perror(ORTE_ERR_MAX - 200, "unknown error");
+
     orte_system_finalize();
     opal_finalize();
 

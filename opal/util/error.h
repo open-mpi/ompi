@@ -72,7 +72,9 @@ typedef const char * (*opal_err2str_fn_t)(int errnum);
  * \note A maximum of 5 converters can be registered.  The 6th
  * converter registration attempt will return OPAL_ERR_OUT_OF_RESOURCE
  */
-OMPI_DECLSPEC int opal_error_register(opal_err2str_fn_t converter);
+OMPI_DECLSPEC int opal_error_register(const char *project,
+                                      int err_base, int err_max,
+                                      opal_err2str_fn_t converter);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
