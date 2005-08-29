@@ -75,9 +75,11 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
                 err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
                                       ptmp, rcounts[i], rdtype);
         } else {
-            err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i,
-                                    MCA_COLL_BASE_TAG_GATHERV,
-                                    comm, MPI_STATUS_IGNORE));
+            if (rcounts[i] > 0) {
+                err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i,
+                                        MCA_COLL_BASE_TAG_GATHERV,
+                                        comm, MPI_STATUS_IGNORE));
+            }
         }
 
         if (MPI_SUCCESS != err) {
