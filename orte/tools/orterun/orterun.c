@@ -355,6 +355,8 @@ int main(int argc, char *argv[])
                    signal_callback, NULL);
     opal_event_add(&int_handler, NULL);
 
+    orte_totalview_init_before_spawn();
+
     /* Spawn the job */
     
     rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback);
@@ -362,6 +364,7 @@ int main(int argc, char *argv[])
         /* JMS show_help */
         opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
     } else {
+
         /* Wait for the app to complete */
 
         if (wait_for_job_completion) {
@@ -541,6 +544,11 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
        ABORTED state and call the pls.terminate_job, which will result
        in killing all the other processes. */
     
+    if (orte_debug_flag) {
+        opal_output(0, "spawn: in job_state_callback(jobid = %d, state = 0x%x)\n",
+                    jobid, state);
+    }
+
     switch(state) {
         case ORTE_PROC_STATE_ABORTED:
             dump_aborted_procs(jobid);
@@ -551,6 +559,10 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
             dump_aborted_procs(jobid);
             orterun_globals.exit = true;
             opal_condition_signal(&orterun_globals.cond);
+            break;
+
+        case ORTE_PROC_STATE_AT_STG1:
+            orte_totalview_init_after_spawn(jobid);
             break;
     }
     OPAL_THREAD_UNLOCK(&orterun_globals.lock);

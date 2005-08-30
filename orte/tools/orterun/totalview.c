@@ -39,6 +39,12 @@
 #include <stdlib.h>
 #include <strings.h>
 
+/*
+ * The environment
+ */
+extern char** environ;
+
+
 /* +++ begin MPICH/TotalView interface definitions */
 
 #define MPIR_DEBUG_SPAWNED  1
@@ -67,9 +73,11 @@ void *MPIR_Breakpoint(void);
 
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
+#include "mca/base/base.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/rmgr/rmgr_types.h"
 #include "mca/rmaps/base/rmaps_base_map.h"
+#include "runtime/runtime.h"
 
 /*
  * NOTE: The job description in the registry will likely evolve to use
@@ -92,7 +100,7 @@ static void dump(void)
     DUMP_INT(MPIR_acquired_pre_main);
     DUMP_INT(MPIR_i_am_starter);
     DUMP_INT(MPIR_proctable_size);
-    fprintf(stderr, "MPIR_proctable:\n");
+    fprintf(stderr, "  MPIR_proctable:\n");
     for (i = 0; i < MPIR_proctable_size; i++) {
         fprintf(stderr,
                 "    (i, host, exe, pid) = (%d, %s, %s, %d)\n",
@@ -106,20 +114,58 @@ static void dump(void)
 
 /**
  * Initialization of data structures for running under a debugger
- * using the MPICH/TotalView parallel debugger interface.
+ * using the MPICH/TotalView parallel debugger interface.  Before the
+ * spawn we need to check if we have being run under a TotalView-like
+ * debugger; if so then inform applications via an MCA parameter.
  */
-int orte_totalview_init(orte_jobid_t jobid)
+void orte_totalview_init_before_spawn(void)
+{
+    if (MPIR_DEBUG_SPAWNED == MPIR_debug_state) {
+
+        int value;
+        char *s;
+
+        if (orte_debug_flag) {
+            opal_output(0, "Info: Spawned by a debugger");
+        }
+
+        if (mca_base_param_reg_int_name("orte", "mpi_wait_for_totalview",
+                                        "Whether the MPI application should wait for a debugger or not",
+                                        false, false, (int)false, &value) < 0) {
+            opal_output(0, "Error: mca_base_param_reg_int_name\n");
+        }
+
+        /* push mca parameter into the environment (not done automatically?) */
+
+        s = mca_base_param_environ_variable("orte", "mpi_wait_for_totalview", NULL);
+        if (ORTE_SUCCESS != opal_setenv(s, "1", true, &environ)) {
+            opal_output(0, "Error: Can't setenv %s\n", s);
+        }
+        free(s);
+    }
+}
+
+
+/**
+ * Initialization of data structures for running under a debugger
+ * using the MPICH/TotalView parallel debugger interface. This stage
+ * of initialization must occur after stage2 of spawn and is invoked
+ * via a callback.
+ * 
+ * @param jobid  The jobid returned by spawn.
+ */
+void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 {
     opal_list_t list_of_resource_maps;
     opal_list_item_t *item;
     int i;
     int rc;
 
-    if (0) { /* debugging deamons <<-- needs work */
+    if (0) { /* debugging daemons <<-- needs work */
 
-        opal_output_verbose(10, 0,
-                            "Info: Setting up debugger "
-                            "process table for daemons\n");
+        if (orte_debug_flag) {
+            opal_output(0, "Info: Setting up debugger process table for daemons\n");
+        }
 
     } else {
 
@@ -130,9 +176,9 @@ int orte_totalview_init(orte_jobid_t jobid)
          * processes in case someone attaches later.
          */
 
-        opal_output_verbose(10, 0,
-                            "Info: Setting up debugger "
-                            "process table for applications\n");
+        if (orte_debug_flag) {
+            opal_output(0, "Info: Setting up debugger process table for applications\n");
+        }
 
         OBJ_CONSTRUCT(&list_of_resource_maps, opal_list_t);
 
@@ -140,8 +186,8 @@ int orte_totalview_init(orte_jobid_t jobid)
 
         rc = orte_rmaps_base_get_map(jobid, &list_of_resource_maps);
         if (ORTE_SUCCESS != rc) {
+            opal_output(0, "Error: Can't get list of resource maps\n");
             ORTE_ERROR_LOG(rc);
-            return rc;
         }
 
         /* find the total number of processes in the job */
@@ -160,10 +206,7 @@ int orte_totalview_init(orte_jobid_t jobid)
         if (MPIR_proctable == NULL) {
             opal_output(0, "Error: Out of memory\n");
             OBJ_DESTRUCT(&list_of_resource_maps);
-            return -1;
         }
-
-        MPIR_being_debugged = 1;
 
         /* initialize MPIR_proctable */
 
@@ -182,12 +225,8 @@ int orte_totalview_init(orte_jobid_t jobid)
         OBJ_DESTRUCT(&list_of_resource_maps);
 
     }
-    
-    if (1 /* some MCA parameter indicating spawned by debugger */) {
-        MPIR_debug_state = MPIR_DEBUG_SPAWNED;
-    }
 
-    if (1 /* verbose */) {
+    if (orte_debug_flag) {
         dump();
     }
 

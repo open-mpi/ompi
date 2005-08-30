@@ -26,7 +26,8 @@ libs = \
 bin_PROGRAMS = orterun
 
 orterun_SOURCES = \
-        orterun.c 
+        orterun.c \
+        totalview.c 
 
 orterun_LDADD = $(libs) 
 orterun_DEPENDENCIES = $(libs)
