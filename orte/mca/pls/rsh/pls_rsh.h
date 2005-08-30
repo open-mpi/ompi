@@ -37,12 +37,11 @@ extern "C" {
 int orte_pls_rsh_component_open(void);
 int orte_pls_rsh_component_close(void);
 orte_pls_base_module_t* orte_pls_rsh_component_init(int *priority);
-                                                                                  
+
 /*
  * Startup / Shutdown
  */
 int orte_pls_rsh_finalize(void);
-                                                                                  
 
 /*
  * Interface
@@ -71,11 +70,9 @@ struct orte_pls_rsh_component_t {
     opal_condition_t cond;
 };
 typedef struct orte_pls_rsh_component_t orte_pls_rsh_component_t;
-                                                                                  
-                                                                                  
+
 ORTE_DECLSPEC extern orte_pls_rsh_component_t mca_pls_rsh_component;
 ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls_rsh_module;
-                                                                                  
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
