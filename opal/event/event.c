@@ -425,13 +425,9 @@ opal_event_process_active(void)
         while (ncalls) {
             ncalls--;
             ev->ev_ncalls = ncalls;
-            if(opal_using_threads()) {
-                opal_mutex_unlock(&opal_event_lock);
-                (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-                opal_mutex_lock(&opal_event_lock);
-            } else {
-                (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-            }
+            opal_mutex_unlock(&opal_event_lock);
+            (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
+            opal_mutex_lock(&opal_event_lock);
         }
     }
 #endif

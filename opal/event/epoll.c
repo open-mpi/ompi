@@ -182,13 +182,9 @@ epoll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 
 	timeout = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        if(opal_using_threads()) {
-            opal_mutex_unlock(&opal_event_lock);
-	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
-            opal_mutex_lock(&opal_event_lock);
-        } else {
-	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
-        }
+    opal_mutex_unlock(&opal_event_lock);
+	res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
+    opal_mutex_lock(&opal_event_lock);
 
 	if (opal_evsignal_recalc(&epollop->evsigmask) == -1)
 		return (-1);
