@@ -19,6 +19,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "opal/util/error.h"
 #include "opal/include/constants.h"
