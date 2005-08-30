@@ -454,9 +454,7 @@ opal_event_loop(int flags)
         return(0);
 
 #if OPAL_HAVE_WORKING_EVENTOPS
-    if(opal_using_threads()) {
-        opal_mutex_lock(&opal_event_lock);
-    } 
+    opal_mutex_lock(&opal_event_lock);
 
     /* Calculate the initial events that we are waiting for */
     if (opal_evsel->recalc && opal_evsel->recalc(opal_evbase, 0) == -1) {
