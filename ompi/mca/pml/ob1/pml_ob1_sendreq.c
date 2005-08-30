@@ -380,12 +380,14 @@ int mca_pml_ob1_send_request_start_copy(
             if(reg_btl != NULL) {
                 bml_btl = reg_btl;
             }
+
+            size = sendreq->req_send.req_bytes_packed;
             mca_bml_base_prepare_src(
                 bml_btl, 
                 registration,
                 &sendreq->req_send.req_convertor,
                 0,
-                &sendreq->req_send.req_bytes_packed,
+                &size,
                 &src);
             if(NULL == src) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -414,7 +416,7 @@ int mca_pml_ob1_send_request_start_copy(
             hdr->hdr_rndv.hdr_src_req.pval = sendreq;
             hdr->hdr_rget.hdr_des.pval = src;
             hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
-            for(i=1; i<src->des_src_cnt; i++)
+            for(i=0; i<src->des_src_cnt; i++)
                hdr->hdr_rget.hdr_segs[i] = src->des_src[i];
             descriptor->des_cbfunc = mca_pml_ob1_ctl_completion;
         }
