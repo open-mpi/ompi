@@ -77,6 +77,7 @@ base as of this writing (26 Aug 2005):
   - PBS Pro, Open PBS, Torque (i.e., anything who supports the TM
     interface)
   - SLURM
+  - POE
 
 - Complete user and system administrator documentation is missing
   (this file comprises the majority of the current user
