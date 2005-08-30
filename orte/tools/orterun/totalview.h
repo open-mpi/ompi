@@ -19,7 +19,8 @@
 
 #include "orte_config.h"
 
-int orte_totalview_init(orte_jobid_t jobid);
+void orte_totalview_init_before_spawn(void);
+void orte_totalview_init_after_spawn(orte_jobid_t jobid);
 void orte_totalview_finalize(void);
 void *MPIR_Breakpoint(void);
 
