@@ -849,33 +849,44 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         void *priv_data)
 {
     switch (event_p->type) {
-        case VAPI_QP_PATH_MIGRATED:
-        case VAPI_EEC_PATH_MIGRATED:
-        case VAPI_QP_COMM_ESTABLISHED:
-        case VAPI_EEC_COMM_ESTABLISHED:
-        case VAPI_SEND_QUEUE_DRAINED:
-        case VAPI_PORT_ACTIVE:
-            {
-                BTL_VERBOSE(("Got an asynchronous event: %s\n", VAPI_event_record_sym(event_p->type)));
-                break;
-            }
-        case VAPI_CQ_ERROR:
-        case VAPI_LOCAL_WQ_INV_REQUEST_ERROR:
-        case VAPI_LOCAL_WQ_ACCESS_VIOL_ERROR:
-        case VAPI_LOCAL_WQ_CATASTROPHIC_ERROR:
-        case VAPI_PATH_MIG_REQ_ERROR:
-        case VAPI_LOCAL_EEC_CATASTROPHIC_ERROR:
-        case VAPI_LOCAL_CATASTROPHIC_ERROR:
-        case VAPI_PORT_ERROR:
-            {
-                BTL_ERROR(("Got an asynchronous event: %s (%s)",
-                          VAPI_event_record_sym(event_p->type),
-                          VAPI_event_syndrome_sym(event_p->syndrome)));
-                break;
-            }
-        default:
-            BTL_ERROR(("Warning!! Got an undefined "
-                    "asynchronous event"));
+    case VAPI_QP_PATH_MIGRATED:
+    case VAPI_EEC_PATH_MIGRATED:
+    case VAPI_QP_COMM_ESTABLISHED:
+    case VAPI_EEC_COMM_ESTABLISHED:
+    case VAPI_SEND_QUEUE_DRAINED:
+    case VAPI_PORT_ACTIVE:
+        {
+            BTL_VERBOSE(("Got an asynchronous event: %s\n", VAPI_event_record_sym(event_p->type)));
+            break;
+        }
+    case VAPI_CQ_ERROR:
+    case VAPI_LOCAL_WQ_INV_REQUEST_ERROR:
+    case VAPI_LOCAL_WQ_ACCESS_VIOL_ERROR:
+    case VAPI_LOCAL_WQ_CATASTROPHIC_ERROR:
+    case VAPI_PATH_MIG_REQ_ERROR:
+    case VAPI_LOCAL_EEC_CATASTROPHIC_ERROR:
+    case VAPI_LOCAL_CATASTROPHIC_ERROR:
+    case VAPI_PORT_ERROR:
+        {
+            BTL_ERROR(("Got an asynchronous event: %s (%s)",
+                       VAPI_event_record_sym(event_p->type),
+                       VAPI_event_syndrome_sym(event_p->syndrome)));
+            break;
+        }
+            
+    case VAPI_SRQ_LIMIT_REACHED: 
+        { 
+            
+            BTL_VERBOSE(("SRQ limit is reached, posting more buffers %s\n", VAPI_event_record_sym(event_p->type))); 
+        }
+        
+    case VAPI_RECEIVE_QUEUE_DRAINED: { 
+        
+
+    }
+    default:
+        BTL_ERROR(("Warning!! Got an undefined "
+                   "asynchronous event %s", VAPI_event_record_sym(event_p->type)));
     }
 
 }

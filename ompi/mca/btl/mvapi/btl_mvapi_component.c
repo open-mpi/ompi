@@ -114,7 +114,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_component.ib_free_list_num =
         mca_btl_mvapi_param_register_int ("free_list_num", 8);
     mca_btl_mvapi_component.ib_free_list_max =
-        mca_btl_mvapi_param_register_int ("free_list_max", 1024);
+        mca_btl_mvapi_param_register_int ("free_list_max", -1);
     mca_btl_mvapi_component.ib_free_list_inc =
         mca_btl_mvapi_param_register_int ("free_list_inc", 32);
     mca_btl_mvapi_component.ib_mem_registry_hints_log_size = 
@@ -467,7 +467,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         ompi_free_list_init(&mvapi_btl->send_free_eager,
                             length, 
                             OBJ_CLASS(mca_btl_mvapi_send_frag_eager_t),
-                            mca_btl_mvapi_component.ib_free_list_num,
+                            2*mca_btl_mvapi_component.ib_rr_buf_max,
                             mca_btl_mvapi_component.ib_free_list_max,
                             mca_btl_mvapi_component.ib_free_list_inc,
                             mvapi_btl->ib_pool);
@@ -475,7 +475,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         ompi_free_list_init(&mvapi_btl->recv_free_eager,
                             length, 
                             OBJ_CLASS(mca_btl_mvapi_recv_frag_eager_t),
-                            mca_btl_mvapi_component.ib_free_list_num,
+                            2*mca_btl_mvapi_component.ib_rr_buf_max,
                             mca_btl_mvapi_component.ib_free_list_max,
                             mca_btl_mvapi_component.ib_free_list_inc,
                             mvapi_btl->ib_pool);
@@ -491,7 +491,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         ompi_free_list_init(&mvapi_btl->send_free_max,
                             length, 
                             OBJ_CLASS(mca_btl_mvapi_send_frag_max_t),
-                            mca_btl_mvapi_component.ib_free_list_num,
+                            2*mca_btl_mvapi_component.ib_rr_buf_max,
                             mca_btl_mvapi_component.ib_free_list_max,
                             mca_btl_mvapi_component.ib_free_list_inc,
                             mvapi_btl->ib_pool);
@@ -502,7 +502,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         ompi_free_list_init (&mvapi_btl->recv_free_max, 
                              length, 
                              OBJ_CLASS (mca_btl_mvapi_recv_frag_max_t),
-                             mca_btl_mvapi_component.ib_free_list_num,
+                             2*mca_btl_mvapi_component.ib_rr_buf_max,
                              mca_btl_mvapi_component.ib_free_list_max,
                              mca_btl_mvapi_component.ib_free_list_inc, mvapi_btl->ib_pool);
 
