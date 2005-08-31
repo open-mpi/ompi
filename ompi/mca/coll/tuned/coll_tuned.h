@@ -59,75 +59,160 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_priority_param;
 
   /* API functions of decision functions and any implementations */
 
-  int mca_coll_tuned_allgather_intra_dec(void *sbuf, int scount, 
+  /*
+   * Note this gets long as we have to have a prototype for each 
+   * MPI collective 4 times.. 2 for the comm type and 2 for each decision
+   * type. 
+   * we might cut down the decision prototypes by conditional compiling
+   */
+
+  int mca_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount, 
                                      struct ompi_datatype_t *sdtype, 
                                      void *rbuf, int rcount, 
                                      struct ompi_datatype_t *rdtype, 
                                      struct ompi_communicator_t *comm);
-  int mca_coll_tuned_allgather_inter_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int rcount, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allgather_inter_dec_fixed(void *sbuf, int scount, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int rcount, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allgather_inter_dec_dynamic(void *sbuf, int scount, 
                                      struct ompi_datatype_t *sdtype, 
                                      void *rbuf, int rcount, 
                                      struct ompi_datatype_t *rdtype, 
                                      struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_allgatherv_intra_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount, 
                                       struct ompi_datatype_t *sdtype, 
                                       void * rbuf, int *rcounts, int *disps, 
                                       struct ompi_datatype_t *rdtype, 
                                       struct ompi_communicator_t *comm);
-  int mca_coll_tuned_allgatherv_inter_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_allgatherv_intra_dec_dynamic(void *sbuf, int scount, 
+                                      struct ompi_datatype_t *sdtype, 
+                                      void * rbuf, int *rcounts, int *disps, 
+                                      struct ompi_datatype_t *rdtype, 
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allgatherv_inter_dec_fixed(void *sbuf, int scount, 
+                                      struct ompi_datatype_t *sdtype, 
+                                      void * rbuf, int *rcounts, int *disps, 
+                                      struct ompi_datatype_t *rdtype, 
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allgatherv_inter_dec_dynamic(void *sbuf, int scount, 
                                       struct ompi_datatype_t *sdtype, 
                                       void * rbuf, int *rcounts, int *disps, 
                                       struct ompi_datatype_t *rdtype, 
                                       struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_allreduce_intra_dec(void *sbuf, void *rbuf, int count, 
+  int mca_coll_tuned_allreduce_intra_dec_fixed(void *sbuf, void *rbuf, 
+                                     int count, 
                                      struct ompi_datatype_t *dtype, 
                                      struct ompi_op_t *op, 
                                      struct ompi_communicator_t *comm);
-  int mca_coll_tuned_allreduce_inter_dec(void *sbuf, void *rbuf, int count, 
+  int mca_coll_tuned_allreduce_intra_dec_dynamic(void *sbuf, void *rbuf, 
+                                     int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allreduce_inter_dec_fixed(void *sbuf, void *rbuf, 
+                                     int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allreduce_inter_dec_dynamic(void *sbuf, void *rbuf, 
+                                     int count, 
                                      struct ompi_datatype_t *dtype, 
                                      struct ompi_op_t *op, 
                                      struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_alltoall_intra_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype, 
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm);
-  int mca_coll_tuned_alltoall_inter_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_inter_dec_fixed(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_inter_dec_dynamic(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype, 
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_alltoallv_intra_dec(void *sbuf, int *scounts, int *sdisps, 
+  int mca_coll_tuned_alltoallv_intra_dec_fixed(void *sbuf, int *scounts, 
+                                     int *sdisps, 
                                      struct ompi_datatype_t *sdtype, 
                                      void *rbuf, int *rcounts, int *rdisps, 
                                      struct ompi_datatype_t *rdtype, 
                                      struct ompi_communicator_t *comm);
-  int mca_coll_tuned_alltoallv_inter_dec(void *sbuf, int *scounts, int *sdisps, 
+  int mca_coll_tuned_alltoallv_intra_dec_dynamic(void *sbuf, int *scounts, 
+                                     int *sdisps, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoallv_inter_dec_fixed(void *sbuf, int *scounts, 
+                                     int *sdisps, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoallv_inter_dec_dynamic(void *sbuf, int *scounts, 
+                                     int *sdisps, 
                                      struct ompi_datatype_t *sdtype, 
                                      void *rbuf, int *rcounts, int *rdisps, 
                                      struct ompi_datatype_t *rdtype, 
                                      struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_alltoallw_intra_dec(void *sbuf, int *scounts, int *sdisps, 
+  int mca_coll_tuned_alltoallw_intra_dec_fixed(void *sbuf, int *scounts, 
+                                     int *sdisps, 
                                      struct ompi_datatype_t **sdtypes, 
                                      void *rbuf, int *rcounts, int *rdisps, 
                                      struct ompi_datatype_t **rdtypes, 
                                      struct ompi_communicator_t *comm);
-  int mca_coll_tuned_alltoallw_inter_dec(void *sbuf, int *scounts, int *sdisps, 
+  int mca_coll_tuned_alltoallw_intra_dec_dynamic(void *sbuf, int *scounts, 
+                                     int *sdisps, 
+                                     struct ompi_datatype_t **sdtypes, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t **rdtypes, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoallw_inter_dec_fixed(void *sbuf, int *scounts, 
+                                     int *sdisps, 
+                                     struct ompi_datatype_t **sdtypes, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t **rdtypes, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoallw_inter_dec_dynamic(void *sbuf, int *scounts, 
+                                     int *sdisps, 
                                      struct ompi_datatype_t **sdtypes, 
                                      void *rbuf, int *rcounts, int *rdisps, 
                                      struct ompi_datatype_t **rdtypes, 
                                      struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_barrier_intra_dec(struct ompi_communicator_t *comm);
-  int mca_coll_tuned_barrier_inter_dec(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_dec_dynamic(
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_inter_dec_fixed(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_inter_dec_dynamic(
+                                     struct ompi_communicator_t *comm);
 
 
-  int mca_coll_tuned_bcast_intra_dec(void *buff, int count, 
+  int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype,
+                                     int root, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count, 
                                      struct ompi_datatype_t *datatype,
                                      int root, 
                                      struct ompi_communicator_t *comm);
@@ -164,92 +249,174 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_priority_param;
 
 
 
-  int mca_coll_tuned_bcast_inter_dec(void *buff, int count, 
+  int mca_coll_tuned_bcast_inter_dec_fixed(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype, 
+                                     int root, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_bcast_inter_dec_dynamic(void *buff, int count, 
                                      struct ompi_datatype_t *datatype, 
                                      int root, 
                                      struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_exscan_intra_dec(void *sbuf, void *rbuf, int count, 
+  int mca_coll_tuned_exscan_intra_dec_fixed(void *sbuf, void *rbuf, int count, 
                                   struct ompi_datatype_t *dtype, 
                                   struct ompi_op_t *op, 
                                   struct ompi_communicator_t *comm);
-  int mca_coll_tuned_exscan_inter_dec(void *sbuf, void *rbuf, int count, 
+  int mca_coll_tuned_exscan_intra_dec_dynamic(void *sbuf, void *rbuf, 
+                                  int count, 
+                                  struct ompi_datatype_t *dtype, 
+                                  struct ompi_op_t *op, 
+                                  struct ompi_communicator_t *comm);
+  int mca_coll_tuned_exscan_inter_dec_fixed(void *sbuf, void *rbuf, int count, 
+                                  struct ompi_datatype_t *dtype, 
+                                  struct ompi_op_t *op, 
+                                  struct ompi_communicator_t *comm);
+  int mca_coll_tuned_exscan_inter_dec_dynamic(void *sbuf, void *rbuf, 
+                                  int count, 
                                   struct ompi_datatype_t *dtype, 
                                   struct ompi_op_t *op, 
                                   struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_gather_intra_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount, 
                                   struct ompi_datatype_t *sdtype, void *rbuf, 
                                   int rcount, struct ompi_datatype_t *rdtype, 
                                   int root, struct ompi_communicator_t *comm);
-  int mca_coll_tuned_gather_inter_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_gather_intra_dec_dynamic(void *sbuf, int scount, 
+                                  struct ompi_datatype_t *sdtype, void *rbuf, 
+                                  int rcount, struct ompi_datatype_t *rdtype, 
+                                  int root, struct ompi_communicator_t *comm);
+  int mca_coll_tuned_gather_inter_dec_fixed(void *sbuf, int scount, 
+                                  struct ompi_datatype_t *sdtype, void *rbuf, 
+                                  int rcount, struct ompi_datatype_t *rdtype, 
+                                  int root, struct ompi_communicator_t *comm);
+  int mca_coll_tuned_gather_inter_dec_dynamic(void *sbuf, int scount, 
                                   struct ompi_datatype_t *sdtype, void *rbuf, 
                                   int rcount, struct ompi_datatype_t *rdtype, 
                                   int root, struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_gatherv_intra_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_gatherv_intra_dec_fixed(void *sbuf, int scount, 
                                    struct ompi_datatype_t *sdtype, void *rbuf, 
                                    int *rcounts, int *disps, 
                                    struct ompi_datatype_t *rdtype, int root, 
                                    struct ompi_communicator_t *comm);
-  int mca_coll_tuned_gatherv_inter_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_gatherv_intra_dec_dynamic(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int *rcounts, int *disps, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
+  int mca_coll_tuned_gatherv_inter_dec_fixed(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int *rcounts, int *disps, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
+  int mca_coll_tuned_gatherv_inter_dec_dynamic(void *sbuf, int scount, 
                                    struct ompi_datatype_t *sdtype, void *rbuf, 
                                    int *rcounts, int *disps, 
                                    struct ompi_datatype_t *rdtype, int root, 
                                    struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_reduce_intra_dec(void *sbuf, void* rbuf, int count, 
+  int mca_coll_tuned_reduce_intra_dec_fixed(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
                                       struct ompi_op_t *op, 
                                       int root,
                                       struct ompi_communicator_t *comm);
-  int mca_coll_tuned_reduce_inter_dec(void *sbuf, void* rbuf, int count, 
+  int mca_coll_tuned_reduce_intra_dec_dynamic(void *sbuf, void* rbuf, 
+                                      int count, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      int root,
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_inter_dec_fixed(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype,
+                                      struct ompi_op_t *op, 
+                                      int root,
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_inter_dec_dynamic(void *sbuf, void* rbuf, 
+                                      int count, 
                                       struct ompi_datatype_t *dtype,
                                       struct ompi_op_t *op, 
                                       int root,
                                       struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_reduce_scatter_intra_dec(void *sbuf, void *rbuf, 
-                                          int *rcounts, 
-                                          struct ompi_datatype_t *dtype, 
-                                          struct ompi_op_t *op, 
-                                          struct ompi_communicator_t *comm);
-  int mca_coll_tuned_reduce_scatter_inter_dec(void *sbuf, void *rbuf, 
-                                          int *rcounts, 
-                                          struct ompi_datatype_t *dtype, 
-                                          struct ompi_op_t *op, 
-                                          struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_scatter_intra_dec_fixed(void *sbuf, void *rbuf, 
+                                      int *rcounts, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_scatter_intra_dec_dynamic(void *sbuf, void *rbuf, 
+                                      int *rcounts, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_scatter_inter_dec_fixed(void *sbuf, void *rbuf, 
+                                      int *rcounts, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_scatter_inter_dec_dynamic(void *sbuf, void *rbuf, 
+                                      int *rcounts, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      struct ompi_communicator_t *comm);
   
-  int mca_coll_tuned_scan_intra_dec(void *sbuf, void *rbuf, int count, 
+  int mca_coll_tuned_scan_intra_dec_fixed(void *sbuf, void *rbuf, int count, 
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op, 
                                 struct ompi_communicator_t *comm);
-  int mca_coll_tuned_scan_inter_dec(void *sbuf, void *rbuf, int count, 
+  int mca_coll_tuned_scan_intra_dec_dynamic(void *sbuf, void *rbuf, int count, 
+                                struct ompi_datatype_t *dtype, 
+                                struct ompi_op_t *op, 
+                                struct ompi_communicator_t *comm);
+  int mca_coll_tuned_scan_inter_dec_fixed(void *sbuf, void *rbuf, int count, 
+                                struct ompi_datatype_t *dtype, 
+                                struct ompi_op_t *op, 
+                                struct ompi_communicator_t *comm);
+  int mca_coll_tuned_scan_inter_dec_dynamic(void *sbuf, void *rbuf, int count, 
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op, 
                                 struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_scatter_intra_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount, 
                                    struct ompi_datatype_t *sdtype, void *rbuf, 
                                    int rcount, struct ompi_datatype_t *rdtype, 
                                    int root, struct ompi_communicator_t *comm);
-  int mca_coll_tuned_scatter_inter_dec(void *sbuf, int scount, 
+  int mca_coll_tuned_scatter_intra_dec_dynamic(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int rcount, struct ompi_datatype_t *rdtype, 
+                                   int root, struct ompi_communicator_t *comm);
+  int mca_coll_tuned_scatter_inter_dec_fixed(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int rcount, struct ompi_datatype_t *rdtype, 
+                                   int root, struct ompi_communicator_t *comm);
+  int mca_coll_tuned_scatter_inter_dec_dynamic(void *sbuf, int scount, 
                                    struct ompi_datatype_t *sdtype, void *rbuf, 
                                    int rcount, struct ompi_datatype_t *rdtype, 
                                    int root, struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_scatterv_intra_dec(void *sbuf, int *scounts, int *disps, 
-                                    struct ompi_datatype_t *sdtype, 
-                                    void* rbuf, int rcount, 
-                                    struct ompi_datatype_t *rdtype, int root, 
-                                    struct ompi_communicator_t *comm);
-  int mca_coll_tuned_scatterv_inter_dec(void *sbuf, int *scounts, int *disps, 
-                                    struct ompi_datatype_t *sdtype, 
-                                    void* rbuf, int rcount, 
-                                    struct ompi_datatype_t *rdtype, int root, 
-                                    struct ompi_communicator_t *comm);
-
-
+  int mca_coll_tuned_scatterv_intra_dec_fixed(void *sbuf, int *scounts, 
+                                   int *disps, 
+                                   struct ompi_datatype_t *sdtype, 
+                                   void* rbuf, int rcount, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
+  int mca_coll_tuned_scatterv_intra_dec_dynamic(void *sbuf, int *scounts, 
+                                   int *disps, 
+                                   struct ompi_datatype_t *sdtype, 
+                                   void* rbuf, int rcount, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
+  int mca_coll_tuned_scatterv_inter_dec_fixed(void *sbuf, int *scounts, 
+                                   int *disps, 
+                                   struct ompi_datatype_t *sdtype, 
+                                   void* rbuf, int rcount, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
+  int mca_coll_tuned_scatterv_inter_dec_dynamic(void *sbuf, int *scounts, 
+                                   int *disps, 
+                                   struct ompi_datatype_t *sdtype, 
+                                   void* rbuf, int rcount, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
 
 /* Utility functions */
 
@@ -271,8 +438,9 @@ typedef struct rule_s {
 struct mca_coll_base_comm_t {
   /* standard data for requests and PML usage */
 
-  /* we need to keep this here for now incase we fall through to the basic functions 
-   * that expect these fields/and memory to be avaliable (GEF something for JS?)
+  /* we need to keep this here for now incase we fall through to the 
+   * basic functions that expect these fields/and memory to be 
+   * avaliable (GEF something for JS?)
    */
   ompi_request_t **mccb_reqs;
   int mccb_num_reqs;
@@ -281,8 +449,9 @@ struct mca_coll_base_comm_t {
   /* 
    * tuned topo information caching per communicator 
    *
-   * for each communicator we cache the topo information so we can reuse without regenerating 
-   * if we change the root, [or fanout] then regenerate and recache this information 
+   * for each communicator we cache the topo information so we can 
+   * reuse without regenerating if we change the root, [or fanout]
+   * then regenerate and recache this information 
    *
    */
 

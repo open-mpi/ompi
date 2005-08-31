@@ -27,6 +27,12 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 
+/* from component.. shouldn't it be cached on the component somehow */
+extern int mca_coll_tuned_use_dynamic_rules_param;
+extern int mca_coll_tuned_init_tree_fanout_param;
+extern int mca_coll_tuned_init_chain_fanout_param;
+
+
 
 /*
  * Which set are we using?
@@ -35,8 +41,11 @@ static const mca_coll_base_module_1_0_0_t *to_use = NULL;
 
 /*
  * Intra communicator decision functions
+ * 
+ * Two prototypes, one for fixed rules and one for dynamic rules
+ *
  */
-static const mca_coll_base_module_1_0_0_t intra = {
+static const mca_coll_base_module_1_0_0_t intra_fixed = {
 
   /* Initialization / finalization functions */
 
@@ -45,45 +54,90 @@ static const mca_coll_base_module_1_0_0_t intra = {
 
   /* Collective function pointers */
 
-/*   mca_coll_tuned_allgather_intra_dec, */
+/*   mca_coll_tuned_allgather_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allgatherv_intra_dec, */
+/*   mca_coll_tuned_allgatherv_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allreduce_intra_dec, */
+/*   mca_coll_tuned_allreduce_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoall_intra_dec, */
+/*   mca_coll_tuned_alltoall_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoallv_intra_dec, */
+/*   mca_coll_tuned_alltoallv_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoallw_intra_dec, */
+/*   mca_coll_tuned_alltoallw_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_barrier_intra_dec, */
+/*   mca_coll_tuned_barrier_intra_dec_fixed, */
     NULL,
-  mca_coll_tuned_bcast_intra_dec,
+  mca_coll_tuned_bcast_intra_dec_fixed,
 /*     NULL, */
-/*   mca_coll_tuned_exscan_intra_dec, */
+/*   mca_coll_tuned_exscan_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gather_intra_dec, */
+/*   mca_coll_tuned_gather_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gatherv_intra_dec, */
+/*   mca_coll_tuned_gatherv_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_reduce_intra_dec, */
+/*   mca_coll_tuned_reduce_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_reduce_scatter_intra_dec, */
+/*   mca_coll_tuned_reduce_scatter_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scan_intra_dec, */
+/*   mca_coll_tuned_scan_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatter_intra_dec, */
+/*   mca_coll_tuned_scatter_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatterv_intra_dec */
+/*   mca_coll_tuned_scatterv_intra_dec_fixed */
     NULL
 };
 
+static const mca_coll_base_module_1_0_0_t intra_dynamic = {
+
+  /* Initialization / finalization functions */
+
+  mca_coll_tuned_module_init,
+  mca_coll_tuned_module_finalize,
+
+  /* Collective function pointers */
+
+/*   mca_coll_tuned_allgather_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_allgatherv_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_allreduce_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_alltoall_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_alltoallv_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_alltoallw_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_barrier_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_bcast_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_exscan_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_gather_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_gatherv_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_reduce_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_reduce_scatter_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_scan_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_scatter_intra_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_scatterv_intra_dec_dynamic */
+    NULL
+};
 
 /*
  * collective decision functions for intercommunicators
+ * 
+ * Two prototypes, one for fixed rules and one for dynamic rules
+ *
  */
-static const mca_coll_base_module_1_0_0_t inter = {
+static const mca_coll_base_module_1_0_0_t inter_fixed = {
 
   /* Initialization / finalization functions */
 
@@ -92,41 +146,87 @@ static const mca_coll_base_module_1_0_0_t inter = {
 
   /* Collective function pointers */
 
-/*   mca_coll_tuned_allgather_inter_dec, */
+/*   mca_coll_tuned_allgather_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allgatherv_inter_dec, */
+/*   mca_coll_tuned_allgatherv_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allreduce_inter_dec, */
+/*   mca_coll_tuned_allreduce_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoall_inter_dec, */
+/*   mca_coll_tuned_alltoall_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoallv_inter_dec, */
+/*   mca_coll_tuned_alltoallv_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoallw_inter_dec, */
+/*   mca_coll_tuned_alltoallw_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_barrier_inter_dec, */
+/*   mca_coll_tuned_barrier_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_bcast_inter_dec, */
+/*   mca_coll_tuned_bcast_inter_dec_fixed, */
     NULL,
-  /* mca_coll_tuned_exscan_inter_dec, */
+  /* mca_coll_tuned_exscan_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gather_inter_dec, */
+/*   mca_coll_tuned_gather_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gatherv_inter_dec, */
+/*   mca_coll_tuned_gatherv_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_reduce_inter_dec, */
+/*   mca_coll_tuned_reduce_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_reduce_scatter_inter_dec, */
+/*   mca_coll_tuned_reduce_scatter_inter_dec_fixed, */
     NULL,
-  /* mca_coll_tuned_scan_inter_dec, */
+  /* mca_coll_tuned_scan_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatter_inter_dec, */
+/*   mca_coll_tuned_scatter_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatterv_inter_dec */
+/*   mca_coll_tuned_scatterv_inter_dec_fixed */
     NULL
 };
 
-/* Note I keep the names here as place markers until I have implemented the functions */
+static const mca_coll_base_module_1_0_0_t inter_dynamic = {
+
+  /* Initialization / finalization functions */
+
+  mca_coll_tuned_module_init,
+  mca_coll_tuned_module_finalize,
+
+  /* Collective function pointers */
+
+/*   mca_coll_tuned_allgather_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_allgatherv_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_allreduce_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_alltoall_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_alltoallv_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_alltoallw_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_barrier_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_bcast_inter_dec_dynamic, */
+    NULL,
+  /* mca_coll_tuned_exscan_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_gather_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_gatherv_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_reduce_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_reduce_scatter_inter_dec_dynamic, */
+    NULL,
+  /* mca_coll_tuned_scan_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_scatter_inter_dec_dynamic, */
+    NULL,
+/*   mca_coll_tuned_scatterv_inter_dec_dynamic */
+    NULL
+};
+
+/* 
+ * Note I keep the names here as place markers until all the functions
+ * are implemented
+ */
 
 
 /*
@@ -152,6 +252,7 @@ const mca_coll_base_module_1_0_0_t *
 mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
                           struct mca_coll_base_comm_t **data)
 {
+    int use_dynamic = -1;
 
     printf("Tuned query called\n");
   if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_tuned_priority_param,
@@ -159,14 +260,39 @@ mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
     return NULL;
   }
 
-  /* Choose whether to use [intra|inter] decision functions */
 
-  if (OMPI_COMM_IS_INTER(comm)) {
-      to_use = &inter;
-  } else {
-      to_use = &intra;
+  /* 
+   * Choose whether to use [intra|inter] decision functions 
+   * and if using fixed OR dynamic rule sets.
+   * Right now you cannot mix them, maybe later on it can be changed
+   * but this would probably add an extra if and funct call to the path
+   *
+   */
+
+  if (OMPI_SUCCESS !=
+  mca_base_param_lookup_int(mca_coll_tuned_use_dynamic_rules_param,
+                                                &use_dynamic)) {
+    printf("No use_dynamic param found!\n");
+    return NULL;
   }
 
+  if (OMPI_COMM_IS_INTER(comm)) {
+    if (use_dynamic) {
+printf("using inter_dynamic\n");
+      to_use = &inter_dynamic;
+    } else {
+printf("using inter_fixed\n");
+      to_use = &inter_fixed;
+    }
+  } else { /* is an intra comm */
+    if (use_dynamic) {
+printf("using intra_dynamic\n");
+      to_use = &intra_dynamic;
+    } else {
+printf("using intra_fixed\n");
+      to_use = &intra_fixed;
+    }
+  }
   return to_use;
 }
 
@@ -186,7 +312,8 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
   printf("Tuned init module called.\n");
 
-  /* This routine will become more complex and might have to be broken into sections */
+  /* This routine will become more complex and might have to be */
+  /* broken into more sections/function calls */
 
   /* Order of operations:
    * alloc memory for nb reqs (in case we fall through) 
@@ -219,11 +346,22 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    */
 
   /* get default fanouts is made available via the MCA */
-  tree_fanout_default = 2;  /* make it binary for now */
-  chain_fanout_default = 4;
+  if (OMPI_SUCCESS !=
+  mca_base_param_lookup_int(mca_coll_tuned_init_tree_fanout_param,
+                                                &tree_fanout_default)) {
+    printf("warning: no mca_coll_tuned_init_tree_fanout_param found?\n");
+    tree_fanout_default = 2;  /* make it binary if failed lookup. */
+  }
+  if (OMPI_SUCCESS !=
+  mca_base_param_lookup_int(mca_coll_tuned_init_chain_fanout_param,
+                                                &chain_fanout_default)) {
+    printf("warning: no mca_coll_tuned_init_chain_fanout_param found?\n");
+    chain_fanout_default = 4;
+  }
 
   
-  data->cached_tree = ompi_coll_tuned_topo_build_tree (tree_fanout_default, comm, 0); 
+  data->cached_tree = ompi_coll_tuned_topo_build_tree (tree_fanout_default, 
+                                                        comm, 0); 
   data->cached_tree_root = 0;
   data->cached_tree_fanout = tree_fanout_default;
 
@@ -238,7 +376,8 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    * will probably change how we cache this later, for now a midsize
    * GEF
    */
-  data->cached_chain = ompi_coll_tuned_topo_build_chain (chain_fanout_default, comm, 0);
+  data->cached_chain = ompi_coll_tuned_topo_build_chain (chain_fanout_default,
+                                                         comm, 0);
   data->cached_chain_root = 0;
   data->cached_chain_fanout = chain_fanout_default;
 

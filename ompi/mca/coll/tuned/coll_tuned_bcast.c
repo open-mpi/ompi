@@ -26,7 +26,7 @@
 #include "mca/pml/pml.h"
 
 /* external prototype we need */
-extern int ompi_mpi_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+extern int coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                               int dest, int stag,
                               void* recvbuf, int rcount, ompi_datatype_t* rdata,
                               int source, int rtag,
@@ -49,7 +49,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
     char *tmpbuf = (char*)buff;
     long ext;
     int typelng;
-    MPI_Request base_req, new_req;
+    ompi_request_t *base_req, *new_req;
     ompi_coll_chain_t* chain;
 
     size = ompi_comm_size(comm);
@@ -228,7 +228,8 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     char *tmpbuf[2];
     int type_size;
     long type_extent;
-    MPI_Request base_req, new_req;
+    long lb;
+    ompi_request_t *base_req, *new_req;
     ompi_coll_tree_t *tree;
 
     size = ompi_comm_size(comm);
@@ -251,7 +252,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
         tree = comm->c_coll_selected_data->cached_tree;
     }
     else {
-        if (comm->c_coll_selected_data->cached_tree) { /* destroy previous chain if defined */
+        if (comm->c_coll_selected_data->cached_tree) { /* destroy previous tree if defined */
             ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_tree);    
         }
         comm->c_coll_selected_data->cached_tree = tree = ompi_coll_tuned_topo_build_tree( 2, comm, root );
@@ -287,6 +288,8 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
                                                         root, comm, segsize ));
     }
 
+    err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
+    
     /* Determine real segment size */
     realsegsize[0] = segcount[0] * type_extent;
     realsegsize[1] = segcount[1] * type_extent;
@@ -424,7 +427,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     }
     if ( (size%2) != 0 && rank != root) { 
 
-        err = ompi_mpi_sendrecv( tmpbuf[lr], counts[lr], datatype,
+        err = coll_tuned_sendrecv( tmpbuf[lr], counts[lr], datatype,
                                  pair, MCA_COLL_BASE_TAG_BCAST,
                                  tmpbuf[(lr+1)%2], counts[(lr+1)%2], datatype,
                                  pair, MCA_COLL_BASE_TAG_BCAST,
@@ -448,7 +451,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
         } 
         /* everyone else exchanges buffers */
         else {
-            err = ompi_mpi_sendrecv( tmpbuf[lr], counts[lr], datatype,
+            err = coll_tuned_sendrecv( tmpbuf[lr], counts[lr], datatype,
                                      pair, MCA_COLL_BASE_TAG_BCAST,
                                      tmpbuf[(lr+1)%2], counts[(lr+1)%2], datatype,
                                      pair, MCA_COLL_BASE_TAG_BCAST,

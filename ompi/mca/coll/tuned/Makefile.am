@@ -22,7 +22,9 @@ sources = \
         coll_tuned.h \
         coll_tuned_topo.h \
         coll_tuned_topo.c \
-        coll_tuned_bcast_decision.c \
+        coll_tuned_util.c \
+        coll_tuned_bcast_decision_fixed.c \
+        coll_tuned_bcast_decision_dynamic.c \
         coll_tuned_bcast.c \
         coll_tuned_component.c \
         coll_tuned_module.c 
