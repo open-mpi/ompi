@@ -1,0 +1,276 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+#include "coll_tuned.h"
+
+#include <stdio.h>
+
+#include "mpi.h"
+#include "communicator/communicator.h"
+#include "mca/base/mca_base_param.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/base.h"
+#include "coll_tuned.h"
+#include "coll_tuned_topo.h"
+
+
+/*
+ * Which set are we using?
+ */
+static const mca_coll_base_module_1_0_0_t *to_use = NULL;
+
+/*
+ * Intra communicator decision functions
+ */
+static const mca_coll_base_module_1_0_0_t intra = {
+
+  /* Initialization / finalization functions */
+
+  mca_coll_tuned_module_init,
+  mca_coll_tuned_module_finalize,
+
+  /* Collective function pointers */
+
+/*   mca_coll_tuned_allgather_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_allgatherv_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_allreduce_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_alltoall_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_alltoallv_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_alltoallw_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_barrier_intra_dec, */
+    NULL,
+  mca_coll_tuned_bcast_intra_dec,
+/*     NULL, */
+/*   mca_coll_tuned_exscan_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_gather_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_gatherv_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_reduce_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_reduce_scatter_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_scan_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_scatter_intra_dec, */
+    NULL,
+/*   mca_coll_tuned_scatterv_intra_dec */
+    NULL
+};
+
+
+/*
+ * collective decision functions for intercommunicators
+ */
+static const mca_coll_base_module_1_0_0_t inter = {
+
+  /* Initialization / finalization functions */
+
+  mca_coll_tuned_module_init,
+  mca_coll_tuned_module_finalize,
+
+  /* Collective function pointers */
+
+/*   mca_coll_tuned_allgather_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_allgatherv_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_allreduce_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_alltoall_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_alltoallv_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_alltoallw_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_barrier_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_bcast_inter_dec, */
+    NULL,
+  /* mca_coll_tuned_exscan_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_gather_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_gatherv_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_reduce_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_reduce_scatter_inter_dec, */
+    NULL,
+  /* mca_coll_tuned_scan_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_scatter_inter_dec, */
+    NULL,
+/*   mca_coll_tuned_scatterv_inter_dec */
+    NULL
+};
+
+/* Note I keep the names here as place markers until I have implemented the functions */
+
+
+/*
+ * Initial query function that is invoked during MPI_INIT, allowing
+ * this component to disqualify itself if it doesn't support the
+ * required level of thread support.
+ */
+int mca_coll_tuned_init_query(bool enable_progress_threads,
+                              bool enable_mpi_threads)
+{
+    /* Nothing to do */
+  
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ * Invoked when there's a new communicator that has been created.
+ * Look at the communicator and decide which set of functions and
+ * priority we want to return.
+ */
+const mca_coll_base_module_1_0_0_t *
+mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
+                          struct mca_coll_base_comm_t **data)
+{
+
+    printf("Tuned query called\n");
+  if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_tuned_priority_param,
+                                                priority)) {
+    return NULL;
+  }
+
+  /* Choose whether to use [intra|inter] decision functions */
+
+  if (OMPI_COMM_IS_INTER(comm)) {
+      to_use = &inter;
+  } else {
+      to_use = &intra;
+  }
+
+  return to_use;
+}
+
+
+/*
+ * Init module on the communicator
+ */
+const struct mca_coll_base_module_1_0_0_t *
+mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
+{
+  int size;
+  struct mca_coll_base_comm_t *data;
+  /* fanout parameters */
+  int tree_fanout_default = 2;
+  int chain_fanout_default = 4;
+
+
+  printf("Tuned init module called.\n");
+
+  /* This routine will become more complex and might have to be broken into sections */
+
+  /* Order of operations:
+   * alloc memory for nb reqs (in case we fall through) 
+   * add decision rules if using dynamic rules
+   *     compact rules using communicator size info etc
+   * build first guess cached topologies (might depend on the rules from above)
+   *
+   * then attach all to the communicator and return base module funct ptrs 
+   */
+
+  /* Allocate the data that hangs off the communicator */
+
+  if (OMPI_COMM_IS_INTER(comm)) {
+      size = ompi_comm_remote_size(comm);
+  } else {
+      size = ompi_comm_size(comm);
+  }
+  data = malloc(sizeof(struct mca_coll_base_comm_t) +
+                 (sizeof(ompi_request_t *) * size * 2));
+  
+  if (NULL == data) {
+      return NULL;
+  }
+  data->mccb_reqs = (ompi_request_t **) (data + 1);
+  data->mccb_num_reqs = size * 2;
+
+  /* 
+   * now for the cached topo functions 
+   * guess the initial topologies to use rank 0 as root 
+   */
+
+  /* get default fanouts is made available via the MCA */
+  tree_fanout_default = 2;  /* make it binary for now */
+  chain_fanout_default = 4;
+
+  
+  data->cached_tree = ompi_coll_tuned_topo_build_tree (tree_fanout_default, comm, 0); 
+  data->cached_tree_root = 0;
+  data->cached_tree_fanout = tree_fanout_default;
+
+  data->cached_bmtree = ompi_coll_tuned_topo_build_bmtree (comm, 0);
+  data->cached_tree_root = 0;
+
+  /* 
+   * chains (fanout followed by pipelines)
+   * are more difficuilt as the fan out really really depends on message size [sometimes].. 
+   * as size gets larger fan-out gets smaller [usually]
+   * 
+   * will probably change how we cache this later, for now a midsize
+   * GEF
+   */
+  data->cached_chain = ompi_coll_tuned_topo_build_chain (chain_fanout_default, comm, 0);
+  data->cached_chain_root = 0;
+  data->cached_chain_fanout = chain_fanout_default;
+
+  /* All done */
+
+  comm->c_coll_selected_data = data;
+
+  printf("Tuned looks like it is in use :)\n");
+  return to_use;
+}
+
+
+/*
+ * Finalize module on the communicator
+ */
+int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
+{
+  if (NULL == comm->c_coll_selected_module) {
+    return OMPI_SUCCESS;
+  }
+
+#if OMPI_ENABLE_DEBUG
+  /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
+     the generel c_coll_selected_data */
+
+  comm->c_coll_selected_data->mccb_reqs = NULL;
+  comm->c_coll_selected_data->mccb_num_reqs = 0;
+#endif
+
+  /* All done */
+
+  free(comm->c_coll_selected_data);
+  comm->c_coll_selected_data = NULL;
+  return OMPI_SUCCESS;
+}
