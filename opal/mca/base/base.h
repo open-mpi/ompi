@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #if OMPI_WANT_LIBLTDL
-#include "libltdl/ltdl.h"
+#include "ltdl.h"
 #endif
 
 #include "opal/class/opal_object.h"

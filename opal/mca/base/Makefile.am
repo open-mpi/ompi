@@ -21,7 +21,8 @@ include $(top_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = \
         -DOMPI_PKGLIBDIR=\"$(pkglibdir)\" \
-        -DOMPI_SYSCONFDIR=\"$(sysconfdir)\"
+        -DOMPI_SYSCONFDIR=\"$(sysconfdir)\" \
+        -I$(top_srcdir)/opal/libltdl
 AM_LFLAGS = -Pmca_base_yy
 LEX_OUTPUT_ROOT = lex.mca_base_yy
 
