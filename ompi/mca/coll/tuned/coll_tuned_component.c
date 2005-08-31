@@ -37,9 +37,9 @@ const char *mca_coll_tuned_component_version_string =
  * Global variable
  */
 int mca_coll_tuned_priority_param = -1;
+int mca_coll_tuned_use_dynamic_rules_param = -1;
 int mca_coll_tuned_init_tree_fanout_param = -1;
 int mca_coll_tuned_init_chain_fanout_param = -1;
-
 /*
  * Local function
  */
@@ -92,6 +92,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_tuned_component = {
 
 static int tuned_open(void)
 {
+    printf("Tuned_open called\n");
 /*     mca_coll_tuned_component_t *ct = &mca_coll_tuned_component; */
 
     /* Use a low priority, but allow other components to be lower */
@@ -99,14 +100,19 @@ static int tuned_open(void)
     mca_coll_tuned_priority_param = 
         mca_base_param_register_int("coll", "tuned", "priority", NULL, 30);
 
+    /* by default DISABLE dynamic rules and force the use of fixed [if] rules */
+    mca_coll_tuned_use_dynamic_rules_param = 
+        mca_base_param_register_int("coll", "tuned", "use_dynamic_rules",
+                                    NULL, 0);
+
+    /* some initial guesses at topology parameters */
     mca_coll_tuned_init_tree_fanout_param = 
-        mca_base_param_register_int("coll", "tuned", "init_tree_fanout", NULL, 2);
+        mca_base_param_register_int("coll", "tuned", "init_tree_fanout", 
+                                    NULL, 2);
 
     mca_coll_tuned_init_chain_fanout_param = 
-        mca_base_param_register_int("coll", "tuned", "init_chain_fanout", NULL, 4);
-
-    printf("mca_coll_tuned_init_tree_fanout_param %d\nmca_coll_tuned_init_chain_fanout_param %d\n", mca_coll_tuned_init_tree_fanout_param,
-    mca_coll_tuned_init_chain_fanout_param);
+        mca_base_param_register_int("coll", "tuned", "init_chain_fanout", 
+                                    NULL, 4);
 
 /* use the newer interface rsn */
 /*     mca_coll_tuned_priority_param = mca_base_param_reg_int(&(ct->super), "priority", "Priority of the tuned coll component", */

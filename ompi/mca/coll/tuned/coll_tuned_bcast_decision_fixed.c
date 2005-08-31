@@ -15,7 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include "coll_tuned.h"
 
 #include "mpi.h"
 #include "include/constants.h"
@@ -27,6 +26,8 @@
 #include "mca/pml/pml.h"
 #include "opal/util/bit_ops.h"
 
+#include "coll_tuned.h"
+
 
 /*
  *	bcast_intra_dec 
@@ -35,7 +36,7 @@
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
  */
-int mca_coll_tuned_bcast_intra_dec(void *buff, int count,
+int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                    struct ompi_datatype_t *datatype, int root,
                                    struct ompi_communicator_t *comm)
 {
@@ -46,7 +47,7 @@ int mca_coll_tuned_bcast_intra_dec(void *buff, int count,
     int contig;
     int dsize;
 
-    printf("mca_coll_tuned_bcast_intra_dec\n");
+    printf("mca_coll_tuned_bcast_intra_dec_fixed\n");
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -54,7 +55,7 @@ int mca_coll_tuned_bcast_intra_dec(void *buff, int count,
 /*     err = mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm); */
 /*     err = mca_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, (8192)); */
 /*     err = mca_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, (8192)); */
-    err = mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, (8192));
+    err = mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, (1024));
 
     return err;
 }
