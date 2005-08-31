@@ -39,13 +39,20 @@
 #include <stdlib.h>
 #include <strings.h>
 
-#include "opal/util/opal_environ.h"
-
 /*
  * The environment
  */
-extern char** environ;
+extern char **environ;
 
+#include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
+#include "opal/class/opal_list.h"
+#include "mca/base/base.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/rmgr/rmgr_types.h"
+#include "mca/rmaps/base/rmaps_base_map.h"
+#include "runtime/runtime.h"
+#include "totalview.h"
 
 /* +++ begin MPICH/TotalView interface definitions */
 
@@ -70,14 +77,6 @@ volatile int MPIR_acquired_pre_main = 0;
 void *MPIR_Breakpoint(void);
 
 /* --- end MPICH/TotalView interface definitions */
-
-#include "opal/util/output.h"
-#include "opal/class/opal_list.h"
-#include "mca/base/base.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/rmgr/rmgr_types.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
-#include "runtime/runtime.h"
 
 /*
  * NOTE: The job description in the registry will likely evolve to use
@@ -115,7 +114,7 @@ static void dump(void)
 /**
  * Initialization of data structures for running under a debugger
  * using the MPICH/TotalView parallel debugger interface.  Before the
- * spawn we need to check if we have being run under a TotalView-like
+ * spawn we need to check if we are being run under a TotalView-like
  * debugger; if so then inform applications via an MCA parameter.
  */
 void orte_totalview_init_before_spawn(void)
@@ -158,7 +157,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 {
     opal_list_t list_of_resource_maps;
     opal_list_item_t *item;
-    int i;
+    size_t i;
     int rc;
 
     if (MPIR_proctable) {
@@ -238,8 +237,6 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
     }
 
     (void) MPIR_Breakpoint();
-
-    return ORTE_SUCCESS;
 }
 
 

@@ -56,6 +56,7 @@
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
 
+#include "orterun.h"
 #include "totalview.h"
 
 /*
@@ -221,7 +222,7 @@ static int parse_appfile(char *filename, char ***env);
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
 
 
-int main(int argc, char *argv[])
+int orterun(int argc, char *argv[])
 {
     orte_app_context_t **apps;
     int rc, i, num_apps, array_size, j;
