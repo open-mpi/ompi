@@ -35,6 +35,7 @@
 #include <vapi_common.h> 
 #include "datatype/convertor.h" 
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
+#include "btl_mvapi_endpoint.h"
 
 mca_btl_mvapi_component_t mca_btl_mvapi_component = {
     {
@@ -138,7 +139,7 @@ int mca_btl_mvapi_component_open(void)
                                       10000); 
     mca_btl_mvapi_component.ib_sg_list_size = 
         mca_btl_mvapi_param_register_int("ib_sg_list_size", 
-                                      1); 
+                                      16); 
     mca_btl_mvapi_component.ib_pkey_ix = 
         mca_btl_mvapi_param_register_int("ib_pkey_ix", 
                                       0); 
@@ -147,16 +148,16 @@ int mca_btl_mvapi_component_open(void)
                                       0); 
     mca_btl_mvapi_component.ib_qp_ous_rd_atom = 
         mca_btl_mvapi_param_register_int("ib_qp_ous_rd_atom", 
-                                      1); 
+                                         4); 
     mca_btl_mvapi_component.ib_mtu = 
         mca_btl_mvapi_param_register_int("ib_mtu", 
                                       MTU1024); 
     mca_btl_mvapi_component.ib_min_rnr_timer = 
         mca_btl_mvapi_param_register_int("ib_min_rnr_timer", 
-                                      5);
+                                         24);
     mca_btl_mvapi_component.ib_timeout = 
         mca_btl_mvapi_param_register_int("ib_timeout", 
-                                      10); 
+                                         10); 
     mca_btl_mvapi_component.ib_retry_count = 
         mca_btl_mvapi_param_register_int("ib_retry_count", 
                                       7); 
@@ -206,7 +207,14 @@ int mca_btl_mvapi_component_open(void)
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
     mca_btl_mvapi_component.leave_pinned = value; 
-
+    mca_base_param_reg_int(&mca_btl_mvapi_component.super.btl_version, 
+                           "max_send_tokens", 
+                           "Maximum number of send tokens", 
+                           false, 
+                           false, 
+                           16, 
+                           &(mca_btl_mvapi_component.max_send_tokens)); 
+    
     mca_btl_mvapi_component.max_send_size = mca_btl_mvapi_module.super.btl_max_send_size; 
     mca_btl_mvapi_component.eager_limit = mca_btl_mvapi_module.super.btl_eager_limit; 
     
@@ -378,9 +386,6 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     
     for(i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++){
                  
-/*                  uint16_t tbl_len_in = 0;  */
-/*                  uint16_t tbl_len_out = 0;  */
-/*                  IB_gid_t *gid_tbl_p = NULL;  */
         
         item = opal_list_remove_first(&btl_list); 
         ib_selected = (mca_btl_base_selected_module_t*)item; 
@@ -408,42 +413,13 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&mvapi_btl->repost, opal_list_t);
         OBJ_CONSTRUCT(&mvapi_btl->reg_mru_list, opal_list_t); 
         
-      
+        OBJ_CONSTRUCT(&mvapi_btl->pending_send_frags, opal_list_t);
 
         if(mca_btl_mvapi_module_init(mvapi_btl) != OMPI_SUCCESS) {
             free(hca_ids);
             return NULL;
         }
-        
-        
-/*         vapi_ret = VAPI_query_hca_gid_tbl(mvapi_btl->nic,  */
-/*                                           mvapi_btl->port_id,  */
-/*                                           tbl_len_in,  */
-/*                                           &tbl_len_out,  */
-/*                                           gid_tbl_p);  */
-/*         if(OMPI_SUCCESS != vapi_ret) {  */
-/*             BTL_ERROR(("error querying gid table to obtain subnet mask"));  */
-/*             return NULL;  */
-/*         } */
-/*         if(tbl_len_out == 0) {  */
-/*             BTL_ERROR(("error querying gid table, table length 0!"));  */
-/*             return NULL;  */
-/*         } */
-/*         tbl_len_in = tbl_len_out;  */
-/*         gid_tbl_p = (IB_gid_t*) malloc(tbl_len_out * sizeof(IB_gid_t*));  */
-/*         vapi_ret = VAPI_query_hca_gid_tbl(mvapi_btl->nic,  */
-/*                                           mvapi_btl->port_id,  */
-/*                                           tbl_len_in,  */
-/*                                           &tbl_len_out,  */
-/*                                           gid_tbl_p);  */
-/*         if(OMPI_SUCCESS != vapi_ret) {  */
-/*             BTL_ERROR(("error querying gid table to obtain subnet mask"));  */
-/*             return NULL;  */
-/*         } */
-/*         /\* first 64 bits of the first gid entry should be the subnet mask *\/  */
-/*         memcpy(&mvapi_btl->mvapi_addr.subnet, &gid_tbl_p[0], 8);  */
-        
-                 
+                         
         hca_pd.hca = mvapi_btl->nic; 
         hca_pd.pd_tag = mvapi_btl->ptag; 
         
@@ -527,6 +503,8 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         /* Initialize the rr_desc_post array for posting of rr*/ 
         mvapi_btl->rr_desc_post = (VAPI_rr_desc_t*) malloc((mca_btl_mvapi_component.ib_rr_buf_max * sizeof(VAPI_rr_desc_t))); 
         
+        mvapi_btl->send_tokens = mca_btl_mvapi_component.max_send_tokens; 
+
         btls[i] = &mvapi_btl->super;
     }
 
@@ -574,16 +552,31 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_RQ_RDMA_WITH_IMM: 
                 BTL_ERROR(("Got an RDMA with Immediate data!, not supported!")); 
                 return OMPI_ERROR; 
+           
+            case VAPI_CQE_SQ_SEND_DATA :
+                mvapi_btl->send_tokens++;
                 
+                /* fall through */ 
             case VAPI_CQE_SQ_RDMA_READ:
             case VAPI_CQE_SQ_RDMA_WRITE:
-            case VAPI_CQE_SQ_SEND_DATA :
+           
                 
                 /* Process a completed send or an rdma write  */
                 frag = (mca_btl_mvapi_frag_t*) comp.id; 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
+                /* check and see if we need to progress pending sends */ 
+                if(mvapi_btl->send_tokens && !opal_list_is_empty(&(mvapi_btl->pending_send_frags))) { 
+                    opal_list_item_t *frag_item;
+                    frag_item = opal_list_remove_first(&(mvapi_btl->pending_send_frags));
+                    frag = (mca_btl_mvapi_frag_t *) frag_item;
+                    
+                    if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { 
+                        BTL_ERROR(("error in posting pending send\n"));
+                    }
+                }
+                
                 break;
                 
             case VAPI_CQE_RQ_SEND_DATA:

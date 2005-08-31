@@ -389,6 +389,9 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
     return OMPI_SUCCESS;
 }
 
+static void mca_btl_mvapi_endpoint_waiting_ack(mca_btl_mvapi_endpoint_t *endpoint) { 
+    endpoint->endpoint_state = MCA_BTL_IB_WAITING_ACK; 
+}
 /*
  *
  */
@@ -453,26 +456,30 @@ static void mca_btl_mvapi_endpoint_recv(
                 /* Setup state as connected */
                 ib_endpoint->endpoint_state = MCA_BTL_IB_CONNECT_ACK;
                 break;
-
+                
             case MCA_BTL_IB_CONNECTING :
-
+                
                 mca_btl_mvapi_endpoint_set_remote_info(ib_endpoint, buffer);
                 if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_connect(ib_endpoint))) {
                     BTL_ERROR(("endpoint connect error: %d", rc)); 
                     break;
                 }
 
-                /* Setup state as connected */
-                mca_btl_mvapi_endpoint_connected(ib_endpoint);
+                /* Setup state as awaiting ack from peer */
+                mca_btl_mvapi_endpoint_waiting_ack(ib_endpoint);
 
                 /* Send him an ack */
                 mca_btl_mvapi_endpoint_send_connect_ack(ib_endpoint);
                 break;
 
+            case MCA_BTL_IB_WAITING_ACK: 
+                mca_btl_mvapi_endpoint_connected(ib_endpoint);
+                break; 
+                
             case MCA_BTL_IB_CONNECT_ACK:
 
                 mca_btl_mvapi_endpoint_connected(ib_endpoint);
-
+                mca_btl_mvapi_endpoint_send_connect_ack(ib_endpoint);
                 break;
 
             case MCA_BTL_IB_CONNECTED :
@@ -526,7 +533,7 @@ int mca_btl_mvapi_endpoint_send(
 
             rc = OMPI_SUCCESS;
             break;
-
+    case MCA_BTL_IB_WAITING_ACK: 
         case MCA_BTL_IB_CONNECT_ACK:
 
             BTL_VERBOSE(("Queuing because waiting for ack"));
@@ -536,6 +543,9 @@ int mca_btl_mvapi_endpoint_send(
 
             rc = OMPI_SUCCESS;
             break;
+            
+    
+        
 
         case MCA_BTL_IB_CLOSED:
 
@@ -555,19 +565,30 @@ int mca_btl_mvapi_endpoint_send(
 
         case MCA_BTL_IB_CONNECTED:
             {
+                
                 mvapi_btl = endpoint->endpoint_btl;
                 
+                if(0 == mvapi_btl->send_tokens) { 
+                    BTL_VERBOSE(("Queing because no send tokens \n"));
+                    
+                    opal_list_append(&mvapi_btl->pending_send_frags,
+                                     (opal_list_item_t *)frag);
+                    
+                    rc = OMPI_SUCCESS;
+                } else { 
                 
-                BTL_VERBOSE(("Send to : %d, len : %d, frag : %p", 
-                              endpoint->endpoint_proc->proc_guid.vpid,
-                              frag->sg_entry.len,
-                              frag));
-                
-                rc = mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag); 
-                
+                    mvapi_btl->send_tokens--; 
+                    
+                    BTL_VERBOSE(("Send to : %d, len : %d, frag : %p", 
+                                 endpoint->endpoint_proc->proc_guid.vpid,
+                                 frag->sg_entry.len,
+                                 frag));
+                    
+                    rc = mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag); 
+                }   
                 break; 
             }
-
+            
     default:
         rc = OMPI_ERR_UNREACH;
     }
@@ -694,14 +715,21 @@ int mca_btl_mvapi_endpoint_create_qp(
             return OMPI_ERR_NOT_IMPLEMENTED;
     }
     
-    qp_init_attr_ext.srq_hndl = srq_hndl; 
-    
-    ret = VAPI_create_qp_ext(nic, 
+    if(mca_btl_mvapi_component.use_srq) { 
+        qp_init_attr_ext.srq_hndl = srq_hndl; 
+        
+        ret = VAPI_create_qp_ext(nic, 
+                                 &qp_init_attr, 
+                                 &qp_init_attr_ext,  
+                                 qp_hndl, 
+                                 qp_prop);
+    }
+    else { 
+        ret = VAPI_create_qp(nic, 
                              &qp_init_attr, 
-                             &qp_init_attr_ext,  
                              qp_hndl, 
-                             qp_prop);
-  
+                             qp_prop); 
+    }
     if(VAPI_OK != ret) {
         BTL_ERROR(("error creating the queue pair: %s", VAPI_strerror(ret))); 
         return OMPI_ERROR;
