@@ -87,6 +87,12 @@ bool ompi_mpi_maffinity_setup = false;
 int MPIR_being_debugged = 0;
 volatile int MPIR_debug_gate = 0;
 volatile int MPIR_debug_state = 0;
+struct MPIR_PROCDESC {
+    char *host_name;        /* something that can be passed to inet_addr */
+    char *executable_name;  /* name of binary */
+    int pid;                /* process pid */
+};
+struct MPIR_PROCDESC *MPIR_proctable = NULL;
 
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)

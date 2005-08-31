@@ -55,9 +55,8 @@ struct MPIR_PROCDESC {
     char *executable_name;  /* name of binary */
     int pid;                /* process pid */
 };
-typedef struct MPIR_PROCDESC MPIR_PROCDESC;
 
-MPIR_PROCDESC *MPIR_proctable = NULL;
+struct MPIR_PROCDESC *MPIR_proctable = NULL;
 int MPIR_proctable_size = 0;
 int MPIR_being_debugged = 0;
 int MPIR_force_to_main = 0;
@@ -65,7 +64,6 @@ volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
 volatile int MPIR_debug_gate = 0;
 volatile int MPIR_acquired_pre_main = 0;
-volatile int debugger_dummy = 0;
 
 void *MPIR_Breakpoint(void);
 
@@ -120,7 +118,7 @@ static void dump(void)
  */
 void orte_totalview_init_before_spawn(void)
 {
-    if (MPIR_DEBUG_SPAWNED == MPIR_debug_state) {
+    if (MPIR_DEBUG_SPAWNED == MPIR_being_debugged) {
 
         int value;
         char *s;
@@ -161,6 +159,11 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
     int i;
     int rc;
 
+    if (MPIR_proctable) {
+        /* already initialized */
+        return;
+    }
+
     if (0) { /* debugging daemons <<-- needs work */
 
         if (orte_debug_flag) {
@@ -179,6 +182,8 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
         if (orte_debug_flag) {
             opal_output(0, "Info: Setting up debugger process table for applications\n");
         }
+
+        MPIR_debug_state = 1;
 
         OBJ_CONSTRUCT(&list_of_resource_maps, opal_list_t);
 
@@ -201,8 +206,8 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 
         /* allocate MPIR_proctable */
 
-        MPIR_proctable = (MPIR_PROCDESC *) malloc(sizeof(MPIR_PROCDESC) *
-                                                  MPIR_proctable_size);
+        MPIR_proctable = (struct MPIR_PROCDESC *) malloc(sizeof(struct MPIR_PROCDESC) *
+                                                         MPIR_proctable_size);
         if (MPIR_proctable == NULL) {
             opal_output(0, "Error: Out of memory\n");
             OBJ_DESTRUCT(&list_of_resource_maps);
