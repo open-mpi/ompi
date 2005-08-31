@@ -413,7 +413,6 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&mvapi_btl->repost, opal_list_t);
         OBJ_CONSTRUCT(&mvapi_btl->reg_mru_list, opal_list_t); 
         
-        OBJ_CONSTRUCT(&mvapi_btl->pending_send_frags, opal_list_t);
 
         if(mca_btl_mvapi_module_init(mvapi_btl) != OMPI_SUCCESS) {
             free(hca_ids);
@@ -502,10 +501,8 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         
         /* Initialize the rr_desc_post array for posting of rr*/ 
         mvapi_btl->rr_desc_post = (VAPI_rr_desc_t*) malloc((mca_btl_mvapi_component.ib_rr_buf_max * sizeof(VAPI_rr_desc_t))); 
-        
-        mvapi_btl->send_tokens = mca_btl_mvapi_component.max_send_tokens; 
-
         btls[i] = &mvapi_btl->super;
+    
     }
 
     /* Post OOB receive to support dynamic connection setup */
@@ -554,22 +551,21 @@ int mca_btl_mvapi_component_progress()
                 return OMPI_ERROR; 
            
             case VAPI_CQE_SQ_SEND_DATA :
-                mvapi_btl->send_tokens++;
+                frag = (mca_btl_mvapi_frag_t*) comp.id; 
+                frag->endpoint->send_tokens++;
                 
                 /* fall through */ 
             case VAPI_CQE_SQ_RDMA_READ:
             case VAPI_CQE_SQ_RDMA_WRITE:
            
-                
                 /* Process a completed send or an rdma write  */
-                frag = (mca_btl_mvapi_frag_t*) comp.id; 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
                 /* check and see if we need to progress pending sends */ 
-                if(mvapi_btl->send_tokens && !opal_list_is_empty(&(mvapi_btl->pending_send_frags))) { 
+                if(frag->endpoint->send_tokens && !opal_list_is_empty(&(frag->endpoint->pending_send_frags))) { 
                     opal_list_item_t *frag_item;
-                    frag_item = opal_list_remove_first(&(mvapi_btl->pending_send_frags));
+                    frag_item = opal_list_remove_first(&(frag->endpoint->pending_send_frags));
                     frag = (mca_btl_mvapi_frag_t *) frag_item;
                     
                     if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { 
