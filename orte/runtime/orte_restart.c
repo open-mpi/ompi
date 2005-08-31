@@ -37,6 +37,7 @@
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "mca/rmgr/base/base.h"
+#include "mca/soh/base/base.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "util/univ_info.h"
@@ -81,6 +82,10 @@ int orte_restart(orte_process_name_t *name, const char* uri)
 
     orte_iof_base.iof_flush = false;
     if (ORTE_SUCCESS != (rc = orte_iof_base_close())) {
+        ORTE_ERROR_LOG(rc);
+	return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_soh_base_close())) {
         ORTE_ERROR_LOG(rc);
 	return rc;
     }
@@ -218,6 +223,10 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    if (ORTE_SUCCESS != (rc = orte_soh_base_open())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     /*
      * Select new modules.
@@ -235,6 +244,11 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    if (ORTE_SUCCESS != (rc = orte_soh_base_select())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
 
     /*
      * Set contact info for the replicas
