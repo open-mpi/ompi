@@ -54,48 +54,53 @@ extern "C" {
     OMPI_DECLSPEC extern bool ompi_mpi_maffinity_setup;
 
 
-  /**
-   * Initialize the Open MPI MPI environment
-   *
-   * @param argc argc, typically from main() (IN)
-   * @param argv argv, typically from main() (IN)
-   * @param requested Thread support that is requested (IN)
-   * @param provided Thread support that is provided (OUT)
-   *
-   * @returns MPI_SUCCESS if successful
-   * @returns Error code if unsuccessful
-   *
-   * Intialize all support code needed for MPI applications.  This
-   * function should only be called by MPI applications (including
-   * singletons).  If this function is called, ompi_init() and
-   * ompi_rte_init() should *not* be called.
-   *
-   * It is permissable to pass in (0, NULL) for (argc, argv).
-   */
-  int ompi_mpi_init(int argc, char **argv, int requested, int *provided);
+    /**
+     * Initialize the Open MPI MPI environment
+     *
+     * @param argc argc, typically from main() (IN)
+     * @param argv argv, typically from main() (IN)
+     * @param requested Thread support that is requested (IN)
+     * @param provided Thread support that is provided (OUT)
+     *
+     * @returns MPI_SUCCESS if successful
+     * @returns Error code if unsuccessful
+     *
+     * Intialize all support code needed for MPI applications.  This
+     * function should only be called by MPI applications (including
+     * singletons).  If this function is called, ompi_init() and
+     * ompi_rte_init() should *not* be called.
+     *
+     * It is permissable to pass in (0, NULL) for (argc, argv).
+     */
+    int ompi_mpi_init(int argc, char **argv, int requested, int *provided);
 
-  /**
-   * Setup I/O forwarding during MPI_Init through the I/O forwarding
-   * framework.
-   */
-  int ompi_mpi_init_io(void);
+    /**
+     * Setup I/O forwarding during MPI_Init through the I/O forwarding
+     * framework.
+     */
+    int ompi_mpi_init_io(void);
 
-  /**
-   * Finalize the Open MPI MPI environment
-   *
-   * @returns MPI_SUCCESS if successful
-   * @returns Error code if unsuccessful
-   *
-   * Should be called after all MPI functionality is complete (usually
-   * during MPI_FINALIZE).
-   */
-  int ompi_mpi_finalize(void);
+    /**
+     * Finalize the Open MPI MPI environment
+     *
+     * @returns MPI_SUCCESS if successful
+     * @returns Error code if unsuccessful
+     *
+     * Should be called after all MPI functionality is complete (usually
+     * during MPI_FINALIZE).
+     */
+    int ompi_mpi_finalize(void);
 
     /**
      * Abort the processes of comm
      */
     int ompi_mpi_abort(struct ompi_communicator_t* comm,
                        int errcode, bool kill_remote_of_intercomm);
+
+    /**
+     * Wait for a TotalView-like debugger if asked.
+     */
+    void ompi_mpi_wait_for_totalview(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -108,6 +108,7 @@ SUBDIRS = \
         class \
         communicator \
         datatype \
+        debuggers \
         errhandler \
         file \
         group \
@@ -132,6 +133,7 @@ libmpi_la_LIBADD = \
         class/libclass.la \
         communicator/libcommunicator.la \
         datatype/libdatatype.la \
+        debuggers/libdebuggers.la \
         errhandler/liberrhandler.la \
         file/libfile.la \
         group/libgroup.la \

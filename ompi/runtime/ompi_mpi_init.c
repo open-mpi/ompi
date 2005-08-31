@@ -65,6 +65,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
+#include "ompi/debuggers/debuggers.h"
 
 /*
  * Global variables and symbols for the MPI layer
@@ -81,19 +82,6 @@ opal_thread_t *ompi_mpi_main_thread = NULL;
 
 bool ompi_mpi_maffinity_setup = false;
 
-/*
- * Variables for TotalView-like debuggers
- */
-int MPIR_being_debugged = 0;
-volatile int MPIR_debug_gate = 0;
-volatile int MPIR_debug_state = 0;
-struct MPIR_PROCDESC {
-    char *host_name;        /* something that can be passed to inet_addr */
-    char *executable_name;  /* name of binary */
-    int pid;                /* process pid */
-};
-struct MPIR_PROCDESC *MPIR_proctable = NULL;
-
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
@@ -102,7 +90,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     bool compound_cmd = false;
-    int wait_for_totalview;
 
     /* Join the run-time environment - do the things that don't hit
        the registry */
@@ -155,19 +142,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Do we need to wait for a TotalView-like debugger? */
-
-    mca_base_param_reg_int_name("orte", "mpi_wait_for_totalview",
-                                "Whether the MPI application should wait for a debugger or not",
-                                false, false, (int)false, &wait_for_totalview);
-    if (wait_for_totalview) {
-        while (MPIR_debug_gate == 0) {
-#if defined(WIN32)
-            sleep(100);     /* milliseconds */
-#else
-            usleep(100000); /* microseconds */
-#endif
-        }
-    }
+    ompi_wait_for_totalview();
 
     /* Setup process affinity */
 
