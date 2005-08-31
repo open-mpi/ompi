@@ -34,8 +34,8 @@ static void orte_ras_base_node_construct(orte_ras_node_t* node)
     node->node_cellid = 0;
     node->node_state = ORTE_NODE_STATE_UNKNOWN;
     node->node_slots = 0;
-    node->node_slots_alloc = 0;
     node->node_slots_inuse = 0;
+    node->node_slots_alloc = 0;
     node->node_slots_max = 0;
 }
 
@@ -127,9 +127,9 @@ int orte_ras_base_node_query(opal_list_t* nodes)
  */
 int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
 {
-    char* keys[] = { 
-        ORTE_NODE_NAME_KEY, 
-        ORTE_NODE_ARCH_KEY, 
+    char* keys[] = {
+        ORTE_NODE_NAME_KEY,
+        ORTE_NODE_ARCH_KEY,
         ORTE_NODE_STATE_KEY,
         ORTE_NODE_SLOTS_KEY,
         ORTE_NODE_SLOTS_ALLOC_KEY,
@@ -137,7 +137,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
         ORTE_CELLID_KEY,
         NULL
     };
-    size_t i, cnt;
+    size_t i, cnt, keys_len;
     orte_gpr_value_t** values;
     char* jobid_str;
     int rc;
@@ -146,7 +146,9 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
     asprintf(&keys[4], "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
+    keys_len = strlen(keys[4]);
     free(jobid_str);
 
     /* query selected node entries */
@@ -165,10 +167,25 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
     /* parse the response */
     for(i=0; i<cnt; i++) {
         orte_gpr_value_t* value = values[i];
-        orte_ras_node_t* node = OBJ_NEW(orte_ras_node_t);
+        orte_ras_node_t* node;
         size_t k;
+        bool found;
 
-        for(k=0; k<value->cnt; k++) {
+        found = false;
+        for (k = 0; k < value->cnt; k++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[k];
+
+            if(0 == strcmp(keyval->key, keys[4])) {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            continue;
+
+        node = OBJ_NEW(orte_ras_node_t);
+
+        for(k=0; k < value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
                 node->node_name = strdup(keyval->value.strptr);
@@ -186,7 +203,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
                 node->node_slots = keyval->value.size;
                 continue;
             }
-            if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
+            if(strncmp(keyval->key, keys[4], keys_len) == 0) {
                 node->node_slots_inuse += keyval->value.size;
                 node->node_slots_alloc += keyval->value.size;
                 continue;
@@ -207,6 +224,8 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
         }
         opal_list_append(nodes, &node->super);
     }
+
+    free (keys[4]);
     return ORTE_SUCCESS;
 }
 
