@@ -53,7 +53,7 @@ int orte_soh_base_select(void)
        be selected.  So save its multi/hidden values and save the
        module with the highest priority */
 
-    if (NULL != module) {
+    if (NULL == module) {
 		continue;
 	}
 
