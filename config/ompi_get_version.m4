@@ -58,7 +58,7 @@ if test -n "$gv_ver_file" -a -f "$gv_ver_file"; then
     if test "$gv_want_svn" = "1"; then
         if test "$gv_svn_r" = "-1"; then
             if test -d "$srcdir/.svn"; then
-                ver=r`svnversion "$srcdir\"`
+                ver=r`svnversion "$srcdir"`
             else
                 ver=svn`date '+%m%d%Y'`
             fi
