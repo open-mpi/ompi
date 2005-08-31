@@ -26,6 +26,7 @@ libs = \
 bin_PROGRAMS = orterun
 
 orterun_SOURCES = \
+        main.c \
         orterun.c \
         totalview.c \
         totalview.h 
