@@ -190,6 +190,9 @@ int mca_bml_r2_add_procs(
         }
     }
     
+    procs = new_procs; 
+    nprocs = n_new_procs; 
+    
     /* attempt to add all procs to each r2 */
     btl_endpoints = (struct mca_btl_base_endpoint_t **) 
         malloc(nprocs * sizeof(struct mca_btl_base_endpoint_t*)); 
