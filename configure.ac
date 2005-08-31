@@ -1648,6 +1648,7 @@ AC_CONFIG_FILES([
     ompi/attribute/Makefile
     ompi/communicator/Makefile
     ompi/datatype/Makefile
+    ompi/debuggers/Makefile
     ompi/errhandler/Makefile
     ompi/file/Makefile
     ompi/group/Makefile
