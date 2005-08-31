@@ -105,7 +105,10 @@ struct mca_btl_base_endpoint_t {
 
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpoint */
-
+    
+    uint32_t                    send_tokens; 
+    /**< number of sends that  can be outstanding (down counter) */ 
+    
     VAPI_qp_num_t               rem_qp_num_high;
     /* High priority remote side QP number */
 
