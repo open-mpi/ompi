@@ -93,6 +93,8 @@ lib_LIBRARIES += libmpi_f90.a
 
 mpi-f90-interfaces.h: fortran_kinds.sh
 
+CLEANFILES += mpi-f90-interfaces.h
+
 # Run scripts to generate the f90 source files.  We only need to
 # generate the .f90 files once, so the "test" checks to see if the
 # file exists before running the script.  However, the
