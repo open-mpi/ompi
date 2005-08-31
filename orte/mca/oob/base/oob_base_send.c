@@ -68,6 +68,7 @@ int mca_oob_send_packed (orte_process_name_t* peer, orte_buffer_t* buffer, int t
     if(rc != ORTE_SUCCESS) {
         return rc;
     }
+    orte_dps.load(buffer, dataptr, datalen);
 
     msg[0].iov_base = dataptr;
     msg[0].iov_len  = datalen;
