@@ -56,6 +56,7 @@
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
 
+#include "totalview.h"
 
 /*
  * The environment

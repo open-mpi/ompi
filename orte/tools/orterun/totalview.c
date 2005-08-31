@@ -39,6 +39,8 @@
 #include <stdlib.h>
 #include <strings.h>
 
+#include "opal/util/opal_environ.h"
+
 /*
  * The environment
  */
