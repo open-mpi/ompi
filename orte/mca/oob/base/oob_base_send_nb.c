@@ -104,6 +104,7 @@ int mca_oob_send_packed_nb(
     if (rc != ORTE_SUCCESS) {
         return rc;
     }
+    orte_dps.load(buffer, dataptr, datalen);
 
     /* allocate a struct to pass into callback */
     if(NULL == (oob_cbdata = malloc(sizeof(mca_oob_send_cbdata_t)))) {
