@@ -55,6 +55,9 @@ typedef enum {
 
     /* Waiting for ack from endpoint */
     MCA_BTL_IB_CONNECT_ACK,
+    
+    /*Waiting for final connection ACK from endpoint */ 
+    MCA_BTL_IB_WAITING_ACK, 
 
     /* Connected ... both sender & receiver have
      * buffers associated with this connection */

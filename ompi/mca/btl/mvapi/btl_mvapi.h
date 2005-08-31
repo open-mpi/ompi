@@ -117,8 +117,8 @@ struct mca_btl_mvapi_component_t {
     uint32_t ib_service_level; 
     uint32_t ib_static_rate; 
     uint32_t ib_src_path_bits; 
-    
-    
+    /* number of send tokes available */ 
+    uint32_t max_send_tokens; 
 
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
 
@@ -175,6 +175,13 @@ struct mca_btl_mvapi_module_t {
 
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
+
+    
+    /* number of outstanding send's */ 
+    uint32_t send_tokens; 
+    
+    opal_list_t                 pending_send_frags;
+    /**< list of pending send frags for this endpoint */
 
 
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
