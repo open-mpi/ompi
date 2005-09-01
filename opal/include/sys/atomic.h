@@ -195,9 +195,9 @@ void opal_atomic_rmb(void);
  *
  * Use system-specific features to instruct the processor and memory
  * conrtoller that all writes that have been posted before the call to
- * \c opal_atomic_rmb() must appear to have been completed before the
+ * \c opal_atomic_wmb() must appear to have been completed before the
  * next write.  Nothing is said about the ordering of reads when using
- * \c opal_atomic_rmb().
+ * \c opal_atomic_wmb().
  */
 void opal_atomic_wmb(void);
 
