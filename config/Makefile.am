@@ -50,6 +50,7 @@ EXTRA_DIST = \
         ompi_functions.m4 \
         ompi_get_version.m4 \
         ompi_get_version.sh \
+        ompi_make_stripped_flags.m4 \
         ompi_mca.m4 \
         ompi_setup_cc.m4 \
         ompi_setup_cxx.m4 \
