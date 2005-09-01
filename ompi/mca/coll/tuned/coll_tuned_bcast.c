@@ -47,7 +47,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
     int new_sendcount;  /* used to mane the size for the next pipelined receive */
     int realsegsize;
     char *tmpbuf = (char*)buff;
-    long ext;
+    long type_extent, lb;
     int typelng;
     ompi_request_t *base_req, *new_req;
     ompi_coll_chain_t* chain;
@@ -94,7 +94,11 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
         num_segments = count / segcount;
         if ((count % segcount)!= 0) num_segments++;
     }
-    realsegsize = segcount*ext;
+    
+    err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
+
+
+    realsegsize = segcount*type_extent;
     /* set the buffer pointer */
     tmpbuf = (char *)buff;
 
@@ -284,8 +288,8 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
         (segsize > counts[0] * type_size) ||
         (segsize > counts[1] * type_size) ) {
         /* call linear version here ! */
-        return (mca_coll_tuned_bcast_intra_bintree( buffer, count, datatype, 
-                                                        root, comm, segsize ));
+        return (mca_coll_tuned_bcast_intra_chain ( buffer, count, datatype, 
+                                                        root, comm, segsize, 1 ));
     }
 
     err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
@@ -300,7 +304,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
 
     /* Step 1:
        Root splits the buffer in 2 and sends segmented message down the branches.
-       Left subtree of the tree receives first half od the buffer, while right
+       Left subtree of the tree receives first half of the buffer, while right
        subtree receives the remaining message.
     */
 
@@ -336,7 +340,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     /* intermediate nodes code */
     else if( tree->tree_nextsize > 0 ) { 
         /* Intermediate nodes:
-         * It will receive segments only from one half od the data.
+         * It will receive segments only from one half of the data.
          * Which one is determined by whether the node belongs to the "left" or "right" 
          * subtree. Topoloby building function builds binary tree such that
          * odd "shifted ranks" ((rank + size - root)%size) are on the left subtree,
@@ -425,6 +429,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     } else {
         pair = (rank+size-1)%size;
     }
+
     if ( (size%2) != 0 && rank != root) { 
 
         err = coll_tuned_sendrecv( tmpbuf[lr], counts[lr], datatype,
@@ -443,7 +448,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
 
         } 
         /* last node receives right buffer from the root */
-        else if (rank == size - 1) {
+        else if (rank == (root+size-1)%size) {
             MCA_PML_CALL(recv(tmpbuf[1], counts[1], datatype,
                               root, MCA_COLL_BASE_TAG_BCAST,
                               comm, MPI_STATUS_IGNORE));
