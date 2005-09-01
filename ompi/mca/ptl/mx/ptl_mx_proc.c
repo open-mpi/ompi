@@ -72,7 +72,7 @@ void mca_ptl_mx_proc_destruct(mca_ptl_mx_proc_t* proc)
 /*
  *  Create a MX process structure. There is a one-to-one correspondence
  *  between a ompi_proc_t and a mca_ptl_mx_proc_t instance. We cache additional
- *  data (specifically the list of mca_ptl_mx_peer_t instances, and publiched 
+ *  data (specifically the list of mca_ptl_mx_peer_t instances, and published 
  *  addresses) associated w/ a given destination on this datastructure.
  */
 
@@ -163,7 +163,7 @@ int mca_ptl_mx_proc_insert(mca_ptl_mx_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl
  retry_connect:
     mx_status = mx_connect( ptl_peer->peer_ptl->mx_endpoint, remote->nic_id, remote->endpoint_id,
                             mca_ptl_mx_component.mx_filter, 1, &(ptl_peer->peer_addr) );
-    if( OMPI_SUCCESS != mx_status ) {
+    if( MX_SUCCESS != mx_status ) {
         if( MX_TIMEOUT == mx_status )
             if( num_retry++ < 5 )
                 goto retry_connect;
