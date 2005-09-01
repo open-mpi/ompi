@@ -98,12 +98,12 @@ AC_DEFUN([_OMPI_CHECK_GM_CONFIG],[
              GM_API_VERSION < 0x2000c)
           #error GM build is broken
         #endif         ],
-       [ mca_btl_gm_broken=0 gm_build_broken=no ],
-       [ mca_btl_gm_broken=1 gm_build_broken=yes ]) 
+       [ mca_gm_broken=0 gm_build_broken=no ],
+       [ mca_gm_broken=1 gm_build_broken=yes ]) 
     AC_MSG_RESULT( [$gm_build_broken] )
-    AC_DEFINE_UNQUOTED( [OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_GET_BROKEN], $mca_btl_gm_broken,
+    AC_DEFINE_UNQUOTED( [OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_GET_BROKEN], $mca_gm_broken,
                         [The GM build has or not a broker gm_get function] )
-    unset gm_build_broken mca_btl_gm_broken
+    unset gm_build_broken mca_gm_broken
 
     AC_DEFINE_UNQUOTED( [OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_SUPPORT_REGISTERING], 0,
                         [The OS support or not the virtal page registration] )
@@ -120,16 +120,16 @@ AC_DEFUN([_OMPI_CHECK_GM_CONFIG],[
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_GM],[
     AC_ARG_WITH([gm],
-                [AC_HELP_STRING([--with-btl-gm=GM_DIR],
+                [AC_HELP_STRING([--with-gm=GM_DIR],
                                 [Additional directory to search for GM installation])])
     AC_ARG_WITH([gm-libdir],
-       [AC_HELP_STRING([--with-btl-gm-libdir=GMLIBDIR],
+       [AC_HELP_STRING([--with-gm-libdir=GMLIBDIR],
                        [directory where the GM library can be found, if it is not in GM_DIR/lib or GM_DIR/lib64])])
 
-    AS_IF([test ! -z "$with_btl_gm" -a "$with_btl_gm" != "yes"],
-          [ompi_check_gm_dir="$with_btl_gm"])
-    AS_IF([test ! -z "$with_btl_gm_libdir" -a "$with_btl_gm_libdir" != "yes"],
-          [ompi_check_gm_libdir="$with_btl_gm_libdir"])
+    AS_IF([test ! -z "$with_gm" -a "$with_gm" != "yes"],
+          [ompi_check_gm_dir="$with_gm"])
+    AS_IF([test ! -z "$with_gm_libdir" -a "$with_gm_libdir" != "yes"],
+          [ompi_check_gm_libdir="$with_gm_libdir"])
 
     OMPI_CHECK_PACKAGE([$1],
                        [gm.h],
@@ -144,7 +144,7 @@ AC_DEFUN([OMPI_CHECK_GM],[
     AS_IF([test "$ompi_check_gm_happy" = "yes"],
           [_OMPI_CHECK_GM_CONFIG($1)
            $2],
-          [AS_IF([test ! -z "$with_btl_gm" -a "$with_btl_gm" != "no"],
+          [AS_IF([test ! -z "$with_gm" -a "$with_gm" != "no"],
                  [AC_MSG_ERROR([GM support requested but not found.  Aborting])])
            $3])
 ])
