@@ -64,11 +64,35 @@ static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi
     
     VAPI_qp_hndl_t qp_hndl; 
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
-        frag->sr_desc.remote_qp = endpoint->rem_qp_num_high; 
-        qp_hndl = endpoint->lcl_qp_hndl_high; 
+        
+        if(0 == endpoint->wr_sq_tokens_hp) { 
+            BTL_VERBOSE(("Queing because no send tokens \n"));
+            
+            opal_list_append(&endpoint->pending_frags_hp,
+                             (opal_list_item_t *)frag);
+            
+            return OMPI_SUCCESS;
+            
+        } else { 
+            
+            frag->sr_desc.remote_qp = endpoint->rem_qp_num_high; 
+            qp_hndl = endpoint->lcl_qp_hndl_high; 
+            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp, -1); 
+        }
     } else {
-        frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
-        qp_hndl = endpoint->lcl_qp_hndl_low; 
+        if(0 == endpoint->wr_sq_tokens_lp) { 
+            BTL_VERBOSE(("Queing because no send tokens \n"));
+            
+            opal_list_append(&endpoint->pending_frags_lp,
+                             (opal_list_item_t *)frag);
+            
+            return OMPI_SUCCESS;
+            
+        } else { 
+            frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
+            qp_hndl = endpoint->lcl_qp_hndl_low; 
+            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp, -1); 
+        }
     } 
     frag->sr_desc.opcode = VAPI_SEND; 
     frag->sg_entry.len = frag->segment.seg_len + ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  /* sizeof(mca_btl_mvapi_header_t); */ 
@@ -120,10 +144,15 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->pending_frags_hp, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->pending_frags_lp, opal_list_t);
+    
     
     endpoint->rr_posted_high = 0;
-    endpoint->rr_posted_low = 0; 
-    endpoint->send_tokens = mca_btl_mvapi_component.max_send_tokens; 
+    endpoint->rr_posted_low = 0;
+    /* initialize the high and low priority tokens */ 
+    endpoint->wr_sq_tokens_hp = mca_btl_mvapi_component.max_wr_sq_tokens; 
+    endpoint->wr_sq_tokens_lp = mca_btl_mvapi_component.max_wr_sq_tokens; 
     
 }
 
@@ -569,26 +598,14 @@ int mca_btl_mvapi_endpoint_send(
                 
                 mvapi_btl = endpoint->endpoint_btl;
                 
-                if(0 == endpoint->send_tokens) { 
-                    BTL_VERBOSE(("Queing because no send tokens \n"));
-                    
-                    opal_list_append(&endpoint->pending_send_frags,
-                                     (opal_list_item_t *)frag);
-                    
-                    rc = OMPI_SUCCESS;
-                } else { 
+                BTL_VERBOSE(("Send to : %d, len : %d, frag : %p", 
+                             endpoint->endpoint_proc->proc_guid.vpid,
+                             frag->sg_entry.len,
+                             frag));
                 
-                    endpoint->send_tokens--; 
-                    
-                    BTL_VERBOSE(("Send to : %d, len : %d, frag : %p", 
-                                 endpoint->endpoint_proc->proc_guid.vpid,
-                                 frag->sg_entry.len,
-                                 frag));
-                    
-                    rc = mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag); 
-                }   
-                break; 
-            }
+                rc = mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag); 
+            }   
+            break;
             
     default:
         rc = OMPI_ERR_UNREACH;
@@ -690,7 +707,7 @@ int mca_btl_mvapi_endpoint_create_qp(
 
     case VAPI_TS_RC: /* Set up RC qp parameters */
         qp_init_attr.cap.max_oust_wr_rq = mca_btl_mvapi_component.ib_rr_buf_max;
-        qp_init_attr.cap.max_oust_wr_sq = mca_btl_mvapi_component.max_send_tokens;
+        qp_init_attr.cap.max_oust_wr_sq = mca_btl_mvapi_component.max_wr_sq_tokens;
         qp_init_attr.cap.max_sg_size_rq = mca_btl_mvapi_component.ib_sg_list_size;
         qp_init_attr.cap.max_sg_size_sq = mca_btl_mvapi_component.ib_sg_list_size;
         qp_init_attr.pd_hndl            = ptag;
