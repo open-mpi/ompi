@@ -17,13 +17,14 @@
 #include "ompi_config.h"
 
 #include "opal/util/argv.h"
-#include "runtime/runtime.h"
 #include "opal/util/show_help.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#include "orte/runtime/runtime.h"
 
 OBJ_CLASS_INSTANCE(
    mca_btl_base_selected_module_t,

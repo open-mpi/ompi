@@ -20,9 +20,12 @@
 
 #include "ompi/include/constants.h"
 #include "opal/include/constants.h"
-#include "libltdl/ltdl.h"
+#include "opal/mca/mca.h"
+/* Ensure to get the right <ltdl.h> -- a -I should be setup in this
+   directory's Makefile.am to get opal/libltdl */ 
+#include "ltdl.h"
+
 #include "components.h"
-#include "mca/mca.h"
 
 
 /*

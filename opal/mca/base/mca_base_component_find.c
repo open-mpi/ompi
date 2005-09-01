@@ -22,14 +22,16 @@
 #include <stdlib.h>
 
 #if OMPI_WANT_LIBLTDL
-/* Ensure to get the right <ltdl.h> */ 
-#include "opal/libltdl/ltdl.h"
+/* Ensure to get the right <ltdl.h> -- a -I should be setup in this
+   directory's Makefile.am to get opal/libltdl */ 
+#include "ltdl.h"
 #endif
 
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/include/constants.h"
 
 

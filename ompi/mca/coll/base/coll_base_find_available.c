@@ -25,10 +25,11 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 
 
 /*

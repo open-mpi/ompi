@@ -17,6 +17,7 @@
 include $(top_srcdir)/test/support/Makefile.options
 
 AM_CPPFLAGS += \
+        $(OPAL_LTDL_CPPFLAGS) \
         -DBUILDDIR=\"$(OMPI_TOP_BUILDDIR)\" \
         -DSRCDIR=\"$(OMPI_TOP_SRCDIR)\"
 

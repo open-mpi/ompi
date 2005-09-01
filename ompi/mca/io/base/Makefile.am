@@ -16,6 +16,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
+
 noinst_LTLIBRARIES = libmca_io_base.la
 
 headers = \

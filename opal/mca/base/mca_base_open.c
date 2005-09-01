@@ -27,6 +27,7 @@
 #include "opal/util/printf.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/include/constants.h"
 
 /*
@@ -100,7 +101,7 @@ int mca_base_open(void)
 
   /* Open up the component repository */
 
-  return mca_base_component_repository_initialize();
+  return mca_base_component_repository_init();
 }
 
 

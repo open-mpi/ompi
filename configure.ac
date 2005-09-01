@@ -1462,6 +1462,14 @@ AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")
 AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $WANT_LIBLTDL,
     [Whether to include support for libltdl or not])
 
+# Have a variable that can be used to indicate where ltdl.h lives.  Do
+# this specifically so that we get the included ltdl.h (which we know
+# will work properly with the compiled code, including libltdl), not
+# the system one (which is likely to be far too old and buggy).
+
+OPAL_LTDL_CPPFLAGS='-I$(top_srcdir)/opal/libltdl'
+AC_SUBST(OPAL_LTDL_CPPFLAGS)
+
 
 ############################################################################
 # final wrapper compiler config
@@ -1471,10 +1479,14 @@ ompi_show_subtitle "Wrapper compiler flags"
 
 #
 # This is needed for VPATH builds, so that it will -I the appropriate
-# include directory (don't know why automake doesn't do this
-# automatically).  We delayed doing it until now just so that
+# include directory.  We delayed doing it until now just so that
 # '-I$(top_srcdir)' doesn't show up in any of the configure output --
 # purely aesthetic.
+#
+# JMS: Someday to remove the -I's for the individual ompi, orte, opal
+# directories -- the top-level ones will suffice after all #include's
+# throughout the tree are converted to use the full path of our header
+# files.
 #
 
 CPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir) -I$(top_builddir) -I$(top_builddir)/include -I$(top_srcdir)/opal -I$(top_srcdir)/orte -I$(top_srcdir)/ompi'" $CPPFLAGS"

@@ -24,13 +24,15 @@
 #include <stdio.h>
 
 #if OMPI_WANT_LIBLTDL
-/* Ensure to get the right <ltdl.h> */ 
-#include "opal/libltdl/ltdl.h"
+/* Ensure to get the right <ltdl.h> -- a -I should be setup in this
+   directory's Makefile.am to get opal/libltdl */ 
+#include "ltdl.h"
 #endif
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/include/constants.h"
 
 #if OMPI_WANT_LIBLTDL
@@ -89,7 +91,7 @@ static int link_items(repository_item_t *src, repository_item_t *depend);
 /*
  * Initialize the repository
  */
-int mca_base_component_repository_initialize(void)
+int mca_base_component_repository_init(void)
 {
   /* Setup internal structures */
 

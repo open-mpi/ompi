@@ -23,11 +23,12 @@
 #include "ompi/include/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/io/io.h"
-#include "mca/io/base/base.h"
-#include "mca/io/base/io_base_request.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/io/base/io_base_request.h"
 
 
 

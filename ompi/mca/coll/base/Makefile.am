@@ -18,6 +18,8 @@ include $(top_srcdir)/config/Makefile.options
 
 EXTRA_DIST = $(pkgdata_DATA)
 
+AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
+
 noinst_LTLIBRARIES = libmca_coll_base.la
 
 pkgdata_DATA = help-mca-coll-base.txt

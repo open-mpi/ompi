@@ -18,10 +18,11 @@
 
 #include "include/constants.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/base.h"
 
 
 /**

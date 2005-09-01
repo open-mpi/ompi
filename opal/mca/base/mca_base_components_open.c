@@ -27,6 +27,7 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/include/constants.h"
 
 struct component_name_t {

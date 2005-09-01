@@ -16,11 +16,9 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
+
 noinst_LTLIBRARIES = libmca_iof_base.la
-
-# For VPATH builds, have to specify where static-modules.h will be found
-
-AM_CPPFLAGS = -I$(top_builddir)/src
 
 # Source code files
 
