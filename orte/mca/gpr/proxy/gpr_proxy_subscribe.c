@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -45,13 +45,14 @@ orte_gpr_proxy_subscribe(size_t num_subs,
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
+    orte_gpr_proxy_subscriber_t **subs;
     int rc = ORTE_SUCCESS, ret;
     size_t i;
-   
+
     /* need to protect against errors */
     if (NULL == subscriptions && NULL == trigs) { /* need at least one */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	    return ORTE_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
@@ -83,15 +84,15 @@ orte_gpr_proxy_subscribe(size_t num_subs,
      * compound cmd buffer and return
      */
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
-	    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_subscribe(orte_gpr_proxy_globals.compound_cmd,
-							                           num_subs, subscriptions,
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_subscribe(orte_gpr_proxy_globals.compound_cmd,
+                                                       num_subs, subscriptions,
                                                        num_trigs, trigs))) {
             ORTE_ERROR_LOG(rc);
             goto ERROR;
         }
 
         /* done */
-	    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_SUCCESS;
     }
 
@@ -102,13 +103,13 @@ orte_gpr_proxy_subscribe(size_t num_subs,
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto ERROR;
     }
-    
+
     /* pack the command and send it */
     if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_subscribe(cmd,
                                                 num_subs, subscriptions,
                                                 num_trigs, trigs))) {
         ORTE_ERROR_LOG(rc);
-	    OBJ_RELEASE(cmd);
+        OBJ_RELEASE(cmd);
         goto ERROR;
     }
 
@@ -128,7 +129,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto ERROR;
     }
-    
+
     if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
@@ -152,7 +153,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     OBJ_RELEASE(answer);
     OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
     return ORTE_SUCCESS;
-    
+
     /* if an error was encountered during processing this request, we need to
      * remove the subscriptions from the subscription tracking system. do this
      * and then exit.
@@ -162,14 +163,16 @@ orte_gpr_proxy_subscribe(size_t num_subs,
      * numbers are NOT re-used.
      */
 ERROR:
+    subs = (orte_gpr_proxy_subscriber_t**)(orte_gpr_proxy_globals.subscriptions)->addr;
     for (i=0; i < num_subs; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(subscriptions[i]->id))) {
+        /* find the subscription on the local tracker */
+        if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(subs[subscriptions[i]->id]))) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
             return rc;
         }
     }
-    
+
     OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
     return rc;
 }
@@ -179,17 +182,33 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
+    orte_gpr_proxy_subscriber_t **subs;
+    size_t i, j;
     int rc, ret;
 
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
     /* remove the specified subscription from the local tracker */
-    if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(sub_number))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-        return rc;
+    subs = (orte_gpr_proxy_subscriber_t**)(orte_gpr_proxy_globals.subscriptions)->addr;
+    for (i=0, j=0; j < orte_gpr_proxy_globals.num_subs &&
+              i < (orte_gpr_proxy_globals.subscriptions)->size; i++) {
+        if (NULL != subs[i]){
+            j++;
+            if (sub_number == subs[i]->id) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(subs[i]))) {
+                    ORTE_ERROR_LOG(rc);
+                    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+                    return rc;
+                }
+                goto PROCESS;
+            }
+        }
     }
-    
+    /* must not have been found - report error */
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    return ORTE_ERR_NOT_FOUND;
+
+PROCESS:
     /* if in compound cmd mode, then just pack the command into
      * that buffer and return
      */
@@ -198,7 +217,7 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
                                     sub_number))) {
             ORTE_ERROR_LOG(rc);
         }
-           
+
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
@@ -212,7 +231,7 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     /* pack and transmit the command */
     if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_unsubscribe(cmd, sub_number))) {
         ORTE_ERROR_LOG(rc);
@@ -225,10 +244,10 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-	    return ORTE_ERR_COMM_FAILURE;
+        return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_RELEASE(cmd);
-    
+
     /* init a buffer to receive the replica's reply */
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
@@ -236,10 +255,10 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-	    OBJ_RELEASE(answer);
+        OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_COMM_FAILURE;
     }
@@ -252,14 +271,14 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
      */
     if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_unsubscribe(answer, &ret))) {
         ORTE_ERROR_LOG(rc);
-	    OBJ_RELEASE(answer);
+        OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
-    
+
     OBJ_RELEASE(answer);
     OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-	return ret;
+    return ret;
 
 }
 
@@ -267,17 +286,33 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
+    orte_gpr_proxy_trigger_t **trigs;
+    size_t i, j;
     int rc, ret;
 
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
     /* remove the specified trigger from the local tracker */
-    if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_trigger(trig))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-        return rc;
+    trigs = (orte_gpr_proxy_trigger_t**)(orte_gpr_proxy_globals.triggers)->addr;
+    for (i=0, j=0; j < orte_gpr_proxy_globals.num_trigs &&
+              i < (orte_gpr_proxy_globals.triggers)->size; i++) {
+        if (NULL != trigs[i]){
+            j++;
+            if (trig == trigs[i]->id) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_trigger(trigs[i]))) {
+                    ORTE_ERROR_LOG(rc);
+                    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+                    return rc;
+                }
+                goto PROCESS;
+            }
+        }
     }
-    
+    /* must not have been found - report error */
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    return ORTE_ERR_NOT_FOUND;
+
+PROCESS:
     /* if the compound cmd mode is on, pack the command into that buffer
      * and return
      */
@@ -286,7 +321,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
                                     orte_gpr_proxy_globals.compound_cmd, trig))) {
             ORTE_ERROR_LOG(rc);
         }
-           
+
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
@@ -300,7 +335,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     /* pack the trigger number and transmit the command */
     if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_cancel_trigger(cmd, trig))) {
         ORTE_ERROR_LOG(rc);
@@ -316,7 +351,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
         return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_RELEASE(cmd);
-    
+
     /* init a buffer to receive the replica's response */
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
@@ -324,7 +359,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
         OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);

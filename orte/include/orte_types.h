@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file */
@@ -26,7 +26,7 @@
 
 /**
  * Supported datatypes for messaging and storage operations.
- * 
+ *
  * ANY CHANGES TO THESE DEFINITIONS MUST BE REFLECTED IN THE TEXT ARRAY
  * orte_data_strings DEFINED IN src/runtime/orte_init.c.
  *
@@ -90,25 +90,18 @@ typedef uint8_t orte_data_type_t ;
 #define    ORTE_GPR_TRIGGER         (orte_data_type_t)   44 /**< describes trigger conditions */
 #define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   45 /**< data returned from a subscription */
 #define    ORTE_GPR_NOTIFY_MSG      (orte_data_type_t)   46 /**< notify message containing notify_data objects */
+#define    ORTE_GPR_NOTIFY_MSG_TYPE (orte_data_type_t)   47 /**< notify message type (subscription or trigger) */
     /* Resource Manager types */
-#define    ORTE_APP_CONTEXT         (orte_data_type_t)   47 /**< argv and enviro arrays */
-#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   48 /**< application context mapping array */
+#define    ORTE_APP_CONTEXT         (orte_data_type_t)   48 /**< argv and enviro arrays */
+#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   49 /**< application context mapping array */
 
 /* define the starting point for dynamically assigning data types */
-#define ORTE_DPS_ID_DYNAMIC 50
+#define ORTE_DPS_ID_DYNAMIC 60
 
 /* define a structure to hold generic byte objects */
 typedef struct {
     size_t size;
     uint8_t *bytes;
 } orte_byte_object_t;
-
-
-/* define a print format to handle the variations in pid_t */
-#if SIZEOF_PID_T == SIZEOF_INT
-#define ORTE_PID_T_PRINTF "%u"
-#elif SIZEOF_PID_T == SIZEOF_LONG
-#define ORTE_PID_T_PRINTF "%lu"
-#endif
 
 #endif

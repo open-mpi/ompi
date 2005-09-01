@@ -4,24 +4,24 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
-/** @file 
+/** @file
  * @page gpr_api
  */
 
-/** 
+/**
  *  \brief General Purpose Registry (GPR) API
  *
- * The Open MPI General Purpose Registry (GPR) 
+ * The Open MPI General Purpose Registry (GPR)
  */
 
 #ifndef ORTE_GPR_H_
@@ -130,7 +130,7 @@ typedef int (*orte_gpr_base_module_exec_compound_cmd_fn_t)(void);
  *
  * @retval ORTE_SUCCESS Operation was successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
- * 
+ *
  * @code
  * status_code = orte_gpr.cleanup_job(jobid);
  * @endcode
@@ -147,7 +147,7 @@ typedef int (*orte_gpr_base_module_cleanup_job_fn_t)(orte_jobid_t jobid);
  *
  * @retval ORTE_SUCCESS Operation was successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
- * 
+ *
  * @code
  * status_code = orte_gpr.cleanup_process(&proc);
  * @endcode
@@ -162,15 +162,15 @@ typedef int (*orte_gpr_base_module_cleanup_proc_fn_t)(orte_process_name_t *proc)
  * "on-the-fly", it is more efficient to initialize the segment via a separate
  * command - thus allowing the registry to allocate the base storage for all
  * the processes in a single malloc.
- * 
+ *
  * @param name A character string indicating the name of the segment.
  * @param num_slots The number of containers expected in this segment. This
  * is just the starting number requested by the user - the registry will
  * dynamically expand the segment as required.
- * 
+ *
  * @retval ORTE_SUCCESS The operation was successfully executed.
  * @retval ORTE_ERROR(s) An appropriate error code is returned.
- * 
+ *
  * @code
  * status_code = orte_gpr.preallocate_segment("MY_SEGMENT", num_slots);
  * @endcode
@@ -207,7 +207,7 @@ typedef int (*orte_gpr_base_module_delete_segment_nb_fn_t)(char *segment,
  * Put a data object on the registry (BLOCKING)
  * Place a data item on the registry using a blocking operation - i.e., the calling
  * program will be blocked until the operation completes.
- * 
+ *
  * Each value contains the addressing mode to be used. Addresses are defined by the tokens provided
  * that describe the object being stored. The caller has the option of specifying how
  * those tokens are to be combined in describing the object. Passing a value of
@@ -225,7 +225,7 @@ typedef int (*orte_gpr_base_module_delete_segment_nb_fn_t)(char *segment,
  * specified segment are checked and appropriately processed.
  *
  * @param cnt The number of value structures to be stored.
- * 
+ *
  * @param **values A pointer to the start of a contiguous array of one or more
  * pointers to orte_gpr_value_t
  * objects to be stored. The registry will copy this data onto the specified segment - the
@@ -240,7 +240,7 @@ typedef int (*orte_gpr_base_module_delete_segment_nb_fn_t)(char *segment,
  *
  * @code
  * orte_gpr_value_t *value;
- * 
+ *
  * status_code = orte_gpr.put(1, &value);
  * @endcode
  */
@@ -290,7 +290,7 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **v
  * @param **keys (IN) A NULL-terminated **char array of keys describing the specific
  * key-value data to be returned. A value of NULL indicates that ALL key-value pairs
  * described by the segment/token combination are to be returned.
- * 
+ *
  * @param *cnt (OUT) A pointer to the number of objects returned by the request.
  * @param ***values (OUT) A pointer to an array of orte_gpr_value_t object pointers
  * containing the data
@@ -299,12 +299,12 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **v
  *
  * @retval ORTE_SUCCESS Operation was successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
- * 
+ *
  * @code
  * opal_list_t *keyval_list;
  * size_t cnt;
  * orte_gpr_value_t **values;
- * 
+ *
  * status_code = orte_gpr.get(addr_mode, segment, tokens, keyval_list,
  *                            &cnt, &values);
  * @endcode
@@ -335,7 +335,7 @@ typedef int (*orte_gpr_base_module_get_nb_fn_t)(orte_gpr_addr_mode_t addr_mode,
  * and that ONLY those tokens be present.
  *
  * Note: A value of NULL for the tokens will delete ALL data items from the specified
- * segment. 
+ * segment.
  *
  * @param addr_mode The addressing mode to be used in the search.
  * @param *segment A character string indicating the name of the segment to be searched.
@@ -344,13 +344,13 @@ typedef int (*orte_gpr_base_module_get_nb_fn_t)(orte_gpr_addr_mode_t addr_mode,
  *
  * @retval ORTE_SUCCESS Operation was successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
- * 
+ *
  * @code
  * status_code = orte_gpr.delete_object(mode, segment, tokens);
  * @endcode
  */
 typedef int (*orte_gpr_base_module_delete_entries_fn_t)(orte_gpr_addr_mode_t addr_mode,
-						      char *segment, char **tokens, char **keys);
+                              char *segment, char **tokens, char **keys);
 
 /*
  * Delete an object from the registry (NON-BLOCKING)
@@ -378,12 +378,12 @@ typedef int (*orte_gpr_base_module_delete_entries_nb_fn_t)(
  *
  * @retval ORTE_SUCCESS Operation was successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
- * 
+ *
  * @code
  * int32_t cnt;
  * char *index;
  * char *segment;
- * 
+ *
  * status_code = orte_gpr.index(segment, &cnt, &index);
  * @endcode
  */
@@ -396,18 +396,18 @@ typedef int (*orte_gpr_base_module_index_fn_t)(char *segment, size_t *cnt, char 
  */
 typedef int (*orte_gpr_base_module_index_nb_fn_t)(char *segment,
                         orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
-                        
+
 /*
  * Subscribe to be notified upon a specified action
  * The registry includes a publish/subscribe mechanism by which callers can be notified
  * upon certain actions occuring to data objects stored on the registry. This function
  * allows the caller to register for such notifications. The registry allows a subscription
  * to be placed upon any segment, and upon the entire registry if desired.
- * 
+ *
  * Two types of subscriptions are supported:
  * (a) notifications - these occur whenever the specified action occurs on the
  * identified data entries in the registry.
- * 
+ *
  * (b) triggers - these occur whenever a count of the number of identified data
  * entries reaches the specified level. The caller can specify that the trigger
  * maintain its own count - in this case, the trigger will count the number of data
@@ -421,33 +421,33 @@ typedef int (*orte_gpr_base_module_index_nb_fn_t)(char *segment,
  *
  * Note that all addressing mode rules apply to both \em value and \em trig_value,
  * including wildcards.
- * 
+ *
  * @param actions (IN) The actions which are to generate a notification message and/or define
  * the trigger operation. These can
  * be OR'd together from the defined registry action flags.
- * 
+ *
  * @param num_subs (IN) The numbr of subscription objects being provided
- * 
+ *
  * @param **subscriptions (IN) A pointer to an array of subscription objects that
  * contain descriptions of the data that is to be returned when a subscription fires.
  * For subscribe requests that do NOT include a trigger, this is the data that
  * will be monitored per the specified action. All of
  * the described values will be returned in a notification message when the specified
  * action occurs.
- * 
+ *
  * @param num_trigs (IN) The number of trigger objects being provided
- * 
+ *
  * @param **triggers (IN) A pointer to an array of orte_gpr_trigger_t objects that describe the
  * conditions (as described above) which will generate a trigger message to be sent
  * to the callback function. Trigger messages include all data specified in the
  * subscription objects, but do NOT include the trigger counters themselves unless
  * so specified with the ORTE_GPR_TRIG_INCLUDE_DATA command.
- * 
+ *
  * @param *sub_number (OUT) The notify id for the resulting subscription
  * is returned in the provided memory location. Callers should save this
  * number for later use if (for example) it is desired to remove the
  * subscription from the registry
- * 
+ *
  * @retval ORTE_SUCCESS Operation was successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
  *
@@ -455,7 +455,7 @@ typedef int (*orte_gpr_base_module_index_nb_fn_t)(char *segment,
  * orte_gpr_subscription_t *subscription;
  * orte_gpr_notify_id_t sub_number;
  * orte_gpr_value_t trig_value;
- * 
+ *
  * status_code = orte_gpr.subscribe(action, 1, &subscription, &trig_value,
  *                                       &sub_number);
  * @endcode
@@ -498,6 +498,18 @@ typedef int (*orte_gpr_base_module_define_trigger_fn_t)(orte_gpr_trigger_id_t *i
                                                      char **tokens,
                                                      size_t n,
                                                      char **keys,
+                                                     orte_gpr_trigger_cb_fn_t cbfunc,
+                                                     void *user_tag);
+
+typedef int (*orte_gpr_base_module_define_trigger_level_fn_t)(orte_gpr_trigger_id_t *id,
+                                                     char *trig_name,
+                                                     orte_gpr_trigger_action_t action,
+                                                     orte_gpr_addr_mode_t addr_mode,
+                                                     char *segment,
+                                                     char **tokens,
+                                                     size_t n,
+                                                     char **keys,
+                                                     size_t *levels,
                                                      orte_gpr_trigger_cb_fn_t cbfunc,
                                                      void *user_tag);
 
@@ -556,9 +568,23 @@ typedef int (*orte_gpr_base_module_dump_all_fn_t)(int output_id);
 
 typedef int (*orte_gpr_base_module_dump_segment_fn_t)(char *segment, int output_id);
 
-typedef int (*orte_gpr_base_module_dump_triggers_fn_t)(int output_id);
+typedef int (*orte_gpr_base_module_dump_triggers_fn_t)(
+                            orte_gpr_trigger_id_t tail,
+                            int output_id);
 
-typedef int (*orte_gpr_base_module_dump_subscriptions_fn_t)(int output_id);
+typedef int (*orte_gpr_base_module_dump_subscriptions_fn_t)(
+                            orte_gpr_subscription_id_t tail,
+                            int output_id);
+
+typedef int (*orte_gpr_base_module_dump_a_trigger_fn_t)(
+                            char *name,
+                            orte_gpr_trigger_id_t id,
+                            int output_id);
+
+typedef int (*orte_gpr_base_module_dump_a_subscription_fn_t)(
+                            char *name,
+                            orte_gpr_subscription_id_t id,
+                            int output_id);
 
 typedef int (*orte_gpr_base_module_dump_local_triggers_fn_t)(int output_id);
 
@@ -591,17 +617,30 @@ typedef int (*orte_gpr_base_module_decrement_value_fn_t)(orte_gpr_value_t *value
  * Because the data type of the value dictates how it must be transferred, it can be
  * a burden to transfer the payload. This function centralizes that action so it only
  * need be defined once.
- * 
+ *
  * @param dest The address of the value union where the data is to be placed.
  * @param src The address of the value union currently holding the data.
  * @param type The type of the data
- * 
+ *
  * @retval ORTE_SUCCESS Operation successfully completed.
  * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
  */
 typedef int (*orte_gpr_base_module_xfer_payload_fn_t)(orte_gpr_value_union_t *dest,
                                     orte_gpr_value_union_t *src, orte_data_type_t type);
-                                    
+
+/* Deliver a notify message
+ * To support the broadcast of stage gate messages that supply all subscribed
+ * data in a single message, we have to provide an API that allows the xcast
+ * to "inject" the message back into the registry's local delivery system.
+ *
+ * @param msg A pointer to the orte_gpr_notify_message_t object to be delivered.
+ * Note that the calling program is responsible for releasing this object.
+ *
+ * @retval None
+ */
+typedef int (*orte_gpr_base_module_deliver_notify_msg_t)(orte_gpr_notify_message_t *msg);
+
+
 /*
  * Ver 1.0.0
  */
@@ -625,6 +664,7 @@ struct orte_gpr_base_module_1_0_0_t {
     /* GENERAL OPERATIONS */
     orte_gpr_base_module_preallocate_segment_fn_t preallocate_segment;
     orte_gpr_base_module_xfer_payload_fn_t xfer_payload;
+    orte_gpr_base_module_deliver_notify_msg_t deliver_notify_msg;
     /* ARITHMETIC OPERATIONS */
     orte_gpr_base_module_increment_value_fn_t increment_value;
     orte_gpr_base_module_decrement_value_fn_t decrement_value;
@@ -633,6 +673,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_subscribe_1_fn_t subscribe_1;
     orte_gpr_base_module_subscribe_N_fn_t subscribe_N;
     orte_gpr_base_module_define_trigger_fn_t define_trigger;
+    orte_gpr_base_module_define_trigger_level_fn_t define_trigger_level;
     orte_gpr_base_module_unsubscribe_fn_t unsubscribe;
     orte_gpr_base_module_cancel_trigger_fn_t cancel_trigger;
     /* COMPOUND COMMANDS */
@@ -644,6 +685,8 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_dump_segment_fn_t dump_segment;
     orte_gpr_base_module_dump_triggers_fn_t dump_triggers;
     orte_gpr_base_module_dump_subscriptions_fn_t dump_subscriptions;
+    orte_gpr_base_module_dump_a_trigger_fn_t dump_a_trigger;
+    orte_gpr_base_module_dump_a_subscription_fn_t dump_a_subscription;
     orte_gpr_base_module_dump_local_triggers_fn_t dump_local_triggers;
     orte_gpr_base_module_dump_local_subscriptions_fn_t dump_local_subscriptions;
     orte_gpr_base_module_dump_callbacks_fn_t dump_callbacks;
@@ -662,12 +705,12 @@ typedef orte_gpr_base_module_1_0_0_t orte_gpr_base_module_t;
  */
 
 typedef orte_gpr_base_module_t* (*orte_gpr_base_component_init_fn_t)(
-								   bool *allow_multi_user_threads,
-								   bool *have_hidden_threads,
-								   int *priority);
+                                   bool *allow_multi_user_threads,
+                                   bool *have_hidden_threads,
+                                   int *priority);
 
 typedef int (*orte_gpr_base_component_finalize_fn_t)(void);
- 
+
 /*
  * the standard component data structure
  */
@@ -686,11 +729,11 @@ typedef mca_gpr_base_component_1_0_0_t mca_gpr_base_component_t;
 /*
  * Macro for use in modules that are of type gpr v1.0.0
  */
-#define MCA_GPR_BASE_VERSION_1_0_0		\
-    /* gpr v1.0 is chained to MCA v1.0 */	\
-    MCA_BASE_VERSION_1_0_0,			\
-	/* gpr v1.0 */				\
-	"gpr", 1, 0, 0
+#define MCA_GPR_BASE_VERSION_1_0_0      \
+    /* gpr v1.0 is chained to MCA v1.0 */   \
+    MCA_BASE_VERSION_1_0_0,         \
+    /* gpr v1.0 */              \
+    "gpr", 1, 0, 0
 
 /*
  * global module that holds function pointers

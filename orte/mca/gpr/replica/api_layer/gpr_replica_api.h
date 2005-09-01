@@ -129,9 +129,19 @@ int orte_gpr_replica_dump_all(int output_id);
 
 int orte_gpr_replica_dump_segments(char *segment, int output_id);
 
-int orte_gpr_replica_dump_triggers(int output_id);
+int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start, int output_id);
 
-int orte_gpr_replica_dump_subscriptions(int output_id);
+int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start, int output_id);
+
+int orte_gpr_replica_dump_a_trigger(
+                            char *name,
+                            orte_gpr_trigger_id_t id,
+                            int output_id);
+
+int orte_gpr_replica_dump_a_subscription(
+                            char *name,
+                            orte_gpr_subscription_id_t id,
+                            int output_id);
 
 int orte_gpr_replica_dump_local_triggers(int output_id);
 
@@ -149,6 +159,8 @@ int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id);
  * General functions
  */
 int orte_gpr_replica_preallocate_segment(char *name, size_t num_slots);
+
+int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

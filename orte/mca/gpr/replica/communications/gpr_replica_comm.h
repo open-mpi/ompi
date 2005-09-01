@@ -111,9 +111,17 @@ int orte_gpr_replica_recv_dump_all_cmd(orte_buffer_t *answer);
 
 int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *input_buffer, orte_buffer_t *answer);
 
-int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *answer);
+int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *input_buffer,
+                                            orte_buffer_t *answer);
 
-int orte_gpr_replica_recv_dump_subscriptions_cmd(orte_buffer_t *answer);
+int orte_gpr_replica_recv_dump_subscriptions_cmd(orte_buffer_t *input_buffer,
+                                                 orte_buffer_t *answer);
+
+int orte_gpr_replica_recv_dump_a_trigger_cmd(orte_buffer_t *input_buffer,
+                                            orte_buffer_t *answer);
+
+int orte_gpr_replica_recv_dump_a_subscription_cmd(orte_buffer_t *input_buffer,
+                                            orte_buffer_t *answer);
 
 int orte_gpr_replica_recv_dump_callbacks_cmd(orte_buffer_t *answer);
 

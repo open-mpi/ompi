@@ -4,24 +4,24 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
-/** @file 
+/** @file
  */
 
-/** 
+/**
  *  \brief General Purpose Registry (GPR) API
  *
- * The Open MPI General Purpose Registry (GPR) 
- * 
+ * The Open MPI General Purpose Registry (GPR)
+ *
  * This file contains the public type definitions supporting the GPR
  */
 
@@ -120,6 +120,7 @@ typedef union {                             /* shared storage for the value */
     size_t size;
     bool tf_flag;
     pid_t pid;
+    int intval;
     uint8_t ui8;
     uint16_t ui16;
     uint32_t ui32;
@@ -165,7 +166,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
  * contains \em copies of the data in the registry. This prevents inadvertent
  * modification of the registry, but requires the recipient to release the data's
  * memory when done.
- * 
+ *
  * The address mode and segment fields are included here for convenience and so that
  * the structure can be re-used by the put command.
  */
@@ -188,7 +189,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
  */
 typedef struct {
     opal_object_t super;            /**< Makes this an object */
-    char *name;                     /**< Name of the associated subscripton, if provided */
+    char *target;                   /**< Name of the associated subscripton, if provided */
     orte_gpr_subscription_id_t id;  /**< Number of the associated subscription */
     bool remove;                    /**< Remove this subscription from recipient's tracker */
     size_t cnt;                     /**< Number of value objects returned, one per container */
@@ -199,10 +200,17 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
 
 /** Return message for notify requests
  */
+typedef uint8_t orte_gpr_notify_msg_type_t;
+#define ORTE_GPR_NOTIFY_MSG_TYPE_T ORTE_UINT8
+#define ORTE_GPR_TRIGGER_MSG        (orte_gpr_notify_msg_type_t)0x01
+#define ORTE_GPR_SUBSCRIPTION_MSG   (orte_gpr_notify_msg_type_t)0x02
+
 typedef struct {
     opal_object_t super;                        /**< Make this an object */
-    char *name;                 /**< Name of the associated trigger, if provided */
-    orte_gpr_trigger_id_t id;   /**< trigger id, if message comes from trigger (ORTE_GPR_TRIGGER_ID_MAX otherwise) */
+    orte_gpr_notify_msg_type_t msg_type;    /**< trigger or subscription msg */
+    char *target;               /**< Name of the associated trigger, if provided */
+    orte_gpr_trigger_id_t id;   /**< trigger id, if message comes from trigger
+                                    (ORTE_GPR_TRIGGER_ID_MAX otherwise) */
     bool remove;                /**< Remove this trigger from recipient's tracker */
     size_t cnt;                 /**< number of data objects */
     orte_pointer_array_t *data; /**< Contiguous array of pointers to data objects */
@@ -210,19 +218,21 @@ typedef struct {
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_message_t);
 
-/** Notify callback function 
+/** Notify callback function
  * notify_msg = message containing data provided by trigger
- * 
+ *
  * user_tag = whatever tag data the user provided when filing the subscription
  */
 typedef void (*orte_gpr_notify_cb_fn_t)(orte_gpr_notify_data_t *notify_data, void *user_tag);
 
-/** Trigger callback function 
+/** Trigger callback function
  * notify_msg = message containing multiple blocks of data provided by trigger
- * 
+ *
  * user_tag = whatever tag data the user provided when filing the subscription
+ *
+ * Since this only takes place locally, we CAN get a status code from the callback!
  */
-typedef void (*orte_gpr_trigger_cb_fn_t)(orte_gpr_notify_message_t *msg, void *user_tag);
+typedef int (*orte_gpr_trigger_cb_fn_t)(orte_gpr_notify_message_t *msg);
 
 /** Structure for registering subscriptions
  * A request to be notified when certain events occur, or when counters reach specified

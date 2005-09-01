@@ -20,6 +20,7 @@
 #include "include/constants.h"
 #include "opal/util/output.h"
 #include "util/proc_info.h"
+#include "orte/dps/dps.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/ns.h"
@@ -46,7 +47,7 @@ int mca_oob_xcast(
     orte_process_name_t* peers,
     size_t num_peers,
     orte_buffer_t* buffer,
-    mca_oob_callback_packed_fn_t cbfunc)
+    orte_gpr_trigger_cb_fn_t cbfunc)
 {
     size_t i;
     int rc;
@@ -74,14 +75,29 @@ int mca_oob_xcast(
         }
     } else {
         orte_buffer_t rbuf;
+        orte_gpr_notify_message_t *msg;
+        
         OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
         rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, tag);
         if(rc < 0) {
             OBJ_DESTRUCT(&rbuf);
             return rc;
         }
-        if(cbfunc != NULL)
-            cbfunc(rc, root, &rbuf, tag, NULL);
+        if (cbfunc != NULL) {
+            msg = OBJ_NEW(orte_gpr_notify_message_t);
+            if (NULL == msg) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            i=1;
+            if (ORTE_SUCCESS != (rc = orte_dps.unpack(&rbuf, &msg, &i, ORTE_GPR_NOTIFY_MSG))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(msg);
+                return rc;
+            }
+            cbfunc(msg);
+            OBJ_RELEASE(msg);
+        }
         OBJ_DESTRUCT(&rbuf);
     }
     return ORTE_SUCCESS;

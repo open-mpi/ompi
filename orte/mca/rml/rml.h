@@ -338,7 +338,8 @@ typedef int (*orte_rml_module_xcast_fn_t)(
     orte_process_name_t* peers,
     size_t num_peers,
     orte_buffer_t* buffer,
-    orte_rml_buffer_callback_fn_t cbfunc);
+    orte_gpr_trigger_cb_fn_t cbfunc,
+    void *user_tag);
 
 /*
  * Initialization/Cleanup

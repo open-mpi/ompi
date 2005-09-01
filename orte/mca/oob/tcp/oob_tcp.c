@@ -1,16 +1,16 @@
-/* 
+/*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -45,37 +45,37 @@
                things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
                not conflict with other error codes that are returned by these functions \
                under UNIX/Linux environments */
-                                                                  
+
 /*
  * Data structure for accepting connections.
  */
-                                                                                                      
+
 struct mca_oob_tcp_event_t {
     opal_list_item_t item;
     opal_event_t event;
 };
 typedef struct mca_oob_tcp_event_t mca_oob_tcp_event_t;
-                                                                                                      
+
 static void mca_oob_tcp_event_construct(mca_oob_tcp_event_t* event)
 {
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     opal_list_append(&mca_oob_tcp_component.tcp_events, &event->item);
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
-                                                                                                      
+
 static void mca_oob_tcp_event_destruct(mca_oob_tcp_event_t* event)
 {
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     opal_list_remove_item(&mca_oob_tcp_component.tcp_events, &event->item);
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
-                                                                                                      
+
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_event_t,
     opal_list_item_t,
     mca_oob_tcp_event_construct,
     mca_oob_tcp_event_destruct);
-                                                                                                      
+
 /*
  * Local utility functions
  */
@@ -117,7 +117,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
     {
         false /* checkpoint / restart */
     },
-    mca_oob_tcp_component_init 
+    mca_oob_tcp_component_init
   }
 };
 
@@ -174,7 +174,7 @@ int mca_oob_tcp_component_open(void)
         return OMPI_ERROR;
     }
 #endif
-    
+
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,     opal_hash_table_t);
@@ -216,7 +216,7 @@ int mca_oob_tcp_component_close(void)
 #ifdef WIN32
     WSACleanup();
 #endif
-    
+
     /* cleanup resources */
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
@@ -247,7 +247,7 @@ static void mca_oob_tcp_accept(void)
         struct sockaddr_in addr;
         mca_oob_tcp_event_t* event;
         int sd;
- 
+
         sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
             IMPORTANT_WINDOWS_COMMENT();
@@ -265,7 +265,7 @@ static void mca_oob_tcp_accept(void)
                 inet_ntoa(addr.sin_addr),
                 addr.sin_port);
         }
-                                                                                                                   
+
         /* wait for receipt of peers process identifier to complete this connection */
         event = OBJ_NEW(mca_oob_tcp_event_t);
         opal_event_set(&event->event, sd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
@@ -276,7 +276,7 @@ static void mca_oob_tcp_accept(void)
 /*
  * Create a listen socket and bind to all interfaces
  */
-                                                                                                                   
+
 static int mca_oob_tcp_create_listen(void)
 {
     int flags;
@@ -306,13 +306,13 @@ static int mca_oob_tcp_create_listen(void)
         return OMPI_ERROR;
     }
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
-                                                                                                                   
+
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
         opal_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
-                                                                                                                   
+
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_oob_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
         opal_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", ompi_socket_errno);
@@ -324,7 +324,7 @@ static int mca_oob_tcp_create_listen(void)
             return OMPI_ERROR;
         }
     }
-                                                                                                                   
+
     /* register listen port */
     opal_event_set(
         &mca_oob_tcp_component.tcp_recv_event,
@@ -380,18 +380,18 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d", 
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d",
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d", 
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d",
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
         }
     }
 
-    /* check for wildcard name - if this is true - we allocate a name from the name server 
-     * and return to the peer 
+    /* check for wildcard name - if this is true - we allocate a name from the name server
+     * and return to the peer
      */
     cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, &hdr->msg_src, MCA_OOB_NAME_ANY);
     if (cmpval == 0) {
@@ -458,7 +458,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             return;
         }
         if(ompi_socket_errno != EINTR) {
-            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
             close(sd);
             return;
@@ -475,7 +475,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             mca_oob_tcp_recv_connect(sd, &hdr);
             break;
         default:
-            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n", 
+            opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name), hdr.msg_type);
             close(sd);
             break;
@@ -556,16 +556,16 @@ void mca_oob_tcp_registry_callback(
             k++;
             value = values[i];
             for(j = 0; j < value->cnt; j++) {
-    
+
                 /* check to make sure this is the requested key */
                 keyval = value->keyvals[j];
                 if(strcmp(keyval->key,"oob-tcp") != 0)
                     continue;
-    
+
                 /* transfer ownership of registry object to buffer and unpack */
                 OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-                if(orte_dps.load(&buffer, 
-                                 keyval->value.byteobject.bytes, 
+                if(orte_dps.load(&buffer,
+                                 keyval->value.byteobject.bytes,
                                  keyval->value.byteobject.size) != ORTE_SUCCESS) {
                     /* TSW - throw ERROR */
                     continue;
@@ -580,13 +580,13 @@ void mca_oob_tcp_registry_callback(
                         ORTE_NAME_ARGS(orte_process_info.my_name));
                     continue;
                 }
-    
+
                 if(mca_oob_tcp_component.tcp_debug > 1) {
                     opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: received peer [%lu,%lu,%lu]\n",
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_NAME_ARGS(&(addr->addr_name)));
                 }
-    
+
                 /* check for existing cache entry */
                 existing = (mca_oob_tcp_addr_t *)orte_hash_table_get_proc(
                     &mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
@@ -595,7 +595,7 @@ void mca_oob_tcp_registry_callback(
                     OBJ_RELEASE(addr);
                     continue;
                 }
-    
+
                 /* insert into cache and notify peer */
                 orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
                 peer = (mca_oob_tcp_peer_t *)orte_hash_table_get_proc(
@@ -616,14 +616,15 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 {
     mca_oob_tcp_addr_t* addr;
     mca_oob_tcp_subscription_t* subscription;
-    orte_gpr_trigger_t trig, *trigs;
-    orte_gpr_subscription_t sub, *subs;
+    char *segment, *sub_name, *trig_name;
+    char *key="oob-tcp";
+    orte_gpr_subscription_id_t sub_id;
     opal_list_item_t* item;
     int rc;
-  
+
     /* if the address is already cached - simply return it */
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    addr = (mca_oob_tcp_addr_t *)orte_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names, 
+    addr = (mca_oob_tcp_addr_t *)orte_hash_table_get_proc(&mca_oob_tcp_component.tcp_peer_names,
          &peer->peer_name);
     if(NULL != addr) {
          OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -641,112 +642,56 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
             return OMPI_SUCCESS;
         }
     }
-                                                                                                        
-    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    /* indicate that this is a standard subscription. This indicates that the
-     * subscription will be common to all processes. Thus, the resulting data
-     * can be consolidated into a process-independent message and broadcast
-     * to all processes
-     */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
+
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
                                 OMPI_OOB_SUBSCRIPTION, peer->peer_name.jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    /* send data when trigger fires, continue to monitor. The default
-     * action for any subscription that includes a trigger condition is
-     * to send the specified data when the trigger fires. This set of flags
-     * indicates that - AFTER the trigger fires - the subscription should
-     * continue to send data any time an entry is added or changed.
-     */
-    sub.action = ORTE_GPR_NOTIFY_ADD_ENTRY |
-                 ORTE_GPR_NOTIFY_VALUE_CHG |
-                 ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG;
-    
-    /* setup the value structures that describe the data to
-     * be monitored and returned by this subscription
-     */
-    sub.cnt = 1;
-    sub.values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
-    if (NULL == sub.values) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0] = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == sub.values[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.cnt = 1;
-    /* define the segment */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(
-                                &(sub.values[0]->segment),
-                                peer->peer_name.jobid))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&sub);
-        return rc;
-    }
-    sub.values[0]->addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
-    /* look at all containers on this segment */
-    sub.values[0]->tokens = NULL;
-    sub.values[0]->num_tokens = 0;
-    /* look for any keyval with "modex" key */
-    sub.values[0]->cnt = 1;
-    sub.values[0]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-    if (NULL == sub.values[0]->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0]->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == sub.values[0]->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0]->keyvals[0]->key = strdup("oob-tcp");
-    if (NULL == sub.values[0]->keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    /* define the callback function */
-    sub.cbfunc = mca_oob_tcp_registry_callback;
-    sub.user_tag = NULL;
 
-    /* setup the trigger value */
-    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
+    /* attach to the stage-1 standard trigger */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
                                     ORTE_STG1_TRIGGER, peer->peer_name.jobid))) {
         ORTE_ERROR_LOG(rc);
+        free(sub_name);
         return rc;
     }
 
-    /* this is an ORTE-standard trigger that is defined by the ORTE resource manager
-     * when the job was launched - therefore, we don't need to provide any additional
-     * info
-     */
-         
-    
-    trigs = &trig;
-    subs = &sub;
-    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
-    subscription->jobid = peer->peer_name.jobid;
-    rc = orte_gpr.subscribe(1, &subs, 1, &trigs);
-    if(rc != OMPI_SUCCESS) {
+    /* define the segment */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment,
+                                peer->peer_name.jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
+        free(sub_name);
+        free(trig_name);
         return rc;
     }
-    /* the id of each subscription is stored by the system in the corresponding
-     * subscription object we passed into orte_gpr.subscribe. We record it
+
+    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, trig_name, sub_name,
+                                         ORTE_GPR_NOTIFY_ADD_ENTRY |
+                                         ORTE_GPR_NOTIFY_VALUE_CHG |
+                                         ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
+                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+                                         segment,
+                                         NULL,  /* look at all containers on this segment */
+                                         key,
+                                         mca_oob_tcp_registry_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        free(sub_name);
+        free(trig_name);
+        free(segment);
+        return rc;
+    }
+
+    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
+    subscription->jobid = peer->peer_name.jobid;
+    /* the id of each subscription is recorded
      * here so we can (if desired) cancel that subscription later
      */
-    subscription->subid = sub.id;
+    subscription->subid = sub_id;
     /* done with these, so release any memory */
-    OBJ_DESTRUCT(&sub);
-    OBJ_DESTRUCT(&trig);
+    free(trig_name);
+    free(sub_name);
+    free(segment);
 
     opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -761,13 +706,16 @@ int mca_oob_tcp_init(void)
 {
     orte_jobid_t jobid;
     orte_buffer_t *buffer;
-    orte_gpr_trigger_t trig, *trigs;
-    orte_gpr_value_t *value;
+    orte_gpr_subscription_id_t sub_id;
+    char *sub_name, *segment, *trig_name, **tokens;
+    char *keys[] = {"oob-tcp", ORTE_PROC_RML_IP_ADDRESS_KEY};
+    orte_data_type_t types[2];
+    orte_gpr_value_union_t values[2];
     mca_oob_tcp_subscription_t *subscription;
-    orte_gpr_subscription_t sub, *subs;
     int rc;
     opal_list_item_t* item;
     char *tmp, *tmp2, *tmp3;
+    size_t num_tokens;
 
     /* random delay to stagger connections back to seed */
 #if defined(WIN32)
@@ -777,7 +725,7 @@ int mca_oob_tcp_init(void)
 #endif
 
     /* get my jobid */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, 
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid,
                                                 orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -803,212 +751,119 @@ int mca_oob_tcp_init(void)
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
     if(mca_oob_tcp_component.tcp_debug > 2) {
-        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.subscribe\n", 
+        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.subscribe\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
-    /* setup the subscription description value */
-    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    /* indicate that this is a standard subscription. This indicates that the
-     * subscription will be common to all processes. Thus, the resulting data
-     * can be consolidated into a process-independent message and broadcast
-     * to all processes
-     */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
                                 OMPI_OOB_SUBSCRIPTION, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    /* send data when trigger fires, continue to monitor. The default
-     * action for any subscription that includes a trigger condition is
-     * to send the specified data when the trigger fires. This set of flags
-     * indicates that - AFTER the trigger fires - the subscription should
-     * continue to send data any time an entry is added or changed.
-     */
-    sub.action = ORTE_GPR_NOTIFY_ADD_ENTRY |
-                 ORTE_GPR_NOTIFY_VALUE_CHG |
-                 ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG;
-    
-    /* setup the value structures that describe the data to
-     * be monitored and returned by this subscription
-     */
-    sub.cnt = 1;
-    sub.values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
-    if (NULL == sub.values) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0] = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == sub.values[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+
+    /* attach to the stage-1 standard trigger */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
+                                    ORTE_STG1_TRIGGER, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        free(sub_name);
+        return rc;
     }
 
     /* define the segment */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(
-                                &(sub.values[0]->segment),
-                                jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&sub);
-        return rc;
-    }
-    sub.values[0]->addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
-    /* look at all containers on this segment */
-    sub.values[0]->tokens = NULL;
-    sub.values[0]->num_tokens = 0;
-    /* look for any keyval with "modex" key */
-    sub.values[0]->cnt = 1;
-    sub.values[0]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-    if (NULL == sub.values[0]->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0]->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == sub.values[0]->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0]->keyvals[0]->key = strdup("oob-tcp");
-    if (NULL == sub.values[0]->keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    /* define the callback function */
-    sub.cbfunc = mca_oob_tcp_registry_callback;
-    sub.user_tag = NULL;
-
-    /* setup the trigger value */
-    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
-                                    ORTE_STG1_TRIGGER, jobid))) {
-        ORTE_ERROR_LOG(rc);
+        free(sub_name);
+        free(trig_name);
         return rc;
     }
 
-    /* this is an ORTE-standard trigger that is defined by the ORTE resource manager
-     * when the job was launched - therefore, we don't need to provide any additional
-     * info
-     */
-         
-    
-    trigs = &trig;
-    subs = &sub;
-    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
-    subscription->jobid = jobid;
-    rc = orte_gpr.subscribe(1, &subs, 1, &trigs);
-    if(rc != OMPI_SUCCESS) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, trig_name, sub_name,
+                                         ORTE_GPR_NOTIFY_ADD_ENTRY |
+                                         ORTE_GPR_NOTIFY_VALUE_CHG |
+                                         ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
+                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+                                         segment,
+                                         NULL,  /* look at all containers on this segment */
+                                         keys[0],
+                                         mca_oob_tcp_registry_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
+        free(sub_name);
+        free(trig_name);
+        free(segment);
         return rc;
     }
-    /* the id of each subscription is stored by the system in the corresponding
-     * subscription object we passed into orte_gpr.subscribe. We record it
+    /* the id of each subscription is recorded
      * here so we can (if desired) cancel that subscription later
      */
-    subscription->subid = sub.id;
+    subscription->subid = sub_id;
     /* done with these, so release any memory */
-    OBJ_DESTRUCT(&sub);
-    OBJ_DESTRUCT(&trig);
+    free(trig_name);
+    free(sub_name);
 
+
+    /* now setup to put our contact info on registry */
     buffer = OBJ_NEW(orte_buffer_t);
     if(buffer == NULL) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    rc = mca_oob_tcp_addr_pack(buffer);
-    if(rc != OMPI_SUCCESS) {
+    if (ORTE_SUCCESS != (rc = mca_oob_tcp_addr_pack(buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
         return rc;
     }
-    
-    /* put our contact info in registry */
-    value = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == value) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value->segment), jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
 
-    value->cnt = 2;
-    value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
-    if(NULL == value->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[1]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens),
-                                &(value->num_tokens), orte_process_info.my_name))) {
+    /* extract payload for storage */
+    types[0] = ORTE_BYTE_OBJECT;
+    if (ORTE_SUCCESS != (rc = orte_dps.unload(buffer, (void**)&(values[0].byteobject.bytes),
+                                 &(values[0].byteobject.size)))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-
-    (value->keyvals[0])->type = ORTE_BYTE_OBJECT;
-    (value->keyvals[0])->key = strdup("oob-tcp");
-    rc = orte_dps.unload(buffer, (void**)&(value->keyvals[0])->value.byteobject.bytes,
-                                &(value->keyvals[0])->value.byteobject.size);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
+        free(segment);
         OBJ_RELEASE(buffer);
         return rc;
     }
+    OBJ_RELEASE(buffer);
 
-    (value->keyvals[1])->type = ORTE_STRING;
-    (value->keyvals[1])->key = strdup(ORTE_PROC_RML_IP_ADDRESS_KEY);
+    /* setup the IP address for storage */
     tmp = mca_oob.oob_get_addr();
     tmp2 = strrchr(tmp, '/') + 1;
     tmp3 = strrchr(tmp, ':');
     if(NULL == tmp2 || NULL == tmp3) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: invalid address \'%s\' "
-                    "returned for selected oob interfaces.\n", 
+                    "returned for selected oob interfaces.\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name), tmp);
         ORTE_ERROR_LOG(ORTE_ERROR);
+        free(segment);
+        free(tmp);
+        free(values[0].byteobject.bytes);
         return ORTE_ERROR;
     }
     *tmp3 = '\0';
-    (value->keyvals[1])->value.strptr = strdup(tmp2);
+    types[1] = ORTE_STRING;
+    values[1].strptr = strdup(tmp2);
     free(tmp);
-    
-    if(mca_oob_tcp_component.tcp_debug > 2) {
-        opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.put(%s)\n", 
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            value->segment);
-    }
 
-    rc = orte_gpr.put(1, &value);
-    if(rc != OMPI_SUCCESS) {
+    /* get the process tokens */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens,
+                                    orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        OBJ_RELEASE(buffer);
+        free(segment);
+        free(values[0].byteobject.bytes);
+        free(values[1].strptr);
         return rc;
     }
-    OBJ_RELEASE(buffer);
-    OBJ_RELEASE(value);
 
-    if(rc != ORTE_SUCCESS) {
+    /* put our contact info in registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put_N(ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND,
+                                        segment, tokens, 2, keys, types, values))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
     }
-    return OMPI_SUCCESS;
+
+    free(segment);
+    free(values[0].byteobject.bytes);
+    free(values[1].strptr);
+
+    return rc;
 }
 
 /*
@@ -1022,7 +877,7 @@ int mca_oob_tcp_fini(void)
 
     /* close listen socket */
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
-        opal_event_del(&mca_oob_tcp_component.tcp_recv_event); 
+        opal_event_del(&mca_oob_tcp_component.tcp_recv_event);
         close(mca_oob_tcp_component.tcp_listen_sd);
         mca_oob_tcp_component.tcp_listen_sd = -1;
     }

@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -43,17 +43,17 @@
  */
 OMPI_COMP_EXPORT mca_gpr_base_component_t mca_gpr_replica_component = {
     {
-	MCA_GPR_BASE_VERSION_1_0_0,
+    MCA_GPR_BASE_VERSION_1_0_0,
 
-	"replica", /* MCA module name */
-	ORTE_MAJOR_VERSION,  /* MCA module major version */
-	ORTE_MINOR_VERSION,  /* MCA module minor version */
-	ORTE_RELEASE_VERSION,  /* MCA module release version */
-	orte_gpr_replica_open,  /* module open */
-	orte_gpr_replica_close /* module close */
+    "replica", /* MCA module name */
+    ORTE_MAJOR_VERSION,  /* MCA module major version */
+    ORTE_MINOR_VERSION,  /* MCA module minor version */
+    ORTE_RELEASE_VERSION,  /* MCA module release version */
+    orte_gpr_replica_open,  /* module open */
+    orte_gpr_replica_close /* module close */
     },
     {
-	false /* checkpoint / restart */
+    false /* checkpoint / restart */
     },
     orte_gpr_replica_init,    /* module init */
     orte_gpr_replica_finalize /* module shutdown */
@@ -82,6 +82,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     /* GENERAL OPERATIONS */
     orte_gpr_replica_preallocate_segment,
     orte_gpr_base_xfer_payload,
+    orte_gpr_replica_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_replica_increment_value,
     orte_gpr_replica_decrement_value,
@@ -90,6 +91,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_base_subscribe_1,
     orte_gpr_base_subscribe_N,
     orte_gpr_base_define_trigger,
+    orte_gpr_base_define_trigger_level,
     orte_gpr_replica_unsubscribe,
     orte_gpr_replica_cancel_trigger,
     /* COMPOUND COMMANDS */
@@ -101,6 +103,8 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_dump_segments,
     orte_gpr_replica_dump_triggers,
     orte_gpr_replica_dump_subscriptions,
+    orte_gpr_replica_dump_a_trigger,
+    orte_gpr_replica_dump_a_subscription,
     orte_gpr_replica_dump_local_triggers,
     orte_gpr_replica_dump_local_subscriptions,
     orte_gpr_replica_dump_callbacks,
@@ -139,7 +143,7 @@ int orte_gpr_replica_open(void)
     } else {
         orte_gpr_replica_globals.debug = false;
     }
-    
+
     id = mca_base_param_register_int("gpr", "replica", "isolate", NULL, 0);
     mca_base_param_lookup_int(id, &tmp);
     if (tmp) {
@@ -162,28 +166,28 @@ int orte_gpr_replica_close(void)
 orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
     int rc;
-    
+
     /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
 
     if (NULL == orte_process_info.gpr_replica_uri) {
 
-    	/* Return a module (choose an arbitrary, positive priority --
-    	   it's only relevant compared to other ns components).  If
-    	   we're not the seed, then we don't want to be selected, so
-    	   return NULL. */
-    
-    	*priority = 50;
-    
-    	/* We allow multi user threads but don't have any hidden threads */
-    
-    	*allow_multi_user_threads = true;
-    	*have_hidden_threads = false;
-    
-    	/* setup the thread locks and condition variables */
-    	OBJ_CONSTRUCT(&orte_gpr_replica_globals.mutex, opal_mutex_t);
+        /* Return a module (choose an arbitrary, positive priority --
+           it's only relevant compared to other ns components).  If
+           we're not the seed, then we don't want to be selected, so
+           return NULL. */
 
-    	/* initialize the registry head */
+        *priority = 50;
+
+        /* We allow multi user threads but don't have any hidden threads */
+
+        *allow_multi_user_threads = true;
+        *have_hidden_threads = false;
+
+        /* setup the thread locks and condition variables */
+        OBJ_CONSTRUCT(&orte_gpr_replica_globals.mutex, opal_mutex_t);
+
+        /* initialize the registry head */
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.segments),
                                 orte_gpr_array_block_size,
                                 orte_gpr_array_max_size,
@@ -192,7 +196,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             return NULL;
         }
         orte_gpr_replica.num_segs = 0;
-        
+
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.triggers),
                                 orte_gpr_array_block_size,
                                 orte_gpr_array_max_size,
@@ -201,7 +205,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             return NULL;
         }
         orte_gpr_replica.num_trigs = 0;
-        
+
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.subscriptions),
                                 orte_gpr_array_block_size,
                                 orte_gpr_array_max_size,
@@ -210,11 +214,11 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             return NULL;
         }
         orte_gpr_replica.num_subs = 0;
-        
-    	/* initialize the callback list head */
-    	OBJ_CONSTRUCT(&orte_gpr_replica.callbacks, opal_list_t);
+
+        /* initialize the callback list head */
+        OBJ_CONSTRUCT(&orte_gpr_replica.callbacks, opal_list_t);
         orte_gpr_replica.processing_callbacks = false;
-    
+
         /* initialize the local subscription and trigger trackers */
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(
                                 &(orte_gpr_replica_globals.local_subscriptions),
@@ -235,7 +239,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             return NULL;
         }
         orte_gpr_replica_globals.num_local_trigs = 0;
-        
+
         /* initialize the search arrays for temporarily storing search results */
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.sub_ptrs),
                                 100, orte_gpr_array_max_size, 100))) {
@@ -249,7 +253,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             return NULL;
         }
         orte_gpr_replica_globals.num_srch_cptr = 0;
-        
+
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.overwritten),
                                 20, orte_gpr_array_max_size, 20))) {
             ORTE_ERROR_LOG(rc);
@@ -270,29 +274,29 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             return NULL;
         }
         orte_gpr_replica_globals.num_acted_upon = 0;
-        
+
         if (ORTE_SUCCESS != (rc = orte_bitmap_init(&(orte_gpr_replica_globals.srch_itag), 64))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
-        
+
         if (orte_gpr_replica_globals.debug) {
             opal_output(0, "nb receive setup");
         }
-       
-       	/* Return the module */
-       
+
+        /* Return the module */
+
         initialized = true;
         return &orte_gpr_replica_module;
     } else {
-    	return NULL;
+        return NULL;
     }
 }
 
 
 int orte_gpr_replica_module_init(void)
 {
-    /* issue the non-blocking receive */ 
+    /* issue the non-blocking receive */
     if (!orte_gpr_replica_globals.isolate) {
         int rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
         if(rc < 0) {
@@ -302,7 +306,7 @@ int orte_gpr_replica_module_init(void)
     }
     return ORTE_SUCCESS;
 }
-        
+
 
 /*
  * finalize routine
@@ -313,9 +317,9 @@ int orte_gpr_replica_finalize(void)
     orte_gpr_replica_segment_t** seg;
     orte_gpr_replica_trigger_t** trig;
     orte_gpr_replica_callbacks_t* cb;
-    
+
     if (orte_gpr_replica_globals.debug) {
-	    opal_output(0, "finalizing gpr replica");
+        opal_output(0, "finalizing gpr replica");
     }
 
     seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
@@ -327,7 +331,7 @@ int orte_gpr_replica_finalize(void)
          }
     }
     OBJ_RELEASE(orte_gpr_replica.segments);
-    
+
     trig = (orte_gpr_replica_trigger_t**)(orte_gpr_replica.triggers)->addr;
     for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
                    i < (orte_gpr_replica.triggers)->size; i++) {
@@ -337,7 +341,7 @@ int orte_gpr_replica_finalize(void)
          }
     }
     OBJ_RELEASE(orte_gpr_replica.triggers);
-    
+
     while (NULL != (cb = (orte_gpr_replica_callbacks_t*)opal_list_remove_first(&orte_gpr_replica.callbacks))) {
         OBJ_RELEASE(cb);
     }
@@ -345,15 +349,15 @@ int orte_gpr_replica_finalize(void)
 
 
     /* clean up the globals */
-    
+
     if (NULL != orte_gpr_replica_globals.srch_cptr) {
         OBJ_RELEASE(orte_gpr_replica_globals.srch_cptr);
     }
-    
+
     if (NULL != orte_gpr_replica_globals.overwritten) {
         OBJ_RELEASE(orte_gpr_replica_globals.overwritten);
     }
-    
+
     if (NULL != orte_gpr_replica_globals.srch_ival) {
         OBJ_RELEASE(orte_gpr_replica_globals.srch_ival);
     }
@@ -366,7 +370,7 @@ int orte_gpr_replica_finalize(void)
     if (orte_gpr_replica_globals.isolate) {
         return ORTE_SUCCESS;
     }
-    
-	orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR);
+
+    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR);
     return ORTE_SUCCESS;
 }

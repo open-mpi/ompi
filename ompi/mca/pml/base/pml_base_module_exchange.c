@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -69,16 +69,16 @@ static void mca_pml_base_modex_module_destruct(mca_pml_base_modex_module_t *modu
 }
 
 OBJ_CLASS_INSTANCE(
-    mca_pml_base_modex_module_t, 
-    opal_list_item_t, 
-    mca_pml_base_modex_module_construct, 
+    mca_pml_base_modex_module_t,
+    opal_list_item_t,
+    mca_pml_base_modex_module_construct,
     mca_pml_base_modex_module_destruct
 );
 
 /**
  * mca_pml_base_modex_t
  *
- * List of modules (mca_pml_base_modex_module_t) for which data has been 
+ * List of modules (mca_pml_base_modex_module_t) for which data has been
  * received from peers.
  */
 struct mca_pml_base_modex_t {
@@ -98,9 +98,9 @@ static void mca_pml_base_modex_destruct(mca_pml_base_modex_t* modex)
 }
 
 OBJ_CLASS_INSTANCE(
-    mca_pml_base_modex_t, 
-    opal_object_t, 
-    mca_pml_base_modex_construct, 
+    mca_pml_base_modex_t,
+    opal_object_t,
+    mca_pml_base_modex_construct,
     mca_pml_base_modex_destruct
 );
 
@@ -216,7 +216,7 @@ static void mca_pml_base_modex_registry_callback(
     int rc;
 
 #if 0
-opal_output(0, "[%lu,%lu,%lu] mca_pml_base_modex_registry_callback\n", 
+opal_output(0, "[%lu,%lu,%lu] mca_pml_base_modex_registry_callback\n",
     ORTE_NAME_ARGS(orte_process_info.my_name));
 orte_gpr_base_dump_notify_data(data,0);
 #endif
@@ -225,7 +225,7 @@ orte_gpr_base_dump_notify_data(data,0);
         new_procs = (ompi_proc_t**)malloc(sizeof(ompi_proc_t*) * data->cnt);
         if(NULL == new_procs) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return; 
+            return;
         }
     }
 
@@ -245,16 +245,16 @@ orte_gpr_base_dump_notify_data(data,0);
                     proc = ompi_proc_find_and_add(proc_name, &isnew);
                     if(NULL == proc)
                         continue;
-        
+
                     if(isnew) {
                         new_procs[new_proc_count] = proc;
                         new_proc_count++;
                     }
-        
+
                     /*
                      * Lookup the modex data structure.
                      */
-            
+
                     OPAL_THREAD_LOCK(&proc->proc_lock);
                     if(NULL == (modex = (mca_pml_base_modex_t*)proc->proc_modex)) {
                         modex = OBJ_NEW(mca_pml_base_modex_t);
@@ -265,7 +265,7 @@ orte_gpr_base_dump_notify_data(data,0);
                         }
                         proc->proc_modex = &modex->super;
                     }
-                    
+
                     /*
                      * Extract the component name and version from the keyval object's key
                      * Could be multiple keyvals returned since there is one for each
@@ -280,10 +280,10 @@ orte_gpr_base_dump_notify_data(data,0);
                         size_t num_bytes;
                         if(strcmp(keyval[j]->key,"modex") != 0)
                             continue;
-        
+
                         OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-                        if (ORTE_SUCCESS != (rc = orte_dps.load(&buffer, 
-                            keyval[j]->value.byteobject.bytes, 
+                        if (ORTE_SUCCESS != (rc = orte_dps.load(&buffer,
+                            keyval[j]->value.byteobject.bytes,
                             keyval[j]->value.byteobject.size))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
@@ -295,7 +295,7 @@ orte_gpr_base_dump_notify_data(data,0);
                         }
                         strcpy(component.mca_type_name,ptr);
                         free(ptr);
-        
+
                         cnt = 1;
                         if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
                             ORTE_ERROR_LOG(rc);
@@ -303,21 +303,21 @@ orte_gpr_base_dump_notify_data(data,0);
                         }
                         strcpy(component.mca_component_name,ptr);
                         free(ptr);
-        
+
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer,
                             &component.mca_component_major_version, &cnt, ORTE_INT32))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer,
                             &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
+                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer,
                             &num_bytes, &cnt, ORTE_SIZE))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
@@ -333,7 +333,7 @@ orte_gpr_base_dump_notify_data(data,0);
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
-            
+
                         /*
                          * Lookup the corresponding modex structure
                          */
@@ -343,7 +343,7 @@ orte_gpr_base_dump_notify_data(data,0);
                             OPAL_THREAD_UNLOCK(&proc->proc_lock);
                             return;
                         }
-        
+
                         modex_module->module_data = bytes;
                         modex_module->module_data_size = num_bytes;
                         modex_module->module_data_avail = true;
@@ -360,7 +360,7 @@ opal_output(0, "[%lu,%lu,%lu] mca_pml_base_modex_registry_callback: %s-%s-%d-%d 
                     }
                     OPAL_THREAD_UNLOCK(&proc->proc_lock);
                 }  /* convert string to process name */
-            
+
             }  /* if value[i]->cnt > 0 */
         }
     }
@@ -380,8 +380,8 @@ opal_output(0, "[%lu,%lu,%lu] mca_pml_base_modex_registry_callback: %s-%s-%d-%d 
 
 static int mca_pml_base_modex_subscribe(orte_process_name_t* name)
 {
-    orte_gpr_trigger_t trig, *trigs;
-    orte_gpr_subscription_t sub, *subs;
+    char *segment, *sub_name, *trig_name;
+    orte_gpr_subscription_id_t sub_id;
     orte_jobid_t jobid;
     opal_list_item_t* item;
     mca_pml_base_modex_subscription_t* subscription;
@@ -407,103 +407,49 @@ static int mca_pml_base_modex_subscribe(orte_process_name_t* name)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
-    /* setup the subscription definition */
-    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    /* indicate that this is a standard subscription. This indicates that the
-     * subscription will be common to all processes. Thus, the resulting data
-     * can be consolidated into a process-independent message and broadcast
-     * to all processes
-     */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
+
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
                                 OMPI_MODEX_SUBSCRIPTION, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    /* send data when trigger fires, continue to monitor. The default
-     * action for any subscription that includes a trigger condition is
-     * to send the specified data when the trigger fires. This set of flags
-     * indicates that - AFTER the trigger fires - the subscription should
-     * continue to send data any time an entry is added or changed.
-     */
-    sub.action = ORTE_GPR_NOTIFY_ADD_ENTRY |
-                 ORTE_GPR_NOTIFY_VALUE_CHG |
-                 ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG;
-    
-    /* setup the value structures that describe the data to
-     * be monitored and returned by this subscription
-     */
-    sub.cnt = 1;
-    sub.values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
-    if (NULL == sub.values) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0] = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == sub.values[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.cnt = 1;
-    /* define the segment */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(
-                                &(sub.values[0]->segment), jobid))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&sub);
-        return rc;
-    }
-    sub.values[0]->addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
-    /* look at all containers on this segment */
-    sub.values[0]->tokens = NULL;
-    sub.values[0]->num_tokens = 0;
-    /* look for any keyval with "modex" key */
-    sub.values[0]->cnt = 1;
-    sub.values[0]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-    if (NULL == sub.values[0]->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0]->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == sub.values[0]->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.values[0]->keyvals[0]->key = strdup("modex");
-    if (NULL == sub.values[0]->keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    /* define the callback function */
-    sub.cbfunc = mca_pml_base_modex_registry_callback;
-    sub.user_tag = NULL;
-    
-    /* setup the trigger definition */
-    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
+
+    /* attach to the stage-1 standard trigger */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
                                     ORTE_STG1_TRIGGER, jobid))) {
         ORTE_ERROR_LOG(rc);
+        free(sub_name);
         return rc;
     }
 
-    /* this is an ORTE-standard trigger that is defined by the ORTE resource manager
-     * when the job was launched - therefore, we don't need to provide any additional
-     * info
-     */
-         
-    /* register the subscription */
-    subs = &sub;
-    trigs = &trig;
-    rc = orte_gpr.subscribe(1, &subs, 1, &trigs);
-    if(ORTE_SUCCESS != rc) {
-        opal_output(0, "mca_pml_base_modex_exchange: "
-		    "orte_gpr.subscribe failed with return code %d\n", rc);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
-	    return OMPI_ERROR;
+    /* define the segment */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        free(sub_name);
+        free(trig_name);
+        return rc;
     }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, trig_name, sub_name,
+                                         ORTE_GPR_NOTIFY_ADD_ENTRY |
+                                         ORTE_GPR_NOTIFY_VALUE_CHG |
+                                         ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
+                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+                                         segment,
+                                         NULL,  /* look at all containers on this segment */
+                                         "modex",
+                                         mca_pml_base_modex_registry_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        opal_output(0, "mca_pml_base_modex_exchange: "
+            "orte_gpr.subscribe failed with return code %d\n", rc);
+        free(sub_name);
+        free(trig_name);
+        free(segment);
+        return rc;
+    }
+    free(sub_name);
+    free(trig_name);
+    free(segment);
 
     /* add this jobid to our list of subscriptions */
     OPAL_LOCK(&mca_pml_base_modex_lock);
@@ -511,8 +457,6 @@ static int mca_pml_base_modex_subscribe(orte_process_name_t* name)
     subscription->jobid = name->jobid;
     opal_list_append(&mca_pml_base_modex_subscriptions, &subscription->item);
     OPAL_UNLOCK(&mca_pml_base_modex_lock);
-    OBJ_DESTRUCT(&sub);
-    OBJ_DESTRUCT(&trig);
     return OMPI_SUCCESS;
 }
 
@@ -525,8 +469,8 @@ static int mca_pml_base_modex_subscribe(orte_process_name_t* name)
  */
 
 int mca_pml_base_modex_send(
-    mca_base_component_t *source_component, 
-    const void *data, 
+    mca_base_component_t *source_component,
+    const void *data,
     size_t size)
 {
     orte_jobid_t jobid;
@@ -575,7 +519,7 @@ int mca_pml_base_modex_send(
     }
     memcpy((value->keyvals[0])->value.byteobject.bytes, data, size);
 
-    asprintf(&((value->keyvals[0])->key), "modex-%s-%s-%d-%d", 
+    asprintf(&((value->keyvals[0])->key), "modex-%s-%s-%d-%d",
         source_component->mca_type_name,
         source_component->mca_component_name,
         source_component->mca_component_major_version,
@@ -602,7 +546,7 @@ int mca_pml_base_modex_send(
     if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, (void*)data, size, ORTE_BYTE))) {
         goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.unload(&buffer, 
+    if (ORTE_SUCCESS != (rc = orte_dps.unload(&buffer,
         (void**)&(value->keyvals[0])->value.byteobject.bytes,
         (size_t*)&(value->keyvals[0])->value.byteobject.size))) {
         goto cleanup;
@@ -625,8 +569,8 @@ cleanup:
 
 int mca_pml_base_modex_recv(
     mca_base_component_t *component,
-    ompi_proc_t *proc, 
-    void **buffer, 
+    ompi_proc_t *proc,
+    void **buffer,
     size_t *size)
 {
     mca_pml_base_modex_t* modex;
