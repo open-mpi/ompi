@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -77,7 +77,7 @@ enum {
     OMPI_UNPACK_INADEQUATE_SPACE        = ORTE_UNPACK_INADEQUATE_SPACE,
     OMPI_UNPACK_READ_PAST_END_OF_BUFFER = ORTE_UNPACK_READ_PAST_END_OF_BUFFER,
     OMPI_ERR_GPR_DATA_CORRUPT           = ORTE_ERR_GPR_DATA_CORRUPT,
-    OMPI_ERR_TYPE_MISMATCH              = ORTE_ERR_TYPE_MISMATCH             
+    OMPI_ERR_TYPE_MISMATCH              = ORTE_ERR_TYPE_MISMATCH
 };
 
 #define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 1)
@@ -92,6 +92,11 @@ enum {
 #define OMPI_OOB_SUBSCRIPTION           "ompi-oob-sub"
 #define OMPI_MODEX_SUBSCRIPTION         "ompi-modex-sub"
 
+/*
+ * OMPI-specific registry keys
+ */
+#define OMPI_PROC_ARCH        "ompi-proc-arch"
+#define OMPI_MODEX_KEY        "ompi-modex"
 
 #endif /* OMPI_CONSTANTS_H */
 

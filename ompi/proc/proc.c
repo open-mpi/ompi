@@ -92,7 +92,10 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     orte_process_name_t *peers;
-    size_t i, npeers, self;
+    size_t i, npeers, self, num_tokens;
+    orte_jobid_t jobid;
+    char *segment, **tokens;
+    orte_gpr_value_union_t value;
     int rc;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
@@ -125,8 +128,41 @@ int ompi_proc_init(void)
     }
 
     /* Here we have to add to the GPR the information about the current architecture.
-     * TODO: george
      */
+    if (OMPI_SUCCESS != (rc = ompi_arch_compute_local_id(&value.ui32))) {
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* find the job segment on the registry */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        return rc;
+    }
+
+    /* get the registry tokens for this node */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens, &num_tokens,
+                                orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
+        return rc;
+    }
+
+    /* put the arch info on the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put_1(ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                                             segment, tokens,
+                                             OMPI_PROC_ARCH, ORTE_UINT32, value))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    free(segment);
+    for (i=0; i < num_tokens; i++) {
+        free(tokens[i]);
+        tokens[i] = NULL;
+    }
+    if (NULL != tokens) free(tokens);
 
     return OMPI_SUCCESS;
 }
@@ -337,7 +373,7 @@ int ompi_proc_get_proclist (orte_buffer_t* buf, int proclistsize, ompi_proc_t **
 static int setup_registry_callback(void)
 {
     int rc;
-    char *segment, *sub_name, *trig_name, *keys[2];
+    char *segment, *sub_name, *trig_name, *keys[3];
     ompi_proc_t *local = ompi_proc_local();
     orte_gpr_subscription_id_t id;
     orte_jobid_t jobid;
@@ -368,6 +404,7 @@ static int setup_registry_callback(void)
     /* define the keys to be returned */
     keys[0] = strdup(ORTE_PROC_NAME_KEY);
     keys[1] = strdup(ORTE_NODE_NAME_KEY);
+    keys[2] = strdup(OMPI_PROC_ARCH);
 
     /* Here we have to add another key to the registry to be able to get the information
      * about the remote architectures.
@@ -387,7 +424,7 @@ static int setup_registry_callback(void)
                                 ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
                                 segment,
                                 NULL,  /* wildcard - look at all containers */
-                                2, keys,
+                                3, keys,
                                 callback, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -414,7 +451,8 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     size_t i, j, k;
     char *str;
-    bool found_name;
+    uint32_t arch;
+    bool found_name, found_arch;
     orte_ns_cmp_bitmask_t mask;
     orte_process_name_t name;
     orte_gpr_value_t **value;
@@ -438,6 +476,7 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
             k++;
             str = NULL;
             found_name = false;
+            found_arch = false;
             keyval = value[i]->keyvals;
 
             /* find the 2 keys that we're looking for */
@@ -451,27 +490,32 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                         free(str);
                     }
                     str = strdup(keyval[j]->value.strptr);
+                } else if (strcmp(keyval[j]->key, OMPI_PROC_ARCH) == 0) {
+                    arch = keyval[j]->value.ui32;
+                    found_arch = true;
                 }
             }
 
-            /* if we found both keys and the proc is on my local host,
+            /* if we found all keys and the proc is on my local host,
                find it in the master proc list and set the "local" flag */
-            if (NULL != str && found_name &&
-                0 == strcmp(str, orte_system_info.nodename)) {
+            if (NULL != str && found_name && found_arch) {
                 for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
                      proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
                      proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-                    if (0 == orte_ns.compare(mask, &name,
-                                             &proc->proc_name)) {
-                        proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+
+                    /* if the nodename of this info is my local host,
+                     * find the associated proc entry and set the local
+                     * flag
+                     */
+                    if (0 == strcmp(str, orte_system_info.nodename) &&
+                        0 == orte_ns.compare(mask, &name, &proc->proc_name)) {
+                            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
                     }
+                    /* set the architecture entry for this proc */
+                    proc->proc_arch = arch;
                 }
             }
         }
-        /* And finally here we have to retrieve the remote architectures and create the convertors
-         * attached to the remote processors depending on the remote architecture.
-         * TODO: George.
-         */
     }
 
     /* unlock */
