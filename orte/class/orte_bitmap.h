@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -49,25 +49,14 @@ struct orte_bitmap_t {
     unsigned char *bitmap; /**< The actual bitmap array of characters */
     size_t array_size;  /**< The actual array size that maintains the bitmap */
     size_t legal_numbits; /**< The number of bits which are legal (the
-			    actual bitmap may contain more bits, since
-			    it needs to be rounded to the nearest
-			    char  */
+                actual bitmap may contain more bits, since
+                it needs to be rounded to the nearest
+                char  */
 };
 
 typedef struct orte_bitmap_t orte_bitmap_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
-
-/**
- * Initializes the bitmap and sets its size. This must be called
- * before the bitmap can be actually used
- *
- * @param  bitmap The input bitmap (IN)
- * @param  size   The initial size of the bitmap in terms of bits (IN)
- * @return ORTE error code or success
- *
- */
-OMPI_DECLSPEC int orte_bitmap_init (orte_bitmap_t *bm, size_t size);
 
 
 /**
@@ -94,7 +83,7 @@ OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, size_t bit);
  * @return OMPI error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit); 
+OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit);
 
 
 /**
@@ -130,8 +119,8 @@ OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, size_t bit);
 
  * @return err        ORTE_SUCCESS on success
  */
-OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm, 
-                                                           size_t *position); 
+OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
+                                                           size_t *position);
 
 
 /**
@@ -139,7 +128,7 @@ OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
  *
  * @param bitmap The input bitmap (IN)
  * @return ORTE error code if bm is NULL
- * 
+ *
  */
 OMPI_DECLSPEC int orte_bitmap_clear_all_bits(orte_bitmap_t *bm);
 
@@ -169,5 +158,5 @@ static inline int orte_bitmap_size(orte_bitmap_t *bm)
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-    
+
 #endif
