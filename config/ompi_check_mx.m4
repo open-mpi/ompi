@@ -17,17 +17,16 @@
 
 
 AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
-    u_OMPI_CHECK_MX_CONFIG_SAVE_CPPFLAGS="$CPPFLAGS"
-    u_OMPI_CHECK_MX_CONFIG_SAVE_LDFLAGS="$LDFLAGS"
-    u_OMPI_CHECK_MX_CONFIG_SAVE_LIBS="$LIBS"
-
-    CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
-    LDFLAGS="$LDFLAGS $$1_LDFLAGS"
-    LIBS="$LIBS $$1_LIBS"
-
     #
-    # See if we have MX_API. OpenMPI require a MX version bigger than the first MX relase (0x300)
+    # See if we have MX_API. OpenMPI require a MX version bigger than
+    # the first MX relase (0x300)
     #
+
+    # restored at end of OMPI_CHECK_MX
+    CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS $$1_CPPFLAGS"
+    LDFLAGS="$ompi_check_mx_$1_save_LDFLAGS $$1_LDFLAGS"
+    LIBS="$ompi_check_mx_$1_save_LIBS $$1_LIBS"
+
     AC_MSG_CHECKING([for MX version 1.0 or later])
     AC_TRY_COMPILE([#include <myriexpress.h>],
         [#if MX_API < 0x300
@@ -41,12 +40,9 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
     AS_IF([test x"$have_recent_api" = "xyes"],
           [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_API_VERSION], $mx_api_ver,
                 [Version of the MX API to use])
-                unset mx_api_ver have_mx_api_ver_msg found val msg
-                $2],
-          [CPPFLAGS="$u_OMPI_CHECK_MX_CONFIG_SAVE_CPPFLAGS"
-           LDFLAGS="$u_OMPI_CHECK_MX_CONFIG_SAVE_LDFLAGS"
-           LIBS="$u_OMPI_CHECK_MX_CONFIG_SAVE_LIBS"
-           $3])
+           unset mx_api_ver have_mx_api_ver_msg found val msg
+           $2],
+          [$3])
 ])dnl
 
 # OMPI_CHECK_MX(prefix, [action-if-found], [action-if-not-found])
@@ -61,6 +57,10 @@ AC_DEFUN([OMPI_CHECK_MX],[
     AC_ARG_WITH([mx-libdir],
                 [AC_HELP_STRING([--with-mx-libdir=MXLIBDIR],
                                 [directory where the MX library can be found, if it is not in MX_DIR/lib or MX_DIR/lib64])])
+
+    ompi_check_mx_$1_save_CPPFLAGS="$CPPFLAGS"
+    ompi_check_mx_$1_save_LDFLAGS="$LDFLAGS"
+    ompi_check_mx_$1_save_LIBS="$LIBS"
 
     AS_IF([test ! -z "$with_mx" -a "$with_mx" != "yes"],
           [ompi_check_mx_dir="$with_mx"])
@@ -78,7 +78,15 @@ AC_DEFUN([OMPI_CHECK_MX],[
                        [ompi_check_mx_happy="no"])
 
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_CONFIG($1, $2, $3)],
+          [_OMPI_CHECK_MX_CONFIG($1, [ompi_check_mx_happy="yes"],
+                                 [ompi_check_mx_happy="no"])])
+
+    CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS"
+    LDFLAGS="$ompi_check_mx_$1_save_LDFLAGS"
+    LIBS="$ompi_check_mx_$1_save_LIBS"
+
+    AS_IF([test "$ompi_check_mx_happy" = "yes"],
+          [$2],
           [AS_IF([test ! -z "$with_mx" -a "$with_mx" != "no"],
                  [AC_MSG_ERROR([MX support requested but not found.  Aborting])])
            $3])
