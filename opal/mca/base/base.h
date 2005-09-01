@@ -19,10 +19,6 @@
 
 #include "ompi_config.h"
 
-#if OMPI_WANT_LIBLTDL
-#include "ltdl.h"
-#endif
-
 #include "opal/class/opal_object.h"
 
 /*
@@ -123,26 +119,6 @@ OMPI_DECLSPEC  int mca_base_component_find(const char *directory, const char *ty
                            const mca_base_component_t *static_components[],
                            opal_list_t *found_components,
                            bool open_dso_components);
-
-  /* mca_base_component_register.c */
-
-#if ! OMPI_WANT_LIBLTDL
-    /* if we don't have libltdl, provide dummy handle type */
-    typedef void* lt_dlhandle;
-#endif
-
-OMPI_DECLSPEC  int mca_base_component_repository_initialize(void);
-OMPI_DECLSPEC  int mca_base_component_repository_retain(char *type, 
-                                        lt_dlhandle component_handle, 
-                                        const mca_base_component_t *component_struct);
-OMPI_DECLSPEC int mca_base_component_repository_retain_component(const char *type, 
-                                                                 const char *name);
-OMPI_DECLSPEC  int mca_base_component_repository_link(const char *src_type, 
-                                      const char *src_name,
-                                      const char *depend_type,
-                                      const char *depend_name);
-OMPI_DECLSPEC  void mca_base_component_repository_release(const mca_base_component_t *component);
-OMPI_DECLSPEC  void mca_base_component_repository_finalize(void);
 
   /* mca_base_components_open.c */
 

@@ -17,10 +17,11 @@
 #include "ompi_config.h"
 
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
 
 orte_iof_base_module_t orte_iof;
 

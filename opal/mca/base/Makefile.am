@@ -20,9 +20,9 @@ include $(top_srcdir)/config/Makefile.options
 # (by default)
 
 AM_CPPFLAGS = \
+        $(OPAL_LTDL_CPPFLAGS) \
         -DOMPI_PKGLIBDIR=\"$(pkglibdir)\" \
-        -DOMPI_SYSCONFDIR=\"$(sysconfdir)\" \
-        -I$(top_srcdir)/opal/libltdl
+        -DOMPI_SYSCONFDIR=\"$(sysconfdir)\"
 AM_LFLAGS = -Pmca_base_yy
 LEX_OUTPUT_ROOT = lex.mca_base_yy
 
@@ -36,6 +36,7 @@ pkgdata_DATA = help-mca-base.txt help-mca-param.txt
 
 headers = \
         base.h \
+        mca_base_component_repository.h \
         mca_base_msgbuf.h \
         mca_base_msgbuf_internal.h \
         mca_base_param.h \
