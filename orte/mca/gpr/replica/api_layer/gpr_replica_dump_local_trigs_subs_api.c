@@ -53,6 +53,11 @@ int orte_gpr_replica_dump_local_triggers(int output_id)
             } else {
                 opal_output(output_id, "\ttrigger name: %s", trigs[j]->name);
             }
+            if (NULL == trigs[j]->callback) {
+                opal_output(output_id, "\tNULL callback");
+            } else {
+                opal_output(output_id, "\tCallback %0x", trigs[j]->callback);
+            }
         }
     }
     return ORTE_SUCCESS;    
@@ -78,7 +83,11 @@ int orte_gpr_replica_dump_local_subscriptions(int output_id)
             } else {
                 opal_output(output_id, "\tsubscription name: %s", subs[j]->name);
             }
-        }
+            if (NULL == subs[j]->callback) {
+                opal_output(output_id, "\tNULL callback");
+            } else {
+                opal_output(output_id, "\tCallback %0x", subs[j]->callback);
+            }        }
     }
     return ORTE_SUCCESS;    
 }

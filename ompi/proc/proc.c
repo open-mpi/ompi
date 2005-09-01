@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,6 +25,7 @@
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
@@ -41,9 +42,9 @@ static int setup_registry_callback(void);
 static void callback(orte_gpr_notify_data_t *data, void *cbdata);
 
 OBJ_CLASS_INSTANCE(
-    ompi_proc_t, 
+    ompi_proc_t,
     opal_list_item_t,
-    ompi_proc_construct, 
+    ompi_proc_construct,
     ompi_proc_destruct
 );
 
@@ -166,7 +167,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
 
     /* First count how many match this jobid */
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
+    for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         if (0 == orte_ns.compare(mask, &proc->proc_name, &my_name)) {
@@ -182,7 +183,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
 
     /* now save only the procs that match this jobid */
     count = 0;
-    for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
+    for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         if (0 == orte_ns.compare(mask, &proc->proc_name, &my_name)) {
@@ -198,7 +199,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
 
 ompi_proc_t** ompi_proc_all(size_t* size)
 {
-    ompi_proc_t **procs = 
+    ompi_proc_t **procs =
         (ompi_proc_t**) malloc(opal_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
     ompi_proc_t *proc;
     size_t count = 0;
@@ -208,7 +209,7 @@ ompi_proc_t** ompi_proc_all(size_t* size)
     }
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
+    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         OBJ_RETAIN(proc);
@@ -241,7 +242,7 @@ ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
 
     mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
+    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         if (0 == orte_ns.compare(mask, &proc->proc_name, name)) {
@@ -262,7 +263,7 @@ ompi_proc_t * ompi_proc_find_and_add ( const orte_process_name_t * name, bool* i
     /* return the proc-struct which matches this jobid+process id */
     mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
+    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         if (0 == orte_ns.compare(mask, &proc->proc_name, name)) {
@@ -336,105 +337,68 @@ int ompi_proc_get_proclist (orte_buffer_t* buf, int proclistsize, ompi_proc_t **
 static int setup_registry_callback(void)
 {
     int rc;
-    char *segment;
+    char *segment, *sub_name, *trig_name, *keys[2];
     ompi_proc_t *local = ompi_proc_local();
+    orte_gpr_subscription_id_t id;
     orte_jobid_t jobid;
-    orte_gpr_trigger_t trig, *trig1;
-    orte_gpr_value_t value, *values;
-    orte_gpr_subscription_t sub, *sub1;
-    
-    if (ORTE_SUCCESS != orte_ns.get_jobid(&jobid, &local->proc_name)) {
-        printf("Badness!\n");
+
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, &local->proc_name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    
+
     /* find the job segment on the registry */
-    if (ORTE_SUCCESS != 
+    if (ORTE_SUCCESS !=
         (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         return rc;
     }
 
-    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
     /* indicate that this is a standard subscription. This indicates
        that the subscription will be common to all processes. Thus,
        the resulting data can be consolidated into a
        process-independent message and broadcast to all processes */
-    if (ORTE_SUCCESS != 
-        (rc = orte_schema.get_std_subscription_name(&(sub.name),
+    if (ORTE_SUCCESS !=
+        (rc = orte_schema.get_std_subscription_name(&sub_name,
                                                     OMPI_PROC_SUBSCRIPTION, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
         return rc;
     }
 
-    /* send data when trigger fires, then delete - no need for further
-       notifications */
-    sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    
-    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
-    values = &value;
-    sub.values = &values;
-    sub.cnt = 1;
-    
-    value.addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
-    value.segment = segment;
-    value.tokens = NULL; /* wildcard - look at all containers */
-    value.num_tokens = 0;
-    value.cnt = 2;
-    value.keyvals = 
-        (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*) * 2);
-    if (NULL == value.keyvals) {
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-    value.keyvals[0] = NULL;
-    value.keyvals[1] = NULL;
-
-    value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value.keyvals[0]) {
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-    value.keyvals[0]->key = strdup(ORTE_PROC_NAME_KEY);
-    if (NULL == value.keyvals[0]->key) {
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-
-    value.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value.keyvals[0]) {
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-    value.keyvals[1]->key = strdup(ORTE_NODE_NAME_KEY);
-    if (NULL == value.keyvals[0]->key) {
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
+    /* define the keys to be returned */
+    keys[0] = strdup(ORTE_PROC_NAME_KEY);
+    keys[1] = strdup(ORTE_NODE_NAME_KEY);
 
     /* Here we have to add another key to the registry to be able to get the information
      * about the remote architectures.
      * TODO: George.
      */
 
-    sub.cbfunc = callback;
-    sub.user_tag = NULL;
-    
-    /* setup the trigger information */
-    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
-    if (ORTE_SUCCESS != 
-        (rc = orte_schema.get_std_trigger_name(&(trig.name),
+    /* attach ourselves to the standard stage-1 trigger */
+    if (ORTE_SUCCESS !=
+        (rc = orte_schema.get_std_trigger_name(&trig_name,
                                                ORTE_STG1_TRIGGER, jobid))) {
-        goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
     }
 
-    /* do the subscription */
-    sub1 = &sub;
-    trig1 = &trig;
-    rc = orte_gpr.subscribe(1, &sub1, 1, &trig1);
+    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&id, trig_name, sub_name,
+                                ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
+                                ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                                segment,
+                                NULL,  /* wildcard - look at all containers */
+                                2, keys,
+                                callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    free(trig_name);
 
- cleanup:
-    OBJ_DESTRUCT(&value);
-    sub.values = NULL;
-    OBJ_DESTRUCT(&sub);
-    OBJ_DESTRUCT(&trig);
+CLEANUP:
+    free(segment);
+    free(sub_name);
+    free(keys[0]);
+    free(keys[1]);
+
     return rc;
 }
 
@@ -445,7 +409,7 @@ static int setup_registry_callback(void)
  * figure out which procs are on the same host as the local proc.  For
  * each proc that is on the same host as the local proc, we set that
  * proc's OMPI_PROC_FLAG_LOCAL flag.
- */ 
+ */
 static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     size_t i, j, k;
@@ -475,7 +439,7 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
             str = NULL;
             found_name = false;
             keyval = value[i]->keyvals;
-    
+
             /* find the 2 keys that we're looking for */
             for (j = 0; j < value[i]->cnt; ++j) {
                 if (strcmp(keyval[j]->key, ORTE_PROC_NAME_KEY) == 0) {
@@ -489,15 +453,15 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                     str = strdup(keyval[j]->value.strptr);
                 }
             }
-    
+
             /* if we found both keys and the proc is on my local host,
                find it in the master proc list and set the "local" flag */
             if (NULL != str && found_name &&
                 0 == strcmp(str, orte_system_info.nodename)) {
-                for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list); 
+                for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
                      proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
                      proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-                    if (0 == orte_ns.compare(mask, &name, 
+                    if (0 == orte_ns.compare(mask, &name,
                                              &proc->proc_name)) {
                         proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
                     }

@@ -1,21 +1,21 @@
 /* -*- C -*-
- * 
+ *
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
-/** @file 
+/** @file
  */
 
 #ifndef ORTE_GPR_REPLICA_H
@@ -77,6 +77,7 @@ typedef uint8_t orte_gpr_replica_action_t;
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_subscription_id_t id;         /**< id of this subscription */
+     size_t index;                          /**< location of this subscription in array */
      char *name;
      orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
      void *user_tag;                        /**< User-provided tag for callback function */
@@ -92,6 +93,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_local_subscriber_t);
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_trigger_id_t id;              /**< id of this trigger */
+     size_t index;                          /**< location of this trigger in array */
      char *name;
      orte_gpr_trigger_cb_fn_t callback;      /**< Function to be called for notification */
      void *user_tag;                        /**< User-provided tag for callback function */
@@ -136,21 +138,21 @@ typedef struct orte_gpr_replica_dict_t orte_gpr_replica_dict_t;
 /*
  * Registry "head"
  * The registry "head" contains:
- * 
+ *
  * (2) the next available itag for the segment dictionary.
- * 
+ *
  * (3) a managed array of pointers to segment objects.
  *
  * (4) a managed array of pointers to triggers acting on the entire registry
- * 
+ *
  */
 struct orte_gpr_replica_t {
     orte_pointer_array_t *segments;  /**< Managed array of pointers to segment objects */
     size_t num_segs;
     orte_pointer_array_t *triggers;     /**< Managed array of pointers to triggers */
-    size_t num_trigs;
+    orte_gpr_trigger_id_t num_trigs;
     orte_pointer_array_t *subscriptions; /**< Managed array of pointers to subscriptions */
-    size_t num_subs;
+    orte_gpr_subscription_id_t num_subs;
     bool processing_callbacks;
     opal_list_t callbacks;          /**< List of callbacks to be processed */
 };
@@ -183,18 +185,18 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_segment_t);
 /** The core registry structure.
  * Each segment of the registry contains an array of registry containers, each composed
  * of:
- * 
- * (1) An object structure that allows the structure to be treated with the OBJ 
+ *
+ * (1) An object structure that allows the structure to be treated with the OBJ
  * memory management system
- * 
+ *
  * (2) An array of itags that define the container - these are 1:1 correspondents with
  * the character string tokens provided by caller
- * 
+ *
  * (3) An array of indices into the trigger notifier array - each index points to
  * a notifier whose trigger refers to this container.
- * 
+ *
  * (4) An array of pointers to keyval objects that actually hold the data.
- * 
+ *
  * At this time, no security is provided on an object-level basis. Thus, all requests for an
  * object are automatically granted. This may be changed at some future time by adding an
  * "authorization" linked list of ID's and their access rights to this structure.
@@ -260,17 +262,18 @@ typedef struct {
     orte_process_name_t *requestor;
     /* idtag associated with this subscription */
     orte_gpr_subscription_id_t idtag;
-    /* for a local subscription, where this block of data goes */
-    orte_gpr_notify_cb_fn_t callback;  /**< Function to be called for notification */
-    void *user_tag;                    /**< User-provided tag for callback function */
 } orte_gpr_replica_requestor_t;
 
 OBJ_CLASS_DECLARATION(orte_gpr_replica_requestor_t);
 
 typedef struct {
-    opal_object_t super;                    /**< Makes this an object */
-    /* index of this entry in subscription array - corresponds to local idtag */
+    opal_object_t super;  /**< Makes this an object */
+    /* index of this entry in subscription array */
     size_t index;
+    /* idtag for the subscription - may be different than index since
+     * the data type can be different than size_t
+     */
+    orte_gpr_subscription_id_t idtag;
     /* name of this subscription, if provided */
     char *name;
     /* boolean indicating if this subscription is active or not */
@@ -323,8 +326,10 @@ struct orte_gpr_replica_trigger_t {
     opal_object_t super;                            /**< Make this an object */
     /* name of this trigger, if provided */
     char *name;
-    /* index of this trigger in the triggers array - corresponds to local idtag */
+    /* index of this trigger in the triggers array */
     size_t index;
+    /* trigger id on the local system */
+    orte_gpr_trigger_id_t idtag;
     /* array of requestors that have "attached" themselves to this trigger */
     size_t num_attached;
     orte_pointer_array_t *attached;
@@ -398,7 +403,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_callbacks_t);
  * of the entry. The GPR requires that each entry be replicated in at least
  * two locations. This structure is used to create a linked list of
  * replicas for the entry.
- * 
+ *
  * THIS IS NOT IMPLEMENTED YET
  */
 struct orte_gpr_replica_list_t {
@@ -415,7 +420,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_list_t);
  * is no longer valid, a time tag indicating the time of the last known modification
  * of the entry within the global registry, and the replica holding the last known
  * up-to-date version of the entry.
- * 
+ *
  * THIS IS NOT IMPLEMENTED YET
  */
 struct orte_gpr_replica_write_invalidate_t {

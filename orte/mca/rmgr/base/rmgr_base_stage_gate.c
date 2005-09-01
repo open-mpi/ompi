@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -30,6 +30,7 @@
 
 #include "orte/dps/dps.h"
 #include "orte/mca/gpr/gpr.h"
+#include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/soh/soh.h"
@@ -41,9 +42,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 {
     size_t i, num_counters=6, num_named_trigs=5;
     int rc;
-    orte_gpr_value_t *values, value, trigvalue, *trigvals;
-    orte_gpr_trigger_t trig, *trigs;
-    orte_gpr_subscription_t sub, *subs;
+    orte_gpr_value_t *values, value;
     char* keys[] = {
         /* changes to this ordering need to be reflected in code below */
         ORTE_PROC_NUM_AT_STG1,
@@ -61,6 +60,9 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         ORTE_NUM_FINALIZED_TRIGGER,
         ORTE_NUM_TERMINATED_TRIGGER
     };
+    char *segment, *trig_name, *tokens[2], *trig_keys[2];
+    orte_gpr_trigger_id_t id;
+    size_t trig_level;
 
     /* setup the counters */
     OBJ_CONSTRUCT(&value, orte_gpr_value_t);
@@ -97,7 +99,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         value.keyvals[i]->value.size = 0;
     }
     values = &value;
-    
+
     /* put the counters on the registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
         ORTE_ERROR_LOG(rc);
@@ -105,517 +107,205 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         return rc;
     }
     OBJ_DESTRUCT(&value);
-    
-    /* for the stage gate triggers, we want the counter values returned to us AND
-     * information on VPID_START so we can generate the list of peers
-     * to receive the xcast messages for barrier release.
+
+    /*** DEFINE STAGE GATE STANDARD TRIGGERS ***/
+    /* The standard triggers will return the trigger counters so that we
+     * can get required information for notifying processes. Other
+     * subscriptions will then attach to them.
      */
-     
-    /*** SUBSCRIPTIONS ***/
-    /* the subscription object is used to define the values we want
-     * returned to us. we'll enter the precise data
-     * keys when we are ready to register the subscription - for now,
-     * do all the basic stuff
-     */
-    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    /* we do not name the subscription - see explanation below. also, we do
-     * not assign the subscription id here - it is assigned for us when the
-     * registry "registers" the subscription and is returned in the
-     * subscription object at that time
-     */
-    /*
-     * set the action to delete the subscription after the trigger fires. this
-     * subscription is solely for the purpose of returning stagegate information
-     * to the resource manager - we don't need it after that happens
-     */
-    sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    /*
-     * setup the value object to define the data to be returned to us
-     */
-    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
-    values = &value;
-    sub.values = &values;
-    sub.cnt = 1;
-    
-    /* set the address mode to identify a specific container (in this case,
-     * the ORTE_JOB_GLOBALS container) and any keys within it
-     */
-    value.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value.segment), job))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
         return rc;
     }
-    /* define the tokens for the container */
-    value.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == value.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value.tokens[0] = strdup(ORTE_JOB_GLOBALS); /* the counters are in the job's globals container */
-    value.num_tokens = 1;
-    /* define the keys to be returned */
-    value.cnt = 3;
-    value.keyvals = (orte_gpr_keyval_t**)malloc(value.cnt * sizeof(orte_gpr_keyval_t*));
-    if (NULL == value.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    for (i=0; i < value.cnt; i++) {
-        value.keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
-        if (NULL == value.keyvals[i]) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            OBJ_DESTRUCT(&value);
-            sub.values = NULL;
-            OBJ_DESTRUCT(&sub);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-    }
-    /* the 0th entry will be defined below */
-    value.keyvals[1]->key = strdup(ORTE_JOB_SLOTS_KEY);
-    value.keyvals[2]->key = strdup(ORTE_JOB_VPID_START_KEY);
-    /* we don't need to define the type and value for the keyvals - the subscribe
-     * function ignores those fields
-     */
-     
-    sub.cbfunc = orte_rmgr_base_proc_stage_gate_mgr;
-    sub.user_tag = NULL;
-    
-    /*** TRIGGERS ***/
-    /* setup the trigger information - initialize the common elements */
-    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
-    /* we WILL name the trig - see explanation below. we do
-     * NOT assign the trigger id here - it is assigned for us when the
-     * registry "registers" the trigger and is returned in the
-     * trigger object at that time
-     */
-    /*
-     * set the action to compare all specified counter levels. this will
-     * "fire" the trigger when all counters are equal
-     */
-    trig.action = ORTE_GPR_TRIG_ALL_CMP;
-    /*
-     * setup the value object to define the data to be returned to us
-     */
-    OBJ_CONSTRUCT(&trigvalue, orte_gpr_value_t);
-    trigvals = &trigvalue;
-    trig.values = &trigvals;
-    trig.cnt = 1;
-    
-    /* set the address mode to identify a specific container (in this case,
-     * the ORTE_JOB_GLOBALS container) and any keys within it
-     */
-    trigvalue.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(trigvalue.segment), job))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    /* define the tokens for the container */
-    trigvalue.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == trigvalue.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    trigvalue.tokens[0] = strdup(ORTE_JOB_GLOBALS); /* the counters are in the job's globals container */
-    trigvalue.num_tokens = 1;
-    /* define the keys that identify the counters */
-    trigvalue.cnt = 2;
-    trigvalue.keyvals = (orte_gpr_keyval_t**)malloc(trigvalue.cnt * sizeof(orte_gpr_keyval_t*));
-    if (NULL == trigvalue.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    trigvalue.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == trigvalue.keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    trigvalue.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == trigvalue.keyvals[1]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
+    tokens[0] = strdup(ORTE_JOB_GLOBALS);
+    tokens[1] = NULL;
 
-    /* setup the triggers for the three main stage gates - these all compare
-     * their value to that in ORTE_JOB_SLOTS_KEY
-     */
-    trigvalue.keyvals[0]->key = strdup(ORTE_JOB_SLOTS_KEY);
-    if (NULL == trigvalue.keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    
-    /* we don't need to define the type and value for the keyvals - the subscribe
-     * function ignores those fields
-     */
-     
-     
-    /* do the three stage gate subscriptions, plus the named triggers
-     * that compare their values to the JOB_SLOTS_KEY
-     */
+    trig_keys[0] = strdup(ORTE_JOB_SLOTS_KEY);
     for (i=0; i < num_named_trigs; i++) {
-        /*
-         * NOTE: we do NOT name the subscriptions here as these are not
-         * standard subscriptions that multiple processes should attach
-         * themselves to - the subscriptions only have meaning to the
-         * resource manager
-         */
-        value.keyvals[0]->key = strdup(keys[i]);
-        if (NULL == value.keyvals[0]->key) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-        /*
-         * NOTE: we DO name the triggers as these will be standard triggers
-         * that multiple processes will want to attach themselves to - for
-         * example, a process may well want to receive some information when
-         * it reaches STAGE_GATE_1, and so will "attach" itself to that
-         * trigger as defined by us here
-         */
-        if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
+        trig_keys[1] = strdup(keys[i]);
+        if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
                                         trig_names[i], job))) {
             ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
+            free(trig_keys[0]);
+            free(trig_keys[1]);
+            return rc;
         }
-        trigvalue.keyvals[1]->key = strdup(keys[i]);
-        if (NULL == trigvalue.keyvals[1]->key) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
+        if (ORTE_SUCCESS != (rc = orte_gpr.define_trigger(&id, trig_name,
+                 ORTE_GPR_TRIG_INCLUDE_TRIG_CNTRS | ORTE_GPR_TRIG_ONE_SHOT |
+                 ORTE_GPR_TRIG_ROUTE_DATA_THRU_ME | ORTE_GPR_TRIG_CMP_LEVELS,
+                 ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,
+                 segment, tokens, 2, trig_keys,
+                 orte_rmgr_base_proc_stage_gate_mgr, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            free(trig_name);
+            free(trig_keys[0]);
+            free(trig_keys[1]);
+            return rc;
         }
-        subs = &sub;
-        trigs = &trig;
-        rc = orte_gpr.subscribe(
-             1, &subs,
-             1, &trigs);
-    
-         if (ORTE_SUCCESS != rc) {
-             ORTE_ERROR_LOG(rc);
-             goto CLEANUP;
-         }
-         free(value.keyvals[0]->key);
-         value.keyvals[0]->key = NULL;
-         free(trig.name);
-         free(trigvalue.keyvals[1]->key);
-         trigvalue.keyvals[1]->key = NULL;
+        free(trig_name);
+        free(trig_keys[1]);
     }
-    
-    /* Next, setup the trigger that watches the NUM_ABORTED counter to see if
-     * any process abnormally terminates - if so, then call the
-     * stage_gate_mgr_abort function
-     * so it can in turn order the job to be aborted
+    free(trig_keys[0]);
+
+    /* Now define the abort trigger. Again, only the trigger counter needs
+     * to be returned, so we don't need to setup a subscription to get
+     * other information
      */
-    sub.cbfunc = orte_rmgr_base_proc_stage_gate_mgr_abort;
-    value.keyvals[0]->key = strdup(ORTE_PROC_NUM_ABORTED);
-    if (NULL == value.keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    
-    /* set the trigger name */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
+    trig_keys[0] = strdup(ORTE_PROC_NUM_ABORTED);
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
                                     ORTE_NUM_ABORTED_TRIGGER, job))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        return rc;
     }
-    /* set the trigger action to fire at a specified level */
-    trig.action = ORTE_GPR_TRIG_ALL_AT;
-    /* cleanup the trigger keyvals that are no longer needed - we will
-     * rebuild them as required
-     */
-    OBJ_RELEASE(trigvalue.keyvals[0]);
-    OBJ_RELEASE(trigvalue.keyvals[1]);
-    free(trigvalue.keyvals);
-    /* we only need one trigger keyval here as we are not comparing
-     * trigger levels - we are just asking to be notified when
-     * a specific counter changes value to "1"
-     */
-    trigvalue.cnt = 1;
-    trigvalue.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t**));
-    if (NULL == trigvalue.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    trigvalue.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == trigvalue.keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    trigvalue.keyvals[0]->key = strdup(ORTE_PROC_NUM_ABORTED);
-    if (NULL == trigvalue.keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    /* trigger on the first process that aborts */
-    trigvalue.keyvals[0]->type = ORTE_SIZE;
-    trigvalue.keyvals[0]->value.size = 1;
-    
-    subs = &sub;
-    trigs = &trig;
-    rc = orte_gpr.subscribe(
-         1, &subs,
-         1, &trigs);
-
-    if (ORTE_SUCCESS != rc) {
+    trig_level = 1;
+    if (ORTE_SUCCESS != (rc = orte_gpr.define_trigger_level(&id, trig_name,
+             ORTE_GPR_TRIG_INCLUDE_TRIG_CNTRS | ORTE_GPR_TRIG_ONE_SHOT |
+             ORTE_GPR_TRIG_AT_LEVEL,
+             ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,
+             segment, tokens, 1, trig_keys, &trig_level,
+             orte_rmgr_base_proc_stage_gate_mgr_abort, NULL))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        free(trig_name);
+        free(trig_keys[0]);
+        return rc;
     }
+    free(trig_name);
+    free(trig_keys[0]);
 
     /* set the job state to "launched" */
     if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_LAUNCHED))) {
         ORTE_ERROR_LOG(rc);
     }
 
-CLEANUP:
-    OBJ_DESTRUCT(&trigvalue);
-    trig.values = NULL;
-    OBJ_DESTRUCT(&trig);
-    OBJ_DESTRUCT(&value);
-    sub.values = NULL;
-    OBJ_DESTRUCT(&sub);
-    
     return rc;
 }
 
 
-void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
-                                        void *user_tag)
+int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 {
-    orte_gpr_value_t **values;
-    orte_gpr_keyval_t **kvals;
+    orte_buffer_t buffer;
     orte_process_name_t *recipients=NULL;
-    size_t i, j, m, n=0;
-    orte_vpid_t k=0;
+    size_t n=0;
     int rc;
-    bool found_slots=false, found_start=false;
-    bool found_stg1=false, found_stg2=false;
-    bool found_stg3=false, found_finalized=false;
-    orte_buffer_t msg;
     orte_jobid_t job;
-    char **tokens=NULL;
-    size_t num_tokens;
-    
-    values = (orte_gpr_value_t**)(data->values)->addr;
 
-    /* get the jobid from the segment name
-     * we setup the stage gate triggers to return at least one value
-     * to us. we use that value to extract the jobid for the returned
-     * data
+    /* check to see if this came from terminate. If so, we ignore it because
+     * that stage gate does NOT set an xcast barrier - processes simply
+     * record their state and continue processing
+      */
+    if (orte_schema.check_std_trigger_name(msg->target, ORTE_NUM_TERMINATED_TRIGGER)) {
+        return ORTE_SUCCESS;
+     }
+
+     /* All stage gate triggers are named, so we can extract the jobid
+      * directly from the trigger name
+      */
+     if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_std_trigger_name(&job, msg->target))) {
+         ORTE_ERROR_LOG(rc);
+         return rc;
+     }
+
+    /* need the list of peers for this job so we can send them the xcast.
+     * obtain this list from the name service's get_job_peers function
      */
-    if (ORTE_SUCCESS != (rc =
-            orte_schema.extract_jobid_from_segment_name(&job,
-                    values[0]->segment))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_job_peers(&recipients, &n, job))) {
         ORTE_ERROR_LOG(rc);
-        return;
+        return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&tokens, &num_tokens, job))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
-    /* check to see if this came from one of the stage gates as opposed
-     * to either terminate or finalize - if the latter, we set the job
-     * state as appropriate and then return - no message needs to be
-     * sent to the processes themselves
-     */
-    kvals = values[0]->keyvals;
-    for (i=0; i < values[0]->cnt; i++) {
-        if (0 == strcmp(kvals[i]->key, ORTE_PROC_NUM_TERMINATED)) {
-            if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_TERMINATED))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            goto CLEANUP;
-        }
-    }
-    
-    /* value returned will contain the counter, which contains the number of
-     * procs in this job. We need to know which counter is included as this
-     * tells us the job state we have reached.
-     */
-    for (i=0, m=0; m < data->cnt &&
-                   i < (data->values)->size &&
-                   (!found_slots || !found_start ||
-                   (!found_stg1 && !found_stg2 && !found_stg3 && !found_finalized)); i++) {
-        if (NULL != values[i]) {
-            m++;
-            kvals = values[i]->keyvals;
-            /* check to see if ORTE_JOB_GLOBALS is the token */
-            if (NULL != values[i]->tokens &&
-                0 == strcmp(ORTE_JOB_GLOBALS, values[i]->tokens[0])) {
-                /* find the ORTE_JOB_SLOTS_KEY and the ORTE_JOB_VPID_START_KEY keyval */
-                for (j=0; j < values[i]->cnt &&
-                     (!found_slots || !found_start ||
-                     (!found_stg1 && !found_stg2 && !found_stg3 && !found_finalized)); j++) {
-                    if (NULL != kvals[j] && !found_slots &&
-                        0 == strcmp(ORTE_JOB_SLOTS_KEY, kvals[j]->key)) {
-                        n = kvals[j]->value.size;
-                        found_slots = true;
-                    }
-                    if (NULL != kvals[j] && !found_start &&
-                        0 == strcmp(ORTE_JOB_VPID_START_KEY, kvals[j]->key)) {
-                        k = kvals[j]->value.vpid;
-                        found_start = true;
-                    }
-                    if (NULL != kvals[j] && 
-                        0 == strcmp(ORTE_PROC_NUM_AT_STG1, kvals[j]->key)) {
-                        found_stg1 = true;
-                    } else if (NULL != kvals[j] && 
-                        0 == strcmp(ORTE_PROC_NUM_AT_STG2, kvals[j]->key)) {
-                        found_stg2 = true;
-                    } else if (NULL != kvals[j] && 
-                        0 == strcmp(ORTE_PROC_NUM_AT_STG3, kvals[j]->key)) {
-                        found_stg3 = true;
-                    } else if (NULL != kvals[j] && 
-                        0 == strcmp(ORTE_PROC_NUM_FINALIZED, kvals[j]->key)) {
-                        found_finalized = true;
-                    }
-                }
-            }
-        }
-    }
-    
-    if (!found_slots) {
-        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-        goto CLEANUP;
-    }
-    
-    if (!found_start) {
-        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-        goto CLEANUP;
-    }
-    
     /* set the job state to the appropriate level */
-    if (found_stg1) {
+    if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG1))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-    } else if (found_stg2) {
+    } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG2))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-    } else if (found_stg3) {
+    } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG3_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG3))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-    } else if (found_finalized) {
+    } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_NUM_FINALIZED_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_FINALIZED))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
     }
 
-    /* now can generate the list of recipients */
-    recipients = (orte_process_name_t*)malloc(n * sizeof(orte_process_name_t));
-    for (i=0; i < n; i++) {
-        recipients[i].cellid = 0;
-        recipients[i].jobid = job;
-        recipients[i].vpid = (orte_vpid_t)(k + i);
-    }
-    
-    /* for the purposes of the stage gate manager, we don't actually have
-     * to determine anything from the message. All we have to do is respond
-     * by sending an xcast to all processes. However, the buffer has to include
-     * at least one piece of data for the RML to function, so pack something
-     * meaningless.
+    /* set the message type to SUBSCRIPTION. When we give this to the processes, we want
+     * them to break the message down and deliver it to the various subsystems.
      */
-    
-    OBJ_CONSTRUCT(&msg, orte_buffer_t);
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&msg, &job, 1, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&msg);
-        goto CLEANUP;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(orte_process_info.my_name, recipients,
-                                        n, &msg, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&msg);
-        goto CLEANUP;
-    }
-    OBJ_DESTRUCT(&msg);
+    msg->msg_type = ORTE_GPR_SUBSCRIPTION_MSG;
+    msg->id = ORTE_GPR_TRIGGER_ID_MAX;
 
+    /* need to pack the msg for sending */
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &msg, 1, ORTE_GPR_NOTIFY_MSG))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buffer);
+        goto CLEANUP;
+    }
+
+    /* send the message */
+    if (ORTE_SUCCESS != (rc = orte_rml.xcast(orte_process_info.my_name, recipients,
+                                        n, &buffer, NULL, NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&buffer);
 
 CLEANUP:
-    for (j=0; j < num_tokens; j++) {
-        free(tokens[j]);
-        tokens[j] = NULL;
-    }
-    if (NULL != tokens) free(tokens);
-    
     if (NULL != recipients) free(recipients);
-    return;
+    return rc;
 }
 
-void orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_data_t *data,
-                                        void *user_tag)
+int orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_message_t *msg)
 {
-    orte_gpr_value_t **values;
     orte_jobid_t job;
     int rc;
-    
-    /* get the jobid from the segment name
-     * we setup the stage gate triggers to return at least one value
-     * to us. we use that value to extract the jobid for the returned
-     * data
-     */
-    values = (orte_gpr_value_t**)(data->values)->addr;
-    if (ORTE_SUCCESS != (rc =
-            orte_schema.extract_jobid_from_segment_name(&job,
-                    values[0]->segment))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
+
+     /* All stage gate triggers are named, so we can extract the jobid
+      * directly from the trigger name
+      */
+     if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_std_trigger_name(&job, msg->target))) {
+         ORTE_ERROR_LOG(rc);
+         return rc;
+     }
 
     /* set the job status to "aborted" */
 
     if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_ABORTED))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     orte_errmgr.incomplete_start(job);
+
+    return ORTE_SUCCESS;
 }
 
 
 /*
- * Routine that subscribes to events on all counters.
+ * Routine that tools such as orterun can use to subscribe
+ * to events on all counters.
  */
 
 int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc, void* cbdata)
 {
     size_t i;
     int rc;
-    orte_gpr_value_t value, *values;
-    orte_gpr_trigger_t trig, *trigs;
-    orte_gpr_subscription_t sub, *subs;
+    char *segment, *trig_name, *tokens[2];
+    orte_gpr_subscription_id_t id;
     char* keys[] = {
         /* changes to this ordering need to be reflected in code below */
         ORTE_PROC_NUM_AT_STG1,
         ORTE_PROC_NUM_AT_STG2,
         ORTE_PROC_NUM_AT_STG3,
         ORTE_PROC_NUM_FINALIZED,
-        ORTE_PROC_NUM_TERMINATED
+        ORTE_PROC_NUM_TERMINATED,
+        ORTE_PROC_NUM_ABORTED
     };
     char* trig_names[] = {
         /* changes to this ordering need to be reflected in code below
@@ -625,160 +315,45 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
         ORTE_STG2_TRIGGER,
         ORTE_STG3_TRIGGER,
         ORTE_NUM_FINALIZED_TRIGGER,
-        ORTE_NUM_TERMINATED_TRIGGER
+        ORTE_NUM_TERMINATED_TRIGGER,
+        ORTE_NUM_ABORTED_TRIGGER
     };
     size_t num_counters = sizeof(keys)/sizeof(keys[0]);
 
-    /*** SUBSCRIPTIONS ***/
-    /* the subscription object is used to define the values we want
-     * returned to us. we'll enter the precise data
-     * keys when we are ready to register the subscription - for now,
-     * do all the basic stuff
-     */
-    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    /* we do not name the subscription - see explanation below. also, we do
-     * not assign the subscription id here - it is assigned for us when the
-     * registry "registers" the subscription and is returned in the
-     * subscription object at that time
-     */
-    /*
-     * set the action to delete the subscription after the trigger fires. this
-     * subscription is solely for the purpose of returning stagegate information
-     * to the resource manager - we don't need it after that happens
-     */
-    sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    /*
-     * setup the value object to define the data to be returned to us
-     */
-    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
-    values = &value;
-    sub.values = &values;
-    sub.cnt = 1;
-    
-    /* set the address mode to identify a specific container (in this case,
-     * the ORTE_JOB_GLOBALS container) and any keys within it
-     */
-    value.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value.segment), job))) {
+    /* identify the segment for this job */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
         return rc;
     }
-    /* define the tokens for the container */
-    value.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == value.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value.tokens[0] = strdup(ORTE_JOB_GLOBALS); /* the counters are in the job's globals container */
-    value.num_tokens = 1;
-    /* the keys describing the data to be returned will be defined later
-     * for now, we simply allocate the space
-     */
-    value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-    if (NULL == value.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value.keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value.cnt = 1;
-    /* define the callback and associated data tag */
-    sub.cbfunc = cbfunc;
-    sub.user_tag = cbdata;
-    
-    /*** TRIGGERS ***/
-    /* setup the trigger information - initialize the common elements */
-    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
-    /* since the named triggers have already been defined, we don't need
-     * to replicate that here! all we need to do is refer to the
-     * proper trigger name - we'll do that below
-     */
-    trig.action = ORTE_GPR_TRIG_ALL_CMP;
 
-    /* do the trigger subscriptions */
+    /* setup the tokens */
+    tokens[0]=ORTE_JOB_GLOBALS;
+    tokens[1]=NULL;
+
     for (i=0; i < num_counters; i++) {
-        /* insert the subscription key identifying the data to
-         * be returned from this trigger
-         */
-        value.keyvals[0]->key = strdup(keys[i]);
-        if (NULL == value.keyvals[0]->key) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-        /* get the standard trigger name to which we are "attaching" */
-        if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
-                                        trig_names[i], job))) {
+        /* attach ourselves to the appropriate standard trigger */
+        if (ORTE_SUCCESS !=
+            (rc = orte_schema.get_std_trigger_name(&trig_name, trig_names[i], job))) {
             ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
+            free(segment);
+            return rc;
         }
-        subs = &sub;
-        trigs = &trig;
-        rc = orte_gpr.subscribe(
-             1, &subs,
-             1, &trigs);
-    
-         if(ORTE_SUCCESS != rc) {
-             ORTE_ERROR_LOG(rc);
-             goto CLEANUP;
-         }
-         free(value.keyvals[0]->key);
-         value.keyvals[0]->key = NULL;
-         free(trig.name);
-         trig.name = NULL;
-    }
-    
-    /* Now do the abort trigger.
-     * setup the subscription to return the number aborted\
-     */
-    value.keyvals[0]->key = strdup(ORTE_PROC_NUM_ABORTED);
-    if (NULL == value.keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
 
-    /* set the trigger action */
-    trig.action = ORTE_GPR_TRIG_ALL_AT;
-    /* get the standard "abort" trigger name */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
-                                    ORTE_NUM_ABORTED_TRIGGER, job))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&id, trig_name, NULL,
+                                    ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
+                                    ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                                    segment, tokens, keys[i],
+                                    cbfunc, cbdata))) {
+            ORTE_ERROR_LOG(rc);
+            free(segment);
+            free(trig_name);
+            return rc;
+        }
+        free(trig_name);
     }
+    free(segment);
 
-    subs = &sub;
-    trigs = &trig;
-    rc = orte_gpr.subscribe(
-         1, &subs,
-         1, &trigs);
-
-     if (ORTE_SUCCESS != rc) {
-         ORTE_ERROR_LOG(rc);
-     }
-     
-CLEANUP:
-    OBJ_DESTRUCT(&trig);
-    OBJ_DESTRUCT(&value);
-    sub.values = NULL;
-    OBJ_DESTRUCT(&sub);
-    
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 

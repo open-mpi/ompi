@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -44,80 +44,107 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
 {
     orte_gpr_notify_data_t **data;
     orte_gpr_proxy_subscriber_t **subs, *sub;
-    orte_gpr_proxy_trigger_t *trig;
-    size_t i, j, k;
+    orte_gpr_proxy_trigger_t *trig, **trigs;
+    size_t i, j, k, n;
     bool processed;
     int rc;
 
-    /* if the message trigger id is valid (i.e., it is set to
-     * something other than ORTE_GPR_TRIGGER_ID_MAX), then this
-     * is an aggregated message intended for a single receiver.
-     * In that case, look up the associated TRIGGER id and pass
-     * the entire message to that receiver.
+    /* we first have to check if the message is a trigger message - if so,
+     * then the message is intended to be
+     * sent as a single block to that trigger's callback function.
      */
-    if (ORTE_GPR_TRIGGER_ID_MAX > msg->id) {
+    if (ORTE_GPR_TRIGGER_MSG == msg->msg_type) {
        trig = (orte_gpr_proxy_globals.triggers)->addr[msg->id];
        if (NULL == trig) {
            ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-opal_output(0, "Trigger id: %lu", (unsigned long)msg->id);
-orte_gpr.dump_local_triggers(0);
            return ORTE_ERR_GPR_DATA_CORRUPT;
        } else {
            trig->callback(msg);
        }
        if (msg->remove) {
-           if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_trigger(msg->id))) {
-               ORTE_ERROR_LOG(rc);
-               return rc;
-           }
+            /* remove the specified trigger from the local tracker */
+            trigs = (orte_gpr_proxy_trigger_t**)(orte_gpr_proxy_globals.triggers)->addr;
+            for (i=0, j=0; j < orte_gpr_proxy_globals.num_trigs &&
+                    i < (orte_gpr_proxy_globals.triggers)->size; i++) {
+                if (NULL != trigs[i]){
+                    j++;
+                    if (msg->id == trigs[i]->id) {
+                        if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_trigger(trigs[i]))) {
+                            ORTE_ERROR_LOG(rc);
+                        }
+                        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+                        return rc;
+                    }
+                }
+            }
+            /* must not have been found - report error */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
        }
        return ORTE_SUCCESS;
     }
-    
-    
-    /* if the message trigger id was NOT valid, then we split the
-     * message into its component datagrams and send each of them
-     * separately to their respective subscriber.
+
+
+    /* get here if this wasn't a trigger message. Only other allowed message type
+     * is a subscription message - if that isn't the case, then we have corrupt
+     * data, so flag it and return
+     */
+    if (ORTE_GPR_SUBSCRIPTION_MSG != msg->msg_type) {
+        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+        return ORTE_ERR_GPR_DATA_CORRUPT;
+    }
+
+    /* get here if we have a subscription message - i.e., the message should
+     * be broken into its component parts and delivered separately
+     * to the indicated subscribers
      */
     data = (orte_gpr_notify_data_t**)(msg->data)->addr;
-orte_gpr.dump_local_subscriptions(0);
-    for (i=0; i < msg->cnt; i++) {
-opal_output(0, "[%lu,%lu,%lu] Sub data id %lu", ORTE_NAME_ARGS(orte_process_info.my_name), (unsigned long)data[i]->id);
-opal_output(0, "\tSub name %s", data[i]->target);
-        /* for each datagram in the message, we need to lookup
-         * the associated subscription (could be specified by name or id) to find the correct
-         * callback function. Name specifications are given precedence over id.
-         */
-        subs = (orte_gpr_proxy_subscriber_t**)
-                        (orte_gpr_proxy_globals.subscriptions)->addr;
-        processed = false;
-        for (j=0, k=0; !processed &&
-                       k < orte_gpr_proxy_globals.num_subs &&
-                       j < (orte_gpr_proxy_globals.subscriptions)->size; j++) {
-            if (NULL != subs[j]) {
-                k++;
-                if ((NULL != subs[j]->name &&
-                    NULL != data[i]->target &&
-                    0 == strcmp(data[i]->target, subs[j]->name)) ||
-                    (data[i]->id == subs[j]->id)) {
-                    sub = subs[j];
-                    processed = true;
+    for (i=0, n=0; n < msg->cnt &&
+                   i < (msg->data)->size; i++) {
+        if (NULL != data[i]) {
+            n++;
+            if (ORTE_GPR_SUBSCRIPTION_ID_MAX != data[i]->id || NULL != data[i]->target) {
+                /* for each datagram in the message, we need to lookup
+                * the associated subscription (could be specified by name or id) to find the correct
+                * callback function. Name specifications are given precedence over id.
+                */
+                subs = (orte_gpr_proxy_subscriber_t**)
+                                (orte_gpr_proxy_globals.subscriptions)->addr;
+                processed = false;
+                for (j=0, k=0; !processed &&
+                            k < orte_gpr_proxy_globals.num_subs &&
+                            j < (orte_gpr_proxy_globals.subscriptions)->size; j++) {
+                    if (NULL != subs[j]) {
+                        k++;
+                        if (NULL != data[i]->target) {
+                            /* if target name provided, must use it */
+                            if (NULL != subs[j]->name &&
+                                0 == strcmp(data[i]->target, subs[j]->name)) {
+                                sub = subs[j];
+                                processed = true;
+                            }
+                        } else if (data[i]->id == subs[j]->id) {
+                            /* otherwise, see if id's match */
+                            sub = subs[j];
+                            processed = true;
+                        }
+                    }
                 }
-            }
-        }
-        /* get here and not processed => not found, abort */
-        if (!processed) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-        sub->callback(data[i], sub->user_tag);
-        OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+                /* get here and not processed => not found, abort */
+                if (!processed) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+                sub->callback(data[i], sub->user_tag);
+                OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
-        if (data[i]->remove) {
-            if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(sub))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+                if (data[i]->remove) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(sub))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                }
             }
         }
     }

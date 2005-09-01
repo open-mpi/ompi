@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -25,10 +25,10 @@
 
 #include "orte_config.h"
 
-#include "dps/dps.h"
+#include "orte/dps/dps.h"
 
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "gpr_replica_api.h"
 
@@ -43,7 +43,7 @@ orte_gpr_replica_subscribe(size_t num_subs,
     /* protect against errors */
     if (NULL == subscriptions && NULL == trigs) { /* need at least one */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	    return ORTE_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -90,7 +90,7 @@ orte_gpr_replica_subscribe(size_t num_subs,
     }
 
     rc = orte_gpr_replica_process_callbacks();
-    
+
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return rc;
@@ -99,11 +99,31 @@ orte_gpr_replica_subscribe(size_t num_subs,
 
 int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number)
 {
+    orte_gpr_replica_local_subscriber_t **subs;
+    size_t i, j;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
-    rc = orte_gpr_replica_remove_subscription(NULL, sub_number);
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_remove_subscription(NULL, sub_number))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    if (ORTE_SUCCESS == rc) {
+        /* find and remove it from the local subscription tracking system */
+        subs = (orte_gpr_replica_local_subscriber_t**)(orte_gpr_replica_globals.local_subscriptions)->addr;
+        for (i=0, j=0; j < orte_gpr_replica_globals.num_local_subs &&
+                       i < (orte_gpr_replica_globals.local_subscriptions)->size; i++) {
+            if (NULL != subs[i]) {
+                j++;
+                if (sub_number == subs[i]->id) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_remove_local_subscription(subs[i]))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                }
+            }
+        }
+    }
 
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
@@ -113,11 +133,29 @@ int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number)
 
 int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig)
 {
+    orte_gpr_replica_local_trigger_t **trigs;
+    size_t i, j;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     rc = orte_gpr_replica_remove_trigger(NULL, trig);
+
+    if (ORTE_SUCCESS == rc) {
+        /* find and remove it from the local trigger tracking system */
+        trigs = (orte_gpr_replica_local_trigger_t**)(orte_gpr_replica_globals.local_triggers)->addr;
+        for (i=0, j=0; j < orte_gpr_replica_globals.num_local_trigs &&
+                       i < (orte_gpr_replica_globals.local_triggers)->size; i++) {
+            if (NULL != trigs[i]) {
+                j++;
+                if (trig == trigs[i]->id) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_remove_local_trigger(trigs[i]))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                }
+            }
+        }
+    }
 
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 

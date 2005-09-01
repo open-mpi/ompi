@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -36,7 +36,7 @@ extern "C" {
  * The "fn" layer of the registry API functions - not accessible from outside
  * the replica
  */
- 
+
  /*
   * Arithemetic operations
   */
@@ -65,7 +65,7 @@ int orte_gpr_replica_delete_entries_nb_fn(
                     orte_gpr_replica_segment_t *seg,
                     orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
                     orte_gpr_replica_itag_t *key_tags, size_t num_keys);
-                            
+
 int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
                             size_t *cnt, char ***index);
 
@@ -94,7 +94,7 @@ int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
                 orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
                 size_t cnt, orte_gpr_keyval_t **keyvals,
                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
-                      
+
 int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
                             orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
@@ -126,11 +126,19 @@ int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer, char *segment);
 
 int orte_gpr_replica_dump_a_segment_fn(orte_buffer_t *buffer, orte_gpr_replica_segment_t *seg);
 
-int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer);
+int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer,
+                orte_gpr_trigger_id_t start);
 
-int orte_gpr_replica_dump_subscriptions_fn(orte_buffer_t *buffer);
+int orte_gpr_replica_dump_subscriptions_fn(orte_buffer_t *buffer,
+                orte_gpr_subscription_id_t start);
 
-int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer);
+int orte_gpr_replica_dump_trigger(orte_buffer_t *buffer,
+                                  orte_gpr_replica_trigger_t *trig);
+
+int orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
+                                       orte_gpr_replica_subscription_t *sub);
+
+        int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer);
 
 /*
  * *********    INTERNAL UTILITY FUNCTIONS     **********
@@ -183,12 +191,12 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
 /*
  * DICTIONARY OPERATIONS
  */
- 
+
 bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t mode,
-				    size_t num_itags_search,
-				    orte_gpr_replica_itag_t *itags,
-				    size_t num_itags_entry,
-				    orte_gpr_replica_itag_t *entry_itags);
+                    size_t num_itags_search,
+                    orte_gpr_replica_itag_t *itags,
+                    size_t num_itags_entry,
+                    orte_gpr_replica_itag_t *entry_itags);
 
 int orte_gpr_replica_copy_itag_list(orte_gpr_replica_itag_t **dest,
                                     orte_gpr_replica_itag_t *src, size_t num_itags);
@@ -203,9 +211,9 @@ int orte_gpr_replica_enter_local_subscription(size_t cnt, orte_gpr_subscription_
 
 int orte_gpr_replica_enter_local_trigger(size_t cnt, orte_gpr_trigger_t **trigs);
 
-int orte_gpr_replica_remove_local_subscription(orte_gpr_subscription_id_t id);
+int orte_gpr_replica_remove_local_subscription(orte_gpr_replica_local_subscriber_t *sub);
 
-int orte_gpr_proxy_remove_local_trigger(orte_gpr_trigger_id_t id);
+int orte_gpr_replica_remove_local_trigger(orte_gpr_replica_local_trigger_t *trig);
 
 int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
@@ -247,18 +255,20 @@ int
 orte_gpr_replica_remove_trigger(orte_process_name_t *requestor,
                                      orte_gpr_trigger_id_t id);
 
-int orte_gpr_replica_register_callback(orte_gpr_replica_trigger_t *trig,
-                                       orte_gpr_replica_subscription_t *sub,
+int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
                                        orte_gpr_value_t *value);
 
-int orte_gpr_replica_define_callback(orte_gpr_replica_callbacks_t **cbptr,
+int orte_gpr_replica_register_trigger_callback(orte_gpr_replica_trigger_t *trig);
+
+int orte_gpr_replica_define_callback(orte_gpr_notify_msg_type_t msg_type,
+                                     orte_gpr_replica_callbacks_t **cbptr,
                                      orte_process_name_t *recipient);
 
 int orte_gpr_replica_process_callbacks(void);
 
 int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc);
 
-int orte_gpr_replica_store_value_in_msg(orte_gpr_subscription_id_t id,
+int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
                                         orte_gpr_notify_message_t *msg,
                                         size_t cnt,
                                         orte_gpr_value_t **values);

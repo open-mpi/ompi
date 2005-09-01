@@ -218,7 +218,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                       opal_output(0, "\tdump triggers cmd");
                   }
             
-                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_triggers_cmd(answer))) {
+                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_triggers_cmd(input_buffer, answer))) {
                      ORTE_ERROR_LOG(ret);
                      goto RETURN_ERROR;
                  }
@@ -232,7 +232,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                       opal_output(0, "\tdump subscriptions cmd");
                   }
             
-                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_subscriptions_cmd(answer))) {
+                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_subscriptions_cmd(input_buffer, answer))) {
                      ORTE_ERROR_LOG(ret);
                      goto RETURN_ERROR;
                  }
@@ -240,6 +240,32 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             
             
                    
+                case ORTE_GPR_DUMP_A_TRIGGER_CMD:  /*****     DUMP     *****/
+            
+                   if (orte_gpr_replica_globals.debug) {
+                      opal_output(0, "\tdump a trigger cmd");
+                  }
+            
+                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_a_trigger_cmd(input_buffer, answer))) {
+                     ORTE_ERROR_LOG(ret);
+                     goto RETURN_ERROR;
+                 }
+                 break;
+            
+            
+                case ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD:  /*****     DUMP     *****/
+            
+                   if (orte_gpr_replica_globals.debug) {
+                      opal_output(0, "\tdump a subscription cmd");
+                  }
+            
+                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_a_subscription_cmd(input_buffer, answer))) {
+                     ORTE_ERROR_LOG(ret);
+                     goto RETURN_ERROR;
+                 }
+                 break;
+            
+            
                 case ORTE_GPR_DUMP_CALLBACKS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {

@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -43,7 +43,7 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
     orte_ns_replica_cell_tracker_t *new_cell;
     int rc;
     size_t index;
-    
+
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     *cellid = ORTE_CELLID_MAX;
@@ -76,9 +76,9 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
     new_cell->cell = orte_ns_replica.num_cells;
     *cellid = new_cell->cell;
     (orte_ns_replica.num_cells)++;
-    
-	OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
-	return ORTE_SUCCESS;
+
+    OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
+    return ORTE_SUCCESS;
 }
 
 int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
@@ -86,7 +86,7 @@ int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
 {
     size_t i, j;
     orte_ns_replica_cell_tracker_t **cell;
-    
+
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
@@ -106,7 +106,7 @@ int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_ERR_NOT_FOUND;
 }
-                                
+
 
 /*
  * JOBID functions
@@ -116,7 +116,7 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
     orte_ns_replica_jobid_tracker_t *ptr;
     int rc;
     size_t index;
-    
+
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     *jobid = ORTE_JOBID_MAX;
@@ -129,7 +129,7 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
      }
-    
+
     ptr = OBJ_NEW(orte_ns_replica_jobid_tracker_t);
     if (NULL == ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -143,11 +143,11 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return rc;
     }
-    
+
     ptr->jobid = orte_ns_replica.num_jobids;
     *jobid = ptr->jobid;
     (orte_ns_replica.num_jobids)++;
-    
+
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_SUCCESS;
 }
@@ -178,7 +178,7 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range,
     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_ERR_NOT_FOUND;
- 
+
 PROCESS:
     if ((ORTE_VPID_MAX-range-(ptr[j]->next_vpid)) > 0) {
         *start = ptr[j]->next_vpid;
@@ -186,21 +186,21 @@ PROCESS:
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return ORTE_SUCCESS;
     }
-     
+
     /* get here if the range isn't available */
     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_ERR_OUT_OF_RESOURCE;
 }
 
-int orte_ns_replica_get_job_peers(orte_process_name_t **procs, 
+int orte_ns_replica_get_job_peers(orte_process_name_t **procs,
                                   size_t *num_procs, orte_jobid_t job)
 {
     orte_ns_replica_jobid_tracker_t **ptr;
     orte_process_name_t *nptr;
     size_t j;
     orte_jobid_t k;
-    
+
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     /* find the jobid */
@@ -235,9 +235,10 @@ PROCESS:
         nptr->cellid = 0;
         nptr->jobid = job;
         nptr->vpid = (orte_vpid_t)k;
+        nptr++;
     }
     *num_procs = (size_t)ptr[j]->next_vpid;
-    
+
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_SUCCESS;
 }
@@ -250,19 +251,19 @@ int orte_ns_replica_dump_cells(int output_id)
 {
     orte_buffer_t buffer;
     int rc;
-    
+
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
     if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_cells_fn(&buffer))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;
     }
-    
+
     OBJ_DESTRUCT(&buffer);
     return ORTE_SUCCESS;
 }
@@ -315,20 +316,20 @@ int orte_ns_replica_dump_jobs(int output_id)
 {
     orte_buffer_t buffer;
     int rc;
-    
+
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
 
     if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_jobs_fn(&buffer))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;
     }
-    
+
     OBJ_DESTRUCT(&buffer);
     return ORTE_SUCCESS;
 }
@@ -375,19 +376,19 @@ int orte_ns_replica_dump_tags(int output_id)
 {
     orte_buffer_t buffer;
     int rc;
-    
+
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
     if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_tags_fn(&buffer))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;
     }
-    
+
     OBJ_DESTRUCT(&buffer);
     return ORTE_SUCCESS;
 }
@@ -434,19 +435,19 @@ int orte_ns_replica_dump_datatypes(int output_id)
 {
     orte_buffer_t buffer;
     int rc;
-    
+
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
     if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_datatypes_fn(&buffer))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;
     }
-    
+
     OBJ_DESTRUCT(&buffer);
     return ORTE_SUCCESS;
 }
@@ -497,7 +498,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
     orte_ns_replica_tagitem_t *tagitem, **tags;
     size_t i, j;
     int rc;
-    
+
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     if (NULL != name) {
@@ -516,10 +517,10 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
             }
         }
     }
-      
+
     /* not in list or not provided, so allocate next tag */
     *tag = ORTE_RML_TAG_MAX;
-    
+
     /* check if tag is available - need to do this since the tag type
      * is probably not going to be a size_t, so we cannot just rely
      * on the pointer_array's size limits to protect us. NOTE: need to
@@ -531,7 +532,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     tagitem = OBJ_NEW(orte_ns_replica_tagitem_t);
     if (NULL == tagitem) { /* out of memory */
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -557,7 +558,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
     return ORTE_SUCCESS;
 }
 
- 
+
 /*
  * DATA TYPE SERVER functions
  */
@@ -567,12 +568,12 @@ int orte_ns_replica_define_data_type(const char *name,
     orte_ns_replica_dti_t **dti, *dtip;
     size_t i, j;
     int rc;
-    
+
     if (NULL == name || 0 < *type) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     dti = (orte_ns_replica_dti_t**)orte_ns_replica.dts->addr;
@@ -588,10 +589,10 @@ int orte_ns_replica_define_data_type(const char *name,
             }
         }
     }
-      
+
     /* not in list or not provided, so allocate next id */
     *type = ORTE_DPS_ID_MAX;
-    
+
     /* check if id is available - need to do this since the data type
      * is probably not going to be a size_t, so we cannot just rely
      * on the pointer_array's size limits to protect us.
@@ -617,7 +618,7 @@ int orte_ns_replica_define_data_type(const char *name,
     }
     dtip->id = orte_ns_replica.num_dts;
     (orte_ns_replica.num_dts)++;
-    
+
     *type = dtip->id;
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_SUCCESS;
@@ -633,7 +634,7 @@ int orte_ns_replica_create_my_name(void)
     orte_jobid_t jobid;
     orte_vpid_t vpid;
     int rc;
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -647,6 +648,6 @@ int orte_ns_replica_create_my_name(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     return ORTE_SUCCESS;
 }

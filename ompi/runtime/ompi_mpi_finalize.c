@@ -93,7 +93,8 @@ int ompi_mpi_finalize(void)
     /*
      * Wait for everyone to get here
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
+                                 orte_gpr.deliver_notify_msg, NULL))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -219,7 +220,8 @@ int ompi_mpi_finalize(void)
      * the RTE while the soh is trying to do the update - which causes
      * an ugly race condition
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
+                                 orte_gpr.deliver_notify_msg, NULL))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

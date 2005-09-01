@@ -179,7 +179,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-#ifndef WIN32
+#if 0
     if (OMPI_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
         error = "util_register_stackhandlers() failed";
         goto error;
@@ -363,7 +363,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
      /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
+                                 orte_gpr.deliver_notify_msg, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;
@@ -469,7 +470,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Second barrier -- wait for message from
        RMGR_PROC_STAGE_GATE_MGR to arrive */
 
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
+                                 orte_gpr.deliver_notify_msg, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;

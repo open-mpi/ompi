@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@
  * Predefined attributes are integer-valued or address-valued (per
  * MPI-2; see section 4.12.7, keeping in mind that Example 4.13 is
  * totally wrong -- see src/attribute/attribute.h for a lengthy
- * explanation of this).  
+ * explanation of this).
  *
  * The only address-valued attribute is MPI_WIN_BASE.  We treat it as
  * if it were set from C.  All other attributes are integer-valued.
@@ -104,17 +104,16 @@ static int set_f(int keyval, MPI_Fint value);
 int ompi_attr_create_predefined(void)
 {
     int rc, ret;
-    orte_gpr_trigger_t trig, *trig1;
-    orte_gpr_value_t value, *values;
-    orte_gpr_subscription_t sub, *sub1;
+    orte_gpr_subscription_id_t id;
+    char *sub_name, *trig_name;
     orte_jobid_t job;
-    
+
     /* Create all the keyvals */
 
     /* DO NOT CHANGE THE ORDER OF CREATING THESE KEYVALS!  This order
        strictly adheres to the order in mpi.h.  If you change the
        order here, you must change the order in mpi.h as well! */
-    
+
     if (OMPI_SUCCESS != (ret = create_comm(MPI_TAG_UB, true)) ||
         OMPI_SUCCESS != (ret = create_comm(MPI_HOST, true)) ||
         OMPI_SUCCESS != (ret = create_comm(MPI_IO, true)) ||
@@ -149,7 +148,7 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
-        OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE, 
+        OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE,
                                      ompi_errclass_lastused)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_UNIVERSE_SIZE,
                                     ompi_comm_size(MPI_COMM_WORLD))) ||
@@ -157,11 +156,11 @@ int ompi_attr_create_predefined(void)
         /* JMS For when we implement IMPI */
         OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_SIZE,
                                    &attr_impi_client_size)) ||
-        OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_COLOR, 
+        OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_COLOR,
                                    &attr_impi_client_color)) ||
         OMPI_SUCCESS != (ret = set(MPI_IMPI_HOST_SIZE,
                                    &attr_impi_host_size)) ||
-        OMPI_SUCCESS != (ret = set(MPI_IMPI_HOST_COLOR, 
+        OMPI_SUCCESS != (ret = set(MPI_IMPI_HOST_COLOR,
                                    &attr_impi_host_color)) ||
 #endif
         0) {
@@ -176,100 +175,41 @@ int ompi_attr_create_predefined(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
-    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    /* indicate that this is a standard subscription. This indicates that the
-     * subscription will be common to all processes. Thus, the resulting data
-     * can be consolidated into a process-independent message and broadcast
-     * to all processes
-     */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
-                         OMPI_ATTRIBUTE_SUBSCRIPTION, job))) {
+
+    /* indicate that this is a standard subscription. This indicates
+       that the subscription will be common to all processes. Thus,
+       the resulting data can be consolidated into a
+       process-independent message and broadcast to all processes */
+    if (ORTE_SUCCESS !=
+        (rc = orte_schema.get_std_subscription_name(&sub_name,
+                                                    OMPI_ATTRIBUTE_SUBSCRIPTION, job))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    /* send data when trigger fires, then delete -
-     * no need for further notifications
-     */
-    sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    
-    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
-    values = &value;
-    sub.values = &values;
-    sub.cnt = 1;
-    
-    value.addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
-    value.segment = strdup(ORTE_NODE_SEGMENT);
-    if (NULL == value.segment) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value.tokens = NULL; /* wildcard - look at all containers */
-    value.num_tokens = 0;
-    value.cnt = 1;
-    value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-    if (NULL == value.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value.keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value.keyvals[0]->key = strdup(ORTE_NODE_SLOTS_KEY);
-    if (NULL == value.keyvals[0]->key) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    sub.cbfunc = ompi_attr_create_predefined_callback;
-    sub.user_tag = NULL;
-    
-    /* setup the trigger information */
-    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
-                                    ORTE_STG1_TRIGGER, job))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
         return rc;
     }
 
-    /* this is an ORTE-standard trigger that is defined by the ORTE resource manager
-     * when the job was launched - therefore, we don't need to provide any additional
-     * info
-     */
-         
-    /* do the subscription */
-    sub1 = &sub;
-    trig1 = &trig;
-    rc = orte_gpr.subscribe(1, &sub1, 1, &trig1);
-    if(ORTE_SUCCESS != rc) {
-        opal_output(0, "ompi_attr_create_predefined: subscribe failed");
-        OBJ_DESTRUCT(&value);
-        sub.values = NULL;
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
-        return OMPI_ERROR;
+    /* attach ourselves to the standard stage-1 trigger */
+    if (ORTE_SUCCESS !=
+        (rc = orte_schema.get_std_trigger_name(&trig_name,
+                                               ORTE_STG1_TRIGGER, job))) {
+        ORTE_ERROR_LOG(rc);
+        free(sub_name);
+        return rc;
     }
-    OBJ_DESTRUCT(&value);
-    sub.values = NULL;
-    OBJ_DESTRUCT(&sub);
-    OBJ_DESTRUCT(&trig);
-    return OMPI_SUCCESS;
+
+    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&id, trig_name, sub_name,
+                                ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
+                                ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                                ORTE_NODE_SEGMENT,
+                                NULL,  /* wildcard - look at all containers */
+                                ORTE_NODE_SLOTS_KEY,
+                                ompi_attr_create_predefined_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    free(trig_name);
+    free(sub_name);
+
+    return rc;
+
 }
 
 
@@ -299,7 +239,7 @@ void ompi_attr_create_predefined_callback(
     /* Query the gpr to find out how many CPUs there will be.
        This will only return a non-empty list in a persistent
        universe.  If we don't have a persistent universe, then just
-       default to the size of MPI_COMM_WORLD. 
+       default to the size of MPI_COMM_WORLD.
 
        JMS: I think we need more here -- there are cases where you
        wouldn't have a persistent universe but still may have a
@@ -357,7 +297,7 @@ static int create_comm(int target_keyval, bool want_inherit)
     ompi_attribute_fn_ptr_union_t del;
 
     keyval = -1;
-    copy.attr_communicator_copy_fn = 
+    copy.attr_communicator_copy_fn =
         want_inherit ? MPI_COMM_DUP_FN : MPI_COMM_NULL_COPY_FN;
     del.attr_communicator_delete_fn = MPI_COMM_NULL_DELETE_FN;
     err = ompi_attr_create_keyval(COMM_ATTR, copy, del,
@@ -400,7 +340,7 @@ static int create_win(int target_keyval)
 static int set_f(int keyval, MPI_Fint value)
 {
     return ompi_attr_set_fortran_mpi1(COMM_ATTR, MPI_COMM_WORLD,
-                                      &MPI_COMM_WORLD->c_keyhash, 
-                                      keyval, value, 
+                                      &MPI_COMM_WORLD->c_keyhash,
+                                      keyval, value,
                                       true, true);
 }

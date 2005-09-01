@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -35,8 +35,8 @@ int
 orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscriptions)
 {
     orte_gpr_proxy_subscriber_t *sub;
-    size_t i, id;
-    
+    size_t i;
+
     for (i=0; i < cnt; i++) {
         sub = OBJ_NEW(orte_gpr_proxy_subscriber_t);
         if (NULL == sub) {
@@ -48,7 +48,7 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
         }
         sub->callback = subscriptions[i]->cbfunc;
         sub->user_tag = subscriptions[i]->user_tag;
-        if (0 > orte_pointer_array_add(&id, orte_gpr_proxy_globals.subscriptions, sub)) {
+        if (0 > orte_pointer_array_add(&sub->index, orte_gpr_proxy_globals.subscriptions, sub)) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
@@ -56,7 +56,7 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
         subscriptions[i]->id = sub->id;
         (orte_gpr_proxy_globals.num_subs)++;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -64,10 +64,45 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
 int
 orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
 {
-    orte_gpr_proxy_trigger_t *trig;
-    size_t i, id;
-    
+    orte_gpr_proxy_trigger_t *trig, **tptr;
+    size_t i, j, k;
+
     for (i=0; i < cnt; i++) {
+        /* If the provided trigger has a name, see if it already is on
+         * the local trigger list. If so, then check to see if we
+         * already defined a return point for it and/or if this trigger
+         * doesn't - in either of those two cases, we ignore the
+         * trigger and just use the existing entry
+         */
+        if (NULL != trigs[i]->name) {
+            tptr = (orte_gpr_proxy_trigger_t**)(orte_gpr_proxy_globals.triggers)->addr;
+            for (j=0, k=0; k < orte_gpr_proxy_globals.num_trigs &&
+                           j < (orte_gpr_proxy_globals.triggers)->size; j++) {
+                if (NULL != tptr[j]) {
+                    k++;
+                    if (0 == strcmp(tptr[j]->name, trigs[i]->name)) {
+                        /* same name - trigger is already on list */
+                        if (NULL != tptr[j]->callback || NULL == trigs[i]->cbfunc) {
+                            /* ignore these cases */
+                            trig = tptr[j];
+                            goto MOVEON;
+                        }
+                        /* reach here if either the prior trigger didn't provide
+                         * a callback, and the new one provides one. In this
+                         * case, we update the existing trigger callback and then
+                         * move on
+                         */
+                         tptr[j]->callback = trigs[i]->cbfunc;
+                         trig = tptr[j];
+                         goto MOVEON;
+                    }
+                }
+            }
+        }
+
+        /* either the trigger doesn't have a name, OR it did, but it isn't
+         * already on the list - add it to the list now
+         */
         trig = OBJ_NEW(orte_gpr_proxy_trigger_t);
         if (NULL == trig) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -89,38 +124,51 @@ orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
         }
         trig->callback = trigs[i]->cbfunc;
         trig->user_tag = trigs[i]->user_tag;
-        if (0 > orte_pointer_array_add(&id, orte_gpr_proxy_globals.triggers, trig)) {
+        if (0 > orte_pointer_array_add(&trig->index, orte_gpr_proxy_globals.triggers, trig)) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         trig->id = orte_gpr_proxy_globals.num_trigs;
-        trigs[i]->id = trig->id;
         (orte_gpr_proxy_globals.num_trigs)++;
+MOVEON:
+        trigs[i]->id = trig->id;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
 
 int
-orte_gpr_proxy_remove_subscription(orte_gpr_subscription_id_t id)
+orte_gpr_proxy_remove_subscription(orte_gpr_proxy_subscriber_t *sub)
 {
-    if (NULL != (orte_gpr_proxy_globals.subscriptions)->addr[id]) {
-        OBJ_RELEASE((orte_gpr_proxy_globals.subscriptions)->addr[id]);
-        orte_pointer_array_set_item(orte_gpr_proxy_globals.subscriptions, (size_t)id, NULL);
+    size_t index;
+
+    if (NULL == sub) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
     }
-    
+
+    index = sub->index;
+    OBJ_RELEASE(sub);
+    orte_pointer_array_set_item(orte_gpr_proxy_globals.subscriptions, index, NULL);
+
     return ORTE_SUCCESS;
 }
 
 int
-orte_gpr_proxy_remove_trigger(orte_gpr_trigger_id_t id)
+orte_gpr_proxy_remove_trigger(orte_gpr_proxy_trigger_t *trig)
 {
-    if (NULL != (orte_gpr_proxy_globals.triggers)->addr[id]) {
-        OBJ_RELEASE((orte_gpr_proxy_globals.triggers)->addr[id]);
-        orte_pointer_array_set_item(orte_gpr_proxy_globals.triggers, (size_t)id, NULL);
+    size_t index;
+
+    if (NULL == trig) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
     }
-    
+
+    index = trig->index;
+    OBJ_RELEASE(trig);
+    orte_pointer_array_set_item(orte_gpr_proxy_globals.triggers, index, NULL);
+
     return ORTE_SUCCESS;
 }
 

@@ -1,21 +1,21 @@
 /* -*- C -*-
- * 
+ *
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
-/** @file 
+/** @file
  */
 
 #ifndef ORTE_GPR_REPLICA_CLASS_INSTANCES_H_
@@ -37,6 +37,8 @@
 static void orte_gpr_replica_local_subscriber_constructor(orte_gpr_replica_local_subscriber_t *ptr)
 {
     ptr->name = NULL;
+    ptr->callback = NULL;
+    ptr->user_tag = NULL;
 }
 
 static void orte_gpr_replica_local_subscriber_destructor(orte_gpr_replica_local_subscriber_t *ptr)
@@ -55,6 +57,8 @@ OBJ_CLASS_INSTANCE(
 static void orte_gpr_replica_local_trigger_constructor(orte_gpr_replica_local_trigger_t *ptr)
 {
     ptr->name = NULL;
+    ptr->callback = NULL;
+    ptr->user_tag = NULL;
 }
 
 static void orte_gpr_replica_local_trigger_destructor(orte_gpr_replica_local_trigger_t *ptr)
@@ -76,7 +80,7 @@ static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 {
     seg->name = NULL;
     seg->itag = ORTE_GPR_REPLICA_ITAG_MAX;
-    
+
     seg->num_dict_entries = 0;
     orte_pointer_array_init(&(seg->dict), orte_gpr_array_block_size,
                             orte_gpr_array_max_size,
@@ -95,7 +99,7 @@ static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
     size_t i, k;
     orte_gpr_replica_dict_t **dptr;
     orte_gpr_replica_container_t **cptr;
-    
+
     if (NULL != seg->name) {
         free(seg->name);
     }
@@ -114,7 +118,7 @@ static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
         }
         OBJ_RELEASE(seg->dict);
     }
-    
+
     if (NULL != seg->containers) {
         cptr = (orte_gpr_replica_container_t**)((seg->containers)->addr);
         for (i=0, k=0; k < seg->num_containers &&
@@ -148,7 +152,7 @@ static void orte_gpr_replica_container_construct(orte_gpr_replica_container_t* r
                             orte_gpr_array_max_size,
                             orte_gpr_array_block_size);
     reg->num_itagvals = 0;
-    
+
     OBJ_CONSTRUCT(&(reg->itaglist), orte_value_array_t);
     orte_value_array_init(&(reg->itaglist), sizeof(orte_gpr_replica_itag_t));
 
@@ -227,7 +231,7 @@ static void orte_gpr_replica_ivalue_construct(orte_gpr_replica_ivalue_t* ptr)
     ptr->index = 0;
     ptr->seg = NULL;
     ptr->addr_mode = 0;
-    
+
     OBJ_CONSTRUCT(&(ptr->tokentags), orte_value_array_t);
     orte_value_array_init(&(ptr->tokentags), sizeof(orte_gpr_replica_itag_t));
 
@@ -303,12 +307,13 @@ OBJ_CLASS_INSTANCE(
 static void orte_gpr_replica_subscription_construct(orte_gpr_replica_subscription_t* sub)
 {
     sub->index = 0;
+    sub->idtag = ORTE_GPR_SUBSCRIPTION_ID_MAX;
     sub->name = NULL;
     sub->active = false;
     sub->processing = false;
     sub->cleanup = false;
     sub->action = ORTE_GPR_REPLICA_NO_ACTION;
-    
+
     sub->num_values = 0;
     orte_pointer_array_init(&(sub->values), orte_gpr_array_block_size,
                             orte_gpr_array_max_size,
@@ -326,7 +331,7 @@ static void orte_gpr_replica_subscription_destructor(orte_gpr_replica_subscripti
     orte_gpr_replica_requestor_t **ptr;
     orte_gpr_replica_ivalue_t **ivals;
     size_t i, k;
-    
+
     if (NULL != sub->name) free(sub->name);
 
     if (NULL != sub->requestors) {
@@ -367,6 +372,7 @@ OBJ_CLASS_INSTANCE(
 static void orte_gpr_replica_trigger_requestor_construct(orte_gpr_replica_trigger_requestor_t* ptr)
 {
     ptr->index = 0;
+    ptr->idtag = ORTE_GPR_TRIGGER_ID_MAX;
     ptr->requestor = NULL;
     ptr->idtag = 0;
 }
@@ -391,6 +397,7 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_trigger_t* trig)
 {
     trig->name = NULL;
     trig->index = 0;
+    trig->idtag = ORTE_GPR_TRIGGER_ID_MAX;
 
     trig->num_attached = 0;
     orte_pointer_array_init(&(trig->attached), orte_gpr_array_block_size,
@@ -398,11 +405,11 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_trigger_t* trig)
                             orte_gpr_array_block_size);
 
     trig->master = NULL;;
-    
+
     trig->action = ORTE_GPR_REPLICA_NO_ACTION;
     trig->one_shot_fired = false;
     trig->processing = false;
-    
+
     trig->num_counters = 0;
     orte_pointer_array_init(&(trig->counters), orte_gpr_array_block_size,
                             orte_gpr_array_max_size,
@@ -421,7 +428,7 @@ static void orte_gpr_replica_trigger_destructor(orte_gpr_replica_trigger_t* trig
     size_t i, cnt;
     orte_gpr_replica_counter_t **cntrs;
     orte_gpr_replica_trigger_requestor_t **att;
-    
+
     if (NULL != trig->name) {
         free(trig->name);
     }
@@ -515,11 +522,11 @@ static void orte_gpr_replica_callbacks_construct(orte_gpr_replica_callbacks_t* c
 static void orte_gpr_replica_callbacks_destructor(orte_gpr_replica_callbacks_t* cb)
 {
     if (NULL != cb->message) OBJ_RELEASE(cb->message);
-    
+
     if (NULL != cb->requestor) {
         free(cb->requestor);
     }
-    
+
 }
 
 /* define instance of opal_class_t */

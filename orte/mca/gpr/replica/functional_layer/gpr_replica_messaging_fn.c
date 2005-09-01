@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -39,17 +39,21 @@
 #include "mca/gpr/replica/communications/gpr_replica_comm.h"
 #include "gpr_replica_fn.h"
 
+static int orte_gpr_replica_get_callback_data(orte_gpr_value_t ***values, size_t *num_vals,
+                                              orte_gpr_replica_subscription_t *sub);
+
+static int orte_gpr_replica_store_value_in_trigger_msg(orte_gpr_replica_subscription_t *sub,
+                                                       orte_gpr_notify_message_t *msg,
+                                                       size_t cnt,
+                                                       orte_gpr_value_t **values);
+
 int orte_gpr_replica_process_callbacks(void)
 {
     orte_gpr_replica_callbacks_t *cb;
-    orte_gpr_notify_data_t **data;
     orte_gpr_replica_trigger_t **trigs;
-    orte_gpr_replica_local_trigger_t **local_trigs;
     orte_gpr_replica_subscription_t **subs;
-    orte_gpr_replica_local_subscriber_t **local_subs;
     orte_gpr_replica_requestor_t **reqs;
     size_t i, j, k, m;
-    bool processed;
     int rc;
 
     /* check and set flag indicating callbacks being processed */
@@ -57,82 +61,25 @@ int orte_gpr_replica_process_callbacks(void)
         return ORTE_SUCCESS;
     }
     orte_gpr_replica.processing_callbacks = true;
-    
+
     while (NULL != (cb = (orte_gpr_replica_callbacks_t*)opal_list_remove_last(&orte_gpr_replica.callbacks))) {
+        /* each callback corresponds to a specific requestor
+         * The message in the callback consists of at least one (and can
+         * be more) "datagrams" intended for that requestor, each of which
+         * is slated to be returned to a specific function on the requestor.
+         */
         if (NULL == cb->requestor) {  /* local callback */
-            /* each callback corresponds to a specific requestor
-             * The message in the callback consists of at least one (and can
-             * be more) "datagrams" intended for that requestor, each of which
-             * is slated to be returned to a specific
-             * function on the requestor.
-             * 
-             * Since this requestor is "local", we simply execute
+            /* Since this requestor is "local", we simply execute
              * the callbacks ourself.
              */
-            /* we first have to check the trigger id in the message. If that
-             * field is set to a valid value (i.e., one other than
-             * ORTE_GPR_TRIGGER_ID_MAX), then the message is intended to be
-             * sent as a single block to that trigger's callback function.
-             */
-            if (ORTE_GPR_TRIGGER_ID_MAX > (cb->message)->id) {
-                /* use the local trigger callback */
-                local_trigs = (orte_gpr_replica_local_trigger_t**)
-                                    (orte_gpr_replica_globals.local_triggers)->addr;
-                for (i=0, j=0; j < orte_gpr_replica_globals.num_local_trigs &&
-                               i < (orte_gpr_replica_globals.local_triggers)->size; i++) {
-                    if (NULL != local_trigs[i]) {
-                        j++;
-                        if ((cb->message)->id == local_trigs[i]->id) {
-                            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-                            local_trigs[i]->callback(cb->message, local_trigs[i]->user_tag);
-                            OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-                            goto CLEANUP;
-                        }
-                    }
-                }
-                /* get here if the trigger could not be found */
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                goto CLEANUP;
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_deliver_notify_msg(cb->message))) {
+                ORTE_ERROR_LOG(rc);
             }
-            
-            /* get here if the trigger id indicated that this was NOT
-             * intended for a trigger callback - i.e., the message should
-             * be broken into its component parts and delivered separately
-             * to the indicated subscribers
-             */
-            data = (orte_gpr_notify_data_t**)((cb->message)->data)->addr;
-            for (i=0; i < (cb->message)->cnt; i++) {
-                /* for each datagram in the message, we need to lookup
-                 * the associated subscription id to find the correct
-                 * callback function.
-                 */
-                local_subs = (orte_gpr_replica_local_subscriber_t**)
-                                (orte_gpr_replica_globals.local_subscriptions)->addr;
-                processed = false;
-                for (j=0, k=0; !processed &&
-                               k < orte_gpr_replica_globals.num_local_subs &&
-                               j < (orte_gpr_replica_globals.local_subscriptions)->size; j++) {
-                    if (NULL != local_subs[j]) {
-                        k++;
-                        if (data[i]->id == local_subs[j]->id) {
-                            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-                            local_subs[j]->callback(data[i], local_subs[j]->user_tag);
-                            OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-                            processed = true;
-                        }
-                    }
-                }
-                /* get here and not processed => not found */
-                if (!processed) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                }
-            }
-            
+
         } else {  /* remote request - send messages back */
            orte_gpr_replica_remote_notify(cb->requestor, cb->message);
         }
 
-CLEANUP:
         OBJ_RELEASE(cb);
     }
 
@@ -154,7 +101,7 @@ CLEANUP:
         }
     }
     orte_gpr_replica.num_trigs -= m;
-    
+
     /* cleanup any subscriptions that are supposed to be
      * removed based on a trigger having fired - set processing to false
      * on all others
@@ -186,99 +133,36 @@ CLEANUP:
 
     /* all callbacks processed - indicate list is open */
     orte_gpr_replica.processing_callbacks = false;
-    
+
     return ORTE_SUCCESS;
 }
 
 
 
-int orte_gpr_replica_register_callback(orte_gpr_replica_trigger_t *trig,
-                                       orte_gpr_replica_subscription_t *sub,
+int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
                                        orte_gpr_value_t *value)
 {
     orte_gpr_replica_callbacks_t *cb;
     orte_gpr_replica_requestor_t **reqs;
-    size_t interim, cnt, num_tokens, num_keys;
-    orte_gpr_value_t **vals, **values;
-    orte_gpr_replica_ivalue_t **ivals;
-    size_t i, j, k;
+    orte_gpr_value_t **values;
+    size_t cnt;
+    size_t i, j;
     bool cleanup_reqd;
     int rc;
-    
+
     /* The data to be returned will be the same for all requestors
      * on this subscription. First, let's get the data (if it hasn't
      * already been provided) so we have it ready to be added to
      * the callback
      */
-     
-    /* check to see if value provided - if so, we'll just use it */
-    if (NULL != value) {
+    if (NULL != value) { /* no need to get data - already provided */
         values = &value;
         cnt = 1;
         cleanup_reqd = false;
     } else {
-        /* value not provided - get the data off the registry. since a
-         * subscription can have multiple data sources specified, we
-         * have to loop through those sources, constructing an aggregated
-         * array of data values that we can work with in composing the
-         * final message
-         */
-        ivals = (orte_gpr_replica_ivalue_t**)(sub->values)->addr;
-        cnt = 0;
-        values = NULL;
-        for (i=0, j=0; j < sub->num_values &&
-                       i < (sub->values)->size; i++) {
-            if (NULL != ivals[i]) {
-                j++;
-                num_tokens = orte_value_array_get_size(&(ivals[i]->tokentags));
-                num_keys = orte_value_array_get_size(&(ivals[i]->keytags));
-                /* get the data for this description off the registry */
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_fn(ivals[i]->addr_mode,
-                        ivals[i]->seg,
-                        ORTE_VALUE_ARRAY_GET_BASE(&(ivals[i]->tokentags), orte_gpr_replica_itag_t),
-                        num_tokens,
-                        ORTE_VALUE_ARRAY_GET_BASE(&(ivals[i]->keytags), orte_gpr_replica_itag_t),
-                        num_keys,
-                        &interim, &vals))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                /* if we don't get any data back, just continue - don't
-                 * try to add it to the values since that would cause a
-                 * zero-byte malloc
-                 */
-                if (0 == interim) {
-                    continue;
-                }
-                /* add these results to those we have already obtained */
-                if (0 == cnt) { /* first time through */
-                    values = (orte_gpr_value_t**)malloc(interim *
-                                                    sizeof(orte_gpr_value_t*));
-                    if (NULL == values) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                } else {
-                    /* reallocate values array */
-                    values = (orte_gpr_value_t**)realloc(values,
-                                    (cnt+interim)*sizeof(orte_gpr_value_t*));
-                    if (NULL == values) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                /* add data to end of array */
-                for (k=0; k < interim; k++) {
-                    values[k+cnt] = vals[k];
-                }
-                /* release the array of pointers - the pointers themselves
-                 * will remain "alive" in the values array to be released
-                 * later
-                 */
-                free(vals);
-                /* update the count */
-                cnt += interim;
-            }
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_callback_data(&values, &cnt, sub))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
         cleanup_reqd = true;
     }
@@ -292,81 +176,45 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_trigger_t *trig,
      * the remote process which callback function to use when it receives
      * a message from us.
      * Each subscription can have multiple "requestors" attached to it,
-     * each "requestor" consisting of the process name and 
+     * each "requestor" consisting of the process name and
      * subscription id (for remote processes), and callback info (for local
      * processes).
      * For each requestor, we need to check to see if a callback has
      * already been scheduled to that destination - if so, we piggyback
      * another datagram onto it to minimize communication costs.
      */
-    
-    /* first, we need to determine if the data in this message
-     * is to be sent back through the trigger callback function
-     * or not. if it is, then we set the callback's message
-     * to point at the correct trigger id for that requestor
-     * so the message goes to the correct place, and we go ahead
-     * and store the data in the message
+
+    /* this data is intended to be sent to the individual
+     * subscribers themselves. Cycle through the subscription's
+     * requestors, define callbacks to them appropriately,
+     * and set the id to indicate that it does NOT go
+     * to a trigger
      */
-    if (NULL != trig && NULL != trig->master) {
-        /* define the callback */
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_define_callback(&cb, (trig->master)->requestor))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        /* transfer the trigger name, if available */
-        if (NULL != trig->name) {
-            (cb->message)->name = strdup(trig->name);
-        }
-        /* set the callback id to point to the trigger callback function */
-        (cb->message)->id = (trig->master)->idtag;
-        /* cycle through all the subscription's requestors and place
-         * the data on the message so that the trigger master can distribute
-         * it as required
-         */
-        reqs = (orte_gpr_replica_requestor_t**)(sub->requestors)->addr;
-        for (i=0, j=0; j < sub->num_requestors &&
-                       i < (sub->requestors)->size; i++) {
-            if (NULL != reqs[i]) {
-                j++;
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_store_value_in_msg(reqs[i]->idtag,
-                                                cb->message, cnt, values))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
+    reqs = (orte_gpr_replica_requestor_t**)(sub->requestors)->addr;
+    for (i=0, j=0; j < sub->num_requestors &&
+                   i < (sub->requestors)->size; i++) {
+        if (NULL != reqs[i]) {
+            j++;
+            /* define the callback */
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_define_callback(ORTE_GPR_SUBSCRIPTION_MSG,
+                                            &cb, reqs[i]->requestor))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            /* set the callback id to indicate not a trigger callback */
+            (cb->message)->id = ORTE_GPR_TRIGGER_ID_MAX;
+            /* okay, now we have a message going to the requestor. We need to
+             * store the values in the notify_data structure corresponding to this
+             * subscription id, combining data where the id's match
+             */
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_store_value_in_msg(reqs[i],
+                                            cb->message, cnt, values))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
             }
         }
-    } else {
-        /* this data is intended to be sent to the individual
-         * subscribers themselves. Cycle through the subscription's
-         * requestors, define callbacks to them appropriately,
-         * and set the id to indicate that it does NOT go
-         * to a trigger
-         */
-        reqs = (orte_gpr_replica_requestor_t**)(sub->requestors)->addr;
-        for (i=0, j=0; j < sub->num_requestors &&
-                       i < (sub->requestors)->size; i++) {
-            if (NULL != reqs[i]) {
-                j++;
-                /* define the callback */
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_define_callback(&cb, reqs[i]->requestor))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
-                /* set the callback id to indicate not a trigger callback */
-                (cb->message)->id = ORTE_GPR_TRIGGER_ID_MAX;
-                /* okay, now we have a message going to the requestor. We need to
-                 * store the values in the notify_data structure corresponding to this
-                 * subscription id, combining data where the id's match
-                 */
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_store_value_in_msg(reqs[i]->idtag,
-                                                cb->message, cnt, values))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
-            }
-        }  /* for i */
-    } /* if else */
-    
+    }  /* for i */
+
 CLEANUP:
     /* release the values here - the value objects have been "retained" in
      * the store_value function, so this just ensures that they will be
@@ -378,27 +226,163 @@ CLEANUP:
      * only a single value is passed in, so there is no array to free
      */
     if (cleanup_reqd && NULL != values) free(values);
-    
+
     return rc;
 }
 
 
-int orte_gpr_replica_define_callback(orte_gpr_replica_callbacks_t **cbptr,
+int orte_gpr_replica_register_trigger_callback(orte_gpr_replica_trigger_t *trig)
+{
+    orte_gpr_replica_callbacks_t *cb;
+    orte_gpr_replica_counter_t **cntr;
+    orte_gpr_replica_subscription_t **subs;
+    orte_gpr_value_t **values, *value;
+    size_t i, j, k, cnt;
+    int rc;
+
+    /* set the callback's message
+     * to point at the correct trigger id for that requestor
+     * so the message goes to the correct place, and go ahead
+     * and store the data in the message
+     */
+    /* define the callback */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_define_callback(ORTE_GPR_TRIGGER_MSG,
+                                    &cb, (trig->master)->requestor))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* transfer the trigger name, if available */
+    if (NULL != trig->name) {
+        (cb->message)->target = strdup(trig->name);
+    }
+    /* set the callback id to point to the trigger callback function */
+    (cb->message)->id = (trig->master)->idtag;
+
+    /* if the trigger counters are to be included, do so */
+    if (ORTE_GPR_TRIG_INCLUDE_TRIG_CNTRS & trig->action) {
+        cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
+        for (i=0, j=0; j < trig->num_counters &&
+                       i < (trig->counters)->size; i++) {
+            if (NULL != cntr[i]) {
+                j++;
+                value = OBJ_NEW(orte_gpr_value_t);
+                if (NULL == value) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                value->segment = strdup(cntr[i]->seg->name);
+                value->cnt = 1;
+                value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+                if (NULL == value->keyvals) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+                if (NULL == value->keyvals[0]) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
+                                        &(value->keyvals[0]->key), cntr[i]->seg,
+                                        cntr[i]->iptr->itag))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(value);
+                    return rc;
+                }
+                value->keyvals[0]->type = cntr[i]->iptr->type;
+                if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
+                            &(value->keyvals[0]->value),
+                            &(cntr[i]->iptr->value), cntr[i]->iptr->type))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(value);
+                    return rc;
+                }
+               /*
+                * store the data in the message
+                */
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_store_value_in_trigger_msg(NULL,
+                                                cb->message, 1, &value))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                /* release the storage */
+                OBJ_RELEASE(value);
+            }
+        }
+    }
+
+    /* cycle through all the trigger's subscriptions and place
+     * that data on the message
+     */
+    subs = (orte_gpr_replica_subscription_t**)(trig->subscriptions)->addr;
+    for (i=0, j=0; j < trig->num_subscriptions &&
+                   i < (trig->subscriptions)->size; i++) {
+        if (NULL != subs[i]) {
+            j++;
+            if (NULL != subs[i]->name) {
+                /* if it's a named subscription, we will deliver it via the
+                 * trigger callback function. The data to be returned will
+                 * be the same for all requestors.
+                 */
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_callback_data(&values, &cnt, subs[i]))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                /*
+                 * store the data in the message
+                 */
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_store_value_in_trigger_msg(subs[i],
+                                                cb->message, cnt, values))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                /* release the storage */
+                for (k=0; k < cnt; k++) OBJ_RELEASE(values[k]);
+                if (NULL != values) free(values);
+            } else {
+                /* in the case of a non-named subscription, we know that someone
+                 * has attached a subscription to this trigger, and that the
+                 * requestor needs the data to be returned directly to them. This
+                 * occurs in the case of orterun, which attaches subscriptions to
+                 * the standard triggers so it can monitor the progress of a job
+                 * it has launched. To facilitate this, we register a separate
+                 * callback for this subscription
+                 */
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(subs[i], NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
+
+int orte_gpr_replica_define_callback(orte_gpr_notify_msg_type_t msg_type,
+                                     orte_gpr_replica_callbacks_t **cbptr,
                                      orte_process_name_t *recipient)
 {
     orte_gpr_replica_callbacks_t *cb;
     int rc;
-    
+
     /* see if a callback has already been registered for this recipient */
     for (cb = (orte_gpr_replica_callbacks_t*)opal_list_get_first(&(orte_gpr_replica.callbacks));
          cb != (orte_gpr_replica_callbacks_t*)opal_list_get_end(&(orte_gpr_replica.callbacks));
          cb = (orte_gpr_replica_callbacks_t*)opal_list_get_next(cb)) {
-
-         if ((NULL == recipient && NULL == cb->requestor) ||
-             ((NULL != recipient && NULL != cb->requestor) &&
+        /* must check to see if both the recipient is the same AND that the
+         * message type being sent is identical (i.e., that messages going back
+         * to trigger callbacks do NOT get mixed with messages going back to
+         * subscription callbacks). This is critical as the deliver_notify_msg
+         * functions handle these message types in different ways
+         */
+         if (((NULL == recipient && NULL == cb->requestor) &&
+              (msg_type == cb->message->msg_type)) ||
+             (((NULL != recipient && NULL != cb->requestor) &&
               (0 == orte_ns.compare(ORTE_NS_CMP_ALL,
                                     recipient,
-                                    cb->requestor)))) {
+                                    cb->requestor))) &&
+               (msg_type == cb->message->msg_type))) {
              /* okay, a callback has been registered to send data to this
               * recipient - return this location
               */
@@ -406,7 +390,7 @@ int orte_gpr_replica_define_callback(orte_gpr_replica_callbacks_t **cbptr,
              return ORTE_SUCCESS;
          }
     }
-    
+
     /* this is going to somebody new - create a new callback
      * for this recipient
      */
@@ -415,15 +399,16 @@ int orte_gpr_replica_define_callback(orte_gpr_replica_callbacks_t **cbptr,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     opal_list_append(&orte_gpr_replica.callbacks, &cb->item);
-    
+
     /* construct the message */
     cb->message = OBJ_NEW(orte_gpr_notify_message_t);
     if (NULL == cb->message) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    cb->message->msg_type = msg_type;
 
     if (NULL == recipient) {
         cb->requestor = NULL;
@@ -433,22 +418,22 @@ int orte_gpr_replica_define_callback(orte_gpr_replica_callbacks_t **cbptr,
             return rc;
         }
     }
-    
+
     /* return the pointer to the new callback */
     *cbptr = cb;
-    
+
     return ORTE_SUCCESS;
 }
 
 
-int orte_gpr_replica_store_value_in_msg(orte_gpr_subscription_id_t id,
+int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
                                         orte_gpr_notify_message_t *msg,
                                         size_t cnt,
                                         orte_gpr_value_t **values)
 {
     size_t i, j, k, index;
     orte_gpr_notify_data_t **data, *dptr;
-    
+
     /* check to see if this data is going to the same place as
      * any prior data on the message. if so, then we add the values
      * to that existing data structure. if not, then we realloc to
@@ -459,7 +444,7 @@ int orte_gpr_replica_store_value_in_msg(orte_gpr_subscription_id_t id,
                    i < (msg->data)->size; i++) {
         if (NULL != data[i]) {
             k++;
-            if (data[i]->id == id) { /* going to the same place */
+            if (data[i]->id == req->idtag) { /* going to the same place */
                 for (j=0; j < cnt; j++) {
                     if (0 > orte_pointer_array_add(&index, data[i]->values, values[j])) {
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -489,7 +474,7 @@ int orte_gpr_replica_store_value_in_msg(orte_gpr_subscription_id_t id,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    dptr->id = id;
+    dptr->id = req->idtag;
     if (0 > orte_pointer_array_add(&index, msg->data, dptr)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -514,3 +499,159 @@ int orte_gpr_replica_store_value_in_msg(orte_gpr_subscription_id_t id,
     return ORTE_SUCCESS;
 }
 
+static int orte_gpr_replica_store_value_in_trigger_msg(orte_gpr_replica_subscription_t *sub,
+                                                       orte_gpr_notify_message_t *msg,
+                                                       size_t cnt,
+                                                       orte_gpr_value_t **values)
+{
+    size_t i, j, k, index;
+    orte_gpr_notify_data_t **data, *dptr;
+
+    /* check to see if this data is going to the same place as
+     * any prior data on the message. if so, then we add the values
+     * to that existing data structure. if not, then we realloc to
+     * establish a new data structure and store the data there
+     */
+    data = (orte_gpr_notify_data_t**)(msg->data)->addr;
+    for (i=0, k=0; k < msg->cnt &&
+                   i < (msg->data)->size; i++) {
+        if (NULL != data[i]) {
+            k++;
+            if ((NULL == data[i]->target && NULL == sub) ||
+                 (NULL != data[i]->target &&
+                 0 == strcmp(data[i]->target, sub->name))) { /* going to the same place */
+                for (j=0; j < cnt; j++) {
+                    if (0 > orte_pointer_array_add(&index, data[i]->values, values[j])) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                    /* must "retain" the value object to ensure that it is
+                    * there for this datagram. Since we are only storing
+                    * pointers to the object (and not actually copying it),
+                    * datagrams may wind up sharing the object. Hence, when
+                    * a datagram is released, it will release the object. Without
+                    * the retain, the next datagram that shares that object
+                    * will see trash
+                    */
+                    OBJ_RETAIN(values[j]);
+                }
+                data[i]->cnt += cnt;
+                return ORTE_SUCCESS;
+            }
+        }
+    }
+
+    /* no prior matching data found, so add another data location to
+     * the message and store the values there
+     */
+    dptr = OBJ_NEW(orte_gpr_notify_data_t);
+    if (NULL == dptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (NULL != sub) {
+        dptr->target = strdup(sub->name);
+    }
+    if (0 > orte_pointer_array_add(&index, msg->data, dptr)) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    (msg->cnt)++;
+    for (j=0; j < cnt; j++) {
+        if (0 > orte_pointer_array_add(&index, dptr->values, values[j])) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        /* must "retain" the value object to ensure that it is
+         * there for this datagram. Since we are only storing
+         * pointers to the object (and not actually copying it),
+         * datagrams may wind up sharing the object. Hence, when
+         * a datagram is released, it will release the object. Without
+         * the retain, the next datagram that shares that object
+         * will see trash
+         */
+        OBJ_RETAIN(values[j]);
+    }
+    dptr->cnt = cnt;
+    return ORTE_SUCCESS;
+}
+
+static int orte_gpr_replica_get_callback_data(orte_gpr_value_t ***ret_values, size_t *cnt,
+                                              orte_gpr_replica_subscription_t *sub)
+{
+    orte_gpr_value_t **vals, **values;
+    orte_gpr_replica_ivalue_t **ivals;
+    size_t i, j, k, num_tokens, num_keys, interim, count;
+    int rc;
+
+    /* setup default error returns */
+    *ret_values = NULL;
+    *cnt = 0;
+
+    /* get the data off the registry. since a
+     * subscription can have multiple data sources specified, we
+     * have to loop through those sources, constructing an aggregated
+     * array of data values that we can work with in composing the
+     * final message
+     */
+    ivals = (orte_gpr_replica_ivalue_t**)(sub->values)->addr;
+    count = 0;
+    values = NULL;
+    for (i=0, j=0; j < sub->num_values &&
+                   i < (sub->values)->size; i++) {
+        if (NULL != ivals[i]) {
+            j++;
+            num_tokens = orte_value_array_get_size(&(ivals[i]->tokentags));
+            num_keys = orte_value_array_get_size(&(ivals[i]->keytags));
+            /* get the data for this description off the registry */
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_fn(ivals[i]->addr_mode,
+                    ivals[i]->seg,
+                    ORTE_VALUE_ARRAY_GET_BASE(&(ivals[i]->tokentags), orte_gpr_replica_itag_t),
+                    num_tokens,
+                    ORTE_VALUE_ARRAY_GET_BASE(&(ivals[i]->keytags), orte_gpr_replica_itag_t),
+                    num_keys,
+                    &interim, &vals))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* if we don't get any data back, just continue - don't
+             * try to add it to the values since that would cause a
+             * zero-byte malloc
+             */
+            if (0 == interim) {
+                continue;
+            }
+            /* add these results to those we have already obtained */
+            if (0 == count) { /* first time through */
+                values = (orte_gpr_value_t**)malloc(interim *
+                                                sizeof(orte_gpr_value_t*));
+                if (NULL == values) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+            } else {
+                /* reallocate values array */
+                values = (orte_gpr_value_t**)realloc(values,
+                                (count+interim)*sizeof(orte_gpr_value_t*));
+                if (NULL == values) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+            }
+            /* add data to end of array */
+            for (k=0; k < interim; k++) {
+                values[k+count] = vals[k];
+            }
+            /* release the array of pointers - the pointers themselves
+             * will remain "alive" in the values array to be released
+             * later
+             */
+            free(vals);
+            /* update the count */
+            count += interim;
+        }
+    }
+    *ret_values = values;
+    *cnt = count;
+    return ORTE_SUCCESS;
+}

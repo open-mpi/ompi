@@ -19,16 +19,17 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
+        gpr_proxy_arithmetic_ops.c \
+        gpr_proxy_cleanup.c \
         gpr_proxy_component.c \
         gpr_proxy_compound_cmd.c \
         gpr_proxy_del_index.c \
-        gpr_proxy_cleanup.c \
+        gpr_proxy_deliver_notify_msg.c \
         gpr_proxy_dump.c \
         gpr_proxy_dump_local_trigs_subs.c \
+        gpr_proxy_general_operations.c \
         gpr_proxy_internals.c \
         gpr_proxy_put_get.c \
-        gpr_proxy_general_operations.c \
-        gpr_proxy_arithmetic_ops.c \
         gpr_proxy_subscribe.c \
         gpr_proxy.h
 

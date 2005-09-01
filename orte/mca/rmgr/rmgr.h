@@ -3,20 +3,20 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
  *
  * The Open RTE Resource Manager (RMGR) Subsystem
- * 
+ *
  * The resource manager (RMGR) subsystem serves as the central
  * switchyard for all resource management activities, including
  * resource discovery, resource allocation, process mapping, and
@@ -51,28 +51,28 @@
  * @endcode
  */
 typedef int (*orte_rmgr_base_module_query_fn_t)(void);
-                                                                                                                                          
+
 /**
  * Create a job. Allocated a jobid and initializes the job segment.
- * 
+ *
  * @param app_context   Array of application context values.
  * @param num_context   Number of entries in the app_context array.
  * @param jobid         Returns id allocated to the job.
  *
  * @code
  * orte_jobid_t jobid;
- * 
+ *
  * return_value = orte_rmgr.create(app_context,num_context,&jobid);
  * @endcode
  */
 typedef int (*orte_rmgr_base_module_create_fn_t)(
-    orte_app_context_t** app_context, 
-    size_t num_context, 
+    orte_app_context_t** app_context,
+    size_t num_context,
     orte_jobid_t *jobid);
 
 /**
  * Allocate resources to a job.
- * 
+ *
  * @code
  * return_value = orte_rmgr.allocate(orte_jobid_t jobid)
  * @endcode
@@ -107,7 +107,7 @@ typedef int (*orte_rmgr_base_module_map_fn_t)(orte_jobid_t job);
 typedef int (*orte_rmgr_base_module_launch_fn_t)(orte_jobid_t job);
 
 /**
- * Terminate an entire job. 
+ * Terminate an entire job.
  *
  * @code
  * return_value = orte_rmgr.terminate_job(orte_jobid_t jobid);
@@ -116,7 +116,7 @@ typedef int (*orte_rmgr_base_module_launch_fn_t)(orte_jobid_t job);
 typedef int (*orte_rmgr_base_module_terminate_job_fn_t)(orte_jobid_t job);
 
 /**
- * Terminate a specific process. 
+ * Terminate a specific process.
  *
  * @code
  * return_value = orte_rmgr.terminate_proc(const orte_process_name_t* proc_name);
@@ -130,7 +130,7 @@ typedef int (*orte_rmgr_base_module_terminate_proc_fn_t)(const orte_process_name
 typedef void (*orte_rmgr_cb_fn_t)(orte_jobid_t jobid, orte_proc_state_t state);
 
 /**
- * Shortcut to spawn an applications. Perform all steps required to 
+ * Shortcut to spawn an applications. Perform all steps required to
  * launch the specified application.
  *
  * (1) Create the application context - create a jobid
@@ -146,8 +146,8 @@ typedef void (*orte_rmgr_cb_fn_t)(orte_jobid_t jobid, orte_proc_state_t state);
  * @endcode
  */
 typedef int (*orte_rmgr_base_module_spawn_fn_t)(
-    orte_app_context_t** app_context, 
-    size_t num_context, 
+    orte_app_context_t** app_context,
+    size_t num_context,
     orte_jobid_t *jobid,
     orte_rmgr_cb_fn_t cbfn);
 
@@ -169,7 +169,7 @@ typedef int (*orte_rmgr_base_module_proc_stage_gate_init_fn_t)(orte_jobid_t job)
  * usually, broadcasting a message to all processes in the job that allows them
  * to proceed.
  */
-typedef void (*orte_rmgr_base_module_proc_stage_gate_mgr_fn_t)(orte_gpr_notify_data_t *data, void *user_tag);
+typedef int (*orte_rmgr_base_module_proc_stage_gate_mgr_fn_t)(orte_gpr_notify_message_t *msg);
 
 /**
  * Cleanup resources held by rmgr.
@@ -205,7 +205,7 @@ typedef orte_rmgr_base_module_1_0_0_t orte_rmgr_base_module_t;
 typedef orte_rmgr_base_module_t* (*orte_rmgr_base_component_init_fn_t)(
     int *priority);
 
- 
+
 /*
  * the standard component data structure
  */

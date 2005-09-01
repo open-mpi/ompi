@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -60,7 +60,7 @@ static void orte_gpr_keyval_construct(orte_gpr_keyval_t* keyval)
 static void orte_gpr_keyval_destructor(orte_gpr_keyval_t* keyval)
 {
     orte_byte_object_t *byteptr;
-    
+
     if (NULL != keyval->key) {
         free(keyval->key);
     }
@@ -106,15 +106,15 @@ static void orte_gpr_value_destructor(orte_gpr_value_t* reg_val)
     size_t i;
 
     if (NULL != reg_val->segment) free(reg_val->segment);
-    
+
     if (0 < reg_val->cnt && NULL != reg_val->keyvals) {
         for (i=0; i < reg_val->cnt; i++) {
             if (NULL != reg_val->keyvals[i])
                 OBJ_RELEASE(reg_val->keyvals[i]);
         }
-	   free(reg_val->keyvals);
+       free(reg_val->keyvals);
     }
-    
+
     if (0 < reg_val->num_tokens && NULL != reg_val->tokens) {
         tokens = reg_val->tokens;
         for (i=0; i < reg_val->num_tokens; i++) {
@@ -127,17 +127,17 @@ static void orte_gpr_value_destructor(orte_gpr_value_t* reg_val)
 
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
-		   orte_gpr_value_t,  /* type name */
-		   opal_object_t, /* parent "class" name */
-		   orte_gpr_value_construct, /* constructor */
-		   orte_gpr_value_destructor); /* destructor */
+           orte_gpr_value_t,  /* type name */
+           opal_object_t, /* parent "class" name */
+           orte_gpr_value_construct, /* constructor */
+           orte_gpr_value_destructor); /* destructor */
 
 
 /** NOTIFY DATA **/
 /* constructor - used to initialize state of registry value instance */
 static void orte_gpr_notify_data_construct(orte_gpr_notify_data_t* ptr)
 {
-    ptr->name = NULL;
+    ptr->target = NULL;
     ptr->id = ORTE_GPR_SUBSCRIPTION_ID_MAX;
     ptr->remove = false;
     ptr->cnt = 0;
@@ -153,8 +153,8 @@ static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
     size_t i, j;
     orte_gpr_value_t **values;
 
-    if (NULL != ptr->name) free(ptr->name);
-    
+    if (NULL != ptr->target) free(ptr->target);
+
     if (NULL != ptr->values) {
         values = (orte_gpr_value_t**)(ptr->values)->addr;
         for (i=0, j=0; j < ptr->cnt &&
@@ -195,7 +195,7 @@ static void orte_gpr_subscription_destructor(orte_gpr_subscription_t* sub)
     size_t i;
 
     if (NULL != sub->name) free(sub->name);
-    
+
     if (0 < sub->cnt && NULL != sub->values) {
         for (i=0; i < sub->cnt; i++) {
             OBJ_RELEASE(sub->values[i]);
@@ -236,7 +236,7 @@ static void orte_gpr_trigger_destructor(orte_gpr_trigger_t* trig)
         for (i=0; i < trig->cnt; i++) OBJ_RELEASE(trig->values[i]);
         free(trig->values);
     }
-    
+
 }
 
 /* define instance of opal_class_t */
@@ -251,7 +251,8 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize notify message instance */
 static void orte_gpr_notify_message_construct(orte_gpr_notify_message_t* msg)
 {
-    msg->name = NULL;
+    msg->msg_type = 0;
+    msg->target = NULL;
     msg->id = ORTE_GPR_TRIGGER_ID_MAX;
     msg->remove = false;
     msg->cnt = 0;
@@ -265,9 +266,9 @@ static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
 {
     size_t i, j;
     orte_gpr_notify_data_t **data;
-    
-    if (NULL != msg->name) free(msg->name);
-    
+
+    if (NULL != msg->target) free(msg->target);
+
     if (NULL != msg->data) {
         data = (orte_gpr_notify_data_t**)(msg->data)->addr;
         for (i=0, j=0; j < msg->cnt &&
@@ -279,7 +280,7 @@ static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
         }
         OBJ_RELEASE(msg->data);
     }
-    
+
 }
 
 /* define instance of opal_class_t */
@@ -312,7 +313,7 @@ int orte_gpr_base_open(void)
     orte_data_type_t tmp;
 
     /* Debugging / verbose output */
-    
+
     param = mca_base_param_reg_int_name("gpr_base", "verbose",
                                         "Verbosity level for the gpr framework",
                                         false, false, 0, &value);
@@ -326,12 +327,12 @@ int orte_gpr_base_open(void)
                                      ORTE_GPR_ARRAY_MAX_SIZE);
     mca_base_param_lookup_int(id, &param);
     orte_gpr_array_max_size = (size_t)param;
-    
+
     id = mca_base_param_register_int("gpr", "base", "blocksize", NULL,
                                      ORTE_GPR_ARRAY_BLOCK_SIZE);
     mca_base_param_lookup_int(id, &param);
     orte_gpr_array_block_size = (size_t)param;
-    
+
     /* register the base data types with the DPS */
     tmp = ORTE_GPR_CMD;
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_cmd,
@@ -340,7 +341,7 @@ int orte_gpr_base_open(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     tmp = ORTE_GPR_SUBSCRIPTION_ID;
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_subscription_id,
                                           orte_gpr_base_unpack_subscription_id,
@@ -369,6 +370,14 @@ int orte_gpr_base_open(void)
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_trigger_action,
                                           orte_gpr_base_unpack_trigger_action,
                                           "ORTE_GPR_TRIGGER_ACTION", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_NOTIFY_MSG_TYPE;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_msg_type,
+                                          orte_gpr_base_unpack_notify_msg_type,
+                                          "ORTE_GPR_NOTIFY_MSG_TYPE", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -431,15 +440,15 @@ int orte_gpr_base_open(void)
 
     /* Open up all available components */
 
-    if (OMPI_SUCCESS != 
-        mca_base_components_open("gpr", 
+    if (OMPI_SUCCESS !=
+        mca_base_components_open("gpr",
                                  orte_gpr_base_output,
-                                 mca_gpr_base_static_components, 
+                                 mca_gpr_base_static_components,
                                  &orte_gpr_base_components_available, true)) {
         return ORTE_ERROR;
     }
 
     /* All done */
-    
+
     return ORTE_SUCCESS;
 }

@@ -26,6 +26,7 @@
 #include "dps/dps_types.h"
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
+#include "mca/gpr/gpr_types.h"
 #include "mca/oob/oob_types.h"
 
 #ifdef HAVE_SYS_UIO_H
@@ -406,7 +407,7 @@ OMPI_DECLSPEC int mca_oob_xcast(
     orte_process_name_t* peers,
     size_t num_peers,
     orte_buffer_t* buffer,
-    mca_oob_callback_packed_fn_t cbfunc);
+    orte_gpr_trigger_cb_fn_t cbfunc);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

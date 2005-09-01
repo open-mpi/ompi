@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -48,7 +48,7 @@
  * the addition of another subscriber, and deletion. Notifications are sent via
  * the OOB communication channel.
  *
- * 
+ *
  */
 
 #ifndef ORTE_GPR_BASE_H_
@@ -85,27 +85,29 @@ extern "C" {
 /*
  * Define flag values for remote commands
  */
-#define ORTE_GPR_DELETE_SEGMENT_CMD     (uint8_t)  1
-#define ORTE_GPR_PUT_CMD                (uint8_t)  2
-#define ORTE_GPR_DELETE_ENTRIES_CMD     (uint8_t)  3
-#define ORTE_GPR_INDEX_CMD              (uint8_t)  4
-#define ORTE_GPR_SUBSCRIBE_CMD          (uint8_t)  5
-#define ORTE_GPR_UNSUBSCRIBE_CMD        (uint8_t)  6
-#define ORTE_GPR_CANCEL_TRIGGER_CMD     (uint8_t)  7
-#define ORTE_GPR_GET_CMD                (uint8_t)  8
-#define ORTE_GPR_TEST_INTERNALS_CMD     (uint8_t)  9
-#define ORTE_GPR_NOTIFY_CMD             (uint8_t) 10
-#define ORTE_GPR_DUMP_ALL_CMD           (uint8_t) 11
-#define ORTE_GPR_DUMP_SEGMENTS_CMD      (uint8_t) 12
-#define ORTE_GPR_DUMP_TRIGGERS_CMD      (uint8_t) 13
-#define ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD (uint8_t) 14
-#define ORTE_GPR_DUMP_CALLBACKS_CMD     (uint8_t) 15
-#define ORTE_GPR_INCREMENT_VALUE_CMD    (uint8_t) 16
-#define ORTE_GPR_DECREMENT_VALUE_CMD    (uint8_t) 17
-#define ORTE_GPR_COMPOUND_CMD           (uint8_t) 18
-#define ORTE_GPR_CLEANUP_JOB_CMD        (uint8_t) 19
-#define ORTE_GPR_CLEANUP_PROC_CMD       (uint8_t) 20
-#define ORTE_GPR_ERROR                  (uint8_t)0xff
+#define ORTE_GPR_DELETE_SEGMENT_CMD         (uint8_t)  1
+#define ORTE_GPR_PUT_CMD                    (uint8_t)  2
+#define ORTE_GPR_DELETE_ENTRIES_CMD         (uint8_t)  3
+#define ORTE_GPR_INDEX_CMD                  (uint8_t)  4
+#define ORTE_GPR_SUBSCRIBE_CMD              (uint8_t)  5
+#define ORTE_GPR_UNSUBSCRIBE_CMD            (uint8_t)  6
+#define ORTE_GPR_CANCEL_TRIGGER_CMD         (uint8_t)  7
+#define ORTE_GPR_GET_CMD                    (uint8_t)  8
+#define ORTE_GPR_TEST_INTERNALS_CMD         (uint8_t)  9
+#define ORTE_GPR_NOTIFY_CMD                 (uint8_t) 10
+#define ORTE_GPR_DUMP_ALL_CMD               (uint8_t) 11
+#define ORTE_GPR_DUMP_SEGMENTS_CMD          (uint8_t) 12
+#define ORTE_GPR_DUMP_TRIGGERS_CMD          (uint8_t) 13
+#define ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD     (uint8_t) 14
+#define ORTE_GPR_DUMP_CALLBACKS_CMD         (uint8_t) 15
+#define ORTE_GPR_INCREMENT_VALUE_CMD        (uint8_t) 16
+#define ORTE_GPR_DECREMENT_VALUE_CMD        (uint8_t) 17
+#define ORTE_GPR_COMPOUND_CMD               (uint8_t) 18
+#define ORTE_GPR_CLEANUP_JOB_CMD            (uint8_t) 19
+#define ORTE_GPR_CLEANUP_PROC_CMD           (uint8_t) 20
+#define ORTE_GPR_DUMP_A_TRIGGER_CMD         (uint8_t) 21
+#define ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD    (uint8_t) 22
+#define ORTE_GPR_ERROR                      (uint8_t)0xff
 
 typedef uint8_t orte_gpr_cmd_flag_t;
 #define ORTE_GPR_CMD_T ORTE_UINT8
@@ -125,7 +127,7 @@ typedef uint8_t orte_gpr_cmd_flag_t;
                                size_t n, char **keys,
                                orte_data_type_t *types,
                                orte_gpr_value_union_t *data_values);
-                               
+
    OMPI_DECLSPEC int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
                                      char *trig_name,
                                      char *sub_name,
@@ -162,14 +164,26 @@ typedef uint8_t orte_gpr_cmd_flag_t;
                                         orte_gpr_trigger_cb_fn_t cbfunc,
                                         void *user_tag);
 
+   OMPI_DECLSPEC int orte_gpr_base_define_trigger_level(orte_gpr_trigger_id_t *id,
+                                        char *trig_name,
+                                        orte_gpr_trigger_action_t action,
+                                        orte_gpr_addr_mode_t addr_mode,
+                                        char *segment,
+                                        char **tokens,
+                                        size_t n,
+                                        char **keys,
+                                        size_t *levels,
+                                        orte_gpr_trigger_cb_fn_t cbfunc,
+                                        void *user_tag);
+
     /* general usage functions */
     OMPI_DECLSPEC int orte_gpr_base_pack_delete_segment(orte_buffer_t *cmd,
                                                         char *segment);
     OMPI_DECLSPEC int orte_gpr_base_unpack_delete_segment(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_delete_entries(orte_buffer_t *buffer,
-					orte_gpr_addr_mode_t mode,
-					char *segment, char **tokens, char **keys);
+                    orte_gpr_addr_mode_t mode,
+                    char *segment, char **tokens, char **keys);
     OMPI_DECLSPEC int orte_gpr_base_unpack_delete_entries(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_index(orte_buffer_t *cmd, char *segment);
@@ -183,7 +197,7 @@ typedef uint8_t orte_gpr_cmd_flag_t;
     OMPI_DECLSPEC int orte_gpr_base_unpack_subscribe(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_unsubscribe(orte_buffer_t *cmd,
-				      orte_gpr_subscription_id_t id);
+                      orte_gpr_subscription_id_t id);
     OMPI_DECLSPEC int orte_gpr_base_unpack_unsubscribe(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_cancel_trigger(orte_buffer_t *cmd,
@@ -191,19 +205,26 @@ typedef uint8_t orte_gpr_cmd_flag_t;
     OMPI_DECLSPEC int orte_gpr_base_unpack_cancel_trigger(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_put(orte_buffer_t *cmd,
-			                                 size_t cnt, orte_gpr_value_t **values);
+                                             size_t cnt, orte_gpr_value_t **values);
     OMPI_DECLSPEC int orte_gpr_base_unpack_put(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_get(orte_buffer_t *cmd,
-			      orte_gpr_addr_mode_t mode,
-			      char *segment, char **tokens, char **keys);
+                  orte_gpr_addr_mode_t mode,
+                  char *segment, char **tokens, char **keys);
     OMPI_DECLSPEC int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret,
                    size_t *cnt, orte_gpr_value_t ***values);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_all(orte_buffer_t *cmd);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_segments(orte_buffer_t *cmd, char *segment);
-    OMPI_DECLSPEC int orte_gpr_base_pack_dump_triggers(orte_buffer_t *cmd);
-    OMPI_DECLSPEC int orte_gpr_base_pack_dump_subscriptions(orte_buffer_t *cmd);
+    OMPI_DECLSPEC int orte_gpr_base_pack_dump_triggers(orte_buffer_t *cmd,
+                   orte_gpr_trigger_id_t start);
+    OMPI_DECLSPEC int orte_gpr_base_pack_dump_subscriptions(orte_buffer_t *cmd,
+                   orte_gpr_subscription_id_t start);
+    OMPI_DECLSPEC int orte_gpr_base_pack_dump_a_trigger(orte_buffer_t *cmd,
+                        char *name, orte_gpr_trigger_id_t id);
+    OMPI_DECLSPEC int orte_gpr_base_pack_dump_a_subscription(orte_buffer_t *cmd,
+                        char *name,
+                        orte_gpr_subscription_id_t id);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_callbacks(orte_buffer_t *cmd);
     OMPI_DECLSPEC int orte_gpr_base_print_dump(orte_buffer_t *buffer, int output_id);
     OMPI_DECLSPEC void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer,
@@ -219,11 +240,11 @@ typedef uint8_t orte_gpr_cmd_flag_t;
     OMPI_DECLSPEC int orte_gpr_base_pack_cleanup_job(orte_buffer_t *buffer,
                                                      orte_jobid_t jobid);
     OMPI_DECLSPEC int orte_gpr_base_unpack_cleanup_job(orte_buffer_t *buffer, int *ret);
-    
+
     OMPI_DECLSPEC int orte_gpr_base_pack_cleanup_proc(orte_buffer_t *buffer,
                                                       orte_process_name_t *proc);
     OMPI_DECLSPEC int orte_gpr_base_unpack_cleanup_proc(orte_buffer_t *buffer, int *ret);
-    
+
     OMPI_DECLSPEC int orte_gpr_base_pack_increment_value(orte_buffer_t *cmd, orte_gpr_value_t *value);
     OMPI_DECLSPEC int orte_gpr_base_unpack_increment_value(orte_buffer_t *buffer, int *ret);
 
@@ -244,6 +265,9 @@ int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
                        size_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, void *src,
                        size_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
@@ -284,6 +308,9 @@ int orte_gpr_base_unpack_trigger_action(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_addr_mode(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_notify_msg_type(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_keyval(orte_buffer_t *buffer, void *dest,

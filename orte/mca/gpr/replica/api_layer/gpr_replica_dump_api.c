@@ -98,7 +98,7 @@ int orte_gpr_replica_dump_segments(char *segment, int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_triggers(int output_id)
+int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
 {
     orte_buffer_t *buffer;
     int rc;
@@ -116,7 +116,7 @@ int orte_gpr_replica_dump_triggers(int output_id)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_triggers_fn(buffer))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_triggers_fn(buffer, start))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -130,7 +130,7 @@ int orte_gpr_replica_dump_triggers(int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_subscriptions(int output_id)
+int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start, int output_id)
 {
     orte_buffer_t *buffer;
     int rc;
@@ -143,7 +143,7 @@ int orte_gpr_replica_dump_subscriptions(int output_id)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_subscriptions_fn(buffer))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_subscriptions_fn(buffer, start))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -156,6 +156,133 @@ int orte_gpr_replica_dump_subscriptions(int output_id)
 
     return rc;
 }
+
+int orte_gpr_replica_dump_a_trigger(
+                            char *name,
+                            orte_gpr_trigger_id_t id,
+                            int output_id)
+{
+    orte_buffer_t buffer;
+    orte_gpr_replica_trigger_t **trigs;
+    size_t i, j;
+    int rc;
+
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+
+    if (NULL == name) {  /* dump the trigger corresponding to the provided id */
+        trigs = (orte_gpr_replica_trigger_t**)(orte_gpr_replica.triggers)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
+                       i < (orte_gpr_replica.triggers)->size; i++) {
+            if (NULL != trigs[i]) {
+                j++;
+                if (id == trigs[i]->index) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_trigger(&buffer, trigs[i]))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                    goto PROCESS;
+                }
+            }
+        }
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OBJ_DESTRUCT(&buffer);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return ORTE_ERR_NOT_FOUND;
+    } else { /* dump the named trigger */
+        trigs = (orte_gpr_replica_trigger_t**)(orte_gpr_replica.triggers)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
+                       i < (orte_gpr_replica.triggers)->size; i++) {
+            if (NULL != trigs[i]) {
+                j++;
+                if (0 == strcmp(name, trigs[i]->name)) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_trigger(&buffer, trigs[i]))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                    goto PROCESS;
+                }
+            }
+        }
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OBJ_DESTRUCT(&buffer);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+PROCESS:
+    if (ORTE_SUCCESS == rc) {
+        orte_gpr_base_print_dump(&buffer, output_id);
+    }
+    OBJ_DESTRUCT(&buffer);
+
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
+    return rc;
+}
+
+
+int orte_gpr_replica_dump_a_subscription(char *name,
+                            orte_gpr_subscription_id_t id,
+                            int output_id)
+{
+    orte_buffer_t buffer;
+    orte_gpr_replica_subscription_t **subs;
+    size_t i, j;
+    int rc;
+
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+
+    if (NULL == name) {  /* dump the subscription corresponding to the provided id */
+        subs = (orte_gpr_replica_subscription_t**)(orte_gpr_replica.subscriptions)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_subs &&
+                       i < (orte_gpr_replica.subscriptions)->size; i++) {
+            if (NULL != subs[i]) {
+                j++;
+                if (id == subs[i]->index) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_subscription(&buffer, subs[i]))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                    goto PROCESS;
+                }
+            }
+        }
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OBJ_DESTRUCT(&buffer);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return ORTE_ERR_NOT_FOUND;
+    } else { /* dump the named subscription */
+        subs = (orte_gpr_replica_subscription_t**)(orte_gpr_replica.subscriptions)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_subs &&
+                       i < (orte_gpr_replica.subscriptions)->size; i++) {
+            if (NULL != subs[i]) {
+                j++;
+                if (0 == strcmp(name, subs[i]->name)) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_subscription(&buffer, subs[i]))) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                    goto PROCESS;
+                }
+            }
+        }
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OBJ_DESTRUCT(&buffer);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+PROCESS:
+    if (ORTE_SUCCESS == rc) {
+        orte_gpr_base_print_dump(&buffer, output_id);
+    }
+    OBJ_DESTRUCT(&buffer);
+
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
+    return rc;
+}
+
 
 int orte_gpr_replica_dump_callbacks(int output_id)
 {

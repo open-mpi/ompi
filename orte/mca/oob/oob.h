@@ -194,7 +194,7 @@ typedef int (*mca_oob_base_module_xcast_fn_t)(orte_process_name_t* root,
     orte_process_name_t* peers,
     size_t num_peers,
     orte_buffer_t* buffer,
-    mca_oob_callback_packed_fn_t cbfunc);
+    orte_gpr_trigger_cb_fn_t cbfunc);
 
 /**
  * OOB Module
