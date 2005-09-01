@@ -48,7 +48,9 @@ ompi_status_public_t statuses[2];
     err = ompi_request_wait_all( 2, reqs, statuses );
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
-    *status = statuses[0];
+    if (MPI_STATUS_IGNORE!=status) {
+        *status = statuses[0];
+    }
     
     return (MPI_SUCCESS);
 
