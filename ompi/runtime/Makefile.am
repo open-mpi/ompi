@@ -40,7 +40,7 @@ libmpiruntime_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mpi/runtime
+ompidir = $(includedir)/openmpi/ompi/runtime
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
