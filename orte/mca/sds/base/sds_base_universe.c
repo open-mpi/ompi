@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -79,21 +79,27 @@ orte_sds_base_basic_contact_universe(void)
             }
             if (ORTE_ERR_NOT_FOUND != ret) {
                 /* if it exists but no contact could be established,
-                 * define unique name based on current one.
-                 * and start new universe with me as seed
+                 * we first check to see if this was a default universe
+                 * or one that the user specifically requested. If
+                 * it's the default, then we quietly generate a unique
+                 * new name and start a new universe behind the scenes.
+                 * If it was not the default (i.e., the user specifically
+                 * directed us to a named universe), then we return an
+                 * error code and abort.
                  */
-                universe = strdup(orte_universe_info.name);
-                free(orte_universe_info.name);
-                orte_universe_info.name = NULL;
-                pid = getpid();
-                if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, (int)pid)) {
-                    opal_output(0, "orte_init: failed to create unique universe name");
-                    return ret;
+                if (0 == strcmp(ORTE_DEFAULT_UNIVERSE, orte_universe_info.name)) {
+                    /* default universe - generate unique name and proceed */
+                    universe = strdup(orte_universe_info.name);
+                    free(orte_universe_info.name);
+                    orte_universe_info.name = NULL;
+                    pid = getpid();
+                    if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, (int)pid)) {
+                        opal_output(0, "orte_init: failed to create unique universe name");
+                        return ret;
+                    }
+                } else { /* user-specified name - abort */
+                    return ORTE_ERR_UNREACH;
                 }
-                opal_output(0, "Could not join a running, existing universe");
-                opal_output(0, "Establishing a new one named: %s",
-                                orte_universe_info.name);
-    
             }
             orte_process_info.seed = true;
             /* since we are seed, ensure that all replica info is NULL'd */
@@ -105,7 +111,7 @@ orte_sds_base_basic_contact_universe(void)
                     free(orte_process_info.ns_replica);
                     orte_process_info.ns_replica = NULL;
             }
-    
+
             if (NULL != orte_process_info.gpr_replica_uri) {
                 free(orte_process_info.gpr_replica_uri);
                 orte_process_info.gpr_replica_uri = NULL;
@@ -125,7 +131,7 @@ int
 orte_sds_base_seed_set_name(void)
 {
     int id, flag, rc;
-    
+
     /* if we're a seed and we're not infrastructure, we're also a
        singleton.  So set the singleton flag in that case */
     id = mca_base_param_find("orte", NULL, "infrastructure");
@@ -142,6 +148,6 @@ orte_sds_base_seed_set_name(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     return ORTE_SUCCESS;
 }
