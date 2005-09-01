@@ -208,12 +208,12 @@ int mca_btl_mvapi_component_open(void)
     mca_base_param_lookup_int(param, &value); 
     mca_btl_mvapi_component.leave_pinned = value; 
     mca_base_param_reg_int(&mca_btl_mvapi_component.super.btl_version, 
-                           "max_send_tokens", 
-                           "Maximum number of send tokens", 
+                           "max_wr_sq_tokens", 
+                           "Maximum number of send/rdma work request tokens", 
                            false, 
                            false, 
                            16, 
-                           &(mca_btl_mvapi_component.max_send_tokens)); 
+                           &(mca_btl_mvapi_component.max_wr_sq_tokens)); 
     
     mca_btl_mvapi_component.max_send_size = mca_btl_mvapi_module.super.btl_max_send_size; 
     mca_btl_mvapi_component.eager_limit = mca_btl_mvapi_module.super.btl_eager_limit; 
@@ -551,21 +551,18 @@ int mca_btl_mvapi_component_progress()
                 return OMPI_ERROR; 
            
             case VAPI_CQE_SQ_SEND_DATA :
-                frag = (mca_btl_mvapi_frag_t*) comp.id; 
-                frag->endpoint->send_tokens++;
-                
-                /* fall through */ 
             case VAPI_CQE_SQ_RDMA_READ:
             case VAPI_CQE_SQ_RDMA_WRITE:
-           
+                frag = (mca_btl_mvapi_frag_t*) comp.id; 
+                OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_hp, 1);
                 /* Process a completed send or an rdma write  */
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
                 /* check and see if we need to progress pending sends */ 
-                if(frag->endpoint->send_tokens && !opal_list_is_empty(&(frag->endpoint->pending_send_frags))) { 
+                if(frag->endpoint->wr_sq_tokens_hp && !opal_list_is_empty(&(frag->endpoint->pending_frags_hp))) { 
                     opal_list_item_t *frag_item;
-                    frag_item = opal_list_remove_first(&(frag->endpoint->pending_send_frags));
+                    frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_hp));
                     frag = (mca_btl_mvapi_frag_t *) frag_item;
                     
                     if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { 
@@ -627,9 +624,21 @@ int mca_btl_mvapi_component_progress()
                 
                 /* Process a completed send */
                 frag = (mca_btl_mvapi_frag_t*) comp.id; 
+                OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_lp, 1); 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
+                /* check and see if we need to progress pending sends */ 
+                if(frag->endpoint->wr_sq_tokens_lp && !opal_list_is_empty(&(frag->endpoint->pending_frags_lp))) { 
+                    opal_list_item_t *frag_item;
+                    frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_lp));
+                    frag = (mca_btl_mvapi_frag_t *) frag_item;
+                    
+                    if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { 
+                        BTL_ERROR(("error in posting pending send\n"));
+                    }
+                }
+                
                 break;
                 
             case VAPI_CQE_RQ_SEND_DATA:

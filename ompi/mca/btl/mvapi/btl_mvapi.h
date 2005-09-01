@@ -118,7 +118,7 @@ struct mca_btl_mvapi_component_t {
     uint32_t ib_static_rate; 
     uint32_t ib_src_path_bits; 
     /* number of send tokes available */ 
-    uint32_t max_send_tokens; 
+    uint32_t max_wr_sq_tokens; 
 
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
 
