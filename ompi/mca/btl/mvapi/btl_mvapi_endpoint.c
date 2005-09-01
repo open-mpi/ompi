@@ -65,37 +65,33 @@ static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi
     VAPI_qp_hndl_t qp_hndl; 
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
         
-        if(0 == endpoint->wr_sq_tokens_hp) { 
+        /* atomically test and acquire a token */
+        if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,-1) < 0) { 
             BTL_VERBOSE(("Queing because no send tokens \n"));
-            
-            opal_list_append(&endpoint->pending_frags_hp,
-                             (opal_list_item_t *)frag);
-            
+            opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
+            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp, 1);
             return OMPI_SUCCESS;
-            
         } else { 
-            
             frag->sr_desc.remote_qp = endpoint->rem_qp_num_high; 
             qp_hndl = endpoint->lcl_qp_hndl_high; 
-            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp, -1); 
         }
+
     } else {
-        if(0 == endpoint->wr_sq_tokens_lp) { 
+
+        /* atomically test and acquire a token */
+        if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) {
             BTL_VERBOSE(("Queing because no send tokens \n"));
-            
-            opal_list_append(&endpoint->pending_frags_lp,
-                             (opal_list_item_t *)frag);
-            
+            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
+            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,1);
             return OMPI_SUCCESS;
-            
         } else { 
             frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
             qp_hndl = endpoint->lcl_qp_hndl_low; 
-            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp, -1); 
         }
     } 
     frag->sr_desc.opcode = VAPI_SEND; 
-    frag->sg_entry.len = frag->segment.seg_len + ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  /* sizeof(mca_btl_mvapi_header_t); */ 
+    frag->sg_entry.len = frag->segment.seg_len + 
+        ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  
 
     if(frag->sg_entry.len <= mvapi_btl->ib_inline_max) { 
             frag->ret = EVAPI_post_inline_sr(mvapi_btl->nic, 
