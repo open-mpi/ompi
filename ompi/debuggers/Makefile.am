@@ -18,6 +18,15 @@ include $(top_srcdir)/config/Makefile.options
 
 noinst_LTLIBRARIES = libdebuggers.la
 
+# This is not quite in the Automake spirit, but we have to do it.
+# Since the totalview portion of the library must be built with -g, we
+# must eliminate the CFLAGS that are passed in here by default (which
+# may already have debugging and/or optimization flags).  We use
+# post-processed forms of the CFLAGS in the library targets down
+# below.
+
+CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
+
 # Source code files
 
 headers = \

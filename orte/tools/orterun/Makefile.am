@@ -19,6 +19,15 @@ include $(top_srcdir)/config/Makefile.options
 EXTRA_DIST = $(pkgdata_DATA)
 pkgdata_DATA = help-orterun.txt
 
+# This is not quite in the Automake spirit, but we have to do it.
+# Since the totalview portion of the library must be built with -g, we
+# must eliminate the CFLAGS that are passed in here by default (which
+# may already have debugging and/or optimization flags).  We use
+# post-processed forms of the CFLAGS in the library targets down
+# below.
+
+CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
+
 libs = \
         $(top_builddir)/orte/liborte.la \
         $(top_builddir)/opal/libopal.la
