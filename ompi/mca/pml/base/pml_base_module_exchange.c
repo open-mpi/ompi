@@ -278,7 +278,7 @@ orte_gpr_base_dump_notify_data(data,0);
                         void* bytes = NULL;
                         size_t cnt;
                         size_t num_bytes;
-                        if(strcmp(keyval[j]->key,"modex") != 0)
+                        if(strcmp(keyval[j]->key,OMPI_MODEX_KEY) != 0)
                             continue;
 
                         OBJ_CONSTRUCT(&buffer, orte_buffer_t);
@@ -324,7 +324,6 @@ orte_gpr_base_dump_notify_data(data,0);
                         }
                         if (num_bytes != 0) {
                             if(NULL == (bytes = malloc(num_bytes))) {
-                                opal_output(0, "Unable to allocate memory (length %d bytes).\n", num_bytes );
                                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                                 continue;
                             }
@@ -437,11 +436,9 @@ static int mca_pml_base_modex_subscribe(orte_process_name_t* name)
                                          ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
                                          segment,
                                          NULL,  /* look at all containers on this segment */
-                                         "modex",
+                                         OMPI_MODEX_KEY,
                                          mca_pml_base_modex_registry_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
-        opal_output(0, "mca_pml_base_modex_exchange: "
-            "orte_gpr.subscribe failed with return code %d\n", rc);
         free(sub_name);
         free(trig_name);
         free(segment);
@@ -474,50 +471,38 @@ int mca_pml_base_modex_send(
     size_t size)
 {
     orte_jobid_t jobid;
-    orte_gpr_value_t *value;
+    orte_gpr_value_union_t value;
     int rc;
     orte_buffer_t buffer;
-    char* ptr;
-
-    value = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == value) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
+    size_t i, num_tokens;
+    char *ptr, *segment, **tokens;
 
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value->segment), jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-
-    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens),
-                                &(value->num_tokens), orte_process_info.my_name))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&tokens,
+                                &num_tokens, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
+        free(segment);
         return rc;
     }
-    value->addr_mode = ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR;
-    value->cnt = 1;
-    value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    (value->keyvals[0])->type = ORTE_BYTE_OBJECT;
+
+
 #if 0
-    (value->keyvals[0])->value.byteobject.size = size;
-    (value->keyvals[0])->value.byteobject.bytes = (void *)malloc(size);
-    if(NULL == (value->keyvals[0])->value.byteobject.bytes) {
+    value.byteobject.size = size;
+    value.byteobject.bytes = (void *)malloc(size);
+    if(NULL == value.byteobject.bytes) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    memcpy((value->keyvals[0])->value.byteobject.bytes, data, size);
+    memcpy((value.byteobject.bytes, data, size);
 
     asprintf(&((value->keyvals[0])->key), "modex-%s-%s-%d-%d",
         source_component->mca_type_name,
@@ -546,19 +531,24 @@ int mca_pml_base_modex_send(
     if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, (void*)data, size, ORTE_BYTE))) {
         goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.unload(&buffer,
-        (void**)&(value->keyvals[0])->value.byteobject.bytes,
-        (size_t*)&(value->keyvals[0])->value.byteobject.size))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unload(&buffer, (void**)&value.byteobject.bytes,
+        (size_t*)&value.byteobject.size))) {
         goto cleanup;
     }
     OBJ_DESTRUCT(&buffer);
-    value->keyvals[0]->key = strdup("modex");
 #endif
 
-    rc = orte_gpr.put(1, &value);
+    rc = orte_gpr.put_1(ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
+                        segment, tokens, OMPI_MODEX_KEY, ORTE_BYTE_OBJECT, value);
 
 cleanup:
-    OBJ_RELEASE(value);
+    free(segment);
+    for (i=0; i < num_tokens; i++) {
+        free(tokens[i]);
+        tokens[i] = NULL;
+    }
+    if (NULL != tokens) free(tokens);
+
     return rc;
 }
 

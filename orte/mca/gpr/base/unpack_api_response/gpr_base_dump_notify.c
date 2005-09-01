@@ -276,23 +276,23 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
             break;
 
         case ORTE_UINT8:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT8\tValue: %d", (int)iptr->value.ui8);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT8\tValue: %u", (int)iptr->value.ui8);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
 
         case ORTE_UINT16:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT16\tValue: %d", (int)iptr->value.ui16);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT16\tValue: %u", (int)iptr->value.ui16);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
 
         case ORTE_UINT32:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT32\tValue: %d", (int)iptr->value.ui32);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT32\tValue: %u", (int)iptr->value.ui32);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
 
 #ifdef HAVE_INT64_T
         case ORTE_UINT64:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT64\tValue: %d", (int)iptr->value.ui64);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT64\tValue: %u", (int)iptr->value.ui64);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
 #endif
