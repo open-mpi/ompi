@@ -275,10 +275,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
         }
         orte_gpr_replica_globals.num_acted_upon = 0;
 
-        if (ORTE_SUCCESS != (rc = orte_bitmap_init(&(orte_gpr_replica_globals.srch_itag), 64))) {
-            ORTE_ERROR_LOG(rc);
-            return NULL;
-        }
+        OBJ_CONSTRUCT(&(orte_gpr_replica_globals.srch_itag), orte_bitmap_t);
 
         if (orte_gpr_replica_globals.debug) {
             opal_output(0, "nb receive setup");
@@ -316,37 +313,81 @@ int orte_gpr_replica_finalize(void)
     size_t i, j;
     orte_gpr_replica_segment_t** seg;
     orte_gpr_replica_trigger_t** trig;
+    orte_gpr_replica_subscription_t** subs;
     orte_gpr_replica_callbacks_t* cb;
+    orte_gpr_replica_local_subscriber_t **lsubs;
+    orte_gpr_replica_local_trigger_t **ltrigs;
 
     if (orte_gpr_replica_globals.debug) {
         opal_output(0, "finalizing gpr replica");
     }
 
-    seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
-    for (i=0, j=0; j < orte_gpr_replica.num_segs &&
-                   i < (orte_gpr_replica.segments)->size; i++) {
-         if (NULL != seg[i]) {
-             j++;
-             OBJ_RELEASE(seg[i]);
-         }
+    if (NULL != orte_gpr_replica.segments) {
+        seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_segs &&
+                    i < (orte_gpr_replica.segments)->size; i++) {
+            if (NULL != seg[i]) {
+                j++;
+                OBJ_RELEASE(seg[i]);
+            }
+        }
+        OBJ_RELEASE(orte_gpr_replica.segments);
     }
-    OBJ_RELEASE(orte_gpr_replica.segments);
 
-    trig = (orte_gpr_replica_trigger_t**)(orte_gpr_replica.triggers)->addr;
-    for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
-                   i < (orte_gpr_replica.triggers)->size; i++) {
-         if (NULL != trig[i]) {
-             j++;
-             OBJ_RELEASE(trig[i]);
-         }
+    if (NULL != orte_gpr_replica.triggers) {
+        trig = (orte_gpr_replica_trigger_t**)(orte_gpr_replica.triggers)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
+                    i < (orte_gpr_replica.triggers)->size; i++) {
+            if (NULL != trig[i]) {
+                j++;
+                OBJ_RELEASE(trig[i]);
+            }
+        }
+        OBJ_RELEASE(orte_gpr_replica.triggers);
     }
-    OBJ_RELEASE(orte_gpr_replica.triggers);
+
+    if (NULL != orte_gpr_replica.subscriptions) {
+        subs = (orte_gpr_replica_subscription_t**)(orte_gpr_replica.subscriptions)->addr;
+        for (i=0, j=0; j < orte_gpr_replica.num_subs &&
+                    i < (orte_gpr_replica.subscriptions)->size; i++) {
+            if (NULL != subs[i]) {
+                j++;
+                OBJ_RELEASE(subs[i]);
+            }
+        }
+        OBJ_RELEASE(orte_gpr_replica.subscriptions);
+    }
 
     while (NULL != (cb = (orte_gpr_replica_callbacks_t*)opal_list_remove_first(&orte_gpr_replica.callbacks))) {
         OBJ_RELEASE(cb);
     }
     OBJ_DESTRUCT(&orte_gpr_replica.callbacks);
 
+
+    /* clear the local subscriptions and triggers */
+    lsubs = (orte_gpr_replica_local_subscriber_t**)(orte_gpr_replica_globals.local_subscriptions)->addr;
+    if (NULL != orte_gpr_replica_globals.local_subscriptions) {
+        for (i=0, j=0; j < orte_gpr_replica_globals.num_local_subs &&
+                    i < (orte_gpr_replica_globals.local_subscriptions)->size; i++) {
+            if (NULL != lsubs[i]) {
+                j++;
+                OBJ_RELEASE(lsubs[i]);
+            }
+        }
+        OBJ_RELEASE(orte_gpr_replica_globals.local_subscriptions);
+    }
+
+    ltrigs = (orte_gpr_replica_local_trigger_t**)(orte_gpr_replica_globals.local_triggers)->addr;
+    if (NULL != orte_gpr_replica_globals.local_triggers) {
+        for (i=0, j=0; j < orte_gpr_replica_globals.num_local_trigs &&
+                    i < (orte_gpr_replica_globals.local_triggers)->size; i++) {
+            if (NULL != ltrigs[i]) {
+                j++;
+                OBJ_RELEASE(ltrigs[i]);
+            }
+        }
+        OBJ_RELEASE(orte_gpr_replica_globals.local_triggers);
+    }
 
     /* clean up the globals */
 
@@ -358,6 +399,10 @@ int orte_gpr_replica_finalize(void)
         OBJ_RELEASE(orte_gpr_replica_globals.overwritten);
     }
 
+    if (NULL != orte_gpr_replica_globals.sub_ptrs) {
+        OBJ_RELEASE(orte_gpr_replica_globals.sub_ptrs);
+    }
+
     if (NULL != orte_gpr_replica_globals.srch_ival) {
         OBJ_RELEASE(orte_gpr_replica_globals.srch_ival);
     }
@@ -365,6 +410,8 @@ int orte_gpr_replica_finalize(void)
     if (NULL != orte_gpr_replica_globals.acted_upon) {
         OBJ_RELEASE(orte_gpr_replica_globals.acted_upon);
     }
+
+    OBJ_DESTRUCT(&(orte_gpr_replica_globals.srch_itag));
 
     /* All done */
     if (orte_gpr_replica_globals.isolate) {

@@ -715,7 +715,7 @@ int mca_oob_tcp_init(void)
     int rc;
     opal_list_item_t* item;
     char *tmp, *tmp2, *tmp3;
-    size_t num_tokens;
+    size_t i, num_tokens;
 
     /* random delay to stagger connections back to seed */
 #if defined(WIN32)
@@ -860,6 +860,11 @@ int mca_oob_tcp_init(void)
     }
 
     free(segment);
+    for(i=0; i < num_tokens; i++) {
+        free(tokens[i]);
+        tokens[i] = NULL;
+    }
+    if (NULL != tokens) free(tokens);
     free(values[0].byteobject.bytes);
     free(values[1].strptr);
 
@@ -951,7 +956,8 @@ char* mca_oob_tcp_get_addr(void)
         if(ptr != contact_info) {
             ptr += sprintf(ptr, ";");
         }
-        ptr += sprintf(ptr, "tcp://%s:%d", inet_ntoa(addr.sin_addr), ntohs(mca_oob_tcp_component.tcp_listen_port));
+        ptr += sprintf(ptr, "tcp://%s:%d", inet_ntoa(addr.sin_addr),
+                    ntohs(mca_oob_tcp_component.tcp_listen_port));
     }
     return contact_info;
 }

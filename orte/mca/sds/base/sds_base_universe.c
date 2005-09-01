@@ -95,8 +95,10 @@ orte_sds_base_basic_contact_universe(void)
                     pid = getpid();
                     if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, (int)pid)) {
                         opal_output(0, "orte_init: failed to create unique universe name");
+                        free(universe);
                         return ret;
                     }
+                    free(universe);
                 } else { /* user-specified name - abort */
                     opal_output(0, "orte_init: could not contact the specified universe name %s",
                         orte_universe_info.name);

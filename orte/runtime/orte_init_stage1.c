@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -86,7 +86,7 @@ int orte_init_stage1(bool infrastructure)
     if (ORTE_SUCCESS != (ret = orte_proc_info())) {
         return ret;
     }
-    
+
     /* Ensure the universe_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_univ_info())) {
         return ret;
@@ -99,9 +99,9 @@ int orte_init_stage1(bool infrastructure)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+
     /*
-     * Open the name services to ensure access to local functions 
+     * Open the name services to ensure access to local functions
      */
     if (OMPI_SUCCESS != (ret = orte_ns_base_open())) {
         return ret;
@@ -111,9 +111,9 @@ int orte_init_stage1(bool infrastructure)
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
         return ret;
     }
-    
+
     /*****   ERROR LOGGING NOW AVAILABLE *****/
-    
+
     /* check for debug flag */
     if (0 > (ret =  mca_base_param_register_int("orte", "debug", NULL, NULL, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -125,7 +125,7 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * Initialize the event library 
+     * Initialize the event library
     */
     if (OMPI_SUCCESS != (ret = opal_event_init())) {
         ORTE_ERROR_LOG(ret);
@@ -199,7 +199,7 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * Name Server 
+     * Name Server
      */
     if (OMPI_SUCCESS != (ret = orte_ns_base_select())) {
         ORTE_ERROR_LOG(ret);
@@ -207,13 +207,13 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * Registry 
+     * Registry
      */
     if (ORTE_SUCCESS != (ret = orte_gpr_base_select())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
- 
+
     /* set contact info for ns/gpr */
     if(NULL != orte_process_info.ns_replica_uri) {
         orte_rml.set_uri(orte_process_info.ns_replica_uri);
@@ -235,7 +235,7 @@ int orte_init_stage1(bool infrastructure)
     if (orte_process_info.seed) {
         orte_universe_info.seed_uri = orte_rml.get_uri();
     }
-    
+
     /* setup my session directory */
     if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobid_str, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(ret);
@@ -245,7 +245,7 @@ int orte_init_stage1(bool infrastructure)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
- 
+
     if (orte_debug_flag) {
         opal_output(0, "[%lu,%lu,%lu] setting up session dir with",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
@@ -303,8 +303,8 @@ int orte_init_stage1(bool infrastructure)
         free(contact_path);
     }
 
-    /* 
-     * setup the resource manager 
+    /*
+     * setup the resource manager
      */
 
     if (ORTE_SUCCESS != (ret = orte_rmgr_base_open())) {
@@ -316,7 +316,7 @@ int orte_init_stage1(bool infrastructure)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+
     /*
      * setup the state-of-health monitor
      */
@@ -329,9 +329,9 @@ int orte_init_stage1(bool infrastructure)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+
      /* if we are a singleton or the seed, setup the infrastructure for our job */
- 
+
     if(orte_process_info.singleton || orte_process_info.seed) {
         char *site, *resource;
 
@@ -339,7 +339,7 @@ int orte_init_stage1(bool infrastructure)
             ORTE_ERROR_LOG(ret);
             return ret;
         }
-        
+
         /* If there is no existing cellid, create one */
         my_cellid = 0; /* JJH Assertion/Repair until cellid's are fixed */
         ret = orte_ns.get_cell_info(my_cellid, &site, &resource);
@@ -350,7 +350,7 @@ int orte_init_stage1(bool infrastructure)
                 ORTE_ERROR_LOG(ret);
                 return ret;
             }
-            
+
             if(my_cellid != 0) { /* JJH Assertion/Repair until cellid's are fixed */
                 my_cellid = 0;
             }
@@ -359,7 +359,7 @@ int orte_init_stage1(bool infrastructure)
             ORTE_ERROR_LOG(ret);
             return ret;
         }
-        
+
         if (ORTE_SUCCESS != (ret = orte_ns.get_cellid(&my_cellid, orte_process_info.my_name))) {
             ORTE_ERROR_LOG(ret);
             return ret;
@@ -372,7 +372,7 @@ int orte_init_stage1(bool infrastructure)
              * really know that info for a singleton, we make the assumption
              * that the allocation is unity and place a structure on the
              * registry for it
-             * 
+             *
              * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
              * FOR ANY OTHER CASE
              */
@@ -389,11 +389,11 @@ int orte_init_stage1(bool infrastructure)
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            
+
             rds_item->site   = strdup("Singleton");
             rds_item->name   = strdup(orte_system_info.nodename);
             rds_item->cellid = my_cellid;
-            
+
             /* Set up data structure for RAS item */
             ras_item->node_name        = strdup(rds_item->name);
             ras_item->node_arch        = strdup("unknown");
@@ -413,7 +413,7 @@ int orte_init_stage1(bool infrastructure)
             new_attr->keyval.type         = ORTE_STRING;
             new_attr->keyval.value.strptr = strdup(ras_item->node_name);
             opal_list_append(&(rds_item->attributes), &new_attr->super);
-            
+
             new_attr = OBJ_NEW(orte_rds_cell_attr_t);
             if (NULL == new_attr) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -423,7 +423,7 @@ int orte_init_stage1(bool infrastructure)
             new_attr->keyval.type         = ORTE_CELLID;
             new_attr->keyval.value.cellid = rds_item->cellid;
             opal_list_append(&(rds_item->attributes), &new_attr->super);
-            
+
             opal_list_append(&rds_single_host, &rds_item->super);
 
             /* Store into registry */
@@ -438,11 +438,11 @@ int orte_init_stage1(bool infrastructure)
                 ORTE_ERROR_LOG(ret);
                 return ret;
             }
-            
+
             OBJ_DESTRUCT(&single_host);
             OBJ_DESTRUCT(&rds_single_host);
         }
-        
+
         /* set the rest of the infrastructure */
         if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(my_jobid,1))) {
             ORTE_ERROR_LOG(ret);
@@ -554,7 +554,7 @@ orte_err2str(int errnum)
     case ORTE_ERR_TYPE_MISMATCH:
         retval = "Type mismatch";
         break;
-    default: 
+    default:
         retval = NULL;
     }
 

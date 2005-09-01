@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -79,9 +79,9 @@ int main (int argc, char* argv[])
 
     test_init("orte_dps");
     test_out = stderr;
-    
 
-    /* 
+
+    /*
      * If threads are supported - assume that we are using threads -
      * and reset otherwise.
      */
@@ -139,7 +139,7 @@ int main (int argc, char* argv[])
     }
 
     /* run the tests */
-    
+
     fprintf(test_out, "executing test1\n");
     if (test1()) {
         test_success();
@@ -293,14 +293,14 @@ int main (int argc, char* argv[])
 static bool test1(void)        /* verify different buffer inits */
 {
     orte_buffer_t *bufA;
-    
+
     bufA = OBJ_NEW(orte_buffer_t);
     if (NULL == bufA) {
         test_comment("orte_buffer failed init in OBJ_NEW");
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -313,7 +313,7 @@ static bool test1(void)        /* verify different buffer inits */
 /*
  * OMPI_INT16 pack/unpack
  */
-static bool test2(void) 
+static bool test2(void)
 {
     orte_buffer_t *bufA;
     int rc;
@@ -330,7 +330,7 @@ static bool test2(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_INT16);
         if (ORTE_SUCCESS != rc) {
@@ -339,7 +339,7 @@ static bool test2(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count;
@@ -362,7 +362,7 @@ static bool test2(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -376,7 +376,7 @@ static bool test2(void)
 /*
  * OMPI_INT pack/unpack
  */
-static bool test2_1(void) 
+static bool test2_1(void)
 {
     orte_buffer_t *bufA;
     int rc;
@@ -393,7 +393,7 @@ static bool test2_1(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_INT);
         if (ORTE_SUCCESS != rc) {
@@ -402,7 +402,7 @@ static bool test2_1(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count;
@@ -425,7 +425,7 @@ static bool test2_1(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -437,7 +437,7 @@ static bool test2_1(void)
 }
 
 /*
- * OMPI_INT32 pack/unpack 
+ * OMPI_INT32 pack/unpack
  */
 static bool test3(void)
 {
@@ -456,7 +456,7 @@ static bool test3(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_INT32);
         if (ORTE_SUCCESS != rc) {
@@ -465,7 +465,7 @@ static bool test3(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -487,7 +487,7 @@ static bool test3(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -499,7 +499,7 @@ static bool test3(void)
 }
 
 /*
- * ORTE_INT64 pack/unpack 
+ * ORTE_INT64 pack/unpack
  */
 static bool test3_1(void)
 {
@@ -518,7 +518,7 @@ static bool test3_1(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_INT64);
         if (ORTE_SUCCESS != rc) {
@@ -527,7 +527,7 @@ static bool test3_1(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -549,7 +549,7 @@ static bool test3_1(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -582,7 +582,7 @@ static bool test4(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_STRING);
         if (ORTE_SUCCESS != rc) {
@@ -591,7 +591,7 @@ static bool test4(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -614,7 +614,7 @@ static bool test4(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -627,7 +627,7 @@ static bool test4(void)
 
 
 /**
- *  OMPI_NAME pack/unpack 
+ *  OMPI_NAME pack/unpack
  */
 
 static bool test5(void)
@@ -650,7 +650,7 @@ static bool test5(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_NAME);
         if (ORTE_SUCCESS != rc) {
@@ -659,7 +659,7 @@ static bool test5(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -680,9 +680,9 @@ static bool test5(void)
             }
         }
     }
-    
+
     /* cleanup */
-     
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -714,7 +714,7 @@ static bool test6(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_BOOL);
         if (ORTE_SUCCESS != rc) {
@@ -723,7 +723,7 @@ static bool test6(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -743,7 +743,7 @@ static bool test6(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -758,7 +758,7 @@ static bool test6(void)
  * OMPI_BYTE_OBJECT pack/unpack
  */
 
-static bool test7(void) 
+static bool test7(void)
 {
 
     orte_buffer_t *bufA;
@@ -778,7 +778,7 @@ static bool test7(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_BYTE_OBJECT);
         if (ORTE_SUCCESS != rc) {
@@ -808,7 +808,7 @@ static bool test7(void)
             }
         }
     }
-    
+
     /* cleanup */
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
@@ -821,18 +821,18 @@ static bool test7(void)
 }
 
 /**
- * ompi everything composite multipack/unpack 
+ * ompi everything composite multipack/unpack
  */
 
-static bool test8(void) 
+static bool test8(void)
 {
 
     orte_buffer_t *bufA;
     int rc;
     int32_t i;
 
-	/* pack and unpack in this order */
-	/* each block now has an offset to make debugging easier.. first block=100, 200,... */
+    /* pack and unpack in this order */
+    /* each block now has an offset to make debugging easier.. first block=100, 200,... */
     orte_byte_object_t srco[NUM_ELEMS];
     orte_byte_object_t dsto[NUM_ELEMS];
     orte_process_name_t srcp[NUM_ELEMS];
@@ -847,25 +847,25 @@ static bool test8(void)
     int16_t dst16[NUM_ELEMS];
 
     for(i=0; i<NUM_ELEMS; i++) {
-		/* object offset 100 */
+        /* object offset 100 */
         asprintf((char**)&(srco[i].bytes), "%d", i+100);
         srco[i].size = strlen((char*)(srco[i].bytes)) + 1;
 
-		/* process name */
+        /* process name */
         srcp[i].cellid = 1000+i;
         srcp[i].jobid = 100+i;
         srcp[i].vpid = i;
 
-		/* strings +200 */
+        /* strings +200 */
         asprintf(&srcs[i], "%d", i+200);
 
-		/* bool */
+        /* bool */
         srcb[i] = ((i % 2) == 0) ? true : false;
 
-		/* INT32 +300 */
+        /* INT32 +300 */
         src32[i] = i+300;
 
-		/* INT16 +400 */
+        /* INT16 +400 */
         src16[i] = i+400;
     }
 
@@ -875,44 +875,44 @@ static bool test8(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
-		/* object first */
+        /* object first */
         rc = orte_dps.pack(bufA, srco, NUM_ELEMS, ORTE_BYTE_OBJECT);
         if (ORTE_SUCCESS != rc) {
             test_comment ("orte_dps.pack on object failed");
             fprintf(test_out, "orte_dps.pack failed with return code %d\n", rc);
             return(false);
         }
-		/* NAME */
+        /* NAME */
         rc = orte_dps.pack(bufA, srcp, NUM_ELEMS, ORTE_NAME);
         if (ORTE_SUCCESS != rc) {
             test_comment ("orte_dps.pack on name failed");
             fprintf(test_out, "orte_dps.pack failed with return code %d\n", rc);
             return(false);
         }
-		/* STRING */
+        /* STRING */
         rc = orte_dps.pack(bufA, srcs, NUM_ELEMS, ORTE_STRING);
         if (ORTE_SUCCESS != rc) {
             test_comment ("orte_dps.pack on string failed");
             fprintf(test_out, "orte_dps.pack failed with return code %d\n", rc);
             return(false);
         }
-		/* BOOL */
+        /* BOOL */
         rc = orte_dps.pack(bufA, srcb, NUM_ELEMS, ORTE_BOOL);
         if (ORTE_SUCCESS != rc) {
             test_comment ("orte_dps.pack on bool failed");
             fprintf(test_out, "orte_dps.pack failed with return code %d\n", rc);
             return(false);
         }
-		/* INT32 */
+        /* INT32 */
         rc = orte_dps.pack(bufA, src32, NUM_ELEMS, ORTE_INT32);
         if (ORTE_SUCCESS != rc) {
             test_comment ("orte_dps.pack on INT32 failed");
             fprintf(test_out, "orte_dps.pack failed with return code %d\n", rc);
             return(false);
         }
-		/* INT16 */
+        /* INT16 */
         rc = orte_dps.pack(bufA, src16, NUM_ELEMS, ORTE_INT16);
         if (ORTE_SUCCESS != rc) {
             test_comment ("orte_dps.pack on INT16 failed");
@@ -921,24 +921,24 @@ static bool test8(void)
         }
     }
 
-/* 	fprintf(test_out,"test8:packed buffer info for STRING with %d iterations %d elements each\n", NUM_ITERS, NUM_ELEMS); */
-   
+/*  fprintf(test_out,"test8:packed buffer info for STRING with %d iterations %d elements each\n", NUM_ITERS, NUM_ELEMS); */
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count;
 
-		/* string */
+        /* string */
         for(j=0; j<NUM_ELEMS; j++) dsts[j] = NULL;
-		/* bool */
+        /* bool */
         memset(dstb,-1,sizeof(dstb));
-		/* int32 */
+        /* int32 */
         for(j=0; j<NUM_ELEMS; j++) dst32[j] = -1;
-		/* int16 */
+        /* int16 */
         for(j=0; j<NUM_ELEMS; j++) dst16[j] = -1;
 
 
-		/* object */
-		count=NUM_ELEMS;
+        /* object */
+        count=NUM_ELEMS;
         rc = orte_dps.unpack(bufA, dsto, &count, ORTE_BYTE_OBJECT);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
             test_comment ("test8: orte_dps.unpack on object failed");
@@ -955,7 +955,7 @@ static bool test8(void)
             }
         }
 
-		/* name */
+        /* name */
         count = NUM_ELEMS;
         rc = orte_dps.unpack(bufA, dstp, &count, ORTE_NAME);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
@@ -974,7 +974,7 @@ static bool test8(void)
             }
         }
 
-		/* string */
+        /* string */
         count = NUM_ELEMS;
         rc = orte_dps.unpack(bufA, dsts, &count, ORTE_STRING);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
@@ -990,8 +990,8 @@ static bool test8(void)
                 return(false);
             }
         }
-	
-		/* bool */
+
+        /* bool */
         count = NUM_ELEMS;
         rc = orte_dps.unpack(bufA, dstb, &count, ORTE_BOOL);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
@@ -999,7 +999,7 @@ static bool test8(void)
             fprintf(test_out, "orte_pack_value failed with return code %d\n", rc);
             return(false);
         }
-    
+
         for(j=0; j<NUM_ELEMS; j++) {
             if(srcb[j] != dstb[j]) {
                 test_comment ("test8: invalid results from unpack");
@@ -1007,7 +1007,7 @@ static bool test8(void)
             }
         }
 
-		/* int32 */
+        /* int32 */
         count = NUM_ELEMS;
         rc = orte_dps.unpack(bufA, dst32, &count, ORTE_INT32);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
@@ -1023,7 +1023,7 @@ static bool test8(void)
             }
         }
 
-		/* int16 */
+        /* int16 */
         count = NUM_ELEMS;
         rc = orte_dps.unpack(bufA, dst16, &count, ORTE_INT16);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
@@ -1041,7 +1041,7 @@ static bool test8(void)
 
 
     } /* per iteration */
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -1078,7 +1078,7 @@ static bool test9(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_KEYVAL);
         if (ORTE_SUCCESS != rc) {
@@ -1088,7 +1088,7 @@ static bool test9(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -1121,7 +1121,7 @@ static bool test9(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -1154,7 +1154,7 @@ static bool test10(void)
         src[i]->keyvals = (orte_gpr_keyval_t**)malloc(src[i]->cnt * sizeof(orte_gpr_keyval_t*));
         for (j=0; j < src[i]->cnt; j++) {
             src[i]->keyvals[j] = OBJ_NEW(orte_gpr_keyval_t);
-            asprintf(&((src[i]->keyvals[j])->key), "%lu", 
+            asprintf(&((src[i]->keyvals[j])->key), "%lu",
                      (unsigned long) j);
             (src[i]->keyvals[j])->type = ((j % 2) == 0) ? ORTE_INT16 : ORTE_INT32;
             if (ORTE_INT16 == (src[i]->keyvals[j])->type)
@@ -1170,7 +1170,7 @@ static bool test10(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_GPR_VALUE);
         if (ORTE_SUCCESS != rc) {
@@ -1189,7 +1189,7 @@ static bool test10(void)
 
 
 
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -1239,7 +1239,7 @@ static bool test10(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -1269,7 +1269,7 @@ static bool test11(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_SIZE);
         if (ORTE_SUCCESS != rc) {
@@ -1278,7 +1278,7 @@ static bool test11(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         size_t j;
         size_t count;
@@ -1298,7 +1298,7 @@ static bool test11(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -1321,43 +1321,43 @@ static bool test12(void)
 
     for(i=0; i<NUM_ELEMS; i++) {
         src[i] = OBJ_NEW(orte_app_context_t);
-		src[i]->idx = i; 
+        src[i]->idx = i;
         src[i]->app = strdup("test-application-name");
-		src[i]->num_procs = i; /* test between 0 and NUM_ELEMS-1 proc counts */
+        src[i]->num_procs = i; /* test between 0 and NUM_ELEMS-1 proc counts */
 
-		/* test arg counts of 1 to NUM_ELEMS+1 */
-		src[i]->argc = i+1;
-		if (src[i]->argc) { /* if to allow testing of argv count of zero */
-        	src[i]->argv = (char**)malloc(src[i]->argc * sizeof(char*));
-        	for (n=0; n < src[i]->argc; n++) {
-            	src[i]->argv[n] = strdup("test-argv");
-        	}
-		}
+        /* test arg counts of 1 to NUM_ELEMS+1 */
+        src[i]->argc = i+1;
+        if (src[i]->argc) { /* if to allow testing of argv count of zero */
+            src[i]->argv = (char**)malloc(src[i]->argc * sizeof(char*));
+            for (n=0; n < src[i]->argc; n++) {
+                src[i]->argv[n] = strdup("test-argv");
+            }
+        }
 
-		/* test env counts of 1 to NUM_ELEMS+1 */
-		src[i]->num_env = i+1;
-		if (src[i]->num_env) { /* if to allow testing of num_env count of zero */
-        	src[i]->env = (char**)malloc(src[i]->num_env * sizeof(char*));
-        	for (j=0; j < src[i]->num_env; j++) {
-            	src[i]->env[j] = strdup("test-env");
-        	}
-		}
+        /* test env counts of 1 to NUM_ELEMS+1 */
+        src[i]->num_env = i+1;
+        if (src[i]->num_env) { /* if to allow testing of num_env count of zero */
+            src[i]->env = (char**)malloc(src[i]->num_env * sizeof(char*));
+            for (j=0; j < src[i]->num_env; j++) {
+                src[i]->env[j] = strdup("test-env");
+            }
+        }
 
-		src[i]->cwd = strdup ("test-cwd");
+        src[i]->cwd = strdup ("test-cwd");
 
-		/* test imap data for map count = num_procs  */
-		src[i]->num_map = i+1;
-		if (src[i]->num_map) { /* if to allow testing of map count of zero */
-        	src[i]->map_data = (orte_app_context_map_t**)malloc(src[i]->num_map * sizeof(orte_app_context_map_t *));	/* map data type */
-        	for (j=0; j < src[i]->num_map; j++) {
-        		src[i]->map_data[j] = OBJ_NEW(orte_app_context_map_t);	/* assume we create with new rather than malloc? */
-            	src[i]->map_data[j]->map_type = (uint8_t) j;
-            	src[i]->map_data[j]->map_data = strdup("test-map-data");
-        	}
-		}
-	}
+        /* test imap data for map count = num_procs  */
+        src[i]->num_map = i+1;
+        if (src[i]->num_map) { /* if to allow testing of map count of zero */
+            src[i]->map_data = (orte_app_context_map_t**)malloc(src[i]->num_map * sizeof(orte_app_context_map_t *));    /* map data type */
+            for (j=0; j < src[i]->num_map; j++) {
+                src[i]->map_data[j] = OBJ_NEW(orte_app_context_map_t);  /* assume we create with new rather than malloc? */
+                src[i]->map_data[j]->map_type = (uint8_t) j;
+                src[i]->map_data[j]->map_data = strdup("test-map-data");
+            }
+        }
+    }
 
-	/* source data set, now create buffer and pack source data */
+    /* source data set, now create buffer and pack source data */
 
     bufA = OBJ_NEW(orte_buffer_t);
     if (NULL == bufA) {
@@ -1369,9 +1369,9 @@ static bool test12(void)
 /* fprintf(test_out,"New buffer ready\n"); */
 /* fflush(test_out); */
 
-/* 	orte_dps_dump_buffer_simple (bufA, 0); */
+/*  orte_dps_dump_buffer_simple (bufA, 0); */
 
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_APP_CONTEXT);
         if (ORTE_SUCCESS != rc) {
@@ -1379,11 +1379,11 @@ static bool test12(void)
             fprintf(test_out, "orte_pack_value failed with return code %d\n", rc);
             return(false);
         }
-/* 		fprintf(test_out,"Packed iter %d\n", i); */
-/* 		fflush(test_out); */
-/* 		orte_dps_dump_buffer_simple (bufA, 0); */
+/*      fprintf(test_out,"Packed iter %d\n", i); */
+/*      fflush(test_out); */
+/*      orte_dps_dump_buffer_simple (bufA, 0); */
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -1396,26 +1396,26 @@ static bool test12(void)
             return(false);
         }
 
-/* 		fprintf(test_out,"Unpacked iter %d\n", i); */
-/* 		fflush(test_out); */
-/* 		orte_dps_dump_buffer_simple (bufA, 0); */
+/*      fprintf(test_out,"Unpacked iter %d\n", i); */
+/*      fflush(test_out); */
+/*      orte_dps_dump_buffer_simple (bufA, 0); */
 
         for(j=0; j<NUM_ELEMS; j++) {
 
-            if ( 
-				src[j]->idx != dst[j]->idx ||
-				0 != strcmp(src[j]->app, dst[j]->app) ||
+            if (
+                src[j]->idx != dst[j]->idx ||
+                0 != strcmp(src[j]->app, dst[j]->app) ||
                 src[j]->num_procs != dst[j]->num_procs ||
                 src[j]->argc != dst[j]->argc ||
                 src[j]->num_env != dst[j]->num_env ||
-				0 != strcmp(src[j]->cwd, dst[j]->cwd) ||
-                src[j]->num_map != dst[j]->num_map 
-				) {
+                0 != strcmp(src[j]->cwd, dst[j]->cwd) ||
+                src[j]->num_map != dst[j]->num_map
+                ) {
                 test_comment ("test12: invalid results from unpack");
                 return(false);
             }
 
-			/* now compare each of the size/cnt depedant values */
+            /* now compare each of the size/cnt depedant values */
             for (n=0; n<src[j]->argc; n++) {
                 if (0 != strcmp(src[j]->argv[n], dst[j]->argv[n])) {
                    test_comment ("test12: invalid results (argv) from unpack");
@@ -1442,7 +1442,7 @@ static bool test12(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -1468,40 +1468,40 @@ static bool test13(void)
             src[i]->name = strdup("dummy-name");
         }
         src[i]->id = (orte_gpr_subscription_id_t)i;
-        
+
         /* test value counts of 1 to NUM_ELEMS+1 */
         src[i]->cnt = i + 1;
         src[i]->values = (orte_gpr_value_t**)malloc(src[i]->cnt * sizeof(orte_gpr_value_t*));
-        
+
         for (k=0; k < src[i]->cnt; k++) {
             src[i]->values[k] = OBJ_NEW(orte_gpr_value_t);
             src[i]->values[k]->addr_mode = (uint16_t) i;
             src[i]->values[k]->segment = strdup("test-segment");
-            
-    		/* test token counts of 0! to NUM_ELEMS */
-    		src[i]->values[k]->num_tokens = i;
-    		if (src[i]->values[k]->num_tokens) { /* if to allow testing of token count of zero */
-            	src[i]->values[k]->tokens = (char**)malloc(src[i]->values[k]->num_tokens * sizeof(char*));
-            	for (j=0; j < src[i]->values[k]->num_tokens; j++) {
-                	src[i]->values[k]->tokens[j] = strdup("test-token");
-            	}
-    		}
 
-    		/* test key counts of 0 to NUM_ELEMS */
-    		src[i]->values[k]->cnt = i;
-    		if (src[i]->values[k]->cnt) { /* if to allow testing of num_keys count of zero */
-            	src[i]->values[k]->keyvals = (orte_gpr_keyval_t**)malloc(
+            /* test token counts of 0! to NUM_ELEMS */
+            src[i]->values[k]->num_tokens = i;
+            if (src[i]->values[k]->num_tokens) { /* if to allow testing of token count of zero */
+                src[i]->values[k]->tokens = (char**)malloc(src[i]->values[k]->num_tokens * sizeof(char*));
+                for (j=0; j < src[i]->values[k]->num_tokens; j++) {
+                    src[i]->values[k]->tokens[j] = strdup("test-token");
+                }
+            }
+
+            /* test key counts of 0 to NUM_ELEMS */
+            src[i]->values[k]->cnt = i;
+            if (src[i]->values[k]->cnt) { /* if to allow testing of num_keys count of zero */
+                src[i]->values[k]->keyvals = (orte_gpr_keyval_t**)malloc(
                             src[i]->values[k]->cnt * sizeof(orte_gpr_keyval_t*));
-            	for (j=0; j < src[i]->values[k]->cnt; j++) {
+                for (j=0; j < src[i]->values[k]->cnt; j++) {
                     src[i]->values[k]->keyvals[j] = OBJ_NEW(orte_gpr_keyval_t);
-                	src[i]->values[k]->keyvals[j]->key = strdup("test-key");
-            	}
-    		}
+                    src[i]->values[k]->keyvals[j]->key = strdup("test-key");
+                }
+            }
                 /* skip the pointers for cb_func and user_tag */
         }
-	}
+    }
 
-	/* source data set, now create buffer and pack source data */
+    /* source data set, now create buffer and pack source data */
 
     bufA = OBJ_NEW(orte_buffer_t);
     if (NULL == bufA) {
@@ -1510,7 +1510,7 @@ static bool test13(void)
         return false;
     }
 
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_GPR_SUBSCRIPTION);
         if (ORTE_SUCCESS != rc) {
@@ -1519,7 +1519,7 @@ static bool test13(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -1540,23 +1540,23 @@ static bool test13(void)
                 test_comment ("test13: invalid results from unpack");
                 return(false);
             }
-            
+
             if ((NULL != src[j]->name &&
                 0 != strcmp(src[j]->name, dst[j]->name)) ||
                 src[j]->id != dst[j]->id ||
                 src[j]->cnt != dst[j]->cnt
-				) {
+                ) {
                 test_comment ("test13: invalid results from unpack");
                 return(false);
             }
 
-			/* now compare each of the size/cnt dependent values */
+            /* now compare each of the size/cnt dependent values */
             for (k=0; k<src[j]->cnt; k++) {
                 if (src[j]->values[k]->num_tokens != dst[j]->values[k]->num_tokens) {
                    test_comment ("test13: invalid results (value num_tokens) from unpack");
                     return(false);
                 }
-                
+
                 for (m=0; m < src[j]->values[k]->num_tokens; m++) {
                     if (0 != strcmp(src[j]->values[k]->tokens[m], dst[j]->values[k]->tokens[m])) {
                        test_comment ("test13: invalid results (tokens) from unpack");
@@ -1568,7 +1568,7 @@ static bool test13(void)
                    test_comment ("test13: invalid results (value cnt) from unpack");
                     return(false);
                 }
-                
+
                 for (m=0; m < src[j]->values[k]->cnt; m++) {
                     if (0 != strcmp(src[j]->values[k]->keyvals[m]->key,
                                     dst[j]->values[k]->keyvals[m]->key)) {
@@ -1579,7 +1579,7 @@ static bool test13(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -1603,46 +1603,46 @@ static bool test14(void)
     for(i=0; i<NUM_ELEMS; i++) {
         src[i] = OBJ_NEW(orte_gpr_notify_data_t);
         if (i % 2) { /* test half with a name and with remove=true */
-            src[i]->name = strdup("test-notify-data-name");
+            src[i]->target = strdup("test-notify-data-name");
             src[i]->remove = true;
         }
-		src[i]->id = i; 
+        src[i]->id = i;
 
-		/* test value counts of 0 to NUM_ELEMS-1 */
-		src[i]->cnt = i; /* value count */
+        /* test value counts of 0 to NUM_ELEMS-1 */
+        src[i]->cnt = i; /* value count */
 
-    	for (j=0; j < src[i]->cnt; j++) {
-        	value = OBJ_NEW(orte_gpr_value_t);
-			value->addr_mode = (orte_gpr_addr_mode_t) i+j+1; 
-			value->segment = strdup("test-gpr-notify-value-segment-name");	/* ek segment name again! */
+        for (j=0; j < src[i]->cnt; j++) {
+            value = OBJ_NEW(orte_gpr_value_t);
+            value->addr_mode = (orte_gpr_addr_mode_t) i+j+1;
+            value->segment = strdup("test-gpr-notify-value-segment-name");  /* ek segment name again! */
 
-			/* tokens */
-			value->num_tokens = j; /* test tokens within gpr values within notify message between 0-NUM_ELEMS-1 */
-			if (value->num_tokens) { /* if to allow testing of num_tokens count of zero */
-    			value->tokens = (char**)malloc(value->num_tokens * sizeof(char*));
-    			for (k=0; k < value->num_tokens; k++) {
-        			value->tokens[k] = strdup("test-grp-notify-value-token");
-    			} /* for each token */
-			} /* if tokens */
+            /* tokens */
+            value->num_tokens = j; /* test tokens within gpr values within notify message between 0-NUM_ELEMS-1 */
+            if (value->num_tokens) { /* if to allow testing of num_tokens count of zero */
+                value->tokens = (char**)malloc(value->num_tokens * sizeof(char*));
+                for (k=0; k < value->num_tokens; k++) {
+                    value->tokens[k] = strdup("test-grp-notify-value-token");
+                } /* for each token */
+            } /* if tokens */
 
-			/* keyval pairs (field name is 'cnt' same as used for value count so be carefull) */
-			value->cnt = j; /* test keyval pairs within gpr values within notify message between 0-NUM_ELEMS-1 */
-			if (value->cnt) { /* if to allow testing of keyval pair count of zero */
-    			value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
-    			for (k=0; k < value->cnt; k++) {
-        			value->keyvals[k] = OBJ_NEW (orte_gpr_keyval_t);
-        			value->keyvals[k]->key = strdup("test-grp-notify-value-key");
-        			value->keyvals[k]->type = ORTE_INT32; /* make it simplier */
-					value->keyvals[k]->value.i32 = (uint32_t) (i*100)+(j*10)+k; /* something variable */
-    			} /* for each keyval pair */
-			} /* if keyvals */
-            
+            /* keyval pairs (field name is 'cnt' same as used for value count so be carefull) */
+            value->cnt = j; /* test keyval pairs within gpr values within notify message between 0-NUM_ELEMS-1 */
+            if (value->cnt) { /* if to allow testing of keyval pair count of zero */
+                value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
+                for (k=0; k < value->cnt; k++) {
+                    value->keyvals[k] = OBJ_NEW (orte_gpr_keyval_t);
+                    value->keyvals[k]->key = strdup("test-grp-notify-value-key");
+                    value->keyvals[k]->type = ORTE_INT32; /* make it simplier */
+                    value->keyvals[k]->value.i32 = (uint32_t) (i*100)+(j*10)+k; /* something variable */
+                } /* for each keyval pair */
+            } /* if keyvals */
+
             /* add the value to the data object */
             orte_pointer_array_add(&k, src[i]->values, value);
-    	} /* for each value */
+        } /* for each value */
     }
 
-	/* source data set, now create buffer and pack source data */
+    /* source data set, now create buffer and pack source data */
 
     bufA = OBJ_NEW(orte_buffer_t);
     if (NULL == bufA) {
@@ -1651,7 +1651,7 @@ static bool test14(void)
         return false;
     }
 
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_GPR_NOTIFY_DATA);
         if (ORTE_SUCCESS != rc) {
@@ -1661,7 +1661,7 @@ static bool test14(void)
         }
     }
 
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
@@ -1675,30 +1675,30 @@ static bool test14(void)
 
         for(j=0; j<NUM_ELEMS; j++) {
 
-            if ( 
+            if (
                 src[j]->id != dst[j]->id ||
                 src[j]->cnt != dst[j]->cnt ||
                 src[j]->remove != dst[j]->remove
-				) {
+                ) {
                 test_comment ("test14: invalid results from unpack");
                 return(false);
             }
 
-            if ((NULL == src[j]->name && NULL != dst[j]->name) ||
-                (NULL != src[j]->name && NULL == dst[j]->name)) {
+            if ((NULL == src[j]->target && NULL != dst[j]->target) ||
+                (NULL != src[j]->target && NULL == dst[j]->target)) {
                 test_comment ("orte_dps.pack failed");
                 fprintf(test_out, "test14 (ORTE_GPR_NOTIFY_DATA) failed with mismatched names");
                 return(false);
             }
 
-            if (NULL != src[j]->name && NULL != dst[j]->name &&
-                0 != strcmp(src[j]->name, dst[j]->name)) {
+            if (NULL != src[j]->target && NULL != dst[j]->target &&
+                0 != strcmp(src[j]->target, dst[j]->target)) {
                 test_comment ("orte_dps.pack failed");
                 fprintf(test_out, "test14 (ORTE_GPR_NOTIFY_DATA) failed with mismatched names");
                 return(false);
             }
 
-			/* now compare each value of the cnt depedant values */
+            /* now compare each value of the cnt depedant values */
             sval = (orte_gpr_value_t**)(src[j]->values)->addr;
             dval = (orte_gpr_value_t**)(dst[j]->values)->addr;
             /* because of the way this has been done, we can safely assume
@@ -1708,52 +1708,52 @@ static bool test14(void)
                            k < (src[j]->values)->size; k++) {
                 if (NULL != sval[k]) {
                     n++;
-                    
-				if (sval[k]->addr_mode != dval[k]->addr_mode) {
+
+                if (sval[k]->addr_mode != dval[k]->addr_mode) {
                    test_comment ("test14: invalid results (values-addr-mode) from unpack");
                     return(false);
-				}
+                }
 
                 if (0 != strcmp(sval[k]->segment, dval[k]->segment)) {
                    test_comment ("test14: invalid results (values-segment) from unpack");
                     return(false);
                 }
 
-				if (sval[k]->num_tokens != dval[k]->num_tokens) {
+                if (sval[k]->num_tokens != dval[k]->num_tokens) {
                    test_comment ("test14: invalid results (values-num_tokens) from unpack");
                     return(false);
-				}
-            	for (l=0; l<sval[k]->num_tokens; l++) {
-				   if (0 != strcmp(sval[k]->tokens[l], dval[k]->tokens[l])) {
-					  test_comment ("test14: invalid results (values-tokens) from unpack");
-					   return(false);
-				   }
-			    } /* for each token inside each grp value */
+                }
+                for (l=0; l<sval[k]->num_tokens; l++) {
+                   if (0 != strcmp(sval[k]->tokens[l], dval[k]->tokens[l])) {
+                      test_comment ("test14: invalid results (values-tokens) from unpack");
+                       return(false);
+                   }
+                } /* for each token inside each grp value */
 
-				if (sval[k]->cnt != dval[k]->cnt) {
+                if (sval[k]->cnt != dval[k]->cnt) {
                    test_comment ("test14: invalid results (values-cnt (of keyval pairs)) from unpack");
                     return(false);
-				}
-            	for (l=0; l< sval[k]->cnt; l++) { 
-                	if (0 != strcmp(sval[k]->keyvals[l]->key, dval[k]->keyvals[l]->key)) {
-					   test_comment ("test14: invalid results (values-keyvals-key) from unpack");
-					   return(false);
-                	}
-                	if (sval[k]->keyvals[l]->type != dval[k]->keyvals[l]->type) {
-					   test_comment ("test14: invalid results (values-keyvals-type) from unpack");
-					   return(false);
-                	}
-                	if (sval[k]->keyvals[l]->value.i32 != dval[k]->keyvals[l]->value.i32) {
-					   test_comment ("test14: invalid results (values-keyvals-value.i32) from unpack");
-					   return(false);
-                	}
-			   }/* for each keyvalpair inside each grp value */
+                }
+                for (l=0; l< sval[k]->cnt; l++) {
+                    if (0 != strcmp(sval[k]->keyvals[l]->key, dval[k]->keyvals[l]->key)) {
+                       test_comment ("test14: invalid results (values-keyvals-key) from unpack");
+                       return(false);
+                    }
+                    if (sval[k]->keyvals[l]->type != dval[k]->keyvals[l]->type) {
+                       test_comment ("test14: invalid results (values-keyvals-type) from unpack");
+                       return(false);
+                    }
+                    if (sval[k]->keyvals[l]->value.i32 != dval[k]->keyvals[l]->value.i32) {
+                       test_comment ("test14: invalid results (values-keyvals-value.i32) from unpack");
+                       return(false);
+                    }
+               }/* for each keyvalpair inside each grp value */
             } /* for each grp value */
         }
 
         } /* for each ELEMENT */
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -1768,7 +1768,7 @@ static bool test14(void)
 /*
  * pid_t pack/unpack
  */
-static bool test15(void) 
+static bool test15(void)
 {
     orte_buffer_t *bufA;
     int rc;
@@ -1785,7 +1785,7 @@ static bool test15(void)
         fprintf(test_out, "OBJ_NEW failed\n");
         return false;
     }
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_PID);
         if (ORTE_SUCCESS != rc) {
@@ -1794,7 +1794,7 @@ static bool test15(void)
             return(false);
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         size_t j;
         size_t count;
@@ -1814,7 +1814,7 @@ static bool test15(void)
             }
         }
     }
-         
+
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");

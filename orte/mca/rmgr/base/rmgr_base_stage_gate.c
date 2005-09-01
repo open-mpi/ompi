@@ -126,6 +126,8 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
                                         trig_names[i], job))) {
             ORTE_ERROR_LOG(rc);
+            free(tokens[0]);
+            free(segment);
             free(trig_keys[0]);
             free(trig_keys[1]);
             return rc;
@@ -137,6 +139,8 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
                  segment, tokens, 2, trig_keys,
                  orte_rmgr_base_proc_stage_gate_mgr, NULL))) {
             ORTE_ERROR_LOG(rc);
+            free(tokens[0]);
+            free(segment);
             free(trig_name);
             free(trig_keys[0]);
             free(trig_keys[1]);
@@ -155,6 +159,9 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&trig_name,
                                     ORTE_NUM_ABORTED_TRIGGER, job))) {
         ORTE_ERROR_LOG(rc);
+        free(tokens[0]);
+        free(segment);
+        free(trig_keys[0]);
         return rc;
     }
     trig_level = 1;
@@ -165,10 +172,14 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
              segment, tokens, 1, trig_keys, &trig_level,
              orte_rmgr_base_proc_stage_gate_mgr_abort, NULL))) {
         ORTE_ERROR_LOG(rc);
+        free(tokens[0]);
+        free(segment);
         free(trig_name);
         free(trig_keys[0]);
         return rc;
     }
+    free(tokens[0]);
+    free(segment);
     free(trig_name);
     free(trig_keys[0]);
 
