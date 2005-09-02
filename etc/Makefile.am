@@ -19,7 +19,7 @@ include $(top_srcdir)/config/Makefile.options
 ompi_config_files = \
 		openmpi-default-hostfile \
 		openmpi-mca-params.conf \
-                openmpi-totalview.rc
+                openmpi-totalview.tcl
 
 EXTRA_DIST = $(ompi_config_files)
 
