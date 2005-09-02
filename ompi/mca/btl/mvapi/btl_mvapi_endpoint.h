@@ -125,12 +125,12 @@ struct mca_btl_base_endpoint_t {
     /**< list of pending high priority frags */ 
 
     opal_list_t                 pending_frags_lp; 
-    /**< list of pending low prioirty frags */ 
+    /**< list of pending low priority frags */ 
 
-    uint32_t                    wr_sq_tokens_hp; 
+    int32_t                     wr_sq_tokens_hp; 
     /**< number of high priority frags that  can be outstanding (down counter) */ 
 
-    uint32_t                    wr_sq_tokens_lp; 
+    int32_t                     wr_sq_tokens_lp; 
     /**< number of low priority frags that  can be outstanding (down counter) */ 
     
     mca_btl_mvapi_rem_info_t    rem_info; 
