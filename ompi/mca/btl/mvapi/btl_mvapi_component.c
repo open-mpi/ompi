@@ -566,7 +566,9 @@ int mca_btl_mvapi_component_progress()
                 if(OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_hp, 1) > 0
                    && !opal_list_is_empty(&(frag->endpoint->pending_frags_hp))) { 
                     opal_list_item_t *frag_item;
+                    OPAL_THREAD_LOCK(&frag->endpoint->endpoint_pending_lock); 
                     frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_hp));
+                    OPAL_THREAD_UNLOCK(&frag->endpoint->endpoint_pending_lock); 
                     frag = (mca_btl_mvapi_frag_t *) frag_item;
                     
                     if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { 
@@ -635,7 +637,9 @@ int mca_btl_mvapi_component_progress()
                 if(OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_lp, 1) > 0
                    && !opal_list_is_empty(&(frag->endpoint->pending_frags_lp))) { 
                     opal_list_item_t *frag_item;
+                    OPAL_THREAD_LOCK(&frag->endpoint->endpoint_pending_lock); 
                     frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_lp));
+                    OPAL_THREAD_UNLOCK(&frag->endpoint->endpoint_pending_lock); 
                     frag = (mca_btl_mvapi_frag_t *) frag_item;
                     switch(frag->sr_desc.opcode){
                     case VAPI_SEND: 

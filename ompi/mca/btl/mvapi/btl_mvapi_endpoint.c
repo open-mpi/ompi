@@ -69,7 +69,8 @@ static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi
         /* atomically test and acquire a token */
         if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,-1) < 0) { 
             BTL_VERBOSE(("Queing because no send tokens \n"));
-            BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_hp, endpoint->wr_sq_tokens_hp, rc); 
+            BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_hp, 
+                                     endpoint->wr_sq_tokens_hp, endpoint->endpoint_pending_lock, rc); 
             return OMPI_SUCCESS;
         } else { 
             frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_high; 
@@ -81,7 +82,8 @@ static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi
         /* atomically test and acquire a token */
         if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) {
             BTL_VERBOSE(("Queing because no send tokens \n"));
-            BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_hp, endpoint->wr_sq_tokens_hp, rc); 
+            BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_hp, 
+                                     endpoint->wr_sq_tokens_hp, endpoint->endpoint_pending_lock,  rc); 
             return OMPI_SUCCESS;
         } else { 
             frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
@@ -137,6 +139,7 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
     endpoint->endpoint_retries = 0;
     OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&endpoint->endpoint_pending_lock, opal_mutex_t);    
     OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->pending_frags_hp, opal_list_t);

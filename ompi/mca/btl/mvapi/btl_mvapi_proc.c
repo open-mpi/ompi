@@ -154,7 +154,7 @@ mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
 
     mvapi_proc->proc_port_count = size/sizeof(mca_btl_mvapi_port_info_t);
     
-
+    
     mvapi_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
         malloc(mvapi_proc->proc_port_count * sizeof(mca_btl_base_endpoint_t*));
 
