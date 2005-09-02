@@ -38,8 +38,8 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
     orte_gpr_replica_dict_t **ptr, *new_dict;
-    size_t i;
-    size_t len, len2;
+    orte_gpr_replica_itag_t j;
+    size_t i, len, len2;
 
     /* default to illegal value */
     *itag = ORTE_GPR_REPLICA_ITAG_MAX;
@@ -54,8 +54,10 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
     
     /* check seg's dictionary to ensure uniqueness */
     ptr = (orte_gpr_replica_dict_t**)(seg->dict)->addr;
-    for (i=0; i < (seg->dict)->size; i++) {
+    for (i=0, j=0; j < seg->num_dict_entries &&
+                   i < (seg->dict)->size; i++) {
         if (NULL != ptr[i]) {
+            j++;
             len2 = strlen(ptr[i]->entry);
             if ((len == len2 && 0 == strncmp(ptr[i]->entry, name, len))) {
                 /* already present */
@@ -66,21 +68,31 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
     }
 
     /* okay, name is unique - create dictionary entry */
+    
+    /* first check to see if one is available */
+    if (ORTE_GPR_REPLICA_ITAG_MAX-1 < seg->num_dict_entries) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
     new_dict = (orte_gpr_replica_dict_t*)malloc(sizeof(orte_gpr_replica_dict_t));
     if (NULL == new_dict) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     new_dict->entry = strdup(name);
-    if (0 > orte_pointer_array_add(&i, seg->dict, (void*)new_dict)) {
+    if (0 > orte_pointer_array_add(&(new_dict->index), seg->dict, (void*)new_dict)) {
         *itag = ORTE_GPR_REPLICA_ITAG_MAX;
+        free(new_dict->entry);
         free(new_dict);
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
-    *itag = (orte_gpr_replica_itag_t)i;
+
+    *itag = seg->num_dict_entries;
     new_dict->itag = *itag;
+    (seg->num_dict_entries)++;
+
     return ORTE_SUCCESS;
 }
 
@@ -89,6 +101,7 @@ int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
 {
     orte_gpr_replica_dict_t **ptr;
     orte_gpr_replica_itag_t itag;
+    size_t index;
     int rc;
 
     /* check for errors */
@@ -117,13 +130,19 @@ int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
      if (NULL == ptr[itag]) {  /* dict element no longer valid */
          return ORTE_ERR_NOT_FOUND;
      }
+     index = ptr[itag]->index;
      if (NULL != ptr[itag]->entry) {
          free(ptr[itag]->entry);
      }
      free(ptr[itag]);
      
      /* remove itag from segment dictionary */
-    return orte_pointer_array_set_item(seg->dict, itag, NULL);
+    orte_pointer_array_set_item(seg->dict, index, NULL);
+    
+    /* decrease the dict counter */
+    (seg->num_dict_entries)--;
+    
+    return ORTE_SUCCESS;
 }
 
 
@@ -133,6 +152,7 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
 {
     orte_gpr_replica_dict_t **ptr;
     size_t i;
+    orte_gpr_replica_itag_t j;
     size_t len, len2;
     
     /* initialize to illegal value */
@@ -153,8 +173,10 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
     
     /* want specified token-itag pair in that segment's dictionary */
     ptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
-    for (i=0; i < (seg->dict)->size; i++) {
+    for (i=0, j=0; j < seg->num_dict_entries &&
+                   i < (seg->dict)->size; i++) {
         if (NULL != ptr[i]) {
+            j++;
             len2 = strlen(ptr[i]->entry);
     	       if (len == len2 && 0 == strncmp(ptr[i]->entry, name, len)) {
                 *itag = ptr[i]->itag;
@@ -172,6 +194,8 @@ int orte_gpr_replica_dict_reverse_lookup(char **name,
 {
     orte_gpr_replica_dict_t **ptr;
     orte_gpr_replica_segment_t **segptr;
+    size_t i;
+    orte_gpr_replica_itag_t j;
 
 
     /* initialize to nothing */
@@ -200,12 +224,19 @@ int orte_gpr_replica_dict_reverse_lookup(char **name,
      * dictionary array
      */
     ptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
-    if (NULL == ptr[itag]) {  /* dict element no longer valid */
-        return ORTE_ERR_NOT_FOUND;
+    for (i=0, j=0; j < seg->num_dict_entries &&
+                   i < (seg->dict)->size; i++) {
+        if (NULL != ptr[i]) {
+            j++;
+            if (itag == ptr[i]->itag) { /* entry found! */
+                *name = strdup(ptr[i]->entry);
+                return ORTE_SUCCESS;
+            }
+        }
     }
-    *name = strdup(ptr[itag]->entry);
-    return ORTE_SUCCESS;
-
+    /* get here if entry not found */
+    
+    return ORTE_ERR_NOT_FOUND;
 }
 
 int

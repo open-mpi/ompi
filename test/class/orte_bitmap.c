@@ -68,19 +68,8 @@ int main(int argc, char *argv[])
     OBJ_CONSTRUCT(&bm, orte_bitmap_t);
 
     PRINT_VALID_ERR;
-    err = orte_bitmap_init(NULL, 2);
-    if (err == ORTE_ERR_BAD_PARAM) {
-	   fprintf(error_out, "Initialization of bitmap correctly failed\n\n");
-    } else {
-        fprintf(error_out, "ERROR: Initialization of bitmap should have failed, but didn't\n\n");
-    }
-
-    err = orte_bitmap_init(&bm, BSIZE);
-    if (0 > err) {
-	   fprintf(error_out, "Error in bitmap create -- aborting \n");
-	   exit(-1);
-    }
-
+    OBJ_CONSTRUCT(&bm, orte_bitmap_t);
+    
     fprintf(error_out, "\nTesting bitmap set... \n");
     test_bitmap_set(&bm);
 

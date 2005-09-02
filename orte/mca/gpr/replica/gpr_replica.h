@@ -130,6 +130,7 @@ typedef struct {
  * for faster searches of the registry.
  */
 struct orte_gpr_replica_dict_t {
+    size_t index;                  /**< location in dictionary array */
     char *entry;                   /**< Char string that defines the itag */
     orte_gpr_replica_itag_t itag;  /**< Numerical value assigned by registry to represent string */
 };
@@ -172,7 +173,7 @@ struct orte_gpr_replica_segment_t {
     opal_object_t super;                /**< Make this an object */
     char *name;                         /**< Name of the segment */
     orte_gpr_replica_itag_t itag;       /**< itag of this segment */
-    size_t num_dict_entries;
+    orte_gpr_replica_itag_t num_dict_entries;
     orte_pointer_array_t *dict;         /**< Managed array of dict structs */
     size_t num_containers;
     orte_pointer_array_t *containers;   /**< Managed array of pointers to containers on this segment */
