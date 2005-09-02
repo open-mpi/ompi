@@ -772,10 +772,8 @@ int mca_btl_mvapi_send(
     
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
-        
     frag->hdr->tag = tag; 
     frag->rc = mca_btl_mvapi_endpoint_send(endpoint, frag);
-           
     return frag->rc;
 }
 
