@@ -300,13 +300,48 @@ int orte_gpr_proxy_module_init(void)
  */
 int orte_gpr_proxy_finalize(void)
 {
-
+    size_t i;
+    orte_gpr_subscription_id_t j;
+    orte_gpr_trigger_id_t k;
+    orte_gpr_proxy_subscriber_t **lsubs;
+    orte_gpr_proxy_trigger_t **ltrigs;
+    
     if (orte_gpr_proxy_globals.debug) {
        opal_output(0, "[%lu,%lu,%lu] gpr_proxy_finalize called",
                         ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     if (initialized) {
+        /* destruct the mutex and condition variables */
+        OBJ_DESTRUCT(&orte_gpr_proxy_globals.mutex);
+        OBJ_DESTRUCT(&orte_gpr_proxy_globals.wait_for_compound_mutex);
+        OBJ_DESTRUCT(&orte_gpr_proxy_globals.compound_cmd_condition);
+
+        /* clear the local subscriptions and triggers */
+        if (NULL != orte_gpr_proxy_globals.subscriptions) {
+            lsubs = (orte_gpr_proxy_subscriber_t**)(orte_gpr_proxy_globals.subscriptions)->addr;
+            for (i=0, j=0; j < orte_gpr_proxy_globals.num_subs &&
+                        i < (orte_gpr_proxy_globals.subscriptions)->size; i++) {
+                if (NULL != lsubs[i]) {
+                    j++;
+                    OBJ_RELEASE(lsubs[i]);
+                }
+            }
+            OBJ_RELEASE(orte_gpr_proxy_globals.subscriptions);
+        }
+    
+        ltrigs = (orte_gpr_proxy_trigger_t**)(orte_gpr_proxy_globals.triggers)->addr;
+        if (NULL != orte_gpr_proxy_globals.triggers) {
+            for (i=0, k=0; k < orte_gpr_proxy_globals.num_trigs &&
+                        i < (orte_gpr_proxy_globals.triggers)->size; i++) {
+                if (NULL != ltrigs[i]) {
+                    k++;
+                    OBJ_RELEASE(ltrigs[i]);
+                }
+            }
+            OBJ_RELEASE(orte_gpr_proxy_globals.triggers);
+        }
+
        initialized = false;
     }
 

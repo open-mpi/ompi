@@ -310,7 +310,9 @@ int orte_gpr_replica_module_init(void)
  */
 int orte_gpr_replica_finalize(void)
 {
-    size_t i, j;
+    size_t i;
+    orte_gpr_subscription_id_t j;
+    orte_gpr_trigger_id_t k;
     orte_gpr_replica_segment_t** seg;
     orte_gpr_replica_trigger_t** trig;
     orte_gpr_replica_subscription_t** subs;
@@ -321,6 +323,9 @@ int orte_gpr_replica_finalize(void)
     if (orte_gpr_replica_globals.debug) {
         opal_output(0, "finalizing gpr replica");
     }
+
+    /* destruct the thread lock */
+    OBJ_DESTRUCT(&orte_gpr_replica_globals.mutex);
 
     if (NULL != orte_gpr_replica.segments) {
         seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
@@ -365,20 +370,20 @@ int orte_gpr_replica_finalize(void)
 
 
     /* clear the local subscriptions and triggers */
-    lsubs = (orte_gpr_replica_local_subscriber_t**)(orte_gpr_replica_globals.local_subscriptions)->addr;
     if (NULL != orte_gpr_replica_globals.local_subscriptions) {
-        for (i=0, j=0; j < orte_gpr_replica_globals.num_local_subs &&
+        lsubs = (orte_gpr_replica_local_subscriber_t**)(orte_gpr_replica_globals.local_subscriptions)->addr;
+        for (i=0, k=0; k < orte_gpr_replica_globals.num_local_subs &&
                     i < (orte_gpr_replica_globals.local_subscriptions)->size; i++) {
             if (NULL != lsubs[i]) {
-                j++;
+                k++;
                 OBJ_RELEASE(lsubs[i]);
             }
         }
         OBJ_RELEASE(orte_gpr_replica_globals.local_subscriptions);
     }
 
-    ltrigs = (orte_gpr_replica_local_trigger_t**)(orte_gpr_replica_globals.local_triggers)->addr;
     if (NULL != orte_gpr_replica_globals.local_triggers) {
+        ltrigs = (orte_gpr_replica_local_trigger_t**)(orte_gpr_replica_globals.local_triggers)->addr;
         for (i=0, j=0; j < orte_gpr_replica_globals.num_local_trigs &&
                     i < (orte_gpr_replica_globals.local_triggers)->size; i++) {
             if (NULL != ltrigs[i]) {
