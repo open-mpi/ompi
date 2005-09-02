@@ -451,7 +451,7 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     size_t i, j, k;
     char *str;
-    uint32_t arch;
+    uint32_t arch = 0;
     bool found_name, found_arch;
     orte_ns_cmp_bitmask_t mask;
     orte_process_name_t name;
