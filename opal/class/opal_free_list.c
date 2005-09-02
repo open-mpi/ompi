@@ -35,6 +35,7 @@ opal_class_t opal_free_list_t_class = {
 static void opal_free_list_construct(opal_free_list_t* fl)
 {
     OBJ_CONSTRUCT(&fl->fl_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&fl->fl_condition, opal_condition_t);
     fl->fl_max_to_alloc = 0;
     fl->fl_num_allocated = 0;
     fl->fl_num_per_alloc = 0;
@@ -45,6 +46,7 @@ static void opal_free_list_construct(opal_free_list_t* fl)
 
 static void opal_free_list_destruct(opal_free_list_t* fl)
 {
+    OBJ_DESTRUCT(&fl->fl_condition);
     OBJ_DESTRUCT(&fl->fl_lock);
 }
 
