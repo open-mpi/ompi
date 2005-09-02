@@ -233,7 +233,7 @@ int mca_btl_mvapi_component_close(void)
 
 
 /*
- *  Register GM component addressing information. The MCA framework
+ *  Register MVAPI port information. The MCA framework
  *  will make this available to all peers.
  */
 
@@ -243,20 +243,20 @@ mca_btl_mvapi_modex_send(void)
     int         rc;
     size_t      i;
     size_t      size;
-    mca_btl_mvapi_addr_t *addrs;
+    mca_btl_mvapi_port_info_t *ports;
 
-    size = mca_btl_mvapi_component.ib_num_btls * sizeof (mca_btl_mvapi_addr_t);
-    addrs = (mca_btl_mvapi_addr_t *)malloc (size);
-    if (NULL == addrs) {
+    size = mca_btl_mvapi_component.ib_num_btls * sizeof (mca_btl_mvapi_port_info_t);
+    ports = (mca_btl_mvapi_port_info_t *)malloc (size);
+    if (NULL == ports) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for (i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) {
         mca_btl_mvapi_module_t *btl = &mca_btl_mvapi_component.mvapi_btls[i];
-        addrs[i] = btl->mvapi_addr;
+        ports[i] = btl->port_info;
     }
-    rc = mca_pml_base_modex_send (&mca_btl_mvapi_component.super.btl_version, addrs, size);
-    free (addrs);
+    rc = mca_pml_base_modex_send (&mca_btl_mvapi_component.super.btl_version, ports, size);
+    free (ports);
     return rc;
 }
 
@@ -353,7 +353,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                  mvapi_btl->nic = hca_hndl; 
                  mvapi_btl->port_id = (IB_port_t) j; 
                  mvapi_btl->port = hca_port; 
-                 mvapi_btl->mvapi_addr.subnet = hca_port.sm_lid;
+                 mvapi_btl->port_info.subnet = hca_port.sm_lid;
                  
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
                  mca_btl_mvapi_component.ib_num_btls ++; 
@@ -507,6 +507,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
 
     /* Post OOB receive to support dynamic connection setup */
     mca_btl_mvapi_post_recv();
+    
     mca_btl_mvapi_modex_send(); 
     *num_btl_modules = mca_btl_mvapi_component.ib_num_btls;
     free(hca_ids);
@@ -554,13 +555,13 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_SQ_RDMA_READ:
             case VAPI_CQE_SQ_RDMA_WRITE:
                 frag = (mca_btl_mvapi_frag_t*) comp.id; 
-                OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_hp, 1);
                 /* Process a completed send or an rdma write  */
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
                 /* check and see if we need to progress pending sends */ 
-                if(frag->endpoint->wr_sq_tokens_hp && !opal_list_is_empty(&(frag->endpoint->pending_frags_hp))) { 
+                if(OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_hp, 1) > 0
+                   && !opal_list_is_empty(&(frag->endpoint->pending_frags_hp))) { 
                     opal_list_item_t *frag_item;
                     frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_hp));
                     frag = (mca_btl_mvapi_frag_t *) frag_item;
@@ -624,18 +625,37 @@ int mca_btl_mvapi_component_progress()
                 
                 /* Process a completed send */
                 frag = (mca_btl_mvapi_frag_t*) comp.id; 
-                OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_lp, 1); 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
                 /* check and see if we need to progress pending sends */ 
-                if(frag->endpoint->wr_sq_tokens_lp && !opal_list_is_empty(&(frag->endpoint->pending_frags_lp))) { 
+                if(OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_lp, 1) > 0
+                   && !opal_list_is_empty(&(frag->endpoint->pending_frags_lp))) { 
                     opal_list_item_t *frag_item;
                     frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_lp));
                     frag = (mca_btl_mvapi_frag_t *) frag_item;
-                    
-                    if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { 
-                        BTL_ERROR(("error in posting pending send\n"));
+                    switch(frag->sr_desc.opcode){
+                    case VAPI_SEND: 
+                        if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { 
+                            BTL_ERROR(("error in posting pending send\n"));
+                        }
+                        break; 
+                    case VAPI_RDMA_WRITE: 
+                        if(OMPI_SUCCESS !=  mca_btl_mvapi_put((mca_btl_base_module_t*) mvapi_btl, 
+                                                              frag->endpoint, 
+                                                              (mca_btl_base_descriptor_t*) frag)) { 
+                            BTL_ERROR(("error in posting pending rdma write\n"));
+                        }
+                        break; 
+                    case VAPI_RDMA_READ: 
+                        if(OMPI_SUCCESS !=  mca_btl_mvapi_put((mca_btl_base_module_t *) mvapi_btl, 
+                                                              frag->endpoint,
+                                                              (mca_btl_base_descriptor_t*) frag)) { 
+                            BTL_ERROR(("error in posting pending rdma read\n"));
+                        }
+                        break;
+                    default: 
+                        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->sr_desc.opcode)); 
                     }
                 }
                 

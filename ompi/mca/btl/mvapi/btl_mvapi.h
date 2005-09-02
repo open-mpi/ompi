@@ -135,7 +135,7 @@ struct mca_btl_mvapi_module_t {
     mca_btl_base_module_t  super;  /**< base PTL interface */
     bool btl_inited; 
     mca_btl_mvapi_recv_reg_t ib_reg[256];
-    mca_btl_mvapi_addr_t mvapi_addr;  /* contains only the subnet right now */ 
+    mca_btl_mvapi_port_info_t port_info;  /* contains only the subnet right now */ 
     VAPI_hca_id_t   hca_id;        /**< ID of HCA */
     IB_port_t port_id; /**< ID of the PORT */ 
     VAPI_hca_port_t port;          /**< IB port of this PTL */

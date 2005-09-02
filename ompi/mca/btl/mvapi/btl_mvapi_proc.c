@@ -32,7 +32,7 @@ OBJ_CLASS_INSTANCE(mca_btl_mvapi_proc_t,
 void mca_btl_mvapi_proc_construct(mca_btl_mvapi_proc_t* proc)
 {
     proc->proc_ompi = 0;
-    proc->proc_addr_count = 0;
+    proc->proc_port_count = 0;
     proc->proc_endpoints = 0;
     proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
@@ -131,7 +131,7 @@ mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
     rc = mca_pml_base_modex_recv(
                                  &mca_btl_mvapi_component.super.btl_version, 
                                  ompi_proc, 
-                                 (void*)&mvapi_proc->proc_addrs, 
+                                 (void*)&mvapi_proc->proc_ports, 
                                  &size
                                  ); 
     
@@ -144,7 +144,7 @@ mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
-    if((size % sizeof(mca_btl_mvapi_addr_t)) != 0) {
+    if((size % sizeof(mca_btl_mvapi_port_info_t)) != 0) {
         opal_output(0, "[%s:%d] invalid mvapi address for peer [%d,%d,%d]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(mvapi_proc);
@@ -152,16 +152,11 @@ mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
     }
 
 
-    mvapi_proc->proc_addr_count = size/sizeof(mca_btl_mvapi_addr_t);
+    mvapi_proc->proc_port_count = size/sizeof(mca_btl_mvapi_port_info_t);
     
 
-    /* XXX: Right now, there can be only 1 peer associated
-     * with a proc. Needs a little bit change in 
-     * mca_btl_mvapi_proc_t to allow on demand increasing of
-     * number of endpoints for this proc */
-
     mvapi_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(mvapi_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
+        malloc(mvapi_proc->proc_port_count * sizeof(mca_btl_base_endpoint_t*));
 
     if(NULL == mvapi_proc->proc_endpoints) {
         OBJ_RELEASE(mvapi_proc);
@@ -179,14 +174,12 @@ mca_btl_mvapi_proc_t* mca_btl_mvapi_proc_create(ompi_proc_t* ompi_proc)
 int mca_btl_mvapi_proc_insert(mca_btl_mvapi_proc_t* mvapi_proc, 
                               mca_btl_base_endpoint_t* mvapi_endpoint)
 {
-    mca_btl_mvapi_module_t* mvapi_btl = mvapi_endpoint->endpoint_btl; 
-    
+        
     /* insert into endpoint array */
-    if(mvapi_proc->proc_addr_count <= mvapi_proc->proc_endpoint_count) 
+    if(mvapi_proc->proc_port_count <= mvapi_proc->proc_endpoint_count) 
         return OMPI_ERR_OUT_OF_RESOURCE; 
     
     mvapi_endpoint->endpoint_proc = mvapi_proc;
-    mvapi_endpoint->endpoint_addr = mvapi_proc->proc_addrs[mvapi_proc->proc_endpoint_count]; 
     mvapi_proc->proc_endpoints[mvapi_proc->proc_endpoint_count++] = mvapi_endpoint;
     
     return OMPI_SUCCESS;
