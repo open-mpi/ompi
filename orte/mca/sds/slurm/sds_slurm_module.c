@@ -268,7 +268,8 @@ static int parse_range(char *base, char *range, char ***names)
     
     len = strlen(range);
     base_len = strlen(base);
-    
+    start = end = 0;
+
     /* Look for the beginning of the first number */
     
     for (found = false, i = 0; i < len; ++i) {
