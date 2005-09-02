@@ -37,6 +37,7 @@
 
 #include "class/orte_proc_table.h"
 #include "opal/util/output.h"
+#include "util/univ_info.h"
 
 #include "mca/gpr/gpr.h"
 #include "mca/ns/ns.h"
@@ -469,7 +470,10 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 
     /* if we lose the connection to the seed - abort */
     if(memcmp(&peer->peer_name,&mca_oob_name_seed,sizeof(mca_oob_name_seed)) == 0) {
-        orte_errmgr.abort();
+        /* If we are not already inside orte_finalize, then call abort */
+        if (ORTE_UNIVERSE_STATE_FINALIZE > orte_universe_info.state) {
+            orte_errmgr.abort();
+        }
     }
 
     mca_oob_tcp_peer_shutdown(peer);

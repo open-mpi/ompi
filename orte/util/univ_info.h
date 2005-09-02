@@ -37,12 +37,21 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
+    
+    /* Some states for the orte_universe_t.state field */
+    enum orte_universe_state_t {
+        ORTE_UNIVERSE_STATE_PRE_INIT, /* Before initialization */
+        ORTE_UNIVERSE_STATE_INIT,     /* In initalization      */
+        ORTE_UNIVERSE_STATE_RUNNING,  /* After initalization   */
+        ORTE_UNIVERSE_STATE_FINALIZE  /* In Finalization       */
+    };
+    typedef  enum orte_universe_state_t orte_universe_state_t;
+    
     /* Define the info structure underlying the Open MPI universe system
-    * instanced in ompi_rte_init.c */
-
+     * instanced in ompi_rte_init.c */
+    
     struct orte_universe_t {
-        bool init;
+        orte_universe_state_t state; /**< Indicates state of the universe */
         char *name;
         char *host;
         char *uid;
