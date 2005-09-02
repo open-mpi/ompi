@@ -117,10 +117,13 @@ struct mca_btl_base_endpoint_t {
 
     opal_mutex_t                endpoint_send_lock;
     /**< lock for concurrent access to endpoint state */
-
+    
     opal_mutex_t                endpoint_recv_lock;
     /**< lock for concurrent access to endpoint state */
 
+    opal_mutex_t                endpoint_pending_lock; 
+    /**< lock for pending frags list access */ 
+    
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpoint */
  
@@ -239,10 +242,12 @@ void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t*);
    }\
 }
 
-#define BTL_MVAPI_INSERT_PENDING(frag, frag_list, tokens, rc) \
+#define BTL_MVAPI_INSERT_PENDING(frag, frag_list, tokens, lock, rc) \
 { \
  do{ \
+     OPAL_THREAD_LOCK(&lock); \
      opal_list_append(&frag_list, (opal_list_item_t *)frag); \
+     OPAL_THREAD_UNLOCK(&lock); \
      OPAL_THREAD_ADD32(&tokens, 1); \
      rc =  OMPI_SUCCESS; \
  } while(0); \
