@@ -31,6 +31,8 @@
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 #include "mca/btl/base/btl_base_error.h" 
 #include <vapi_types.h> 
+#include <math.h> /* for log2 */ 
+
 mca_btl_mvapi_module_t mca_btl_mvapi_module = {
     {
         &mca_btl_mvapi_component.super,
@@ -114,8 +116,13 @@ int mca_btl_mvapi_add_procs(
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         peers[i] = ib_peer;
     }
+    
+    mvapi_btl->num_peers += nprocs; 
+    if(mca_btl_mvapi_component.use_srq) { 
+        mvapi_btl->rd_buf_max = mca_btl_mvapi_component.ib_rr_buf_max + log2(nprocs) * mca_btl_mvapi_component.rd_per_peer; 
+    }
 
-    return OMPI_SUCCESS;
+   return OMPI_SUCCESS;
 }
 
 /* 

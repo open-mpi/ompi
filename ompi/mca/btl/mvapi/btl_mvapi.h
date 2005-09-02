@@ -95,6 +95,9 @@ struct mca_btl_mvapi_component_t {
     uint32_t ib_rr_buf_min; 
     /**< the minimum number of posted rr */ 
     
+    uint32_t rd_per_peer; 
+    /**< the number of recv desc posted per log(peer) in SRQ mode */ 
+
     size_t eager_limit; 
     size_t max_send_size; 
 
@@ -175,7 +178,11 @@ struct mca_btl_mvapi_module_t {
 
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
+    
+    uint32_t num_peers; 
+    uint32_t rd_buf_max; 
 
+    
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
     
 
