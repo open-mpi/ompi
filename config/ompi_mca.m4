@@ -780,7 +780,7 @@ AC_MSG_ERROR([*** ${framework} component ${component} was supposed to be direct-
         eval "$str"
         var_out="LIBMPI_EXTRA_${flags}"
         if test -n "$line"; then
-            str="$var_out="'"$'"$var_out $var_in $line"'"'
+            str="$var_out="'"$'"$var_out $line"'"'
             eval $str
         fi
     done
@@ -790,7 +790,7 @@ AC_MSG_ERROR([*** ${framework} component ${component} was supposed to be direct-
         eval "$str"
         var_out="WRAPPER_EXTRA_${flags}"
         if test -n "$line"; then
-            str="$var_out="'"$'"$var_out $var_in $line"'"'
+            str="$var_out="'"$'"$var_out $line"'"'
             eval $str
         fi
     done
@@ -804,7 +804,7 @@ AC_MSG_ERROR([*** ${framework} component ${component} was supposed to be direct-
             eval "$str"
             var_out="LIBMPI_EXTRA_${flags}"
             if test -n "$line"; then
-                str="$var_out="'"$'"$var_out $var_in $line"'"'
+                str="$var_out="'"$'"$var_out $line"'"'
                 eval $str
             fi
         done
@@ -814,7 +814,7 @@ AC_MSG_ERROR([*** ${framework} component ${component} was supposed to be direct-
             eval "$str"
             var_out="WRAPPER_EXTRA_${flags}"
             if test -n "$line"; then
-                str="$var_out="'"$'"$var_out $var_in $line"'"'
+                str="$var_out="'"$'"$var_out $line"'"'
                 eval $str
             fi
         done
