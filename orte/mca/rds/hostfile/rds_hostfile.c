@@ -382,7 +382,7 @@ cleanup:
         while (NULL != (item = opal_list_remove_first(&(rds_item->attributes))) ) {
             OBJ_RELEASE(item);
         }
-        OBJ_RELEASE(item);
+        OBJ_RELEASE(rds_item);
     }
 
     OBJ_DESTRUCT(&existing);
