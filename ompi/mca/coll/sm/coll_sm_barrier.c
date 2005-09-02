@@ -13,6 +13,7 @@
  * 
  * $HEADER$
  */
+/** @file */
 
 #include "ompi_config.h"
 
@@ -23,99 +24,97 @@
 #include "coll_sm.h"
 
 #if 0
-#define D(foo) printf foo
+#define D(foo) { printf foo ; fflush(stdout); }
 #else
 #define D(foo)
 #endif
 
-/*
- *	barrier
+/**
+ * Shared memory barrier.
  *
- *	Function:	- barrier 
- *	Accepts:	- same as MPI_Barrier()
- *	Returns:	- MPI_SUCCESS or error code
+ * Tree-based algorithm for a barrier -- the general scheme is a fan
+ * in to rank 0 followed by a fan out using the control segments in
+ * the shared memory area.  The data segments are not used.
+ *
+ * The general algorithm is to wait for all N children to report in by
+ * atomically increasing a uint32_t in my "in" control segment.  Once
+ * that value equals N, I atomically increase the corresponding number
+ * in my parent's "in" control segment.
+ *
+ * If I have no parent and all N children have reported in, then I
+ * write a 1 into each of my children's "out" control segments.  Once
+ * the children see the 1, they do the same to their children.
  */
 int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
 {
-    mca_coll_base_comm_t *data = comm->c_coll_selected_data;
-    uint32_t *my_control_in, *my_control_out;
-    uint32_t *parent_control_in;
-    int i, rank, segment;
-    char *control_in, *control_out;
-    int num_children = data->mcb_num_children;
+    int rank, buffer_set;
+    mca_coll_base_comm_t *data;
+    uint32_t i, num_children;
+    uint32_t *me_in, *me_out, *parent, *children;
+    int uint_control_size;
 
+    uint_control_size = 
+        mca_coll_sm_component.sm_control_size / sizeof(uint32_t);
+    data = comm->c_coll_selected_data;
     rank = ompi_comm_rank(comm);
-    segment = (++data->mcb_operation_count % data->mcb_mpool_num_segments);
-    control_in = data->mcb_mpool_index[segment]->mcbmi_control_fan_in;
-    control_out = data->mcb_mpool_index[segment]->mcbmi_control_fan_out;
+    num_children = data->mcb_tree[rank].mcstn_num_children;
+    buffer_set = ((data->mcb_barrier_count++) % 2) * 2;
+    me_in = &data->mcb_barrier_control_me[buffer_set];
+    me_out = me_in + uint_control_size;
+    me_out = (uint32_t*)
+        (((char*) me_in) + mca_coll_sm_component.sm_control_size);
+    D(("rank %d barrier set %d: in %p, out %p\n", rank, buffer_set, me_in, me_out));
 
-    /* Pre-calculate some pointers */
+    /* Wait for my children to write to my *in* buffer */
 
-    my_control_in = (uint32_t *)
-        (control_in + (rank * mca_coll_sm_component.sm_control_size));
-    my_control_out = (uint32_t *)
-        (control_out + (rank * mca_coll_sm_component.sm_control_size));
-    *my_control_out = 0;
-
-    if (0 != rank) {
-        parent_control_in = (uint32_t *)
-            (control_in + (data->mcb_parent_rank * 
-                           mca_coll_sm_component.sm_control_size));
-    } else {
-        parent_control_in = NULL;
-    }
-
-    /* Fan in: wait for my children */
-
-    if (0 != data->mcb_num_children) {
+    if (0 != num_children) {
+        /* Get children *out* buffer */
+        children = data->mcb_barrier_control_children + buffer_set + 
+            uint_control_size;
         D(("rank %d waiting for fan in from %d children...\n", rank, num_children));
-        while (*my_control_in != (uint32_t) num_children) {
-            opal_atomic_wmb();
+        while (*me_in != num_children) {
+            continue;
         }
-        *my_control_in = 0;
+        *me_in = 0;
         D(("rank %d got fan in\n", rank));
     }
 
-    /* Fan in: send to my parent */
-
-    if (NULL != parent_control_in) {
-        D(("rank %d writing to parent\n", rank));
-        opal_atomic_add(parent_control_in, 1);
-        D(("rank %d wrote to parent: %d\n", rank, *parent_control_in));
-    }
-
-    /* Fan out: wait for my parent to write to me (don't poll on
+    /* Send to my parent and wait for a response (don't poll on
        parent's out buffer -- that would cause a lot of network
-       traffic / contention / faults / etc. -- this way, the children
-       poll on local memory and therefore only num_children messages
-       are sent across the network [vs. num_children *each* time all
-       the children poll] -- i.e., the memory is only being polled by
-       one process, and it is only changed *once* by an external
+       traffic / contention / faults / etc.  Instead, children poll on
+       local memory and therefore only num_children messages are sent
+       across the network [vs. num_children *each* time all the
+       children poll] -- i.e., the memory is only being polled by one
+       process, and it is only changed *once* by an external
        process) */
 
-    if (NULL != parent_control_in) {
-        D(("rank %d waiting for fan out from parent\n", rank));
-        while (0 == *my_control_out) {
-            opal_atomic_wmb();
+    if (0 != rank) {
+        /* Get parent *in* buffer */
+        parent = &data->mcb_barrier_control_parent[buffer_set];
+        D(("rank %d writing to parent\n", rank));
+        opal_atomic_add(parent, 1);
+
+        D(("rank %d waiting for fan out from parent: %p\n", rank, me_out));
+        while (0 == *me_out) {
+            continue;
         }
         D(("rank %d got fan out from parent\n", rank));
+        *me_out = 0;
     }
 
-    /* Fan out: send to my children */
+    /* Send to my children */
 
-    for (i = data->mcb_child_rank_start; i <= data->mcb_child_rank_end; ++i) {
-        D(("rank %d sending to child %d, rank %d\n", 
-           rank, i, i - data->mcb_child_rank_start));
-        *((uint32_t *) 
-          (control_out + (i * mca_coll_sm_component.sm_control_size))) = 1;
-        
+    for (i = 0; i < num_children; ++i) {
+        D(("rank %d sending to child %d: %p\n", rank, i,
+           children + (i * uint_control_size * 4)));
+        children[i * uint_control_size * 4] = 1;
     }
     D(("rank %d done with barrier\n", rank));
 
     /* All done!  End state of the control segment:
 
-       my_control_in: 0
-       my_control_out: 1
+       me_in: 0
+       me_out: 0
     */
 
     return OMPI_SUCCESS;
