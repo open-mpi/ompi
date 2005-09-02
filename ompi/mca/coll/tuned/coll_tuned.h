@@ -245,6 +245,12 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_priority_param;
                                      int root, 
                                      struct ompi_communicator_t *comm,
                                      uint32_t segsize);
+  int mca_coll_tuned_bcast_intra_split_bintree(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype,
+                                     int root, 
+                                     struct ompi_communicator_t *comm,
+                                     uint32_t segsize);
+
 
 
 
