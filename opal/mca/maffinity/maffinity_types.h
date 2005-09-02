@@ -32,13 +32,18 @@ extern "C" {
 
     /**
      * Struct used with opal_maffinity_base_module_set_fn_t.  It
-     * describes a section of memory (starting address and length) and
-     * what process owns it (by PID).  PID is unique enough because
-     * all processes are guaranteed to be on the same machine.
+     * describes a section of memory (starting address and length).
+     * This is really the same thing as an iovec, but we include a
+     * separate type for it for at least 2 reasons:
+     *
+     * 1. Some OS's iovec definitions are exceedingly lame (e.g.,
+     * Solaris 9 has the length argument as an int, instead of a
+     * size_t).
+     *
+     * 2. We reserve the right to expand/change this struct in the
+     * future.
      */
     struct opal_maffinity_base_segment_t {
-        /** Owning process */
-        pid_t mbs_owner_pid;
         /** Starting address of segment */
         void *mbs_start_addr;
         /** Length of segment */

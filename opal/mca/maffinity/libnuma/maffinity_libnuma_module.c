@@ -16,8 +16,6 @@
 
 #include "ompi_config.h"
 
-#include <sys/types.h>
-#include <unistd.h>
 #include <string.h>
 #include <numa.h>
 
@@ -32,7 +30,7 @@
  */
 static int libnuma_module_init(void);
 static int libnuma_module_set(opal_maffinity_base_segment_t *segments,
-                                size_t num_segments, bool am_allocator);
+                              size_t num_segments);
 
 /*
  * Libnuma maffinity module
@@ -78,10 +76,9 @@ static int libnuma_module_init(void)
 
 
 static int libnuma_module_set(opal_maffinity_base_segment_t *segments,
-                              size_t num_segments, bool am_allocator)
+                              size_t num_segments)
 {
     size_t i;
-    pid_t mypid = getpid();
 
     /* Kinda crummy that we have to allocate each portion individually
        rather than provide a top-level function call that does it all,
@@ -90,10 +87,8 @@ static int libnuma_module_set(opal_maffinity_base_segment_t *segments,
        placement of pages. */
 
     for (i = 0; i < num_segments; ++i) {
-        if (segments[i].mbs_owner_pid == mypid) {
-            numa_setlocal_memory(segments[i].mbs_start_addr,
-                                 segments[i].mbs_len);
-        }
+        numa_setlocal_memory(segments[i].mbs_start_addr,
+                             segments[i].mbs_len);
     }
 
     return OPAL_SUCCESS;

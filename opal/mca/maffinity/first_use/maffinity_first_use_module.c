@@ -16,8 +16,6 @@
 
 #include "ompi_config.h"
 
-#include <sys/types.h>
-#include <unistd.h>
 #include <string.h>
 
 #include "opal/include/constants.h"
@@ -31,7 +29,7 @@
  */
 static int first_use_module_init(void);
 static int first_use_module_set(opal_maffinity_base_segment_t *segments,
-                                size_t num_segments, bool am_allocator);
+                                size_t num_segments);
 
 /*
  * First_Use maffinity module
@@ -69,10 +67,9 @@ static int first_use_module_init(void)
 
 
 static int first_use_module_set(opal_maffinity_base_segment_t *segments,
-                                size_t num_segments, bool am_allocator)
+                                size_t num_segments)
 {
     size_t i;
-    pid_t mypid = getpid();
 
     /* Crude: zero out all the segments that belong to me.  We could
        probably get away with touching a byte in each page (which
@@ -81,9 +78,7 @@ static int first_use_module_set(opal_maffinity_base_segment_t *segments,
        optimization... */
 
     for (i = 0; i < num_segments; ++i) {
-        if (segments[i].mbs_owner_pid == mypid) {
-            memset(segments[i].mbs_start_addr, 0, segments[i].mbs_len);
-        }
+        memset(segments[i].mbs_start_addr, 0, segments[i].mbs_len);
     }
 
     return OPAL_SUCCESS;

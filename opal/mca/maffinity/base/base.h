@@ -103,7 +103,7 @@ extern "C" {
      * opal_maffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned.
      */
-    OMPI_DECLSPEC int opal_maffinity_base_set(opal_maffinity_base_segment_t *segments, size_t num_segments, bool am_allocator);
+    OMPI_DECLSPEC int opal_maffinity_base_set(opal_maffinity_base_segment_t *segments, size_t num_segments);
 
     /**
      * Shut down the maffinity MCA framework.
