@@ -643,6 +643,24 @@ CFLAGS_save="$CFLAGS"
 AC_PROG_CC
 CFLAGS="$CFLAGS_save"
 
+# Open MPI: this is a useless CHECK_HEADER (i.e., everyone will have
+# stdio.h), but we need to do it here because AC_CHECK_HEADER has
+# several other macros AC_REQUIRE'd.  The problem is best illustrated
+# via example -- the code in the rest of configure is analogous to the
+# following:
+#
+# AC_PROG_CC
+# if test ...something...; then
+#     AC_CHECK_HEADER(...)
+# fi
+# AC_CHECK_HEADER
+#
+# The second AC_CHECK_HEADER may fail if the conditional block is not
+# taken, because from AC/AM's perspective, the AC_REQUIRE'd macros
+# have already been invoked (i.e., they don't know anything about the
+# shell conditional).
+AC_CHECK_HEADER([stdio.h], [:], [:])
+
 # Open MPI: this stuff is not necessary with modern versions of the
 # GNU auto tools.
 #AR="${AR:-ar} cr$AR_LOCAL"
