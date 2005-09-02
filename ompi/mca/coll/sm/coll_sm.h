@@ -148,6 +148,25 @@ extern "C" {
     typedef struct mca_coll_sm_component_t mca_coll_sm_component_t;
 
     /**
+     * Structure for representing a node in the tree
+     */
+    struct mca_coll_sm_tree_node_t {
+        /** Arbitrary ID number, starting from 0 */
+        int mcstn_id;
+        /** Pointer to parent, or NULL if root */
+        struct mca_coll_sm_tree_node_t *mcstn_parent;
+        /** Number of children, or 0 if a leaf */
+        int mcstn_num_children;
+        /** Pointer to an array of children, or NULL if 0 ==
+            mcstn_num_children */
+        struct mca_coll_sm_tree_node_t **mcstn_children;
+    };
+    /**
+     * Convenienve typedef
+     */
+    typedef struct mca_coll_sm_tree_node_t mca_coll_sm_tree_node_t;
+
+    /**
      * Structure containing pointers to various arrays of data in the
      * data mpool area (one of these indexes a single segment in the
      * data mpool).  Nothing is hard-coded because all the array
@@ -155,14 +174,10 @@ extern "C" {
      * many processes are in the communicator.
      */
     struct mca_coll_base_mpool_index_t {
-        /** Pointer to beginning of control fan-in data */
-        char *mcbmi_control_fan_in;
-        /** Pointer to beginning of control fan-out data */
-        char *mcbmi_control_fan_out;
-        /** Pointer to beginning of message data fan-in data */
-        char *mcbmi_data_fan_in;
-        /** Pointer to beginning of message data fan-out data */
-        char *mcbmi_data_fan_out;
+        /** Pointer to beginning of control data */
+        uint32_t *mcbmi_control;
+        /** Pointer to beginning of message fragment data */
+        char *mcbmi_data;
     };
     typedef struct mca_coll_base_mpool_index_t mca_coll_base_mpool_index_t;
 
@@ -179,43 +194,48 @@ extern "C" {
             process will call free). */
         void *mcb_data_mpool_malloc_addr;
         /** Base of the data mpool */
-        char *mcb_mpool_base;
+        unsigned char *mcb_mpool_base;
         /** Offset into the data mpool where this comm's operations
             area is */
         size_t mcb_mpool_offset;
         /** Pointer in the data mpool to the beginning of this comm's
             operations area (i.e., mcb_mpool_base +
             mcb_mpool_offset) */
-        char *mcb_mpool_area;
+        unsigned char *mcb_mpool_area;
         /** Number of segments in this comm's area in the data mpool */
         int mcb_mpool_num_segments;
 
-        /** Array of indexes into the mpool area (containing pointers
-            to each segments control and data areas).  This array will
-            be located immediately after the instance of this struct
-            in memory (i.e., so this struct and the array that this
-            member points to will be adjacent in memory). */
-        mca_coll_base_mpool_index_t **mcb_mpool_index;
+        /** Pointer to my barrier control pages (odd index pages are
+            "in", even index pages are "out") */
+        uint32_t *mcb_barrier_control_me;
+
+        /** Pointer to my parent's barrier control pages (will be NULL
+            for communicator rank 0; odd index pages are "in", even
+            index pages are "out") */
+        uint32_t *mcb_barrier_control_parent;
+
+        /** Pointers to my childrens' barrier control pages (they're
+            contiguous in memory, so we only point to the base -- the
+            number of children is in my entry in the mcb_tree); will
+            be NULL if this process has no children (odd index pages
+            are "in", even index pages are "out") */
+        uint32_t *mcb_barrier_control_children;
+
+        /** Number of barriers that we have executed (i.e., which set
+            of barrier buffers to use). */
+        int mcb_barrier_count;
+
+        /** Array of indexes into the mpool area for control and data
+            fragment passing (containing pointers to each segments
+            control and data areas). */
+        mca_coll_base_mpool_index_t *mcb_mpool_index;
+
+        /** Array of graph nodes representing the tree used for
+            communications */
+        mca_coll_sm_tree_node_t *mcb_tree;
 
         /** Operation number (i.e., which segment number to use) */
         int mcb_operation_count;
-
-        /** Parent rank, for root==0 */
-        int mcb_parent_rank;
-
-        /** First child rank, or -1 if no children (i.e., a leaf
-            node), for root==0 */
-        int mcb_child_rank_start;
-
-        /** Last child rank, or -1 if no children (i.e., a leaf
-            node), for root==0 */
-        int mcb_child_rank_end;
-
-        /** Number of children (to include 0 if leak) -- just
-            (mcb_child_rank_end - mcb_child_rank_start + 1) -- so that
-            we don't have to compute this during loops and whatnot,
-            for root==0. */
-        int mcb_num_children;
     };
     /**
      * Convenience typedef

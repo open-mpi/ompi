@@ -181,10 +181,13 @@ static int sm_open(void)
                               &cs->sm_mpool_name);
     
     mca_base_param_reg_int(c, "communicator_num_segments",
-                           "Number of shared memory collective segments on each communicator",
+                           "Number of shared memory collective segments on each communicator (must be >= 2)",
                            false, false,
                            cs->sm_communicator_num_segments,
                            &cs->sm_communicator_num_segments);
+    if (cs->sm_communicator_num_segments < 2) {
+        cs->sm_communicator_num_segments = 2;
+    }
 
     mca_base_param_reg_int(c, "tree_degree",
                            "Degree of the tree for tree-based operations (must be <= control size and <= 255)",
@@ -204,8 +207,7 @@ static int sm_open(void)
         cs->sm_tree_degree = 255;
     }
 
-    /* Size of the bootstrap shared mb
-emory area. */
+    /* Size of the bootstrap shared memory area. */
 
     size1 = 
         sizeof(mca_coll_sm_bootstrap_header_extension_t) +
@@ -242,6 +244,10 @@ emory area. */
 
     size2 = cs->sm_communicator_num_segments * 2 *
         (cs->sm_control_size + cs->sm_fragment_size);
+    mca_base_param_reg_int(c, "shared_mem_used_data",
+                           "Amount of shared memory used in the shared memory data area for one process (in bytes)",
+                           false, true,
+                           size2, NULL);
 
     return OMPI_SUCCESS;
 }
