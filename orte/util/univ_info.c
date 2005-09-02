@@ -41,7 +41,7 @@
 #include "orte/util/univ_info.h"
 
 orte_universe_t orte_universe_info = {
-    /* .init =                */    false,
+    /* .state =               */    ORTE_UNIVERSE_STATE_PRE_INIT,
     /* .name =                */    NULL,
     /* .host =                */    NULL,
     /* .uid =                 */    NULL,
@@ -59,7 +59,7 @@ int orte_univ_info(void)
     int id, tmp;
     char *tmpname=NULL, *tptr, *ptr;
 
-    if (!orte_universe_info.init) {
+    if (ORTE_UNIVERSE_STATE_PRE_INIT == orte_universe_info.state) {
         id = mca_base_param_register_string("universe", NULL, NULL, NULL, NULL);
         mca_base_param_lookup_string(id, &tmpname);
 
@@ -119,7 +119,7 @@ int orte_univ_info(void)
         id = mca_base_param_register_string("universe", "script", NULL, NULL, orte_universe_info.scriptfile);
         mca_base_param_lookup_string(id, &(orte_universe_info.scriptfile));
 
-        orte_universe_info.init = true;
+        orte_universe_info.state = ORTE_UNIVERSE_STATE_INIT;
     }
 
     return(ORTE_SUCCESS);
@@ -158,7 +158,7 @@ int orte_univ_info_finalize(void)
         orte_universe_info.scriptfile = NULL;
     }
 
-    orte_universe_info.init = false;
+    orte_universe_info.state = ORTE_UNIVERSE_STATE_PRE_INIT;
     orte_universe_info.persistence = false;
     orte_universe_info.console = false;
     orte_universe_info.console_connected = false;

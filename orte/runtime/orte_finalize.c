@@ -32,6 +32,10 @@
  */
 int orte_finalize(void)
 {
+
+    /* We have now entered the finalization stage */
+    orte_universe_info.state = ORTE_UNIVERSE_STATE_FINALIZE;
+
     /* finalize the orte system */
     orte_system_finalize();
     
