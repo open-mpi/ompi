@@ -115,14 +115,8 @@ struct mca_btl_base_endpoint_t {
     double                      endpoint_tstamp;
     /**< timestamp of when the first connection was attempted */
 
-    opal_mutex_t                endpoint_send_lock;
+    opal_mutex_t                endpoint_lock;
     /**< lock for concurrent access to endpoint state */
-    
-    opal_mutex_t                endpoint_recv_lock;
-    /**< lock for concurrent access to endpoint state */
-
-    opal_mutex_t                endpoint_pending_lock; 
-    /**< lock for pending frags list access */ 
     
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpoint */
@@ -135,7 +129,6 @@ struct mca_btl_base_endpoint_t {
 
     uint32_t                    wr_sq_tokens_hp; 
     /**< number of high priority frags that  can be outstanding (down counter) */ 
-
 
     uint32_t                    wr_sq_tokens_lp; 
     /**< number of low priority frags that  can be outstanding (down counter) */ 
@@ -168,8 +161,6 @@ int  mca_btl_mvapi_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_b
 int  mca_btl_mvapi_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_mvapi_post_recv(void);
 
-
-void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t*);
 
 #define MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(post_rr_high_endpoint, \
                                              post_rr_high_additional) \
