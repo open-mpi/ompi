@@ -229,9 +229,13 @@ static void mca_pml_ob1_recv_request_ack(
             }
 
         /* start rdma at the current fragment offset - no need to send an ack in this case */
-        } else { 
+        } else if (mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) { 
             recvreq->req_rdma_offset = recvreq->req_bytes_received;
             return;
+
+        /* don't do rdma */
+        } else {
+            recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
         }
 
     /* zero byte message */
