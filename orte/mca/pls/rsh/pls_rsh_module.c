@@ -629,6 +629,7 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
+    free(jobid_string);  /* done with this variable */
     return rc;
 }
 
