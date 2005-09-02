@@ -118,7 +118,10 @@ int orte_ras_base_node_query(opal_list_t* nodes)
             }
         }
         opal_list_append(nodes, &node->super);
+        OBJ_RELEASE(value);
     }
+    if (NULL != values) free(values);
+    
     return ORTE_SUCCESS;
 }
 
@@ -223,9 +226,11 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
             continue;
         }
         opal_list_append(nodes, &node->super);
+        OBJ_RELEASE(value);
     }
 
     free (keys[4]);
+    if (NULL != values) free(values);
     return ORTE_SUCCESS;
 }
 
@@ -349,7 +354,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     for (j=0; j < num_values; j++) {
           OBJ_RELEASE(values[j]);
     }
-    free(values);
+    if (NULL != values) free(values);
     return rc;
 }
 
@@ -360,7 +365,7 @@ int orte_ras_base_node_delete(opal_list_t* nodes)
 {
     opal_list_item_t* item;
     int rc;
-    size_t num_values, num_tokens;
+    size_t i, num_values, num_tokens;
     orte_ras_node_t* node;
     char** tokens;
 
@@ -391,6 +396,11 @@ int orte_ras_base_node_delete(opal_list_t* nodes)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        for (i=0; i < num_tokens; i++) {
+            free(tokens[i]);
+            tokens[i] = NULL;
+        }
+        if (NULL != tokens) free(tokens);
     }
     return ORTE_SUCCESS;
 }
@@ -495,7 +505,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     for (j=0; j < num_values; j++) {
         OBJ_RELEASE(values[j]);
     }
-    free(values);
+    if (NULL != values) free(values);
 
     return rc;
 }
