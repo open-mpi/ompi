@@ -58,21 +58,21 @@ int mca_btl_mvapi_endpoint_qp_init_query(
                    
 static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi_btl, mca_btl_mvapi_endpoint_t * endpoint, mca_btl_mvapi_frag_t * frag)
 { 
-    
+    int rc; 
+    VAPI_qp_hndl_t qp_hndl; 
     frag->sr_desc.remote_qkey = 0; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
+    frag->sr_desc.opcode = VAPI_SEND; 
     
-    VAPI_qp_hndl_t qp_hndl; 
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
         
         /* atomically test and acquire a token */
         if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,-1) < 0) { 
             BTL_VERBOSE(("Queing because no send tokens \n"));
-            opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
-            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp, 1);
+            BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_hp, endpoint->wr_sq_tokens_hp, rc); 
             return OMPI_SUCCESS;
         } else { 
-            frag->sr_desc.remote_qp = endpoint->rem_qp_num_high; 
+            frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_high; 
             qp_hndl = endpoint->lcl_qp_hndl_high; 
         }
 
@@ -81,15 +81,14 @@ static inline int mca_btl_mvapi_endpoint_post_send(mca_btl_mvapi_module_t* mvapi
         /* atomically test and acquire a token */
         if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) {
             BTL_VERBOSE(("Queing because no send tokens \n"));
-            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
-            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,1);
+            BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_hp, endpoint->wr_sq_tokens_hp, rc); 
             return OMPI_SUCCESS;
         } else { 
-            frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
+            frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
             qp_hndl = endpoint->lcl_qp_hndl_low; 
         }
     } 
-    frag->sr_desc.opcode = VAPI_SEND; 
+    
     frag->sg_entry.len = frag->segment.seg_len + 
         ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  
 
@@ -149,7 +148,10 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     /* initialize the high and low priority tokens */ 
     endpoint->wr_sq_tokens_hp = mca_btl_mvapi_component.max_wr_sq_tokens; 
     endpoint->wr_sq_tokens_lp = mca_btl_mvapi_component.max_wr_sq_tokens; 
-    
+    endpoint->rem_info.rem_qp_num_high = 0; 
+    endpoint->rem_info.rem_qp_num_low = 0; 
+    endpoint->rem_info.rem_lid = 0; 
+    endpoint->rem_info.rem_subnet = 0; 
 }
 
 /*
@@ -177,7 +179,7 @@ static void mca_btl_mvapi_endpoint_send_cb(
 }
 
 
-static int mca_btl_mvapi_endpoint_send_connect_req(mca_btl_base_endpoint_t* endpoint)
+static int mca_btl_mvapi_endpoint_send_connect_data(mca_btl_base_endpoint_t* endpoint)
 {
     orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
     int rc;
@@ -204,6 +206,13 @@ static int mca_btl_mvapi_endpoint_send_connect_req(mca_btl_base_endpoint_t* endp
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    
+    rc = orte_dps.pack(buffer, &((mca_btl_mvapi_endpoint_t*)endpoint)->subnet, 1, ORTE_UINT32);
+    if(rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
 
     /* send to endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
@@ -227,34 +236,34 @@ static int mca_btl_mvapi_endpoint_send_connect_req(mca_btl_base_endpoint_t* endp
  *
  */
 
-static int mca_btl_mvapi_endpoint_send_connect_ack(mca_btl_base_endpoint_t* endpoint)
-{
-    orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
-    int rc;
-    uint32_t zero = 0;
+/* static int mca_btl_mvapi_endpoint_send_connect_data(mca_btl_base_endpoint_t* endpoint) */
+/* { */
+/*     orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t); */
+/*     int rc; */
+/*     uint32_t zero = 0; */
 
-    /* pack the info in the send buffer */
-    if(ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &zero, 1, ORTE_UINT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &zero, 1, ORTE_UINT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &zero, 1, ORTE_UINT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+/*     /\* pack the info in the send buffer *\/ */
+/*     if(ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &zero, 1, ORTE_UINT32))) { */
+/*         ORTE_ERROR_LOG(rc); */
+/*         return rc; */
+/*     } */
+/*     if(ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &zero, 1, ORTE_UINT32))) { */
+/*         ORTE_ERROR_LOG(rc); */
+/*         return rc; */
+/*     } */
+/*     if(ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &zero, 1, ORTE_UINT32))) { */
+/*         ORTE_ERROR_LOG(rc); */
+/*         return rc; */
+/*     } */
 
-    /* send to endpoint */
-    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
-         mca_btl_mvapi_endpoint_send_cb, NULL);
-    if(rc < 0) {
-        ORTE_ERROR_LOG(rc);
-    }
-    return rc;
-}
+/*     /\* send to endpoint *\/ */
+/*     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0, */
+/*          mca_btl_mvapi_endpoint_send_cb, NULL); */
+/*     if(rc < 0) { */
+/*         ORTE_ERROR_LOG(rc); */
+/*     } */
+/*     return rc; */
+/* } */
 
 /*
  * Set remote connection info
@@ -264,32 +273,15 @@ static int mca_btl_mvapi_endpoint_send_connect_ack(mca_btl_base_endpoint_t* endp
  * setup.
  *
  */
-static int mca_btl_mvapi_endpoint_set_remote_info(mca_btl_base_endpoint_t* endpoint, orte_buffer_t* buffer)
+static int mca_btl_mvapi_endpoint_set_remote_info(mca_btl_base_endpoint_t* endpoint, mca_btl_mvapi_rem_info_t* rem_info)
 {
-    int rc;
-
-
-
-    size_t cnt = 1;
-    rc = orte_dps.unpack(buffer, &endpoint->rem_qp_num_high, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_dps.unpack(buffer, &endpoint->rem_qp_num_low, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_dps.unpack(buffer, &endpoint->rem_lid, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
-              endpoint->rem_qp_num_high,
-              endpoint->rem_qp_num_low, 
-              endpoint->rem_lid));
+    
+    memcpy(&((mca_btl_mvapi_endpoint_t*) endpoint)->rem_info, rem_info, sizeof(mca_btl_mvapi_rem_info_t)); 
+    
+    BTL_VERBOSE(("Setting High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+                 endpoint->rem_info.rem_qp_num_high,
+                 endpoint->rem_info.rem_qp_num_low, 
+                 endpoint->rem_info.rem_lid));
 
     return ORTE_SUCCESS;
 }
@@ -345,7 +337,7 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
 
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
-    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_req(endpoint))) {
+    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_data(endpoint))) {
         BTL_ERROR(("error sending connect request, error code %d", rc)); 
         return rc;
     }
@@ -356,7 +348,8 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
  * Reply to a `start - connect' message
  *
  */
-static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *endpoint, orte_buffer_t* buffer)
+static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *endpoint, 
+                                                      mca_btl_mvapi_rem_info_t* rem_info)
 {
     int rc;
 
@@ -397,8 +390,8 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
 
 
     /* Set the remote side info */
-    mca_btl_mvapi_endpoint_set_remote_info(endpoint, buffer);
-
+    mca_btl_mvapi_endpoint_set_remote_info(endpoint, rem_info);
+    
     /* Connect to endpoint */
 
     rc = mca_btl_mvapi_endpoint_connect(endpoint);
@@ -408,7 +401,7 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
     }
 
     /* Send connection info over to remote endpoint */
-    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_req(endpoint))) {
+    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_data(endpoint))) {
         BTL_ERROR(("error in endpoint send connect request error code is %d", rc)); 
         return rc;
     }
@@ -447,8 +440,43 @@ static void mca_btl_mvapi_endpoint_recv(
     mca_btl_mvapi_proc_t *ib_proc;
     mca_btl_mvapi_endpoint_t *ib_endpoint;
     int endpoint_state;
-    int rc;
+    int rc; 
+    uint32_t i;
+    size_t cnt = 1; 
+    mca_btl_mvapi_rem_info_t rem_info; 
+    
+    /* start by unpacking data first so we know who is knocking at 
+       our door */ 
 
+    rc = orte_dps.unpack(buffer, &rem_info.rem_qp_num_high, &cnt, ORTE_UINT32);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    rc = orte_dps.unpack(buffer, &rem_info.rem_qp_num_low, &cnt, ORTE_UINT32);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    rc = orte_dps.unpack(buffer, &rem_info.rem_lid, &cnt, ORTE_UINT32);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    rc = orte_dps.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT32);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+                 rem_info.rem_qp_num_high,
+                 rem_info.rem_qp_num_low, 
+                 rem_info.rem_lid));
+
+
+   
+    
     for(ib_proc = (mca_btl_mvapi_proc_t*)
             opal_list_get_first(&mca_btl_mvapi_component.ib_procs);
             ib_proc != (mca_btl_mvapi_proc_t*)
@@ -456,16 +484,57 @@ static void mca_btl_mvapi_endpoint_recv(
             ib_proc  = (mca_btl_mvapi_proc_t*)opal_list_get_next(ib_proc)) {
 
         if(ib_proc->proc_guid.vpid == endpoint->vpid) {
+            bool found = false;
+            
+            /* ib_endpoint = ib_proc->proc_endpoints[0] */ 
 
             /* Try to get the endpoint instance of this proc */
-
-            /* Limitation: Right now, we have only 1 endpoint
-             * for every process. Need several changes, some
-             * in PML/BTL interface to set this right */
-            ib_endpoint = ib_proc->proc_endpoints[0];
-
+            /* first match the endpoint based on lid meaning we've seen */ 
+            /* this endpoint before.. */ 
+            for(i = 0; i < ib_proc->proc_endpoint_count; i++) { 
+                mca_btl_mvapi_port_info_t port_info; 
+                port_info = ib_proc->proc_ports[i]; 
+                ib_endpoint = ib_proc->proc_endpoints[i]; 
+                if(ib_endpoint->rem_info.rem_lid && 
+                   ib_endpoint->rem_info.rem_lid  == rem_info.rem_lid) { 
+                    /* we've seen them before! */ 
+                    found = true; 
+                    break;
+                }
+            }
+            /* If we haven't seen this remote lid before then try to match on 
+               endpoint */ 
+            for(i = 0; !found && i < ib_proc->proc_endpoint_count; i++) { 
+                mca_btl_mvapi_port_info_t port_info; 
+                port_info = ib_proc->proc_ports[i]; 
+                ib_endpoint = ib_proc->proc_endpoints[i]; 
+                if(!ib_endpoint->rem_info.rem_lid && 
+                   ib_endpoint->rem_info.rem_subnet  == rem_info.rem_subnet) { 
+                    /* found a match based on subnet! */ 
+                    found = true; 
+                    break;
+                }
+            }
+            /* try finding an open port, even if subnets  
+               don't match
+            */ 
+            for(i = 0; !found && i < ib_proc->proc_endpoint_count; i++) { 
+                mca_btl_mvapi_port_info_t port_info; 
+                port_info = ib_proc->proc_ports[i]; 
+                ib_endpoint = ib_proc->proc_endpoints[i]; 
+                if(!ib_endpoint->rem_info.rem_lid) { 
+                    /* found an unused end-point */ 
+                    found = true; 
+                    break;
+                }
+            }
+            
+            if(!found) { 
+                BTL_ERROR(("can't find suitable endpoint for this peer\n")); 
+                return; 
+            }
             endpoint_state = ib_endpoint->endpoint_state;
-
+            
             /* Update status */
             switch(endpoint_state) {
             case MCA_BTL_IB_CLOSED :
@@ -474,18 +543,18 @@ static void mca_btl_mvapi_endpoint_recv(
                  * status of this connection to CONNECTING,
                  * and then reply with our QP information */
 
-                if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_reply_start_connect(ib_endpoint, buffer))) {
+                if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_reply_start_connect(ib_endpoint, &rem_info))) {
                     BTL_ERROR(("error in endpoint reply start connect")); 
                     break;
                 }
-
+                
                 /* Setup state as connected */
                 ib_endpoint->endpoint_state = MCA_BTL_IB_CONNECT_ACK;
                 break;
                 
             case MCA_BTL_IB_CONNECTING :
                 
-                mca_btl_mvapi_endpoint_set_remote_info(ib_endpoint, buffer);
+                mca_btl_mvapi_endpoint_set_remote_info(ib_endpoint, &rem_info);
                 if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_connect(ib_endpoint))) {
                     BTL_ERROR(("endpoint connect error: %d", rc)); 
                     break;
@@ -495,7 +564,7 @@ static void mca_btl_mvapi_endpoint_recv(
                 mca_btl_mvapi_endpoint_waiting_ack(ib_endpoint);
 
                 /* Send him an ack */
-                mca_btl_mvapi_endpoint_send_connect_ack(ib_endpoint);
+                mca_btl_mvapi_endpoint_send_connect_data(ib_endpoint);
                 break;
 
             case MCA_BTL_IB_WAITING_ACK: 
@@ -505,7 +574,7 @@ static void mca_btl_mvapi_endpoint_recv(
             case MCA_BTL_IB_CONNECT_ACK:
 
                 mca_btl_mvapi_endpoint_connected(ib_endpoint);
-                mca_btl_mvapi_endpoint_send_connect_ack(ib_endpoint);
+                mca_btl_mvapi_endpoint_send_connect_data(ib_endpoint);
                 break;
 
             case MCA_BTL_IB_CONNECTED :
@@ -649,18 +718,18 @@ int mca_btl_mvapi_endpoint_connect(
     int rc;
     /* Connection establishment RC */
     rc = mca_btl_mvapi_endpoint_qp_init_query(endpoint->endpoint_btl, 
-                                           endpoint->endpoint_btl->nic, 
-                                           endpoint->lcl_qp_hndl_high, 
-                                           endpoint->rem_qp_num_high, 
-                                           endpoint->rem_lid,                                            
-                                           endpoint->endpoint_btl->port_id); 
+                                              endpoint->endpoint_btl->nic, 
+                                              endpoint->lcl_qp_hndl_high, 
+                                              endpoint->rem_info.rem_qp_num_high, 
+                                              endpoint->rem_info.rem_lid,                                            
+                                              endpoint->endpoint_btl->port_id); 
     
     rc = mca_btl_mvapi_endpoint_qp_init_query(endpoint->endpoint_btl, 
-                                           endpoint->endpoint_btl->nic, 
-                                           endpoint->lcl_qp_hndl_low, 
-                                           endpoint->rem_qp_num_low, 
-                                           endpoint->rem_lid,                                            
-                                           endpoint->endpoint_btl->port_id); 
+                                              endpoint->endpoint_btl->nic, 
+                                              endpoint->lcl_qp_hndl_low, 
+                                              endpoint->rem_info.rem_qp_num_low, 
+                                              endpoint->rem_info.rem_lid,                                            
+                                              endpoint->endpoint_btl->port_id); 
     
     
 
@@ -699,6 +768,7 @@ int mca_btl_mvapi_endpoint_create_qp(
     VAPI_ret_t ret;
     VAPI_qp_init_attr_t qp_init_attr;
     VAPI_qp_init_attr_ext_t qp_init_attr_ext; 
+        
     switch(transport_type) {
 
     case VAPI_TS_RC: /* Set up RC qp parameters */

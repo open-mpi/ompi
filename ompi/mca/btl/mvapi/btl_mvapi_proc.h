@@ -44,9 +44,9 @@ struct mca_btl_mvapi_proc_t {
     orte_process_name_t proc_guid;           
     /**< globally unique identifier for the process */
 
-    struct mca_btl_mvapi_addr_t* proc_addrs; 
-    size_t proc_addr_count;                  
-    /**< number of addresses published by endpoint */
+    struct mca_btl_mvapi_port_info_t* proc_ports; 
+    size_t proc_port_count;                  
+    /**< number of ports published by endpoint */
 
     struct mca_btl_base_endpoint_t **proc_endpoints; 
     /**< array of endpoints that have been created to access this proc */    

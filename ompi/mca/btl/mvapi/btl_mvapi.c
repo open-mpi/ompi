@@ -102,6 +102,7 @@ int mca_btl_mvapi_add_procs(
         }
 
         ib_peer->endpoint_btl = mvapi_btl;
+        ib_peer->subnet = mvapi_btl->port_info.subnet; 
         rc = mca_btl_mvapi_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ib_peer);
@@ -772,32 +773,45 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
                        mca_btl_base_endpoint_t* endpoint,
                        mca_btl_base_descriptor_t* descriptor)
 {
+    int rc; 
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
-    frag->endpoint = endpoint;
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
-    
-    frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
-    frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
-    frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
-    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
-    frag->sg_entry.len  = frag->base.des_src->seg_len; 
-
-    frag->ret = VAPI_post_sr(mvapi_btl->nic, 
-                             endpoint->lcl_qp_hndl_low, 
-                             &frag->sr_desc); 
-    if(VAPI_OK != frag->ret){ 
-        return OMPI_ERROR; 
-    }
-    if(mca_btl_mvapi_component.use_srq) { 
-        MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
-        MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
+    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock); 
+    /* atomically test and acquire a token */
+    if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
+        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
+        BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, endpoint->wr_sq_tokens_lp, rc); 
     } else { 
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+        
+        frag->endpoint = endpoint;
+        
+    
+        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
+        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
+        frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
+        frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
+        frag->sg_entry.len  = frag->base.des_src->seg_len; 
+        
+        frag->ret = VAPI_post_sr(mvapi_btl->nic, 
+                                 endpoint->lcl_qp_hndl_low, 
+                                 &frag->sr_desc); 
+        if(VAPI_OK != frag->ret){ 
+            rc =  OMPI_ERROR; 
+        } else { 
+            rc = OMPI_SUCCESS; 
+        }
+        if(mca_btl_mvapi_component.use_srq) { 
+            MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
+            MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
+        } else { 
+            MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+            MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+        }
     }
-    return OMPI_SUCCESS; 
-
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock); 
+    return rc; 
+        
 }
 
 /* 
@@ -808,33 +822,45 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
                        mca_btl_base_endpoint_t* endpoint,
                        mca_btl_base_descriptor_t* descriptor)
 {
+    int rc; 
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
-    frag->endpoint = endpoint;
-    frag->sr_desc.opcode = VAPI_RDMA_READ; 
     
-    frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
-    frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
-    frag->sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
-    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
-    frag->sg_entry.len  = frag->base.des_dst->seg_len; 
-
-    frag->ret = VAPI_post_sr(mvapi_btl->nic, 
-                             endpoint->lcl_qp_hndl_low, 
-                             &frag->sr_desc); 
-    if(VAPI_OK != frag->ret){ 
-        return OMPI_ERROR; 
-    }
-    if(mca_btl_mvapi_component.use_srq) { 
-        MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
-        MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
+    frag->sr_desc.opcode = VAPI_RDMA_READ; 
+    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock); 
+    /* atomically test and acquire a token */
+    if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
+        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
+        BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, endpoint->wr_sq_tokens_lp, rc); 
     } else { 
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
-    }
-    return OMPI_SUCCESS; 
+        frag->endpoint = endpoint;
+        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
+        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
+        frag->sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
+        frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
+        frag->sg_entry.len  = frag->base.des_dst->seg_len; 
 
+        frag->ret = VAPI_post_sr(mvapi_btl->nic, 
+                                 endpoint->lcl_qp_hndl_low, 
+                                 &frag->sr_desc); 
+        if(VAPI_OK != frag->ret){ 
+            rc =  OMPI_ERROR; 
+        } else { 
+            rc = OMPI_SUCCESS; 
+        }
+        if(mca_btl_mvapi_component.use_srq) { 
+            MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
+            MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
+        } else { 
+            MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+            MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+        }
+    }
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock); 
+    return rc; 
+    
 }
+
                        
 
 /*
