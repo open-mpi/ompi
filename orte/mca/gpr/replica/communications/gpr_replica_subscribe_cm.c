@@ -152,17 +152,25 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
                                         num_subs, subscriptions,
                                         num_trigs, trigs))) {
         ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-        return rc;
+        goto RETURN_ERROR;
     }
 
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
         ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-        return rc;
     }
 
  RETURN_ERROR:
+    /* release the subscription objects, if any */
+    if (NULL != subscriptions) {
+        for (n=0; n < num_subs; n++) OBJ_RELEASE(subscriptions[n]);
+        if (NULL != subscriptions) free(subscriptions);
+    }
+    /* release the trigger objects, if any */
+    if (NULL != trigs) {
+        for (n=0; n < num_trigs; n++) OBJ_RELEASE(trigs[n]);
+        if (NULL != trigs) free(trigs);
+    }
+    
     if (ORTE_SUCCESS != (ret = orte_dps.pack(output_buffer, &rc, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(ret);
         return ret;

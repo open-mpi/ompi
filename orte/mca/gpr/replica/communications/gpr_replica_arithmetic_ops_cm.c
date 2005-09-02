@@ -76,6 +76,9 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
       free(itags);
     }
 
+    /* release value object */
+    OBJ_RELEASE(value);
+    
     if (ORTE_SUCCESS == ret) {
         if (ORTE_SUCCESS != 
             (rc = orte_gpr_replica_check_events())) {
@@ -139,6 +142,9 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
       free(itags);
     }
 
+    /* release value object */
+    OBJ_RELEASE(value);
+    
     if (ORTE_SUCCESS == ret) {
         if (ORTE_SUCCESS != 
             (rc = orte_gpr_replica_check_events())) {

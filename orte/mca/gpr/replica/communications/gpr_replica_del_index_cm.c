@@ -59,6 +59,8 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
     }
 
  RETURN_ERROR:
+    if (NULL != segment) free(segment);
+    
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -169,15 +171,17 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
     if (NULL != tokens) {
         for (i=0; i<num_tokens; i++) {
             free(tokens[i]);
+            tokens[i] = NULL;
         }
-        free(tokens);
+        if (NULL != tokens) free(tokens);
     }
 
     if (NULL != keys) {
         for (i=0; i<num_keys; i++) {
             free(keys[i]);
+            keys[i] = NULL;
         }
-        free(keys);
+        if (NULL != keys) free(keys);
     }
 
     if (NULL != token_itags) {
