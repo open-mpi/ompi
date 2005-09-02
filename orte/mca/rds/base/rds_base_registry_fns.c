@@ -115,6 +115,7 @@ CLEANUP:
     for (i=0; i < num_vals; i++) {
         if (NULL != values[i]) OBJ_RELEASE(values[i]);
     }
+    if (NULL != values) free(values);
     
     return rc;
 }
