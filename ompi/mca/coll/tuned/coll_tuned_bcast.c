@@ -102,6 +102,8 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
     /* set the buffer pointer */
     tmpbuf = (char *)buff;
 
+/*     printf("%1d chain root %d num_segments %d\n", rank, root, num_segments); */
+
     /* root code */
     if( rank == root ) {
         /* for each segment */
@@ -129,9 +131,9 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
          * complete and we disseminating the data to all children.
          */
         new_sendcount = sendcount = segcount;
-        err = MCA_PML_CALL(recv( tmpbuf, sendcount, datatype,
+        err = MCA_PML_CALL(irecv( tmpbuf, sendcount, datatype,
                                  chain->chain_prev, MCA_COLL_BASE_TAG_BCAST,
-                                 comm, MPI_STATUS_IGNORE));
+                                 comm, &base_req));
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
         for( segindex = 1; segindex < num_segments; segindex++ ) {
