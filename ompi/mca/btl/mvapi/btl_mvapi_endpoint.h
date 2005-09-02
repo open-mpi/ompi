@@ -174,8 +174,8 @@ void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t*);
     mca_btl_mvapi_module_t * post_rr_high_mvapi_btl = post_rr_high_endpoint->endpoint_btl; \
     OPAL_THREAD_LOCK(&post_rr_high_mvapi_btl->ib_lock); \
     if(post_rr_high_endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+post_rr_high_additional && \
-       post_rr_high_endpoint->rr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){ \
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
+       post_rr_high_endpoint->rr_posted_high < post_rr_high_mvapi_btl->rd_buf_max){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(post_rr_high_mvapi_btl->rd_buf_max -  \
                                             post_rr_high_endpoint->rr_posted_high, \
                                             post_rr_high_endpoint, \
                                             &post_rr_high_mvapi_btl->recv_free_eager, \
@@ -192,8 +192,8 @@ void mca_btl_mvapi_progress_send_frags(mca_btl_mvapi_endpoint_t*);
     mca_btl_mvapi_module_t * post_rr_low_mvapi_btl = post_rr_low_endpoint->endpoint_btl; \
     OPAL_THREAD_LOCK(&post_rr_low_mvapi_btl->ib_lock); \
     if(post_rr_low_endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+post_rr_low_additional && \
-       post_rr_low_endpoint->rr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){ \
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
+       post_rr_low_endpoint->rr_posted_low < post_rr_low_mvapi_btl->rd_buf_max){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(post_rr_low_mvapi_btl->rd_buf_max -  \
                                             post_rr_low_endpoint->rr_posted_low, \
                                             post_rr_low_endpoint, \
                                             &post_rr_low_mvapi_btl->recv_free_max, \
