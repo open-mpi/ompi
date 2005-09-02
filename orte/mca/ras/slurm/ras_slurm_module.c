@@ -330,6 +330,8 @@ static int parse_range(char *base, char *range, char ***names)
     
     len = strlen(range);
     base_len = strlen(base);
+    /* Silence compiler warnings; start and end are always assigned
+       properly, below */
     start = end = 0;
     
     /* Look for the beginning of the first number */
