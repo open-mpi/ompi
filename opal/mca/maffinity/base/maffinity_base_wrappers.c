@@ -24,11 +24,10 @@
 
 
 int opal_maffinity_base_set(opal_maffinity_base_segment_t *segments,
-                            size_t num_segments, bool am_allocator)
+                            size_t num_segments)
 {
     if (!opal_maffinity_base_selected) {
         return OPAL_ERR_NOT_FOUND;
     }
-    return opal_maffinity_base_module->maff_module_set(segments, num_segments,
-                                                       am_allocator);
+    return opal_maffinity_base_module->maff_module_set(segments, num_segments);
 }

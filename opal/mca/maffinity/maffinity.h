@@ -37,23 +37,16 @@
  * for a given process are physically local to the processor where
  * that process is bound.
  *
- * One process will allocate a large shared memory block and one or
- * more processors will need to participate to make pages local to
- * specific processors.  
+ * One process will allocate a large shared memory block and all will
+ * need to participate to make pages local to specific processors.
  *
- * Some systems have an API (e.g., SGI Altix) where a single function
- * call by the allocating process can assign the page locality of the
- * pages throughout the entire shared block.  Other systems follow a
- * "first use" rule, where pages in the shared block are assigned to
- * memory local to the processor of the first process that uses it.
- *
- * This API can handle both models.  There is one main module function
+ * There is one main module function
  * (opal_maffinity_base_module_set_fn_t) that takes an array of
- * segment descriptions within the block.  This is enough information
- * to describe each section in the shared block and what process owns
- * it.  Components can then do whatever is necessary to make pages
- * local to their respective processes (i.e., the processors where the
- * processes are running).
+ * segment descriptions within the block.  Each process will get a
+ * different set of segment descriptions (i.e., the segments belonging
+ * to that process).  Components then do whatever is necessary to make
+ * pages local to their respective processes (i.e., the processors
+ * where the processes are running).
  */
 
 #ifndef OPAL_MAFFINITY_H
@@ -97,8 +90,7 @@ typedef int (*opal_maffinity_base_module_init_1_0_0_fn_t)(void);
  * "touch" the pages that are supposed to be local to them).
  */
 typedef int (*opal_maffinity_base_module_set_fn_t)
-    (opal_maffinity_base_segment_t *segments, size_t num_segments,
-     bool am_allocator);
+    (opal_maffinity_base_segment_t *segments, size_t num_segments);
 
 
 /**
