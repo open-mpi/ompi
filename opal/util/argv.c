@@ -50,8 +50,9 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
 
   if (NULL == *argv) {
     *argv = (char**) malloc(2 * sizeof(char *));
-    if (NULL == *argv)
-        return OMPI_ERROR;
+    if (NULL == *argv) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     argc = 0;
     (*argv)[0] = NULL;
     (*argv)[1] = NULL;
@@ -63,17 +64,18 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
         argc = opal_argv_count(*argv);
         
         *argv = (char**) realloc(*argv, (argc + 2) * sizeof(char *));
-        if (NULL == *argv)
-            return OMPI_ERROR;
+        if (NULL == *argv) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     /* Set the newest element to point to a copy of the arg string */
 
-    (*argv)[argc] = (char*) malloc(strlen(arg) + 1);
-    if (NULL == (*argv)[argc])
-        return OMPI_ERROR;
+    (*argv)[argc] = strdup(arg);
+    if (NULL == (*argv)[argc]) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
-    strcpy((*argv)[argc], arg);
     argc = argc + 1;
     (*argv)[argc] = NULL;
 
