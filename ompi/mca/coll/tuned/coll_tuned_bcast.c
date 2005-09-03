@@ -171,6 +171,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
                                      chain->chain_next[i],
                                      MCA_COLL_BASE_TAG_BCAST,
                                      MCA_PML_BASE_SEND_STANDARD, comm));
+            if (err != MPI_SUCCESS) printf("sendcount %d i %d chain_next %d \n", sendcount, i, chain->chain_next[i]);
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         } /* end of for each child */
     } 
@@ -256,17 +257,15 @@ mca_coll_tuned_bcast_intra_split_bintree ( void* buffer,
      * other wise recreate it.
      */
 
-    if ((comm->c_coll_selected_data->cached_tree) && (comm->c_coll_selected_data->cached_tree_root == root) 
-        && (comm->c_coll_selected_data->cached_tree_fanout == 2)) {
-        tree = comm->c_coll_selected_data->cached_tree;
+    if ((comm->c_coll_selected_data->cached_bintree) && (comm->c_coll_selected_data->cached_bintree_root == root)) {
+        tree = comm->c_coll_selected_data->cached_bintree;
     }
     else {
-        if (comm->c_coll_selected_data->cached_tree) { /* destroy previous tree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_tree);    
+        if (comm->c_coll_selected_data->cached_bintree) { /* destroy previous tree if defined */
+            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bintree);    
         }
-        comm->c_coll_selected_data->cached_tree = tree = ompi_coll_tuned_topo_build_tree( 2, comm, root );
-        comm->c_coll_selected_data->cached_tree_root = root;
-        comm->c_coll_selected_data->cached_tree_fanout = 2;
+        comm->c_coll_selected_data->cached_bintree = tree = ompi_coll_tuned_topo_build_tree( 2, comm, root );
+        comm->c_coll_selected_data->cached_bintree_root = root;
     }
 
 
@@ -513,17 +512,15 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
      * other wise recreate it.
      */
 
-    if ((comm->c_coll_selected_data->cached_tree) && (comm->c_coll_selected_data->cached_tree_root == root) 
-        && (comm->c_coll_selected_data->cached_tree_fanout == 2)) {
-        tree = comm->c_coll_selected_data->cached_tree;
+    if ((comm->c_coll_selected_data->cached_bintree) && (comm->c_coll_selected_data->cached_bintree_root == root)) {
+        tree = comm->c_coll_selected_data->cached_bintree;
     }
     else {
-        if (comm->c_coll_selected_data->cached_tree) { /* destroy previous tree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_tree);    
+        if (comm->c_coll_selected_data->cached_bintree) { /* destroy previous bintree if defined */
+            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bintree);    
         }
-        comm->c_coll_selected_data->cached_tree = tree = ompi_coll_tuned_topo_build_tree( 2, comm, root );
-        comm->c_coll_selected_data->cached_tree_root = root;
-        comm->c_coll_selected_data->cached_tree_fanout = 2;
+        comm->c_coll_selected_data->cached_bintree = tree = ompi_coll_tuned_topo_build_tree( 2, comm, root );
+        comm->c_coll_selected_data->cached_bintree_root = root;
     }
 
 

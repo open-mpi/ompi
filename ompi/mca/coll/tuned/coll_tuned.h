@@ -444,13 +444,13 @@ typedef struct rule_s {
 struct mca_coll_base_comm_t {
   /* standard data for requests and PML usage */
 
-  /* we need to keep this here for now incase we fall through to the 
-   * basic functions that expect these fields/and memory to be 
-   * avaliable (GEF something for JS?)
+  /* Precreate space for requests 
+   * Note this does not effect basic, 
+   * but if in wrong context can confuse a debugger
    */
-  ompi_request_t **mccb_reqs;
-  int mccb_num_reqs;
 
+  ompi_request_t **mcct_reqs;
+  int mcct_num_reqs;
 
   /* 
    * tuned topo information caching per communicator 
@@ -461,16 +461,27 @@ struct mca_coll_base_comm_t {
    *
    */
 
-   ompi_coll_tree_t *cached_tree;
-   int cached_tree_root; 
-   int cached_tree_fanout; 
+   /* general tree with n fan out */
+   ompi_coll_tree_t *cached_ntree;
+   int cached_ntree_root; 
+   int cached_ntree_fanout; 
 
-   ompi_coll_bmtree_t *cached_bmtree;
+   /* binary tree */
+   ompi_coll_tree_t *cached_bintree;
+   int cached_bintree_root; 
+
+   /* binomial tree */
+   ompi_coll_tree_t *cached_bmtree;
    int cached_bmtree_root;
 
+   /* chained tree (fanout followed by pipelines) */
    ompi_coll_chain_t *cached_chain;
    int cached_chain_root;
    int cached_chain_fanout; 
+
+   /* pipeline */
+   ompi_coll_chain_t *cached_pipeline;
+   int cached_pipeline_root;
 
   /* extra data required by the decision functions */
   rule_t* decision_table;
