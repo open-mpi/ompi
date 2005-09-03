@@ -28,6 +28,17 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 
+/*
+ * Horrid debugging macro
+ */
+#if 0
+#include <stdio.h>
+#define D(foo) { printf foo ; fflush(stdout); }
+#else
+#define D(foo)
+#endif
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -45,7 +56,7 @@ extern "C" {
 
         /** Number of segments in the data mpool area for this
             communicator */
-        int smbcs_communicator_num_segments;
+        int smbcs_comm_num_segments;
 
         /** Number of processes in this communicator who have seen
             this value already. */
@@ -114,15 +125,23 @@ extern "C" {
             use */
         char *sm_mpool_name;
 
+        /** MCA parameter: Number of "in use" flags in each
+            communicator's area in the data mpool */
+        int sm_comm_num_in_use_flags;
+
         /** MCA parameter: Number of segments for each communicator in
             the data mpool */
-        int sm_communicator_num_segments;
+        int sm_comm_num_segments;
 
         /** MCA parameter: Fragment size for data */
         int sm_fragment_size;
 
         /** MCA parameter: Degree of tree for tree-based collectives */
         int sm_tree_degree;
+
+        /** MCA parameter: Number of processes to use in the
+            calculation of the "info" MCA parameter */
+        int sm_info_comm_size;
 
         /** Size of the bootstrap area -- calculated in
             coll_sm_component.c */
@@ -176,6 +195,8 @@ extern "C" {
     struct mca_coll_base_mpool_index_t {
         /** Pointer to beginning of control data */
         uint32_t *mcbmi_control;
+        /** Pointer to the "in use" buffer for this segment */
+        uint32_t *mcbmi_in_use;
         /** Pointer to beginning of message fragment data */
         char *mcbmi_data;
     };

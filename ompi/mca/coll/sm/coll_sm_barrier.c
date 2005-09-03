@@ -23,12 +23,6 @@
 #include "opal/include/sys/atomic.h"
 #include "coll_sm.h"
 
-#if 0
-#define D(foo) { printf foo ; fflush(stdout); }
-#else
-#define D(foo)
-#endif
-
 /**
  * Shared memory barrier.
  *

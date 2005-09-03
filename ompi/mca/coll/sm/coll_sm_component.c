@@ -12,12 +12,12 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
+ */
+/**
+ * @file
  *
- * These symbols are in a file by themselves to provide nice linker
- * semantics.  Since linkers generally pull in symbols by object
- * files, keeping these symbols as the only symbols in this file
- * prevents utility programs such as "ompi_info" from having to import
- * entire components just to query their version and parameters.
+ * Most of the description of the data layout is in the
+ * coll_sm_module.c file.
  */
 
 #include "ompi_config.h"
@@ -96,8 +96,8 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     /* (default) priority */
     75,
 
-    /* (default) control unit size (bytes) */
-    64,
+    /* (default) control size (bytes) */
+    4096,
 
     /* (default) bootstrap filename */
     "coll-sm-bootstrap",
@@ -108,15 +108,23 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     /* (default) mpool name to use */
     "sm",
 
+    /* (default) number of "in use" flags for each communicator's area
+       in the mpool */
+    2,
+
     /* (default) number of segments for each communicator in the mpool
        area */
-    2,
+    8,
 
     /* (default) fragment size */
     8192,
 
     /* (default) degree of tree for tree-based operations (must be <=
        control unit size) */
+    4,
+
+    /* (default) number of processes in coll_sm_shared_mem_size
+       information variable */
     4,
 
     /* default values for non-MCA parameters */
@@ -147,7 +155,7 @@ static int sm_open(void)
                            &cs->sm_priority);
 
     mca_base_param_reg_int(c, "control_size",
-                           "Length of the control data -- should usually be either a cache line on most SMPs, or a page on machine where pages that support direct memory affinity placement (in bytes)",
+                           "Length of the control data -- should usually be either the length of a cache line on most SMPs, or the size of a page on machines that support direct memory affinity page placement (in bytes)",
                            false, false,
                            cs->sm_control_size,
                            &cs->sm_control_size);
@@ -165,7 +173,7 @@ static int sm_open(void)
                            &cs->sm_bootstrap_num_segments);
 
     mca_base_param_reg_int(c, "fragment_size",
-                           "Fragment size (in bytes) used for passing data through shared memory (will be rounded up to the nearest control_size size)",
+                           "Fragment size (in bytes) used for passing data through shared memory (bytes, will be rounded up to the nearest control_size size)",
                            false, false,
                            cs->sm_fragment_size,
                            &cs->sm_fragment_size);
@@ -180,17 +188,30 @@ static int sm_open(void)
                               cs->sm_mpool_name,
                               &cs->sm_mpool_name);
     
-    mca_base_param_reg_int(c, "communicator_num_segments",
-                           "Number of shared memory collective segments on each communicator (must be >= 2)",
+    mca_base_param_reg_int(c, "comm_in_use_flags",
+                           "Number of \"in use\" flags, used to mark a message passing area segment as currently being used or not (must be >= 2 and <= comm_num_segments)",
                            false, false,
-                           cs->sm_communicator_num_segments,
-                           &cs->sm_communicator_num_segments);
-    if (cs->sm_communicator_num_segments < 2) {
-        cs->sm_communicator_num_segments = 2;
+                           cs->sm_comm_num_in_use_flags,
+                           &cs->sm_comm_num_in_use_flags);
+    if (cs->sm_comm_num_in_use_flags < 2) {
+        cs->sm_comm_num_in_use_flags = 2;
+    }
+
+    mca_base_param_reg_int(c, "comm_num_segments",
+                           "Number of segments in each communicator's shared memory message passing area (must be >= 2, and must be a multiple of comm_in_use_flags)",
+                           false, false,
+                           cs->sm_comm_num_segments,
+                           &cs->sm_comm_num_segments);
+    if (cs->sm_comm_num_segments < 2) {
+        cs->sm_comm_num_segments = 2;
+    }
+    if (0 != (cs->sm_comm_num_segments % cs->sm_comm_num_in_use_flags)) {
+        cs->sm_comm_num_segments += cs->sm_comm_num_in_use_flags - 
+            (cs->sm_comm_num_segments % cs->sm_comm_num_in_use_flags);
     }
 
     mca_base_param_reg_int(c, "tree_degree",
-                           "Degree of the tree for tree-based operations (must be <= control size and <= 255)",
+                           "Degree of the tree for tree-based operations (must be => 1 and <= min(control_size, 255))",
                            false, false,
                            cs->sm_tree_degree,
                            &cs->sm_tree_degree);
@@ -238,11 +259,15 @@ static int sm_open(void)
        Which reduces to:
 
            num_segs * num_procs * 2 * (control_size + frag)
-
-       For this example, assume num_procs = 1.
     */
 
-    size2 = cs->sm_communicator_num_segments * 2 *
+    mca_base_param_reg_int(c, "info_num_procs",
+                           "Number of processes to use for the calculation of the shared_mem_size MCA information parameter (must be => 2)",
+                           false, false,
+                           cs->sm_info_comm_size,
+                           &cs->sm_info_comm_size);
+
+    size2 = cs->sm_comm_num_segments * cs->sm_info_comm_size *
         (cs->sm_control_size + cs->sm_fragment_size);
     mca_base_param_reg_int(c, "shared_mem_used_data",
                            "Amount of shared memory used in the shared memory data area for one process (in bytes)",
