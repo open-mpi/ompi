@@ -306,7 +306,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   int size;
   struct mca_coll_base_comm_t *data;
   /* fanout parameters */
-  int tree_fanout_default = 2;
+  int tree_fanout_default = 4;
   int chain_fanout_default = 4;
 
 
@@ -331,14 +331,22 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   } else {
       size = ompi_comm_size(comm);
   }
+
+  /* 
+   * we still malloc data as it is used by BOTH the TUNED and the BASIC modules
+   * if we don't allocate it and fall back to a BASIC module routine then confuses debuggers 
+   * we place any special info after the default data
+   *
+   */
+
   data = malloc(sizeof(struct mca_coll_base_comm_t) +
                  (sizeof(ompi_request_t *) * size * 2));
   
   if (NULL == data) {
       return NULL;
   }
-  data->mccb_reqs = (ompi_request_t **) (data + 1);
-  data->mccb_num_reqs = size * 2;
+  data->mcct_reqs = (ompi_request_t **) (data + 1);
+  data->mcct_num_reqs = size * 2;
 
   /* 
    * now for the cached topo functions 
@@ -350,23 +358,26 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   mca_base_param_lookup_int(mca_coll_tuned_init_tree_fanout_param,
                                                 &tree_fanout_default)) {
     printf("warning: no mca_coll_tuned_init_tree_fanout_param found?\n");
-    tree_fanout_default = 2;  /* make it binary if failed lookup. */
   }
   if (OMPI_SUCCESS !=
   mca_base_param_lookup_int(mca_coll_tuned_init_chain_fanout_param,
                                                 &chain_fanout_default)) {
     printf("warning: no mca_coll_tuned_init_chain_fanout_param found?\n");
-    chain_fanout_default = 4;
   }
 
-  
-  data->cached_tree = ompi_coll_tuned_topo_build_tree (tree_fanout_default, 
-                                                        comm, 0); 
-  data->cached_tree_root = 0;
-  data->cached_tree_fanout = tree_fanout_default;
+ 
+  /* general n fan out tree */
+  data->cached_ntree = ompi_coll_tuned_topo_build_tree (tree_fanout_default, comm, 0); 
+  data->cached_ntree_root = 0;
+  data->cached_ntree_fanout = tree_fanout_default;
 
+  /* binary tree */
+  data->cached_bintree = ompi_coll_tuned_topo_build_tree (2, comm, 0); 
+  data->cached_bintree_root = 0;
+
+  /* binomial tree */
   data->cached_bmtree = ompi_coll_tuned_topo_build_bmtree (comm, 0);
-  data->cached_tree_root = 0;
+  data->cached_bmtree_root = 0;
 
   /* 
    * chains (fanout followed by pipelines)
@@ -376,10 +387,13 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    * will probably change how we cache this later, for now a midsize
    * GEF
    */
-  data->cached_chain = ompi_coll_tuned_topo_build_chain (chain_fanout_default,
-                                                         comm, 0);
+  data->cached_chain = ompi_coll_tuned_topo_build_chain (chain_fanout_default, comm, 0);
   data->cached_chain_root = 0;
   data->cached_chain_fanout = chain_fanout_default;
+
+  /* standard pipeline */
+  data->cached_pipeline = ompi_coll_tuned_topo_build_chain (1, comm, 0);
+  data->cached_pipeline_root = 0;
 
   /* All done */
 
@@ -403,9 +417,27 @@ int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
   /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
      the generel c_coll_selected_data */
 
-  comm->c_coll_selected_data->mccb_reqs = NULL;
-  comm->c_coll_selected_data->mccb_num_reqs = 0;
+  comm->c_coll_selected_data->mcct_reqs = NULL;
+  comm->c_coll_selected_data->mcct_num_reqs = 0;
 #endif
+
+  /* free any cached information that has been allocated */
+  if (comm->c_coll_selected_data->cached_ntree) { /* destroy general tree if defined */
+        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_ntree);
+  }
+  if (comm->c_coll_selected_data->cached_bintree) { /* destroy bintree if defined */
+        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bintree);
+  }
+  if (comm->c_coll_selected_data->cached_bmtree) { /* destroy bmtree if defined */
+        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bmtree);
+  }
+  if (comm->c_coll_selected_data->cached_chain) { /* destroy general chain if defined */
+        ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_chain);
+  }
+  if (comm->c_coll_selected_data->cached_pipeline) { /* destroy pipeline if defined */
+        ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_pipeline);
+  }
+
 
   /* All done */
 

@@ -29,17 +29,11 @@ extern "C"
 typedef struct ompi_coll_tree_t {
     int32_t tree_root;
     int32_t tree_fanout;
+    int32_t tree_bmtree;
     int32_t tree_prev;
     int32_t tree_next[MAXTREEFANOUT];
     int32_t tree_nextsize;
 } ompi_coll_tree_t;
-
-typedef struct ompi_coll_bmtree_t {
-    int32_t bmtree_root;
-    int32_t bmtree_prev;
-    int32_t bmtree_next[MAXTREEFANOUT];
-    int32_t bmtree_nextsize;
-} ompi_coll_bmtree_t;
 
 typedef struct ompi_coll_chain_t {
     int32_t chain_root;
@@ -55,10 +49,9 @@ ompi_coll_tuned_topo_build_tree( int fanout,
                              int root );
 int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree );
 
-ompi_coll_bmtree_t*
+ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
                         int root );
-int ompi_coll_tuned_topo_destroy_bmtree( ompi_coll_bmtree_t** bmtree );
 
 ompi_coll_chain_t*
 ompi_coll_tuned_topo_build_chain( int fanout,

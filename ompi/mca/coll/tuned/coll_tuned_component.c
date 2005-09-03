@@ -108,7 +108,7 @@ static int tuned_open(void)
     /* some initial guesses at topology parameters */
     mca_coll_tuned_init_tree_fanout_param = 
         mca_base_param_register_int("coll", "tuned", "init_tree_fanout", 
-                                    NULL, 2);
+                                    NULL, 4);
 
     mca_coll_tuned_init_chain_fanout_param = 
         mca_base_param_register_int("coll", "tuned", "init_chain_fanout", 

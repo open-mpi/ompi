@@ -53,9 +53,11 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     rank = ompi_comm_rank(comm);
 
 /*     err = mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm); */
-/*     err = mca_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, (8192)); */
+/*     err = mca_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, (0)); */
+/*     err = mca_coll_tuned_bcast_intra_chain (buff, count, datatype, root, comm, (0), 1); */
 /*     err = mca_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, (8192)); */
-    err = mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, (1024));
+/*     err = mca_coll_tuned_bcast_intra_split_bintree (buff, count, datatype, root, comm, (100)); */
+    err = mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, (100));
 
     return err;
 }

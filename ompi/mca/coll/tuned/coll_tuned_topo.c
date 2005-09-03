@@ -73,6 +73,15 @@ ompi_coll_tuned_topo_build_tree( int fanout,
 
     printf("Building tuned topo tree: fo %d rt %d\n", fanout, root);
 
+    if (fanout<1) {
+        printf("ompi_coll_tuned_topo_build_tree: invalid fanout %d\n", fanout);
+        return NULL;
+    }
+    if (fanout>MAXTREEFANOUT) {
+        printf("ompi_coll_tuned_topo_build_tree: invalid fanout %d bigger than max %d\n", fanout, MAXTREEFANOUT);
+        return NULL;
+    }
+
     /* 
      * Get size and rank of the process in this communicator 
      */
@@ -80,16 +89,14 @@ ompi_coll_tuned_topo_build_tree( int fanout,
     rank = ompi_comm_rank(comm);
 
     tree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    if (!tree) {
+        printf("PANIC:ompi_coll_tuned_topo_build_tree:out of memory\n");
+        fflush(stdout);
+        return NULL;
+    }
+
     tree->tree_root     = MPI_UNDEFINED;
     tree->tree_nextsize = MPI_UNDEFINED;
-
-    /*
-     * Check if we calculated the tree for this root and 
-     * fanout combination already  (on this communicator)
-     */
-    if( (root == tree->tree_root) && (fanout == tree->tree_fanout) ) {
-        return tree;
-    }
 
     /*
      * Set root
@@ -100,6 +107,7 @@ ompi_coll_tuned_topo_build_tree( int fanout,
      * Initialize tree
      */
     tree->tree_fanout   = fanout;
+    tree->tree_bmtree   = 0;
     tree->tree_root     = root;
     tree->tree_prev     = -1;
     tree->tree_nextsize = 0;
@@ -155,10 +163,23 @@ ompi_coll_tuned_topo_build_tree( int fanout,
 
 int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
 {
+    ompi_coll_tree_t *ptr;
+
+    return 0;
+
+    if ((!tree)||(!*tree)) {
+        return OMPI_SUCCESS;
+    }
+
+    ptr = *tree;
+
+    free (ptr);
+    *tree = NULL;   /* mark tree as gone */
+
     return OMPI_SUCCESS;
 }
 
-ompi_coll_bmtree_t*
+ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
                         int root )
 {
@@ -168,7 +189,8 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
     int mask = 1;
     int index;
     int remote;
-    ompi_coll_bmtree_t *bmtree;
+    ompi_coll_tree_t *bmtree;
+    int i;
 
     printf("Building tuned topo bmtree: rt %d\n", root);
 
@@ -180,13 +202,19 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 
     index = rank -root;
 
-    bmtree = (ompi_coll_bmtree_t*)malloc(sizeof(ompi_coll_bmtree_t));
-    bmtree->bmtree_root     = MPI_UNDEFINED;
-    bmtree->bmtree_nextsize = MPI_UNDEFINED;
+    bmtree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    if (!bmtree) {
+        printf("PANIC:ompi_coll_tuned_topo_build_bmtree:out of memory\n");
+        fflush(stdout);
+        return NULL;
+    }
 
-    if( bmtree->bmtree_root == root ) {
-        /* the bmtree was computed before */
-        return bmtree;
+    bmtree->tree_bmtree   = 1;
+
+    bmtree->tree_root     = MPI_UNDEFINED;
+    bmtree->tree_nextsize = MPI_UNDEFINED;
+    for(i=0;i<MAXTREEFANOUT;i++) {
+        bmtree->tree_next[i] = -1;
     }
 
     if( index < 0 ) index += size;
@@ -195,11 +223,11 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 
     /* Now I can compute my father rank */
     if( root == rank ) {
-        bmtree->bmtree_prev = root;
+        bmtree->tree_prev = root;
     } else {
         remote = (index ^ (mask >> 1)) + root;
         if( remote >= size ) remote -= size;
-        bmtree->bmtree_prev = remote;
+        bmtree->tree_prev = remote;
     }
     /* And now let's fill my childs */
     while( mask < size ) {
@@ -207,19 +235,19 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
         if( remote >= size ) break;
         remote += root;
         if( remote >= size ) remote -= size;
-        bmtree->bmtree_next[childs] = remote;
+        if (childs==MAXTREEFANOUT) {
+            printf("ompi_coll_tuned_topo_build_bmtree: max fanout incorrect %d needed %d\n", MAXTREEFANOUT, childs);
+            return NULL;
+        }
+        bmtree->tree_next[childs] = remote;
         mask <<= 1;
         childs++;
     }
-    bmtree->bmtree_nextsize = childs;
-    bmtree->bmtree_root     = root;
+    bmtree->tree_nextsize = childs;
+    bmtree->tree_root     = root;
     return bmtree;
 }
 
-int ompi_coll_tuned_topo_destroy_bmtree( ompi_coll_bmtree_t** bmtree )
-{
-    return OMPI_SUCCESS;
-}
 
 ompi_coll_chain_t*
 ompi_coll_tuned_topo_build_chain( int fanout,
@@ -240,7 +268,11 @@ ompi_coll_tuned_topo_build_chain( int fanout,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    if( fanout > MAXTREEFANOUT ) {
+    if( fanout < 1 ) {
+        return NULL;
+    }
+    if (fanout>MAXTREEFANOUT) {
+        printf("ompi_coll_tuned_topo_build_chain: invalid fanout %d bigger than max %d\n", fanout, MAXTREEFANOUT);
         return NULL;
     }
 
@@ -248,17 +280,16 @@ ompi_coll_tuned_topo_build_chain( int fanout,
      * Allocate space for topology arrays if needed 
      */
     chain = (ompi_coll_chain_t*)malloc( sizeof(ompi_coll_chain_t) );
+    if (!chain) {
+        printf("PANIC:ompi_coll_tuned_topo_build_chain:out of memory\n");
+        fflush(stdout);
+        return NULL;
+    }
     chain->chain_root     = MPI_UNDEFINED;
     chain->chain_nextsize = -1;
     chain->chain_numchain = -1;
+    for(i=0;i<fanout;i++) chain->chain_next[i] = -1;
 
-    /*
-     * Check if we calculated the topology for this root and comm 
-     */
-    if( (root == chain->chain_root) &&
-        (fanout == chain->chain_numchain) ) {
-        return chain;
-    }
     /* 
      * Set root & numchain
      */
@@ -374,5 +405,18 @@ ompi_coll_tuned_topo_build_chain( int fanout,
 
 int ompi_coll_tuned_topo_destroy_chain( ompi_coll_chain_t** chain )
 {
+    ompi_coll_chain_t *ptr;
+
+    return 0;
+
+    if ((!chain)||(!*chain)) {
+        return OMPI_SUCCESS;
+    }
+
+    ptr = *chain;
+
+    free (ptr);
+    *chain = NULL;   /* mark chain as gone */
+
     return OMPI_SUCCESS;
 }
