@@ -406,6 +406,7 @@ int orterun(int argc, char *argv[])
     orte_finalize();
     free(abort_msg);
     free(orterun_basename);
+    free(proc_infos);
     return rc;
 }
 
@@ -521,6 +522,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     if (NULL != values) {
         free(values);
     }
+    free(segment);
 }
 
 

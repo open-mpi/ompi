@@ -262,6 +262,9 @@ static int orte_rds_hostfile_query(void)
     opal_list_t existing;
     opal_list_t updates, rds_updates;
     opal_list_item_t *item;
+    orte_rds_cell_desc_t *rds_item;
+    orte_rds_cell_attr_t *new_attr;
+    orte_ras_node_t *ras_item;
     int rc;
     
     OBJ_CONSTRUCT(&existing, opal_list_t);
@@ -288,16 +291,11 @@ static int orte_rds_hostfile_query(void)
     }
 
     if ( !opal_list_is_empty(&updates) ) {
-        orte_rds_cell_desc_t *rds_item;
-        orte_rds_cell_attr_t *new_attr;
-        orte_ras_node_t *ras_item;
-        opal_list_item_t *item;
 
         /* Convert RAS update list to RDS update list */
-        for ( item  = opal_list_get_first(&updates);
-              item != opal_list_get_end(  &updates);
-              item  = opal_list_get_next( item)) {
-            ras_item = (orte_ras_node_t *) item;
+        for ( ras_item  = (orte_ras_node_t*)opal_list_get_first(&updates);
+              ras_item != (orte_ras_node_t*)opal_list_get_end(&updates);
+              ras_item  = (orte_ras_node_t*)opal_list_get_next(ras_item)) {
             
             rds_item = OBJ_NEW(orte_rds_cell_desc_t);
             if (NULL == rds_item) {
@@ -376,11 +374,9 @@ cleanup:
         OBJ_RELEASE(item);
     }
 
-    while(NULL != (item = opal_list_remove_first(&rds_updates))) {
-        orte_rds_cell_desc_t *rds_item;
-        rds_item = (orte_rds_cell_desc_t *) item;
-        while (NULL != (item = opal_list_remove_first(&(rds_item->attributes))) ) {
-            OBJ_RELEASE(item);
+    while (NULL != (rds_item = (orte_rds_cell_desc_t*)opal_list_remove_first(&rds_updates))) {
+        while (NULL != (new_attr = (orte_rds_cell_attr_t*)opal_list_remove_first(&(rds_item->attributes)))) {
+            OBJ_RELEASE(new_attr);
         }
         OBJ_RELEASE(rds_item);
     }
