@@ -13,6 +13,10 @@
  * 
  * $HEADER$
  */
+/**
+ * @file
+ *
+ */
 
 #include "ompi_config.h"
 
@@ -197,7 +201,7 @@ sm_module_init(struct ompi_communicator_t *comm)
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
     opal_maffinity_base_segment_t *segments;
     int parent, min_child, max_child, num_children;
-    char *barrier_base;
+    char *base;
     const int num_barrier_buffers = 2;
 
     /* Get some space to setup memory affinity (just easier to try to
@@ -250,16 +254,6 @@ sm_module_init(struct ompi_communicator_t *comm)
             data->mcb_tree[i - 1].mcstn_children + c->sm_tree_degree;
     }
 
-    /* Bootstrap this communicator; find the shared memory in the main
-       mpool that has been allocated among my peers for this
-       communicator. */
-
-    if (OMPI_SUCCESS != bootstrap_comm(comm)) {
-        free(data);
-        comm->c_coll_selected_data = NULL;
-        return NULL;
-    }
-
     /* Pre-compute a tree for a given number of processes and degree.
        We'll re-use this tree for all possible values of root (i.e.,
        shift everyone's process to be the "0"/root in this tree. */
@@ -299,6 +293,16 @@ sm_module_init(struct ompi_communicator_t *comm)
         }
     }
 
+    /* Bootstrap this communicator; find the shared memory in the main
+       mpool that has been allocated among my peers for this
+       communicator. */
+
+    if (OMPI_SUCCESS != bootstrap_comm(comm)) {
+        free(data);
+        comm->c_coll_selected_data = NULL;
+        return NULL;
+    }
+
     /* Once the communicator is bootstrapped, setup the pointers into
        the data mpool area.  First, setup the barrier buffers.  There
        are 2 sets of barrier buffers (because there can never be more
@@ -309,12 +313,12 @@ sm_module_init(struct ompi_communicator_t *comm)
        data is sufficient). */
 
     control_size = c->sm_control_size;
-    barrier_base = (char*) (data->mcb_mpool_base + data->mcb_mpool_offset);
+    base = (char*) (data->mcb_mpool_base + data->mcb_mpool_offset);
     data->mcb_barrier_control_me = (uint32_t*)
-        (barrier_base + (rank * control_size * num_barrier_buffers * 2));
+        (base + (rank * control_size * num_barrier_buffers * 2));
     if (data->mcb_tree[rank].mcstn_parent) {
         data->mcb_barrier_control_parent = (uint32_t*)
-            (barrier_base +
+            (base +
              (data->mcb_tree[rank].mcstn_parent->mcstn_id * control_size * 
               num_barrier_buffers * 2));
     } else {
@@ -322,7 +326,7 @@ sm_module_init(struct ompi_communicator_t *comm)
     }
     if (data->mcb_tree[rank].mcstn_num_children > 0) {
         data->mcb_barrier_control_children = (uint32_t*)
-            (barrier_base +
+            (base +
              (data->mcb_tree[rank].mcstn_children[0]->mcstn_id * control_size *
               num_barrier_buffers * 2));
     } else {
@@ -335,12 +339,13 @@ sm_module_init(struct ompi_communicator_t *comm)
 
     control_size = size * c->sm_control_size;
     frag_size = size * c->sm_fragment_size;
+    base += (control_size * num_barrier_buffers * 2);
     for (j = i = 0; i < data->mcb_mpool_num_segments; ++i) {
         data->mcb_mpool_index[i].mcbmi_control = (uint32_t*)
-            (barrier_base + (control_size * num_barrier_buffers * 2));
+            (base + (i * (control_size + frag_size)));
         data->mcb_mpool_index[i].mcbmi_data = 
-            ((char*) data->mcb_mpool_index[i].mcbmi_control) + 
-            control_size;
+            (((char*) data->mcb_mpool_index[i].mcbmi_control) + 
+             control_size);
 
         /* Memory affinity: control */
 
@@ -504,7 +509,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
     mca_coll_sm_bootstrap_comm_setup_t *bscs;
     mca_coll_base_comm_t *data = comm->c_coll_selected_data;
     int comm_size = ompi_comm_size(comm);
-    int num_segments = c->sm_communicator_num_segments;
+    int num_segments = c->sm_comm_num_segments;
     int frag_size = c->sm_fragment_size;
     int control_size = c->sm_control_size;
 
@@ -547,7 +552,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
             i = empty_index;
             bshe->smbhe_cids[i] = comm->c_contextid;
 
-            bscs[i].smbcs_communicator_num_segments = num_segments;
+            bscs[i].smbcs_comm_num_segments = num_segments;
             bscs[i].smbcs_count = comm_size;
 
             /* Calculate how much space we need in the data mpool.
@@ -556,9 +561,10 @@ static int bootstrap_comm(ompi_communicator_t *comm)
                - size of the barrier data (2 of these):
                    - fan-in data (num_procs * control_size)
                    - fan-out data (num_procs * control_size)
-               - size of the control data (one for each segment):
+               - size of the "in use" buffers:
+                   - num_in_use_buffers * control_size
+               - size of the message fragment area (one for each segment):
                    - control (num_procs * control_size)
-               - size of message fragment data (one for each segment):
                    - fragment data (num_procs * (frag_size))
 
                So it's:
@@ -585,7 +591,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
                    component would have been chosen), so we don't need
                    to do that cleanup. */
                 bscs[i].smbcs_data_mpool_offset = 0;
-                bscs[i].smbcs_communicator_num_segments = 0;
+                bscs[i].smbcs_comm_num_segments = 0;
                 --bscs[i].smbcs_count;
                 opal_atomic_unlock(&bshe->super.seg_lock);
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -618,7 +624,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
 
     /* Check to see if there was an error while allocating the shared
        memory */
-    if (0 == bscs[i].smbcs_communicator_num_segments) {
+    if (0 == bscs[i].smbcs_comm_num_segments) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -630,7 +636,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
         data->mcb_mpool_base = c->sm_data_mpool->mpool_base(c->sm_data_mpool);
         data->mcb_mpool_offset = bscs[i].smbcs_data_mpool_offset;
         data->mcb_mpool_area = data->mcb_mpool_base + data->mcb_mpool_offset;
-        data->mcb_mpool_num_segments = bscs[i].smbcs_communicator_num_segments;
+        data->mcb_mpool_num_segments = bscs[i].smbcs_comm_num_segments;
         data->mcb_operation_count = 0;
     }
 
@@ -665,8 +671,7 @@ int mca_coll_sm_bootstrap_finalize(void)
 
         /* Free the area in the mpool that we were using */
         if (mca_coll_sm_component.sm_data_mpool_created) {
-            /* JMS: there does not yet seem to be any opposite to
-               mca_mpool_base_module_create()... */
+            mca_mpool_base_module_destroy(mca_coll_sm_component.sm_data_mpool);
         }
 
         /* Free the entire bootstrap area (no need to zero out

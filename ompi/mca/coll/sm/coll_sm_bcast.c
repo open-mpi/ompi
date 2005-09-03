@@ -24,13 +24,6 @@
 #include "opal/include/sys/atomic.h"
 #include "coll_sm.h"
 
-#if 0
-#define D(foo) { printf foo ; fflush(stdout); }
-#else
-#define D(foo)
-#endif
-
-
 /**
  * Shared memory broadcast.
  *
@@ -55,7 +48,8 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
     struct iovec iov;
     uint32_t iov_size = 1;
     mca_coll_base_comm_t *data = comm->c_coll_selected_data;
-    int i, ret, rank, size, segment, num_children;
+    int i, ret, rank, vrank, size, segment, num_children;
+    int parent_rank, child_rank;
     size_t total_size, max_data, bytes;
     uint32_t *my_control, *parent_control;
     ompi_convertor_t send_convertor;
@@ -67,8 +61,10 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
+    vrank = (rank + size - root) % size;
 
-    me = &data->mcb_tree[(rank + size - root) % size];
+    me = &data->mcb_tree[vrank];
+    D(("rank %d: virtual rank %d\n", rank, vrank));
     parent = me->mcstn_parent;
     children = me->mcstn_children;
     num_children = me->mcstn_num_children;
@@ -119,7 +115,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
     /* Loop over the fragments */
 
     do {
-        segment = (++data->mcb_operation_count % 
+        segment = (data->mcb_operation_count++ % 
                    data->mcb_mpool_num_segments);
 
         /* Root */
@@ -129,30 +125,36 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
             /* Wait for the segment to become available */
             /* JMS */
             
-            /* Copy the fragment from the user buffer to the segment */
-            iov.iov_base = data->mcb_mpool_index[segment].mcbmi_data +
-                (root * mca_coll_sm_component.sm_fragment_size);
+            /* Copy the fragment from the user buffer to my fragment
+               in the current segment */
+            iov.iov_base = 
+                data->mcb_mpool_index[segment].mcbmi_data +
+                (rank * mca_coll_sm_component.sm_fragment_size);
             max_data = iov.iov_len;
+            D(("root copying %lu bytes to data fan out, seg %d: %p\n",
+               (unsigned long) iov.iov_len, segment, iov.iov_base));
             ompi_convertor_pack(&send_convertor, &iov, &iov_size,
                                 &max_data, &bogus_free_after);
-            D(("root sent %lu bytes to data fan out: %p\n",
-               (unsigned long) max_data,
-               data->mcb_mpool_index[segment].mcbmi_data +
-               (root * mca_coll_sm_component.sm_fragment_size)));
 
             /* Wait for the write to absolutely complete */
             opal_atomic_wmb();
             
-            /* Tell my children that this fragment is ready */
+            /* Tell my children that this fragment is ready (be sure
+               to normalize the child's ID based on the shift we did
+               above to calculate the "me" node in the tree) */
             for (i = 0; i < num_children; ++i) {
-                /* JMS: TEMPORARILY HARDWIRED FOR ROOT==0 */
+                child_rank = (children[i]->mcstn_id + root) % size;
                 *((size_t*) 
                   (((char*) 
                     data->mcb_mpool_index[segment].mcbmi_control) +
                    (mca_coll_sm_component.sm_control_size * 
-                    children[i]->mcstn_id))) = max_data;
-                D(("root sent notice to child %d (rank %d)\n",
-                   i, children[i]->mcstn_id));
+                    child_rank))) = max_data;
+                D(("root sent notice to child %d (vrank %d), control to %p\n",
+                   i, children[i]->mcstn_id,
+                   (((char*) 
+                     data->mcb_mpool_index[segment].mcbmi_control) +
+                    (mca_coll_sm_component.sm_control_size * 
+                     child_rank))));
             }
         }
 
@@ -161,7 +163,9 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
         else {
             
             /* Pre-calculate some pointers */
-            
+
+            parent_rank = (parent->mcstn_id + root) % size;
+            D(("rank %d parent rank is %d\n", rank, parent_rank));
             my_control = (uint32_t *)
                 (((char*) 
                   data->mcb_mpool_index[segment].mcbmi_control) +
@@ -169,42 +173,40 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
             parent_control = (uint32_t *)
                 (((char*) 
                   data->mcb_mpool_index[segment].mcbmi_control) +
-                 (parent->mcstn_id * mca_coll_sm_component.sm_control_size));
+                 (parent_rank * mca_coll_sm_component.sm_control_size));
             
             /* Wait for the fragment: the parent will mark the segment
                as ready */
-            D(("rank %d waiting for fragment in segment %d\n", rank, segment));
+            D(("rank %d waiting for fragment in segment %d (control %p)\n",
+               rank, segment, (char*) my_control));
             while (0 == *my_control) {
                 continue;
             }
             max_data = *my_control;
             D(("rank %d: fragment ready in segment %d\n", rank, segment));
-            
+
             /* If I have children, send the data to them */
             if (num_children > 0) {
                 max_data = iov.iov_len;
 
-                /* Wait for the segment to become available */
-                /* JMS */
-
-                /* Copy the fragment from the parent's portion in the
-                   segment to my portion in the segment.  This is a
-                   simply memcpy because it's already been packed
-                   into the parent's segment. */
+                /* No need to wait for the segment to become available
+                   -- the root has already claimed it and we're all
+                   already using it.  So copy the fragment from the
+                   parent's portion in the segment to my portion in
+                   the segment.  This is a simply memcpy because it's
+                   already been packed into the parent's segment. */
                 memcpy(/* my data fan out section in the segment */
                        (data->mcb_mpool_index[segment].mcbmi_data +
-                        (me->mcstn_id * 
-                         mca_coll_sm_component.sm_fragment_size)),
+                        (rank * mca_coll_sm_component.sm_fragment_size)),
                        /* parent's fan out section in the segment */
                        (data->mcb_mpool_index[segment].mcbmi_data +
-                        (parent->mcstn_id * 
+                        (parent_rank *
                          mca_coll_sm_component.sm_fragment_size)),
                        /* length */
                        *my_control);
-                D(("rank %d copied fragment (%p) to my data fan out (%lu bytes)\n", rank, 
+                D(("rank %d memcopy'ed fragment (%p) to my data fan out (%lu bytes)\n", rank, 
                    (data->mcb_mpool_index[segment].mcbmi_data +
-                    (parent->mcstn_id * 
-                     mca_coll_sm_component.sm_fragment_size)),
+                    (parent_rank * mca_coll_sm_component.sm_fragment_size)),
                    (unsigned long) *my_control));
             
                 /* Wait for the write to absolutely complete */
@@ -212,14 +214,14 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
                 /* Tell my children that this fragment is ready */
                 for (i = 0; i < num_children; ++i) {
-                    /* JMS: TEMPORARILY HARDWIRED FOR ROOT==0 */
-                    *((uint32_t*) 
+                    child_rank = (children[i]->mcstn_id + root) % size;
+                    *((size_t*) 
                       (((char*) 
                         data->mcb_mpool_index[segment].mcbmi_control) +
                        (mca_coll_sm_component.sm_control_size * 
-                        children[i]->mcstn_id))) = 1;
-                    D(("rank %d notifying child %d (rank %d)\n",
-                       rank, i, children[i]->mcstn_id));
+                        child_rank))) = *my_control;
+                    D(("rank %d notifying child %d (vrank %d, rank %d)\n",
+                       rank, i, children[i]->mcstn_id, child_rank));
                 }
 
                 /* Set the "copy from buffer" to be my local segment
@@ -229,9 +231,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                    buffer */
                 iov.iov_base =
                     data->mcb_mpool_index[segment].mcbmi_data +
-                    (me->mcstn_id * 
-                     mca_coll_sm_component.sm_fragment_size);
-                D(("rank %d convertor copying from my data fan out\n", rank));
+                    (rank * mca_coll_sm_component.sm_fragment_size);
             }
 
             /* If I don't have any children, set the "copy from
@@ -242,14 +242,14 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                 iov.iov_base =
                     (((char*) 
                       data->mcb_mpool_index[segment].mcbmi_data) +
-                     (parent->mcstn_id * 
-                      mca_coll_sm_component.sm_fragment_size));
+                     (parent_rank * mca_coll_sm_component.sm_fragment_size));
             }
             
             /* Copy to my output buffer */
+            D(("rank %d convertor copied from parent data %p to user buffer (%lu bytes)\n",
+               rank, iov.iov_base, (unsigned long) iov.iov_len));
             ompi_convertor_unpack(&recv_convertor, &iov, &iov_size,
                                   &max_data, &bogus_free_after);
-            D(("rank %d convertor copied into user buffer (%lu bytes)\n", rank, max_data));
         }
 
         /* It's ok to only look at the max_data from the last
@@ -257,13 +257,10 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
            them */
         bytes += max_data;
     } while (bytes < total_size);
-    D(("rank %d done sending/receiving\n", rank));
 
     if (root == rank) {
-        D(("root destroying send convertor\n"));
         OBJ_DESTRUCT(&send_convertor);
     } else {
-        D(("rank %d destroying recv_convertor\n", rank));
         OBJ_DESTRUCT(&recv_convertor);
     }
     D(("rank %d done with bcast\n", rank));
