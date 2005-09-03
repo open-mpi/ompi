@@ -49,7 +49,7 @@ fi
 
 ompi_automake_version="1.7"
 ompi_autoconf_version="2.58"
-ompi_libtool_version="1.5"
+ompi_libtool_version="1.5.16"
 
 
 ##############################################################################
