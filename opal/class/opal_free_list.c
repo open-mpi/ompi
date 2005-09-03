@@ -42,10 +42,20 @@ static void opal_free_list_construct(opal_free_list_t* fl)
     fl->fl_num_waiting = 0;
     fl->fl_elem_size = 0;
     fl->fl_elem_class = 0;
+    OBJ_CONSTRUCT(&(fl->fl_allocations), opal_list_t);
 }
 
 static void opal_free_list_destruct(opal_free_list_t* fl)
 {
+    opal_list_item_t *item;
+
+    while (NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
+        /* destruct the item (we constructed it), then free the memory chunk */
+        OBJ_DESTRUCT(item);
+        free(item);
+    }
+
+    OBJ_DESTRUCT(&fl->fl_allocations);
     OBJ_DESTRUCT(&fl->fl_condition);
     OBJ_DESTRUCT(&fl->fl_lock);
 }
@@ -72,15 +82,24 @@ int opal_free_list_init(
 int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
 {
     unsigned char* ptr;
+    unsigned char* alloc_ptr;
     size_t i;
     size_t mod;
 
     if (flist->fl_max_to_alloc > 0 && flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-    ptr = (unsigned char *)malloc((num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE);
-    if(NULL == ptr)
+    alloc_ptr = (unsigned char *)malloc((num_elements * flist->fl_elem_size) + 
+                                        sizeof(opal_list_item_t) +
+                                        CACHE_LINE_SIZE);
+    if(NULL == alloc_ptr)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+    /* make the alloc_ptr a list item, save the chunk in the allocations list, and
+       have ptr point to memory right after the list item structure */
+    OBJ_CONSTRUCT(alloc_ptr, opal_list_item_t);
+    opal_list_append(&(flist->fl_allocations), (opal_list_item_t*) alloc_ptr);
+    ptr = alloc_ptr + sizeof(opal_list_item_t);
 
     mod = (unsigned long)ptr % CACHE_LINE_SIZE;
     if(mod != 0) {

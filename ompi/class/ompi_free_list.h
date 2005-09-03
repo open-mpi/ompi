@@ -43,7 +43,7 @@ struct ompi_free_list_t
     mca_mpool_base_module_t* fl_mpool;
     opal_mutex_t fl_lock;
     opal_condition_t fl_condition; 
-    
+    opal_list_t fl_allocations;
 };
 typedef struct ompi_free_list_t ompi_free_list_t;
 

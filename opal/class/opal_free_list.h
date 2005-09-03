@@ -41,6 +41,7 @@ struct opal_free_list_t
     opal_class_t* fl_elem_class;
     opal_mutex_t fl_lock;
     opal_condition_t fl_condition; 
+    opal_list_t fl_allocations;
 };
 typedef struct opal_free_list_t opal_free_list_t;
 
