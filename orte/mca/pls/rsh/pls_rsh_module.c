@@ -251,7 +251,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     }
 
     /* need integer value for command line parameter */
-    asprintf(&jobid_string, "%lu", (unsigned long) jobid);
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
 
     /* What is our local shell? */
     p = getpwuid(getuid());
@@ -400,8 +403,11 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         char **exec_argv;
 
         /* setup node name */
-        argv[node_name_index1] = node->node_name;
-        argv[node_name_index2] = node->node_name;
+        free(argv[node_name_index1]);
+        argv[node_name_index1] = strdup(node->node_name);
+        
+        free(argv[node_name_index2]);
+        argv[node_name_index2] = strdup(node->node_name);
 
         /* initialize daemons process name */
         rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
@@ -473,12 +479,14 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
                                 node->node_slots, node->node_slots_inuse);
                 }
-                argv[call_yield_index] = "1";
+                free(argv[call_yield_index]);
+                argv[call_yield_index] = strdup("1");
             } else {
                 if (mca_pls_rsh_component.debug) {
                     opal_output(0, "pls:rsh: not oversubscribed -- setting mpi_yield_when_idle to 0");
                 }
-                argv[call_yield_index] = "0";
+                free(argv[call_yield_index]);
+                argv[call_yield_index] = strdup("0");
             }
 
             /* Is this a local launch?
@@ -519,6 +527,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                    there's no need to save this and restore it
                    afterward -- the parent's argv[] is unmodified. */
                 if (NULL != argv[local_exec_index_end]) {
+                    free(argv[local_exec_index_end]);
                     argv[local_exec_index_end] = NULL;
                 }
             } else {
@@ -536,7 +545,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 opal_output(0, "orte_pls_rsh: unable to create process name");
                 exit(-1);
             }
-            argv[proc_name_index] = name_string;
+            free(argv[proc_name_index]);
+            argv[proc_name_index] = strdup(name_string);
 
             if (!mca_pls_rsh_component.debug) {
                  /* setup stdin */
@@ -630,6 +640,7 @@ cleanup:
     }
     OBJ_DESTRUCT(&nodes);
     free(jobid_string);  /* done with this variable */
+    opal_argv_free(argv);
     return rc;
 }
 
