@@ -91,8 +91,16 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
     } else {
         /* segment the message */
         segcount = segsize / typelng;
-        num_segments = count / segcount;
-        if ((count % segcount)!= 0) num_segments++;
+        if (segcount > count) { /* we have a single underfilled segment */
+            segcount = count;
+            num_segments = 1;
+        }
+        else { /* multiple segments */
+            num_segments = count / segcount;
+            if ((count % segcount)!= 0) {
+                num_segments++; /* left overs partly fill extra seg at end */
+            }
+        }
     }
     
     err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
@@ -534,8 +542,16 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     } else {
         /* segment the message */
         segcount = segsize / type_size;
-        num_segments = count / segcount;
-        if ((count % segcount)!= 0) num_segments++;
+        if (segcount > count) { /* we have a single underfilled segment */
+            segcount = count;
+            num_segments = 1;
+        }
+        else { /* multiple segments */
+            num_segments = count / segcount;
+            if ((count % segcount)!= 0) {
+                num_segments++; /* left overs partly fill extra seg at end */
+            }
+        }
     }
 
     err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
