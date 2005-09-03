@@ -107,6 +107,7 @@ OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_create(
     void* user_data,
     struct mca_mpool_base_resources_t* mpool_resources);
 OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name);
+OMPI_DECLSPEC int mca_mpool_base_module_destroy(mca_mpool_base_module_t *module);
  
 /*
  * Globals

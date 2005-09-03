@@ -98,3 +98,25 @@ mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
 
     return NULL;
 }
+
+
+int mca_mpool_base_module_destroy(mca_mpool_base_module_t *module)
+{
+    opal_list_item_t* item;
+    mca_mpool_base_selected_module_t *sm;
+
+    for (item = opal_list_remove_first(&mca_mpool_base_modules);
+         NULL != item; 
+         item = opal_list_remove_first(&mca_mpool_base_modules)) {
+        sm = (mca_mpool_base_selected_module_t *) item;
+        if (module == sm->mpool_module) {
+            if (NULL != sm->mpool_module->mpool_finalize) {
+                sm->mpool_module->mpool_finalize(sm->mpool_module);
+            }
+            OBJ_RELEASE(sm);
+            return OMPI_SUCCESS;
+        }
+    }
+
+    return OMPI_ERR_NOT_FOUND;
+}
