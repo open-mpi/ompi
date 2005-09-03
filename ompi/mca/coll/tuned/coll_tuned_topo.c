@@ -165,8 +165,6 @@ int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
 {
     ompi_coll_tree_t *ptr;
 
-    return 0;
-
     if ((!tree)||(!*tree)) {
         return OMPI_SUCCESS;
     }
@@ -406,8 +404,6 @@ ompi_coll_tuned_topo_build_chain( int fanout,
 int ompi_coll_tuned_topo_destroy_chain( ompi_coll_chain_t** chain )
 {
     ompi_coll_chain_t *ptr;
-
-    return 0;
 
     if ((!chain)||(!*chain)) {
         return OMPI_SUCCESS;
