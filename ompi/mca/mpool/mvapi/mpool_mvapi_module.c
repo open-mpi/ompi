@@ -22,7 +22,7 @@
 #include <vapi_types.h> 
 #include <vapi_common.h> 
 
-/* 
+/*
  *  Initializes the mpool module.
  */ 
 void mca_mpool_mvapi_module_init(mca_mpool_mvapi_module_t* mpool)
@@ -34,6 +34,8 @@ void mca_mpool_mvapi_module_init(mca_mpool_mvapi_module_t* mpool)
     mpool->super.mpool_free = mca_mpool_mvapi_free; 
     mpool->super.mpool_register = mca_mpool_mvapi_register; 
     mpool->super.mpool_deregister = mca_mpool_mvapi_deregister; 
+    mpool->super.mpool_find = mca_mpool_mvapi_find; 
+    mpool->super.mpool_release = mca_mpool_mvapi_release; 
     mpool->super.mpool_finalize = NULL; 
 }
 
@@ -165,6 +167,26 @@ void mca_mpool_mvapi_free(mca_mpool_base_module_t* mpool, void * addr,
     
     
 }
+
+
+int mca_mpool_mvapi_find(
+                         struct mca_mpool_base_module_t* mpool, 
+                         void* addr, 
+                         size_t size, 
+                         ompi_pointer_array_t *regs 
+                         ){
+
+    return OMPI_SUCCESS; 
+}
+ 
+int mca_mpool_mvapi_release(
+                            struct mca_mpool_base_module_t* mpool, 
+                            mca_mpool_base_registration_t* registraion
+                            ){
+    return OMPI_SUCCESS; 
+}
+
+
 
 
 
