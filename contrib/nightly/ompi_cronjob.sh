@@ -3,10 +3,13 @@
 # Please adjust the below parameters for Your setup.
 #
 #
-SRCDIR=$HOME/WORK/OPENMPI              # Where the script and the tar-balls reside
-LAST_VERSION=1.0a1r6211                # Should be detected by download
-TEST_VERSION=r360
+SRCDIR=$HOME/WORK/OPENMPI                   # Where the script and the tar-balls reside
+DATE_STRING=`date +%Y.%m.%d`                # Date string for tmp-/scratch-dir
+TMPDIR=`ws_allocate OpenMPI-$DATE_STRING 3` # Where to build the OMPI 
+LAST_VERSION=1.0a1r6896                     # Should be detected by download
+TEST_VERSION=r362
 CONFIG_FILE=build-$HOSTNAME.txt
+PATCHES="ompi_orte.diff"                    # Comma-separated list of patches to apply when building
 #EMAIL="testing@open-mpi.org"
 EMAIL="keller@hlrs.de"
 
@@ -113,7 +116,9 @@ fi
 #
 # Here comes the main part.
 #
-perl build_tarball.pl --email $EMAIL --config $CONFIG_FILE --file openmpi-$version.tar.bz2 --leave-install $SRCDIR/ompi-out-$version.txt --install-dir=$HOME/ompi-install --nocheck
+perl build_tarball.pl --email $EMAIL --config $CONFIG_FILE --scratch $TMPDIR --file openmpi-$version.tar.bz2 \
+                      --patches "$PATCHES" \
+                      --leave-install $SRCDIR/ompi-out-$version.txt --install-dir=$HOME/ompi-install --nocheck
 
 if [ \! -r ompi-out-$version.txt ] ; then
   echo "No ompi-out-$version.txt file found; none of the configurations have been built?"

@@ -111,7 +111,7 @@ struct proc_info_t *proc_infos = NULL;
 
 opal_cmd_line_init_t cmd_line_init[] = {
     /* Various "obvious" options */
-    { NULL, NULL, NULL, 'h', NULL, "help", 0, 
+    { NULL, NULL, NULL, 'h', NULL, "help", 0,
       &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
@@ -247,13 +247,13 @@ int orterun(int argc, char *argv[])
     array_size = orte_pointer_array_get_size(apps_pa);
     apps = malloc(sizeof(orte_app_context_t *) * array_size);
     if (NULL == apps) {
-        opal_show_help("help-orterun.txt", "orterun:syscall-failed", 
+        opal_show_help("help-orterun.txt", "orterun:syscall-failed",
                        true, orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
     num_apps = 0;
     for (j = i = 0; i < array_size; ++i) {
-        apps[num_apps] = (orte_app_context_t *) 
+        apps[num_apps] = (orte_app_context_t *)
             orte_pointer_array_get_item(apps_pa, i);
         if (NULL != apps[num_apps]) {
             j += apps[num_apps]->num_procs;
@@ -263,13 +263,13 @@ int orterun(int argc, char *argv[])
     if (0 == num_apps) {
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
-        opal_show_help("help-orterun.txt", "orterun:nothing-to-do", 
+        opal_show_help("help-orterun.txt", "orterun:nothing-to-do",
                        true, orterun_basename);
         exit(1);
     }
     proc_infos = malloc(sizeof(struct proc_info_t) * j);
     if (NULL == proc_infos) {
-        opal_show_help("help-orterun.txt", "orterun:syscall-failed", 
+        opal_show_help("help-orterun.txt", "orterun:syscall-failed",
                        true, orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
@@ -323,7 +323,7 @@ int orterun(int argc, char *argv[])
                                      "Whether want stdout/stderr of daemons to go to a file or not",
                                      false, false, 0, &iparam);
     if (iparam) {
-        char *tmp = mca_base_param_environ_variable("orte", "debug", 
+        char *tmp = mca_base_param_environ_variable("orte", "debug",
                                                     "daemons_file");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
@@ -337,7 +337,7 @@ int orterun(int argc, char *argv[])
                                      "Whether to properly daemonize the ORTE daemons or not",
                                      false, false, 0, &iparam);
     if (iparam) {
-        char *tmp = mca_base_param_environ_variable("orte", NULL, 
+        char *tmp = mca_base_param_environ_variable("orte", NULL,
                                                     "no_daemonize");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
@@ -347,8 +347,8 @@ int orterun(int argc, char *argv[])
         }
         free(tmp);
     }
-    
-     /* Prep to start the application */
+
+    /* Prep to start the application */
 
     opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    signal_callback, NULL);
@@ -360,7 +360,7 @@ int orterun(int argc, char *argv[])
     orte_totalview_init_before_spawn();
 
     /* Spawn the job */
-    
+
     rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
@@ -372,7 +372,7 @@ int orterun(int argc, char *argv[])
         if (wait_for_job_completion) {
             OPAL_THREAD_LOCK(&orterun_globals.lock);
             while (!orterun_globals.exit) {
-                opal_condition_wait(&orterun_globals.cond, 
+                opal_condition_wait(&orterun_globals.cond,
                                     &orterun_globals.lock);
             }
             /* Make sure we propagate the exit code */
@@ -411,7 +411,7 @@ int orterun(int argc, char *argv[])
 }
 
 /*
- * On abnormal termination - dump the 
+ * On abnormal termination - dump the
  * exit status of the aborted procs.
  */
 
@@ -491,8 +491,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
             proc_infos[rank].exit_status = exit_status;
         }
 
-        if (WIFSIGNALED(exit_status) && rank_found && 
-            !proc_infos[rank].reported) { 
+        if (WIFSIGNALED(exit_status) && rank_found &&
+            !proc_infos[rank].reported) {
             proc_infos[rank].reported = true;
 
             if (9 == WTERMSIG(exit_status)) {
@@ -500,7 +500,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
             } else {
                 if (num_aborted < max_display_aborted) {
                     opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
-                                   orterun_basename, (unsigned long)rank, (unsigned long)pid, 
+                                   orterun_basename, (unsigned long)rank, (unsigned long)pid,
                                    node_name, WTERMSIG(exit_status));
                 }
                 ++num_aborted;
@@ -547,7 +547,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
        Remember that the rmgr itself will also be called for the
        ABORTED state and call the pls.terminate_job, which will result
        in killing all the other processes. */
-    
+
     if (orte_debug_flag) {
         opal_output(0, "spawn: in job_state_callback(jobid = %d, state = 0x%x)\n",
                     jobid, state);
@@ -573,7 +573,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 }
 
 /*
- * Fail-safe in the event the job hangs and doesn't  
+ * Fail-safe in the event the job hangs and doesn't
  * cleanup correctly.
  */
 
@@ -592,7 +592,7 @@ static void exit_callback(int fd, short event, void *arg)
 
 /*
  * Attempt to terminate the job and wait for callback indicating
- * the job has been aborted. 
+ * the job has been aborted.
  */
 
 static void signal_callback(int fd, short flags, void *arg)
@@ -621,7 +621,7 @@ static void signal_callback(int fd, short flags, void *arg)
 }
 
 
-static int init_globals(void) 
+static int init_globals(void)
 {
     struct globals_t tmp = {
         false,
@@ -640,7 +640,7 @@ static int init_globals(void)
     };
 
     /* Only CONSTRUCT things once */
-    
+
     if (!globals_init) {
         OBJ_CONSTRUCT(&orterun_globals.lock, opal_mutex_t);
         OBJ_CONSTRUCT(&orterun_globals.cond, opal_condition_t);
@@ -667,20 +667,20 @@ static int parse_globals(int argc, char* argv[])
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
-    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true, 
+    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true,
                                                    argc, argv)) ) {
         return ret;
     }
-    
+
     /* Check for help request */
-    
+
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         opal_show_help("help-orterun.txt", "orterun:usage", false,
                        orterun_basename, args);
         free(args);
-        
+
         /* If someone asks for help, that should be all we do */
         exit(0);
     }
@@ -733,9 +733,7 @@ static int parse_locals(int argc, char* argv[])
     env = NULL;
     for (app_num = 0, i = 1; i < argc; ++i) {
         if (0 == strcmp(argv[i], ":")) {
-            
             /* Make an app with this argv */
-
             if (opal_argv_count(temp_argv) > 1) {
                 if (NULL != env) {
                     opal_argv_free(env);
@@ -756,9 +754,9 @@ static int parse_locals(int argc, char* argv[])
                 } else {
                     OBJ_RELEASE(app);
                 }
-            
+
                 /* Reset the temps */
-            
+
                 temp_argc = 0;
                 temp_argv = NULL;
                 opal_argv_append(&temp_argc, &temp_argv, argv[0]);
@@ -796,7 +794,7 @@ static int parse_locals(int argc, char* argv[])
         size1 = orte_pointer_array_get_size(apps_pa);
         /* Iterate through all the apps */
         for (j = 0; j < size1; ++j) {
-            app = (orte_app_context_t *) 
+            app = (orte_app_context_t *)
                 orte_pointer_array_get_item(apps_pa, j);
             if (NULL != app) {
                 /* Use handy utility function */
@@ -827,7 +825,7 @@ static int parse_locals(int argc, char* argv[])
             /* Remember that pointer_array's can be padded with NULL
                entries; so only use the app's env if there is exactly
                1 non-NULL entry */
-            app = (orte_app_context_t *) 
+            app = (orte_app_context_t *)
                 orte_pointer_array_get_item(apps_pa, 0);
             if (NULL != app) {
                 env = app->env;
@@ -840,7 +838,7 @@ static int parse_locals(int argc, char* argv[])
             }
         }
     }
-    
+
     if (NULL != env) {
         size1 = opal_argv_count(env);
         for (j = 0; j < size1; ++j) {
@@ -892,7 +890,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     *made_app = false;
 
     /* Pre-process the command line:
-       
+
        - convert C, cX, N, nX arguments to "-rawmap <id> <arg>" so
          that the parser can pick it up nicely.
        - convert -host to -rawmap <id> <arg>
@@ -909,9 +907,9 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         if (0 == strcmp(argv[i], "C") ||
             0 == strcmp(argv[i], "N")) {
             map_data = true;
-        } 
+        }
 
-        /* Huersitic: if the string fits "[cn][0-9]+" or [cn][0-9],",
+        /* Heuristic: if the string fits "[cn][0-9]+" or "[cn][0-9],",
            then accept it as mapping data */
 
         else if ('c' == argv[i][0] || 'n' == argv[i][0]) {
@@ -1103,7 +1101,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     value = opal_basename(app->argv[0]);
     if (strlen(value) == strlen(app->argv[0])) {
-        app->app = opal_path_findv(app->argv[0], 0, environ, app->cwd); 
+        app->app = opal_path_findv(app->argv[0], 0, environ, app->cwd);
     } else {
         app->app = strdup(app->argv[0]);
     }
@@ -1171,7 +1169,7 @@ static int parse_appfile(char *filename, char ***env)
         line[0] = '\0';
         strcat(line, bogus);
 
-        if (NULL == fgets(line + sizeof(bogus) - 1, 
+        if (NULL == fgets(line + sizeof(bogus) - 1,
                           sizeof(line) - sizeof(bogus) - 1, fp)) {
             break;
         }
@@ -1222,7 +1220,7 @@ static int parse_appfile(char *filename, char ***env)
                have a consistent global env.  This allows for the
                case:
 
-                   orterun --mca foo bar --appfile file 
+                   orterun --mca foo bar --appfile file
 
                where the "file" contains multiple apps.  In this case,
                each app in "file" will get *only* foo=bar as the base
