@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_TEMPLATE_ENDPOINT_H
-#define MCA_BTL_TEMPLATE_ENDPOINT_H
+#ifndef MCA_BTL_MX_ENDPOINT_H
+#define MCA_BTL_MX_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
@@ -23,11 +23,23 @@
 #include "mca/btl/btl.h"
 #include "btl_mx_frag.h"
 #include "btl_mx.h"
+
+#include <myriexpress.h>
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
 OBJ_CLASS_DECLARATION(mca_btl_mx_endpoint_t);
+
+/**
+ * Structure used to publish MX information to peers
+ */
+struct mca_btl_mx_addr_t {
+    uint64_t nic_id;
+    uint32_t endpoint_id;
+};
+typedef struct mca_btl_mx_addr_t mca_btl_mx_addr_t;
 
 /**
  * An abstraction that represents a connection to a endpoint process.
@@ -44,6 +56,12 @@ struct mca_btl_base_endpoint_t {
 
     struct mca_btl_mx_proc_t*   endpoint_proc;
     /**< proc structure corresponding to endpoint */
+
+    struct mca_btl_mx_addr_t    mx_peer;
+    /** the address as reported by the peer */
+
+    mx_endpoint_addr_t          mx_peer_addr;
+    /** the remote MX endpoint address */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;

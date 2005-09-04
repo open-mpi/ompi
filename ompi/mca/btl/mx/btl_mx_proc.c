@@ -31,9 +31,9 @@ OBJ_CLASS_INSTANCE(mca_btl_mx_proc_t,
 
 void mca_btl_mx_proc_construct(mca_btl_mx_proc_t* proc)
 {
-    proc->proc_ompi = 0;
-    proc->proc_addr_count = 0;
-    proc->proc_endpoints = 0;
+    proc->proc_ompi           = 0;
+    proc->proc_addr_index     = 0;
+    proc->proc_endpoints      = 0;
     proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
     /* add to list of all proc instance */
@@ -61,7 +61,7 @@ void mca_btl_mx_proc_destruct(mca_btl_mx_proc_t* proc)
 
 
 /*
- * Look for an existing TEMPLATE process instances based on the associated
+ * Look for an existing MX process instances based on the associated
  * ompi_proc_t instance.
  */
 static mca_btl_mx_proc_t* mca_btl_mx_proc_lookup_ompi(ompi_proc_t* ompi_proc)
@@ -89,7 +89,7 @@ static mca_btl_mx_proc_t* mca_btl_mx_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 }
 
 /*
- * Create a TEMPLATE process structure. There is a one-to-one correspondence
+ * Create a MX process structure. There is a one-to-one correspondence
  * between a ompi_proc_t and a mca_btl_mx_proc_t instance. We cache
  * additional data (specifically the list of mca_btl_mx_endpoint_t instances, 
  * and published addresses) associated w/ a given destination on this
@@ -100,46 +100,21 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_mx_proc_t* module_proc = NULL;
 
-    /* Check if we have already created a TEMPLATE proc
+    /* Check if we have already created a MX proc
      * structure for this ompi process */
     module_proc = mca_btl_mx_proc_lookup_ompi(ompi_proc);
-
-    if(module_proc != NULL) {
-
+    if( module_proc != NULL ) {
         /* Gotcha! */
         return module_proc;
     }
 
-    /* Oops! First time, gotta create a new TEMPLATE proc
+    /* Oops! First time, gotta create a new MX proc
      * out of the ompi_proc ... */
 
     module_proc = OBJ_NEW(mca_btl_mx_proc_t);
 
-    /* Initialize number of peer */
-    module_proc->proc_endpoint_count = 0;
-
     module_proc->proc_ompi = ompi_proc;
 
-    /* build a unique identifier (of arbitrary
-     * size) to represent the proc */
-    module_proc->proc_guid = ompi_proc->proc_name;
-
-    /* TEMPLATE module doesn't have addresses exported at
-     * initialization, so the addr_count is set to one. */
-    module_proc->proc_addr_count = 1;
-
-    /* XXX: Right now, there can be only 1 peer associated
-     * with a proc. Needs a little bit change in 
-     * mca_btl_mx_proc_t to allow on demand increasing of
-     * number of endpoints for this proc */
-
-    module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(module_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
-
-    if(NULL == module_proc->proc_endpoints) {
-        OBJ_RELEASE(module_proc);
-        return NULL;
-    }
     return module_proc;
 }
 
@@ -149,9 +124,67 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
  * already held.  Insert a btl instance into the proc array and assign 
  * it an address.
  */
-int mca_btl_mx_proc_insert(mca_btl_mx_proc_t* module_proc, 
-        mca_btl_base_endpoint_t* module_endpoint)
+int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc, 
+                            mca_btl_mx_endpoint_t* module_endpoint )
 {
+    mx_return_t mx_status;
+    mx_endpoint_addr_t mx_remote_addr;
+    mca_btl_mx_addr_t  *mx_peers;
+    int num_retry = 0, rc, count, i;
+    size_t size;
+
+    /* query for the peer address info */
+    rc = mca_pml_base_modex_recv( &mca_btl_mx_component.super.btl_version,
+                                  module_proc->proc_ompi, (void*)&mx_peers, &size );
+    if( OMPI_SUCCESS != rc ) {
+        opal_output( 0, "mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
+                     ORTE_NAME_ARGS(&module_proc->proc_ompi->proc_name) );
+        OBJ_RELEASE(module_proc);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if( (size % sizeof(mca_btl_mx_addr_t)) != 0 ) {
+        opal_output( 0, "invalid mx address for peer [%d,%d,%d]",
+                     ORTE_NAME_ARGS(&module_proc->proc_ompi->proc_name) );
+        OBJ_RELEASE(module_proc);
+        return OMPI_ERROR;
+    }
+    count = size / sizeof(mca_btl_mx_addr_t);
+
+    for( i = module_proc->proc_addr_index; i < count; i++ ) {
+        
+    retry_connect:
+        mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint, mx_peers[i].nic_id, mx_peers[i].endpoint_id,
+                                mca_btl_mx_component.mx_filter, 5, &mx_remote_addr );
+        if( MX_SUCCESS != mx_status ) {
+            opal_output( 0, "mx_connect fail for %dth remote address key %x (error %s)\n", 
+                         i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
+            if( MX_TIMEOUT == mx_status )
+                if( num_retry++ < 5 )
+                    goto retry_connect;
+            continue;
+        }
+        module_endpoint->mx_peer.nic_id = mx_peers[i].nic_id;
+        module_endpoint->mx_peer.endpoint_id = mx_peers[i].endpoint_id;
+        module_endpoint->mx_peer_addr = mx_remote_addr;
+        module_proc->proc_addr_index = i;
+        break;
+    }
+
+    free( mx_peers );
+
+    if( i == count ) {  /* no available connection */
+        return OMPI_ERROR;
+    }
+
+    if( NULL == module_proc->proc_endpoints ) {
+        module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+            malloc(count * sizeof(mca_btl_base_endpoint_t*));
+        if(NULL == module_proc->proc_endpoints) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+    }
+        
     /* insert into endpoint array */
     module_endpoint->endpoint_proc = module_proc;
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;

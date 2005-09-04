@@ -41,7 +41,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */
-        0, /* flags */
+        MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT, /* flags */
         mca_btl_mx_add_procs,
         mca_btl_mx_del_procs,
         mca_btl_mx_register, 
@@ -76,6 +76,11 @@ int mca_btl_mx_add_procs(
         mca_btl_mx_proc_t* mx_proc;
         mca_btl_base_endpoint_t* mx_endpoint;
 
+        if( ompi_procs[i] == ompi_proc_local_proc ) {
+            /* Do not alllow to connect to ourselfs ... */
+            continue;
+        }
+
         if(NULL == (mx_proc = mca_btl_mx_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -86,9 +91,9 @@ int mca_btl_mx_add_procs(
          * don't bind this PTL instance to the proc.
          */
 
-        OPAL_THREAD_LOCK(&mx_proc->proc_lock);
+        OPAL_THREAD_LOCK(&module_proc->proc_lock);
 
-        /* The btl_proc datastructure is shared by all TEMPLATE PTL
+        /* The btl_proc datastructure is shared by all MX BTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the btl_proc.
          */
@@ -102,6 +107,7 @@ int mca_btl_mx_add_procs(
         rc = mca_btl_mx_proc_insert(mx_proc, mx_endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(mx_endpoint);
+            OBJ_RELEASE(mx_proc);
             OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             continue;
         }
@@ -128,15 +134,51 @@ int mca_btl_mx_del_procs(struct mca_btl_base_module_t* btl,
  * Register callback function to support send/recv semantics
  */
 
-int mca_btl_mx_register(
-                        struct mca_btl_base_module_t* btl, 
-                        mca_btl_base_tag_t tag, 
-                        mca_btl_base_module_recv_cb_fn_t cbfunc, 
-                        void* cbdata)
+int mca_btl_mx_register( struct mca_btl_base_module_t* btl, 
+                         mca_btl_base_tag_t tag, 
+                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
+                         void* cbdata )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
+    mca_btl_mx_frag_t* frag;
+    mx_return_t mx_return;
+    mx_segment_t mx_segment;
+    int i, rc;
+
     mx_btl->mx_reg[tag].cbfunc = cbfunc; 
     mx_btl->mx_reg[tag].cbdata = cbdata; 
+    /*
+     * Post the receives
+     */
+    for( i = 0; i < mca_btl_mx_component.mx_max_posted_recv; i++ ) {
+        MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
+        if( NULL == frag ) {
+            if( 0 == i ) {
+                return OMPI_ERROR;
+            }
+        }
+        frag->base.des_dst     = frag->segment;
+        frag->base.des_dst_cnt = 1;
+        frag->base.des_src     = NULL;
+        frag->base.des_src_cnt = 0;
+        frag->mx_frag_list     = NULL;
+        frag->tag              = tag;
+
+        mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
+        mx_segment.segment_length = frag->base.des_dst->seg_len;
+        mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)tag, 0xffffffffffffffff,
+                              frag, &(frag->mx_request) );
+        if( MX_SUCCESS != mx_return ) {
+            return OMPI_ERROR;
+        }
+    }
+
+    extern int mx_debug;
+    if( mx_debug ) {
+#include <unistd.h>
+        sleep(20);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -156,43 +198,50 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc(
     mca_btl_mx_frag_t* frag;
     int rc;
     
-    if(size <= btl->btl_eager_limit){ 
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(mx_btl, frag, rc); 
-        frag->segment.seg_len = 
-            size <= btl->btl_eager_limit ? 
-            size : btl->btl_eager_limit ; 
+#if 0
+    if(size <= mx_btl->super.btl_eager_limit) { 
+        MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag, rc);
+        frag->segment[0].seg_len = 
+            size <= mx_btl->super.btl_eager_limit ? 
+            size : mx_btl->super.btl_eager_limit ; 
     } else { 
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(mx_btl, frag, rc); 
-        frag->segment.seg_len = 
-            size <= btl->btl_max_send_size ? 
-            size : btl->btl_max_send_size ; 
+        MCA_BTL_MX_FRAG_ALLOC_USER(mx_btl, frag, rc);
+        frag->segment[0].seg_len = 
+            size <= mx_btl->super.btl_max_send_size ? 
+            size : mx_btl->super.btl_max_send_size ; 
     }
-    
-    frag->base.des_flags = 0; 
+#endif
+    MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag, rc);
+    frag->segment[0].seg_len = 
+        size <= mx_btl->super.btl_eager_limit ? 
+        size : mx_btl->super.btl_eager_limit ; 
+    frag->base.des_src = frag->segment;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    frag->base.des_flags = 0;
     return (mca_btl_base_descriptor_t*)frag;
 }
 
 
 /**
  * Return a segment
- */
+xo */
 
 int mca_btl_mx_free(
     struct mca_btl_base_module_t* btl, 
     mca_btl_base_descriptor_t* des) 
 {
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)des; 
-    if(frag->size == 0) {
 #if MCA_BTL_HAS_MPOOL
+    if(frag->size == 0) {
         OBJ_RELEASE(frag->registration);
+    }
 #endif
-        MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl, frag); 
-    } else if(frag->size == btl->btl_eager_limit){ 
-        MCA_BTL_TEMPLATE_FRAG_RETURN_EAGER(btl, frag); 
-    } else if(frag->size == btl->btl_max_send_size) {
-        MCA_BTL_TEMPLATE_FRAG_RETURN_EAGER(btl, frag); 
-    }  else {
-        return OMPI_ERR_BAD_PARAM;
+    if( 0 == frag->base.des_dst_cnt ) {  /* send fragment */
+        MCA_BTL_MX_FRAG_RETURN(btl, frag);
+    } else {  /* receive fragment */
+        opal_output( 0, "BARFFFFFFF   return send frag\n" );
     }
     return OMPI_SUCCESS; 
 }
@@ -220,7 +269,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
     size_t max_data = *size;
     int32_t free_after;
     int rc;
-                                                                                                    
+
 #if MCA_BTL_HAS_MPOOL
     /*
      * If the data has already been pinned and is contigous than we can
@@ -229,7 +278,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
     if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
 
         size_t reg_len;
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(mx_btl, frag, rc);
+        MCA_BTL_MX_FRAG_ALLOC_USER(mx_btl, frag, rc);
         if(NULL == frag){
             return NULL;
         }
@@ -260,7 +309,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
                 new_len,
                 &registration);
             if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
                 return NULL;
             }
 
@@ -272,7 +321,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
                 btl,
                 registration);
             if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
                 OBJ_RELEASE(registration);
                 return NULL;
             }
@@ -294,7 +343,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
                reserve == 0) {
 
         mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(mx_btl, frag, rc);
+        MCA_BTL_MX_FRAG_ALLOC_USER(mx_btl, frag, rc);
         if(NULL == frag){
             return NULL;
         }
@@ -312,7 +361,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
             max_data,
             &registration);
         if(rc != OMPI_SUCCESS) {
-            MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+            MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
             return NULL;
         }
 
@@ -328,7 +377,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
                 btl,
                 registration);
             if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
                 OBJ_RELEASE(registration);
                 return NULL;
             }
@@ -336,60 +385,55 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
         } 
         frag->registration = registration;
 
-    } else 
+    } else
 #endif
+        /* If the data is contiguous we can user directly the pointer
+         * to the user memory.
+         */
+        if( 0 == ompi_convertor_need_buffers(convertor) ) {
+            MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
+            if( NULL == frag ) {
+                return NULL;
+            }
+            
+            if( (max_data + reserve) > btl->btl_eager_limit ) {
+                max_data = btl->btl_eager_limit - reserve;
+            }
+            /* let the convertor figure out the correct pointer depending on the data layout */
+            iov.iov_base = NULL;
+            iov.iov_len  = max_data;
+            frag->base.des_src_cnt = 2;
+            frag->segment[0].seg_len = reserve;
+        } else {
+            MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
+            if( NULL == frag ) {
+                return NULL;
+            }
+                
+            if( (max_data + reserve) <= btl->btl_eager_limit ) {
+                iov.iov_len = max_data;
+            } else {
+                iov.iov_len = mca_btl_mx_module.super.btl_eager_limit - reserve;
+                max_data = iov.iov_len;  /* let the PML establish the pipeline */
+            }
+            iov.iov_base = (unsigned char*)frag->segment[0].seg_addr.pval + reserve;
+            frag->segment[0].seg_len = reserve;
+            frag->base.des_src_cnt = 1;
+        }
 
-    /*
-     * if we aren't pinning the data and the requested size is less
-     * than the eager limit pack into a fragment from the eager pool
-    */
-    if (max_data+reserve <= btl->btl_eager_limit) {
-                                                                                                    
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(btl, frag, rc);
-        if(NULL == frag) {
-            return NULL;
-        }
-                                                                                                    
-        iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
-        if( rc < 0 ) {
-            MCA_BTL_TEMPLATE_FRAG_RETURN_EAGER(btl, frag);
-            return NULL;
-        }
-        frag->segment.seg_len = max_data + reserve;
+    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+    *size  = max_data;
+    if( rc < 0 ) {
+        MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+        return NULL;
     }
-
-    /* 
-     * otherwise pack as much data as we can into a fragment
-     * that is the max send size.
-     */
-    else {
-                                                                                                    
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(btl, frag, rc);
-        if(NULL == frag) {
-            return NULL;
-        }
-        if(max_data + reserve > frag->size){
-            max_data = frag->size - reserve;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
-                                                                                                    
-        if( rc < 0 ) {
-            MCA_BTL_TEMPLATE_FRAG_RETURN_MAX(btl, frag);
-            return NULL;
-        }
-        frag->segment.seg_len = max_data + reserve;
+    if( 1 == frag->base.des_src_cnt ) {
+        frag->segment[0].seg_len += max_data;
+    } else {
+        frag->segment[1].seg_addr.pval = iov.iov_base;
+        frag->segment[1].seg_len       = max_data;
     }
-
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
+    frag->base.des_src = frag->segment;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
@@ -423,17 +467,17 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
     mca_btl_mx_frag_t* frag;
     int rc;
 
-    MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag, rc);
+    MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
     if(NULL == frag) {
         return NULL;
     }
 
-    frag->segment.seg_len = *size;
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    frag->segment[0].seg_len = *size;
+    frag->segment[0].seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
-    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst = frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
 
@@ -458,7 +502,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
                 new_len,
                 &registration);
             if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
                 return NULL;
             }
 
@@ -470,7 +514,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
                 btl,
                 registration);
             if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
                 OBJ_RELEASE(registration);
                 return NULL;
             }
@@ -491,7 +535,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
             frag->segment.seg_len,
             &registration);
         if(rc != OMPI_SUCCESS) {
-            MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+            MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
             return NULL;
         }
                                                                                                                    
@@ -507,7 +551,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
                 btl,
                 registration);
             if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
+                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
                 OBJ_RELEASE(registration);
                 return NULL;
             }
@@ -536,11 +580,42 @@ int mca_btl_mx_send(
     mca_btl_base_tag_t tag)
    
 {
-    /* mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; */
-    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor; 
-    frag->endpoint = endpoint; 
-    /* TODO */
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl;
+    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
+    mx_segment_t mx_segment[2];
+    mx_return_t mx_return;
+    uint64_t total_length;
+
+    frag->endpoint = endpoint;
+    frag->tag      = tag;
+    mx_segment[0].segment_ptr    = descriptor->des_src[0].seg_addr.pval;
+    mx_segment[0].segment_length = descriptor->des_src[0].seg_len;
+    total_length = mx_segment[0].segment_length;
+    if( 2 == descriptor->des_src_cnt ) {
+        mx_segment[1].segment_ptr    = descriptor->des_src[1].seg_addr.pval;
+        mx_segment[1].segment_length = descriptor->des_src[1].seg_len;
+        total_length += mx_segment[1].segment_length;
+    }
+    mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt, endpoint->mx_peer_addr,
+                          (uint64_t)tag, frag, &frag->mx_request );
+    if( MX_SUCCESS != mx_return ) {
+        opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
+        return OMPI_ERROR;
+    }
+#if 0
+    if( 4096 > total_length ) {
+        mx_status_t mx_status;
+        uint32_t mx_result;
+
+        /* let's check for completness */
+        mx_return = mx_test( mx_btl->mx_endpoint, &(frag->mx_request), &mx_status, &mx_result );
+        if( MX_SUCCESS != mx_return ) 
+            return OMPI_SUCCESS;
+        /* call the completion callback */
+        frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
+    }
+#endif
+    return OMPI_SUCCESS;
 }
 
 
@@ -595,29 +670,8 @@ int mca_btl_mx_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
     
-    if(mx_btl->mx_frag_eager.fl_num_allocated != 
-       mx_btl->mx_frag_eager.super.opal_list_length){ 
-        opal_output(0, "btl mx_frag_eager: %d allocated %d returned \n", 
-                    mx_btl->mx_frag_eager.fl_num_allocated, 
-                    mx_btl->mx_frag_eager.super.opal_list_length); 
-    }
-    if(mx_btl->mx_frag_max.fl_num_allocated != 
-      mx_btl->mx_frag_max.super.opal_list_length) { 
-        opal_output(0, "btl mx_frag_max: %d allocated %d returned \n", 
-                    mx_btl->mx_frag_max.fl_num_allocated, 
-                    mx_btl->mx_frag_max.super.opal_list_length); 
-    }
-    if(mx_btl->mx_frag_user.fl_num_allocated != 
-       mx_btl->mx_frag_user.super.opal_list_length){ 
-        opal_output(0, "btl mx_frag_user: %d allocated %d returned \n", 
-                    mx_btl->mx_frag_user.fl_num_allocated, 
-                    mx_btl->mx_frag_user.super.opal_list_length); 
-    }
-
-    OBJ_DESTRUCT(&mx_btl->mx_lock);
-    OBJ_DESTRUCT(&mx_btl->mx_frag_eager);
-    OBJ_DESTRUCT(&mx_btl->mx_frag_max);
-    OBJ_DESTRUCT(&mx_btl->mx_frag_user);
+    OBJ_DESTRUCT( &mx_btl->mx_lock );
+    OBJ_DESTRUCT( &mx_btl->mx_peers );
     free(mx_btl);
     return OMPI_SUCCESS;
 }
