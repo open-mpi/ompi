@@ -17,8 +17,8 @@
 /**
  * @file
  */
-#ifndef MCA_PTL_TEMPLATE_H
-#define MCA_PTL_TEMPLATE_H
+#ifndef MCA_PTL_MX_H
+#define MCA_PTL_MX_H
 
 /* Standard system includes */
 #include <sys/types.h>
@@ -35,11 +35,13 @@
 #include "mca/mpool/mpool.h" 
 #include "mca/btl/btl.h"
 
+#include "myriexpress.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-#define MCA_BTL_HAS_MPOOL 1
+#define MCA_BTL_HAS_MPOOL 0
 
 /**
  * MX BTL component.
@@ -49,9 +51,10 @@ struct mca_btl_mx_component_t {
     mca_btl_base_component_1_0_0_t          super;  /**< base BTL component */ 
     
     uint32_t                                mx_num_btls;
-    /**< number of hcas available to the TEMPLATE component */
+    uint32_t                                mx_max_btls;
+    /**< number of hcas available to the MX component */
 
-    struct mca_btl_mx_module_t       *mx_btls;
+    struct mca_btl_mx_module_t** mx_btls;
     /**< array of available BTL modules */
 
     int mx_free_list_num;
@@ -60,26 +63,30 @@ struct mca_btl_mx_component_t {
     int mx_free_list_max;
     /**< maximum size of free lists */
 
+    int mx_max_posted_recv;
+    /**< number of posted receives on each NIC */
+
     int mx_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
-    opal_list_t mx_procs;
-    /**< list of mx proc structures */
+    opal_list_t mx_procs;  /**< list of mx proc structures */
 
-    opal_mutex_t mx_lock;
-    /**< lock for accessing module state */
+    uint32_t mx_filter;
 
-    char* mx_mpool_name; 
-    /**< name of memory pool */ 
+    ompi_free_list_t mx_send_eager_frags;      /**< free list of mx eager send fragments */
+    ompi_free_list_t mx_send_user_frags;       /**< free list of mx user send fragments */
 
-    bool leave_pinned;
-    /**< pin memory on first use and leave pinned */
+    ompi_free_list_t mx_recv_frags;            /**< free list of mx recv fragments */
+
+    opal_list_t      mx_pending_acks;          /**< queue of pending sends */
+
+    opal_mutex_t     mx_lock;                  /**< lock for accessing module state */
+
+    char* mx_mpool_name;                       /**< name of memory pool */ 
 }; 
 typedef struct mca_btl_mx_component_t mca_btl_mx_component_t;
 
 extern mca_btl_mx_component_t mca_btl_mx_component;
-
-
 
 /**
  * BTL Module Interface
@@ -88,13 +95,12 @@ struct mca_btl_mx_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
     mca_btl_base_recv_reg_t mx_reg[MCA_BTL_TAG_MAX]; 
 
-    /* free list of fragment descriptors */
-    ompi_free_list_t mx_frag_eager;
-    ompi_free_list_t mx_frag_max;
-    ompi_free_list_t mx_frag_user;
+    mx_endpoint_t      mx_endpoint;        /**<  */
+    mx_endpoint_addr_t mx_endpoint_addr;   /**<  */
+    opal_list_t        mx_peers;           /**<  */
 
-    /* lock for accessing module state */
-    opal_mutex_t mx_lock;
+    uint32_t           mx_posted_request;  /**< number of posted MX request */
+    opal_mutex_t       mx_lock;            /**< lock for accessing module state */
 
 #if MCA_BTL_HAS_MPOOL
     struct mca_mpool_base_module_t* mx_mpool;
@@ -105,7 +111,7 @@ extern mca_btl_mx_module_t mca_btl_mx_module;
 
 
 /**
- * Register TEMPLATE component parameters with the MCA framework
+ * Register MX component parameters with the MCA framework
  */
 extern int mca_btl_mx_component_open(void);
 
@@ -115,7 +121,7 @@ extern int mca_btl_mx_component_open(void);
 extern int mca_btl_mx_component_close(void);
 
 /**
- * TEMPLATE component initialization.
+ * MX component initialization.
  * 
  * @param num_btl_modules (OUT)           Number of BTLs returned in BTL array.
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
@@ -129,7 +135,7 @@ extern mca_btl_base_module_t** mca_btl_mx_component_init(
 
 
 /**
- * TEMPLATE component progress.
+ * MX component progress.
  */
 extern int mca_btl_mx_component_progress(void);
 

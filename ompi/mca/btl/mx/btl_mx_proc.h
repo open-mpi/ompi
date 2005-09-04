@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_TEMPLATE_PROC_H
-#define MCA_BTL_TEMPLATE_PROC_H
+#ifndef MCA_BTL_MX_PROC_H
+#define MCA_BTL_MX_PROC_H
 
 #include "mca/ns/ns.h"
 #include "opal/class/opal_object.h"
@@ -41,11 +41,8 @@ struct mca_btl_mx_proc_t {
     ompi_proc_t *proc_ompi;                  
     /**< pointer to corresponding ompi_proc_t */
 
-    orte_process_name_t proc_guid;           
-    /**< globally unique identifier for the process */
-
-    size_t proc_addr_count;                  
-    /**< number of addresses published by endpoint */
+    size_t proc_addr_index;                  
+    /**< next remote address that will be used to establish the connection */
 
     struct mca_btl_base_endpoint_t **proc_endpoints; 
     /**< array of endpoints that have been created to access this proc */    

@@ -37,8 +37,8 @@
 
 static void mca_btl_mx_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
-    endpoint->endpoint_btl = 0;
-    endpoint->endpoint_proc = 0;
+    endpoint->endpoint_btl = NULL;
+    endpoint->endpoint_proc = NULL;
 }
 
 /*
