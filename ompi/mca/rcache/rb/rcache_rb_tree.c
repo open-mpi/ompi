@@ -60,7 +60,7 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
 {
     mca_rcache_rb_tree_item_t* found, *copy;
         
-    OPAL_THREAD_LOCK(&rb_module->tree_lock);
+    OPAL_THREAD_LOCK(&rb_module->rb_lock);
     found = mca_rcache_rb_tree_find_nl(rb_module, base);
     if(NULL == found) { 
         copy = NULL; 
@@ -68,7 +68,7 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
         copy = OBJ_NEW(mca_rcache_rb_tree_item_t); 
         *copy = *found; 
     }
-    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
+    OPAL_THREAD_UNLOCK(&rb_moduel->rb_lock);
     return copy;
 }
 
