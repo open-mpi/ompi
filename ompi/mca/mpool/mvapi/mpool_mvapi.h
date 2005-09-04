@@ -138,6 +138,20 @@ void mca_mpool_mvapi_free(mca_mpool_base_module_t* mpool,
                          void * addr, 
                          mca_mpool_base_registration_t* registration);
 
+
+int mca_mpool_mvapi_find(
+                         struct mca_mpool_base_module_t* mpool, 
+                         void* addr, 
+                         size_t size, 
+                         ompi_pointer_array_t *regs 
+                         );
+ 
+int mca_mpool_mvapi_release(
+                            struct mca_mpool_base_module_t* mpool, 
+                            mca_mpool_base_registration_t* registraion
+                            ); 
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

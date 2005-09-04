@@ -22,7 +22,10 @@
 #include "mca/mca.h"
 #include "info/info.h"
 #include "opal/class/opal_list.h" 
+#include "ompi/class/ompi_pointer_array.h" 
 
+#define MCA_MPOOL_FLAGS_CACHE 0x1
+#define MCA_MPOOL_FLAGS_PERSIST 0x2 
 
 struct mca_mpool_base_resources_t;
 
@@ -33,7 +36,11 @@ struct mca_mpool_base_registration_t {
     unsigned char* base;
     unsigned char* bound; 
     unsigned char* alloc_base; 
+    void* user_data; 
+    uint32_t ref_count; 
+    uint32_t flags;
 };  
+
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t); 
@@ -89,6 +96,26 @@ typedef int (*mca_mpool_base_module_deregister_fn_t)(
     mca_mpool_base_registration_t* registration);
 
 /**
+ * find registrations in this memory pool
+ */ 
+
+typedef int (*mca_mpool_base_module_find_fn_t) (
+                                                struct mca_mpool_base_module_t* mpool, 
+                                                void* addr, 
+                                                size_t size, 
+                                                ompi_pointer_array_t* regs 
+                                                ); 
+
+/** 
+ * release registration
+ */ 
+
+typedef int (*mca_mpool_base_module_release_fn_t) ( 
+                                            struct mca_mpool_base_module_t* mpool, 
+                                            mca_mpool_base_registration_t* registration); 
+
+                                            
+/**
   * if appropriate - returns base address of memory pool
   */
 typedef void* (*mca_mpool_base_module_address_fn_t)(struct mca_mpool_base_module_t* mpool);
@@ -131,6 +158,8 @@ struct mca_mpool_base_module_t {
     mca_mpool_base_module_free_fn_t mpool_free;          /**< free function */
     mca_mpool_base_module_register_fn_t mpool_register;  /**< register memory */
     mca_mpool_base_module_deregister_fn_t mpool_deregister; /**< deregister memory */
+    mca_mpool_base_module_find_fn_t mpool_find; /**< find regisrations in the cache */
+    mca_mpool_base_module_release_fn_t mpool_release; /**< release a regisrtation from the cache */ 
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
 };
 /**
