@@ -144,19 +144,19 @@ for a full list); a summary of the more important ones follows:
   Open MPI will place its executables in <directory>/bin, its header
   files in <directory>/include, its libraries in <directory>/lib, etc.
 
---with-btl-gm=<directory>
+--with-gm=<directory>
   Specify the directory where the GM libraries and header files are
   located.  This enables GM support in Open MPI.
 
---with-btl-mx=<directory>
+--with-mx=<directory>
   Specify the directory where the MX libraries and header files are
   located.  This enables MX support in Open MPI.
 
---with-btl-mvapi=<directory>
+--with-mvapi=<directory>
   Specify the directory where the mVAPI libraries and header files are
   located.  This enables mVAPI support in Open MPI.
 
---with-btl-openib=<directory>
+--with-openib=<directory>
   Specify the directory where the Open IB libraries and header files are
   located.  This enables mVAPI support in Open MPI.
 
