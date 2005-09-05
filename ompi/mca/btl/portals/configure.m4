@@ -20,17 +20,17 @@
 #                             default_val, descrtiption)
 # -----------------------------------------------------
 AC_DEFUN([MCA_btl_portals_CONFIG_VAL], [
-    AC_ARG_WITH([btl-portals-$1], AC_HELP_STRING([--with-btl-portals-$1], 
+    AC_ARG_WITH([portals-$1], AC_HELP_STRING([--with-portals-$1], 
                 [$4 (default: $3)]))
-    case "[$with_]m4_bpatsubst([btl-portals-$1], -, _)" in
+    case "[$with_]m4_bpatsubst([portals-$1], -, _)" in
         "")
             $2=$3
             ;;
         "no")
-            AC_MSG_ERROR([--without-btl-portals-$1 is invalid argument])
+            AC_MSG_ERROR([--without-portals-$1 is invalid argument])
             ;;
         *)
-            $2="[$with_]m4_bpatsubst([btl-portals-$1], -, _)"
+            $2="[$with_]m4_bpatsubst([portals-$1], -, _)"
             ;;
     esac
     AC_DEFINE_UNQUOTED([$2], [[$]$2], [$4])
@@ -100,15 +100,15 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
     btl_portals_compat="none"
     btl_portals_header_prefix=
     btl_portals_starting_table_id=0
-    AC_ARG_WITH([btl-portals-config],
-            AC_HELP_STRING([--with-btl-portals-config],
+    AC_ARG_WITH([portals-config],
+            AC_HELP_STRING([--with-portals-config],
                            [configuration to use for Portals support.
                             One of "utcp", "redstorm".  (default: utcp)]))
     AC_MSG_CHECKING([for Portals configuration])
-    if test "$with_btl_portals_config" = "" ; then
-        with_btl_portals_config="utcp"
+    if test "$with_portals_config" = "" ; then
+        with_portals_config="utcp"
     fi
-    case "$with_btl_portals_config" in
+    case "$with_portals_config" in
         "utcp")
             BTL_PORTALS_UTCP=1
             BTL_PORTALS_HAVE_EVENT_UNLINK=1
@@ -138,9 +138,9 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
     AC_ARG_WITH(btl-portals-libs, 
         AC_HELP_STRING([--with-btl-portals-libs=LIBS],
                        [Libraries to link with for portals]))
-    if test -n "$with_btl_portals_libs" ; then
+    if test -n "$with_portals_libs" ; then
         btl_portals_LIBS=""
-        for lib in $with_btl_portals_libs ; do
+        for lib in $with_portals_libs ; do
             btl_portals_LIBS="$btl_portals_LIBS -l$lib"
         done
     fi
@@ -173,16 +173,16 @@ AC_DEFUN([MCA_btl_portals_CONFIG],[
     btl_portals_save_LIBS="$LIBS"
 
     # allow user a way to say where the Portals installation is
-    AC_ARG_WITH(btl-portals, 
-        AC_HELP_STRING([--with-btl-portals=DIR],
+    AC_ARG_WITH(portals, 
+        AC_HELP_STRING([--with-portals=DIR],
                        [Specify the installation directory of PORTALS]))
 
-    AS_IF([test -n "$with_btl_portals"],
-          [AS_IF([test -d "$with_btl_portals/include"],
-                 [btl_portals_CPPFLAGS="-I$with_btl_portals/include"
+    AS_IF([test -n "$with_portals"],
+          [AS_IF([test -d "$with_portals/include"],
+                 [btl_portals_CPPFLAGS="-I$with_portals/include"
                   CPPFLAGS="$CPPFLAGS $btl_portals_CPPFLAGS"], [])
-           AS_IF([test -d "$with_btl_portals/lib"],
-                 [btl_portals_LDFLAGS="-L$with_btl_portals/lib"
+           AS_IF([test -d "$with_portals/lib"],
+                 [btl_portals_LDFLAGS="-L$with_portals/lib"
                   LDFLAGS="$LDFLAGS $btl_portals_LDFLAGS"], [])])
 
     # try to get our platform configuration
