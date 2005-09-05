@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +62,7 @@ int orte_iof_base_flush(void)
     struct timeval tv = { 0, 0 };
     int flushed = 0;
     size_t pending;
-                                                                                                                              
+
     /* flush any pending output */
     fflush(NULL);
 
@@ -58,8 +74,9 @@ int orte_iof_base_flush(void)
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
         opal_evtimer_set(&ev, orte_iof_base_timer_cb, &flushed);
         opal_event_add(&ev, &tv);
-        while(flushed == 0)
+        while(0 == flushed) {
             opal_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
+        }
     } else {
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
