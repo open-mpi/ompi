@@ -23,10 +23,10 @@
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_OPENIB],[
     AC_ARG_WITH([openib],
-                [AC_HELP_STRING([--with-btl-openib=OPENIB_DIR],
+                [AC_HELP_STRING([--with-openib=OPENIB_DIR],
                                 [Additional directory to search for OPENIB installation])])
     AC_ARG_WITH([openib-libdir],
-       [AC_HELP_STRING([--with-btl-openib-libdir=IBLIBDIR],
+       [AC_HELP_STRING([--with-openib-libdir=IBLIBDIR],
                        [directory where the IB library can be found, if it is not in OPENIB_DIR/lib or OPENIB_DIR/lib64])])
 
     AS_IF([test ! -z "$with_btl_openib" -a "$with_btl_openib" != "yes"],
