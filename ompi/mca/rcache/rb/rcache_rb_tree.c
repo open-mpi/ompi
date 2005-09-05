@@ -68,7 +68,7 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
         copy = OBJ_NEW(mca_rcache_rb_tree_item_t); 
         *copy = *found; 
     }
-    OPAL_THREAD_UNLOCK(&rb_moduel->rb_lock);
+    OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
     return copy;
 }
 
