@@ -46,6 +46,19 @@
   fun:__pthread_initialize_minimal
 }
 
+# The event library leaves some blocks in use that we should clean up,
+# but it would require much changing of the event library, so it
+# really isn't worth it...
+{
+  event_lib_poll
+  Memcheck:Leak
+  fun:malloc
+  fun:realloc
+  fun:opal_realloc
+  fun:poll_dispatch
+}
+
+
 ###############################################################
 #
 # ORTE suppressions
