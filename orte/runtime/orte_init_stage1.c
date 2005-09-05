@@ -233,6 +233,9 @@ int orte_init_stage1(bool infrastructure)
 
     /* if I'm the seed, set the seed uri to be me! */
     if (orte_process_info.seed) {
+        if (NULL != orte_universe_info.seed_uri) {
+            free(orte_universe_info.seed_uri);
+        }
         orte_universe_info.seed_uri = orte_rml.get_uri();
     }
 
