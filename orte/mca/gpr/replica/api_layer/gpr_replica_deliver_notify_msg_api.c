@@ -93,9 +93,8 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                  */
                 local_subs = (orte_gpr_replica_local_subscriber_t**)
                                 (orte_gpr_replica_globals.local_subscriptions)->addr;
-                processed = false;
-                for (j=0, k=0; !processed &&
-                               k < orte_gpr_replica_globals.num_local_subs &&
+                sub = NULL;
+                for (j=0, k=0; k < orte_gpr_replica_globals.num_local_subs &&
                                j < (orte_gpr_replica_globals.local_subscriptions)->size; j++) {
                     if (NULL != local_subs[j]) {
                         k++;
@@ -104,18 +103,18 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                             if (NULL != local_subs[j]->name &&
                                 0 == strcmp(data[i]->target, local_subs[j]->name)) {
                                 sub = local_subs[j];
-                                processed = true;
+                                break;
                             }
                         } else if (data[i]->id == local_subs[j]->id) {
                             /* otherwise, see if id's match */
                             sub = local_subs[j];
-                            processed = true;
+                            break;
                         }
                     }
                 }
 
-                /* get here and not processed => not found, abort */
-                if (!processed) {
+                /* get here and not found => abort */
+                if (NULL == sub ) {
                     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                     return ORTE_ERR_NOT_FOUND;
                 }
