@@ -16,8 +16,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = 
-
 noinst_LTLIBRARIES = libmca_schema_base.la
 
 # Source code files
