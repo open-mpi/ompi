@@ -324,7 +324,9 @@ int mca_pml_ob1_send_request_start_copy(
                    (mca_pml_ob1.leave_pinned && 
                     mca_bml_base_btl_array_get_size(&sendreq->bml_endpoint->btl_rdma))) && 
                    ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false;
-        if(do_rdma == false || (reg_btl != NULL && (reg_btl->btl_flags & MCA_BTL_FLAGS_GET) == 0)) {
+        if (do_rdma == false || 
+            (reg_btl != NULL && (reg_btl->btl_flags & MCA_BTL_FLAGS_GET) == 0) ||
+            (bml_btl->btl_flags & MCA_BTL_FLAGS_GET) == 0) {
             int32_t free_after;
 
             /* allocate space for hdr + first fragment */
