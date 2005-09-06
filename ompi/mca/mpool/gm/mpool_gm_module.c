@@ -155,8 +155,14 @@ void* mca_mpool_gm_realloc(
 void mca_mpool_gm_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
+#if OMPI_MCA_MPOOL_GM_SUPPORT_REGISTERING
     OBJ_RELEASE(registration);
     free(addr);
+#else
+    mca_mpool_gm_module_t *gm_mpool = (mca_mpool_gm_module_t*)mpool;
+    OBJ_RELEASE(registration);
+    gm_dma_free(gm_mpool->port, addr);
+#endif
 }
 
 
