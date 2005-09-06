@@ -1071,7 +1071,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             param_len--;
             if (0 == param_len) {
                 opal_show_help("help-orterun.txt", "orterun:empty-prefix",
-                                true);
+                                true, orterun_basename, orterun_basename);
                 return ORTE_ERR_FATAL;
             }
         }

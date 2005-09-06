@@ -87,4 +87,6 @@ This means that %s exited before it received notification that all
 started processes had terminated.  You should double check and ensure
 that there are no runaway processes still executing.
 [orterun:empty-prefix]
-Specified an empty prefix (only containing slashes).
+A prefix was supplied to %s that only contained slashes.  
+
+This is a fatal error; %s will now abort.  No processes were launched.
