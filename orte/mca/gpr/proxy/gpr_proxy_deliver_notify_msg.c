@@ -46,7 +46,6 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     orte_gpr_proxy_subscriber_t **subs, *sub;
     orte_gpr_proxy_trigger_t *trig, **trigs;
     size_t i, j, k, n;
-    bool processed;
     int rc;
 
     /* we first have to check if the message is a trigger message - if so,
@@ -110,10 +109,9 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                 */
                 subs = (orte_gpr_proxy_subscriber_t**)
                                 (orte_gpr_proxy_globals.subscriptions)->addr;
-                processed = false;
-                for (j=0, k=0; !processed &&
-                            k < orte_gpr_proxy_globals.num_subs &&
-                            j < (orte_gpr_proxy_globals.subscriptions)->size; j++) {
+                sub = NULL;
+                for (j=0, k=0; k < orte_gpr_proxy_globals.num_subs &&
+                               j < (orte_gpr_proxy_globals.subscriptions)->size; j++) {
                     if (NULL != subs[j]) {
                         k++;
                         if (NULL != data[i]->target) {
@@ -121,17 +119,17 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                             if (NULL != subs[j]->name &&
                                 0 == strcmp(data[i]->target, subs[j]->name)) {
                                 sub = subs[j];
-                                processed = true;
+                                break;
                             }
                         } else if (data[i]->id == subs[j]->id) {
                             /* otherwise, see if id's match */
                             sub = subs[j];
-                            processed = true;
+                            break;
                         }
                     }
                 }
-                /* get here and not processed => not found, abort */
-                if (!processed) {
+                /* get here and not found => abort */
+                if (NULL == sub) {
                     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                     return ORTE_ERR_NOT_FOUND;
                 }
