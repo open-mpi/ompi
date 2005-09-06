@@ -44,7 +44,7 @@ orte_gpr_replica_register_subscription(orte_gpr_replica_subscription_t **subptr,
     int rc;
     size_t i, j, k, num_tokens, num_keys;
     orte_gpr_replica_subscription_t *sub, **subs;
-    orte_gpr_replica_requestor_t *req;
+    orte_gpr_replica_requestor_t *req, **reqs;
     orte_gpr_replica_addr_mode_t tok_mode, key_mode;
     orte_gpr_replica_itag_t itag, *tokentags=NULL;
     orte_gpr_replica_ivalue_t *ival;
@@ -202,7 +202,25 @@ orte_gpr_replica_register_subscription(orte_gpr_replica_subscription_t **subptr,
     (orte_gpr_replica.num_subs)++;
 
 ADDREQ:
-    /* add this requestor to the subscription */
+    /* see if this requestor and subscription id is already attached to
+     * this subscription - if so, ignore it to avoid duplicates
+     */
+    reqs = (orte_gpr_replica_requestor_t**)(sub->requestors)->addr;
+    for (i=0, j=0; j < sub->num_requestors &&
+                   i < (sub->requestors)->size; i++) {
+        if (NULL != reqs[i]) {
+            j++;
+            if (reqs[i]->idtag == subscription->id &&
+                0 == orte_ns.compare(ORTE_NS_CMP_ALL, reqs[i]->requestor, requestor)) {
+                /* found this requestor - do not add it again */
+                goto DONESUB;
+            }
+        }
+    }
+
+    /* get here if requestor is not already on this subscription
+     * add this requestor to the subscription
+     */
     req = OBJ_NEW(orte_gpr_replica_requestor_t);
     if (NULL == req) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -233,6 +251,7 @@ ADDREQ:
      */
     req->idtag = subscription->id;
 
+DONESUB:
     /* record where the subscription went */
     *subptr = sub;
 
@@ -253,7 +272,7 @@ orte_gpr_replica_register_trigger(orte_gpr_replica_trigger_t **trigptr,
     orte_gpr_replica_itag_t itag, *tokentags=NULL;
     orte_gpr_replica_itagval_t *iptr;
     orte_gpr_replica_counter_t *cntr;
-    orte_gpr_replica_trigger_requestor_t *req;
+    orte_gpr_replica_trigger_requestor_t *req, **reqs;
     bool found;
 
     /* set a default response value */
@@ -465,6 +484,22 @@ orte_gpr_replica_register_trigger(orte_gpr_replica_trigger_t **trigptr,
     } /* end for i */
 
 ADDREQ:
+    /* see if this requestor and trigger id is already attached to
+     * this trigger - if so, ignore it to avoid duplicates
+     */
+    reqs = (orte_gpr_replica_trigger_requestor_t**)(trig->attached)->addr;
+    for (i=0, j=0; j < trig->num_attached &&
+                   i < (trig->attached)->size; i++) {
+        if (NULL != reqs[i]) {
+            j++;
+            if (reqs[i]->idtag == trigger->id &&
+                0 == orte_ns.compare(ORTE_NS_CMP_ALL, reqs[i]->requestor, requestor)) {
+                /* found this requestor - do not add it again */
+                goto DONETRIG;
+            }
+        }
+    }
+
     /* add this requestor to the trigger's list of "attached" callers */
     req = OBJ_NEW(orte_gpr_replica_trigger_requestor_t);
     if (NULL == req) {
@@ -521,6 +556,7 @@ opal_output(0, "Trigger master being redefined");
         }
     }
 
+DONETRIG:
     /* report the location of this trigger */
     *trigptr = trig;
 
