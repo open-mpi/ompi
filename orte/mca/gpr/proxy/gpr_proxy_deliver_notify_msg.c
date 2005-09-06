@@ -48,39 +48,39 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     size_t i, j, k, n;
     int rc;
 
+    OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+
     /* we first have to check if the message is a trigger message - if so,
      * then the message is intended to be
      * sent as a single block to that trigger's callback function.
      */
     if (ORTE_GPR_TRIGGER_MSG == msg->msg_type) {
-       trig = (orte_gpr_proxy_globals.triggers)->addr[msg->id];
-       if (NULL == trig) {
-           ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-           return ORTE_ERR_GPR_DATA_CORRUPT;
-       } else {
-           trig->callback(msg);
-       }
-       if (msg->remove) {
-            /* remove the specified trigger from the local tracker */
-            trigs = (orte_gpr_proxy_trigger_t**)(orte_gpr_proxy_globals.triggers)->addr;
-            for (i=0, j=0; j < orte_gpr_proxy_globals.num_trigs &&
-                    i < (orte_gpr_proxy_globals.triggers)->size; i++) {
-                if (NULL != trigs[i]){
-                    j++;
-                    if (msg->id == trigs[i]->id) {
+        trigs = (orte_gpr_proxy_trigger_t**)(orte_gpr_proxy_globals.triggers)->addr;
+        for (i=0, j=0; j < orte_gpr_proxy_globals.num_trigs &&
+                       i < (orte_gpr_proxy_globals.triggers)->size; i++) {
+            if (NULL != trigs[i]){
+                j++;
+                if (msg->id == trigs[i]->id) {
+                    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+                    trigs[i]->callback(msg);
+                    OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+                    rc = ORTE_SUCCESS;
+                    if (msg->remove) {
+                        /* remove the specified trigger from the local tracker */
                         if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_trigger(trigs[i]))) {
                             ORTE_ERROR_LOG(rc);
                         }
-                        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
-                        return rc;
                     }
+                    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+                    return rc;
                 }
             }
-            /* must not have been found - report error */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-       }
-       return ORTE_SUCCESS;
+        }
+
+        /* must not have been found - report error */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        return ORTE_ERR_NOT_FOUND;
     }
 
 
@@ -90,6 +90,7 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
      */
     if (ORTE_GPR_SUBSCRIPTION_MSG != msg->msg_type) {
         ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_GPR_DATA_CORRUPT;
     }
 
@@ -131,6 +132,7 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                 /* get here and not found => abort */
                 if (NULL == sub) {
                     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
                     return ORTE_ERR_NOT_FOUND;
                 }
                 OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
@@ -140,6 +142,7 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                 if (data[i]->remove) {
                     if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(sub))) {
                         ORTE_ERROR_LOG(rc);
+                        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
                         return rc;
                     }
                 }
@@ -148,5 +151,6 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     }
 
     /* all done */
+    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
     return ORTE_SUCCESS;
 }
