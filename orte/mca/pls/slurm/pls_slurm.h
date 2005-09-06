@@ -31,6 +31,7 @@ extern "C" {
         int priority;
         int debug;
         char *orted;
+        char *custom_args;
     };
     typedef struct orte_pls_slurm_component_t orte_pls_slurm_component_t;
 
