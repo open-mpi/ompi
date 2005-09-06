@@ -141,7 +141,7 @@ OBJ_CLASS_DECLARATION(orte_rds_cell_attr_t);
 #define ORTE_RDS_FRONT_END      "orte-rds-fe*"            /* info on frontend systems */
 #define ORTE_RDS_OS             "orte-rds-os*"            /* operating system info */
 #define ORTE_RDS_FILESYSTEM     "orte-rds-fs*"            /* filesystem info */
-#define ORTE_RDSD_NODE_ARCH     "orte-rds-arch*"          /* architecture info */
+#define ORTE_RDS_NODE_ARCH     "orte-rds-arch*"          /* architecture info */
 #define ORTE_RDS_INTERCONNECT   "orte-rds-arch-interconnect*"
 #define ORTE_RDS_CPU            "orte-rds-arch-cpu*"
 
