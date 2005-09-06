@@ -18,26 +18,28 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-sources = \
-        coll_sm.h \
+not_used_yet = \
         coll_sm_allgather.c \
         coll_sm_allgatherv.c \
-        coll_sm_allreduce.c \
         coll_sm_alltoall.c \
         coll_sm_alltoallv.c \
         coll_sm_alltoallw.c \
-        coll_sm_barrier.c \
-        coll_sm_bcast.c \
-        coll_sm_component.c \
         coll_sm_gather.c \
         coll_sm_gatherv.c \
-        coll_sm_module.c \
-        coll_sm_reduce.c \
         coll_sm_reduce_scatter.c \
         coll_sm_scan.c \
         coll_sm_exscan.c \
         coll_sm_scatter.c \
         coll_sm_scatterv.c
+
+sources = \
+        coll_sm.h \
+        coll_sm_allreduce.c \
+        coll_sm_barrier.c \
+        coll_sm_bcast.c \
+        coll_sm_component.c \
+        coll_sm_module.c \
+        coll_sm_reduce.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

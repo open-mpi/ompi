@@ -16,6 +16,11 @@
 /**
  * @file
  *
+ * Warning: this is not for the faint of heart -- don't even bother
+ * reading this source code if you don't have a strong understanding
+ * of nested data structures and pointer math (remeber that
+ * associativity and order of C operations is *critical* in terms of
+ * pointer math!).
  */
 
 #include "ompi_config.h"
@@ -70,7 +75,7 @@ static const mca_coll_base_module_1_0_0_t module = {
 
     NULL,
     NULL,
-    NULL, 
+    mca_coll_sm_allreduce_intra,
     NULL,
     NULL,
     NULL,
@@ -79,7 +84,7 @@ static const mca_coll_base_module_1_0_0_t module = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    mca_coll_sm_reduce_intra,
     NULL,
     NULL,
     NULL,
@@ -199,7 +204,7 @@ sm_module_init(struct ompi_communicator_t *comm)
     mca_coll_base_comm_t *data;
     size_t control_size, frag_size;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
-    opal_maffinity_base_segment_t *segments;
+    opal_maffinity_base_segment_t *maffinity;
     int parent, min_child, max_child, num_children;
     char *base;
     const int num_barrier_buffers = 2;
@@ -207,9 +212,9 @@ sm_module_init(struct ompi_communicator_t *comm)
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */
 
-    segments = malloc(sizeof(opal_maffinity_base_segment_t) * 
-                      c->sm_bootstrap_num_segments * 5);
-    if (NULL == segments) {
+    maffinity = malloc(sizeof(opal_maffinity_base_segment_t) * 
+                      c->sm_comm_num_segments * 3);
+    if (NULL == maffinity) {
         return NULL;
     }
 
@@ -334,13 +339,37 @@ sm_module_init(struct ompi_communicator_t *comm)
     }
     data->mcb_barrier_count = 0;
 
-    /* Next, setup the mca_coll_base_mpool_index_t pointers to point
-       to the appropriate places in the mpool. */
+    /* Next, setup the pointer to the in-use flags.  The number of
+       segments will be an even multiple of the number of in-use
+       flags. */
 
+    base += (c->sm_control_size * size * num_barrier_buffers * 2);
+    data->mcb_in_use_flags = (mca_coll_sm_in_use_flag_t*) base;
+
+    /* All things being equal, if we're rank 0, then make the in-use
+       flags be local (memory affinity).  Then zero them all out so
+       that they're marked as unused. */
+    
+    j = 0;
+    if (0 == rank) {
+        maffinity[j].mbs_start_addr = base;
+        maffinity[j].mbs_len = c->sm_control_size * 
+            c->sm_comm_num_in_use_flags;
+        memset(maffinity[j].mbs_start_addr, 0, maffinity[j].mbs_len);
+        D(("rank 0 zeroed in-use flags (num %d, len %d): %p - %p\n",
+           c->sm_comm_num_in_use_flags,
+           maffinity[j].mbs_len,
+           base, base + maffinity[j].mbs_len));
+        ++j;
+    }
+
+    /* Next, setup pointers to the control and data portions of the
+       segments, as well as to the relevant in-use flags. */
+
+    base += (c->sm_comm_num_in_use_flags * c->sm_control_size);
     control_size = size * c->sm_control_size;
     frag_size = size * c->sm_fragment_size;
-    base += (control_size * num_barrier_buffers * 2);
-    for (j = i = 0; i < data->mcb_mpool_num_segments; ++i) {
+    for (i = 0; i < c->sm_comm_num_segments; ++i) {
         data->mcb_mpool_index[i].mcbmi_control = (uint32_t*)
             (base + (i * (control_size + frag_size)));
         data->mcb_mpool_index[i].mcbmi_data = 
@@ -349,16 +378,16 @@ sm_module_init(struct ompi_communicator_t *comm)
 
         /* Memory affinity: control */
 
-        segments[j].mbs_len = c->sm_control_size;
-        segments[j].mbs_start_addr = 
+        maffinity[j].mbs_len = c->sm_control_size;
+        maffinity[j].mbs_start_addr = 
             data->mcb_mpool_index[i].mcbmi_control +
             (rank * c->sm_control_size);
         ++j;
 
         /* Memory affinity: data */
 
-        segments[j].mbs_len = c->sm_fragment_size;
-        segments[j].mbs_start_addr = 
+        maffinity[j].mbs_len = c->sm_fragment_size;
+        maffinity[j].mbs_start_addr = 
             data->mcb_mpool_index[i].mcbmi_data +
             (rank * c->sm_control_size);
         ++j;
@@ -367,14 +396,14 @@ sm_module_init(struct ompi_communicator_t *comm)
     /* Setup memory affinity so that the pages that belong to this
        process are local to this process */
 
-    opal_maffinity_base_set(segments, j);
-    free(segments);
+    opal_maffinity_base_set(maffinity, j);
+    free(maffinity);
 
     /* Zero out the control structures that belong to this process */
 
     memset(data->mcb_barrier_control_me, 0, 
            num_barrier_buffers * 2 * c->sm_control_size);
-    for (i = 0; i < data->mcb_mpool_num_segments; ++i) {
+    for (i = 0; i < c->sm_comm_num_segments; ++i) {
         memset(data->mcb_mpool_index[i].mcbmi_control, 0,
                c->sm_control_size);
     }
@@ -476,8 +505,6 @@ static int bootstrap_init(void)
     opal_atomic_lock(&bshe->super.seg_lock);
     opal_atomic_wmb();
     if (!bshe->super.seg_inited) {
-        bshe->smbhe_num_segments = 
-            mca_coll_sm_component.sm_bootstrap_num_segments;
         bshe->smbhe_segments = (mca_coll_sm_bootstrap_comm_setup_t *)
             (((char *) bshe) + 
              sizeof(mca_coll_sm_bootstrap_header_extension_t) +
@@ -485,7 +512,7 @@ static int bootstrap_init(void)
               mca_coll_sm_component.sm_bootstrap_num_segments));
         bshe->smbhe_cids = (uint32_t *)
             (((char *) bshe) + sizeof(*bshe));
-        for (i = 0; i < bshe->smbhe_num_segments; ++i) {
+        for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
             bshe->smbhe_cids[i] = INT_MAX;
         }
 
@@ -510,6 +537,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
     mca_coll_base_comm_t *data = comm->c_coll_selected_data;
     int comm_size = ompi_comm_size(comm);
     int num_segments = c->sm_comm_num_segments;
+    int num_in_use = c->sm_comm_num_in_use_flags;
     int frag_size = c->sm_fragment_size;
     int control_size = c->sm_control_size;
 
@@ -525,7 +553,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
         opal_atomic_wmb();
         found = false;
         empty_index = -1;
-        for (i = 0; i < bshe->smbhe_num_segments; ++i) {
+        for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
             if (comm->c_contextid == bshe->smbhe_cids[i]) {
                 found = true;
                 break;
@@ -552,7 +580,6 @@ static int bootstrap_comm(ompi_communicator_t *comm)
             i = empty_index;
             bshe->smbhe_cids[i] = comm->c_contextid;
 
-            bscs[i].smbcs_comm_num_segments = num_segments;
             bscs[i].smbcs_count = comm_size;
 
             /* Calculate how much space we need in the data mpool.
@@ -570,12 +597,14 @@ static int bootstrap_comm(ompi_communicator_t *comm)
                So it's:
 
                barrier: 2 * control_size + 2 * control_size
+               in use:  num_in_use * control_size
                control: num_segments * (num_procs * control_size * 2 +
                                         num_procs * control_size)
                message: num_segments * (num_procs * frag_size)
             */
 
-            size = 4 * c->sm_control_size +
+            size = 4 * control_size +
+                (num_in_use * control_size) +
                 (num_segments * (comm_size * control_size * 2)) +
                 (num_segments * (comm_size * frag_size));
 
@@ -591,11 +620,12 @@ static int bootstrap_comm(ompi_communicator_t *comm)
                    component would have been chosen), so we don't need
                    to do that cleanup. */
                 bscs[i].smbcs_data_mpool_offset = 0;
-                bscs[i].smbcs_comm_num_segments = 0;
+                bscs[i].smbcs_success = false;
                 --bscs[i].smbcs_count;
                 opal_atomic_unlock(&bshe->super.seg_lock);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
+            bscs[i].smbcs_success = true;
 
             /* Calculate the offset and put it in the bootstrap
                area */
@@ -624,7 +654,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
 
     /* Check to see if there was an error while allocating the shared
        memory */
-    if (0 == bscs[i].smbcs_comm_num_segments) {
+    if (!bscs[i].smbcs_success) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -636,7 +666,6 @@ static int bootstrap_comm(ompi_communicator_t *comm)
         data->mcb_mpool_base = c->sm_data_mpool->mpool_base(c->sm_data_mpool);
         data->mcb_mpool_offset = bscs[i].smbcs_data_mpool_offset;
         data->mcb_mpool_area = data->mcb_mpool_base + data->mcb_mpool_offset;
-        data->mcb_mpool_num_segments = bscs[i].smbcs_comm_num_segments;
         data->mcb_operation_count = 0;
     }
 

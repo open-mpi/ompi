@@ -13,6 +13,7 @@
  * 
  * $HEADER$
  */
+/** @file */
 
 #include "ompi_config.h"
 
@@ -20,17 +21,20 @@
 #include "coll_sm.h"
 
 
-/*
- *	allreduce_intra
+/**
+ * Shared memory allreduce.
  *
- *	Function:	- allreduce using other MPI collectives
- *	Accepts:	- same as MPI_Allreduce()
- *	Returns:	- MPI_SUCCESS or error code
+ * For the moment, all we're doing is a reduce to root==0 and then a
+ * broadcast.  It is possible that we'll do something better someday.
  */
 int mca_coll_sm_allreduce_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    int ret;
+
+    ret = mca_coll_sm_reduce_intra(sbuf, rbuf, count, dtype, op, 0, comm);
+    return (ret == OMPI_SUCCESS) ?
+        mca_coll_sm_bcast_intra(rbuf, count, dtype, 0, comm) : ret;
 }
