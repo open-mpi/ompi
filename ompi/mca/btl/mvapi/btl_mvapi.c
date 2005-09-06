@@ -793,7 +793,7 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
         BTL_VERBOSE(("Queing because no rdma write tokens \n"));
         BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
-                                 endpoint->wr_sq_tokens_lp, endpoint->endpoint_pending_lock, rc); 
+                                 endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock, rc); 
     } else { 
         
         frag->endpoint = endpoint;
@@ -844,7 +844,7 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
         BTL_VERBOSE(("Queing because no rdma write tokens \n"));
         BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
-                                 endpoint->wr_sq_tokens_lp, endpoint->endpoint_pending_lock, rc); 
+                                 endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock, rc); 
     } else { 
         frag->endpoint = endpoint;
         frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
