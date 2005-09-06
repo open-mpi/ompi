@@ -98,6 +98,9 @@ typedef struct {
     /** Mapping data about how this app should be laid out across CPUs
         / nodes */
     orte_app_context_map_t **map_data;
+    /** Prefix directory for this app (or NULL if no override
+        necessary) */
+    char *prefix_dir;
 } orte_app_context_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);

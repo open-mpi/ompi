@@ -28,6 +28,19 @@ For reference, your current PATH is:
 We also looked for orted in the following directory:
 
   %s
+
+[multiple-prefixes]
+Specified multiple application contexts using different
+settings for --prefix. Care should be taken, that corresponding
+processes are mapped to different nodes. Having multiple prefixes
+per node is not allowed.
+
+The previously set prefix was
+  %s
+
+the prefix to be set overriding:
+  %s
+
 [concurrency-less-than-zero]
 The value of the MCA parameter "pls_rsh_num_concurrent" is less than
 or equal to zero (%d).  This parameter is used to determine how many
@@ -35,13 +48,3 @@ remote agents (typically rsh or ssh) to invoke concurrently while
 launching parallel jobs.  
 
 This value has automatically be reset to 1; processing will continue.
-[assume-same-shell-probe-not-implemented]
-WARNING: The MCA parameter "pls_rsh_assume_same_shell" was set to 0,
-indicating that the rsh pls component should probe for the value of
-the remote shell.
-
-Probe functionality has not yet been implemented.  If you need this
-functionality, please report it back to the Open MPI team.
-
-Setting the pls_rsh_assume_same_shell parameter to "1" and
-continuing...

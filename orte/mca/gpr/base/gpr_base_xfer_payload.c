@@ -172,6 +172,10 @@ int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
             } else {
                 dest->app_context->map_data = NULL;
             }
+            if (NULL != src->app_context->prefix_dir) {
+                dest->app_context->prefix_dir =
+                    strdup(src->app_context->prefix_dir);
+            }
             break;
 
         case ORTE_NULL:

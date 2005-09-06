@@ -86,3 +86,5 @@ WARNING: %s encountered an abnormal exit.
 This means that %s exited before it received notification that all
 started processes had terminated.  You should double check and ensure
 that there are no runaway processes still executing.
+[orterun:empty-prefix]
+Specified an empty prefix (only containing slashes).

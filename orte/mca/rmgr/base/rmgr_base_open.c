@@ -78,6 +78,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->cwd=NULL;
     app_context->num_map = 0;
     app_context->map_data = NULL;
+    app_context->prefix_dir = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -109,6 +110,9 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
             }
         }
         free(app_context->map_data);
+    }
+    if (NULL != app_context->prefix_dir) {
+        free(app_context->prefix_dir);
     }
 }
 

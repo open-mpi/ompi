@@ -33,6 +33,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
                                  size_t num_vals, orte_data_type_t type)
 {
     int rc;
+    int8_t have_prefix;
     size_t i;
     orte_app_context_t **app_context;
 
@@ -113,7 +114,28 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
                  ORTE_ERROR_LOG(rc);
                  return rc;
            }
-       }
+        }
+
+        /* pack the prefix dir if we have one */
+        if (NULL != app_context[i]->prefix_dir) {
+            have_prefix = 1;
+        } else {
+            have_prefix = 0;
+        }
+
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                                                       (void*)(&have_prefix), 1, ORTE_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        if (have_prefix) {
+            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                                                           (void*)(&(app_context[i]->prefix_dir)), 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
     }
     
     return ORTE_SUCCESS;

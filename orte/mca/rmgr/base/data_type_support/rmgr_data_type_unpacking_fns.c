@@ -37,6 +37,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
     int rc;
     orte_app_context_t **app_context;
     size_t i, max_n=1, temp;
+    int8_t have_prefix;
     
     /* unpack into array of app_context objects */
     app_context = (orte_app_context_t**) dest;
@@ -150,6 +151,21 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
             }
         }
 
+        /* unpack the prefix dir if there is one */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &have_prefix,
+                   &max_n, ORTE_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (have_prefix) {
+            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &app_context[i]->prefix_dir,
+                                                             &max_n, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            app_context[i]->prefix_dir = NULL;
+        }
     }
 
     return ORTE_SUCCESS;
