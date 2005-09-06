@@ -95,6 +95,8 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     int nodelist_argc;
     orte_process_name_t* name;
     char *name_string;
+    char **custom_strings;
+    int   num_args, i;
 
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
@@ -134,6 +136,16 @@ static int pls_slurm_launch(orte_jobid_t jobid)
 
     /* add the srun command */
     opal_argv_append(&argc, &argv, "srun");
+
+    /* Append user defined arguments to srun */
+    if ( NULL != mca_pls_slurm_component.custom_args ) {
+        custom_strings = opal_argv_split(mca_pls_slurm_component.custom_args, ' ');
+        num_args       = opal_argv_count(custom_strings);
+        for (i = 0; i < num_args; ++i) {
+            opal_argv_append(&argc, &argv, custom_strings[i]);
+        }
+        opal_argv_free(custom_strings);
+    }
 
     asprintf(&tmp, "--nodes=%lu", (unsigned long) num_nodes);
     opal_argv_append(&argc, &argv, tmp);

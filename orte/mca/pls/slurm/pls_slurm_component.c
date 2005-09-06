@@ -110,6 +110,11 @@ static int pls_slurm_open(void)
                               false, false, "orted",
                               &mca_pls_slurm_component.orted);
 
+    mca_base_param_reg_string(comp, "args",
+                              "Custom arguments to srun",
+                              false, false, NULL,
+                              &mca_pls_slurm_component.custom_args);
+
     return ORTE_SUCCESS;
 }
 
@@ -135,6 +140,10 @@ static int pls_slurm_close(void)
 {
     if (NULL != mca_pls_slurm_component.orted) {
         free(mca_pls_slurm_component.orted);
+    }
+
+    if (NULL != mca_pls_slurm_component.custom_args) {
+        free(mca_pls_slurm_component.custom_args);
     }
 
     return ORTE_SUCCESS;
