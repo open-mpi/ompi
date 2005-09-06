@@ -17,6 +17,8 @@
 
 include $(top_srcdir)/test/support/Makefile.options
 
+AM_CPPFLAGS += -I$(top_srcdir)/opal/libltdl
+
 check_PROGRAMS = \
 	test_schema
 
