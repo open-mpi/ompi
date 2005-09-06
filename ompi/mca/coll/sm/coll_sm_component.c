@@ -173,7 +173,7 @@ static int sm_open(void)
                            &cs->sm_bootstrap_num_segments);
 
     mca_base_param_reg_int(c, "fragment_size",
-                           "Fragment size (in bytes) used for passing data through shared memory (bytes, will be rounded up to the nearest control_size size)",
+                           "Fragment size (in bytes) used for passing data through shared memory (will be rounded up to the nearest control_size size)",
                            false, false,
                            cs->sm_fragment_size,
                            &cs->sm_fragment_size);
@@ -202,8 +202,8 @@ static int sm_open(void)
                            false, false,
                            cs->sm_comm_num_segments,
                            &cs->sm_comm_num_segments);
-    if (cs->sm_comm_num_segments < 2) {
-        cs->sm_comm_num_segments = 2;
+    if (cs->sm_comm_num_segments < cs->sm_comm_num_in_use_flags) {
+        cs->sm_comm_num_segments = cs->sm_comm_num_in_use_flags;
     }
     if (0 != (cs->sm_comm_num_segments % cs->sm_comm_num_in_use_flags)) {
         cs->sm_comm_num_segments += cs->sm_comm_num_in_use_flags - 
@@ -240,26 +240,8 @@ static int sm_open(void)
                            false, true,
                            size1, NULL);
 
-    /* Calculate how much space we need in the data mpool.  There are
-       several values to add (one of these for each segment):
-
-       - size of the control data:
-           - fan-in data (num_procs * control_size size)
-           - fan-out data (num_procs * control_size size)
-       - size of message data
-           - fan-in data (num_procs * (frag_size rounded up to
-             control_size size))
-           - fan-out data (num_procs * (frag_size rounded up
-             to control_size size))
-
-       So it's:
-
-           num_segs * ((num_procs * control_size * 2) + (num_procs * frag * 2))
-
-       Which reduces to:
-
-           num_segs * num_procs * 2 * (control_size + frag)
-    */
+    /* Calculate how much space we need in the data mpool.  This
+       formula taken directly from coll_sm_module.c. */
 
     mca_base_param_reg_int(c, "info_num_procs",
                            "Number of processes to use for the calculation of the shared_mem_size MCA information parameter (must be => 2)",
@@ -267,10 +249,12 @@ static int sm_open(void)
                            cs->sm_info_comm_size,
                            &cs->sm_info_comm_size);
 
-    size2 = cs->sm_comm_num_segments * cs->sm_info_comm_size *
-        (cs->sm_control_size + cs->sm_fragment_size);
+    size2 = 4 * cs->sm_control_size +
+                (cs->sm_comm_num_in_use_flags * cs->sm_control_size) +
+                (cs->sm_comm_num_segments * (cs->sm_info_comm_size * cs->sm_control_size * 2)) +
+                (cs->sm_comm_num_segments * (cs->sm_info_comm_size * cs->sm_fragment_size));
     mca_base_param_reg_int(c, "shared_mem_used_data",
-                           "Amount of shared memory used in the shared memory data area for one process (in bytes)",
+                           "Amount of shared memory used in the shared memory data area for info_num_procs processes (in bytes)",
                            false, true,
                            size2, NULL);
 

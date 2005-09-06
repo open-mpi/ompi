@@ -13,9 +13,7 @@
  * 
  * $HEADER$
  */
-/**
- * @file
- */
+/** @file */
 
 #ifndef MCA_COLL_SM_EXPORT_H
 #define MCA_COLL_SM_EXPORT_H
@@ -52,15 +50,15 @@ extern "C" {
             collective sm operations -- use this value plus the base
             of the mpool to obtain the pointer to this comm's
             mca_coll_sm_mpool_area_t */
-        size_t smbcs_data_mpool_offset;
-
-        /** Number of segments in the data mpool area for this
-            communicator */
-        int smbcs_comm_num_segments;
+        volatile size_t smbcs_data_mpool_offset;
 
         /** Number of processes in this communicator who have seen
             this value already. */
-        int smbcs_count;
+        volatile  int smbcs_count;
+
+        /** Mechanism for letting multiple processes know whether this
+            allocation succeeded or not */
+        volatile bool smbcs_success;
     };
     /**
      * Convenience typedef
@@ -75,19 +73,17 @@ extern "C" {
         /** upper-level control structure */
         mca_common_sm_file_header_t super;
 
-        /** Number of segments in the bootstrap mmap file */
-        int smbhe_num_segments;
-
         /** Pointer to the start of the segments in the bootstrap area
             (map->seg_data only points to just beyond the
             mca_common_sm_file_header_t) */
         mca_coll_sm_bootstrap_comm_setup_t *smbhe_segments;
 
-        /** Pointer to array containing smhe_num_segments CIDs for use
-            in bootstrap phase -- will always point immediately after
-            the end of this struct (i.e., still within this header,
-            but since it's variable size (set by MCA param), we can't
-            just have it here in the struct.  Bonk). */
+        /** Pointer to array containing
+            component.sm_bootstrap_num_segments CIDs for use in
+            bootstrap phase -- will always point immediately after the
+            end of this struct (i.e., still within this header, but
+            since it's variable size (set by MCA param), we can't just
+            have it here in the struct.  Bonk). */
         uint32_t *smbhe_cids;
     };
     /**
@@ -143,6 +139,8 @@ extern "C" {
             calculation of the "info" MCA parameter */
         int sm_info_comm_size;
 
+        /******* end of MCA params ********/
+
         /** Size of the bootstrap area -- calculated in
             coll_sm_component.c */
         size_t sm_bootstrap_size;
@@ -186,6 +184,24 @@ extern "C" {
     typedef struct mca_coll_sm_tree_node_t mca_coll_sm_tree_node_t;
 
     /**
+     * Simple structure comprising the "in use" flags.  Contains two
+     * members: the number of processes that are currently using this
+     * set of segments and the operation number of the current
+     * operation.
+     */
+    struct mca_coll_sm_in_use_flag_t {
+        /** Number of processes currently using this set of
+            segments */
+        volatile uint32_t mcsiuf_num_procs_using;
+        /** Must match data->mcb_count */
+        volatile uint32_t mcsiuf_operation_count;
+    };
+    /**
+     * Convenienve typedef
+     */
+    typedef struct mca_coll_sm_in_use_flag_t mca_coll_sm_in_use_flag_t;
+
+    /**
      * Structure containing pointers to various arrays of data in the
      * data mpool area (one of these indexes a single segment in the
      * data mpool).  Nothing is hard-coded because all the array
@@ -195,8 +211,6 @@ extern "C" {
     struct mca_coll_base_mpool_index_t {
         /** Pointer to beginning of control data */
         uint32_t *mcbmi_control;
-        /** Pointer to the "in use" buffer for this segment */
-        uint32_t *mcbmi_in_use;
         /** Pointer to beginning of message fragment data */
         char *mcbmi_data;
     };
@@ -223,8 +237,6 @@ extern "C" {
             operations area (i.e., mcb_mpool_base +
             mcb_mpool_offset) */
         unsigned char *mcb_mpool_area;
-        /** Number of segments in this comm's area in the data mpool */
-        int mcb_mpool_num_segments;
 
         /** Pointer to my barrier control pages (odd index pages are
             "in", even index pages are "out") */
@@ -246,6 +258,9 @@ extern "C" {
             of barrier buffers to use). */
         int mcb_barrier_count;
 
+        /** "In use" flags indicating which segments are available */
+        mca_coll_sm_in_use_flag_t *mcb_in_use_flags;
+
         /** Array of indexes into the mpool area for control and data
             fragment passing (containing pointers to each segments
             control and data areas). */
@@ -256,7 +271,7 @@ extern "C" {
         mca_coll_sm_tree_node_t *mcb_tree;
 
         /** Operation number (i.e., which segment number to use) */
-        int mcb_operation_count;
+        uint32_t mcb_operation_count;
     };
     /**
      * Convenience typedef
