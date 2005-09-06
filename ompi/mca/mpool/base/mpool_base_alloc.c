@@ -93,12 +93,15 @@ static void mca_mpool_base_registration_constructor( mca_mpool_base_registration
 
 static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_t * reg )
 {
-    if(NULL != reg->mpool) {
-        reg->mpool->mpool_deregister(
-            reg->mpool,
-            reg->base,
-            reg->bound - reg->base + 1,
-            reg);
+    mca_mpool_base_module_t* mpool = reg->mpool;
+    if(NULL != mpool) {
+        if(NULL != mpool->mpool_deregister) {
+            reg->mpool->mpool_deregister(
+                reg->mpool,
+                reg->base,
+                reg->bound - reg->base + 1,
+                reg);
+        }
     }
 }
 
