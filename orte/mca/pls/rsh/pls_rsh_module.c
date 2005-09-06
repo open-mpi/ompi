@@ -27,8 +27,21 @@
 #endif
 #include <errno.h>
 #include <string.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -96,6 +109,161 @@ static OBJ_CLASS_INSTANCE(rsh_daemon_info_t,
                           opal_object_t,
                           NULL, NULL);
 static void set_handler_default(int sig);
+
+enum {
+    ORTE_PLS_RSH_SHELL_BASH = 0,
+    ORTE_PLS_RSH_SHELL_TCSH,
+    ORTE_PLS_RSH_SHELL_CSH,
+    ORTE_PLS_RSH_SHELL_KSH,
+    ORTE_PLS_RSH_SHELL_UNKNOWN
+};
+
+typedef int orte_pls_rsh_shell;
+
+static const char * orte_pls_rsh_shell_name[] = {
+    "bash",
+    "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
+    "csh",
+    "ksh",
+    "unknown"
+};
+
+/**
+ * Check the Shell variable on the specified node
+ */
+
+static int orte_pls_rsh_probe(orte_ras_node_t * node, orte_pls_rsh_shell * shell)
+{
+    char ** argv;
+    int argc, rc, nfds, i;
+    int fd[2];
+    pid_t pid;
+    fd_set readset;
+    fd_set errset;
+    char outbuf[4096];
+
+    if (mca_pls_rsh_component.debug) {
+        opal_output(0, "pls:rsh: going to check SHELL variable on node %s\n",
+                    node->node_name);
+    }
+    *shell = ORTE_PLS_RSH_SHELL_UNKNOWN;
+    /*
+     * Build argv array
+     */
+    argv = opal_argv_copy(mca_pls_rsh_component.argv);
+    argc = mca_pls_rsh_component.argc;
+    opal_argv_append(&argc, &argv, node->node_name);
+    opal_argv_append(&argc, &argv, "echo $SHELL");
+    if (pipe(fd)) {
+        opal_output(0, "pls:rsh: pipe failed with errno=%d\n", errno);
+        return ORTE_ERR_IN_ERRNO;
+    }
+    if ((pid = fork()) < 0) {
+        opal_output(0, "pls:rsh: fork failed with errno=%d\n", errno);
+        return ORTE_ERR_IN_ERRNO;
+    }
+    else if (pid == 0) {          /* child */
+        if (dup2(fd[1], 1) < 0) {
+            opal_output(0, "pls:rsh: dup2 failed with errno=%d\n", errno);
+            return ORTE_ERR_IN_ERRNO;
+        }
+        execvp(argv[0], argv);
+        exit(errno);
+    }
+    if (close(fd[1])) {
+        opal_output(0, "pls:rsh: close failed with errno=%d\n", errno);
+        return ORTE_ERR_IN_ERRNO;
+    }
+    /* Monitor stdout */
+    FD_ZERO(&readset);
+    nfds = fd[0]+1;
+
+    memset (outbuf, 0, sizeof (outbuf));
+    rc = ORTE_SUCCESS;;
+    while (ORTE_SUCCESS == rc) {
+        int err;
+        FD_SET (fd[0], &readset);
+        errset = readset;
+        err = select(nfds, &readset, NULL, &errset, NULL);
+        if (err == -1) {
+            if (errno == EINTR)
+                continue;
+            else {
+                rc = ORTE_ERR_IN_ERRNO;
+                break;
+            }
+        }
+        if (FD_ISSET(fd[0], &errset) != 0)
+            rc = ORTE_ERR_FATAL;
+        /* In case we have something valid to read on stdin */
+        if (FD_ISSET(fd[0], &readset) != 0) {
+            ssize_t ret = 1;
+            char temp[4096];
+            char * ptr = outbuf;
+            ssize_t outbufsize = sizeof(outbuf);
+
+            memset (temp, 0, sizeof(temp));
+
+            while (ret != 0) {
+                ret = read (fd[0], temp, 256);
+                if (ret < 0) {
+                    if (errno == EINTR)
+                        continue;
+                    else {
+                        rc = ORTE_ERR_IN_ERRNO;
+                        break;
+                    }
+                }
+                else {
+                    if (outbufsize > 0) {
+                        memcpy (ptr, temp, (ret > outbufsize) ? outbufsize : ret);
+                        outbufsize -= ret;
+                        ptr += ret;
+                        if (outbufsize > 0)
+                            *ptr = '\0';
+                    }
+                }
+            }
+            /* After reading complete string (aka read returns 0), we just break */
+            break;
+        }
+    }
+
+    /* Search for the substring of known shell-names */
+    for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name)/
+                          sizeof(orte_pls_rsh_shell_name[0])); i++) {
+        if (NULL != strstr (outbuf, orte_pls_rsh_shell_name[i])) {
+          *shell = i;
+          break;
+        }
+    }
+    if (mca_pls_rsh_component.debug) {
+        opal_output(0, "pls:rsh: node:%s has SHELL:%s\n",
+                    node->node_name, orte_pls_rsh_shell_name[*shell]);
+    }
+    return rc;
+}
+
+/**
+ * Fill the exec_path variable with the directory to the orted
+ */
+
+static int orte_pls_rsh_fill_exec_path ( char ** exec_path)
+{
+    struct stat buf;
+
+    asprintf(exec_path, "%s/orted", OMPI_BINDIR);
+    if (0 != stat(*exec_path, &buf)) {
+        char *path = getenv("PATH");
+        if (NULL == path) {
+            path = ("PATH is empty!");
+        }
+        opal_show_help("help-pls-rsh.txt", "no-local-orted",
+                        true, path, OMPI_BINDIR);
+        return ORTE_ERR_NOT_FOUND;
+    }
+   return ORTE_SUCCESS;
+}
 
 /**
  * Callback on daemon exit.
@@ -199,7 +367,6 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
     OBJ_RELEASE(info);
 }
 
-
 /**
  * Launch a daemon (bootproxy) on each node. The daemon will be responsible
  * for launching the application.
@@ -279,11 +446,26 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             opal_output(0, "pls:rsh: assuming same remote shell as local shell");
         }
     } else {
-        /* JMS to be removed/replaced when probe is implemented */
-        opal_output(0, "WARNING: assume_same_shell is false!  %s, %d",
-                    __FILE__, __LINE__);
-        remote_bash = local_bash;
-        remote_csh = local_csh;
+        orte_pls_rsh_shell shell;
+        orte_ras_node_t* node = (orte_ras_node_t*)opal_list_get_first(&nodes);
+
+        rc = orte_pls_rsh_probe(node, &shell);
+
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        switch (shell) {
+        case ORTE_PLS_RSH_SHELL_KSH: /* fall through */
+        case ORTE_PLS_RSH_SHELL_BASH: remote_bash = true; break;
+        case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
+        case ORTE_PLS_RSH_SHELL_CSH:  remote_csh = true; break;
+        default:
+            opal_output(0, "WARNING: rsh probe returned unhandled shell:%s assuming bash\n",
+                        orte_pls_rsh_shell_name[shell]);
+            remote_bash = true;
+        }
     }
     if (mca_pls_rsh_component.debug) {
         opal_output(0, "pls:rsh: remote csh: %d, remote bash: %d\n",
@@ -390,7 +572,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      * Iterate through each of the nodes and spin
      * up a daemon.
      */
-
     for(item =  opal_list_get_first(&nodes);
         item != opal_list_get_end(&nodes);
         item =  opal_list_get_next(item)) {
@@ -399,6 +580,53 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         pid_t pid;
         char *exec_path;
         char **exec_argv;
+        char * cur_prefix;
+        opal_list_t map;
+        opal_list_item_t* item;
+
+        OBJ_CONSTRUCT(&map, opal_list_t);
+        /* Get the mapping of this very node */
+        rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
+                                          jobid,
+                                          node->node_name,
+                                          &map);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        /* Copy the prefix-directory specified within the corresponding
+         * app_context.
+         * If there are multiple (differing) prefix-dir being set for this
+         * node, abort.
+         */
+        cur_prefix = NULL;
+        for(item =  opal_list_get_first(&map);
+            item != opal_list_get_end(&map);
+            item =  opal_list_get_next(item)) {
+            orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
+            char * app_prefix_dir = map->app->prefix_dir;
+
+            /* Check for already set cur_prefix_dir -- if different, complain */
+            if (NULL != app_prefix_dir) {
+                if (NULL != cur_prefix &&
+                    0 != strcmp (cur_prefix, app_prefix_dir)) {
+                    opal_show_help("help-pls-rsh.txt", "multiple-prefixes",
+                                   true, cur_prefix, app_prefix_dir);
+                    return ORTE_ERR_FATAL;
+                }
+
+                /* If not yet set, copy it; iff set, then it's the same anyway */
+                if (NULL == cur_prefix) {
+                    cur_prefix = strdup (map->app->prefix_dir);
+                }
+
+                if (mca_pls_rsh_component.debug) {
+                    opal_output (0, "pls:rsh: Set cur_prefix:%s\n",
+                                 cur_prefix);
+                }
+            }
+        }
 
         /* setup node name */
         free(argv[node_name_index1]);
@@ -504,20 +732,23 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 exec_argv = &argv[local_exec_index];
                 exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
 
-                if (NULL == exec_path) {
-                    struct stat buf;
-
-                    asprintf(&exec_path, "%s/orted", OMPI_BINDIR);
-                    if (0 != stat(exec_path, &buf)) {
-                        char *path = getenv("PATH");
-                        if (NULL == path) {
-                            path = ("PATH is empty!");
+                if (NULL == exec_path && NULL == cur_prefix) {
+                    rc = orte_pls_rsh_fill_exec_path (&exec_path);
+                    if (ORTE_SUCCESS != rc) {
+                        return rc;
+                    }
+                } else {
+                    if (NULL != cur_prefix)
+                        asprintf(&exec_path, "%s/bin/orted", cur_prefix);
+                    /* If we yet did not fill up the execpath, do so now */
+                    if (NULL == exec_path) {
+                        rc = orte_pls_rsh_fill_exec_path (&exec_path);
+                        if (ORTE_SUCCESS != rc) {
+                            return rc;
                         }
-                        opal_show_help("help-pls-rsh.txt", "no-local-orted",
-                                       true, path, OMPI_BINDIR);
-                        return ORTE_ERR_NOT_FOUND;
                     }
                 }
+
                 /* Since this is a local execution, we need to
                    potentially whack the final ")" in the argv (if
                    sh/csh conditionals, from above).  Note that we're
@@ -535,6 +766,35 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 }
                 exec_argv = argv;
                 exec_path = strdup(mca_pls_rsh_component.path);
+
+                if (NULL != cur_prefix) {
+                    if (remote_bash) {
+                        asprintf (&argv[local_exec_index],
+                                "PATH=%s/bin:$PATH ; export PATH ; "
+                                "LD_LIBRARY_PATH=%s/lib:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+                                "%s/bin/%s",
+                                cur_prefix,
+                                cur_prefix,
+                                cur_prefix, mca_pls_rsh_component.orted);
+                    }
+                    /*
+                     * This needs cleanup:
+                     * Only if the LD_LIBRARY_PATH is set, prepend our prefix/lib to it....
+                     */
+                    if (remote_csh) {
+                        asprintf (&argv[local_exec_index],
+                                "set path = ( %s/bin $path ) ; "
+                                "if ( \"$?LD_LIBRARY_PATH\" == 1 ) "
+                                "setenv LD_LIBRARY_PATH %s/lib:$LD_LIBRARY_PATH ; "
+                                "if ( \"$?LD_LIBRARY_PATH\" == 0 ) "
+                                "setenv LD_LIBRARY_PATH %s/lib ; "
+                                "%s/bin/%s",
+                                cur_prefix,
+                                cur_prefix,
+                                cur_prefix,
+                                cur_prefix, mca_pls_rsh_component.orted);
+                    }
+                }
             }
 
             /* setup process name */
@@ -629,6 +889,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             vpid++;
         }
         free(name);
+        if (NULL != cur_prefix) {
+            free (cur_prefix);
+        }
     }
 
 

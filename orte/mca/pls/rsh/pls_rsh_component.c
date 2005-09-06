@@ -140,14 +140,9 @@ int orte_pls_rsh_component_open(void)
                            false, false, 1, &tmp);
     mca_pls_rsh_component.reap = tmp;
     mca_base_param_reg_int(c, "assume_same_shell",
-                           "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell is (PROBE IS NOT CURRENTLY IMPLEMENTED!).",
+                           "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell.",
                            false, false, 1, &tmp);
     mca_pls_rsh_component.assume_same_shell = tmp;
-    /* JMS: To be removed when probe is implemented */
-    if (!mca_pls_rsh_component.assume_same_shell) {
-        opal_show_help("help-pls-rsh.txt", "assume-same-shell-probe-not-implemented", true);
-        mca_pls_rsh_component.assume_same_shell = true;
-    }
 
     mca_base_param_reg_string(c, "agent",
                               "The command used to launch executables on remote nodes (typically either \"rsh\" or \"ssh\")",

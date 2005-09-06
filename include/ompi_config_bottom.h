@@ -215,6 +215,15 @@ typedef long long bool;
 #endif
 
 /*
+ * Set the compile-time path-separator on this system
+ */
+#ifdef WIN32
+#define OMPI_PATH_SEP "\\"
+#else
+#define OMPI_PATH_SEP "/"
+#endif
+
+/*
  * Do we have <stdint.h>?
  */
 #ifdef HAVE_STDINT_H

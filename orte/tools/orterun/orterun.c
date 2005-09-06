@@ -973,6 +973,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     cmd_line_made = true;
     opal_cmd_line_make_opt3(&cmd_line, '\0', NULL, "rawmap", 2,
                             "Hidden / internal parameter -- users should not use this!");
+    opal_cmd_line_make_opt3(&cmd_line, '\0', NULL, "prefix", 1,
+                            "Prefix-directory for orted");
     rc = opal_cmd_line_parse(&cmd_line, true, new_argc, new_argv);
     opal_argv_free(new_argv);
     new_argv = NULL;
@@ -1053,6 +1055,28 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     } else {
         getcwd(cwd, sizeof(cwd));
         app->cwd = strdup(cwd);
+    }
+
+    /* Did the user specify a specific prefix for this app_context_t */
+    if (opal_cmd_line_is_taken(&cmd_line, "prefix")) {
+        size_t param_len;
+
+        param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
+        /*
+         * "Parse" the param, aka remove superfluous path_sep "/".
+         */
+        param_len = strlen(param);
+        while (0 == strcmp (OMPI_PATH_SEP, &(param[param_len-1]))) {
+            param[param_len-1] = '\0';
+            param_len--;
+            if (0 == param_len) {
+                opal_show_help("help-orterun.txt", "orterun:empty-prefix",
+                                true);
+                return ORTE_ERR_FATAL;
+            }
+        }
+
+        app->prefix_dir = strdup(param);
     }
 
     /* Did the user request any mappings?  They were all converted to
