@@ -72,7 +72,7 @@ int mca_rcache_base_mru_touch(
                               mca_mpool_base_registration_t* reg
                               ){
     int rc; 
-    OPAL_THREAD_LOCK(rcache->rb_lock); 
+    OPAL_THREAD_LOCK(&rcache->rb_lock); 
     if(NULL == opal_list_remove_item(
                                      &rcache->mru_list,
                                      (opal_list_item_t*) reg
@@ -82,7 +82,7 @@ int mca_rcache_base_mru_touch(
         opal_list_append(&rcache->mru_list, (opal_list_item_t*) reg); 
         rc = OMPI_SUCCESS; 
     }
-    OPAL_THREAD_UNLOCK(rcache->rb_lock); 
+    OPAL_THREAD_UNLOCK(&rcache->rb_lock); 
     return rc; 
 }
 
