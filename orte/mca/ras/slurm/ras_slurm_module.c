@@ -70,7 +70,7 @@ static int allocate(orte_jobid_t jobid)
 
     slurm_node_str = getenv("SLURM_NODELIST");
     if (NULL == slurm_node_str) {
-        opal_show_help("help-ras-slurm.txt", "env-var-not-found",
+        opal_show_help("help-ras-slurm.txt", "env-var-not-found", 1,
                        "SLURM_NODELIST");
         return ORTE_ERR_NOT_FOUND;
     }
@@ -209,7 +209,7 @@ static int discover(char *regexp, opal_list_t* nodelist)
     memset(slots, 0, sizeof(int) * opal_argv_count(names));
     tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
     if (NULL == tasks_per_node) {
-        opal_show_help("help-ras-slurm.txt", "env-var-not-found",
+        opal_show_help("help-ras-slurm.txt", "env-var-not-found", 1,
                        "SLURM_TASKS_PER_NODE");
         return ORTE_ERR_NOT_FOUND;
     }
@@ -234,7 +234,7 @@ static int discover(char *regexp, opal_list_t* nodelist)
         } else if (*endptr == '\0') {
             break;
         } else {
-            opal_show_help("help-ras-slurm.txt", "env-var-bad-value",
+            opal_show_help("help-ras-slurm.txt", "env-var-bad-value", 1,
                            "SLURM_TASKS_PER_NODE", tasks_per_node);
             return ORTE_ERR_NOT_FOUND;
         }
