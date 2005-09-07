@@ -11,7 +11,7 @@ mca_rcache_rb_component_t mca_rcache_rb_component = {
            implies a specific MCA version) */
         
         MCA_RCACHE_BASE_VERSION_1_0_0,
-        "rcache", /* MCA component name */
+        "rb", /* MCA component name */
         OMPI_MAJOR_VERSION,  /* MCA component major version */
         OMPI_MINOR_VERSION,  /* MCA component minor version */
         OMPI_RELEASE_VERSION,  /* MCA component release version */

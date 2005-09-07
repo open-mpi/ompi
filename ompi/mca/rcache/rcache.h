@@ -36,7 +36,8 @@ typedef int (*mca_rcache_base_module_find_fn_t) (
                                             struct mca_rcache_base_module_t* rcache, 
                                             void* addr, 
                                             size_t size, 
-                                            ompi_pointer_array_t *regs
+                                            ompi_pointer_array_t *regs,
+                                            uint32_t *cnt
                                             );
 
 typedef int (*mca_rcache_base_module_insert_fn_t)( 
@@ -89,6 +90,8 @@ struct mca_rcache_base_module_t {
 }; 
 typedef struct mca_rcache_base_module_t mca_rcache_base_module_t; 
  
+
+
 
 
 /**

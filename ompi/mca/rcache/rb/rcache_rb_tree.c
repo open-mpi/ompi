@@ -22,6 +22,11 @@
 #include "rcache_rb_tree.h"
 
 
+OBJ_CLASS_INSTANCE(mca_rcache_rb_tree_item_t, opal_list_item_t, NULL, NULL); 
+
+int mca_rcache_rb_tree_init(mca_rcache_rb_module_t* rcache) { 
+    OBJ_CONSTRUCT(&rcache->rb_tree, ompi_rb_tree_t);
+}
 /**
  * Searches the rcache to see if it has allocated the memory that is passed in.
  * If so it returns an array of rcaches the memory is registered with.
