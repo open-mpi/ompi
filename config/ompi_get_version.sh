@@ -26,6 +26,16 @@
 srcfile="$1"
 option="$2"
 
+case "$option" in
+    # svnversion can take a while to run.  If we don't need it, don't run it.
+    --major|--minor|--release|--alpha|--beta|--base|--help)
+        OMPI_NEED_SVN=0
+        ;;
+    *)
+        OMPI_NEED_SVN=1
+esac
+
+
 if test "$srcfile" = ""; then
     option="--help"
 else
@@ -50,7 +60,7 @@ else
 
     OMPI_BASE_VERSION="$OMPI_VERSION"
 
-    if test "$OMPI_WANT_SVN" = "1"; then
+    if test "$OMPI_WANT_SVN" = "1" -a "$OMPI_NEED_SVN" = "1" ; then
         if test "$OMPI_SVN_R" = "-1"; then
             if test -d .svn; then
                 ver="r`svnversion .`"
@@ -112,6 +122,10 @@ $0 <srcfile> [<option>]
     --base    - Show base version number (no svn number)
     --help    - This message
 EOF
+        ;;
+    *)
+        echo "Unrecognized option $option.  Run $0 --help for options"
+        ;;
 esac
 
 # All done
