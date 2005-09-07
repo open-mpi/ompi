@@ -225,14 +225,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             pLast->elem.common.flags  = pdtAdd->flags & ~(DT_FLAG_COMMITED);
         }
     } else {
-        /* We handle a user defined datatype. We should make sure that the user will not have the
-         * oportunity to destroy it before all datatypes derived are destroyed. As we keep pointers
-         * to every datatype (for MPI_Type_get_content and MPI_Type_get_envelope) we have to make
-         * sure that those datatype will be available if the user ask for them. However, there
-         * is no easy way to free them in this case ...
-         */
-        OBJ_RETAIN( pdtAdd );
-        
         /* keep trace of the total number of basic datatypes in the datatype definition */
         pdtBase->btypes[DT_LOOP]     += pdtAdd->btypes[DT_LOOP];
         pdtBase->btypes[DT_END_LOOP] += pdtAdd->btypes[DT_END_LOOP];

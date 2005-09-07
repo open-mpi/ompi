@@ -169,6 +169,18 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
     if( pArgs->d != NULL )
         memcpy( pArgs->d, d, cd * sizeof(MPI_Datatype) );
 
+    for( pos = 0; pos < cd; pos++ ) {
+        if( !(d[pos]->flags & DT_FLAG_PREDEFINED) ) {
+            /* We handle a user defined datatype. We should make sure that the
+             * user will not have the oportunity to destroy it before all derived
+             * datatypes are destroyed. As we keep pointers to every datatype
+             * (for MPI_Type_get_content and MPI_Type_get_envelope) we have to make
+             * sure that those datatype will be available if the user ask for them.
+             * However, there is no easy way to free them in this case ...
+             */
+            OBJ_RETAIN( d[pos] );
+        }
+    }
     return MPI_SUCCESS;
 }
 
