@@ -16,7 +16,7 @@
 
 # Use the top-level Makefile.options
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 CFLAGS = $(btl_mvapi_CFLAGS)
 AM_CPPFLAGS = $(btl_mvapi_CPPFLAGS)

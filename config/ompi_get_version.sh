@@ -48,6 +48,8 @@ else
 	OMPI_VERSION="${OMPI_VERSION}b$OMPI_BETA_VERSION"
     fi
 
+    OMPI_BASE_VERSION="$OMPI_VERSION"
+
     if test "$OMPI_WANT_SVN" = "1"; then
         if test "$OMPI_SVN_R" = "-1"; then
             if test -d .svn; then
@@ -87,6 +89,9 @@ case "$option" in
     --svn)
 	echo $OMPI_SVN_R
 	;;
+    --base)
+        echo $OMPI_BASE_VERSION
+        ;;
     --all)
         echo ${OMPI_VERSION} ${OMPI_MAJOR_VERSION} ${OMPI_MINOR_VERSION} ${OMPI_RELEASE_VERSION} ${OMPI_ALPHA_VERSION} ${OMPI_BETA_VERSION} ${OMPI_SVN_R}
         ;;
@@ -104,6 +109,7 @@ $0 <srcfile> [<option>]
     --beta    - Beta version nmumber
     --svn     - Subversion repository number
     --all     - Show all version numbers, separated by :
+    --base    - Show base version number (no svn number)
     --help    - This message
 EOF
 esac

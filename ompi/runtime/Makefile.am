@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 AM_CPPFLAGS = -I$(top_builddir)/src/event
 

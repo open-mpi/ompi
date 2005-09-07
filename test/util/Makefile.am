@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/test/support/Makefile.options
+
 
 check_PROGRAMS = \
 	ompi_numtostr \

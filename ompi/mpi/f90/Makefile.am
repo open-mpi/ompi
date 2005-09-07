@@ -47,7 +47,7 @@
 # Once you understand this diagram, this Makefile is much more clear.
 # 
 
-include $(top_srcdir)/config/Makefile.options
+
 
 SUBDIRS = scripts
 

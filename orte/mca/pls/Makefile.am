@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 SUBDIRS = base $(MCA_pls_STATIC_SUBDIRS)
 DIST_SUBDIRS = base $(MCA_pls_ALL_SUBDIRS)

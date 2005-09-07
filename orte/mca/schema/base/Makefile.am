@@ -14,7 +14,6 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
 
 noinst_LTLIBRARIES = libmca_schema_base.la
 

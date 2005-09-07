@@ -15,6 +15,6 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 SUBDIRS = console openmpi orted orteprobe orterun

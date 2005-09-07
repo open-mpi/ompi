@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 dist_noinst_HEADERS = \
 	orte_config.h \

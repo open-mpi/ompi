@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/test/support/Makefile.options
+
 
 TESTS_ENVIRONMENT = TEST_WRITE_TO_FILE=1
 

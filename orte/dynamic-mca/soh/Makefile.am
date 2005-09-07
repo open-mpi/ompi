@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 SUBDIRS			= $(MCA_soh_DSO_SUBDIRS)
 DISTCLEANFILES		= $(SUBDIRS)

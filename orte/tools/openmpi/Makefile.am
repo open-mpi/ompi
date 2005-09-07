@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 AM_CPPFLAGS = \
             -DOMPI_PREFIX="\"$(prefix)\"" \

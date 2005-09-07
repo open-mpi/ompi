@@ -16,7 +16,7 @@
 
 # Use the top-level Makefile.options
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 AM_CPPFLAGS = -I$(top_ompi_builddir)/include 
 AM_OBJCFLAGS = $(pls_xgrid_OBJCFLAGS)

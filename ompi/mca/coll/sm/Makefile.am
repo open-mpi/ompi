@@ -14,9 +14,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-include $(top_ompi_srcdir)/config/Makefile.options
 
 not_used_yet = \
         coll_sm_allgather.c \

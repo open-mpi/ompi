@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 if WANT_MPI_CXX_BINDINGS
 
