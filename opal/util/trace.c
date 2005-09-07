@@ -24,7 +24,7 @@ int opal_trace_handle;
 
 void opal_trace_init(void)
 {
-#if ENABLE_TRACE
+#if OPAL_ENABLE_TRACE
      opal_output_stream_t tracer;
 
    /* get a file setup for opal_output to use for the trace */
@@ -37,7 +37,7 @@ void opal_trace_init(void)
 
 void opal_trace_finalize(void)
 {
-#if ENABLE_TRACE
+#if OPAL_ENABLE_TRACE
     opal_output_close(opal_trace_handle);
 #endif
 }

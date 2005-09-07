@@ -20,11 +20,11 @@
 
 #include "ompi_config.h"
 
-#ifndef ENABLE_TRACE
-#define ENABLE_TRACE 0
+#ifndef OPAL_ENABLE_TRACE
+#define OPAL_ENABLE_TRACE 0
 #endif
 
-#if ENABLE_TRACE
+#if OPAL_ENABLE_TRACE
 
 #include "opal/util/output.h"
 
