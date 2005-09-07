@@ -28,7 +28,8 @@ headers = \
         base.h 
 
 libmca_rcache_base_la_SOURCES = \
-        $(headers) 
+    rcache_base_close.c rcache_base_init.c rcache_base_open.c \
+    $(headers) 
 
 # Conditionally install the header files
 
