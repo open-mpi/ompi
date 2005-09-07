@@ -284,7 +284,6 @@ extern "C" {
      */
     extern mca_coll_sm_component_t mca_coll_sm_component;
 
-
     /*
      * coll module functions
      */
@@ -384,5 +383,110 @@ extern "C" {
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+/**
+ * Global variables used in the macros (essentially constants, so
+ * these are thread safe)
+ */
+extern uint32_t mca_coll_sm_iov_size;
+extern int32_t mca_coll_sm_bogus_free_after;
+
+
+/**
+ * Macro to setup flag usage
+ */
+#define FLAG_SETUP(flag_num, flag, data) \
+    (flag) = (mca_coll_sm_in_use_flag_t*) \
+        (((char *) (data)->mcb_in_use_flags) + \
+        ((flag_num) * mca_coll_sm_component.sm_control_size));
+
+/**
+ * Macro to wait for the in-use flag to become idle (used by the root)
+ */
+#define FLAG_WAIT_FOR_IDLE(flag) \
+    while (0 != (flag)->mcsiuf_num_procs_using) continue;
+
+/**
+ * Macro to wait for a flag to indicate that it's ready for this
+ * operation (used by non-root processes to know when FLAG_SET() has
+ * been called)
+ */
+#define FLAG_WAIT_FOR_OP(flag, op) \
+    while ((op) != flag->mcsiuf_operation_count) continue;
+
+/**
+ * Macro to set an in-use flag with relevant data to claim it
+ */
+#define FLAG_RETAIN(flag, num_procs, op_count) \
+    (flag)->mcsiuf_num_procs_using = (num_procs); \
+    (flag)->mcsiuf_operation_count = (op_count);
+
+/**
+ * Macro to release an in-use flag from this process
+ */
+#define FLAG_RELEASE(flag) \
+    opal_atomic_add(&(flag)->mcsiuf_num_procs_using, -1);
+
+/**
+ * Macro to copy a single segment in from a user buffer to a shared
+ * segment
+ */
+#define COPY_FRAGMENT_IN(convertor, index, iov, max_data) \
+    (iov).iov_base = \
+        (index)->mcbmi_data + \
+        (rank * mca_coll_sm_component.sm_fragment_size); \
+    (max_data) = (iov).iov_len = mca_coll_sm_component.sm_fragment_size; \
+    ompi_convertor_pack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
+                        &(max_data), &mca_coll_sm_bogus_free_after);
+
+/**
+ * Macro to copy a single segment out from a shared segment to a user
+ * buffer
+ */
+#define COPY_FRAGMENT_OUT(convertor, src_rank, index, iov, max_data) \
+    (iov).iov_base = (((char*) (index)->mcbmi_data) + \
+                      ((src_rank) * mca_coll_sm_component.sm_fragment_size)); \
+    ompi_convertor_unpack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
+                          &(max_data), &mca_coll_sm_bogus_free_after);
+
+/**
+ * Macro to memcpy a fragment between one shared segment and another
+ */
+#define COPY_FRAGMENT_BETWEEN(src_rank, dest_rank, index, len) \
+    memcpy(((index)->mcbmi_data + \
+            ((dest_rank) * mca_coll_sm_component.sm_fragment_size)), \
+           ((index)->mcbmi_data + \
+            ((src_rank) * \
+             mca_coll_sm_component.sm_fragment_size)), \
+           (len));
+
+/** 
+ * Macro to tell children that a segment is ready (normalize the
+ * child's ID based on the shift used to calculate the "me" node in
+ * the tree)
+ */
+#define PARENT_NOTIFY_CHILDREN(children, num_children, index, value) \
+    for (i = 0; i < (num_children); ++i) { \
+        *((size_t*) \
+          (((char*) index->mcbmi_control) + \
+           (mca_coll_sm_component.sm_control_size * \
+            (((children)[i]->mcstn_id + root) % size)))) = (value); \
+    }
+
+/**
+ * Macro for childen to wait for parent notification (use real rank).
+ * Save the value passed and then reset it when done.
+ */
+#define CHILD_WAIT_FOR_NOTIFY(rank, index, value) \
+    while (0 == *((volatile uint32_t*) \
+                  (((char*) index->mcbmi_control) + \
+                   ((rank) * mca_coll_sm_component.sm_control_size)))) { \
+        continue; \
+    } \
+    (value) = *((volatile uint32_t*) \
+                  (((char*) index->mcbmi_control) + \
+                   ((rank) * mca_coll_sm_component.sm_control_size))); \
+    *((uint32_t*) (((char*) index->mcbmi_control) + \
+                   ((rank) * mca_coll_sm_component.sm_control_size))) = 0;
 
 #endif /* MCA_COLL_SM_EXPORT_H */

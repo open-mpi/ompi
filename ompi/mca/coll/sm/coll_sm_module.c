@@ -45,6 +45,13 @@
 
 
 /*
+ * Global variables
+ */
+uint32_t mca_coll_sm_iov_size = 1;
+int32_t mca_coll_sm_bogus_free_after = 0;
+
+
+/*
  * Local functions
  */
 static const struct mca_coll_base_module_1_0_0_t *
