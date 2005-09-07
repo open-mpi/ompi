@@ -40,14 +40,15 @@ struct mca_rcache_rb_module_t {
 typedef struct mca_rcache_rb_module_t mca_rcache_rb_module_t; 
 
 typedef mca_rcache_base_component_t mca_rcache_rb_component_t; 
-
+OMPI_COMP_EXPORT extern mca_rcache_rb_component_t mca_rcache_rb_component;
 
 
 int mca_rcache_rb_find (
                         mca_rcache_base_module_t* rcache, 
                         void* addr, 
                         size_t size, 
-                        ompi_pointer_array_t* regs
+                        ompi_pointer_array_t* regs, 
+                        uint32_t *cnt
                         );
 
 int mca_rcache_rb_insert ( 
@@ -74,5 +75,6 @@ void mca_rcache_rb_finalize(
 
 
 
-#endif /* MCA_RCACHE_H */
+#endif /* MCA_RCACHE_RB_H */
+
 

@@ -52,6 +52,12 @@ typedef struct mca_rcache_rb_tree_item_t mca_rcache_rb_tree_item_t;
 
 OBJ_CLASS_DECLARATION(mca_rcache_rb_tree_item_t);
 
+
+/*
+ * initialize the rb tree
+ */
+int mca_rcache_rb_tree_init(mca_rcache_rb_module_t* rcache); 
+
 /**
  *  Returns the item in the rb tree  
  */
@@ -75,6 +81,7 @@ int mca_rcache_rb_tree_delete(
                               mca_rcache_rb_module_t* rcache, 
                               mca_mpool_base_registration_t* reg
                               ); 
+
 
 #endif /* MCA_RCACHE_RB_TREE_H */
 

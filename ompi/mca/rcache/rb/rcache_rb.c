@@ -30,13 +30,14 @@ void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache ) {
     rcache->base.rcache_insert = mca_rcache_rb_insert; 
     rcache->base.rcache_delete = mca_rcache_rb_delete; 
     rcache->base.rcache_finalize = mca_rcache_rb_finalize; 
-    
+    mca_rcache_rb_tree_init(rcache);
 }
 int mca_rcache_rb_find (
                         struct mca_rcache_base_module_t* rcache, 
                         void* addr, 
                         size_t size, 
-                        ompi_pointer_array_t* regs
+                        ompi_pointer_array_t* regs, 
+                        uint32_t *cnt
                         ){ 
     
     int rc; 
@@ -86,6 +87,7 @@ int mca_rcache_rb_delete (
     if(OMPI_SUCCESS != rc) { 
         return rc; 
     }
+    reg->flags = 0; 
     return mca_rcache_rb_tree_delete((mca_rcache_rb_module_t*)rcache, reg );
     
 }
