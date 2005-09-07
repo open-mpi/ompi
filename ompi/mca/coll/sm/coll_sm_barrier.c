@@ -26,18 +26,26 @@
 /**
  * Shared memory barrier.
  *
- * Tree-based algorithm for a barrier -- the general scheme is a fan
- * in to rank 0 followed by a fan out using the control segments in
- * the shared memory area.  The data segments are not used.
+ * Tree-based algorithm for a barrier: a fan in to rank 0 followed by
+ * a fan out using the barrier segments in the shared memory area.
  *
- * The general algorithm is to wait for all N children to report in by
- * atomically increasing a uint32_t in my "in" control segment.  Once
- * that value equals N, I atomically increase the corresponding number
- * in my parent's "in" control segment.
+ * There are 2 sets of barrier buffers -- since there can only be, at
+ * most, 2 outstanding barriers at any time, there is no need for more
+ * than this.  The generalized in-use flags, control, and data
+ * segments are not used.
  *
- * If I have no parent and all N children have reported in, then I
- * write a 1 into each of my children's "out" control segments.  Once
- * the children see the 1, they do the same to their children.
+ * The general algorithm is for a given process to wait for its N
+ * children to fan in by monitoring a uint32_t in its barrier "in"
+ * buffer.  When this value reaches N (i.e., each of the children have
+ * atomically incremented the value), then the process atomically
+ * increases the uint32_t in its parent's "in" buffer.  Then the
+ * process waits for the parent to set a "1" in the process' "out"
+ * buffer.  Once this happens, the process writes a "1" in each of its
+ * children's "out" buffers, and returns.
+ *
+ * There's corner cases, of course, such as the root that has no
+ * parent, and the leaves that have no children.  But that's the
+ * general idea.
  */
 int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
 {
