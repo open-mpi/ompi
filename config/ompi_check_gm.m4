@@ -105,7 +105,7 @@ AC_DEFUN([_OMPI_CHECK_GM_CONFIG],[
                         [The GM build has or not a broker gm_get function] )
     unset gm_build_broken mca_gm_broken
 
-    AC_DEFINE_UNQUOTED( [OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_SUPPORT_REGISTERING], 0,
+    AC_DEFINE_UNQUOTED( [OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_SUPPORT_REGISTERING], 1,
                         [The OS support or not the virtal page registration] )
 
     CPPFLAGS="$u_OMPI_CHECK_GM_CONFIG_SAVE_CPPFLAGS"
