@@ -17,9 +17,9 @@
 
 #include "ompi_config.h"
 #include <stdbool.h>
-#include "datatype.h"
-#include "datatype/datatype_internal.h"
-#include "datatype/convertor.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/convertor.h"
 #include <time.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
