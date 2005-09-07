@@ -27,19 +27,26 @@
 /**
  * Shared memory broadcast.
  *
- * For the root, the general algorithm is to wait for the segment to
- * be available.  Once it is, it copies a fragment of the user's
- * buffer into the shared data segment and then write a 1 into its
- * childrens' "out" control buffers.  The process is repeated until
+ * For the root, the general algorithm is to wait for a set of
+ * segments to become available.  Once it is, the root claims the set
+ * by writing the current operation number and the number of processes
+ * using the set to the flag.  The root then loops over the set of
+ * segments; for each segment, it copies a fragment of the user's
+ * buffer into the shared data segment and then writes the data size
+ * into its childrens' control buffers.  The process is repeated until
  * all fragments have been written.
  *
- * For non-roots, they wait for a 1 to appear into their "out" control
- * buffers.  If they have children, they copy the data from their
- * parent's shared data segment into their shared data segment, and
- * write a 1 into each of its childrens' "out" control buffers.  They
- * then copy the data from their shared [local] data segment into the
- * user's buffer.  The process is repeated until all fragments have
- * been received.
+ * For non-roots, for each set of buffers, they wait until the current
+ * operation number appears in the in-use flag (i.e., written by the
+ * root).  Then for each segment, they wait for a nonzero to appear
+ * into their control buffers.  If they have children, they copy the
+ * data from their parent's shared data segment into their shared data
+ * segment, and write the data size into each of their childrens'
+ * control buffers.  They then copy the data from their shared [local]
+ * data segment into the user's output buffer.  The process is
+ * repeated until all fragments have been received.  If they do not
+ * have children, they copy the data directly from the parent's shared
+ * data segment into the user's output buffer.
  */
 int mca_coll_sm_bcast_intra(void *buff, int count, 
                             struct ompi_datatype_t *datatype, int root, 
