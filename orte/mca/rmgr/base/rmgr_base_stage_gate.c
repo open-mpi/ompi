@@ -27,6 +27,7 @@
 #include "orte/include/orte_types.h"
 
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
 #include "orte/dps/dps.h"
 #include "orte/mca/gpr/gpr.h"
@@ -63,6 +64,8 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     char *segment, *trig_name, *tokens[2], *trig_keys[2];
     orte_gpr_trigger_id_t id;
     size_t trig_level;
+
+    OPAL_TRACE();
 
     /* setup the counters */
     OBJ_CONSTRUCT(&value, orte_gpr_value_t);
