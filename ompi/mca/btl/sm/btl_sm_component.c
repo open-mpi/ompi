@@ -82,7 +82,7 @@ static inline char* mca_btl_sm_param_register_string(
     const char* default_value)
 {
     char *param_value;
-    int id = mca_base_param_register_string("ptl","sm",param_name,NULL,default_value);
+    int id = mca_base_param_register_string("btl","sm",param_name,NULL,default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
@@ -91,7 +91,7 @@ static inline int mca_btl_sm_param_register_int(
     const char* param_name, 
     int default_value)
 {
-    int id = mca_base_param_register_int("ptl","sm",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("btl","sm",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;

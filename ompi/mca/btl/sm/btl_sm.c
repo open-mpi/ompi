@@ -711,9 +711,12 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     int rc;
     if(size <= mca_btl_sm_component.eager_limit) {
         MCA_BTL_SM_FRAG_ALLOC1(frag,rc);
-    } else {
+    } else if (size <= mca_btl_sm_component.max_frag_size) {
         MCA_BTL_SM_FRAG_ALLOC2(frag,rc);
+    } else {
+        return NULL;
     }
+    frag->segment.seg_len = size;
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
@@ -728,7 +731,7 @@ extern int mca_btl_sm_free(
     mca_btl_base_descriptor_t* des)
 {
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
-    if(frag->size <= mca_btl_sm_component.eager_limit) {
+    if(frag->size == mca_btl_sm_component.eager_limit) {
         MCA_BTL_SM_FRAG_RETURN1(frag);
     } else {
         MCA_BTL_SM_FRAG_RETURN2(frag);
@@ -766,7 +769,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
         max_data = frag->size - reserve;
     } 
     iov.iov_len = max_data;
-    iov.iov_base = (void*)((unsigned char*)(frag+1) + reserve);
+    iov.iov_base = (void*)(((unsigned char*)(frag+1)) + reserve);
 
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
     if(rc < 0) {
