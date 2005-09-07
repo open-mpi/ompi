@@ -62,16 +62,16 @@ ompi_check_linker_flags_work() {
 # First make a sample library with the current LDFLAGS and LIBS
 #
 
-cmd="$libtool --mode=compile $CC $CFLAGS foo.c -c -o foo.o"
+cmd="$libtool --mode=compile --tag=CC $CC $CFLAGS foo.c -c -o foo.o"
 ompi_check_linker_flags_work
-cmd="$libtool --mode=link $CC $CFLAGS foo.lo $LDFLAGS $LIBS -o libfoo.la"
+cmd="$libtool --mode=link --tag=CC $CC $CFLAGS foo.lo $LDFLAGS $LIBS -o libfoo.la"
 ompi_check_linker_flags_work
 
 #
 # Now fake linking to it and capture the output from libtool
 #
 
-cmd="$libtool --dry-run --mode=link $CC bar.lo libfoo.la -o bar $extra_flags"
+cmd="$libtool --dry-run --mode=link --tag=CC $CC bar.lo libfoo.la -o bar $extra_flags"
 ompi_check_linker_flags_work yes
 
 eval "set $output"

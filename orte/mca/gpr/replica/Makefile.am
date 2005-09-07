@@ -16,7 +16,7 @@
 
 # Use the top-level Makefile.options
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 SUBDIRS = api_layer functional_layer transition_layer communications
 

@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 noinst_SCRIPTS = \
      mpi-f90-interfaces.h.sh \

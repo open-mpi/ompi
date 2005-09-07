@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 noinst_LTLIBRARIES = libmca_soh_base.la
 

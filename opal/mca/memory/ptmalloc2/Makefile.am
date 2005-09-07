@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 AM_CPPFLAGS		= -DMALLOC_DEBUG=0
 

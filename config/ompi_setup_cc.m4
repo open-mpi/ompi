@@ -15,56 +15,60 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_SETUP_CC],[
+AC_DEFUN([_OMPI_START_SETUP_CC],[
+    ompi_show_subtitle "C compiler and preprocessor" 
 
-# Modularize this setup so that sub-configure.in scripts can use this
-# same setup code.
+    # $%@#!@#% AIX!!  This has to be called before anything invokes the C
+    # compiler.
+    dnl AC_AIX
+])
 
-ompi_show_subtitle "C compiler and preprocessor" 
 
-# $%@#!@#% AIX!!  This has to be called before anything invokes the C
-# compiler.
+AC_DEFUN([_OMPI_PROG_CC],[
+    #
+    # Check for the compiler
+    #
+    ompi_cflags_save="$CFLAGS"
+    AC_PROG_CC
+    BASECC="`basename $CC`"
+    CFLAGS="$ompi_cflags_save"
+    AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
+    OMPI_CC_ABSOLUTE="`which $CC`"
+    AC_SUBST(OMPI_CC_ABSOLUTE)
+])
 
-dnl AC_AIX
 
-#
-# Check for the compiler
-#
-
-ompi_cflags_save="$CFLAGS"
-AC_PROG_CC
-OMPI_CC_ORIGINAL="$CC"
-BASECC="`basename $CC`"
-CFLAGS="$ompi_cflags_save"
-AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
-OMPI_CC_ABSOLUTE="`which $CC`"
-AC_SUBST(OMPI_CC_ABSOLUTE)
-
-# Check for compilers that impersonate gcc
-
-AC_MSG_CHECKING([for compilers that impersonate gcc])
-msg="not this one!"
-liar=
-TRULY_GCC=$GCC
-if test "$GCC" = "yes"; then
-    AC_TRY_COMPILE([], [
+AC_DEFUN([_OMPI_PROG_CC_IMPERSONATE_GCC],[
+    # Check for compilers that impersonate gcc
+    AC_CACHE_CHECK([if compiler impersonates gcc],
+                   [ompi_cv_prog_cc_impersonate_gcc],
+                   [ompi_cv_prog_cc_impersonate_gcc="no"
+                    if test "$GCC" = "yes" ; then
+                        AC_TRY_COMPILE([], [
 int i = 3;
 #if __INTEL_COMPILER
 #error Yes, I am lying about being gcc.
 #endif
-], [], [msg=intel liar=yes])
+                            ], [], [ompi_cv_prog_cc_impersonate_gcc="yes"])
+                    fi])
 
-    # If we made it through unscathed, then it really is gcc
-    if test -z "$liar"; then
-        TRULY_GCC=yes
+    if test "$GCC" = "yes" -a "$ompi_cv_prog_cc_impersonate_gcc" = "no" ; then
+        TRULY_GCC="yes"
     else
-        TRULY_GCC=no
+        TRULY_GCC="no"
     fi
-else
-    # We never thought that this was gcc to begin with
-    TRULY_GCC=no
-fi
-AC_MSG_RESULT([$msg])
+])
+
+
+AC_DEFUN([OMPI_SETUP_CC],[
+# Modularize this setup so that sub-configure.in scripts can use this
+# same setup code.
+
+    # Order is important!
+    AC_REQUIRE([_OMPI_START_SETUP_CC])
+    AC_REQUIRE([_OMPI_PROG_CC])
+    AC_REQUIRE([AM_PROG_CC_C_O])
+    AC_REQUIRE([_OMPI_PROG_CC_IMPERSONATE_GCC])
 
 # Do we want code coverage
 if test "$WANT_COVERAGE" = "1"; then 

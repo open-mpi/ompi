@@ -66,6 +66,8 @@ if ("$cur_svn_r" == "-1") then
     sed -e 's/^svn_r=.*/svn_r='$svn_r'/' VERSION > version.new
     cp version.new VERSION
     rm -f version.new
+    # need to reset the timestamp to not annoy AM dependencies
+    touch -r "$srcdir/VERSION" VERSION
     echo "*** Updated VERSION file with SVN r number"
 else
     echo "*** Did NOT updated VERSION file with SVN r number"

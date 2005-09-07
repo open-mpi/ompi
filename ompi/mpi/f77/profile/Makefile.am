@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 #
 # OMPI_PROFILING_DEFINES flag is enabled when we want our MPI_* symbols
 # to be replaced by PMPI_*. In other words, this flag decides 

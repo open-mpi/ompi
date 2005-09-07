@@ -15,6 +15,6 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/test/support/Makefile.options
+
 
 SUBDIRS = environment

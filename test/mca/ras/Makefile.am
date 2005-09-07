@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/test/support/Makefile.options
+
 
 check_PROGRAMS = \
 	test_ras

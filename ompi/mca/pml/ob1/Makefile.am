@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 ob1_sources  = \
 	pml_ob1.c \

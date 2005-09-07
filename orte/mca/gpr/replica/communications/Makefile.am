@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 noinst_LTLIBRARIES = libmca_gpr_replica_comm.la
 libmca_gpr_replica_comm_la_SOURCES = \

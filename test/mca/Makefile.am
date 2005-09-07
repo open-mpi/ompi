@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/test/support/Makefile.options
+
 
 SUBDIRS = oob schema
 DIST_SUBDIRS = gpr ns oob ras rds rmaps schema

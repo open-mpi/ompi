@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
 AM_LFLAGS = -Popal_show_help_yy

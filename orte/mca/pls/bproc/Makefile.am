@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 EXTRA_DIST = $(pkgdata_DATA)
 pkgdata_DATA = help-pls-bproc.txt

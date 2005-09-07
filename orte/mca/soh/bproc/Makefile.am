@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 headers = \
 	soh_bproc.h

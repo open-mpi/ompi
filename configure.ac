@@ -22,17 +22,44 @@
 
 # Init autoconf
 
-AC_INIT(./ompi/mpi/c/init.c)
+# We don't have the version number to put in here yet, and we can't
+# call OMPI_GET_VERSION (etc.) before AC_INIT.  So use the shell
+# version.
+
+AC_INIT([Open MPI], 
+        [m4_normalize(esyscmd([config/ompi_get_version.sh VERSION --base]))],
+        [http://www.open-mpi.org/community/help/], [openmpi])
 AC_PREREQ(2.58)
 AC_CONFIG_AUX_DIR(./config)
+AC_CONFIG_MACRO_DIR(./config)
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 OMPI_LOAD_PLATFORM
 
+#
+# Init automake
+#
+
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define])
+
+# now that we're inited, must make configure depend on the VERSION file
+AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
+
 # Get the version of OMPI that we are installing
 
 OMPI_GET_VERSION($srcdir/VERSION, OMPI)
+
+# override/fixup the version numbers set by AC_INIT, since on
+# developer builds, there's no good way to know what the version is
+# before running configure :(.  We only use the base version number
+# (ie, no svn r numbers) for the version set in AC_INIT.  This will
+# always match reality because we add the VERSION file (the only way
+# to change the major.minor.release{alpha,beta}) into the configure
+# dependencies.
+PACKAGE_VERSION="$OMPI_VERSION"
+PACKAGE_STRING="${PACKAGE_NAME} ${PACKAGE_VERSION}"
+VERSION="${PACKAGE_VERSION}"
 
 AC_SUBST(OMPI_MAJOR_VERSION)
 AC_SUBST(OMPI_MINOR_VERSION)
@@ -146,14 +173,6 @@ AC_MSG_CHECKING([OPAL Subversion repository version])
 AC_MSG_RESULT([$OPAL_SVN_R])
 
 ompi_show_subtitle "Initialization, setup"
-
-#
-# Init automake
-# The third argument to AM_INIT_AUTOMAKE surpresses the PACKAGE and
-# VERSION macors
-#
-
-AM_INIT_AUTOMAKE(openmpi, $OMPI_VERSION, 'no')
 
 #
 # GNU C and autotools are inconsistent about whether this is defined

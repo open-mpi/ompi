@@ -16,7 +16,7 @@
 
 # Use the top-level OpenMPI Makefile.options
 
-include $(top_ompi_srcdir)/config/Makefile.options
+
 
 # According to the MCA spec, we have to make the output library here
 # in the top-level directory, and it has to be named

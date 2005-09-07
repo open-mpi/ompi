@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 # The majority of stuff to build the PS/PDF files are included in a
 # separate Makefile so that they can be invoked directly at "make

@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/test/support/Makefile.options
+
 
 TESTS_ENVIRONMENT = $(SHELL) $(srcdir)/run_tests
 

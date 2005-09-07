@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+
 
 EXTRA_DIST = $(pkgdata_DATA)
 pkgdata_DATA = help-orteprobe.txt
