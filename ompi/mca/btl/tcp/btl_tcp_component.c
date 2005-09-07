@@ -208,11 +208,11 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_module.super.btl_exclusivity =
         mca_btl_tcp_param_register_int ("exclusivity", MCA_BTL_EXCLUSIVITY_LOW);
     mca_btl_tcp_module.super.btl_eager_limit = 
-        mca_btl_tcp_param_register_int ("eager_limit", 64*1024) - sizeof(mca_btl_base_header_t);
+        mca_btl_tcp_param_register_int ("eager_limit", 64*1024);
     mca_btl_tcp_module.super.btl_min_send_size =
-        mca_btl_tcp_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
+        mca_btl_tcp_param_register_int ("min_send_size", 64*1024);
     mca_btl_tcp_module.super.btl_max_send_size =
-        mca_btl_tcp_param_register_int ("max_send_size", 256*1024) - sizeof(mca_btl_base_header_t);
+        mca_btl_tcp_param_register_int ("max_send_size", 256*1024);
     mca_btl_tcp_module.super.btl_min_rdma_size = 
         mca_btl_tcp_param_register_int("min_rdma_size", 256*1024); 
     mca_btl_tcp_module.super.btl_max_rdma_size = 
@@ -481,7 +481,8 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
 
     /* initialize free lists */
     ompi_free_list_init( &mca_btl_tcp_component.tcp_frag_eager,
-                         sizeof (mca_btl_tcp_frag_eager_t) + mca_btl_tcp_module.super.btl_eager_limit,
+                         sizeof (mca_btl_tcp_frag_eager_t) + 
+                         mca_btl_tcp_module.super.btl_eager_limit,
                          OBJ_CLASS (mca_btl_tcp_frag_eager_t),
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
@@ -489,7 +490,8 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          NULL );
                                                                                                                                   
     ompi_free_list_init( &mca_btl_tcp_component.tcp_frag_max,
-                         sizeof (mca_btl_tcp_frag_max_t) + mca_btl_tcp_module.super.btl_max_send_size,
+                         sizeof (mca_btl_tcp_frag_max_t) + 
+                         mca_btl_tcp_module.super.btl_max_send_size,
                          OBJ_CLASS (mca_btl_tcp_frag_max_t),
                          mca_btl_tcp_component.tcp_free_list_num,
                          mca_btl_tcp_component.tcp_free_list_max,
