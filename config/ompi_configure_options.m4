@@ -296,14 +296,6 @@ AC_DEFINE_UNQUOTED([OMPI_WANT_PRETTY_PRINT_STACKTRACE],
                    [$WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
-# --enable-dist
-# ...?
-
-# amorphous, seem-to-be-good-idea options
-# --with-ompi=maintainer_options
-# --with-mca-*
-# ...?
-
 #
 # Do we want deprecated executable names ?
 # 
@@ -368,7 +360,6 @@ AC_SUBST(OMPI_F77_WIN_ATTR_DISP_VALUE)
 AC_SUBST(OMPI_F77_WIN_NULL_COPY_FN)
 AC_SUBST(OMPI_F77_WIN_NULL_DELETE_FN)
 AC_SUBST(OMPI_F77_WIN_DUP_FN)
-#
 
 #
 # What is the max array rank that we want to support in the f90 bindings?
@@ -413,7 +404,7 @@ AC_ARG_ENABLE([dlopen],
                     [Whether build should attempt to use dlopen (or
                      similar) to dynamically load components.
                      Disabling dlopen implies --disable-mca-dso.
-                     (default=enabled)])])
+                     (default: enabled)])])
 if test "$enable_dlopen" = "no" ; then
     enable_mca_dso="no"
     enable_mca_static="yes"
@@ -423,14 +414,16 @@ else
     OMPI_ENABLE_DLOPEN_SUPPORT=1
     AC_MSG_RESULT([yes])
 fi
-# this doesn't define anything in the makefiles or ompi_config.h.
-# Only provides a variable that the MCA and ltdl stuff keys off.
+
+#
+# Heterogeneous support
+#
 
 AC_MSG_CHECKING([if heterogeneous support should be enabled])
 AC_ARG_ENABLE([heterogeneous],
     [AC_HELP_STRING([--enable-heterogeneous],
                     [Enable features required for heterogeneous
-                     platform support (default=enabled)])])
+                     platform support (default: enabled)])])
 if test "$enable_heterogeneous" = "no" ; then
      AC_MSG_RESULT([no])
      ompi_want_heterogeneous=0
@@ -441,4 +434,22 @@ fi
 AC_DEFINE_UNQUOTED([OMPI_ENABLE_HETEROGENEOUS_SUPPORT], 
                    [$ompi_want_heterogeneous], 
                    [Enable features required for heterogeneous support])
+
+#
+# Internal trace file logging (debugging)
+#
+
+AC_MSG_CHECKING([if want trace file debugging])
+AC_ARG_ENABLE([trace],
+    [AC_HELP_STRING([--enable-trace],
+                    [Enable internal tracing of OMPI/ORTE/OPAL calls -- used only for developer debugging, not tracing of MPI applications (default: disabled)])])
+if test "$enable_trace" = "yes"; then
+    AC_MSG_RESULT([yes])
+    opal_want_trace=1
+else
+    AC_MSG_RESULT([no])
+    opal_want_trace=0
+fi
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_TRACE], [$opal_want_trace],
+                   [Enable run-time tracing of internal functions])
 ])
