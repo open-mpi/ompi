@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-#define OPAL_TRACE()
+#define OPAL_TRACE() \
     do {                                                    \
         opal_output(opal_trace_handle, "TRACE: %s @ %s:%d",   \
             __func__, __FILE__, __LINE__);                  \
