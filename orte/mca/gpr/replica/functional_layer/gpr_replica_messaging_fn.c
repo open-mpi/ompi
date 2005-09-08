@@ -148,7 +148,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
     size_t cnt;
     size_t i, j;
     bool cleanup_reqd;
-    int rc;
+    int rc=ORTE_SUCCESS;
 
     /* The data to be returned will be the same for all requestors
      * on this subscription. First, let's get the data (if it hasn't
