@@ -272,11 +272,17 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
  * MPI_OP_NULL
  * All types
  */
+#define FLAGS_NO_FLOAT \
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE)
+#define FLAGS \
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | \
+     OMPI_OP_FLAGS_FLOAT_ASSOC | OMPI_OP_FLAGS_COMMUTE)
+
 ompi_op_t ompi_mpi_op_null = {
     { NULL, 0 },
 
     "MPI_OP_NULL",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER_NULL,
       FORTRAN_INTEGER_NULL,
       FLOATING_POINT_NULL,
@@ -295,7 +301,7 @@ ompi_op_t ompi_mpi_op_max = {
     { NULL, 0 },
 
     "MPI_OP_MAX",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(max),
       FORTRAN_INTEGER(max),
       FLOATING_POINT(max),
@@ -313,7 +319,7 @@ ompi_op_t ompi_mpi_op_min = {
     { NULL, 0 },
 
     "MPI_OP_MIN",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(min),
       FORTRAN_INTEGER(min),
       FLOATING_POINT(min),
@@ -331,7 +337,7 @@ ompi_op_t ompi_mpi_op_sum = {
     { NULL, 0 },
 
     "MPI_OP_SUM",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS_NO_FLOAT,
     { C_INTEGER(sum),
       FORTRAN_INTEGER(sum),
       FLOATING_POINT(sum),
@@ -349,7 +355,7 @@ ompi_op_t ompi_mpi_op_prod = {
     { NULL, 0 },
 
     "MPI_OP_PROD",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS_NO_FLOAT,
     { C_INTEGER(prod),
       FORTRAN_INTEGER(prod),
       FLOATING_POINT(prod),
@@ -367,7 +373,7 @@ ompi_op_t ompi_mpi_op_land = {
     { NULL, 0 },
 
     "MPI_OP_LAND",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(land),
       FORTRAN_INTEGER_NULL,
       FLOATING_POINT_NULL,
@@ -385,7 +391,7 @@ ompi_op_t ompi_mpi_op_band = {
     { NULL, 0 },
 
     "MPI_OP_BAND",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(band),
       FORTRAN_INTEGER(band),
       FLOATING_POINT_NULL,
@@ -403,7 +409,7 @@ ompi_op_t ompi_mpi_op_lor = {
     { NULL, 0 },
 
     "MPI_OP_LOR",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(lor),
       FORTRAN_INTEGER_NULL,
       FLOATING_POINT_NULL,
@@ -421,7 +427,7 @@ ompi_op_t ompi_mpi_op_bor = {
     { NULL, 0 },
 
     "MPI_OP_BOR",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(bor),
       FORTRAN_INTEGER(bor),
       FLOATING_POINT_NULL,
@@ -439,7 +445,7 @@ ompi_op_t ompi_mpi_op_lxor = {
     { NULL, 0 },
 
     "MPI_OP_LXOR",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(lxor),
       FORTRAN_INTEGER_NULL,
       FLOATING_POINT_NULL,
@@ -457,7 +463,7 @@ ompi_op_t ompi_mpi_op_bxor = {
     { NULL, 0 },
 
     "MPI_OP_BXOR",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(bxor),
       FORTRAN_INTEGER(bxor),
       FLOATING_POINT_NULL,
@@ -493,7 +499,7 @@ ompi_op_t ompi_mpi_op_minloc = {
     { NULL, 0 },
 
     "MPI_OP_MINLOC",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER_NULL,
       FORTRAN_INTEGER_NULL,
       FLOATING_POINT_NULL,
@@ -510,7 +516,7 @@ ompi_op_t ompi_mpi_op_replace = {
     { NULL, 0 },
 
     "MPI_OP_REPLACE",
-    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    FLAGS,
     { C_INTEGER(replace),
       FORTRAN_INTEGER(replace),
       FLOATING_POINT(replace),

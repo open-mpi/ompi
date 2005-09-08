@@ -181,14 +181,22 @@ typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
 /*
  * Flags for MPI_Op
  */
+/** Set if the MPI_Op is a built-in operation */
 #define OMPI_OP_FLAGS_INTRINSIC    0x0001
-  /**< Set if the MPI_Op is a built-in operation */
+/** Set if the callback function is in Fortran */
 #define OMPI_OP_FLAGS_FORTRAN_FUNC 0x0002
-  /**< Set if the callback function is in Fortran */
+/** Set if the callback function is associative (MAX and SUM will both
+    have ASSOC set -- in fact, it will only *not* be set if we
+    implement some extensions to MPI, because MPI says that all
+    MPI_Op's should be associative, so this flag is really here for
+    future expansion) */
 #define OMPI_OP_FLAGS_ASSOC        0x0004
-  /**< Set if the callback function is associative */
-#define OMPI_OP_FLAGS_COMMUTE      0x0008
-  /**< Set if the callback function is communative */
+/** Set if the callback function is associative for floating point
+    operands (e.g., MPI_SUM will have ASSOC set, but will *not* have
+    FLOAT_ASSOC set)  */
+#define OMPI_OP_FLAGS_FLOAT_ASSOC  0x0008
+/** Set if the callback function is communative */
+#define OMPI_OP_FLAGS_COMMUTE      0x0010
 
 
 /**
@@ -422,6 +430,23 @@ static inline bool ompi_op_is_intrinsic(ompi_op_t *op)
 static inline bool ompi_op_is_commute(ompi_op_t *op)
 {
   return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_COMMUTE));
+}
+
+/**
+ * Check to see if an op is floating point associative or not
+ *
+ * @param op The op to check
+ *
+ * @returns true If the op is floating point associative
+ * @returns false If the op is not floating point associative
+ *
+ * Self-explanitory.  This is needed in a few top-level MPI functions;
+ * this function is provided to hide the internal structure field
+ * names.
+ */
+static inline bool ompi_op_is_float_assoc(ompi_op_t *op)
+{
+  return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_FLOAT_ASSOC));
 }
 
 
