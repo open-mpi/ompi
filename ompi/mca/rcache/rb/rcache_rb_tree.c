@@ -24,8 +24,16 @@
 
 OBJ_CLASS_INSTANCE(mca_rcache_rb_tree_item_t, opal_list_item_t, NULL, NULL); 
 
+int mca_rcache_rb_tree_node_compare(void * key1, void * key2); 
+
 int mca_rcache_rb_tree_init(mca_rcache_rb_module_t* rcache) { 
     OBJ_CONSTRUCT(&rcache->rb_tree, ompi_rb_tree_t);
+    OBJ_CONSTRUCT(&rcache->rb_tree_item_list, ompi_free_list_t);
+    ompi_free_list_init(&rcache->rb_tree_item_list, sizeof(mca_rcache_rb_tree_item_t), 
+                        OBJ_CLASS(mca_rcache_rb_tree_item_t), 0, -1, 128, NULL); 
+    
+    return ompi_rb_tree_init(&rcache->rb_tree, 
+                             mca_rcache_rb_tree_node_compare);
 }
 /**
  * Searches the rcache to see if it has allocated the memory that is passed in.
@@ -92,6 +100,7 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
  * @retval 1 if key 1 is above key2
  * @retval 0 if the keys are the same
  */
+
 int mca_rcache_rb_tree_node_compare(void * key1, void * key2)
 {
     if(((mca_rcache_rb_tree_key_t *) key1)->base <

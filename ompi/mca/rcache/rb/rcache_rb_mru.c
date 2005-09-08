@@ -25,7 +25,7 @@
 /* 
  * insert an item in the rb mru 
  */ 
-int mca_rcache_base_mru_insert(
+int mca_rcache_rb_mru_insert(
                               mca_rcache_rb_module_t* rcache, 
                               mca_mpool_base_registration_t* reg
                               ) {
@@ -46,7 +46,7 @@ int mca_rcache_base_mru_insert(
  * remove an item from 
 the rb mru 
  */
-int mca_rcache_base_mru_delete( 
+int mca_rcache_rb_mru_delete( 
                                mca_rcache_rb_module_t* rcache, 
                                mca_mpool_base_registration_t *reg
                                ){
@@ -67,7 +67,7 @@ int mca_rcache_base_mru_delete(
 /* 
  * touch an item in the mru list 
  */ 
-int mca_rcache_base_mru_touch( 
+int mca_rcache_rb_mru_touch( 
                               mca_rcache_rb_module_t* rcache, 
                               mca_mpool_base_registration_t* reg
                               ){

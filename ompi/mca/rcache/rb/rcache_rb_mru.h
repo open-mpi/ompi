@@ -41,5 +41,10 @@ int mca_rcache_rb_mru_delete(
                              mca_mpool_base_registration_t* reg
                              ); 
 
+int mca_rcache_rb_mru_touch( 
+                              mca_rcache_rb_module_t* rcache, 
+                              mca_mpool_base_registration_t* reg
+                              ); 
+
 #endif /* MCA_RCACHE_RB_MRU_H */
 

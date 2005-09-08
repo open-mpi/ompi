@@ -53,7 +53,7 @@ int mca_rcache_rb_find (
     }
     
     if( !(tree_item->reg->flags & MCA_MPOOL_FLAGS_PERSIST) ) { 
-        rc = mca_rcache_base_mru_touch(rcache, tree_item->reg); 
+        rc = mca_rcache_rb_mru_touch((mca_rcache_rb_module_t*)rcache, tree_item->reg); 
     }
     OPAL_THREAD_ADD32(&tree_item->reg->ref_count, 1); 
     return rc;
