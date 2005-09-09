@@ -187,14 +187,13 @@ struct opal_output_stream_t {
      * When opal_output_stream_t::lds_want_file is true, this field
      * indicates the string suffix to add to the filename.
      *
-     * The output file will be in the OPAL session directory and have a
-     * OPAL-generated prefix (generally "$proc_sessiondir/output-").
-     * The suffix is intended to give stream users a chance to write
-     * their output into unique files.  If this field is NULL, the
-     * suffix "output.txt" is used.
+     * The output file will be in the directory and begin with the
+     * prefix set by opal_output_set_output_file_info() (e.g.,
+     * "$dir/$prefix$suffix").  If this field is NULL and
+     * lds_want_file is true, then the suffix "output.txt" is used.
      *
-     * Note that it is possible that the process session directory does
-     * not exist when opal_output_open() is invoked.  See opal_output()
+     * Note that it is possible that the output directory may not
+     * exist when opal_output_open() is invoked.  See opal_output()
      * for details on what happens in this situation.
      */
     char *lds_file_suffix;
@@ -387,6 +386,46 @@ struct opal_output_stream_t {
      * will be used for all future invocations of opal_output_verbose().
      */
     OMPI_DECLSPEC void opal_output_set_verbosity(int output_id, int level);
+
+    /**
+     * Set characteristics for output files.
+     *
+     * @param dir Directory where output files will go
+     * @param olddir If non-NULL, the directory where output files
+     * were previously opened
+     * @param prefix Prefix of files in the output directory
+     * @param oldprefix If non-NULL, the old prefix
+     *
+     * This function controls the final filename used for all new
+     * output streams that request output files.  Specifically, when
+     * opal_output_stream_t::lds_want_file is true, the output
+     * filename will be of the form $dir/$prefix$suffix.
+     *
+     * The default value for the output directory is whatever is
+     * specified in the TMPDIR environment variable if it exists, or
+     * $HOME if it does not.  The default value for the prefix is
+     * "output-".
+     *
+     * If dir or prefix are NULL, new values are not set.  The strings
+     * represented by dir and prefix are copied into internal storage;
+     * it is safe to free() these values after
+     * opal_output_set_output_file_info() returns.
+     *
+     * If olddir or oldprefix are not NULL, copies of the old
+     * directory and prefix (respectively) are returned in these
+     * parameters.  The caller is responsible for calling (free) on
+     * these values.  This allows one to get the old values, output an
+     * output file in a specific directory and/or with a specific
+     * prefix, and then restore the old values.
+     *
+     * Note that this function only affects the creation of \em new
+     * streams -- streams that are already open are not affected
+     * (i.e., their output files are not moved to the new directory).
+     */
+    OMPI_DECLSPEC void opal_output_set_output_file_info(const char *dir,
+                                                        const char *prefix,
+                                                        char **olddir,
+                                                        char **oldprefix);
     
 #if OMPI_ENABLE_DEBUG
     /**

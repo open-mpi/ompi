@@ -279,6 +279,12 @@ int orte_init_stage1(bool infrastructure)
         free(procid_str);
     }
 
+    /* Once the session directory location has been established, set
+       the opal_output default file location to be in the
+       proc-specific session directory. */
+    opal_output_set_output_file_info(orte_process_info.proc_session_dir, NULL,
+                                     NULL, NULL);
+
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (orte_process_info.seed) {
         if (NULL != orte_universe_info.seed_uri) {
