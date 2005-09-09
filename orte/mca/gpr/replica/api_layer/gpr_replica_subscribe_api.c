@@ -25,6 +25,8 @@
 
 #include "orte_config.h"
 
+#include "opal/util/trace.h"
+
 #include "orte/dps/dps.h"
 
 #include "orte/mca/ns/ns.h"
@@ -39,6 +41,8 @@ orte_gpr_replica_subscribe(size_t num_subs,
                            orte_gpr_trigger_t **trigs)
 {
     int rc;
+
+    OPAL_TRACE(1);
 
     /* protect against errors */
     if (NULL == subscriptions && NULL == trigs) { /* need at least one */
@@ -103,6 +107,8 @@ int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number)
     size_t i, j;
     int rc;
 
+    OPAL_TRACE(1);
+
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_remove_subscription(NULL, sub_number))) {
@@ -136,6 +142,8 @@ int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig)
     orte_gpr_replica_local_trigger_t **trigs;
     size_t i, j;
     int rc;
+
+    OPAL_TRACE(1);
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 

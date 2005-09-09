@@ -26,6 +26,8 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
+#include "opal/util/trace.h"
+
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/replica/api_layer/gpr_replica_api.h"
@@ -38,6 +40,8 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     size_t i, j, k, n;
     int rc;
     bool processed;
+
+    OPAL_TRACE(1);
 
     /* we first have to check if the message is a trigger message - if so,
      * then the message is intended to be

@@ -65,7 +65,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     orte_gpr_trigger_id_t id;
     size_t trig_level;
 
-    OPAL_TRACE();
+    OPAL_TRACE(1);
 
     /* setup the counters */
     OBJ_CONSTRUCT(&value, orte_gpr_value_t);
@@ -203,6 +203,8 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
     int rc;
     orte_jobid_t job;
 
+    OPAL_TRACE(1);
+
     /* check to see if this came from terminate. If so, we ignore it because
      * that stage gate does NOT set an xcast barrier - processes simply
      * record their state and continue processing
@@ -281,6 +283,8 @@ int orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_message_t *msg)
     orte_jobid_t job;
     int rc;
 
+    OPAL_TRACE(1);
+
      /* All stage gate triggers are named, so we can extract the jobid
       * directly from the trigger name
       */
@@ -333,6 +337,8 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
         ORTE_NUM_ABORTED_TRIGGER
     };
     size_t num_counters = sizeof(keys)/sizeof(keys[0]);
+
+    OPAL_TRACE(1);
 
     /* identify the segment for this job */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {

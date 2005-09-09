@@ -29,6 +29,7 @@
 #include "include/orte_types.h"
 #include "dps/dps.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 #include "util/proc_info.h"
 
 #include "mca/ns/ns.h"
@@ -49,6 +50,8 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     int rc;
 
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+
+    OPAL_TRACE(1);
 
     /* we first have to check if the message is a trigger message - if so,
      * then the message is intended to be

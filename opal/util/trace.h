@@ -32,9 +32,9 @@
 extern "C" {
 #endif
 
-#define OPAL_TRACE() \
+#define OPAL_TRACE(verbose) \
     do {                                                    \
-        opal_output(opal_trace_handle, "TRACE: %s @ %s:%d",   \
+        opal_output_verbose(verbose, opal_trace_handle, "TRACE: %s @ %s:%d",   \
             __func__, __FILE__, __LINE__);                  \
        } while (0)
 #else
