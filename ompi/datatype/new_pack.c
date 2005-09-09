@@ -26,7 +26,7 @@
 #endif
 #include <stdlib.h>
 
-#define DO_DEBUG(INST)  /* no debug informations */
+#define DO_DEBUG(INST)  /* no debug info */
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
  * all basic functionalities, hence using them as basic blocks for all conversion functions.
@@ -140,6 +140,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     uint32_t count_desc;      /* the number of items already done in the actual pos_desc */
     uint16_t type;            /* type at current position */
     long disp_desc = 0;       /* compute displacement for truncated data */
+    size_t total_packed = 0;  /* total amount packed this time */
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
@@ -162,7 +163,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     source = source_base + disp_desc;
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        if( pConvertor->bConverted == (pData->size * pConvertor->count) )
+        if( pConvertor->flags & CONVERTOR_COMPLETED )
             break;  /* do not pack over the boundaries even if there are more iovecs */
         if( iov[iov_count].iov_base == NULL ) {
             /*
@@ -171,8 +172,8 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
             uint32_t length = iov[iov_count].iov_len;
             if( length <= 0 )
                 length = pConvertor->count * pData->size - pConvertor->bConverted;
-            if( (*max_data) < length )
-                length = *max_data;
+            if( ((*max_data) - total_packed) < length )
+                length = (*max_data) - total_packed;
             iov[iov_count].iov_len = length;
             iov[iov_count].iov_base = pConvertor->memAlloc_fn( &(iov[iov_count].iov_len),
                                                                pConvertor->memAlloc_userdata );
@@ -241,9 +242,11 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
         }
     complete_loop:
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
+        total_packed += iov[iov_count].iov_len;
         pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
         assert( iov_len_local >= 0 );
     }
+    *max_data = total_packed;
     if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
