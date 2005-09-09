@@ -39,7 +39,7 @@ extern "C" {
        } while (0)
 #else
 
-#define OPAL_TRACE()
+#define OPAL_TRACE(verbose)
 
 #endif /* ENABLE_TRACE */
 
