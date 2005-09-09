@@ -44,7 +44,7 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
 {
     orte_gpr_notify_data_t **data;
     orte_gpr_proxy_subscriber_t **subs, *sub;
-    orte_gpr_proxy_trigger_t *trig, **trigs;
+    orte_gpr_proxy_trigger_t **trigs;
     size_t i, j, k, n;
     int rc;
 
