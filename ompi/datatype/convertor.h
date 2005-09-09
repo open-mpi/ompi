@@ -47,6 +47,7 @@ struct ompi_datatype_t;
 #define CONVERTOR_STATE_START      0x01000000
 #define CONVERTOR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
+#define CONVERTOR_COMPLETED        0x08000000
 
 typedef int32_t (*conversion_fct_t)( uint32_t count,
                                      const void* from, uint32_t from_len, long from_extent,
