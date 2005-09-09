@@ -27,4 +27,5 @@ noinst_HEADERS = \
         io_adio_conv.h \
         mpio_error.h \
         mpipr.h \
-        mpisgi2.h
+        mpisgi2.h \
+        romioconf-undefs.h
