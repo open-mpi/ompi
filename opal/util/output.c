@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
@@ -32,6 +31,7 @@
 #include <sys/param.h>
 #endif
 
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
 #include "ompi/include/constants.h"
@@ -41,6 +41,8 @@
  */
 static int verbose_stream = -1;
 static opal_output_stream_t verbose;
+static char *output_dir = NULL;
+static char *output_prefix = NULL;
 
 
 /*
@@ -107,6 +109,7 @@ OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, NULL);
 bool opal_output_init(void)
 {
     int i;
+    char *str;
 
     if (initialized) {
 	return true;
@@ -131,6 +134,17 @@ bool opal_output_init(void)
 
     OBJ_CONSTRUCT(&mutex, opal_mutex_t);
     initialized = true;
+
+    /* Set some defaults */
+
+    output_prefix = strdup("output-");
+    if (NULL != (str = getenv("TMPDIR"))) {
+        output_dir = strdup(str);
+    } else if (NULL != (str = getenv("HOME"))) {
+        output_dir = strdup(str);
+    } else {
+        output_dir = strdup(".");
+    }
 
     /* Open the default verbose stream */
 
@@ -307,6 +321,32 @@ void opal_output_set_verbosity(int output_id, int level)
 
 
 /*
+ * Control where output flies will go
+ */
+void opal_output_set_output_file_info(const char *dir,
+                                      const char *prefix,
+                                      char **olddir,
+                                      char **oldprefix)
+{
+    if (NULL != olddir) {
+        *olddir = strdup(output_dir);
+    }
+    if (NULL != oldprefix) {
+        *oldprefix = strdup(output_prefix);
+    }
+
+    if (NULL != dir) {
+        free(output_dir);
+        output_dir = strdup(dir);
+    }
+    if (NULL != prefix) {
+        free(output_prefix);
+        output_prefix = strdup(prefix);
+    }
+}
+
+
+/*
  * Shut down the output stream system
  */
 void opal_output_finalize(void)
@@ -448,19 +488,20 @@ static int do_open(int output_id, opal_output_stream_t * lds)
 static int open_file(int i)
 {
     int flags;
-    char *dir, *filename;
+    char *filename;
 
     /* Setup the filename and open flags */
 
-    /* BWB - fix me! - used to look at orte_process_info */
-    dir = NULL;
-    if (NULL != dir) {
+    if (NULL != output_dir) {
 	filename = (char *) malloc(MAXPATHLEN);
 	if (NULL == filename) {
 	    return OMPI_ERR_OUT_OF_RESOURCE;
 	}
-	strcpy(filename, dir);
-	strcat(filename, "/output-");
+	strcpy(filename, output_dir);
+	strcat(filename, "/");
+        if (NULL != output_prefix) {
+            strcat(filename, output_prefix);
+        }
 	if (info[i].ldi_file_suffix != NULL) {
 	    strcat(filename, info[i].ldi_file_suffix);
 	} else {
