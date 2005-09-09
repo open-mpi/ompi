@@ -175,39 +175,40 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 
 #elif OMPI_F77_SINGLE_UNDERSCORE
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom)
+   (addr == (void*) &mpi_fortran_bottom_)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place)
+   (addr == (void*) &mpi_fortran_in_place_)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null)
+   (addr == (void*) &mpi_fortran_argv_null_)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null)
+   (addr == (void*) &mpi_fortran_argvs_null_)
 #define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore)
+   (addr == (void*) &mpi_fortran_errcodes_ignore_)
 #define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore)
+   (addr == (void*) &mpi_fortran_status_ignore_)
 #define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore)
+   (addr == (void*) &mpi_fortran_statuses_ignore_)
 
 #else
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom)
+   (addr == (void*) &mpi_fortran_bottom__)
 #define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place)
+   (addr == (void*) &mpi_fortran_in_place__)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null)
+   (addr == (void*) &mpi_fortran_argv_null__)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null)
+   (addr == (void*) &mpi_fortran_argvs_null__)
 #define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore)
+   (addr == (void*) &mpi_fortran_errcodes_ignore__)
 #define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore)
+   (addr == (void*) &mpi_fortran_status_ignore__)
 #define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore)
+   (addr == (void*) &mpi_fortran_statuses_ignore__)
 
 #endif /* weak / specific symbol type */
 
 /* Convert between Fortran and C MPI_BOTTOM */
 #define OMPI_ADDR(addr)  (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
+#define OMPI_IN_PLACE(addr)  (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
 
 #endif /* OMPI_F77_CONSTANTS_H */
