@@ -26,7 +26,9 @@
 #endif
 #include <stdlib.h>
 
-#define DO_DEBUG(INST)  /* output disabled */
+static int ompi_new_pack_debug = 0;
+
+#define DO_DEBUG(INST)  if( ompi_new_pack_debug ) { INST }
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
  * all basic functionalities, hence using them as basic blocks for all conversion functions.
@@ -46,68 +48,82 @@
                                   SOURCE,       /* the source pointer (char*) */ \
                                   DESTINATION,  /* the destination pointer (char*) */ \
                                   SPACE )       /* the space in the destination buffer */ \
-     do {                             \
-         uint32_t _copy_count = (COUNT), _copy_blength;                 \
-                                                                        \
-         if( (_copy_count * ompi_ddt_basicDatatypes[(TYPE)]->size) > (SPACE) ) \
-             _copy_count = (SPACE) / ompi_ddt_basicDatatypes[type]->size; \
-         _copy_blength = _copy_count * ompi_ddt_basicDatatypes[type]->size; \
-         if( 0 == _copy_count ) break;  /* nothing to do */             \
-                                                                        \
-         if( ompi_ddt_basicDatatypes[type]->size == (uint32_t)(EXTENT) ) { \
-             /* the extent and the size of the basic datatype are equals */ \
-             OMPI_DDT_SAFEGUARD_POINTER( (SOURCE), _copy_blength, (CONVERTOR)->pBaseBuf, \
-                                         (CONVERTOR)->pDesc, (CONVERTOR)->count ); \
-             DO_DEBUG( opal_output( 0, "1. memcpy( %p, %p, %ld )\n",    \
-                                    (DESTINATION), (SOURCE),            \
-                                    _copy_blength ); );                 \
-             MEMCPY( (DESTINATION), (SOURCE), _copy_blength );          \
-             (SOURCE) += _copy_blength;                                 \
-             (DESTINATION) += _copy_blength;                            \
-         } else {                                                       \
-             uint32_t _i;                                               \
-             for( _i = 0; _i < _copy_count; _i++ ) {                    \
-                 OMPI_DDT_SAFEGUARD_POINTER( (SOURCE), _copy_blength, (CONVERTOR)->pBaseBuf, \
-                                             (CONVERTOR)->pDesc, (CONVERTOR)->count ); \
-                 DO_DEBUG( opal_output( 0, "2. memcpy( %p, %p, %ld )\n", \
-                                        (DESTINATION), (SOURCE), _copy_blength ); ); \
-                 MEMCPY( (DESTINATION), (SOURCE), ompi_ddt_basicDatatypes[type]->size ); \
-                 (DESTINATION) += ompi_ddt_basicDatatypes[type]->size;  \
-                 (SOURCE) += (EXTENT);                                  \
-             }                                                          \
-         }                                                              \
-         (SPACE) -= _copy_blength;                                      \
-         (COUNT) -= _copy_count;                                        \
-     } while (0)
+pack_predefined_data( (CONVERTOR), (TYPE), &(COUNT), (EXTENT), &(SOURCE), &(DESTINATION), &(SPACE) )
 
-#define PACK_CONTIGUOUS_LOOP( CONVERTOR,    /*   */ \
-                              ELEM,         /*   */ \
-                              COUNT,        /*   */ \
-                              SOURCE,       /*   */ \
-                              DESTINATION,  /*   */ \
-                              SPACE )       /*   */ \
-    do {                                                                \
-        ddt_loop_desc_t *loop = (ddt_loop_desc_t*)(ELEM);               \
-        ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)((ELEM) + (ELEM)->loop.items); \
-        size_t _copy_loops = (COUNT);                                   \
-        uint32_t _i;                                                    \
-                                                                        \
-        if( (_copy_loops * end_loop->size) > (SPACE) )                  \
-            _copy_loops = (SPACE) / end_loop->size;                     \
-        for( _i = 0; _i < _copy_loops; _i++ ) {                         \
-            OMPI_DDT_SAFEGUARD_POINTER( (SOURCE),                       \
-                                        end_loop->size, (CONVERTOR)->pBaseBuf, \
-                                        (CONVERTOR)->pDesc, (CONVERTOR)->count ); \
-            DO_DEBUG( opal_output( 0, "3. memcpy( %p, %p, %ld )\n",     \
-                                   (DESTINATION), (SOURCE),             \
-                                   end_loop->size ); );                 \
-            MEMCPY( (DESTINATION), (SOURCE), end_loop->size );          \
-            (DESTINATION) += end_loop->size;                            \
-            (SOURCE) += loop->extent;                                   \
-        }                                                               \
-        (SPACE) -= _copy_loops * end_loop->size;                        \
-        (COUNT) -= _copy_loops;                                         \
-    } while (0)
+static inline void pack_predefined_data( ompi_convertor_t* CONVERTOR,
+                                         uint16_t TYPE,
+                                         uint32_t* COUNT,
+                                         long EXTENT,
+                                         char** SOURCE,
+                                         char** DESTINATION,
+                                         uint32_t* SPACE )
+{
+    uint32_t _copy_count = *(COUNT), _copy_blength;
+
+    if( (_copy_count * ompi_ddt_basicDatatypes[(TYPE)]->size) > *(SPACE) ) {
+        _copy_count = *(SPACE) / ompi_ddt_basicDatatypes[(TYPE)]->size;
+        if( 0 == _copy_count ) return;  /* nothing to do */
+    }
+    _copy_blength = _copy_count * ompi_ddt_basicDatatypes[(TYPE)]->size;
+
+    if( ompi_ddt_basicDatatypes[(TYPE)]->size == (uint32_t)(EXTENT) ) {
+        /* the extent and the size of the basic datatype are equals */
+        OMPI_DDT_SAFEGUARD_POINTER( *(SOURCE), _copy_blength, (CONVERTOR)->pBaseBuf,
+                                    (CONVERTOR)->pDesc, (CONVERTOR)->count );
+        DO_DEBUG( opal_output( 0, "1. memcpy( %p, %p, %ld ) => space %d\n",
+                               *(DESTINATION), *(SOURCE),
+                               _copy_blength, *(SPACE) ); );
+        MEMCPY( *(DESTINATION), *(SOURCE), _copy_blength );
+        *(SOURCE) += _copy_blength;
+        *(DESTINATION) += _copy_blength;
+    } else {
+        uint32_t _i;
+        for( _i = 0; _i < _copy_count; _i++ ) {
+            OMPI_DDT_SAFEGUARD_POINTER( *(SOURCE), _copy_blength, (CONVERTOR)->pBaseBuf,
+                                        (CONVERTOR)->pDesc, (CONVERTOR)->count );
+            DO_DEBUG( opal_output( 0, "2. memcpy( %p, %p, %ld ) => space %d\n",
+                                   *(DESTINATION), *(SOURCE), _copy_blength,
+                                   *(SPACE) - (_i * ompi_ddt_basicDatatypes[(TYPE)]->size) ); );
+            MEMCPY( *(DESTINATION), *(SOURCE), ompi_ddt_basicDatatypes[(TYPE)]->size );
+            *(DESTINATION) += ompi_ddt_basicDatatypes[(TYPE)]->size;
+            *(SOURCE) += (EXTENT);
+        }
+    }
+    *(SPACE) -= _copy_blength;
+    *(COUNT) -= _copy_count;
+}
+
+static inline void pack_contiguous_loop( ompi_convertor_t* CONVERTOR,
+                                         dt_elem_desc_t* ELEM,
+                                         uint32_t* COUNT,
+                                         char** SOURCE,
+                                         char** DESTINATION,
+                                         uint32_t* SPACE )
+{
+    ddt_loop_desc_t *loop = (ddt_loop_desc_t*)(ELEM);
+    ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)((ELEM) + (ELEM)->loop.items);
+    size_t _copy_loops = *(COUNT);
+    uint32_t _i;
+
+    if( (_copy_loops * end_loop->size) > *(SPACE) )
+        _copy_loops = *(SPACE) / end_loop->size;
+    for( _i = 0; _i < _copy_loops; _i++ ) {
+        OMPI_DDT_SAFEGUARD_POINTER( *(SOURCE),
+                                    end_loop->size, (CONVERTOR)->pBaseBuf,
+                                    (CONVERTOR)->pDesc, (CONVERTOR)->count );
+        DO_DEBUG( opal_output( 0, "3. memcpy( %p, %p, %ld )\n",
+                               *(DESTINATION), *(SOURCE),
+                               end_loop->size ); );
+        MEMCPY( *(DESTINATION), *(SOURCE), end_loop->size );
+        *(DESTINATION) += end_loop->size;
+        *(SOURCE) += loop->extent;
+    }
+    *(SPACE) -= _copy_loops * end_loop->size;
+    *(COUNT) -= _copy_loops;
+}
+
+#define PACK_CONTIGUOUS_LOOP( CONVERTOR, ELEM, COUNT, SOURCE, DESTINATION, SPACE ) \
+    pack_contiguous_loop( (CONVERTOR), (ELEM), &(COUNT), &(SOURCE), &(DESTINATION), &(SPACE) )
 
 #define UPDATE_INTERNAL_COUNTERS( DESCRIPTION, POSITION, ELEMENT, COUNTER, DISPLACEMENT ) \
     do {                                                                \
@@ -168,9 +184,13 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
         iov_len_local = iov[iov_count].iov_len;
         while( 1 ) {
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
+                DO_DEBUG( opal_output( 0, "end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
-                    if( pConvertor->stack_pos == 0 )
+                    if( pConvertor->stack_pos == 0 ) {
+                        pConvertor->flags |= CONVERTOR_COMPLETED;
                         goto complete_loop;  /* completed */
+                    }
                     pConvertor->stack_pos--;
                     pStack--;
                     pos_desc++;
@@ -185,6 +205,8 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
                 }
                 source_base = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc, disp_desc );
+                DO_DEBUG( opal_output( 0, "new_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc, disp_desc, iov_len_local ); );
             }
             if( DT_LOOP == pElem->elem.common.type ) {
                 if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
@@ -208,7 +230,6 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
             }
             while( pElem->elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
-                if( 0 == iov_len_local ) goto complete_loop;
                 type = pElem->elem.common.type;
                 source = source_base + disp_desc;
                 PACK_PREDEFINED_DATATYPE( pConvertor, type, count_desc, pElem->elem.extent,
@@ -225,10 +246,12 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
         pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
         assert( iov_len_local >= 0 );
     }
-    if( pConvertor->bConverted != (pData->size * pConvertor->count) ) {
+    if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
                     source - source_base, pos_desc );
+        DO_DEBUG( opal_output( 0, "save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+                               pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
         return 0;
     }
     return 1;
