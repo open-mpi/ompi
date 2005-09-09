@@ -17,15 +17,19 @@
 
 #include "ompi_config.h"
 #include <stdbool.h>
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_internal.h"
-#include "ompi/datatype/convertor.h"
+#include "datatype/datatype.h"
+#include "datatype/datatype_internal.h"
+#include "datatype/convertor.h"
 #include <time.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include <time.h>
+
+/* Compile with:
+mpicc -DHAVE_CONFIG_H -I. -I../../include -I../../../ompi-trunk/include  -I../.. -I../../include -I../../../ompi-trunk/opal -I../../../ompi-trunk/orte -I../../../ompi-trunk/ompi -g ddt_test.c -o ddt_test
+*/
 
 #define TIMER_DATA_TYPE struct timeval
 #define GET_TIME(TV)   gettimeofday( &(TV), NULL )
