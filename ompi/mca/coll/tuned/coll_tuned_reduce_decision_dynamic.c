@@ -22,7 +22,7 @@
 #include "communicator/communicator.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
-#include "coll_tuned.h"
+#include "op/op.h"
 #include "mca/pml/pml.h"
 #include "opal/util/bit_ops.h"
 
@@ -37,7 +37,7 @@
  *	Returns:	- MPI_SUCCESS or error code (passed from the reduce implementation)
  *                                        
  */
-int mca_coll_tuned_reduce_intra( void *sendbuf, void *recvbuf,
+int mca_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
                                           int count, ompi_datatype_t* datatype,
                                           ompi_op_t* op, int root,
                                           ompi_communicator_t* comm)
