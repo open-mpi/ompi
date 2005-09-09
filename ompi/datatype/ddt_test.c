@@ -880,7 +880,7 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 int main( int argc, char* argv[] )
 {
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
-    int rc, length = 500, check_pack_unpack = 0;
+    int rc, length = 500;
 
     ompi_ddt_init();
 
