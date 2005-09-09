@@ -137,7 +137,7 @@ bool opal_output_init(void)
 
     /* Set some defaults */
 
-    output_prefix = strdup("output-");
+    asprintf(&output_prefix, "output-pid%d-", getpid());
     if (NULL != (str = getenv("TMPDIR"))) {
         output_dir = strdup(str);
     } else if (NULL != (str = getenv("HOME"))) {
