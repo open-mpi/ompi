@@ -26,9 +26,7 @@
 #endif
 #include <stdlib.h>
 
-static int ompi_new_pack_debug = 0;
-
-#define DO_DEBUG(INST)  if( ompi_new_pack_debug ) { INST }
+#define DO_DEBUG(INST)  /* no debug informations */
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
  * all basic functionalities, hence using them as basic blocks for all conversion functions.
