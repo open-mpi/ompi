@@ -53,9 +53,9 @@ int mca_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    err = mca_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, (0));
 /*     err = mca_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, (8192)); */
-/*     err = mca_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, (8192), 4); */
+/*     err = mca_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, (8192)); */
+    err = mca_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, (8192), 3);
 
     return err;
 }
