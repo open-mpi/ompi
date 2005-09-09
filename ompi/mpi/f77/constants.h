@@ -87,6 +87,8 @@ OMPI_DECLSPEC extern ompi_fortran_common_t double_u
 
 DECL(MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
      mpi_fortran_bottom_, mpi_fortran_bottom__);
+DECL(MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
+     mpi_fortran_in_place_, mpi_fortran_in_place__);
 DECL(MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
 DECL(MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
@@ -108,6 +110,11 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
    addr == (void*) &mpi_fortran_bottom || \
    addr == (void*) &mpi_fortran_bottom_ || \
    addr == (void*) &mpi_fortran_bottom__)
+#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
+  (addr == (void*) &MPI_FORTRAN_IN_PLACE || \
+   addr == (void*) &mpi_fortran_in_place || \
+   addr == (void*) &mpi_fortran_in_place_ || \
+   addr == (void*) &mpi_fortran_in_place__)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
   (addr == (void*) &MPI_FORTRAN_ARGV_NULL || \
    addr == (void*) &mpi_fortran_argv_null || \
@@ -137,6 +144,8 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #elif OMPI_F77_CAPS
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
   (addr == (void*) &MPI_FORTRAN_BOTTOM)
+#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
+  (addr == (void*) &MPI_FORTRAN_IN_PLACE)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
   (addr == (void*) &MPI_FORTRAN_ARGV_NULL)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
@@ -151,6 +160,8 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #elif OMPI_F77_PLAIN
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
    (addr == (void*) &mpi_fortran_bottom)
+#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
+   (addr == (void*) &mpi_fortran_in_place)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
    (addr == (void*) &mpi_fortran_argv_null)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
@@ -165,6 +176,8 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #elif OMPI_F77_SINGLE_UNDERSCORE
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
    (addr == (void*) &mpi_fortran_bottom)
+#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
+   (addr == (void*) &mpi_fortran_in_place)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
    (addr == (void*) &mpi_fortran_argv_null)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
@@ -179,6 +192,8 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
 #else
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
    (addr == (void*) &mpi_fortran_bottom)
+#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
+   (addr == (void*) &mpi_fortran_in_place)
 #define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
    (addr == (void*) &mpi_fortran_argv_null)
 #define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \

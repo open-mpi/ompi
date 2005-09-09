@@ -27,6 +27,8 @@ ompi_fortran_common_t double_u
 
 INST(MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
      mpi_fortran_bottom_, mpi_fortran_bottom__);
+INST(MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
+     mpi_fortran_in_place_, mpi_fortran_in_place__);
 INST(MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
 INST(MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
