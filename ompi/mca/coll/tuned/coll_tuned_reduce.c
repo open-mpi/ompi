@@ -27,10 +27,43 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 
+#include <sys/types.h>
+#include <unistd.h>
+
+/* temp debug routines */
+static int dump_buf_int (char* ptr, int count, char *comment, int rank);
+
+static int dump_buf_int (char* ptr, int count, char *comment, int rank) {
+int i=0;
+int *tptr;
+int c=0;
+tptr=(int*)ptr;
+printf("%1d ", rank);
+if (comment) printf("%s ", comment);
+if (count <0) {
+    printf("cnt %d?\n", count);
+    return (0);
+}
+
+if (count>5) c = 5;
+else c = count;
+printf("Cnt %1d  ", count);
+for(i=0;i<c;i++) {
+    printf("%1d [%1d] ", i, *tptr++);
+    }
+if (c!=count) {
+    tptr=(int*)ptr;
+    printf(" ... %1d [%1d]", count-1, tptr[count-1]);
+}
+printf("\n");
+return (0);
+}
+
 /* Attention: this version of the reduce operations does not
    work for:
    - non-commutative operations
    - segment sizes which are not multiplies of the extent of the datatype
+     meaning that at least one datatype must fit in the segment !
 */
 
 int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
@@ -42,11 +75,13 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     int recvcount, sendcount, prevcount, inbi, previnbi;
     int segcount, segindex, num_segments, realsegsize;
     char *inbuf[2] = {NULL, NULL};
-    char *recvtmpbuf = NULL;
+    char *accumbuf = NULL;
+    char *sendtmpbuf = NULL;
     long ext, lb;
     int  typelng;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
+
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -88,25 +123,47 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     }
     realsegsize = segcount * ext;
 
+/*     printf("rank %d root %d count %d \t\t segsize %d typesize %d typeext %d realsegsize %d segcount %d num_segments %d\n", */
+/*             rank, root, count, segsize, typelng, ext, realsegsize, segcount, num_segments); */
+
+/*     ompi_coll_tuned_topo_dump_chain (chain, rank); */
+
+    /* ----------------------------------------------------------------- */
+    /* MPI_IN_PLACE is not yet supported by ompi.. ?!.. */
+    /* set the char * buffer pointers */
+
+
+#if 0
+    if (sendbuf != MPI_IN_PLACE) { 
+        sendtmpbuf = (char*) sendbuf; 
+    }
+    else { 
+        sendtmpbuf = (char *) recvbuf; 
+    }
+    accumbuf = (char *) recvbuf;
+
+    /* handle special case when size == 1 */
+    if (size == 1) {
+       if (sendbuf != MPI_IN_PLACE) {
+          ompi_ddt_copy_content_same_ddt( datatype, count, recvbuf, sendbuf );
+       }
+       return MPI_SUCCESS;
+    }
     /* ----------------------------------------------------------------- */
     /* MPI_IN_PLACE is not yet supported by ompi.. ?!.. */
 
-#if 0
-    /* copy sendbuf to recvbuf if sendbuf is not MPI_IN_PLACE */
-    if (sendbuf != MPI_IN_PLACE) {
-        /* copy data from sendbuf into receive buf */
+#else 
+    /* while MPI_IN_PLACE is not available */
+    if (1 == size) {
         ompi_ddt_copy_content_same_ddt( datatype, count, recvbuf, sendbuf );
+        return (OMPI_SUCCESS);
+    }
+    else {
+        accumbuf = (char *) recvbuf;
+        sendtmpbuf = (char *) sendbuf;
     }
 #endif
     /* ----------------------------------------------------------------- */
-
-    /* if size == 1 we are done*/
-    if (size == 1) {
-        return OMPI_SUCCESS;
-    }
-
-    /* size > 1 */
-    recvtmpbuf = (char*)recvbuf;
 
     /* non-leaf nodes -
        wait for children to send me data & forward up (if needed) */
@@ -140,11 +197,26 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                 */
                 /* post irecv for current segindex on current child */
                 if (segindex < num_segments) {
+
+                    if (0==i) { /* for the first step (1st child per segment) */
+                                /* we irecv directly into the accumulate buffer so that we */
+                                /* can reduce this with our sendbuf in one step */
+                                /* as op_reduce only has two buffer pointers, this avoids */
+                                /* an extra memory copy GEF */
+                    ret = MCA_PML_CALL(irecv(accumbuf+segindex*realsegsize,recvcount,datatype,
+                                             chain->chain_next[i],
+                                             MCA_COLL_BASE_TAG_REDUCE,
+                                             comm, &reqs[inbi]));
+                    if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                    }
+                    else {  /* perform a irecv into the standard inbuf */
                     ret = MCA_PML_CALL(irecv(inbuf[inbi],recvcount,datatype,
                                              chain->chain_next[i],
                                              MCA_COLL_BASE_TAG_REDUCE,
                                              comm, &reqs[inbi]));
                     if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                    }
+
                 }
                 /* wait for previous req to complete, if any */
                 previnbi = (inbi+1)%2;
@@ -153,23 +225,37 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                     ret = ompi_request_wait_all( 1, &reqs[previnbi], MPI_STATUSES_IGNORE );
                     if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                     /* apply operation */
-                    ompi_op_reduce(op, inbuf[previnbi], recvtmpbuf+segindex*realsegsize,
-                                   recvcount, datatype );
+                    if (1==i) {
+                        /* our first operation is to combine our own [sendbuf] data with the data we recvd from down stream */
+                        ompi_op_reduce(op, sendtmpbuf+segindex*realsegsize, accumbuf+segindex*realsegsize, recvcount, datatype );
+                    }
+                    else { /* not the first child, we can accumulate straight into accumbuf normally from the inbuf buffers */
+                        ompi_op_reduce(op, inbuf[previnbi], accumbuf+segindex*realsegsize, recvcount, datatype );
+                    } /* if i>0 (if not first step) */
                 } else if (i == 0 && segindex > 0) {
                     /* wait on data from last child for previous segment */
                     ret = ompi_request_wait_all( 1, &reqs[previnbi], MPI_STATUSES_IGNORE );
                     if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
-                    /* apply operation */
-                    ompi_op_reduce(op, inbuf[previnbi], recvtmpbuf+(segindex-1)*realsegsize,
-                                   prevcount, datatype );
 
+                    if (chain->chain_nextsize>1) { /* if I have more than one child */
+                        /* I reduce the data in the the inbuf and the accumbuf */
+                        /* as the accumbuf already contains some accumulated results */
+                        ompi_op_reduce(op, inbuf[previnbi], accumbuf+(segindex-1)*realsegsize, prevcount, datatype );
+                    } 
+                    else {  /* I have only one child, so I must combine my data (sendbuf) with the accumulated data in accumbuf */
+                        ompi_op_reduce(op, sendtmpbuf+(segindex-1)*realsegsize, accumbuf+(segindex-1)*realsegsize, prevcount, datatype );
+                    }
+
+                    /* all reduced on available data this step (i) complete, pass to the next process unless your the root */
                     if (rank != root) {
-                        /* send combined data to parent */
-                        ret = MCA_PML_CALL( send(recvtmpbuf+(segindex-1)*realsegsize,
+                        /* send combined/accumulated data to parent */
+                        ret = MCA_PML_CALL( send(accumbuf+(segindex-1)*realsegsize,
                                                  prevcount,datatype, chain->chain_prev,
                                                  MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm) );
                         if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                     }
+
+                    /* we stop when segindex = number of segments (i.e. we do num_segment+1 steps to allow for pipelining */
                     if (segindex == num_segments) break;
                 }
 
@@ -191,7 +277,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         for (segindex = 0; segindex < num_segments; segindex++) {
             if (segindex < num_segments-1) sendcount = segcount;
             else sendcount = count - segindex*segcount;
-            ret = MCA_PML_CALL( send(recvtmpbuf+segindex*realsegsize, sendcount,
+            ret = MCA_PML_CALL( send(sendbuf+segindex*realsegsize, sendcount,
                                      datatype, chain->chain_prev,
                                      MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm) );
             if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
@@ -221,3 +307,4 @@ int mca_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                               datatype, op, root, comm,
                                               segsize, 1 );
 }
+

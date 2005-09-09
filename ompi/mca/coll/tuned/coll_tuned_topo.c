@@ -416,3 +416,29 @@ int ompi_coll_tuned_topo_destroy_chain( ompi_coll_chain_t** chain )
 
     return OMPI_SUCCESS;
 }
+
+
+int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank)
+{
+int i;
+printf("%1d tree root %d fanout %d BM %1d nextsize %d prev %d\n", rank, 
+        tree->tree_root, tree->tree_bmtree, tree->tree_fanout, tree->tree_nextsize, tree->tree_prev );
+if (tree->tree_nextsize) {
+    for (i=0;i<tree->tree_nextsize;i++) printf("[%1d] %d ", i, tree->tree_next[i]);
+}
+printf("\n");
+return (0);
+}
+
+int ompi_coll_tuned_topo_dump_chain (ompi_coll_chain_t* chain, int rank)
+{
+int i;
+printf("%1d chain root %d fanout %d nextsize %d prev %d\n", rank, 
+        chain->chain_root, chain->chain_numchain, chain->chain_nextsize, chain->chain_prev );
+if (chain->chain_nextsize) {
+    for (i=0;i<chain->chain_nextsize;i++) printf("[%1d] %d ", i, chain->chain_next[i]);
+}
+printf("\n");
+return (0);
+}
+
