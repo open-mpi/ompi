@@ -419,8 +419,12 @@ struct opal_output_stream_t {
      * prefix, and then restore the old values.
      *
      * Note that this function only affects the creation of \em new
-     * streams -- streams that are already open are not affected
-     * (i.e., their output files are not moved to the new directory).
+     * streams -- streams that have already started writing to output
+     * files are not affected (i.e., their output files are not moved
+     * to the new directory).  More specifically, the opal_output
+     * system only opens/creates output files lazily -- so calling
+     * this function affects both new streams \em and any stream that
+     * was previously opened but had not yet output anything.
      */
     OMPI_DECLSPEC void opal_output_set_output_file_info(const char *dir,
                                                         const char *prefix,
