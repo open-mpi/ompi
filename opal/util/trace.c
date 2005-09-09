@@ -17,6 +17,8 @@
 
 #include "ompi_config.h"
 #include "opal/util/output.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 
 #include "opal/util/trace.h"
 
@@ -31,13 +33,31 @@ static opal_output_stream_t tracer;
 void opal_trace_init(void)
 {
 #if OPAL_ENABLE_TRACE
+    int param, value;
 
-     /* get a file setup for opal_output to use for the trace */
-     OBJ_CONSTRUCT(&tracer, opal_output_stream_t);
-     tracer.lds_file_suffix = "trace";
-     tracer.lds_want_file = true;
+    param = mca_base_param_reg_int_name("trace", "verbose",
+                                        "Verbosity level for opal trace system",
+                                        false, false, 0, &value);
 
-     opal_trace_handle = opal_output_open(&tracer);
+    OBJ_CONSTRUCT(&tracer, opal_output_stream_t);
+
+    /* if the value is < 0, then we want the output to go to the screen */
+    if (0 > value) {
+        tracer.lds_want_file = false;
+        tracer.lds_want_stderr = true;
+        value = -1 * value;
+    } else if (0 == value) { /* don't provide any output */
+        opal_trace_handle = -1;
+        return;
+    } else {
+        /* get a file setup for opal_output to use for the trace */
+        tracer.lds_file_suffix = "trace";
+        tracer.lds_want_file = true;
+    }
+
+    tracer.lds_verbose_level = value;
+
+    opal_trace_handle = opal_output_open(&tracer);
 #endif
 }
 

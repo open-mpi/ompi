@@ -26,6 +26,7 @@
 #include "orte_config.h"
 
 #include "orte/include/orte_constants.h"
+#include "opal/util/trace.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/class/orte_pointer_array.h"
@@ -36,6 +37,8 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
 {
     orte_gpr_proxy_subscriber_t *sub;
     size_t i;
+
+    OPAL_TRACE(2);
 
     for (i=0; i < cnt; i++) {
         sub = OBJ_NEW(orte_gpr_proxy_subscriber_t);
@@ -66,6 +69,8 @@ orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
 {
     orte_gpr_proxy_trigger_t *trig, **tptr;
     size_t i, j, k;
+
+    OPAL_TRACE(2);
 
     for (i=0; i < cnt; i++) {
         /* If the provided trigger has a name, see if it already is on
@@ -143,6 +148,8 @@ orte_gpr_proxy_remove_subscription(orte_gpr_proxy_subscriber_t *sub)
 {
     size_t index;
 
+    OPAL_TRACE(2);
+
     if (NULL == sub) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -159,6 +166,8 @@ int
 orte_gpr_proxy_remove_trigger(orte_gpr_proxy_trigger_t *trig)
 {
     size_t index;
+
+    OPAL_TRACE(2);
 
     if (NULL == trig) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);

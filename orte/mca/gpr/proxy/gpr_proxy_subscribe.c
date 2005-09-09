@@ -28,6 +28,7 @@
 #include "include/orte_constants.h"
 #include "dps/dps.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 #include "util/proc_info.h"
 
 #include "mca/ns/ns_types.h"
@@ -48,6 +49,8 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     orte_gpr_proxy_subscriber_t **subs;
     int rc = ORTE_SUCCESS, ret;
     size_t i;
+
+    OPAL_TRACE(1);
 
     /* need to protect against errors */
     if (NULL == subscriptions && NULL == trigs) { /* need at least one */
@@ -186,6 +189,8 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
     size_t i, j;
     int rc, ret;
 
+    OPAL_TRACE(1);
+
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
     /* remove the specified subscription from the local tracker */
@@ -289,6 +294,8 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
     orte_gpr_proxy_trigger_t **trigs;
     size_t i, j;
     int rc, ret;
+
+    OPAL_TRACE(1);
 
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
