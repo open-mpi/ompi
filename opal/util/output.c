@@ -40,25 +40,13 @@
  * Private data
  */
 static int verbose_stream = -1;
-static opal_output_stream_t verbose = {
-    /* debugging */
-    false,
-    /* verbose level */
-    0,
-    /* syslog */
-    false, 0, NULL, NULL,
-    /* stdout */
-    false,
-    /* stderr */
-    true,
-    /* file */
-    false, false, NULL
-};
+static opal_output_stream_t verbose;
 
 
 /*
  * Private functions
  */
+static void construct(opal_object_t *stream);
 static int do_open(int output_id, opal_output_stream_t * lds);
 static int open_file(int i);
 static void free_descriptor(int output_id);
@@ -111,6 +99,8 @@ static opal_mutex_t mutex;
 static bool syslog_opened = false;
 
 
+OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, NULL);
+
 /*
  * Setup the output stream infrastructure
  */
@@ -121,6 +111,9 @@ bool opal_output_init(void)
     if (initialized) {
 	return true;
     }
+
+    OBJ_CONSTRUCT(&verbose, opal_output_stream_t);
+    verbose.lds_want_stderr = true;
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
 	info[i].ldi_used = false;
@@ -238,7 +231,7 @@ void opal_output_close(int output_id)
     /* Setup */
 
     if (!initialized) {
-	opal_output_init();
+        return;
     }
 
     /* If it's valid, used, enabled, and has an open file descriptor,
@@ -273,6 +266,7 @@ void opal_output_close(int output_id)
 	temp_str = NULL;
 	temp_str_len = 0;
     }
+    OBJ_DESTRUCT(&verbose);
     OPAL_THREAD_UNLOCK(&mutex);
 }
 
@@ -327,6 +321,25 @@ void opal_output_finalize(void)
 }
 
 /************************************************************************/
+
+/*
+ * Constructor
+ */
+static void construct(opal_object_t *obj)
+{
+    opal_output_stream_t *stream = (opal_output_stream_t*) obj;
+
+    stream->lds_is_debugging = false;
+    stream->lds_verbose_level = 0;
+    stream->lds_want_syslog = false;
+    stream->lds_syslog_priority = 0;
+    stream->lds_syslog_ident = NULL;
+    stream->lds_prefix = NULL;
+    stream->lds_want_stdout = false;
+    stream->lds_want_file = false;
+    stream->lds_want_file_append = false;
+    stream->lds_file_suffix = NULL;
+}
 
 /*
  * Back-end of open() and reopen().  Necessary to have it as a

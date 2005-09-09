@@ -63,6 +63,8 @@
 
 #include <stdarg.h>
 
+#include "opal/class/opal_object.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -80,10 +82,11 @@ extern "C" {
  * Note that all strings in this struct are cached on the stream by
  * value; there is no need to keep them allocated after the return
  * from opal_output_open().
- *
- * @see output.h
  */
 struct opal_output_stream_t {
+    /** Class parent */
+    opal_object_t super;
+
     /**
      * Indicates whether the output of the stream is
      * debugging/developer-only output or not.
@@ -196,9 +199,20 @@ struct opal_output_stream_t {
      */
     char *lds_file_suffix;
 };
-    
-typedef struct opal_output_stream_t opal_output_stream_t;
 
+    /**
+     * Convenience typedef
+     */    
+    typedef struct opal_output_stream_t opal_output_stream_t;
+    /**
+     * Declare the class of this type.  Note that the constructor for
+     * this class is for convenience only -- it is \em not necessary
+     * to be invoked.  If the constructor it used, it sets all values
+     * in the struct to be false / 0 (i.e., turning off all output).
+     * The intended usage is to invoke the constructor and then enable
+     * the output fields that you want.
+     */
+    OBJ_CLASS_DECLARATION(opal_output_stream_t);
 
     /**
      * Initializes the output stream system and opens a default

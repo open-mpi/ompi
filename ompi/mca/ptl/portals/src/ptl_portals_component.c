@@ -61,7 +61,8 @@ mca_ptl_portals_component_t mca_ptl_portals_component = {
 };
 
 
-static opal_output_stream_t portals_output_stream = {
+static opal_output_stream_t portals_output_stream;
+{
     true,  /* is debugging */
     0,     /* verbose level */
     0,     /* want syslog */
@@ -120,6 +121,11 @@ mca_ptl_portals_component_open(void)
                   opal_list_t);
     OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_lock, 
                   opal_mutex_t);
+
+    OBJ_CONSTRUCT(&portals_output_stream, opal_output_stream_t);
+    portals_output_stream.lds_is_debugging = true;
+    portals_output_stream.lds_want_stdout = true;
+    portals_output_stream.lds_file_suffix = "ptl-portals";
 
     /* register portals module parameters */
 #if PTL_PORTALS_UTCP
@@ -203,7 +209,7 @@ mca_ptl_portals_component_close(void)
     }
 
     if (NULL != portals_output_stream.lds_prefix) {
-        free(portals_output_stream.lds_prefix);
+        portals_output_stream.lds_prefix = NULL;
     }
 
     opal_output_close(mca_ptl_portals_component.portals_output);
