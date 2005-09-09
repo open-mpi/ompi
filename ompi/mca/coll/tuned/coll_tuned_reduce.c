@@ -43,7 +43,8 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     int segcount, segindex, num_segments, realsegsize;
     char *inbuf[2] = {NULL, NULL};
     char *recvtmpbuf = NULL;
-    long typelng, ext;
+    long ext, lb;
+    int  typelng;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
 
@@ -75,8 +76,8 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     /* ----------------------------------------------------------------- */
     /* Determine number of segments and number of elements
        sent per operation  */
-    ompi_ddt_get_extent( datatype, &typelng, &ext );
-    ompi_ddt_get_size( datatype, &typelng );
+    ompi_ddt_get_extent( datatype, &lb, &ext );
+    ompi_ddt_type_size( datatype, &typelng );
     if( segsize > 0 ) {
         segcount     = segsize/typelng;
         num_segments = count/segcount;
@@ -216,7 +217,7 @@ int mca_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                           ompi_op_t* op, int root,
                                           ompi_communicator_t* comm, uint32_t segsize )
 {
-    return mca_coll_tuned_reduce_chain_intra( sendbuf,recvbuf, count,
+    return mca_coll_tuned_reduce_intra_chain( sendbuf,recvbuf, count,
                                               datatype, op, root, comm,
                                               segsize, 1 );
 }

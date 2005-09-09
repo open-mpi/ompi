@@ -323,37 +323,31 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_priority_param;
 
   int mca_coll_tuned_reduce_intra_dec_fixed(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
-                                      struct ompi_op_t *op, 
-                                      int root,
+                                      struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm);
-  int mca_coll_tuned_reduce_intra_dec_dynamic(void *sbuf, void* rbuf, 
-                                      int count, 
+  int mca_coll_tuned_reduce_intra_dec_dynamic(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
-                                      struct ompi_op_t *op, 
-                                      int root,
+                                      struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm);
 
   int mca_coll_tuned_reduce_intra_chain(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
-                                      struct ompi_op_t *op, 
-                                      int root,
-                                      struct ompi_communicator_t *comm, uint32_t segsize, int fanout);
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm, 
+                                      uint32_t segsize, int fanout);
   int mca_coll_tuned_reduce_intra_pipeline(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
-                                      struct ompi_op_t *op, 
-                                      int root,
-                                      struct ompi_communicator_t *comm, uint32_t segsize);
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm, 
+                                      uint32_t segsize);
 
   int mca_coll_tuned_reduce_inter_dec_fixed(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype,
-                                      struct ompi_op_t *op, 
-                                      int root,
+                                      struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm);
-  int mca_coll_tuned_reduce_inter_dec_dynamic(void *sbuf, void* rbuf, 
-                                      int count, 
+  int mca_coll_tuned_reduce_inter_dec_dynamic(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype,
-                                      struct ompi_op_t *op, 
-                                      int root,
+                                      struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm);
 
   int mca_coll_tuned_reduce_scatter_intra_dec_fixed(void *sbuf, void *rbuf, 
