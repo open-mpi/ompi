@@ -63,19 +63,7 @@ mca_btl_portals_component_t mca_btl_portals_component = {
 };
 
 
-static opal_output_stream_t portals_output_stream = {
-    true,  /* is debugging */
-    0,     /* verbose level */
-    0,     /* want syslog */
-    0,     /* syslog priority */
-    NULL,  /* syslog ident */
-    NULL,  /* prefix */
-    true, /* want stdout */
-    false,  /* want stderr */
-    false, /* want file */
-    false, /* file append */
-    "btl-portals"   /* file suffix */
-};
+static opal_output_stream_t portals_output_stream;
 
 int
 mca_btl_portals_component_open(void)
@@ -88,6 +76,10 @@ mca_btl_portals_component_open(void)
      */
 
     /* start up debugging output */
+    OBJ_CONSTRUCT(&portals_output_stream, opal_output_stream_t);
+    portals_output_stream.lds_is_debugging = true;
+    portals_output_stream.lds_want_stdout = true;
+    portals_output_stream.lds_file_suffix = "btl-portals";
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "debug_level",
                            "Debugging verbosity (0 - 100)",

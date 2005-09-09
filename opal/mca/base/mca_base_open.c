@@ -112,19 +112,12 @@ static void set_defaults(opal_output_stream_t *lds)
 {
   /* Load up defaults */
 
-  lds->lds_is_debugging = false;
-  lds->lds_verbose_level = 0;
-  lds->lds_want_syslog = false;
+    OBJ_CONSTRUCT(lds, opal_output_stream_t);
 #ifndef WIN32
-  lds->lds_syslog_priority = LOG_INFO;
+    lds->lds_syslog_priority = LOG_INFO;
 #endif
-  lds->lds_syslog_ident = "ompi";
-  lds->lds_want_stdout = false;
-  lds->lds_want_stderr = true;
-  lds->lds_want_file = false;
-  lds->lds_want_file_append = false;
-  lds->lds_file_suffix = NULL;
-  lds->lds_file_suffix = "mca.txt";
+    lds->lds_syslog_ident = "ompi";
+    lds->lds_want_stderr = true;
 }
 
 
@@ -137,8 +130,9 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
   char *ptr, *next;
   bool have_output = false;
 
-  if (NULL == e)
+  if (NULL == e) {
     return;
+  }
 
   edup = strdup(e);
   ptr = edup;

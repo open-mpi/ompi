@@ -22,16 +22,22 @@
 
 int opal_trace_handle;
 
+/*
+ * Local state
+ */
+static opal_output_stream_t tracer;
+
+
 void opal_trace_init(void)
 {
 #if OPAL_ENABLE_TRACE
-     opal_output_stream_t tracer;
 
-   /* get a file setup for opal_output to use for the trace */
-    tracer.lds_file_suffix = "trace";
-    tracer.lds_want_file = true;
+     /* get a file setup for opal_output to use for the trace */
+     OBJ_CONSTRUCT(&tracer, opal_output_stream_t);
+     tracer.lds_file_suffix = "trace";
+     tracer.lds_want_file = true;
 
-    opal_trace_handle = opal_output_open(&tracer);
+     opal_trace_handle = opal_output_open(&tracer);
 #endif
 }
 
@@ -39,5 +45,6 @@ void opal_trace_finalize(void)
 {
 #if OPAL_ENABLE_TRACE
     opal_output_close(opal_trace_handle);
+    OBJ_DESTRUCT(&tracer);
 #endif
 }

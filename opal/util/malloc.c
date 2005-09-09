@@ -49,29 +49,20 @@ int opal_malloc_output = -1;
 /*
  * Private variables
  */
-static opal_output_stream_t malloc_stream = {
-  /* debugging */
-  true,
-  /* verbose level */
-  5, 
-  /* syslog */
-  false, 0, NULL,
-  /* prefix */
-  "malloc_debug: ",
-  /* stdout */
-  false,
-  /* stderr */
-  true,
-  /* file */
-  false, false, NULL
-};
+static opal_output_stream_t malloc_stream;
+
 
 /*
  * Initialize the malloc debug interface
  */
 void opal_malloc_init(void)
 {
-  opal_malloc_output = opal_output_open(&malloc_stream);
+    OBJ_CONSTRUCT(&malloc_stream, opal_output_stream_t);
+    malloc_stream.lds_is_debugging = true;
+    malloc_stream.lds_verbose_level = 5;
+    malloc_stream.lds_prefix = "malloc debug: ";
+    malloc_stream.lds_want_stderr = true;
+    opal_malloc_output = opal_output_open(&malloc_stream);
 }
 
 
@@ -83,6 +74,7 @@ void opal_malloc_finalize(void)
   if (-1 != opal_malloc_output) {
     opal_output_close(opal_malloc_output);
     opal_malloc_output = -1;
+    OBJ_DESTRUCT(&malloc_stream);
   }
 }
 
