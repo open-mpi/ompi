@@ -172,8 +172,7 @@ static int mca_pml_teg_add_ptls(void)
 int mca_pml_teg_enable(bool enable) 
 {
     size_t i=0;
-    int value = enable, rc;
-    uint32_t proc_arch;
+    int value = enable;
 
     /* If I'm not selected then prepare for close */
     if( false == enable ) return OMPI_SUCCESS;
@@ -186,13 +185,6 @@ int mca_pml_teg_enable(bool enable)
                          mca_pml_teg.teg_free_list_max,
                          mca_pml_teg.teg_free_list_inc,
                          NULL );
-
-    /* I get selected. Publish my information */
-    proc_arch = ompi_proc_local()->proc_arch;
-    proc_arch = htonl(proc_arch);
-    rc = mca_pml_base_modex_send(&mca_pml_teg_component.pmlm_version, &proc_arch, sizeof(proc_arch));
-    if(rc != OMPI_SUCCESS)
-        return rc;
 
     /* Grab all the PTLs and prepare them */
     mca_pml_teg_add_ptls();
@@ -230,20 +222,6 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    /* iterate through each of the procs and set the peers architecture */
-    for(p=0; p<nprocs; p++) {
-        uint32_t* proc_arch;
-        size_t size = sizeof(uint32_t);
-        rc = mca_pml_base_modex_recv(&mca_pml_teg_component.pmlm_version, procs[p], 
-            (void**)&proc_arch, &size);
-        if(rc != OMPI_SUCCESS) 
-            return rc;
-        if(size != sizeof(uint32_t))
-            return OMPI_ERROR;
-        procs[p]->proc_arch = ntohl(*proc_arch);
-        free(proc_arch);
-    }
-    
     /* attempt to add all procs to each ptl */
     ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
     for(p_index = 0; p_index < mca_pml_teg.teg_num_ptl_modules; p_index++) {

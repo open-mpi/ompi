@@ -121,11 +121,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    
-    for(p=0; p<nprocs; p++) {
-        procs[p]->proc_arch = ompi_proc_local()->proc_arch;
-    }    
-    
     rc = mca_bml.bml_add_procs(
                                nprocs, 
                                procs, 
