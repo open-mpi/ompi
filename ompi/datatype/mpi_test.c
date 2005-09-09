@@ -67,6 +67,9 @@ MPITEST README for further details.
 #include "mpitest_cfg.h"
 #include "mpitest.h"
 
+/* Compile with:
+mpicc -DHAVE_CONFIG_H -I. -I../../include -I../../../ompi-trunk/include  -I../.. -I../../include -I../../../ompi-trunk/opal -I../../../ompi-trunk/orte -I../../../ompi-trunk/ompi -g mpi_test.c -o mpi_test ~/ompi-tests/intel_tests/src/libmpitest.o -I../../../ompi-tests/intel_tests/src
+*/
 main(int argc, char *argv[])
 {
     int
