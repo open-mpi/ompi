@@ -95,8 +95,10 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
         while( 1 ) {
             if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
                 if( --(pStack->count) == 0 ) { /* end of loop */
-                    if( pConvertor->stack_pos == 0 )
+                    if( pConvertor->stack_pos == 0 ) {
+                        pConvertor->flags |= CONVERTOR_COMPLETED;
                         goto save_and_return;  /* completed */
+                    }
                     pConvertor->stack_pos--;
                     pStack--;
                 }
@@ -158,13 +160,13 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
     /* out of the loop: we have complete the data conversion or no more space
      * in the buffer.
      */
-    if( pConvertor->pStack[0].count < 0 ) return 1;  /* data succesfully converted */
+    if( pConvertor->flags & CONVERTOR_COMPLETED ) return 1;  /* data succesfully converted */
 
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, type,
                 count_desc, disp_desc, pos_desc );
 
-    return (pConvertor->bConverted == (pConvertor->count * pConvertor->pDesc->size));
+    return 0;
 }
 
 static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
@@ -200,6 +202,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( pConv->stack_pos == 0 ) {
                     last_blength = 0;  /* nothing to copy anymore */
+                    pConv->flags |= CONVERTOR_COMPLETED;
                     goto end_loop;
                 }
                 pStack--;
@@ -301,16 +304,17 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         bConverted += last_blength;
         lastDisp += last_blength;
     }
-    if( pos_desc < (uint32_t)pStack->end_loop ) {  /* update the stack */
-        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
-		    last_count, lastDisp, pos_desc );
-    }
 
     pConv->bConverted += bConverted;  /* update the converted field */
     iov[0].iov_len = bConverted;      /* update the iovec length */
     *max_data = bConverted;
 
-    return (pConv->bConverted == (pConv->count * pData->size));
+    if( pConv->flags & CONVERTOR_COMPLETED ) {  /* finish thus do not update the stack */
+        return 1;
+    }
+    PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
+                last_count, lastDisp, pos_desc );
+    return 0;
 }
 
 static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
@@ -372,7 +376,11 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     }
     *out_size = iov_count;
     *max_data = (pConv->bConverted - initial_bytes_converted);
-    return (pConv->bConverted == (pData->size * pConv->count));
+    if( pConv->bConverted == (pData->size * pConv->count) ) {
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
+    return 0;
 }
 
 /* Return value:
@@ -643,6 +651,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
     convertor->memAlloc_fn = NULL;
     convertor->fAdvance    = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
     convertor->fAdvance    = ompi_convertor_unpack_homogeneous; /* default behaviour */
+    convertor->fAdvance    = ompi_convertor_generic_simple_unpack;
 
     /* TODO: work only on homogeneous architectures */
     if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
@@ -813,7 +822,9 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
                 pStack--;
-                if( --stack_pos == -1 ) goto end_loop;
+                if( --stack_pos == -1 ) {
+                    goto end_loop;
+                }
                 DDT_DUMP_STACK( pStack, stack_pos, pElems, "loop finish" );
                 pos_desc++;
             } else {
