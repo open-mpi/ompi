@@ -39,7 +39,6 @@ int ompi_ddt_dfd = -1;
             0/*lb*/, 0/*ub*/, DT_FLAG_PREDEFINED, TYPE, 1,                   \
       (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
 
-
 #define INIT_BASIC_DATA( TYPE, ALIGN, NAME, FLAGS )                                \
     { BASEOBJ_DATA, sizeof(TYPE), ALIGN, 0, sizeof(TYPE),                          \
             0, sizeof(TYPE), DT_FLAG_BASIC | (FLAGS),                              \
