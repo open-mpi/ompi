@@ -404,12 +404,13 @@ struct opal_output_stream_t {
      * The default value for the output directory is whatever is
      * specified in the TMPDIR environment variable if it exists, or
      * $HOME if it does not.  The default value for the prefix is
-     * "output-".
+     * "output-pid<pid>-" (where "<pid>" is replaced by the PID of the
+     * current process).
      *
      * If dir or prefix are NULL, new values are not set.  The strings
      * represented by dir and prefix are copied into internal storage;
-     * it is safe to free() these values after
-     * opal_output_set_output_file_info() returns.
+     * it is safe to pass string constants or free() these values
+     * after opal_output_set_output_file_info() returns.
      *
      * If olddir or oldprefix are not NULL, copies of the old
      * directory and prefix (respectively) are returned in these
