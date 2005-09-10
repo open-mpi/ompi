@@ -27,7 +27,9 @@ int opal_trace_handle;
 /*
  * Local state
  */
+#if OPAL_ENABLE_TRACE
 static opal_output_stream_t tracer;
+#endif
 
 
 void opal_trace_init(void)
