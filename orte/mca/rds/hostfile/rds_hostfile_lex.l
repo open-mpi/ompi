@@ -98,11 +98,30 @@ count_max          { orte_rds_hostfile_value.sval = yytext;
 max_count          { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
 
+username           { orte_rds_hostfile_value.sval = yytext;
+                     return ORTE_RDS_HOSTFILE_USERNAME; }
+"user-name"        { orte_rds_hostfile_value.sval = yytext;
+                     return ORTE_RDS_HOSTFILE_USERNAME; }
+"user_name"        { orte_rds_hostfile_value.sval = yytext;
+                     return ORTE_RDS_HOSTFILE_USERNAME; }
+
 [0-9]+             { orte_rds_hostfile_value.ival = atol(yytext); 
                      return ORTE_RDS_HOSTFILE_INT; }
+%{ /* First detect hosts as standard Strings (but without ".")
+    * then username@IPv4 or IPV4, then username@hostname or hostname
+    */
+%}
 
-[A-Za-z0-9_\-\.]*  { orte_rds_hostfile_value.sval = yytext; 
+[A-za-z0-9_\-]*  { orte_rds_hostfile_value.sval = yytext;
                      return ORTE_RDS_HOSTFILE_STRING; }
+
+([A-Za-z0-9][A-Za-z0-9_\-]*"@")?([0-9]{1,3}"."){3}[0-9]{1,3} {
+                      orte_rds_hostfile_value.sval = yytext;
+                      return ORTE_RDS_HOSTFILE_IPV4; }
+
+([A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z][A-Za-z0-9_\-\.]*  {
+                     orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_HOSTNAME; }
 
 .                  { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_ERROR; }

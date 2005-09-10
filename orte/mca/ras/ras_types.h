@@ -62,6 +62,8 @@ struct orte_ras_node_t {
         specified limit.  For example, if we have two processors, we
         may want to allow up to four processes but no more. */
     size_t node_slots_max;
+    /** Username on this node, if specified */
+    char * node_username;
 };
 
 /**

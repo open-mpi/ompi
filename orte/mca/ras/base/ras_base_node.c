@@ -37,6 +37,7 @@ static void orte_ras_base_node_construct(orte_ras_node_t* node)
     node->node_slots_inuse = 0;
     node->node_slots_alloc = 0;
     node->node_slots_max = 0;
+    node->node_username = NULL;
 }
 
 static void orte_ras_base_node_destruct(orte_ras_node_t* node)
@@ -46,6 +47,9 @@ static void orte_ras_base_node_destruct(orte_ras_node_t* node)
     }
     if (NULL != node->node_arch) {
         free(node->node_arch);
+    }
+    if (NULL != node->node_username) {
+        free(node->node_username);
     }
 }
 
@@ -112,6 +116,10 @@ int orte_ras_base_node_query(opal_list_t* nodes)
                 node->node_slots_max = keyval->value.size;
                 continue;
             }
+            if(strcmp(keyval->key, ORTE_NODE_USERNAME_KEY) == 0) {
+                node->node_username = strdup(keyval->value.strptr);
+                continue;
+            }
             if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
                 node->node_cellid = keyval->value.cellid;
                 continue;
@@ -137,6 +145,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
         ORTE_NODE_SLOTS_KEY,
         ORTE_NODE_SLOTS_ALLOC_KEY,
         ORTE_NODE_SLOTS_MAX_KEY,
+        ORTE_NODE_USERNAME_KEY,
         ORTE_CELLID_KEY,
         NULL
     };
@@ -215,6 +224,10 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
                 node->node_slots_max = keyval->value.size;
                 continue;
             }
+            if(strcmp(keyval->key, ORTE_NODE_USERNAME_KEY) == 0) {
+                node->node_username = strdup(keyval->value.strptr);
+                continue;
+            }
             if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
                 node->node_cellid = keyval->value.cellid;
                 continue;
@@ -270,7 +283,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         
         value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
         value->segment = strdup(ORTE_NODE_SEGMENT);
-        value->cnt = 6;
+        value->cnt = 7;             /* Seven, at max (including node_username) */
         value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt*sizeof(orte_gpr_keyval_t*));
         if (NULL == value->keyvals) {
             for (j=0; j < i; j++) {
@@ -333,6 +346,15 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         (value->keyvals[j])->key = strdup(ORTE_NODE_SLOTS_MAX_KEY);
         (value->keyvals[j])->type = ORTE_SIZE;
         (value->keyvals[j])->value.size = node->node_slots_max;
+
+        ++j;
+        (value->keyvals[j])->key = strdup(ORTE_NODE_USERNAME_KEY);
+        (value->keyvals[j])->type = ORTE_STRING;
+        if (NULL != node->node_username) {
+            (value->keyvals[j])->value.strptr = strdup(node->node_username);
+        } else {
+            (value->keyvals[j])->value.strptr = strdup("");
+        }
 
         /* setup index/keys for this node */
         rc = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, node->node_cellid, node->node_name);

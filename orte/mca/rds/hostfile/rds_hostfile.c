@@ -23,6 +23,7 @@
 #include "include/orte_constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 #include "util/sys_info.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -39,13 +40,28 @@
 static orte_cellid_t local_cellid;
 static bool need_cellid = true;
 
-static void orte_rds_hostfile_parse_error(void)
+static void orte_rds_hostfile_parse_error(int token)
 {
-    opal_output(0, "Error reading hostfile at line %d: %s\n",
-        orte_rds_hostfile_line, orte_rds_hostfile_value.sval);
+    switch (token) {
+    case ORTE_RDS_HOSTFILE_STRING:
+        opal_output(0, "Error reading hostfile at line %d: token:%d %s\n",
+            orte_rds_hostfile_line, token, orte_rds_hostfile_value.sval);
+        break;
+    case ORTE_RDS_HOSTFILE_IPV4:
+    case ORTE_RDS_HOSTFILE_INT:
+        opal_output(0, "Error reading hostfile at line %d: token:%d %d\n",
+            orte_rds_hostfile_line, token, orte_rds_hostfile_value.ival);
+        break;
+     default:
+        opal_output(0, "Error reading hostfile at line %d token:%d\n",
+            orte_rds_hostfile_line, token);
+        break;
+    }
 }
 
-
+ /**
+  * Return the integer following an = (actually may only return positive ints)
+  */
 static int orte_rds_hostfile_parse_int(void)
 {
     if (ORTE_RDS_HOSTFILE_EQUAL != orte_rds_hostfile_lex()) 
@@ -53,6 +69,20 @@ static int orte_rds_hostfile_parse_int(void)
     if (ORTE_RDS_HOSTFILE_INT != orte_rds_hostfile_lex()) 
         return -1;
     return orte_rds_hostfile_value.ival;
+}
+
+/**
+ * Return the string following an = (option to a keyword)
+ */
+static char * orte_rds_hostfile_parse_string(void)
+{
+    int rc;
+    if (ORTE_RDS_HOSTFILE_EQUAL != orte_rds_hostfile_lex())
+        return NULL;
+    rc = orte_rds_hostfile_lex();
+    if (ORTE_RDS_HOSTFILE_STRING != rc)
+        return NULL;
+    return strdup(orte_rds_hostfile_value.sval);
 }
 
 
@@ -78,12 +108,31 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
     bool update = false;
     bool got_count = false;
 
-    if (ORTE_RDS_HOSTFILE_STRING == token) {
-        char* node_name = orte_rds_hostfile_value.sval;
+    if (ORTE_RDS_HOSTFILE_STRING == token ||
+        ORTE_RDS_HOSTFILE_HOSTNAME == token ||
+        ORTE_RDS_HOSTFILE_IPV4 == token) {
+        char* value = orte_rds_hostfile_value.sval;
+        char** argv = opal_argv_split (value, '@');
+        char* node_name = NULL;
+        char* username = NULL;
+        int cnt;
+
+        cnt = opal_argv_count (argv);
+        if (1 == cnt) {
+            node_name = strdup(argv[0]);
+        } else if (2 == cnt) {
+            username = strdup(argv[0]);
+            node_name = strdup(argv[1]);
+        } else {
+            opal_output(0, "WARNING: Unhandeled user@host-combination\n"); /* XXX */
+        }
+        opal_argv_free (argv);
 
         /* convert this into something globally unique */
         if(strcmp(node_name, "localhost") == 0) {
-            node_name = orte_system_info.nodename;
+            /* Nodename has been allocated, that is for sure */
+            free (node_name);
+            node_name = strdup(orte_system_info.nodename);
         }
 
         /* Do we need to make a new node object?  First check to see
@@ -96,7 +145,8 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             if (NULL == (node = orte_rds_hostfile_lookup(updates, 
                                                          node_name))) {
                 node = OBJ_NEW(orte_ras_node_t);
-                node->node_name = strdup(node_name);
+                node->node_name = node_name;
+                node->node_username = username;
                 node->node_slots = 0;
 
 #if 0
@@ -133,19 +183,24 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             need_cellid = false;
         }
     } else {
-        orte_rds_hostfile_parse_error();
+        orte_rds_hostfile_parse_error(token);
         return OMPI_ERROR;
     }
 
     got_count = false;
     while (!orte_rds_hostfile_done) {
         token = orte_rds_hostfile_lex();
+
         switch (token) {
         case ORTE_RDS_HOSTFILE_DONE:
             goto done;
 
         case ORTE_RDS_HOSTFILE_NEWLINE:
             goto done;
+
+        case ORTE_RDS_HOSTFILE_USERNAME:
+            node->node_username = orte_rds_hostfile_parse_string();
+            break;
 
         case ORTE_RDS_HOSTFILE_COUNT:
         case ORTE_RDS_HOSTFILE_CPU:
@@ -185,7 +240,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             break;
 
         default:
-            orte_rds_hostfile_parse_error();
+            orte_rds_hostfile_parse_error(token);
             OBJ_RELEASE(node);
             return OMPI_ERROR;
         }
@@ -224,6 +279,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
 
     while (!orte_rds_hostfile_done) {
         token = orte_rds_hostfile_lex();
+
         switch (token) {
         case ORTE_RDS_HOSTFILE_DONE:
             orte_rds_hostfile_done = true;
@@ -232,7 +288,15 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
         case ORTE_RDS_HOSTFILE_NEWLINE:
             break;
 
+        /*
+         * This looks odd, since we have several forms of host-definitions:
+         *   hostname              just plain as it is, being a ORTE_RDS_HOSTFILE_STRING
+         *   IP4s and user@IPv4s
+         *   hostname.domain and user@hostname.domain
+         */
         case ORTE_RDS_HOSTFILE_STRING:
+        case ORTE_RDS_HOSTFILE_HOSTNAME:
+        case ORTE_RDS_HOSTFILE_IPV4:
             rc = orte_rds_hostfile_parse_line(token, existing, updates);
             if (ORTE_SUCCESS != rc) {
                 goto unlock;
@@ -240,7 +304,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
             break;
 
         default:
-            orte_rds_hostfile_parse_error();
+            orte_rds_hostfile_parse_error(token);
             goto unlock;
         }
     }
@@ -400,4 +464,3 @@ orte_rds_base_module_t orte_rds_hostfile_module = {
     orte_rds_base_store_resource,
     orte_rds_hostfile_finalize
 };
-
