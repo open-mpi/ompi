@@ -19,28 +19,18 @@
 # -----------------------------------------------------------
 
 AC_DEFUN([MCA_pls_poe_CONFIG],[
-    AC_ARG_WITH([poe], 
-                [AC_HELP_STRING([--with-poe=DIR], 
-                               [directory where POE was installed])])
-
-    AS_IF([test ! -z "$with_poe" -a "$with_poe" = "no"], [$2], [
-        AS_IF([test -z "$with_poe" -o "$with_poe" = "yes"], 
-              [AC_PATH_PROG(OMPI_POE,poe)], 
-              [AC_PATH_PROG(OMPI_POE,poe,,$with_poe)]
-        )
-        AS_IF([test ! -z "$OMPI_POE"], [  
-              AC_DEFINE_UNQUOTED([OMPI_HAVE_POE], [1], [Whether we have POE support or not])
-              AC_DEFINE_UNQUOTED([OMPI_POE], ["$OMPI_POE"], [POE execution path])
-              AC_PATH_PROG(LSLPP,lslpp)
-              AC_MSG_CHECKING([POE Version])
-              AS_IF([test ! -z "$LSLPP"], [  
-                  OMPI_POE_VERSION=`$LSLPP -q -c -L ppe.poe | cut -f 3 -d ':'`
-                  AC_MSG_RESULT($OMPI_POE_VERSION)
-                  AC_DEFINE_UNQUOTED([OMPI_POE_VERSION], ["$OMPI_POE_VERSION"], [POE Version])
-              ], [
-                  AC_MSG_RESULT([Unknown])
-              ])
-              [$1]
-        ], [$2] )
-    ])
+    # POE is only supported on AIX.  We only need executables (no
+    # header files or libraries), but those can be found (or not) at
+    # run-time.  So if we're on AIX, build this component.
+    AC_MSG_CHECKING([if on AIX])
+    case $host_os in
+    aix3* | aix4* | aix5*)
+        happy=yes
+        ;;
+    *)
+        happy=no
+        ;;
+    esac
+    AC_MSG_RESULT([$happy])
+    AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
