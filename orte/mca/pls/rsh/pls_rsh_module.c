@@ -630,7 +630,13 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
         /* setup node name */
         free(argv[node_name_index1]);
-        argv[node_name_index1] = strdup(node->node_name);
+        if (NULL != node->node_username &&
+            0 != strlen (node->node_username)) {
+            asprintf (&argv[node_name_index1], "%s@%s",
+                      node->node_username, node->node_name);
+        } else {
+            argv[node_name_index1] = strdup(node->node_name);
+        }
 
         free(argv[node_name_index2]);
         argv[node_name_index2] = strdup(node->node_name);
