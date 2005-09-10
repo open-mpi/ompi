@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -32,7 +32,7 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
-#include "mca/bml/base/base.h" 
+#include "mca/bml/base/base.h"
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {
@@ -50,7 +50,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
     mca_pml_ob1_send,
     mca_pml_ob1_iprobe,
     mca_pml_ob1_probe,
-    mca_pml_ob1_start, 
+    mca_pml_ob1_start,
     32768,
     (0x7fffffff)
     }
@@ -59,7 +59,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
 int mca_pml_ob1_enable(bool enable)
 {
     if( false == enable ) return OMPI_SUCCESS;
-    mca_pml_ob1.enabled = true; 
+    mca_pml_ob1.enabled = true;
     return OMPI_SUCCESS;
 }
 
@@ -67,7 +67,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     mca_pml_ob1_comm_t* pml_comm = OBJ_NEW(mca_pml_ob1_comm_t);
-    mca_pml_ob1_proc_t* pml_proc = NULL; 
+    mca_pml_ob1_proc_t* pml_proc = NULL;
     int i;
 
     if (NULL == pml_comm) {
@@ -82,8 +82,8 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
     }
 
     for(i=0; i<comm->c_remote_group->grp_proc_count; i++){
-        pml_proc = OBJ_NEW(mca_pml_ob1_proc_t); 
-        pml_proc->base.proc_ompi = comm->c_remote_group->grp_proc_pointers[i]; 
+        pml_proc = OBJ_NEW(mca_pml_ob1_proc_t);
+        pml_proc->base.proc_ompi = comm->c_remote_group->grp_proc_pointers[i];
         comm->c_pml_procs[i] = (mca_pml_proc_t*) pml_proc; /* comm->c_remote_group->grp_proc_pointers[i]->proc_pml; */
     }
     return OMPI_SUCCESS;
@@ -108,11 +108,10 @@ int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 
 int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
-    size_t p;
     ompi_bitmap_t reachable;
-    struct mca_bml_base_endpoint_t ** bml_endpoints = NULL; 
+    struct mca_bml_base_endpoint_t ** bml_endpoints = NULL;
     int rc;
-    
+
     if(nprocs == 0)
         return OMPI_SUCCESS;
 
@@ -122,19 +121,19 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         return rc;
 
     rc = mca_bml.bml_add_procs(
-                               nprocs, 
-                               procs, 
-                               bml_endpoints, 
+                               nprocs,
+                               procs,
+                               bml_endpoints,
                                &reachable
-                               ); 
-    if(OMPI_SUCCESS != rc) 
-        return rc; 
-    
+                               );
+    if(OMPI_SUCCESS != rc)
+        return rc;
+
     rc = mca_bml.bml_register(
-                              MCA_BTL_TAG_PML, 
-                              mca_pml_ob1_recv_frag_callback, 
+                              MCA_BTL_TAG_PML,
+                              mca_pml_ob1_recv_frag_callback,
                               NULL);
-    
+
     /* initialize free list of receive buffers */
     ompi_free_list_init(
                         &mca_pml_ob1.buffers,
@@ -144,8 +143,8 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                         mca_pml_ob1.free_list_max,
                         mca_pml_ob1.free_list_inc,
                         NULL);
-    
-    return rc; 
+
+    return rc;
 }
 
 /*
