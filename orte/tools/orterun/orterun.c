@@ -350,12 +350,12 @@ int orterun(int argc, char *argv[])
 
     /* Prep to start the application */
 
-    opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
+    opal_signal_set(&term_handler, SIGTERM, 
                    signal_callback, NULL);
-    opal_event_add(&term_handler, NULL);
-    opal_event_set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
+    opal_signal_add(&term_handler, NULL);
+    opal_signal_set(&int_handler, SIGINT, 
                    signal_callback, NULL);
-    opal_event_add(&int_handler, NULL);
+    opal_signal_add(&int_handler, NULL);
 
     orte_totalview_init_before_spawn();
 
@@ -581,6 +581,10 @@ static void exit_callback(int fd, short event, void *arg)
 {
     opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
                    true, orterun_basename, orterun_basename);
+
+    /* Remove the TERM and INT signal handlers */
+    opal_signal_del(&term_handler);
+    opal_signal_del(&int_handler);
 
     /* Trigger the normal exit conditions */
 
