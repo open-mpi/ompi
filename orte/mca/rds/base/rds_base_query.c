@@ -29,7 +29,7 @@
 int orte_rds_base_query(void)
 {
     opal_list_item_t* item;
-                                                                                                            
+
     /* Query all selected modules */
     for(item =  opal_list_get_first(&orte_rds_base.rds_selected);
         item != opal_list_get_end(&orte_rds_base.rds_selected);

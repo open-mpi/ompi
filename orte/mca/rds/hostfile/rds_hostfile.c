@@ -64,9 +64,9 @@ static void orte_rds_hostfile_parse_error(int token)
   */
 static int orte_rds_hostfile_parse_int(void)
 {
-    if (ORTE_RDS_HOSTFILE_EQUAL != orte_rds_hostfile_lex()) 
+    if (ORTE_RDS_HOSTFILE_EQUAL != orte_rds_hostfile_lex())
         return -1;
-    if (ORTE_RDS_HOSTFILE_INT != orte_rds_hostfile_lex()) 
+    if (ORTE_RDS_HOSTFILE_INT != orte_rds_hostfile_lex())
         return -1;
     return orte_rds_hostfile_value.ival;
 }
@@ -137,12 +137,12 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
 
         /* Do we need to make a new node object?  First check to see
            if it's in the existing list. */
-        
+
         if (NULL == (node = orte_rds_hostfile_lookup(existing, node_name))) {
 
             /* If it wasn't, see if it's already in the updates list */
 
-            if (NULL == (node = orte_rds_hostfile_lookup(updates, 
+            if (NULL == (node = orte_rds_hostfile_lookup(updates,
                                                          node_name))) {
                 node = OBJ_NEW(orte_ras_node_t);
                 node->node_name = node_name;
@@ -156,7 +156,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
                 /* JJH This assumes that each hostname listed should be
                    placed in a new cell. Is this accurate to the design?
                 */
-                if (ORTE_SUCCESS != 
+                if (ORTE_SUCCESS !=
                     (rc = orte_ns.create_cellid(&(node->node_cellid),
                                                 "UNKNOWN-SITE",
                                                 node->node_name))) {
@@ -330,7 +330,7 @@ static int orte_rds_hostfile_query(void)
     orte_rds_cell_attr_t *new_attr;
     orte_ras_node_t *ras_item;
     int rc;
-    
+
     OBJ_CONSTRUCT(&existing, opal_list_t);
     OBJ_CONSTRUCT(&updates, opal_list_t);
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
@@ -360,7 +360,7 @@ static int orte_rds_hostfile_query(void)
         for ( ras_item  = (orte_ras_node_t*)opal_list_get_first(&updates);
               ras_item != (orte_ras_node_t*)opal_list_get_end(&updates);
               ras_item  = (orte_ras_node_t*)opal_list_get_next(ras_item)) {
-            
+
             rds_item = OBJ_NEW(orte_rds_cell_desc_t);
             if (NULL == rds_item) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -381,7 +381,7 @@ static int orte_rds_hostfile_query(void)
                 local_cellid = 0;
                 need_cellid = false;
             }
-            
+
             rds_item->cellid      = local_cellid;
             ras_item->node_cellid = local_cellid;
 
@@ -394,7 +394,7 @@ static int orte_rds_hostfile_query(void)
             new_attr->keyval.type         = ORTE_STRING;
             new_attr->keyval.value.strptr = strdup(ras_item->node_name);
             opal_list_append(&(rds_item->attributes), &new_attr->super);
-            
+
             new_attr = OBJ_NEW(orte_rds_cell_attr_t);
             if (NULL == new_attr) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -404,7 +404,7 @@ static int orte_rds_hostfile_query(void)
             new_attr->keyval.type         = ORTE_CELLID;
             new_attr->keyval.value.cellid = rds_item->cellid;
             opal_list_append(&(rds_item->attributes), &new_attr->super);
-            
+
             opal_list_append(&rds_updates, &rds_item->super);
         }
 
@@ -423,13 +423,13 @@ static int orte_rds_hostfile_query(void)
             goto cleanup;
         }
     }
-   
+
 cleanup:
     if (NULL != mca_rds_hostfile_component.path) {
         free(mca_rds_hostfile_component.path);
         mca_rds_hostfile_component.path = NULL;
     }
-    
+
     while(NULL != (item = opal_list_remove_first(&existing))) {
         OBJ_RELEASE(item);
     }

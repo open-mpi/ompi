@@ -32,8 +32,8 @@
 
 
 int
-orte_pls_base_proxy_set_node_name(orte_ras_node_t* node, 
-                                  orte_jobid_t jobid, 
+orte_pls_base_proxy_set_node_name(orte_ras_node_t* node,
+                                  orte_jobid_t jobid,
                                   orte_process_name_t* name)
 {
     orte_gpr_value_t* values[1];
@@ -43,19 +43,19 @@ orte_pls_base_proxy_set_node_name(orte_ras_node_t* node,
     char* jobid_string;
     size_t i;
     int rc;
-                                                                                                                  
+
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-                                                                                                                  
-    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens, 
+
+    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens,
         node->node_cellid, node->node_name))) {
         ORTE_ERROR_LOG(rc);
         free(jobid_string);
         return rc;
     }
-                                                                                                                  
+
     asprintf(&kv_name.key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
     kv_name.value.proc = *name;
     keyvals[0] = &kv_name;
@@ -155,7 +155,7 @@ orte_pls_base_proxy_terminate_job(orte_jobid_t jobid)
     orte_gpr_value_t** values = NULL;
     size_t i, j, num_values = 0;
     int rc;
-                                                                                                                           
+
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -193,7 +193,7 @@ orte_pls_base_proxy_terminate_job(orte_jobid_t jobid)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            if (strcmp(keyval->key, keys[0]) != 0) 
+            if (strcmp(keyval->key, keys[0]) != 0)
                 continue;
 
             /* construct command */
@@ -207,11 +207,11 @@ orte_pls_base_proxy_terminate_job(orte_jobid_t jobid)
 
             /* send a terminate message to the bootproxy on each node */
             if (0 > (ret = orte_rml.send_buffer_nb(
-                &keyval->value.proc, 
-                cmd, 
-                ORTE_RML_TAG_RMGR_SVC, 
-                0, 
-                orte_pls_rsh_terminate_job_cb, 
+                &keyval->value.proc,
+                cmd,
+                ORTE_RML_TAG_RMGR_SVC,
+                0,
+                orte_pls_rsh_terminate_job_cb,
                 NULL))) {
 
                 ORTE_ERROR_LOG(ret);
@@ -226,7 +226,7 @@ cleanup:
 
     free(jobid_string);
     free(keys[0]);
-                                                                                                                           
+
     if (NULL != values) {
         for(i=0; i<num_values; i++) {
             if (NULL != values[i]) {
