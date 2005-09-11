@@ -763,7 +763,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
         return OMPI_ERROR;
     }
 
-    convertor->flags |= CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;
+    convertor->flags            |= CONVERTOR_SEND;
     convertor->memAlloc_fn       = NULL;
     convertor->memAlloc_userdata = NULL;
     /* Just to avoid complaint from the compiler */
@@ -793,6 +793,7 @@ ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
 {
     convertor->remoteArch      = pSrcConv->remoteArch;
     convertor->pFunctions      = pSrcConv->pFunctions;
+    convertor->flags           = pSrcConv->flags & ~CONVERTOR_STATE_MASK;
 
     return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
 }

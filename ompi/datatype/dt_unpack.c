@@ -648,6 +648,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
         return OMPI_ERROR;
     }
 
+    convertor->flags      |= CONVERTOR_RECV;
     convertor->memAlloc_fn = NULL;
     convertor->fAdvance    = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
     convertor->fAdvance    = ompi_convertor_unpack_homogeneous; /* default behaviour */
@@ -670,7 +671,7 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
 {
     convertor->remoteArch      = pSrcConv->remoteArch;
     convertor->pFunctions      = pSrcConv->pFunctions;
-    convertor->flags           = pSrcConv->flags;
+    convertor->flags           = pSrcConv->flags & ~CONVERTOR_STATE_MASK;
 
     return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
 }
