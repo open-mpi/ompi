@@ -26,6 +26,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include "class/ompi_free_list.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_fifo.h"

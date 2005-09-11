@@ -2,10 +2,9 @@
 #define MCA_BTL_SM_FIFO_H
 
 #include "btl_sm.h"
+#include "btl_sm_endpoint.h"
 
-
-
-#define MCA_BTL_SM_FIFO_WRITE(my_smp_rank,peer_smp_rank,frag,rc) \
+#define MCA_BTL_SM_FIFO_WRITE(endpoint_peer, my_smp_rank,peer_smp_rank,frag,rc) \
 do { \
     ompi_fifo_t* fifo; \
     fifo=&(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]); \
@@ -33,7 +32,7 @@ do { \
     rc=ompi_fifo_write_to_head_same_base_addr(frag, fifo, \
         mca_btl_sm_component.sm_mpool); \
     if(  0 <= rc ) { \
-        MCA_BTL_SM_SIGNAL_PEER(btl_peer); \
+        MCA_BTL_SM_SIGNAL_PEER(endpoint_peer); \
         rc=OMPI_SUCCESS; \
     } \
     if(opal_using_threads()) \

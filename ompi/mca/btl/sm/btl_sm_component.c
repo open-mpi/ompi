@@ -226,9 +226,9 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
-    sprintf(mca_btl_sm_component.sm_fifo_path, 
-        "%s/sm_fifo.%d", orte_process_info.job_session_dir,
-         orte_process_info.my_name->vpid);
+    sprintf( mca_btl_sm_component.sm_fifo_path, 
+             "%s/sm_fifo.%lu", orte_process_info.job_session_dir,
+             (unsigned long)orte_process_info.my_name->vpid );
     if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
         opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
@@ -298,7 +298,7 @@ void mca_btl_sm_component_event_thread(opal_object_t* thread)
             /* return when done message received */
             return;
         } 
-        mca_btl_sm_component_progress(0);
+        mca_btl_sm_component_progress();
     }
 }
 #endif
@@ -379,7 +379,8 @@ int mca_btl_sm_component_progress(void)
                 frag->base.des_src_cnt = 0;
                 reg->cbfunc(&mca_btl_sm[0].super,frag->tag,&frag->base,reg->cbdata);
                 frag->type = MCA_BTL_SM_FRAG_ACK;
-                MCA_BTL_SM_FIFO_WRITE(my_smp_rank,peer_smp_rank,frag,rc);
+                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
+                                       my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
                     return rc;
                 break;
@@ -389,7 +390,8 @@ int mca_btl_sm_component_progress(void)
                 /* unknown */
                 frag->rc = OMPI_ERROR;
                 frag->type = MCA_BTL_SM_FRAG_ACK;
-                MCA_BTL_SM_FIFO_WRITE(my_smp_rank,peer_smp_rank,frag,rc);
+                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
+                                       my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
                     return rc;
                 break;
@@ -469,7 +471,8 @@ int mca_btl_sm_component_progress(void)
                 frag->base.des_src_cnt = 0;
                 reg->cbfunc(&mca_btl_sm[0].super,frag->tag,&frag->base,reg->cbdata);
                 frag->type = MCA_BTL_SM_FRAG_ACK;
-                MCA_BTL_SM_FIFO_WRITE(my_smp_rank,peer_smp_rank,frag,rc);
+                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
+                                       my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
                     return rc;
                 break;
@@ -479,7 +482,8 @@ int mca_btl_sm_component_progress(void)
                 /* unknown */
                 frag->rc = OMPI_ERROR;
                 frag->type = MCA_BTL_SM_FRAG_ACK;
-                MCA_BTL_SM_FIFO_WRITE(my_smp_rank,peer_smp_rank,frag,rc);
+                MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
+                                       my_smp_rank, peer_smp_rank, frag, rc );
                 if(OMPI_SUCCESS != rc)
                     return rc;
                 break;
