@@ -183,8 +183,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
             mca_ptl_sm_component.num_smp_procs;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-        sprintf(path, "%s/sm_fifo.%d", orte_process_info.job_session_dir, 
-                procs[proc]->proc_name.vpid);
+        sprintf(path, "%s/sm_fifo.%lu", orte_process_info.job_session_dir, 
+                (unsigned long)procs[proc]->proc_name.vpid);
         peer->fifo_fd = open(path, O_WRONLY);
         if(peer->fifo_fd < 0) {
             opal_output(0, "mca_ptl_sm_add_procs: open(%s) failed with errno=%d\n", path, errno);
