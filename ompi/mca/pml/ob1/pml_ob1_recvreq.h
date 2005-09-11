@@ -35,7 +35,7 @@ struct  mca_pml_ob1_recv_request_t {
     struct mca_mpool_base_chunk_t* req_chunk;
     struct mca_mpool_base_reg_mpool_t* req_mpool;
     ompi_ptr_t req_send;
-    int32_t req_lock;
+    volatile int32_t req_lock;
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;
