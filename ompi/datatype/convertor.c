@@ -59,6 +59,7 @@ static void ompi_convertor_construct( ompi_convertor_t* convertor )
     convertor->fAdvance          = NULL;
     convertor->memAlloc_fn       = NULL;
     convertor->memAlloc_userdata = NULL;
+    convertor->stack_pos         = 0;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
@@ -213,7 +214,18 @@ extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConv
 
 inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t* position )
 {
+    /*
+     * If the convertor is already at the correct position we are happy
+     */
     if( (*position) == convertor->bConverted ) return OMPI_SUCCESS;
+
+    /*
+     * Do not allow the convertor to go outside the data boundaries.
+     */
+    if( (convertor->pDesc->size * convertor->count) <= *position ) {
+        convertor->flags |= CONVERTOR_COMPLETED;
+    }
+
     if( 0 == (*position) )
         return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
 
@@ -257,8 +269,11 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
 
     assert( datatype != NULL );
     OBJ_RETAIN( datatype );
-    /* as we increase the reference count on the datatype we are not a clone anymore */
-    convertor->flags &= ~CONVERTOR_CLONE;
+    /* As we change (or set) the datatype on this convertor we should reset the datatype
+     * part of the convertor flags to the default value.
+     */
+    convertor->flags &= CONVERTOR_TYPE_MASK;
+    convertor->flags |= (CONVERTOR_DATATYPE_MASK | datatype->flags);
     convertor->pDesc = (ompi_datatype_t*)datatype;
     convertor->bConverted = 0;
 
