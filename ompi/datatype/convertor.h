@@ -38,11 +38,13 @@ struct ompi_datatype_t;
  * CONVERTOR SECTION
  */
 /* keep the last 16 bits free for data flags */
+#define CONVERTOR_DATATYPE_MASK    0x0000FFFF
 #define CONVERTOR_USELESS          0x00010000
 #define CONVERTOR_RECV             0x00020000
 #define CONVERTOR_SEND             0x00040000
 #define CONVERTOR_HOMOGENEOUS      0x00080000
 #define CONVERTOR_CLONE            0x00100000
+#define CONVERTOR_TYPE_MASK        0x00FF0000
 #define CONVERTOR_STATE_MASK       0xFF000000
 #define CONVERTOR_STATE_START      0x01000000
 #define CONVERTOR_STATE_COMPLETE   0x02000000
