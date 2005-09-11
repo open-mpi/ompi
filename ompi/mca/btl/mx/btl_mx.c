@@ -91,7 +91,7 @@ int mca_btl_mx_add_procs(
          * don't bind this PTL instance to the proc.
          */
 
-        OPAL_THREAD_LOCK(&module_proc->proc_lock);
+        OPAL_THREAD_LOCK(&mx_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all MX BTL
          * instances that are trying to reach this destination. 
@@ -99,7 +99,7 @@ int mca_btl_mx_add_procs(
          */
         mx_endpoint = OBJ_NEW(mca_btl_mx_endpoint_t);
         if(NULL == mx_endpoint) {
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&mx_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -108,12 +108,12 @@ int mca_btl_mx_add_procs(
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(mx_endpoint);
             OBJ_RELEASE(mx_proc);
-            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&mx_proc->proc_lock);
             continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
-        OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&mx_proc->proc_lock);
         peers[i] = mx_endpoint;
     }
 
