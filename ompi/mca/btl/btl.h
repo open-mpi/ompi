@@ -136,9 +136,13 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_FLAGS_SEND  0x1
 #define MCA_BTL_FLAGS_PUT   0x2
 #define MCA_BTL_FLAGS_GET   0x4
+#define MCA_BTL_FLAGS_RDMA (MCA_BTL_FLAGS_GET|MCA_BTL_FLAGS_PUT)
 
 /* btl can send directly from user buffer w/out registration */
 #define MCA_BTL_FLAGS_SEND_INPLACE  0x8
+
+/* btl transport is reliable */
+#define MCA_BTL_FLAGS_RELIABLE 0x10
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     64*1024   /* internal loopback */
@@ -348,7 +352,8 @@ typedef int (*mca_btl_base_module_del_procs_fn_t)(
 
 /**
  * Callback function that is called asynchronously on receipt
- * of data by the transport layer.
+ * of data by the transport layer. 
+ * 
  */
 
 typedef void (*mca_btl_base_module_recv_cb_fn_t)(
@@ -357,7 +362,6 @@ typedef void (*mca_btl_base_module_recv_cb_fn_t)(
     mca_btl_base_descriptor_t* descriptor,
     void* cbdata
 );
-
 
 
 /**
