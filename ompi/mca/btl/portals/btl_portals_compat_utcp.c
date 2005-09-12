@@ -25,6 +25,8 @@
 
 #include "ompi/include/constants.h"
 #include "opal/util/output.h"
+#include "ompi/proc/proc.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
 #include "btl_portals.h"
 #include "btl_portals_compat.h"
