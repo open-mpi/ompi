@@ -20,10 +20,11 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "include/ompi_socket_errno.h"
+#include "ompi/include/ompi_socket_errno.h"
 #include "include/types.h"
-#include "datatype/datatype.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/communicator/communicator.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_proc.h"

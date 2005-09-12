@@ -37,9 +37,9 @@
 #endif
 
 #include "include/types.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "mca/ns/ns.h"
-#include "mca/oob/base/base.h"
+#include "opal/util/output.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"

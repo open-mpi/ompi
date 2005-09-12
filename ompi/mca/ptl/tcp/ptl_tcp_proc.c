@@ -19,9 +19,9 @@
 #include <string.h>
 
 #include "include/sys/atomic.h"
-#include "class/orte_proc_table.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
-#include "mca/ns/ns_types.h"
+#include "orte/class/orte_proc_table.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "opal/util/output.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"

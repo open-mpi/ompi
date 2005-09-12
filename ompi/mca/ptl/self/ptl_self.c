@@ -19,34 +19,25 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <string.h>
 #include <fcntl.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
 
 #include "ompi/include/constants.h"
-#include "class/ompi_bitmap.h"
+#include "ompi/class/ompi_bitmap.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "datatype/datatype.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_self.h"
+#include "ompi/communicator/communicator.h"
 
 mca_ptl_base_module_t mca_ptl_self_module = {
     &mca_ptl_self_component.super,

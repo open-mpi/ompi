@@ -24,27 +24,19 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
 
 #include "ompi/include/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/base/mca_base_param.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "ptl_self.h"
+#include "ompi/proc/proc.h"
 
 mca_ptl_self_component_t mca_ptl_self_component = {
     {

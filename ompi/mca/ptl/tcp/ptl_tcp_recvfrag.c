@@ -20,8 +20,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "include/ompi_socket_errno.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/include/ompi_socket_errno.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "opal/util/output.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_recvfrag.h"
