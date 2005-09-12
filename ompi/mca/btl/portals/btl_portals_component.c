@@ -23,6 +23,7 @@
 
 #include "opal/util/output.h"
 #include "opal/threads/threads.h"
+#include "opal/mca/base/mca_base_param.h"
 
 #include "btl_portals.h"
 #include "btl_portals_compat.h"

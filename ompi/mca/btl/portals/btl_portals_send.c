@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include "ompi/include/constants.h"
+#include "opal/util/output.h"
 
 #include "btl_portals.h"
 #include "btl_portals_send.h"
