@@ -35,4 +35,7 @@ AC_DEFUN([MCA_ptl_gm_CONFIG],[
     AC_SUBST([ptl_gm_CPPFLAGS])
     AC_SUBST([ptl_gm_LDFLAGS])
     AC_SUBST([ptl_gm_LIBS])
+    # Define it for internal use.
+    AC_DEFINE_UNQUOTED(OMPI_MCA_PTL_GM_CACHE_ENABLE, 0,
+            [Whether we want the internal GM cache to be activated.])
 ])dnl
