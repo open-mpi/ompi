@@ -20,14 +20,14 @@
 #include <unistd.h>
 #endif
 
-#include "communicator/communicator.h"
+#include "ompi/communicator/communicator.h"
 #include "opal/util/show_help.h"
 #include "util/proc_info.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "orte/runtime/runtime.h"
-#include "mca/ns/ns.h"
-#include "mca/rmgr/rmgr.h"
-
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "ompi/proc/proc.h"
 #include "opal/event/event.h"
 
 #if HAVE_SIGNAL_H

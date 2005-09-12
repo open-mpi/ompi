@@ -18,8 +18,6 @@
 
 #include <stdio.h>
 
-#include "mpi.h"
-
 #include "opal/util/bit_ops.h"
 #include "ompi/include/constants.h"
 #include "mca/pml/pml.h"
@@ -27,9 +25,9 @@
 #include "mca/topo/base/base.h"
 #include "mca/ns/base/base.h"
 #include "ompi/runtime/params.h"
-#include "communicator/communicator.h"
-#include "group/group.h"
+#include "ompi/communicator/communicator.h"
 #include "attribute/attribute.h"
+#include "mca/topo/topo.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion
@@ -310,7 +308,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     /* Release the collective module */
 
     if ( MPI_COMM_NULL != comm ) {
-	mca_coll_base_comm_unselect(comm);
+        mca_coll_base_comm_unselect(comm);
     }
 
     /*  Check if the communicator is a topology */
@@ -362,7 +360,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
        never pml_add_com'ed. */
 
     if ( MPI_COMM_NULL != comm && OMPI_COMM_IS_PML_ADDED(comm) ) {
-	MCA_PML_CALL(del_comm (comm));
+        MCA_PML_CALL(del_comm (comm));
     }
     
 
@@ -370,16 +368,16 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     mca_topo_base_comm_unselect(comm);
 
     if (NULL != comm->c_local_group) {
-	ompi_group_decrement_proc_count (comm->c_local_group);
+        ompi_group_decrement_proc_count (comm->c_local_group);
         OBJ_RELEASE ( comm->c_local_group );
         comm->c_local_group = NULL;
-	if ( OMPI_COMM_IS_INTRA(comm) ) {
-	    comm->c_remote_group = NULL;
-	}
+        if ( OMPI_COMM_IS_INTRA(comm) ) {
+            comm->c_remote_group = NULL;
+        }
     }
 
     if (NULL != comm->c_remote_group) {
-	ompi_group_decrement_proc_count (comm->c_remote_group);
+        ompi_group_decrement_proc_count (comm->c_remote_group);
         OBJ_RELEASE ( comm->c_remote_group );
         comm->c_remote_group = NULL;
     }

@@ -196,6 +196,7 @@
 #include "communicator/communicator.h"
 #include "win/win.h"
 #include "mpi/f77/fint_2_int.h"
+#include "class/ompi_bitmap.h"
 
 /*
  * Macros
@@ -817,7 +818,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == keyval_hash) {
-	return MPI_ERR_INTERN;
+        return MPI_ERR_INTERN;
     }
 
     /* If there's nothing to do, just return */
@@ -845,8 +846,8 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         /* Get the attr_item in the main keyval hash - so that we know
            what the copy_attr_fn is */
 
-	err = opal_hash_table_get_value_uint32(keyval_hash, key, 
-					       (void **) &hash_value);
+        err = opal_hash_table_get_value_uint32(keyval_hash, key, 
+                                               (void **) &hash_value);
 
         new_attr = OBJ_NEW(attribute_value_t);
         switch (type) {
@@ -918,7 +919,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == keyval_hash) {
-	return MPI_ERR_INTERN;
+        return MPI_ERR_INTERN;
     }
 
     /* Ensure that the table is not empty */
@@ -940,20 +941,20 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
     del_ret = OMPI_SUCCESS;
     while (OMPI_SUCCESS == key_ret && OMPI_SUCCESS == del_ret) {
 
-	/* Save this node info for deletion, before we move onto the
-	   next node */
+        /* Save this node info for deletion, before we move onto the
+           next node */
 
-	in_node = node;
-	oldkey = key;
+        in_node = node;
+        oldkey = key;
 	
-	/* Move to the next node */
+        /* Move to the next node */
 
-	key_ret = opal_hash_table_get_next_key_uint32(keyhash,
+        key_ret = opal_hash_table_get_next_key_uint32(keyhash,
                                                       &key, &old_attr, 
                                                       in_node, &node);
-	/* Now delete this attribute */
+        /* Now delete this attribute */
 
-	del_ret = ompi_attr_delete(type, object, keyhash, oldkey, true, false);
+        del_ret = ompi_attr_delete(type, object, keyhash, oldkey, true, false);
     }
 
     /* All done */

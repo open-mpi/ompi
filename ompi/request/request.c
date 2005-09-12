@@ -22,7 +22,6 @@
 
 ompi_pointer_array_t  ompi_request_f_to_c_table;
 OMPI_DECLSPEC volatile int          ompi_request_waiting = 0;
-int                   ompi_request_poll_iterations = 20000;
 OMPI_DECLSPEC opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC ompi_request_t        ompi_request_null;
