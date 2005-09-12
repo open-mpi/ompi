@@ -19,8 +19,9 @@
 #include <string.h>
 
 #include "include/sys/atomic.h"
-#include "class/orte_proc_table.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
+#include "orte/class/orte_proc_table.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "opal/util/output.h"
 #include "ptl_mx.h"
 #include "ptl_mx_peer.h"
 #include "ptl_mx_proc.h"

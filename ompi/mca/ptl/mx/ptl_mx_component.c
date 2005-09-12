@@ -17,10 +17,10 @@
 #include "ompi/include/constants.h"
 #include "opal/util/output.h"
 #include "opal/threads/threads.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "ptl_mx.h"
 #include "ptl_mx_module.h"
 #include "ptl_mx_peer.h"
-
 
 /*
  * The MX component
