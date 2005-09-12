@@ -21,7 +21,7 @@
 
 #include "class/ompi_free_list.h"
 #include "request/request.h"
-#include "communicator/communicator.h"
+/*#include "communicator/communicator.h"*/
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -49,8 +49,8 @@ struct mca_pml_base_request_t {
     size_t req_count;                     /**< count of user datatype elements */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
     int32_t req_tag;                      /**< user defined tag */
-    ompi_communicator_t *req_comm;        /**< communicator pointer */
-    ompi_proc_t* req_proc;                /**< peer process */
+    struct ompi_communicator_t *req_comm; /**< communicator pointer */
+    struct ompi_proc_t* req_proc;         /**< peer process */
     uint64_t req_sequence;                /**< sequence number for MPI pt-2-pt ordering */
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     mca_pml_base_request_type_t req_type; /**< MPI request type - used for test */

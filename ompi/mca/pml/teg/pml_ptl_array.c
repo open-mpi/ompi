@@ -20,7 +20,7 @@
 
 #include "mca/pml/pml.h"
 #include "pml_ptl_array.h"
-
+#include "ompi/include/constants.h"
 
 static void mca_ptl_array_construct(mca_ptl_array_t* array)
 {

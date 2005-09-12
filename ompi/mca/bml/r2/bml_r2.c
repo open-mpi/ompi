@@ -20,13 +20,14 @@
 #include <string.h>
 
 #include "class/ompi_bitmap.h"
-#include "mca/bml/bml.h"
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h"
-#include "mca/bml/base/bml_base_endpoint.h" 
-#include "mca/bml/base/bml_base_btl.h" 
+#include "ompi/mca/bml/bml.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/bml/base/bml_base_endpoint.h" 
+#include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "bml_r2.h"
-#include "class/orte_proc_table.h" 
+#include "orte/class/orte_proc_table.h" 
+#include "ompi/proc/proc.h"
 
 extern mca_bml_base_component_t mca_bml_r2_component; 
 
