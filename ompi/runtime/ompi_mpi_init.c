@@ -66,6 +66,7 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/debuggers/debuggers.h"
+#include "ompi/proc/proc.h"
 
 /*
  * Global variables and symbols for the MPI layer

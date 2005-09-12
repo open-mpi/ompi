@@ -18,6 +18,7 @@
 #include "ompi/include/constants.h"
 #include "request/request.h"
 
+int ompi_request_poll_iterations = 20000;
 
 int ompi_request_wait_any(
     size_t count,

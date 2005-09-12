@@ -15,7 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include "mpi.h"
 #include "ompi/include/constants.h"
 #include "request/request.h"
 

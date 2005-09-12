@@ -17,9 +17,9 @@
 #include "ompi_config.h"
 #include <string.h>
 #include <stdio.h>
-#include "mpi.h"
 
-#include "communicator/communicator.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/proc/proc.h"
 #include "ompi/include/constants.h"
 
 #include "mca/errmgr/errmgr.h"
@@ -56,6 +56,7 @@ int ompi_open_port(char *port_name)
 
     OPAL_THREAD_LOCK(&ompi_port_lock);
     if (ORTE_SUCCESS != (rc = orte_ns.assign_rml_tag(&lport_id, NULL))) {
+    	    OPAL_THREAD_UNLOCK(&ompi_port_lock);
         return rc;
     }
     OPAL_THREAD_UNLOCK(&ompi_port_lock);
@@ -76,7 +77,7 @@ char *ompi_parse_port (char *port_name, orte_rml_tag_t *tag)
 
     tmp_string = (char *) malloc (MPI_MAX_PORT_NAME);
     if (NULL ==  tmp_string ) {
-	return NULL;
+	   return NULL;
     }
 
     strncpy (tmp_port, port_name, MPI_MAX_PORT_NAME);
