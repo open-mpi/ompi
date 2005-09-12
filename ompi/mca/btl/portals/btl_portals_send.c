@@ -36,6 +36,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
     int ret;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+    assert(frag->md_h == PTL_INVALID_HANDLE);
 
     frag->endpoint = endpoint;
     frag->hdr.tag = tag;
@@ -57,8 +58,8 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
 
         ret = OMPI_SUCCESS;
     } else {
-        ptl_handle_md_t md_h;
         int ret;
+        ptl_handle_md_t md_h;
 
         /* setup the send */
         if (1 == frag->base.des_src_cnt) {
@@ -84,7 +85,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                         "PtlMDBind failed with error %d", ret);
             return OMPI_ERROR;
         }
-        
+
         ret = PtlPut(md_h,
                      PTL_ACK_REQ,
                      *((mca_btl_base_endpoint_t*) endpoint),
@@ -95,7 +96,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                      frag->hdr.tag); /* hdr_data - tag */
         if (ret != PTL_OK) {
             opal_output(mca_btl_portals_component.portals_output,
-                        "PtlPut failed with error %d", ret);
+                        "send: PtlPut failed with error %d", ret);
             PtlMDUnlink(md_h);
             return OMPI_ERROR;
         }
