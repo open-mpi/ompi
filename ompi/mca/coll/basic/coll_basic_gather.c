@@ -20,10 +20,10 @@
 #include "mpi.h"
 #include "ompi/include/constants.h"
 #include "coll_basic.h"
-#include "datatype/datatype.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/coll_tags.h"
-#include "mca/pml/pml.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/pml/pml.h"
 
 /*
  *	gather_intra

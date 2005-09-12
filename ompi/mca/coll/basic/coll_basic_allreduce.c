@@ -19,13 +19,12 @@
 
 #include "mpi.h"
 #include "ompi/include/constants.h"
-#include "communicator/communicator.h"
-#include "datatype/datatype.h"
-#include "op/op.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/coll_tags.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/op/op.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
-#include "mca/pml/pml.h"
+#include "ompi/mca/pml/pml.h"
 
 
 /*

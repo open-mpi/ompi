@@ -21,9 +21,10 @@
 
 #include "mpi.h"
 #include "mca/mca.h"
-#include "mca/coll/coll.h"
-#include "request/request.h"
-#include "mca/pml/pml.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/request/request.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/communicator/communicator.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C"
