@@ -70,13 +70,21 @@ int mca_base_components_open(const char *type_name, int output_id,
   int param_verbose = -1;
   int param_type = -1;
   int verbose_level;
+  char *str;
 
   /* Register MCA parameters */
 
-  param_verbose = mca_base_param_register_int(type_name, "base", 
-                                              "verbose", NULL, 0);
-  param_type = mca_base_param_register_string(type_name, "base", NULL, 
-                                              type_name, NULL);
+  asprintf(&str, "Default selection set of components for the %s framework (<none> means \"use all components that can be found\")", type_name);
+  param_type = 
+      mca_base_param_reg_string_name(type_name, NULL, str, 
+                                     false, false, NULL, NULL);
+  free(str);
+
+  asprintf(&str, "Verbosity level for the %s framework (0 = no verbosity)", type_name);
+  param_verbose = 
+      mca_base_param_reg_int_name(type_name, "base_verbose",
+                                  str, false, false, 0, NULL);
+  free(str);
 
   param = mca_base_param_find("mca", NULL, "component_show_load_errors");
   mca_base_param_lookup_int(param, &ret);
@@ -89,7 +97,8 @@ int mca_base_components_open(const char *type_name, int output_id,
     opal_output_set_verbosity(output_id, verbose_level);
   }
   opal_output_verbose(10, output_id, 
-                      "mca: base: components_open: Looking for components");
+                      "mca: base: components_open: Looking for %s components",
+                      type_name);
 
   /* Find and load all available components */
 
@@ -278,7 +287,8 @@ static int open_components(const char *type_name, int output_id,
 
             if (show_errors) {
                 opal_output(0, "mca: base: components_open: "
-                            "component %s open function failed",
+                            "component %s / %s open function failed",
+                            component->mca_type_name,
                             component->mca_component_name);
             }
             opal_output_verbose(10, output_id, 
