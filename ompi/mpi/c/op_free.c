@@ -16,11 +16,8 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "op/op.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
+#include "ompi/op/op.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Op_free = PMPI_Op_free

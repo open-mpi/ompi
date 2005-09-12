@@ -16,12 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "mpi/f77/fint_2_int.h"
-#include "group/group.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
+#include "ompi/group/group.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Group_c2f = PMPI_Group_c2f

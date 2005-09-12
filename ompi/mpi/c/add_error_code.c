@@ -16,11 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "errhandler/errcode.h"
-#include "errhandler/errclass.h"
-#include "communicator/communicator.h"
+#include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errclass.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Add_error_code = PMPI_Add_error_code

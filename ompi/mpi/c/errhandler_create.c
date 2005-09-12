@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES

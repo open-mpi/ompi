@@ -16,10 +16,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "attribute/attribute.h"
-#include "communicator/communicator.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Keyval_free = PMPI_Keyval_free

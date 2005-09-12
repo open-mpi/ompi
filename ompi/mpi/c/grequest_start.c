@@ -16,11 +16,8 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "request/grequest.h"
-#include "errhandler/errhandler.h"
+#include "ompi/request/grequest.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start

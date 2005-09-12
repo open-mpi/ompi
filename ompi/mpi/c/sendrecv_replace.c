@@ -16,13 +16,11 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
-#include "errhandler/errhandler.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/proc/proc.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Sendrecv_replace = PMPI_Sendrecv_replace

@@ -16,10 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "info/info.h"
-#include "communicator/communicator.h"
+#include "ompi/info/info.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Publish_name = PMPI_Publish_name

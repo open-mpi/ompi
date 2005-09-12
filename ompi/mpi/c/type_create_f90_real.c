@@ -16,10 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "errhandler/errhandler.h"
 
 #include <float.h>
 

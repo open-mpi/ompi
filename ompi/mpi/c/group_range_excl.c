@@ -16,11 +16,11 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "group/group.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
+#include "ompi/group/group.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/proc/proc.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Group_range_excl = PMPI_Group_range_excl

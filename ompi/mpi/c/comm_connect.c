@@ -16,11 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "info/info.h"
-#include "communicator/communicator.h"
-#include "mca/ns/ns.h"
+#include "ompi/info/info.h"
+#include "orte/mca/ns/ns.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_connect = PMPI_Comm_connect

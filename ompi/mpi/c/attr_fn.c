@@ -16,11 +16,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "datatype/datatype.h"
-#include "communicator/communicator.h"
-#include "win/win.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/win/win.h"
 
 /*
  * Comment to circumvent error-msg of weak-check:

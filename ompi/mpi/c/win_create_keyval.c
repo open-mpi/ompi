@@ -16,10 +16,8 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "attribute/attribute.h"
-#include "communicator/communicator.h"
+#include "ompi/attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_create_keyval = PMPI_Win_create_keyval

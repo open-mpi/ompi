@@ -18,11 +18,8 @@
 
 #include <string.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "datatype/datatype.h"
-#include "communicator/communicator.h"
-#include "errhandler/errhandler.h"
+#include "ompi/datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name

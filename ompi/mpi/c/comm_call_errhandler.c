@@ -16,10 +16,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler

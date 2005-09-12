@@ -20,10 +20,7 @@
 #endif
 #include <string.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Get_processor_name = PMPI_Get_processor_name

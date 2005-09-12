@@ -17,10 +17,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "errhandler/errcode.h"
-#include "communicator/communicator.h"
+#include "ompi/errhandler/errcode.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Add_error_string = PMPI_Add_error_string

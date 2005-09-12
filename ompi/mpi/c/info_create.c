@@ -16,12 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "opal/class/opal_list.h"
-#include "info/info.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
+#include "ompi/info/info.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Info_create = PMPI_Info_create

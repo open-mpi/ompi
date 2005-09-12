@@ -16,12 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "mca/topo/topo.h"
-#include "errhandler/errhandler.h"
-#include "group/group.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/group/group.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Cart_coords = PMPI_Cart_coords

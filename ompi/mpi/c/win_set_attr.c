@@ -16,10 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "attribute/attribute.h"
-#include "win/win.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/win/win.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_set_attr = PMPI_Win_set_attr

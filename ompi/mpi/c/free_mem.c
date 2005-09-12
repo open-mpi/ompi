@@ -19,11 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "errhandler/errhandler.h"
-#include "mca/mpool/mpool.h"
+#include "ompi/mca/mpool/mpool.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Free_mem = PMPI_Free_mem

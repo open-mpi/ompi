@@ -16,11 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "mpi/f77/fint_2_int.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
