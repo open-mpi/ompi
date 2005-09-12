@@ -150,10 +150,6 @@ struct mca_btl_openib_module_t {
     opal_list_t repost;            /**< list of buffers to repost */
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
-
-    mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
-    
-
     
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 

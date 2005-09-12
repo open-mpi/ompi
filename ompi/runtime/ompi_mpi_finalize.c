@@ -55,6 +55,7 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/rcache/base/base.h"
 
 
 int ompi_mpi_finalize(void)
@@ -207,7 +208,10 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = mca_mpool_base_close())) {
 	return ret;
     }
-
+    if (OMPI_SUCCESS != (ret = mca_rcache_base_close())) { 
+        return ret;
+    }
+    
     /* Set process status to "finalized" */
     if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
                                 ORTE_PROC_STATE_FINALIZED, 0))) {

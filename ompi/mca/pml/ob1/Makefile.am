@@ -32,6 +32,8 @@ ob1_sources  = \
 	pml_ob1_proc.c \
 	pml_ob1_proc.h \
 	pml_ob1_progress.c \
+	pml_ob1_rdma.c \
+	pml_ob1_rdma.h \
 	pml_ob1_rdmafrag.c \
 	pml_ob1_rdmafrag.h \
 	pml_ob1_recvfrag.c \

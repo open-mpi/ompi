@@ -63,16 +63,6 @@ mca_mpool_gm_component_t mca_mpool_gm_component = {
 
 
 
-static char* mca_mpool_gm_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("mpool","gm",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
 
 /**
   * component open/close/init function
@@ -88,6 +78,14 @@ static mca_mpool_base_module_t* mca_mpool_gm_init(
      struct mca_mpool_base_resources_t* resources)
 {
     mca_mpool_gm_module_t* gm_mpool; 
+    mca_base_param_reg_string(&mca_mpool_gm_component.super.mpool_version, 
+                              "rcache_name", 
+                              "The name of the registration cache the mpool should use", 
+                              false, 
+                              false, 
+                              "rb", 
+                              &(mca_mpool_gm_component.rcache_name)); 
+    
     gm_mpool = (mca_mpool_gm_module_t*)malloc(sizeof(mca_mpool_gm_module_t)); 
     mca_mpool_gm_module_init(gm_mpool); 
     gm_mpool->port = resources->port;

@@ -164,9 +164,6 @@ struct mca_btl_mvapi_module_t {
     opal_list_t repost;            /**< list of buffers to repost */
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
-
-    mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
-    
     VAPI_rr_desc_t*                          rr_desc_post;
     VAPI_srq_hndl_t srq_hndl_high; /**< A high priority shared receive queue 
                                          runtime optional, can also use a receive queue 

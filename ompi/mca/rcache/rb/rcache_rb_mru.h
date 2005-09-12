@@ -25,6 +25,13 @@
 #include "opal/class/opal_list.h" 
 #include "rcache_rb.h"
 
+
+
+/*
+ * initialize the rb mru
+ */
+int mca_rcache_rb_mru_init(mca_rcache_rb_module_t* rcache);
+
 /* 
  * insert an item in the rb mru 
  */ 

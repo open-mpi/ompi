@@ -189,7 +189,8 @@ int mca_btl_gm_free(
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des; 
     if(frag->size == 0) {
-        OBJ_RELEASE(frag->registration);
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, 
+                                     frag->registration);
         MCA_BTL_GM_FRAG_RETURN_USER(btl, frag); 
     } else if(frag->size == mca_btl_gm_component.gm_eager_frag_size) {
         MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag); 
@@ -218,7 +219,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     size_t* size
 )
 {
-    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*)btl;
     mca_btl_gm_frag_t* frag;
     struct iovec iov;
     uint32_t iov_count = 1;
@@ -233,8 +233,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
      * use it in place.
     */
     if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
-
-        bool is_leave_pinned = registration->is_leave_pinned;
         size_t reg_len;
         MCA_BTL_GM_FRAG_ALLOC_USER(gm_btl, frag, rc);
         if(NULL == frag){
@@ -249,61 +247,13 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base;
 
         reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1;
-        if(frag->segment.seg_len > reg_len) {
-                                                                                                     
-            mca_mpool_base_module_t* mpool = gm_btl->gm_mpool;
-            size_t new_len = (unsigned char*)iov.iov_base - registration->base + max_data;
-            void* base_addr = registration->base;
-
-            /* remove old registration from tree and decrement reference count */
-            mca_mpool_base_remove(base_addr);
-            if(is_leave_pinned) {
-                OPAL_THREAD_LOCK(&gm_btl->gm_lock);
-                opal_list_remove_item(&gm_btl->gm_mru_reg, (opal_list_item_t*)registration);
-                OPAL_THREAD_UNLOCK(&gm_btl->gm_lock);
-            }
-            OBJ_RELEASE(registration);
-
-            /* re-register at new size */
-            rc = mpool->mpool_register(
-                mpool,
-                base_addr,
-                new_len,
-                &registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
-                return NULL;
-            }
-
-            /* re-insert into tree with new registration */
-            rc = mca_mpool_base_insert(
-                base_addr,
-                new_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-            if(is_leave_pinned) {
-                OPAL_THREAD_LOCK(&gm_btl->gm_lock);
-                registration->is_leave_pinned = true;
-                opal_list_append(&gm_btl->gm_mru_reg, (opal_list_item_t*)registration);
-                OPAL_THREAD_UNLOCK(&gm_btl->gm_lock);
-            }
-        }  else if (is_leave_pinned) {
-            OPAL_THREAD_LOCK(&gm_btl->gm_lock);
-            opal_list_remove_item(&gm_btl->gm_mru_reg, (opal_list_item_t*)registration);
-            opal_list_append(&gm_btl->gm_mru_reg, (opal_list_item_t*)registration);
-            OPAL_THREAD_UNLOCK(&gm_btl->gm_lock);
-        }
-
+        
         /* bump reference count as so that the registration
          * doesn't go away when the operation completes
          */
-        OBJ_RETAIN(registration);
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, 
+                                     (mca_mpool_base_registration_t*) registration);
+        
         frag->registration = registration;
 
     /*
@@ -311,11 +261,11 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
      * then go ahead and pin contigous data. however, if a reserve is required 
      * then we must allocated a fragment w/ buffer space
     */
-    } else if ((mca_btl_gm_component.leave_pinned || max_data > btl->btl_max_send_size) && 
+    } else if (max_data > btl->btl_max_send_size && 
                ompi_convertor_need_buffers(convertor) == 0 &&
                reserve == 0) {
 
-        mca_mpool_base_module_t* mpool = gm_btl->gm_mpool;
+        mca_mpool_base_module_t* mpool = gm_btl->btl_mpool;
         MCA_BTL_GM_FRAG_ALLOC_USER(gm_btl, frag, rc);
         if(NULL == frag){
             return NULL;
@@ -329,50 +279,17 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base;
 
         rc = mpool->mpool_register(
-            mpool,
-            iov.iov_base,
-            max_data,
-            &registration);
+                                   mpool,
+                                   iov.iov_base,
+                                   max_data,
+                                   0,
+                                   &registration);
+
         if(rc != OMPI_SUCCESS) {
             MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
             return NULL;
         }
 
-        if(mca_btl_gm_component.leave_pinned) {
-            /*
-             * insert the registration into the tree and bump the reference
-             * count so that it doesn't go away on completion.
-            */
-            OBJ_RETAIN(registration);
-            registration->is_leave_pinned = true;
-            rc = mca_mpool_base_insert(
-                iov.iov_base,
-                iov.iov_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-
-            /*
-             * remove registrations that exceed the mru count
-             */
-            OPAL_THREAD_LOCK(&gm_btl->gm_lock);
-            while(opal_list_get_size(&gm_btl->gm_mru_reg) >= mca_btl_gm_component.gm_num_mru) {
-                mca_mpool_base_registration_t* lru = (mca_mpool_base_registration_t*)
-                    opal_list_remove_first(&gm_btl->gm_mru_reg);
-                int rc = mca_mpool_base_remove(lru->base);
-                if(OMPI_SUCCESS != rc) {
-                    opal_output(0, "[%s:%d] unable to remove registration\n", __FILE__,__LINE__);
-                }
-                OBJ_RELEASE(lru);
-            }
-            opal_list_append(&gm_btl->gm_mru_reg, (opal_list_item_t*)registration);
-            OPAL_THREAD_UNLOCK(&gm_btl->gm_lock);
-        } 
         frag->registration = registration;
     } 
 
@@ -478,82 +395,30 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
-
+    mca_mpool_base_module_t* mpool = btl->btl_mpool;
     if(NULL != registration) {
-        size_t reg_len = (unsigned char*)registration->bound - (unsigned char*)frag->segment.seg_addr.pval + 1;
-        if(frag->segment.seg_len > reg_len) {
-            mca_mpool_base_module_t* mpool = gm_btl->gm_mpool;
-            size_t new_len = (unsigned char*)frag->segment.seg_addr.pval - registration->base + frag->segment.seg_len;
-            void* base_addr = registration->base;
-
-            /* remove old registration from tree and decrement reference count */
-            mca_mpool_base_remove(base_addr);
-            OBJ_RELEASE(registration);
-
-            /* re-register at new size */
-            rc = mpool->mpool_register(
-                mpool,
-                base_addr,
-                new_len,
-                &registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
-                return NULL;
-            }
-
-            /* re-insert into tree with new registration */
-            rc = mca_mpool_base_insert(
-                base_addr,
-                new_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-        }
-
         /* bump reference count as so that the registration
          * doesn't go away when the operation completes
          */
-        OBJ_RETAIN(registration);
+        
+        mpool->mpoo_retain(mpool, 
+                           (mca_mpool_base_registration_t*) registration); 
+                
         frag->registration = registration;
 
     }  else {
 
-        mca_mpool_base_module_t* mpool = gm_btl->gm_mpool;
         rc = mpool->mpool_register(
-            mpool,
-            frag->segment.seg_addr.pval,
-            frag->segment.seg_len,
-            &registration);
+                                   mpool,
+                                   frag->segment.seg_addr.pval,
+                                   frag->segment.seg_len,
+                                   0,
+                                   &registration);
         if(rc != OMPI_SUCCESS) {
             MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
             return NULL;
         }
-                                                                                                                   
-        if(mca_btl_gm_component.leave_pinned) {
-            /*
-             * insert the registration into the tree and bump the reference
-             * count so that it doesn't go away on completion.
-            */
-            OBJ_RETAIN(registration);
-            rc = mca_mpool_base_insert(
-                frag->segment.seg_addr.pval,
-                frag->segment.seg_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
-                /* release twice */
-                OBJ_RELEASE(registration); 
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-        }
+        
         frag->registration = registration;
     }
     return &frag->base;

@@ -230,11 +230,11 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
                                                                                                   
     /* initialize memory pool */
     resources.port = btl->port;
-    btl->gm_mpool = mca_mpool_base_module_create(
+    btl->super.btl_mpool = mca_mpool_base_module_create(
         mca_btl_gm_component.gm_mpool_name,
         &btl->super,
         &resources);
-    if(NULL == btl->gm_mpool) {
+    if(NULL == btl->super.btl_mpool) {
         opal_output (0, "[%s:%d] unable to initialize mpool", __FILE__, __LINE__);
         return OMPI_ERROR;
     }
@@ -246,7 +246,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
                          btl->gm_max_send_tokens,  
                          mca_btl_gm_component.gm_free_list_max, 
                          mca_btl_gm_component.gm_free_list_inc,
-                         btl->gm_mpool ); 
+                         btl->super.btl_mpool ); 
 
     ompi_free_list_init( &btl->gm_frag_max,
                          sizeof (mca_btl_gm_frag_max_t) + (1 << mca_btl_gm_component.gm_max_frag_size),
@@ -254,7 +254,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
                          btl->gm_max_recv_tokens,
                          mca_btl_gm_component.gm_free_list_max, 
                          mca_btl_gm_component.gm_free_list_inc,
-                         btl->gm_mpool ); 
+                         btl->super.btl_mpool ); 
 
     ompi_free_list_init( &btl->gm_frag_user,
                          sizeof (mca_btl_gm_frag_user_t),

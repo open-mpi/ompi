@@ -186,58 +186,51 @@ static void mca_pml_ob1_recv_request_ack(
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     
-    /*
-     * lookup request buffer to determine if the memory is already
-     * registered. if registered on both sides - do one rdma for
-     * the entire message.
-     */
     if(hdr->hdr_msg_length > 0) {
-
-        recvreq->req_chunk = mca_mpool_base_find(recvreq->req_recv.req_base.req_addr);
-        if( NULL != recvreq->req_chunk &&
-            ((hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN)
-             || mca_pml_ob1.leave_pinned)) {  /* BUG here! hdr_flags are 0! */ 
-            struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
-            while(reg->mpool != NULL) {
-                if(NULL != mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma,(mca_btl_base_module_t*) reg->user_data)) {
-                    recvreq->req_mpool = reg;
-                    break;
-                }
-                reg++;
-            }
-        } 
-    
-        /* use the longer rdma protocol for this request if:
-         * - size is larger than the rdma threshold
-         * - rdma devices are available
-        */
-        if(NULL == recvreq->req_mpool && !mca_pml_ob1.leave_pinned) {
-            if(recvreq->req_recv.req_bytes_packed > bml_endpoint->btl_rdma_offset &&
-               mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma) &&
-               ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
         
+        /*
+         * lookup request buffer to determine if memory is already
+         * registered. 
+         */
+
+        if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
+            recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
+                bml_endpoint,
+                recvreq->req_recv.req_base.req_addr,
+                recvreq->req_recv.req_bytes_packed,
+                recvreq->req_rdma);
+
+            /* memory is already registered on both sides */
+            if (hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN &&
+                recvreq->req_rdma_cnt != 0) {
+
+                /* start rdma at current fragment offset - no need to ack */
+                recvreq->req_rdma_offset = recvreq->req_bytes_received;
+                return;
+
+            /* are rdma devices available for long rdma protocol */
+            } else if (bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
+                       mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
+
                 /* use convertor to figure out the rdma offset for this request */
                 recvreq->req_rdma_offset = bml_endpoint->btl_rdma_offset;
                 if(recvreq->req_rdma_offset < recvreq->req_bytes_received) {
                     recvreq->req_rdma_offset = recvreq->req_bytes_received;
                 }
                 ompi_convertor_set_position(
-                                            &recvreq->req_recv.req_convertor,
-                                            &recvreq->req_rdma_offset);
-            } else {
-                recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
-            }
+                    &recvreq->req_recv.req_convertor,
+                    &recvreq->req_rdma_offset);
 
-        /* start rdma at the current fragment offset - no need to send an ack in this case */
-        } else if (mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) { 
-            recvreq->req_rdma_offset = recvreq->req_bytes_received;
-            return;
+           /* copy */
+           } else {
+               recvreq->req_rdma_offset = hdr->hdr_msg_length;
+           }
 
-        /* don't do rdma */
+        /* copy */
         } else {
-            recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
+            recvreq->req_rdma_offset = hdr->hdr_msg_length;
         }
-
+        
     /* zero byte message */
     } else { 
         recvreq->req_rdma_offset = 0;
@@ -372,7 +365,7 @@ static void mca_pml_ob1_recv_request_rget(
     mca_bml_base_btl_t* bml_btl;
     mca_pml_ob1_rdma_frag_t* frag;
     mca_btl_base_descriptor_t* descriptor;
-    mca_mpool_base_registration_t* registration = NULL;
+    mca_mpool_base_registration_t* reg;
     size_t i, size = 0;
     int rc;
 
@@ -396,24 +389,15 @@ static void mca_pml_ob1_recv_request_rget(
     frag->rdma_state = MCA_PML_OB1_RDMA_PREPARE;
 
     /* is there an existing registration for this btl */
-    recvreq->req_chunk = mca_mpool_base_find(recvreq->req_recv.req_base.req_addr);
-    if( NULL != recvreq->req_chunk ) {
-        struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
-        while(reg->mpool != NULL) {
-            if(NULL != mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma,
-                (mca_btl_base_module_t*) reg->user_data)) {
-                    recvreq->req_mpool = reg;
-                    registration = reg->mpool_registration;
-                    break;
-                }
-            reg++;
-        }
-    } 
+    reg = mca_pml_ob1_rdma_registration(
+        bml_btl, 
+        recvreq->req_recv.req_base.req_addr,
+        recvreq->req_recv.req_bytes_packed);
 
     /* prepare descriptor */
     mca_bml_base_prepare_dst(
         bml_btl, 
-        registration,
+        reg,
         &recvreq->req_recv.req_convertor,
         0,
         &size, 
@@ -563,15 +547,39 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 mca_btl_base_descriptor_t* dst;
                 mca_btl_base_descriptor_t* ctl;
                 mca_mpool_base_registration_t * reg = NULL;
-                size_t num_btl_avail = bml_endpoint->btl_rdma.arr_size; 
+                size_t num_btl_avail = recvreq->req_rdma_cnt;
                 int rc;
 
-                /*
-                 * if the memory is already registed - use the NICs that its
-                 * registed with. Otherwise, schedule round-robin across the
-                 * available RDMA nics.
-                */
-                if(recvreq->req_mpool == NULL &&  !mca_pml_ob1.leave_pinned) {
+                if(recvreq->req_rdma_cnt) {
+ 
+                    /*
+                     * Select the next btl out of the list w/ preregistered
+                     * memory.
+                    */
+                    bml_btl = recvreq->req_rdma[recvreq->req_rdma_idx].bml_btl;
+                    reg = recvreq->req_rdma[recvreq->req_rdma_idx].btl_reg;
+                    if(++recvreq->req_rdma_idx >= recvreq->req_rdma_cnt)
+                        recvreq->req_rdma_idx = 0;
+
+                    if(recvreq->req_rdma_cnt == 1 || bytes_remaining < bml_btl->btl_min_rdma_size) {
+                        size = bytes_remaining;
+
+                    /* otherwise attempt to give the BTL a percentage of the message
+                     * based on a weighting factor. for simplicity calculate this as
+                     * a percentage of the overall message length (regardless of amount
+                     * previously assigned)
+                     */
+                    } else {
+                        size = (bml_btl->btl_weight * bytes_remaining) / 100;
+                    }
+                     
+                } else {
+
+                    /*
+                     * Otherwise, schedule round-robin across the
+                     * available RDMA nics dynamically registering/deregister
+                     * as required.
+                    */
                     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
                     
                     /* if there is only one btl available or the size is less than
@@ -592,21 +600,6 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     /* makes sure that we don't exceed BTL max rdma size */
                     if (bml_btl->btl_max_rdma_size != 0 && size > bml_btl->btl_max_rdma_size) {
                         size = bml_btl->btl_max_rdma_size;
-                    }
-                    
-                    /*
-                     * For now schedule entire message across a single NIC - need to FIX
-                     */
-                } else {
-                    size = bytes_remaining;
-                    if(NULL != recvreq->req_mpool){ 
-                        /* find the endpoint corresponding to this btl and schedule the entire message */
-                        bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, 
-                                                              (mca_btl_base_module_t*) recvreq->req_mpool->user_data);
-                        reg = recvreq->req_mpool->mpool_registration; 
-                    }
-                    else{ 
-                        bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
                     }
                 }
 

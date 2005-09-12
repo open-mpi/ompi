@@ -150,7 +150,7 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
 
     /* allocate fifo array */
     len_to_allocate = sizeof(void *) * fifo->size;
-    fifo->queue=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, NULL);
+    fifo->queue=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->queue) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -166,7 +166,7 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
 
     /* allocate head control structure */
     len_to_allocate = sizeof(ompi_cb_fifo_ctl_t);
-    fifo->head=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, NULL);
+    fifo->head=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->head) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -178,7 +178,7 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
 
     /* allocate tail control structure */
     len_to_allocate = sizeof(ompi_cb_fifo_ctl_t);
-    fifo->tail=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, NULL);
+    fifo->tail=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->tail) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -483,7 +483,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
 
     /* allocate fifo array */
     len_to_allocate = sizeof(void *) * fifo->size;
-    fifo->queue=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, NULL);
+    fifo->queue=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->queue) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -495,7 +495,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
 
     /* allocate head control structure */
     len_to_allocate = sizeof(ompi_cb_fifo_ctl_t);
-    fifo->head=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, NULL);
+    fifo->head=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->head) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -507,7 +507,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
 
     /* allocate tail control structure */
     len_to_allocate = sizeof(ompi_cb_fifo_ctl_t);
-    fifo->tail=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, NULL);
+    fifo->tail=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->tail) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

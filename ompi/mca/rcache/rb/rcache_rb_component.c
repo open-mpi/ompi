@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#include "mca/base/mca_base_param.h"
 #include "mca/rcache/rcache.h"
 #include "rcache_rb.h"
 
@@ -7,25 +24,27 @@ static mca_rcache_base_module_t* mca_rcache_rb_component_init( void );
 
 mca_rcache_rb_component_t mca_rcache_rb_component = {
     {
-        /* Indicate that we are a rcache v1.0.0 component (which also
-           implies a specific MCA version) */
+        {
+            /* Indicate that we are a rcache v1.0.0 component (which also
+               implies a specific MCA version) */
         
-        MCA_RCACHE_BASE_VERSION_1_0_0,
-        "rb", /* MCA component name */
-        OMPI_MAJOR_VERSION,  /* MCA component major version */
-        OMPI_MINOR_VERSION,  /* MCA component minor version */
-        OMPI_RELEASE_VERSION,  /* MCA component release version */
-        mca_rcache_rb_component_open,  /* component open  */
-        NULL
-    },
+            MCA_RCACHE_BASE_VERSION_1_0_0,
+            "rb", /* MCA component name */
+            OMPI_MAJOR_VERSION,  /* MCA component major version */
+            OMPI_MINOR_VERSION,  /* MCA component minor version */
+            OMPI_RELEASE_VERSION,  /* MCA component release version */
+            mca_rcache_rb_component_open,  /* component open  */
+            NULL
+        },
     
-    /* Next the MCA v1.0.0 component meta data */
+        /* Next the MCA v1.0.0 component meta data */
     
-    {
-        /* Whether the component is checkpointable or not */
-        false
-    },
-    mca_rcache_rb_component_init
+        {
+            /* Whether the component is checkpointable or not */
+            false
+        },
+        mca_rcache_rb_component_init
+    }
 };
 
 
@@ -36,6 +55,14 @@ static int mca_rcache_rb_component_open(void)
 
 mca_rcache_base_module_t* mca_rcache_rb_component_init(void) {
     mca_rcache_rb_module_t* rcache; 
+    mca_base_param_reg_int(&mca_rcache_rb_component.super.rcache_version, 
+                           "mru_len", 
+                           "The maximum size of the MRU (most recently used) rcache list", 
+                           false, 
+                           false, 
+                           16, 
+                           (int*)&(mca_rcache_rb_component.reg_mru_len)); 
+    
     rcache = (mca_rcache_rb_module_t*) malloc(sizeof(mca_rcache_rb_module_t));
     mca_rcache_rb_module_init(rcache); 
     return &rcache->base; 

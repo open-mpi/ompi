@@ -506,6 +506,10 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_send_fn_t        btl_send;
     mca_btl_base_module_put_fn_t         btl_put;
     mca_btl_base_module_get_fn_t         btl_get;
+
+    /* the mpool associated with this btl (optional) */ 
+    mca_mpool_base_module_t*             btl_mpool; 
+
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 

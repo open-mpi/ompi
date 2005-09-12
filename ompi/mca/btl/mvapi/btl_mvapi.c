@@ -216,7 +216,7 @@ int mca_btl_mvapi_free(
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)des; 
 
     if(frag->size == 0) {
-        OBJ_RELEASE(frag->vapi_reg); 
+        btl->btl_mpool->mpool_release(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->vapi_reg); 
         MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
     } else if(frag->size == mca_btl_mvapi_component.max_send_size){ 
         MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
@@ -274,9 +274,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
     
     if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        bool is_leave_pinned = vapi_reg->base_reg.is_leave_pinned; 
         size_t reg_len; 
-
         /* the memory is already pinned and we have contiguous user data */ 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
@@ -292,66 +290,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base; 
         
         reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
-        if(frag->segment.seg_len > reg_len) { 
-            
-            /* the pinned region is too small! we have to re-pinn it */ 
-            
-            size_t new_len = vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1 
-                + frag->segment.seg_len - reg_len; 
-            void * base_addr = vapi_reg->base_reg.base; 
-            
-            rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
-            if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR(("error removing memory region from memory pool tree")); 
-                return NULL; 
-            } 
-            
-            if(is_leave_pinned) { 
-                if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)){ 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-            } 
-            OBJ_RELEASE(vapi_reg); 
-            
-            mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool, 
-                                            base_addr, 
-                                            new_len, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg);
-            
-            
-            
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base, 
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
-                                       mvapi_btl->ib_pool, 
-                                       (void*) (&mvapi_btl->super), 
-                                       (mca_mpool_base_registration_t*) vapi_reg); 
-            
-            
-            if(rc != OMPI_SUCCESS) { 
-                BTL_ERROR(("error inserting memory region into memory pool tree")); 
-                return NULL; 
-            } 
 
-            OBJ_RETAIN(vapi_reg); 
-            if(is_leave_pinned) {
-                /* we should leave the memory pinned so put the memory on the MRU list */ 
-                vapi_reg->base_reg.is_leave_pinned = is_leave_pinned; 
-                opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
-            } 
-        }   
-        else if(is_leave_pinned) { 
-            /* the current memory region is large enough and we should leave the memory pinned */  
-            if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) {
-                BTL_ERROR(("error removing item from reg_mru_list")); 
-                return NULL; 
-            }
-        
-            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
-            
-        }
-        
-        /* frag->mem_hndl = vapi_reg->hndl; */ 
         frag->sg_entry.len = max_data; 
         frag->sg_entry.lkey = vapi_reg->l_key; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
@@ -365,16 +304,14 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->base.des_flags = 0; 
         frag->vapi_reg = vapi_reg; 
         
-        OBJ_RETAIN(vapi_reg); 
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) vapi_reg); 
         return &frag->base;
         
-    } else if((mca_btl_mvapi_component.leave_pinned || max_data > btl->btl_max_send_size) && 
+    } else if( max_data > btl->btl_max_send_size && 
                ompi_convertor_need_buffers(convertor) == 0 && 
                reserve == 0)
     {
-        /* The user buffer is contigous and we need to leave the buffer pinned or we are asked to send 
-           more than the max send size.  Note that the memory was not already pinned because we have 
-           no registration information passed to us */ 
+        /* The user buffer is contigous and we are asked to send more than the max send size.  */            
 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
@@ -391,62 +328,13 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base; 
         frag->base.des_flags = 0; 
 
+        btl->btl_mpool->mpool_register(btl->btl_mpool,
+                                       iov.iov_base, 
+                                       max_data, 
+                                       0,
+                                       (mca_mpool_base_registration_t**) &vapi_reg); 
         
-        if(mca_btl_mvapi_component.leave_pinned) { 
-            /* so we need to leave pinned  which means we must check and see if we 
-               have room on the MRU list */
-            
-            if(mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.opal_list_length  ) {
-                /* we have the maximum number of entries on the MRU list, time to 
-                   pull something off and make room. */ 
-
-                mca_mpool_mvapi_registration_t* old_reg =
-                    (mca_mpool_mvapi_registration_t*)
-                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
-                
-                if( NULL == old_reg) { 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-
-                                
-                rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
-                
-                if(OMPI_SUCCESS != rc) { 
-                    BTL_ERROR(("error removing memory region from memory pool tree")); 
-                    return NULL; 
-                }
-                
-                               
-                OBJ_RELEASE(old_reg);
-            }
-            mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
-                                            iov.iov_base, 
-                                            max_data, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg); 
-            
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base, 
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
-                                       mvapi_btl->ib_pool, 
-                                       (void*) (&mvapi_btl->super), 
-                                       (mca_mpool_base_registration_t*) vapi_reg); 
-            if(rc != OMPI_SUCCESS) 
-                return NULL; 
-            OBJ_RETAIN(vapi_reg); 
-            
-            vapi_reg->base_reg.is_leave_pinned = true; 
-                    
-            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
-            
-        } else { 
-            /* we don't need to leave the memory pinned so just register it.. */ 
-            mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
-                                            iov.iov_base, 
-                                            max_data, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg); 
-            
-            vapi_reg->base_reg.is_leave_pinned = false; 
-        } 
+        
         frag->sg_entry.len = max_data; 
         frag->sg_entry.lkey = vapi_reg->l_key; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
@@ -554,8 +442,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     mca_btl_mvapi_frag_t* frag; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
     int rc; 
-    size_t reg_len; 
-
+    
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
     
@@ -571,132 +458,17 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     frag->base.des_flags = 0; 
 
     if(NULL!= vapi_reg){ 
-        /* the memory is already pinned try to use it if the pinned region is large enough*/ 
-        reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
-        bool is_leave_pinned = vapi_reg->base_reg.is_leave_pinned; 
-
-        if(frag->segment.seg_len > reg_len ) { 
-            /* the pinned region is too small! we have to re-pinn it */ 
-            
-            size_t new_len = vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1 
-                + frag->segment.seg_len - reg_len; 
-            void * base_addr = vapi_reg->base_reg.base; 
-
-            rc = mca_mpool_base_remove((void*) vapi_reg->base_reg.base); 
-            if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR(("error removing memory region from memory pool tree")); 
-                return NULL; 
-            } 
-
-            if(is_leave_pinned) { 
-                /* the memory we just un-pinned was marked as leave pinned, 
-                 * pull it off the MRU list 
-                 */ 
-     
-                if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-            }
-            OBJ_RELEASE(vapi_reg); 
-            
-            mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool, 
-                                            base_addr, 
-                                            new_len,
-                                            (mca_mpool_base_registration_t**) &vapi_reg);
-            
-        
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base, 
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
-                                       mvapi_btl->ib_pool, 
-                                       (void*) (&mvapi_btl->super), 
-                                       (mca_mpool_base_registration_t*) vapi_reg); 
-            
-            if(OMPI_SUCCESS != rc) {
-                BTL_ERROR(("error inserting memory region into memory pool tree")); 
-                return NULL;
-            }
-            OBJ_RETAIN(vapi_reg); 
-            
-            if(is_leave_pinned) { 
-                /* we should leave the memory pinned so put the memory on the MRU list */ 
-                vapi_reg->base_reg.is_leave_pinned = is_leave_pinned; 
-                opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
-            } 
-
-        } 
-        else if(is_leave_pinned){ 
-            /* the current memory region is large enough and we should leave the memory pinned */  
-            if(NULL == opal_list_remove_item(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg)) { 
-                BTL_ERROR(("error removing item from reg_mru_list")); 
-                return NULL; 
-            }    
-            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
-        
-        }
-        OBJ_RETAIN(vapi_reg); 
+        /* the memory is already pinned- use it*/ 
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) vapi_reg); 
     }  else { 
         /* we didn't get a memory registration passed in, so we have to register the region
          * ourselves 
          */ 
-
-        if(mca_btl_mvapi_component.leave_pinned) { 
-              /* so we need to leave pinned  which means we must check and see if we 
-               have room on the MRU list */
-          
-            if( mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.opal_list_length  ) {
-                /* we have the maximum number of entries on the MRU list, time to 
-                   pull something off and make room. */ 
-
-                mca_mpool_mvapi_registration_t* old_reg =
-                    (mca_mpool_mvapi_registration_t*)
-                    opal_list_remove_last(&mvapi_btl->reg_mru_list);
-                
-                if( NULL == old_reg) { 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-                
-                rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
-                if(OMPI_SUCCESS !=rc ) { 
-                    BTL_ERROR(("error removing memory region from memory pool tree")); 
-                    return NULL; 
-                } 
-                
-                OBJ_RELEASE(old_reg);
-                
-            }
-            mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
-                                        frag->segment.seg_addr.pval,
-                                        *size, 
-                                        (mca_mpool_base_registration_t**) &vapi_reg);
-            
-            vapi_reg->base_reg.is_leave_pinned = true;
-            
-            rc = mca_mpool_base_insert(vapi_reg->base_reg.base,  
-                                       vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1, 
-                                       mvapi_btl->ib_pool, 
-                                       (void*) (&mvapi_btl->super), 
-                                       (mca_mpool_base_registration_t*)  vapi_reg); 
-            if(OMPI_SUCCESS != rc){ 
-                BTL_ERROR(("error inserting memory region into memory pool")); 
-                return NULL;
-            } 
-
-            OBJ_RETAIN(vapi_reg); 
-            opal_list_append(&mvapi_btl->reg_mru_list, (opal_list_item_t*) vapi_reg);
-            
-        } else { 
-            /* we don't need to leave the memory pinned so just register it.. */ 
-
-            mvapi_btl->ib_pool->mpool_register(mvapi_btl->ib_pool,
-                                            frag->segment.seg_addr.pval,
-                                            *size, 
-                                            (mca_mpool_base_registration_t**) &vapi_reg);
-            vapi_reg->base_reg.is_leave_pinned=false; 
-        }
-        
-        
+        btl->btl_mpool->mpool_register(btl->btl_mpool,
+                                       frag->segment.seg_addr.pval,
+                                       *size, 
+                                       0,
+                                       (mca_mpool_base_registration_t**) &vapi_reg);
     }
     
     frag->sg_entry.len = *size; 

@@ -43,6 +43,7 @@ struct mca_mpool_openib_component_t {
     mca_mpool_base_component_t super;
     long page_size; 
     long page_size_log; 
+    char* rcache_name;
 };
 
 typedef struct mca_mpool_openib_component_t mca_mpool_openib_component_t;
@@ -93,6 +94,7 @@ void* mca_mpool_openib_alloc(
     mca_mpool_base_module_t* mpool, 
     size_t size, 
     size_t align, 
+    uint32_t flags, 
     mca_mpool_base_registration_t** registration);
 
 /**
@@ -111,12 +113,11 @@ int mca_mpool_openib_register(
     mca_mpool_base_module_t* mpool, 
     void *addr, 
     size_t size, 
+    uint32_t flags, 
     mca_mpool_base_registration_t** registration);
 
 int mca_mpool_openib_deregister(
     mca_mpool_base_module_t* mpool, 
-    void *addr, 
-    size_t size, 
     mca_mpool_base_registration_t* );
 
 
@@ -126,6 +127,27 @@ int mca_mpool_openib_deregister(
 void mca_mpool_openib_free(mca_mpool_base_module_t* mpool, 
                          void * addr, 
                          mca_mpool_base_registration_t* registration);
+
+
+int mca_mpool_openib_find(
+                         struct mca_mpool_base_module_t* mpool, 
+                         void* addr, 
+                         size_t size, 
+                         ompi_pointer_array_t *regs,
+                         uint32_t *cnt
+                         );
+ 
+int mca_mpool_openib_release(
+                            struct mca_mpool_base_module_t* mpool, 
+                            mca_mpool_base_registration_t* registraion
+                            ); 
+
+int mca_mpool_openib_retain(
+                            struct mca_mpool_base_module_t* mpool, 
+                            mca_mpool_base_registration_t* registraion
+                            ); 
+
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

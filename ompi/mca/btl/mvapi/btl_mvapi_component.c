@@ -426,12 +426,12 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         hca_pd.pd_tag = mvapi_btl->ptag; 
         
         /* initialize the memory pool using the hca */ 
-        mvapi_btl->ib_pool = 
+        mvapi_btl->super.btl_mpool = 
             mca_mpool_base_module_create(mca_btl_mvapi_component.ib_mpool_name,
                                          &mvapi_btl->super, 
                                          &hca_pd); 
         
-        if(NULL == mvapi_btl->ib_pool) { 
+        if(NULL == mvapi_btl->super.btl_mpool) { 
             BTL_ERROR(("error creating vapi memory pool! aborting mvapi btl initialization")); 
             return NULL; 
         }
@@ -448,7 +448,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                             2*mvapi_btl->rd_buf_max,
                             mca_btl_mvapi_component.ib_free_list_max,
                             mca_btl_mvapi_component.ib_free_list_inc,
-                            mvapi_btl->ib_pool);
+                            mvapi_btl->super.btl_mpool);
         
         ompi_free_list_init(&mvapi_btl->recv_free_eager,
                             length, 
@@ -456,7 +456,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                             2*mvapi_btl->rd_buf_max,
                             mca_btl_mvapi_component.ib_free_list_max,
                             mca_btl_mvapi_component.ib_free_list_inc,
-                            mvapi_btl->ib_pool);
+                            mvapi_btl->super.btl_mpool);
         
         
         
@@ -472,7 +472,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                             2*mvapi_btl->rd_buf_max,
                             mca_btl_mvapi_component.ib_free_list_max,
                             mca_btl_mvapi_component.ib_free_list_inc,
-                            mvapi_btl->ib_pool);
+                            mvapi_btl->super.btl_mpool);
         
         
         
@@ -482,7 +482,8 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                              OBJ_CLASS (mca_btl_mvapi_recv_frag_max_t),
                              2*mvapi_btl->rd_buf_max,
                              mca_btl_mvapi_component.ib_free_list_max,
-                             mca_btl_mvapi_component.ib_free_list_inc, mvapi_btl->ib_pool);
+                             mca_btl_mvapi_component.ib_free_list_inc, 
+                             mvapi_btl->super.btl_mpool);
 
         
         
@@ -499,7 +500,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                             mca_btl_mvapi_component.ib_free_list_num,
                             mca_btl_mvapi_component.ib_free_list_max,
                             mca_btl_mvapi_component.ib_free_list_inc,
-                            mvapi_btl->ib_pool);
+                            mvapi_btl->super.btl_mpool);
         
         
         /* Initialize the rr_desc_post array for posting of rr*/ 

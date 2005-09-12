@@ -31,7 +31,9 @@ void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache ) {
     rcache->base.rcache_delete = mca_rcache_rb_delete; 
     rcache->base.rcache_finalize = mca_rcache_rb_finalize; 
     mca_rcache_rb_tree_init(rcache);
+    mca_rcache_rb_mru_init(rcache);
 }
+
 int mca_rcache_rb_find (
                         struct mca_rcache_base_module_t* rcache, 
                         void* addr, 
@@ -42,13 +44,18 @@ int mca_rcache_rb_find (
     
     int rc; 
     mca_rcache_rb_tree_item_t* tree_item; 
+    OPAL_THREAD_LOCK(&rb_module->rb_lock);
+    *cnt = 0;
     tree_item = mca_rcache_rb_tree_find( (mca_rcache_rb_module_t*) rcache, addr ); 
     if(NULL == tree_item) { 
+        OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
         return OMPI_ERROR; 
     }
     
+   
     rc =  ompi_pointer_array_add(regs, (void*) tree_item->reg); 
     if(OMPI_SUCCESS != rc) { 
+        OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
         return rc; 
     }
     
@@ -56,6 +63,10 @@ int mca_rcache_rb_find (
         rc = mca_rcache_rb_mru_touch((mca_rcache_rb_module_t*)rcache, tree_item->reg); 
     }
     OPAL_THREAD_ADD32(&tree_item->reg->ref_count, 1); 
+    OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
+    if(rc == OMPI_SUCCESS) { 
+        *cnt = 1; 
+    }
     return rc;
 }
 
@@ -64,15 +75,21 @@ int mca_rcache_rb_insert (
                           mca_mpool_base_registration_t* reg, 
                           uint32_t flags
                           ) { 
-    int rc; 
+    int rc;
+    OPAL_THREAD_LOCK(&rb_module->rb_lock); 
     if(!(flags & MCA_MPOOL_FLAGS_PERSIST)) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
+        if(OMPI_SUCCESS != rc) { 
+            OPAL_THREAD_UNLOCK(&rb_module->rb_lock); 
+            return rc; 
+        } else { 
+            OPAL_THREAD_ADD32(&reg->ref_count, 1); 
+        }
     }
-    if(OMPI_SUCCESS != rc) { 
-        return rc; 
-    }
-    mca_rcache_rb_tree_insert((mca_rcache_rb_module_t*)rcache, reg );
+    rc = mca_rcache_rb_tree_insert((mca_rcache_rb_module_t*)rcache, reg );
     OPAL_THREAD_ADD32(&reg->ref_count, 1); 
+    OPAL_THREAD_UNLOCK(&rb_module->rb_lock); 
+    return rc;
 }
 
 int mca_rcache_rb_delete (
@@ -81,15 +98,18 @@ int mca_rcache_rb_delete (
                           uint32_t flags
                           ) { 
     int rc; 
+    OPAL_THREAD_LOCK(&rb_module->rb_lock); 
     if(!(flags & MCA_MPOOL_FLAGS_PERSIST)) { 
         rc = mca_rcache_rb_mru_delete( (mca_rcache_rb_module_t*) rcache, reg); 
     }
     if(OMPI_SUCCESS != rc) { 
+        OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
         return rc; 
     }
     reg->flags = 0; 
-    return mca_rcache_rb_tree_delete((mca_rcache_rb_module_t*)rcache, reg );
-    
+    rc =  mca_rcache_rb_tree_delete((mca_rcache_rb_module_t*)rcache, reg );
+    OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
+    return rc; 
 }
 
 
