@@ -18,11 +18,8 @@
 
 #include <stdlib.h>
 
-#include "mpi.h"
-#include "ompi/include/constants.h"
 #include "mpi/c/bindings.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
+#include "ompi/include/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init = PMPI_Init

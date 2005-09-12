@@ -16,11 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "mca/oob/oob.h"
-#include "info/info.h"
-#include "communicator/communicator.h"
+#include "orte/mca/oob/oob.h"
+#include "ompi/info/info.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_spawn = PMPI_Comm_spawn

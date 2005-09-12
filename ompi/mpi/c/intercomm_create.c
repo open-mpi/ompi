@@ -16,11 +16,10 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "mca/pml/pml.h"
-#include "communicator/communicator.h"
-
+#include "ompi/mca/pml/pml.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Intercomm_create = PMPI_Intercomm_create
@@ -40,7 +39,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     int local_size=0, local_rank=0;
     int lleader=0, rleader=0;
     ompi_communicator_t *newcomp=NULL;
-    ompi_proc_t **rprocs=NULL;
+    struct ompi_proc_t **rprocs=NULL;
     int rc=0, rsize=0;
 
     if ( MPI_PARAM_CHECK ) {

@@ -17,9 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_remote_group = PMPI_Comm_remote_group

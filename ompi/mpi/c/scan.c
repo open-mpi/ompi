@@ -16,13 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
-#include "datatype/datatype.h"
 #include "mpi/c/bindings.h"
-#include "mca/coll/coll.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
-#include "op/op.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/op/op.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Scan = PMPI_Scan

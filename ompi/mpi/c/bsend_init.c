@@ -16,10 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_bsend.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Bsend_init = PMPI_Bsend_init

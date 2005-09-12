@@ -30,10 +30,9 @@
 #include <netinet/in.h>
 #endif
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "mca/ns/ns.h"
+#include "orte/mca/ns/ns.h"
+#include "ompi/proc/proc.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_join = PMPI_Comm_join

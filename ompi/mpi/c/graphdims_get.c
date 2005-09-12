@@ -16,11 +16,8 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "errhandler/errhandler.h"
-#include "mca/topo/topo.h"
+#include "ompi/mca/topo/topo.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Graphdims_get = PMPI_Graphdims_get

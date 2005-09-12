@@ -16,10 +16,8 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "info/info.h"
-#include "communicator/communicator.h"
+#include "ompi/info/info.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_accept = PMPI_Comm_accept
@@ -75,7 +73,6 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
         }
     }
 
-
     /* parse info object. no prefedined values for this function in MPI-2 
      * so lets ignore it for the moment.
      * if ( rank == root && MPI_INFO_NULL != info ) {
@@ -87,8 +84,8 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
      * The two leaders will figure this out later. However, we need the tag.
      */
     if ( rank == root ) {
-	tmp_port = ompi_parse_port(port_name, &tag);
-	free (tmp_port);
+	    tmp_port = ompi_parse_port(port_name, &tag);
+	    free (tmp_port);
     }
     rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 

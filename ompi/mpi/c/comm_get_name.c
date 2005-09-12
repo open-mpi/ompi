@@ -18,11 +18,9 @@
 
 #include <string.h>
 
+#include "mpi/c/bindings.h"
 #include "opal/util/strncpy.h"
 #include "include/totalview.h"
-#include "mpi.h"
-#include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
 #include "opal/threads/mutex.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES

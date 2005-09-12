@@ -15,12 +15,9 @@
  */
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "mpi/f77/fint_2_int.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
-#include "datatype/datatype.h"
+#include "ompi/datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_f2c = PMPI_Type_f2c

@@ -19,12 +19,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "errhandler/errhandler.h"
-#include "info/info.h"
-#include "mca/mpool/mpool.h"
+#include "ompi/info/info.h"
+#include "ompi/mca/mpool/mpool.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Alloc_mem = PMPI_Alloc_mem

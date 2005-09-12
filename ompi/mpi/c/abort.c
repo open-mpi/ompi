@@ -15,10 +15,8 @@
  */
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Abort = PMPI_Abort

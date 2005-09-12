@@ -16,12 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "info/info.h"
-#include "communicator/communicator.h"
-#include "proc/proc.h"
-#include "mca/ns/base/base.h"
+#include "ompi/info/info.h"
+#include "ompi/proc/proc.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Open_port = PMPI_Open_port

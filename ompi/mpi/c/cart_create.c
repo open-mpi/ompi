@@ -16,12 +16,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
-#include "errhandler/errhandler.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Cart_create = PMPI_Cart_create

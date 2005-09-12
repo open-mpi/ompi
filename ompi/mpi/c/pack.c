@@ -18,13 +18,9 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
-#include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
-#include "opal/class/opal_object.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Pack = PMPI_Pack

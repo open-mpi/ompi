@@ -16,11 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "communicator/communicator.h"
-#include "errhandler/errhandler.h"
 #include "opal/threads/threads.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
