@@ -30,7 +30,6 @@
 #include "mca/gpr/gpr_types.h"
 #include "mca/oob/oob_types.h"
 #include "request/request.h"
-#include "ompi/proc/proc.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -209,12 +208,12 @@ struct ompi_communicator_t {
 	return (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators, cid);
     }
     
-    static inline ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* comm, int peer_id)
+    static inline struct ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* comm, int peer_id)
     {
 #if OMPI_ENABLE_DEBUG
 	if(peer_id >= comm->c_remote_group->grp_proc_count) {
 	    opal_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
-	    return (ompi_proc_t *) NULL;
+	    return (struct ompi_proc_t *) NULL;
 	}
 #endif
 	return comm->c_remote_group->grp_proc_pointers[peer_id];
@@ -340,9 +339,9 @@ struct ompi_communicator_t {
     int ompi_comm_set ( ompi_communicator_t* newcomm,
                         ompi_communicator_t* oldcomm,
                         int local_size, 
-                        ompi_proc_t **local_procs,
+                        struct ompi_proc_t **local_procs,
                         int remote_size,
-                        ompi_proc_t **remote_procs,
+                        struct ompi_proc_t **remote_procs,
                         opal_hash_table_t *attr,
                         ompi_errhandler_t *errh, 
                         mca_base_component_t *topocomponent );
@@ -351,7 +350,7 @@ struct ompi_communicator_t {
      * The routine makes sure, that all processes have afterwards
      * a list of ompi_proc_t pointers for the remote group.
      */
-    ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm, 
+    struct ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm, 
                                        ompi_communicator_t *bridge_comm, 
                                        int local_leader,
                                        int remote_leader,
@@ -363,8 +362,8 @@ struct ompi_communicator_t {
      * This routine verifies, whether local_group and remote group are overlapping
      * in intercomm_create
      */
-    int ompi_comm_overlapping_groups (int size, ompi_proc_t **lprocs,
-				      int rsize, ompi_proc_t ** rprocs);
+    int ompi_comm_overlapping_groups (int size, struct ompi_proc_t **lprocs,
+				      int rsize, struct ompi_proc_t ** rprocs);
 
 
     /**
@@ -431,7 +430,7 @@ struct ompi_communicator_t {
      *
      */
     orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port,
-                                              int send_first, ompi_proc_t *proc,
+                                              int send_first, struct ompi_proc_t *proc,
 					                         orte_rml_tag_t tag);
     
 
