@@ -23,9 +23,10 @@
 #ifndef MCA_PTL_GM_SEND_FRAG_H
 #define MCA_PTL_GM_SEND_FRAG_H
 
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/communicator/communicator.h"
 
 #define MATCH 0
 #define FRAG 1

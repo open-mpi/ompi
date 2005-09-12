@@ -17,7 +17,7 @@
  * 
  * $HEADER$
  */
-#include "gm_config.h"
+#include "ompi_config.h"
 #include "gm.h"
 
 struct mca_ptl_gm_send_frag_t;

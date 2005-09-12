@@ -24,6 +24,7 @@
 #define MCA_PTL_GM_PROC_H
 
 #include "opal/class/opal_object.h"
+#include "orte/mca/ns/ns_types.h"
 #include "ptl_gm.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

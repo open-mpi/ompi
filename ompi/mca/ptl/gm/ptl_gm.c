@@ -19,19 +19,19 @@
  */
 
 #include "ompi_config.h"
-#include "gm_config.h"
 #include <string.h>
-#include "class/ompi_bitmap.h"
+#include "ompi/class/ompi_bitmap.h"
 #include "opal/util/output.h"
-#include "util/proc_info.h"
-#include "mca/ns/ns.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_header.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_header.h"
 #include "ptl_gm.h"
 #include "ptl_gm_proc.h"
 #include "ptl_gm_priv.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_sendfrag.h"
+#include "ompi/proc/proc.h"
 
 mca_ptl_gm_module_t mca_ptl_gm_module = {
     {

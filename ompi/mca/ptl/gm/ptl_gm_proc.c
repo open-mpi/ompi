@@ -23,8 +23,10 @@
 #include <string.h>
 
 #include "include/sys/atomic.h"
-#include "class/opal_hash_table.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
+#include "opal/class/opal_hash_table.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/proc/proc.h"
+#include "opal/util/output.h"
 #include "ptl_gm.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_proc.h"
