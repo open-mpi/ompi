@@ -140,11 +140,7 @@ int main(int argc, char *argv[])
     orte_process_name_t requestor;
     int id, orted_pipe[2];
     pid_t pid;
-    int sleeper = 0;
-    
-    while(sleeper == 0) {
-        sleep(1);
-    }
+
 #if defined(HAVE_FORK) && defined(HAVE_PIPE)
     
     /* setup to check common command line options that just report and die */
