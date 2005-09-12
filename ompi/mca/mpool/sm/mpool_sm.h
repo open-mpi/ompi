@@ -66,6 +66,7 @@ void* mca_mpool_sm_alloc(
     mca_mpool_base_module_t* mpool, 
     size_t size, 
     size_t align, 
+    uint32_t flags,
     mca_mpool_base_registration_t** registration);
 
 /**

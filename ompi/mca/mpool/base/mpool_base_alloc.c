@@ -88,21 +88,12 @@ static void mca_mpool_base_registration_constructor( mca_mpool_base_registration
     reg->mpool = NULL;
     reg->base = NULL;
     reg->bound = NULL;
-    reg->is_leave_pinned = false;
+    reg->ref_count = 0;
 }
 
 static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_t * reg )
 {
-    mca_mpool_base_module_t* mpool = reg->mpool;
-    if(NULL != mpool) {
-        if(NULL != mpool->mpool_deregister) {
-            reg->mpool->mpool_deregister(
-                reg->mpool,
-                reg->base,
-                reg->bound - reg->base + 1,
-                reg);
-        }
-    }
+    
 }
 
 OBJ_CLASS_INSTANCE(
@@ -232,15 +223,12 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     {
         for(item = opal_list_get_first(&mca_mpool_base_modules);
             item != opal_list_get_end(&mca_mpool_base_modules);
-            item = opal_list_get_next(item)) 
-        {
+            item = opal_list_get_next(item)) {
             current = ((mca_mpool_base_selected_module_t *) item);
-            if(NULL == current->mpool_module->mpool_register)
-            {
+            if(NULL == current->mpool_module->mpool_register){
                 no_reg_function = current;
             }
-            else
-            {
+            else {
                 has_reg_function[reg_module_num++] = current;
             }
         }
@@ -292,9 +280,6 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         free(key);
     }
     
-    OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, i);
-    memset( ((mca_mpool_base_chunk_t *) item)->mpools, 0, sizeof(mca_mpool_base_reg_mpool_t) * MCA_MPOOL_BASE_MAX_REG); 
-
     if(NULL == no_reg_function && 0 == reg_module_num)
     {
         free(has_reg_function);
@@ -302,22 +287,13 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         {
             /* if the info argument was NULL and there were no useable mpools,
              * just malloc the memory and return it */
-            ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool = NULL;
             mem = malloc(size);
             if(NULL != mem)
-            {
-                ((mca_mpool_base_chunk_t *) item)->key.bottom = mem;
-                ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
-                                                     ((char *) mem + size - 1);
-                OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
-
-                ompi_rb_tree_insert(&mca_mpool_base_tree, 
-                                    &((mca_mpool_base_chunk_t *)item)->key, item);
-                OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
-                return mem;
-            }
+                {
+                    return mem;
+                }
+            
         }
-        OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, item);
         /* the user passed info but we were not able to use any of the mpools 
          * specified */
         return NULL;
@@ -329,23 +305,13 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     if(NULL != no_reg_function)
     {
         mca_mpool_base_module_t* mpool = no_reg_function->mpool_module;
-        mem = mpool->mpool_alloc(mpool, size, 0, &registration);
-        ((mca_mpool_base_chunk_t *) item)->key.bottom = mem;
-        ((mca_mpool_base_chunk_t *) item)->key.top = (void *)((char *) mem + size - 1);
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = mpool;
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].user_data = (void*) no_reg_function->user_data;
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool_registration = registration;
+        mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST, &registration);
         num_modules++;
     }
     else
     {
         mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
-        mem = mpool->mpool_alloc(mpool, size, 0, &registration);
-        ((mca_mpool_base_chunk_t *) item)->key.bottom = mem;
-        ((mca_mpool_base_chunk_t *) item)->key.top = (void *) ((char *) mem + size - 1);
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = mpool;
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].user_data = has_reg_function[i]->user_data;
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool_registration = registration;
+        mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST, &registration);
         i++;
         num_modules++;
     }
@@ -353,33 +319,15 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     while(i < reg_module_num && MCA_MPOOL_BASE_MAX_REG > num_modules)
     {
         mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
-        if(OMPI_SUCCESS != mpool->mpool_register(mpool, mem, size, &registration))
+        if(OMPI_SUCCESS != mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,  &registration))
         {
-            if(info == &ompi_mpi_info_null)
-            {
-                continue;
-            }
-            ((mca_mpool_base_chunk_t *) item)->mpools[i].mpool = NULL;
-            mca_mpool_base_free(mem);
-            OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, item);
             free(has_reg_function);
             return NULL;
         }
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = mpool;
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].user_data = has_reg_function[i]->user_data;
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool_registration = registration;
         num_modules++;
         i++;
     }
 
-    if(MCA_MPOOL_BASE_MAX_REG > num_modules)
-    {
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = NULL;
-    }
-    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
-    ompi_rb_tree_insert(&mca_mpool_base_tree, 
-                        &((mca_mpool_base_chunk_t *)item)->key, item);
-    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
     free(has_reg_function);
     return mem;
 }
@@ -421,8 +369,6 @@ int mca_mpool_base_free(void * base)
     for( ; i > 0; i--)
     {
         chunk->mpools[i].mpool->mpool_deregister(chunk->mpools[i].mpool, 
-                                                 chunk->key.bottom, 
-                                                 ((char *) chunk->key.top - (char *) chunk->key.bottom + 1), 
                                                  chunk->mpools[i].mpool_registration
                                                  );
     }

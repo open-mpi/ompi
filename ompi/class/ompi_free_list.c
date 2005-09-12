@@ -110,7 +110,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     if (NULL != flist->fl_mpool)
         alloc_ptr = flist->fl_mpool->mpool_alloc(flist->fl_mpool, 
                                                  (num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE + sizeof(ompi_free_list_memory_t), 
-                                                 0, &user_out);
+                                                 0, 0, &user_out);
     else
         alloc_ptr = malloc((num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE + sizeof(ompi_free_list_memory_t));
     if(NULL == alloc_ptr)

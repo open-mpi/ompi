@@ -67,22 +67,20 @@ static inline struct mca_rcache_rb_tree_item_t *
  * @retval pointer to an array of type mca_mpool_base_reg_mpool_t
  */
 struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
-                                                           mca_rcache_rb_module_t* rb_module, 
+                                                           mca_rcache_rb_module_t* rcache, 
                                                            void * base
                                                            )
 {
-    mca_rcache_rb_tree_item_t* found, *copy;
-        
-    OPAL_THREAD_LOCK(&rb_module->rb_lock);
-    found = mca_rcache_rb_tree_find_nl(rb_module, base);
-    if(NULL == found) { 
-        copy = NULL; 
-    } else { 
-        copy = OBJ_NEW(mca_rcache_rb_tree_item_t); 
-        *copy = *found; 
-    }
-    OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
-    return copy;
+    mca_rcache_rb_tree_item_t* found; 
+    mca_rcache_rb_tree_key_t key;
+
+    
+    key.base = base;
+    key.bound = base;
+    found =  (mca_rcache_rb_tree_item_t *)
+        ompi_rb_tree_find(&rcache->rb_tree, &key);
+    
+    return found;
 }
 
 /**
@@ -137,12 +135,9 @@ int mca_rcache_rb_tree_insert(
     rb_tree_item->key.bound = reg->bound; 
     rb_tree_item->reg = reg;
     
-    
-    OPAL_THREAD_LOCK(&rb_module->rb_lock); 
     rc = ompi_rb_tree_insert(&rb_module->rb_tree, 
                              (void*) &rb_tree_item->key, item);
-    OPAL_THREAD_UNLOCK(&rb_module->rb_lock); 
-    
+        
     if(OMPI_SUCCESS != rc) {
         OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, item);
         return rc; 
@@ -168,9 +163,8 @@ int mca_rcache_rb_tree_delete(mca_rcache_rb_module_t* rb_module,
     if(NULL == tree_item) {
         return OMPI_ERROR; 
     }
-    OPAL_THREAD_LOCK(&rb_module->rb_lock); 
     rc =  ompi_rb_tree_delete(&rb_module->rb_tree, &tree_item->key); 
-    OPAL_THREAD_UNLOCK(&rb_module->rb_lock);
+    
     return rc;
 }
 

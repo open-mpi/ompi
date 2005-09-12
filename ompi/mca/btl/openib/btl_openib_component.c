@@ -395,12 +395,12 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         mpool_resources.ib_pd = openib_btl->ib_pd; 
                 
         /* initialize the memory pool using the hca */ 
-        openib_btl->ib_pool = 
+        openib_btl->super.btl_mpool = 
             mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
                                          &openib_btl->super, 
                                          &mpool_resources); 
         
-        if(NULL == openib_btl->ib_pool) { 
+        if(NULL == openib_btl->super.btl_mpool) { 
             BTL_ERROR(("error creating vapi memory pool! aborting openib btl initialization")); 
             return NULL; 
         }
@@ -417,7 +417,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_num,
                             mca_btl_openib_component.ib_free_list_max,
                             mca_btl_openib_component.ib_free_list_inc,
-                            openib_btl->ib_pool);
+                            openib_btl->super.btl_mpool);
         
         ompi_free_list_init(&openib_btl->recv_free_eager,
                             length, 
@@ -425,7 +425,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_num,
                             mca_btl_openib_component.ib_free_list_max,
                             mca_btl_openib_component.ib_free_list_inc,
-                            openib_btl->ib_pool);
+                            openib_btl->super.btl_mpool);
         
         
         
@@ -441,7 +441,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_num,
                             mca_btl_openib_component.ib_free_list_max,
                             mca_btl_openib_component.ib_free_list_inc,
-                            openib_btl->ib_pool);
+                            openib_btl->super.btl_mpool);
                 
         /* Initialize pool of receive fragments */
         ompi_free_list_init (&openib_btl->recv_free_max, 
@@ -449,7 +449,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                              OBJ_CLASS (mca_btl_openib_recv_frag_max_t),
                              mca_btl_openib_component.ib_free_list_num,
                              mca_btl_openib_component.ib_free_list_max,
-                             mca_btl_openib_component.ib_free_list_inc, openib_btl->ib_pool);
+                             mca_btl_openib_component.ib_free_list_inc, openib_btl->super.btl_mpool);
 
         
         
@@ -466,7 +466,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_num,
                             mca_btl_openib_component.ib_free_list_max,
                             mca_btl_openib_component.ib_free_list_inc,
-                            openib_btl->ib_pool);
+                            openib_btl->super.btl_mpool);
         
         
         /* Initialize the rr_desc_post array for posting of rr*/ 

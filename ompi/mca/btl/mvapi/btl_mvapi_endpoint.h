@@ -36,7 +36,7 @@ extern "C" {
 OBJ_CLASS_DECLARATION(mca_btl_mvapi_endpoint_t);
 
 
-    struct mca_btl_mvapi_frag_t; 
+struct mca_btl_mvapi_frag_t; 
    
 struct mca_btl_mvapi_port_info_t {
     uint32_t subnet; 
@@ -86,6 +86,7 @@ struct mca_btl_mvapi_rem_info_t {
 
     uint32_t                    rem_subnet; 
     /* subnet of remote process */ 
+    
 } ; 
 typedef struct mca_btl_mvapi_rem_info_t mca_btl_mvapi_rem_info_t; 
 
@@ -152,7 +153,9 @@ struct mca_btl_base_endpoint_t {
     uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
 
     uint32_t subnet; 
-
+#if 0
+    mca_btl_mvapi_rdma_buf_t   *rdma_buf;
+#endif
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;

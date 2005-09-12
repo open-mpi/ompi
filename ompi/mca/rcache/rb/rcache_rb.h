@@ -36,12 +36,19 @@ struct mca_rcache_rb_module_t {
     size_t reg_mru_len; 
     
 };
-
 typedef struct mca_rcache_rb_module_t mca_rcache_rb_module_t; 
 
-typedef mca_rcache_base_component_t mca_rcache_rb_component_t; 
+
+struct mca_rcache_rb_component_t { 
+    mca_rcache_base_component_t super; 
+    size_t reg_mru_len; 
+}; typedef struct mca_rcache_rb_component_t mca_rcache_rb_component_t; 
+
 OMPI_COMP_EXPORT extern mca_rcache_rb_component_t mca_rcache_rb_component;
 
+
+
+void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache );
 
 int mca_rcache_rb_find (
                         mca_rcache_base_module_t* rcache, 
@@ -65,8 +72,11 @@ int mca_rcache_rb_delete (
 
 
 /**
-  * finalize
+  * init/finalize
   */
+
+void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache );
+
 void mca_rcache_rb_finalize(
                             struct mca_rcache_base_module_t*
                             );

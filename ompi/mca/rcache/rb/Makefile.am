@@ -18,9 +18,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-CFLAGS = $(rcache_rb_CFLAGS)
-AM_CPPFLAGS = $(rcache_rb_CPPFLAGS)
-
 sources = \
     rcache_rb.c \
     rcache_rb.h \

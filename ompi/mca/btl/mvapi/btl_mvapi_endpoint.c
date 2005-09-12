@@ -215,7 +215,32 @@ static int mca_btl_mvapi_endpoint_send_connect_data(mca_btl_base_endpoint_t* end
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+#if 0
+    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->reg->r_key, 1, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
+    
+    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->base, 1, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
+    
+    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->entry_size, 1, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
 
+    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->entry_cnt, 1, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
+#endif
+   
 
     /* send to endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
@@ -284,7 +309,7 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
         return rc;
     }
 
-
+    
     /* Create the Low Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_qp(endpoint->endpoint_btl, 
                                                               endpoint->endpoint_btl->nic, 
@@ -298,6 +323,16 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
         BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
+
+#if 0
+    /* Create the RDMA buffer's for small messages */
+    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_rdma_buf(endpoint->endpoint_btl,
+                                                                    (mca_btl_mvapi_endpoint_t*) endpoint))) { 
+        BTL_ERROR(("error creating rdma_buf for small messages error code %d", rc)); 
+        return rc; 
+    }
+                                                                    
+#endif
 
     BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
@@ -349,6 +384,15 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
         BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
+
+#if 0 
+    /* Create the RDMA buffer's for small messages */
+    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_rdma_buf(endpoint->endpoint_btl,
+                                                                    (mca_btl_mvapi_endpoint_t*) endpoint))) { 
+        BTL_ERROR(("error creating rdma_buf for small messages error code %d", rc)); 
+        return rc; 
+    }
+#endif                                                              
 
     BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
@@ -451,6 +495,32 @@ static void mca_btl_mvapi_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
+#if 0
+    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->r_key, &cnt, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
+    
+    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_base, &cnt, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
+    
+    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_size, &cnt, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
+
+    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_cnt, &cnt, ORTE_UINT32); 
+    if(rc != ORTE_SUCCESS) { 
+        ORTE_ERROR_LOG(rc); 
+        return rc; 
+    }
+#endif
+
     
     BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
                  rem_info.rem_qp_num_high,
@@ -702,7 +772,40 @@ int mca_btl_mvapi_endpoint_connect(
     return OMPI_SUCCESS;
 }
 
+#if 0
+/* 
+ * Create the small message RDMA buffer
+ */ 
+int mca_btl_mvapi_endpoint_create_rdma_buf(
+                                           mca_btl_mvapi_module_t* mvapi_btl, 
+                                           mca_btl_mvapi_endpoint_t* endpoint
+                                           )
 
+
+{
+    endpoint->rdma_buf = (mca_btl_mvapi_rdma_buf_t*) 
+        malloc(sizeof(mca_btl_mvapi_rdma_buf_t));
+    
+    if(NULL == endpoint->rdma_buf) { 
+        return OMPI_ERROR; 
+    }
+    
+    endpoint->entry_size = 8196; 
+    endpoint->entry_cnt = 64;
+    endpoint->rdma_buf->base = mvapi_btl->btl_mpool->mpool_alloc(mvapi_btl->btl_mpool, 
+                                                                 endpoint->rdma_buf->entry_size *
+                                                                 endpoint->rdma_buf->entry_cnt, 
+                                                                 0, 
+                                                                 0, 
+                                                                 endpoint->rdma_buf->reg); 
+    if(NULL == endpoint->rdma_buf->base) { 
+        return OMPI_ERROR; 
+    } else { 
+        return OMPI_SUCCESS; 
+    }
+}
+
+#endif
 /* 
  * Create the queue pair note that this is just the initial 
  *  queue pair creation and we need to get the remote queue pair 

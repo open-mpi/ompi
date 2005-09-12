@@ -287,6 +287,8 @@ int mca_bml_r2_add_procs(
                 bml_btl->btl_put = btl->btl_put;
                 bml_btl->btl_get = btl->btl_get;
                 bml_btl->btl_flags = btl->btl_flags; 
+                
+                bml_btl->btl_mpool = btl->btl_mpool;
             }
         }
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {

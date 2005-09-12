@@ -32,7 +32,6 @@ struct mca_mpool_base_resources_t;
 struct mca_mpool_base_registration_t { 
     opal_list_item_t super; 
     struct mca_mpool_base_module_t *mpool; 
-    bool is_leave_pinned;
     unsigned char* base;
     unsigned char* bound; 
     unsigned char* alloc_base; 
@@ -44,6 +43,19 @@ struct mca_mpool_base_registration_t {
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t); 
+
+#define MCA_MPOOL_REG_RETAIN(reg) { \
+ do{ \
+ OPAL_THREAD_ADD32(&reg->ref_count, 1); \
+ } while(0); \
+}
+
+#define MCA_MPOOL_REG_RELEASE(reg) { \
+ do{ \
+ OPAL_THREAD_ADD32(&reg->ref_count, -1); \
+ } while(0); \
+}
+
 
 /**
  * component initialize
@@ -58,6 +70,7 @@ typedef void* (*mca_mpool_base_module_alloc_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     size_t size,
     size_t align,
+    uint32_t flags, 
     mca_mpool_base_registration_t** registration);
                                                                                                                                    
 /**
@@ -84,6 +97,7 @@ typedef int (*mca_mpool_base_module_register_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     void * addr,
     size_t size,
+    uint32_t flags, 
     mca_mpool_base_registration_t** registration);
     
 /**
@@ -91,8 +105,6 @@ typedef int (*mca_mpool_base_module_register_fn_t)(
   */
 typedef int (*mca_mpool_base_module_deregister_fn_t)(
     struct mca_mpool_base_module_t* mpool,
-    void * addr,
-    size_t size, 
     mca_mpool_base_registration_t* registration);
 
 /**
@@ -103,8 +115,19 @@ typedef int (*mca_mpool_base_module_find_fn_t) (
                                                 struct mca_mpool_base_module_t* mpool, 
                                                 void* addr, 
                                                 size_t size, 
-                                                ompi_pointer_array_t* regs 
+                                                ompi_pointer_array_t* regs, 
+                                                uint32_t *cnt 
                                                 ); 
+
+
+/** 
+ * retain registration
+ */ 
+
+typedef int (*mca_mpool_base_module_retain_fn_t) ( 
+                                            struct mca_mpool_base_module_t* mpool, 
+                                            mca_mpool_base_registration_t* registration); 
+
 
 /** 
  * release registration
@@ -159,8 +182,10 @@ struct mca_mpool_base_module_t {
     mca_mpool_base_module_register_fn_t mpool_register;  /**< register memory */
     mca_mpool_base_module_deregister_fn_t mpool_deregister; /**< deregister memory */
     mca_mpool_base_module_find_fn_t mpool_find; /**< find regisrations in the cache */
+    mca_mpool_base_module_retain_fn_t mpool_retain; /**< retain a regisrtation from the cache */ 
     mca_mpool_base_module_release_fn_t mpool_release; /**< release a regisrtation from the cache */ 
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
+    struct mca_rcache_base_module_t *rcache; /* the rcache associated with this mpool */ 
 };
 /**
  * Convenience typedef

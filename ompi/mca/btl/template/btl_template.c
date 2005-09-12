@@ -258,6 +258,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
                 mpool,
                 base_addr,
                 new_len,
+                0, 
                 &registration);
             if(rc != OMPI_SUCCESS) {
                 MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
@@ -310,6 +311,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
             mpool,
             iov.iov_base,
             max_data,
+            0,
             &registration);
         if(rc != OMPI_SUCCESS) {
             MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
@@ -456,6 +458,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
                 mpool,
                 base_addr,
                 new_len,
+                0,
                 &registration);
             if(rc != OMPI_SUCCESS) {
                 MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
@@ -489,6 +492,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
             mpool,
             frag->segment.seg_addr.pval,
             frag->segment.seg_len,
+            0, 
             &registration);
         if(rc != OMPI_SUCCESS) {
             MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);

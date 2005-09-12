@@ -68,6 +68,9 @@ struct mca_bml_base_btl_t {
     mca_btl_base_module_put_fn_t     btl_put;
     mca_btl_base_module_get_fn_t     btl_get;
     mca_btl_base_component_progress_fn_t btl_progress; 
+    
+    mca_mpool_base_module_t*         btl_mpool; 
+    
 };
 typedef struct mca_bml_base_btl_t mca_bml_base_btl_t;
 

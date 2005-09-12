@@ -204,7 +204,9 @@ int mca_btl_openib_free(
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)des; 
 
     if(frag->size == 0) {
-        OBJ_RELEASE(frag->openib_reg); 
+        btl->btl_mpool->mpool_release(btl->btl_mpool, 
+                                      (mca_mpool_base_registration_t*) 
+                                      frag->openib_reg); 
         MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
                  
     } 
@@ -267,7 +269,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     
     if(NULL != openib_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
         size_t reg_len; 
 
        /* the memory is already pinned and we have contiguous user data */ 
@@ -287,61 +288,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         
         
         reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
-        if(frag->segment.seg_len > reg_len) { 
-            
-            /* the pinned region is too small! we have to re-pinn it */ 
-            
-            size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
-                + frag->segment.seg_len - reg_len; 
-            void * base_addr = openib_reg->base_reg.base; 
-            
-            rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
-            if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR(("error removing memory region from memory pool tree")); 
-                return NULL; 
-            } 
-
-            if(is_leave_pinned) { 
-                if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)){ 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-            } 
-            OBJ_RELEASE(openib_reg); 
-            
-            openib_btl->ib_pool->mpool_register(openib_btl->ib_pool, 
-                                                base_addr, 
-                                                new_len, 
-                                                (mca_mpool_base_registration_t**) &openib_reg);
-            
-            rc = mca_mpool_base_insert(openib_reg->base_reg.base, 
-                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
-                                       openib_btl->ib_pool, 
-                                       (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*) openib_reg); 
-            
-            
-            if(rc != OMPI_SUCCESS) { 
-                BTL_ERROR(("error inserting memory region into memory pool tree")); 
-                return NULL; 
-            } 
-
-            OBJ_RETAIN(openib_reg); 
-            
-            if(is_leave_pinned) {
-                /* we should leave the memory pinned so put the memory on the MRU list */ 
-                openib_reg->base_reg.is_leave_pinned = is_leave_pinned; 
-                opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
-            } 
-        } else if(is_leave_pinned) {
-            /* the current memory region is large enough and we should leave the memory pinned */  
-            if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                BTL_ERROR(("error removing item from reg_mru_list")); 
-                return NULL; 
-            }
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
-        }
-        
+               
         frag->mr = openib_reg->mr; 
         frag->sg_entry.length = max_data; 
         frag->sg_entry.lkey = frag->mr->lkey; 
@@ -355,18 +302,14 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0; 
         frag->openib_reg= openib_reg; 
-        OBJ_RETAIN(openib_reg); 
-
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) openib_reg); 
         return &frag->base;
         
-    } else if((mca_btl_openib_component.leave_pinned || max_data > btl->btl_max_send_size) && 
+    } else if( max_data > btl->btl_max_send_size && 
                ompi_convertor_need_buffers(convertor) == 0 && 
-               reserve == 0)
-    {
-        /* The user buffer is contigous and we need to leave the buffer pinned or we are asked to send 
-           more than the max send size.  Note that the memory was not already pinned because we have 
-           no registration information passed to us */ 
-
+               reserve == 0) {
+        /* The user buffer is contigous and we are asked to send more than the max send size.  */            
+        
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -383,61 +326,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->base.des_flags = 0; 
 
         
-        if(mca_btl_openib_component.leave_pinned) { 
-            /* so we need to leave pinned  which means we must check and see if we 
-               have room on the MRU list */
-            
-            if(mca_btl_openib_component.reg_mru_len <= openib_btl->reg_mru_list.opal_list_length  ) {
-                /* we have the maximum number of entries on the MRU list, time to 
-                   pull something off and make room. */ 
-
-                mca_mpool_openib_registration_t* old_reg =
-                    (mca_mpool_openib_registration_t*)
-                    opal_list_remove_last(&openib_btl->reg_mru_list);
-                
-                if( NULL == old_reg) { 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-
-                                
-                rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
-                
-                if(OMPI_SUCCESS != rc) { 
-                    BTL_ERROR(("error removing memory region from memory pool tree")); 
-                    return NULL; 
-                }
-                
-                               
-                OBJ_RELEASE(old_reg);
-            }
-            openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
+        btl->btl_mpool->mpool_register(btl->btl_mpool,
                                             iov.iov_base, 
                                             max_data, 
+                                            0,
                                             (mca_mpool_base_registration_t**) &openib_reg); 
-            
-            rc = mca_mpool_base_insert(openib_reg->base_reg.base, 
-                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
-                                       openib_btl->ib_pool, 
-                                       (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*) openib_reg); 
-            if(rc != OMPI_SUCCESS) 
-                return NULL; 
-            OBJ_RETAIN(openib_reg); 
-            
-            openib_reg->base_reg.is_leave_pinned = true; 
-                    
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
-            
-        } else {
-            /* we don't need to leave the memory pinned so just register it.. */ 
-            openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
-                                            iov.iov_base, 
-                                            max_data, 
-                                            (mca_mpool_base_registration_t**) &openib_reg); 
-            
-            openib_reg->base_reg.is_leave_pinned = false; 
-        } 
+        
+        
         frag->mr = openib_reg->mr; 
         frag->sg_entry.length = max_data; 
         frag->sg_entry.lkey = openib_reg->mr->lkey;
@@ -565,128 +460,20 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     if(NULL!= openib_reg){ 
         /* the memory is already pinned try to use it if the pinned region is large enough*/ 
-        bool is_leave_pinned = openib_reg->base_reg.is_leave_pinned; 
         reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
         
-
-        if(frag->segment.seg_len > reg_len ) { 
-            /* the pinned region is too small! we have to re-pinn it */ 
-            size_t new_len = openib_reg->base_reg.bound - openib_reg->base_reg.base + 1 
-                + frag->segment.seg_len - reg_len; 
-            void * base_addr = openib_reg->base_reg.base; 
-
-            rc = mca_mpool_base_remove((void*) openib_reg->base_reg.base); 
-            if(OMPI_SUCCESS != rc) { 
-                BTL_ERROR(("error removing memory region from memory pool tree")); 
-                return NULL; 
-            } 
-
-            if(is_leave_pinned) { 
-                /* the memory we just un-pinned was marked as leave pinned, 
-                 * pull it off the MRU list 
-                 */ 
-                if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-            }
-            OBJ_RELEASE(openib_reg); 
-            
-            openib_btl->ib_pool->mpool_register(openib_btl->ib_pool, 
-                                            base_addr, 
-                                            new_len,
-                                            (mca_mpool_base_registration_t**) &openib_reg);
-            
-        
-            rc = mca_mpool_base_insert(openib_reg->base_reg.base, 
-                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
-                                       openib_btl->ib_pool, 
-                                       (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*) openib_reg); 
-            
-            if(OMPI_SUCCESS != rc) {
-                BTL_ERROR(("error inserting memory region into memory pool tree")); 
-                return NULL;
-            }
-            OBJ_RETAIN(openib_reg); 
-            
-            if(is_leave_pinned) { 
-                /* we should leave the memory pinned so put the memory on the MRU list */ 
-                openib_reg->base_reg.is_leave_pinned = is_leave_pinned; 
-                opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
-            } 
-
-        } 
-        else if(is_leave_pinned){ 
-            /* the current memory region is large enough and we should leave the memory pinned */  
-            if(NULL == opal_list_remove_item(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg)) { 
-                BTL_ERROR(("error removing item from reg_mru_list")); 
-                return NULL; 
-            }    
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg); 
-        }
-        OBJ_RETAIN(openib_reg); 
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, 
+                                     (mca_mpool_base_registration_t*) openib_reg); 
     }  else { 
         /* we didn't get a memory registration passed in, so we have to register the region
          * ourselves 
          */ 
-
-        if(mca_btl_openib_component.leave_pinned) { 
-              /* so we need to leave pinned  which means we must check and see if we 
-               have room on the MRU list */
         
-            if( mca_btl_openib_component.reg_mru_len <= openib_btl->reg_mru_list.opal_list_length  ) {
-                /* we have the maximum number of entries on the MRU list, time to 
-                   pull something off and make room. */ 
-
-                mca_mpool_openib_registration_t* old_reg =
-                    (mca_mpool_openib_registration_t*)
-                    opal_list_remove_last(&openib_btl->reg_mru_list);
-                
-                if( NULL == old_reg) { 
-                    BTL_ERROR(("error removing item from reg_mru_list")); 
-                    return NULL; 
-                }
-                
-                rc = mca_mpool_base_remove((void*) old_reg->base_reg.base); 
-                if(OMPI_SUCCESS !=rc ) { 
-                    BTL_ERROR(("error removing memory region from memory pool tree")); 
-                    return NULL; 
-                } 
-                
-                OBJ_RELEASE(old_reg);
-                
-            }
-            openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
-                                        frag->segment.seg_addr.pval,
-                                        *size, 
-                                        (mca_mpool_base_registration_t**) &openib_reg);
-            
-            openib_reg->base_reg.is_leave_pinned = true;
-            
-            rc = mca_mpool_base_insert(openib_reg->base_reg.base,  
-                                       openib_reg->base_reg.bound - openib_reg->base_reg.base + 1, 
-                                       openib_btl->ib_pool, 
-                                       (void*) (&openib_btl->super), 
-                                       (mca_mpool_base_registration_t*)  openib_reg); 
-            if(OMPI_SUCCESS != rc){ 
-                BTL_ERROR(("error inserting memory region into memory pool")); 
-                return NULL;
-            } 
-            
-            OBJ_RETAIN(openib_reg); 
-            opal_list_append(&openib_btl->reg_mru_list, (opal_list_item_t*) openib_reg);
-            
-        } else { 
-            /* we don't need to leave the memory pinned so just register it.. */ 
-            openib_btl->ib_pool->mpool_register(openib_btl->ib_pool,
-                                            frag->segment.seg_addr.pval,
-                                            *size, 
-                                            (mca_mpool_base_registration_t**) &openib_reg);
-            openib_reg->base_reg.is_leave_pinned=false; 
-        }
-        
-        
+        btl->btl_mpool->mpool_register(btl->btl_mpool,
+                                       frag->segment.seg_addr.pval,
+                                       *size, 
+                                       0,
+                                       (mca_mpool_base_registration_t**) &openib_reg);
     }
 
     

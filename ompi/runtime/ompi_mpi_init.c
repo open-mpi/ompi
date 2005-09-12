@@ -56,6 +56,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/mca/allocator/base/base.h"
 #include "ompi/mca/allocator/allocator.h"
+#include "ompi/mca/rcache/base/base.h"
+#include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/pml/pml.h"
@@ -212,6 +214,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
         error = "mca_allocator_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = mca_rcache_base_open())) {
+        error = "mca_rcache_base_open() failed";
         goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {

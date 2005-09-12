@@ -64,14 +64,17 @@ mca_mpool_mvapi_component_t mca_mpool_mvapi_component = {
 
 static void mca_mpool_mvapi_registration_constructor( mca_mpool_mvapi_registration_t * registration ) 
 { 
-    registration->base_reg.is_leave_pinned = false; 
+    registration->base_reg.base = NULL; 
+    registration->base_reg.bound = NULL; 
+    registration->base_reg.flags = 0;
+
 }
 
 static void mca_mpool_mvapi_registration_destructor( mca_mpool_mvapi_registration_t * registration ) 
 { 
     registration->base_reg.base = NULL; 
     registration->base_reg.bound = NULL; 
-    registration->base_reg.is_leave_pinned=false; 
+    registration->base_reg.flags = 0;
 
 } 
 
@@ -104,7 +107,14 @@ static mca_mpool_base_module_t* mca_mpool_mvapi_init(
 {
     mca_mpool_mvapi_module_t* mpool_module; 
     long page_size = mca_mpool_mvapi_component.page_size; 
-
+    mca_base_param_reg_string(&mca_mpool_mvapi_component.super.mpool_version,                                                                                                                                      
+                              "rcache_name",                                                                                                                                                                    
+                              "The name of the registration cache the mpool should use",                                                                                                                        
+                              false,                                                                                                                                                                            
+                              false,                                                                                                                                                                            
+                              "rb",                                                                                                                                                                             
+                              &(mca_mpool_mvapi_component.rcache_name));     
+    
     mca_mpool_mvapi_component.page_size_log = 0; 
     while(page_size > 1){ 
         page_size = page_size >> 1; 

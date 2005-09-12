@@ -21,6 +21,7 @@
 
 #include "pml_ob1.h"
 #include "pml_ob1_proc.h"
+#include "pml_ob1_rdma.h"
 #include "mca/mpool/base/base.h"
 #include "mca/pml/base/pml_base_recvreq.h"
 
@@ -32,14 +33,15 @@ extern "C" {
 struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     struct ompi_proc_t *req_proc;
-    struct mca_mpool_base_chunk_t* req_chunk;
-    struct mca_mpool_base_reg_mpool_t* req_mpool;
     ompi_ptr_t req_send;
     volatile int32_t req_lock;
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;
     size_t  req_rdma_offset;
+    mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST];
+    uint32_t req_rdma_cnt;
+    uint32_t req_rdma_idx;
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -102,17 +104,13 @@ do {                                                               \
  */
 #define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                                     \
 do {                                                                                 \
-    if(NULL != (recvreq)->req_chunk) {                                               \
-        mca_mpool_base_reg_mpool_t* reg = (recvreq)->req_chunk->mpools;              \
-        while(NULL != reg->mpool) {                                                  \
-            if(NULL != reg->mpool_registration) {                                    \
-                OBJ_RELEASE(reg->mpool_registration);                                \
-            }                                                                        \
-            reg++;                                                                   \
+    size_t r;                                                                        \
+    for(r=0; r<recvreq->req_rdma_cnt; r++) {                                         \
+        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;       \
+        if(NULL != btl_reg) {                                                        \
+            btl_reg->mpool->mpool_release(btl_reg->mpool, btl_reg);                  \
         }                                                                            \
-        OBJ_RELEASE((recvreq)->req_chunk);                                           \
     }                                                                                \
-                                                                                     \
     MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                            \
     OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (opal_list_item_t*)(recvreq)); \
 } while(0)
@@ -149,9 +147,9 @@ do {                                                                            
     (request)->req_bytes_received = 0;                                            \
     (request)->req_bytes_delivered = 0;                                           \
     (request)->req_lock = 0;                                                      \
-    (request)->req_chunk = NULL;                                                  \
-    (request)->req_mpool = NULL;                                                  \
     (request)->req_pipeline_depth = 0;                                            \
+    (request)->req_rdma_cnt = 0;                                                  \
+    (request)->req_rdma_idx = 0;                                                  \
     (request)->req_recv.req_base.req_pml_complete = false;                        \
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
     (request)->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;        \

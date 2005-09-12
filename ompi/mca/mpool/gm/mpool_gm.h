@@ -36,6 +36,7 @@ extern "C" {
 
 struct mca_mpool_gm_component_t {
     mca_mpool_base_component_t super;
+    char* rcache_name; 
 };
 
 typedef struct mca_mpool_gm_component_t mca_mpool_gm_component_t;
@@ -75,6 +76,7 @@ void* mca_mpool_gm_alloc(
     mca_mpool_base_module_t* mpool, 
     size_t size, 
     size_t align, 
+    uint32_t flags, 
     mca_mpool_base_registration_t** registration);
 
 /**
@@ -93,12 +95,11 @@ int mca_mpool_gm_register(
     mca_mpool_base_module_t* mpool, 
     void *addr, 
     size_t size, 
+    uint32_t flags, 
     mca_mpool_base_registration_t** registration);
 
 int mca_mpool_gm_deregister(
     mca_mpool_base_module_t* mpool, 
-    void *addr, 
-    size_t size, 
     mca_mpool_base_registration_t*);
 
 
@@ -110,10 +111,31 @@ void mca_mpool_gm_free(
     void * addr, 
     mca_mpool_base_registration_t* registration);
 
+int mca_mpool_gm_find(
+                      struct mca_mpool_base_module_t* mpool, 
+                      void* addr, 
+                      size_t size, 
+                      ompi_pointer_array_t *regs,
+                      uint32_t *cnt
+                      );
+    
+int mca_mpool_gm_release(
+                            struct mca_mpool_base_module_t* mpool, 
+                            mca_mpool_base_registration_t* registraion
+                            ); 
+
+int mca_mpool_gm_retain(
+                            struct mca_mpool_base_module_t* mpool, 
+                            mca_mpool_base_registration_t* registraion
+                            ); 
+
+
+
 void* mca_common_gm_segment_alloc(
     struct mca_mpool_base_module_t* module, 
     size_t* size, 
     mca_mpool_base_registration_t** registration);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

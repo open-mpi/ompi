@@ -21,6 +21,8 @@
 #include <vapi.h>
 #include <vapi_types.h> 
 #include <vapi_common.h> 
+#include "mca/rcache/rcache.h" 
+#include "mca/rcache/base/base.h"
 
 /*
  *  Initializes the mpool module.
@@ -35,8 +37,11 @@ void mca_mpool_mvapi_module_init(mca_mpool_mvapi_module_t* mpool)
     mpool->super.mpool_register = mca_mpool_mvapi_register; 
     mpool->super.mpool_deregister = mca_mpool_mvapi_deregister; 
     mpool->super.mpool_find = mca_mpool_mvapi_find; 
+    mpool->super.mpool_retain = mca_mpool_mvapi_retain;
     mpool->super.mpool_release = mca_mpool_mvapi_release; 
     mpool->super.mpool_finalize = NULL; 
+    mpool->super.rcache = 
+        mca_rcache_base_module_create(mca_mpool_mvapi_component.rcache_name);
 }
 
 
@@ -46,13 +51,14 @@ void mca_mpool_mvapi_module_init(mca_mpool_mvapi_module_t* mpool)
 void* mca_mpool_mvapi_alloc(
     mca_mpool_base_module_t* mpool, 
     size_t size, 
-    size_t align, 
+    size_t align,
+    uint32_t flags, 
     mca_mpool_base_registration_t** registration)
 {
     
     void* addr_malloc = (void*)malloc(size + mca_mpool_mvapi_component.page_size); 
     void* addr = (void*)  ALIGN_ADDR(addr_malloc, mca_mpool_mvapi_component.page_size_log); 
-    if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, registration)) { 
+    if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, flags, registration)) { 
         free(addr_malloc);
         return NULL; 
     }
@@ -65,9 +71,10 @@ void* mca_mpool_mvapi_alloc(
  * register memory 
  */ 
 int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool, 
-                            void *addr, 
-                            size_t size, 
-                            mca_mpool_base_registration_t** registration){
+                             void *addr, 
+                             size_t size, 
+                             uint32_t flags, 
+                             mca_mpool_base_registration_t** registration){
     
     mca_mpool_mvapi_module_t * mpool_module = (mca_mpool_mvapi_module_t*) mpool; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
@@ -111,7 +118,18 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
     vapi_reg->r_key = mr_out.r_key; 
     vapi_reg->base_reg.base = addr; 
     vapi_reg->base_reg.bound = (void*) ((char*) addr + size - 1); 
+    if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
+        mpool->rcache->rcache_insert(mpool->rcache, 
+                                     (mca_mpool_base_registration_t*) vapi_reg, 
+                                     flags); 
+    }
+                                     
+                                     
+    vapi_reg->base_reg.flags = flags; 
     
+    mca_mpool_mvapi_retain(mpool, 
+                           vapi_reg); 
+                                 
     return OMPI_SUCCESS; 
 }
 
@@ -119,7 +137,7 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
 /* 
  * deregister memory 
  */ 
-int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size, 
+int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool, 
                               mca_mpool_base_registration_t* registration){
     
     VAPI_ret_t ret; 
@@ -135,6 +153,11 @@ int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_
         opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
         return OMPI_ERROR; 
     }
+    if(registration->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
+        mpool->rcache->rcache_delete(mpool->rcache, 
+                                        registration, 
+                                        registration->flags); 
+    }
     
     return OMPI_SUCCESS; 
 }
@@ -149,7 +172,7 @@ void* mca_mpool_mvapi_realloc(
     mca_mpool_base_registration_t** registration)
 {
     mca_mpool_base_registration_t* old_reg  = *registration; 
-    void* new_mem = mpool->mpool_alloc(mpool, size, 0, registration); 
+    void* new_mem = mpool->mpool_alloc(mpool, size, 0, old_reg->flags, registration); 
     memcpy(new_mem, addr, old_reg->bound - old_reg->base); 
     mpool->mpool_free(mpool, addr, old_reg); 
     return new_mem; 
@@ -161,11 +184,8 @@ void* mca_mpool_mvapi_realloc(
 void mca_mpool_mvapi_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
-    
-    mpool->mpool_deregister(mpool, addr, 0, registration); 
+    mpool->mpool_deregister(mpool, registration); 
     free(registration->alloc_base); 
-    
-    
 }
 
 
@@ -173,16 +193,32 @@ int mca_mpool_mvapi_find(
                          struct mca_mpool_base_module_t* mpool, 
                          void* addr, 
                          size_t size, 
-                         ompi_pointer_array_t *regs 
+                         ompi_pointer_array_t *regs,
+                         uint32_t *cnt
                          ){
 
-    return OMPI_SUCCESS; 
+    return mpool->rcache->rcache_find(mpool->rcache, 
+                                      addr, 
+                                      size, 
+                                      regs, 
+                                      cnt); 
+    
 }
  
 int mca_mpool_mvapi_release(
                             struct mca_mpool_base_module_t* mpool, 
-                            mca_mpool_base_registration_t* registraion
+                            mca_mpool_base_registration_t* registration
                             ){
+    if(0 == OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
+        mpool->mpool_deregister(mpool, registration);
+    }
+    return OMPI_SUCCESS; 
+}
+
+int mca_mpool_mvapi_retain(struct mca_mpool_base_module_t* mpool, 
+                           mca_mpool_base_registration_t* registration
+                           ){
+    OPAL_THREAD_ADD32(&registration->ref_count, 1); 
     return OMPI_SUCCESS; 
 }
 

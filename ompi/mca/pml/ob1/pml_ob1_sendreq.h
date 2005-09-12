@@ -25,6 +25,7 @@
 #include "pml_ob1_proc.h"
 #include "pml_ob1_comm.h"
 #include "pml_ob1_hdr.h"
+#include "pml_ob1_rdma.h"
 #include "datatype/convertor.h"
 #include "mca/bml/bml.h" 
 
@@ -36,15 +37,16 @@ extern "C" {
 struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     ompi_proc_t* req_proc; 
-    mca_bml_base_endpoint_t* bml_endpoint;
+    mca_bml_base_endpoint_t* req_endpoint;
     volatile int32_t req_state;
-    struct mca_mpool_base_chunk_t* req_chunk;
     ompi_ptr_t req_recv;
     volatile int32_t req_lock;
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
     size_t req_send_offset;
     size_t req_rdma_offset;
+    mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST]; 
+    uint32_t req_rdma_cnt; 
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
@@ -119,7 +121,7 @@ do {                                                                            
     sendreq->req_lock = 0;                                                                \
     sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
-    sendreq->req_chunk = NULL;                                                            \
+    sendreq->req_rdma_cnt = 0;                                                            \
     sendreq->req_state = 0;                                                               \
     sendreq->req_send_offset = 0;                                                         \
     sendreq->req_send.req_base.req_pml_complete = false;                                  \
@@ -127,7 +129,7 @@ do {                                                                            
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(                          \
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);               \
-    sendreq->bml_endpoint = endpoint;                                                     \
+    sendreq->req_endpoint = endpoint;                                                     \
                                                                                           \
     /* select a btl */                                                                    \
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                      \
@@ -245,18 +247,14 @@ do {                                                                            
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                            \
 {                                                                           \
-    if(NULL != (sendreq)->req_chunk) {                                      \
-        mca_mpool_base_reg_mpool_t* reg = (sendreq)->req_chunk->mpools;     \
-        while(NULL != reg->mpool) {                                         \
-            if(NULL != reg->mpool_registration) {                           \
-                OBJ_RELEASE(reg->mpool_registration);                       \
-            }                                                               \
-            reg++;                                                          \
-        }                                                                   \
-        OBJ_RELEASE((sendreq)->req_chunk);                                  \
-    }                                                                       \
-                                                                            \
     /*  Let the base handle the reference counts */                         \
+    size_t r;                                                               \
+    for(r=0; r<sendreq->req_rdma_cnt; r++) {                                \
+        mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;  \
+        if( NULL != reg ) {                                                 \
+          reg->mpool->mpool_release(reg->mpool, reg);                       \
+        }                                                                   \
+    }                                                                       \
     MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));                 \
     OMPI_FREE_LIST_RETURN(                                                  \
         &mca_pml_ob1.send_requests, (opal_list_item_t*)sendreq);            \
