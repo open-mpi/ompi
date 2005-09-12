@@ -23,6 +23,7 @@
 #include "opal/util/output.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/ptl/ptl.h"
+#include "ompi/communicator/communicator.h"
 #include "ptl_mx.h"
 #include "ptl_mx_peer.h"
 #include "ptl_mx_sendfrag.h"

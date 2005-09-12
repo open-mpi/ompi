@@ -16,11 +16,12 @@
 
 #include "ptl_mx.h"
 #include "ompi/include/constants.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/communicator/communicator.h"
 #include "opal/util/output.h"
 #include "ptl_mx_peer.h"
 #include "ptl_mx_proc.h"
 #include "ptl_mx_module.h"
-
 
 static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr);
 
