@@ -52,6 +52,8 @@
 #include "util/universe_setup_file_io.h"
 #include "opal/util/malloc.h"
 #include "opal/memory/memory.h"
+#include "opal/mca/timer/base/base.h"
+#include "opal/mca/memory/base/base.h"
 
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -138,7 +140,11 @@ int main(int argc, char *argv[])
     orte_process_name_t requestor;
     int id, orted_pipe[2];
     pid_t pid;
-
+    int sleeper = 0;
+    
+    while(sleeper == 0) {
+        sleep(1);
+    }
 #if defined(HAVE_FORK) && defined(HAVE_PIPE)
     
     /* setup to check common command line options that just report and die */
@@ -188,6 +194,11 @@ int main(int argc, char *argv[])
 
     /* initialize the memory manager / tracker */
     opal_mem_free_init();
+
+    opal_memory_base_open();
+
+    /* Initialize the timer */
+    opal_timer_base_open();
 
     /*
      * Initialize the MCA framework 
