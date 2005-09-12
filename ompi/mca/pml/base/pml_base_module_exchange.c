@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "class/opal_hash_table.h"
+#include "ompi/proc/proc.h"
 #include "opal/threads/condition.h"
 #include "opal/util/output.h"
 #include "util/proc_info.h"
@@ -214,12 +214,6 @@ static void mca_pml_base_modex_registry_callback(
     mca_base_component_t component;
     bool isnew = false;
     int rc;
-
-#if 0
-opal_output(0, "[%lu,%lu,%lu] mca_pml_base_modex_registry_callback\n",
-    ORTE_NAME_ARGS(orte_process_info.my_name));
-orte_gpr_base_dump_notify_data(data,0);
-#endif
 
     if(data->cnt) {
         new_procs = (ompi_proc_t**)malloc(sizeof(ompi_proc_t*) * data->cnt);

@@ -23,7 +23,7 @@
 #include "mca/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
-
+#include "opal/runtime/opal_progress.h"
 
 typedef struct opened_component_t {
   opal_list_item_t super;

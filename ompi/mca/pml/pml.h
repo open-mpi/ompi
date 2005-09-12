@@ -59,10 +59,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_list.h"
-#include "communicator/communicator.h"
-#include "request/request.h"
 #include "mca/mca.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -78,9 +75,9 @@ struct mca_ptl_addr_t;
 
 struct mca_pml_proc_t {
     opal_list_item_t super;
-    ompi_proc_t *proc_ompi;           /**< back-pointer to ompi_proc_t */
+    struct ompi_proc_t *proc_ompi;    /**< back-pointer to ompi_proc_t */
     opal_mutex_t proc_lock;           /**< lock to protect against concurrent access */
-    int proc_flags;                     /**< prefered method of accessing this peer */
+    int proc_flags;                   /**< prefered method of accessing this peer */
 };
     
     typedef struct mca_pml_proc_t mca_pml_proc_t; 
@@ -359,7 +356,7 @@ typedef int (*mca_pml_base_module_send_fn_t)(
  */
 typedef int (*mca_pml_base_module_start_fn_t)(
     size_t count,
-    ompi_request_t** requests
+    struct ompi_request_t** requests
 );
 
 /**
@@ -376,7 +373,7 @@ typedef int (*mca_pml_base_module_start_fn_t)(
 typedef int (*mca_pml_base_module_iprobe_fn_t)(
     int src,
     int tag,
-    ompi_communicator_t* comm,
+    struct ompi_communicator_t* comm,
     int *matched,
     ompi_status_public_t *status
 );
@@ -394,7 +391,7 @@ typedef int (*mca_pml_base_module_iprobe_fn_t)(
 typedef int (*mca_pml_base_module_probe_fn_t)(
     int src,
     int tag,
-    ompi_communicator_t* comm,
+    struct ompi_communicator_t* comm,
     ompi_status_public_t *status
 );
 
@@ -406,7 +403,7 @@ typedef int (*mca_pml_base_module_probe_fn_t)(
  *
  */
 typedef int (*mca_pml_base_module_cancel_fn_t)(
-    ompi_request_t* request
+    struct ompi_request_t* request
 );
 
 
@@ -418,7 +415,7 @@ typedef int (*mca_pml_base_module_cancel_fn_t)(
  *
  */
 typedef int (*mca_pml_base_module_cancelled_fn_t)(
-    ompi_request_t* request,
+    struct ompi_request_t* request,
     int *flag
 );
 
@@ -430,7 +427,7 @@ typedef int (*mca_pml_base_module_cancelled_fn_t)(
  *
  */
 typedef int (*mca_pml_base_module_free_fn_t)(
-    ompi_request_t** request
+    struct ompi_request_t** request
 );
 
 
@@ -442,7 +439,7 @@ typedef int (*mca_pml_base_module_free_fn_t)(
  *
  */
 typedef int (*mca_pml_base_module_null_fn_t)(
-    ompi_request_t** request
+    struct ompi_request_t** request
 );
 
 

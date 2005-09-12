@@ -21,7 +21,7 @@
 #include "mca/bml/base/base.h"
 #include "mca/btl/base/base.h"
 #include "ompi/mca/bml/base/static-components.h"
-
+#include "opal/mca/base/base.h"
 
 opal_list_t mca_bml_base_components_available;
 

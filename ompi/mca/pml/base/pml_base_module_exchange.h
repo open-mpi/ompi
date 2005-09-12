@@ -25,9 +25,9 @@
 #include <sys/types.h>
 #endif
 
-#include "proc/proc.h"
 #include "mca/mca.h"
 
+struct ompi_proc_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -123,7 +123,7 @@ OMPI_DECLSPEC int mca_pml_base_modex_send(mca_base_component_t *source_component
    * number of bytes is split into two parts.
    */
 OMPI_DECLSPEC int mca_pml_base_modex_recv(mca_base_component_t *dest_component,
-                                          ompi_proc_t *source_proc,
+                                          struct ompi_proc_t *source_proc,
                                           void **buffer, size_t *size);
 
   /*

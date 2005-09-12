@@ -22,7 +22,6 @@
 #include "mpi.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-#include "proc/proc.h"
 
 /*
  * ******************************************************************
@@ -135,6 +134,8 @@ typedef mca_topo_base_comm_1_0_0_t mca_topo_base_comm_t;
  * ******************************************************************
  */ 
 
+struct ompi_proc_t;
+
 /*
  * ***********************************************************************
  * ************************  Interface function definitions **************
@@ -157,7 +158,7 @@ typedef int (*mca_topo_base_module_cart_coords_fn_t)
 typedef int (*mca_topo_base_module_cart_create_fn_t)
                     (mca_topo_base_comm_t *topo_data,
                      int *proc_count, 
-                     ompi_proc_t **proc_pointers,
+                     struct ompi_proc_t **proc_pointers,
                      int *new_rank,
                      int ndims, 
                      int *dims, 
@@ -202,7 +203,7 @@ typedef int (*mca_topo_base_module_cart_sub_fn_t)
 typedef int (*mca_topo_base_module_graph_create_fn_t)
                     (mca_topo_base_comm_t *topo_data, 
                      int *proc_count,
-                     ompi_proc_t **proc_pointers,
+                     struct ompi_proc_t **proc_pointers,
                      int *new_rank,
                      int nnodes, 
                      int *index, 

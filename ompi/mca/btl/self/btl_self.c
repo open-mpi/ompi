@@ -24,21 +24,21 @@
 #include <errno.h>
 
 #include "opal/threads/mutex.h"
-#include "datatype/convertor.h"
+#include "ompi/datatype/convertor.h"
 #include "include/sys/atomic.h"
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "util/proc_info.h"
 #include "opal/util/printf.h"
 #include "util/sys_info.h"
-#include "class/ompi_fifo.h"
-#include "class/ompi_free_list.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/class/ompi_fifo.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 #include "mca/mpool/base/base.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"
-
+#include "ompi/proc/proc.h"
 
 mca_btl_base_module_t mca_btl_self = {
     &mca_btl_self_component.super,

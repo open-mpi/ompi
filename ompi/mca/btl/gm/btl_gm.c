@@ -28,7 +28,7 @@
 #include "datatype/convertor.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
-
+#include "ompi/proc/proc.h"
 
 mca_btl_gm_module_t mca_btl_gm_module = {
     {

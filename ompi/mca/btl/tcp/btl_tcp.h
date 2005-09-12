@@ -42,6 +42,7 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/btl/btl.h"
+#include "opal/class/opal_hash_table.h"
 
 #define MCA_BTL_TCP_STATISTICS 0
 #if defined(c_plusplus) || defined(__cplusplus)
