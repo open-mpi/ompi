@@ -30,6 +30,7 @@
 #include "mca/gpr/gpr_types.h"
 #include "mca/oob/oob_types.h"
 #include "request/request.h"
+#include "ompi/proc/proc.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
