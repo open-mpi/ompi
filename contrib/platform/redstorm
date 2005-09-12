@@ -7,3 +7,5 @@ enable_pretty_print_stacktrace=no
 enable_dlopen=no
 with_portals_config=redstorm
 enable_mca_no_build=gpr-proxy,gpr-replica,pml-teg,pml-uniq,rml-oob,btl-sm,mpool-sm,btl-self,ptl-sm,ptl-self,ns-proxy,rds-resfile,sds-env,sds-seed,sds-singleton
+with_memory_manager=no
+enable_heterogeneous=no
