@@ -21,20 +21,21 @@
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/mpool/base/base.h" 
-#include "mca/mpool/gm/mpool_gm.h"
+#include "ompi/mca/mpool/gm/mpool_gm.h"
 #include "btl_gm.h"
 #include "btl_gm_frag.h"
 #include "btl_gm_endpoint.h" 
-#include "mca/btl/base/base.h" 
-#include "datatype/convertor.h" 
+#include "ompi/mca/btl/base/base.h" 
+#include "ompi/datatype/convertor.h" 
 #include "btl_gm_endpoint.h"
-
+#include "orte/util/proc_info.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
 mca_btl_gm_component_t mca_btl_gm_component = {
     {
