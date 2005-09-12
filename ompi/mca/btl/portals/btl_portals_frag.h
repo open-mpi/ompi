@@ -36,6 +36,8 @@ struct mca_btl_portals_frag_t {
     enum { mca_btl_portals_frag_type_send, 
            mca_btl_portals_frag_type_recv, 
            mca_btl_portals_frag_type_rdma} type;
+    /* handle to use for communication */
+    ptl_handle_md_t md_h;
     size_t size; 
 
 };
