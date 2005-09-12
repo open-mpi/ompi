@@ -75,7 +75,7 @@ typedef size_t orte_jobid_t;
 typedef size_t orte_cellid_t;
 typedef size_t orte_vpid_t;
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
-typedef uint16_t orte_ns_cmd_flag_t;
+typedef uint8_t orte_ns_cmd_flag_t;
 
 struct orte_process_name_t {
     orte_cellid_t cellid;  /**< Cell number */
