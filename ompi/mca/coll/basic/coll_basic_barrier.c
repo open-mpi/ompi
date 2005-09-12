@@ -19,11 +19,10 @@
 
 #include "mpi.h"
 #include "ompi/include/constants.h"
-#include "communicator/communicator.h"
 #include "opal/util/bit_ops.h"
-#include "mca/pml/pml.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/coll_tags.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 

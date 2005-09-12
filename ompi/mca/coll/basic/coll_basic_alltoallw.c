@@ -19,10 +19,9 @@
 
 #include "mpi.h"
 #include "ompi/include/constants.h"
-#include "datatype/datatype.h"
-#include "communicator/communicator.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/coll_tags.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 
 
 /*
