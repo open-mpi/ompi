@@ -17,7 +17,6 @@
 #include "ompi_config.h"
 #include <string.h>
 #include <stdio.h>
-#include "mpi.h"
 
 #include "ompi/include/constants.h"
 #include "dps/dps.h"
@@ -34,7 +33,7 @@
 #include "communicator/communicator.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/base/ptl_base_comm.h"
-
+#include "request/request.h"
 
 /*
 ** sort-function for MPI_Comm_split 
@@ -969,12 +968,12 @@ int ompi_comm_overlapping_groups (int size, ompi_proc_t **lprocs,
     int i,j;
 
     for (i=0; i<size; i++) {
-	for ( j=0; j<rsize; j++) {
-	    if ( lprocs[i] == rprocs[j] ) {
-		rc = MPI_ERR_COMM;
-		return rc;
-	    }
-	}
+        for ( j=0; j<rsize; j++) {
+            if ( lprocs[i] == rprocs[j] ) {
+                rc = MPI_ERR_COMM;
+                return rc;
+            }
+        }
     }
 
     return rc;

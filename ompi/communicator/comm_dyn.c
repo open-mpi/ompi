@@ -24,11 +24,10 @@
 #include <unistd.h>
 #endif
 
-#include "mpi.h"
 #include "dps/dps.h"
-#include "communicator/communicator.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 #include "errhandler/errhandler.h"
-#include "group/group.h"
 #include "proc/proc.h"
 #include "info/info.h"
 #include "opal/threads/mutex.h"
@@ -39,11 +38,9 @@
 #include "mca/pml/pml.h"
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
-#include "mca/oob/oob_types.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/rmgr/rmgr.h"
 
-#include "mca/pml/pml.h"
 #include "mca/rml/rml.h"
 
 #include "runtime/runtime.h"
@@ -72,49 +69,47 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
            information of the remote process. Therefore, we have to
            exchange that.
         */
-	if ( OMPI_COMM_JOIN_TAG != (int)tag ) {
-	    rport = ompi_comm_get_rport (port,send_first,
-					 group->grp_proc_pointers[rank], tag);
-	}
-	else {
-	    rport = port;
-	}
+	    if ( OMPI_COMM_JOIN_TAG != (int)tag ) {
+	        rport = ompi_comm_get_rport( port,send_first,
+                                         group->grp_proc_pointers[rank], tag);
+	    } else {
+	        rport = port;
+	    }
 	
-	/* Generate the message buffer containing the number of processes and the list of
-	   participating processes */
-	nbuf = OBJ_NEW(orte_buffer_t);
-	if (NULL == nbuf) {
-	    return OMPI_ERROR;
-	}
+	    /* Generate the message buffer containing the number of processes and the list of
+	       participating processes */
+	    nbuf = OBJ_NEW(orte_buffer_t);
+	    if (NULL == nbuf) {
+	        return OMPI_ERROR;
+	    }
 
         /* tell the progress engine to tick the event library more
            often, to make sure that the OOB messages get sent */
         opal_progress_event_increment();
 
-	if (ORTE_SUCCESS != (rc = orte_dps.pack(nbuf, &size, 1, ORTE_INT))) {
-	    goto exit;
-	}
-	ompi_proc_get_namebuf (group->grp_proc_pointers, size, nbuf);
+	    if (ORTE_SUCCESS != (rc = orte_dps.pack(nbuf, &size, 1, ORTE_INT))) {
+	        goto exit;
+	    }
+	    ompi_proc_get_namebuf (group->grp_proc_pointers, size, nbuf);
 	
-	nrbuf = OBJ_NEW(orte_buffer_t);
-	if (NULL == nrbuf ) {
-	    rc = OMPI_ERROR;
-	    goto exit;
-	}
+	    nrbuf = OBJ_NEW(orte_buffer_t);
+	    if (NULL == nrbuf ) {
+	        rc = OMPI_ERROR;
+	        goto exit;
+	    }
 	
-	/* Exchange the number and the list of processes in the groups */
-	if ( send_first ) {
-	    rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
-	    rc = orte_rml.recv_buffer(rport, nrbuf, tag);
-	}
-	else {
-	    rc = orte_rml.recv_buffer(rport, nrbuf, tag);
-	    rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
-	}
+	    /* Exchange the number and the list of processes in the groups */
+	    if ( send_first ) {
+	        rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
+	        rc = orte_rml.recv_buffer(rport, nrbuf, tag);
+	    } else {
+	        rc = orte_rml.recv_buffer(rport, nrbuf, tag);
+	        rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
+	    }
 	
-	if (ORTE_SUCCESS != (rc = orte_dps.unload(nrbuf, &rnamebuf, &rnamebuflen))) {
-	    goto exit;
-	}
+	    if (ORTE_SUCCESS != (rc = orte_dps.unload(nrbuf, &rnamebuf, &rnamebuflen))) {
+	        goto exit;
+	    }
     }
     
     /* bcast the buffer-length to all processes in the local comm */
@@ -124,12 +119,12 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     if ( rank != root ) {
-	/* non root processes need to allocate the buffer manually */
-	rnamebuf = (char *) malloc(rnamebuflen);
-	if ( NULL == rnamebuf ) {
-	    rc = OMPI_ERR_OUT_OF_RESOURCE;
-	    goto exit;
-	}
+	    /* non root processes need to allocate the buffer manually */
+	    rnamebuf = (char *) malloc(rnamebuflen);
+	    if ( NULL == rnamebuf ) {
+	        rc = OMPI_ERR_OUT_OF_RESOURCE;
+	        goto exit;
+	    }
     }
     
     /* bcast list of processes to all procs in local group 
@@ -139,37 +134,37 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     */
     rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen, MPI_BYTE, root, comm );
     if ( OMPI_SUCCESS != rc ) {
-	goto exit;
+	    goto exit;
     }
 
     nrbuf = OBJ_NEW(orte_buffer_t);
     if (NULL == nrbuf) {
-	goto exit;
+	    goto exit;
     }
     if ( ORTE_SUCCESS != ( rc = orte_dps.load(nrbuf, rnamebuf, rnamebuflen))) {
-	goto exit;
+	    goto exit;
     }
 
     num_vals = 1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(nrbuf, &rsize, &num_vals, ORTE_INT))) {
-	goto exit;
+	    goto exit;
     }
 
     rc = ompi_proc_get_proclist (nrbuf, rsize, &rprocs);
     if ( OMPI_SUCCESS != rc ) {
-	goto exit;
+	    goto exit;
     }
     
     OBJ_RELEASE(nrbuf);
     if ( rank == root ) {
-	OBJ_RELEASE(nbuf);
+	    OBJ_RELEASE(nbuf);
     }
     
     /* allocate comm-structure */
     newcomp = ompi_comm_allocate ( size, rsize );
     if ( NULL == newcomp ) {
-	rc = OMPI_ERR_OUT_OF_RESOURCE;
-	goto exit;
+	    rc = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
     }
     
     /* allocate comm_cid */
@@ -257,7 +252,6 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
     orte_process_name_t *rport, tbuf;
     ompi_proc_t *rproc=NULL;
     bool isnew = false;
-
 
     if ( send_first ) {
         orte_buffer_t *sbuf;
