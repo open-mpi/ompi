@@ -15,7 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include "mpi.h"
 
 #include "dps/dps.h"
 #include "opal/util/convert.h"
@@ -26,9 +25,9 @@
 #include "class/ompi_pointer_array.h"
 #include "opal/class/opal_list.h"
 #include "mca/pml/pml.h"
-#include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "mca/rml/rml.h"
+#include "ompi/request/request.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
