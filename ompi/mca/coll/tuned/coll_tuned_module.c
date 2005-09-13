@@ -31,6 +31,7 @@
 extern int mca_coll_tuned_use_dynamic_rules_param;
 extern int mca_coll_tuned_init_tree_fanout_param;
 extern int mca_coll_tuned_init_chain_fanout_param;
+extern int mca_coll_tuned_preallocate_memory_comm_size_limit_param;
 
 
 
@@ -60,8 +61,8 @@ static const mca_coll_base_module_1_0_0_t intra_fixed = {
     NULL,
 /*   mca_coll_tuned_allreduce_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoall_intra_dec_fixed, */
-    NULL,
+  mca_coll_tuned_alltoall_intra_dec_fixed,
+/*     NULL, */
 /*   mca_coll_tuned_alltoallv_intra_dec_fixed, */
     NULL,
 /*   mca_coll_tuned_alltoallw_intra_dec_fixed, */
@@ -306,8 +307,10 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   int size;
   struct mca_coll_base_comm_t *data;
   /* fanout parameters */
-  int tree_fanout_default = 4;
-  int chain_fanout_default = 4;
+  int tree_fanout_default = 0;
+  int chain_fanout_default = 0;
+  int pre_allocate_limit = -1;
+  int pre_allocate = 1;
 
 
   printf("Tuned init module called.\n");
@@ -333,20 +336,43 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   }
 
   /* 
-   * we still malloc data as it is used by BOTH the TUNED and the BASIC modules
+   * we still malloc data as it is used by the TUNED modules
    * if we don't allocate it and fall back to a BASIC module routine then confuses debuggers 
    * we place any special info after the default data
    *
+   * BUT on very large systems we might not be able to allocate all this memory so
+   * we do check a MCA parameter to see if if we should allocate this memory
+   *
+   * The default is set very high  
+   *
    */
 
-  data = malloc(sizeof(struct mca_coll_base_comm_t) +
+  if (OMPI_SUCCESS !=
+    mca_base_param_lookup_int(mca_coll_tuned_preallocate_memory_comm_size_limit_param,
+                                                &pre_allocate_limit)) {
+    printf("No pre_allocate param found!\n");
+    return NULL;
+  }
+
+  /* if we within the memory/size limit, allow preallocated data */
+  if (size<=pre_allocate_limit) {
+    data = malloc(sizeof(struct mca_coll_base_comm_t) +
                  (sizeof(ompi_request_t *) * size * 2));
   
-  if (NULL == data) {
-      return NULL;
+    if (NULL == data) {
+         return NULL;
+    }
+    data->mcct_reqs = (ompi_request_t **) (data + 1);
+    data->mcct_num_reqs = size * 2;
   }
-  data->mcct_reqs = (ompi_request_t **) (data + 1);
-  data->mcct_num_reqs = size * 2;
+  else {
+     data = malloc(sizeof(struct mca_coll_base_comm_t)); 
+  
+     if (NULL == data) {
+         data->mcct_reqs = (ompi_request_t **) NULL;
+         data->mcct_num_reqs = 0;
+     }
+  }
 
   /* 
    * now for the cached topo functions 
@@ -439,9 +465,10 @@ int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
   }
 
 
-  /* All done */
-
-  free(comm->c_coll_selected_data);
-  comm->c_coll_selected_data = NULL;
+  /* if allocated memory free it */
+  if (comm->c_coll_selected_data) {
+    free(comm->c_coll_selected_data);
+    comm->c_coll_selected_data = NULL;
+  }
   return OMPI_SUCCESS;
 }
