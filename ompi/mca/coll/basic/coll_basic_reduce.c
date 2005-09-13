@@ -45,6 +45,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     long true_lb, true_extent, lb, extent;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
+    char *inplace_temp = NULL;
     char *inbuf;
 
     /* Initialize */
@@ -186,10 +187,19 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      * 
      */
 
-    if (size > 1) {
-        ompi_ddt_get_extent(dtype, &lb, &extent);
-        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_ddt_get_extent(dtype, &lb, &extent);
+    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+        inplace_temp = malloc(true_extent + (count - 1) * extent);
+        if (NULL == inplace_temp) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        rbuf = inplace_temp - lb;
+    }
+
+    if (size > 1) {
         free_buffer = malloc(true_extent + (count - 1) * extent);
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -200,7 +210,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     /* Initialize the receive buffer. */
 
     if (rank == (size - 1)) {
-        err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
     } else {
         err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
                                 MCA_COLL_BASE_TAG_REDUCE, comm,
@@ -237,6 +247,10 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
         ompi_op_reduce(op, inbuf, rbuf, count, dtype);
     }
 
+    if (NULL != inplace_temp) {
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, sbuf, inplace_temp);
+        free(inplace_temp);
+    }
     if (NULL != free_buffer) {
         free(free_buffer);
     }
@@ -274,6 +288,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     char *pml_buffer = NULL;
     char *snd_buffer = sbuf;
     char *rcv_buffer = rbuf;
+    char *inplace_temp = NULL;
 
     /* JMS Codearound for now -- if the operations is not communative,
      * just call the linear algorithm.  Need to talk to Edgar / George
@@ -294,33 +309,31 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     /* Allocate the incoming and resulting message buffers.  See lengthy
      * rationale above. */
 
-    if (size > 1) {
-        ompi_ddt_get_extent(dtype, &lb, &extent);
-        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
-
-        free_buffer = malloc(true_extent + (count - 1) * extent);
-        if (NULL == free_buffer) {
+    ompi_ddt_get_extent(dtype, &lb, &extent);
+    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    
+    free_buffer = malloc(true_extent + (count - 1) * extent);
+    if (NULL == free_buffer) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    
+    pml_buffer = free_buffer - lb;
+    /* read the comment about commutative operations (few lines down
+     * the page) */
+    if (ompi_op_is_commute(op)) {
+        rcv_buffer = pml_buffer;
+    }
+    
+    if (rank != root && 0 == (vrank & 1)) {
+        /* root is the only one required to provide a valid rbuf.
+         * Assume rbuf is invalid for all other ranks, so fix it up
+         * here to be valid on all non-leaf ranks */
+        free_rbuf = malloc(true_extent + (count - 1) * extent);
+        if (NULL == free_rbuf) {
+            free(free_buffer);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-
-        pml_buffer = free_buffer - lb;
-        /* read the comment about commutative operations (few lines down
-         * the page) */
-        if (ompi_op_is_commute(op)) {
-            rcv_buffer = pml_buffer;
-        }
-
-        if (rank != root && 0 == (vrank & 1)) {
-            /* root is the only one required to provide a valid rbuf.
-             * Assume rbuf is invalid for all other ranks, so fix it up
-             * here to be valid on all non-leaf ranks */
-            free_rbuf = malloc(true_extent + (count - 1) * extent);
-            if (NULL == free_rbuf) {
-                free(free_buffer);
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            rbuf = free_rbuf - lb;
-        }
+        rbuf = free_rbuf - lb;
     }
 
     /* Loop over cube dimensions. High processes send to low ones in the
@@ -397,8 +410,8 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                  * buffer into a temp buffer (pml_buffer) and then reduce
                  * what we just received against it. */
                 if (!ompi_op_is_commute(op)) {
-                    ompi_ddt_sndrcv(sbuf, count, dtype, pml_buffer, count,
-                                    dtype);
+                    ompi_ddt_copy_content_same_ddt(dtype, count, pml_buffer,
+                                                   sbuf);
                     ompi_op_reduce(op, rbuf, pml_buffer, count, dtype);
                 } else {
                     ompi_op_reduce(op, sbuf, pml_buffer, count, dtype);
@@ -416,7 +429,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     err = MPI_SUCCESS;
     if (0 == vrank) {
         if (root == rank) {
-            ompi_ddt_sndrcv(snd_buffer, count, dtype, rbuf, count, dtype);
+            ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, snd_buffer);
         } else {
             err = MCA_PML_CALL(send(snd_buffer, count,
                                     dtype, root, MCA_COLL_BASE_TAG_REDUCE,

@@ -55,9 +55,13 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
     /* If I'm rank 0, just copy into the receive buffer */
 
     if (0 == rank) {
-        err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
-        if (MPI_SUCCESS != err) {
-            return err;
+        if (MPI_IN_PLACE != sbuf) {
+            err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+            if (MPI_SUCCESS != err) {
+                return err;
+            }
+        } else {
+            return MPI_SUCCESS;
         }
     }
 
@@ -68,25 +72,25 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
          * listed in coll_basic_reduce.c.  Use this temporary buffer to
          * receive into, later. */
 
-        if (size > 1) {
-            ompi_ddt_get_extent(dtype, &lb, &extent);
-            ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+        ompi_ddt_get_extent(dtype, &lb, &extent);
+        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-            free_buffer = malloc(true_extent + (count - 1) * extent);
-            if (NULL == free_buffer) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            pml_buffer = free_buffer - lb;
+        free_buffer = malloc(true_extent + (count - 1) * extent);
+        if (NULL == free_buffer) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
+        pml_buffer = free_buffer - lb;
 
         /* Copy the send buffer into the receive buffer. */
 
-        err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
-        if (MPI_SUCCESS != err) {
-            if (NULL != free_buffer) {
-                free(free_buffer);
+        if (MPI_IN_PLACE != sbuf) {
+            err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+            if (MPI_SUCCESS != err) {
+                if (NULL != free_buffer) {
+                    free(free_buffer);
+                }
+                return err;
             }
-            return err;
         }
 
         /* Receive the prior answer */

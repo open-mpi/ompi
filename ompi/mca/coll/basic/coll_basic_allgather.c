@@ -39,12 +39,28 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
                                int rcount, struct ompi_datatype_t *rdtype,
                                struct ompi_communicator_t *comm)
 {
-    int size;
     int err;
+    char *inplace_temp = NULL;
+    long true_lb, true_extent, lb, extent;
+
+    /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to
+       allocate temp buffer) */
+
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+        sdtype = rdtype;
+        scount = rcount;
+
+        ompi_ddt_get_extent(rdtype, &lb, &extent);
+        ompi_ddt_get_true_extent(rdtype, &true_lb, &true_extent);
+        inplace_temp = malloc(true_extent + (rcount - 1) * extent);
+        if (NULL == inplace_temp) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        rbuf = inplace_temp - lb;
+    }
 
     /* Gather and broadcast. */
-
-    size = ompi_comm_size(comm);
 
     err = comm->c_coll.coll_gather(sbuf, scount, sdtype, rbuf, rcount,
                                    rdtype, 0, comm);
@@ -52,8 +68,23 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
         return err;
     }
 
-    err = comm->c_coll.coll_bcast(rbuf, rcount * size, rdtype, 0, comm);
-    return err;
+    err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
+                                  rdtype, 0, comm);
+    if (MPI_SUCCESS != err) {
+        return err;
+    }
+
+    /* If we're IN_PLACE, copy back out (sendcount and sendtype are
+       ignored) */
+
+    if (NULL != inplace_temp) {
+        ompi_ddt_copy_content_same_ddt(rdtype, rcount, rbuf, sbuf);
+        free(inplace_temp);
+    }
+
+    /* All done */
+
+    return MPI_SUCCESS;
 }
 
 
