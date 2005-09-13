@@ -35,7 +35,7 @@ int mca_coll_self_scatter_intra(void *sbuf, int scount,
                                 int root, 
                                 struct ompi_communicator_t *comm)
 {
-    if (MPI_IN_PLACE == sbuf) {
+    if (MPI_IN_PLACE == rbuf) {
         return MPI_SUCCESS;
     } else {
         return ompi_ddt_sndrcv(sbuf, scount, sdtype,
