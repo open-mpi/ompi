@@ -266,6 +266,9 @@ mca_btl_portals_free(struct mca_btl_base_module_t* btl_base,
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
     if (frag->md_h != PTL_INVALID_HANDLE) {
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "rdma frag free frag 0x%x, callback 0x%x, bits %lld",
+                             frag, frag->base.des_cbfunc, frag->segments[0].seg_key.key64));
         PtlMDUnlink(frag->md_h);
     }
 
