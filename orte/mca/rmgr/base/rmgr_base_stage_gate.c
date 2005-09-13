@@ -310,7 +310,7 @@ int orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_message_t *msg)
  * to events on all counters.
  */
 
-int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc, void* cbdata)
+int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc, void* cbdata, int type)
 {
     size_t i;
     int rc;
@@ -351,6 +351,24 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
     tokens[1]=NULL;
 
     for (i=0; i < num_counters; i++) {
+        if (ORTE_STAGE_GATE_TERMINATION == type) {
+            if ( ORTE_PROC_NUM_TERMINATED != keys[i] &&
+                 ORTE_PROC_NUM_ABORTED    != keys[i])
+                continue;
+        }
+        else if (ORTE_STAGE_GATE_STAGES == type) {
+            if (ORTE_PROC_NUM_AT_STG1   != keys[i] &&
+                ORTE_PROC_NUM_AT_STG2   != keys[i] && 
+                ORTE_PROC_NUM_AT_STG3   != keys[i] &&
+                ORTE_PROC_NUM_FINALIZED != keys[i] )
+                continue;
+        }
+        else if (ORTE_STAGE_GATE_ALL != type) {
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            printf("Invalid argument (%d)\n", type);
+            return ORTE_ERROR;
+        }
+        
         /* attach ourselves to the appropriate standard trigger */
         if (ORTE_SUCCESS !=
             (rc = orte_schema.get_std_trigger_name(&trig_name, trig_names[i], job))) {

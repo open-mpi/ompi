@@ -353,7 +353,7 @@ static int orte_rmgr_proxy_spawn(
      */
 
     if(NULL != cbfunc) {
-        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, (void*)cbfunc);
+        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, (void*)cbfunc, ORTE_STAGE_GATE_ALL);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;

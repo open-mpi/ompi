@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
     char *log_path = NULL;
     char log_file[PATH_MAX];
     char *jobidstring;
-    
+
     /* setup to check common command line options that just report and die */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
     cmd_line = OBJ_NEW(opal_cmd_line_t);
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
         OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
         /* Setup callback on jobid */
-        ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL);
+        ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL, ORTE_STAGE_GATE_TERMINATION);
         if(ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             return ret;
@@ -579,9 +579,9 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
                     continue;
                 }
 
-                if(strcmp(keyval->key, ORTE_PROC_NUM_ABORTED) == 0) {
+                else if(strcmp(keyval->key, ORTE_PROC_NUM_ABORTED) == 0) {
                     OPAL_THREAD_LOCK(&orted_globals.mutex);
-
+                    
                     if (orted_globals.debug) {
                         opal_output(0, "orted: job_state_callback(jobid = %d, state = ORTE_PROC_STATE_ABORTED)\n",
                                     jobid);
@@ -592,6 +592,12 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
 
                     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
                     continue;
+                }
+                else {
+                    if (orted_globals.debug) {
+                        opal_output(0, "orted: job_state_callback(jobid = %d, state = %d)\n",
+                                    jobid, keyval->key);
+                    }
                 }
             }
         }

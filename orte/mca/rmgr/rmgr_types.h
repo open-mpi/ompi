@@ -27,6 +27,14 @@ extern "C" {
 #define ORTE_RMGR_LAUNCHER      "orte-rmgr-launcher"
 
 /*
+ * Stage Gate flags used to specify which state changes 
+ * one desires to be notified of.
+ */
+#define ORTE_STAGE_GATE_ALL         1
+#define ORTE_STAGE_GATE_STAGES      2
+#define ORTE_STAGE_GATE_TERMINATION 3
+
+/*
  * Constants for command values
  */
 #define ORTE_RMGR_CMD_QUERY       1
