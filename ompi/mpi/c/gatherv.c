@@ -55,7 +55,7 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
           if ((root >= ompi_comm_size(comm)) || (root < 0)) {
             err = MPI_ERR_ROOT;
-          } else {
+          } else if (MPI_IN_PLACE != sendbuf) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
           }
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);

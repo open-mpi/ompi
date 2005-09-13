@@ -55,11 +55,13 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           /* Errors for all ranks */
 
           if ((root >= ompi_comm_size(comm)) || (root < 0)) {
-            err = MPI_ERR_ROOT;
-          } else if (recvcount < 0) {
-            err = MPI_ERR_COUNT;
-          } else if (MPI_DATATYPE_NULL == recvtype) {
-            err = MPI_ERR_TYPE;
+              err = MPI_ERR_ROOT;
+          } else if (MPI_IN_PLACE != recvbuf) {
+              if (recvcount < 0) {
+                  err = MPI_ERR_COUNT;
+              } else if (MPI_DATATYPE_NULL == recvtype) {
+                  err = MPI_ERR_TYPE;
+              }
           }
 
           /* Errors for the root.  Some of these could have been
