@@ -101,9 +101,8 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
         /* If we're commutative, we can copy my sbuf into the reduction
          * buffer before the receive completes */
 
-        err =
-            ompi_ddt_sndrcv(sbuf, count, dtype, reduce_buffer, count,
-                            dtype);
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, 
+                                             reduce_buffer, sbuf);
         if (MPI_SUCCESS != err) {
             goto error;
         }
@@ -133,9 +132,8 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
             goto error;
         }
 
-        err =
-            ompi_ddt_sndrcv(rbuf, count, dtype, reduce_buffer, count,
-                            dtype);
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, 
+                                             reduce_buffer, rbuf);
         if (MPI_SUCCESS != err) {
             goto error;
         }

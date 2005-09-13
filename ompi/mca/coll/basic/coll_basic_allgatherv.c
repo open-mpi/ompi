@@ -38,15 +38,22 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
                                 struct ompi_datatype_t *rdtype,
                                 struct ompi_communicator_t *comm)
 {
-    int i, size;
+    int i, size, rank;
     int err;
 
     /* Collect all values at each process, one at a time. */
 
     size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
     for (i = 0; i < size; ++i) {
-        err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
-                                        rcounts, disps, rdtype, i, comm);
+        if (MPI_IN_PLACE == sbuf) {
+            err = comm->c_coll.coll_gatherv(MPI_IN_PLACE, 0, 
+                                            MPI_DATATYPE_NULL, rbuf,
+                                            rcounts, disps, rdtype, i, comm);
+        } else {
+            err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
+                                            rcounts, disps, rdtype, i, comm);
+        }
         if (MPI_SUCCESS != err) {
             return err;
         }
