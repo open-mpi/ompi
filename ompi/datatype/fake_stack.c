@@ -141,8 +141,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                 pos_desc -= (end_loop->items - 1);  /* go back to the first element in the loop */
                 pElems -= (end_loop->items - 1);
                 remoteLength[pConvertor->stack_pos] = 0;
-		loop_length = 0;
-		continue;
+                loop_length = 0;
+                continue;
             }
             /* Not in this loop. Cleanup the stack and advance to the
              * next data description.
@@ -174,8 +174,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                 loop_length += (cnt * basic_type->size);
                 resting_place -= (cnt * basic_type->size);
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->elem.common.type, 
-			    pElems->elem.count - cnt,
-			    pStack->disp + pElems->elem.disp + cnt * pElems->elem.extent,
+                            pElems->elem.count - cnt,
+                            pStack->disp + pElems->elem.disp + cnt * pElems->elem.extent,
                             pos_desc );
                 pConvertor->bConverted = starting_point - resting_place;
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos,

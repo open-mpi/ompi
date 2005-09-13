@@ -214,6 +214,8 @@ extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConv
 
 inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t* position )
 {
+    int32_t rc;
+
     /*
      * If the convertor is already at the correct position we are happy
      */
@@ -224,16 +226,21 @@ inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t*
      */
     if( (convertor->pDesc->size * convertor->count) <= *position ) {
         convertor->flags |= CONVERTOR_COMPLETED;
+        convertor->bConverted = convertor->pDesc->size * convertor->count;
+        return OMPI_SUCCESS;
     }
-
     if( 0 == (*position) )
         return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
 
-    if( convertor->flags & DT_FLAG_CONTIGUOUS )
-        return ompi_convertor_create_stack_with_pos_contig( convertor, (*position),
-                                                            ompi_ddt_local_sizes );
-    return ompi_convertor_create_stack_with_pos_general( convertor, (*position),
-                                                         ompi_ddt_local_sizes );
+    if( convertor->flags & DT_FLAG_CONTIGUOUS ) {
+        rc = ompi_convertor_create_stack_with_pos_contig( convertor, (*position),
+                                                          ompi_ddt_local_sizes );
+    } else {
+        rc = ompi_convertor_create_stack_with_pos_general( convertor, (*position),
+                                                           ompi_ddt_local_sizes );
+    }
+    *position = convertor->bConverted;
+    return rc;
 }
 
 int32_t
