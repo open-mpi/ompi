@@ -52,8 +52,8 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           err = MPI_ERR_COUNT;
         } else if (MPI_IN_PLACE == recvbuf) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        } else {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+        } else if (MPI_IN_PLACE != sendbuf) {
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
