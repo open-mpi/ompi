@@ -19,7 +19,7 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
   AC_MSG_CHECKING(for __attribute__)
   AC_CACHE_VAL(ac_cv___attribute__, [
     AC_TRY_COMPILE(
-      [#include <stdlib.h>,
+      [#include <stdlib.h>
        static void foo(void) __attribute__ ((unused));
        static void foo(void) { exit(1); }],
       [],
@@ -109,6 +109,6 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
                      [Whether your compiler has __attribute__ malloc or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NORETURN, [$ac_cv___attribute__noreturn],
                      [Whether your compiler has __attribute__ noreturn or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PURE, [$ac_cv___attribute__PURE],
-                     [Whether your compiler has __attribute__ PURE or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PURE, [$ac_cv___attribute__pure],
+                     [Whether your compiler has __attribute__ pure or not])
 ])
