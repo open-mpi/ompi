@@ -170,6 +170,18 @@ static inline int32_t ompi_ddt_get_extent( const ompi_datatype_t* pData, long* l
 static inline int32_t ompi_ddt_get_true_extent( const ompi_datatype_t* pData, long* true_lb, long* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; }
 
+/*
+ * This function return true (1) if the datatype representation depending on the count
+ * is contiguous in the memory. And false (0) otherwise.
+ */
+static inline int32_t ompi_ddt_is_contiguous_memory_layout( ompi_datatype_t* datatype, int32_t count )
+{
+    if( !(datatype->flags & DT_FLAG_CONTIGUOUS) ) return 0;
+    if( count == 1 ) return 1;  /* only one data ignore the gaps around */
+    if( (long)datatype->size != (datatype->ub - datatype->lb) ) return 0;
+    return 1;
+}
+
 OMPI_DECLSPEC int32_t ompi_ddt_get_element_count( const ompi_datatype_t* pData, int32_t iSize );
 OMPI_DECLSPEC int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* pData, int32_t count,
                                                       char* pDestBuf, const char* pSrcBuf );
