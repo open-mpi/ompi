@@ -18,6 +18,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
+#include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
