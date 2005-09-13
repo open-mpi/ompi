@@ -45,12 +45,13 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
       err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (ompi_comm_invalid(comm)) {
-	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                      FUNC_NAME);
       }
 
       if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
-          (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes)) {
+          (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
+          MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
       }
 

@@ -40,13 +40,13 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
-	}
+        }
 
         /* Unrooted operation; same checks for all ranks on both
            intracommunicators and intercommunicators */
-	
+
         else if (MPI_OP_NULL == op) {
           err = MPI_ERR_OP;
         } else if (ompi_op_is_intrinsic(op) && 
@@ -55,13 +55,15 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
           err = MPI_ERR_OP;
         } else if (NULL == recvcounts) {
           err = MPI_ERR_COUNT;
+        } else if (MPI_IN_PLACE == recvbuf) {
+          err = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
-      /* We always define the remote group to be the same as the local
-         group in the case of an intracommunicator, so it's safe to
-         get the size of the remote group here for both intra- and
-         intercommunicators */
+        /* We always define the remote group to be the same as the
+           local group in the case of an intracommunicator, so it's
+           safe to get the size of the remote group here for both
+           intra- and intercommunicators */
 
         size = ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
