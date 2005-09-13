@@ -19,12 +19,12 @@
 
 #include "ompi_config.h"
 #include <stdio.h>
+#include "orte/util/proc_info.h"
 
 extern int mca_btl_base_debug;
 
 extern int mca_btl_base_err(const char*, ...);
 extern int mca_btl_base_out(const char*, ...);
-
 
 #define BTL_OUTPUT(args)                                     \
 do {                                                         \
