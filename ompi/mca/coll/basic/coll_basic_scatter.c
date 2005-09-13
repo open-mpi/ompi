@@ -75,7 +75,7 @@ mca_coll_basic_scatter_intra(void *sbuf, int scount,
         /* simple optimization */
 
         if (i == rank) {
-            if (MPI_IN_PLACE != recvbuf) {
+            if (MPI_IN_PLACE != rbuf) {
                 err =
                     ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
                                     rdtype);
