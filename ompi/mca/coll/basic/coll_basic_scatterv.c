@@ -79,11 +79,10 @@ mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
 
         if (i == rank) {
             /* simple optimization or a local operation */
-            if (0 == scounts[i]) {
-                continue;
+            if (scounts[i] > 0 && MPI_IN_PLACE != rbuf) {
+                err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
+                                      rdtype);
             }
-            err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
-                                  rdtype);
         } else {
             /* Only send if there is something to send */
             if (scounts[i] > 0) {

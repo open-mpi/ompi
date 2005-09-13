@@ -48,8 +48,9 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
 
     err = comm->c_coll.coll_gather(sbuf, scount, sdtype, rbuf, rcount,
                                    rdtype, 0, comm);
-    if (MPI_SUCCESS != err)
+    if (MPI_SUCCESS != err) {
         return err;
+    }
 
     err = comm->c_coll.coll_bcast(rbuf, rcount * size, rdtype, 0, comm);
     return err;

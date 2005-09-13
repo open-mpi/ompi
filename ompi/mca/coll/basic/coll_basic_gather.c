@@ -71,8 +71,10 @@ mca_coll_basic_gather_intra(void *sbuf, int scount,
         /* simple optimization */
 
         if (i == rank) {
-            err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
-                                  rcount, rdtype);
+            if (MPI_IN_PLACE != sbuf) {
+                err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
+                                      rcount, rdtype);
+            }
         } else {
             err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
                                     MCA_COLL_BASE_TAG_GATHER,
