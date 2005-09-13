@@ -243,9 +243,10 @@ int mca_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
 
    /* Step 3 - local rotation - */
    for (i = 0; i < size; i++) {
+
         err = ompi_ddt_copy_content_same_ddt (rdtype, (int32_t) rcount,
                                            ((char*)rbuf)+(((rank-i+size)%size)*rcount*rext), 
-                                           tmpbuf+rcount*rext);
+                                           tmpbuf+i*rcount*rext);
         if (err<0) {
             line = __LINE__; err = -1; goto err_hndl;
         }
