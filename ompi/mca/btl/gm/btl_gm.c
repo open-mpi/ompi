@@ -234,7 +234,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     */
     if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
         size_t reg_len;
-        MCA_BTL_GM_FRAG_ALLOC_USER(gm_btl, frag, rc);
+        MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
         if(NULL == frag){
             return NULL;
         }
@@ -265,8 +265,8 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
                ompi_convertor_need_buffers(convertor) == 0 &&
                reserve == 0) {
 
-        mca_mpool_base_module_t* mpool = gm_btl->btl_mpool;
-        MCA_BTL_GM_FRAG_ALLOC_USER(gm_btl, frag, rc);
+        mca_mpool_base_module_t* mpool = btl->btl_mpool;
+        MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
         if(NULL == frag){
             return NULL;
         }
@@ -378,8 +378,8 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
 {
 #if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && \
     (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
-    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
     mca_btl_gm_frag_t* frag;
+    mca_mpool_base_module_t* mpool = btl->btl_mpool;
     int rc;
 
     MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
@@ -395,13 +395,12 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
-    mca_mpool_base_module_t* mpool = btl->btl_mpool;
     if(NULL != registration) {
         /* bump reference count as so that the registration
          * doesn't go away when the operation completes
          */
         
-        mpool->mpoo_retain(mpool, 
+        mpool->mpool_retain(mpool, 
                            (mca_mpool_base_registration_t*) registration); 
                 
         frag->registration = registration;
