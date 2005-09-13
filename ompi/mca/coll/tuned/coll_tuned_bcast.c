@@ -25,13 +25,7 @@
 #include "mca/coll/base/coll_tags.h"
 #include "mca/pml/pml.h"
 
-/* external prototype we need */
-extern int coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
-                              int dest, int stag,
-                              void* recvbuf, int rcount, ompi_datatype_t* rdata,
-                              int source, int rtag,
-                              struct ompi_communicator_t* comm,
-                              ompi_status_public_t* status );
+#include "coll_tuned_util.h"
 
 int
 mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
@@ -445,7 +439,7 @@ mca_coll_tuned_bcast_intra_split_bintree ( void* buffer,
                                  pair, MCA_COLL_BASE_TAG_BCAST,
                                  tmpbuf[(lr+1)%2], counts[(lr+1)%2], datatype,
                                  pair, MCA_COLL_BASE_TAG_BCAST,
-                                 comm, MPI_STATUS_IGNORE );
+                                 comm, MPI_STATUS_IGNORE, rank);
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
     } else if ( (size%2) == 0 ) {
         /* root sends right buffer to the last node */
@@ -469,7 +463,7 @@ mca_coll_tuned_bcast_intra_split_bintree ( void* buffer,
                                      pair, MCA_COLL_BASE_TAG_BCAST,
                                      tmpbuf[(lr+1)%2], counts[(lr+1)%2], datatype,
                                      pair, MCA_COLL_BASE_TAG_BCAST,
-                                     comm, MPI_STATUS_IGNORE );
+                                     comm, MPI_STATUS_IGNORE, rank);
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }  
         }
     }

@@ -28,17 +28,19 @@
 
 #include "coll_tuned.h"
 
-
 /*
- *	bcast_intra_dec 
+ *	alltoall_intra_dec 
  *
- *	Function:	- seletects broadcast algorithm to use
- *	Accepts:	- same arguments as MPI_Bcast()
+ *	Function:	- seletects alltoall algorithm to use
+ *	Accepts:	- same arguments as MPI_Alltoall()
  *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
  */
-int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
-                                   struct ompi_datatype_t *datatype, int root,
-                                   struct ompi_communicator_t *comm)
+
+int mca_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype,
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm)
 {
     int i;
     int size;
@@ -47,19 +49,12 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     int contig;
     int dsize;
 
-    printf("mca_coll_tuned_bcast_intra_dec_fixed\n");
+    printf("mca_coll_tuned_alltoall_intra_dec_dynamic\n");
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-/*     err = mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm); */
-/*     err = mca_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, (0)); */
-/*     err = mca_coll_tuned_bcast_intra_chain (buff, count, datatype, root, comm, (0), 1); */
-/*     err = mca_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, (8192)); */
-    err = mca_coll_tuned_bcast_intra_split_bintree (buff, count, datatype, root, comm, (100));
-/*     err = mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, (100)); */
-
-    return err;
+    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 

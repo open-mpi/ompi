@@ -37,6 +37,7 @@ const char *mca_coll_tuned_component_version_string =
  * Global variable
  */
 int mca_coll_tuned_priority_param = -1;
+int mca_coll_tuned_preallocate_memory_comm_size_limit_param = -1;
 int mca_coll_tuned_use_dynamic_rules_param = -1;
 int mca_coll_tuned_init_tree_fanout_param = -1;
 int mca_coll_tuned_init_chain_fanout_param = -1;
@@ -100,6 +101,10 @@ static int tuned_open(void)
     mca_coll_tuned_priority_param = 
         mca_base_param_register_int("coll", "tuned", "priority", NULL, 30);
 
+    /* check the parameter for pre-allocated memory requests etc */
+    mca_coll_tuned_preallocate_memory_comm_size_limit_param = 
+        mca_base_param_register_int("coll", "tuned", "pre_allocate_memory", NULL, (32*1024)+1);
+    
     /* by default DISABLE dynamic rules and force the use of fixed [if] rules */
     mca_coll_tuned_use_dynamic_rules_param = 
         mca_base_param_register_int("coll", "tuned", "use_dynamic_rules",

@@ -25,7 +25,7 @@
 #include "mca/coll/base/coll_tags.h"
 #include "mca/pml/pml.h"
 
-inline int coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+int coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                               int dest, int stag,
                               void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
                               int source, int rtag,

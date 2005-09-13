@@ -139,6 +139,29 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_priority_param;
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm);
+
+  int mca_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_intra_linear(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+
+
   int mca_coll_tuned_alltoall_inter_dec_fixed(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype, 
                                     void* rbuf, int rcount, 
@@ -453,6 +476,7 @@ struct mca_coll_base_comm_t {
   /* Precreate space for requests 
    * Note this does not effect basic, 
    * but if in wrong context can confuse a debugger
+   * this is controlled by an MCA param
    */
 
   ompi_request_t **mcct_reqs;
