@@ -230,6 +230,13 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_priority_param;
   int mca_coll_tuned_barrier_inter_dec_dynamic(
                                      struct ompi_communicator_t *comm);
 
+    
+  int mca_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_linear(struct ompi_communicator_t *comm);
+
 
   int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count, 
                                      struct ompi_datatype_t *datatype,

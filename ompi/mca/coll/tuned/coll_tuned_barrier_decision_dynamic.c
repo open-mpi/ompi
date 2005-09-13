@@ -29,18 +29,13 @@
 #include "coll_tuned.h"
 
 /*
- *	alltoall_intra_dec 
+ *	barrier_intra_dec 
  *
- *	Function:	- seletects alltoall algorithm to use
- *	Accepts:	- same arguments as MPI_Alltoall()
- *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
+ *	Function:	- seletects barrier algorithm to use
+ *	Accepts:	- same arguments as MPI_Barrier()
+ *	Returns:	- MPI_SUCCESS or error code (passed from the barrier implementation)
  */
-
-int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount, 
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount, 
-                                    struct ompi_datatype_t *rdtype, 
-                                    struct ompi_communicator_t *comm)
+int mca_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm)
 {
     int i;
     int size;
@@ -49,20 +44,13 @@ int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     int contig;
     int dsize;
 
-    printf("mca_coll_tuned_alltoall_intra_dec_fixed\n");
+    printf("mca_coll_tuned_barrier_intra_dec_dynamic\n");
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    if (size==2) {
-        return mca_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    }
-    else {
-/*         return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm); */
-        return mca_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    }
 
-/*     return OMPI_ERR_NOT_IMPLEMENTED; */
+return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 
