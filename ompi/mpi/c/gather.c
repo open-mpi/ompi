@@ -57,7 +57,9 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
           }
 
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+          if (MPI_IN_PLACE != sendbuf) {
+              OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+          }
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
           /* Errors for the root.  Some of these could have been

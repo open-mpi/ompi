@@ -57,12 +57,16 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
           }
 
-          if (recvcount < 0) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-          }
-
-          if (MPI_DATATYPE_NULL == recvtype) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+          if (MPI_IN_PLACE != recvbuf) {
+              if (recvcount < 0) {
+                  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, 
+                                                FUNC_NAME);
+              }
+              
+              if (MPI_DATATYPE_NULL == recvtype) {
+                  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, 
+                                                FUNC_NAME); 
+              }
           }
 
           /* Errors for the root.  Some of these could have been
