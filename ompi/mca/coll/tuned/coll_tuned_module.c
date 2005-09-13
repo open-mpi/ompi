@@ -67,8 +67,8 @@ static const mca_coll_base_module_1_0_0_t intra_fixed = {
     NULL,
 /*   mca_coll_tuned_alltoallw_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_barrier_intra_dec_fixed, */
-    NULL,
+  mca_coll_tuned_barrier_intra_dec_fixed,
+/*     NULL, */
   mca_coll_tuned_bcast_intra_dec_fixed,
 /*     NULL, */
 /*   mca_coll_tuned_exscan_intra_dec_fixed, */
@@ -120,8 +120,8 @@ static const mca_coll_base_module_1_0_0_t intra_dynamic = {
     NULL,
 /*   mca_coll_tuned_gatherv_intra_dec_dynamic, */
     NULL,
-  mca_coll_tuned_reduce_intra_dec_dynamic,
-/*     NULL, */
+/*   mca_coll_tuned_reduce_intra_dec_dynamic, */
+    NULL,
 /*   mca_coll_tuned_reduce_scatter_intra_dec_dynamic, */
     NULL,
 /*   mca_coll_tuned_scan_intra_dec_dynamic, */

@@ -27,6 +27,9 @@ sources = \
         coll_tuned_alltoall_decision_fixed.c \
         coll_tuned_alltoall_decision_dynamic.c \
         coll_tuned_alltoall.c \
+        coll_tuned_barrier_decision_fixed.c \
+        coll_tuned_barrier_decision_dynamic.c \
+        coll_tuned_barrier.c \
         coll_tuned_bcast_decision_fixed.c \
         coll_tuned_bcast_decision_dynamic.c \
         coll_tuned_bcast.c \
