@@ -258,6 +258,16 @@ void mca_pml_ob1_recv_request_progress(
  *
  */
 
+void mca_pml_ob1_recv_request_matched_probe(
+    mca_pml_ob1_recv_request_t* req,
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_segment_t* segments,
+    size_t num_segments);
+
+/**
+ *
+ */
+
 void mca_pml_ob1_recv_request_schedule(
     mca_pml_ob1_recv_request_t* req);
 
