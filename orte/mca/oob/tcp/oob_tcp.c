@@ -666,10 +666,10 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, trig_name, sub_name,
+    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, NULL, NULL,
                                          ORTE_GPR_NOTIFY_ADD_ENTRY |
                                          ORTE_GPR_NOTIFY_VALUE_CHG |
-                                         ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
+                                         ORTE_GPR_NOTIFY_PRE_EXISTING,
                                          ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
                                          segment,
                                          NULL,  /* look at all containers on this segment */
