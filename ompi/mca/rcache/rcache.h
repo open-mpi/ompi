@@ -23,7 +23,7 @@
 #include "info/info.h"
 #include "opal/class/opal_list.h" 
 #include "mca/mpool/mpool.h"
-
+#include "opal/threads/mutex.h"
 
 
 /**
@@ -87,6 +87,7 @@ struct mca_rcache_base_module_t {
     mca_rcache_base_module_insert_fn_t rcache_insert; 
     mca_rcache_base_module_delete_fn_t rcache_delete; 
     mca_rcache_base_module_finalize_fn_t rcache_finalize; 
+    opal_mutex_t lock;
 }; 
 typedef struct mca_rcache_base_module_t mca_rcache_base_module_t; 
  

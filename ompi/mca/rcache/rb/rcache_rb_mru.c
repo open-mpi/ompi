@@ -40,14 +40,12 @@ int mca_rcache_rb_mru_insert(
         
                               ) {
     mca_mpool_base_registration_t* old_reg; 
-    OPAL_THREAD_LOCK(&rcache->rb_lock); 
     if(rcache->reg_mru_len <= rcache->mru_list.opal_list_length) { 
         old_reg = (mca_mpool_base_registration_t*) 
             opal_list_remove_last(&rcache->mru_list); 
         /* need to pull out of rb tree here */ 
     }
     opal_list_append(&rcache->mru_list,(opal_list_item_t*) reg); 
-    OPAL_THREAD_UNLOCK(&rcache->rb_lock); 
     return OMPI_SUCCESS; 
 }
 
@@ -60,7 +58,6 @@ int mca_rcache_rb_mru_delete(
                                mca_mpool_base_registration_t *reg
                                ){
     int rc; 
-    OPAL_THREAD_LOCK(&rcache->rb_lock); 
     if(NULL == opal_list_remove_item(
                                      &rcache->mru_list,
                                      (opal_list_item_t*) reg
@@ -69,7 +66,6 @@ int mca_rcache_rb_mru_delete(
     } else { 
         rc = OMPI_SUCCESS; 
     }
-    OPAL_THREAD_UNLOCK(&rcache->rb_lock); 
     return rc; 
 }
 
@@ -81,7 +77,6 @@ int mca_rcache_rb_mru_touch(
                               mca_mpool_base_registration_t* reg
                               ){
     int rc; 
-    OPAL_THREAD_LOCK(&rcache->rb_lock); 
     if(NULL == opal_list_remove_item(
                                      &rcache->mru_list,
                                      (opal_list_item_t*) reg
@@ -91,7 +86,6 @@ int mca_rcache_rb_mru_touch(
         opal_list_append(&rcache->mru_list, (opal_list_item_t*) reg); 
         rc = OMPI_SUCCESS; 
     }
-    OPAL_THREAD_UNLOCK(&rcache->rb_lock); 
     return rc; 
 }
 
