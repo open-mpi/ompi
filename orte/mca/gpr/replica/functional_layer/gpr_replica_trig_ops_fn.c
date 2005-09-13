@@ -251,6 +251,16 @@ ADDREQ:
      */
     req->idtag = subscription->id;
 
+    /*
+     * New subscription, send initial values?
+     */
+    if(sub->active && subscription->action & ORTE_GPR_NOTIFY_PRE_EXISTING) {
+
+        if(ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(sub, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
 DONESUB:
     /* record where the subscription went */
     *subptr = sub;
