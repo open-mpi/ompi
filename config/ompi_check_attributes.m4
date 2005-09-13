@@ -19,21 +19,28 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
   AC_MSG_CHECKING(for __attribute__)
   AC_CACHE_VAL(ac_cv___attribute__, [
     AC_TRY_COMPILE(
-      [#include <stdlib.h>],
-      [static void foo(void) __attribute__ ((unused));
+      [#include <stdlib.h>,
+       static void foo(void) __attribute__ ((unused));
        static void foo(void) { exit(1); }],
+      [],
       [ac_cv___attribute__=1 ac_cv___attribute__msg=yes],
       [ac_cv___attribute__=0 ac_cv___attribute__msg=no],
     )])
-  AC_DEFINE_UNQUOTED( HAVE___ATTRIBUTE__, [$ac_cv___attribute__],
-                      [define if your compiler has __attribute__] )
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE, [$ac_cv___attribute__],
+                     [Whether your compiler has __attribute__ or not])
   AC_MSG_RESULT($ac_cv___attribute__msg)
 
 #
 # Now that we know the compiler support __attribute__ let's check which kind of
 # attributed are supported.
 #
-  if test "$ac_cv___attribute__msg" = "yes"; then
+  if test "$ac_cv___attribute__msg" = "no"; then
+    ac_cv___attribute__alias=0
+    ac_cv___attribute__const=0
+    ac_cv___attribute__malloc=0
+    ac_cv___attribute__noreturn=0
+    ac_cv___attribute__pure=0
+  else
     AC_MSG_CHECKING("for __attribute__ ((alias))" )
     AC_CACHE_VAL(ac_cv___attribute__alias, [
       AC_TRY_COMPILE(
@@ -44,10 +51,7 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [ac_cv___attribute__alias=1 ac_cv___attribute__alias_msg=yes],
         [ac_cv___attribute__alias=0 ac_cv___attribute__alias_msg=no]
       )])
-    AC_DEFINE_UNQUOTED( HAVE___ATTRIBUTE__WEAK_ALIAS, [$ac_cv___attribute__alias],
-                        [define if your compiler has __attribute__ alias weak] )
     AC_MSG_RESULT($ac_cv___attribute__alias_msg)
-    
 
     AC_MSG_CHECKING("for __attribute__ ((const))" )
     AC_CACHE_VAL(ac_cv___attribute__const, [
@@ -58,8 +62,6 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [ac_cv___attribute__const=1 ac_cv___attribute__const_msg=yes],
         [ac_cv___attribute__const=0 ac_cv___attribute__const_msg=no]
       )])
-    AC_DEFINE_UNQUOTED( HAVE___ATTRIBUTE__CONST, [$ac_cv___attribute__const],
-                        [define if your compiler has __attribute__ const] )
     AC_MSG_RESULT($ac_cv___attribute__const_msg)
 
     AC_MSG_CHECKING("for __attribute__ ((malloc))" )
@@ -71,8 +73,6 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [ac_cv___attribute__malloc=1 ac_cv___attribute__malloc_msg=yes],
         [ac_cv___attribute__malloc=0 ac_cv___attribute__malloc_msg=no]
       )])
-    AC_DEFINE_UNQUOTED( HAVE___ATTRIBUTE__MALLOC, [$ac_cv___attribute__malloc],
-                        [define if your compiler has __attribute__ malloc] )
     AC_MSG_RESULT($ac_cv___attribute__malloc_msg)
 
     AC_MSG_CHECKING("for __attribute__ ((noreturn))" )
@@ -84,8 +84,6 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [ac_cv___attribute__noreturn=1 ac_cv___attribute__noreturn_msg=yes],
         [ac_cv___attribute__noreturn=0 ac_cv___attribute__noreturn_msg=no]
       )])
-    AC_DEFINE_UNQUOTED( HAVE___ATTRIBUTE__NORETURN, [$ac_cv___attribute__noreturn],
-                        [define if your compiler has __attribute__ noreturn] )
     AC_MSG_RESULT($ac_cv___attribute__noreturn_msg)
 
     AC_MSG_CHECKING("for __attribute__ ((pure))" )
@@ -97,9 +95,20 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [ac_cv___attribute__pure=1 ac_cv___attribute__pure_msg=yes],
         [ac_cv___attribute__pure=0 ac_cv___attribute__pure_msg=no]
       )])
-    AC_DEFINE_UNQUOTED( HAVE___ATTRIBUTE__PURE, [$ac_cv___attribute__PURE],
-                        [define if your compiler has __attribute__ PURE] )
     AC_MSG_RESULT($ac_cv___attribute__pure_msg)
 
   fi
+
+  # Now that all the values are set, define them
+
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS, [$ac_cv___attribute__alias],
+                     [Whether your compiler has __attribute__ alias weak or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_CONST, [$ac_cv___attribute__const],
+                     [Whether your compiler has __attribute__ const or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MALLOC, [$ac_cv___attribute__malloc],
+                     [Whether your compiler has __attribute__ malloc or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NORETURN, [$ac_cv___attribute__noreturn],
+                     [Whether your compiler has __attribute__ noreturn or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PURE, [$ac_cv___attribute__PURE],
+                     [Whether your compiler has __attribute__ PURE or not])
 ])
