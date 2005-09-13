@@ -278,7 +278,7 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
     }
 
 #if 0
-    PtlNIDebug(mca_btl_portals_module.portals_ni_h, PTL_DBG_NI_ALL);
+    PtlNIDebug(mca_btl_portals_module.portals_ni_h, PTL_DBG_ALL);
 #endif
 
     return OMPI_SUCCESS;
