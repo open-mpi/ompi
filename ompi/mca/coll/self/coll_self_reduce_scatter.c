@@ -33,6 +33,9 @@ int mca_coll_self_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                        struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm)
 {
-    return ompi_ddt_sndrcv(sbuf, rcounts[0], dtype,
-                           rbuf, rcounts[0], dtype);
+    if (MPI_IN_PLACE == sbuf) {
+        return MPI_SUCCESS;
+    } else {
+        return ompi_ddt_copy_content_same_ddt(dtype, rcounts[0], rbuf, sbuf);
+    }
 }

@@ -34,6 +34,10 @@ int mca_coll_self_scatterv_intra(void *sbuf, int *scounts,
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm)
 {
-    return ompi_ddt_sndrcv(((char *) sbuf) + disps[0], scounts[0], sdtype,
-                           rbuf, rcount, rdtype);
+    if (MPI_IN_PLACE == sbuf) {
+        return MPI_SUCCESS;
+    } else {
+        return ompi_ddt_sndrcv(((char *) sbuf) + disps[0], scounts[0], sdtype,
+                               rbuf, rcount, rdtype);
+    }
 }

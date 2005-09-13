@@ -34,6 +34,10 @@ int mca_coll_self_gatherv_intra(void *sbuf, int scount,
                                 struct ompi_datatype_t *rdtype, int root,
                                 struct ompi_communicator_t *comm)
 {
-    return ompi_ddt_sndrcv(sbuf, scount, sdtype,
-                           ((char *) rbuf) + disps[0], rcounts[0], rdtype);
+    if (MPI_IN_PLACE == sbuf) {
+        return MPI_SUCCESS;
+    } else {
+        return ompi_ddt_sndrcv(sbuf, scount, sdtype,
+                               ((char *) rbuf) + disps[0], rcounts[0], rdtype);
+    }
 }

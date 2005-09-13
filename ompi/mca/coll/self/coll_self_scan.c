@@ -33,6 +33,9 @@ int mca_coll_self_scan_intra(void *sbuf, void *rbuf, int count,
                              struct ompi_op_t *op, 
                              struct ompi_communicator_t *comm)
 {
-    return ompi_ddt_sndrcv(sbuf, count, dtype, 
-                           rbuf, count, dtype);
+    if (MPI_IN_PLACE == sbuf) {
+        return MPI_SUCCESS;
+    } else {
+        return ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+    }
 }
