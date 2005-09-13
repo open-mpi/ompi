@@ -36,6 +36,7 @@
 #include "datatype/convertor.h" 
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 #include "btl_mvapi_endpoint.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 
 mca_btl_mvapi_component_t mca_btl_mvapi_component = {
     {
