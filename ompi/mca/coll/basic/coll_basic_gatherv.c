@@ -76,9 +76,10 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
 
         if (i == rank) {
             /* simple optimization */
-            if ((0 < scount) && (0 < rcounts[i]))
+            if (MPI_IN_PLACE != sbuf && (0 < scount) && (0 < rcounts[i])) {
                 err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
                                       ptmp, rcounts[i], rdtype);
+            }
         } else {
             /* Only receive if there is something to receive */
             if (rcounts[i] > 0) {

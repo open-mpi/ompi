@@ -75,9 +75,11 @@ mca_coll_basic_scatter_intra(void *sbuf, int scount,
         /* simple optimization */
 
         if (i == rank) {
-            err =
-                ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
-                                rdtype);
+            if (MPI_IN_PLACE != recvbuf) {
+                err =
+                    ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
+                                    rdtype);
+            }
         } else {
             err = MCA_PML_CALL(send(ptmp, scount, sdtype, i,
                                     MCA_COLL_BASE_TAG_SCATTER,
