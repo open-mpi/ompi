@@ -472,8 +472,16 @@ int mca_pml_ob1_recv_frag_match(
              * update delivered sequence number information, if needed.
              */
             if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
+
                 /* Match a probe, rollback the next expected sequence number */
                 (proc->expected_sequence)--;
+                OPAL_THREAD_UNLOCK(&comm->matching_lock);
+
+                /* complete the probe */
+                mca_pml_ob1_recv_request_matched_probe(match,btl,segments,num_segments);
+
+                /* attempt to match actual request */
+                return mca_pml_ob1_recv_frag_match(btl,hdr,segments,num_segments);
             }
         } else {
 
