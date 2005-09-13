@@ -44,12 +44,14 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if (ompi_comm_invalid(comm)) {
+        if (ompi_comm_invalid(comm)) {
           OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
-	} else if (MPI_DATATYPE_NULL == recvtype) {
+        } else if (MPI_DATATYPE_NULL == recvtype) {
           err = MPI_ERR_TYPE;
         } else if (recvcount < 0) {
           err = MPI_ERR_COUNT;
+        } else if (MPI_IN_PLACE == recvbuf) {
+          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         } else {
           OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
         }

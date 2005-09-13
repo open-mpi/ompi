@@ -40,9 +40,9 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
-	}
+        }
 
         /* No intercommunicators allowed! (MPI does not define
            MPI_SCAN on intercommunicators) */
@@ -52,10 +52,12 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
         }
 
         /* Unrooted operation; checks for all ranks */
-	
-	else if (MPI_OP_NULL == op) {
+
+        else if (MPI_OP_NULL == op) {
           err = MPI_ERR_OP;
-	} else if (ompi_op_is_intrinsic(op) &&
+        } else if (MPI_IN_PLACE == recvbuf) {
+          err = MPI_ERR_ARG;
+        } else if (ompi_op_is_intrinsic(op) &&
                    datatype->id < DT_MAX_PREDEFINED &&
                    -1 == ompi_op_ddt_map[datatype->id]) {
           err = MPI_ERR_OP;

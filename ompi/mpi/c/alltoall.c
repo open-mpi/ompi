@@ -51,6 +51,8 @@ int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         err = MPI_ERR_TYPE;
       } else if (recvcount < 0) {
         err = MPI_ERR_COUNT;
+      } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+        err = MPI_ERR_ARG;
       } else {
         OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
       }

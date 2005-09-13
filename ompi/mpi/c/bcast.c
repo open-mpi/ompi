@@ -39,7 +39,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
       err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (ompi_comm_invalid(comm)) {
-	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                      FUNC_NAME);
       }
 
@@ -47,6 +47,9 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
       OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
       OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+      if (MPI_IN_PLACE == buffer) {
+          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+      }
 
       /* Errors for intracommunicators */
 
@@ -61,7 +64,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
       else {
         if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
                MPI_ROOT == root || MPI_PROC_NULL == root)) {
-	  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
       } 
     }
