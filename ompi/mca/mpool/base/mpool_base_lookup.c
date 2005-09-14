@@ -23,6 +23,7 @@
 #include "mca/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
+#include "mpool_base_mem_cb.h"
 
 
 mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
@@ -77,6 +78,11 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     sm->user_data = user_data;
     sm->mpool_resources = resources;
     opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
+    /* on the very first creation of a module we init the memory callback*/ 
+    /* if(opal_list_get_size(&mca_mpool_base_modules) == 1 && */
+/*        opal_mem_free_is_supported()) {  */
+/*         opal_mem_free_register_handler(mca_mpool_base_mem_cb, NULL);  */
+/*     } */
     return module; 
 }
 

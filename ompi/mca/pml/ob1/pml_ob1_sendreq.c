@@ -348,13 +348,21 @@ static int mca_pml_ob1_send_request_start_rndv(
     int rc;
 
     /* prepare descriptor */
-    mca_bml_base_prepare_src(
-        bml_btl, 
-        NULL,
-        &sendreq->req_send.req_convertor,
-        sizeof(mca_pml_ob1_rendezvous_hdr_t),
-        &size,
-        &des);
+    if(size == 0) {
+        mca_bml_base_alloc(
+                           bml_btl, 
+                           &des, 
+                           sizeof(mca_pml_ob1_rendezvous_hdr_t)
+                           ); 
+    } else {
+        mca_bml_base_prepare_src(
+                                 bml_btl, 
+                                 NULL,
+                                 &sendreq->req_send.req_convertor,
+                                 sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                                 &size,
+                                 &des);
+    }
 
     if(NULL == des) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -477,7 +485,8 @@ int mca_pml_ob1_send_request_start_copy(
         /* if the data is contiguous and registered then we attempt to do 
          * an rdma of the entire message.
          */
-        if(ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false &&
+        if(size > 0 &&
+           ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false &&
            0 != (sendreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                sendreq->req_endpoint,
                sendreq->req_send.req_addr,

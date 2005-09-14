@@ -21,7 +21,8 @@ noinst_LTLIBRARIES = libmca_mpool_base.la
 # Source code files
 
 headers = \
-        base.h 
+        base.h \
+	mpool_base_mem_cb.h
 
 libmca_mpool_base_la_SOURCES = \
         $(headers) \
