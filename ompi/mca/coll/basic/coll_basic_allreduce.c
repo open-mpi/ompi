@@ -44,7 +44,15 @@ mca_coll_basic_allreduce_intra(void *sbuf, void *rbuf, int count,
 
     /* Reduce to 0 and broadcast. */
 
-    err = comm->c_coll.coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm);
+    if (MPI_IN_PLACE == sbuf) {
+        if (0 == ompi_comm_rank(comm)) {
+            err = comm->c_coll.coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm);
+        } else {
+            err = comm->c_coll.coll_reduce(rbuf, NULL, count, dtype, op, 0, comm);
+        }
+    } else {
+        err = comm->c_coll.coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm);
+    }
     if (MPI_SUCCESS != err) {
         return err;
     }
