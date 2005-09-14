@@ -47,9 +47,20 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
     for (i = 0; i < size; ++i) {
         if (MPI_IN_PLACE == sbuf) {
-            err = comm->c_coll.coll_gatherv(MPI_IN_PLACE, 0, 
-                                            MPI_DATATYPE_NULL, rbuf,
-                                            rcounts, disps, rdtype, i, comm);
+            /* MPI-2 7.3.3 description of MPI_Allgatherv is wrong --
+               can't just have all processes call
+               MPI_Gatherv(MPI_IN_PLACE...) because IN_PLACE is only
+               allowed to be used at the root.  Non-root processes
+               must use their receive buf as the send buf. */
+            if (i == rank) {
+                err = comm->c_coll.coll_gatherv(MPI_IN_PLACE, -1, 
+                                                MPI_DATATYPE_NULL, rbuf,
+                                                rcounts, disps, rdtype, i, comm);
+            } else {
+                err = comm->c_coll.coll_gatherv(rbuf, rcounts[i], rdtype, 
+                                                NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                                                i, comm);
+            }
         } else {
             err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
                                             rcounts, disps, rdtype, i, comm);
