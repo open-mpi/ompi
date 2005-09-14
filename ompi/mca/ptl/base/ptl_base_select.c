@@ -17,13 +17,14 @@
 #include "ompi_config.h"
 
 #include "opal/util/argv.h"
-#include "runtime/runtime.h"
 #include "opal/util/show_help.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
+#include "opal/util/output.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/runtime/runtime.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/base.h"
 
 /**
  * Function for weeding out ptl components that don't want to run.
