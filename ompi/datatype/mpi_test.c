@@ -285,7 +285,8 @@ main(int argc, char *argv[])
                      struct iovec iov;
                      uint32_t iov_count;
                      int32_t free_after;
-                     size_t max_data;
+                     size_t max_data_pack;
+                     size_t max_data_unpack;
                      size_t bytes_remaining;
 
                      loop_cnt++;  /* increase the number of runned tests */
@@ -306,16 +307,24 @@ main(int argc, char *argv[])
                          length, recv_buffer);
 
                      if(bytes_remaining > sizeof(eager))
-                         max_data = sizeof(eager);
+                         max_data_pack = sizeof(eager);
                      else
-                         max_data = bytes_remaining;
+                         max_data_pack = bytes_remaining;
  
                      iov.iov_base = eager;
-                     iov.iov_len = max_data;
+                     iov.iov_len = max_data_pack;
                      iov_count = 1;
                      ompi_convertor_pack(send_conv, &iov, &iov_count, &max_data, &free_after);
+                     bytes_remaining -= max_data_pack; /* sender schedules data */
+
+                     iov.iov_base = eager;
+                     iov.iov_len = max_data_pack;
+                     max_data_unpack = max_data_pack;
                      ompi_convertor_unpack(recv_conv, &iov, &iov_count, &max_data, &free_after);
-                     bytes_remaining -= max_data;
+
+                     if (max_data_pack != max_data_unpack) {
+                         fprintf(stderr, "pack/unpack count mismatch: %lu != !lu\n", max_data_pack, max_data_unpack);
+                     }
 
                      while(bytes_remaining != 0) {
                          if(bytes_remaining > sizeof(max_send)) {
@@ -329,8 +338,17 @@ main(int argc, char *argv[])
                          iov_count = 1;
 
                          ompi_convertor_pack(send_conv, &iov, &iov_count, &max_data, &free_after);
-                         ompi_convertor_unpack(recv_conv, &iov, &iov_count, &max_data, &free_after);
                          bytes_remaining -= max_data;
+
+                         iov.iov_base = max_send;
+                         iov.iov_len = max_data_pack;
+                         iov_count = 1;
+                         max_data_unpack = max_data_pack;
+                         ompi_convertor_unpack(recv_conv, &iov, &iov_count, &max_data_unpack, &free_after);
+
+                         if (max_data_pack != max_data_unpack) {
+                             fprintf(stderr, "pack/unpack count mismatch: %lu != !lu\n", max_data_pack, max_data_unpack);
+                         }
                      }
 
                      /* Error Test  */

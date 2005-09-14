@@ -233,7 +233,8 @@ extern int mca_pml_ob1_start(
         case MCA_PML_REQUEST_SEND: \
             { \
                 mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request; \
-                if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
+                if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED && \
+                   sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) { \
                     mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
                 } \
                 MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq); \
