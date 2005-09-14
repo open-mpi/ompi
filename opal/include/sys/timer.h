@@ -84,6 +84,10 @@ extern "C" {
 #include "include/sys/powerpc/timer.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64
 #include "include/sys/powerpc/timer.h"
+#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_32
+#include "include/sys/sparcv9/timer.h"
+#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
+#include "include/sys/sparcv9/timer.h"
 #endif
 
 #ifndef DOXYGEN
