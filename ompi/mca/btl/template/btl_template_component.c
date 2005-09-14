@@ -44,7 +44,7 @@ mca_btl_template_component_t mca_btl_template_component = {
 
             MCA_BTL_BASE_VERSION_1_0_0,
 
-            "ib", /* MCA component name */
+            "template", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
