@@ -20,6 +20,14 @@
 
 #define MCA_BTL_TCP_FRAG_ALIGN (8)
 #include "ompi_config.h"
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+
 #include "btl_tcp.h" 
 #include "btl_tcp_hdr.h"
 
