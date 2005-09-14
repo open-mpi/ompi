@@ -34,6 +34,9 @@ void mca_mpool_gm_module_init(mca_mpool_gm_module_t* mpool)
     mpool->super.mpool_free = mca_mpool_gm_free; 
     mpool->super.mpool_register = mca_mpool_gm_register; 
     mpool->super.mpool_deregister = mca_mpool_gm_deregister; 
+    mpool->super.mpool_find = mca_mpool_gm_find; 
+    mpool->super.mpool_retain = mca_mpool_gm_retain;
+    mpool->super.mpool_release = mca_mpool_gm_release; 
     mpool->super.mpool_finalize = NULL; 
     mpool->super.rcache = 
         mca_rcache_base_module_create(mca_mpool_gm_component.rcache_name);
