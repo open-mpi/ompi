@@ -229,9 +229,14 @@ inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t*
         convertor->bConverted = convertor->pDesc->size * convertor->count;
         return OMPI_SUCCESS;
     }
-    if( 0 == (*position) )
-        return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
-
+    /*
+     * If we plan to rollback the convertor then first we have to set it
+     * at the beginning.
+     */
+    if( (0 == (*position)) || ((*position) < convertor->bConverted) ) {
+        rc = ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
+        if( 0 == (*position) ) return rc;
+    }
     if( convertor->flags & DT_FLAG_CONTIGUOUS ) {
         rc = ompi_convertor_create_stack_with_pos_contig( convertor, (*position),
                                                           ompi_ddt_local_sizes );
@@ -280,7 +285,7 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
      * part of the convertor flags to the default value.
      */
     convertor->flags &= CONVERTOR_TYPE_MASK;
-    convertor->flags |= (CONVERTOR_DATATYPE_MASK | datatype->flags);
+    convertor->flags |= (CONVERTOR_DATATYPE_MASK & datatype->flags);
     convertor->pDesc = (ompi_datatype_t*)datatype;
     convertor->bConverted = 0;
 
