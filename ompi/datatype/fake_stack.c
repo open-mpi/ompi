@@ -175,7 +175,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                 resting_place -= (cnt * basic_type->size);
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->elem.common.type, 
                             pElems->elem.count - cnt,
-                            pStack->disp + pElems->elem.disp + cnt * pElems->elem.extent,
+                            pElems->elem.disp + cnt * pElems->elem.extent,
                             pos_desc );
                 pConvertor->bConverted = starting_point - resting_place;
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos,
