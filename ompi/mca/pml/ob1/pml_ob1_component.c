@@ -145,6 +145,7 @@ int mca_pml_ob1_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
     
     mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
