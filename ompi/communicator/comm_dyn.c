@@ -581,7 +581,7 @@ ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
 
 	ret = MCA_PML_CALL(isend (&(obj->buf), 0, MPI_INT, i,
 				 OMPI_COMM_BARRIER_TAG, 
-				 MCA_PML_BASE_SEND_STANDARD,
+				 MCA_PML_BASE_SEND_SYNCHRONOUS,
 				 comm, &(obj->reqs[2*i+1])));
 				 
 	if ( OMPI_SUCCESS != ret ) {
