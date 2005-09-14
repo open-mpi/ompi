@@ -773,7 +773,8 @@ int mca_pml_ob1_send_request_start_prepare(
         /* if the data is contiguous and registered then we attempt to do 
          * an rdma of the entire message.
          */
-        if(ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false &&
+        if(size > 0 &&
+           ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false &&
            0 != (sendreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                sendreq->req_endpoint,
                sendreq->req_send.req_addr,
