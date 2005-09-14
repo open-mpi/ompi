@@ -141,8 +141,12 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 }
             }
         }
+        if(cnt == 0) {
+            mca_btl_tcp_endpoint_close(frag->endpoint);
+            return false;
+        }
     }
-                                                                                                       
+
     /* if the write didn't complete - update the iovec state */
     num_vecs = frag->iov_cnt;
     for(i=0; i<num_vecs; i++) {
