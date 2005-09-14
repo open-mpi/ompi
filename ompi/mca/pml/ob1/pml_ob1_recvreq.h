@@ -34,7 +34,11 @@ struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     struct ompi_proc_t *req_proc;
     ompi_ptr_t req_send;
+#if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t req_lock;
+#else
+    int32_t req_lock;
+#endif
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;

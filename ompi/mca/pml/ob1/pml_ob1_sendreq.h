@@ -38,9 +38,14 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     ompi_proc_t* req_proc; 
     mca_bml_base_endpoint_t* req_endpoint;
-    volatile int32_t req_state;
     ompi_ptr_t req_recv;
+#if OMPI_HAVE_THREAD_SUPPORT
+    volatile int32_t req_state;
     volatile int32_t req_lock;
+#else
+    volatile int32_t req_state;
+    volatile int32_t req_lock;
+#endif
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
     size_t req_send_offset;
@@ -154,12 +159,11 @@ do {                                                                            
         hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;                            \
         hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;        \
         hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;          \
-        hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;                     \
         hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
         hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;                 \
                                                                                           \
         /* short message */                                                               \
-        descriptor->des_cbfunc = mca_pml_ob1_match_completion;                            \
+        descriptor->des_cbfunc = mca_pml_ob1_match_completion_cache;                      \
         descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                              \
         descriptor->des_cbdata = sendreq;                                                 \
                                                                                           \
@@ -173,13 +177,9 @@ do {                                                                            
         }                                                                                 \
                                                                                           \
     } else {                                                                              \
-        /* handle buffered send */                                                        \
         if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {               \
-            mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi);       \
-        }                                                                                 \
-                                                                                          \
-        /* start request */                                                               \
-        if(bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                             \
+            rc = mca_pml_ob1_send_request_start_buffered( sendreq, bml_btl );             \
+        } else if(bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                      \
             rc = mca_pml_ob1_send_request_start_prepare( sendreq, bml_btl );              \
         } else {                                                                          \
             rc = mca_pml_ob1_send_request_start_copy( sendreq, bml_btl );                 \
@@ -208,7 +208,8 @@ do {                                                                            
         }                                                                                 \
     } else if((sendreq)->req_send.req_base.req_free_called) {                             \
         MCA_PML_OB1_FREE((ompi_request_t**)&sendreq);                                     \
-    } else if ((sendreq)->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {         \
+    } else if ((sendreq)->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&         \
+               (sendreq)->req_send.req_addr != (sendreq)->req_send.req_base.req_addr) {   \
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                        \
     }                                                                                     \
 }
@@ -301,6 +302,10 @@ do {                                                                  \
  *  Start the specified request
  */
 
+int mca_pml_ob1_send_request_start_buffered(
+    mca_pml_ob1_send_request_t* sendreq,
+    mca_bml_base_btl_t* bml_btl);
+
 int mca_pml_ob1_send_request_start_copy(
     mca_pml_ob1_send_request_t* sendreq,
     mca_bml_base_btl_t* bml_btl);
@@ -317,8 +322,19 @@ int mca_pml_ob1_send_request_schedule(
 
 /**
  *  Completion callback on match header
+ *  Cache descriptor.
  */
-void mca_pml_ob1_match_completion(
+void mca_pml_ob1_match_completion_cache(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status);
+
+/**
+ *  Completion callback on match header
+ *  Free descriptor.
+ */
+void mca_pml_ob1_match_completion_free(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
     struct mca_btl_base_descriptor_t* descriptor,

@@ -657,6 +657,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             if(mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd) == false) {
                 break;
             }
+            btl_endpoint->endpoint_send_frag = NULL;
 
             /* if required - update request status and release fragment */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);

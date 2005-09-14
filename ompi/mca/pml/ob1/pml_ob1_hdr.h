@@ -103,7 +103,6 @@ struct mca_pml_ob1_match_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;   /**< common attributes */
     uint16_t hdr_ctx;                      /**< communicator index */
     int32_t  hdr_src;                      /**< source rank */
-    int32_t  hdr_dst;                      /**< destination rank */
     int32_t  hdr_tag;                      /**< user tag */
     uint16_t hdr_seq;                      /**< message sequence number */
 };
@@ -114,7 +113,6 @@ typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
     MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_ctx = ntohs((h).hdr_ctx); \
     (h).hdr_src = ntohl((h).hdr_src); \
-    (h).hdr_dst = ntohl((h).hdr_dst); \
     (h).hdr_tag = ntohl((h).hdr_tag); \
     (h).hdr_seq = ntohs((h).hdr_seq); \
     } while (0)
@@ -124,7 +122,6 @@ typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
     MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
     (h).hdr_ctx = htons((h).hdr_ctx); \
     (h).hdr_src = htonl((h).hdr_src); \
-    (h).hdr_dst = htonl((h).hdr_dst); \
     (h).hdr_tag = htonl((h).hdr_tag); \
     (h).hdr_seq = htons((h).hdr_seq); \
     } while (0) 

@@ -892,14 +892,14 @@ int main( int argc, char* argv[] )
     pdt = create_inversed_vector( &ompi_mpi_int, 10 );
     if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_ddt_count(pdt, 100);
-       local_copy_with_convertor(pdt, 100, 4008);
+       local_copy_with_convertor(pdt, 100, 956);
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
     printf( "\n\n/*\n * TEST STRANGE DATATYPE\n */\n\n" );
     pdt = create_strange_dt();
     if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_ddt_count(pdt, 1);
-       local_copy_with_convertor(pdt, 1, 4008);
+       local_copy_with_convertor(pdt, 1, 956);
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
    
@@ -961,9 +961,11 @@ int main( int argc, char* argv[] )
         ompi_ddt_dump( pdt3 );
     }
 
+#if 0
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
     OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
+#endif
 
     pdt = test_struct_char_double();
     if( outputFlags & CHECK_PACK_UNPACK ) {
@@ -979,7 +981,7 @@ int main( int argc, char* argv[] )
 
     pdt = test_create_blacs_type();
     if( outputFlags & CHECK_PACK_UNPACK ) {
-       local_copy_with_convertor( pdt, 4500, 1023 );
+       local_copy_with_convertor( pdt, 4500, 956 );
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 

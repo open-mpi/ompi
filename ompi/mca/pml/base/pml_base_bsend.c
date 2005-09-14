@@ -255,6 +255,44 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 }
 
 
+/* 
+ * allocate buffer
+ */
+
+int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
+{
+    mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
+    int rc;
+
+    /* has a buffer been provided */
+    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
+    if(NULL == mca_pml_bsend_addr) {
+        sendreq->req_addr = NULL;
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        return OMPI_ERR_BUFFER;
+    }
+
+    /* allocate a buffer to hold packed message */
+    sendreq->req_addr = mca_pml_bsend_allocator->alc_alloc(
+        mca_pml_bsend_allocator, sendreq->req_bytes_packed, 0, NULL);
+    if(NULL == sendreq->req_addr) {
+        /* release resources when request is freed */
+        sendreq->req_base.req_pml_complete = true;
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        return OMPI_ERR_BUFFER;
+    }
+
+    /* increment count of pending requests */
+    mca_pml_bsend_count++;
+    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    
+    /* setup request to reflect the contigous buffer */
+    sendreq->req_count = sendreq->req_bytes_packed;
+    sendreq->req_datatype = MPI_PACKED;
+    return OMPI_SUCCESS;
+}
+
+
 /*
  *  Request completed - free buffer and decrement pending count 
  */
