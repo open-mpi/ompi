@@ -23,7 +23,7 @@
 #include "mca/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
-
+#include "mpool_base_mem_cb.h"
 
 int mca_mpool_base_close(void)
 {
@@ -54,6 +54,10 @@ int mca_mpool_base_close(void)
   mca_base_components_close(mca_mpool_base_output, 
                             &mca_mpool_base_components, NULL);
 
+  /* deregister memory free callback */
+  /* if(opal_mem_free_is_supported()) {  */
+/*       opal_mem_free_unregister_handler(mca_mpool_base_mem_cb);  */
+/*   } */
   /* All done */
 
   return OMPI_SUCCESS;

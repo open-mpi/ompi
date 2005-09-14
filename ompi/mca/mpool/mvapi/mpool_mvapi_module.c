@@ -17,12 +17,15 @@
 #include "ompi_config.h"
 #include <string.h>
 #include "opal/util/output.h"
+#include "opal/memory/memory.h"
 #include "mca/mpool/mvapi/mpool_mvapi.h"
 #include <vapi.h>
 #include <vapi_types.h> 
 #include <vapi_common.h> 
 #include "mca/rcache/rcache.h" 
 #include "mca/rcache/base/base.h"
+
+
 
 /*
  *  Initializes the mpool module.
@@ -221,6 +224,7 @@ int mca_mpool_mvapi_retain(struct mca_mpool_base_module_t* mpool,
     OPAL_THREAD_ADD32(&registration->ref_count, 1); 
     return OMPI_SUCCESS; 
 }
+
 
 
 
