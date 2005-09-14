@@ -288,7 +288,6 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     char *pml_buffer = NULL;
     char *snd_buffer = sbuf;
     char *rcv_buffer = rbuf;
-    char *inplace_temp = NULL;
 
     /* JMS Codearound for now -- if the operations is not communative,
      * just call the linear algorithm.  Need to talk to Edgar / George
