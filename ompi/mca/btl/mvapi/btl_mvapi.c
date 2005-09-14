@@ -379,16 +379,14 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         
         return &frag->base; 
         
-    } else if(max_data + reserve <= mvapi_btl->super.btl_max_send_size) { 
-        /** if the data fits in the max limit and we aren't told to pinn then we 
-           simply pack, if the data  is non contiguous then we pack **/ 
+    } else { 
        
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
         } 
-        if(max_data + reserve > frag->size){ 
-            max_data = frag->size - reserve; 
+        if(max_data + reserve > btl->btl_max_send_size){ 
+            max_data = btl->btl_max_send_size - reserve; 
         }
         iov.iov_len = max_data; 
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve; 
