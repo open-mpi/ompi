@@ -15,21 +15,49 @@ dnl
 dnl $HEADER$
 dnl
 
+# _OMPI_C_WEAK_SYMBOLS(action_if_found, [action_if_not_found])
+# ------------------------------------------------------------
+AC_DEFUN([_OMPI_C_WEAK_SYMBOLS],[
+    # need two files because icc will incorrectly not create the
+    # symbols if they are not used in the object file in which they
+    # are defined.  Blah!
+    cat > conftest_weak.c <<EOF
+extern int real(int i);
+extern int fake(int i);
+#pragma weak fake = real
+int real(int i) { return i; }
+EOF
+
+    cat > conftest.c <<EOF
+extern int fake(int i);
+extern int real(int i);
+int main(int argc, char *argv[]) { return fake(3); }
+EOF
+
+# Try the compile
+OMPI_LOG_COMMAND(
+    [$CC $CFLAGS  -c conftest_weak.c],
+    OMPI_LOG_COMMAND(
+        [$CC $CFLAGS  conftest.c conftest_weak.o -o conftest $LDFLAGS $LIBS],
+        [ompi_c_weak_symbols_happy=1],
+	[ompi_c_weak_symbols_happy=0]),
+    [ompi_c_weak_symbols_happy=0])
+
+    AS_IF([test "$ompi_c_weak_symbols_happy" = "1"], [$1], [$2])
+
+    unset ompi_c_weak_symbols_happy
+    /bin/rm -f conftest*
+])
+
+
 # OMPI_C_WEAK_SYMBOLS()
 # ---------------------
 # sets OMPI_C_WEAK_SYMBOLS=1 if C compiler has support for weak symbols
-define([OMPI_C_WEAK_SYMBOLS],[
-    AC_CACHE_CHECK([for weak symbols],
-                    [ompi_cv_c_weak_symbols],
-                    [AC_LINK_IFELSE([AC_LANG_SOURCE([[#pragma weak fake = real
-extern int fake(int i);
-int real(int i);
-int real(int i) { return i; }
-int main(int argc, char* argv[]) {
-  return fake(3);
-}]])],
-                                    [ompi_cv_c_weak_symbols="yes"],
-                                    [ompi_cv_c_weak_symbols="no"])])
+AC_DEFUN([OMPI_C_WEAK_SYMBOLS],[
+    AC_CACHE_CHECK([for weak symbol support],
+                   [ompi_cv_c_weak_symbols],
+                   [_OMPI_C_WEAK_SYMBOLS([ompi_cv_c_weak_symbols="yes"],
+                                         [ompi_cv_c_weak_symbols="no"])])
 
     AS_IF([test "$ompi_cv_c_weak_symbols" = "yes"],
           [OMPI_C_HAVE_WEAK_SYMBOLS=1], [OMPI_C_HAVE_WEAK_SYMBOLS=0])
