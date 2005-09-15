@@ -208,20 +208,6 @@ extern int mca_pml_ob1_start(
 }
 #endif
 
-#define MCA_PML_OB1_FINI(request) \
-{ \
-    mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
-    if(pml_request->req_persistent) { \
-       if(pml_request->req_free_called) { \
-           MCA_PML_OB1_FREE(request); \
-       } else { \
-           pml_request->req_ompi.req_state = OMPI_REQUEST_INACTIVE; \
-       } \
-    } else { \
-        MCA_PML_OB1_FREE(request); \
-    } \
-}
-
 
 #define MCA_PML_OB1_FREE(request) \
 { \
