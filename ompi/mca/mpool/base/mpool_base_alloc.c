@@ -342,41 +342,47 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
  */
 int mca_mpool_base_free(void * base)
 {
-    mca_mpool_base_chunk_t * chunk;
-    int i = 0;
-    int rc; 
+    int rc = OMPI_SUCCESS; 
+    opal_list_item_t * item;
+    mca_mpool_base_selected_module_t * current;
+    ompi_pointer_array_t regs; 
+    uint32_t i, cnt;
+    mca_mpool_base_registration_t* reg;
 
-    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
-    if(NULL == (chunk = mca_mpool_base_find_nl(base)))
-    {
-        OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
-        return OMPI_ERR_BAD_PARAM;
+    for(item = opal_list_get_first(&mca_mpool_base_modules);
+        item != opal_list_get_end(&mca_mpool_base_modules);
+        item = opal_list_get_next(item)) {
+        current = ((mca_mpool_base_selected_module_t *) item);
+        if(NULL != current->mpool_module->mpool_find){
+            if(NULL != current->mpool_module->mpool_find) { 
+                rc = current->mpool_module->mpool_find(
+                                                       current->mpool_module, 
+                                                       base,
+                                                       0,
+                                                       &regs, 
+                                                       &cnt 
+                                                       ); 
+                if(OMPI_SUCCESS != rc) { 
+                    return rc;
+                }
+                if(0 < cnt) { 
+                    for(i = 0; i < cnt; i++) { 
+                        reg = (mca_mpool_base_registration_t*) 
+                            ompi_pointer_array_get_item(&regs, i);
+                        
+                        rc = current->mpool_module->mpool_deregister(
+                                                                     current->mpool_module, 
+                                                                     reg
+                                                                     ); 
+                        if(OMPI_SUCCESS != rc) { 
+                            return rc; 
+                        }
+                    }
+                }
+            }    
+        }   
     }
 
-    /* if no special mpool was used to allocate the memory, call free */
-    if(chunk->mpools[0].mpool == NULL)
-    {
-        free(chunk->key.bottom);
-        OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (opal_list_item_t*) chunk);
-        rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-        OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
-        return rc;
-    }
-
-    while(MCA_MPOOL_BASE_MAX_REG > i && NULL != chunk->mpools[i].mpool) { i++; };
-
-    i -= 1;
-    for( ; i > 0; i--)
-    {
-        chunk->mpools[i].mpool->mpool_deregister(chunk->mpools[i].mpool, 
-                                                 chunk->mpools[i].mpool_registration
-                                                 );
-    }
-    chunk->mpools[i].mpool->mpool_free(chunk->mpools[i].mpool, chunk->key.bottom, chunk->mpools[i].mpool_registration);
-    OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (opal_list_item_t *) chunk);
-
-    rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
     return rc;
 }
 
