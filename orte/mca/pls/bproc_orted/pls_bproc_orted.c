@@ -478,6 +478,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
                 if(!pty_error_thrown) {
                     if(mca_pls_bproc_orted_component.debug) {
                         opal_output(0, "pls_bproc_orted: openpty failed, using pipes instead");
+                    }
                     pty_error_thrown = true;
                 }
                 rc = pls_bproc_orted_link_pipes(num_procs, jobid, master,
