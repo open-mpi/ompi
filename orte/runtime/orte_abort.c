@@ -40,8 +40,8 @@ int orte_abort(int status, char *fmt, ...)
     }
     va_end(arglist);
 
-    /* Shut down and exit */
-
-    orte_finalize();
+    /* Exit - do NOT do normal finalize as this will very likely
+     * hang the process. We are aborting due to an abnormal condition
+     * that precludes normal cleanup */
     exit(status);
 }
