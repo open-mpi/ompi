@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 SUBDIRS = \
         include \
         $(LIBLTDL_SUBDIR) \
