@@ -632,7 +632,7 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
 
     /* get some memory and copy the data inside. We can then release the receive buffer */
     if( 0 != recv_frag->attached_data_length ) {
-        char* ptr = (char*)gm_get_local_buffer();
+        char* ptr = (char*)mca_ptl_gm_get_local_buffer();
         recv_frag->have_allocated_buffer = true;
         memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, recv_frag->attached_data_length );
         recv_frag->frag_recv.frag_base.frag_addr = ptr;
@@ -750,7 +750,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
          */
         ompi_convertor_clone_with_position( &(request->req_recv.req_convertor),
                                             convertor, 1,
-                                            &(hdr->hdr_frag.hdr_frag_offset) );
+                                            (size_t*)&(hdr->hdr_frag.hdr_frag_offset) );
     }
 
     if( header_length != msg_len ) {
