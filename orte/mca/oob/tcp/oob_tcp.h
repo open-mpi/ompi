@@ -153,7 +153,8 @@ static inline uint64_t ntoh64(uint64_t val)
 * when process names are used as indices.
 */
 int mca_oob_tcp_process_name_compare(const orte_process_name_t* n1, const orte_process_name_t* n2);
-                                                                                                           /**
+
+/**
  *  Obtain contact information for this host (e.g. <ipaddress>:<port>)
  */
 
