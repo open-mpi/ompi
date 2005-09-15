@@ -403,7 +403,7 @@ static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) {
     char * var;
     int rc;
     /* append mca parameters to our environment */
-    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, (int*)num_env, true))) {
+    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, (int*)num_env, false))) {
         ORTE_ERROR_LOG(rc);
     }
 
