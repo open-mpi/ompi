@@ -61,19 +61,15 @@ mca_coll_basic_gather_intra(void *sbuf, int scount,
 
     /* I am the root, loop receiving the data. */
 
-    if (OMPI_SUCCESS != (err = ompi_ddt_get_extent(rdtype, &lb, &extent))) {
-        return err;
-    }
-
+    ompi_ddt_get_extent(rdtype, &lb, &extent);
     incr = extent * rcount;
     for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
-
-        /* simple optimization */
-
         if (i == rank) {
             if (MPI_IN_PLACE != sbuf) {
-                err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
-                                      rcount, rdtype);
+                err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
+                                      ptmp, rcount, rdtype);
+            } else {
+                err = MPI_SUCCESS;
             }
         } else {
             err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
