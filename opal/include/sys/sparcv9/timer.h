@@ -17,9 +17,7 @@
 #ifndef OMPI_SYS_ARCH_TIMER_H
 #define OMPI_SYS_ARCH_TIMER_H 1
 
-#if 0
 typedef uint64_t opal_timer_t;
-#endif
 
 #if OMPI_GCC_INLINE_ASSEMBLY
 
@@ -31,7 +29,7 @@ opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
 
-    __asm__ __volatile__("rdtsc" : "=r"(ret));
+    __asm__ __volatile__("mov %%tick, %0" : "=r"(ret));
 
     return ret;
 }
