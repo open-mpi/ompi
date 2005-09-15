@@ -65,34 +65,28 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         rbuf = inplace_temp - lb;
-
-    }
+    } 
 
     /* Gather and broadcast. */
 
     err = comm->c_coll.coll_gather(sbuf, scount, sdtype, rbuf, rcount,
                                    rdtype, 0, comm);
-    if (MPI_SUCCESS != err) {
-        return err;
+    if (MPI_SUCCESS == err) {
+        err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
+                                      rdtype, 0, comm);
     }
 
-    err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), 
-                                  rdtype, 0, comm);
-    if (MPI_SUCCESS != err) {
-        return err;
-    }
+    /* If we've got a temp buffer, copy back out */
 
-    /* If we're IN_PLACE and not the root, copy back out (sendcount
-       and sendtype are ignored) */
-
-    if (NULL != inplace_temp) {
-        ompi_ddt_copy_content_same_ddt(rdtype, rcount, rbuf_original, rbuf);
+    if (MPI_SUCCESS == err && NULL != inplace_temp) {
+        ompi_ddt_copy_content_same_ddt(rdtype, rcount * ompi_comm_size(comm),
+                                       rbuf_original, rbuf);
         free(inplace_temp);
     }
 
     /* All done */
 
-    return MPI_SUCCESS;
+    return err;
 }
 
 
