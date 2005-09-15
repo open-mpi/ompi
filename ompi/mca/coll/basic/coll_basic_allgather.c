@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include <stdlib.h>
+
 #include "mpi.h"
 #include "ompi/include/constants.h"
 #include "ompi/datatype/datatype.h"
@@ -40,24 +42,30 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
                                struct ompi_communicator_t *comm)
 {
     int err;
-    char *inplace_temp = NULL;
+    char *rbuf_original, *inplace_temp = NULL;
     long true_lb, true_extent, lb, extent;
 
     /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to
-       allocate temp buffer) */
+       allocate temp buffer) -- note that rank 0 can use IN_PLACE
+       natively, and we'll be ok (actually saves a little bit of
+       copying around) */
 
-    if (MPI_IN_PLACE == sbuf) {
-        sbuf = rbuf;
+    if (MPI_IN_PLACE == sbuf && 0 != ompi_comm_rank(comm)) {
+        ompi_ddt_get_extent(rdtype, &lb, &extent);
+        ompi_ddt_get_true_extent(rdtype, &true_lb, &true_extent);
+
+        rbuf_original = rbuf;
+        sbuf = ((char*) rbuf) + (ompi_comm_rank(comm) * extent * rcount);
         sdtype = rdtype;
         scount = rcount;
 
-        ompi_ddt_get_extent(rdtype, &lb, &extent);
-        ompi_ddt_get_true_extent(rdtype, &true_lb, &true_extent);
-        inplace_temp = malloc(true_extent + (rcount - 1) * extent);
+        inplace_temp = malloc((true_extent + (rcount - 1) * extent) * 
+                              ompi_comm_size(comm));
         if (NULL == inplace_temp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         rbuf = inplace_temp - lb;
+
     }
 
     /* Gather and broadcast. */
@@ -74,11 +82,11 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
         return err;
     }
 
-    /* If we're IN_PLACE, copy back out (sendcount and sendtype are
-       ignored) */
+    /* If we're IN_PLACE and not the root, copy back out (sendcount
+       and sendtype are ignored) */
 
     if (NULL != inplace_temp) {
-        ompi_ddt_copy_content_same_ddt(rdtype, rcount, rbuf, sbuf);
+        ompi_ddt_copy_content_same_ddt(rdtype, rcount, rbuf_original, rbuf);
         free(inplace_temp);
     }
 
