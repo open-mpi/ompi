@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_gpr_replica_api.la
 libmca_gpr_replica_api_la_SOURCES = \
         gpr_replica_api.h \
