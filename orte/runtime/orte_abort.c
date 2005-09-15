@@ -62,7 +62,8 @@ int orte_abort(int status, char *fmt, ...)
     /* - Clean up session directory */
     orte_session_dir_finalize(orte_process_info.my_name);
 
-    /* - Clean out the global structures (no necessary, but good practice) */
+    /* - Clean out the global structures 
+     * (not really necessary, but good practice) */
     orte_sys_info_finalize();
     orte_proc_info_finalize();
     orte_univ_info_finalize();
