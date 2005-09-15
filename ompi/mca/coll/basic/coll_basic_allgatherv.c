@@ -18,6 +18,7 @@
 #include "coll_basic.h"
 
 #include "mpi.h"
+#include "ompi/datatype/datatype.h"
 #include "ompi/include/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -40,11 +41,22 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
 {
     int i, size, rank;
     int err;
+    MPI_Aint extent;
+    MPI_Aint lb;
+    char *send_buf;
 
     /* Collect all values at each process, one at a time. */
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
+
+    if (MPI_IN_PLACE == sbuf) {
+        ompi_ddt_get_extent(rdtype, &lb, &extent);
+        send_buf = rbuf;
+        for (i = 0; i < rank; ++i) {
+            send_buf += (rcounts[i] * extent);
+        }
+    }
     for (i = 0; i < size; ++i) {
         if (MPI_IN_PLACE == sbuf) {
             /* MPI-2 7.3.3 description of MPI_Allgatherv is wrong --
@@ -55,10 +67,13 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
             if (i == rank) {
                 err = comm->c_coll.coll_gatherv(MPI_IN_PLACE, -1, 
                                                 MPI_DATATYPE_NULL, rbuf,
-                                                rcounts, disps, rdtype, i, comm);
+                                                rcounts, disps, rdtype, i,
+                                                comm);
             } else {
-                err = comm->c_coll.coll_gatherv(rbuf, rcounts[i], rdtype, 
-                                                NULL, NULL, NULL, MPI_DATATYPE_NULL,
+                err = comm->c_coll.coll_gatherv(send_buf, 
+                                                rcounts[rank], rdtype, 
+                                                NULL, NULL, NULL, 
+                                                MPI_DATATYPE_NULL,
                                                 i, comm);
             }
         } else {
