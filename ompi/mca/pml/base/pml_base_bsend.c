@@ -262,7 +262,6 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
-    int rc;
 
     /* has a buffer been provided */
     OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
@@ -299,7 +298,9 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
 int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
-    if(sendreq->req_count == 0 || sendreq->req_addr == NULL)
+    if(sendreq->req_count == 0 || 
+       sendreq->req_addr == NULL || 
+       sendreq->req_addr == sendreq->req_base.req_addr)
         return OMPI_SUCCESS;
 
     /* remove from list of pending requests */
@@ -307,7 +308,7 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 
     /* free buffer */
     mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, sendreq->req_addr);
-    sendreq->req_addr = NULL;
+    sendreq->req_addr = sendreq->req_base.req_addr;
 
     /* decrement count of buffered requests */
     if(--mca_pml_bsend_count == 0)
