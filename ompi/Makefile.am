@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 # Include Windows only files in dist
 WIN32_FILES = win32/ompi_declspec.h \
               win32/ompi_time.c     \
