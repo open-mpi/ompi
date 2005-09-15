@@ -14,10 +14,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 SUBDIRS = api_layer functional_layer transition_layer communications
 
 # Make the output library in this directory, and name it either
@@ -44,6 +40,9 @@ mca_gpr_replica_la_LIBADD = \
 	functional_layer/libmca_gpr_replica_fn.la \
 	communications/libmca_gpr_replica_comm.la
 mca_gpr_replica_la_LDFLAGS = -module -avoid-version
+mca_gpr_replica_la_LIBADD = \
+        $(top_ompi_builddir)/orte/liborte.la \
+        $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_gpr_replica_la_SOURCES = gpr_replica.h \

@@ -14,10 +14,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
         gpr_proxy_arithmetic_ops.c \
         gpr_proxy_cleanup.c \
@@ -49,6 +45,9 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_gpr_proxy_la_SOURCES = $(sources)
 mca_gpr_proxy_la_LDFLAGS = -module -avoid-version
+mca_gpr_proxy_la_LIBADD = \
+        $(top_ompi_builddir)/orte/liborte.la \
+        $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_gpr_proxy_la_SOURCES =$(sources)
