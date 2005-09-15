@@ -60,7 +60,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
 
     for (i = 0, count = 0; i < size; ++i) {
         if (rcounts[i] < 0) {
-            return EINVAL;
+            return MPI_ERR_ARG;
         }
         count += rcounts[i];
     }
@@ -88,6 +88,12 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
         for (i = 0; i < (size - 1); ++i) {
             disps[i + 1] = disps[i] + rcounts[i];
         }
+    }
+
+    /* Handle MPI_IN_PLACE */
+
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
     }
 
     /* reduction */
