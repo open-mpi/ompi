@@ -38,11 +38,10 @@ mca_gpr_replica_la_LIBADD = \
 	api_layer/libmca_gpr_replica_api.la \
 	transition_layer/libmca_gpr_replica_tl.la \
 	functional_layer/libmca_gpr_replica_fn.la \
-	communications/libmca_gpr_replica_comm.la
-mca_gpr_replica_la_LDFLAGS = -module -avoid-version
-mca_gpr_replica_la_LIBADD = \
+	communications/libmca_gpr_replica_comm.la \
         $(top_ompi_builddir)/orte/liborte.la \
         $(top_ompi_builddir)/opal/libopal.la
+mca_gpr_replica_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_gpr_replica_la_SOURCES = gpr_replica.h \
