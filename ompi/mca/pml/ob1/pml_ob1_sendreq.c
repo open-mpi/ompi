@@ -528,6 +528,7 @@ int mca_pml_ob1_send_request_start_rdma(
     if(bml_btl->btl_flags & MCA_BTL_FLAGS_GET) {
 
          /* prepare source descriptor/segment(s) */
+         size = sendreq->req_send.req_bytes_packed;
          mca_bml_base_prepare_src(
              bml_btl, 
              reg,
