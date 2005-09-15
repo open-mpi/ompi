@@ -126,7 +126,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
                 /* Copy the fragment from the user buffer to my fragment
                    in the current segment */
-                COPY_FRAGMENT_IN(convertor, index, iov, max_data);
+                COPY_FRAGMENT_IN(convertor, index, rank, iov, max_data);
                 bytes += max_data;
                 
                 /* Wait for the write to absolutely complete */
@@ -150,7 +150,6 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
         /* Non-root processes need a receive convertor to unpack from
            shared mmory to the user's buffer */
 
-        OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
         if (OMPI_SUCCESS != 
             (ret = 
              ompi_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor,

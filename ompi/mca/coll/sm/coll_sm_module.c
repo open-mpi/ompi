@@ -18,7 +18,7 @@
  *
  * Warning: this is not for the faint of heart -- don't even bother
  * reading this source code if you don't have a strong understanding
- * of nested data structures and pointer math (remeber that
+ * of nested data structures and pointer math (remember that
  * associativity and order of C operations is *critical* in terms of
  * pointer math!).
  */
@@ -41,6 +41,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
+#include "ompi/proc/proc.h"
 #include "coll_sm.h"
 
 
@@ -177,6 +178,15 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
         !have_local_peers(comm->c_local_group->grp_proc_pointers,
                           ompi_comm_size(comm))) {
 	return NULL;
+    }
+
+    /* If the number of processes in this communicator is larger than
+       (mca_coll_sm_component.sm_control_size / sizeof(uint32_t)),
+       then we can't handle it. */
+
+    if (((unsigned) ompi_comm_size(comm)) > 
+        mca_coll_sm_component.sm_control_size / sizeof(uint32_t)) {
+        return NULL;
     }
 
     /* Get our priority */
@@ -362,7 +372,15 @@ sm_module_init(struct ompi_communicator_t *comm)
         maffinity[j].mbs_start_addr = base;
         maffinity[j].mbs_len = c->sm_control_size * 
             c->sm_comm_num_in_use_flags;
-        memset(maffinity[j].mbs_start_addr, 0, maffinity[j].mbs_len);
+        /* Set the op counts to 1 (actually any nonzero value will do)
+           so that the first time children/leaf processes come
+           through, they don't see a value of 0 and think that the
+           root/parent has already set the count to their op number
+           (i.e., 0 is the first op count value). */
+        for (i = 0; i < mca_coll_sm_component.sm_comm_num_in_use_flags; ++i) {
+            ((mca_coll_sm_in_use_flag_t *)base)[i].mcsiuf_operation_count = 1;
+            ((mca_coll_sm_in_use_flag_t *)base)[i].mcsiuf_num_procs_using = 0;
+        }
         D(("rank 0 zeroed in-use flags (num %d, len %d): %p - %p\n",
            c->sm_comm_num_in_use_flags,
            maffinity[j].mbs_len,
@@ -617,7 +635,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
 
             data->mcb_data_mpool_malloc_addr = tmp =
                 c->sm_data_mpool->mpool_alloc(c->sm_data_mpool, size, 
-                                              c->sm_control_size, NULL);
+                                              c->sm_control_size, 0, NULL);
             if (NULL == tmp) {
                 /* Cleanup before returning; allow other processes in
                    this communicator to learn of the failure.  Note
