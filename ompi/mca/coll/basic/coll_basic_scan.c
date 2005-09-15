@@ -60,8 +60,6 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
             if (MPI_SUCCESS != err) {
                 return err;
             }
-        } else {
-            return MPI_SUCCESS;
         }
     }
 
