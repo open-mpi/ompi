@@ -557,7 +557,7 @@ mca_ptl_gm_component_control (int param, void *value, size_t size)
     return OMPI_SUCCESS;
 }
 
-char* gm_get_local_buffer( void )
+char* mca_ptl_gm_get_local_buffer( void )
 {
     opal_list_item_t* item;
     int rc;
@@ -566,7 +566,7 @@ char* gm_get_local_buffer( void )
     return (char*)item;
 }
 
-void gm_release_local_buffer( char* ptr )
+void mca_ptl_gm_release_local_buffer( char* ptr )
 {
     OMPI_GM_FREE_LIST_RETURN( &(mca_ptl_gm_component.gm_unexpected_frags_data), (opal_list_item_t*)ptr );
 }
