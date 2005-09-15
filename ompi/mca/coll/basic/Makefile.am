@@ -14,10 +14,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
         coll_basic.h \
         coll_basic_allgather.c \
@@ -55,6 +51,10 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_basic_la_SOURCES = $(sources)
 mca_coll_basic_la_LDFLAGS = -module -avoid-version
+mca_coll_basic_la_LIBADD = \
+        $(top_ompi_builddir)/ompi/libmpi.la \
+        $(top_ompi_builddir)/orte/liborte.la \
+        $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_basic_la_SOURCES =$(sources)

@@ -14,10 +14,6 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
         paffinity_linux.h \
         paffinity_linux_component.c \
@@ -39,6 +35,8 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_paffinity_linux_la_SOURCES = $(sources)
 mca_paffinity_linux_la_LDFLAGS = -module -avoid-version
+mca_paffinity_linux_la_LIBADD = \
+        $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_paffinity_linux_la_SOURCES =$(sources)
