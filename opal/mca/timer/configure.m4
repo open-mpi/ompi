@@ -26,7 +26,7 @@ AC_DEFUN([MCA_timer_CONFIG],[
 
         # someone should have set this...
         if test "$timer_base_include" = "" ; then
-            timer_base_include="base/base_null.h"
+            timer_base_include="base/timer_base_null.h"
         fi
 
         AC_CONFIG_LINKS([opal/mca/timer/base/base_impl.h:opal/mca/timer/$timer_base_include])
