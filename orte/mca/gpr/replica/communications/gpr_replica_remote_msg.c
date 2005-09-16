@@ -34,6 +34,17 @@
 
 #include "gpr_replica_comm.h"
 
+static void orte_gpr_replica_remote_send_cb(
+                   int status,
+                   orte_process_name_t* peer,
+                   orte_buffer_t* req,
+                   orte_rml_tag_t tag,
+                   void* cbdata)
+{
+    /* Doesn't need to do anything at the moment */
+    return;
+}
+
 int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
                 orte_gpr_notify_message_t *message)
 {
@@ -57,7 +68,8 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
        
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
-    if (0 > orte_rml.send_buffer(recipient, &buffer, ORTE_RML_TAG_GPR_NOTIFY, 0)) {
+    if (0 > orte_rml.send_buffer_nb(recipient, &buffer, ORTE_RML_TAG_GPR_NOTIFY, 0,
+                                    orte_gpr_replica_remote_send_cb, NULL)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
         return ORTE_ERR_COMM_FAILURE;
