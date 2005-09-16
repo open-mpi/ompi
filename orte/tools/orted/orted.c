@@ -344,11 +344,6 @@ int main(int argc, char *argv[])
             opal_setenv(var, "1", true, &environ);
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rmgr.launch(orted_globals.bootproxy))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        
         /* setup the thread lock and condition variable */
         OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
         OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
@@ -360,13 +355,16 @@ int main(int argc, char *argv[])
             return ret;
         }
 
+        if (ORTE_SUCCESS != (ret = orte_rmgr.launch(orted_globals.bootproxy))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        
         /* setup and enter the event monitor */
         OPAL_THREAD_LOCK(&orted_globals.mutex);
-
         while (false == orted_globals.exit_condition) {
             opal_condition_wait(&orted_globals.condition, &orted_globals.mutex);
         }
-
         OPAL_THREAD_UNLOCK(&orted_globals.mutex);
         
         /* Finalize and clean up */
