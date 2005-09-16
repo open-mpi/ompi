@@ -131,7 +131,7 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
         } else {
             /* first_rank == last_rank */
             index = first_rank;
-            if (elements_int_list[index] != -1 || stride != 1) {
+            if (elements_int_list[index] != -1) {
                 free(elements_int_list);
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
                                               FUNC_NAME);
