@@ -45,6 +45,7 @@ void mca_mpool_mvapi_module_init(mca_mpool_mvapi_module_t* mpool)
     mpool->super.mpool_finalize = NULL; 
     mpool->super.rcache = 
         mca_rcache_base_module_create(mca_mpool_mvapi_component.rcache_name);
+    mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM; 
 }
 
 

@@ -26,6 +26,7 @@
 
 #define MCA_MPOOL_FLAGS_CACHE 0x1
 #define MCA_MPOOL_FLAGS_PERSIST 0x2 
+#define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM 0x4
 
 struct mca_mpool_base_resources_t;
 
@@ -186,6 +187,7 @@ struct mca_mpool_base_module_t {
     mca_mpool_base_module_release_fn_t mpool_release; /**< release a regisrtation from the cache */ 
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
     struct mca_rcache_base_module_t *rcache; /* the rcache associated with this mpool */ 
+    uint32_t flags; /**< mpool flags */
 };
 /**
  * Convenience typedef

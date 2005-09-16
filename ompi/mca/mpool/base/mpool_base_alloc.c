@@ -25,60 +25,6 @@
 #include "mca/mpool/base/base.h"
 #include "opal/threads/mutex.h" 
 
-ompi_rb_tree_t mca_mpool_base_tree;
-ompi_free_list_t mca_mpool_base_mem_list;
-opal_mutex_t mca_mpool_base_tree_lock; 
-
-
-/**
- * Searches the mpool to see if it has allocated the memory that is passed in.
- * If so it returns an array of mpools the memory is registered with.
- *
- * @param base pointer to the memory to lookup
- *
- * @retval NULL if the memory is not in any mpool
- * @retval pointer to an array of type mca_mpool_base_reg_mpool_t
- */
-static inline struct mca_mpool_base_chunk_t * mca_mpool_base_find_nl(void * base)
-{
-    mca_mpool_base_key_t key;
-    key.bottom = base;
-    key.top = base;
-    return (mca_mpool_base_chunk_t *)ompi_rb_tree_find(&mca_mpool_base_tree, &key);
-}
-
-/**
- * Searches the mpool to see if it has allocated the memory that is passed in.
- * If so it returns an array of mpools the memory is registered with.
- *
- * @param base pointer to the memory to lookup
- *
- * @retval NULL if the memory is not in any mpool
- * @retval pointer to an array of type mca_mpool_base_reg_mpool_t
- */
-struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base)
-{
-    mca_mpool_base_chunk_t* found;
-    mca_mpool_base_chunk_t* copy;
-
-    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock);
-    if(NULL != (found = mca_mpool_base_find_nl(base))) {
-        mca_mpool_base_reg_mpool_t* reg;
-        copy = OBJ_NEW(mca_mpool_base_chunk_t);
-        *copy = *found;
-        reg = copy->mpools;
-        while(NULL != reg->mpool) {
-            if(NULL != reg->mpool_registration)
-                OBJ_RETAIN(reg->mpool_registration);
-            reg++;
-        }
-    } else {
-        copy = NULL;
-    }
-    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
-    return copy;
-}
-
 /**
  * Memory Pool Registration
  */
@@ -101,88 +47,6 @@ OBJ_CLASS_INSTANCE(
     opal_list_item_t,
     mca_mpool_base_registration_constructor,
     mca_mpool_base_registration_destructor);
-
-/**
- * Function for the red black tree to compare 2 keys
- *
- * @param key1 a pointer to the 1st key
- * @param key2 a pointer to the second key
- *
- * @retval -1 if key1 is below key2
- * @retval 1 if key 1 is above key2
- * @retval 0 if the keys are the same
- */
-int mca_mpool_base_tree_node_compare(void * key1, void * key2)
-{
-    if(((mca_mpool_base_key_t *) key1)->bottom <
-       ((mca_mpool_base_key_t *) key2)->bottom)
-    {
-        return -1;
-    }
-    else if(((mca_mpool_base_key_t *) key1)->bottom >
-            ((mca_mpool_base_key_t *) key2)->top)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-int mca_mpool_base_insert(void * addr, size_t size, 
-                          mca_mpool_base_module_t* mpool, 
-                          void* user_data,
-                          mca_mpool_base_registration_t* registration)
-{
-    opal_list_item_t *item; 
-    int rc; 
-    OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, rc);
-    if(rc != OMPI_SUCCESS) 
-        return rc; 
-    memset( ((mca_mpool_base_chunk_t *) item)->mpools, 0, sizeof(mca_mpool_base_reg_mpool_t) * MCA_MPOOL_BASE_MAX_REG); 
-    
-    ((mca_mpool_base_chunk_t *) item)->key.bottom = addr;
-    ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
-        ((char *) addr + size - 1);
-    ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool = mpool; 
-    ((mca_mpool_base_chunk_t *) item)->mpools[0].user_data = user_data;
-    ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool_registration = registration;
-    
-    
-    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
-    rc = ompi_rb_tree_insert(&mca_mpool_base_tree, 
-                        &((mca_mpool_base_chunk_t *)item)->key, item);
-    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
-    if(OMPI_SUCCESS != rc) {
-        OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, item);
-        return rc; 
-    }
-    return OMPI_SUCCESS; 
-}
-
-/**
- * Function to remove previously memory from the tree without freeing it
- *
- * @param base pointer to the memory to free
- *
- * @retval OMPI_SUCCESS
- * @retval OMPI_ERR_BAD_PARAM if the passed base pointer was invalid
- */
-int mca_mpool_base_remove(void * base)
-{
-    int rc; 
-    mca_mpool_base_chunk_t *chunk;
-
-    OPAL_THREAD_LOCK(&mca_mpool_base_tree_lock); 
-    if(NULL == (chunk = mca_mpool_base_find_nl(base))) {
-        OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
-        return OMPI_ERR_BAD_PARAM;
-    }
-    rc =  ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-    OPAL_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
-    return rc;
-}
 
 /**
  * Function to allocate special memory according to what the user requests in
@@ -225,11 +89,13 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
             item != opal_list_get_end(&mca_mpool_base_modules);
             item = opal_list_get_next(item)) {
             current = ((mca_mpool_base_selected_module_t *) item);
-            if(NULL == current->mpool_module->mpool_register){
-                no_reg_function = current;
-            }
-            else {
-                has_reg_function[reg_module_num++] = current;
+            if(current->mpool_module->flags & MCA_MPOOL_FLAGS_MPI_ALLOC_MEM) {
+                if(NULL == current->mpool_module->mpool_register){
+                    no_reg_function = current;
+                }
+                else {
+                    has_reg_function[reg_module_num++] = current;
+                }
             }
         }
     }
@@ -316,7 +182,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         num_modules++;
     }
     
-    while(i < reg_module_num && MCA_MPOOL_BASE_MAX_REG > num_modules)
+    while(i < reg_module_num)
     {
         mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
         if(OMPI_SUCCESS != mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,  &registration))
