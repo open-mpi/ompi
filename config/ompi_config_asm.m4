@@ -87,7 +87,7 @@ AC_DEFUN([_OMPI_CHECK_ASM_LSYM],[
 
     for sym in L .L $ L$ ; do
         asm_result=0
-        echo "configure: trying $sym" >& AC_FD_CC
+        echo "configure: trying $sym" >&AC_FD_CC
         OMPI_TRY_ASSEMBLE([foobar$ompi_cv_asm_label_suffix
 ${sym}mytestlabel$ompi_cv_asm_label_suffix],
             [# ok, we succeeded at assembling.  see if we can nm, 
@@ -104,8 +104,8 @@ ${sym}mytestlabel$ompi_cv_asm_label_suffix],
                 fi
             else
                 # not so much on the NM goodness :/
-                echo "$NM failed.  Output from NM was:" >& AC_FD_CC
-                cat conftest.out > AC_FD_CC
+                echo "$NM failed.  Output from NM was:" >&AC_FD_CC
+                cat conftest.out >&AC_FD_CC
                 AC_MSG_WARN([$NM could not read object file])
             fi
             ])
@@ -166,7 +166,7 @@ AC_DEFUN([_OMPI_CHECK_ASM_GSYM],[
 
     for sym in "_" "" "." ; do
         asm_result=0
-        echo "configure: trying $sym" >& AC_FD_CC
+        echo "configure: trying $sym" >&AC_FD_CC
 cat > conftest_c.c <<EOF
 #ifdef __cplusplus
 extern "C" {
@@ -272,7 +272,7 @@ foo$ompi_cv_asm_label_suffix
         [ompi_asm_addr=[`$NM conftest.$OBJEXT | grep foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
         [ompi_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
-    echo "configure: .align test address offset is $ompi_asm_addr" >& AC_FD_CC
+    echo "configure: .align test address offset is $ompi_asm_addr" >&AC_FD_CC
     if test "$ompi_asm_addr" = "16" -o "$ompi_asm_addr" = "10" ; then
        ompi_cv_asm_align_log="yes"
     else
@@ -329,7 +329,7 @@ AC_DEFUN([_OMPI_CHECK_ASM_TYPE],[
     *)
         for type  in @ \# % ; do
             asm_result=0
-            echo "configure: trying $type" >& AC_FD_CC
+            echo "configure: trying $type" >&AC_FD_CC
             OMPI_TRY_ASSEMBLE([     .type mysym, ${type}function],
                 [# ok, we succeeded at assembling.  see if there was
                  # a warning in the output.
