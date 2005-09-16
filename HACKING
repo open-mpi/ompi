@@ -68,7 +68,7 @@ developer's checkout, you have three main options:
    output of "./configure --help" to see which options to disable.
    They are all listed, but some are less obvious than others (they
    are not listed here because it is a changing set of flags; by
-   Murphy's Law, listing them here will pretty much guarnatee that
+   Murphy's Law, listing them here will pretty much guarantee that
    this file will get out of date):
 
      shell$ ./configure --disable-debug ...
@@ -100,7 +100,7 @@ You can check what versions you have installed with the following:
 
 shell$ autoconf --version
 shell$ automake --version
-shell$ libtool --version
+shell$ libtoolize --version
 
 To strengthen the above point: the core Open MPI developers typically
 use very, very recent versions of the GNU tools.  Little checking is
@@ -153,7 +153,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
 4. All three packages require two simple commands to build and
    install (where PREFIX is the prefix discussed in 3, above).
 
-      shell$ cd autoconf-2.58
+      shell$ cd autoconf-2.59
       shell$ ./configure --prefix=PREFIX
       shell$ make all install
 
@@ -163,7 +163,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../automake-1.7
+      shell$ cd ../automake-1.9
       shell$ ./configure --prefix=PREFIX
       shell$ make all install
 
