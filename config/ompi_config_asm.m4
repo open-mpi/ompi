@@ -142,11 +142,26 @@ dnl a global linkable from C.  Basically, an _ or not.
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_GSYM],[
+    AC_CACHE_CHECK([prefix for global symbol labels],
+                   [ompi_cv_asm_gsym],
+                   [_OMPI_CHECK_ASM_GSYM])
+
+    if test "$ompi_cv_asm_gsym" = "none" ; then
+       AC_MSG_ERROR([Could not determine global symbol label prefix])
+    fi
+
+    AC_DEFINE_UNQUOTED([OMPI_ASM_GSYM], ["$ompi_cv_asm_gsym"],
+                       [Assembly prefix for gsym labels])
+    OMPI_ASM_GSYM="$ompi_cv_asm_gsym"
+    AC_SUBST(OMPI_ASM_GSYM)
+
+])
+
+AC_DEFUN([_OMPI_CHECK_ASM_GSYM],[
     AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
     AC_REQUIRE([OMPI_CHECK_ASM_GLOBAL])
     AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
 
-    AC_MSG_CHECKING([prefix for global symbol labels])
     ompi_cv_asm_gsym="none"
 
     for sym in "_" "" "." ; do
@@ -202,17 +217,6 @@ ${sym}gsym_test_func${ompi_cv_asm_label_suffix}],
         fi
     done
     rm -f conftest.*
-
-    AC_MSG_RESULT([$ompi_cv_asm_gsym])
-
-    if test "$ompi_cv_asm_gsym" = "none" ; then
-       AC_MSG_ERROR([Could not determine global symbol label prefix])
-    fi
-
-    AC_DEFINE_UNQUOTED([OMPI_ASM_GSYM], ["$ompi_cv_asm_gsym"],
-                       [Assembly prefix for lsym labels])
-    OMPI_ASM_GSYM="$ompi_cv_asm_gsym"
-    AC_SUBST(OMPI_ASM_GSYM)
 ])dnl
 
 
@@ -297,7 +301,17 @@ dnl We look for @ \# %
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_TYPE],[
-    AC_MSG_CHECKING([prefix for function in .type])
+        AC_CACHE_CHECK([prefix for function in .type],
+                       [ompi_cv_asm_type],
+                       [_OMPI_CHECK_ASM_TYPE])
+
+    AC_DEFINE_UNQUOTED([OMPI_ASM_TYPE], ["$ompi_cv_asm_type"],
+                       [How to set function type in .type directive])
+    OMPI_ASM_TYPE="$ompi_cv_asm_type"
+    AC_SUBST(OMPI_ASM_TYPE)
+])
+
+AC_DEFUN([_OMPI_CHECK_ASM_TYPE],[
     ompi_cv_asm_type=""
 
     case "${host}" in
@@ -326,11 +340,6 @@ AC_DEFUN([OMPI_CHECK_ASM_TYPE],[
     esac
     rm -f conftest.out
 
-    AC_MSG_RESULT([$ompi_cv_asm_type])
-    AC_DEFINE_UNQUOTED([OMPI_ASM_TYPE], ["$ompi_cv_asm_type"],
-                       [How to set function type in .type directive])
-    OMPI_ASM_TYPE="$ompi_cv_asm_type"
-    AC_SUBST(OMPI_ASM_TYPE)
     unset asm_result type
 ])dnl
 
@@ -344,23 +353,26 @@ dnl each function, 0 otherwise.
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_SIZE],[
-    AC_MSG_CHECKING([if .size is needed])
-    ompi_cv_asm_size=0
-    asm_result="no"
-
-    OMPI_TRY_ASSEMBLE([     .size mysym, 1],
+    AC_CACHE_CHECK([if .size is needed],
+                   [ompi_cv_asm_need_size],
+                   [ompi_cv_asm_need_size="no"
+                    OMPI_TRY_ASSEMBLE([     .size mysym, 1],
             [# ok, we succeeded at assembling.  see if there was
              # a warning in the output.
              if test "`cat conftest.out`" = "" ; then
-                ompi_cv_asm_size=1
-                asm_result="yes"
+                 ompi_cv_asm_need_size="yes"
              fi])
-    rm -f conftest.out
+                    rm -f conftest.out])
 
-    AC_MSG_RESULT([$asm_result])
-    AC_DEFINE_UNQUOTED([OMPI_ASM_SIZE], ["$ompi_cv_asm_size"],
-                       [Do we need to give a .size directive?])
-    OMPI_ASM_SIZE="$ompi_cv_asm_size"
+    if test "$ompi_cv_asm_need_size" = "yes" ; then
+       ompi_asm_size=1
+    else
+       ompi_asm_size=0
+    fi
+
+    AC_DEFINE_UNQUOTED([OMPI_ASM_SIZE], ["$ompi_asm_size"],
+                       [Do we need to give a .size directive])
+    OMPI_ASM_SIZE="$ompi_asm_size"
     AC_SUBST(OMPI_ASM_TYPE)
     unset asm_result
 ])dnl

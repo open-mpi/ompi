@@ -15,21 +15,34 @@ dnl
 dnl $HEADER$
 dnl
 
-define([OMPI_CXX_FIND_TEMPLATE_REPOSITORY],[
-#
-# Arguments: None
-#
-# Dependencies: None
-#
-# See if the compiler makes template repository directories
-# Warning: this is a really screwy example! -JMS
-#
-# Sets OMPI_CXX_TEMPLATE_REPOSITORY to the template repository, or blank.
-# Must call AC_SUBST manually
-#
+AC_DEFUN([OMPI_CXX_FIND_TEMPLATE_REPOSITORY],[
+    #
+    # Arguments: None
+    #
+    # Dependencies: None
+    #
+    # See if the compiler makes template repository directories
+    # Warning: this is a really screwy example! -JMS
+    #
+    # Sets OMPI_CXX_TEMPLATE_REPOSITORY to the template repository, or blank.
+    # Must call AC_SUBST manually
+    #
+    AC_CACHE_CHECK([for C++ template_repository_directory],
+                   [ompi_cv_cxx_template_repository],
+                   [_OMPI_CXX_FIND_TEMPLATE_REPOSITORY])
 
+    if test "$ompi_cv_cxx_template_repository" = "not used" ; then
+        OMPI_CXX_TEMPLATE_REPOSITORY=
+    elif test "$ompi_cv_cxx_template_repository" = "templates not supported" ; then
+        OMPI_CXX_TEMPLATE_REPOSITORY=
+    else
+        OMPI_CXX_TEMPLATE_REPOSITORY="$ompi_cv_cxx_template_repository"
+    fi
+])
+
+
+AC_DEFUN([_OMPI_CXX_FIND_TEMPLATE_REPOSITORY],[
 # Find the repository
-AC_MSG_CHECKING([for C++ template repository directory])
 mkdir conf_tmp_$$
 cd conf_tmp_$$
 cat > conftest.h <<EOF
@@ -90,7 +103,7 @@ ompi_template_failed=
 echo configure:__oline__: $CXX $CXXFLAGS -c conftest1.C >&5
 $CXX $CXXFLAGS -c conftest1.C >&5 2>&5
 if test ! -f conftest1.o ; then
-    AC_MSG_RESULT([templates not supported?])
+    ompi_cv_cxx_template_repository="templates not supported"
     echo configure:__oline__: here is the program that failed: >&5
     cat conftest1.C >&5
     echo configure:__oline__: here is conftest.h: >&5
@@ -100,7 +113,7 @@ else
     echo configure:__oline__: $CXX $CXXFLAGS -c conftest2.C >&5
     $CXX $CXXFLAGS -c conftest2.C >&5 2>&5
     if test ! -f conftest2.o ; then
-	AC_MSG_RESULT([unknown error])
+        ompi_cv_cxx_template_repository=
 	echo configure:__oline__: here is the program that failed: >&5
 	cat conftest2.C >&5
 	echo configure:__oline__: here is conftest.h: >&5
@@ -141,15 +154,13 @@ else
 	fi
     fi
 fi
-OMPI_CXX_TEMPLATE_REPOSITORY="$ompi_template_dir $ompi_template_filemask"
+ompi_cv_cxx_template_repository="$ompi_template_dir $ompi_template_filemask"
 
-if test "`echo $OMPI_CXX_TEMPLATE_REPOSITORY`" != ""; then
-    AC_MSG_RESULT([$OMPI_CXX_TEMPLATE_REPOSITORY])
-else
-    AC_MSG_RESULT([not used])
+if test "`echo $ompi_cv_cxx_template_repository`" = ""; then
+    ompi_cv_cxx_template_repository="not used"
 fi
 cd ..
 rm -rf conf_tmp_$$
 
 # Clean up
-unset ompi_file ompi_template_failed ompi_template_dir])dnl
+unset ompi_file ompi_template_failed ompi_template_dir])

@@ -43,7 +43,7 @@ OMPI_LOAD_PLATFORM
 
 AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define])
 
-# now that we're inited, must make configure depend on the VERSION file
+# Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
 # Get the version of OMPI that we are installing
