@@ -16,10 +16,11 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/rml/base/base.h"
+#include "orte/mca/rml/base/base.h"
 #include "rml_cnos.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #if OMPI_RML_CNOS_HAVE_BARRIER
 #include <catamount/cnos_mpi_os.h>
@@ -221,15 +222,26 @@ orte_rml_cnos_barrier(void)
 
 int
 orte_rml_cnos_xcast(orte_process_name_t * root,
-		      orte_process_name_t * peers,
-		      size_t num_peers,
-		      orte_buffer_t * buffer,
-		      orte_rml_buffer_callback_fn_t cbfunc)
+                    orte_process_name_t * peers,
+                    size_t num_peers,
+                    orte_buffer_t * buffer,
+                    orte_gpr_trigger_cb_fn_t cbfunc,
+                    void *user_tag)
 {
     if (NULL != root || NULL != peers || 0 != num_peers || 
-        NULL != buffer || NULL != cbfunc) {
+        NULL != buffer || NULL != user_tag) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
 
-    return orte_rml_cnos_barrier();
+    orte_rml_cnos_barrier();
+    if (NULL != cbfunc) {
+        orte_gpr_notify_message_t *msg;
+        msg = OBJ_NEW(orte_gpr_notify_message_t);
+        if (NULL == msg) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        cbfunc(msg);
+        OBJ_RELEASE(msg);
+    }
 }
