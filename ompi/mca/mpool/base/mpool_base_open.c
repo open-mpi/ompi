@@ -41,6 +41,7 @@
  * Global variables
  */
 int mca_mpool_base_output = -1;
+int mca_mpool_base_use_mem_hooks = 0; 
 opal_list_t mca_mpool_base_components;
 opal_list_t mca_mpool_base_modules;
 
@@ -59,13 +60,21 @@ int mca_mpool_base_open(void)
                                &mca_mpool_base_components, true)) {
     return OMPI_ERROR;
   }
-
+  
   /* Initialize the list so that in mca_mpool_base_close(), we can
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
   OBJ_CONSTRUCT(&mca_mpool_base_modules, opal_list_t);
-
+  
+  mca_base_param_reg_int_name("mpool_base", 
+                              "use_mem_hooks", 
+                              "use memory hooks for deregistering freed memory",
+                              false, 
+                              false, 
+                              0,
+                              &mca_mpool_base_use_mem_hooks); 
+        
   /* All done */
 
   return OMPI_SUCCESS;
