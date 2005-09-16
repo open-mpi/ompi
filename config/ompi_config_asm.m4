@@ -260,10 +260,9 @@ AC_DEFUN([OMPI_CHECK_ASM_ALIGN_LOG],[
     AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
     AC_REQUIRE([AC_PROG_NM])
 
-    ompi_cv_asm_align_log=0
-    asm_result="no"
-    AC_MSG_CHECKING([if .align directive takes logarithmic value])
-    OMPI_TRY_ASSEMBLE([        $ompi_cv_asm_text
+    AC_CACHE_CHECK([if .align directive takes logarithmic value],
+                   [ompi_cv_asm_align_log],
+                   [ OMPI_TRY_ASSEMBLE([        $ompi_cv_asm_text
         .align 4
         $ompi_cv_asm_global foo
         .byte 1
@@ -275,13 +274,19 @@ foo$ompi_cv_asm_label_suffix
     # test for both 16 and 10 (decimal and hex notations)
     echo "configure: .align test address offset is $ompi_asm_addr" >& AC_FD_CC
     if test "$ompi_asm_addr" = "16" -o "$ompi_asm_addr" = "10" ; then
-       ompi_cv_asm_align_log=1
-       asm_result="yes"
+       ompi_cv_asm_align_log="yes"
+    else
+        ompi_cv_asm_align_log="no"
+    fi])
+
+    if test "$ompi_cv_asm_align_log" = "yes" -o "$ompi_cv_asm_align_log" = "1" ; then
+        ompi_asm_align_log_result=1
+    else
+        ompi_asm_align_log_result=0
     fi
-    AC_MSG_RESULT([$asm_result])
 
     AC_DEFINE_UNQUOTED([OMPI_ASM_ALIGN_LOG],
-                       [$ompi_cv_asm_align_log],
+                       [$asm_align_log_result],
                        [Assembly align directive expects logarithmic value])
 
     unset omp_asm_addr asm_result
@@ -859,8 +864,8 @@ asm_format="${ompi_asm_arch_config}"
 asm_format="${asm_format}-${ompi_cv_asm_text}-${ompi_cv_asm_global}"
 asm_format="${asm_format}-${ompi_cv_asm_label_suffix}-${ompi_cv_asm_gsym}"
 asm_format="${asm_format}-${ompi_cv_asm_lsym}"
-asm_format="${asm_format}-${ompi_cv_asm_type}-${ompi_cv_asm_size}"
-asm_format="${asm_format}-${ompi_cv_asm_align_log}"
+asm_format="${asm_format}-${ompi_cv_asm_type}-${ompi_asm_size}"
+asm_format="${asm_format}-${ompi_asm_align_log_result}"
 if test "$ompi_cv_asm_arch" = "POWERPC32" -o "$ompi_cv_asm_arch" = "POWERPC64" ; then
     asm_format="${asm_format}-${ompi_cv_asm_powerpc_r_reg}"
 else
