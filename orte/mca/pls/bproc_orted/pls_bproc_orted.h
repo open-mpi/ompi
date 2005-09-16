@@ -67,9 +67,6 @@ struct orte_pls_bproc_orted_component_t {
      *   that bproc is available and running on this node, */
     opal_mutex_t lock;
     /**< Lock used to prevent some race conditions */
-    opal_condition_t condition;
-    /**< Condition that is signaled when we have recieved a message from
-     *   the seed that it is time to terminate. */
 };
 /**
  * Convenience typedef

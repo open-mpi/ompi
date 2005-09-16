@@ -68,8 +68,6 @@ static int pls_bproc_orted_link_pipes(int proc_rank, orte_jobid_t jobid, int * f
                                       bool connect_stdin, size_t app_context);
 static void pls_bproc_orted_delete_dir_tree(char * path);
 static int pls_bproc_orted_remove_dir(void);
-static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
-                                    orte_buffer_t* buffer, int tag, void* cbdata);
 static void pls_bproc_orted_send_cb(int status, orte_process_name_t * peer,
                                     orte_buffer_t* buffer, int tag, void* cbdata);
 
@@ -358,22 +356,6 @@ static int pls_bproc_orted_remove_dir() {
 }
 
 /**
- * Callback function for when mpirun sends us a message saying all the child 
- * procs are done.
- * @param status
- * @param peer
- * @param buffer
- * @param tag
- * @param cbdata 
- */
-static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
-                                    orte_buffer_t* buffer, int tag, void* cbdata) {
-    OPAL_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
-    opal_condition_signal(&mca_pls_bproc_orted_component.condition);
-    OPAL_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
-}
-
-/**
  * Callback function for when we tell mpirun we are ready
  * @param status
  * @param peer
@@ -382,7 +364,9 @@ static void pls_bproc_orted_kill_cb(int status, orte_process_name_t * peer,
  * @param cbdata 
  */
 static void pls_bproc_orted_send_cb(int status, orte_process_name_t * peer,
-                                    orte_buffer_t* buffer, int tag, void* cbdata) {
+                                    orte_buffer_t* buffer, int tag, void* cbdata) 
+{
+    OBJ_RELEASE(buffer);
 }
 
 /**
@@ -402,7 +386,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
     int num_procs = 0;
     size_t i;
     int src = 0;
-    orte_buffer_t ack;
+    orte_buffer_t *ack;
     char * param;
     bool connect_stdin;
     char * pty_name = NULL;
@@ -413,7 +397,6 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
         goto cleanup;
     }
 #endif
-    OBJ_CONSTRUCT(&ack, orte_buffer_t);
 
     rc = bproc_currnode();
     if(0 > rc) {
@@ -503,20 +486,14 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
         }
     }
     
-    /* post recieve for termination signal */
-    rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_SEED, MCA_OOB_TAG_BPROC, 0, 
-                                pls_bproc_orted_kill_cb, NULL);
-    if (0 > rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    /* do callback to say we are ready */
-    rc = orte_dps.pack(&ack, &src, 1, ORTE_INT);
+    /* message to indicate that we are ready */
+    ack = OBJ_NEW(orte_buffer_t);
+    rc = orte_dps.pack(ack, &src, 1, ORTE_INT);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
-    rc = mca_oob_send_packed_nb(MCA_OOB_NAME_SEED, &ack, MCA_OOB_TAG_BPROC, 0, 
-                                pls_bproc_orted_send_cb, NULL);
+    rc = mca_oob_send_packed_nb(MCA_OOB_NAME_SEED, ack, MCA_OOB_TAG_BPROC, 0, 
+        pls_bproc_orted_send_cb, NULL);
     if (0 > rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -531,7 +508,6 @@ cleanup:
         free(pty_name);
     }
     OBJ_DESTRUCT(&map);
-    OBJ_DESTRUCT(&ack);
     return rc;
 }
 
@@ -542,7 +518,8 @@ cleanup:
  * @param jobid The job to terminate
  * @retval ORTE_SUCCESS
  */
-int orte_pls_bproc_orted_terminate_job(orte_jobid_t jobid) {
+int orte_pls_bproc_orted_terminate_job(orte_jobid_t jobid) 
+{
     orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
@@ -554,28 +531,21 @@ int orte_pls_bproc_orted_terminate_job(orte_jobid_t jobid) {
  * @param proc the process's name
  * @retval ORTE_SUCCESS
  */
-int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc) {
+int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc) 
+{
     orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
 
 /**
- * Finalizes the bproc_orted module. This function simply blocks on a condition
- * until we get a message from the seed telling us the user processes are done
- * so we can now terminate.
+ * Finalizes the bproc_orted module. Cleanup tmp directory/files
+ * used for I/O forwarding.
  * @retval ORTE_SUCCESS
  */
-int orte_pls_bproc_orted_finalize(void) {
-    OPAL_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
-    opal_condition_wait(&mca_pls_bproc_orted_component.condition, 
-                        &mca_pls_bproc_orted_component.lock);
-    orte_iof.iof_flush();
+int orte_pls_bproc_orted_finalize(void) 
+{
     pls_bproc_orted_remove_dir();
     orte_session_dir_finalize(orte_process_info.my_name);
-    if(mca_pls_bproc_orted_component.debug) {
-        opal_output(0, "pls_bproc_orted: all cleanup routines called\n");
-    }
-    OPAL_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
     return ORTE_SUCCESS;
 }
 

@@ -275,36 +275,6 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
         opal_output(0, "in orte_pls_bproc_waitpid_cb, %d processes left\n", 
                 mca_pls_bproc_component.num_procs);
     }
-    if(0 == mca_pls_bproc_component.num_procs && 
-            mca_pls_bproc_component.done_launching) {
-        orte_buffer_t ack;
-        size_t i;
-
-        OBJ_CONSTRUCT(&ack, orte_buffer_t);
-        rc = orte_dps.pack(&ack, &i, 1, ORTE_BYTE);
-        if(rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-        }
-        for(i = 0; i < mca_pls_bproc_component.num_daemons; i++) {
-            proc = orte_pointer_array_get_item(mca_pls_bproc_component.daemon_names, i);
-            if(NULL == proc) {
-                ORTE_ERROR_LOG(rc);
-                continue;
-            }
-            rc = mca_oob_send_packed(proc, &ack, MCA_OOB_TAG_BPROC, 0);
-            if (0 > rc) {
-                ORTE_ERROR_LOG(rc);
-            }
-            free(proc);
-        }
-        OBJ_DESTRUCT(&ack);
-        while(0 < mca_pls_bproc_component.num_daemons) {
-             opal_condition_wait(&mca_pls_bproc_component.condition,
-                                 &mca_pls_bproc_component.lock);
-        } 
-        mca_pls_bproc_component.done_launching = false; 
-        orte_pointer_array_clear(mca_pls_bproc_component.daemon_names); 
-    }
     OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
 }
  
@@ -586,10 +556,12 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     }
     
     /* launch the daemons */
+    mca_pls_bproc_component.num_daemons = num_daemons;
     rc = bproc_vexecmove(num_daemons, daemon_list, pids, orted_path, argv, *envp);
     if(rc != num_daemons) {
         opal_show_help("help-pls-bproc.txt", "daemon-launch-number", true, 
                        num_daemons, rc, orted_path);
+        mca_pls_bproc_component.num_daemons = 0;
         rc = ORTE_ERROR;
         goto cleanup;
     }
@@ -637,7 +609,6 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
             }
         }
     }
-    mca_pls_bproc_component.num_daemons = num_daemons;
 
 cleanup:
     if(NULL != argv) {
@@ -649,7 +620,6 @@ cleanup:
     if(NULL != orted_path) {
         free(orted_path);
     }
-    
     return rc;
 }
 
@@ -798,7 +768,6 @@ cleanup:
 int orte_pls_bproc_launch(orte_jobid_t jobid) {
     opal_list_item_t* item;
     opal_list_t mapping;
-    orte_buffer_t ack;
     orte_cellid_t cellid;
     orte_rmaps_base_map_t* map;
     orte_vpid_t vpid_launch;
@@ -811,8 +780,6 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     int num_processes = 0;
     int context = 0;
     size_t idx, j;
-
-    OBJ_CONSTRUCT(&ack, orte_buffer_t);
 
     /* query for the application context and allocated nodes */
     OBJ_CONSTRUCT(&mapping, opal_list_t);
@@ -871,9 +838,12 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
      * sucessfully set up the pty/pipes and IO forwarding which the user apps
      * will use  */
     for(j = 0; j < mca_pls_bproc_component.num_daemons; j++) {
+        orte_buffer_t ack;
+        OBJ_CONSTRUCT(&ack, orte_buffer_t);
         rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &ack, MCA_OOB_TAG_BPROC);
         if(0 > rc) {
             ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&ack);
             goto cleanup;
         }
         idx = 4;
@@ -881,6 +851,8 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
+        OBJ_DESTRUCT(&ack);
+
         if(-1 == src[0]) { 
             /* one of the daemons has failed to properly launch. The error is sent
              * by orte_pls_bproc_waitpid_daemon_cb  */
@@ -929,7 +901,6 @@ cleanup:
         free(node_array_len);
     }
     OBJ_DESTRUCT(&mapping);
-    OBJ_DESTRUCT(&ack);
     return rc;
 }
 
