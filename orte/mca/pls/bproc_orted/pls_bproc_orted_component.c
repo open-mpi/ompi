@@ -64,7 +64,6 @@ int orte_pls_bproc_orted_component_open(void)
 {
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_pls_bproc_orted_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_pls_bproc_orted_component.condition, opal_condition_t);
 
     /* lookup parameters */
     mca_base_param_reg_int(&mca_pls_bproc_orted_component.super.pls_version, 
@@ -110,7 +109,6 @@ orte_pls_base_module_t *orte_pls_bproc_orted_init(int *priority)
 int orte_pls_bproc_orted_component_close(void)
 {
     OBJ_DESTRUCT(&mca_pls_bproc_orted_component.lock);
-    OBJ_DESTRUCT(&mca_pls_bproc_orted_component.condition);
     return ORTE_SUCCESS;
 }
 
