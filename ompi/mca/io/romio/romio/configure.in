@@ -800,7 +800,7 @@ int main( int argc, char **argv )
     if (argc > 10) aio_write();
     return 0;
 }
-],aio_runs=yes,aio_runs=no,aio_runs=unknown);    
+],aio_runs=yes,aio_runs=no,aio_runs=unknown)
     AC_MSG_RESULT($aio_runs)						 
     if test "$enable_aio" != "no" -a "$aio_runs" = "no" ; then
         enable_aio=no
