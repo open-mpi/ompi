@@ -116,7 +116,7 @@ opal_timer_linux_open(void)
         /* look for the sparc way of getting cpu frequency */
         loc = find_info(fp, "Cpu0ClkTck", buf, 1024);
         if (NULL != loc) {
-            int freq;
+            unsigned int freq;
             ret = sscanf(loc, "%x", &freq);
             if (1 == ret) {
                 opal_timer_linux_freq = freq;
