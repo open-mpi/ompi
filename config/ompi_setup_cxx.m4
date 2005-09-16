@@ -15,6 +15,31 @@ dnl
 dnl $HEADER$
 dnl
 
+# _OMPI_PROG_CXX_IMPERSONATE_GCC()
+# --------------------------------
+# Check for compilers that impersonate g++
+AC_DEFUN([_OMPI_PROG_CXX_IMPERSONATE_GCC],[
+    AC_CACHE_CHECK([if compiler impersonates g++],
+                   [ompi_cv_prog_cxx_impersonate_gcc],
+                   [ompi_cv_prog_cxx_impersonate_gcc="no"
+                    TRULY_GXX=$GXX
+                    if test "$GXX" = "yes"; then
+                        AC_TRY_COMPILE([], [
+int i = 3;
+#if __INTEL_COMPILER
+#error Yes, I am lying about being g++.
+#endif
+                            ], [], [ompi_cv_prog_cxx_impersonate_gcc="yes"])
+                    fi])
+
+    if test "$GXX" = "yes" -a "$ompi_cv_prog_cxx_impersonate_gcc" = "no" ; then
+        TRULY_GXX=yes
+    else
+        TRULY_GXX=no
+    fi
+])
+
+
 AC_DEFUN([OMPI_SETUP_CXX],[
 
 # Modularize this setup so that sub-configure.in scripts can use this
@@ -31,31 +56,7 @@ AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
 OMPI_CXX_ABSOLUTE="`which $CXX`"
 AC_SUBST(OMPI_CXX_ABSOLUTE)
 
-# Check for compilers that impersonate g++
-
-AC_MSG_CHECKING([for compilers that impersonate g++])
-msg=
-TRULY_GXX=$GXX
-if test "$GXX" = "yes"; then
-    AC_TRY_COMPILE([], [
-int i = 3;
-#if __INTEL_COMPILER
-#error Yes, I am lying about being g++.
-#endif
-], [], [msg=intel])
-
-    # If we made it through unscathed, then it really is g++   
-    if test -z "$msg"; then
-        TRULY_GXX=yes
-    else
-        TRULY_GXX=no
-    fi
-else
-    # We never thought that this was GXX to begin with
-    msg="not applicable"
-    TRULY_GXX=no
-fi
-AC_MSG_RESULT([$msg])
+    _OMPI_PROG_CXX_IMPERSONATE_GCC
 
 # Do we want code coverage
 if test "$WANT_COVERAGE" = "1"; then 
@@ -89,13 +90,22 @@ if test "$TRULY_GXX" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     AC_LANG_PUSH(C++)
     CXXFLAGS_orig="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS -Wno-long-double"
-    AC_TRY_COMPILE([], [], add="$add -Wno-long-double")
+    AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
+                   [ompi_cv_cxx_wno_long_double],
+                   [AC_TRY_COMPILE([], [], 
+                                   [ompi_cv_cxx_wno_long_double="yes"],
+                                   [ompi_cv_cxx_wno_long_double="no"])])
     CXXFLAGS="$CXXFLAGS_orig"
     AC_LANG_POP(C++)
+    if test "$ompi_cv_cxx_wno_long_double" = "yes" ; then
+        add="$add -Wno-long-double"
+    fi
 
     CXXFLAGS="$CXXFLAGS $add"
     OMPI_UNIQ(CXXFLAGS)
-    AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
+    if test "$add" != "" ; then
+        AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
+    fi
     unset add
 fi
 
@@ -105,10 +115,19 @@ if test "$GXX" = "yes"; then
     CXXFLAGS_orig="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS -finline-functions"
     add=
-    AC_TRY_COMPILE([], [], add=" -finline-functions")
+    AC_CACHE_CHECK([if $CXX supports -finline-functions],
+                   [ompi_cv_cxx_finline_functions],
+                   [AC_TRY_COMPILE([], [],
+                                   [ompi_cv_cxx_finline_functions="yes"],
+                                   [ompi_cv_cxx_finline_functions="no"])])
+    if test "$ompi_cv_cxx_finline_functions" = "yes" ; then
+        add=" -finline-functions"
+    fi
     CXXFLAGS="$CXXFLAGS_orig$add"
     OMPI_UNIQ(CXXFLAGS)
-    AC_MSG_WARN([$add has been added to CXXFLAGS])
+    if test "$add" != "" ; then
+        AC_MSG_WARN([$add has been added to CXXFLAGS])
+    fi
     unset add
 fi
 

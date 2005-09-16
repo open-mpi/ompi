@@ -104,8 +104,16 @@ if test "$TRULY_GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     # see if -Wno-long-double works...
     CFLAGS_orig="$CFLAGS"
     CFLAGS="$CFLAGS -Wno-long-double"
-    AC_TRY_COMPILE([], [], add="$add -Wno-long-double")
+    AC_CACHE_CHECK([if $CC supports -Wno-long-double],
+                   [ompi_cv_cc_wno_long_double],
+                   [AC_TRY_COMPILE([], [], 
+                                   [ompi_cv_cc_wno_long_double="yes"],
+                                   [ompi_cv_cc_wno_long_double="no"])])
+
     CFLAGS="$CFLAGS_orig"
+    if test "$ompi_cv_cc_wno_long_double" = "yes" ; then
+        add="$add -Wno-long-double"
+    fi
 
     add="$add -Werror-implicit-function-declaration "
 
@@ -122,12 +130,26 @@ if test "$GCC" = "yes"; then
 
     CFLAGS="$CFLAGS_orig -finline-functions"
     add=
-    AC_TRY_COMPILE([], [], add=" -finline-functions")
+    AC_CACHE_CHECK([if $CC supports -finline-functions],
+                   [ompi_cv_cc_finline_functions],
+                   [AC_TRY_COMPILE([], [],
+                                   [ompi_cv_cc_finline_functions="yes"],
+                                   [ompi_cv_cc_finline_functions="no"])])
+    if test "$ompi_cv_cc_finline_functions" = "yes" ; then
+        add=" -finline-functions"
+    fi
     CFLAGS="$CFLAGS_orig$add"
 
     CFLAGS="$CFLAGS_orig -fno-strict-aliasing"
     add=
-    AC_TRY_COMPILE([], [], add=" -fno-strict-aliasing")
+    AC_CACHE_CHECK([if $CC supports -fno-strict-aliasing],
+                   [ompi_cv_cc_fno_strict_aliasing],
+                   [AC_TRY_COMPILE([], [],
+                                   [ompi_cv_cc_fno_strict_aliasing="yes"],
+                                   [ompi_cv_cc_fno_strict_aliasing="no"])])
+    if test "$ompi_cv_cc_fno_strict_aliasing" = "yes" ; then
+        add=" -fno-strict-aliasing"
+    fi
     CFLAGS="$CFLAGS_orig$add"
 
     OMPI_UNIQ(CFLAGS)
@@ -158,10 +180,20 @@ if test ! -z "$RESTRICT_CFLAGS" ; then
     CFLAGS_orig="$CFLAGS"
     CFLAGS="$CFLAGS_orig $RESTRICT_CFLAGS"
     add=
-    AC_TRY_COMPILE([], [], add=" $RESTRICT_CFLAGS")
+    AC_CACHE_CHECK([if $CC supports $RESTRICT_CFLAGS],
+                   [ompi_cv_cc_restrict_cflags],
+                   [AC_TRY_COMPILE([], [], 
+                                   [ompi_cv_cc_restrict_cflags="yes"],
+                                   [ompi_cv_cc_restrict_cflags="no"])])
+    if test "ompi_cv_cc_restruct_cflags" = "yes" ; then
+        add="$RESTRUCT_CFLAGS"
+    fi
+
     CFLAGS="${CFLAGS_orig}${add}"
     OMPI_UNIQ(CFLAGS)
-    AC_MSG_WARN([$add has been added to CFLAGS])
+    if test "$add" != "" ; then
+        AC_MSG_WARN([$add has been added to CFLAGS])
+    fi
     unset add
 fi
 
