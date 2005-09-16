@@ -29,7 +29,7 @@ opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
 
-    __asm__ __volatile__("mov %%tick, %0" : "=r"(ret));
+    __asm__ __volatile__("rd %%tick, %0" : "=r"(ret));
 
     return ret;
 }
@@ -42,12 +42,12 @@ opal_sys_timer_get_cycles(void)
     opal_timer_t ret;
     int a, b;
 
-    __asm__ __volatile__("mov %%tick, %0    \n"
+    __asm__ __volatile__("rd %%tick, %0    \n"
                          "srlx %0, 32, %1 " :
                          "=r"(a), "=r"(b) 
                          );
 
-    ret = a | (((opal_timer_t) b) << 32);
+    ret = (0x00000000FFFFFFFF & a) | (((opal_timer_t) b) << 32);
 
     return ret;
 }
