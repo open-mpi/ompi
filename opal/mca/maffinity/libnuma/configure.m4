@@ -49,7 +49,9 @@ AC_DEFUN([MCA_maffinity_libnuma_CONFIG],[
           [AS_IF([test ! -z "$with_libnuma"], 
                  [maffinity_libnuma_CPPFLAGS="$maffinity_libnuma_CPPFLAGS -I$with_libnuma/include"
                   maffinity_libnuma_LDFLAGS="$maffinity_libnuma_LDFLAGS -L$with_libnuma/lib64"
-                  maffinity_libnuma_LIBS="$maffinity_libnuma_LIBS -lnuma"])
+                  maffinity_libnuma_LIBS="$maffinity_libnuma_LIBS -lnuma"
+                  maffinity_libnuma_WRAPPER_EXTRA_LDFLAGS="$maffinity_libnuma_LDFLAGS"
+                  maffinity_libnuma_WRAPPER_EXTRA_LIBS="$maffinity_libnuma_LIBS"])
            $1], 
           [$2])
 
