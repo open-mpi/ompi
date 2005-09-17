@@ -34,6 +34,6 @@ liborte_la_LIBADD = \
         dps/libdps.la \
         runtime/libruntime.la \
         util/liborteutil.la \
-	$(MCA_orte_FRAMEWORK_LIBS)
+	$(MCA_orte_FRAMEWORK_LIBS) $(top_ompi_builddir)/opal/libopal.la
 
 liborte_la_DEPENDENCIES = $(liborte_la_LIBADD)

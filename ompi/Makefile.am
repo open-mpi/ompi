@@ -142,7 +142,7 @@ libmpi_la_LIBADD = \
         op/libop.la \
         proc/libproc.la \
         request/librequest.la \
-	$(MCA_ompi_FRAMEWORK_LIBS)
+	$(MCA_ompi_FRAMEWORK_LIBS) $(top_ompi_builddir)/orte/liborte.la
 
 
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
