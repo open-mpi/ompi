@@ -42,7 +42,7 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
                                struct ompi_communicator_t *comm)
 {
     int err;
-    char *rbuf_original, *inplace_temp = NULL;
+    char *rbuf_original = NULL, *inplace_temp = NULL;
     long true_lb, true_extent, lb, extent;
 
     /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to

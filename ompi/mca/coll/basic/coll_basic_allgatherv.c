@@ -43,7 +43,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
     int err;
     MPI_Aint extent;
     MPI_Aint lb;
-    char *send_buf;
+    char *send_buf = NULL;
 
     /* Collect all values at each process, one at a time. */
 
