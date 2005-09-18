@@ -7,14 +7,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004 The Ohio State University.
  *                    All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -113,7 +113,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
     get_line = &(frag->pipeline.lines[frag->pipeline.pos_transfert]);
     if( (PTL_GM_PIPELINE_TRANSFERT & get_line->flags) == PTL_GM_PIPELINE_TRANSFERT ) {
         peer->get_started = true;
-        gm_get( peer->peer_ptl->gm_port, get_line->remote_memory.lval, 
+        gm_get( peer->peer_ptl->gm_port, get_line->remote_memory.lval,
                 get_line->local_memory.pval, get_line->length,
                 GM_LOW_PRIORITY, peer->peer_addr.local_id, peer->peer_addr.port_id,
 		mca_ptl_gm_get_callback, frag );
@@ -194,11 +194,11 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
     if( (send_line->flags & PTL_GM_PIPELINE_TRANSFERT) == PTL_GM_PIPELINE_TRANSFERT ) {
         opal_list_item_t* item;
         int32_t rc;
-	
+
         OMPI_FREE_LIST_WAIT( &(peer->peer_ptl->gm_send_dma_frags), item, rc );
         opal_atomic_sub( &(peer->peer_ptl->num_send_tokens), 1 );
         hdr = (mca_ptl_gm_frag_header_t*)item;
-	
+
         hdr->hdr_frag.hdr_common.hdr_type  = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_frag.hdr_common.hdr_flags = send_line->hdr_flags |
                                              frag->frag_send.frag_base.frag_header.hdr_common.hdr_flags;
@@ -208,17 +208,17 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
         hdr->hdr_frag.hdr_frag_offset      = send_line->offset;
         hdr->hdr_frag.hdr_frag_length      = send_line->length;
         hdr->registered_memory             = send_line->local_memory;
-	
+
         gm_send_with_callback( peer->peer_ptl->gm_port, hdr,
                                GM_SIZE, sizeof(mca_ptl_gm_frag_header_t),
                                GM_HIGH_PRIORITY, peer->peer_addr.local_id, peer->peer_addr.port_id,
                                mca_ptl_gm_basic_frag_callback, (void*)hdr );
-	
+
         send_line->flags ^= PTL_GM_PIPELINE_REMOTE;
         frag->pipeline.pos_transfert = (frag->pipeline.pos_transfert + 1) % GM_PIPELINE_DEPTH;
         DO_DEBUG( count += sprintf( buffer + count, " send new fragment %lld", send_line->length ); )
     }
-    
+
     /* deregister previous segment */
     dereg_line = &(frag->pipeline.lines[frag->pipeline.pos_deregister]);
     if( dereg_line->flags & PTL_GM_PIPELINE_DEREGISTER ) {  /* something usefull */
@@ -265,7 +265,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
                                         reg_line->length, reg_line->offset ); )
         }
     }
-    
+
     DO_DEBUG( opal_output( 0, "sender %d %s", orte_process_info.my_name->vpid, buffer ); )
     return OMPI_SUCCESS;
 }
@@ -282,17 +282,17 @@ int mca_ptl_gm_send_internal_rndv_header( mca_ptl_gm_peer_t *ptl_peer,
     size_t max_data;
     int32_t freeAfter;
     ompi_convertor_t *convertor = &(fragment->frag_send.frag_base.frag_convertor);
-    
+
     iov.iov_base = (char*)hdr + sizeof(mca_ptl_gm_frag_header_t);
     iov.iov_len = fragment->frag_send.frag_base.frag_size - fragment->frag_bytes_processed;
     if( iov.iov_len > (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_gm_frag_header_t))  )
         iov.iov_len = (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_gm_frag_header_t));
     max_data = iov.iov_len;
     in_size = 1;
-    
+
     if( ompi_convertor_pack(convertor, &(iov), &in_size, &max_data, &freeAfter) < 0)
         return OMPI_ERROR;
-    
+
     hdr->hdr_frag.hdr_common.hdr_type  = MCA_PTL_HDR_TYPE_FRAG;
     hdr->hdr_frag.hdr_common.hdr_flags = flags;
     hdr->hdr_frag.hdr_src_ptr.lval     = 0L;  /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
@@ -303,7 +303,7 @@ int mca_ptl_gm_send_internal_rndv_header( mca_ptl_gm_peer_t *ptl_peer,
                                          fragment->frag_bytes_processed;
     hdr->registered_memory.lval        = 0L;
     hdr->registered_memory.pval        = NULL;
-    
+
     DO_DEBUG( opal_output( 0, "sender %d before send internal rndv header hdr_offset %lld hdr_length %lld max_data %u",
                            orte_process_info.my_name->vpid, hdr->hdr_frag.hdr_frag_offset, hdr->hdr_frag.hdr_frag_length, max_data ); );
     gm_send_with_callback( ptl_peer->peer_ptl->gm_port, hdr, GM_SIZE,
@@ -376,10 +376,10 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
 }
 
 int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
-                                   mca_ptl_gm_send_frag_t *fragment, 
-                                   struct mca_ptl_base_send_request_t *sendreq, 
+                                   mca_ptl_gm_send_frag_t *fragment,
+                                   struct mca_ptl_base_send_request_t *sendreq,
                                    size_t offset,
-                                   size_t *size, 
+                                   size_t *size,
                                    int flags )
 {
     mca_ptl_gm_frag_header_t* hdr;
@@ -507,7 +507,7 @@ static void send_match_callback( struct gm_port* port, void* context, gm_status_
  */
 int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
                           struct mca_ptl_base_peer_t* ptl_base_peer,
-                          struct mca_ptl_base_send_request_t *sendreq, 
+                          struct mca_ptl_base_send_request_t *sendreq,
                           size_t offset,
                           size_t size,
                           int flags )
@@ -542,11 +542,11 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
          * request.
          */
 
-        if( (size + header_length) <= mca_ptl_gm_component.gm_segment_size ) 
+        if( (size + header_length) <= mca_ptl_gm_component.gm_segment_size )
             iov.iov_len = size;
         else
             iov.iov_len = mca_ptl_gm_component.gm_segment_size - header_length;
-	
+
         /* copy the data to the registered buffer */
         iov.iov_base = ((char*)hdr) + header_length;
         max_data = iov.iov_len;
@@ -564,7 +564,7 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
                            GM_SIZE, max_data + header_length, GM_LOW_PRIORITY,
                            ptl_peer->peer_addr.local_id, ptl_peer->peer_addr.port_id,
                            send_match_callback, (void *)hdr );
-    
+
     if( !(flags & MCA_PTL_FLAGS_ACK) ) {
         ptl->ptl_send_progress( ptl, sendreq, max_data );
         DO_DEBUG( opal_output( 0, "sender %d complete request %p w/o rndv with %d bytes",
@@ -582,7 +582,7 @@ mca_ptl_gm_recv_frag_ctrl( struct mca_ptl_gm_module_t *ptl,
                            mca_ptl_base_header_t * header, uint32_t msg_len )
 {
     mca_ptl_base_send_request_t *req;
-  
+
     assert( MCA_PTL_FLAGS_ACK & header->hdr_common.hdr_flags );
     req = (mca_ptl_base_send_request_t*)(header->hdr_ack.hdr_src_ptr.pval);
     req->req_peer_match = header->hdr_ack.hdr_dst_match;
@@ -591,7 +591,7 @@ mca_ptl_gm_recv_frag_ctrl( struct mca_ptl_gm_module_t *ptl,
     DO_DEBUG( opal_output( 0, "sender %d get back the rendez-vous for request %p",
                            orte_process_info.my_name->vpid, req ); );
     ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, req, req->req_offset );
-    
+
     return NULL;
 }
 
@@ -640,7 +640,7 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
         recv_frag->frag_recv.frag_base.frag_addr = NULL;
     }
     recv_frag->matched = false;
-    
+
     return recv_frag;
 }
 
@@ -766,7 +766,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
             ptl->super.ptl_recv_progress( (mca_ptl_base_module_t*)ptl, request, max_data, max_data );
             return NULL;
         }
-    } 
+    }
 
     /* Update the status of the fragment depending on the amount of data converted so far */
     frag->frag_bytes_processed += max_data;
@@ -787,7 +787,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
         mca_ptl_gm_pipeline_line_t* pipeline;
 
         /* There is a kind of rendez-vous protocol used internally by the GM driver. If the amount of data
-         * to transfert is large enough, then the sender will start sending a frag message with the 
+         * to transfert is large enough, then the sender will start sending a frag message with the
          * remote_memory set to NULL (but with the length set to the length of the first fragment).
          * It will allow the receiver to start to register it's own memory. Later when the receiver
          * get a fragment with the remote_memory field not NULL it can start getting the data.
@@ -865,34 +865,34 @@ void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
 {
     mca_ptl_gm_recv_frag_t * frag = NULL;
     int  size;
-    bool matched; 
-    
+    bool matched;
+
     size = opal_list_get_size (&ptl->gm_recv_outstanding_queue);
-    
+
     if (size > 0) {
         frag = (mca_ptl_gm_recv_frag_t *)
 	    opal_list_remove_first( (opal_list_t *)&(ptl->gm_recv_outstanding_queue) );
-	
-	
+
+
         matched = ptl->super.ptl_match( &(ptl->super), &(frag->frag_recv),
                                         &(frag->frag_recv.frag_base.frag_header.hdr_match) );
-	
+
         if(!matched) {
             opal_list_append((opal_list_t *)&(ptl->gm_recv_outstanding_queue),
                              (opal_list_item_t *) frag);
         } else {
             /* if allocated buffer, free the buffer */
             /* return the recv descriptor to the free list */
-            OMPI_FREE_LIST_RETURN(&(ptl->gm_recv_frags_free), (opal_list_item_t *)frag);   
-        }  
+            OMPI_FREE_LIST_RETURN(&(ptl->gm_recv_frags_free), (opal_list_item_t *)frag);
+        }
     }
-} 
+}
 
-frag_management_fct_t* frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
+mca_ptl_gm_frag_management_fct_t* mca_ptl_gm_frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
     NULL,  /* empty no header type equal to zero */
     NULL,  /* mca_ptl_gm_recv_frag_match, */
     mca_ptl_gm_recv_frag_match,
-    (frag_management_fct_t*)mca_ptl_gm_recv_frag_frag,  /* force the conversion to remove a warning */
+    (mca_ptl_gm_frag_management_fct_t*)mca_ptl_gm_recv_frag_frag,  /* force the conversion to remove a warning */
     mca_ptl_gm_recv_frag_ctrl,
     NULL,
     NULL,
@@ -902,7 +902,7 @@ frag_management_fct_t* frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
 int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_event_t* event )
 {
     mca_ptl_base_header_t *header = NULL, *release_buf;
-    frag_management_fct_t* function;
+    mca_ptl_gm_frag_management_fct_t* function;
     uint32_t priority = GM_HIGH_PRIORITY, msg_len;
 
     release_buf = (mca_ptl_base_header_t*)gm_ntohp(event->recv.buffer);
@@ -930,7 +930,7 @@ int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_even
     }
 
     assert( header->hdr_common.hdr_type < MCA_PTL_HDR_TYPE_MAX );
-    function = frag_management_fct[header->hdr_common.hdr_type];
+    function = mca_ptl_gm_frag_management_fct[header->hdr_common.hdr_type];
     assert( NULL != function );
 
     msg_len = gm_ntohl( event->recv.length );
