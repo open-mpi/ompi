@@ -141,7 +141,6 @@ static void opal_event_queue_insert(struct opal_event *, int);
 static void opal_event_queue_remove(struct opal_event *, int);
 static void opal_timeout_process(void);
 int opal_event_haveevents(void);
-bool opal_event_progress_thread(void);
 extern int opal_evsignal_restart(void);
 
 static RB_HEAD(opal_event_tree, opal_event) opal_timetree;
