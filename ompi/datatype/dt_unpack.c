@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -191,7 +191,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     pStack = pConv->pStack + pConv->stack_pos;
     pos_desc = pStack->index;
     lastDisp = pStack->disp;
-    last_count = pStack->count; 
+    last_count = pStack->count;
     /*opal_output( 0, "ompi_convertor_unpack_homogeneous stack_pos %d index %d count %d lastDisp %ld bConverted %d\n",
                    pConv->stack_pos, pStack->index, pStack->count, lastDisp, pConv->bConverted );*/
     pStack--;
@@ -329,7 +329,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     long extent = pData->ub - pData->lb;
     uint32_t bConverted, length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
-    
+
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         pSrcBuf = (char*)iov[iov_count].iov_base;
         remaining = pConv->count * pData->size - pConv->bConverted;
@@ -541,29 +541,29 @@ COPY_CONTIGUOUS_BYTES( bytes, 20 )
 #endif  /* REQUIRE_COPY_BYTES_20 */
 
 conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
-   (conversion_fct_t)NULL,                      /* DT_LOOP                */ 
-   (conversion_fct_t)NULL,                      /* DT_END_LOOP            */ 
-   (conversion_fct_t)NULL,                      /* DT_LB                  */ 
-   (conversion_fct_t)NULL,                      /* DT_UB                  */ 
-   (conversion_fct_t)copy_char,                 /* DT_CHAR                */ 
-   (conversion_fct_t)copy_char,                 /* DT_CHARACTER           */ 
-   (conversion_fct_t)copy_char,                 /* DT_UNSIGNED_CHAR       */ 
-   (conversion_fct_t)copy_char,                 /* DT_BYTE                */ 
-   (conversion_fct_t)copy_short,                /* DT_SHORT               */ 
-   (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */ 
-   (conversion_fct_t)copy_int,                  /* DT_INT                 */ 
-   (conversion_fct_t)copy_int,                  /* DT_UNSIGNED_INT        */ 
-   (conversion_fct_t)copy_long,                 /* DT_LONG                */ 
-   (conversion_fct_t)copy_long,                 /* DT_UNSIGNED_LONG       */ 
-   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG           */ 
-   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG_INT       */ 
-   (conversion_fct_t)copy_long_long,            /* DT_UNSIGNED_LONG_LONG  */ 
-   (conversion_fct_t)copy_float,                /* DT_FLOAT               */ 
-   (conversion_fct_t)copy_double,               /* DT_DOUBLE              */ 
-   (conversion_fct_t)copy_long_double,          /* DT_LONG_DOUBLE         */ 
-   (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */ 
-   (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */ 
-   (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */ 
+   (conversion_fct_t)NULL,                      /* DT_LOOP                */
+   (conversion_fct_t)NULL,                      /* DT_END_LOOP            */
+   (conversion_fct_t)NULL,                      /* DT_LB                  */
+   (conversion_fct_t)NULL,                      /* DT_UB                  */
+   (conversion_fct_t)copy_char,                 /* DT_CHAR                */
+   (conversion_fct_t)copy_char,                 /* DT_CHARACTER           */
+   (conversion_fct_t)copy_char,                 /* DT_UNSIGNED_CHAR       */
+   (conversion_fct_t)copy_char,                 /* DT_BYTE                */
+   (conversion_fct_t)copy_short,                /* DT_SHORT               */
+   (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */
+   (conversion_fct_t)copy_int,                  /* DT_INT                 */
+   (conversion_fct_t)copy_int,                  /* DT_UNSIGNED_INT        */
+   (conversion_fct_t)copy_long,                 /* DT_LONG                */
+   (conversion_fct_t)copy_long,                 /* DT_UNSIGNED_LONG       */
+   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG           */
+   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG_INT       */
+   (conversion_fct_t)copy_long_long,            /* DT_UNSIGNED_LONG_LONG  */
+   (conversion_fct_t)copy_float,                /* DT_FLOAT               */
+   (conversion_fct_t)copy_double,               /* DT_DOUBLE              */
+   (conversion_fct_t)copy_long_double,          /* DT_LONG_DOUBLE         */
+   (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */
+   (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */
+   (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */
    (conversion_fct_t)NULL,                      /* DT_PACKED              */
 #if OMPI_SIZEOF_FORTRAN_LOGICAL == 1
    (conversion_fct_t)copy_bytes_1,              /* DT_LOGIC               */
@@ -583,32 +583,32 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
 #error Complete me please
 #endif
 #if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 12
-   (conversion_fct_t)copy_bytes_12,             /* DT_LONG_DOUBLE_INT     */ 
+   (conversion_fct_t)copy_bytes_12,             /* DT_LONG_DOUBLE_INT     */
 #elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
-   (conversion_fct_t)copy_bytes_16,             /* DT_LONG_DOUBLE_INT     */ 
+   (conversion_fct_t)copy_bytes_16,             /* DT_LONG_DOUBLE_INT     */
 #elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 20
-   (conversion_fct_t)copy_bytes_20,             /* DT_LONG_DOUBLE_INT     */ 
+   (conversion_fct_t)copy_bytes_20,             /* DT_LONG_DOUBLE_INT     */
 #else
 #error Complete me please
 #endif
 #if (SIZEOF_LONG + SIZEOF_INT) == 8
-   (conversion_fct_t)copy_bytes_8,              /* DT_LONG_INT            */ 
+   (conversion_fct_t)copy_bytes_8,              /* DT_LONG_INT            */
 #elif (SIZEOF_LONG + SIZEOF_INT) == 12
-   (conversion_fct_t)copy_bytes_12,              /* DT_LONG_INT            */ 
+   (conversion_fct_t)copy_bytes_12,             /* DT_LONG_INT            */
 #else
 #error Complete me please
 #endif
-   (conversion_fct_t)copy_2int,                 /* DT_2INT                */ 
-   (conversion_fct_t)NULL,                      /* DT_SHORT_INT           */ 
-   (conversion_fct_t)copy_int,                  /* DT_INTEGER             */ 
-   (conversion_fct_t)copy_float,                /* DT_REAL                */ 
-   (conversion_fct_t)copy_double,               /* DT_DBLPREC             */ 
-   (conversion_fct_t)copy_2float,               /* DT_2REAL               */ 
-   (conversion_fct_t)copy_2double,              /* DT_2DBLPREC            */ 
-   (conversion_fct_t)copy_2int,                 /* DT_2INTEGER            */ 
-   (conversion_fct_t)copy_wchar,                /* DT_WCHAR               */ 
-   (conversion_fct_t)copy_2complex_float,       /* DT_2COMPLEX            */ 
-   (conversion_fct_t)copy_2complex_double,      /* DT_2DOUBLE_COMPLEX     */ 
+   (conversion_fct_t)copy_2int,                 /* DT_2INT                */
+   (conversion_fct_t)NULL,                      /* DT_SHORT_INT           */
+   (conversion_fct_t)copy_int,                  /* DT_INTEGER             */
+   (conversion_fct_t)copy_float,                /* DT_REAL                */
+   (conversion_fct_t)copy_double,               /* DT_DBLPREC             */
+   (conversion_fct_t)copy_2float,               /* DT_2REAL               */
+   (conversion_fct_t)copy_2double,              /* DT_2DBLPREC            */
+   (conversion_fct_t)copy_2int,                 /* DT_2INTEGER            */
+   (conversion_fct_t)copy_wchar,                /* DT_WCHAR               */
+   (conversion_fct_t)copy_2complex_float,       /* DT_2COMPLEX            */
+   (conversion_fct_t)copy_2complex_double,      /* DT_2DOUBLE_COMPLEX     */
 #if SIZEOF_BOOL == 1
    (conversion_fct_t)copy_bytes_1,              /* DT_CXX_BOOL            */
 #elif SIZEOF_BOOL == 4
@@ -618,7 +618,7 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
 #else
 #error Complete me please
 #endif
-   (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */ 
+   (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */
 };
 
 /* Should we supply buffers to the convertor or can we use directly
@@ -693,7 +693,7 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
     int stack_pos = 0;
     dt_elem_desc_t* pElems;
 
-    /* Normally the size should be less or equal to the size of the datatype. 
+    /* Normally the size should be less or equal to the size of the datatype.
      * This function does not support a iSize bigger than the size of the datatype.
      */
     assert( (uint32_t)iSize <= datatype->size );
@@ -776,7 +776,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     if( (datatype->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
         long extent = (datatype->ub - datatype->lb);
 	/* Now that we know the datatype is contiguous, we should move the 2 pointers
-	 * source and destination to the correct displacement. 
+	 * source and destination to the correct displacement.
 	 */
 	pDestBuf += datatype->lb;
 	pSrcBuf += datatype->lb;
@@ -875,7 +875,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
                     MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
                     lastDisp += pElems[pos_desc].elem.disp;
                     lastLength = BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
-                }                    
+                }
             }
             pos_desc++;  /* advance to the next data */
         }

@@ -41,7 +41,7 @@ const ompi_datatype_t* ompi_ddt_match_size_internal( int size, uint16_t datakind
 const ompi_datatype_t* ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang )
 {
     if( datalang == DT_FLAG_DATA_CPP ) {
-        if( datakind == DT_FLAG_DATA_COMPLEX ) 
+        if( datakind == DT_FLAG_DATA_COMPLEX )
             return ompi_ddt_match_size_internal( size, datakind, datalang );
         datalang = DT_FLAG_DATA_C;
     }

@@ -100,7 +100,7 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       size_t* max_data, int32_t* freeAfter )
 {
     const ompi_datatype_t *pData = pConv->pDesc;
-   
+
     /* protect against over unpacking data */
     if( pConv->bConverted == (pData->size * pConv->count) ) {
         iov[0].iov_len = 0;
@@ -139,7 +139,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
         count = starting_point / pData->size;
     }
     extent = pData->ub - pData->lb;
-    
+
     pStack[0].disp = count * extent;
     pStack[0].count -= count;
 

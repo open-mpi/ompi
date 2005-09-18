@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -121,7 +121,7 @@ int32_t ompi_ddt_finalize( void );
 ompi_datatype_t* ompi_ddt_create( int32_t expectedSize );
 int32_t ompi_ddt_commit( ompi_datatype_t** );
 int32_t ompi_ddt_destroy( ompi_datatype_t** );
-static inline int32_t ompi_ddt_is_committed( const ompi_datatype_t* type ) 
+static inline int32_t ompi_ddt_is_committed( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_COMMITED) == DT_FLAG_COMMITED); }
 static inline int32_t ompi_ddt_is_overlapped( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_OVERLAP) == DT_FLAG_OVERLAP); }
@@ -169,7 +169,8 @@ static inline int32_t ompi_ddt_get_extent( const ompi_datatype_t* pData, long* l
 { *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; }
 static inline int32_t ompi_ddt_get_true_extent( const ompi_datatype_t* pData, long* true_lb, long* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; }
-
+static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, long* size )
+{ *size = pData->size; return 0; }
 /*
  * This function return true (1) if the datatype representation depending on the count
  * is contiguous in the memory. And false (0) otherwise.
@@ -202,7 +203,7 @@ OMPI_DECLSPEC int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t w
                                          int32_t * ca, long* a,
                                          int32_t * cd, ompi_datatype_t** d, int32_t * type);
 OMPI_DECLSPEC int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
-                                         int32_t ci, int32_t ** i, 
+                                         int32_t ci, int32_t ** i,
                                          int32_t ca, long* a,
                                          int32_t cd, ompi_datatype_t** d,int32_t type);
 OMPI_DECLSPEC int32_t ompi_ddt_release_args( ompi_datatype_t* pData );

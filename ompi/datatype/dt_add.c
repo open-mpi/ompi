@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -70,7 +70,7 @@ static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
  * be sure that the pdtBase datatype is correctly initialized with all fields
  * set to ZERO if it's a empty datatype.
  */
-int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, 
+int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                       uint32_t count, long disp, long extent )
 {
     uint32_t newLength, place_needed = 0, i;
@@ -181,7 +181,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         pdtBase->ub += (pdtBase->align - epsilon);
     }
 
-    /* 
+    /*
      * the count == 0 is LEGAL only for MPI_UB and MPI_LB. I accept it just as a nice way to set
      * the soft UB for a data (without using a real UB marker). This approach can be used to
      * create the subarray and darray datatype. However from the MPI level this function
@@ -190,7 +190,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     if( count == 0 ) {
         return OMPI_SUCCESS;
     }
-    
+
     pdtBase->bdt_used |= pdtAdd->bdt_used;
     newLength = pdtBase->desc.used + place_needed;
     if( newLength > pdtBase->desc.length ) {
@@ -252,7 +252,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 pdtBase->desc.used += 2;
                 pLast++;
             }
-	    
+
             for( i = 0; i < pdtAdd->desc.used; i++ ) {
                 pLast->elem               = pdtAdd->desc.desc[i].elem;
                 pLast->elem.common.flags |= localFlags;
@@ -285,7 +285,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
         }
     }
-    
+
     pdtBase->nbElems += (count * pdtAdd->nbElems);
 
     return OMPI_SUCCESS;

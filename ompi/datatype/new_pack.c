@@ -158,7 +158,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     count_desc = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
-    pElem = &(description[pos_desc]); 
+    pElem = &(description[pos_desc]);
     source_base = pConvertor->pBaseBuf + pStack->disp;
     source = source_base + disp_desc;
 
@@ -215,7 +215,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
             if( DT_LOOP == pElem->elem.common.type ) {
                 if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
                     source = source_base + disp_desc;
-                    PACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc, 
+                    PACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
                                           source, destination, iov_len_local );
                     if( 0 == count_desc ) {  /* completed */
                         pos_desc += pElem->loop.items + 1;
