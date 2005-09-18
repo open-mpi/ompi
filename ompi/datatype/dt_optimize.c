@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,7 +27,7 @@
 
 static int32_t
 ompi_ddt_optimize_short( ompi_datatype_t* pData,
-                         int32_t count, 
+                         int32_t count,
                          dt_type_desc_t* pTypeDesc )
 {
     dt_elem_desc_t* pElemDesc;
@@ -100,7 +100,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                         pElemDesc++; nbElems++;
                         last_disp += last_length;
                         last_length = 0;
-                    }                  
+                    }
                     /* we have a gap in the begining or the end of the loop but the whole
                      * loop can be merged in just one memcpy.
                      */
@@ -134,8 +134,8 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
         while( pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_DATA ) {  /* keep doing it until we reach a non datatype element */
             /* now here we have a basic datatype */
             type = pData->desc.desc[pos_desc].elem.common.type;
-            
-            if( (pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_CONTIGUOUS) && 
+
+            if( (pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_CONTIGUOUS) &&
                 (last_disp + last_length) == (total_disp + pData->desc.desc[pos_desc].elem.disp) &&
                 (pData->desc.desc[pos_desc].elem.extent == (int32_t)ompi_ddt_basicDatatypes[type]->size) ) {
                 if( type == last_type ) {
@@ -147,7 +147,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                         last_length = pData->desc.desc[pos_desc].elem.count;
                         last_extent = pData->desc.desc[pos_desc].elem.extent;
                     } else {
-                        last_length = last_length * ompi_ddt_basicDatatypes[last_type]->size + 
+                        last_length = last_length * ompi_ddt_basicDatatypes[last_type]->size +
                             pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
                         last_type = DT_BYTE;
                         last_extent = 1;
@@ -168,7 +168,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
             pos_desc++;  /* advance to the next data */
         }
     }
-    
+
     if( last_length != 0 ) {
         CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
         pElemDesc++; nbElems++;

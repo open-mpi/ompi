@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -56,7 +56,7 @@ typedef struct __dt_args {
     } while(0)
 
 int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
-                           int32_t ci, int32_t** i, 
+                           int32_t ci, int32_t** i,
                            int32_t ca, MPI_Aint* a,
                            int32_t cd, MPI_Datatype* d, int32_t type)
 {
@@ -105,7 +105,7 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
         break;
         /******************************************************************/
     case MPI_COMBINER_INDEXED_BLOCK:
-        pArgs->i[0] = i[0][0]; 
+        pArgs->i[0] = i[0][0];
         pArgs->i[1] = i[1][0];
         memcpy( pArgs->i + 2, i[2], i[0][0] * sizeof(int) );
         break;
@@ -161,7 +161,7 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
     default:
         break;
     }
-   
+
     /* copy the array of MPI_Aint */
     if( pArgs->a != NULL )
         memcpy( pArgs->a, a, ca * sizeof(MPI_Aint) );
@@ -215,7 +215,7 @@ int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
         *type = pArgs->create_type;
         break;
     case 1:     /* GET THE ARGUMENTS */
-        if(*ci < pArgs->ci || *ca < pArgs->ca || *cd < pArgs->cd) 
+        if(*ci < pArgs->ci || *ca < pArgs->ca || *cd < pArgs->cd)
             return MPI_ERR_ARG;
         if( pArgs->i != NULL )
             memcpy( i, pArgs->i, pArgs->ci * sizeof(int) );

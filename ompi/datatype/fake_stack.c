@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,10 +27,10 @@
 #include <stdlib.h>
 
 int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
-                                                  int starting_point, 
+                                                  int starting_point,
                                                   const int* sizes );
 
-static inline size_t 
+static inline size_t
 ompi_convertor_compute_remote_size( const ompi_datatype_t* pData, const int* sizes )
 {
     uint32_t i;
@@ -39,7 +39,7 @@ ompi_convertor_compute_remote_size( const ompi_datatype_t* pData, const int* siz
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
         length += (pData->btypes[i] * sizes[i]);
     }
-    return length;    
+    return length;
 }
 
 int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
@@ -75,7 +75,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
         /* Special case for contiguous datatypes */
         int cnt = starting_point / pData->size;
         long extent = pData->ub - pData->lb;
-        
+
         loop_length = GET_FIRST_NON_LOOP( pElems );
         pStack[0].disp  = pElems[loop_length].elem.disp;
         pStack[0].type  = DT_LOOP;

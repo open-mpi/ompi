@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -72,7 +72,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 
     DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "starting" );
     DUMP( "remember position on stack %d last_elem at %d\n", pConvertor->stack_pos, pos_desc );
-    DUMP( "top stack info {index = %d, count = %d}\n", 
+    DUMP( "top stack info {index = %d, count = %d}\n",
           pStack->index, pStack->count );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
@@ -186,16 +186,16 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     dt_elem_desc_t* pElems;
 
     pDestBuf = iov[0].iov_base;
-  
-    pElems = pConv->use_desc->desc; 
-   
+
+    pElems = pConv->use_desc->desc;
+
     pStack = pConv->pStack + pConv->stack_pos;
     pos_desc = pStack->index;
     lastDisp = pStack->disp;
     last_count = pStack->count;
     pStack--;
     pConv->stack_pos--;
-   
+
     while( 1 ) {
         if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
@@ -328,7 +328,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     pStack = pConv->pStack + pConv->stack_pos;
     destination = iov[0].iov_base;
     source = (char*)pConv->pBaseBuf + pStack->disp;
-   
+
     /* retrieve the context of the last call */
     pos_desc = pStack->index;
     pack_elem.count = pStack->count;
@@ -475,7 +475,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 /* nothing else to do, we act the next time */
             } else {
                 /* Now we have 2 piece of non contiguous memory. One start at source
-                 * with a length of saveLength, the other start at 
+                 * with a length of saveLength, the other start at
                  * pConv->pBaseBuf + lastDisp with a length of last_blength bytes.
                  * First we have to pack the old buffer and then we should decide
                  * what we do with the new one.
@@ -649,7 +649,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
 
     i = pConv->bConverted / pData->size;  /* how many we already pack */
     pSrc = pConv->pBaseBuf + pStack->disp;  /* actual starting point for the conversion */
-    
+
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
@@ -677,7 +677,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
             }
             /* now special case for big contiguous data with gaps around */
             if( pData->size >= IOVEC_MEM_LIMIT ) {
-                /* as we dont have to copy any data, we can simply fill the iovecs 
+                /* as we dont have to copy any data, we can simply fill the iovecs
                  * with data from the user data description.
                  */
                 for( index = iov_count; (i < pConv->count) && (index < (*out_size));
@@ -702,10 +702,10 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                 return (pConv->bConverted == length );
             }
         }
-        
+
         {
             uint32_t done, counter;
-            
+
             if( iov[iov_count].iov_base == NULL ) {
                 iov[iov_count].iov_base = pConv->memAlloc_fn( &(iov[iov_count].iov_len),
                                                  pConv->memAlloc_userdata );
@@ -741,7 +741,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
             total_bytes_converted += iov[iov_count].iov_len;
         }
         /* Now update the pSrc pointer. At the end of each parth we have to update
-         * the pStack[0].disp field. BEWARE here we remove the pStack[1].disp as 
+         * the pStack[0].disp field. BEWARE here we remove the pStack[1].disp as
          * it's supposed to be useless from now.
          */
         pSrc = pConv->pBaseBuf + pStack[0].disp;
@@ -771,7 +771,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
     convertor->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
     convertor->fAdvance = ompi_convertor_pack_no_conversion;
     convertor->fAdvance = ompi_convertor_generic_simple_pack;
-    
+
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         convertor->flags |= DT_FLAG_CONTIGUOUS;
         if( ((datatype->ub - datatype->lb) == (long)datatype->size)

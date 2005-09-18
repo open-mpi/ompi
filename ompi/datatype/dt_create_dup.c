@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -49,7 +49,7 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
     return OMPI_SUCCESS;
 }
 
-int32_t ompi_ddt_create_contiguous( int count, const ompi_datatype_t* oldType, 
+int32_t ompi_ddt_create_contiguous( int count, const ompi_datatype_t* oldType,
 				    ompi_datatype_t** newType )
 {
    ompi_datatype_t* pdt = ompi_ddt_create( oldType->desc.used + 2 );

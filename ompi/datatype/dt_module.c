@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -59,7 +59,7 @@ int ompi_ddt_dfd = -1;
     INIT_BASIC_TYPE( TYPE, NAME )
 #endif  /* OMPI_WANT_F77_BINDINGS */
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_datatype_null = 
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_datatype_null =
     { BASEOBJ_DATA, 0, 0, 0, 0,
       0, 0, DT_FLAG_PREDEFINED, 0, 1,
       ((long long)0), EMPTY_DATA(DATATYPE_NULL) };
@@ -334,7 +334,7 @@ int32_t ompi_ddt_init( void )
         ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_ddt_basicDatatypes[i];
 
         datatype->desc.desc         = (dt_elem_desc_t*)malloc(2*sizeof(dt_elem_desc_t));
-        datatype->desc.desc[0].elem.common.flags = DT_FLAG_PREDEFINED | DT_FLAG_DATA | DT_FLAG_CONTIGUOUS; 
+        datatype->desc.desc[0].elem.common.flags = DT_FLAG_PREDEFINED | DT_FLAG_DATA | DT_FLAG_CONTIGUOUS;
         datatype->desc.desc[0].elem.common.type  = i;
         datatype->desc.desc[0].elem.count        = 1;
         datatype->desc.desc[0].elem.disp         = 0;
@@ -533,13 +533,13 @@ int32_t ompi_ddt_finalize( void )
      * Anyway they are over the limit of DT_MAX_PREDEFINED so they will never get freed.
      */
 
-    /* As they are statically allocated they cannot be released. But we 
+    /* As they are statically allocated they cannot be released. But we
      * can call OBJ_DESTRUCT, just to free all internally allocated ressources.
      */
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
         OBJ_DESTRUCT( ompi_ddt_basicDatatypes[i] );
     }
-    
+
     /* Get rid of the Fortran2C translation table */
     OBJ_RELEASE(ompi_datatype_f_to_c_table);
 
@@ -581,7 +581,7 @@ static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
         ptr[12] = 'C'; ptr[13] = 'P'; ptr[14] = 'P'; break;
     case DT_FLAG_DATA_FORTRAN:
         ptr[12] = 'F'; ptr[13] = '7'; ptr[14] = '7'; break;
-    default: 
+    default:
         if( usflags & DT_FLAG_PREDEFINED ) {
             ptr[12] = 'E'; ptr[13] = 'R'; ptr[14] = 'R'; break;
         }
@@ -635,7 +635,7 @@ static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, ch
     int i;
     size_t index = 0;
     unsigned long long mask = 1;
-   
+
     if( pData->flags & DT_FLAG_USER_LB ) index += snprintf( ptr, length - index, "lb " );
     if( pData->flags & DT_FLAG_USER_UB ) index += snprintf( ptr + index, length - index, "ub " );
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
