@@ -34,9 +34,6 @@ struct mca_btl_base_endpoint_t {
                          *   SELFP specfic data structures. */
     int peer_selfp_rank;  /**< My peer's SELFP process rank.  Used for accessing
                          *   SELFP specfic data structures. */
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-    int fifo_fd;        /**< pipe/fifo used to signal endpoint that data is queued */
-#endif
 };
 
 #endif
