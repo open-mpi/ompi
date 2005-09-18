@@ -42,7 +42,7 @@ int mca_rcache_rb_find (
                         uint32_t *cnt
                         ){ 
     
-    int rc; 
+    int rc = OMPI_SUCCESS; 
     mca_rcache_rb_tree_item_t* tree_item; 
     OPAL_THREAD_LOCK(&rcache->lock);
     *cnt = 0;
@@ -75,7 +75,7 @@ int mca_rcache_rb_insert (
                           mca_mpool_base_registration_t* reg, 
                           uint32_t flags
                           ) { 
-    int rc;
+    int rc = OMPI_SUCCESS;
     OPAL_THREAD_LOCK(&rcache->lock); 
     if(!(flags & MCA_MPOOL_FLAGS_PERSIST)) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
@@ -97,7 +97,7 @@ int mca_rcache_rb_delete (
                           mca_mpool_base_registration_t* reg, 
                           uint32_t flags
                           ) { 
-    int rc; 
+    int rc = OMPI_SUCCESS; 
     OPAL_THREAD_LOCK(&rcache->lock); 
     if(!(flags & MCA_MPOOL_FLAGS_PERSIST)) { 
         rc = mca_rcache_rb_mru_delete( (mca_rcache_rb_module_t*) rcache, reg); 
@@ -122,6 +122,7 @@ void mca_rcache_rb_finalize(
                             ) { 
 
 }
+
 
 
 
