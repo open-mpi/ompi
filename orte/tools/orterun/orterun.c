@@ -434,7 +434,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         NULL
     };
 
-    OPAL_TRACE(1);
+    OPAL_TRACE_ARG(1, jobid);
     
     /* query the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
@@ -536,7 +536,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 {
-    OPAL_TRACE(1);
+    OPAL_TRACE_ARG(1, jobid);
     
     OPAL_THREAD_LOCK(&orterun_globals.lock);
 
