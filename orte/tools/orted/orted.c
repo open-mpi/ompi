@@ -31,40 +31,41 @@
 #include <errno.h>
 #include <signal.h>
 
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 
+#include "opal/event/event.h"
+#include "opal/mca/base/base.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-
-#include "dps/dps.h"
-#include "opal/util/opal_environ.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
-#include "util/sys_info.h"
-#include "opal/event/event.h"
-#include "opal/util/os_path.h"
 #include "opal/util/cmd_line.h"
-#include "util/proc_info.h"
-#include "util/univ_info.h"
-#include "util/session_dir.h"
-#include "opal/util/printf.h"
 #include "opal/util/daemon_init.h"
-#include "util/universe_setup_file_io.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/os_path.h"
+#include "opal/util/output.h"
+#include "opal/util/printf.h"
+#include "opal/util/show_help.h"
+#include "opal/util/trace.h"
 
-#include "mca/base/base.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rml/rml.h"
-#include "mca/soh/soh.h"
-#include "mca/rmgr/rmgr.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/soh/base/base.h"
+#include "orte/dps/dps.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/universe_setup_file_io.h"
 
-#include "runtime/runtime.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/soh/base/base.h"
 
-#include "tools/orted/orted.h"
+#include "orte/runtime/runtime.h"
+
+#include "orte/tools/orted/orted.h"
 
 extern char **environ;
 
@@ -434,6 +435,8 @@ int main(int argc, char *argv[])
 
 static void signal_callback(int fd, short flags, void *arg)
 {
+    OPAL_TRACE(1);
+    
     orted_globals.exit_condition = true;
     opal_condition_signal(&orted_globals.condition);
 }
@@ -448,6 +451,8 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     size_t n;
     char *contact_info;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
@@ -535,6 +540,8 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
     size_t i, j, k;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* we made sure in the subscriptions that at least one
      * value is always returned
      * get the jobid from the segment name in the first value
