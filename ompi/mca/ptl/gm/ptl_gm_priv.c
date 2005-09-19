@@ -888,6 +888,13 @@ void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
     }
 }
 
+/*
+ *
+ */
+typedef mca_ptl_gm_recv_frag_t* (mca_ptl_gm_frag_management_fct_t)( struct mca_ptl_gm_module_t *ptl,
+                                                                    mca_ptl_base_header_t *hdr,
+                                                                    uint32_t msg_len );
+
 mca_ptl_gm_frag_management_fct_t* mca_ptl_gm_frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
     NULL,  /* empty no header type equal to zero */
     NULL,  /* mca_ptl_gm_recv_frag_match, */

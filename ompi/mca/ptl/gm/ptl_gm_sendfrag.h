@@ -124,13 +124,6 @@ extern "C" {
 			      size_t* size,
 			      int flags );
 
-/*
- *
- */
-typedef mca_ptl_gm_recv_frag_t* (frag_management_fct_t)( struct mca_ptl_gm_module_t *ptl,
-							 mca_ptl_base_header_t *hdr,
-                                                         uint32_t msg_len );
-
 #define OMPI_FREE_LIST_TRY_GET(fl, item) \
 { \
     item = NULL; \
