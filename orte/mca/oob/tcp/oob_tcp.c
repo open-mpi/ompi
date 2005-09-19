@@ -666,6 +666,16 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
         return rc;
     }
 
+    /* If we do not release the mutex before the subscrition we will deadlock
+     * as the suscription involve oob_tcp_send who involve again a lookup
+     * call. Before unlocking the mutex (just to be protected by it) we can
+     * create the subscription and add it to the list.
+     */
+    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
+    subscription->jobid = peer->peer_name.jobid;
+    opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
+
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&sub_id, NULL, NULL,
                                          ORTE_GPR_NOTIFY_ADD_ENTRY |
                                          ORTE_GPR_NOTIFY_VALUE_CHG |
@@ -679,11 +689,16 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
         free(sub_name);
         free(trig_name);
         free(segment);
+        /* Subscription registration failed, we should activate the cleaning logic:
+         * remove the subscription from the list (protected by the mutex).
+         */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        opal_list_remove_item( &mca_oob_tcp_component.tcp_subscriptions,
+                               &subscription->item );
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return rc;
     }
 
-    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
-    subscription->jobid = peer->peer_name.jobid;
     /* the id of each subscription is recorded
      * here so we can (if desired) cancel that subscription later
      */
@@ -693,8 +708,6 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     free(sub_name);
     free(segment);
 
-    opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
-    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     return rc;
 }
 
