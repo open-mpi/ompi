@@ -995,14 +995,18 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
     OBJ_CONSTRUCT(&stack, orte_pls_rsh_stack_t);
 
     stack.jobid = jobid;
-    opal_evtimer_set(&event, orte_pls_rsh_launch_cb, &stack);
-    opal_evtimer_add(&event, &tv);
+    if( opal_event_progress_thread() ) {
+        stack.rc = orte_pls_rsh_launch( jobid );
+    } else {
+        opal_evtimer_set(&event, orte_pls_rsh_launch_cb, &stack);
+        opal_evtimer_add(&event, &tv);
 
-    OPAL_THREAD_LOCK(&stack.mutex);
-    while (stack.complete == false) {
-        opal_condition_wait(&stack.cond, &stack.mutex);
+        OPAL_THREAD_LOCK(&stack.mutex);
+        while (stack.complete == false) {
+            opal_condition_wait(&stack.cond, &stack.mutex);
+        }
+        OPAL_THREAD_UNLOCK(&stack.mutex);
     }
-    OPAL_THREAD_UNLOCK(&stack.mutex);
     OBJ_DESTRUCT(&stack);
     return stack.rc;
 }
