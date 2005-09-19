@@ -22,6 +22,7 @@
 
 #include "include/orte_types.h"
 #include "mca/soh/soh_types.h"
+#include "mca/rmgr/rmgr_types.h"
 #include "mca/ras/ras.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -36,6 +37,12 @@ extern "C" {
  * Query the registry for all available nodes 
  */
 int orte_ras_base_node_query(opal_list_t*);
+
+/*
+ * Query the registry for all available nodes that satisfy any
+ * constraints specified on the app_context(s)
+ */
+int orte_ras_base_node_query_context(opal_list_t*, orte_app_context_t**, size_t num_context);
 
 /*
  * Query the registry for all nodes allocated to a specific job
