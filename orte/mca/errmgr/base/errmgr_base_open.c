@@ -22,6 +22,7 @@
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
 #include "mca/errmgr/base/base.h"
 
@@ -63,6 +64,8 @@ int orte_errmgr_base_open(void)
 {
     int param, value;
 
+    OPAL_TRACE(5);
+    
     if (!orte_errmgr_initialized) { /* ensure we only do this once */
       
         /* Debugging / verbose output */

@@ -25,16 +25,20 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "gpr_replica_comm.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
 
 int orte_gpr_replica_recv_dump_all_cmd(orte_buffer_t *answer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_ALL_CMD;
     int rc;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -55,6 +59,8 @@ int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *input_buffer, orte_bu
     char *segment;
     size_t n;
     int rc;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -82,6 +88,8 @@ int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *input_buffer,
     size_t n;
     int rc;
     
+    OPAL_TRACE(3);
+    
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -108,6 +116,8 @@ int orte_gpr_replica_recv_dump_subscriptions_cmd(orte_buffer_t *input_buffer,
     orte_gpr_subscription_id_t start;
     size_t n;
     int rc;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -137,6 +147,8 @@ int orte_gpr_replica_recv_dump_a_trigger_cmd(orte_buffer_t *input_buffer,
     orte_gpr_replica_trigger_t **trigs;
     size_t n, i, j;
     int rc;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -202,6 +214,8 @@ int orte_gpr_replica_recv_dump_a_subscription_cmd(orte_buffer_t *input_buffer,
     char *name;
     int rc;
     
+    OPAL_TRACE(3);
+    
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -261,6 +275,8 @@ int orte_gpr_replica_recv_dump_callbacks_cmd(orte_buffer_t *answer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_CALLBACKS_CMD;
     int rc;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);

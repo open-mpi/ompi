@@ -13,22 +13,24 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>
 
-#include "include/constants.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/rds/base/base.h"
-#include "mca/ras/base/base.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/pls/base/base.h"
-#include "mca/gpr/gpr.h"
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
+
+#include "orte/include/orte_constants.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 
 /*
@@ -45,6 +47,8 @@ int orte_rmgr_base_put_app_context(
     size_t job_slots;
     int rc;
 
+    OPAL_TRACE(2);
+    
     rc = orte_rmgr_base_get_job_slots(jobid, &job_slots);
     if(ORTE_SUCCESS != rc) {
         return rc;
@@ -115,6 +119,8 @@ static int orte_rmgr_base_cmp_app_context(
     orte_app_context_t** app1,
     orte_app_context_t** app2)
 {
+    OPAL_TRACE(3);
+    
     if ((*app1)->idx < (*app2)->idx) {
         return -1;
     } else if((*app1)->idx > (*app2)->idx) {
@@ -140,6 +146,8 @@ int orte_rmgr_base_get_app_context(
     size_t i, num_values = 0, index = 0;
     int rc;
 
+    OPAL_TRACE(2);
+    
     /* create the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid)))
         return rc;
@@ -204,6 +212,8 @@ int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
     size_t i, num_values = 0;
     int rc;
 
+    OPAL_TRACE(2);
+    
     /* query the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid)))
         return rc;
@@ -261,6 +271,8 @@ int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, size_t proc_slots)
     orte_gpr_keyval_t* keyvals[1];
     int rc;
 
+    OPAL_TRACE(2);
+    
     /* query the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid)))
         return rc;

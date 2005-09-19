@@ -20,6 +20,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
 #include "mca/errmgr/errmgr.h"
 
@@ -32,6 +33,8 @@ int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
 {
     size_t i;
 
+    OPAL_TRACE(3);
+    
     switch(type) {
 
         case ORTE_STRING:

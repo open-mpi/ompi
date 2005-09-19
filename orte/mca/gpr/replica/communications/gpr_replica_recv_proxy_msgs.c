@@ -26,13 +26,14 @@
 #include "orte_config.h"
 
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "opal/util/trace.h"
+#include "orte/util/proc_info.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns_types.h"
-#include "mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/rml/rml.h"
 
-#include "gpr_replica_comm.h"
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
 /* 
  * handle message from proxies
@@ -44,6 +45,8 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
     orte_buffer_t *answer;
     int rc;
 
+    OPAL_TRACE(3);
+    
     if (orte_gpr_replica_globals.debug) {
 	   opal_output(0, "[%lu,%lu,%lu] gpr replica: received message from [%lu,%lu,%lu]",
 			    ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(sender));

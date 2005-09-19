@@ -22,6 +22,7 @@
 #include "orte/include/orte_constants.h"
 
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
 #include "orte/dps/dps.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -55,6 +56,8 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
     size_t i;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* assemble the subscription object */
     subs = &sub;
     sub.name = sub_name;
@@ -132,6 +135,8 @@ int orte_gpr_base_subscribe_N(orte_gpr_subscription_id_t *id,
     size_t i, j;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* assemble the subscription object */
     subs = &sub;
     sub.name = sub_name;
@@ -223,6 +228,8 @@ int orte_gpr_base_define_trigger(orte_gpr_trigger_id_t *id,
     size_t i, j;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* check for error - this function can only be used to define triggers
      * that compare their values to each other. It cannot be used to define
      * triggers that fire when reaching a specified value as there is no
@@ -314,6 +321,8 @@ int orte_gpr_base_define_trigger_level(orte_gpr_trigger_id_t *id,
     size_t i, j;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* check for error - this function can only be used to define triggers
      * that fire at a specified level. It cannot be used to define
      * triggers that compare their values to each other

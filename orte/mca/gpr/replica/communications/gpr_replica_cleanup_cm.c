@@ -25,10 +25,12 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "gpr_replica_comm.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
 int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
                                           orte_buffer_t *output_buffer)
@@ -37,6 +39,8 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
     orte_jobid_t jobid=0;
     size_t n;
     int rc, ret;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -72,6 +76,8 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
     orte_process_name_t proc;
     size_t n;
     int rc, ret;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);

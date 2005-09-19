@@ -16,9 +16,11 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "opal/util/trace.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/include/orte_constants.h"
+
+#include "orte/mca/gpr/base/base.h"
 
 
 /**
@@ -34,6 +36,8 @@ int orte_gpr_base_select(void)
   bool multi, hidden;
   int priority, best_priority = -1;
 
+    OPAL_TRACE(5);
+    
   /* Iterate through all the available components */
 
   for (item = opal_list_get_first(&orte_gpr_base_components_available);

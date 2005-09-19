@@ -25,18 +25,22 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/base/base.h"
 
 int orte_gpr_base_unpack_cleanup_job(orte_buffer_t *cmd, int *ret)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
     size_t n;
+    
+    OPAL_TRACE(3);
     
     n=1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(cmd, &command, &n, ORTE_GPR_CMD))) {
@@ -63,6 +67,8 @@ int orte_gpr_base_unpack_cleanup_proc(orte_buffer_t *cmd, int *ret)
     orte_gpr_cmd_flag_t command;
     int rc;
     size_t n;
+    
+    OPAL_TRACE(3);
     
     n=1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(cmd, &command, &n, ORTE_GPR_CMD))) {

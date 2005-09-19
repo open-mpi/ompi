@@ -15,15 +15,15 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "include/constants.h"
-
+#include "orte/include/orte_constants.h"
+\
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/mca/gpr/base/base.h"
 
 
 
@@ -312,6 +312,8 @@ int orte_gpr_base_open(void)
     int param, value, rc, id;
     orte_data_type_t tmp;
 
+    OPAL_TRACE(5);
+    
     /* Debugging / verbose output */
 
     param = mca_base_param_reg_int_name("gpr_base", "verbose",

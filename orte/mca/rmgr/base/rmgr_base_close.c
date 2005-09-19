@@ -18,15 +18,19 @@
 
 #include <stdio.h>
 
-#include "include/orte_constants.h"
+#include "opal/util/trace.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/rmgr/base/base.h"
+#include "orte/include/orte_constants.h"
+
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
 
 
 int orte_rmgr_base_close(void)
 {
+    OPAL_TRACE(5);
+    
     /* finalize the selected component */
 
     if (NULL != orte_rmgr.finalize) {

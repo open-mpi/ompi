@@ -25,12 +25,14 @@
 
 #include "orte_config.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns.h"
-#include "util/output.h"
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
-#include "gpr_replica_fn.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
+#include "opal/util/output.h"
+#include "opal/util/trace.h"
+
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 
 /* FUNCTIONS REQUIRED FOR LOCAL SUBSCRIPTION AND TRIGGER
@@ -42,6 +44,8 @@ orte_gpr_replica_enter_local_subscription(size_t cnt, orte_gpr_subscription_t **
     orte_gpr_replica_local_subscriber_t *sub;
     size_t i;
 
+    OPAL_TRACE(2);
+    
     for (i=0; i < cnt; i++) {
         sub = OBJ_NEW(orte_gpr_replica_local_subscriber_t);
         if (NULL == sub) {
@@ -71,6 +75,8 @@ orte_gpr_replica_enter_local_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
 {
     orte_gpr_replica_local_trigger_t *trig, **tptr;
     size_t i, j, k;
+
+    OPAL_TRACE(2);
 
     for (i=0; i < cnt; i++) {
         /* If the provided trigger has a name, see if it already is on
@@ -146,7 +152,9 @@ MOVEON:
 int orte_gpr_replica_remove_local_subscription(orte_gpr_replica_local_subscriber_t *sub)
 {
     size_t index;
-
+    
+    OPAL_TRACE(2);
+ 
     if (NULL == sub) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -162,7 +170,9 @@ int orte_gpr_replica_remove_local_subscription(orte_gpr_replica_local_subscriber
 int orte_gpr_replica_remove_local_trigger(orte_gpr_replica_local_trigger_t *trig)
 {
     size_t index;
-
+    
+    OPAL_TRACE(2);
+ 
     if (NULL == trig) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;

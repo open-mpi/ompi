@@ -25,15 +25,16 @@
 
 #include "orte_config.h"
 
-#include "class/orte_pointer_array.h"
+#include "orte/class/orte_pointer_array.h"
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "opal/util/trace.h"
+#include "orte/util/proc_info.h"
 
-#include "mca/ns/ns.h"
+#include "orte/mca/ns/ns.h"
 
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 
-#include "gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 
 int orte_gpr_replica_cleanup_job_fn(orte_jobid_t jobid)
@@ -41,6 +42,8 @@ int orte_gpr_replica_cleanup_job_fn(orte_jobid_t jobid)
     int rc;
     char *jobidstring, *segment;
     orte_gpr_replica_segment_t *seg;
+    
+    OPAL_TRACE(2);
     
     if (ORTE_SUCCESS != orte_ns.convert_jobid_to_string(&jobidstring, jobid)) {
         return ORTE_ERR_BAD_PARAM;
@@ -71,6 +74,8 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc)
     int rc;
     size_t i, j;
 
+    OPAL_TRACE(2);
+    
 	if (orte_gpr_replica_globals.debug) {
 		opal_output(0, "[%lu,%lu,%lu] gpr_replica_cleanup_proc: function entered for process [%lu,%lu,%lu]",
 					ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(proc));

@@ -22,6 +22,7 @@
 #include "orte/include/orte_constants.h"
 
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
 #include "orte/dps/dps.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -44,6 +45,8 @@ int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
                                   0 };
     size_t i;
     int rc;
+    
+    OPAL_TRACE(1);
     
     value.addr_mode = addr_mode;
     value.segment = segment;
@@ -88,6 +91,8 @@ int orte_gpr_base_put_N(orte_gpr_addr_mode_t addr_mode,
                                 NULL, 0, NULL, 0, NULL };
     size_t i, j;
     int rc;
+    
+    OPAL_TRACE(1);
     
     value.addr_mode = addr_mode;
     value.segment = segment;

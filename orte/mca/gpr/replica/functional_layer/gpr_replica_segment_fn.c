@@ -28,10 +28,12 @@
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "opal/util/trace.h"
 
-#include "gpr_replica_fn.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 
 int orte_gpr_replica_find_containers(orte_gpr_replica_segment_t *seg,
@@ -41,6 +43,8 @@ int orte_gpr_replica_find_containers(orte_gpr_replica_segment_t *seg,
     orte_gpr_replica_container_t **cptr;
     size_t i, j, index;
     
+    OPAL_TRACE(3);
+
     /* ensure the search array is clear */
     orte_pointer_array_clear(orte_gpr_replica_globals.srch_cptr);
     orte_gpr_replica_globals.num_srch_cptr = 0;
@@ -74,6 +78,8 @@ int orte_gpr_replica_create_container(orte_gpr_replica_container_t **cptr,
     int rc;
     size_t index;
     
+    OPAL_TRACE(3);
+
     *cptr = OBJ_NEW(orte_gpr_replica_container_t);
     if (NULL == *cptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -106,6 +112,8 @@ int orte_gpr_replica_release_container(orte_gpr_replica_segment_t *seg,
     size_t i;
     int rc;
     
+    OPAL_TRACE(3);
+
     /* delete all the itagvals in the container */
     iptr = (orte_gpr_replica_itagval_t**)((cptr->itagvals)->addr);
     for (i=0; i < (cptr->itagvals)->size; i++) {
@@ -143,6 +151,8 @@ int orte_gpr_replica_add_keyval(orte_gpr_replica_itagval_t **ivalptr,
     orte_gpr_replica_itagval_t *iptr;
     int rc;
     
+    OPAL_TRACE(3);
+
     iptr = OBJ_NEW(orte_gpr_replica_itagval_t);
     if (NULL == iptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -190,6 +200,8 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
     size_t i;
     int rc;
     
+    OPAL_TRACE(3);
+
     /* record that we are going to do this
      * NOTE: it is important that we make the record BEFORE doing the release.
      * The record_action function will do a RETAIN on the object so it
@@ -238,6 +250,8 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_itagval_t **iptr2,
     int rc;
     orte_pointer_array_t *ptr;
     orte_gpr_replica_itagval_t *iptr;
+
+    OPAL_TRACE(3);
 
     ptr = orte_gpr_replica_globals.srch_ival;
     
@@ -307,6 +321,8 @@ int orte_gpr_replica_search_container(orte_gpr_replica_addr_mode_t addr_mode,
     orte_gpr_replica_itagval_t **ptr;
     size_t i, j, index;
     
+    OPAL_TRACE(3);
+
     /* ensure the search array is clear */
     orte_pointer_array_clear(orte_gpr_replica_globals.srch_ival);
     orte_gpr_replica_globals.num_srch_ival = 0;
@@ -346,6 +362,8 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
 {
     orte_gpr_value_union_t *src;
     
+    OPAL_TRACE(3);
+
     src = &(ival->value);
     
     switch(ival->type) {
@@ -441,6 +459,8 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
 int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
                                     orte_gpr_replica_itagval_t *ival2)
 {
+    OPAL_TRACE(3);
+
     /* sanity check */
     if (ival1->type != ival2->type) {  /* can't compare mismatch */
         ORTE_ERROR_LOG(ORTE_ERR_TYPE_MISMATCH);
@@ -642,6 +662,8 @@ int orte_gpr_replica_release_segment(orte_gpr_replica_segment_t **seg)
     int rc;
     size_t i;
     
+    OPAL_TRACE(3);
+
     i = (*seg)->itag;
     OBJ_RELEASE(*seg);
     
@@ -656,6 +678,8 @@ int orte_gpr_replica_release_segment(orte_gpr_replica_segment_t **seg)
 int orte_gpr_replica_purge_itag(orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t itag)
 {
+    OPAL_TRACE(3);
+
      /*
      * Begin by looping through the segment's containers and check
      * their descriptions first - if removing this name leaves that

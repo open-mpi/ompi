@@ -13,23 +13,26 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "include/constants.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/rds/base/base.h"
-#include "mca/ras/base/base.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/pls/base/base.h"
-#include "mca/gpr/gpr.h"
-#include "mca/iof/iof.h"
-#include "mca/ns/ns.h"
-#include "mca/rml/rml.h"
-#include "rmgr_urm.h"
+#include "opal/util/trace.h"
+
+#include "orte/include/orte_constants.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/rml/rml.h"
+
+#include "orte/mca/rmgr/urm/rmgr_urm.h"
 
 
 static int orte_rmgr_urm_query(void);
@@ -89,6 +92,9 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
 static int orte_rmgr_urm_query(void)
 {
     int rc;
+
+    OPAL_TRACE(1);
+    
     if(ORTE_SUCCESS != (rc = orte_rds_base_query())) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -108,6 +114,8 @@ static int orte_rmgr_urm_create(
 {
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* allocate a jobid  */
     if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -135,31 +143,43 @@ static int orte_rmgr_urm_create(
 
 static int orte_rmgr_urm_allocate(orte_jobid_t jobid)
 {
-    return mca_rmgr_urm_component.urm_ras->allocate(jobid);
+     OPAL_TRACE(1);
+    
+   return mca_rmgr_urm_component.urm_ras->allocate(jobid);
 }
 
 static int orte_rmgr_urm_deallocate(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return mca_rmgr_urm_component.urm_ras->deallocate(jobid);
 }
 
 static int orte_rmgr_urm_map(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return mca_rmgr_urm_component.urm_rmaps->map(jobid);
 }
 
 static int orte_rmgr_urm_launch(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return mca_rmgr_urm_component.urm_pls->launch(jobid);
 }
 
 static int orte_rmgr_urm_terminate_job(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return mca_rmgr_urm_component.urm_pls->terminate_job(jobid);
 }
 
 static int orte_rmgr_urm_terminate_proc(const orte_process_name_t* proc_name)
 {
+    OPAL_TRACE(1);
+    
     return mca_rmgr_urm_component.urm_pls->terminate_proc(proc_name);
 }
 
@@ -169,6 +189,8 @@ static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
     int rc;
     orte_process_name_t* name;
 
+    OPAL_TRACE(1);
+    
     if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, jobid, 0))) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -188,6 +210,8 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
     size_t i, j, k;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* we made sure in the subscriptions that at least one
      * value is always returned
      * get the jobid from the segment name in the first value
@@ -256,6 +280,8 @@ static int orte_rmgr_urm_spawn(
     int rc;
     orte_process_name_t* name;
  
+    OPAL_TRACE(1);
+    
     /* 
      * Perform resource discovery.
      */
@@ -330,6 +356,8 @@ static int orte_rmgr_urm_finalize(void)
 {
     int rc;
 
+    OPAL_TRACE(1);
+    
     /**
      * Finalize Process Launch Subsystem (PLS)
      */

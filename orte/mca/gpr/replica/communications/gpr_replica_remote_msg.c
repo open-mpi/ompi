@@ -25,14 +25,16 @@
  */
 #include "orte_config.h"
 
-#include "include/orte_types.h"
+#include "orte/include/orte_types.h"
 #include "opal/util/output.h"
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns_types.h"
-#include "mca/rml/rml.h"
+#include "opal/util/trace.h"
 
-#include "gpr_replica_comm.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/rml/rml.h"
+
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
 static void orte_gpr_replica_remote_send_cb(
                    int status,
@@ -52,6 +54,8 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
     orte_gpr_cmd_flag_t command;
     int rc;
 
+    OPAL_TRACE(3);
+    
     command = ORTE_GPR_NOTIFY_CMD;
 
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);

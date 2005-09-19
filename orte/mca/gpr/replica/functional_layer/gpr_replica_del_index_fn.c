@@ -25,13 +25,15 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 
 #include "opal/util/output.h"
 #include "orte/util/proc_info.h"
+#include "opal/util/trace.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 
 int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
@@ -45,6 +47,8 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
     size_t i, j, k, n, p;
     int rc;
 
+    OPAL_TRACE(2);
+    
     /* if num_tokens == 0 and num_keys == 0, remove segment. We don't record
      * any actions when doing this so that subscriptions don't fire like mad
      */
@@ -142,6 +146,8 @@ int orte_gpr_replica_delete_entries_nb_fn(
                     orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
                     orte_gpr_replica_itag_t *key_tags, size_t num_keys)
 {
+    OPAL_TRACE(2);
+    
     return ORTE_ERR_NOT_IMPLEMENTED;
 }                           
 
@@ -155,6 +161,8 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
     size_t i, j;
 
 
+    OPAL_TRACE(2);
+    
     /* set default responses */
     *index = NULL;
     *cnt = 0;
@@ -217,6 +225,8 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
 int orte_gpr_replica_index_nb_fn(orte_gpr_replica_segment_t *seg,
                         orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
+    OPAL_TRACE(2);
+    
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 

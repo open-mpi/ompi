@@ -25,12 +25,14 @@
  */
 #include "orte_config.h"
 
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 
 int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
@@ -46,6 +48,8 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
     int rc;
     size_t i, j, k, m, n;
 
+    OPAL_TRACE(2);
+    
     /* extract the token address mode */
     tok_mode = 0x004f & addr_mode;
     if (0x00 == tok_mode) {  /* default tokens addressing mode to AND */
@@ -144,6 +148,8 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
     int rc;
     size_t i, j, k, m, n;
 
+    OPAL_TRACE(2);
+    
     /* extract the token address mode */
     tok_mode = 0x004f & addr_mode;
     if (0x00 == tok_mode) {  /* default tokens addressing mode to AND */

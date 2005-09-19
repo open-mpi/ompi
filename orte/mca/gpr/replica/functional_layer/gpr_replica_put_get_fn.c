@@ -26,14 +26,16 @@
 #include "orte_config.h"
 
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "opal/util/trace.h"
 
-#include "mca/errmgr/errmgr.h"
+#include "orte/util/proc_info.h"
 
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
+
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
  
 /*
  * Local typedef for storing a list of itagvals
@@ -134,6 +136,8 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     int rc;
     size_t i, j, k, m, n, index;
 
+    OPAL_TRACE(2);
+ 
     if (orte_gpr_replica_globals.debug) {
         char *tmp;
 
@@ -293,6 +297,8 @@ int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
                 size_t cnt, orte_gpr_keyval_t **keyvals,
                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
+    OPAL_TRACE(2);
+
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
                       
@@ -313,6 +319,8 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     int rc;
     size_t i, j, k, m;
     
+    OPAL_TRACE(2);
+
     if (orte_gpr_replica_globals.debug) {
             char *token;
             opal_output(0, "[%lu,%lu,%lu] gpr_replica_get: entered",
@@ -501,6 +509,8 @@ int orte_gpr_replica_get_nb_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_itag_t *keytags, size_t num_keys,
                                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
+    OPAL_TRACE(2);
+
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 

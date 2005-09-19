@@ -19,12 +19,14 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/base/base.h"
 
 
 int orte_gpr_base_unpack_delete_segment(orte_buffer_t *buffer, int *ret)
@@ -33,6 +35,8 @@ int orte_gpr_base_unpack_delete_segment(orte_buffer_t *buffer, int *ret)
     int rc;
     size_t n;
 
+    OPAL_TRACE(3);
+    
     n = 1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -59,6 +63,8 @@ int orte_gpr_base_unpack_delete_entries(orte_buffer_t *buffer, int *ret)
     int rc;
     size_t n;
 
+    OPAL_TRACE(3);
+    
     n = 1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -86,6 +92,8 @@ int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, size_t *cnt, cha
     orte_data_type_t type;
     int rc;
 
+    OPAL_TRACE(3);
+    
     *cnt = 0;
     *index = NULL;
     

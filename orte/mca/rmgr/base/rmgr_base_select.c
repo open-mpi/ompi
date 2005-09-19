@@ -17,11 +17,14 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/rmgr/base/base.h"
+#include "opal/util/trace.h"
+
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+
+#include "orte/mca/rmgr/base/base.h"
 
 
 /**
@@ -36,6 +39,8 @@ int orte_rmgr_base_select(void)
     orte_rmgr_base_module_t *module, *best_module = NULL;
     int priority, best_priority = -1;
 
+    OPAL_TRACE(5);
+    
     /* Iterate through all the available components */
     for (item = opal_list_get_first(&orte_rmgr_base.rmgr_components);
          item != opal_list_get_end(&orte_rmgr_base.rmgr_components);

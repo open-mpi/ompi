@@ -25,12 +25,14 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
-#include "dps/dps.h"
+#include "opal/util/trace.h"
+
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
+#include "orte/dps/dps.h"
 #include "opal/util/output.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/mca/gpr/base/base.h"
 
 static void orte_gpr_base_dump_data(orte_buffer_t *buffer, orte_gpr_notify_data_t *data);
 
@@ -43,6 +45,8 @@ int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
     orte_gpr_notify_data_t **data;
     size_t i, j;
 
+    OPAL_TRACE(3);
+    
     asprintf(&tmp_out, "\nDUMP OF NOTIFY MESSAGE STRUCTURE");
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
 
@@ -95,6 +99,8 @@ int orte_gpr_base_dump_notify_data(orte_buffer_t *buffer,
 {
     char *tmp_out;
 
+    OPAL_TRACE(3);
+    
     asprintf(&tmp_out, "\nDUMP OF NOTIFY DATA STRUCTURE");
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
 
@@ -115,6 +121,8 @@ static void orte_gpr_base_dump_data(orte_buffer_t *buffer,
     orte_gpr_value_t **values;
     size_t i, j;
 
+    OPAL_TRACE(3);
+    
     if (NULL != data->target) {
         asprintf(&tmp_out, "%lu values going to subscription target %s",
              (unsigned long) data->cnt, data->target);
@@ -144,6 +152,8 @@ int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
     orte_gpr_addr_mode_t addr;
     size_t j;
 
+    OPAL_TRACE(3);
+    
     if (NULL == value->segment) {
         asprintf(&tmp_out, "\tNULL segment name in value - %lu keyvals",
                 (unsigned long) value->cnt);
@@ -242,6 +252,8 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
 {
     char *tmp_out;
 
+    OPAL_TRACE(3);
+    
     switch(iptr->type) {
 
         case ORTE_BYTE:

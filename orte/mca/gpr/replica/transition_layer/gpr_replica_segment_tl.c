@@ -25,7 +25,9 @@
 
 #include "orte_config.h"
 
-#include "gpr_replica_tl.h"
+#include "opal/util/trace.h"
+
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 
 int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
                               bool create, char *segment)
@@ -34,6 +36,8 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
     int rc=ORTE_SUCCESS;
     size_t i, cntri;
     orte_gpr_replica_segment_t **ptr;
+
+    OPAL_TRACE(3);
 
     /* initialize to nothing */
     *seg = NULL;

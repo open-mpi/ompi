@@ -18,10 +18,12 @@
 #endif
 #include <string.h>
 
-#include "include/constants.h"
-#include "dps/dps.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
+
+#include "orte/include/orte_constants.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 
 /*
@@ -31,6 +33,9 @@
 int orte_rmgr_base_pack_cmd(orte_buffer_t* buffer, orte_rmgr_cmd_t cmd, orte_jobid_t jobid)
 {
      int rc;
+     
+     OPAL_TRACE(4);
+    
      rc = orte_dps.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
@@ -55,8 +60,11 @@ int orte_rmgr_base_pack_create_cmd(
     size_t num_context)
 {
      int rc;
+     
      orte_rmgr_cmd_t cmd = ORTE_RMGR_CMD_CREATE;
 
+     OPAL_TRACE(4);
+    
      rc = orte_dps.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
@@ -82,8 +90,11 @@ int orte_rmgr_base_pack_terminate_proc_cmd(
     const orte_process_name_t* name)
 {
      int rc;
+     
      orte_rmgr_cmd_t cmd = ORTE_RMGR_CMD_CREATE;
 
+     OPAL_TRACE(4);
+    
      rc = orte_dps.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
@@ -104,6 +115,9 @@ int orte_rmgr_base_unpack_rsp(
 {
     int32_t rc;
     size_t cnt = 1;
+
+    OPAL_TRACE(4);
+    
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(buffer,&rc,&cnt,ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -118,6 +132,8 @@ int orte_rmgr_base_unpack_create_rsp(
     int32_t rc;
     size_t cnt;
 
+    OPAL_TRACE(4);
+    
     cnt = 1;
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(buffer,jobid,&cnt,ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
