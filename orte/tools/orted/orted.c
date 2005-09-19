@@ -336,6 +336,10 @@ int main(int argc, char *argv[])
         }
     }
 
+	/* setup the thread lock and condition variable */
+	OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
+	OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
+
     /* check to see if I'm a bootproxy */
     if (orted_globals.bootproxy) { /* perform bootproxy-specific things */
         if (orted_globals.mpi_call_yield > 0) {
@@ -343,10 +347,6 @@ int main(int argc, char *argv[])
             var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
             opal_setenv(var, "1", true, &environ);
         }
-
-        /* setup the thread lock and condition variable */
-        OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
-        OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
         /* Setup callback on jobid */
         ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL, ORTE_STAGE_GATE_TERMINATION);
@@ -374,10 +374,6 @@ int main(int argc, char *argv[])
         
         exit(ret);
     }
-
-    /* setup the thread lock and condition variable */
-    OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
     /*
      *  Set my process status to "starting". Note that this must be done
