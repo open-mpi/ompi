@@ -25,12 +25,14 @@
 
 #include "orte_config.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
 #include "opal/util/output.h"
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
-#include "gpr_replica_fn.h"
+#include "opal/util/trace.h"
+
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 
 /*
@@ -48,6 +50,8 @@ orte_gpr_replica_register_subscription(orte_gpr_replica_subscription_t **subptr,
     orte_gpr_replica_addr_mode_t tok_mode, key_mode;
     orte_gpr_replica_itag_t itag, *tokentags=NULL;
     orte_gpr_replica_ivalue_t *ival;
+
+    OPAL_TRACE(3);
 
     /* if this is a named subscription, see if that name has
      * already been entered on the replica. If it has, then we
@@ -284,6 +288,8 @@ orte_gpr_replica_register_trigger(orte_gpr_replica_trigger_t **trigptr,
     orte_gpr_replica_counter_t *cntr;
     orte_gpr_replica_trigger_requestor_t *req, **reqs;
     bool found;
+
+    OPAL_TRACE(3);
 
     /* set a default response value */
     *trigptr = NULL;
@@ -597,6 +603,8 @@ orte_gpr_replica_remove_subscription(orte_process_name_t *requestor,
     size_t i, j, k, m;
     bool found;
 
+    OPAL_TRACE(3);
+
     /* find this subscription on the list */
     subs = (orte_gpr_replica_subscription_t**)(orte_gpr_replica.subscriptions)->addr;
     for (i=0, j=0; j < orte_gpr_replica.num_subs &&
@@ -701,37 +709,39 @@ orte_gpr_replica_remove_trigger(orte_process_name_t *requestor,
     orte_gpr_replica_trigger_t **trigs, *trig;
     size_t i, j, k, m;
 
-        /* find this trigger on the list */
-        trigs = (orte_gpr_replica_trigger_t**)(orte_gpr_replica.triggers)->addr;
-        for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
-                       i < (orte_gpr_replica.triggers)->size; i++) {
-            if (NULL != trigs[i]) {
-                j++;
-                reqs = (orte_gpr_replica_trigger_requestor_t**)(trigs[i]->attached)->addr;
-                for (k=0, m=0; m < trigs[i]->num_attached &&
-                               k < (trigs[i]->attached)->size; k++) {
-                    if (NULL != reqs[k]) {
-                        m++;
-                        if (id == reqs[k]->idtag &&
-                            ((NULL == requestor && NULL == reqs[k]->requestor) ||
-                            (NULL != requestor && NULL != reqs[k]->requestor &&
-                            0 == orte_ns.compare(ORTE_NS_CMP_ALL,
-                                reqs[k]->requestor, requestor)))) {
-                            /* this is the trigger */
-                            trig = trigs[i];
-                            req = reqs[k];
-                            goto PROCESS;
-                        }
+    OPAL_TRACE(3);
+
+    /* find this trigger on the list */
+    trigs = (orte_gpr_replica_trigger_t**)(orte_gpr_replica.triggers)->addr;
+    for (i=0, j=0; j < orte_gpr_replica.num_trigs &&
+                   i < (orte_gpr_replica.triggers)->size; i++) {
+        if (NULL != trigs[i]) {
+            j++;
+            reqs = (orte_gpr_replica_trigger_requestor_t**)(trigs[i]->attached)->addr;
+            for (k=0, m=0; m < trigs[i]->num_attached &&
+                           k < (trigs[i]->attached)->size; k++) {
+                if (NULL != reqs[k]) {
+                    m++;
+                    if (id == reqs[k]->idtag &&
+                        ((NULL == requestor && NULL == reqs[k]->requestor) ||
+                        (NULL != requestor && NULL != reqs[k]->requestor &&
+                        0 == orte_ns.compare(ORTE_NS_CMP_ALL,
+                            reqs[k]->requestor, requestor)))) {
+                        /* this is the trigger */
+                        trig = trigs[i];
+                        req = reqs[k];
+                        goto PROCESS;
                     }
                 }
             }
         }
-        /* if we arrive here, then we had a remote requestor but were
-         * unable to find a matching trigger. report that fact
-         * and exit
-         */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
+    }
+    /* if we arrive here, then we had a remote requestor but were
+     * unable to find a matching trigger. report that fact
+     * and exit
+     */
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    return ORTE_ERR_NOT_FOUND;
 
 PROCESS:
     /* remove the specified requestor. if this was the last
@@ -787,6 +797,8 @@ int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
     size_t index;
     int rc;
 
+    OPAL_TRACE(3);
+
     new_action = OBJ_NEW(orte_gpr_replica_action_taken_t);
     if (NULL == new_action) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -826,6 +838,8 @@ int orte_gpr_replica_update_storage_locations(orte_gpr_replica_itagval_t *new_ip
     orte_gpr_replica_itagval_t **old_iptrs;
     size_t i, j, k, m, n, p;
     bool replaced;
+
+    OPAL_TRACE(3);
 
     trig = (orte_gpr_replica_trigger_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0, m=0; m < orte_gpr_replica.num_trigs &&
@@ -869,6 +883,8 @@ int orte_gpr_replica_check_events(void)
     orte_gpr_replica_action_taken_t **ptr;
     size_t i, j;
     int rc;
+
+    OPAL_TRACE(3);
 
     /* we first check all the subscriptions to see if any are "active".
      * this needs to be done BEFORE we check triggers to ensure that
@@ -942,6 +958,8 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_trigger_t *trig)
     size_t i, j;
     int cmp;
     int rc;
+
+    OPAL_TRACE(3);
 
     if (ORTE_GPR_TRIG_CMP_LEVELS & trig->action) { /* compare the levels of the counters */
         cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
@@ -1087,6 +1105,8 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
     orte_gpr_addr_mode_t addr_mode;
     int rc=ORTE_SUCCESS;
 
+    OPAL_TRACE(3);
+
     /* When entering this function, we know that the specified
      * subscription is active since that was tested above. What we now need
      * to determine is whether or not any of the data
@@ -1203,6 +1223,8 @@ bool orte_gpr_replica_check_notify_matches(orte_gpr_addr_mode_t *addr_mode,
     size_t i, j;
     orte_gpr_replica_ivalue_t **ivals;
 
+    OPAL_TRACE(3);
+
     /* we need to run through all of this subscription's defined
      * values to see if any of them match the acted upon one.
      */
@@ -1251,6 +1273,8 @@ int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc)
     orte_gpr_replica_trigger_t **trig;
     size_t i;
     int rc;
+
+    OPAL_TRACE(3);
 
     /* locate any notification events that have proc as the requestor
      * and remove them

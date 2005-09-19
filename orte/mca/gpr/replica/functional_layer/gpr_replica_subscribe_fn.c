@@ -26,12 +26,14 @@
 #include "orte_config.h"
 
 #include "opal/util/output.h"
-#include "util/proc_info.h"
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
-#include "gpr_replica_fn.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
                                   size_t num_subs,
@@ -44,6 +46,8 @@ int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
     size_t i, j, k, m, n, index;
     bool ignore;
     int rc=ORTE_SUCCESS;
+
+    OPAL_TRACE(2);
 
     if (orte_gpr_replica_globals.debug) {
         opal_output(0, "[%lu,%lu,%lu] gpr_replica_subscribe: entered with num_trigs:%d",

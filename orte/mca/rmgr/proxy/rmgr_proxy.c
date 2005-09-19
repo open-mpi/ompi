@@ -11,18 +11,21 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "include/constants.h"
+#include "orte/include/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/iof/iof.h"
-#include "rmgr_proxy.h"
+#include "opal/util/trace.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/iof/iof.h"
+
+#include "orte/mca/rmgr/proxy/rmgr_proxy.h"
 
 
 static int orte_rmgr_proxy_query(void);
@@ -87,6 +90,8 @@ static int orte_rmgr_proxy_create(
     orte_buffer_t rsp;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* construct command */
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     rc = orte_rmgr_base_pack_create_cmd(&cmd, app_context, num_context);
@@ -127,6 +132,8 @@ static int orte_rmgr_proxy_cmd(orte_rmgr_cmd_t cmd_id, orte_jobid_t jobid)
     orte_buffer_t rsp;
     int rc;
 
+    OPAL_TRACE(2);
+    
     /* construct command */
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     rc = orte_rmgr_base_pack_cmd(&cmd, cmd_id, jobid);
@@ -164,31 +171,43 @@ static int orte_rmgr_proxy_cmd(orte_rmgr_cmd_t cmd_id, orte_jobid_t jobid)
 
 static int orte_rmgr_proxy_query(void)
 {
+    OPAL_TRACE(1);
+    
     return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_QUERY, 0);
 }
 
 static int orte_rmgr_proxy_allocate(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_ALLOCATE, jobid);
 }
 
 static int orte_rmgr_proxy_deallocate(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_DEALLOCATE, jobid);
 }
 
 static int orte_rmgr_proxy_map(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_MAP, jobid);
 }
 
 static int orte_rmgr_proxy_launch(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_LAUNCH, jobid);
 }
 
 static int orte_rmgr_proxy_terminate_job(orte_jobid_t jobid)
 {
+    OPAL_TRACE(1);
+    
     return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_TERM_JOB, jobid);
 }
 
@@ -198,6 +217,8 @@ static int orte_rmgr_proxy_terminate_proc(const orte_process_name_t* proc_name)
     orte_buffer_t rsp;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* construct command */
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     rc = orte_rmgr_base_pack_terminate_proc_cmd(&cmd, proc_name);
@@ -241,6 +262,8 @@ static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
     size_t i, j, k;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* we made sure in the subscriptions that at least one
      * value is always returned
      * get the jobid from the segment name in the first value
@@ -306,6 +329,8 @@ static int orte_rmgr_proxy_spawn(
     int rc;
     orte_process_name_t* name;
  
+    OPAL_TRACE(1);
+    
     /* 
      * Perform resource discovery.
      */

@@ -15,13 +15,18 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
 
-#include "mca/gpr/base/base.h"
+#include "opal/util/trace.h"
+
+#include "orte/include/orte_constants.h"
+
+#include "orte/mca/gpr/base/base.h"
 
 
 int orte_gpr_base_close(void)
 {
+    OPAL_TRACE(5);
+    
   /* If we have a selected component and module, then finalize it */
 
   if (orte_gpr_base_selected) {

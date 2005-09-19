@@ -25,17 +25,19 @@
  */
 #include "orte_config.h"
 
-#include "class/orte_bitmap.h"
+#include "orte/class/orte_bitmap.h"
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "opal/util/trace.h"
 
-#include "mca/rml/rml.h"
+#include "orte/util/proc_info.h"
 
-#include "gpr_replica.h"
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
-#include "mca/gpr/replica/communications/gpr_replica_comm.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+
+#include "orte/mca/gpr/replica/gpr_replica.h"
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 
 /*
@@ -130,11 +132,13 @@ orte_gpr_replica_t orte_gpr_replica;
 orte_gpr_replica_globals_t orte_gpr_replica_globals;
 
 /* instantiate the classes */
-#include "mca/gpr/replica/gpr_replica_class_instances.h"
+#include "orte/mca/gpr/replica/gpr_replica_class_instances.h"
 
 int orte_gpr_replica_open(void)
 {
     int id, tmp;
+
+    OPAL_TRACE(5);
 
     id = mca_base_param_register_int("gpr", "replica", "debug", NULL, 0);
     mca_base_param_lookup_int(id, &tmp);
@@ -160,12 +164,16 @@ int orte_gpr_replica_open(void)
  */
 int orte_gpr_replica_close(void)
 {
+    OPAL_TRACE(5);
+
     return ORTE_SUCCESS;
 }
 
 orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
     int rc;
+
+    OPAL_TRACE(5);
 
     /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
@@ -293,6 +301,8 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
 
 int orte_gpr_replica_module_init(void)
 {
+    OPAL_TRACE(5);
+
     /* issue the non-blocking receive */
     if (!orte_gpr_replica_globals.isolate) {
         int rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
@@ -320,9 +330,7 @@ int orte_gpr_replica_finalize(void)
     orte_gpr_replica_local_subscriber_t **lsubs;
     orte_gpr_replica_local_trigger_t **ltrigs;
 
-    if (orte_gpr_replica_globals.debug) {
-        opal_output(0, "finalizing gpr replica");
-    }
+    OPAL_TRACE(5);
 
     /* destruct the thread lock */
     OBJ_DESTRUCT(&orte_gpr_replica_globals.mutex);

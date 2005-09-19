@@ -25,10 +25,12 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
+
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/output.h"
-#include "gpr_replica_comm.h"
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
 /* 
  * handle message from proxies
@@ -45,6 +47,8 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
     bool compound_cmd=false;
     orte_data_type_t type;
 
+    OPAL_TRACE(3);
+    
     *output_buffer = OBJ_NEW(orte_buffer_t);
     if (NULL == *output_buffer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);

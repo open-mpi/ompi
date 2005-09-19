@@ -11,18 +11,20 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>
 
-#include "include/constants.h"
+#include "orte/include/orte_constants.h"
 #include "opal/util/output.h"
-#include "dps/dps.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
+
+#include "orte/dps/dps.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 
 /*
@@ -32,6 +34,9 @@
 static int orte_rmgr_base_cmd_query(orte_buffer_t* req, orte_buffer_t* rsp)
 {
     int32_t rc = orte_rmgr.query();
+    
+    OPAL_TRACE(4);
+    
     return orte_dps.pack(rsp, &rc, 1, ORTE_INT32);
 }
 
@@ -43,6 +48,8 @@ static int orte_rmgr_base_cmd_create(orte_buffer_t* req, orte_buffer_t* rsp)
     orte_jobid_t jobid;
     size_t i, cnt, num_context;
 
+    OPAL_TRACE(4);
+    
     cnt = 1;
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &num_context, &cnt, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
@@ -86,6 +93,8 @@ static int orte_rmgr_base_cmd_allocate(orte_buffer_t* req, orte_buffer_t* rsp)
     orte_jobid_t jobid;
     size_t cnt = 1;
 
+    OPAL_TRACE(4);
+    
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -100,6 +109,8 @@ static int orte_rmgr_base_cmd_deallocate(orte_buffer_t* req, orte_buffer_t* rsp)
     orte_jobid_t jobid;
     size_t cnt = 1;
 
+    OPAL_TRACE(4);
+    
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -114,6 +125,8 @@ static int orte_rmgr_base_cmd_map(orte_buffer_t* req, orte_buffer_t* rsp)
     orte_jobid_t jobid;
     size_t cnt = 1;
 
+    OPAL_TRACE(4);
+    
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -128,6 +141,8 @@ static int orte_rmgr_base_cmd_launch(orte_buffer_t* req, orte_buffer_t* rsp)
     orte_jobid_t jobid;
     size_t cnt = 1;
 
+    OPAL_TRACE(4);
+    
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -143,6 +158,8 @@ static int orte_rmgr_base_cmd_term_job(orte_buffer_t* req, orte_buffer_t* rsp)
     orte_jobid_t jobid;
     size_t cnt = 1;
 
+    OPAL_TRACE(4);
+    
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -158,6 +175,8 @@ static int orte_rmgr_base_cmd_term_proc(orte_buffer_t* req, orte_buffer_t* rsp)
     orte_process_name_t name;
     size_t cnt = 1;
 
+    OPAL_TRACE(4);
+    
     if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &name, &cnt, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -174,6 +193,8 @@ int orte_rmgr_base_cmd_dispatch(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t cnt = 1;
     int rc;
 
+    OPAL_TRACE(4);
+    
     rc = orte_dps.unpack(req, &cmd, &cnt, ORTE_RMGR_CMD);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);

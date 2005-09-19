@@ -26,6 +26,7 @@
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 #include "util/proc_info.h"
 #include "mca/ns/ns.h"
 
@@ -36,6 +37,8 @@
 
 void orte_errmgr_base_log(int error_code, char *filename, int line)
 {
+    OPAL_TRACE(1);
+    
     if (NULL == orte_process_info.my_name) {
         opal_output(0, "[NO-NAME] ORTE_ERROR_LOG: %s in file %s at line %d",
                                 ORTE_ERROR_NAME(error_code), filename, line);
@@ -52,6 +55,8 @@ void orte_errmgr_base_proc_aborted(orte_process_name_t *proc)
     orte_jobid_t job;
     int rc;
     
+    OPAL_TRACE(1);
+    
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&job, proc))) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -62,15 +67,21 @@ void orte_errmgr_base_proc_aborted(orte_process_name_t *proc)
 
 void orte_errmgr_base_incomplete_start(orte_jobid_t job)
 {
-    orte_rmgr.terminate_job(job);
+     OPAL_TRACE(1);
+    
+   orte_rmgr.terminate_job(job);
 }
 
 void orte_errmgr_base_error_detected(int error_code)
 {
+    OPAL_TRACE(1);
+    
 }
 
 void orte_errmgr_base_abort()
 {
+    OPAL_TRACE(1);
+    
     /* kill and reap all children */
     orte_wait_kill(9);
 
@@ -84,5 +95,7 @@ int orte_errmgr_base_register_job(orte_jobid_t job)
      * changing to abnormal termination codes
      */
      
+    OPAL_TRACE(1);
+    
      return ORTE_SUCCESS;
 }

@@ -25,16 +25,20 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "gpr_replica_comm.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
 int orte_gpr_replica_recv_compound_cmd(orte_buffer_t *output_buffer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_COMPOUND_CMD;
     int rc;
 
+    OPAL_TRACE(3);
+    
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
     }

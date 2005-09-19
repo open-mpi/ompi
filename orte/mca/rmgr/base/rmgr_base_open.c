@@ -16,17 +16,20 @@
 
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 
-#include "dps/dps.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/dps/dps.h"
+
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+
+#include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/trace.h"
 
-#include "mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
 
 
 
@@ -153,6 +156,8 @@ int orte_rmgr_base_open(void)
     int param, value, rc;
     orte_data_type_t tmp;
 
+    OPAL_TRACE(5);
+    
     /* Debugging / verbose output */
 
     orte_rmgr_base.rmgr_output = opal_output_open(NULL);

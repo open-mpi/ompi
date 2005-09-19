@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #include "include/orte_constants.h"
+#include "opal/util/trace.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/errmgr/base/base.h"
@@ -26,6 +27,8 @@
 
 int orte_errmgr_base_close(void)
 {
+    OPAL_TRACE(5);
+    
   /* If we have a selected component and module, then finalize it */
 
   if (orte_errmgr_base_selected) {

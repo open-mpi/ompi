@@ -25,10 +25,12 @@
 
 #include "orte_config.h"
 
-#include "class/orte_bitmap.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "gpr_replica_fn.h"
+#include "orte/class/orte_bitmap.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 /*
  */
@@ -42,6 +44,8 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
     bool exclusive, match, found_one, not_set;
     int rc, bit_is_set;
 
+    OPAL_TRACE(3);
+    
     /* check for trivial case */
     if (NULL == itags || 0 == num_itags_search) {  /* wildcard case - automatically true */
 	   return true;
@@ -138,6 +142,8 @@ int orte_gpr_replica_copy_itag_list(orte_gpr_replica_itag_t **dest,
         return ORTE_ERR_BAD_PARAM;
     }
     
+    OPAL_TRACE(3);
+ 
     *dest = (orte_gpr_replica_itag_t*)malloc(num_itags * sizeof(orte_gpr_replica_itag_t));
     if (NULL == *dest) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);

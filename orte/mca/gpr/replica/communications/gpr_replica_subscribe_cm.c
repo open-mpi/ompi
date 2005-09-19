@@ -25,12 +25,13 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
-#include "util/proc_info.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
-#include "gpr_replica_comm.h"
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
 int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
                                         orte_buffer_t *input_buffer,
@@ -42,6 +43,8 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
     size_t n, num_subs, num_trigs;
     orte_gpr_trigger_t **trigs=NULL;
     orte_gpr_subscription_t **subscriptions=NULL;
+    
+    OPAL_TRACE(3);
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -188,6 +191,8 @@ int orte_gpr_replica_recv_unsubscribe_cmd(orte_process_name_t *sender,
     int rc, ret;
     size_t n;
 
+    OPAL_TRACE(3);
+    
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -225,6 +230,8 @@ int orte_gpr_replica_recv_cancel_trigger_cmd(orte_process_name_t *sender,
     int rc, ret;
     size_t n;
 
+    OPAL_TRACE(3);
+    
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;

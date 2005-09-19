@@ -25,12 +25,14 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
+#include "orte/dps/dps.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/gpr/base/base.h"
 
 int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
                  size_t num_subs,
@@ -42,6 +44,8 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
     int rc;
     size_t zero=0;
 
+    OPAL_TRACE(3);
+    
     command = ORTE_GPR_SUBSCRIBE_CMD;
 
     /* can't be both NULL */
@@ -94,6 +98,8 @@ int orte_gpr_base_pack_unsubscribe(orte_buffer_t *cmd,
     orte_gpr_cmd_flag_t command;
     int rc;
 
+    OPAL_TRACE(3);
+    
     command = ORTE_GPR_UNSUBSCRIBE_CMD;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
@@ -112,6 +118,8 @@ int orte_gpr_base_pack_cancel_trigger(orte_buffer_t *cmd, orte_gpr_trigger_id_t 
     orte_gpr_cmd_flag_t command;
     int rc;
 
+    OPAL_TRACE(3);
+    
     command = ORTE_GPR_CANCEL_TRIGGER_CMD;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {

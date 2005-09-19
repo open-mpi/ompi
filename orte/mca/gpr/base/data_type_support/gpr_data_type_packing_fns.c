@@ -21,6 +21,8 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/util/trace.h"
+
 #include "mca/errmgr/errmgr.h"
 #include "dps/dps_internal.h"
 
@@ -34,6 +36,8 @@ int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
+    OPAL_TRACE(4);
+    
     if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_CMD_T))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -49,6 +53,8 @@ int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
+    OPAL_TRACE(4);
+    
     if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_SUBSCRIPTION_ID_T))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -64,6 +70,8 @@ int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
+    OPAL_TRACE(4);
+    
     if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_TRIGGER_ID_T))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -79,6 +87,8 @@ int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
+    OPAL_TRACE(4);
+    
     if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_NOTIFY_ACTION_T))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -94,6 +104,8 @@ int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
+    OPAL_TRACE(4);
+    
     if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_TRIGGER_ACTION_T))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -109,6 +121,8 @@ int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
+    OPAL_TRACE(4);
+    
     if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_ADDR_MODE_T))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -124,6 +138,8 @@ int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
+    OPAL_TRACE(4);
+    
     if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_NOTIFY_MSG_TYPE_T))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -142,6 +158,8 @@ int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
     orte_gpr_keyval_t **keyval;
     size_t i;
 
+    OPAL_TRACE(4);
+    
     /* array of pointers to keyval objects - need to pack the
        objects */
     keyval = (orte_gpr_keyval_t**) src;
@@ -182,6 +200,8 @@ int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
     orte_gpr_value_t **values;
     size_t i;
 
+    OPAL_TRACE(4);
+    
     /* array of pointers to value objects - need to pack the objects */
     values = (orte_gpr_value_t**) src;
     for (i=0; i<num_vals; i++) {
@@ -245,6 +265,8 @@ int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
     orte_gpr_subscription_t **subs;
     size_t i;
 
+    OPAL_TRACE(4);
+    
     /* array of pointers to subscription objects - need to pack the objects */
     subs = (orte_gpr_subscription_t**) src;
     for (i=0; i<num_vals; i++) {
@@ -301,6 +323,8 @@ int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
     orte_gpr_trigger_t **trigs;
     size_t i;
 
+    OPAL_TRACE(4);
+    
     /* array of pointers to trigger objects - need to pack the objects */
     trigs = (orte_gpr_trigger_t**) src;
     for (i=0; i<num_vals; i++) {
@@ -356,6 +380,8 @@ int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
     orte_gpr_value_t **values;
     size_t i, j, k;
 
+    OPAL_TRACE(4);
+    
     /* array of pointers to notify data objects - need to pack the objects */
     data = (orte_gpr_notify_data_t**) src;
 
@@ -421,6 +447,8 @@ int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
     orte_gpr_notify_data_t **data;
     size_t i, j, k;
 
+    OPAL_TRACE(4);
+    
     /* array of messages */
     msg = (orte_gpr_notify_message_t**) src;
 

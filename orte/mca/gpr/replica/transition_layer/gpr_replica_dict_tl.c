@@ -25,13 +25,15 @@
 
 #include "orte_config.h"
 
-#include "class/orte_pointer_array.h"
+#include "orte/class/orte_pointer_array.h"
 #include "opal/util/output.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/util/trace.h"
 
-#include "mca/gpr/replica/functional_layer/gpr_replica_fn.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
+
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 
 int
 orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
@@ -40,6 +42,8 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
     orte_gpr_replica_dict_t **ptr, *new_dict;
     orte_gpr_replica_itag_t j;
     size_t i, len, len2;
+
+    OPAL_TRACE(3);
 
     /* default to illegal value */
     *itag = ORTE_GPR_REPLICA_ITAG_MAX;
@@ -104,6 +108,8 @@ int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
     size_t index;
     int rc;
 
+    OPAL_TRACE(3);
+
     /* check for errors */
     if (NULL == name || NULL == seg) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -155,6 +161,8 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
     orte_gpr_replica_itag_t j;
     size_t len, len2;
     
+    OPAL_TRACE(3);
+
     /* initialize to illegal value */
     *itag = ORTE_GPR_REPLICA_ITAG_MAX;
     
@@ -197,6 +205,8 @@ int orte_gpr_replica_dict_reverse_lookup(char **name,
     size_t i;
     orte_gpr_replica_itag_t j;
 
+
+    OPAL_TRACE(3);
 
     /* initialize to nothing */
     *name = NULL;
@@ -247,6 +257,8 @@ orte_gpr_replica_get_itag_list(orte_gpr_replica_itag_t **itaglist,
     char **namptr;
     int rc;
     size_t i;
+
+    OPAL_TRACE(3);
 
     *itaglist = NULL;
 
