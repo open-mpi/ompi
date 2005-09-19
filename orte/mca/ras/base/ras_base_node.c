@@ -158,7 +158,6 @@ int orte_ras_base_node_query_context(opal_list_t* nodes, orte_app_context_t** co
                 node->node_name = strdup(map[m]->map_data);
                 opal_list_append(&required, (opal_list_item_t*)node);
             }
-            map++;
         }
     }
 
