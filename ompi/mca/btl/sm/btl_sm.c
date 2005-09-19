@@ -433,8 +433,8 @@ int mca_btl_sm_add_procs_same_base_addr(
         fifo_tmp=(ompi_fifo_t * volatile *)
                 ( (char *)(mca_btl_sm_component.sm_ctl_header->fifo) +
                   (long)(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
-        /* RLG : need memory barrier */
         fifo_tmp[mca_btl_sm_component.my_smp_rank]=my_fifos;
+        opal_atomic_mb();
 
         /* cache the pointer to the 2d fifo array.  These addresses
          * are valid in the current process space */

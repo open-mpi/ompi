@@ -18,9 +18,9 @@
 #define _OMPI_CIRCULAR_BUFFER_FIFO
 
 #include "ompi/include/constants.h"
-#include "include/sys/cache.h"
-#include "include/sys/atomic.h"
-#include "mca/mpool/mpool.h"
+#include "opal/include/sys/cache.h"
+#include "opal/include/sys/atomic.h"
+#include "ompi/mca/mpool/mpool.h"
 #include "opal/util/pow2.h"
 
 
@@ -304,6 +304,7 @@ static inline int ompi_cb_fifo_write_to_head(void *data, ompi_cb_fifo_t
     if (ptr[index] == OMPI_CB_FREE) {
         slot = index;
         ptr[slot] = data;
+        opal_atomic_wmb();
         (h_ptr->fifo_index)++;
         (h_ptr->fifo_index) &= fifo->mask;
     }
@@ -337,6 +338,7 @@ static inline int ompi_cb_fifo_get_slot(ompi_cb_fifo_t *fifo,
     if ( OMPI_CB_FREE == ptr[index] ) {
         ptr[index] = OMPI_CB_RESERVED;
         return_value = index;
+        opal_atomic_wmb();
         (h_ptr->fifo_index)++;
         (h_ptr->fifo_index) &= fifo->mask;
     }
@@ -622,6 +624,7 @@ static inline int ompi_cb_fifo_write_to_head_same_base_addr(void *data, ompi_cb_
     if (ptr[index] == OMPI_CB_FREE) {
         slot = index;
         ptr[slot] = data;
+        opal_atomic_wmb();
         (h_ptr->fifo_index)++;
         /* wrap around */
         (h_ptr->fifo_index) &= fifo->mask;
@@ -655,6 +658,7 @@ static inline int ompi_cb_fifo_get_slot_same_base_addr(ompi_cb_fifo_t *fifo)
     if ( OMPI_CB_FREE == ptr[index] ) {
         ptr[index] = OMPI_CB_RESERVED;
         return_value = index;
+        opal_atomic_wmb();
         (h_ptr->fifo_index)++;
         (h_ptr->fifo_index) &= fifo->mask;
     }

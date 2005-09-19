@@ -60,13 +60,6 @@ base as of this writing (26 Aug 2005):
 
 - LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
 
-- Shared memory support will not function properly on machines that
-  have a weak memory consistency mode.  The default in this beta is to
-  disable shared memory support on all Power PC architectures, even
-  though some Power PC platforms have strong memory consistency
-  models.  See the description of the --enable-ptl-sm configure flag,
-  below.
-
 - Striping MPI messages across multiple networks is supported (and
   happens automatically when multiple networks are available), but
   needs performance tuning.
