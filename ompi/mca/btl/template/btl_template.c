@@ -213,7 +213,6 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     size_t* size
 )
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*)btl;
     mca_btl_template_frag_t* frag;
     struct iovec iov;
     uint32_t iov_count = 1;
@@ -221,125 +220,6 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     int32_t free_after;
     int rc;
                                                                                                     
-#if MCA_BTL_HAS_MPOOL
-    /*
-     * If the data has already been pinned and is contigous than we can
-     * use it in place.
-    */
-    if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
-
-        size_t reg_len;
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(template_btl, frag, rc);
-        if(NULL == frag){
-            return NULL;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-                                                                                                    
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-
-        reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1;
-        if(frag->segment.seg_len > reg_len) {
-                                                                                                    
-            mca_mpool_base_module_t* mpool = template_btl->template_mpool;
-            size_t new_len = (unsigned char*)iov.iov_base - 
-                (unsigned char *) registration->base + max_data;
-            void* base_addr = registration->base;
-
-            /* remove old registration from tree and decrement reference count */
-            mca_mpool_base_remove(base_addr);
-            OBJ_RELEASE(registration);
-
-            /* re-register at new size */
-            rc = mpool->mpool_register(
-                mpool,
-                base_addr,
-                new_len,
-                0, 
-                &registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-                return NULL;
-            }
-
-            /* re-insert into tree with new registration */
-            rc = mca_mpool_base_insert(
-                base_addr,
-                new_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-        } 
-
-        /* bump reference count as so that the registration
-         * doesn't go away when the operation completes
-         */
-        OBJ_RETAIN(registration);
-        frag->registration = registration;
-
-    /*
-     * if the data is not already pinned - but the leave pinned option is set,
-     * then go ahead and pin contigous data. however, if a reserve is required 
-     * then we must allocated a fragment w/ buffer space
-    */
-    } else if ((mca_btl_template_component.leave_pinned || max_data > btl->btl_max_send_size) && 
-               ompi_convertor_need_buffers(convertor) == 0 &&
-               reserve == 0) {
-
-        mca_mpool_base_module_t* mpool = template_btl->template_mpool;
-        MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(template_btl, frag, rc);
-        if(NULL == frag){
-            return NULL;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-                                                                                                
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-
-        rc = mpool->mpool_register(
-            mpool,
-            iov.iov_base,
-            max_data,
-            0,
-            &registration);
-        if(rc != OMPI_SUCCESS) {
-            MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-            return NULL;
-        }
-
-        if(mca_btl_template_component.leave_pinned) {
-            /*
-             * insert the registration into the tree and bump the reference
-             * count so that it doesn't go away on completion.
-            */
-            rc = mca_mpool_base_insert(
-                iov.iov_base,
-                iov.iov_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-            OBJ_RETAIN(registration);
-        } 
-        frag->registration = registration;
-
-    } else 
-#endif
 
     /*
      * if we aren't pinning the data and the requested size is less
@@ -421,7 +301,6 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     size_t reserve,
     size_t* size)
 {
-    mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
     mca_btl_template_frag_t* frag;
     int rc;
 
@@ -438,88 +317,6 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
-
-#if MCA_BTL_HAS_MPOOL
-    if(NULL != registration) {
-        size_t reg_len = (unsigned char*)registration->bound - (unsigned char*)frag->segment.seg_addr.pval + 1;
-        if(frag->segment.seg_len > reg_len) {
-            mca_mpool_base_module_t* mpool = template_btl->template_mpool;
-            size_t new_len = (unsigned char*)frag->segment.seg_addr.pval - 
-                (unsigned char*) registration->base + 
-                frag->segment.seg_len;
-            void* base_addr = registration->base;
-
-            /* remove old registration from tree and decrement reference count */
-            mca_mpool_base_remove(base_addr);
-            OBJ_RELEASE(registration);
-
-            /* re-register at new size */
-            rc = mpool->mpool_register(
-                mpool,
-                base_addr,
-                new_len,
-                0,
-                &registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-                return NULL;
-            }
-
-            /* re-insert into tree with new registration */
-            rc = mca_mpool_base_insert(
-                base_addr,
-                new_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-        }
-
-        /* bump reference count as so that the registration
-         * doesn't go away when the operation completes
-         */
-        OBJ_RETAIN(registration);
-        frag->registration = registration;
-
-    }  else {
-
-        mca_mpool_base_module_t* mpool = template_btl->template_mpool;
-        rc = mpool->mpool_register(
-            mpool,
-            frag->segment.seg_addr.pval,
-            frag->segment.seg_len,
-            0, 
-            &registration);
-        if(rc != OMPI_SUCCESS) {
-            MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-            return NULL;
-        }
-                                                                                                                   
-        if(mca_btl_template_component.leave_pinned) {
-            /*
-             * insert the registration into the tree and bump the reference
-             * count so that it doesn't go away on completion.
-            */
-            rc = mca_mpool_base_insert(
-                frag->segment.seg_addr.pval,
-                frag->segment.seg_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-            OBJ_RETAIN(registration);
-        }
-        frag->registration = registration;
-    }
-#endif
     return &frag->base;
 }
 
