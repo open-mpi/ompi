@@ -41,6 +41,7 @@ static void mca_oob_tcp_addr_construct(mca_oob_tcp_addr_t* addr)
     addr->addr_alloc = 0;
     addr->addr_next = 0;
     addr->addr_inet = NULL;
+    addr->addr_matched = false;
 }
 
 static void mca_oob_tcp_addr_destruct(mca_oob_tcp_addr_t* addr)
@@ -132,11 +133,42 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
 }
 
 
-int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_in* inaddr)
+int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_in* retval)
 {
     if(addr == NULL || addr->addr_count == 0)
         return ORTE_ERROR;
-    *inaddr = addr->addr_inet[addr->addr_next];
+    if(addr->addr_matched == false) {
+        size_t i=0;
+        for(i=0; i<addr->addr_count; i++) {
+            int ifindex;
+            for(ifindex=opal_ifbegin(); ifindex>0; ifindex=opal_ifnext(ifindex)) {
+                struct sockaddr_in inaddr;
+                struct sockaddr_in inmask;
+                char name[32];
+                opal_ifindextoname(i, name, sizeof(name));
+                if (mca_oob_tcp_component.tcp_include != NULL &&
+                    strstr(mca_oob_tcp_component.tcp_include,name) == NULL)
+                    continue;
+                if (mca_oob_tcp_component.tcp_exclude != NULL &&
+                    strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
+                    continue;
+                opal_ifindextoaddr(ifindex, (struct sockaddr*)&inaddr, sizeof(inaddr));
+                if(opal_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+                    continue;
+                opal_ifindextomask(ifindex, (struct sockaddr*)&inmask, sizeof(inmask));
+
+                /* if match on network prefix - start here */
+                if((inaddr.sin_addr.s_addr & inmask.sin_addr.s_addr) ==
+                   (addr->addr_inet[i].sin_addr.s_addr & inmask.sin_addr.s_addr)) {
+                   addr->addr_next = i;
+                   goto done;
+                }
+            }
+        }
+done:
+        addr->addr_matched = true;
+    }
+    *retval = addr->addr_inet[addr->addr_next];
     if(++addr->addr_next >= addr->addr_count)
         addr->addr_next = 0;
     return ORTE_SUCCESS;
