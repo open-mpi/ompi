@@ -30,31 +30,33 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "include/orte_constants.h"
-
 #include "opal/event/event.h"
-#include "class/orte_pointer_array.h"
-#include "util/proc_info.h"
-#include "opal/util/argv.h"
-#include "opal/util/opal_environ.h"
-#include "opal/util/path.h"
-#include "opal/util/cmd_line.h"
-#include "util/sys_info.h"
-#include "opal/util/output.h"
-#include "util/universe_setup_file_io.h"
-#include "opal/util/show_help.h"
-#include "opal/util/basename.h"
+#include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
+#include "opal/util/argv.h"
+#include "opal/util/basename.h"
+#include "opal/util/cmd_line.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
+#include "opal/util/path.h"
+#include "opal/util/show_help.h"
+#include "opal/util/trace.h"
 
-#include "mca/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rmgr/rmgr.h"
-#include "mca/schema/schema.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/include/orte_constants.h"
 
-#include "runtime/runtime.h"
-#include "runtime/orte_wait.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/universe_setup_file_io.h"
+
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/schema/schema.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orterun.h"
 #include "totalview.h"
@@ -432,6 +434,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         NULL
     };
 
+    OPAL_TRACE(1);
+    
     /* query the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -532,6 +536,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 {
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orterun_globals.lock);
 
     /* Note that there's only two states that we're interested in
@@ -579,6 +585,8 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 
 static void exit_callback(int fd, short event, void *arg)
 {
+    OPAL_TRACE(1);
+    
     opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
                    true, orterun_basename, orterun_basename);
 
@@ -606,6 +614,9 @@ static void signal_callback(int fd, short flags, void *arg)
     opal_event_t* event;
 
     static int signalled = 0;
+    
+    OPAL_TRACE(1);
+    
     if (0 != signalled++) {
          return;
     }
