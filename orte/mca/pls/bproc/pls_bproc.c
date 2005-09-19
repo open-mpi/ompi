@@ -369,7 +369,9 @@ static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd,
  * @param env a pointer to the environment to setup
  * @param num_env a pointer to where the size f the environment is stored
  */
-static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) {
+static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) 
+{
+    char ** merged;
     char * var;
     int rc;
     /* append mca parameters to our environment */
@@ -414,14 +416,14 @@ static void orte_pls_bproc_setup_env(char *** env, size_t * num_env) {
     opal_setenv(var,orte_process_info.gpr_replica_uri, true, env);
     free(var);
 
-    /* because this is bproc, we the user might have had to place some libraries
-     * in nonstandard spots on the backend node. To facilitate finding these,
-     * send along their LD_LIBRARY_PATH */
-    var = getenv("LD_LIBRARY_PATH");
-    if(NULL != var) {
-        opal_setenv("LD_LIBRARY_PATH", var, true, env);
-    } 
-  
+    /* merge in environment */
+    merged = opal_environ_merge(*env, environ);
+    opal_argv_free(*env);
+    *env = merged;
+                                                                                                        
+    /* make sure hostname doesn't get pushed to backend node */
+    opal_unsetenv("HOSTNAME", env);
+
     /* overwrite previously specified values with the above settings */
     *num_env = opal_argv_count(*env);
 }
@@ -675,6 +677,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
         goto cleanup;
     }
     while(0 != num_nodes) {
+
         /* setup environment so the procs can figure out their names */
         rc = orte_ns_nds_bproc_put(cellid, jobid, vpid_start, global_vpid_start,
                                    num_processes, &map->app->env);
