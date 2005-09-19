@@ -33,13 +33,21 @@ extern "C" {
 #endif
 
 #define OPAL_TRACE(verbose) \
-    do {                                                    \
+    do {                                                                       \
         opal_output_verbose(verbose, opal_trace_handle, "TRACE: %s @ %s:%d",   \
-            __func__, __FILE__, __LINE__);                  \
+            __func__, __FILE__, __LINE__);                                     \
        } while (0)
+
+#define OPAL_TRACE_ARG(verbose, foo) \
+    do {                                                                       \
+        opal_output_verbose(verbose, opal_trace_handle, "TRACE: %s @ %s:%d arg: %lu",   \
+            __func__, __FILE__, __LINE__, (unsigned long)foo);                                     \
+       } while (0)
+        
 #else
 
 #define OPAL_TRACE(verbose)
+#define OPAL_TRACE_ARG(verbose, foo)
 
 #endif /* ENABLE_TRACE */
 
