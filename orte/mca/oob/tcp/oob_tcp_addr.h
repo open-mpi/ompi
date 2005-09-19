@@ -43,6 +43,7 @@ struct mca_oob_tcp_addr_t {
     uint32_t addr_count;               
     uint32_t addr_next;
     uint32_t addr_alloc;
+    bool addr_matched;
     struct sockaddr_in* addr_inet;    
 };
 typedef struct mca_oob_tcp_addr_t mca_oob_tcp_addr_t;
