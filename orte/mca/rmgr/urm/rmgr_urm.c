@@ -241,7 +241,7 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG2) == 0) {
-                    (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG2);
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG3) == 0) {
