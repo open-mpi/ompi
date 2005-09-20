@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -39,6 +39,13 @@ extern "C" {
 /*
  * Macro definitions
  */
+/*
+ * Thess macros and associated error name array are used to output intelligible error
+ * messages.
+ */
+
+#define ORTE_ERROR_NAME(n)  opal_strerror(n)
+
 #define ORTE_ERROR_LOG(n) \
     orte_errmgr.log((n), __FILE__, __LINE__)
 
@@ -51,7 +58,7 @@ extern "C" {
  * Log an error
  * Log an error that occurred in the runtime environment, and call the "error_detected"
  * interface to see if further action is required.
- * 
+ *
  * @code
  * orte_errmgr.log("this is an error", __FILE__, __LINE__);
  * @endcode
@@ -65,7 +72,7 @@ typedef void (*orte_errmgr_base_module_log_fn_t)(int error_code, char *filename,
  * process errors should always be reported through the error_detected interface and
  * NOT here. The function is called when a message is received from the universe daemon
  * indicating that another process in the job failed. For now, this function will
- * simply cause the local process to gracefully finalize and terminate. 
+ * simply cause the local process to gracefully finalize and terminate.
  */
 typedef void (*orte_errmgr_base_module_proc_aborted_fn_t)(orte_process_name_t *proc);
 
@@ -75,7 +82,7 @@ typedef void (*orte_errmgr_base_module_proc_aborted_fn_t)(orte_process_name_t *p
  * one or more processes to start. The function decides on the strategy for dealing
  * with this "incomplete start" situation - for now, it simply orders the resource
  * manager to terminate the entire job.
- * 
+ *
  * This function is only called by the respective process launcher, which is responsible
  * for detecting incomplete starts.
  */
@@ -96,7 +103,7 @@ typedef void (*orte_errmgr_base_module_error_detected_fn_t)(int error_code);
  * problems occur - i.e., when process status entries change to abnormal termination
  * values. Process status entries are changed by the appropriate state-of-health monitor
  * and/or the process launcher, depending upon the stage at which the problem occurs.
- * 
+ *
  * Monitoring of the job begins once the job has reached the "executing" stage. Prior
  * to that time, failure of processes to start are the responsibility of the respective
  * process launcher - which is expected to call the error manager via the "incomplete
@@ -136,7 +143,7 @@ typedef orte_errmgr_base_module_t* (*orte_errmgr_base_component_init_fn_t)(
     int *priority);
 
 typedef int (*orte_errmgr_base_component_finalize_fn_t)(void);
- 
+
 /*
  * the standard component data structure
  */

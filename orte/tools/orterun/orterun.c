@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -354,10 +354,10 @@ int orterun(int argc, char *argv[])
 
     /* Prep to start the application */
 
-    opal_signal_set(&term_handler, SIGTERM, 
+    opal_signal_set(&term_handler, SIGTERM,
                    signal_callback, NULL);
     opal_signal_add(&term_handler, NULL);
-    opal_signal_set(&int_handler, SIGINT, 
+    opal_signal_set(&int_handler, SIGINT,
                    signal_callback, NULL);
     opal_signal_add(&int_handler, NULL);
 
@@ -436,8 +436,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         NULL
     };
 
-    OPAL_TRACE_ARG(1, jobid);
-    
+    OPAL_TRACE_ARG1(1, jobid);
+
     /* query the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -538,8 +538,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 {
-    OPAL_TRACE_ARG(1, jobid);
-    
+    OPAL_TRACE_ARG2(1, jobid, state);
+
     OPAL_THREAD_LOCK(&orterun_globals.lock);
 
     /* Note that there's only two states that we're interested in
@@ -588,7 +588,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 static void exit_callback(int fd, short event, void *arg)
 {
     OPAL_TRACE(1);
-    
+
     opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
                    true, orterun_basename, orterun_basename);
 
@@ -616,9 +616,9 @@ static void signal_callback(int fd, short flags, void *arg)
     opal_event_t* event;
 
     static int signalled = 0;
-    
+
     OPAL_TRACE(1);
-    
+
     if (0 != signalled++) {
          return;
     }

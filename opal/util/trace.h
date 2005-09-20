@@ -38,16 +38,23 @@ extern "C" {
             __func__, __FILE__, __LINE__);                                     \
        } while (0)
 
-#define OPAL_TRACE_ARG(verbose, foo) \
+#define OPAL_TRACE_ARG1(verbose, foo) \
     do {                                                                       \
         opal_output_verbose(verbose, opal_trace_handle, "TRACE: %s @ %s:%d arg: %lu",   \
             __func__, __FILE__, __LINE__, (unsigned long)foo);                                     \
        } while (0)
-        
+
+#define OPAL_TRACE_ARG2(verbose, foo, foo2) \
+    do {                                                                       \
+        opal_output_verbose(verbose, opal_trace_handle, "TRACE: %s @ %s:%d arg: %lu\n\t0x%x",   \
+            __func__, __FILE__, __LINE__, (unsigned long)foo, (unsigned long)foo2);        \
+       } while (0)
+
 #else
 
 #define OPAL_TRACE(verbose)
-#define OPAL_TRACE_ARG(verbose, foo)
+#define OPAL_TRACE_ARG1(verbose, foo)
+#define OPAL_TRACE_ARG2(verbose, foo, foo2)
 
 #endif /* ENABLE_TRACE */
 

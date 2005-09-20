@@ -22,13 +22,6 @@
 #include "opal/util/error.h"
 
 /*
- * This macro and array are used to output intelligible error
- * messages.
- */
-
-#define ORTE_ERROR_NAME(n)  opal_strerror(n)
-
-/*
  * Standard names used across the system
  */
 #define ORTE_DEFAULT_UNIVERSE    "default-universe"
