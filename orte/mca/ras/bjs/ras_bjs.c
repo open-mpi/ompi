@@ -23,6 +23,7 @@
 #include "include/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "mca/rmgr/base/base.h"
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/errmgr/errmgr.h"
@@ -102,17 +103,21 @@ static int orte_ras_bjs_node_resolve(char* node_name, int* node_num)
  *  - check for additional nodes that have already been allocated
  */
 
-static int orte_ras_bjs_discover(opal_list_t* nodelist)
+static int orte_ras_bjs_discover(
+    opal_list_t* nodelist,
+    orte_app_context_t** context,
+    size_t num_context)
 {
     char* nodes;
     char* ptr;
     opal_list_item_t* item;
     opal_list_t new_nodes;
     int rc;
+    bool constrained;
 
     /* query the nodelist from the registry */
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist))) {
+    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_context(nodelist, context, num_context, &constrained))) {
         ORTE_ERROR_LOG(rc); 
         return rc;
     }
@@ -153,6 +158,10 @@ static int orte_ras_bjs_discover(opal_list_t* nodelist)
         }
         item = next;
     }
+    if(constrained) {
+        return ORTE_SUCCESS;
+    }
+
 
     /* parse the node list and check node status/access */
     nodes = getenv("NODES");
@@ -231,11 +240,19 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
     opal_list_t nodes;
     opal_list_item_t* item;
     int rc;
+    orte_app_context_t **context;
+    size_t i, num_context;
 
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_ras_bjs_discover(&nodes))) {
+    rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context);
+    if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+    if(ORTE_SUCCESS != (rc = orte_ras_bjs_discover(&nodes, context, num_context))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     if (0 == strcmp(mca_ras_bjs_component.schedule_policy, "node")) {
         rc = orte_ras_base_allocate_nodes_by_node(jobid, &nodes);
@@ -246,9 +263,13 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
     }
 
+cleanup:
     while(NULL != (item = opal_list_remove_first(&nodes)))
         OBJ_RELEASE(item);
     OBJ_DESTRUCT(&nodes);
+    for(i=0; i<num_context; i++)
+        OBJ_RELEASE(context[i]);
+    free(context);
     return rc;
 }
 
