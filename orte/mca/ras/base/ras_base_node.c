@@ -20,6 +20,7 @@
 
 #include "include/orte_constants.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/soh/soh_types.h"
@@ -137,7 +138,11 @@ int orte_ras_base_node_query(opal_list_t* nodes)
  * Query the registry for all available nodes
  */
 
-int orte_ras_base_node_query_context(opal_list_t* nodes, orte_app_context_t** context, size_t num_context)
+int orte_ras_base_node_query_context(
+    opal_list_t* nodes, 
+    orte_app_context_t** context, 
+    size_t num_context,
+    bool *constrained)
 {
     size_t i, cnt;
     orte_gpr_value_t** values;
@@ -148,15 +153,23 @@ int orte_ras_base_node_query_context(opal_list_t* nodes, orte_app_context_t** co
     /* expand the list of node/host specifications on the context structure into
      * a list of node names
     */
+    *constrained = false;
     OBJ_CONSTRUCT(&required, opal_list_t);
     for(i=0; i<num_context; i++) {
         orte_app_context_map_t** map = context[i]->map_data;
         size_t m, num_map = context[i]->num_map;
         for(m=0; m<num_map; m++) {
             if(map[m]->map_type == ORTE_APP_CONTEXT_MAP_HOSTNAME) {
-                orte_ras_node_t* node = OBJ_NEW(orte_ras_node_t);
-                node->node_name = strdup(map[m]->map_data);
-                opal_list_append(&required, (opal_list_item_t*)node);
+                char** hosts = opal_argv_split(map[m]->map_data, ',');
+                char** ptr = hosts;
+                while(*ptr) {
+                    orte_ras_node_t* node = OBJ_NEW(orte_ras_node_t);
+                    node->node_name = strdup(*ptr);
+                    opal_list_append(&required, (opal_list_item_t*)node);
+                    ptr++;
+                }
+                opal_argv_free(hosts);
+                *constrained = true;
             }
         }
     }
@@ -221,7 +234,7 @@ int orte_ras_base_node_query_context(opal_list_t* nodes, orte_app_context_t** co
         for(item = opal_list_get_first(&required);
             item != opal_list_get_end(&required);
             item = opal_list_get_next(item)) {
-            if(strcmp(((orte_ras_node_t*)item)->node_name,node->node_name)) {
+            if(0 == strcmp(((orte_ras_node_t*)item)->node_name,node->node_name)) {
                 opal_list_remove_item(&required, item);
                 OBJ_RELEASE(item);
                 found = true;
@@ -239,11 +252,16 @@ int orte_ras_base_node_query_context(opal_list_t* nodes, orte_app_context_t** co
     /* append any remaining specified nodes to the list with
      * with default settings for slots,etc.
      */
-    while(NULL != (item = opal_list_remove_first(&required))) {
-        opal_list_append(&required, item);
+    if(opal_list_get_size(&required)) {
+        if(ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&required))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        while(NULL != (item = opal_list_remove_first(&required))) {
+            opal_list_append(nodes, item);
+        }
     }
     OBJ_DESTRUCT(&required);
-
     if (NULL != values) free(values);
     return ORTE_SUCCESS;
 }
