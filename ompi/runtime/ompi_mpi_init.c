@@ -144,9 +144,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Do we need to wait for a TotalView-like debugger? */
-    ompi_wait_for_totalview();
-
     /* Setup process affinity */
 
     if (ompi_mpi_paffinity_alone) {
@@ -515,6 +512,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         opal_output(0, "[%lu,%lu,%lu] ompi_mpi_init completed",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
     }
+
+    /* Do we need to wait for a TotalView-like debugger? */
+    ompi_wait_for_totalview();
 
     return MPI_SUCCESS;
 }
