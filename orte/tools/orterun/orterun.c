@@ -177,12 +177,18 @@ opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
     /* These arguments can be specified multiple times */
+#if 0
+    /* JMS: Removed because it's not really implemented */
     { NULL, NULL, NULL, '\0', "arch", "arch", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Architecture to start processes on" },
+#endif
+#if 0
+    /* JMS: Removed because it's not really implemented */
     { NULL, NULL, NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
+#endif
 
     /* OpenRTE arguments */
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
@@ -944,6 +950,9 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             }
         }
 
+#if 0
+        /* JMS commented out because we don't handle this in any
+           mapper */
         /* Save -arch args */
 
         else if (0 == strcmp("-arch", argv[i])) {
@@ -953,7 +962,11 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             opal_argv_append(&new_argc, &new_argv, str);
             save_arg = false;
         }
+#endif
 
+#if 0
+        /* JMS commented out because we don't handle this in any
+           mapper */
         /* Save -host args */
 
         else if (0 == strcmp("-host", argv[i])) {
@@ -963,6 +976,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             opal_argv_append(&new_argc, &new_argv, str);
             save_arg = false;
         }
+#endif
 
         /* If this token was C/N map data, save it */
 
