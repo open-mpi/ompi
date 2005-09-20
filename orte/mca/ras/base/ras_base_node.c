@@ -241,7 +241,7 @@ int orte_ras_base_node_query_context(
                 break;
             }
         }
-        if(opal_list_get_size(&required) == 0 || found) {
+        if(*constrained == false || found) {
             opal_list_append(nodes, &node->super);
         } else {
             OBJ_RELEASE(node);
