@@ -406,7 +406,6 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
     mca_btl_mvapi_endpoint_set_remote_info(endpoint, rem_info);
     
     /* Connect to endpoint */
-
     rc = mca_btl_mvapi_endpoint_connect(endpoint);
     if(rc != OMPI_SUCCESS) {
         BTL_ERROR(("error in endpoint connect error code is %d", rc)); 
@@ -414,6 +413,7 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
     }
 
     /* Send connection info over to remote endpoint */
+    endpoint->endpoint_state = MCA_BTL_IB_CONNECT_ACK;
     if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_send_connect_data(endpoint))) {
         BTL_ERROR(("error in endpoint send connect request error code is %d", rc)); 
         return rc;
@@ -602,9 +602,6 @@ static void mca_btl_mvapi_endpoint_recv(
                     BTL_ERROR(("error in endpoint reply start connect")); 
                     break;
                 }
-                
-                /* Setup state as connected */
-                ib_endpoint->endpoint_state = MCA_BTL_IB_CONNECT_ACK;
                 break;
                 
             case MCA_BTL_IB_CONNECTING :
@@ -628,8 +625,8 @@ static void mca_btl_mvapi_endpoint_recv(
                 
             case MCA_BTL_IB_CONNECT_ACK:
 
-                mca_btl_mvapi_endpoint_connected(ib_endpoint);
                 mca_btl_mvapi_endpoint_send_connect_data(ib_endpoint);
+                mca_btl_mvapi_endpoint_connected(ib_endpoint);
                 break;
 
             case MCA_BTL_IB_CONNECTED :
