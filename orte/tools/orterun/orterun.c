@@ -183,13 +183,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Architecture to start processes on" },
 #endif
-#if 0
-    /* JMS: Removed because it's not really implemented */
     { NULL, NULL, NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
-#endif
-
     /* OpenRTE arguments */
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
