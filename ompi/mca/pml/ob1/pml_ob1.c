@@ -139,11 +139,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                         &mca_pml_ob1.buffers,
                         sizeof(mca_pml_ob1_buffer_t) + mca_pml_ob1.eager_limit,
                         OBJ_CLASS(mca_pml_ob1_buffer_t),
-                        mca_pml_ob1.free_list_num,
+                        0,
                         mca_pml_ob1.free_list_max,
                         mca_pml_ob1.free_list_inc,
                         NULL);
-
     return rc;
 }
 

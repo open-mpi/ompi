@@ -681,7 +681,7 @@ int mca_btl_mvapi_endpoint_send(
             rc = OMPI_SUCCESS;
             break;
 
-    case MCA_BTL_IB_WAITING_ACK: 
+        case MCA_BTL_IB_WAITING_ACK: 
         case MCA_BTL_IB_CONNECT_ACK:
 
             BTL_VERBOSE(("Queuing because waiting for ack"));
