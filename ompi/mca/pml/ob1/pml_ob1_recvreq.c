@@ -176,7 +176,8 @@ static void mca_pml_ob1_put_completion(
 
 static void mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_recv_request_t* recvreq,
-    mca_pml_ob1_rendezvous_hdr_t* hdr)
+    mca_pml_ob1_rendezvous_hdr_t* hdr, 
+    size_t bytes_received)
 {
     ompi_proc_t* proc = (ompi_proc_t*) recvreq->req_proc;
     mca_bml_base_endpoint_t* bml_endpoint = NULL; 
@@ -195,7 +196,7 @@ static void mca_pml_ob1_recv_request_ack(
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     
-    if(hdr->hdr_msg_length > 0) {
+    if(hdr->hdr_msg_length > bytes_received) {
         
         /*
          * lookup request buffer to determine if memory is already
@@ -240,9 +241,9 @@ static void mca_pml_ob1_recv_request_ack(
             recvreq->req_rdma_offset = hdr->hdr_msg_length;
         }
         
-    /* zero byte message */
+    /* copy */
     } else { 
-        recvreq->req_rdma_offset = 0;
+        recvreq->req_rdma_offset = hdr->hdr_msg_length;
     }
 
     /* allocate descriptor */
@@ -474,7 +475,7 @@ void mca_pml_ob1_recv_request_progress(
             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
             recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
-            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv);
+            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
             MCA_PML_OB1_RECV_REQUEST_UNPACK(
                 recvreq,
                 segments,
@@ -721,7 +722,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 }
 
                 /* run progress as the prepare (pinning) can take some time */
-                mca_pml_ob1_progress();
+                /* mca_pml_ob1_progress(); */
             }
         } while(OPAL_THREAD_ADD32(&recvreq->req_lock,-1) > 0);
     }
