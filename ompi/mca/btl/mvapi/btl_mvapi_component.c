@@ -134,7 +134,7 @@ int mca_btl_mvapi_component_open(void)
 
     mca_btl_mvapi_component.ib_cq_size = 
         mca_btl_mvapi_param_register_int("ib_cq_size", 
-                                      40000); 
+                                      10000); 
     mca_btl_mvapi_component.ib_wq_size = 
         mca_btl_mvapi_param_register_int("ib_wq_size", 
                                       10000); 
