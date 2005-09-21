@@ -89,20 +89,16 @@ int mca_mpool_gm_register(
     }
     reg->mpool = mpool;
     reg->base = addr; 
+    reg->flags = flags; 
     reg->bound = reg->base + size - 1; 
-    
+    OPAL_THREAD_ADD32(&reg->ref_count,1);
+
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 
                                      (mca_mpool_base_registration_t*) reg, 
                                      flags); 
     }
-    
-                                     
-    reg->flags = flags; 
-    mca_mpool_gm_retain(mpool, 
-                        reg); 
     *registration = reg;
-    
     return OMPI_SUCCESS; 
 }
 
@@ -113,23 +109,12 @@ int mca_mpool_gm_register(
 int mca_mpool_gm_deregister(mca_mpool_base_module_t* mpool, 
                               mca_mpool_base_registration_t* reg)
 {
-    mca_mpool_gm_module_t * mpool_gm = (mca_mpool_gm_module_t*) mpool; 
-    int rc = gm_deregister_memory(
-                                  mpool_gm->port,
-                                  reg->base,
-                                  reg->bound - reg->base + 1);
-    if(GM_SUCCESS != rc) { 
-        opal_output(0, "[%s:%d] error(%d) deregistering gm memory\n", __FILE__, __LINE__, rc); 
-        return OMPI_ERROR; 
-    }
     if(reg->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_delete(mpool->rcache, 
                                      reg, 
                                      reg->flags); 
     }
-    
-
-    return OMPI_SUCCESS; 
+    return mca_mpool_gm_release(mpool, reg); 
 }
 
 /**
@@ -161,34 +146,42 @@ void mca_mpool_gm_free(mca_mpool_base_module_t* mpool, void * addr,
 }
 
 int mca_mpool_gm_find(
-                         struct mca_mpool_base_module_t* mpool, 
-                         void* addr, 
-                         size_t size, 
-                         ompi_pointer_array_t *regs,
-                         uint32_t *cnt
-                         ){
-
+    struct mca_mpool_base_module_t* mpool, 
+    void* addr, 
+    size_t size, 
+    ompi_pointer_array_t *regs,
+    uint32_t *cnt)
+{
     return mpool->rcache->rcache_find(mpool->rcache, 
                                       addr, 
                                       size, 
                                       regs, 
                                       cnt); 
-    
 }
  
 int mca_mpool_gm_release(
-                            struct mca_mpool_base_module_t* mpool, 
-                            mca_mpool_base_registration_t* registration
-                            ){
-    if(0 == OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
-        mpool->mpool_deregister(mpool, registration);
+    struct mca_mpool_base_module_t* mpool, 
+    mca_mpool_base_registration_t* reg)
+{
+    mca_mpool_gm_module_t * mpool_gm = (mca_mpool_gm_module_t*) mpool; 
+    if(0 == OPAL_THREAD_ADD32(&reg->ref_count, -1)) {
+        int rc = gm_deregister_memory(
+                                  mpool_gm->port,
+                                  reg->base,
+                                  reg->bound - reg->base + 1);
+        if(GM_SUCCESS != rc) { 
+            opal_output(0, "[%s:%d] error(%d) deregistering gm memory\n", __FILE__, __LINE__, rc); 
+            return OMPI_ERROR; 
+        }
+        OBJ_RELEASE(reg);
     }
     return OMPI_SUCCESS; 
 }
 
-int mca_mpool_gm_retain(struct mca_mpool_base_module_t* mpool, 
-                           mca_mpool_base_registration_t* registration
-                           ){
+int mca_mpool_gm_retain(
+    struct mca_mpool_base_module_t* mpool, 
+    mca_mpool_base_registration_t* registration)
+{
     OPAL_THREAD_ADD32(&registration->ref_count, 1); 
     return OMPI_SUCCESS; 
 }
