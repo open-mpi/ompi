@@ -41,9 +41,13 @@ int mca_rcache_rb_mru_insert(
                               ) {
     mca_mpool_base_registration_t* old_reg; 
     if(rcache->reg_mru_len <= rcache->mru_list.opal_list_length) { 
+        /* call deregister - which removes the registration from
+         * the tree and mru list. memory will be deregistered when
+         * the reference count goes to zero.
+         */
         old_reg = (mca_mpool_base_registration_t*) 
-            opal_list_remove_last(&rcache->mru_list); 
-        /* need to pull out of rb tree here */ 
+            opal_list_get_first(&rcache->mru_list); 
+        old_reg->mpool->mpool_deregister(old_reg->mpool, old_reg);
     }
     opal_list_append(&rcache->mru_list,(opal_list_item_t*) reg); 
     return OMPI_SUCCESS; 
