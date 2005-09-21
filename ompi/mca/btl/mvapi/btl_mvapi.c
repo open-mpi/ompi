@@ -539,7 +539,6 @@ int mca_btl_mvapi_send(
     mca_btl_base_tag_t tag)
    
 {
-    
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
     frag->hdr->tag = tag; 
@@ -558,6 +557,8 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     int rc; 
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
+
+    assert(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED);
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
     /* atomically test and acquire a token */
     if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
@@ -608,6 +609,7 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
     
+    assert(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED);
     frag->sr_desc.opcode = VAPI_RDMA_READ; 
     
     /* atomically test and acquire a token */
