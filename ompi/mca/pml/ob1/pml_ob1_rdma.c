@@ -148,11 +148,9 @@ size_t mca_pml_ob1_rdma_btls(
                 unsigned char* new_base = largest->base;
                 size_t new_len = (base - largest->base) + size;
 
-                /* simplify cleanup logic - bump reference count so we can
-                 * decrement below 
-                */
-                btl_mpool->mpool_retain(btl_mpool, largest);
-                btl_mpool->mpool_deregister(btl_mpool, largest); 
+                /* simplify cleanup - bump reference count as we decrement again below */
+                btl_mpool->mpool_retain(btl_mpool,largest);
+                btl_mpool->mpool_deregister(btl_mpool, largest);
                 btl_mpool->mpool_register(btl_mpool, 
                     new_base, 
                     new_len, 
