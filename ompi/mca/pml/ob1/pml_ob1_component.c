@@ -81,7 +81,7 @@ int mca_pml_ob1_component_open(void)
     int param, value; 
 
     mca_pml_ob1.free_list_num =
-        mca_pml_ob1_param_register_int("free_list_num", 256);
+        mca_pml_ob1_param_register_int("free_list_num", 8);
     mca_pml_ob1.free_list_max =
         mca_pml_ob1_param_register_int("free_list_max", -1);
     mca_pml_ob1.free_list_inc =

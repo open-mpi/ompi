@@ -103,7 +103,7 @@ int mca_btl_self_component_open(void)
 {
     /* register SELF component parameters */
     mca_btl_self_component.free_list_num =
-        mca_btl_self_param_register_int("free_list_num", 256);
+        mca_btl_self_param_register_int("free_list_num", 0);
     mca_btl_self_component.free_list_max =
         mca_btl_self_param_register_int("free_list_max", -1);
     mca_btl_self_component.free_list_inc =
