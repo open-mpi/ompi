@@ -107,7 +107,7 @@ int mca_btl_self_component_open(void)
     mca_btl_self_component.free_list_max =
         mca_btl_self_param_register_int("free_list_max", -1);
     mca_btl_self_component.free_list_inc =
-        mca_btl_self_param_register_int("free_list_inc", 256);
+        mca_btl_self_param_register_int("free_list_inc", 32);
     mca_btl_self.btl_eager_limit = 
         mca_btl_self_param_register_int("eager_limit", 128*1024);
     mca_btl_self.btl_min_send_size = 

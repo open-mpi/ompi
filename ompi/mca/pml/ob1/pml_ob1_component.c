@@ -81,11 +81,11 @@ int mca_pml_ob1_component_open(void)
     int param, value; 
 
     mca_pml_ob1.free_list_num =
-        mca_pml_ob1_param_register_int("free_list_num", 8);
+        mca_pml_ob1_param_register_int("free_list_num", 4);
     mca_pml_ob1.free_list_max =
         mca_pml_ob1_param_register_int("free_list_max", -1);
     mca_pml_ob1.free_list_inc =
-        mca_pml_ob1_param_register_int("free_list_inc", 256);
+        mca_pml_ob1_param_register_int("free_list_inc", 64);
     mca_pml_ob1.priority =
         mca_pml_ob1_param_register_int("priority", 1);
     mca_pml_ob1.eager_limit =

@@ -198,7 +198,7 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_component.tcp_free_list_num =
         mca_btl_tcp_param_register_int ("free_list_num", 8);
     mca_btl_tcp_component.tcp_free_list_max =
-        mca_btl_tcp_param_register_int ("free_list_max", 1024);
+        mca_btl_tcp_param_register_int ("free_list_max", -1);
     mca_btl_tcp_component.tcp_free_list_inc =
         mca_btl_tcp_param_register_int ("free_list_inc", 32);
     mca_btl_tcp_component.tcp_sndbuf =
