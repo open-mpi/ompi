@@ -74,11 +74,13 @@ void* mca_mpool_mvapi_alloc(
 /* 
  * register memory 
  */ 
-int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool, 
-                             void *addr, 
-                             size_t size, 
-                             uint32_t flags, 
-                             mca_mpool_base_registration_t** registration){
+int mca_mpool_mvapi_register(
+    mca_mpool_base_module_t* mpool, 
+    void *addr, 
+    size_t size, 
+    uint32_t flags, 
+    mca_mpool_base_registration_t** registration)
+{
     
     mca_mpool_mvapi_module_t * mpool_module = (mca_mpool_mvapi_module_t*) mpool; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
@@ -89,14 +91,13 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
     memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
     memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
     
-    *registration = (mca_mpool_base_registration_t*) OBJ_NEW(mca_mpool_mvapi_registration_t);    /* (void*) malloc(sizeof(mca_mpool_base_registration_t));  */
-    vapi_reg = (mca_mpool_mvapi_registration_t*) *registration; 
+    vapi_reg = OBJ_NEW(mca_mpool_mvapi_registration_t);    
     vapi_reg->base_reg.mpool = mpool;
-    
-    
+    vapi_reg->base_reg.flags = flags; 
     vapi_reg->hndl = VAPI_INVAL_HNDL; 
-    
-    
+    OPAL_THREAD_ADD32(&vapi_reg->base_reg.ref_count, 1); 
+    *registration = &vapi_reg->base_reg;
+
     mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE | VAPI_EN_REMOTE_READ;
     mr_in.l_key = 0;
     mr_in.r_key = 0;
@@ -104,7 +105,6 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
     mr_in.size = size;
     mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
     mr_in.type = VAPI_MR;
-    
 
     ret = VAPI_register_mr(
                            mpool_module->hca_pd.hca, 
@@ -115,6 +115,7 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
     
     if(VAPI_OK != ret){ 
         opal_output(0, "error registering memory: %s ", VAPI_strerror(ret)); 
+        OBJ_RELEASE(vapi_reg);
         return OMPI_ERROR; 
     }
     
@@ -127,43 +128,24 @@ int mca_mpool_mvapi_register(mca_mpool_base_module_t* mpool,
                                      (mca_mpool_base_registration_t*) vapi_reg, 
                                      flags); 
     }
-                                     
-                                     
-    vapi_reg->base_reg.flags = flags; 
-    
-    mca_mpool_mvapi_retain(mpool, 
-                           vapi_reg); 
-                                 
     return OMPI_SUCCESS; 
 }
 
 
 /* 
- * deregister memory 
+ * Remove the registration from the rcache immediately and
+ * deregister the memory when the reference count goes to zero.
  */ 
 int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool, 
-                              mca_mpool_base_registration_t* registration){
-    
-    VAPI_ret_t ret; 
-    mca_mpool_mvapi_module_t * mpool_mvapi = (mca_mpool_mvapi_module_t*) mpool; 
-    mca_mpool_mvapi_registration_t * vapi_reg; 
-    vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
-    ret = VAPI_deregister_mr(
-                             mpool_mvapi->hca_pd.hca, 
-                             vapi_reg->hndl 
-                             ); 
-    
-    if(VAPI_OK != ret){ 
-        opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
-        return OMPI_ERROR; 
-    }
+                              mca_mpool_base_registration_t* registration)
+{
     if(registration->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_delete(mpool->rcache, 
                                         registration, 
                                         registration->flags); 
+        registration->flags = 0;
     }
-    
-    return OMPI_SUCCESS; 
+    return mca_mpool_mvapi_release(mpool, registration); 
 }
 
 /**
@@ -210,18 +192,33 @@ int mca_mpool_mvapi_find(
 }
  
 int mca_mpool_mvapi_release(
-                            struct mca_mpool_base_module_t* mpool, 
-                            mca_mpool_base_registration_t* registration
-                            ){
+    struct mca_mpool_base_module_t* mpool, 
+    mca_mpool_base_registration_t* registration
+    )
+{
     if(0 == OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
-        mpool->mpool_deregister(mpool, registration);
+        VAPI_ret_t ret; 
+        mca_mpool_mvapi_module_t * mpool_mvapi = (mca_mpool_mvapi_module_t*) mpool; 
+        mca_mpool_mvapi_registration_t * vapi_reg; 
+        vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
+        ret = VAPI_deregister_mr(
+            mpool_mvapi->hca_pd.hca, 
+            vapi_reg->hndl 
+        ); 
+    
+        if(VAPI_OK != ret){ 
+            opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
+            return OMPI_ERROR; 
+        }
+        OBJ_RELEASE(vapi_reg);
     }
     return OMPI_SUCCESS; 
 }
 
 int mca_mpool_mvapi_retain(struct mca_mpool_base_module_t* mpool, 
                            mca_mpool_base_registration_t* registration
-                           ){
+                           )
+{
     OPAL_THREAD_ADD32(&registration->ref_count, 1); 
     return OMPI_SUCCESS; 
 }
