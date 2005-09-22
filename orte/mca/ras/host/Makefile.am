@@ -38,7 +38,9 @@ host_SOURCES = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_host_la_SOURCES = $(host_SOURCES)
-mca_ras_host_la_LIBADD = 
+mca_ras_host_la_LIBADD = \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_ras_host_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -44,7 +44,9 @@ svc_SOURCES = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_svc_la_SOURCES = $(svc_SOURCES)
-mca_iof_svc_la_LIBADD = 
+mca_iof_svc_la_LIBADD = \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_iof_svc_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -34,14 +34,17 @@ component_install =
 endif
 
 sources = \
-	pls_bproc.h \
-	pls_bproc.c \
-	pls_bproc_component.c
+    pls_bproc.h \
+    pls_bproc.c \
+    pls_bproc_component.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_bproc_la_SOURCES = $(sources)
-mca_pls_bproc_la_LIBADD = $(pls_bproc_LIBS)
+mca_pls_bproc_la_LIBADD = \
+    $(pls_bproc_LIBS) \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_pls_bproc_la_LDFLAGS = -module -avoid-version $(pls_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -38,6 +38,10 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_allocator_basic_la_SOURCES = $(sources)
 mca_allocator_basic_la_LDFLAGS = -module -avoid-version
+mca_allocator_basic_la_LIBADD = \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_allocator_basic_la_SOURCES = $(sources)

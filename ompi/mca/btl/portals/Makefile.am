@@ -57,7 +57,11 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_portals_la_SOURCES = $(portals_SOURCES)
 nodist_mca_btl_portals_la_SOURCES = $(portals_nodist_SOURCES)
-mca_btl_portals_la_LIBADD = $(btl_portals_LIBS)
+mca_btl_portals_la_LIBADD = \
+    $(btl_portals_LIBS) \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

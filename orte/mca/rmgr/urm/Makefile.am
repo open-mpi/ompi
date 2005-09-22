@@ -38,7 +38,9 @@ proxy_SOURCES = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmgr_urm_la_SOURCES = $(proxy_SOURCES)
-mca_rmgr_urm_la_LIBADD = 
+mca_rmgr_urm_la_LIBADD = \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_rmgr_urm_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

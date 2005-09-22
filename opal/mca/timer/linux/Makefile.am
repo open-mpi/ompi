@@ -16,11 +16,11 @@
 
 
 
-noinst_LTLIBRARIES	= libmca_timer_linux.la
+noinst_LTLIBRARIES = libmca_timer_linux.la
 
 libmca_timer_linux_la_SOURCES = \
-			timer_linux.h \
-			timer_linux_component.c
+    timer_linux.h \
+    timer_linux_component.c
 
-EXTRA_DIST		= \
-			$(doc_DATA)
+EXTRA_DIST  = \
+    $(doc_DATA)

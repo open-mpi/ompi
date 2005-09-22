@@ -16,11 +16,11 @@
 
 
 
-noinst_LTLIBRARIES	= libmca_timer_aix.la
+noinst_LTLIBRARIES = libmca_timer_aix.la
 
 libmca_timer_aix_la_SOURCES = \
-			timer_aix.h \
-			timer_aix_component.c
+    timer_aix.h \
+    timer_aix_component.c
 
-EXTRA_DIST		= \
-			$(doc_DATA)
+EXTRA_DIST = \
+    $(doc_DATA)

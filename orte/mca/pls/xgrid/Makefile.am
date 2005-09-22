@@ -22,11 +22,11 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/include
 AM_OBJCFLAGS = $(pls_xgrid_OBJCFLAGS)
 
 xgrid_sources = \
-	src/pls_xgrid.h \
-        src/pls_xgrid_component.m \
-        src/pls_xgrid_module.m \
-	src/pls_xgrid_client.h \
-	src/pls_xgrid_client.m
+    src/pls_xgrid.h \
+    src/pls_xgrid_component.m \
+    src/pls_xgrid_module.m \
+    src/pls_xgrid_client.h \
+    src/pls_xgrid_client.m
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -43,7 +43,9 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_xgrid_la_SOURCES = $(xgrid_sources)
-mca_pls_xgrid_la_LIBADD = 
+mca_pls_xgrid_la_LIBADD = \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_pls_xgrid_la_LDFLAGS = -module -avoid-version $(pls_xgrid_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

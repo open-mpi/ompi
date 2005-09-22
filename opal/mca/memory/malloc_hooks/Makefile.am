@@ -22,4 +22,5 @@ noinst_LTLIBRARIES = libmca_memory_malloc_hooks.la
 libmca_memory_malloc_hooks_la_SOURCES = \
 	memory_malloc_hooks.c \
 	memory_malloc_hooks_component.c
-libmca_memory_malloc_hooks_la_LIBADD = $(memory_malloc_hooks_LIBS)
+libmca_memory_malloc_hooks_la_LIBADD = \
+    $(memory_malloc_hooks_LIBS)

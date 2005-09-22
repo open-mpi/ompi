@@ -44,7 +44,11 @@ libs = romio/libromio_dist.la
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_io_romio_la_SOURCES = $(component_sources)
-mca_io_romio_la_LIBADD = $(libs)
+mca_io_romio_la_LIBADD = \
+    $(libs) \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_io_romio_la_DEPENDENCIES = $(libs)
 mca_io_romio_la_LDFLAGS = -module -avoid-version
 

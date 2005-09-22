@@ -54,6 +54,10 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_ptl_tcp_la_SOURCES = $(component_sources)
 mca_ptl_tcp_la_LDFLAGS = -module -avoid-version
+mca_ptl_tcp_la_LIBADD = \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_ptl_tcp_la_SOURCES = $(lib_sources)
