@@ -961,9 +961,10 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 #endif
 
         /* Save -host args */
-        else if (0 == strcmp("-host", argv[i]) || 0 == strcmp("-H", argv[i])) {
+        else if (0 == strcmp("--host",argv[i]) || 
+                 0 == strcmp("-host", argv[i]) || 
+                 0 == strcmp("-H", argv[i])) {
             char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_HOSTNAME, '\0' };
-
             opal_argv_append(&new_argc, &new_argv, "-rawmap");
             opal_argv_append(&new_argc, &new_argv, str);
             save_arg = false;
