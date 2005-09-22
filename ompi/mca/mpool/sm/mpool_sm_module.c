@@ -31,6 +31,7 @@ void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
   mpool->super.mpool_alloc = mca_mpool_sm_alloc; 
   mpool->super.mpool_realloc = mca_mpool_sm_realloc; 
   mpool->super.mpool_free = mca_mpool_sm_free; 
+  mpool->super.mpool_find = NULL; 
   mpool->super.mpool_register = NULL; 
   mpool->super.mpool_deregister = NULL; 
   mpool->super.mpool_finalize = NULL; 
