@@ -42,7 +42,11 @@ local_sources = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_portals_la_SOURCES = $(local_sources)
-mca_pml_portals_la_LIBADD = $(pml_portals_LIBS)
+mca_pml_portals_la_LIBADD = \
+    $(pml_portals_LIBS) \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_pml_portals_la_LDFLAGS = -module -avoid-version $(pml_portals_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

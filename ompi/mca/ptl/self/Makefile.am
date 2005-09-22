@@ -35,7 +35,10 @@ self_SOURCES = ptl_self.c ptl_self.h ptl_self_component.c
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ptl_self_la_SOURCES = $(self_SOURCES)
-mca_ptl_self_la_LIBADD = 
+mca_ptl_self_la_LIBADD = \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_ptl_self_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

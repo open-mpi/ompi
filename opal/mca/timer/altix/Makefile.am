@@ -16,8 +16,9 @@
 
 
 
-noinst_LTLIBRARIES	= libmca_timer_altix.la
+noinst_LTLIBRARIES = libmca_timer_altix.la
 
 libmca_timer_altix_la_SOURCES = \
-			timer_altix.h \
-			timer_altix_component.c
+    timer_altix.h \
+    timer_altix_component.c
+

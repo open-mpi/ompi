@@ -47,7 +47,10 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_tcp_la_SOURCES = $(sources)
-mca_oob_tcp_la_LIBADD = $(LIBOMPI_LA)
+mca_oob_tcp_la_LIBADD = \
+    $(LIBOMPI_LA) \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_oob_tcp_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

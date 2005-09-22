@@ -21,4 +21,7 @@ noinst_LTLIBRARIES = libmca_memory_malloc_interpose.la
 # Source code files
 libmca_memory_malloc_interpose_la_SOURCES = \
 	memory_malloc_interpose.c
-libmca_memory_malloc_interpose_la_LIBADD = $(memory_malloc_interpose_LIBS)
+libmca_memory_malloc_interpose_la_LIBADD = \
+   $(memory_malloc_interpose_LIBS)
+   $(top_ompi_builddir)/opal/libopal.la
+

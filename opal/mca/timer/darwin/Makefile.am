@@ -16,11 +16,11 @@
 
 
 
-noinst_LTLIBRARIES	= libmca_timer_darwin.la
+noinst_LTLIBRARIES = libmca_timer_darwin.la
 
 libmca_timer_darwin_la_SOURCES = \
-			timer_darwin.h \
-			timer_darwin_component.c
+    timer_darwin.h \
+    timer_darwin_component.c
 
-EXTRA_DIST		= \
-			$(doc_DATA)
+EXTRA_DIST = \
+    $(doc_DATA)

@@ -41,7 +41,10 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sds_bproc_la_SOURCES = $(sources)
 mca_sds_bproc_la_LDFLAGS = -module -avoid-version $(sds_bproc_LDFLAGS)
-mca_sds_bproc_la_LIBADD =  $(sds_bproc_LIBS)
+mca_sds_bproc_la_LIBADD = \
+    $(sds_bproc_LIBS) \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sds_bproc_la_SOURCES =$(sources)

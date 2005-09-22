@@ -47,7 +47,11 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_rcache_rb_la_SOURCES = $(component_sources)
 mca_rcache_rb_la_LDFLAGS = -module -avoid-version $(rcache_rb_LDFLAGS)
-mca_rcache_rb_la_LIBADD = $(rcache_rb_LIBS)
+mca_rcache_rb_la_LIBADD = \
+    $(rcache_rb_LIBS) \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_rcache_rb_la_SOURCES = $(lib_sources)

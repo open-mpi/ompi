@@ -41,6 +41,9 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_ns_proxy_la_SOURCES = $(component_sources)
 mca_ns_proxy_la_LDFLAGS = -module -avoid-version
+mca_ns_proxy_la_LIBADD = \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_ns_proxy_la_SOURCES = $(lib_sources)

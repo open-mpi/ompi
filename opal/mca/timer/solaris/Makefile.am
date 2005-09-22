@@ -16,11 +16,11 @@
 
 
 
-noinst_LTLIBRARIES	= libmca_timer_solaris.la
+noinst_LTLIBRARIES = libmca_timer_solaris.la
 
 libmca_timer_solaris_la_SOURCES = \
-			timer_solaris.h \
-			timer_solaris_component.c
+    timer_solaris.h \
+    timer_solaris_component.c
 
-EXTRA_DIST		= \
-			$(doc_DATA)
+EXTRA_DIST  = \
+    $(doc_DATA)

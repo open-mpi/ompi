@@ -40,7 +40,9 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_xgrid_la_SOURCES = $(xgrid_sources)
-mca_ras_xgrid_la_LIBADD = 
+mca_ras_xgrid_la_LIBADD = \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_ras_xgrid_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -40,7 +40,10 @@ proxy_SOURCES = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_lsf_bproc_la_SOURCES = $(proxy_SOURCES)
-mca_ras_lsf_bproc_la_LIBADD = $(ras_lsf_bproc_LIBS)
+mca_ras_lsf_bproc_la_LIBADD =
+    $(ras_lsf_bproc_LIBS) \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_ras_lsf_bproc_la_LDFLAGS = -module -avoid-version $(ras_lsf_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

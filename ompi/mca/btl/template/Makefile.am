@@ -50,6 +50,10 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_template_la_SOURCES = $(component_sources)
 mca_btl_template_la_LDFLAGS = -module -avoid-version
+mca_btl_template_la_LIBADD = \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_template_la_SOURCES = $(lib_sources)

@@ -50,7 +50,10 @@ portals_SOURCES = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ptl_portals_la_SOURCES = $(portals_SOURCES)
-mca_ptl_portals_la_LIBADD = 
+mca_ptl_portals_la_LIBADD = \
+    $(top_ompi_builddir)/ompi/libmpi.la \
+    $(top_ompi_builddir)/orte/liborte.la \
+    $(top_ompi_builddir)/opal/libopal.la
 mca_ptl_portals_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
