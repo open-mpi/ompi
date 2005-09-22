@@ -16,6 +16,7 @@
 
 
 #include "ompi_config.h"
+#include <unistd.h>
 #include "ompi/include/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
@@ -369,7 +370,9 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     }
     
     if(0 == mca_btl_mvapi_component.ib_num_btls){ 
-        BTL_ERROR(("no mvapi btl's found on this host!")); 
+        char hostname[32];
+        gethostname(hostname, sizeof(hostname));
+        BTL_ERROR(("no mvapi btl's found on this host(%s)!", hostname)); 
         return NULL; 
     }
     /* Allocate space for btl modules */
