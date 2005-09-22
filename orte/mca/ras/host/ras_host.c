@@ -20,6 +20,9 @@
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/ras/host/ras_host.h"
+#include "mca/rmgr/base/base.h"
+#include "mca/ras/base/ras_base_node.h"
+#include "mca/errmgr/errmgr.h"
 
 #if HAVE_STRING_H
 #include <string.h>
@@ -35,11 +38,22 @@ static int orte_ras_host_allocate(orte_jobid_t jobid)
 {
     opal_list_t nodes;
     opal_list_item_t* item;
+    orte_app_context_t **context;
+    size_t i, num_context;
+    bool constrained;
     int rc;
 
+    rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(&nodes))) {
-        goto cleanup;
+    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_context(
+        &nodes, context, num_context, &constrained))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     if (0 == strcmp(mca_ras_host_component.schedule_policy, "node")) {
@@ -59,6 +73,9 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
+    for(i=0; i<num_context; i++)
+        OBJ_RELEASE(context[i]);
+    free(context);
     return rc;
 }
 
