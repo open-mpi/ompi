@@ -86,8 +86,8 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         /* setup a buffer for recv */
         ompi_convertor_get_packed_size( &convertor, &packed_size );
         if( packed_size > sizeof(recv_data) ) {
-            iov.iov_base = (caddr_t)malloc(packed_size);
-            if(iov.iov_base == NULL) {
+            rc = MPI_Alloc_mem(packed_size, MPI_INFO_NULL, &iov.iov_base);
+            if(OMPI_SUCCESS != rc) {
                 OMPI_ERRHANDLER_RETURN(OMPI_ERR_OUT_OF_RESOURCE, comm, MPI_ERR_BUFFER, FUNC_NAME);
             }
         } else {
@@ -117,7 +117,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
         /* release resources */
         if(packed_size > sizeof(recv_data)) {
-            free(iov.iov_base);
+            MPI_Free_mem(iov.iov_base);
         }
         OBJ_DESTRUCT(&convertor);
         return MPI_SUCCESS;
