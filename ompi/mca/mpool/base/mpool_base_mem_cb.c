@@ -22,8 +22,8 @@
 /*
  *  memory hook callback, called when memory is free'd out from under us
  */
-void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata){
-
+void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
+{
     uint32_t i, cnt;
     ompi_pointer_array_t regs;
     mca_mpool_base_registration_t* reg;
@@ -31,6 +31,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata){
     int rc;
     opal_list_item_t* item;
 
+    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
     for(item = opal_list_get_first(&mca_mpool_base_modules);
         item != opal_list_get_end(&mca_mpool_base_modules);
         item = opal_list_get_next(item)) {
@@ -45,24 +46,15 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata){
                                                    &cnt 
                                                    ); 
             if(OMPI_SUCCESS != rc) { 
-                return;
+                continue;
             }
-            if(0 < cnt) { 
-                for(i = 0; i < cnt; i++) { 
-                    reg = (mca_mpool_base_registration_t*) 
-                        ompi_pointer_array_get_item(&regs, i);
-                    
-                    rc = current->mpool_module->mpool_deregister(
-                                                                 current->mpool_module, 
-                                                                 reg
-                                                                 ); 
-                    if(OMPI_SUCCESS != rc) { 
-                        return; 
-                    }
-                }
+            for(i = 0; i < cnt; i++) { 
+                reg = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, i);
+                current->mpool_module->mpool_deregister(current->mpool_module, reg); 
             }
         }    
     }    
+    OBJ_DESTRUCT(&regs);
 }
 
 
