@@ -39,7 +39,7 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_null_la_SOURCES = $(null_SOURCES)
 mca_iof_null_la_LIBADD = \
-    $(top_ompi_builddir)/orte/liborte.la
+    $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opallibopal.la
 mca_iof_null_la_LDFLAGS = -module -avoid-version
 
