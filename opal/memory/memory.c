@@ -100,17 +100,27 @@ opal_mem_free_release_hook(void *buf, size_t length)
 
     if (!run_callbacks) return;
 
-    opal_atomic_lock(&callback_lock);
+    /*
+     * This is not really thread safe - but we can't hold the lock
+     * while calling the callback function as this routine can
+     * be called recursively.
+     *
+     * Instead, we could set a flag if we are already in the callback,
+     * and if called recursively queue the new address/length and allow
+     * the initial callback to dispatch this
+     */
 
-    for (item = opal_list_get_first(&callback_list) ;
-         item != opal_list_get_end(&callback_list) ;
-         item = opal_list_get_next(item)) {
-        callback_list_item_t *cbitem = (callback_list_item_t*) item;
+    item = opal_list_get_first(&callback_list);
+    while(item != opal_list_get_end(&callback_list)) {
+        opal_list_item_t* next = opal_list_get_next(item);
+        callback_list_item_t cbitem = *(callback_list_item_t*) item;
+        item = next;
 
-        cbitem->cbfunc(buf, length, cbitem->cbdata);
+        opal_atomic_lock(&callback_lock);
+        cbitem.cbfunc(buf, length, cbitem.cbdata);
+        opal_atomic_unlock(&callback_lock);
     }
 
-    opal_atomic_unlock(&callback_lock);
 }
 
 
@@ -163,7 +173,6 @@ opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
 
  done:
     opal_atomic_unlock(&callback_lock);
-
     return ret;
 }
 
