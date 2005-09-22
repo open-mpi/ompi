@@ -60,7 +60,7 @@ mca_rcache_base_module_t* mca_rcache_rb_component_init(void) {
                            "The maximum size of the MRU (most recently used) rcache list", 
                            false, 
                            false, 
-                           16, 
+                           256, 
                            (int*)&(mca_rcache_rb_component.reg_mru_len)); 
     
     rcache = (mca_rcache_rb_module_t*) malloc(sizeof(mca_rcache_rb_module_t));
