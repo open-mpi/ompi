@@ -208,47 +208,42 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
  */
 int mca_mpool_base_free(void * base)
 {
-    int rc = OMPI_SUCCESS; 
+    int rc = OMPI_SUCCESS;
     opal_list_item_t * item;
     mca_mpool_base_selected_module_t * current;
-    ompi_pointer_array_t regs; 
     uint32_t i, cnt;
-    mca_mpool_base_registration_t* reg;
-
+    ompi_pointer_array_t regs;
+    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
+                                                                                                       
     for(item = opal_list_get_first(&mca_mpool_base_modules);
         item != opal_list_get_end(&mca_mpool_base_modules);
         item = opal_list_get_next(item)) {
         current = ((mca_mpool_base_selected_module_t *) item);
-        if(NULL != current->mpool_module->mpool_find){
-            if(NULL != current->mpool_module->mpool_find) { 
-                rc = current->mpool_module->mpool_find(
-                                                       current->mpool_module, 
-                                                       base,
-                                                       0,
-                                                       &regs, 
-                                                       &cnt 
-                                                       ); 
-                if(OMPI_SUCCESS != rc) { 
-                    return rc;
+        if(NULL != current->mpool_module->mpool_find)  {
+            rc = current->mpool_module->mpool_find(
+                current->mpool_module,
+                base,
+                0,
+                &regs,
+                &cnt
+                );
+            if(OMPI_SUCCESS != rc) {
+                goto cleanup;
+            }
+            for(i = 0; i < cnt; i++) {
+                mca_mpool_base_registration_t* reg = (mca_mpool_base_registration_t*)
+                    ompi_pointer_array_get_item(&regs, i);
+                                                                                                       
+                rc = current->mpool_module->mpool_deregister(current->mpool_module, reg);
+                if(OMPI_SUCCESS != rc) {
+                    goto cleanup;
                 }
-                if(0 < cnt) { 
-                    for(i = 0; i < cnt; i++) { 
-                        reg = (mca_mpool_base_registration_t*) 
-                            ompi_pointer_array_get_item(&regs, i);
-                        
-                        rc = current->mpool_module->mpool_deregister(
-                                                                     current->mpool_module, 
-                                                                     reg
-                                                                     ); 
-                        if(OMPI_SUCCESS != rc) { 
-                            return rc; 
-                        }
-                    }
-                }
-            }    
-        }   
+            }
+        }
     }
 
+cleanup:
+    OBJ_DESTRUCT(&regs);
     return rc;
 }
 
