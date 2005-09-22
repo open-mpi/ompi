@@ -110,17 +110,18 @@ opal_mem_free_release_hook(void *buf, size_t length)
      * the initial callback to dispatch this
      */
 
+    opal_atomic_lock(&callback_lock);
     item = opal_list_get_first(&callback_list);
     while(item != opal_list_get_end(&callback_list)) {
         opal_list_item_t* next = opal_list_get_next(item);
         callback_list_item_t cbitem = *(callback_list_item_t*) item;
         item = next;
 
-        opal_atomic_lock(&callback_lock);
-        cbitem.cbfunc(buf, length, cbitem.cbdata);
         opal_atomic_unlock(&callback_lock);
+        cbitem.cbfunc(buf, length, cbitem.cbdata);
+        opal_atomic_lock(&callback_lock);
     }
-
+    opal_atomic_unlock(&callback_lock);
 }
 
 
