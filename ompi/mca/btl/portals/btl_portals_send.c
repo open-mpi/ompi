@@ -69,12 +69,28 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
             mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
             mca_btl_portals_module.md_send.length = frag->segments[0].seg_len;
             mca_btl_portals_module.md_send.options = PTL_MD_EVENT_START_DISABLE;
+            OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                 "fragment info:\n"
+                                 "\tstart: 0x%x\n"
+                                 "\tlen: %d",
+                                 frag->segments[0].seg_addr.pval,
+                                 frag->segments[0].seg_len)); 
         } else {
             assert(2 == frag->base.des_src_cnt);
             mca_btl_portals_module.md_send.start = frag->iov;
             mca_btl_portals_module.md_send.length = 2;
             mca_btl_portals_module.md_send.options = 
                 PTL_MD_EVENT_START_DISABLE | PTL_MD_IOVEC;
+            OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                  "fragment info:\n"
+                                  "\tiov[0].iov_base: 0x%x\n"
+                                  "\tiov[0].iov_len: %d\n"
+                                  "\tiov[1].iov_base: 0x%x\n"
+                                  "\tiov[1].iov_len: %d",
+                                  frag->iov[0].iov_base,
+                                  frag->iov[0].iov_len,
+                                  frag->iov[1].iov_base,
+                                  frag->iov[1].iov_len));
         }
         mca_btl_portals_module.md_send.user_ptr = frag; /* keep a pointer to ourselves */
 
