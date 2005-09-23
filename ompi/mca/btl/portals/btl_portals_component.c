@@ -18,6 +18,9 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#if OMPI_BTL_PORTALS_REDSTORM
+#include <catamount/cnos_mpi_os.h>
+#endif
 
 #include "ompi/include/constants.h"
 
@@ -88,8 +91,13 @@ mca_btl_portals_component_open(void)
                            false,
                            OMPI_BTL_PORTALS_DEFAULT_DEBUG_LEVEL,
                            &(portals_output_stream.lds_verbose_level));
+#if OMPI_BTL_PORTALS_REDSTORM
+    asprintf(&(portals_output_stream.lds_prefix),
+             "btl: portals (%2d): ", cnos_get_rank());
+#else
     asprintf(&(portals_output_stream.lds_prefix), 
              "btl: portals (%5d): ", getpid());
+#endif
     mca_btl_portals_component.portals_output = 
         opal_output_open(&portals_output_stream);
 
@@ -195,7 +203,11 @@ mca_btl_portals_component_open(void)
                            &dummy);
     mca_btl_portals_module.super.btl_bandwidth = dummy;
 
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET| MCA_BTL_FLAGS_SEND_INPLACE;
+#if 0
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
+#else
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
+#endif
 
     mca_btl_portals_module.portals_num_procs = 0;
     bzero(&(mca_btl_portals_module.portals_reg),
