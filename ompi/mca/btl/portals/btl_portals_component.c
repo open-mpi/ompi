@@ -195,7 +195,7 @@ mca_btl_portals_component_open(void)
                            &dummy);
     mca_btl_portals_module.super.btl_bandwidth = dummy;
 
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_SEND_INPLACE;
+    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET| MCA_BTL_FLAGS_SEND_INPLACE;
 
     mca_btl_portals_module.portals_num_procs = 0;
     bzero(&(mca_btl_portals_module.portals_reg),
@@ -454,6 +454,9 @@ mca_btl_portals_component_progress(void)
                     OMPI_BTL_PORTALS_FRAG_ALLOC_RECV(&mca_btl_portals_module, frag, ret);
                     frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
                     frag->segments[0].seg_len = ev.mlength;
+
+                    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                         "received send fragment %x", frag));
                 
                     if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size) {
                         /* the block is full.  It's deactivated automagically, but we

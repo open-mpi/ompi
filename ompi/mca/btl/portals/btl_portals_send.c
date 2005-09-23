@@ -61,6 +61,8 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
     } else {
         int ret;
         ptl_handle_md_t md_h;
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "PtlPut (send) fragment %x", frag));
 
         /* setup the send */
         if (1 == frag->base.des_src_cnt) {
