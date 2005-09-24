@@ -135,9 +135,9 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
     esac
 
     # Try to find all the portals libraries (this is not fun!)
-    AC_ARG_WITH(btl-portals-libs, 
-        AC_HELP_STRING([--with-btl-portals-libs=LIBS],
-                       [Libraries to link with for portals]))
+    AC_ARG_WITH([portals-libs], 
+        [AC_HELP_STRING([--with-portals-libs=LIBS],
+                       [Libraries to link with for portals])])
     if test -n "$with_portals_libs" ; then
         btl_portals_LIBS=""
         for lib in $with_portals_libs ; do
