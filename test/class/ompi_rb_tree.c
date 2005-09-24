@@ -57,6 +57,10 @@ struct my_key_t{
     void *bound; 
 }; typedef struct my_key_t my_key_t; 
 
+struct my_val_t{
+    my_key_t* key; 
+    int val; 
+}; typedef struct my_val_t my_val_t; 
 
 int comp_key(void* key1, void* key2) { 
     if( ((my_key_t*) key1)->base < 
@@ -75,35 +79,50 @@ int comp_key(void* key1, void* key2) {
 void test_keys(void)
 {
     ompi_rb_tree_t tree; 
-    int rc, i, result; 
+    int rc, i, *result; 
     my_key_t keys[NUM_KEYS];
-    int vals[NUM_KEYS];
-    
+    my_val_t vals[NUM_KEYS];
+    char buf[200];
     my_key_t *cur_key;
+    my_val_t *cur_val;
 
     OBJ_CONSTRUCT(&tree, ompi_rb_tree_t); 
     rc = ompi_rb_tree_init(&tree, comp_key); 
     srand(SEED); 
     for(i = 0; i < NUM_KEYS; i++) { 
-        vals[i] = i;
         cur_key = &(keys[i]); 
+        cur_val = &(vals[i]); 
+        cur_val->key = cur_key;
+        cur_val->val = i;
         cur_key->base = rand(); 
         cur_key->bound = cur_key->base + rand();
-        rc = ompi_rb_tree_insert(&tree, cur_key, &vals[i]); 
+        rc = ompi_rb_tree_insert(&tree, cur_key, cur_val); 
+        if(OMPI_SUCCESS != rc) { 
+            test_failure("error inserting element in the tree"); 
+        }
     }
-    for(i = 0; i < NUM_KEYS; i++) { 
+    for(i = 0; i < NUM_KEYS; i+=2) { 
         cur_key = &(keys[i]); 
-        result = ompi_rb_tree_find(&tree, cur_key); 
-        if(result == NULL) { 
+        rc = ompi_rb_tree_delete(&tree, cur_key);
+        if(OMPI_SUCCESS != rc) { 
+            test_failure("error deleting element in the tree"); 
+        }
+    }
+    for(i = 1; i < NUM_KEYS; i+=2) { 
+        cur_key = &(keys[i]); 
+        cur_val = (int*) ompi_rb_tree_find(&tree, cur_key); 
+        if(cur_val == NULL) { 
             test_failure("lookup returned NULL item"); 
         }
-        if(result != i) { 
-            test_failure("lookup returned invalid item"); 
+        else if(cur_val->val != i && (cur_val->key->base > cur_key->base ||
+                                      cur_val->key->bound < cur_key->base)) { 
+            sprintf(buf, "lookup returned invalid item, returned %d, extected %d", 
+                    cur_val->val, i); 
+            test_failure(buf);
         }
         
     }
 }
-    
 
 void test1(void)
 {
@@ -377,4 +396,3 @@ int main(int argc, char **argv)
     test_keys();
     return test_finalize();
 }
-
