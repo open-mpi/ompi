@@ -50,6 +50,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
             }
             for(i = 0; i < cnt; i++) { 
                 reg = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, i);
+                assert(reg->base == base);
                 current->mpool_module->mpool_deregister(current->mpool_module, reg); 
             }
         }    

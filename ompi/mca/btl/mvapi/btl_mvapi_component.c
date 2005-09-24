@@ -38,6 +38,7 @@
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 #include "btl_mvapi_endpoint.h"
 #include "mca/pml/base/pml_base_module_exchange.h"
+#include <malloc.h>
 
 mca_btl_mvapi_component_t mca_btl_mvapi_component = {
     {
@@ -293,6 +294,10 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     mca_btl_mvapi_module_t * mvapi_btl; 
     mca_btl_base_selected_module_t* ib_selected; 
     opal_list_item_t* item; 
+
+    /* ugly HACK!! */ 
+    /* mallopt(M_TRIM_THRESHOLD, -1);  */
+/*     mallopt(M_MMAP_MAX, 0); */
     /* initialization */
     *num_btl_modules = 0;
 

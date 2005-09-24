@@ -59,14 +59,18 @@ int mca_rcache_rb_find (
         return rc; 
     }
     
-    if( !(tree_item->reg->flags & MCA_MPOOL_FLAGS_PERSIST) ) { 
-        rc = mca_rcache_rb_mru_touch((mca_rcache_rb_module_t*)rcache, tree_item->reg); 
+    if( tree_item->reg->flags & MCA_MPOOL_FLAGS_CACHE ) { 
+        rc = mca_rcache_rb_mru_touch((mca_rcache_rb_module_t*)rcache, 
+                                     tree_item->reg); 
     }
     OPAL_THREAD_ADD32((int32_t*) &tree_item->reg->ref_count, 1); 
     OPAL_THREAD_UNLOCK(&rcache->lock);
     if(rc == OMPI_SUCCESS) { 
         *cnt = 1; 
     }
+    assert(tree_item->reg->bound - tree_item->reg->base > 0); 
+    assert(tree_item->reg->base <= addr);
+    assert(tree_item->reg->bound >= addr);
     return rc;
 }
 
@@ -77,16 +81,15 @@ int mca_rcache_rb_insert (
                           ) { 
     int rc = OMPI_SUCCESS;
     OPAL_THREAD_LOCK(&rcache->lock); 
-    if(!(flags & MCA_MPOOL_FLAGS_PERSIST)) { 
+    if(flags & MCA_MPOOL_FLAGS_CACHE) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
         if(OMPI_SUCCESS != rc) { 
             OPAL_THREAD_UNLOCK(&rcache->lock); 
             return rc; 
-        } else { 
-            OPAL_THREAD_ADD32((int32_t*)&reg->ref_count, 1); 
         }
+        OPAL_THREAD_ADD32((int32_t*)&reg->ref_count, 1); 
     }
-    rc = mca_rcache_rb_tree_insert((mca_rcache_rb_module_t*)rcache, reg );
+    rc = mca_rcache_rb_tree_insert((mca_rcache_rb_module_t*)rcache, reg);
     OPAL_THREAD_ADD32((int32_t*) &reg->ref_count, 1); 
     OPAL_THREAD_UNLOCK(&rcache->lock); 
     return rc;
@@ -98,8 +101,11 @@ int mca_rcache_rb_delete (
                           uint32_t flags
                           ) { 
     int rc = OMPI_SUCCESS; 
+    assert(reg->ref_count >= 1); 
     OPAL_THREAD_LOCK(&rcache->lock); 
-    if(!(flags & MCA_MPOOL_FLAGS_PERSIST)) { 
+    if(flags & MCA_MPOOL_FLAGS_CACHE) { 
+        assert(reg->ref_count >= 2);
+        OPAL_THREAD_ADD32((int32_t*)&reg->ref_count, -1);
         rc = mca_rcache_rb_mru_delete( (mca_rcache_rb_module_t*) rcache, reg); 
     }
     if(OMPI_SUCCESS != rc) { 
@@ -107,6 +113,7 @@ int mca_rcache_rb_delete (
         return rc; 
     }
     reg->flags = 0; 
+    OPAL_THREAD_ADD32((int32_t*)&reg->ref_count, -1);
     rc =  mca_rcache_rb_tree_delete((mca_rcache_rb_module_t*)rcache, reg );
     OPAL_THREAD_UNLOCK(&rcache->lock);
     return rc; 

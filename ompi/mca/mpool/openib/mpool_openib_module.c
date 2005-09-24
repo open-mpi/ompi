@@ -60,7 +60,7 @@ void* mca_mpool_openib_alloc(
     void* addr_malloc = (void*)memalign(mca_mpool_openib_component.page_size, size); 
     void* addr = addr_malloc; 
 
-    if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, 0, registration)) { 
+    if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, flags, registration)) { 
         free(addr_malloc);
         return NULL; 
     } 

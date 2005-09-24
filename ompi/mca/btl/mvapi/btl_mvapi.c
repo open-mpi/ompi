@@ -305,6 +305,12 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->vapi_reg = vapi_reg; 
         
         btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) vapi_reg); 
+        if(vapi_reg->base_reg.flags & MCA_MPOOL_FLAGS_CACHE) { 
+            assert(vapi_reg->base_reg.ref_count >= 4); 
+        } else { 
+            assert(vapi_reg->base_reg.ref_count >= 2); 
+        }
+
         return &frag->base;
         
     } else if( max_data > btl->btl_max_send_size && 
@@ -458,6 +464,11 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     if(NULL!= vapi_reg){ 
         /* the memory is already pinned- use it*/ 
         btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) vapi_reg); 
+        if(vapi_reg->base_reg.flags & MCA_MPOOL_FLAGS_CACHE) { 
+            assert(vapi_reg->base_reg.ref_count >= 4); 
+        } else { 
+            assert(vapi_reg->base_reg.ref_count >= 2); 
+        }
     }  else { 
         /* we didn't get a memory registration passed in, so we have to register the region
          * ourselves 
