@@ -6,7 +6,7 @@
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
   *                         University of Stuttgart.  All rights reserved.
   * Copyright (c) 2004-2005 The Regents of the University of California.
-  *                         All rights reserved.
+  *                         All rights reserved.5A
   * $COPYRIGHT$
   * 
   * Additional copyrights may follow
@@ -81,9 +81,9 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
         ompi_rb_tree_find(&rcache->rb_tree, &key);
     
     if(NULL != found ) { 
-        if((void*) found->reg->base <= base || 
-           (void*) found->reg->bound >= base){ 
-            return NULL; 
+        if((void*) found->reg->base < base ||
+           (void*) found->reg->bound > base){
+            return NULL;
         }
     }
     return found;
