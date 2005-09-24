@@ -16,7 +16,7 @@
 #
 
 
-AM_CPPFLAGS = -I$(top_srcdir)/opal/libltdl
+AM_CPPFLAGS = -I$(top_srcdir)/opal/libltdl -I$(top_srcdir)/test/support
 
 check_PROGRAMS = \
 	test_schema

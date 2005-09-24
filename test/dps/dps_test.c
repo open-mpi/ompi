@@ -46,6 +46,7 @@
 #include "orte/mca/gpr/base/base.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/soh/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "opal/runtime/opal.h"
 
 #define NUM_ITERS 3

@@ -15,6 +15,7 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS="-I$(top_srcdir)/test/support"
 
 
 check_PROGRAMS = \
