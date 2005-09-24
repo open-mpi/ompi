@@ -27,8 +27,8 @@ AC_DEFUN([MCA_sds_portals_utcp_CONFIG],[
     sds_portals_utcp_save_LIBS="$LIBS"
 
     # allow user a way to say where the Portals installation is
-    AC_ARG_WITH(btl-portals, 
-        AC_HELP_STRING([--with-btl-portals=DIR],
+    AC_ARG_WITH(portals, 
+        AC_HELP_STRING([--with-portals=DIR],
                        [Specify the installation directory of PORTALS]))
 
     AS_IF([test -n "$with_btl_portals"],
@@ -40,8 +40,8 @@ AC_DEFUN([MCA_sds_portals_utcp_CONFIG],[
                   LDFLAGS="$LDFLAGS $sds_portals_utcp_LDFLAGS"], [])])
 
     # Try to find all the portals libraries (this is not fun!)
-    AC_ARG_WITH(btl-portals-libs, 
-        AC_HELP_STRING([--with-btl-portals-libs=LIBS],
+    AC_ARG_WITH(portals-libs, 
+        AC_HELP_STRING([--with-portals-libs=LIBS],
                        [Libraries to link with for portals]))
     if test -n "$with_btl_portals_libs" ; then
         sds_portals_utcp_LIBS=""
