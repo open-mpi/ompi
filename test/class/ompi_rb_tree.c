@@ -27,6 +27,8 @@
 #include "support.h"
 #include "class/ompi_rb_tree.h"
 
+#define NUM_KEYS 10000
+#define SEED  1
 int keys[] = {
     0, 1, 2, 3, 4, 5, 6, 7
 };
@@ -49,6 +51,59 @@ int comp_fn(void * ele1, void * ele2)
     }
     return(0);
 }
+
+struct my_key_t{
+    void *base; 
+    void *bound; 
+}; typedef struct my_key_t my_key_t; 
+
+
+int comp_key(void* key1, void* key2) { 
+    if( ((my_key_t*) key1)->base < 
+        ((my_key_t*) key2)->base) { 
+        return -1;
+    }
+    else if ( ((my_key_t*) key1)->base > 
+              ((my_key_t*) key2)->bound) {
+        return 1;
+    }
+    else { 
+        return 0; 
+    }
+}
+
+void test_keys(void)
+{
+    ompi_rb_tree_t tree; 
+    int rc, i, result; 
+    my_key_t keys[NUM_KEYS];
+    int vals[NUM_KEYS];
+    
+    my_key_t *cur_key;
+
+    OBJ_CONSTRUCT(&tree, ompi_rb_tree_t); 
+    rc = ompi_rb_tree_init(&tree, comp_key); 
+    srand(SEED); 
+    for(i = 0; i < NUM_KEYS; i++) { 
+        vals[i] = i;
+        cur_key = &(keys[i]); 
+        cur_key->base = rand(); 
+        cur_key->bound = cur_key->base + rand();
+        rc = ompi_rb_tree_insert(&tree, cur_key, &vals[i]); 
+    }
+    for(i = 0; i < NUM_KEYS; i++) { 
+        cur_key = &(keys[i]); 
+        result = ompi_rb_tree_find(&tree, cur_key); 
+        if(result == NULL) { 
+            test_failure("lookup returned NULL item"); 
+        }
+        if(result != i) { 
+            test_failure("lookup returned invalid item"); 
+        }
+        
+    }
+}
+    
 
 void test1(void)
 {
@@ -319,6 +374,7 @@ int main(int argc, char **argv)
     
     test1();
     test2();
+    test_keys();
     return test_finalize();
 }
 
