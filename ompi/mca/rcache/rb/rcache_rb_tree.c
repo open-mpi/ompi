@@ -81,7 +81,8 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
         ompi_rb_tree_find(&rcache->rb_tree, &key);
     
     if(NULL != found ) { 
-        if(found->reg->base <= base || found->reg->bound >= base){ 
+        if((void*) found->reg->base <= base || 
+           (void*) found->reg->bound >= base){ 
             return NULL; 
         }
     }
