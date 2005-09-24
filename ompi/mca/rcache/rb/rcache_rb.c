@@ -52,8 +52,11 @@ int mca_rcache_rb_find (
         return OMPI_ERROR; 
     }
     
-   
-    rc =  ompi_pointer_array_add(regs, (void*) tree_item->reg); 
+    OBJ_DESTRUCT(regs); 
+    OBJ_CONSTRUCT(regs, ompi_pointer_array_t);
+    
+    rc =  ompi_pointer_array_set_item(regs, 0, (void*) tree_item->reg); 
+    
     if(OMPI_SUCCESS != rc) { 
         OPAL_THREAD_UNLOCK(&rcache->lock);
         return rc; 
@@ -69,8 +72,8 @@ int mca_rcache_rb_find (
         *cnt = 1; 
     }
     assert(tree_item->reg->bound - tree_item->reg->base > 0); 
-    assert(tree_item->reg->base <= addr);
-    assert(tree_item->reg->bound >= addr);
+    assert(((void*) tree_item->reg->base) <= addr);
+    assert(((void*) tree_item->reg->bound) >= addr);
     return rc;
 }
 
@@ -81,6 +84,7 @@ int mca_rcache_rb_insert (
                           ) { 
     int rc = OMPI_SUCCESS;
     OPAL_THREAD_LOCK(&rcache->lock); 
+    reg->flags = flags;
     if(flags & MCA_MPOOL_FLAGS_CACHE) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
         if(OMPI_SUCCESS != rc) { 
