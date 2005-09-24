@@ -1,5 +1,7 @@
 #include "ompi_config.h"
 
+#include <stdio.h>
+
 #include "support.h"
 #include "opal/include/constants.h"
 #include "opal/threads/threads.h"
