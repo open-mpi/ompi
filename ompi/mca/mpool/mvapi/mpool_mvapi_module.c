@@ -88,6 +88,7 @@ int mca_mpool_mvapi_register(
     
     VAPI_ret_t ret; 
     
+    assert(size > 0); 
     memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
     memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
     
@@ -95,9 +96,9 @@ int mca_mpool_mvapi_register(
     vapi_reg->base_reg.mpool = mpool;
     vapi_reg->base_reg.flags = flags; 
     vapi_reg->hndl = VAPI_INVAL_HNDL; 
-    OPAL_THREAD_ADD32(&vapi_reg->base_reg.ref_count, 1); 
+    
+    
     *registration = &vapi_reg->base_reg;
-
     mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE | VAPI_EN_REMOTE_READ;
     mr_in.l_key = 0;
     mr_in.r_key = 0;
@@ -114,7 +115,7 @@ int mca_mpool_mvapi_register(
                            ); 
     
     if(VAPI_OK != ret){ 
-        opal_output(0, "error registering memory: %s ", VAPI_strerror(ret)); 
+        opal_output(0, "error registering memory of size %d: %s ", size, VAPI_strerror(ret)); 
         OBJ_RELEASE(vapi_reg);
         return OMPI_ERROR; 
     }
@@ -123,11 +124,13 @@ int mca_mpool_mvapi_register(
     vapi_reg->r_key = mr_out.r_key; 
     vapi_reg->base_reg.base = addr; 
     vapi_reg->base_reg.bound = (void*) ((char*) addr + size - 1); 
+    assert(vapi_reg->base_reg.bound - vapi_reg->base_reg.base > 0);
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 
                                      (mca_mpool_base_registration_t*) vapi_reg, 
                                      flags); 
     }
+    OPAL_THREAD_ADD32(&vapi_reg->base_reg.ref_count, 1); 
     return OMPI_SUCCESS; 
 }
 

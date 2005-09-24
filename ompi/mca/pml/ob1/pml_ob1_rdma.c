@@ -78,6 +78,9 @@ size_t mca_pml_ob1_rdma_btls(
         if(reg_cnt == 1) {
             mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, 0); 
             size_t reg_len = reg->bound - base + 1;
+            if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
+                assert(reg->ref_count >= 3); 
+            }
 
             /* is the existing registration the required size */
             if(reg->base <= base && reg_len >= size) {
@@ -90,13 +93,14 @@ size_t mca_pml_ob1_rdma_btls(
             } else if(mca_pml_ob1.leave_pinned) {
                 unsigned char* new_base = reg->base;
                 size_t new_len = (base - reg->base) + size;
+                assert(new_len >= size);
                 btl_mpool->mpool_deregister(btl_mpool, reg); 
                 btl_mpool->mpool_register(btl_mpool, 
                     new_base, 
                     new_len, 
                     MCA_MPOOL_FLAGS_CACHE,
                     &reg); 
-
+                
                 rdma_btls[num_btls_used].bml_btl = bml_btl;
                 rdma_btls[num_btls_used].btl_reg = reg;
                 num_btls_used++;
@@ -114,6 +118,10 @@ size_t mca_pml_ob1_rdma_btls(
         for(r = 0; r < reg_cnt; r++) { 
             mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
             size_t reg_len = reg->bound - base + 1;
+
+            if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
+                assert(reg->ref_count >= 3); 
+            }
             if(reg->base <= base && reg_len >= size) {
                 fit = reg;
                 break;
@@ -138,6 +146,7 @@ size_t mca_pml_ob1_rdma_btls(
                        size, 
                        MCA_MPOOL_FLAGS_CACHE,
                        &fit); 
+                assert(fit->ref_count == 3); 
                 if(NULL == fit) {
                     opal_output(0, "[%s:%d] unable to register memory\n", __FILE__, __LINE__);
                     continue;
@@ -151,11 +160,13 @@ size_t mca_pml_ob1_rdma_btls(
                 /* simplify cleanup - bump reference count as we decrement again below */
                 btl_mpool->mpool_retain(btl_mpool,largest);
                 btl_mpool->mpool_deregister(btl_mpool, largest);
+                assert(new_len >= size);
                 btl_mpool->mpool_register(btl_mpool, 
                     new_base, 
                     new_len, 
                     MCA_MPOOL_FLAGS_CACHE,
                     &fit); 
+                assert(fit->ref_count == 3);
             }
         }
 
@@ -209,10 +220,14 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
         size,
         &regs, 
         &reg_cnt); 
-        
+   
     for(r = 0; r < reg_cnt; r++) { 
         mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
         size_t reg_len = reg->bound - base + 1;
+        if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
+            assert(reg->ref_count >= 3); 
+        }
+                
         if(reg->base <= base && reg_len >= size) {
             fit = reg;
             break;
@@ -230,24 +245,26 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
      */
     if(NULL == fit && mca_pml_ob1.leave_pinned) {
        if (NULL == largest) {
-          /* register the memory */ 
-          btl_mpool->mpool_register(
+           /* register the memory */ 
+           btl_mpool->mpool_register(
               btl_mpool, 
               base,
               size, 
               MCA_MPOOL_FLAGS_CACHE,
               &fit); 
-
+           assert(fit->ref_count >= 3);
        /* a registration exists but is not large enough */
        } else {
            unsigned char* new_base = largest->base;
            size_t new_len = (base - largest->base) + size;
            btl_mpool->mpool_deregister(btl_mpool, largest); 
+           assert(new_len >= size);
            btl_mpool->mpool_register(btl_mpool, 
                new_base, 
                new_len, 
                MCA_MPOOL_FLAGS_CACHE,
                &fit); 
+           assert(fit->ref_count >= 3);
         }
     }
 
@@ -261,4 +278,3 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
     OBJ_DESTRUCT(&regs);
     return fit;
 }
-
