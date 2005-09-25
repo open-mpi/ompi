@@ -76,12 +76,16 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     int i, num_keys;
     mca_mpool_base_selected_module_t * current;
     mca_mpool_base_selected_module_t * no_reg_function = NULL;
-    mca_mpool_base_selected_module_t ** has_reg_function = (mca_mpool_base_selected_module_t **) 
-                           malloc(num_modules * sizeof(mca_mpool_base_module_t *));
+    mca_mpool_base_selected_module_t ** has_reg_function = NULL;
     mca_mpool_base_registration_t * registration;
     void * mem = NULL;
     char * key;
     bool match_found;
+
+    if (num_modules > 0) {
+        has_reg_function = (mca_mpool_base_selected_module_t **)
+                           malloc(num_modules * sizeof(mca_mpool_base_module_t *));
+    }
 
     if(&ompi_mpi_info_null == info)
     {
@@ -123,7 +127,9 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                            /* there was more than one requested mpool that lacks 
                             * a registration function, so return failure */
                             free(key);
-                            free(has_reg_function);
+                            if (NULL != has_reg_function) {
+                                free(has_reg_function);
+                            }
                             return NULL;
                         }
                         no_reg_function = current;
@@ -139,7 +145,9 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 /* one of the keys given to us by the user did not match any
                  * mpools, so return an error */
                 free(key);
-                free(has_reg_function);
+                if (NULL != has_reg_function) {
+                    free(has_reg_function);
+                }
                 return NULL;
             }
         }
@@ -148,7 +156,9 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     
     if(NULL == no_reg_function && 0 == reg_module_num)
     {
-        free(has_reg_function);
+        if (NULL != has_reg_function) {
+            free(has_reg_function);
+        }
         if(&ompi_mpi_info_null == info)
         {
             /* if the info argument was NULL and there were no useable mpools,
@@ -187,14 +197,18 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
         if(OMPI_SUCCESS != mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,  &registration))
         {
-            free(has_reg_function);
+            if (NULL != has_reg_function) {
+                free(has_reg_function);
+            }
             return NULL;
         }
         num_modules++;
         i++;
     }
 
-    free(has_reg_function);
+    if (NULL != has_reg_function) {
+        free(has_reg_function);
+    }
     return mem;
 }
 
