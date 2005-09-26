@@ -42,16 +42,19 @@ typedef struct component_name_t component_name_t;
  * Local variables
  */
 static bool show_errors = false;
+static const char negate = '^';
 
 
 /*
  * Local functions
  */
+static int parse_requested(int mca_param, bool *include_mode,
+                           char ***requested_component_names);
 static int open_components(const char *type_name, int output_id, 
-                           opal_list_t *components_found, 
-                           opal_list_t *components_available,
-                           char **requested_component_names);
-static int parse_requested(int mca_param, char ***requested_component_names);
+                           opal_list_t *src, opal_list_t *dest);
+static int distill(bool include_mode, const char *type_name,
+                   int output_id, opal_list_t *src, opal_list_t *dest,
+                   char **names);
 
 
 /**
@@ -65,12 +68,14 @@ int mca_base_components_open(const char *type_name, int output_id,
 {
   int ret, param;
   opal_list_item_t *item;
-  opal_list_t components_found;
+  opal_list_t components_found, components_distilled;
   char **requested_component_names;
   int param_verbose = -1;
   int param_type = -1;
   int verbose_level;
   char *str;
+  bool include_mode;
+  bool distilled = false;
 
   /* Register MCA parameters */
 
@@ -110,21 +115,36 @@ int mca_base_components_open(const char *type_name, int output_id,
 
   /* See if one or more specific components were requested */
 
-  ret = parse_requested(param_type, &requested_component_names);
+  ret = parse_requested(param_type, &include_mode, &requested_component_names);
   if (OMPI_SUCCESS == ret) {
-    ret = open_components(type_name, output_id, &components_found, 
-                          components_available,
-                          requested_component_names);
+      ret = distill(include_mode, type_name, output_id, &components_found,
+                    &components_distilled, requested_component_names);
+      distilled = true;
+  }
+
+  /* Now open whatever we have left */
+
+  if (OMPI_SUCCESS == ret) {
+      ret = open_components(type_name, output_id,
+                            &components_distilled, components_available);
   }
 
   /* Free resources */
 
   for (item = opal_list_remove_first(&components_found); NULL != item;
        item = opal_list_remove_first(&components_found)) {
-    OBJ_RELEASE(item);
+      OBJ_RELEASE(item);
+  }
+  OBJ_DESTRUCT(&components_found);
+  if (distilled) {
+      for (item = opal_list_remove_first(&components_distilled); NULL != item;
+           item = opal_list_remove_first(&components_distilled)) {
+          OBJ_RELEASE(item);
+      }
+      OBJ_DESTRUCT(&components_distilled);
   }
   if (NULL != requested_component_names) {
-    opal_argv_free(requested_component_names);
+      opal_argv_free(requested_component_names);
   }
 
   /* All done */
@@ -133,9 +153,12 @@ int mca_base_components_open(const char *type_name, int output_id,
 }
 
 
-static int parse_requested(int mca_param, char ***requested_component_names)
+static int parse_requested(int mca_param, bool *include_mode,
+                           char ***requested_component_names)
 {
+  int i;
   char *requested;
+  char *tmp;
 
   *requested_component_names = NULL;
 
@@ -149,9 +172,138 @@ static int parse_requested(int mca_param, char ***requested_component_names)
   }
   *requested_component_names = opal_argv_split(requested, ',');
 
+  /* Are we including or excluding? */
+
+  *include_mode = true;
+  for (i = 0; NULL != (*requested_component_names)[i]; ++i) {
+      if (negate == *((*requested_component_names)[i])) {
+          tmp = strdup((*requested_component_names)[i] + 1);
+          free((*requested_component_names)[i]);
+          (*requested_component_names)[i] = tmp;
+
+          *include_mode = false;
+      }
+  }
+
   /* All done */
 
   return OMPI_SUCCESS;
+}
+
+
+/*
+ * Parse the list of found components and factor in the included /
+ * excluded names to come up with a distilled list of components that
+ * we should try to open.
+ */
+static int distill(bool include_mode, const char *type_name,
+                   int output_id, opal_list_t *src, opal_list_t *dest,
+                   char **names)
+{
+    int i;
+    bool good;
+    opal_list_item_t *item, *next;
+    const mca_base_component_t *component;
+    mca_base_component_list_item_t *cli;
+
+    opal_output_verbose(10, output_id,
+                        "mca: base: components_open: "
+                        "distilling %s components", type_name);
+    OBJ_CONSTRUCT(dest, opal_list_t);
+
+    /* Bozo case */
+
+    if (NULL == names) {
+        opal_output_verbose(10, output_id,
+                            "mca: base: components_open: "
+                            "accepting all %s components", type_name);
+        opal_list_join(dest, opal_list_get_end(dest), src);
+        return OMPI_SUCCESS;
+    }
+
+    /* Are we including components? */
+
+    if (include_mode) {
+        opal_output_verbose(10, output_id,
+                            "mca: base: components_open: "
+                            "including %s components", type_name);
+
+        /* Go through all the components and only keep the ones that
+           are specifically mentioned in the list */
+
+        for (i = 0; NULL != names[i]; ++i) {
+            good = false;
+
+            for (item = opal_list_get_first(src);
+                 opal_list_get_end(src) != item;
+                 item = next) {
+                next = opal_list_get_next(item);
+                cli = (mca_base_component_list_item_t *) item;
+                component = cli->cli_component;
+                if (0 == strcmp(names[i], component->mca_component_name)) {
+                    opal_list_remove_item(src, item);
+                    opal_list_append(dest, item);
+                    good = true;
+                    break;
+                }
+            }
+
+            if (good) {
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open:   "
+                                    "%s --> included", names[i]);
+            } else {
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open:   "
+                                    "%s --> not found", names[i]);
+            }
+        }
+    }
+
+    /* No, we are excluding components */
+   
+    else {
+        opal_output_verbose(10, output_id,
+                            "mca: base: components_open: "
+                            "excluding %s components", type_name);
+
+        /* Go through all the components and only keep the ones that
+           are specifically mentioned in the list */
+
+        for (item = opal_list_get_first(src);
+             opal_list_get_end(src) != item;
+             item = next) {
+            next = opal_list_get_next(item);
+            good = true;
+
+            for (i = 0; NULL != names[i]; ++i) {
+                cli = (mca_base_component_list_item_t *) item;
+                component = cli->cli_component;
+                if (0 == strcmp(names[i], component->mca_component_name)) {
+                    good = false;
+                    break;
+                }
+            }
+
+            if (!good) {
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open:   "
+                                    "%s --> excluded", 
+                                    component->mca_component_name);
+            } else {
+                opal_list_remove_item(src, item);
+                opal_list_append(dest, item);
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open:   "
+                                    "%s --> included",
+                                    component->mca_component_name);
+            }
+        }
+    }
+
+    /* All done */
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -163,183 +315,108 @@ static int parse_requested(int mca_param, char ***requested_component_names)
  * If it opens, add it to the components_available list.
  */
 static int open_components(const char *type_name, int output_id, 
-                           opal_list_t *components_found, 
-                           opal_list_t *components_available,
-                           char **requested_component_names)
+                           opal_list_t *src, opal_list_t *dest)
 {
-  int i;
-  opal_list_item_t *item;
-  const mca_base_component_t *component;
-  mca_base_component_list_item_t *cli;
-  bool acceptable;
-  bool any_acceptable = true;
-  bool called_open;
-  bool opened;
-
-  /* Announce */
-
-  if (NULL == requested_component_names) {
+    opal_list_item_t *item;
+    const mca_base_component_t *component;
+    mca_base_component_list_item_t *cli;
+    bool called_open;
+    bool opened;
+    
+    /* Announce */
+    
     opal_output_verbose(10, output_id,
-                        "mca: base: components_open: "
-                        "looking for any %s components", type_name);
-  } else {
-    opal_output_verbose(10, output_id,
-                        "mca: base: components_open: looking for specific %s components:", 
+                        "mca: base: components_open: opening %s components",
                         type_name);
-    for (i = 0; NULL != requested_component_names[i]; ++i) {
-      opal_output_verbose(10, output_id, "mca: base: components_open:   %s", 
-                          requested_component_names[i]);
-    }
-  }
-
-  /*
-   * Check requested components for validity
-   */
-  if (NULL != requested_component_names) {
-     any_acceptable = false;
-
-     /* For every requested component ... */
-     for (i = 0; NULL != requested_component_names[i]; ++i) {
-        acceptable     = false;
+    
+    /* Traverse the list of found components */
+    
+    OBJ_CONSTRUCT(dest, opal_list_t);
+    for (item = opal_list_get_first(src);
+         opal_list_get_end(src) != item;
+         item = opal_list_get_next(item)) {
+        cli = (mca_base_component_list_item_t *) item;
+        component = cli->cli_component;
         
-        /* Try to match it to an item in the list */
-        for (item = opal_list_get_first(components_found);
-             opal_list_get_end(components_found) != item;
-             item = opal_list_get_next(item)) {
-
-           cli = (mca_base_component_list_item_t *) item;
-           component = cli->cli_component;
-           
-           if (0 == strcmp(requested_component_names[i],
-                           component->mca_component_name)) {
-              acceptable     = true;
-              any_acceptable = true;
-              break;
-           }
-        }
-
-        /* Didn't find it in the list, warn the user */
-        if (!acceptable) {
-           opal_show_help("help-mca-base.txt", "find-available:not-valid", true,
-                          requested_component_names[i]);
-        }
-     }
-
-     /* None of the listed components were acceptable :( */
-     if(!any_acceptable) {
-        opal_show_help("help-mca-base.txt", "find-available:none-found", true, 
-                       type_name);
-        return OMPI_ERROR;
-     }
-  }
-
-  /* Traverse the list of found components */
-
-  OBJ_CONSTRUCT(components_available, opal_list_t);
-  for (item = opal_list_get_first(components_found);
-       opal_list_get_end(components_found) != item;
-       item = opal_list_get_next(item)) {
-    cli = (mca_base_component_list_item_t *) item;
-    component = cli->cli_component;
-
-    /* Do we need to check for specific components? */
-
-    if (NULL != requested_component_names) {
-      acceptable = false;
-      for (i = 0; NULL != requested_component_names[i]; ++i) {
-        if (0 == strcmp(requested_component_names[i], 
-                        component->mca_component_name)) {
-          acceptable = true;
-          break;
-        }
-      }
-    } else {
-      acceptable = true;
-    }
-
-    /* If this is an acceptable component, try to open it */
-
-    if (acceptable) {
-      opened = called_open = false;
-      opal_output_verbose(10, output_id, 
-                          "mca: base: components_open: found loaded component %s",
-                          component->mca_component_name);
-      
-      if (NULL == component->mca_open_component) {
-        opened = true; 
+        opened = called_open = false;
         opal_output_verbose(10, output_id, 
-                            "mca: base: components_open: "
-                            "component %s has no open function",
+                            "mca: base: components_open: found loaded component %s",
                             component->mca_component_name);
-      } else {
-        called_open = true;
-        if (MCA_SUCCESS == component->mca_open_component()) {
-          opened = true;
-          opal_output_verbose(10, output_id, 
-                              "mca: base: components_open: "
-                              "component %s open function successful",
-                              component->mca_component_name);
-        } else {
-            /* We may end up displaying this twice, but it may go to
-               separate streams.  So better to be redundant than to
-               not display the error in the stream where it was
-               expected. */
-
-            if (show_errors) {
-                opal_output(0, "mca: base: components_open: "
-                            "component %s / %s open function failed",
-                            component->mca_type_name,
-                            component->mca_component_name);
-            }
+        
+        if (NULL == component->mca_open_component) {
+            opened = true; 
             opal_output_verbose(10, output_id, 
                                 "mca: base: components_open: "
-                                "component %s open function failed",
+                                "component %s has no open function",
+                                component->mca_component_name);
+        } else {
+            called_open = true;
+            if (MCA_SUCCESS == component->mca_open_component()) {
+                opened = true;
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open: "
+                                    "component %s open function successful",
+                                    component->mca_component_name);
+            } else {
+                /* We may end up displaying this twice, but it may go
+                   to separate streams.  So better to be redundant
+                   than to not display the error in the stream where
+                   it was expected. */
+                
+                if (show_errors) {
+                    opal_output(0, "mca: base: components_open: "
+                                "component %s / %s open function failed",
+                                component->mca_type_name,
+                                component->mca_component_name);
+                }
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open: "
+                                    "component %s open function failed",
+                                    component->mca_component_name);
+            }
+        }
+        
+        /* If it didn't open, close it out and get rid of it */
+        
+        if (!opened) {
+            if (called_open) {
+                if (NULL != component->mca_close_component) {
+                    component->mca_close_component();
+                }
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open: component %s closed",
+                                    component->mca_component_name);
+                called_open = false;
+            }
+            mca_base_component_repository_release(component);
+            opal_output_verbose(10, output_id, 
+                                "mca: base: components_open: component %s unloaded", 
                                 component->mca_component_name);
         }
-      }
-
-      /* If it didn't open, close it out and get rid of it */
-
-      if (!opened) {
-        if (called_open) {
-          if (NULL != component->mca_close_component) {
-            component->mca_close_component();
-          }
-          opal_output_verbose(10, output_id, 
-                              "mca: base: components_open: component %s closed",
-                              component->mca_component_name);
-          called_open = false;
+        
+        /* If it did open, register its "priority" MCA parameter (if
+           it doesn't already have one) and save it in the
+           opened_components list */
+        
+        else {
+            if (OMPI_ERROR == mca_base_param_find(type_name, 
+                                                  component->mca_component_name,
+                                                  "priority")) {
+                mca_base_param_register_int(type_name,
+                                            component->mca_component_name,
+                                            "priority", NULL, 0);
+            }
+            
+            cli = OBJ_NEW(mca_base_component_list_item_t);
+            if (NULL == cli) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            cli->cli_component = component;
+            opal_list_append(dest, (opal_list_item_t *) cli);
         }
-        mca_base_component_repository_release(component);
-        opal_output_verbose(10, output_id, 
-                            "mca: base: components_open: component %s unloaded", 
-                            component->mca_component_name);
-      }
-
-      /* If it did open, register its "priority" MCA parameter (if it
-         doesn't already have one) and save it in the opened_components
-         list */
-
-      else {
-        if (OMPI_ERROR == mca_base_param_find(type_name, 
-                                              component->mca_component_name,
-                                              "priority")) {
-          mca_base_param_register_int(type_name,
-                                      component->mca_component_name,
-                                      "priority", NULL, 0);
-        }
-
-        cli = OBJ_NEW(mca_base_component_list_item_t);
-        if (NULL == cli) {
-          return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        cli->cli_component = component;
-        opal_list_append(components_available, (opal_list_item_t *) cli);
-      }
     }
-  }
-
-  /* All done */
-
-  return OMPI_SUCCESS;
+    
+    /* All done */
+    
+    return OMPI_SUCCESS;
 }
