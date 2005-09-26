@@ -17,7 +17,9 @@
 #include "ompi_config.h"
 
 #include <sys/types.h>
+#include <sys/mman.h>
 
+#include "opal/util/output.h"
 #include "opal/memory/memory.h"
 #include "opal/memory/memory_internal.h"
 #include "opal/class/opal_list.h"
@@ -43,7 +45,7 @@ static opal_list_t callback_list;
 static opal_atomic_lock_t callback_lock;
 static int have_free_support = false;
 static int run_callbacks = false;
-
+static int have_been_called = 0;
 
 int
 opal_mem_free_init(void)
@@ -55,6 +57,20 @@ opal_mem_free_init(void)
        registration */
     run_callbacks = false;
     opal_atomic_mb();
+
+    /* make sure that things really work  - we munmap something that
+       won't matter (a NULL, 0 pair) and see if have_been_called flips
+       from 0 to 1.  If so, we're all good. */
+    munmap(NULL, 0);
+    if (0 == have_been_called) {
+        if (have_free_support) {
+            opal_output(0, "WARNING: free() and munmap() hooks inoperative"
+                        "disabling memory hooks.  This");
+            opal_output(0, "WARNING: may cause performance degredation.");
+        } 
+
+        have_free_support = false;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -70,7 +86,7 @@ opal_mem_free_finalize(void)
 
     /* aquire the lock, just to make sure no one is currently
        twiddling with the list.  We know this won't last long, since
-       no new calls will come in twiddle with the list */
+       no new calls will come in after we set run_callbacks to false */
     opal_atomic_lock(&callback_lock);
 
     while (NULL != (item = opal_list_remove_first(&callback_list))) {
@@ -97,6 +113,8 @@ void
 opal_mem_free_release_hook(void *buf, size_t length)
 {
     opal_list_item_t *item;
+
+    have_been_called = 1;
 
     if (!run_callbacks) return;
 
