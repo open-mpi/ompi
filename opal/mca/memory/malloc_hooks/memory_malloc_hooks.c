@@ -51,11 +51,11 @@ opal_memory_malloc_hooks_init(void)
     }
 
     initialized = 1;
-    opal_mem_free_set_free_support(1);
     old_free_hook = __free_hook;
     old_realloc_hook = __realloc_hook;
     __free_hook = opal_mem_free_free_hook;
     __realloc_hook = opal_mem_free_realloc_hook;
+    opal_mem_free_set_free_support(1);
 }
 
 

@@ -79,9 +79,6 @@ int opal_init(void)
     /* init the trace function */
     opal_trace_init();
 
-    /* initialize the memory manager / tracker */
-    opal_mem_free_init();
-
     /* register handler for errnum -> string converstion */
     opal_error_register("OPAL", OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str);
 
@@ -97,6 +94,9 @@ int opal_init(void)
        actually).  This is a hook available for memory manager hooks
        without good initialization routine support */
     opal_memory_base_open();
+
+    /* initialize the memory manager / tracker */
+    opal_mem_free_init();
 
     opal_timer_base_open();
 
