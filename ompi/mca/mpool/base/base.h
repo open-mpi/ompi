@@ -31,13 +31,13 @@
 extern "C" {
 #endif
 
-static inline unsigned long my_log2(unsigned long val) { 
-    unsigned long count = -1;
+static inline unsigned int my_log2(unsigned long val) { 
+    unsigned int count = 0;
     while(val > 0) { 
         val = val >> 1; 
         count++;
     }
-    return count;
+    return count > 0 ? count-1: 0;
 }
 static inline void *down_align_addr(void* addr, unsigned int shift) {
     return (void*) (((unsigned long) addr) & (~(unsigned long) 0) << shift); 
