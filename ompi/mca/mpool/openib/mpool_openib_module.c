@@ -103,13 +103,10 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
         return OMPI_ERROR; 
     }
     
-    vapi_reg->base_reg.base = addr; 
-    vapi_reg->base_reg.bound = (void*) ((char*) addr + size - 1); 
-    vapi_reg->base_reg.base_align = down_align_addr(addr, mca_mpool_base_page_size_log); 
-    vapi_reg->base_reg.bound_align = up_align_addr(vapi_reg->base_reg.bound 
-                                                   , mca_mpool_base_page_size_log);
-    
-    
+    vapi_reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    vapi_reg->base_reg.bound = up_align_addr( (void*) ((char*) addr + size - 1)
+                                              , mca_mpool_base_page_size_log);
+       
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 
                                      (mca_mpool_base_registration_t*) vapi_reg, 

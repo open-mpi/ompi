@@ -75,9 +75,9 @@ int mca_rcache_rb_find (
     if(rc == OMPI_SUCCESS) { 
         *cnt = 1; 
     }
-    assert(tree_item->reg->bound - tree_item->reg->base > 0); 
-    assert(((void*) tree_item->reg->base_align) <= addr);
-    assert(((void*) tree_item->reg->bound_align) >= addr);
+    assert(tree_item->reg->bound - tree_item->reg->base >= 0); 
+    assert(((void*) tree_item->reg->base) <= addr);
+    assert(((void*) tree_item->reg->bound) >= addr);
     return rc;
 }
 

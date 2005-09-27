@@ -36,6 +36,10 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
     opal_list_item_t* item;
     void* base_addr; 
     void* bound_addr; 
+    if(size == 0) { 
+        return;
+    }
+          
     base_addr = down_align_addr( base, mca_mpool_base_page_size_log);
     bound_addr = up_align_addr((void*) ((unsigned long) base + size - 1), mca_mpool_base_page_size_log);
     OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);

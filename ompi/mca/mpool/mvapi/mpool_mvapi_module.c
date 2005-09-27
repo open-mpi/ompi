@@ -126,13 +126,11 @@ int mca_mpool_mvapi_register(
     
     vapi_reg->l_key = mr_out.l_key; 
     vapi_reg->r_key = mr_out.r_key; 
-    vapi_reg->base_reg.base = addr; 
-    vapi_reg->base_reg.bound = (unsigned char*) (unsigned long) addr + size - 1;
-    vapi_reg->base_reg.base_align = down_align_addr(addr, mca_mpool_base_page_size_log); 
-    vapi_reg->base_reg.bound_align = up_align_addr(vapi_reg->base_reg.bound 
+    vapi_reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    vapi_reg->base_reg.bound = up_align_addr((void*) ((unsigned long) addr + size - 1) 
                                                    , mca_mpool_base_page_size_log);
     
-    assert(vapi_reg->base_reg.bound - vapi_reg->base_reg.base > 0);
+    assert(vapi_reg->base_reg.bound - vapi_reg->base_reg.base >= 0);
     
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 

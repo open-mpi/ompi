@@ -65,8 +65,6 @@ static void mca_mpool_mvapi_registration_constructor( mca_mpool_mvapi_registrati
 { 
     registration->base_reg.base = NULL; 
     registration->base_reg.bound = NULL; 
-    registration->base_reg.base_align = NULL; 
-    registration->base_reg.bound_align = NULL;     
     registration->base_reg.flags = 0;
 
 }
