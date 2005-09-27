@@ -86,16 +86,18 @@ int mca_mpool_gm_register(
     if(NULL == reg) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    if((rc = gm_register_memory(gm_mpool->port, addr, size)) != GM_SUCCESS) {
-        opal_output(0, "[%s:%d] error(%d) registering gm memory\n", __FILE__, __LINE__, rc);
-        OBJ_RELEASE(reg);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
     reg->mpool = mpool;
     reg->base = down_align_addr(addr, mca_mpool_base_page_size_log); 
     reg->flags = flags; 
     reg->bound = up_align_addr(reg->base + size -1
                                , mca_mpool_base_page_size_log);
+    
+
+    if((rc = gm_register_memory(gm_mpool->port, reg->base, reg->bound - reg->base + 1)) != GM_SUCCESS) {
+        opal_output(0, "[%s:%d] error(%d) registering gm memory\n", __FILE__, __LINE__, rc);
+        OBJ_RELEASE(reg);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     
     OPAL_THREAD_ADD32(&reg->ref_count,1);
 
