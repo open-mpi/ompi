@@ -212,7 +212,7 @@ void mca_btl_mvapi_post_recv(void);
     uint32_t post_rr_sub_i; \
     int post_rr_sub_rc; \
     opal_list_item_t* post_rr_sub_item; \
-    mca_btl_mvapi_frag_t* post_rr_sub_frag; \
+    mca_btl_mvapi_frag_t* post_rr_sub_frag = NULL; \
     mca_btl_mvapi_module_t *post_rr_sub_mvapi_btl = post_rr_sub_endpoint->endpoint_btl; \
     VAPI_rr_desc_t* post_rr_sub_desc_post = post_rr_sub_mvapi_btl->rr_desc_post; \
     for(post_rr_sub_i = 0; post_rr_sub_i < post_rr_sub_cnt; post_rr_sub_i++) { \
@@ -228,10 +228,10 @@ void mca_btl_mvapi_post_recv(void);
                                                 post_rr_sub_qp, \
                                                 post_rr_sub_cnt, \
                                                 post_rr_sub_desc_post); \
-    if(VAPI_OK != post_rr_sub_frag->ret) { \
+   if(NULL != post_rr_sub_frag && VAPI_OK != post_rr_sub_frag->ret) { \
         BTL_ERROR(("error posting receive descriptors: %s",\
                    VAPI_strerror(post_rr_sub_frag->ret))); \
-    } else {\
+    } else if (NULL != post_rr_sub_frag){\
         OPAL_THREAD_ADD32(post_rr_sub_rr_posted, post_rr_sub_cnt); \
    }\
 }

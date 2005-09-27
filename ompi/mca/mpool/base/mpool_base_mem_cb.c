@@ -62,7 +62,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                 for(i = 0; i < cnt; i++) { 
                 
                     reg = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, i);
-                    if(base_addr < reg->bound) { 
+                    if(base_addr < (void*) reg->bound) { 
                         base_addr = down_align_addr( reg->bound, mca_mpool_base_page_size_log ); 
                     }
                     current->mpool_module->mpool_deregister(current->mpool_module, reg); 
