@@ -67,23 +67,25 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     orte_jobid_t my_jobid;
     int ret=OMPI_SUCCESS;
     
-    /* BWB - XXX - Should probably publish the error code somewhere */
-
-    /* Kill everyone in the job.  We may make this better someday to
-       actually loop over ompi_rte_kill_proc() to only kill the procs
-       in comm, and additionally to somehow use errorcode. */
-
-    if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
-        return ret;
-    }
-
     /* Corner case: if we're being called as a result of the
        OMPI_ERR_INIT_FINALIZE macro (meaning that this is before
        MPI_INIT or after MPI_FINALIZE), then just abort nothing MPI or
        ORTE has been setup yet. */
 
     if (!ompi_mpi_initialized || ompi_mpi_finalized) {
-        abort();
+        exit(errcode);
+    }
+
+    /* BWB - XXX - Should probably publish the error code somewhere */
+
+    /* Kill everyone in the job.  We may make this better someday to
+       actually loop over ompi_rte_kill_proc() to only kill the procs
+       in comm, and additionally to somehow use errorcode. */
+
+    if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, 
+                                                 orte_process_info.my_name))) {
+        /* What else can you do? */
+        exit(errcode);
     }
 
     /* kill everyone in the remote group execpt our jobid, if
@@ -118,7 +120,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         /* If ret isn't OMPI_SUCCESS, then the rest of the job is
         still running.  But we can't really do anything about that, so
         just exit and let it become Somebody Elses Problem. */
-        abort();
+        exit(errcode);
     }
 
     return OMPI_SUCCESS;
