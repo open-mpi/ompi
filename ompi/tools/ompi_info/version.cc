@@ -37,8 +37,7 @@ const string ompi_info::ver_full = "full";
 const string ompi_info::ver_major = "major";
 const string ompi_info::ver_minor = "minor";
 const string ompi_info::ver_release = "release";
-const string ompi_info::ver_alpha = "alpha";
-const string ompi_info::ver_beta = "beta";
+const string ompi_info::ver_greek = "greek";
 const string ompi_info::ver_svn = "svn";
 
 //
@@ -58,8 +57,9 @@ static const string ver_component = "component";
 static void show_mca_version(const mca_base_component_t *component,
                              const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
-                               int major, int minor, int release, int alpha, 
-                               int beta, bool want_svn, const string& svn);
+                               int major, int minor, int release,
+                               const string& greek, 
+                               bool want_svn, const string& svn);
 
 //
 // do_version
@@ -124,7 +124,7 @@ void ompi_info::show_ompi_version(const string& scope)
       make_version_str(scope, 
                        OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
                        OMPI_RELEASE_VERSION, 
-                       OMPI_ALPHA_VERSION, OMPI_BETA_VERSION, 
+                       OMPI_GREEK_VERSION,
                        OMPI_WANT_SVN, OMPI_SVN_R));
   out("Open MPI SVN revision", type_ompi + ":version:svn",
       OMPI_SVN_R);
@@ -133,7 +133,7 @@ void ompi_info::show_ompi_version(const string& scope)
       make_version_str(scope, 
                        ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
                        ORTE_RELEASE_VERSION, 
-                       ORTE_ALPHA_VERSION, ORTE_BETA_VERSION, 
+                       ORTE_GREEK_VERSION,
                        ORTE_WANT_SVN, ORTE_SVN_R));
   out("Open RTE SVN revision", type_orte + ":version:svn",
       ORTE_SVN_R);
@@ -142,7 +142,7 @@ void ompi_info::show_ompi_version(const string& scope)
       make_version_str(scope, 
                        OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
                        OPAL_RELEASE_VERSION, 
-                       OPAL_ALPHA_VERSION, OPAL_BETA_VERSION, 
+                       OPAL_GREEK_VERSION,
                        OPAL_WANT_SVN, OPAL_SVN_R));
   out("OPAL SVN revision", type_opal + ":version:svn",
       OPAL_SVN_R);
@@ -219,16 +219,16 @@ static void show_mca_version(const mca_base_component_t* component,
 
   mca_version = make_version_str(scope, component->mca_major_version,
                                  component->mca_minor_version,
-                                 component->mca_release_version, 0, 0, 
+                                 component->mca_release_version, "",
                                  false, "");
   api_version = make_version_str(scope, component->mca_type_major_version,
                                  component->mca_type_minor_version,
-                                 component->mca_type_release_version, 0, 0,
+                                 component->mca_type_release_version, "",
                                  false, "");
   component_version = make_version_str(scope, component->mca_component_major_version,
                                     component->mca_component_minor_version,
                                     component->mca_component_release_version, 
-                                    0, 0, false, "");
+                                    "", false, "");
 
   if (pretty) {
     message = "MCA ";
@@ -270,8 +270,9 @@ static void show_mca_version(const mca_base_component_t* component,
 
 
 static string make_version_str(const string& scope,
-                               int major, int minor, int release, int alpha, 
-                               int beta, bool want_svn, const string& svn)
+                               int major, int minor, int release,
+                               const string &greek, 
+                               bool want_svn, const string& svn)
 {
   string str;
   char temp[BUFSIZ];
@@ -284,13 +285,8 @@ static string make_version_str(const string& scope,
       snprintf(temp, BUFSIZ - 1, ".%d", release);
       str += temp;
     }
-    if (alpha > 0) {
-      snprintf(temp, BUFSIZ - 1, "a%d", alpha);
-      str += temp;
-    }
-    else if (beta > 0) {
-      snprintf(temp, BUFSIZ - 1, "b%d", beta);
-      str += temp;
+    if (!greek.empty()) {
+        str += greek;
     }
     if (want_svn && !svn.empty()) {
       str += svn;
@@ -301,10 +297,8 @@ static string make_version_str(const string& scope,
     snprintf(temp, BUFSIZ - 1, "%d", minor);
   } else if (scope == ver_release) {
     snprintf(temp, BUFSIZ - 1, "%d", release);
-  } else if (scope == ver_alpha) {
-    snprintf(temp, BUFSIZ - 1, "%d", alpha);
-  } else if (scope == ver_beta) {
-    snprintf(temp, BUFSIZ - 1, "%d", beta);
+  } else if (scope == ver_greek) {
+    str = greek;
   } else if (scope == ver_svn) {
     str = svn;
   } else {

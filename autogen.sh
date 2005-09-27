@@ -787,8 +787,7 @@ make_version_header_template() {
 #define MCA_${mvht_component_type}_${mvht_component_name}_MAJOR_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_MAJOR_VERSION@
 #define MCA_${mvht_component_type}_${mvht_component_name}_MINOR_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_MINOR_VERSION@
 #define MCA_${mvht_component_type}_${mvht_component_name}_RELEASE_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_RELEASE_VERSION@
-#define MCA_${mvht_component_type}_${mvht_component_name}_ALPHA_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_ALPHA_VERSION@
-#define MCA_${mvht_component_type}_${mvht_component_name}_BETA_VERSION @MCA_${mvht_component_type}_${mvht_component_name}_BETA_VERSION@
+#define MCA_${mvht_component_type}_${mvht_component_name}_GREEK_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_GREEK_VERSION@"
 #define MCA_${mvht_component_type}_${mvht_component_name}_SVN_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_SVN_VERSION@"
 #define MCA_${mvht_component_type}_${mvht_component_name}_VERSION "@MCA_${mvht_component_type}_${mvht_component_name}_VERSION@"
 

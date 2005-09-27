@@ -4,20 +4,20 @@
 # number string.
 
 # major, minor, and release are generally combined in the form
-# <major>.<minor>.<release>.  If minor and release are both zero, then
-# release is omitted.
+# <major>.<minor>.<release>.  If release is zero, then it is omitted.
 
 major=1
 minor=0
 release=0
 
-# Only one of alpha or beta can be nonzero.  If both are zero, alpha
-# will be preferred.  If alpha is nonzero, it will be appended to the
-# version string as "a<alpha>".  If beta is nonzero (and alpha is
-# zero), it will be appended to the version string as "b<beta>".
+# greek is used for alpha or beta release tags.  If it is non-empty,
+# it will be appended to the version number.  It does not have to be
+# numeric.  Common examples include a1 (alpha release 1),
+# b1 (beta release 1), sc2005 (Super Computing 2005 release).  The
+# only requirement is that it must be entirely printable ASCII 
+# characters and have no white space.
 
-alpha=1
-beta=0
+greek=a1
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.

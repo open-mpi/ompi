@@ -52,8 +52,7 @@ namespace ompi_info {
   extern const std::string ver_major;
   extern const std::string ver_minor;
   extern const std::string ver_release;
-  extern const std::string ver_alpha;
-  extern const std::string ver_beta;
+  extern const std::string ver_greek;
   extern const std::string ver_svn;
 
   void do_version(bool want_all, opal_cmd_line_t *cmd_line);
