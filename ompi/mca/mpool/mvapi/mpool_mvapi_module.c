@@ -107,9 +107,16 @@ int mca_mpool_mvapi_register(
     mr_in.l_key = 0;
     mr_in.r_key = 0;
     mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
-    mr_in.size =  size;
-    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
+    vapi_reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    vapi_reg->base_reg.bound = up_align_addr((void*) ((unsigned long) addr + size - 1) 
+                                             , mca_mpool_base_page_size_log);
+    
+    mr_in.size =  vapi_reg->base_reg.bound - vapi_reg->base_reg.base + 1;
+    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) vapi_reg->base_reg.base;
     mr_in.type = VAPI_MR;
+    
+    /* printf("registering addr %p size %d base %p bound %p\n",  */
+/*            addr, size, vapi_reg->base_reg.base, vapi_reg->base_reg.bound);  */
 
     ret = VAPI_register_mr(
                            mpool_module->hca_pd.hca, 
@@ -126,9 +133,6 @@ int mca_mpool_mvapi_register(
     
     vapi_reg->l_key = mr_out.l_key; 
     vapi_reg->r_key = mr_out.r_key; 
-    vapi_reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
-    vapi_reg->base_reg.bound = up_align_addr((void*) ((unsigned long) addr + size - 1) 
-                                                   , mca_mpool_base_page_size_log);
     
     assert(vapi_reg->base_reg.bound - vapi_reg->base_reg.base >= 0);
     

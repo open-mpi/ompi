@@ -92,8 +92,8 @@ size_t mca_pml_ob1_rdma_btls(
             /* otherwise if leave_pinned re-register */
             } else if(mca_pml_ob1.leave_pinned) {
                 unsigned char* new_base = reg->base;
-                size_t new_len = (base - reg->base) + size;
-                                
+                size_t new_len = (base - reg->base) + size;                
+                /* printf("re-reg 2: base %p size %d new_base %p new_len %d\n", base, size, new_base, new_len);  */
                 assert(new_len >= size);
                 btl_mpool->mpool_deregister(btl_mpool, reg); 
                 btl_mpool->mpool_register(btl_mpool, 
@@ -257,7 +257,8 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
        } else {
            unsigned char* new_base = largest->base;
            size_t new_len = (base - largest->base) + size;
-           
+           /* printf("re-reg 2: base %p size %d new_base %p new_len %d\n", base, size, new_base, new_len);  */
+
            btl_mpool->mpool_deregister(btl_mpool, largest); 
            assert(new_len >= size);
            btl_mpool->mpool_register(btl_mpool, 
