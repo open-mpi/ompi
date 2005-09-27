@@ -110,13 +110,16 @@ bool opal_output_init(void)
 {
     int i;
     char *str;
+    char hostname[32];
 
     if (initialized) {
 	return true;
     }
 
     OBJ_CONSTRUCT(&verbose, opal_output_stream_t);
+    gethostname(hostname, sizeof(hostname));
     verbose.lds_want_stderr = true;
+    asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
 	info[i].ldi_used = false;

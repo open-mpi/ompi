@@ -14,13 +14,15 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
+
 #include <stdio.h>
 #include <string.h>
-
 #if HAVE_SYSLOG_H
 #include <syslog.h>
+#endif
+#if HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include "opal/util/output.h"
@@ -51,6 +53,7 @@ int mca_base_open(void)
   int param_index;
   char *value;
   opal_output_stream_t lds;
+  char hostname[64];
 
   if (!mca_base_opened) {
     mca_base_opened = true;
@@ -96,6 +99,8 @@ int mca_base_open(void)
   } else {
     set_defaults(&lds);
   }
+  gethostname(hostname, sizeof(hostname));
+  asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
   opal_output_reopen(0, &lds);
   opal_output_verbose(5, 0, "mca: base: opening components");
 
@@ -110,7 +115,8 @@ int mca_base_open(void)
  */
 static void set_defaults(opal_output_stream_t *lds)
 {
-  /* Load up defaults */
+
+    /* Load up defaults */
 
     OBJ_CONSTRUCT(lds, opal_output_stream_t);
 #ifndef WIN32
@@ -141,9 +147,9 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
 
   while (NULL != ptr && strlen(ptr) > 0) {
     next = strchr(ptr, ',');
-    if (NULL != next)
+    if (NULL != next) {
       *next = '\0';
-
+    }
 
     if (0 == strcasecmp(ptr, "syslog")) {
 #ifndef WIN32 /* there is no syslog */
@@ -163,7 +169,7 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
       lds->lds_want_syslog = true;
       lds->lds_syslog_ident = ptr + 9;
 #endif
-	}
+    }
 
     else if (strcasecmp(ptr, "stdout") == 0) {
       lds->lds_want_stdout = true;
@@ -192,8 +198,9 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
         lds->lds_verbose_level = atoi(ptr + 6);
     }
 
-    if (NULL == next)
+    if (NULL == next) {
       break;
+    }
     ptr = next + 1;
   }
 
