@@ -44,7 +44,7 @@ static inline void *down_align_addr(void* addr, unsigned int shift) {
 }
 
 static inline void *up_align_addr(void*addr, unsigned int shift) { 
-    return (void*) ((((unsigned long) addr) | ~((~(unsigned long) 0) << shift)) + 1); 
+    return (void*) ((((unsigned long) addr) | ~((~(unsigned long) 0) << shift))); 
 }
 
 struct mca_mpool_base_selected_module_t {

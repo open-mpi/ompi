@@ -60,8 +60,8 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
         ompi_rb_tree_find(&rcache->rb_tree, &key);
     
     if(NULL != found ) { 
-        if((void*) found->reg->base_align > base ||
-           (void*) found->reg->bound_align < base){
+        if((void*) found->reg->base > base ||
+           (void*) found->reg->bound < base){
             assert(0);
         }
     }
@@ -116,8 +116,8 @@ int mca_rcache_rb_tree_insert(
         return rc; 
     rb_tree_item = (mca_rcache_rb_tree_item_t*) item; 
     
-    rb_tree_item->key.base = reg->base_align;
-    rb_tree_item->key.bound = reg->bound_align; 
+    rb_tree_item->key.base = reg->base;
+    rb_tree_item->key.bound = reg->bound; 
     rb_tree_item->reg = reg;
     
     rc = ompi_rb_tree_insert(&rb_module->rb_tree, 

@@ -92,12 +92,10 @@ int mca_mpool_gm_register(
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     reg->mpool = mpool;
-    reg->base = addr; 
+    reg->base = down_align_addr(addr, mca_mpool_base_page_size_log); 
     reg->flags = flags; 
-    reg->bound = reg->base + size - 1; 
-    reg->base_align = down_align_addr(addr, mca_mpool_base_page_size_log); 
-    reg->bound_align = up_align_addr(reg->bound 
-                                     , mca_mpool_base_page_size_log);
+    reg->bound = up_align_addr(reg->base + size -1
+                               , mca_mpool_base_page_size_log);
     
     OPAL_THREAD_ADD32(&reg->ref_count,1);
 
