@@ -85,9 +85,9 @@
        integer MPI_STATUS_SIZE, MPI_SOURCE, MPI_TAG, MPI_ERROR
        integer MPI_TAG_UB, MPI_HOST, MPI_IO, MPI_WTIME_IS_GLOBAL
        integer MPI_APPNUM, MPI_LASTUSEDCODE, MPI_UNIVERSE_SIZE
-       integer MPI_WIN_BASE, MPI_WIN_SIZE, MPI_WIN_DISP_UNIT
        integer IMPI_CLIENT_SIZE, IMPI_CLIENT_COLOR
        integer IMPI_HOST_SIZE, IMPI_HOST_COLOR
+       integer MPI_BSEND_OVERHEAD
        integer MPI_MAX_INFO_KEY, MPI_MAX_INFO_VAL
        integer MPI_MAX_PORT_NAME, MPI_MAX_OBJECT_NAME
        integer MPI_ORDER_C, MPI_ORDER_FORTRAN
@@ -100,7 +100,7 @@
        integer MPI_MODE_RDONLY, MPI_MODE_WRONLY, MPI_MODE_RDWR
        integer MPI_MODE_DELETE_ON_CLOSE, MPI_MODE_UNIQUE_OPEN
        integer MPI_MODE_EXCL, MPI_MODE_APPEND, MPI_MODE_SEQUENTIAL
-       integer MPI_DISPLAYCEMENT_CURRENT
+       integer MPI_DISPLACEMENT_CURRENT
        @OMPI_F77_WIN_ATTR_KEYS@
 
        parameter (MPI_ANY_SOURCE=-1)
@@ -125,17 +125,14 @@
        parameter (MPI_APPNUM=4)
        parameter (MPI_LASTUSEDCODE=5)
        parameter (MPI_UNIVERSE_SIZE=6)
-       parameter (MPI_WIN_BASE=7)
-       parameter (MPI_WIN_SIZE=8)
-       parameter (MPI_WIN_DISP_UNIT=9)
+       @OMPI_F77_WIN_ATTR_BASE_VALUE@
+       @OMPI_F77_WIN_ATTR_SIZE_VALUE@
+       @OMPI_F77_WIN_ATTR_DISP_VALUE@
        parameter (IMPI_CLIENT_SIZE=10)
        parameter (IMPI_CLIENT_COLOR=11)
        parameter (IMPI_HOST_SIZE=12)
        parameter (IMPI_HOST_COLOR=13)
 
-       @OMPI_F77_WIN_ATTR_BASE_VALUE@
-       @OMPI_F77_WIN_ATTR_SIZE_VALUE@
-       @OMPI_F77_WIN_ATTR_DISP_VALUE@
        parameter (MPI_BSEND_OVERHEAD=128)
        parameter (MPI_MAX_INFO_KEY=35)
        parameter (MPI_MAX_INFO_VAL=255)
@@ -331,23 +328,23 @@
 !
 ! datatype combiners
 !
-       integer MPI_COMBINER_NAMED,
-       integer MPI_COMBINER_DUP,
-       integer MPI_COMBINER_CONTIGUOUS,
-       integer MPI_COMBINER_VECTOR,
-       integer MPI_COMBINER_HVECTOR_INTEGER,
-       integer MPI_COMBINER_HVECTOR,
-       integer MPI_COMBINER_INDEXED,
-       integer MPI_COMBINER_HINDEXED_INTEGER,
-       integer MPI_COMBINER_HINDEXED,
-       integer MPI_COMBINER_INDEXED_BLOCK,
-       integer MPI_COMBINER_STRUCT_INTEGER,
-       integer MPI_COMBINER_STRUCT,
-       integer MPI_COMBINER_SUBARRAY,
-       integer MPI_COMBINER_DARRAY,
-       integer MPI_COMBINER_F90_REAL,
-       integer MPI_COMBINER_F90_COMPLEX,
-       integer MPI_COMBINER_F90_INTEGER,
+       integer MPI_COMBINER_NAMED
+       integer MPI_COMBINER_DUP
+       integer MPI_COMBINER_CONTIGUOUS
+       integer MPI_COMBINER_VECTOR
+       integer MPI_COMBINER_HVECTOR_INTEGER
+       integer MPI_COMBINER_HVECTOR
+       integer MPI_COMBINER_INDEXED
+       integer MPI_COMBINER_HINDEXED_INTEGER
+       integer MPI_COMBINER_HINDEXED
+       integer MPI_COMBINER_INDEXED_BLOCK
+       integer MPI_COMBINER_STRUCT_INTEGER
+       integer MPI_COMBINER_STRUCT
+       integer MPI_COMBINER_SUBARRAY
+       integer MPI_COMBINER_DARRAY
+       integer MPI_COMBINER_F90_REAL
+       integer MPI_COMBINER_F90_COMPLEX
+       integer MPI_COMBINER_F90_INTEGER
        integer MPI_COMBINER_RESIZED
 
        parameter (MPI_COMBINER_NAMED=0)
@@ -367,7 +364,7 @@
        parameter (MPI_COMBINER_F90_REAL=14)
        parameter (MPI_COMBINER_F90_COMPLEX=15)
        parameter (MPI_COMBINER_F90_INTEGER=16)
-       parameter (MPI_COMBINER_RESIZE=17)
+       parameter (MPI_COMBINER_RESIZED=17)
 !
 ! lookup table indices
 !
