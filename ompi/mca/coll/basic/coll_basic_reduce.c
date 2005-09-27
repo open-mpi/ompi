@@ -288,6 +288,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     char *pml_buffer = NULL;
     char *snd_buffer = sbuf;
     char *rcv_buffer = rbuf;
+    char *inplace_temp = NULL;
 
     /* JMS Codearound for now -- if the operations is not communative,
      * just call the linear algorithm.  Need to talk to Edgar / George
@@ -304,6 +305,8 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     rank = ompi_comm_rank(comm);
     vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
     dim = comm->c_cube_dim;
+
+	
 
     /* Allocate the incoming and resulting message buffers.  See lengthy
      * rationale above. */
@@ -323,6 +326,19 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
         rcv_buffer = pml_buffer;
     }
     
+    /* Allocate sendbuf in case the MPI_IN_PLACE option has been used. See lengthy
+     * rationale above. */
+
+    if (MPI_IN_PLACE == sbuf) {
+        inplace_temp = malloc(true_extent + (count - 1) * extent);
+        if (NULL == inplace_temp) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        sbuf = inplace_temp - lb;
+	err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+    }
+
+
     if (rank != root && 0 == (vrank & 1)) {
         /* root is the only one required to provide a valid rbuf.
          * Assume rbuf is invalid for all other ranks, so fix it up
@@ -443,6 +459,9 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
         }
     }
 
+    if (NULL != inplace_temp) {
+        free(inplace_temp);
+    }
     if (NULL != free_buffer) {
         free(free_buffer);
     }
