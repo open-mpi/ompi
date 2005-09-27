@@ -251,27 +251,27 @@ void opal_output_close(int output_id)
     /* If it's valid, used, enabled, and has an open file descriptor,
      * free the resources associated with the descriptor */
 
+    OPAL_THREAD_LOCK(&mutex);
     if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
 	info[output_id].ldi_used && info[output_id].ldi_enabled) {
 	free_descriptor(output_id);
-    }
 
-    /* If no one has the syslog open, we should close it */
-
-    OPAL_THREAD_LOCK(&mutex);
-    for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
-	if (info[i].ldi_used && info[i].ldi_syslog) {
-	    break;
-	}
-    }
+        /* If no one has the syslog open, we should close it */
+        
+        for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
+            if (info[i].ldi_used && info[i].ldi_syslog) {
+                break;
+            }
+        }
 
 #ifndef WIN32
-    if (i >= OPAL_OUTPUT_MAX_STREAMS && syslog_opened) {
-	closelog();
-    }
+        if (i >= OPAL_OUTPUT_MAX_STREAMS && syslog_opened) {
+            closelog();
+        }
 #else
-    DeregisterEventSource(info[output_id].ldi_syslog_ident);
+        DeregisterEventSource(info[output_id].ldi_syslog_ident);
 #endif
+    }
 
     /* Somewhat of a hack to free up the temp_str */
 
@@ -290,10 +290,12 @@ void opal_output_close(int output_id)
  */
 void opal_output(int output_id, const char *format, ...)
 {
-    va_list arglist;
-    va_start(arglist, format);
-    output(output_id, format, arglist);
-    va_end(arglist);
+    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS) {
+        va_list arglist;
+        va_start(arglist, format);
+        output(output_id, format, arglist);
+        va_end(arglist);
+    }
 }
 
 
@@ -302,7 +304,8 @@ void opal_output(int output_id, const char *format, ...)
  */
 void opal_output_verbose(int level, int output_id, const char *format, ...)
 {
-    if (info[output_id].ldi_verbose_level >= level) {
+    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
+        info[output_id].ldi_verbose_level >= level) {
 	va_list arglist;
 	va_start(arglist, format);
 	output(output_id, format, arglist);
@@ -316,7 +319,9 @@ void opal_output_verbose(int level, int output_id, const char *format, ...)
  */
 void opal_output_set_verbosity(int output_id, int level)
 {
-    info[output_id].ldi_verbose_level = level;
+    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS) {
+        info[output_id].ldi_verbose_level = level;
+    }
 }
 
 
