@@ -92,6 +92,7 @@ int orte_ras_base_open(void)
     orte_ras_base_module_t *module;
     int param, priority, value;
     orte_ras_base_cmp_t *cmp;
+    char * policy;
 
     /* Debugging / verbose output */
 
@@ -103,6 +104,13 @@ int orte_ras_base_open(void)
         orte_ras_base.ras_output = opal_output_open(NULL);
     } else {
         orte_ras_base.ras_output = -1;
+    }
+
+    param = mca_base_param_reg_string_name("ras_base", "schedule_policy",
+                                           "Scheduling Policy for RAS. [slot | node]",
+                                           false, false, "slot", &policy);
+    if (0 == strcmp(policy, "node")) {
+        mca_base_param_set_string(param, "node");
     }
 
     /* Open up all available components */

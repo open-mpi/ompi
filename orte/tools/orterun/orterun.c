@@ -646,7 +646,7 @@ static int init_globals(void)
         false,
         false,
         false,
-        true,
+        false,
         0,
         0,
         NULL,
@@ -706,14 +706,26 @@ static int parse_globals(int argc, char* argv[])
        MCA param. */
 
     /* JMS To be changed post-beta to LAM's C/N command line notation */
-    id = mca_base_param_register_string("ras", "base", "schedule_policy",
-                                         NULL, "slot");
-    if (orterun_globals.by_node) {
-        orterun_globals.by_slot = false;
-        mca_base_param_set_string(id, "node");
-    } else {
+    /* Don't initialize the MCA parameter here unless we have to,
+     * since it really should be initialized in ras_base_open */
+    if (orterun_globals.by_node || orterun_globals.by_slot) {
+        char *policy = NULL;
+        id = mca_base_param_reg_string_name("ras_base", "schedule_policy",
+                                            "Scheduling Policy for RAS. [slot | node]",
+                                            false, false, "slot", &policy);
+
+        if (orterun_globals.by_node) {
+            orterun_globals.by_slot = false;
+            mca_base_param_set_string(id, "node");
+        } else {
+            orterun_globals.by_slot = true;
+            mca_base_param_set_string(id, "slot");
+        }
+        free(policy);
+    }
+    else {
+        /* Default */
         orterun_globals.by_slot = true;
-        mca_base_param_set_string(id, "slot");
     }
 
     /* If we don't want to wait, we don't want to wait */

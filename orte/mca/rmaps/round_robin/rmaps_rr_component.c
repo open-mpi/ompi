@@ -62,44 +62,35 @@ orte_rmaps_round_robin_component_t mca_rmaps_round_robin_component = {
 
 
 /**
- *  Convience functions to lookup MCA parameter values.
- */
-
-static  int orte_rmaps_round_robin_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("rmaps","round_robin",
-                                         param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
- 
-
-static char *orte_rmaps_round_robin_param_register_string(
-    const char *a, const char *b, const char *c,
-    char *default_value)
-{
-    int id = mca_base_param_register_string(a, b, c, NULL, default_value);
-    char *param_value = default_value;
-    mca_base_param_lookup_string(id,&param_value);
-    return param_value;
-}
- 
-
-/**
   * component open/close/init function
   */
 static int orte_rmaps_round_robin_open(void)
 {
-    mca_rmaps_round_robin_component.debug = 
-        orte_rmaps_round_robin_param_register_int("debug", 1);
-    mca_rmaps_round_robin_component.priority = 
-        orte_rmaps_round_robin_param_register_int("priority", 1);
+    size_t id;
+
+    mca_base_param_reg_int(&mca_rmaps_round_robin_component.super.rmaps_version, "debug",
+                           "Toggle debug output for Round Robin RMAPS component",
+                           false, false, 1, 
+                           &mca_rmaps_round_robin_component.debug);
+    
+    mca_base_param_reg_int(&mca_rmaps_round_robin_component.super.rmaps_version, "priority",
+                           "Selection priority for Round Robin RMAPS component",
+                           false, false, 1,
+                           &mca_rmaps_round_robin_component.priority);
+
     /* JMS To be changed post-beta to LAM's C/N command line notation */
-    mca_rmaps_round_robin_component.schedule_policy = 
-        orte_rmaps_round_robin_param_register_string("ras", "base", "schedule_policy", "slot");
+
+    id = mca_base_param_find("ras_base", NULL, "schedule_policy");
+    if (0 > id) {
+        id = mca_base_param_reg_string_name("ras_base", "schedule_policy",
+                                            "Scheduling Policy for RAS. [slot | node]",
+                                            false, false, "slot", 
+                                            &mca_rmaps_round_robin_component.schedule_policy);
+    }
+    else {
+        mca_base_param_lookup_string(id, &mca_rmaps_round_robin_component.schedule_policy);
+    }
+
     return ORTE_SUCCESS;
 }
 
