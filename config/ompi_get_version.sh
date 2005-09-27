@@ -28,7 +28,7 @@ option="$2"
 
 case "$option" in
     # svnversion can take a while to run.  If we don't need it, don't run it.
-    --major|--minor|--release|--alpha|--beta|--base|--help)
+    --major|--minor|--release|--greek|--base|--help)
         OMPI_NEED_SVN=0
         ;;
     *)
@@ -42,8 +42,7 @@ else
     OMPI_MAJOR_VERSION="`cat $srcfile | egrep '^major=' | cut -d= -f2`"
     OMPI_MINOR_VERSION="`cat $srcfile | egrep '^minor=' | cut -d= -f2`"
     OMPI_RELEASE_VERSION="`cat $srcfile | egrep '^release=' | cut -d= -f2`"
-    OMPI_ALPHA_VERSION="`cat $srcfile | egrep '^alpha=' | cut -d= -f2`"
-    OMPI_BETA_VERSION="`cat $srcfile | egrep '^beta=' | cut -d= -f2`"
+    OMPI_GREEK_VERSION="`cat $srcfile | egrep '^greek=' | cut -d= -f2`"
     OMPI_WANT_SVN="`cat $srcfile | egrep '^want_svn=' | cut -d= -f2`"
     OMPI_SVN_R="`cat $srcfile | egrep '^svn_r=' | cut -d= -f2`"
     if test "$OMPI_RELEASE_VERSION" != "0" -a "$OMPI_RELEASE_VERSION" != ""; then
@@ -52,11 +51,7 @@ else
 	OMPI_VERSION="$OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION"
     fi
 
-    if test "`expr $OMPI_ALPHA_VERSION \> 0`" = "1"; then
-	OMPI_VERSION="${OMPI_VERSION}a$OMPI_ALPHA_VERSION"
-    elif test "`expr $OMPI_BETA_VERSION \> 0`" = "1"; then
-	OMPI_VERSION="${OMPI_VERSION}b$OMPI_BETA_VERSION"
-    fi
+    OMPI_VERSION="${OMPI_VERSION}${OMPI_GREEK_VERSION}"
 
     OMPI_BASE_VERSION="$OMPI_VERSION"
 
@@ -90,11 +85,8 @@ case "$option" in
     --release)
 	echo $OMPI_RELEASE_VERSION
 	;;
-    --alpha)
-	echo $OMPI_ALPHA_VERSION
-	;;
-    --beta)
-	echo $OMPI_BETA_VERSION
+    --greek)
+	echo $OMPI_GREEK_VERSION
 	;;
     --svn)
 	echo $OMPI_SVN_R
@@ -103,7 +95,7 @@ case "$option" in
         echo $OMPI_BASE_VERSION
         ;;
     --all)
-        echo ${OMPI_VERSION} ${OMPI_MAJOR_VERSION} ${OMPI_MINOR_VERSION} ${OMPI_RELEASE_VERSION} ${OMPI_ALPHA_VERSION} ${OMPI_BETA_VERSION} ${OMPI_SVN_R}
+        echo ${OMPI_VERSION} ${OMPI_MAJOR_VERSION} ${OMPI_MINOR_VERSION} ${OMPI_RELEASE_VERSION} ${OMPI_GREEK_VERSION} ${OMPI_SVN_R}
         ;;
     -h|--help)
 	cat <<EOF
@@ -115,8 +107,7 @@ $0 <srcfile> [<option>]
     --major   - Major version number
     --minor   - Minor version number
     --release - Release version number
-    --alpha   - Alpha version number
-    --beta    - Beta version nmumber
+    --greek   - Greek (alpha, beta, etc) version number
     --svn     - Subversion repository number
     --all     - Show all version numbers, separated by :
     --base    - Show base version number (no svn number)
