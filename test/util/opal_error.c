@@ -53,8 +53,6 @@ main(int argc, char *argv[])
     char buf[1024];
 
     opal_init();
-    orte_init_stage1(true);
-    orte_init_stage2();
 
     for (i = 0 ; errors[i] <= 0 ; ++i) {
         printf("--> error code: %d\n", errors[i]);
@@ -82,7 +80,6 @@ main(int argc, char *argv[])
     printf("--> unknown error test\n");
     opal_perror(ORTE_ERR_MAX - 200, "unknown error");
 
-    orte_system_finalize();
     opal_finalize();
 
     return 0;
