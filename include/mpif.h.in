@@ -91,6 +91,7 @@
        integer MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG
        integer MPI_TYPECLASS_INTEGER, MPI_TYPECLASS_REAL
        integer MPI_TYPECLASS_COMPLEX
+       integer MPI_SEEK_SET, MPI_MODE_CREATE, MPI_MODE_WRONLY
        @OMPI_F77_WIN_ATTR_KEYS@
 
        parameter (MPI_ANY_SOURCE=-1)
@@ -129,6 +130,9 @@
        parameter (MPI_TYPECLASS_INTEGER=1)
        parameter (MPI_TYPECLASS_REAL=2)
        parameter (MPI_TYPECLASS_COMPLEX=3)
+       parameter (MPI_SEEK_SET=600)
+       parameter (MPI_SEEK_CUR=602)
+       parameter (MPI_SEEK_END=604)
 !
 ! global variables
 !
