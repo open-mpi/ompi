@@ -20,7 +20,11 @@
 #include "support.h"
 #include "mca/mpool/mpool.h"
 
-static void *malloc_noalign(mca_mpool_base_module_t* mpool, size_t size, size_t dummy, void* user_out) {
+static void *malloc_noalign(mca_mpool_base_module_t* mpool, 
+                            size_t size, 
+                            size_t align, 
+                            uint32_t flags, 
+                            mca_mpool_base_registration_t** reg) {
     return malloc(size);
 }
 
@@ -28,12 +32,17 @@ size_t offset;
 static void *malloc_base_addr(mca_mpool_base_module_t* mpool){
     return (void *)offset;
 }
-static void my_free(mca_mpool_base_module_t* mpool, void* addr)
+static void my_free(mca_mpool_base_module_t* mpool, 
+                    void* addr, 
+                    mca_mpool_base_registration_t* reg)
 {
     free(addr); 
 }
 
-static void* my_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void* user_out){
+static void* my_realloc(mca_mpool_base_module_t* mpool, 
+                        void* addr, 
+                        size_t size, 
+                        mca_mpool_base_registration_t** reg){
    return  realloc(addr, size);
 }
 
