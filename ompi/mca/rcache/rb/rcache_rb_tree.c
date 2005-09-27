@@ -35,27 +35,6 @@ int mca_rcache_rb_tree_init(mca_rcache_rb_module_t* rcache) {
     return ompi_rb_tree_init(&rcache->rb_tree, 
                              mca_rcache_rb_tree_node_compare);
 }
-/**
- * Searches the rcache to see if it has allocated the memory that is passed in.
- * If so it returns an array of rcaches the memory is registered with.
- *
- * @param base pointer to the memory to lookup
- *
- * @retval NULL if the memory is not in any rcache
- * @retval pointer to an array of type mca_rcache_base_reg_rcache_t
- */
-static inline struct mca_rcache_rb_tree_item_t * 
-  mca_rcache_rb_tree_find_nl(
-                             mca_rcache_rb_module_t* rcache, 
-                             void* base
-                             )
-{
-    mca_rcache_rb_tree_key_t key;
-    key.base = base;
-    key.bound = base;
-    return (mca_rcache_rb_tree_item_t *)
-        ompi_rb_tree_find(&rcache->rb_tree, &key);
-}
 
 /**
  * Searches the mpool to see if it has allocated the memory that is passed in.
@@ -81,8 +60,8 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
         ompi_rb_tree_find(&rcache->rb_tree, &key);
     
     if(NULL != found ) { 
-        if((void*) found->reg->base > base ||
-           (void*) found->reg->bound < base){
+        if((void*) found->reg->base_align > base ||
+           (void*) found->reg->bound_align < base){
             assert(0);
         }
     }
@@ -137,8 +116,8 @@ int mca_rcache_rb_tree_insert(
         return rc; 
     rb_tree_item = (mca_rcache_rb_tree_item_t*) item; 
     
-    rb_tree_item->key.base = reg->base;
-    rb_tree_item->key.bound = reg->bound; 
+    rb_tree_item->key.base = reg->base_align;
+    rb_tree_item->key.bound = reg->bound_align; 
     rb_tree_item->reg = reg;
     
     rc = ompi_rb_tree_insert(&rb_module->rb_tree, 

@@ -23,6 +23,8 @@
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
 #include "ompi/include/constants.h"
+#include <unistd.h> 
+
 
 /*
  * The following file was created by configure.  It contains extern
@@ -42,6 +44,9 @@
  */
 int mca_mpool_base_output = -1;
 int mca_mpool_base_use_mem_hooks = 0; 
+uint32_t mca_mpool_base_page_size; 
+uint32_t mca_mpool_base_page_size_log;
+
 opal_list_t mca_mpool_base_components;
 opal_list_t mca_mpool_base_modules;
 
@@ -84,6 +89,11 @@ int mca_mpool_base_open(void)
 /*         param = mca_base_param_find("mpi", NULL, "leave_pinned"); */
 /*         mca_base_param_lookup_int(param, &mca_mpool_base_use_mem_hooks); */
 /*     } */
+    
+    /* get the page size for this architecture*/ 
+    mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
+    mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size); 
+    
     return OMPI_SUCCESS;
 }
 

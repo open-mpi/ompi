@@ -18,8 +18,12 @@
 #include <string.h>
 #include "opal/util/output.h"
 #include "mpool_gm.h"
-#include "mca/rcache/rcache.h"
-#include "mca/rcache/base/base.h"
+#include "ompi/mca/rcache/rcache.h"
+#include "ompi/mca/rcache/base/base.h"
+#include "ompi/mca/mpool/base/base.h"
+
+extern uint32_t mca_mpool_base_page_size;
+extern uint32_t mca_mpool_base_page_size_log; 
 
 
 /* 
@@ -91,6 +95,10 @@ int mca_mpool_gm_register(
     reg->base = addr; 
     reg->flags = flags; 
     reg->bound = reg->base + size - 1; 
+    reg->base_align = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    reg->bound_align = up_align_addr(reg->bound 
+                                     , mca_mpool_base_page_size_log);
+    
     OPAL_THREAD_ADD32(&reg->ref_count,1);
 
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 

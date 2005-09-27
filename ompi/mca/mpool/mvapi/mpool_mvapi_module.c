@@ -24,7 +24,10 @@
 #include <vapi_common.h> 
 #include "mca/rcache/rcache.h" 
 #include "mca/rcache/base/base.h"
+#include "ompi/mca/mpool/base/base.h"
 
+extern uint32_t mca_mpool_base_page_size;
+extern uint32_t mca_mpool_base_page_size_log; 
 
 
 /*
@@ -60,8 +63,8 @@ void* mca_mpool_mvapi_alloc(
     mca_mpool_base_registration_t** registration)
 {
     
-    void* addr_malloc = (void*)malloc(size + mca_mpool_mvapi_component.page_size); 
-    void* addr = (void*)  ALIGN_ADDR(addr_malloc, mca_mpool_mvapi_component.page_size_log); 
+    void* addr_malloc = (void*)malloc(size + mca_mpool_base_page_size); 
+    void* addr = (void*)  up_align_addr(addr_malloc, mca_mpool_base_page_size_log); 
     if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, flags, registration)) { 
         free(addr_malloc);
         return NULL; 
@@ -85,9 +88,10 @@ int mca_mpool_mvapi_register(
     mca_mpool_mvapi_module_t * mpool_module = (mca_mpool_mvapi_module_t*) mpool; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
     VAPI_mrw_t mr_in, mr_out;
-    
     VAPI_ret_t ret; 
     
+    
+        
     assert(size > 0); 
     memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
     memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
@@ -103,7 +107,7 @@ int mca_mpool_mvapi_register(
     mr_in.l_key = 0;
     mr_in.r_key = 0;
     mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
-    mr_in.size = size;
+    mr_in.size =  size;
     mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
     mr_in.type = VAPI_MR;
 
@@ -123,8 +127,13 @@ int mca_mpool_mvapi_register(
     vapi_reg->l_key = mr_out.l_key; 
     vapi_reg->r_key = mr_out.r_key; 
     vapi_reg->base_reg.base = addr; 
-    vapi_reg->base_reg.bound = (void*) ((char*) addr + size - 1); 
+    vapi_reg->base_reg.bound = (unsigned char*) (unsigned long) addr + size - 1;
+    vapi_reg->base_reg.base_align = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    vapi_reg->base_reg.bound_align = up_align_addr(vapi_reg->base_reg.bound 
+                                                   , mca_mpool_base_page_size_log);
+    
     assert(vapi_reg->base_reg.bound - vapi_reg->base_reg.base > 0);
+    
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 
                                      (mca_mpool_base_registration_t*) vapi_reg, 

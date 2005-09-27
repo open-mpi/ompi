@@ -35,7 +35,9 @@ struct mca_mpool_base_registration_t {
     struct mca_mpool_base_module_t *mpool; 
     unsigned char* base;
     unsigned char* bound; 
-    unsigned char* alloc_base; 
+    unsigned char* alloc_base;
+    unsigned char* base_align; 
+    unsigned char* bound_align;
     void* user_data; 
     uint32_t ref_count; 
     uint32_t flags;

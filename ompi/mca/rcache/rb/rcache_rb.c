@@ -14,11 +14,11 @@
  * $HEADER$
  */
 
-#include "mca/rcache/rcache.h"
+#include "ompi/mca/rcache/rcache.h"
 #include "rcache_rb.h"
 #include "rcache_rb_tree.h"
 #include "rcache_rb_mru.h"
-
+#include "opal/util/output.h"
 
 /**
  * Initialize the rcache 
@@ -42,7 +42,7 @@ int mca_rcache_rb_find (
                         uint32_t *cnt
                         ){ 
     
-    int rc = OMPI_SUCCESS; 
+    int pos, rc = OMPI_SUCCESS; 
     mca_rcache_rb_tree_item_t* tree_item; 
     OPAL_THREAD_LOCK(&rcache->lock);
     *cnt = 0;
@@ -55,7 +55,11 @@ int mca_rcache_rb_find (
     OBJ_DESTRUCT(regs); 
     OBJ_CONSTRUCT(regs, ompi_pointer_array_t);
     
-    rc =  ompi_pointer_array_set_item(regs, 0, (void*) tree_item->reg); 
+    pos =  ompi_pointer_array_add(regs, (void*) tree_item->reg); 
+    if(0 != pos) {
+        opal_output(0, "error inserting registration in 1st position"); 
+        return OMPI_ERROR; 
+    }
     
     if(OMPI_SUCCESS != rc) { 
         OPAL_THREAD_UNLOCK(&rcache->lock);
@@ -72,8 +76,8 @@ int mca_rcache_rb_find (
         *cnt = 1; 
     }
     assert(tree_item->reg->bound - tree_item->reg->base > 0); 
-    assert(((void*) tree_item->reg->base) <= addr);
-    assert(((void*) tree_item->reg->bound) >= addr);
+    assert(((void*) tree_item->reg->base_align) <= addr);
+    assert(((void*) tree_item->reg->bound_align) >= addr);
     return rc;
 }
 

@@ -93,6 +93,7 @@ size_t mca_pml_ob1_rdma_btls(
             } else if(mca_pml_ob1.leave_pinned) {
                 unsigned char* new_base = reg->base;
                 size_t new_len = (base - reg->base) + size;
+                                
                 assert(new_len >= size);
                 btl_mpool->mpool_deregister(btl_mpool, reg); 
                 btl_mpool->mpool_register(btl_mpool, 
@@ -111,7 +112,6 @@ size_t mca_pml_ob1_rdma_btls(
             }
             continue;
         }
-
         /*
          * find the best fit when there are multiple registrations
         */
@@ -257,6 +257,7 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
        } else {
            unsigned char* new_base = largest->base;
            size_t new_len = (base - largest->base) + size;
+           
            btl_mpool->mpool_deregister(btl_mpool, largest); 
            assert(new_len >= size);
            btl_mpool->mpool_register(btl_mpool, 
