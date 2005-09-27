@@ -23,6 +23,10 @@
 #include <string.h> 
 #include "mca/rcache/rcache.h"
 #include "mca/rcache/base/base.h"
+#include "ompi/mca/mpool/base/base.h"
+
+extern uint32_t mca_mpool_base_page_size;
+extern uint32_t mca_mpool_base_page_size_log; 
 
 /* 
  *  Initializes the mpool module.
@@ -57,7 +61,7 @@ void* mca_mpool_openib_alloc(
     mca_mpool_base_registration_t** registration)
 {
        
-    void* addr_malloc = (void*)memalign(mca_mpool_openib_component.page_size, size); 
+    void* addr_malloc = (void*)memalign(mca_mpool_base_page_size, size); 
     void* addr = addr_malloc; 
 
     if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, flags, registration)) { 
@@ -101,7 +105,11 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
     
     vapi_reg->base_reg.base = addr; 
     vapi_reg->base_reg.bound = (void*) ((char*) addr + size - 1); 
-
+    vapi_reg->base_reg.base_align = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    vapi_reg->base_reg.bound_align = up_align_addr(vapi_reg->base_reg.bound 
+                                                   , mca_mpool_base_page_size_log);
+    
+    
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 
                                      (mca_mpool_base_registration_t*) vapi_reg, 

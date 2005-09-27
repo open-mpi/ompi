@@ -31,6 +31,22 @@
 extern "C" {
 #endif
 
+static inline unsigned long my_log2(unsigned long val) { 
+    unsigned long count = -1;
+    while(val > 0) { 
+        val = val >> 1; 
+        count++;
+    }
+    return count;
+}
+static inline void *down_align_addr(void* addr, unsigned int shift) {
+    return (void*) (((unsigned long) addr) & (~(unsigned long) 0) << shift); 
+}
+
+static inline void *up_align_addr(void*addr, unsigned int shift) { 
+    return (void*) ((((unsigned long) addr) | ~((~(unsigned long) 0) << shift)) + 1); 
+}
+
 struct mca_mpool_base_selected_module_t {
     opal_list_item_t super;
     mca_mpool_base_component_t *mpool_component;

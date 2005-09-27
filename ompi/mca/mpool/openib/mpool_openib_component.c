@@ -95,9 +95,7 @@ OBJ_CLASS_INSTANCE(
   */
 static int mca_mpool_openib_open(void)
 {
-    /* get the page size for this architecture*/ 
-    mca_mpool_openib_component.page_size = sysconf(_SC_PAGESIZE); 
-
+ 
     return OMPI_SUCCESS;
 }
 
@@ -105,7 +103,6 @@ static mca_mpool_base_module_t* mca_mpool_openib_init(
      struct mca_mpool_base_resources_t* resources)
 {
     mca_mpool_openib_module_t* mpool_module; 
-    long page_size = mca_mpool_openib_component.page_size; 
     mca_base_param_reg_string(&mca_mpool_openib_component.super.mpool_version,                                                                                                                                      
                               "rcache_name",                                                                                                                                                                    
                               "The name of the registration cache the mpool should use",                                                                                                                        
@@ -115,12 +112,6 @@ static mca_mpool_base_module_t* mca_mpool_openib_init(
                               &(mca_mpool_openib_component.rcache_name));     
 
         
-    mca_mpool_openib_component.page_size_log = 0; 
-    while(page_size > 1){ 
-        page_size = page_size >> 1; 
-        mca_mpool_openib_component.page_size_log++; 
-    }    
-    
     mpool_module = (mca_mpool_openib_module_t*)malloc(sizeof(mca_mpool_openib_module_t)); 
     
     mca_mpool_openib_module_init(mpool_module); 

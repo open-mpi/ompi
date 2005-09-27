@@ -41,8 +41,6 @@ static inline void*  ALIGN_ADDR(void* addr, uint32_t cnt ) {
 
 struct mca_mpool_openib_component_t {
     mca_mpool_base_component_t super;
-    long page_size; 
-    long page_size_log; 
     char* rcache_name;
 };
 
