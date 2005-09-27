@@ -258,7 +258,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
  * Predefined attribute keyvals
  *
  * DO NOT CHANGE THE ORDER WITHOUT ALSO CHANGING THE ORDER IN
- * src/attribute/attribute_predefined.c.
+ * src/attribute/attribute_predefined.c and mpif.h.in.
  */
 enum {
     /* MPI-1 */
@@ -285,6 +285,7 @@ enum {
 
 /*
  * Error classes and codes
+ * Do not change the values of these without also modifying mpif.h.in.
  */
 #define MPI_SUCCESS                   0  
 #define MPI_ERR_BUFFER                1
@@ -348,6 +349,7 @@ enum {
 /*
  * Comparison results.  Don't change the order of these, the group
  * comparison functions rely on it.
+ * Do not change the order of these without also modifying mpif.h.in.
  */
 enum {
   MPI_IDENT,
@@ -358,6 +360,7 @@ enum {
 
 /*
  * MPI_Init_thread constants
+ * Do not change the order of these without also modifying mpif.h.in.
  */
 enum {
   MPI_THREAD_SINGLE,
@@ -368,6 +371,7 @@ enum {
 
 /*
  * Datatype combiners.
+ * Do not change the order of these without also modifying mpif.h.in.
  */
 enum {
   MPI_COMBINER_NAMED,
