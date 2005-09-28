@@ -286,7 +286,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     char *free_buffer = NULL;
     char *free_rbuf = NULL;
     char *pml_buffer = NULL;
-    char *snd_buffer = sbuf;
+    char *snd_buffer = NULL;
     char *rcv_buffer = rbuf;
     char *inplace_temp = NULL;
 
@@ -335,9 +335,9 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         sbuf = inplace_temp - lb;
-	err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+	err = ompi_ddt_copy_content_same_ddt(dtype, count, sbuf, rbuf);
     }
-
+    snd_buffer = sbuf;
 
     if (rank != root && 0 == (vrank & 1)) {
         /* root is the only one required to provide a valid rbuf.
