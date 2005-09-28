@@ -30,6 +30,7 @@
 #include "errhandler/errhandler.h"
 #include "proc/proc.h"
 #include "info/info.h"
+#include "opal/util/convert.h"
 #include "opal/threads/mutex.h"
 #include "util/proc_info.h"
 #include "opal/util/bit_ops.h"
@@ -53,6 +54,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     int size, rsize, rank, rc;
     size_t num_vals;
     size_t rnamebuflen = 0;
+    int rnamebuflen_int = 0;
     void *rnamebuf=NULL;
 
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
@@ -63,6 +65,10 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
+
+    /* tell the progress engine to tick the event library more
+       often, to make sure that the OOB messages get sent */
+    opal_progress_event_increment();
 
     if ( rank == root ) {
         /* The process receiving first does not have yet the contact 
@@ -82,10 +88,6 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 	    if (NULL == nbuf) {
 	        return OMPI_ERROR;
 	    }
-
-        /* tell the progress engine to tick the event library more
-           often, to make sure that the OOB messages get sent */
-        opal_progress_event_increment();
 
 	    if (ORTE_SUCCESS != (rc = orte_dps.pack(nbuf, &size, 1, ORTE_INT))) {
 	        goto exit;
@@ -112,11 +114,18 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 	    }
     }
     
+    /* First convert the size_t to an int so we can cast in the bcast to a void *
+     * if we don't then we will get badness when using big vs little endian */
+    if (OMPI_SUCCESS != (rc = opal_size2int(rnamebuflen, &rnamebuflen_int, true))) {
+        goto exit;
+    }
+
     /* bcast the buffer-length to all processes in the local comm */
-    rc = comm->c_coll.coll_bcast (&rnamebuflen, 1, MPI_INT, root, comm );
+    rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
+    rnamebuflen = (size_t)rnamebuflen_int;
 
     if ( rank != root ) {
 	    /* non root processes need to allocate the buffer manually */
@@ -132,7 +141,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
        adds processes, which were not known yet to our
        process pool.
     */
-    rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen, MPI_BYTE, root, comm );
+    rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen_int, MPI_BYTE, root, comm );
     if ( OMPI_SUCCESS != rc ) {
 	    goto exit;
     }
