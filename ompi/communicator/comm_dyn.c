@@ -52,7 +52,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 {
     int size, rsize, rank, rc;
     size_t num_vals;
-    size_t rnamebuflen;
+    size_t rnamebuflen = 0;
     void *rnamebuf=NULL;
 
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
