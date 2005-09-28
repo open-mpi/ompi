@@ -154,7 +154,7 @@ int
 opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
 {
     opal_list_item_t *item;
-    callback_list_item_t *cbitem;
+    callback_list_item_t *cbitem, *new_cbitem;
     int ret = OMPI_SUCCESS;
 
     if (!have_free_support) return OMPI_ERR_NOT_SUPPORTED;
@@ -164,6 +164,15 @@ opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
        now */
     run_callbacks = true;
     opal_atomic_mb();
+
+    /* pre-allocate a callback item on the assumption it won't be
+       found.  We can't call OBJ_NEW inside the lock because it might
+       call realloc */
+    new_cbitem = OBJ_NEW(callback_list_item_t);
+    if (NULL == new_cbitem) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto done;
+    }
 
     opal_atomic_lock(&callback_lock);
 
@@ -179,18 +188,16 @@ opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
         }
     }
 
-    cbitem = OBJ_NEW(callback_list_item_t);
-    if (NULL == cbitem) {
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto done;
-    }
+    new_cbitem->cbfunc = func;
+    new_cbitem->cbdata = cbdata;
 
-    cbitem->cbfunc = func;
-    cbitem->cbdata = cbdata;
-
-    opal_list_append(&callback_list, (opal_list_item_t*) cbitem);
+    opal_list_append(&callback_list, (opal_list_item_t*) new_cbitem);
 
  done:
+    if (OMPI_EXISTS == rc && NULL != new_cbitem) {
+        OBJ_RELEASE(new_cbitem);
+    }
+
     opal_atomic_unlock(&callback_lock);
     return ret;
 }
