@@ -474,8 +474,12 @@ int ompi_comm_dyn_init (void)
           return rc;
         }
 
-	ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,  
+	rc = ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,  
 				  send_first, &newcomm, tag );
+    if (ORTE_SUCCESS != rc) {
+        return rc;
+    }
+
 	/* Set the parent communicator */
 	ompi_mpi_comm_parent = newcomm;
 
