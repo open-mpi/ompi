@@ -69,6 +69,13 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                     if(base_addr < (void*) reg->bound) { 
                         base_addr = down_align_addr( reg->bound, mca_mpool_base_page_size_log ); 
                     }
+                    if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
+                        assert(reg->ref_count <= 3);
+                    } else if(reg->flags & MCA_MPOOL_FLAGS_PERSIST) { 
+                        assert(reg->ref_count <= 2); 
+                    } else { 
+                        assert(reg->ref_count <= 1); 
+                    }
                     current->mpool_module->mpool_deregister(current->mpool_module, reg); 
                 }
             }
