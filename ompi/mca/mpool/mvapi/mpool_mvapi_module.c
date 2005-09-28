@@ -210,7 +210,7 @@ int mca_mpool_mvapi_release(
     mca_mpool_base_registration_t* registration
     )
 {
-    if(0 == OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
+    if(0 >= OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
         VAPI_ret_t ret; 
         mca_mpool_mvapi_module_t * mpool_mvapi = (mca_mpool_mvapi_module_t*) mpool; 
         mca_mpool_mvapi_registration_t * vapi_reg; 
