@@ -89,13 +89,14 @@ int mca_mpool_gm_register(
     reg->mpool = mpool;
     reg->base = down_align_addr(addr, mca_mpool_base_page_size_log); 
     reg->flags = flags; 
-    reg->bound = up_align_addr(reg->base + size -1
+    reg->bound = up_align_addr(addr + size -1
                                , mca_mpool_base_page_size_log);
     
 
     if((rc = gm_register_memory(gm_mpool->port, reg->base, reg->bound - reg->base + 1)) != GM_SUCCESS) {
         opal_output(0, "[%s:%d] error(%d) registering gm memory\n", __FILE__, __LINE__, rc);
         OBJ_RELEASE(reg);
+        
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
@@ -107,6 +108,7 @@ int mca_mpool_gm_register(
                                      flags); 
     }
     *registration = reg;
+    /* opal_output(0,"registered memory from %p to %p\n", reg->base, reg->bound); */
     return OMPI_SUCCESS; 
 }
 
@@ -181,8 +183,13 @@ int mca_mpool_gm_release(
             opal_output(0, "[%s:%d] error(%d) deregistering gm memory\n", __FILE__, __LINE__, rc); 
             return OMPI_ERROR; 
         }
+        /* opal_output(0,"deregistering gm memory\n"); */
         OBJ_RELEASE(reg);
     }
+    else { 
+        /* opal_output(0, "release says ref_count is %d\n", reg->ref_count);  */
+    }
+
     return OMPI_SUCCESS; 
 }
 
