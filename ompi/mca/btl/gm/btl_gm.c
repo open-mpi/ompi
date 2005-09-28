@@ -189,8 +189,8 @@ int mca_btl_gm_free(
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des; 
     if(frag->size == 0) {
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, 
-                                     frag->registration);
+        btl->btl_mpool->mpool_release(btl->btl_mpool, 
+                                      frag->registration);
         MCA_BTL_GM_FRAG_RETURN_USER(btl, frag); 
     } else if(frag->size == mca_btl_gm_component.gm_eager_frag_size) {
         MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag); 
