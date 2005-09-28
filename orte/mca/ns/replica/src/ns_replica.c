@@ -545,7 +545,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return rc;
     }
-    tagitem->tag = orte_ns_replica.num_tags;
+    tagitem->tag = orte_ns_replica.num_tags + ORTE_RML_TAG_DYNAMIC;
     (orte_ns_replica.num_tags)++;
     if (NULL != name) {  /* provided - can look it up later */
         tagitem->name = strdup(name);
