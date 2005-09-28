@@ -19,6 +19,10 @@
 #include "rcache_rb_tree.h"
 #include "rcache_rb_mru.h"
 #include "opal/util/output.h"
+#include "ompi/mca/mpool/base/base.h" 
+
+extern unsigned int mca_mpool_base_page_size; 
+extern unsigned int mca_mpool_base_page_size_log;
 
 /**
  * Initialize the rcache 
@@ -44,13 +48,30 @@ int mca_rcache_rb_find (
     
     int pos, rc = OMPI_SUCCESS; 
     mca_rcache_rb_tree_item_t* tree_item; 
+    void* base_addr; 
+    void* bound_addr; 
+    if(size == 0) { 
+        return OMPI_ERROR; 
+    }
     OPAL_THREAD_LOCK(&rcache->lock);
     *cnt = 0;
-    tree_item = mca_rcache_rb_tree_find( (mca_rcache_rb_module_t*) rcache, addr ); 
+    
+    base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
+    bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
+    
+    for( ; base_addr <= bound_addr;  
+         base_addr =(void*) ((unsigned long) base_addr + mca_mpool_base_page_size)) { 
+        tree_item = mca_rcache_rb_tree_find( (mca_rcache_rb_module_t*) rcache, base_addr ); 
+        if(NULL != tree_item) { 
+            break; 
+        }
+    }
+        
     if(NULL == tree_item) { 
         OPAL_THREAD_UNLOCK(&rcache->lock);
         return OMPI_ERROR; 
     }
+    
     
     OBJ_DESTRUCT(regs); 
     OBJ_CONSTRUCT(regs, ompi_pointer_array_t);
@@ -76,7 +97,6 @@ int mca_rcache_rb_find (
         *cnt = 1; 
     }
     assert(tree_item->reg->bound - tree_item->reg->base >= 0); 
-    assert(((void*) tree_item->reg->base) <= addr);
     assert(((void*) tree_item->reg->bound) >= addr);
     return rc;
 }
