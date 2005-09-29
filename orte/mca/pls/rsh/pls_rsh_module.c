@@ -21,6 +21,7 @@
  */
 
 #include "orte_config.h"
+
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -51,6 +52,15 @@
 #include <pwd.h>
 #endif
 
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/util/if.h"
+#include "opal/util/if.h"
+#include "opal/util/path.h"
+#include "opal/event/event.h"
+#include "opal/util/show_help.h"
+#include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
 #include "orte/include/orte_constants.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
@@ -67,16 +77,7 @@
 #include "orte/mca/soh/soh.h"
 #include "orte/mca/soh/base/base.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
-#include "opal/mca/base/mca_base_param.h"
 #include "orte/util/sys_info.h"
-#include "opal/util/if.h"
-#include "opal/util/if.h"
-#include "opal/util/path.h"
-#include "opal/event/event.h"
-#include "opal/util/show_help.h"
-#include "opal/util/argv.h"
-#include "opal/util/opal_environ.h"
-#include "opal/util/output.h"
 
 extern char **environ;
 
@@ -478,7 +479,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     argv = opal_argv_copy(mca_pls_rsh_component.argv);
     argc = mca_pls_rsh_component.argc;
     node_name_index1 = argc;
-    opal_argv_append(&argc, &argv, "");  /* placeholder for node name */
+    opal_argv_append(&argc, &argv, "<template>");
 
     /* Do we need to source .profile on the remote side? */
 
@@ -505,7 +506,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, jobid_string);
     opal_argv_append(&argc, &argv, "--name");
     proc_name_index = argc;
-    opal_argv_append(&argc, &argv, "");
+    opal_argv_append(&argc, &argv, "<template>");
 
     /* tell the daemon how many procs are in the daemon's job */
     opal_argv_append(&argc, &argv, "--num_procs");
@@ -518,7 +519,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
     opal_argv_append(&argc, &argv, "--nodename");
     node_name_index2 = argc;
-    opal_argv_append(&argc, &argv, "");
+    opal_argv_append(&argc, &argv, "<template>");
 
     /* pass along the universe name and location info */
     opal_argv_append(&argc, &argv, "--universe");
@@ -562,7 +563,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     if (mca_pls_rsh_component.debug) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
-            opal_output(0, "pls:rsh: final top-level argv:");
+            opal_output(0, "pls:rsh: final template argv:");
             opal_output(0, "pls:rsh:     %s", param);
             free(param);
         }
@@ -744,8 +745,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         return rc;
                     }
                 } else {
-                    if (NULL != cur_prefix)
+                    if (NULL != cur_prefix) {
                         asprintf(&exec_path, "%s/bin/orted", cur_prefix);
+                    }
                     /* If we yet did not fill up the execpath, do so now */
                     if (NULL == exec_path) {
                         rc = orte_pls_rsh_fill_exec_path (&exec_path);
@@ -753,6 +755,41 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                             return rc;
                         }
                     }
+                }
+
+                /* If we have a prefix, then modify the PATH and
+                   LD_LIBRARY_PATH environment variables.  We're
+                   already in the child process, so it's ok to modify
+                   environ. */
+                if (NULL != cur_prefix) {
+                    char *oldenv, *newenv;
+
+                    /* Reset PATH */
+                    oldenv = getenv("PATH");
+                    if (NULL != oldenv) {
+                        asprintf(&newenv, "%s/bin:%s\n", cur_prefix, oldenv);
+                    } else {
+                        asprintf(&newenv, "%s/bin", cur_prefix);
+                    }
+                    opal_setenv("PATH", newenv, true, &environ);
+                    if (mca_pls_rsh_component.debug) {
+                        opal_output(0, "pls:rsh: reset PATH: %s", newenv);
+                    }
+                    free(newenv);
+
+                    /* Reset LD_LIBRARY_PATH */
+                    oldenv = getenv("LD_LIBRARY_PATH");
+                    if (NULL != oldenv) {
+                        asprintf(&newenv, "%s/lib:%s\n", cur_prefix, oldenv);
+                    } else {
+                        asprintf(&newenv, "%s/lib", cur_prefix);
+                    }
+                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
+                    if (mca_pls_rsh_component.debug) {
+                        opal_output(0, "pls:rsh: reset LD_LIBRARY_PATH: %s",
+                                    newenv);
+                    }
+                    free(newenv);
                 }
 
                 /* Since this is a local execution, we need to
