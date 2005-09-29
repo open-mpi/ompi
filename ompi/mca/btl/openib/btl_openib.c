@@ -656,7 +656,14 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     }
 
     /* Create the low and high priority queue pairs */ 
-    openib_btl->ib_cq_low = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
+#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+    openib_btl->ib_cq_low = 
+        ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
+#else
+    openib_btl->ib_cq_low = 
+        ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size,
+                      NULL, NULL, 0); 
+#endif
     
     if(NULL == openib_btl->ib_cq_low) {
         BTL_ERROR(("error creating low priority cq for %s errno says %s\n",
@@ -665,8 +672,15 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
         return OMPI_ERROR;
     }
 
-    openib_btl->ib_cq_high = ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
-    
+#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+    openib_btl->ib_cq_high = 
+        ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
+#else
+    openib_btl->ib_cq_high = 
+        ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size,
+                      NULL, NULL, 0); 
+#endif    
+
     if(NULL == openib_btl->ib_cq_high) {
         BTL_ERROR(("error creating high priority cq for %s errno says %s\n", 
                   ibv_get_device_name(openib_btl->ib_dev), 
