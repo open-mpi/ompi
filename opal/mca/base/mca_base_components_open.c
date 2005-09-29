@@ -275,10 +275,10 @@ static int distill(bool include_mode, const char *type_name,
              item = next) {
             next = opal_list_get_next(item);
             good = true;
+            cli = (mca_base_component_list_item_t *) item;
+            component = cli->cli_component;
 
             for (i = 0; NULL != names[i]; ++i) {
-                cli = (mca_base_component_list_item_t *) item;
-                component = cli->cli_component;
                 if (0 == strcmp(names[i], component->mca_component_name)) {
                     good = false;
                     break;
