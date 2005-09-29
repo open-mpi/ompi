@@ -472,6 +472,10 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
     if(memcmp(&peer->peer_name,&mca_oob_name_seed,sizeof(mca_oob_name_seed)) == 0) {
         /* If we are not already inside orte_finalize, then call abort */
         if (ORTE_UNIVERSE_STATE_FINALIZE > orte_universe_info.state) {
+            /* Should free the peer lock before we abort so we don't 
+             * get stuck in the orte_wait_kill when receiving messages in the 
+             * tcp OOB. */
+            OPAL_THREAD_UNLOCK(&peer->peer_lock);
             orte_errmgr.abort();
         }
     }

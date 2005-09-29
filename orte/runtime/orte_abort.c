@@ -53,12 +53,6 @@ int orte_abort(int status, char *fmt, ...)
      * - Assume errmgr cleans up child processes before we exit.
      */
 
-    /* - Turn of progress engine */
-    opal_progress_finalize();
-
-    /* - Turn off event loop */
-    opal_event_fini();
-
     /* - Clean up session directory */
     orte_session_dir_finalize(orte_process_info.my_name);
 
