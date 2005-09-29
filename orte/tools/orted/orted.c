@@ -519,13 +519,14 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     OBJ_RELEASE(answer);
 
  DONE:
+    OPAL_THREAD_UNLOCK(&orted_globals.mutex);
+
     /* reissue the non-blocking receive */
     ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, 0, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
     }
 
-    OPAL_THREAD_UNLOCK(&orted_globals.mutex);
     return;
 }
 

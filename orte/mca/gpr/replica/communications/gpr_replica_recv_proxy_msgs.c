@@ -71,10 +71,11 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
             ORTE_ERROR_LOG(rc);
         }
     }
+
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
     /* reissue the non-blocking receive before returning */
     orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
 
-    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return;
 }
