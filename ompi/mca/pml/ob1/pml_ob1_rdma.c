@@ -73,7 +73,7 @@ size_t mca_pml_ob1_rdma_btls(
                               size,
                               &regs, 
                               &reg_cnt); 
-        
+        assert(reg_cnt <= 1);
         /* shortcut for one entry - the typical case */
         if(reg_cnt == 1) {
             mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, 0); 
@@ -90,11 +90,15 @@ size_t mca_pml_ob1_rdma_btls(
                 num_btls_used++;
 
             /* otherwise if leave_pinned re-register */
-            } else if(mca_pml_ob1.leave_pinned) {
+            } else if( mca_pml_ob1.leave_pinned ) {
+                mca_mpool_base_registration_t reg_temp;
                 unsigned char* new_base = reg->base < base ? reg->base : base;
-                size_t new_len = (base - new_base) + size;                
-                /* printf("re-reg 2: base %p size %d new_base %p new_len %d\n", base, size, new_base, new_len);  */
+                unsigned char* new_bound = reg->bound > (base + size - 1) ? reg->bound : (base + size - 1);  
+                size_t new_len = new_bound - new_base + 1;
+                
+                /* printf("re-re5Bg 2: base %p size %d new_base %p new_len %d\n", base, size, new_base, new_len);  */
                 assert(new_len >= size);
+                reg_temp = *reg; 
                 btl_mpool->mpool_deregister(btl_mpool, reg); 
                 btl_mpool->mpool_register(btl_mpool, 
                     new_base, 
@@ -220,7 +224,7 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
         size,
         &regs, 
         &reg_cnt); 
-   
+    assert(reg_cnt <= 1);
     for(r = 0; r < reg_cnt; r++) { 
         mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
         size_t reg_len = reg->bound - base + 1;
@@ -256,16 +260,18 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
        /* a registration exists but is not large enough */
        } else {
            unsigned char* new_base = largest->base < base ? largest->base: base;
-           size_t new_len = (base - new_base) + size;
+           unsigned char* new_bound = largest->bound > (base + size - 1) ? largest->bound : (base + size - 1);  
+           size_t new_len = new_bound - new_base + 1;
+           
            /* printf("re-reg 2: base %p size %d new_base %p new_len %d\n", base, size, new_base, new_len);  */
-
-           btl_mpool->mpool_deregister(btl_mpool, largest); 
+           
+           btl_mpool->mpool_deregister(btl_mpool, largest);
            assert(new_len >= size);
-           btl_mpool->mpool_register(btl_mpool, 
-               new_base, 
-               new_len, 
+           btl_mpool->mpool_register(btl_mpool,
+               new_base,
+               new_len,
                MCA_MPOOL_FLAGS_CACHE,
-               &fit); 
+               &fit);
            assert(fit->ref_count >= 3);
         }
     }

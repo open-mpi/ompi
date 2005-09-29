@@ -24,7 +24,7 @@
 
 extern uint32_t mca_mpool_base_page_size;
 extern uint32_t mca_mpool_base_page_size_log; 
-
+uint64_t mca_mpool_gm_mem_registered; 
 
 /* 
  *  Initializes the mpool module.
@@ -45,6 +45,7 @@ void mca_mpool_gm_module_init(mca_mpool_gm_module_t* mpool)
     mpool->super.rcache = 
         mca_rcache_base_module_create(mca_mpool_gm_component.rcache_name);
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM; 
+    mca_mpool_gm_mem_registered = 0;
 }
 
 
@@ -95,10 +96,13 @@ int mca_mpool_gm_register(
 
     if((rc = gm_register_memory(gm_mpool->port, reg->base, reg->bound - reg->base + 1)) != GM_SUCCESS) {
         opal_output(0, "[%s:%d] error(%d) registering gm memory\n", __FILE__, __LINE__, rc);
+        assert(0);
         OBJ_RELEASE(reg);
         
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    mca_mpool_gm_mem_registered += reg->bound - reg->base + 1;
+
     
     OPAL_THREAD_ADD32(&reg->ref_count,1);
 
@@ -119,12 +123,20 @@ int mca_mpool_gm_register(
 int mca_mpool_gm_deregister(mca_mpool_base_module_t* mpool, 
                               mca_mpool_base_registration_t* reg)
 {
+    int rc;
     if(reg->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_delete(mpool->rcache, 
                                      reg, 
                                      reg->flags); 
     }
-    return mca_mpool_gm_release(mpool, reg); 
+    if((rc = mca_mpool_gm_release(mpool, reg)) != GM_SUCCESS) { 
+        opal_output(0, "[%s:%d] error(%d) deregistering gm memory\n", __FILE__, __LINE__, rc);
+        assert(0);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+
+    }
+    
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -184,12 +196,13 @@ int mca_mpool_gm_release(
             return OMPI_ERROR; 
         }
         /* opal_output(0,"deregistering gm memory\n"); */
+        mca_mpool_gm_mem_registered -= reg->bound - reg->base + 1;
         OBJ_RELEASE(reg);
     }
     else { 
         /* opal_output(0, "release says ref_count is %d\n", reg->ref_count);  */
     }
-
+    
     return OMPI_SUCCESS; 
 }
 
