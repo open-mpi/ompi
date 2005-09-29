@@ -200,10 +200,15 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
     if( pElems[index].elem.common.flags & DT_FLAG_DATA ) {  /* let's stop here */
         PUSH_STACK( pStack, pConvertor->stack_pos, index, pElems[index].elem.common.type,
                     pElems[index].elem.count, pElems[index].elem.disp, 0 );
-    } else {
+    } 
+#if 0
+    /* JMS: Why is this here?  Intel tests seem to pass even without
+       any further processing... */
+    else {
         opal_output( 0, "Here we should have a data in the datatype description\n" );
 	ompi_ddt_dump( pConvertor->pDesc );
     }
+#endif
     pConvertor->bConverted = 0;
     return OMPI_SUCCESS;
 }
