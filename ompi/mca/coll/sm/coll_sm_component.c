@@ -94,7 +94,8 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     /* sm-component specifc information */
 
     /* (default) priority */
-    75,
+    /* JMS temporarily lowered until we can get more testing */
+    0,
 
     /* (default) control size (bytes) */
     4096,
