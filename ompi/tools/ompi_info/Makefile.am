@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 AM_CPPFLAGS = \
             -DOMPI_PREFIX="\"$(prefix)\"" \
             -DOMPI_BINDIR="\"$(bindir)\"" \
@@ -48,9 +46,7 @@ AM_CPPFLAGS = \
             -DOPAL_WANT_SVN=\"@OPAL_WANT_SVN@\" \
             -DOPAL_SVN_R=\"@OPAL_SVN_R@\"
 
-pkgdata_DATA = help-ompi_info.txt
-
-EXTRA_DIST = $(pkgdata_DATA)
+dist_pkgdata_DATA = help-ompi_info.txt
 
 libs = \
         $(top_builddir)/ompi/libmpi.la \

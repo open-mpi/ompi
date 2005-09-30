@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-
-
-EXTRA_DIST = $(pkgdata_DATA)
-pkgdata_DATA = help-orteprobe.txt
+dist_pkgdata_DATA = help-orteprobe.txt
 
 AM_CPPFLAGS = \
             -DOMPI_PREFIX="\"$(prefix)\"" \

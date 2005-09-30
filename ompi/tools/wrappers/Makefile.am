@@ -14,7 +14,7 @@
 # $HEADER$
 #
 
-
+dist_pkgdata_DATA = help-wrapper.txt
 
 # This is ugly, but we need it so that people can change things at
 # "make" time (e.g., "make sysconfdir=/foo/bar all") as documented in
@@ -32,9 +32,7 @@ else
 AM_CPPFLAGS += -DOMPI_WANT_DEVEL_HEADERS=0
 endif
 
-EXTRA_DIST = wrap.cc wrap_engine.cc $(pkgdata_DATA)
-
-pkgdata_DATA = help-wrapper.txt
+EXTRA_DIST = wrap.cc wrap_engine.cc
 
 bin_PROGRAMS = mpicc mpic++ mpif77 mpif90
 

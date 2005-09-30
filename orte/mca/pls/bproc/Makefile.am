@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-
-
-EXTRA_DIST = $(pkgdata_DATA)
-pkgdata_DATA = help-pls-bproc.txt
+dist_pkgdata_DATA = help-pls-bproc.txt
 
 AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include $(pls_bproc_CPPFLAGS) -DORTE_BINDIR="\"$(bindir)\""
 
