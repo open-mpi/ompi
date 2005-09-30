@@ -138,6 +138,7 @@ static int orte_pls_fork_proc(
     int rc;
     sigset_t sigs;
     orte_vpid_t vpid;
+    int i;
 
     /* should pull this information from MPIRUN instead of going with
        default */
@@ -235,6 +236,37 @@ static int orte_pls_fork_proc(
         } else {
             environ_copy = opal_argv_copy(environ);
         }
+
+        /* special case handling for --prefix: this is somewhat icky,
+           but at least some users do this.  :-\ It is possible that
+           when using --prefix, the user will also "-x PATH" and/or
+           "-x LD_LIBRARY_PATH", which would therefore clobber the
+           work that was done in the prior pls to ensure that we have
+           the prefix at the beginning of the PATH and
+           LD_LIBRARY_PATH.  So examine the context->env and see if we
+           find PATH or LD_LIBRARY_PATH.  If found, that means the
+           prior work was clobbered, and we need to re-prefix those
+           variables. */
+        for (i = 0; NULL != context->env && NULL != context->env[i]; ++i) {
+            char *newenv;
+
+            /* Reset PATH */
+            if (0 == strncmp("PATH=", context->env[i], 5)) {
+                asprintf(&newenv, "%s/bin:%s\n", 
+                         context->prefix_dir, context->env[i] + 5);
+                opal_setenv("PATH", newenv, true, &environ_copy);
+                free(newenv);
+            } 
+
+            /* Reset LD_LIBRARY_PATH */
+            else if (0 == strncmp("LD_LIBRARY_PATH=", context->env[i], 16)) {
+                asprintf(&newenv, "%s/lib:%s\n", 
+                         context->prefix_dir, context->env[i] + 16);
+                opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ_copy);
+                free(newenv);
+            } 
+        }
+
         param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
         opal_unsetenv(param, &environ_copy);
         free(param);
