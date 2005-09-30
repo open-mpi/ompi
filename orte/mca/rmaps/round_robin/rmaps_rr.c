@@ -21,6 +21,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/rmaps/base/base.h"
@@ -179,6 +180,8 @@ static int map_app_by_node(
 
         /* Double check that the list is not empty */
         if (opal_list_get_end(nodes) == cur_node_item) {
+            opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
+                           true, num_alloc, app->num_procs);
             return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
         }
 
@@ -186,6 +189,8 @@ static int map_app_by_node(
            then we're full */
         if (start == cur_node_item) {
             if (!did_alloc) {
+                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
+                               true, num_alloc, app->num_procs);
                 return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
             }
         }
@@ -273,6 +278,8 @@ static int map_app_by_slot(
     /* Did we allocate everything? */
 
     if (num_alloc < app->num_procs) {
+        opal_show_help("help-rmaps-rr.txt", "rmaps-rr:alloc-error",
+                       true, num_alloc, app->num_procs);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 

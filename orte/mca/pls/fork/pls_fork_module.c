@@ -38,6 +38,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/util/show_help.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/univ_info.h"
 #include "opal/util/opal_environ.h"
@@ -222,8 +223,8 @@ static int orte_pls_fork_proc(
         }
 #else
         if(chdir(context->cwd) != 0) {
-            perror("chdir");
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            opal_show_help("help-orte-pls-fork.txt", "orte-pls-fork:chdir-error",
+                           true, context->cwd, strerror(errno));
         }
 #endif
 
@@ -327,9 +328,8 @@ static int orte_pls_fork_proc(
         /* Exec the new executable */
 
         execve(context->app, context->argv, environ_copy);
-        opal_output(0, "orte_pls_fork: %s - %s\n", context->app, 
-            opal_argv_join(context->argv, ' '));
-        opal_output(0, "orte_pls_fork: execv failed with errno=%d\n", errno);
+        opal_show_help("help-orte-pls-fork.txt", "orte-pls-fork:execv-error",
+                       true, context->app, strerror(errno));
         exit(-1);
 
     } else {

@@ -1,0 +1,32 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open RTE's orterun.
+#
+[orte-pls-fork:chdir-error]
+Warning: Could not change to the working directory "%s".
+
+The error returned was "%s".
+
+This is not necessarily a fatal condition, and execution will continue.
+
+[orte-pls-fork:execv-error]
+Could not execute the executable "%s": %s
+
+This could mean that your PATH or executable name is wrong, or that you do not
+have the necessary permissions.  Please ensure that the executable is able to be
+found and executed.
+
