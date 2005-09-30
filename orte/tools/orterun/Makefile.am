@@ -29,8 +29,7 @@ pkgdata_DATA = help-orterun.txt
 CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
 libs = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/liborte.la
 
 bin_PROGRAMS = orterun
 
