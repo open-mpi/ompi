@@ -250,7 +250,7 @@ sm_module_init(struct ompi_communicator_t *comm)
 
     comm->c_coll_selected_data = data =
         malloc(sizeof(mca_coll_base_comm_t) + 
-               (c->sm_bootstrap_num_segments * 
+               (c->sm_comm_num_segments * 
                 sizeof(mca_coll_base_mpool_index_t)) +
                (size * 
                 (sizeof(mca_coll_sm_tree_node_t) +
@@ -266,7 +266,7 @@ sm_module_init(struct ompi_communicator_t *comm)
     data->mcb_mpool_index = (mca_coll_base_mpool_index_t*) (data + 1);
     /* Setup array of pointers for #3 */
     data->mcb_tree = (mca_coll_sm_tree_node_t*)
-        (data->mcb_mpool_index + c->sm_bootstrap_num_segments);
+        (data->mcb_mpool_index + c->sm_comm_num_segments);
     /* Finally, setup the array of children pointers in the instances
        in #5 to point to their corresponding arrays in #6 */
     data->mcb_tree[0].mcstn_children = (mca_coll_sm_tree_node_t**)
