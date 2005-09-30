@@ -265,12 +265,11 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 
             /* Loop over all the segments in this set */
             
-            segment_num = flag_num * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
-            max_segment_num = (flag_num + 1) * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
+            segment_num = 
+                flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            max_segment_num = 
+                (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             reduce_target = (((char*) rbuf) + (frag_num * segment_ddt_bytes));
-
             do {
 
                 /* Loop over the processes, receiving and reducing
@@ -452,10 +451,10 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 
             /* Loop over all the segments in this set */
 
-            segment_num = flag_num * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
-            max_segment_num = (flag_num + 1) * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
+            segment_num = 
+                flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            max_segment_num = 
+                (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             do {
                 index = &(data->mcb_mpool_index[segment_num]);
 
