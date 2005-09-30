@@ -472,6 +472,7 @@ static void mca_btl_mvapi_endpoint_recv(
     size_t cnt = 1; 
     mca_btl_mvapi_rem_info_t rem_info; 
     
+    ib_endpoint = (mca_btl_mvapi_endpoint_t*) endpoint;
     /* start by unpacking data first so we know who is knocking at 
        our door */ 
 

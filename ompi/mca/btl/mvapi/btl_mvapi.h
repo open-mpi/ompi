@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -219,40 +218,43 @@ struct mca_btl_mvapi_module_t {
 }
 
 
-#define MCA_BTL_MVAPI_POST_SRR_SUB(post_srr_sub_cnt, \
-                                   post_srr_sub_mvapi_btl, \
-                                   post_srr_sub_frag_list, \
-                                   post_srr_sub_srr_posted, \
-                                   post_srr_sub_nic, \
-                                   post_srr_sub_srq_hndl) \
+#define MCA_BTL_MVAPI_POST_SRR_SUB(cnt, \
+                                   mvapi_btl, \
+                                   frag_list, \
+                                   srr_posted, \
+                                   nic, \
+                                   srq_hndl) \
 {\
-    uint32_t post_srr_sub_i; \
-    uint32_t post_srr_sub_rwqe_posted; \
-    int post_srr_sub_rc; \
-    opal_list_item_t* post_srr_sub_item; \
-    mca_btl_mvapi_frag_t* post_srr_sub_frag; \
-    VAPI_rr_desc_t* post_srr_sub_desc_post = post_srr_sub_mvapi_btl->rr_desc_post; \
-    for(post_srr_sub_i = 0; post_srr_sub_i < post_srr_sub_cnt; post_srr_sub_i++) { \
-        OMPI_FREE_LIST_WAIT(post_srr_sub_frag_list, post_srr_sub_item, post_srr_sub_rc); \
-        post_srr_sub_frag = (mca_btl_mvapi_frag_t*) post_srr_sub_item; \
-        post_srr_sub_frag->sg_entry.len = post_srr_sub_frag->size + \
-            ((unsigned char*) post_srr_sub_frag->segment.seg_addr.pval-  \
-             (unsigned char*) post_srr_sub_frag->hdr);  \
-       post_srr_sub_desc_post[post_srr_sub_i] = post_srr_sub_frag->rr_desc; \
+    do { \
+    uint32_t i; \
+    VAPI_ret_t ret; \
+    uint32_t rwqe_posted = 0; \
+    int rc; \
+    opal_list_item_t* item = NULL; \
+    mca_btl_mvapi_frag_t* frag = NULL; \
+    VAPI_rr_desc_t* desc_post = mvapi_btl->rr_desc_post; \
+    for(i = 0; i < cnt; i++) { \
+        OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
+        frag = (mca_btl_mvapi_frag_t*) item; \
+        frag->sg_entry.len = frag->size + \
+            ((unsigned char*) frag->segment.seg_addr.pval-  \
+             (unsigned char*) frag->hdr);  \
+       desc_post[i] = frag->rr_desc; \
     }\
-    post_srr_sub_frag->ret = VAPI_post_srq( post_srr_sub_nic, \
-                                             post_srr_sub_srq_hndl, \
-                                             post_srr_sub_cnt, \
-                                             post_srr_sub_desc_post, \
-                                             &post_srr_sub_rwqe_posted); \
-   if(VAPI_OK != post_srr_sub_frag->ret) { \
+    ret = VAPI_post_srq( nic, \
+                               srq_hndl, \
+                               cnt, \
+                               desc_post, \
+                               &rwqe_posted); \
+   if(VAPI_OK != ret) { \
         BTL_ERROR(("error posting receive descriptors to shared receive queue: %s",\
-                   VAPI_strerror(post_srr_sub_frag->ret))); \
-   } else if(post_srr_sub_rwqe_posted < 1) { \
-       BTL_ERROR(("error posting receive descriptors to shared receive queue, number of entries posted is %d", post_srr_sub_rwqe_posted)); \
+                   VAPI_strerror(ret))); \
+   } else if(rwqe_posted < 1) { \
+       BTL_ERROR(("error posting receive descriptors to shared receive queue, number of entries posted is %d", rwqe_posted)); \
    } else {\
-        OPAL_THREAD_ADD32(post_srr_sub_srr_posted, post_srr_sub_cnt); \
+        OPAL_THREAD_ADD32(srr_posted, cnt); \
    }\
+   } while(0);\
 }
 struct mca_btl_mvapi_frag_t; 
 extern mca_btl_mvapi_module_t mca_btl_mvapi_module;
