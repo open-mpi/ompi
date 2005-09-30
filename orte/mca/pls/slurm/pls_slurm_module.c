@@ -30,6 +30,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/runtime/runtime.h"
 #include "orte/include/orte_constants.h"
@@ -40,6 +41,7 @@
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
 #include "pls_slurm.h"
 
 
@@ -51,7 +53,8 @@ static int pls_slurm_terminate_job(orte_jobid_t jobid);
 static int pls_slurm_terminate_proc(const orte_process_name_t *name);
 static int pls_slurm_finalize(void);
 
-static int pls_slurm_start_proc(int argc, char **argv, char **env);
+static int pls_slurm_start_proc(int argc, char **argv, char **env,
+                                char *prefix);
 
 
 /*
@@ -79,7 +82,7 @@ extern char **environ;
 static int pls_slurm_launch(orte_jobid_t jobid)
 {
     opal_list_t nodes;
-    opal_list_item_t* item;
+    opal_list_item_t *item, *item2;
     size_t num_nodes;
     orte_vpid_t vpid;
     char *jobid_string;
@@ -96,7 +99,8 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     orte_process_name_t* name;
     char *name_string;
     char **custom_strings;
-    int   num_args, i;
+    int num_args, i;
+    char *cur_prefix;
 
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
@@ -262,11 +266,58 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     }
 
     /* Bookkeeping -- save the node names */
+    cur_prefix = NULL;
     for (item =  opal_list_get_first(&nodes);
          item != opal_list_get_end(&nodes);
          item =  opal_list_get_next(item)) {
         orte_ras_node_t* node = (orte_ras_node_t*)item;
         orte_process_name_t* name;
+        opal_list_t map;
+
+        OBJ_CONSTRUCT(&map, opal_list_t);
+        /* Get the mapping of this very node */
+        rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
+                                          jobid,
+                                          node->node_name,
+                                          &map);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        /* Copy the prefix-directory specified within the
+           corresponding app_context.  If there are multiple,
+           different prefix's in the app context, complain (i.e., only
+           allow one --prefix option for the entire slurm run -- we
+           don't support different --prefix'es for different nodes in
+           the SLURM pls) */
+        for (item2 =  opal_list_get_first(&map);
+             item2 != opal_list_get_end(&map);
+             item2 =  opal_list_get_next(item2)) {
+            orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item2;
+            char * app_prefix_dir = map->app->prefix_dir;
+
+            /* Check for already set cur_prefix_dir -- if different,
+               complain */
+            if (NULL != app_prefix_dir) {
+                if (NULL != cur_prefix &&
+                    0 != strcmp (cur_prefix, app_prefix_dir)) {
+                    opal_show_help("help-pls-slurm.txt", "multiple-prefixes",
+                                   true, cur_prefix, app_prefix_dir);
+                    return ORTE_ERR_FATAL;
+                }
+
+                /* If not yet set, copy it; iff set, then it's the
+                   same anyway */
+                if (NULL == cur_prefix) {
+                    cur_prefix = strdup(map->app->prefix_dir);
+                    if (mca_pls_slurm_component.debug) {
+                        opal_output (0, "pls:slurm: Set prefix:%s\n",
+                                     cur_prefix);
+                    }
+                }
+            }
+        }
 
         /* initialize daemons process name */
         rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
@@ -314,7 +365,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
 #endif
     
     /* exec the daemon */
-    rc = pls_slurm_start_proc(argc, argv, env);
+    rc = pls_slurm_start_proc(argc, argv, env, cur_prefix);
     if (ORTE_SUCCESS != rc) {
         opal_output(0, "pls:slurm: start_procs returned error %d", rc);
         goto cleanup;
@@ -364,7 +415,8 @@ static int pls_slurm_finalize(void)
 }
 
 
-static int pls_slurm_start_proc(int argc, char **argv, char **env)
+static int pls_slurm_start_proc(int argc, char **argv, char **env,
+                                char *prefix)
 {
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
@@ -378,6 +430,41 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env)
                     "pls:slurm:start_proc: fork failed");
         return ORTE_ERR_IN_ERRNO;
     } else if (0 == srun_pid) {
+        
+        /* If we have a prefix, then modify the PATH and
+           LD_LIBRARY_PATH environment variables.  We're already in
+           the child process, so it's ok to modify environ. */
+        if (NULL != prefix) {
+            char *oldenv, *newenv;
+            
+            /* Reset PATH */
+            oldenv = getenv("PATH");
+            if (NULL != oldenv) {
+                asprintf(&newenv, "%s/bin:%s\n", prefix, oldenv);
+            } else {
+                asprintf(&newenv, "%s/bin", prefix);
+            }
+            opal_setenv("PATH", newenv, true, &environ);
+            if (mca_pls_slurm_component.debug) {
+                opal_output(0, "pls:slurm: reset PATH: %s", newenv);
+            }
+            free(newenv);
+            
+            /* Reset LD_LIBRARY_PATH */
+            oldenv = getenv("LD_LIBRARY_PATH");
+            if (NULL != oldenv) {
+                asprintf(&newenv, "%s/lib:%s\n", prefix, oldenv);
+            } else {
+                asprintf(&newenv, "%s/lib", prefix);
+            }
+            opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
+            if (mca_pls_slurm_component.debug) {
+                opal_output(0, "pls:slurm: reset LD_LIBRARY_PATH: %s",
+                            newenv);
+            }
+            free(newenv);
+        }
+
         /* get the srun process out of orterun's process group so that
            signals sent from the shell (like those resulting from
            cntl-c) don't get sent to srun */
