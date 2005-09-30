@@ -57,21 +57,36 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_interpose_component =
 #define FIND_REALFREE() \
     do { \
         if (NULL == realfree) { \
-            realfree = (void (*)(void*)) dlsym(RTLD_NEXT, "free"); \
+            union { \
+                void (*free_fp)(void*); \
+                void *free_p; \
+            } tmp; \
+            tmp.free_p = dlsym(RTLD_NEXT, "free"); \
+            realfree = tmp.free_fp; \
         } \
     } while (0);
 
 #define FIND_REALREALLOC() \
     do { \
         if (NULL == realrealloc) { \
-            realrealloc = (void* (*)(void*, size_t)) dlsym(RTLD_NEXT, "realloc"); \
+            union { \
+                void* (*realloc_fp)(void*, size_t); \
+                void* realloc_p; \
+            } tmp; \
+            tmp.realloc_p = dlsym(RTLD_NEXT, "realloc"); \
+            realrealloc = tmp.realloc_fp; \
         } \
     } while (0);
 
 #define FIND_REALMUNMAP() \
     do { \
         if (NULL == realmunmap) { \
-            realmunmap = (int (*)(void*, size_t)) dlsym(RTLD_NEXT, "munmap"); \
+            union { \
+                int (*munmap_fp)(void*, size_t); \
+                void *munmap_p; \
+            } tmp; \
+            tmp.munmap_p = dlsym(RTLD_NEXT, "munmap"); \
+            realmunmap = tmp.munmap_fp; \
         } \
     } while (0);
 
