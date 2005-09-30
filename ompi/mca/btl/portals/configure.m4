@@ -71,10 +71,10 @@ AC_DEFUN([MCA_btl_portals_CONFIG_VALS], [
         [max size for rdma fragments])
 
     MCA_btl_portals_CONFIG_VAL([max-sends-pending],
-        [OMPI_BTL_PORTALS_MAX_SENDS_PENDING], [128],
+        [OMPI_BTL_PORTALS_MAX_SENDS_PENDING], [64],
         [max number of sends pending at any time])
     MCA_btl_portals_CONFIG_VAL([recv-queue-size],
-        [OMPI_BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE], [2048],
+        [OMPI_BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE], [8192],
         [size of event queue for receiving frags])
 
     MCA_btl_portals_CONFIG_VAL([free-list-init-num],
