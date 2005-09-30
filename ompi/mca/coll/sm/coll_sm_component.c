@@ -210,6 +210,8 @@ static int sm_open(void)
         cs->sm_comm_num_segments += cs->sm_comm_num_in_use_flags - 
             (cs->sm_comm_num_segments % cs->sm_comm_num_in_use_flags);
     }
+    cs->sm_segs_per_inuse_flag = 
+        cs->sm_comm_num_segments / cs->sm_comm_num_in_use_flags;
 
     mca_base_param_reg_int(c, "tree_degree",
                            "Degree of the tree for tree-based operations (must be => 1 and <= min(control_size, 255))",

@@ -117,10 +117,10 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
             /* Loop over all the segments in this set */
             
-            segment_num = flag_num * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
-            max_segment_num = (flag_num + 1) * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
+            segment_num = 
+                flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            max_segment_num = 
+                (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             do {
                 index = &(data->mcb_mpool_index[segment_num]);
 
@@ -178,10 +178,10 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
             /* Loop over all the segments in this set */
             
-            segment_num = flag_num * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
-            max_segment_num = (flag_num + 1) * 
-                mca_coll_sm_component.sm_comm_num_in_use_flags; 
+            segment_num = 
+                flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            max_segment_num = 
+                (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             do {
 
                 /* Pre-calculate some values */

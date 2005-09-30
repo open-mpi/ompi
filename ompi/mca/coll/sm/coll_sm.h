@@ -158,6 +158,12 @@ extern "C" {
 
         /** Meta struct containing information about the bootstrap area */
         mca_common_sm_mmap_t *sm_bootstrap_meta;
+
+        /** How many fragment segments are protected by a single
+            in-use flags.  This is solely so that we can only perform
+            the division once and then just use the value without
+            having to re-calculate. */
+        int sm_segs_per_inuse_flag;
     };
     /**
      * Convenience typedef
