@@ -32,6 +32,7 @@
 #include "btl_mx_frag.h"
 #include "btl_mx_endpoint.h" 
 #include "mca/btl/base/base.h" 
+#include "mca/btl/base/btl_base_error.h"
 
 mca_btl_mx_component_t mca_btl_mx_component = {
     {
@@ -307,6 +308,15 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     if( (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
                                &mca_btl_mx_component.mx_num_btls, sizeof(uint32_t))) != MX_SUCCESS ) {
         opal_output(0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status=%d\n", status);
+        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
+                                NULL, 0);
+        return NULL;
+    }
+
+    if (0 == mca_btl_mx_component.mx_num_btls) {
+        mca_btl_base_error_no_nics("Myrinet/MX", "NIC");
+        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
+                                NULL, 0);
         return NULL;
     }
 

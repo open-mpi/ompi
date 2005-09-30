@@ -82,7 +82,7 @@ int mca_btl_mvapi_add_procs(
         mca_btl_base_endpoint_t* ib_peer;
 
         if(NULL == (ib_proc = mca_btl_mvapi_proc_create(ompi_proc))) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            continue;
         }
 
         /*

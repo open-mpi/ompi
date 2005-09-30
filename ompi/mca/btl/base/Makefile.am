@@ -21,6 +21,8 @@ noinst_LTLIBRARIES = libmca_btl_base.la
 
 # Source code files
 
+pkgdata_DATA = help-mpi-btl-base.txt
+
 headers = \
         base.h \
 	btl_base_error.h

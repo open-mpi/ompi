@@ -321,10 +321,12 @@ static void mca_pml_base_modex_registry_callback(
                                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                                 continue;
                             }
-                        }
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
-                            ORTE_ERROR_LOG(rc);
-                            continue;
+                            if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
+                                ORTE_ERROR_LOG(rc);
+                                continue;
+                            }
+                        } else {
+                            bytes = NULL;
                         }
 
                         /*
@@ -514,7 +516,7 @@ int mca_pml_base_modex_send(
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    memcpy((value.byteobject.bytes, data, size);
+    memcpy((value.byteobject.bytes, data, size));
 
     asprintf(&((value->keyvals[0])->key), "modex-%s-%s-%d-%d",
         source_component->mca_type_name,
@@ -540,8 +542,10 @@ int mca_pml_base_modex_send(
     if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &size, 1, ORTE_SIZE))) {
         goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, (void*)data, size, ORTE_BYTE))) {
-        goto cleanup;
+    if (0 != size) {
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, (void*)data, size, ORTE_BYTE))) {
+            goto cleanup;
+        }
     }
     if (ORTE_SUCCESS != (rc = orte_dps.unload(&buffer, (void**)&value.byteobject.bytes,
         (size_t*)&value.byteobject.size))) {

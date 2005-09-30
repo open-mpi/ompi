@@ -32,6 +32,7 @@
 #include "btl_gm_frag.h"
 #include "btl_gm_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
+#include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/datatype/convertor.h" 
 #include "btl_gm_endpoint.h"
 #include "orte/util/proc_info.h"
@@ -405,20 +406,24 @@ mca_btl_gm_modex_send(void)
     int         rc;
     size_t      i;
     size_t      size;
-    mca_btl_gm_addr_t *addrs;
+    mca_btl_gm_addr_t *addrs = NULL;
 
     size = mca_btl_gm_component.gm_num_btls * sizeof (mca_btl_gm_addr_t);
-    addrs = (mca_btl_gm_addr_t *)malloc (size);
-    if (NULL == addrs) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+    if (0 != size) {
+        addrs = (mca_btl_gm_addr_t *)malloc (size);
+        if (NULL == addrs) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-    for (i = 0; i < mca_btl_gm_component.gm_num_btls; i++) {
-        mca_btl_gm_module_t *btl = mca_btl_gm_component.gm_btls[i];
-        addrs[i] = btl->gm_addr;
+        for (i = 0; i < mca_btl_gm_component.gm_num_btls; i++) {
+            mca_btl_gm_module_t *btl = mca_btl_gm_component.gm_btls[i];
+            addrs[i] = btl->gm_addr;
+        }
     }
     rc = mca_pml_base_modex_send (&mca_btl_gm_component.super.btl_version, addrs, size);
-    free (addrs);
+    if (NULL != addrs) {
+        free (addrs);
+    }
     return rc;
 }
                                                                                                                 
@@ -439,6 +444,8 @@ mca_btl_gm_component_init (int *num_btl_modules,
     /* try to initialize GM */
     if( GM_SUCCESS != gm_init() ) {
         opal_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
+        mca_btl_gm_component.gm_num_btls = 0;
+        mca_btl_gm_modex_send();
         return NULL;
     }
 
@@ -451,9 +458,15 @@ mca_btl_gm_component_init (int *num_btl_modules,
 
     /* initialize gm */
     if (OMPI_SUCCESS != mca_btl_gm_discover()) {
+        mca_btl_base_error_no_nics("Myrinet/GM", "NIC");
+        mca_btl_gm_component.gm_num_btls = 0;
+        mca_btl_gm_modex_send();
         return NULL;
     }
     if (mca_btl_gm_component.gm_num_btls == 0) {
+        mca_btl_base_error_no_nics("Myrinet/GM", "NIC");
+        mca_btl_gm_component.gm_num_btls = 0;
+        mca_btl_gm_modex_send();
         return NULL;
     }
 

@@ -82,7 +82,7 @@ int mca_btl_mx_add_procs(
         }
 
         if(NULL == (mx_proc = mca_btl_mx_proc_create(ompi_proc))) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            continue;
         }
 
         /*
