@@ -47,7 +47,7 @@ int mca_rcache_rb_find (
                         ){ 
     
     int pos, rc = OMPI_SUCCESS; 
-    mca_rcache_rb_tree_item_t* tree_item; 
+    mca_rcache_rb_tree_item_t* tree_item = NULL; 
     void* base_addr; 
     void* bound_addr; 
     if(size == 0) { 
