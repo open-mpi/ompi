@@ -14,14 +14,12 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 sources = \
         pls_slurm.h \
         pls_slurm_component.c \
         pls_slurm_module.c
+
+dist_pkgdata_DATA = help-pls-slurm.txt
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
