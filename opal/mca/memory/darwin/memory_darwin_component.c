@@ -115,7 +115,13 @@ munmap(void* addr, size_t len)
     opal_mem_free_release_hook(addr, len);
 
     if (NULL == realmunmap) {
-        realmunmap = (int (*)(void*, size_t)) dlsym(RTLD_NEXT, "munmap");
+        union { 
+            int (*munmap_fp)(void*, size_t);
+            void *munmap_p;
+        } tmp;
+
+        tmp.munmap_p = dlsym(RTLD_NEXT, "munmap");
+        realmunmap = tmp.munmap_fp;
     }
 
     return realmunmap(addr, len);
