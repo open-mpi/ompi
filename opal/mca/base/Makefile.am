@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 # Need this so that the base knows where to load dynamic components from
 # (by default)
 
@@ -26,11 +24,9 @@ AM_CPPFLAGS = \
 AM_LFLAGS = -Pmca_base_yy
 LEX_OUTPUT_ROOT = lex.mca_base_yy
 
-EXTRA_DIST = $(pkgdata_DATA)
-
 noinst_LTLIBRARIES = libmca_base.la
 
-pkgdata_DATA = help-mca-base.txt help-mca-param.txt
+dist_pkgdata_DATA = help-mca-base.txt help-mca-param.txt
 
 # Source code files
 

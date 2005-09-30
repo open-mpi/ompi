@@ -14,15 +14,11 @@
 # $HEADER$
 #
 
-
-
-EXTRA_DIST = $(pkgdata_DATA)
-
 AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
 
 noinst_LTLIBRARIES = libmca_coll_base.la
 
-pkgdata_DATA = help-mca-coll-base.txt
+dist_pkgdata_DATA = help-mca-coll-base.txt
 
 headers = \
         base.h \

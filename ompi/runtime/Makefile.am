@@ -14,15 +14,11 @@
 # $HEADER$
 #
 
-
-
 AM_CPPFLAGS = -I$(top_builddir)/src/event
-
-EXTRA_DIST = $(pkgdata_DATA)
 
 noinst_LTLIBRARIES = libmpiruntime.la
 
-pkgdata_DATA = help-mpi-runtime.txt
+dist_pkgdata_DATA = help-mpi-runtime.txt
 
 # Source code files
 

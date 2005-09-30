@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-
-
-EXTRA_DIST = $(pkgdata_DATA)
-pkgdata_DATA = help-orterun.txt
+dist_pkgdata_DATA = help-orterun.txt
 
 # This is not quite in the Automake spirit, but we have to do it.
 # Since the totalview portion of the library must be built with -g, we

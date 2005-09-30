@@ -14,12 +14,7 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
-EXTRA_DIST = $(pkgdata_DATA)
-pkgdata_DATA = help-pls-rsh.txt
+dist_pkgdata_DATA = help-pls-rsh.txt
 
 AM_CPPFLAGS = -DOMPI_BINDIR="\"$(bindir)\""
 

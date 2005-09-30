@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-
-
-EXTRA_DIST = $(pkgdata_DATA)
-pkgdata_DATA = help-orteconsole.txt
+dist_pkgdata_DATA = help-orteconsole.txt
 
 libs = \
         $(top_builddir)/orte/liborte.la
