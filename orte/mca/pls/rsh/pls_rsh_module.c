@@ -608,7 +608,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
             char * app_prefix_dir = map->app->prefix_dir;
 
-            /* Check for already set cur_prefix_dir -- if different, complain */
+            /* Check for already set cur_prefix_dir -- if different,
+               complain */
             if (NULL != app_prefix_dir) {
                 if (NULL != cur_prefix &&
                     0 != strcmp (cur_prefix, app_prefix_dir)) {
@@ -617,14 +618,14 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     return ORTE_ERR_FATAL;
                 }
 
-                /* If not yet set, copy it; iff set, then it's the same anyway */
+                /* If not yet set, copy it; iff set, then it's the
+                   same anyway */
                 if (NULL == cur_prefix) {
                     cur_prefix = strdup (map->app->prefix_dir);
-                }
-
-                if (mca_pls_rsh_component.debug) {
-                    opal_output (0, "pls:rsh: Set cur_prefix:%s\n",
-                                 cur_prefix);
+                    if (mca_pls_rsh_component.debug) {
+                        opal_output (0, "pls:rsh: Set prefix:%s\n",
+                                     cur_prefix);
+                    }
                 }
             }
         }
