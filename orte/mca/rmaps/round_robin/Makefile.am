@@ -14,9 +14,7 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
+dist_pkgdata_DATA = help-orte-rmaps-rr.txt
 
 sources = \
         rmaps_rr.c \

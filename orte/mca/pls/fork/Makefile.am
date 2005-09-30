@@ -17,6 +17,7 @@
 # Use the top-level Makefile.options
 
 
+dist_pkgdata_DATA = help-orte-pls-fork.txt
 
 sources = \
         pls_fork.h \
