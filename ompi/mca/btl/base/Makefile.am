@@ -14,7 +14,6 @@
 # $HEADER$
 #
 
-
 AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
 
 noinst_LTLIBRARIES = libmca_btl_base.la
@@ -22,6 +21,7 @@ noinst_LTLIBRARIES = libmca_btl_base.la
 # Source code files
 
 pkgdata_DATA = help-mpi-btl-base.txt
+EXTRA_DIST = $(pkgdata_DATA)
 
 headers = \
         base.h \
