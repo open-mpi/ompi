@@ -136,8 +136,12 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
     }
 
     gm_proc->proc_addr_count = size/sizeof(mca_btl_gm_addr_t);
-    gm_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(gm_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
+    if (0 == gm_proc->proc_addr_count) {
+        gm_proc->proc_endpoints = NULL;
+    } else {
+        gm_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+            malloc(gm_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
+    }
     if(NULL == gm_proc->proc_endpoints) {
         OBJ_RELEASE(gm_proc);
         return NULL;

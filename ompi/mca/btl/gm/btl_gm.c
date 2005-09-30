@@ -81,7 +81,7 @@ int mca_btl_gm_add_procs(
             continue;
 
         if(NULL == (gm_proc = mca_btl_gm_proc_create(ompi_proc))) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            continue;
         }
 
         /*

@@ -250,20 +250,24 @@ mca_btl_mvapi_modex_send(void)
     int         rc;
     size_t      i;
     size_t      size;
-    mca_btl_mvapi_port_info_t *ports;
+    mca_btl_mvapi_port_info_t *ports = NULL;
 
     size = mca_btl_mvapi_component.ib_num_btls * sizeof (mca_btl_mvapi_port_info_t);
-    ports = (mca_btl_mvapi_port_info_t *)malloc (size);
-    if (NULL == ports) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+    if (size != 0) {
+        ports = (mca_btl_mvapi_port_info_t *)malloc (size);
+        if (NULL == ports) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-    for (i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) {
-        mca_btl_mvapi_module_t *btl = &mca_btl_mvapi_component.mvapi_btls[i];
-        ports[i] = btl->port_info;
+        for (i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) {
+            mca_btl_mvapi_module_t *btl = &mca_btl_mvapi_component.mvapi_btls[i];
+            ports[i] = btl->port_info;
+        }
     }
     rc = mca_pml_base_modex_send (&mca_btl_mvapi_component.super.btl_version, ports, size);
-    free (ports);
+    if (NULL != ports) {
+        free (ports);
+    }
     return rc;
 }
 
@@ -304,7 +308,9 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     /* Determine the number of hca's available on the host */
     vapi_ret=EVAPI_list_hcas(0, &num_hcas, NULL);
     if( VAPI_EAGAIN != vapi_ret || 0 == num_hcas ) {
-        BTL_ERROR(("No hca's found on this host!")); 
+        mca_btl_base_error_no_nics("MVAPI", "HCA");
+        mca_btl_mvapi_component.ib_num_btls = 0;
+        mca_btl_mvapi_modex_send();
         return NULL;
     }
 
@@ -375,9 +381,8 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     }
     
     if(0 == mca_btl_mvapi_component.ib_num_btls){ 
-        char hostname[32];
-        gethostname(hostname, sizeof(hostname));
-        BTL_ERROR(("no mvapi btl's found on this host(%s)!", hostname)); 
+        mca_btl_base_error_no_nics("MVAPI", "HCA");
+        mca_btl_mvapi_modex_send();
         return NULL; 
     }
     /* Allocate space for btl modules */
