@@ -66,8 +66,8 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                 for(i = 0; i < cnt; i++) { 
                 
                     reg = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, i);
-                    if(base_addr < (void*) reg->bound) { 
-                        base_addr = down_align_addr( reg->bound, mca_mpool_base_page_size_log ); 
+                    if(base_addr <  (void*) ((unsigned long) reg->bound - mca_mpool_base_page_size + 1)) { 
+                        base_addr = (reg->bound - mca_mpool_base_page_size + 1); 
                     }
                     if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
                         assert(reg->ref_count <= 3);

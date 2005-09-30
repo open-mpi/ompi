@@ -90,7 +90,7 @@ int mca_mpool_gm_register(
     reg->mpool = mpool;
     reg->base = down_align_addr(addr, mca_mpool_base_page_size_log); 
     reg->flags = flags; 
-    reg->bound = up_align_addr(addr + size -1
+    reg->bound = up_align_addr((void*) ((unsigned long) addr + size -1)
                                , mca_mpool_base_page_size_log);
     
 

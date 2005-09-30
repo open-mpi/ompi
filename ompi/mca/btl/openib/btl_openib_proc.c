@@ -32,7 +32,7 @@ OBJ_CLASS_INSTANCE(mca_btl_openib_proc_t,
 void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* proc)
 {
     proc->proc_ompi = 0;
-    proc->proc_addr_count = 0;
+    proc->proc_port_count = 0;
     proc->proc_endpoints = 0;
     proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
@@ -95,7 +95,9 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_ompi(ompi_proc_t* ompi_
 mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_openib_proc_t* module_proc = NULL;
-
+    size_t size; 
+    int rc;
+    
     /* Check if we have already created a IB proc
      * structure for this ompi process */
     module_proc = mca_btl_openib_proc_lookup_ompi(ompi_proc);
@@ -116,19 +118,42 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
      * size) to represent the proc */
     module_proc->proc_guid = ompi_proc->proc_name;
 
-    /* IB module doesn't have addresses exported at
-     * initialization, so the addr_count is set to one. */
-    module_proc->proc_addr_count = 1;
+    
+    /* query for the peer address info */ 
+    rc = mca_pml_base_modex_recv(
+                                 &mca_btl_openib_component.super.btl_version, 
+                                 ompi_proc, 
+                                 (void*)&module_proc->proc_ports, 
+                                 &size
+                                 ); 
+    
+    
+
+    if(OMPI_SUCCESS != rc) {
+        opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
+            __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
+        OBJ_RELEASE(module_proc);
+        return NULL;
+    }
+
+    if((size % sizeof(mca_btl_openib_port_info_t)) != 0) {
+        opal_output(0, "[%s:%d] invalid module address for peer [%d,%d,%d]",
+            __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
+        OBJ_RELEASE(module_proc);
+        return NULL;
+    }
 
 
-    /* XXX: Right now, there can be only 1 peer associated
-     * with a proc. Needs a little bit change in 
-     * mca_btl_openib_proc_t to allow on demand increasing of
-     * number of endpoints for this proc */
-
-    module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(module_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
-
+    module_proc->proc_port_count = size/sizeof(mca_btl_openib_port_info_t);
+    
+    
+    if (0 == module_proc->proc_port_count) {
+        module_proc->proc_endpoints = NULL;
+    } else {
+        module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+            malloc(module_proc->proc_port_count * sizeof(mca_btl_base_endpoint_t*));
+    }
+    
     if(NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
