@@ -258,13 +258,17 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     
     /* Determine the number of hca's available on the host */
     dev_list = ibv_get_devices(); 
+    if (NULL == dev_list) {
+        mca_btl_base_error_no_nics("OpenIB", "HCA");
+        return NULL;
+    }
     dlist_start(dev_list); 
 
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
         num_devs++; 
     
     if(0 == num_devs) { 
-        BTL_ERROR(("No hca's found on this host!")); 
+        mca_btl_base_error_no_nics("OpenIB", "HCA");
         return NULL; 
     }
         
