@@ -36,6 +36,7 @@
 
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h" 
+#include "btl_openib_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -126,7 +127,7 @@ struct mca_btl_openib_module_t {
     mca_btl_base_module_t  super;  /**< base PTL interface */
     bool btl_inited; 
     mca_btl_openib_recv_reg_t ib_reg[256]; 
-        
+    mca_btl_openib_port_info_t port_info;  /* contains only the subnet right now */ 
     uint8_t port_num;           /**< ID of the PORT */ 
     struct ibv_device *ib_dev;  /* the ib device */ 
     struct ibv_context *ib_dev_context; 

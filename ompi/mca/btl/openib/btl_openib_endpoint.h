@@ -33,6 +33,15 @@ extern "C" {
 #endif
 OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 
+
+struct mca_btl_openib_frag_t;
+
+struct mca_btl_openib_port_info_t {
+    uint16_t subnet; 
+};
+typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
+
+
 /**
  * State of IB endpoint connection.
  */
@@ -44,6 +53,9 @@ typedef enum {
 
     /* Waiting for ack from endpoint */
     MCA_BTL_IB_CONNECT_ACK,
+    
+    /*Waiting for final connection ACK from endpoint */ 
+    MCA_BTL_IB_WAITING_ACK, 
 
     /* Connected ... both sender & receiver have
      * buffers associated with this connection */
@@ -57,6 +69,29 @@ typedef enum {
      * Report failure on send to upper layer */
     MCA_BTL_IB_FAILED
 } mca_btl_openib_endpoint_state_t;
+
+struct mca_btl_openib_rem_info_t { 
+    
+    uint32_t                    rem_qp_num_high;
+    uint32_t                    rem_qp_num_low; 
+    /* Remote QP number  (Low and High priority) */ 
+
+    uint16_t                    rem_lid;
+    /* Local identifier of the remote process */
+    
+    
+    uint32_t                    rem_psn_high; 
+    uint32_t                    rem_psn_low; 
+    /* Remote processes port sequence number (Low and High) */ 
+   
+    uint16_t                    rem_subnet; 
+    /* subnet of remote process */     
+
+    
+}; 
+typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t; 
+
+
 
 /**
  * An abstraction that represents a connection to a endpoint process.
@@ -92,17 +127,7 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpotint */
     
-    uint32_t                    rem_qp_num_high;
-    uint32_t                    rem_qp_num_low; 
-    /* Remote QP number  (Low and High priority) */ 
-
-    uint16_t                    rem_lid;
-    /* Local identifier of the remote process */
-    
-    
-    uint32_t                    rem_psn_high; 
-    uint32_t                    rem_psn_low; 
-    /* Remote processes port sequence number (Low and High) */ 
+    mca_btl_openib_rem_info_t   rem_info;
     
     uint32_t                    lcl_psn_high; 
     uint32_t                    lcl_psn_low; 
@@ -119,7 +144,7 @@ struct mca_btl_base_endpoint_t {
     uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
     uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
     
-
+    uint16_t subnet; /**< subnet of this endpoint*/
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -129,8 +154,6 @@ int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_
 int  mca_btl_openib_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_openib_post_recv(void);
 
-
-void mca_btl_openib_progress_send_frags(mca_btl_openib_endpoint_t*);
 
     
 #define MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(post_rr_high_endpoint, \

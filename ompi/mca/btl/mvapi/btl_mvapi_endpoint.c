@@ -563,7 +563,7 @@ static void mca_btl_mvapi_endpoint_recv(
                 port_info = ib_proc->proc_ports[i]; 
                 ib_endpoint = ib_proc->proc_endpoints[i]; 
                 if(!ib_endpoint->rem_info.rem_lid && 
-                   ib_endpoint->rem_info.rem_subnet  == rem_info.rem_subnet) { 
+                   ib_endpoint->subnet  == rem_info.rem_subnet) { 
                     /* found a match based on subnet! */ 
                     found = true; 
                     break;

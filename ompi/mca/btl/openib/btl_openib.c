@@ -106,6 +106,7 @@ int mca_btl_openib_add_procs(
         }
 
         ib_peer->endpoint_btl = openib_btl;
+        ib_peer->subnet = openib_btl->port_info.subnet; 
         rc = mca_btl_openib_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ib_peer);
@@ -360,7 +361,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         } 
         
         iov.iov_len = max_data; 
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.lval + reserve; 
+        iov.iov_base = (unsigned char*) (frag->segment.seg_addr.lval + reserve); 
         
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 

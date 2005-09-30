@@ -41,6 +41,8 @@
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
 
+#include "mca/pml/base/pml_base_module_exchange.h"
+
 mca_btl_openib_component_t mca_btl_openib_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -225,6 +227,40 @@ int mca_btl_openib_component_close(void)
     return OMPI_SUCCESS;
 }
 
+
+/*
+ *  Register MVAPI port information. The MCA framework
+ *  will make this available to all peers.
+ */
+
+static int
+mca_btl_openib_modex_send(void)
+{
+    int         rc;
+    size_t      i;
+    size_t      size;
+    mca_btl_openib_port_info_t *ports = NULL;
+
+    size = mca_btl_openib_component.ib_num_btls * sizeof (mca_btl_openib_port_info_t);
+    if (size != 0) {
+        ports = (mca_btl_openib_port_info_t *)malloc (size);
+        if (NULL == ports) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+            mca_btl_openib_module_t *btl = &mca_btl_openib_component.openib_btls[i];
+            ports[i] = btl->port_info;
+        }
+    }
+    rc = mca_pml_base_modex_send (&mca_btl_openib_component.super.btl_version, ports, size);
+    if (NULL != ports) {
+        free (ports);
+    }
+    return rc;
+}
+
+
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -260,6 +296,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     dev_list = ibv_get_devices(); 
     if (NULL == dev_list) {
         mca_btl_base_error_no_nics("OpenIB", "HCA");
+        mca_btl_openib_component.ib_num_btls = 0;
+        mca_btl_openib_modex_send();
         return NULL;
     }
     dlist_start(dev_list); 
@@ -269,6 +307,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     
     if(0 == num_devs) { 
         mca_btl_base_error_no_nics("OpenIB", "HCA");
+        mca_btl_openib_modex_send();
         return NULL; 
     }
         
@@ -335,7 +374,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                  openib_btl->ib_dev_context = ib_dev_context; 
                  openib_btl->port_num = (uint8_t) j; 
                  openib_btl->ib_port_attr = ib_port_attr; 
-                 
+                 openib_btl->port_info.subnet = ib_port_attr->sm_lid; /* store the sm_lid for multi-nic support */
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
                  mca_btl_openib_component.ib_num_btls ++; 
                  
@@ -482,6 +521,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
     /* Post OOB receive to support dynamic connection setup */
     mca_btl_openib_post_recv();
+    mca_btl_openib_modex_send();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;
     free(ib_devs);  
@@ -533,7 +573,7 @@ int mca_btl_openib_component_progress()
                 /* Process a RECV */ 
                     
                 BTL_VERBOSE(("Got an  recv on the completion queue")); 
-                frag = (mca_btl_openib_frag_t*) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (void*) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  
