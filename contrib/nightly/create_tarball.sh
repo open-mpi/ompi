@@ -187,7 +187,16 @@ do_command "./autogen.sh"
 do_command "./configure --enable-dist"
 
 # do make dist
-do_command "make dist"
+# distcheck does many things; we need to ensure it doesn't pick up any 
+# other OMPI installs via LD_LIBRARY_PATH.  It may be a bit Draconian
+# to totally clean LD_LIBRARY_PATH (i.e., we may need something in there),
+# but at least in the current building setup, we don't.  But be advised
+# that this may need to change in the future...
+save=$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=
+do_command "make distcheck"
+LD_LIBRARY_PATH=$save
+save=
 
 # move the resulting tarballs to the destdir
 gz="`/bin/ls openmpi*tar.gz`"
