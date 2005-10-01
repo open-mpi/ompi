@@ -339,16 +339,41 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
     (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
                  local_leader, remote_leader, send_first );
     
+    /* Check to see if this process is in the new communicator.
 
-    /* Step 2: call all functions, which might use the new communicator
-     * already.
-     */
+       Specifically, this function is invoked by all proceses in the
+       old communicator, regardless of whether they are in the new
+       communicator or not.  This is because it is far simpler to use
+       MPI collective functions on the old communicator to determine
+       some data for the new communicator (e.g., remote_leader) than
+       to kludge up our own pseudo-collective routines over just the
+       processes in the new communicator.  Hence, *all* processes in
+       the old communicator need to invoke this function.
 
-    /* Initialize the coll components */
-    /* Let the collectives components fight over who will do
-       collective on this new comm.  */
-    if (OMPI_ERROR == mca_coll_base_comm_select(newcomm, collcomponent)) {
-	return OMPI_ERROR;
+       That being said, only processes in the new communicator need to
+       select a coll module for the new communicator.  More
+       specifically, proceses who are not in the new communicator
+       should *not* select a coll module -- for example,
+       ompi_comm_rank(newcomm) returns MPI_UNDEFINED for processes who
+       are not in the new communicator.  This can cause errors in the
+       selection / initialization of a coll module.  Plus, it's
+       wasteful -- processes in the new communicator will end up
+       freeing the new communicator anyway, so we might as well leave
+       the coll selection as NULL (the coll base comm unselect code
+       handles that case properly). */
+
+    if (MPI_UNDEFINED != newcomm->c_local_group->grp_my_rank) {
+
+        /* Step 2: call all functions, which might use the new
+           communicator already. */
+
+        /* Initialize the coll components */
+        /* Let the collectives components fight over who will do
+           collective on this new comm.  */
+        if (OMPI_SUCCESS != 
+            (ok = mca_coll_base_comm_select(newcomm, collcomponent))) {
+            return ok;
+        }
     }
 
     return OMPI_SUCCESS;
