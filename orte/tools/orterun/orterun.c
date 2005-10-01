@@ -159,9 +159,12 @@ opal_cmd_line_init_t cmd_line_init[] = {
       "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)" },
 
     /* Specific mapping (C, cX, N, nX) */
+#if 0
+    /* JJH --map is not currently implemented so don't advertise it until it is */
     { NULL, NULL, NULL, '\0', NULL, "map", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Mapping of processes to nodes / CPUs" },
+#endif
     { NULL, NULL, NULL, '\0', "bynode", "bynode", 0,
       &orterun_globals.by_node, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by node" },

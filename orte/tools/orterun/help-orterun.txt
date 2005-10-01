@@ -57,14 +57,13 @@ following process:
 
     %s
 
-You must specify how many processes to launch, either via the -np
-argument or by using the mapping argument (the C, N, cX, and/or nX
-nomenclature).
+You must specify how many processes to launch, via the -np
+argument.
 [orterun:nothing-to-do]
 %s could not find anything to do.
 
-It is possible that you forgot to specify how many processes to run,
-perhaps via the "-np" or "N" or "C" arguments.
+It is possible that you forgot to specify how many processes to run
+via the "-np" argument.
 [orterun:syscall-failed]
 %s encountered a system call failure.  This should not happen, and
 usually indicates an error within the operating system itself.
