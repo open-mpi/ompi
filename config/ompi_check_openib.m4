@@ -106,6 +106,10 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                                  [$ompi_cv_func_ibv_create_cq_args],
                                  [Number of arguments to ibv_create_cq])])])
 
+    AC_CHECK_FUNCS([ibv_create_srq], [ompi_check_openib_have_srq=1], [ompi_check_openib_have_srq=0])
+    AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],
+                       [$ompi_check_openib_have_srq],
+		       [Whether install of OpenIB includes shared receive queue support])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
