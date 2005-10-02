@@ -15,20 +15,25 @@
 # $HEADER$
 #
 
-set srcdir="`pwd`"
-set distdir="$srcdir/$1"
-set OMPI_VERSION="$2"
-set OMPI_SVN_VERSION="$3"
+set srcdir="$1"
+set builddir="`pwd`"
+set distdir="$builddir/$2"
+set OMPI_VERSION="$3"
+set OMPI_SVN_VERSION="$4"
 
 if ("$distdir" == "") then
-    echo "Must supply relative distdir as argv[1] -- aborting"
+    echo "Must supply relative distdir as argv[2] -- aborting"
     exit 1
 elif ("$OMPI_VERSION" == "") then
-    echo "Must supply version as argv[2] -- aborting"
+    echo "Must supply version as argv[1] -- aborting"
     exit 1
 endif
 
-set svn_r=
+# we can catch some hard (but possible) to do mistakes by looking at
+# our tree's revision number, but only if we are in the source tree.
+# Otherwise, use what configure told us, at the cost of allowing one
+# or two corner cases in (but otherwise VPATH builds won't work)
+set svn_r=$OMPI_SVN_VERSION
 if (-d .svn) then
     set svn_r="r`svnversion .`"
 endif
@@ -45,33 +50,35 @@ EOF
 
 umask 022
 
-#########################################################
-# VERY IMPORTANT: Now go into the new distribution tree #
-#########################################################
-
 if (! -d "$distdir") then
     echo "*** ERROR: dist dir does not exist"
     echo "*** ERROR:   $distdir"
     exit 1
 endif
-cd "$distdir"
-echo "*** Now in distdir: $distdir"
 
 #
-# See if we need VERSION.svn
+# See if we need to update the version file with the current SVN
+# revision number.  Do this *before* entering the distribution tree to
+# solve a whole host of problems with VPATH (since srcdir may be
+# relative or absolute)
 #
-
-set cur_svn_r="`grep '^svn_r' VERSION | cut -d= -f2`"
+set cur_svn_r="`grep '^svn_r' ${distdir}/VERSION | cut -d= -f2`"
 if ("$cur_svn_r" == "-1") then
-    sed -e 's/^svn_r=.*/svn_r='$svn_r'/' VERSION > version.new
-    cp version.new VERSION
-    rm -f version.new
+    sed -e 's/^svn_r=.*/svn_r='$svn_r'/' "${distdir}/VERSION" > "${distdir}/version.new"
+    cp "${distdir}/version.new" "${distdir}/VERSION"
+    rm -f "${distdir}/version.new"
     # need to reset the timestamp to not annoy AM dependencies
-    touch -r "$srcdir/VERSION" VERSION
+    touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
     echo "*** Updated VERSION file with SVN r number"
 else
     echo "*** Did NOT updated VERSION file with SVN r number"
 endif
+
+#########################################################
+# VERY IMPORTANT: Now go into the new distribution tree #
+#########################################################
+cd "$distdir"
+echo "*** Now in distdir: $distdir"
 
 #
 # Get the latest config.guess and config.sub from ftp.gnu.org

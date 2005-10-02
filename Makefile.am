@@ -20,4 +20,4 @@ SUBDIRS = config include etc contrib $(MCA_PROJECT_SUBDIRS) test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
 
 dist-hook:
-	csh "$(top_srcdir)/config/distscript.csh" $(PACKAGE)-$(OMPI_VERSION) $(OMPI_VERSION) $(OMPI_SVN_VERSION)
+	csh "$(top_srcdir)/config/distscript.csh" "$(top_srcdir)" "$(distdir)" "$(OMPI_VERSION)" "$(OMPI_SVN_R)"
