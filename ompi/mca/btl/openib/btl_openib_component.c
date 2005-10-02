@@ -35,7 +35,7 @@
 
 
 #include "datatype/convertor.h" 
-#include "mca/mpool/mvapi/mpool_mvapi.h" 
+#include "mca/mpool/mpool.h" 
 #include <sysfs/libsysfs.h>  
 #include <infiniband/verbs.h> 
 #include <errno.h> 
@@ -124,8 +124,6 @@ int mca_btl_openib_component_open(void)
         mca_btl_openib_param_register_int ("free_list_max", 1024);
     mca_btl_openib_component.ib_free_list_inc =
         mca_btl_openib_param_register_int ("free_list_inc", 32);
-    mca_btl_openib_component.ib_mem_registry_hints_log_size = 
-        mca_btl_openib_param_register_int ("hints_log_size", 8);
     mca_btl_openib_component.ib_mpool_name = 
         mca_btl_openib_param_register_string("mpool", "openib"); 
     mca_btl_openib_component.ib_rr_buf_max = 
@@ -134,6 +132,8 @@ int mca_btl_openib_component_open(void)
         mca_btl_openib_param_register_int("rr_buf_min", 8); 
     mca_btl_openib_component.reg_mru_len = 
         mca_btl_openib_param_register_int("reg_mru_len",  16); 
+    mca_btl_openib_component.use_srq = 
+        mca_btl_openib_param_register_int("use_srq", 0); 
     
     mca_btl_openib_component.ib_cq_size = 
         mca_btl_openib_param_register_int("ib_cq_size", 
@@ -181,7 +181,10 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_component.ib_src_path_bits = 
         mca_btl_openib_param_register_int("ib_src_path_bits", 
                                           0); 
-
+    mca_btl_openib_component.rd_per_peer = 
+        mca_btl_openib_param_register_int("rd_per_peer", 
+                                         16); 
+    
 
 
     mca_btl_openib_module.super.btl_exclusivity =
@@ -229,7 +232,7 @@ int mca_btl_openib_component_close(void)
 
 
 /*
- *  Register MVAPI port information. The MCA framework
+ *  Register OPENIB  port information. The MCA framework
  *  will make this available to all peers.
  */
 
@@ -573,7 +576,7 @@ int mca_btl_openib_component_progress()
                 /* Process a RECV */ 
                     
                 BTL_VERBOSE(("Got an  recv on the completion queue")); 
-                frag = (mca_btl_openib_frag_t*) (void*) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (void*) (unsigned long) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  
@@ -588,8 +591,17 @@ int mca_btl_openib_component_progress()
                                                           &frag->base, 
                                                           openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
-                OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
-                MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
+                if(mca_btl_openib_component.use_srq) { 
+                    OPAL_THREAD_ADD32(&openib_btl->srr_posted_high, -1); 
+                    MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 0); 
+                } else { 
+#endif
+                    OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
+                    MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(((mca_btl_openib_frag_t*) (void*) (unsigned long) wc.wr_id)->endpoint, 0); 
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
+                }
+#endif 
                 OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
                 count++; 
                 break; 
@@ -599,7 +611,7 @@ int mca_btl_openib_component_progress()
             case IBV_WC_SEND :
                     
                 /* Process a completed send or rdma write*/
-                frag = (mca_btl_openib_frag_t*) wc.wr_id; 
+                frag = (mca_btl_openib_frag_t*) (void*) (unsigned long) wc.wr_id; 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
@@ -632,7 +644,7 @@ int mca_btl_openib_component_progress()
             case IBV_WC_RECV: 
                 /* process a recv completion (this should only occur for a send not an rdma) */ 
                 BTL_VERBOSE(( "Got a recv completion")); 
-                frag = (mca_btl_openib_frag_t*) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (void*) (unsigned long) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
                 
@@ -647,8 +659,18 @@ int mca_btl_openib_component_progress()
                                                           &frag->base, 
                                                           openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
-                OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
-                MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(((mca_btl_openib_frag_t*)wc.wr_id)->endpoint, 0); 
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
+                if(mca_btl_openib_component.use_srq) { 
+                    OPAL_THREAD_ADD32(&openib_btl->srr_posted_low, -1); 
+                    MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 0); 
+                } else { 
+#endif
+                    OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
+                    MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(((mca_btl_openib_frag_t*) (void*) 
+                                                         (unsigned long)wc.wr_id)->endpoint, 0); 
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
+                }
+#endif 
                 OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_max), (opal_list_item_t*) frag); 
                 count++; 
                 break; 
@@ -658,7 +680,7 @@ int mca_btl_openib_component_progress()
             case IBV_WC_SEND :
 
                 /* Process a completed send */
-                frag = (mca_btl_openib_frag_t*) wc.wr_id; 
+                frag = (mca_btl_openib_frag_t*) (void*) (unsigned long) wc.wr_id; 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
