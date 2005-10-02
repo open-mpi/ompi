@@ -14,11 +14,9 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
 AM_CPPFLAGS = $(pls_tm_CPPFLAGS)
+
+dist_pkgdata_DATA = help-pls-tm.txt
 
 sources = \
         pls_tm.h \

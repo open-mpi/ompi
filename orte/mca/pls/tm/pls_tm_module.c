@@ -37,6 +37,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
 #include "orte/include/orte_constants.h"
@@ -87,7 +88,7 @@ static int
 pls_tm_launch(orte_jobid_t jobid)
 {
     opal_list_t nodes;
-    opal_list_item_t* item;
+    opal_list_item_t *item, *item2;
     size_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index;
@@ -98,6 +99,8 @@ pls_tm_launch(orte_jobid_t jobid)
     int argc;
     int rc;
     bool connected = false;
+    opal_list_t map;
+    char *cur_prefix;
     
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
@@ -219,6 +222,50 @@ pls_tm_launch(orte_jobid_t jobid)
         char** env;
         char* var;
 
+        OBJ_CONSTRUCT(&map, opal_list_t);
+        /* Get the mapping of this very node */
+        rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
+                                          jobid,
+                                          node->node_name,
+                                          &map);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        /* Copy the prefix-directory specified within the
+           corresponding app_context.  If there are multiple,
+           different prefix's for this node, complain */
+        cur_prefix = NULL;
+        for (item2 =  opal_list_get_first(&map);
+             item2 != opal_list_get_end(&map);
+             item2 =  opal_list_get_next(item2)) {
+            orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item2;
+            char * app_prefix_dir = map->app->prefix_dir;
+
+            /* Check for already set cur_prefix -- if different,
+               complain */
+            if (NULL != app_prefix_dir) {
+                if (NULL != cur_prefix &&
+                    0 != strcmp (cur_prefix, app_prefix_dir)) {
+                    opal_show_help("help-pls-tm.txt", "multiple-prefixes",
+                                   true, node->node_name, 
+                                   cur_prefix, app_prefix_dir);
+                    return ORTE_ERR_FATAL;
+                }
+
+                /* If not yet set, copy it; iff set, then it's the
+                   same anyway */
+                if (NULL == cur_prefix) {
+                    cur_prefix = strdup(map->app->prefix_dir);
+                    if (mca_pls_tm_component.debug) {
+                        opal_output (0, "pls:tm: Set prefix:%s",
+                                     cur_prefix);
+                    }
+                }
+            }
+        }
+
         /* setup node name */
         argv[node_name_index] = node->node_name;
 
@@ -231,7 +278,7 @@ pls_tm_launch(orte_jobid_t jobid)
 
         /* setup per-node options */
         if (mca_pls_tm_component.debug) {
-            opal_output(0, "pls:tm: launching on node %s\n", 
+            opal_output(0, "pls:tm: launching on node %s", 
                         node->node_name);
         }
         
@@ -247,6 +294,40 @@ pls_tm_launch(orte_jobid_t jobid)
         env = opal_argv_copy(environ);
         var = mca_base_param_environ_variable("seed",NULL,NULL);
         opal_setenv(var, "0", true, &env);
+
+        /* If we have a prefix, then modify the PATH and
+           LD_LIBRARY_PATH environment variables.  */
+        if (NULL != cur_prefix) {
+            int i;
+            char *newenv;
+            
+            for (i = 0; NULL != env && NULL != env[i]; ++i) {
+                /* Reset PATH */
+                if (0 == strncmp("PATH=", env[i], 5)) {
+                    asprintf(&newenv, "%s/bin:%s\n", 
+                             cur_prefix, env[i] + 5);
+                    if (mca_pls_tm_component.debug) {
+                        opal_output(0, "pls:tm: resetting PATH: %s", 
+                                    newenv);
+                    }
+                    opal_setenv("PATH", newenv, true, &env);
+                    free(newenv);
+                } 
+
+                /* Reset LD_LIBRARY_PATH */
+                else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
+                    asprintf(&newenv, "%s/lib:%s\n", 
+                             cur_prefix, env[i] + 16);
+                    if (mca_pls_tm_component.debug) {
+                        opal_output(0, "pls:tm: resetting LD_LIBRARY_PATH: %s", 
+                                    newenv);
+                    }
+                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
+                    free(newenv);
+                } 
+            }
+            free(cur_prefix);
+        }
 
         /* set the progress engine schedule for this node.
          * if node_slots is set to zero, then we default to
