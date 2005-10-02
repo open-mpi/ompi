@@ -14,8 +14,6 @@
 # 
 # $HEADER$
 #
-# This is the US/English general help file for Open RTE's orterun.
-#
 [multiple-prefixes]
 The SLURM process starter for Open MPI does not support multiple
 different --prefix options to mpirun.  You can specify at most one
@@ -26,9 +24,9 @@ parallel job.
 Put simply, you must have Open MPI installed in the same location on
 all of your SLURM nodes.
 
-Multiple different --prefix options were specified to mpirun; this is
+Multiple different --prefix options were specified to mpirun.  This is
 a fatal error for the SLURM process starter in Open MPI.
 
-Two prefix values supplied were:
+The first two prefix values supplied were:
     %s
 and %s
