@@ -312,7 +312,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
                 if (NULL == cur_prefix) {
                     cur_prefix = strdup(map->app->prefix_dir);
                     if (mca_pls_slurm_component.debug) {
-                        opal_output (0, "pls:slurm: Set prefix:%s\n",
+                        opal_output (0, "pls:slurm: Set prefix:%s",
                                      cur_prefix);
                     }
                 }
