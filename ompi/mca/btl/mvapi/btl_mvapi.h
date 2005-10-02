@@ -82,9 +82,6 @@ struct mca_btl_mvapi_component_t {
     opal_mutex_t                            ib_lock;
     /**< lock for accessing module state */
 
-    int                                     ib_mem_registry_hints_log_size;
-    /**< log2 size of hints hash array used by memory registry */
-    
     char* ib_mpool_name; 
     /**< name of ib memory pool */ 
    

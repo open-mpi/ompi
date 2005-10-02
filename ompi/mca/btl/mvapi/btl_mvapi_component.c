@@ -121,8 +121,6 @@ int mca_btl_mvapi_component_open(void)
         mca_btl_mvapi_param_register_int ("free_list_max", -1);
     mca_btl_mvapi_component.ib_free_list_inc =
         mca_btl_mvapi_param_register_int ("free_list_inc", 32);
-    mca_btl_mvapi_component.ib_mem_registry_hints_log_size = 
-        mca_btl_mvapi_param_register_int ("hints_log_size", 8);
     mca_btl_mvapi_component.ib_mpool_name = 
         mca_btl_mvapi_param_register_string("mpool", "mvapi"); 
     mca_btl_mvapi_component.ib_rr_buf_max = 
@@ -180,7 +178,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_component.ib_src_path_bits = 
         mca_btl_mvapi_param_register_int("ib_src_path_bits", 
                                       0); 
-
+    
     mca_btl_mvapi_component.rd_per_peer = 
         mca_btl_mvapi_param_register_int("rd_per_peer", 
                                          16); 
