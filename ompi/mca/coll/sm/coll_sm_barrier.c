@@ -52,7 +52,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
     int rank, buffer_set;
     mca_coll_base_comm_t *data;
     uint32_t i, num_children;
-    uint32_t *me_in, *me_out, *parent, *children;
+    uint32_t *me_in, *me_out, *parent, *children = NULL;
     int uint_control_size;
 
     uint_control_size = 
