@@ -329,9 +329,9 @@ if test "$enable_mpi2_one_sided" = "yes"; then
     # Need to set values that will be in mpif.h
 
     OMPI_F77_WIN_ATTR_KEYS="integer MPI_WIN_BASE, MPI_WIN_SIZE, MPI_WIN_DISP_UNIT"
-    OMPI_F77_WIN_ATTR_BASE_VALUE="parameter (MPI_WIN_BASE=6)"
-    OMPI_F77_WIN_ATTR_SIZE_VALUE="parameter (MPI_WIN_SIZE=7)"
-    OMPI_F77_WIN_ATTR_DISP_VALUE="parameter (MPI_WIN_DISP_UNIT=8)"
+    OMPI_F77_WIN_ATTR_BASE_VALUE="parameter (MPI_WIN_BASE=7)"
+    OMPI_F77_WIN_ATTR_SIZE_VALUE="parameter (MPI_WIN_SIZE=8)"
+    OMPI_F77_WIN_ATTR_DISP_VALUE="parameter (MPI_WIN_DISP_UNIT=9)"
     OMPI_F77_WIN_NULL_COPY_FN="external MPI_WIN_NULL_COPY_FN"
     OMPI_F77_WIN_NULL_DELETE_FN="external MPI_WIN_NULL_DELETE_FN"
     OMPI_F77_WIN_DUP_FN="external MPI_WIN_DUP_FN"
