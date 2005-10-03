@@ -199,7 +199,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
         ompi_ddt_get_extent(dtype, &lb, &extent);
         ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
         if (ompi_ddt_is_contiguous_memory_layout(dtype, count)) {
-            free_buffer = NULL;
+            reduce_temp_buffer = free_buffer = NULL;
         } else {
             OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
 
@@ -256,12 +256,13 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 
         do {
 
-            flag_num = (data->mcb_operation_count++ % 
+            flag_num = (data->mcb_operation_count % 
                         mca_coll_sm_component.sm_comm_num_in_use_flags);
 
             FLAG_SETUP(flag_num, flag, data);
             FLAG_WAIT_FOR_IDLE(flag);
-            FLAG_RETAIN(flag, size, data->mcb_operation_count - 1);
+            FLAG_RETAIN(flag, size, data->mcb_operation_count);
+            ++data->mcb_operation_count;
 
             /* Loop over all the segments in this set */
             
@@ -272,45 +273,74 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
             reduce_target = (((char*) rbuf) + (frag_num * segment_ddt_bytes));
             do {
 
-                /* Loop over the processes, receiving and reducing
-                   from them in order */
+                /* Process 0 (special case) */
 
-                for (peer = 0; peer < size; ++peer) {
+                if (rank == 0) {
+                    /* If we're the root *and* the first process to be
+                       combined *and* this is the first segment in the
+                       entire algorithm, then just copy the whole
+                       buffer.  That way, we never need to copy from
+                       this process again (i.e., do the copy all at
+                       once since all the data is local, and then
+                       don't worry about it for the rest of the
+                       algorithm) */
+                    if (first_operation) {
+                        first_operation = false;
+                        if (MPI_IN_PLACE != sbuf) {
+                            ompi_ddt_copy_content_same_ddt(dtype,
+                                                           count,
+                                                           reduce_target, sbuf);
+                            D(("root copied entire buffer to rbuf (contig ddt, count %d) FIRST OPERATION\n", count));
+                        }
+                    }
+                } else {
+                    index = &(data->mcb_mpool_index[segment_num]);
+                    PARENT_WAIT_FOR_NOTIFY_SPECIFIC(0, rank, index, max_data);
+                        
+                    /* If we don't need an extra buffer, memcpy the
+                       fragment straight to the output buffer.
+                       Otherwise, unpack. */
+                        
+                    if (NULL == free_buffer) {
+                        D(("root: special case -- copy from rank 0 shemem to reduce_target (%d bytes)\n", max_data));
+                        memcpy(reduce_target, index->mcbmi_data, max_data);
+                    } else {
+                        /* This is somethat inefficient -- should be
+                           able to avoid one of the memory copies
+                           here, but doing so would violate an
+                           abstraction barrier in the convertor (i.e.,
+                           directly manipulate some of the private
+                           data on the convertor struct) */
+                        D(("root: special case -- unpack and copy from rank 0 to reduce_target\n"));
+                        COPY_FRAGMENT_OUT(convertor, 0, index, 
+                                          iov, max_data);
+                        ompi_convertor_set_position(&convertor, &zero);
+                        
+                        ompi_ddt_copy_content_same_ddt(dtype, 
+                                                       max_data / ddt_size,
+                                                       reduce_target,
+                                                       iov.iov_base);
+                    }
+                }
+
+                /* Loop over all the remaining processes, receiving
+                   and reducing them in order */
+
+                for (peer = 1; peer < size; ++peer) {
 
                     /* Handle the case where the source is this process */
 
                     if (rank == peer) {
-                        if (peer == 0) {
-                            /* If we're the root *and* the first
-                               process to be combined *and* this is
-                               the first segment in the entire
-                               algorithm, then just copy the whole
-                               buffer.  That way, we never need to
-                               copy from this process again (i.e., do
-                               the copy all at once since all the data
-                               is local, and then don't worry about it
-                               for the rest of the algorithm) */
-                            if (first_operation) {
-                                first_operation = false;
-                                if (MPI_IN_PLACE != sbuf) {
-                                    ompi_ddt_copy_content_same_ddt(dtype,
-                                                                   count,
-                                                                   reduce_target, sbuf);
-                                    D(("root copied entire buffer to rbuf (contig ddt, count %d) FIRST OPERATION\n", count));
-                                }
-                            }
-                        } else {
-                            /* Otherwise, I'm not the first process,
-                               so instead of copying, combine in the
-                               next fragment */
-                            D(("root combiningn fragment from shmem (contig ddt): count %d (left %d, seg %d)\n", min(count_left, segment_ddt_count), count_left, segment_ddt_count));
-                            ompi_op_reduce(op, 
-                                           ((char *) sbuf) +
-                                           frag_num * segment_ddt_bytes,
-                                           reduce_target,
-                                           min(count_left, segment_ddt_count),
-                                           dtype);
-                        }
+                        /* Otherwise, I'm not the first process, so
+                           instead of copying, combine in the next
+                           fragment */
+                        D(("root combiningn fragment from shmem (contig ddt): count %d (left %d, seg %d)\n", min(count_left, segment_ddt_count), count_left, segment_ddt_count));
+                        ompi_op_reduce(op, 
+                                       ((char *) sbuf) +
+                                       frag_num * segment_ddt_bytes,
+                                       reduce_target,
+                                       min(count_left, segment_ddt_count),
+                                       dtype);
                     }
 
                     /* Now handle the case where the source is not
@@ -327,66 +357,32 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                            from the shmem. */
                         
                         if (NULL == free_buffer) {
-                            /* If this is the first process, just copy */
-                            if (0 == peer) {
-                                D(("root: special case -- copy from rank 0 shemem to reduce_target (%d bytes)\n", max_data));
-                                memcpy(reduce_target, index->mcbmi_data, 
-                                       max_data);
-                            }
-
-                            /* If this is not the first process, do
-                               the reduction */
-                            else {
-                                
-                                D(("root combining %d elements in shmem from peer %d\n",
-                                   max_data / ddt_size, peer));
-                                ompi_op_reduce(op,
-                                               (index->mcbmi_data + 
-                                                (peer * mca_coll_sm_component.sm_fragment_size)),
-                                               reduce_target, max_data / ddt_size,
-                                               dtype);
-                            }
+                            D(("root combining %d elements in shmem from peer %d\n",
+                               max_data / ddt_size, peer));
+                            ompi_op_reduce(op,
+                                           (index->mcbmi_data + 
+                                            (peer * mca_coll_sm_component.sm_fragment_size)),
+                                           reduce_target, max_data / ddt_size,
+                                           dtype);
                         }
                         
                         /* Otherwise, unpack the fragment to the temporary
                            buffer and then do the reduction from there */
                         
                         else {
-                            /* If this is the first process, then just
-                               copy out to the target buffer */
-                            if (0 == peer) {
-                                /* JMS: this is clearly inefficient --
-                                   can avoid one of the memory copies
-                                   here; have a pending question to
-                                   george about this */
-                                D(("root: special case -- unpack and copy from rank 0 to reduce_target\n"));
-                                COPY_FRAGMENT_OUT(convertor, peer, index, 
-                                                  iov, max_data);
-                                ompi_convertor_set_position(&convertor, &zero);
-
-                                ompi_ddt_copy_content_same_ddt(dtype, 
-                                                               max_data / ddt_size,
-                                                               reduce_target,
-                                                               iov.iov_base);
-                            }
-
-                            /* Otherwise, copy to the temp buffer and
-                               then do the reduction */
-                            else {
-                                D(("root combining %d elements in copy out buffer from peer %d\n",
-                                   max_data / ddt_size, peer));
-                                /* Unpack the fragment into my temporary
-                                   buffer */
-                                COPY_FRAGMENT_OUT(convertor, peer, index, 
-                                                  iov, max_data);
-                                ompi_convertor_set_position(&convertor, &zero);
-                                
-                                /* Do the reduction on this fragment */
-                                ompi_op_reduce(op, reduce_temp_buffer,
-                                               reduce_target, 
-                                               max_data / ddt_size,
-                                               dtype);
-                            }
+                            D(("root combining %d elements in copy out buffer from peer %d\n",
+                               max_data / ddt_size, peer));
+                            /* Unpack the fragment into my temporary
+                               buffer */
+                            COPY_FRAGMENT_OUT(convertor, peer, index, 
+                                              iov, max_data);
+                            ompi_convertor_set_position(&convertor, &zero);
+                            
+                            /* Do the reduction on this fragment */
+                            ompi_op_reduce(op, reduce_temp_buffer,
+                                           reduce_target, 
+                                           max_data / ddt_size,
+                                           dtype);
                         }
                     } /* whether this process was me or not */
                 } /* loop over all proceses */
