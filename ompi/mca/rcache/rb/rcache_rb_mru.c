@@ -47,6 +47,8 @@ int mca_rcache_rb_mru_insert(
          */
         old_reg = (mca_mpool_base_registration_t*)
             opal_list_get_first(&rcache->mru_list);
+        /* we need to retain first, because we only want the registration 
+         removed from the tree and the mru */
         old_reg->mpool->mpool_retain(old_reg->mpool, old_reg);
         old_reg->mpool->mpool_deregister(old_reg->mpool, old_reg);
         
