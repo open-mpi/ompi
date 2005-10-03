@@ -73,9 +73,6 @@ int mca_rcache_rb_find (
     }
     
     
-    OBJ_DESTRUCT(regs); 
-    OBJ_CONSTRUCT(regs, ompi_pointer_array_t);
-    
     pos =  ompi_pointer_array_add(regs, (void*) tree_item->reg); 
     if(0 != pos) {
         opal_output(0, "error inserting registration in 1st position"); 

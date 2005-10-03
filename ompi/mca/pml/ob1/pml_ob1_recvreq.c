@@ -403,10 +403,11 @@ static void mca_pml_ob1_recv_request_rget(
         bml_btl, 
         recvreq->req_recv.req_base.req_addr,
         recvreq->req_recv.req_bytes_packed);
-    
-    recvreq->req_rdma[0].bml_btl = bml_btl; 
-    recvreq->req_rdma[0].btl_reg = reg;
-    recvreq->req_rdma_cnt = 1;
+    if(NULL != reg) {
+         recvreq->req_rdma[0].bml_btl = bml_btl; 
+         recvreq->req_rdma[0].btl_reg = reg;
+         recvreq->req_rdma_cnt = 1;
+    }
     
     /* prepare descriptor */
     mca_bml_base_prepare_dst(
