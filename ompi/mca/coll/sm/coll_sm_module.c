@@ -36,6 +36,7 @@
 #include "mpi.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
+#include "orte/mca/ns/ns.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
@@ -509,7 +510,8 @@ static int bootstrap_init(void)
         sizeof(mca_coll_sm_bootstrap_header_extension_t) +
         (mca_coll_sm_component.sm_bootstrap_num_segments *
          sizeof(mca_coll_sm_bootstrap_comm_setup_t)) +
-        (sizeof(uint32_t) * mca_coll_sm_component.sm_bootstrap_num_segments);
+        (sizeof(mca_coll_sm_bootstrap_comm_key_t) *
+         mca_coll_sm_component.sm_bootstrap_num_segments);
 
     mca_coll_sm_component.sm_bootstrap_meta = meta =
         mca_common_sm_mmap_init(size, fullpath,
@@ -535,10 +537,12 @@ static int bootstrap_init(void)
              sizeof(mca_coll_sm_bootstrap_header_extension_t) +
              (sizeof(uint32_t) * 
               mca_coll_sm_component.sm_bootstrap_num_segments));
-        bshe->smbhe_cids = (uint32_t *)
+        bshe->smbhe_keys = (mca_coll_sm_bootstrap_comm_key_t *)
             (((char *) bshe) + sizeof(*bshe));
         for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
-            bshe->smbhe_cids[i] = INT_MAX;
+            bshe->smbhe_keys[i].mcsbck_cid = INT_MAX;
+            memset(&bshe->smbhe_keys[i].mcsbck_rank0_name, 0,
+                   sizeof(orte_process_name_t));
         }
 
         bshe->super.seg_inited = true;
@@ -565,6 +569,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
     int num_in_use = c->sm_comm_num_in_use_flags;
     int frag_size = c->sm_fragment_size;
     int control_size = c->sm_control_size;
+    orte_process_name_t *rank0;
 
     /* Is our CID in the CIDs array?  If not, loop until we can find
        an open slot in the array to use in the bootstrap to setup our
@@ -574,15 +579,20 @@ static int bootstrap_comm(ompi_communicator_t *comm)
         c->sm_bootstrap_meta->map_seg;
     bscs = bshe->smbhe_segments;
     opal_atomic_lock(&bshe->super.seg_lock);
+    rank0 = &(comm->c_local_group->grp_proc_pointers[0]->proc_name);
     while (1) {
         opal_atomic_wmb();
         found = false;
         empty_index = -1;
         for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
-            if (comm->c_contextid == bshe->smbhe_cids[i]) {
+            if (comm->c_contextid == bshe->smbhe_keys[i].mcsbck_cid &&
+                0 == orte_ns.compare(ORTE_NS_CMP_ALL,
+                                     rank0,
+                                     &bshe->smbhe_keys[i].mcsbck_rank0_name)) {
                 found = true;
                 break;
-            } else if (INT_MAX == bshe->smbhe_cids[i] && -1 == empty_index) {
+            } else if (INT_MAX == bshe->smbhe_keys[i].mcsbck_cid &&
+                       -1 == empty_index) {
                 empty_index = i;
             }
         }
@@ -603,7 +613,9 @@ static int bootstrap_comm(ompi_communicator_t *comm)
             size_t size;
 
             i = empty_index;
-            bshe->smbhe_cids[i] = comm->c_contextid;
+            bshe->smbhe_keys[i].mcsbck_cid = comm->c_contextid;
+            /* JMS better assignment? */
+            bshe->smbhe_keys[i].mcsbck_rank0_name = *rank0;
 
             bscs[i].smbcs_count = comm_size;
 
@@ -701,7 +713,9 @@ static int bootstrap_comm(ompi_communicator_t *comm)
     --bscs[i].smbcs_count;
     if (0 == bscs[i].smbcs_count) {
         bscs[i].smbcs_data_mpool_offset = 0;
-        bshe->smbhe_cids[i] = INT_MAX;
+        bshe->smbhe_keys[i].mcsbck_cid = INT_MAX;
+        memset(&bshe->smbhe_keys[i].mcsbck_rank0_name, 0,
+               sizeof(orte_process_name_t));
     }
 
     /* All done */

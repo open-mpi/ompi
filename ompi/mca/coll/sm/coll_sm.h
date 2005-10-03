@@ -22,6 +22,7 @@
 
 #include "mpi.h"
 #include "opal/mca/mca.h"
+#include "orte/mca/ns/ns_types.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
@@ -34,6 +35,13 @@
 #define D(foo) { printf foo ; fflush(stdout); }
 #else
 #define D(foo)
+#endif
+
+#if 0
+#include <sched.h>
+#define SPIN sched_yield()
+#else
+#define SPIN continue
 #endif
 
 
@@ -67,6 +75,23 @@ extern "C" {
         mca_coll_sm_bootstrap_comm_setup_t;
 
     /**
+     * Structure that acts as a key for the bootstrap area -- a
+     * segment in the bootstrap mpool is uniquely identified by its
+     * CID and the process name of rank 0 in the group.
+     */
+    struct mca_coll_sm_bootstrap_comm_key_t {
+        /** CID of the communicator using a bootstrap segment */
+        uint32_t mcsbck_cid;
+        /** Process name of rank 0 in this communicator */
+        orte_process_name_t mcsbck_rank0_name;
+    };
+    /**
+     * Convenience typedef
+     */
+    typedef struct mca_coll_sm_bootstrap_comm_key_t
+        mca_coll_sm_bootstrap_comm_key_t;
+
+    /**
      * Extension to the control structure in the bootstrap mmap file
      */
     struct mca_coll_sm_bootstrap_header_extension_t {
@@ -79,12 +104,13 @@ extern "C" {
         mca_coll_sm_bootstrap_comm_setup_t *smbhe_segments;
 
         /** Pointer to array containing
-            component.sm_bootstrap_num_segments CIDs for use in
-            bootstrap phase -- will always point immediately after the
-            end of this struct (i.e., still within this header, but
-            since it's variable size (set by MCA param), we can't just
-            have it here in the struct.  Bonk). */
-        uint32_t *smbhe_cids;
+            component.sm_bootstrap_num_segments (CID, rank 0 process
+            name) tuples for use in bootstrap phase -- will always
+            point immediately after the end of this struct (i.e.,
+            still within this header, but since it's variable size
+            (set by MCA param), we can't just have it here in the
+            struct.  Bonk). */
+        mca_coll_sm_bootstrap_comm_key_t *smbhe_keys;
     };
     /**
      * Convenience typedef
@@ -410,7 +436,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
  * Macro to wait for the in-use flag to become idle (used by the root)
  */
 #define FLAG_WAIT_FOR_IDLE(flag) \
-    while (0 != (flag)->mcsiuf_num_procs_using) continue
+    while (0 != (flag)->mcsiuf_num_procs_using) SPIN
 
 /**
  * Macro to wait for a flag to indicate that it's ready for this
@@ -418,7 +444,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
  * been called)
  */
 #define FLAG_WAIT_FOR_OP(flag, op) \
-    while ((op) != flag->mcsiuf_operation_count) continue
+    while ((op) != flag->mcsiuf_operation_count) SPIN
 
 /**
  * Macro to set an in-use flag with relevant data to claim it
@@ -491,7 +517,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
         volatile uint32_t *ptr = ((uint32_t*) \
                                   (((char*) index->mcbmi_control) + \
                                    ((rank) * mca_coll_sm_component.sm_control_size))); \
-        while (0 == *ptr) continue; \
+        while (0 == *ptr) SPIN; \
         (value) = *ptr; \
         *ptr = 0; \
     } while (0)
@@ -517,7 +543,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
                                 (((char*) index->mcbmi_control) + \
                                  (mca_coll_sm_component.sm_control_size * \
                                   (parent_rank)))) + child_rank; \
-        while (0 == *ptr) continue; \
+        while (0 == *ptr) SPIN; \
         (value) = *ptr; \
         *ptr = 0; \
     } while (0)
