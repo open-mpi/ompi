@@ -156,65 +156,71 @@ void mca_btl_openib_post_recv(void);
 
 
     
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(post_rr_high_endpoint, \
-                                             post_rr_high_additional) \
+#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, \
+                                             additional) \
 { \
-    mca_btl_openib_module_t * post_rr_high_openib_btl = post_rr_high_endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&post_rr_high_openib_btl->ib_lock); \
-    if(post_rr_high_endpoint->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+post_rr_high_additional && \
-       post_rr_high_endpoint->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ \
+   do { \
+    mca_btl_openib_module_t * openib_btl = endpoint->endpoint_btl; \
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
+    if(endpoint->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && \
+       endpoint->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ \
         MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(mca_btl_openib_component.ib_rr_buf_max -  \
-                                            post_rr_high_endpoint->rr_posted_high, \
-                                            post_rr_high_endpoint, \
-                                            &post_rr_high_openib_btl->recv_free_eager, \
-                                            &post_rr_high_endpoint->rr_posted_high, \
-                                            post_rr_high_endpoint->lcl_qp_high); \
+                                            endpoint->rr_posted_high, \
+                                            endpoint, \
+                                            &openib_btl->recv_free_eager, \
+                                            &endpoint->rr_posted_high, \
+                                            endpoint->lcl_qp_high); \
     } \
-    OPAL_THREAD_UNLOCK(&post_rr_high_openib_btl->ib_lock); \
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
+   } while(0); \
 }
 
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(post_rr_low_endpoint, \
-                                            post_rr_low_additional) { \
-    mca_btl_openib_module_t * post_rr_low_openib_btl = post_rr_low_endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&post_rr_low_openib_btl->ib_lock); \
-    if(post_rr_low_endpoint->rr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+post_rr_low_additional && \
-       post_rr_low_endpoint->rr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ \
+#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, \
+                                            additional) { \
+    do { \
+    mca_btl_openib_module_t * openib_btl = endpoint->endpoint_btl; \
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
+    if(endpoint->rr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && \
+       endpoint->rr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ \
        MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(mca_btl_openib_component.ib_rr_buf_max - \
-                                            post_rr_low_endpoint->rr_posted_low,  \
-                                            post_rr_low_endpoint, \
-                                            &post_rr_low_openib_btl->recv_free_max, \
-                                            &post_rr_low_endpoint->rr_posted_low, \
-                                            post_rr_low_endpoint->lcl_qp_low \
+                                            endpoint->rr_posted_low,  \
+                                            endpoint, \
+                                            &openib_btl->recv_free_max, \
+                                            &endpoint->rr_posted_low, \
+                                            endpoint->lcl_qp_low \
                                             ); } \
-    OPAL_THREAD_UNLOCK(&post_rr_low_openib_btl->ib_lock); \
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
+    } while(0); \
 }
 
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(post_rr_sub_cnt, \
-                                            post_rr_sub_endpoint, \
-                                            post_rr_sub_frag_list, \
-                                            post_rr_sub_rr_posted, \
-                                            post_rr_sub_qp ) \
+#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(cnt, \
+                                            my_endpoint, \
+                                            frag_list, \
+                                            rr_posted, \
+                                            qp ) \
 {\
-    uint32_t post_rr_sub_i; \
-    int post_rr_sub_rc; \
-    opal_list_item_t* post_rr_sub_item; \
-    mca_btl_openib_frag_t* post_rr_sub_frag; \
-    struct ibv_recv_wr* post_rr_sub_bad_wr; \
-    for(post_rr_sub_i = 0; post_rr_sub_i < post_rr_sub_cnt; post_rr_sub_i++) { \
-        OMPI_FREE_LIST_WAIT(post_rr_sub_frag_list, post_rr_sub_item, post_rr_sub_rc); \
-        post_rr_sub_frag = (mca_btl_openib_frag_t*) post_rr_sub_item; \
-        post_rr_sub_frag->endpoint = post_rr_sub_endpoint; \
-        post_rr_sub_frag->sg_entry.length = post_rr_sub_frag->size + \
-            ((unsigned char*) post_rr_sub_frag->segment.seg_addr.pval-  \
-             (unsigned char*) post_rr_sub_frag->hdr);  \
-        if(ibv_post_recv(post_rr_sub_qp, \
-            &post_rr_sub_frag->wr_desc.rr_desc, \
-            &post_rr_sub_bad_wr)) { \
+    do { \
+    uint32_t i; \
+    int rc; \
+    opal_list_item_t* item; \
+    mca_btl_openib_frag_t* frag; \
+    struct ibv_recv_wr* bad_wr; \
+    for(i = 0; i < cnt; i++) { \
+        OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
+        frag = (mca_btl_openib_frag_t*) item; \
+        frag->endpoint = my_endpoint; \
+        frag->sg_entry.length = frag->size + \
+            ((unsigned char*) frag->segment.seg_addr.pval-  \
+             (unsigned char*) frag->hdr);  \
+        if(ibv_post_recv(qp, \
+            &frag->wr_desc.rr_desc, \
+            &bad_wr)) { \
             BTL_ERROR(("error posting receive errno says %s\n", strerror(errno))); \
             return OMPI_ERROR; \
         }\
     }\
-    OPAL_THREAD_ADD32(post_rr_sub_rr_posted, post_rr_sub_cnt); \
+    OPAL_THREAD_ADD32((int32_t*) rr_posted, cnt); \
+    } while(0); \
 }
 
 

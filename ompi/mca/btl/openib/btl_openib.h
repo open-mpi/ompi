@@ -401,6 +401,7 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
 
 #define MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, additional) \
 { \
+    do{ \
         OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
         if(openib_btl->srr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && \
            openib_btl->srr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ \
@@ -412,10 +413,12 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
                                       openib_btl->srq_high); \
         } \
         OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
+    } while(0); \
 }
 
 #define MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, additional) \
 { \
+    do { \
     OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
     if(openib_btl->srr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && \
        openib_btl->srr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ \
@@ -427,6 +430,7 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
                                             openib_btl->srq_low); \
     } \
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
+    } while(0); \
 }
 
 
@@ -454,7 +458,7 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
            return OMPI_ERROR; \
        }\
     }\
-    OPAL_THREAD_ADD32(srr_posted, cnt); \
+    OPAL_THREAD_ADD32((int32_t*) srr_posted,  cnt); \
    } while(0);\
 }
 

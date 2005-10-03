@@ -155,10 +155,10 @@ int mca_btl_openib_register(
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; 
     
 
-    OPAL_THREAD_LOCK(&openib->ib_lock); 
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock); 
     openib_btl->ib_reg[tag].cbfunc = cbfunc; 
     openib_btl->ib_reg[tag].cbdata = cbdata; 
-    OPAL_THREAD_UNLOCK(&openib->ib_lock); 
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); 
     return OMPI_SUCCESS;
 }
 

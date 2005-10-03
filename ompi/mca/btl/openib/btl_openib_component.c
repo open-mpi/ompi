@@ -593,11 +593,11 @@ int mca_btl_openib_component_progress()
                 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 if(mca_btl_openib_component.use_srq) { 
-                    OPAL_THREAD_ADD32(&openib_btl->srr_posted_high, -1); 
+                    OPAL_THREAD_ADD32((int32_t*) &openib_btl->srr_posted_high, -1); 
                     MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 0); 
                 } else { 
 #endif
-                    OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
+                    OPAL_THREAD_ADD32((int32_t*) &endpoint->rr_posted_high, -1); 
                     MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(((mca_btl_openib_frag_t*) (void*) (unsigned long) wc.wr_id)->endpoint, 0); 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 }
@@ -661,11 +661,11 @@ int mca_btl_openib_component_progress()
                 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 if(mca_btl_openib_component.use_srq) { 
-                    OPAL_THREAD_ADD32(&openib_btl->srr_posted_low, -1); 
+                    OPAL_THREAD_ADD32((int32_t*) &openib_btl->srr_posted_low, -1); 
                     MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 0); 
                 } else { 
 #endif
-                    OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
+                    OPAL_THREAD_ADD32((int32_t*) &endpoint->rr_posted_low, -1); 
                     MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(((mca_btl_openib_frag_t*) (void*) 
                                                          (unsigned long)wc.wr_id)->endpoint, 0); 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
