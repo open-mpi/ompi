@@ -59,25 +59,25 @@ opal_list_t mca_coll_base_components_opened;
  */
 int mca_coll_base_open(void)
 {
-  /* Open an output stream for this framework */
+    /* Open an output stream for this framework */
 
-  mca_coll_base_output = opal_output_open(NULL);
+    mca_coll_base_output = opal_output_open(NULL);
 
-  /* Open up all available components */
+    /* Open up all available components */
 
-  if (OMPI_SUCCESS != 
-      mca_base_components_open("coll", mca_coll_base_output,
-                               mca_coll_base_static_components, 
-                               &mca_coll_base_components_opened, true)) {
-    return OMPI_ERROR;
-  }
-  mca_coll_base_components_opened_valid = true;
+    if (OMPI_SUCCESS != 
+        mca_base_components_open("coll", mca_coll_base_output,
+                                 mca_coll_base_static_components, 
+                                 &mca_coll_base_components_opened, true)) {
+        return OMPI_ERROR;
+    }
+    mca_coll_base_components_opened_valid = true;
 
-  /* Find the index of the MCA "coll" param for selection */
+    /* Find the index of the MCA "coll" param for selection */
 
-  mca_coll_base_param = mca_base_param_find("coll", "base", NULL);
+    mca_coll_base_param = mca_base_param_find("coll", "base", NULL);
 
-  /* All done */
+    /* All done */
 
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
