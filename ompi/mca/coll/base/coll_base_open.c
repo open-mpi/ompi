@@ -45,9 +45,6 @@ int mca_coll_base_output = -1;
 
 int mca_coll_base_crossover = 4;
 int mca_coll_base_associative = 1;
-int mca_coll_base_reduce_crossover = 4;
-int mca_coll_base_bcast_collmaxlin = 4;
-int mca_coll_base_bcast_collmaxdim = 64;
 
 bool mca_coll_base_components_opened_valid = false;
 opal_list_t mca_coll_base_components_opened;

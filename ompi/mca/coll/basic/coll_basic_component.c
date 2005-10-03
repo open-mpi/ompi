@@ -34,9 +34,10 @@ const char *mca_coll_basic_component_version_string =
     "Open MPI basic collective MCA component version " OMPI_VERSION;
 
 /*
- * Global variable
+ * Global variables
  */
-int mca_coll_basic_priority_param = -1;
+int mca_coll_basic_priority = 10;
+int mca_coll_basic_crossover = 4;
 
 /*
  * Local function
@@ -69,14 +70,16 @@ const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
      /* Component open and close functions */
 
      basic_open,
-     NULL},
+     NULL
+    },
 
     /* Next the MCA v1.0.0 component meta data */
 
     {
      /* Whether the component is checkpointable or not */
 
-     true},
+     true
+    },
 
     /* Initialization / querying functions */
 
@@ -91,8 +94,16 @@ basic_open(void)
 {
     /* Use a low priority, but allow other components to be lower */
 
-    mca_coll_basic_priority_param =
-        mca_base_param_register_int("coll", "basic", "priority", NULL, 10);
+    mca_base_param_reg_int(&mca_coll_basic_component.collm_version,
+                           "priority",
+                           "Priority of the basic coll component",
+                           false, false, mca_coll_basic_priority,
+                           &mca_coll_basic_priority);
+    mca_base_param_reg_int(&mca_coll_basic_component.collm_version,
+                           "crossover",
+                           "Minimum number of processes in a communicator before using the logarithmic algorithms",
+                           false, false, mca_coll_basic_crossover,
+                           &mca_coll_basic_crossover);
 
     return OMPI_SUCCESS;
 }
