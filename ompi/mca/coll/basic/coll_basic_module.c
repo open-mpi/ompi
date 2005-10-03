@@ -145,11 +145,7 @@ const mca_coll_base_module_1_0_0_t *
 mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority,
                           struct mca_coll_base_comm_t **data)
 {
-    if (OMPI_SUCCESS !=
-        mca_base_param_lookup_int(mca_coll_basic_priority_param,
-                                  priority)) {
-        return NULL;
-    }
+    *priority = mca_coll_basic_priority;
 
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */
@@ -157,7 +153,7 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority,
     if (OMPI_COMM_IS_INTER(comm)) {
         return &inter_linear;
     } else {
-        if (ompi_comm_size(comm) <= mca_coll_base_crossover) {
+        if (ompi_comm_size(comm) <= mca_coll_basic_crossover) {
             return &intra_linear;
         } else {
             return &intra_log;

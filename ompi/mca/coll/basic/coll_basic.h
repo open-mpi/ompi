@@ -31,19 +31,12 @@ extern "C"
 {
 #endif
 
-/*
- * Globally exported variable
- */
+    /* Globally exported variables */
 
     OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t
         mca_coll_basic_component;
-    OMPI_COMP_EXPORT extern int mca_coll_basic_priority_param;
-
-
-/*
- * coll API functions
- */
-
+    OMPI_COMP_EXPORT extern int mca_coll_basic_priority;
+    OMPI_COMP_EXPORT extern int mca_coll_basic_crossover;
 
     /* API functions */
 

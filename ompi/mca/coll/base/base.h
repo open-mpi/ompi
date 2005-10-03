@@ -214,27 +214,6 @@ OMPI_DECLSPEC extern int mca_coll_base_param;
 OMPI_DECLSPEC extern int mca_coll_base_output;
 
 /**
- * JMS should this move to the basic component?
- */
-OMPI_DECLSPEC extern int mca_coll_base_crossover;
-/**
- * JMS should this move to the basic component?
- */
-OMPI_DECLSPEC extern int mca_coll_base_associative;
-/**
- * JMS should this move to the basic component?
- */
-OMPI_DECLSPEC extern int mca_coll_base_reduce_crossover;
-/**
- * JMS should this move to the basic component?
- */
-OMPI_DECLSPEC extern int mca_coll_base_bcast_collmaxlin;
-/**
- * JMS should this move to the basic component?
- */
-OMPI_DECLSPEC extern int mca_coll_base_bcast_collmaxdim;
-
-/**
  * Indicator as to whether the list of opened coll components is valid or
  * not.
  */
