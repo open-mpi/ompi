@@ -21,11 +21,11 @@
 Although some coll components are available on your system, none of
 them said that they could be used for a new communicator.
 
-This is extremely unusual -- in a worse case scenario, the "basic"
-component should be able to be chosen for any communicator.  As such,
-this likely means that something else is wrong (although you should
-double check that the "basic" coll component is available on your
-system -- look at the output of the "ompi_info" command).
+This is extremely unusual -- either the "basic" or "self" components
+should be able to be chosen for any communicator.  As such, this
+likely means that something else is wrong (although you should double
+check that the "basic" and "self" coll components are available on
+your system -- check the output of the "ompi_info" command).
 #
 [comm-unselect:failed-finalize]
 A coll module failed to finalize properly when a communicator that was
@@ -41,4 +41,3 @@ named "%s".
 
 This is extremely unusual and typically indicates some other kind of
 problem (e.g., a memory problem)
-
