@@ -93,7 +93,6 @@ int mca_mpool_base_open(void)
     /* get the page size for this architecture*/ 
     mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
     mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size); 
-    
     return OMPI_SUCCESS;
 }
 

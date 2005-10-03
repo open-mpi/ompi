@@ -18,6 +18,8 @@
  */
 #include "mpool_base_mem_cb.h"
 #include "base.h"
+#include "orte/util/proc_info.h"
+#include "mca/ns/ns_types.h"
 
 
 extern uint32_t mca_mpool_base_page_size; 
@@ -33,6 +35,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
     mca_mpool_base_registration_t* reg;
     mca_mpool_base_selected_module_t* current;
     int rc;
+    int dereg = 0;
     opal_list_item_t* item;
     void* base_addr; 
     void* bound_addr; 
@@ -66,8 +69,8 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                 for(i = 0; i < cnt; i++) { 
                 
                     reg = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, i);
-                    if(base_addr <  (void*) ((unsigned long) reg->bound - mca_mpool_base_page_size + 1)) { 
-                        base_addr = (reg->bound - mca_mpool_base_page_size + 1); 
+                    if(base_addr <  (void*) ((unsigned long) reg->bound - mca_mpool_base_page_size)) { 
+                        base_addr = reg->bound - mca_mpool_base_page_size; 
                     }
                     if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
                         assert(reg->ref_count <= 3);
@@ -76,13 +79,26 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                     } else { 
                         assert(reg->ref_count <= 1); 
                     }
+#if 0
+                    fprintf(stderr, "[%lu,%lu,%lu] mca_mpool_base_mem_cb: base %p bound %p len %lu refcnt %d\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name), reg->base, reg->bound, 
+                        reg->bound-reg->base+1, reg->ref_count);
+#endif
                     current->mpool_module->mpool_deregister(current->mpool_module, reg); 
+                    dereg++;
                 }
+                ompi_pointer_array_remove_all(&regs);
             }
         }
-        
     }    
     OBJ_DESTRUCT(&regs);
+#if 0
+    if(dereg != 0) {
+        fprintf(stderr, "[%lu,%lu,%lu] mca_mpool_base_mem_cb: addr %p size %lu base %p bound %p\n", 
+            ORTE_NAME_ARGS(orte_process_info.my_name), base, size,
+            down_align_addr( base, mca_mpool_base_page_size_log), bound_addr);
+    }
+#endif
 }
 
 

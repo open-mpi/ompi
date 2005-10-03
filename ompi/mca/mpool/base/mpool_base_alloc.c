@@ -242,7 +242,7 @@ int mca_mpool_base_free(void * base)
                 &cnt
                 );
             if(OMPI_SUCCESS != rc) {
-                goto cleanup;
+                continue;
             }
             for(i = 0; i < cnt; i++) {
                 mca_mpool_base_registration_t* reg = (mca_mpool_base_registration_t*)
@@ -253,6 +253,7 @@ int mca_mpool_base_free(void * base)
                     goto cleanup;
                 }
             }
+            ompi_pointer_array_remove_all(&regs);
         }
     }
 

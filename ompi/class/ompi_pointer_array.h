@@ -145,6 +145,25 @@ static inline int ompi_pointer_array_get_size(ompi_pointer_array_t *array)
 OMPI_DECLSPEC bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, 
                                           int index,
                                           void *value);
+
+/**
+ * Empty the array.
+ *
+ * @param array Pointer to array (IN)
+ *
+ */
+static inline void ompi_pointer_array_remove_all(ompi_pointer_array_t *array)
+{
+  int i;
+  OPAL_THREAD_LOCK(&array->lock);
+  array->lowest_free = 0;
+  array->number_free = array->size;
+  for(i=0; i<array->size; i++) {
+      array->addr[i] = NULL;
+  }
+  OPAL_THREAD_UNLOCK(&array->lock);
+}
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

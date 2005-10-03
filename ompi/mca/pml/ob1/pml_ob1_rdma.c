@@ -20,9 +20,11 @@
 #include "ompi_config.h"
 #include <sched.h>
 #include "ompi/include/constants.h"
+#include "orte/util/proc_info.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 #include "mca/bml/bml.h"
+#include "mca/ns/ns_types.h"
 #include "mca/mpool/mpool.h" 
 #include "pml_ob1.h"
 #include "pml_ob1_rdma.h"
@@ -39,8 +41,8 @@ size_t mca_pml_ob1_rdma_btls(
     mca_pml_ob1_rdma_btl_t* rdma_btls)
 {
     size_t num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
-    size_t num_btls_used = 0;
     ompi_pointer_array_t regs;
+    size_t num_btls_used = 0;
     size_t n;
     
     /* shortcut when there are no rdma capable btls */
@@ -68,6 +70,7 @@ size_t mca_pml_ob1_rdma_btls(
         }
  
         /* look through existing registrations */
+        ompi_pointer_array_remove_all(&regs);
         btl_mpool->mpool_find(btl_mpool, 
                               base,
                               size,
@@ -91,14 +94,7 @@ size_t mca_pml_ob1_rdma_btls(
 
             /* otherwise if leave_pinned re-register */
             } else if( mca_pml_ob1.leave_pinned ) {
-                mca_mpool_base_registration_t reg_temp;
-                unsigned char* new_base = reg->base < base ? reg->base : base;
-                unsigned char* new_bound = reg->bound > (base + size - 1) ? reg->bound : (base + size - 1);  
-                size_t new_len = new_bound - new_base + 1;
-                
-                /* printf("re-reg 2: base %p size %d new_base %p new_len %d\n", base, size, new_base, new_len);  */
-                assert(new_len >= size);
-                reg_temp = *reg; 
+
                 btl_mpool->mpool_deregister(btl_mpool, reg); 
                 btl_mpool->mpool_register(btl_mpool, 
                     base, 
@@ -158,16 +154,13 @@ size_t mca_pml_ob1_rdma_btls(
 
             /* a registration exists but is not large enough */
             } else {
-                unsigned char* new_base = largest->base;
-                size_t new_len = (base - largest->base) + size;
 
                 /* simplify cleanup - bump reference count as we decrement again below */
                 btl_mpool->mpool_retain(btl_mpool,largest);
                 btl_mpool->mpool_deregister(btl_mpool, largest);
-                assert(new_len >= size);
                 btl_mpool->mpool_register(btl_mpool, 
-                    new_base, 
-                    new_len, 
+                    base, 
+                    size, 
                     MCA_MPOOL_FLAGS_CACHE,
                     &fit); 
                 assert(fit->ref_count == 3);
@@ -188,7 +181,6 @@ size_t mca_pml_ob1_rdma_btls(
             num_btls_used++;
         }
     }
-    OBJ_DESTRUCT(&regs);
     return num_btls_used;
 }
 
@@ -224,7 +216,35 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
         size,
         &regs, 
         &reg_cnt); 
+
     assert(reg_cnt <= 1);
+    /* shortcut for one entry - the typical case */
+    if(reg_cnt == 1) {
+        mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, 0); 
+        size_t reg_len = reg->bound - base + 1;
+
+        /* is the existing registration the required size */
+        if(reg->base <= base && reg_len >= size) {
+            return reg;
+
+        /* otherwise if leave_pinned re-register */
+        } else if ( mca_pml_ob1.leave_pinned ) {
+          
+            btl_mpool->mpool_deregister(btl_mpool, reg); 
+            btl_mpool->mpool_register(btl_mpool, 
+                base, 
+                size, 
+                MCA_MPOOL_FLAGS_CACHE,
+                &reg); 
+            return reg;
+
+        /* existing registration cannot be used */
+        } else {
+            btl_mpool->mpool_release(btl_mpool, reg);
+            return NULL;
+        }
+    }
+
     for(r = 0; r < reg_cnt; r++) { 
         mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
         size_t reg_len = reg->bound - base + 1;
@@ -259,14 +279,9 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
            assert(fit->ref_count >= 3);
        /* a registration exists but is not large enough */
        } else {
-           unsigned char* new_base = largest->base < base ? largest->base: base;
-           unsigned char* new_bound = largest->bound > (base + size - 1) ? largest->bound : (base + size - 1);  
-           size_t new_len = new_bound - new_base + 1;
            
-           /* printf("re-reg 2: base %p size %d new_base %p new_len %d\n", base, size, new_base, new_len);  */
-           
+           btl_mpool->mpool_retain(btl_mpool, largest);
            btl_mpool->mpool_deregister(btl_mpool, largest);
-           assert(new_len >= size);
            btl_mpool->mpool_register(btl_mpool,
                base,
                size,
