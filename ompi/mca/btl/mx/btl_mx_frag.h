@@ -68,13 +68,11 @@ extern "C" {
 
 #define MCA_BTL_MX_FRAG_ALLOC_EAGER(btl, frag, rc)                              \
 {                                                                               \
-                                                                                \
     opal_list_item_t *item;                                                     \
     OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_eager_frags, item, rc);  \
     frag = (mca_btl_mx_frag_t*) item;                                           \
-    frag->mx_frag_list = (struct opal_free_list_t*)&(mca_btl_mx_component.mx_send_eager_frags);  \
-    /*opal_output( 0, "get item from eager list  %p\n", frag->mx_frag_list );*/                 \
-    frag->segment[0].seg_addr.pval = frag+1;                                    \
+    frag->mx_frag_list = (ompi_free_list_t*)&(mca_btl_mx_component.mx_send_eager_frags);  \
+    frag->segment[0].seg_addr.pval = (void*)(frag+1);                           \
     frag->segment[0].seg_len = mca_btl_mx_module.super.btl_eager_limit;         \
 }
 
@@ -84,9 +82,8 @@ extern "C" {
     opal_list_item_t *item;                                                   \
     OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_user_frags, item, rc); \
     frag = (mca_btl_mx_frag_t*) item;                                         \
-    frag->mx_frag_list = (struct opal_free_list_t*)&(mca_btl_mx_component.mx_send_user_frags);  \
-    /*opal_output( 0, "get item from user list %p\n", frag->mx_frag_list );*/               \
-    frag->segment[0].seg_addr.pval = frag+1;                                  \
+    frag->mx_frag_list = (ompi_free_list_t*)&(mca_btl_mx_component.mx_send_user_frags);  \
+    frag->segment[0].seg_addr.pval = (void*)(frag+1);                         \
     frag->segment[0].seg_len = mca_btl_mx_module.super.btl_eager_limit;       \
 }
 #else
