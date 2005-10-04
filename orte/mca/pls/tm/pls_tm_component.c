@@ -24,6 +24,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 #include "orte/include/orte_constants.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
@@ -42,6 +43,7 @@ const char *mca_pls_tm_component_version_string =
  * Local function
  */
 static int pls_tm_open(void);
+static int pls_tm_close(void);
 static struct orte_pls_base_module_1_0_0_t *pls_tm_init(int *priority);
 
 
@@ -68,7 +70,7 @@ orte_pls_tm_component_t mca_pls_tm_component = {
 
             /* Component open and close functions */
             pls_tm_open,
-            NULL
+            pls_tm_close,
         },
 
         /* Next the MCA v1.0.0 component meta data */
@@ -85,6 +87,7 @@ orte_pls_tm_component_t mca_pls_tm_component = {
 
 static int pls_tm_open(void)
 {
+    int tmp;
     mca_base_component_t *comp = &mca_pls_tm_component.super.pls_version;
 
     mca_base_param_reg_int(comp, "debug", "Enable debugging of TM pls",
@@ -93,8 +96,26 @@ static int pls_tm_open(void)
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, &mca_pls_tm_component.priority);
 
-    mca_base_param_reg_string(comp, "orted", "Command to use to start proxy orted",
-                           false, false, "orted", &mca_pls_tm_component.orted);
+    mca_base_param_reg_string(comp, "orted",
+                              "Command to use to start proxy orted",
+                              false, false, "orted",
+                              &mca_pls_tm_component.orted);
+    mca_base_param_reg_int(comp, "want_path_check",
+                           "Whether the launching process should check for the pls_tm_orted executable in the PATH before launching (the TM API does not give an idication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
+                           false, false, (int) true, &tmp);
+    mca_pls_tm_component.want_path_check = (bool) tmp;
+
+    mca_pls_tm_component.checked_paths = NULL;
+
+    return ORTE_SUCCESS;
+}
+
+
+static int pls_tm_close(void)
+{
+    if (NULL != mca_pls_tm_component.checked_paths) {
+        opal_argv_free(mca_pls_tm_component.checked_paths);
+    }
 
     return ORTE_SUCCESS;
 }
