@@ -61,7 +61,7 @@ typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             uint32_t* inputCount,
                                             size_t* max_data,
                                             int32_t* freeAfter );
-typedef void*(*memalloc_fct_t)( size_t* pLengthi, void* userdata );
+typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
 
 typedef struct dt_stack {
     int16_t index;    /**< index in the element description */
