@@ -333,7 +333,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         pSrcBuf = (char*)iov[iov_count].iov_base;
         remaining = pConv->count * pData->size - pConv->bConverted;
-        if( remaining > iov[iov_count].iov_len )
+        if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
 

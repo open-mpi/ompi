@@ -174,14 +174,13 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
             /*
              *  ALLOCATE SOME MEMORY ...
              */
-            uint32_t length = iov[iov_count].iov_len;
+            size_t length = iov[iov_count].iov_len;
             if( length <= 0 )
                 length = pConvertor->count * pData->size - pConvertor->bConverted;
             if( ((*max_data) - total_packed) < length )
                 length = (*max_data) - total_packed;
+            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &length, pConvertor->memAlloc_userdata );
             iov[iov_count].iov_len = length;
-            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &(iov[iov_count].iov_len),
-                                                               pConvertor->memAlloc_userdata );
             *freeAfter = (*freeAfter) | (1 << iov_count);
         }
         destination = iov[iov_count].iov_base;
