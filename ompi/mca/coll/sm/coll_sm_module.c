@@ -405,9 +405,9 @@ sm_module_init(struct ompi_communicator_t *comm)
         /* Memory affinity: control */
 
         maffinity[j].mbs_len = c->sm_control_size;
-        maffinity[j].mbs_start_addr = 
-            data->mcb_mpool_index[i].mcbmi_control +
-            (rank * c->sm_control_size);
+        maffinity[j].mbs_start_addr = (void *)
+            (data->mcb_mpool_index[i].mcbmi_control +
+             (rank * c->sm_control_size));
         ++j;
 
         /* Memory affinity: data */
@@ -430,7 +430,7 @@ sm_module_init(struct ompi_communicator_t *comm)
     memset(data->mcb_barrier_control_me, 0, 
            num_barrier_buffers * 2 * c->sm_control_size);
     for (i = 0; i < c->sm_comm_num_segments; ++i) {
-        memset(data->mcb_mpool_index[i].mcbmi_control, 0,
+        memset((void *) data->mcb_mpool_index[i].mcbmi_control, 0,
                c->sm_control_size);
     }
 

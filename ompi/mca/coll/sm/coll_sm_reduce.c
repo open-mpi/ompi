@@ -147,7 +147,6 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
     mca_coll_sm_in_use_flag_t *flag;
     ompi_convertor_t convertor;
     mca_coll_base_mpool_index_t *index;
-    mca_coll_sm_tree_node_t *me;
     int32_t ddt_size;
     size_t segment_ddt_count, segment_ddt_bytes, zero = 0;
 
@@ -155,8 +154,6 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-
-    me = &data->mcb_tree[(rank + size - root) % size];
 
     /* Figure out how much we should have the convertor copy.  We need
        to have it be in units of a datatype -- i.e., we only want to
@@ -255,10 +252,8 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
         /* Main loop over receiving / reducing fragments */
 
         do {
-
             flag_num = (data->mcb_operation_count % 
                         mca_coll_sm_component.sm_comm_num_in_use_flags);
-
             FLAG_SETUP(flag_num, flag, data);
             FLAG_WAIT_FOR_IDLE(flag);
             FLAG_RETAIN(flag, size, data->mcb_operation_count);
@@ -417,7 +412,6 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
      *********************************************************************/
 
     else {
-        int parent_rank = (me->mcstn_parent->mcstn_id + root) % size;
 
         /* Here we get a convertor for the full count that the user
            provided (as opposed to the convertor that the root got) */
@@ -454,7 +448,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
             do {
                 index = &(data->mcb_mpool_index[segment_num]);
 
-                /* Copy from the user's buffer to the shared mem
+                /* Copy from the user's buffer to my shared mem
                    segment */
                 COPY_FRAGMENT_IN(convertor, index, rank, iov, max_data);
                 bytes += max_data;
@@ -462,8 +456,10 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 /* Wait for the write to absolutely complete */
                 opal_atomic_wmb();
                 
-                /* Tell my parent that this fragment is ready */
-                CHILD_NOTIFY_PARENT(rank, parent_rank, index, max_data);
+                /* Tell my parent (always the reduction root -- we're
+                   ignoring the mcb_tree parent/child relationships
+                   here) that this fragment is ready */
+                CHILD_NOTIFY_PARENT(rank, root, index, max_data);
 
                 ++segment_num;
             } while (bytes < total_size && segment_num < max_segment_num);
