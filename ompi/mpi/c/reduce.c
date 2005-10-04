@@ -68,6 +68,14 @@ int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
           }
         }
+
+        /* Intracommunicator errors */
+
+        else {
+            if (root < 0 || root >= ompi_comm_size(comm)) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+            }
+        }
     }
 
     /* MPI-1, p114, says that each process must supply at least
