@@ -124,7 +124,7 @@ do {                                                                       \
     frag->btl = ep->endpoint_btl;                                          \
     frag->endpoint = ep;                                                   \
     frag->iov[0].iov_len = sizeof(frag->hdr);                              \
-    frag->iov[0].iov_base = &frag->hdr;                                    \
+    frag->iov[0].iov_base = (void*)&frag->hdr;                             \
     frag->iov_cnt = 1;                                                     \
     frag->iov_idx = 0;                                                     \
     frag->iov_ptr = frag->iov;                                             \

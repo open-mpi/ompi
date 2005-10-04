@@ -168,7 +168,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
         switch(frag->hdr.type) {
             case MCA_BTL_TCP_HDR_TYPE_SEND:
                 if(frag->iov_idx == 1) {
-                    frag->iov[1].iov_base = (frag+1);
+                    frag->iov[1].iov_base = (void*)(frag+1);
                     frag->iov[1].iov_len = frag->hdr.size;
                     frag->segments[0].seg_addr.pval = frag+1;
                     frag->segments[0].seg_len = frag->hdr.size;
@@ -178,7 +178,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 break;
             case MCA_BTL_TCP_HDR_TYPE_PUT:
                 if(frag->iov_idx == 1) {
-                    frag->iov[1].iov_base = frag->segments;
+                    frag->iov[1].iov_base = (void*)frag->segments;
                     frag->iov[1].iov_len = frag->hdr.count * sizeof(mca_btl_base_segment_t);
                     frag->iov_cnt++;
                     return false;
