@@ -189,8 +189,7 @@ int mca_btl_gm_free(
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des; 
     if(frag->size == 0) {
-        btl->btl_mpool->mpool_release(btl->btl_mpool, 
-                                      frag->registration);
+        btl->btl_mpool->mpool_release(btl->btl_mpool, frag->registration);
         MCA_BTL_GM_FRAG_RETURN_USER(btl, frag); 
     } else if(frag->size == mca_btl_gm_component.gm_eager_frag_size) {
         MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag); 
@@ -226,8 +225,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     int32_t free_after;
     int rc;
 
-#if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && \
-    (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
+#if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
     /*
      * If the data has already been pinned and is contigous than we can
      * use it in place.
@@ -376,8 +374,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     size_t reserve,
     size_t* size)
 {
-#if OMPI_MCA_BTL_GM_SUPPORT_REGISTERING && \
-    (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
+#if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
     mca_btl_gm_frag_t* frag;
     mca_mpool_base_module_t* mpool = btl->btl_mpool;
     int rc;
@@ -643,9 +640,9 @@ int mca_btl_gm_get(
     frag->btl = gm_btl;
     frag->endpoint = endpoint;
 
-    gm_put(gm_btl->port,
-        des->des_src->seg_addr.pval,
+    gm_get(gm_btl->port,
         des->des_dst->seg_addr.lval,
+        des->des_src->seg_addr.pval,
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.node_id,
