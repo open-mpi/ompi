@@ -78,14 +78,13 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         bConverted = 0;
         if( iov[iov_count].iov_base == NULL ) {
-            uint32_t length = iov[iov_count].iov_len;
+            size_t length = iov[iov_count].iov_len;
             if( length <= 0 )
                 length = pConvertor->count * pData->size - pConvertor->bConverted - bConverted;
             if( (*max_data) < length )
                 length = *max_data;
+            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &length, pConvertor->memAlloc_userdata );
             iov[iov_count].iov_len = length;
-            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &(iov[iov_count].iov_len),
-                                          pConvertor->memAlloc_userdata );
             *freeAfter = (*freeAfter) | ( 1 << iov_count);
         }
         pInput = iov[iov_count].iov_base;
@@ -415,8 +414,9 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 /* point to the end of loop element */
                 ddt_endloop_desc_t* end_loop = &(pElems[pos_desc + pElems[pos_desc].loop.items].end_loop);
                 if( iov[iov_pos].iov_base == NULL ) {
-                    iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len),
-                                                   pConv->memAlloc_userdata );
+                    size_t length = iov[iov_pos].iov_len;
+                    iov[iov_pos].iov_base = pConv->memAlloc_fn( &length, pConv->memAlloc_userdata );
+                    iov[iov_pos].iov_len = length;
                     space_on_iovec = iov[iov_pos].iov_len;
                     destination = iov[iov_pos].iov_base;
                     (*freeAfter) |= (1 << iov_pos);
@@ -482,6 +482,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                  */
                 do {
                     if( iov[iov_pos].iov_base == NULL ) {
+                        size_t length;
+
                         if( saveLength > IOVEC_MEM_LIMIT ) {
                             /* If the user didn't provide any memory, then we are free
                              * to handle this case as we want.
@@ -499,9 +501,10 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                             space_on_iovec = iov[iov_pos].iov_len;
                             break;
                         }
+                        length = iov[iov_pos].iov_len;
                         /* Let's allocate some. */
-                        iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len),
-                                                       pConv->memAlloc_userdata );
+                        iov[iov_pos].iov_base = pConv->memAlloc_fn( &length, pConv->memAlloc_userdata );
+                        iov[iov_pos].iov_len = length;
                         (*freeAfter) |= (1 << iov_pos);
                         destination = iov[iov_pos].iov_base;
                         space_on_iovec = iov[iov_pos].iov_len;
@@ -600,7 +603,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
     pSrc = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         if( 0 == length ) break;
-        if( iov[iov_count].iov_len > length )
+        if( (size_t)iov[iov_count].iov_len > length )
             iov[iov_count].iov_len = length;
         if( iov[iov_count].iov_base == NULL ) {
             iov[iov_count].iov_base = pSrc;
@@ -707,10 +710,11 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
             uint32_t done, counter;
 
             if( iov[iov_count].iov_base == NULL ) {
-                iov[iov_count].iov_base = pConv->memAlloc_fn( &(iov[iov_count].iov_len),
-                                                 pConv->memAlloc_userdata );
+                size_t length = iov[iov_count].iov_len;
+                iov[iov_count].iov_base = pConv->memAlloc_fn( &length, pConv->memAlloc_userdata );
+                iov[iov_count].iov_len = length;
                 (*freeAfter) |= (1 << 0);
-                if( max_allowed < iov[iov_count].iov_len )
+                if( max_allowed < (size_t)iov[iov_count].iov_len )
                     iov[iov_count].iov_len = max_allowed;
                 else
                     max_allowed = iov[iov_count].iov_len;
