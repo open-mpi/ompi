@@ -30,7 +30,9 @@ extern "C" {
         orte_pls_base_component_t super;
         int priority;
         int debug;
+        bool want_path_check;
         char *orted;
+        char **checked_paths;
     };
     typedef struct orte_pls_tm_component_t orte_pls_tm_component_t;
 

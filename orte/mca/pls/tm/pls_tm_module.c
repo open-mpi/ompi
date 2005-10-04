@@ -38,6 +38,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
+#include "opal/util/path.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
 #include "orte/include/orte_constants.h"
@@ -69,6 +70,7 @@ static int pls_tm_finalize(void);
 static int pls_tm_connect(void);
 static int pls_tm_disconnect(void);
 static int pls_tm_start_proc(char *nodename, int argc, char **argv, char **env);
+static int pls_tm_check_path(char *exe, char **env);
 
 /*
  * Global variable
@@ -128,14 +130,9 @@ pls_tm_launch(orte_jobid_t jobid)
     /* need integer value for command line parameter */
     asprintf(&jobid_string, "%lu", (unsigned long) jobid);
 
-    /*
-     * start building argv array
-     */
-    argv = NULL;
-    argc = 0;
-
     /* add the daemon command (as specified by user) */
-    opal_argv_append(&argc, &argv, mca_pls_tm_component.orted);
+    argv = opal_argv_split(mca_pls_tm_component.orted, ' ');
+    argc = opal_argv_count(argv);
 
     opal_argv_append(&argc, &argv, "--no-daemonize");
     
@@ -329,6 +326,17 @@ pls_tm_launch(orte_jobid_t jobid)
             free(cur_prefix);
         }
 
+        /* Do a quick sanity check to ensure that we can find the
+           orted in the PATH */
+        
+        if (ORTE_SUCCESS != 
+            (rc = pls_tm_check_path(argv[0], env))) {
+            ORTE_ERROR_LOG(rc);
+            opal_show_help("help-pls-tm.txt", "daemon-not-found",
+                           true, argv[0]);
+            goto cleanup;
+        }
+
         /* set the progress engine schedule for this node.
          * if node_slots is set to zero, then we default to
          * NOT being oversubscribed
@@ -376,9 +384,8 @@ pls_tm_launch(orte_jobid_t jobid)
 
 cleanup:
     if (connected) {
-        rc = pls_tm_disconnect();
+        pls_tm_disconnect();
     }
-
 
     while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
@@ -595,5 +602,85 @@ pls_tm_start_proc(char *nodename, int argc, char **argv, char **env)
         return ORTE_ERR_IN_ERRNO;
     }
 
+    return ORTE_SUCCESS;
+}
+
+
+static int pls_tm_check_path(char *exe, char **env)
+{
+    static int size = 256;
+    int i;
+    char *file;
+    char *cwd;
+    char *path;
+
+    /* Do we want this check at all? */
+
+    if (!mca_pls_tm_component.want_path_check) {
+        return ORTE_SUCCESS;
+    }
+
+    /* Find the path in the supplied environment */
+
+    for (i = 0; NULL != env[i]; ++i) {
+        if (0 == strncmp("PATH=", env[i], 5)) {
+            path = strdup(env[i]);
+            break;
+        }
+    }
+    if (NULL == env[i]) {
+        path = strdup("NULL");
+    }
+
+    /* Check the already-successful paths (i.e., be a little
+       friendlier to the filesystem -- if we find the executable
+       successfully, save it) */
+
+    for (i = 0; NULL != mca_pls_tm_component.checked_paths &&
+             NULL != mca_pls_tm_component.checked_paths[i]; ++i) {
+        if (0 == strcmp(path, mca_pls_tm_component.checked_paths[i])) {
+            return ORTE_SUCCESS;
+        }
+    }
+
+    /* We didn't already find it, so check now.  First, get the cwd. */
+
+    do {
+        cwd = malloc(size);
+        if (NULL == cwd) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        if (NULL == getcwd(cwd, size)) {
+            free(cwd);
+            if (ERANGE == errno) {
+                size *= 2;
+            } else {
+                return ORTE_ERR_IN_ERRNO;
+            }
+        } else {
+            break;
+        }
+    } while (1);
+
+    /* Now do the search */
+
+    file = opal_path_findv(exe, X_OK, env, cwd);
+    free(cwd);
+    if (NULL == file) {
+        free(path);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    if (mca_pls_tm_component.debug) {
+        opal_output(0, "pls:tm: found %s", file);
+    }
+    free(file);
+
+    /* Success -- so cache it */
+
+    opal_argv_append_nosize(&mca_pls_tm_component.checked_paths, path);
+
+    /* All done */
+
+    free(path);
     return ORTE_SUCCESS;
 }
