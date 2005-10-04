@@ -75,7 +75,7 @@ static int ras_slurm_open(void)
         mca_base_param_reg_int(&mca_ras_slurm_component.ras_version,
                                "priority",
                                "Priority of the slurm ras component",
-                               false, false, 100, NULL);
+                               false, false, 75, NULL);
 
     return ORTE_SUCCESS;
 }
