@@ -374,7 +374,7 @@ int mca_btl_tcp_send(
     frag->iov_idx = 0;
     frag->iov_cnt = 1;
     frag->iov_ptr = frag->iov;
-    frag->iov[0].iov_base = &frag->hdr;
+    frag->iov[0].iov_base = (void*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
     frag->hdr.size = 0;
     for(i=0; i<frag->base.des_src_cnt; i++) {
@@ -414,9 +414,9 @@ int mca_btl_tcp_put(
     frag->hdr.size = 0;
     frag->iov_cnt = 2;
     frag->iov_ptr = frag->iov;
-    frag->iov[0].iov_base = &frag->hdr;
+    frag->iov[0].iov_base = (void*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
-    frag->iov[1].iov_base = frag->base.des_dst;
+    frag->iov[1].iov_base = (void*)frag->base.des_dst;
     frag->iov[1].iov_len = frag->base.des_dst_cnt * sizeof(mca_btl_base_segment_t);
     for(i=0; i<frag->base.des_src_cnt; i++) {
         frag->hdr.size += frag->segments[i].seg_len;
@@ -455,9 +455,9 @@ int mca_btl_tcp_get(
     frag->hdr.size = 0;
     frag->iov_cnt = 2;
     frag->iov_ptr = frag->iov;
-    frag->iov[0].iov_base = &frag->hdr;
+    frag->iov[0].iov_base = (void*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
-    frag->iov[1].iov_base = frag->base.des_src;
+    frag->iov[1].iov_base = (void*)frag->base.des_src;
     frag->iov[1].iov_len = frag->base.des_src_cnt * sizeof(mca_btl_base_segment_t);
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_GET;
