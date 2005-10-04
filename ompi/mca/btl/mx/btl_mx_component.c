@@ -66,15 +66,12 @@ mca_btl_mx_component_t mca_btl_mx_component = {
     }
 };
 
-int mx_debug = 0;
-
 /*
  * utility routines for parameter registration
  */
 
-static inline char* mca_btl_mx_param_register_string(
-                                                     const char* param_name, 
-                                                     const char* default_value)
+static inline char* mca_btl_mx_param_register_string( const char* param_name, 
+                                                      const char* default_value )
 {
     char *param_value;
     int id = mca_base_param_register_string("btl","mx",param_name,NULL,default_value);
@@ -82,9 +79,8 @@ static inline char* mca_btl_mx_param_register_string(
     return param_value;
 }
 
-static inline int mca_btl_mx_param_register_int(
-        const char* param_name, 
-        int default_value)
+static inline int mca_btl_mx_param_register_int( const char* param_name, 
+                                                 int default_value )
 {
     int id = mca_base_param_register_int("btl","mx",param_name,NULL,default_value);
     int param_value = default_value;
@@ -99,11 +95,9 @@ static inline int mca_btl_mx_param_register_int(
 
 int mca_btl_mx_component_open(void)
 {
-
-    
     /* initialize state */
-    mca_btl_mx_component.mx_num_btls=0;
-    mca_btl_mx_component.mx_btls=NULL;
+    mca_btl_mx_component.mx_num_btls = 0;
+    mca_btl_mx_component.mx_btls = NULL;
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
@@ -146,7 +140,6 @@ int mca_btl_mx_component_open(void)
     mca_btl_mx_module.super.btl_flags  = 
         mca_btl_mx_param_register_int("flags", MCA_BTL_FLAGS_PUT); 
 
-    mx_debug = mca_btl_mx_param_register_int( "debug", 0 );
     return OMPI_SUCCESS;
 }
 
@@ -446,7 +439,8 @@ int mca_btl_mx_component_progress()
              */
             mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
             mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
-            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)frag->tag, 0xffffffffffffffff,
+            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)frag->tag, 
+                                  (uint64_t)0xffffffffffffffffULL,
                                   frag, &(frag->mx_request) );
             if( MX_SUCCESS != mx_return ) {
                 opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
