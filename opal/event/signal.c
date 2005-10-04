@@ -170,17 +170,29 @@ opal_evsignal_del(sigset_t *evsigmask, struct opal_event *ev)
 #ifdef WIN32
    return 0;
 #else
-	int evsignal;
+   int evsignal, ret;
    struct sigaction sa;
+   sigset_t set;
    
-	evsignal = OPAL_EVENT_SIGNAL(ev);
-	sigdelset(evsigmask, evsignal);
-	opal_needrecalc = 1;
+   evsignal = OPAL_EVENT_SIGNAL(ev);	
 
-	memset(&sa, 0, sizeof(sa));
+   /* remove from the "in use" signal list */
+   sigdelset(evsigmask, evsignal);
+   opal_needrecalc = 1;
+
+   /* set back to default handler */
+   memset(&sa, 0, sizeof(sa));
    sa.sa_handler = SIG_DFL;
    
-   return sigaction(evsignal, &sa, NULL);
+   ret = sigaction(evsignal, &sa, NULL);
+
+   /* unblock signal, in case we were blocking the "in use" signals
+      when this function was called */
+   sigemptyset(&set);
+   sigaddset(&set, evsignal);
+   sigprocmask(SIG_UNBLOCK, &set, NULL);
+
+   return ret;
 #endif
 }
 
@@ -193,7 +205,7 @@ opal_evsignal_handler(int sig)
 
 	opal_evsigcaught[sig]++;
 	opal_evsignal_caught = 1;
- 
+
 #if 0
         if(opal_event_signal_count == 0) {
             opal_event_signal_count++;
