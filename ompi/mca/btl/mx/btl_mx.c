@@ -166,17 +166,12 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
 
         mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
         mx_segment.segment_length = frag->base.des_dst->seg_len;
-        mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)tag, 0xffffffffffffffff,
+        mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)tag,
+                              0xffffffffffffffffULL,
                               frag, &(frag->mx_request) );
         if( MX_SUCCESS != mx_return ) {
             return OMPI_ERROR;
         }
-    }
-
-    extern int mx_debug;
-    if( mx_debug ) {
-#include <unistd.h>
-        sleep(20);
     }
 
     return OMPI_SUCCESS;
@@ -262,7 +257,6 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
     size_t* size
 )
 {
-    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     mca_btl_mx_frag_t* frag;
     struct iovec iov;
     uint32_t iov_count = 1;
@@ -271,6 +265,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
     int rc;
 
 #if MCA_BTL_HAS_MPOOL
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     /*
      * If the data has already been pinned and is contigous than we can
      * use it in place.
@@ -416,7 +411,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
                 iov.iov_len = mca_btl_mx_module.super.btl_eager_limit - reserve;
                 max_data = iov.iov_len;  /* let the PML establish the pipeline */
             }
-            iov.iov_base = (unsigned char*)frag->segment[0].seg_addr.pval + reserve;
+            iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
             frag->segment[0].seg_len = reserve;
             frag->base.des_src_cnt = 1;
         }
@@ -463,7 +458,9 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
     size_t reserve,
     size_t* size)
 {
-    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
+#if MCA_BTL_HAS_MPOOL
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl;
+#endif  /* MCA_BTL_HAS_MPOOL */
     mca_btl_mx_frag_t* frag;
     int rc;
 
