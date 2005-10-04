@@ -338,7 +338,7 @@ int mca_pml_ob1_send_request_start_buffered(
         return rc;
     }
 
-    iov.iov_base = ((unsigned char*)sendreq->req_send.req_addr) + sendreq->req_send_offset;
+    iov.iov_base = (void*)(((unsigned char*)sendreq->req_send.req_addr) + sendreq->req_send_offset);
     iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - sendreq->req_send_offset;
 
     if((rc = ompi_convertor_pack(
