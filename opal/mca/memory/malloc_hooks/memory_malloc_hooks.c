@@ -14,13 +14,12 @@
  * $HEADER$
  */
 
-#include <malloc.h>
-
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <stdio.h>
 #define __USE_GNU
 #include <dlfcn.h>
+#include <malloc.h>
 
 #include "opal/memory/memory_internal.h"
      
