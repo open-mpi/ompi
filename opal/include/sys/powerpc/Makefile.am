@@ -16,7 +16,7 @@
 
 
 
-noinst_HEADERS = atomic.h 
+noinst_HEADERS = atomic.h timer.h
 
 # Conditionally install the header files
 
