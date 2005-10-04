@@ -62,7 +62,7 @@ extern "C" {
 
         /** Number of processes in this communicator who have seen
             this value already. */
-        volatile  int smbcs_count;
+        volatile int smbcs_count;
 
         /** Mechanism for letting multiple processes know whether this
             allocation succeeded or not */
@@ -242,7 +242,7 @@ extern "C" {
      */
     struct mca_coll_base_mpool_index_t {
         /** Pointer to beginning of control data */
-        uint32_t *mcbmi_control;
+        uint32_t volatile *mcbmi_control;
         /** Pointer to beginning of message fragment data */
         char *mcbmi_data;
     };
@@ -514,7 +514,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
  */
 #define CHILD_WAIT_FOR_NOTIFY(rank, index, value) \
     do { \
-        volatile uint32_t *ptr = ((uint32_t*) \
+        uint32_t volatile *ptr = ((uint32_t*) \
                                   (((char*) index->mcbmi_control) + \
                                    ((rank) * mca_coll_sm_component.sm_control_size))); \
         while (0 == *ptr) SPIN; \
@@ -527,7 +527,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
  * segment.  Used for fan in operations.
  */
 #define CHILD_NOTIFY_PARENT(child_rank, parent_rank, index, value) \
-    ((size_t*) \
+    ((size_t volatile *) \
      (((char*) (index)->mcbmi_control) + \
       (mca_coll_sm_component.sm_control_size * \
        (parent_rank))))[(child_rank)] = (value)
@@ -539,7 +539,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
  */
 #define PARENT_WAIT_FOR_NOTIFY_SPECIFIC(child_rank, parent_rank, index, value) \
     do { \
-        volatile size_t *ptr = ((size_t *) \
+        size_t volatile *ptr = ((size_t volatile *) \
                                 (((char*) index->mcbmi_control) + \
                                  (mca_coll_sm_component.sm_control_size * \
                                   (parent_rank)))) + child_rank; \
