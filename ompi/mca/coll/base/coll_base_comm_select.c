@@ -35,6 +35,7 @@
 /*
  * Local variables
  */
+static int basic_priority = -1;
 static mca_coll_base_module_1_0_0_t null_module = {
 
   /* Module init and finalize */
@@ -240,10 +241,27 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
     using_basic = false;
     item = opal_list_remove_first(selectable);
     avail = (avail_coll_t *) item;
-    selected_component = avail->ac_component;
-    selected_module = avail->ac_module;
-    selected_data = avail->ac_data;
-    OBJ_RELEASE(avail);
+
+    /* Check to see if the basic component has a higher priority than
+       the highest priority component on the selectable list.  If so,
+       use basic. */
+
+    if (NULL != mca_coll_base_basic_component) {
+        query_basic(comm);
+    }
+    if (avail->ac_priority > basic_priority) {
+        selected_component = avail->ac_component;
+        selected_module = avail->ac_module;
+        selected_data = avail->ac_data;
+        OBJ_RELEASE(avail);
+    } else {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:base:comm_select: component available: basic, priority: %d\n", basic_priority);
+        using_basic = true;
+        selected_component = mca_coll_base_basic_component;
+        selected_module = comm->c_coll_basic_module;
+        selected_data = comm->c_coll_basic_data;
+    }
   } else {
     using_basic = true;
     selected_component = mca_coll_base_basic_component;
@@ -564,13 +582,12 @@ static int module_init(const mca_coll_base_module_1_0_0_t *module,
 static int query_basic(ompi_communicator_t *comm) 
 {
   int ret;
-  int priority;
   struct mca_coll_base_comm_t *data;
 
   ret = OMPI_SUCCESS;
   if (NULL == comm->c_coll_basic_module) {
     ret = query((mca_base_component_t *) mca_coll_base_basic_component, comm, 
-                &priority, &comm->c_coll_basic_module, &data);
+                &basic_priority, &comm->c_coll_basic_module, &data);
     if (ret != OMPI_SUCCESS) {
       comm->c_coll_basic_module = NULL;
       return ret;
