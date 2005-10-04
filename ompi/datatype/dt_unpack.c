@@ -569,7 +569,7 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_bytes_1,              /* DT_LOGIC               */
 #elif OMPI_SIZEOF_FORTRAN_LOGICAL == 4
    (conversion_fct_t)copy_bytes_4,              /* DT_LOGIC               */
-#elif
+#elif 1 /* always, some compiler complain if there is not value */
    NULL,                                        /* DT_LOGIC               */
 #endif
 #if (SIZEOF_FLOAT + SIZEOF_INT) == 8
@@ -635,7 +635,7 @@ int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 
-inline int32_t
+int32_t
 ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
                                  const struct ompi_datatype_t* datatype,
                                  int32_t count,
@@ -748,9 +748,6 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
             pos_desc++;  /* advance to the next data */
         }
     }
-
-    /* cleanup the stack */
-    return -1;  /* never reached */
 }
 
 int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t count,

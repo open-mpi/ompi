@@ -275,7 +275,6 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
             last_count = pElems[pos_desc].elem.count;
         }
     }
-    last_count = 0;  /* complete the data */
  end_loop:
     if( last_count != 0 ) {  /* save the internal state */
         OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_count,
@@ -756,7 +755,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
     return (pConv->bConverted == length);
 }
 
-inline int32_t
+int32_t
 ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
                                  const struct ompi_datatype_t* datatype,
                                  int32_t count,
