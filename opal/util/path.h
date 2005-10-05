@@ -30,7 +30,7 @@ extern "C" {
      *  
      *  @param fname File name
      *  @param pathv Array of search directories
-     *  @param mode  Permissions which must be satisfied
+     *  @param mode  Permissions which must be satisfied (see access(2))
      *  @param envv  Pointer to string containing environment
      *
      *  @retval Full pathname of located file Success
@@ -41,6 +41,8 @@ extern "C" {
      *  value if it is defined; otherwise the whole prefix is ignored.
      *  Environment variables must be followed by a path delimiter or
      *  end-of-string.
+     *
+     * The caller is responsible for freeing the returned string.
      */
     OMPI_DECLSPEC char *opal_path_find(char *fname, char **pathv, int mode,
                                        char **envv);
@@ -50,7 +52,7 @@ extern "C" {
      *  paths
      *
      *  @param fname File name
-     *  @param mode  Target permissions which must be satisfied
+     *  @param mode  Target permissions which must be satisfied (see access(2))
      *  @param envv  Pointer to environment list
      *  @param wrkdir Working directory
      *
@@ -60,6 +62,8 @@ extern "C" {
      *  Locates a file with certain permissions from the list of paths
      *  given by the $PATH environment variable.  Replaces "." in the
      *  path with the working dir.
+     *
+     * The caller is responsible for freeing the returned string.
      */
     OMPI_DECLSPEC char *opal_path_findv(char *fname, int mode, 
                                         char **envv, char *wrkdir);
