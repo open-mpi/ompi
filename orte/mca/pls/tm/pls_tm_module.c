@@ -612,7 +612,7 @@ static int pls_tm_check_path(char *exe, char **env)
     int i;
     char *file;
     char *cwd;
-    char *path;
+    char *path = NULL;
 
     /* Do we want this check at all? */
 
