@@ -38,6 +38,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 /*
  * The environment
@@ -46,6 +49,8 @@ extern char **environ;
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
+#include "opal/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "mca/base/base.h"
 #include "mca/errmgr/errmgr.h"
@@ -107,6 +112,41 @@ static void dump(void)
                 MPIR_proctable[i].host_name,
                 MPIR_proctable[i].executable_name,
                 MPIR_proctable[i].pid);
+    }
+}
+
+
+/**
+ * Add "-tv" to the command line parsing options
+ */
+void orte_totalview_cmd_line_setup(opal_cmd_line_t *cmd)
+{
+    opal_cmd_line_make_opt3(cmd, '\0', "tv", "tv", 0,
+                            "Convenience option to re-exec under the TotalView debugger");
+}
+
+/**
+ * If -tv was given, re-exec under totalview
+ */
+void orte_totalview_cmd_line_process(opal_cmd_line_t *cmd, char *basename,
+                                     int argc, char *argv[])
+{
+    if (opal_cmd_line_is_taken(cmd, "tv")) {
+        int i;
+        char **new_argv = NULL;
+        printf("found -tv\n");
+
+        opal_argv_append_nosize(&new_argv, "totalview");
+        opal_argv_append_nosize(&new_argv, argv[0]);
+        opal_argv_append_nosize(&new_argv, "-a");
+        for (i = 1; i < argc; ++i) {
+            opal_argv_append_nosize(&new_argv, argv[i]);
+        }
+
+        execvp(new_argv[0], new_argv);
+        opal_show_help("help-orterun.txt", "totalview-exec-failed",
+                       true, basename);
+        exit(1);
     }
 }
 
