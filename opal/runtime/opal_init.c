@@ -97,14 +97,8 @@ int opal_init(void)
     }
 
     /* open the processor affinity base */
-    if (OPAL_SUCCESS != (ret = opal_paffinity_base_open())) {
-        error = "opal_paffinity_base_open";
-        goto error;
-    }
-    if (OPAL_SUCCESS != (ret = opal_paffinity_base_select())) {
-        error = "opal_paffinity_base_select";
-        goto error;
-    }
+    opal_paffinity_base_open();
+    opal_paffinity_base_select();
 
     /* open the memory manager components.  Memory hooks may be
        triggered before this (any time after mem_free_init(),
