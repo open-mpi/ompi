@@ -89,3 +89,9 @@ that there are no runaway processes still executing.
 A prefix was supplied to %s that only contained slashes.  
 
 This is a fatal error; %s will now abort.  No processes were launched.
+[totalview-exec-failed]
+%s was unable to launch the totalview debugger.  Things to check:
+
+    - Ensure that TotalView is installed properly
+    - Ensure that the "totalview" executable is in your path
+    - Ensure that valid licenses are available to run the TotalView debugger

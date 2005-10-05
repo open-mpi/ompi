@@ -19,6 +19,9 @@
 
 #include "orte_config.h"
 
+void orte_totalview_cmd_line_setup(opal_cmd_line_t *cmd);
+void orte_totalview_cmd_line_process(opal_cmd_line_t *cmd, char *basename,
+                                     int argc, char *argv[]);
 void orte_totalview_init_before_spawn(void);
 void orte_totalview_init_after_spawn(orte_jobid_t jobid);
 void orte_totalview_finalize(void);
