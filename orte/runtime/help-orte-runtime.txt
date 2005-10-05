@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,32 +14,16 @@
 # 
 # $HEADER$
 #
+# This is the US/English general help file for Open MPI.
+#
+[orte_init:startup:internal-failure]
+It looks like orte_init failed for some reason; your parallel process is
+likely to abort.  There are many reasons that a parallel process can
+fail during orte_init; some of which are due to configuration or
+environment problems.  This failure appears to be an internal failure;
+here's some additional information (which may only be relevant to an
+Open MPI developer):
 
+  %s failed
+  --> Returned value %d instead of ORTE_SUCCESS
 
-
-AM_CPPFLAGS = -I$(top_builddir)/src/event
-
-noinst_LTLIBRARIES = libruntime.la
-
-# Source code files
-
-dist_pkgdata_DATA = help-opal-runtime.txt
-
-headers = \
-        opal_progress.h \
-        opal.h
-
-libruntime_la_SOURCES = \
-        $(headers) \
-        opal_progress.c \
-        opal_finalize.c \
-        opal_init.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/runtime
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif

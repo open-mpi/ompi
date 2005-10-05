@@ -26,6 +26,7 @@
 #include "include/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal.h"
 #include "dps/dps.h"
@@ -62,6 +63,7 @@ static const char * orte_err2str(int errnum);
 int orte_init_stage1(bool infrastructure)
 {
     int ret;
+    char *error = NULL;
     char *jobid_str = NULL;
     char *procid_str = NULL;
     char *contact_path = NULL;
@@ -72,24 +74,29 @@ int orte_init_stage1(bool infrastructure)
     opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
 
     /* Register all MCA Params */
+    /* AWF - uh, is ORTE_ERROR_LOG really available yet? */
     if (ORTE_SUCCESS != (ret = orte_register_params(infrastructure))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_register_params";
+        goto error;
     }
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
-        return ret;
+        error = "orte_sys_info";
+        goto error;
     }
 
     /* Ensure the process info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_proc_info())) {
-        return ret;
+        error = "orte_proc_info";
+        goto error;
     }
 
     /* Ensure the universe_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_univ_info())) {
-        return ret;
+        error = "orte_univ_info";
+        goto error;
     }
 
     /*
@@ -97,19 +104,22 @@ int orte_init_stage1(bool infrastructure)
      */
     if (ORTE_SUCCESS != (ret = orte_dps_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_dps_open";
+        goto error;
     }
 
     /*
      * Open the name services to ensure access to local functions
      */
     if (OMPI_SUCCESS != (ret = orte_ns_base_open())) {
-        return ret;
+        error = "orte_ns_base_open";
+        goto error;
     }
 
     /* Open the error manager to activate error logging - needs local name services */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
-        return ret;
+        error = "orte_errmgr_base_open";
+        goto error;
     }
 
     /*****   ERROR LOGGING NOW AVAILABLE *****/
@@ -117,11 +127,13 @@ int orte_init_stage1(bool infrastructure)
     /* check for debug flag */
     if (0 > (ret =  mca_base_param_register_int("orte", "debug", NULL, NULL, 0))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "mca_base_param_register_int";
+        goto error;
     }
     if (ORTE_SUCCESS != (ret = mca_base_param_lookup_int(ret, &orte_debug_flag))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "mca_base_param_lookup_int";
+        goto error;
     }
 
     /*
@@ -129,7 +141,8 @@ int orte_init_stage1(bool infrastructure)
     */
     if (OMPI_SUCCESS != (ret = opal_event_init())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "opal_event_init";
+        goto error;
     }
 
     /*
@@ -137,7 +150,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (OMPI_SUCCESS != (ret = opal_progress_init())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "opal_progress_init";
+        goto error;
     }
 
     /*
@@ -145,7 +159,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (OMPI_SUCCESS != (ret = orte_wait_init())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_wait_init";
+        goto error;
     }
 
     /*
@@ -153,7 +168,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (OMPI_SUCCESS != (ret = orte_rml_base_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_rml_base_open";
+        goto error;
     }
 
     /*
@@ -161,7 +177,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (OMPI_SUCCESS != (ret = orte_rml_base_select())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_rml_base_select";
+        goto error;
     }
 
     /*
@@ -169,7 +186,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (ORTE_SUCCESS != (ret = orte_gpr_base_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_gpr_base_open";
+        goto error;
     }
 
     /*
@@ -177,7 +195,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (ORTE_SUCCESS != (ret = orte_schema_base_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_schema_base_open";
+        goto error;
     }
 
     /*
@@ -185,17 +204,20 @@ int orte_init_stage1(bool infrastructure)
      */
     if (ORTE_SUCCESS != (ret = orte_sds_base_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_sds_base_open";
+        goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_sds_base_select())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_sds_base_select";
+        goto error;
     }
 
     /* Try to connect to the universe */
     if (ORTE_SUCCESS != (ret = orte_sds_base_contact_universe())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_sds_base_contact_universe";
+        goto error;
     }
 
     /*
@@ -203,7 +225,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (OMPI_SUCCESS != (ret = orte_ns_base_select())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_ns_base_select";
+        goto error;
     }
 
     /*
@@ -211,7 +234,8 @@ int orte_init_stage1(bool infrastructure)
      */
     if (ORTE_SUCCESS != (ret = orte_gpr_base_select())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_gpr_base_select";
+        goto error;
     }
 
     /* set contact info for ns/gpr */
@@ -225,7 +249,8 @@ int orte_init_stage1(bool infrastructure)
     /* set my name and the names of the procs I was started with */
     if (ORTE_SUCCESS != (ret = orte_sds_base_set_name())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_sds_base_set_name";
+        goto error;
     }
 
     /* all done with sds - clean up and call it a day */
@@ -242,11 +267,13 @@ int orte_init_stage1(bool infrastructure)
     /* setup my session directory */
     if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobid_str, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_ns.get_jobid_string";
+        goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_ns.get_vpid_string(&procid_str, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_ns.get_vpid_string";
+        goto error;
     }
 
     if (orte_debug_flag) {
@@ -270,7 +297,8 @@ int orte_init_stage1(bool infrastructure)
         if (jobid_str != NULL) free(jobid_str);
         if (procid_str != NULL) free(procid_str);
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_session_dir";
+        goto error;
     }
     if (NULL != jobid_str) {
         free(jobid_str);
@@ -293,7 +321,9 @@ int orte_init_stage1(bool infrastructure)
         }
         if (NULL == (orte_universe_info.seed_uri = orte_rml.get_uri())) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
+            error = "orte_rml_get_uri";
+            ret = ORTE_ERR_NOT_FOUND;
+            goto error;
         }
         contact_path = opal_os_path(false, orte_process_info.universe_session_dir,
                     "universe-setup.txt", NULL);
@@ -318,12 +348,14 @@ int orte_init_stage1(bool infrastructure)
 
     if (ORTE_SUCCESS != (ret = orte_rmgr_base_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_rmgr_base_open";
+        goto error;
     }
 
     if (ORTE_SUCCESS != (ret = orte_rmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_rmgr_base_select";
+        goto error;
     }
 
     /*
@@ -331,12 +363,14 @@ int orte_init_stage1(bool infrastructure)
      */
     if (ORTE_SUCCESS != (ret = orte_soh_base_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_soh_base_open";
+        goto error;
     }
 
     if (ORTE_SUCCESS != (ret = orte_soh_base_select())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_soh_base_select";
+        goto error;
     }
 
      /* if we are a singleton or the seed, setup the infrastructure for our job */
@@ -346,7 +380,8 @@ int orte_init_stage1(bool infrastructure)
 
         if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            error = "orte_ns.get_jobid";
+            goto error;
         }
 
         /* If there is no existing cellid, create one */
@@ -357,7 +392,8 @@ int orte_init_stage1(bool infrastructure)
             ret = orte_ns.create_cellid(&my_cellid, "unkonwn", orte_system_info.nodename);
             if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
-                return ret;
+                error = "orte_ns.create_cellid";
+                goto error;
             }
 
             if(my_cellid != 0) { /* JJH Assertion/Repair until cellid's are fixed */
@@ -366,12 +402,14 @@ int orte_init_stage1(bool infrastructure)
         }
         else if (ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            error = "orte_ns.get_cell_info";
+            goto error;
         }
 
         if (ORTE_SUCCESS != (ret = orte_ns.get_cellid(&my_cellid, orte_process_info.my_name))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            error = "orte_ns.get_cellid";
+            goto error;
         }
 
         if (orte_process_info.singleton) {
@@ -396,7 +434,9 @@ int orte_init_stage1(bool infrastructure)
             rds_item = OBJ_NEW(orte_rds_cell_desc_t);
             if (NULL == ras_item || NULL == rds_item) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
+                error = "singleton node structure construction";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
             }
 
             rds_item->site   = strdup("Singleton");
@@ -416,7 +456,9 @@ int orte_init_stage1(bool infrastructure)
             new_attr = OBJ_NEW(orte_rds_cell_attr_t);
             if (NULL == new_attr) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
+                error = "OBJ_NEW(orte_rds_cell_attr_t) for ORTE_RDS_NAME";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
             }
             new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
             new_attr->keyval.type         = ORTE_STRING;
@@ -426,7 +468,9 @@ int orte_init_stage1(bool infrastructure)
             new_attr = OBJ_NEW(orte_rds_cell_attr_t);
             if (NULL == new_attr) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
+                error = "OBJ_NEW(orte_rds_cell_attr_t) for ORTE_CELLID_KEY";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
             }
             new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
             new_attr->keyval.type         = ORTE_CELLID;
@@ -439,13 +483,15 @@ int orte_init_stage1(bool infrastructure)
             ret = orte_rds.store_resource(&rds_single_host);
             if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
-                return ret;
+                error = "orte_rds.store_resource";
+                goto error;
             }
 
             ret = orte_ras.node_insert(&single_host);
             if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
-                return ret;
+                error = "orte_ras.node_insert";
+                goto error;;
             }
 
             OBJ_DESTRUCT(&single_host);
@@ -455,19 +501,29 @@ int orte_init_stage1(bool infrastructure)
         /* set the rest of the infrastructure */
         if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(my_jobid,1))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            error = "orte_rmgr_base_set_job_slots";
+            goto error;
         }
         if (ORTE_SUCCESS != (ret = orte_rmaps_base_set_vpid_range(my_jobid,0,1))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            error = "orte_rmaps_base_set_vpid_range";
+            goto error;
         }
         if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            error = "orte_rmgr_base_proc_stage_gate_init";
+            goto error;
         }
     }
 
-    return ORTE_SUCCESS;
+error:
+    if (ret != ORTE_SUCCESS) {
+        opal_show_help("help-orte-runtime",
+                       "orte_init:startup:internal-failure",
+                       error, ret);
+    }
+
+    return ret;
 }
 
 
