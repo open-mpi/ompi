@@ -23,6 +23,8 @@ noinst_LTLIBRARIES = libruntime.la
 
 # Source code files
 
+dist_pkgdata_DATA = help-orte-runtime.txt
+
 headers = \
         orte_wait.h \
         runtime.h \

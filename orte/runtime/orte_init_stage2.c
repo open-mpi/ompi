@@ -20,6 +20,8 @@
 
 #include "include/orte_constants.h"
 
+#include "opal/util/show_help.h"
+
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/rml/rml.h"
@@ -35,6 +37,7 @@
 int orte_init_stage2(void)
 {
     int ret;
+    char *error;
 
     /* 
      * Initialize the selected modules now that all components/name are available.
@@ -42,17 +45,20 @@ int orte_init_stage2(void)
 
     if (ORTE_SUCCESS != (ret = orte_rml.init())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_rml.init";
+        goto error;
     }
 
     if (ORTE_SUCCESS != (ret = orte_ns.init())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_ns.init";
+        goto error;
     }
 
     if (ORTE_SUCCESS != (ret = orte_gpr.init())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_gpr.init";
+        goto error;
     }
 
     /*
@@ -60,16 +66,24 @@ int orte_init_stage2(void)
      */
     if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_iof_base_open";
+        goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "orte_iof_base_select";
+        goto error;
     }
     
      /* 
      * All done 
      */
-
-    return ORTE_SUCCESS;
+error:
+    if (ret != ORTE_SUCCESS) {
+        opal_show_help("help-orte-runtime",
+                       "orte_init:startup:internal-failure",
+                       error, ret);
+    }
+    
+    return ret;
 }

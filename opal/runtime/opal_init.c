@@ -21,6 +21,7 @@
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
+#include "opal/util/show_help.h"
 #include "opal/memory/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -70,6 +71,9 @@ opal_err2str(int errnum)
  */
 int opal_init(void)
 {
+    int ret;
+    char *error = NULL;
+
     /* initialize the memory allocator */
     opal_malloc_init();
 
@@ -80,26 +84,55 @@ int opal_init(void)
     opal_trace_init();
 
     /* register handler for errnum -> string converstion */
-    opal_error_register("OPAL", OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str);
+    if (OPAL_SUCCESS != (ret = opal_error_register("OPAL",
+            OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
+        error = "opal_error_register";
+        goto error;
+    }
 
     /* initialize the mca */
-    mca_base_open();
+    if (OMPI_SUCCESS != (ret = mca_base_open())) {
+        error = "mca_base_open";
+        goto error;
+    }
 
     /* open the processor affinity base */
-    opal_paffinity_base_open();
-    opal_paffinity_base_select();
+    if (OPAL_SUCCESS != (ret = opal_paffinity_base_open())) {
+        error = "opal_paffinity_base_open";
+        goto error;
+    }
+    if (OPAL_SUCCESS != (ret = opal_paffinity_base_select())) {
+        error = "opal_paffinity_base_select";
+        goto error;
+    }
 
     /* open the memory manager components.  Memory hooks may be
        triggered before this (any time after mem_free_init(),
        actually).  This is a hook available for memory manager hooks
        without good initialization routine support */
-    opal_memory_base_open();
+    if (OPAL_SUCCESS != (ret = opal_memory_base_open())) {
+        error = "opal_memory_base_open";
+        goto error;
+    }
 
     /* initialize the memory manager / tracker */
-    opal_mem_free_init();
+    if (OPAL_SUCCESS != opal_mem_free_init()) {
+        error = "opal_mem_free_init";
+        goto error;
+    }
 
-    opal_timer_base_open();
+    if (OPAL_SUCCESS != (ret = opal_timer_base_open())) {
+        error = "opal_timer_base_open";
+        goto error;
+    }
 
-    return OPAL_SUCCESS;
+error:
+    if (ret != OPAL_SUCCESS) {
+        opal_show_help("help-opal-runtime",
+                       "opal_init:startup:internal-failure",
+                       error, ret);
+    }
+
+    return ret;
 }
 
