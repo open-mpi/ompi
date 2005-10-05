@@ -52,7 +52,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
     mca_pml_ob1_probe,
     mca_pml_ob1_start,
     32768,
-    (0x7fffffff)
+    (0xffff)
     }
 };
 
