@@ -110,7 +110,6 @@ static const mca_coll_base_module_1_0_0_t module = {
 int mca_coll_sm_init_query(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
-    int ret;
 #if 0
     /* JMS: Arrgh.  Unfortunately, we don't have this information by
        the time this is invoked -- the GPR compound command doesn't
@@ -132,29 +131,12 @@ int mca_coll_sm_init_query(bool enable_progress_threads,
     free(procs);
 #endif
 
-    /* Ok, we have local peers.  So setup the bootstrap file */
+    /* Don't do much here because we don't really want to allocate any
+       shared memory until this component is selected to be used. */
 
-    if (OMPI_SUCCESS != (ret = bootstrap_init())) {
-        return ret;
-    }
-
-    /* Can we get an mpool allocation?  See if there was one created
-       already.  If not, try to make one. */
-
-    mca_coll_sm_component.sm_data_mpool = 
-        mca_mpool_base_module_lookup(mca_coll_sm_component.sm_mpool_name);
-    if (NULL == mca_coll_sm_component.sm_data_mpool) {
-        mca_coll_sm_component.sm_data_mpool = 
-            mca_mpool_base_module_create(mca_coll_sm_component.sm_mpool_name,
-                                         NULL, NULL);
-        if (NULL == mca_coll_sm_component.sm_data_mpool) {
-            mca_coll_sm_bootstrap_finalize();
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        mca_coll_sm_component.sm_data_mpool_created = true;
-    } else {
-        mca_coll_sm_component.sm_data_mpool_created = false;
-    }
+    mca_coll_sm_component.sm_data_mpool_created = false;
+    mca_coll_sm_component.sm_component_setup = false;
+    opal_atomic_init(&mca_coll_sm_component.sm_component_setup_lock, 0);
 
     /* Alles gut */
 
@@ -171,6 +153,13 @@ const mca_coll_base_module_1_0_0_t *
 mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
                        struct mca_coll_base_comm_t **data)
 {
+    /* See if someone has previously lazily initialized and failed */
+
+    if (mca_coll_sm_component.sm_component_setup &&
+        !mca_coll_sm_component.sm_component_setup_success) {
+        return NULL;
+    }
+    
     /* If we're intercomm, or if there's only one process in the
        communicator, or if not all the processes in the communicator
        are not on this node, then we don't want to run */
@@ -226,6 +215,51 @@ sm_module_init(struct ompi_communicator_t *comm)
     int parent, min_child, max_child, num_children;
     char *base;
     const int num_barrier_buffers = 2;
+
+    /* Once-per-component setup.  This may happen at any time --
+       during MPI_INIT or later.  So we must protect this with locks
+       to ensure that only one thread in the process actually does
+       this setup. */
+
+    opal_atomic_lock(&mca_coll_sm_component.sm_component_setup_lock);
+    if (!mca_coll_sm_component.sm_component_setup) {
+        mca_coll_sm_component.sm_component_setup = true;
+
+        if (OMPI_SUCCESS != bootstrap_init()) {
+            mca_coll_sm_component.sm_component_setup_success = false;
+            opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
+            return NULL;
+        }
+
+        /* Can we get an mpool allocation?  See if there was one created
+           already.  If not, try to make one. */
+        
+        mca_coll_sm_component.sm_data_mpool = 
+            mca_mpool_base_module_lookup(mca_coll_sm_component.sm_mpool_name);
+        if (NULL == mca_coll_sm_component.sm_data_mpool) {
+            mca_coll_sm_component.sm_data_mpool = 
+                mca_mpool_base_module_create(mca_coll_sm_component.sm_mpool_name,
+                                             NULL, NULL);
+            if (NULL == mca_coll_sm_component.sm_data_mpool) {
+                mca_coll_sm_bootstrap_finalize();
+                mca_coll_sm_component.sm_component_setup_success = false;
+                opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
+                return NULL;
+            }
+            mca_coll_sm_component.sm_data_mpool_created = true;
+        } else {
+            mca_coll_sm_component.sm_data_mpool_created = false;
+        }
+        mca_coll_sm_component.sm_component_setup_success = true;
+    }
+    opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
+
+    /* Double check to see if some interleaved lazy init failed before
+       we got in here */
+
+    if (!mca_coll_sm_component.sm_component_setup_success) {
+        return NULL;
+    }
 
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */
@@ -727,8 +761,9 @@ static int bootstrap_comm(ompi_communicator_t *comm)
 
 /*
  * This function is not static and has a prefix-rule-enabled name
- * because it gets called from the component.  This is only called
- * once -- no need for reference counting or thread protection.
+ * because it gets called from the component (but may also be called
+ * from above).  This is only called once -- no need for reference
+ * counting or thread protection.
  */
 int mca_coll_sm_bootstrap_finalize(void)
 {
