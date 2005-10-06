@@ -342,6 +342,26 @@ typedef int (*orte_rml_module_xcast_fn_t)(
     void *user_tag);
 
 /*
+ * Callback on exception condition.
+ */
+                                                                                                                 
+typedef enum {
+    ORTE_RML_PEER_UNREACH,
+    ORTE_RML_PEER_DISCONNECTED
+} orte_rml_exception_t;
+                                                                                                                 
+typedef void (*orte_rml_exception_callback_t)(
+    const orte_process_name_t* peer, 
+    orte_rml_exception_t exception);
+                                                                                                                 
+/**
+ *  Register a callback function on loss of a connection.
+ */
+                                                                                                                 
+typedef int (*orte_rml_module_exception_fn_t)(
+    orte_rml_exception_callback_t cbfunc);
+                                                                                                                 
+/*
  * Initialization/Cleanup
  */
 
@@ -377,6 +397,8 @@ struct orte_rml_module_t {
     orte_rml_module_recv_cancel_fn_t     recv_cancel;
     orte_rml_module_barrier_fn_t         barrier;
     orte_rml_module_xcast_fn_t           xcast;
+    orte_rml_module_exception_fn_t       add_exception_handler;
+    orte_rml_module_exception_fn_t       del_exception_handler;
 };
 typedef struct orte_rml_module_t orte_rml_module_t;
 

@@ -41,6 +41,7 @@ char* mca_oob_base_include = NULL;
 char* mca_oob_base_exclude = NULL;
 opal_list_t mca_oob_base_components;
 opal_list_t mca_oob_base_modules;
+opal_list_t mca_oob_base_exception_handlers;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -52,6 +53,7 @@ int mca_oob_base_open(void)
 
   OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
   OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
+  OBJ_CONSTRUCT(&mca_oob_base_exception_handlers, opal_list_t);
 
   if (OMPI_SUCCESS != 
       mca_base_components_open("oob", mca_oob_base_output,

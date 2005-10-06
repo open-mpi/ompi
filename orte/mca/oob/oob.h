@@ -187,9 +187,9 @@ typedef int (*mca_oob_base_module_init_fn_t)(void);
  */
 typedef int (*mca_oob_base_module_fini_fn_t)(void);
 
-    /**
-     * xcast function for sending common messages to all processes
-     */
+/**
+ * xcast function for sending common messages to all processes
+ */
 typedef int (*mca_oob_base_module_xcast_fn_t)(orte_process_name_t* root, 
     orte_process_name_t* peers,
     size_t num_peers,
@@ -271,6 +271,24 @@ typedef struct mca_oob_base_info_t mca_oob_base_info_t;
  */
 OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
 
+/**
+ * List of registrations of exception callbacks
+ */
+struct mca_oob_base_exception_handler_t {
+  opal_list_item_t super;
+  mca_oob_base_exception_fn_t cbfunc;
+};
+
+/**
+ * Convenience Typedef
+ */
+typedef struct mca_oob_base_exception_handler_t mca_oob_base_exception_handler_t;
+
+/**
+ * declare the association structure as a class
+ */
+OBJ_CLASS_DECLARATION(mca_oob_base_exception_handler_t);
+
 
 /*
  * Global functions for MCA overall collective open and close
@@ -289,6 +307,7 @@ OMPI_DECLSPEC extern char* mca_oob_base_include;
 OMPI_DECLSPEC extern char* mca_oob_base_exclude;
 OMPI_DECLSPEC extern opal_list_t mca_oob_base_components;
 OMPI_DECLSPEC extern opal_list_t mca_oob_base_modules;
+OMPI_DECLSPEC extern opal_list_t mca_oob_base_exception_handlers;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
