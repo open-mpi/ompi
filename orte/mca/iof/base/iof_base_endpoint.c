@@ -172,7 +172,10 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
             break;
         }
         opal_list_remove_item(&endpoint->ep_frags, &frag->super);
+        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+        orte_iof_base_endpoint_ack(endpoint, frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len);
         orte_iof_base_frag_ack(frag);
+        OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     }
 
     /* is there anything left to write? */
