@@ -45,6 +45,7 @@ int mca_oob_base_close(void)
 
   OBJ_DESTRUCT(&mca_oob_base_modules);
   OBJ_DESTRUCT(&mca_oob_base_components);
+  OBJ_DESTRUCT(&mca_oob_base_exception_handlers);
 
   if( NULL != mca_oob_base_include )
     free(mca_oob_base_include);

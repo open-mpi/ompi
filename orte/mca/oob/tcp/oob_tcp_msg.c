@@ -286,6 +286,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                     ORTE_NAME_ARGS(&(peer->peer_name)),
                     ompi_socket_errno);
                 mca_oob_tcp_peer_close(peer);
+                mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
                 return false;
             }
         } else if (rc == 0)  {
@@ -296,6 +297,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                    ompi_socket_errno);
             }
             mca_oob_tcp_peer_close(peer);
+            mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
             return false;
         }
 

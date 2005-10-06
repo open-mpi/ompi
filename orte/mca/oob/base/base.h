@@ -409,9 +409,40 @@ OMPI_DECLSPEC int mca_oob_xcast(
     orte_buffer_t* buffer,
     orte_gpr_trigger_cb_fn_t cbfunc);
 
+/*
+ * Callback on exception condition.
+ */
+
+typedef enum {
+    MCA_OOB_PEER_UNREACH,
+    MCA_OOB_PEER_DISCONNECTED
+} mca_oob_base_exception_t;
+
+typedef int (*mca_oob_base_exception_fn_t)(const orte_process_name_t* peer, int exception);
+                                                                                                                 
+/**
+ *  Register a callback function on loss of a connection.
+ */
+
+OMPI_DECLSPEC int mca_oob_add_exception_handler(
+    mca_oob_base_exception_fn_t cbfunc);
+
+/**
+ * Remove a callback
+ */
+
+OMPI_DECLSPEC int mca_oob_del_exception_handler(
+    mca_oob_base_exception_fn_t cbfunc);
+
+/**
+ * Invoke exception handlers
+ */
+
+OMPI_DECLSPEC void mca_oob_call_exception_handlers(
+    orte_process_name_t* peer, int exception);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-
 #endif
 
