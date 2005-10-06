@@ -131,6 +131,30 @@ int orte_iof_svc_sub_delete(
 }
 
 
+int orte_iof_svc_sub_delete_all(
+    const orte_process_name_t *name)
+{
+    opal_list_item_t *item;
+    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    item =  opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
+    while(item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed)) {
+        opal_list_item_t* next =  opal_list_get_next(item);
+        orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
+        if ((sub->src_mask == ORTE_NS_CMP_ALL &&
+             orte_ns.compare(ORTE_NS_CMP_ALL,&sub->src_name,name) == 0) ||
+            (sub->dst_mask == ORTE_NS_CMP_ALL &&
+             orte_ns.compare(ORTE_NS_CMP_ALL,&sub->dst_name,name) == 0)) {
+            opal_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
+            OBJ_RELEASE(item);
+        }
+        item = next;
+    }
+    OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+    return ORTE_SUCCESS;
+}
+
+
+
 /*
  * Callback on send completion. Release send resources (fragment).
  */
@@ -159,7 +183,8 @@ int orte_iof_svc_sub_forward(
     orte_iof_svc_sub_t* sub,
     const orte_process_name_t* src,
     orte_iof_base_msg_header_t* hdr,
-    const unsigned char* data)
+    const unsigned char* data,
+    bool *forward)
 {
     opal_list_item_t* item;
     for(item  = opal_list_get_first(&sub->sub_forward);
@@ -195,8 +220,10 @@ int orte_iof_svc_sub_forward(
         if(rc != ORTE_SUCCESS) {
             return rc;
         }
+        *forward = true;
     }
     if(sub->sub_endpoint != NULL) {
+        *forward = true;
         return orte_iof_base_endpoint_forward(sub->sub_endpoint,src,hdr,data); 
     }
     return ORTE_SUCCESS;

@@ -69,6 +69,9 @@ int orte_iof_svc_sub_delete(
     orte_ns_cmp_bitmask_t dst_mask,
     orte_iof_base_tag_t dst_tag);
 
+int orte_iof_svc_sub_delete_all(
+    const orte_process_name_t *dst_name);
+
 /**
  * Forward message to any endpoints that
  * match the subscription.
@@ -78,7 +81,8 @@ int orte_iof_svc_sub_forward(
     orte_iof_svc_sub_t* sub,
     const orte_process_name_t* src,
     orte_iof_base_msg_header_t* hdr,
-    const unsigned char* data);
+    const unsigned char* data,
+    bool *forward);
 
 /**
  * Check to see if the published endpoint matches

@@ -142,4 +142,38 @@ int orte_iof_svc_pub_delete(
 }
                                                                                                            
 
+/*
+ * Remove all publications associated w/ the given process name.
+ */
+
+void orte_iof_svc_pub_delete_all(
+    const orte_process_name_t* name)
+{
+    opal_list_item_t* p_item;
+
+    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    p_item  = opal_list_get_first(&mca_iof_svc_component.svc_published);
+    while(p_item != opal_list_get_end(&mca_iof_svc_component.svc_published)) {
+        opal_list_item_t* p_next = opal_list_get_next(p_item);
+        orte_iof_svc_pub_t* pub = (orte_iof_svc_pub_t*)p_item;
+
+        if (orte_ns.compare(ORTE_NS_CMP_ALL, &pub->pub_name,name) == 0 ||
+            orte_ns.compare(ORTE_NS_CMP_ALL, &pub->pub_proxy,name) == 0) {
+
+            opal_list_item_t* s_item;
+            for(s_item  = opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
+                s_item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed);
+                s_item =  opal_list_get_next(s_item)) {
+                orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)s_item;
+                if(orte_iof_svc_fwd_match(sub,pub)) {
+                    orte_iof_svc_fwd_delete(sub,pub);
+                }
+            }
+            opal_list_remove_item(&mca_iof_svc_component.svc_published, p_item);
+            OBJ_RELEASE(pub);
+        }
+        p_item = p_next;
+    }
+    OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+}
 
