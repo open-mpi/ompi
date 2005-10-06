@@ -60,6 +60,12 @@ int orte_iof_svc_pub_delete(
     orte_ns_cmp_bitmask_t pub_mask,
     orte_iof_base_tag_t pub_tag);
 
+/**
+ * Remove all entries matching a specified process name.
+ */
+
+void orte_iof_svc_pub_delete_all(
+    const orte_process_name_t* name);
 
 #endif
 

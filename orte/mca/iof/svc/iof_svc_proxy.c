@@ -101,6 +101,24 @@ done:
 
 
 /**
+ * Release resources when ack completed.
+ */
+static void orte_iof_svc_ack_send_cb(
+    int status,
+    orte_process_name_t* peer,
+    struct iovec* msg,
+    int count,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
+    ORTE_IOF_BASE_FRAG_RETURN(frag);
+    if(status < 0) {
+        ORTE_ERROR_LOG(status);
+    }
+}
+                                                                                                                    
+/**
  * Receive a data message. Check the subscription list for a match
  * on the source - and on matches forward to any published endpoints
  * that match the subscriptions destination.
@@ -112,6 +130,7 @@ static void orte_iof_svc_proxy_msg(
     unsigned char* data)
 {
     opal_list_item_t* item;
+    bool forward = false;
     if(mca_iof_svc_component.svc_debug > 1) {
         opal_output(0, "orte_iof_svc_proxy_msg: tag %d seq %d\n",hdr->msg_tag,hdr->msg_seq);
     }
@@ -133,30 +152,41 @@ static void orte_iof_svc_proxy_msg(
                 opal_output(0, "[%lu,%lu,%lu] orte_iof_svc_proxy_msg: tag %d sequence %d\n",
                     ORTE_NAME_ARGS(&sub->src_name),hdr->msg_tag,hdr->msg_seq);
             }
-            orte_iof_svc_sub_forward(sub,src,hdr,data);
+            orte_iof_svc_sub_forward(sub,src,hdr,data,&forward);
         }
     }
     OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
-}
 
-/**
- *
- */
-static void orte_iof_svc_ack_send_cb(
-    int status,
-    orte_process_name_t* peer,
-    struct iovec* msg,
-    int count,
-    orte_rml_tag_t tag,
-    void* cbdata)
-{
-    orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
-    ORTE_IOF_BASE_FRAG_RETURN(frag);
-    if(status < 0) {
-        ORTE_ERROR_LOG(status);
+    /* if there is no one to forward to - go ahead and ack */
+    if(forward == false) {
+        orte_iof_base_frag_t* frag;
+        int rc;
+                                                                                                                 
+        ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
+        if(NULL == frag) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+                                                                                                                 
+        frag->frag_hdr.hdr_msg = *hdr;
+        frag->frag_hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_ACK;
+        frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
+        frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
+        ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
+                                                                                                                 
+        rc = orte_rml.send_nb(
+            &hdr->msg_proxy,
+            frag->frag_iov,
+            1,
+            ORTE_RML_TAG_IOF_SVC,
+            0,
+            orte_iof_svc_ack_send_cb,
+            frag);
+        if(rc < 0) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
 }
-                                                                                                                    
 
 /**
  *  Received an acknowledgment from an endpoint - forward on

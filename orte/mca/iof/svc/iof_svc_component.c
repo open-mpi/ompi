@@ -23,6 +23,8 @@
 #include "mca/rml/rml_types.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
+#include "iof_svc_pub.h"
+#include "iof_svc_sub.h"
 
 /*
  * Local functions
@@ -123,7 +125,22 @@ static int orte_iof_svc_close(void)
 }
 
 
+/**
+ * Callback when peer is disconnected
+ */
 
+static void
+orte_iof_svc_exception_handler(const orte_process_name_t* peer, orte_rml_exception_t reason)
+{
+    fprintf(stderr, "orte_iof_svc_exception_handler [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(peer));
+    orte_iof_svc_sub_delete_all(peer);
+    orte_iof_svc_pub_delete_all(peer);
+}
+
+
+/**
+ * Module Initialization
+ */
 
 static orte_iof_base_module_t* 
 orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
@@ -158,6 +175,8 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
         opal_output(0, "orte_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }
+
+    rc = orte_rml.add_exception_handler(orte_iof_svc_exception_handler);
     initialized = true;
     return &orte_iof_svc_module;
 }
