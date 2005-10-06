@@ -209,7 +209,7 @@ static int orte_pls_fork_proc(
         char *param, *param2;
         char *uri;
         char **environ_copy;
-
+        long fd, fdmax = sysconf(_SC_OPEN_MAX);
 #if 0
         /* for gperf - setup a new directory for each executable */
         char path[PATH_MAX];
@@ -326,6 +326,10 @@ static int orte_pls_fork_proc(
 
         /* setup stdout/stderr */
         orte_iof_base_setup_child(&opts);
+
+        /* close all file descriptors w/ exception of stdin/stdout/stderr */
+        for(fd=3; fd<fdmax; fd++)
+            close(fd);
 
         if (context->argv == NULL) {
             context->argv = malloc(sizeof(char*)*2);
