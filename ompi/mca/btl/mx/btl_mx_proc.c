@@ -154,8 +154,9 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
     for( i = module_proc->proc_addr_index; i < count; i++ ) {
         
     retry_connect:
-        mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint, mx_peers[i].nic_id, mx_peers[i].endpoint_id,
-                                mca_btl_mx_component.mx_filter, 5, &mx_remote_addr );
+        mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint,
+                                mx_peers[i].nic_id, mx_peers[i].endpoint_id,
+                                mca_btl_mx_component.mx_filter, 500, &mx_remote_addr );
         if( MX_SUCCESS != mx_status ) {
             opal_output( 0, "mx_connect fail for %dth remote address key %x (error %s)\n", 
                          i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
