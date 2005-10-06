@@ -37,7 +37,7 @@
 #define D(foo)
 #endif
 
-#if 0
+#if OMPI_ENABLE_DEBUG
 #include <sched.h>
 #define SPIN sched_yield()
 #else
@@ -190,6 +190,21 @@ extern "C" {
             the division once and then just use the value without
             having to re-calculate. */
         int sm_segs_per_inuse_flag;
+
+        /** Whether the component's shared memory has been [lazily]
+            initialized or not */
+        bool sm_component_setup;
+
+        /** Once the component has been lazily initialized, keep the
+            state of it around */
+        bool sm_component_setup_success;
+
+        /** A lock protecting the lazy initialzation of the component
+            (SINCE THERE IS NO STATIC INITIALIZER FOR
+            opal_atomic_lock_t, THIS *MUST* BE THE LAST MEMBER OF THE
+            STRUCT!) */
+        opal_atomic_lock_t sm_component_setup_lock;
+
     };
     /**
      * Convenience typedef

@@ -133,7 +133,11 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     0, /* mpool data size -- filled in below */
     NULL, /* data mpool pointer */
     false, /* whether this process created the data mpool */
-    NULL /* pointer to meta data about bootstrap area */
+    NULL, /* pointer to meta data about bootstrap area */
+    false, /* whether the component sm has been [lazily] inited or not */
+    false /* whether lazy init was successful or not */
+    /* the lock for lazy initialization is not initialized here --
+       there is no static initializer for opal_atomic_lock_t */
 };
 
 
