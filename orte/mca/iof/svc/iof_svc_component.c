@@ -132,7 +132,6 @@ static int orte_iof_svc_close(void)
 static void
 orte_iof_svc_exception_handler(const orte_process_name_t* peer, orte_rml_exception_t reason)
 {
-    fprintf(stderr, "orte_iof_svc_exception_handler [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(peer));
     orte_iof_svc_sub_delete_all(peer);
     orte_iof_svc_pub_delete_all(peer);
 }
