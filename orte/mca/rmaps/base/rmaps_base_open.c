@@ -61,6 +61,7 @@ int orte_rmaps_base_open(void)
     orte_rmaps_base_module_t *module;
     int param, priority, value;
     orte_rmaps_base_cmp_t *cmp;
+    char *policy;
 
     /* Debugging / verbose output */
 
@@ -71,6 +72,15 @@ int orte_rmaps_base_open(void)
         orte_rmaps_base.rmaps_output = opal_output_open(NULL);
     } else {
         orte_rmaps_base.rmaps_output = -1;
+    }
+
+    /* Are we scheduling by node or by slot? */
+
+    param = mca_base_param_reg_string_name("rmaps_base", "schedule_policy",
+                                           "Scheduling Policy for RMAPS. [slot | node]",
+                                           false, false, "slot", &policy);
+    if (0 == strcmp(policy, "node")) {
+        mca_base_param_set_string(param, "node");
     }
 
     /* Open up all the components that we can find */

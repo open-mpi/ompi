@@ -16,32 +16,40 @@
 /**
  * @file
  *
- * Resource Allocation (Host)
+ * Resource Allocation (dash_host)
  */
-#ifndef ORTE_RAS_HOST_H
-#define ORTE_RAS_HOST_H
+#ifndef ORTE_RAS_DASH_HOST_H
+#define ORTE_RAS_DASH_HOST_H
 
 #include "mca/ras/ras.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
+    /**
+     * Dash_host-specific RAS component struct
+     */
+    struct orte_ras_dash_host_component_t {
+        /** Base RAS component */
+        orte_ras_base_component_t super;
+        /** What's the priority of this component */
+        int priority;
+    };
+    /**
+     * Convenience typedef
+     */
+    typedef struct orte_ras_dash_host_component_t orte_ras_dash_host_component_t;
 
-/**
- * RAS Component 
- */
-struct orte_ras_host_component_t {
-    orte_ras_base_component_t super;
-    int debug;
-    int priority;
-    char *schedule_policy;
-};
-typedef struct orte_ras_host_component_t orte_ras_host_component_t;
-
-OMPI_COMP_EXPORT extern orte_ras_host_component_t mca_ras_host_component;
-OMPI_COMP_EXPORT extern orte_ras_base_module_t orte_ras_host_module;
-
-
+    /**
+     * Component export structure
+     */
+    OMPI_COMP_EXPORT extern orte_ras_dash_host_component_t mca_ras_dash_host_component;
+    
+    /**
+     * Module init function
+     */
+    orte_ras_base_module_t *orte_ras_dash_host_init(int* priority);
+    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

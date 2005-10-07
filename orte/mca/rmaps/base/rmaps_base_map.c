@@ -195,6 +195,94 @@ orte_rmaps_lookup_node(opal_list_t* nodes, char* node_name, orte_rmaps_base_proc
     return node;
 }
 
+/**
+ * Obtain the mapping for this job, and the list of nodes confined to that mapping.
+ *
+ * Use this instead of orte_ras_base_node_query when past the RMAPS framework
+ *  since components like the PLS are only conserned with those nodes that they
+ *  been mapped on, not all of the nodes allocated to their job. In the case
+ *  where we are allocated 10 nodes from the RAS, but only map to 2 of them
+ *  then we don't try to launch orteds on all 10 nodes, just the 2 mapped.
+ */
+int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid) {
+    opal_list_t nodes;
+    opal_list_item_t *item_a, *item_m, *item_n;
+    int num_mapping = 0;
+    int rc = ORTE_SUCCESS;
+    bool matched = false;
+
+    /* get all nodes allocated to this job */
+    OBJ_CONSTRUCT(&nodes, opal_list_t);    
+    rc = orte_ras_base_node_query_alloc(&nodes, jobid);
+    if (ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+    
+    /* get the mapping for this job */
+    rc = orte_rmaps_base_get_map(jobid, mapping_list);
+    if (ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+
+    num_mapping = opal_list_get_size(mapping_list);
+
+    /* Create a list of nodes that are in the mapping */
+    for( item_m  = opal_list_get_first(mapping_list);
+         item_m != opal_list_get_end(mapping_list);
+         item_m  = opal_list_get_next(item_m)) {
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item_m;
+
+        /* Iterate over all the nodes mapped and check them against the 
+         * allocated node list */
+        for( item_n  = opal_list_get_first(&(map->nodes));
+             item_n != opal_list_get_end(&(map->nodes));
+             item_n  = opal_list_get_next(item_n)) {
+            matched = false;
+            
+            /* If this node is in the list already, skip it */
+            for( item_a  = opal_list_get_first(nodes_alloc);
+                 item_a != opal_list_get_end(nodes_alloc);
+                 item_a  = opal_list_get_next(item_a)) {
+                if( 0 == strcmp( ((orte_ras_node_t*)        item_a)->node_name, 
+                                 ((orte_rmaps_base_node_t*) item_n)->node_name) ) {
+                    matched = true;
+                    break;
+                }
+            }
+            if(matched){
+                continue;
+            }
+
+            /* Otherwise 
+             *  - Find it in the node list from the node segment,
+             *  - Add it to the allocated list of nodes
+             */
+            matched = false;
+            for( item_a  = opal_list_get_first(&nodes);
+                 item_a != opal_list_get_end(&nodes);
+                 item_a  = opal_list_get_next(item_a)) {
+                if( 0 == strcmp( ((orte_ras_node_t*)        item_a)->node_name,
+                                 ((orte_rmaps_base_node_t*) item_n)->node_name) ) {
+                    matched = true;
+                    break;
+                }
+            }
+            if(!matched) {
+                printf("Unable to find the matched node in the allocation. This should never happen\n");
+                return ORTE_ERROR;
+            }
+            opal_list_remove_item(&nodes, item_a);
+            opal_list_append(nodes_alloc, item_a);
+        }
+    }
+    
+ cleanup:
+    while (NULL != (item_a = opal_list_remove_first(&nodes))) {
+        OBJ_RELEASE(item_a);
+    }
+
+    return rc;
+}
 
 /**
  *  Query the process mapping from the registry.

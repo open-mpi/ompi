@@ -134,137 +134,6 @@ int orte_ras_base_node_query(opal_list_t* nodes)
     return ORTE_SUCCESS;
 }
 
-/*
- * Query the registry for all available nodes
- */
-
-int orte_ras_base_node_query_context(
-    opal_list_t* nodes, 
-    orte_app_context_t** context, 
-    size_t num_context,
-    bool *constrained)
-{
-    size_t i, cnt;
-    orte_gpr_value_t** values;
-    int rc;
-    opal_list_t required; 
-    opal_list_item_t* item;
-
-    /* expand the list of node/host specifications on the context structure into
-     * a list of node names
-    */
-    *constrained = false;
-    OBJ_CONSTRUCT(&required, opal_list_t);
-    for(i=0; i<num_context; i++) {
-        orte_app_context_map_t** map = context[i]->map_data;
-        size_t m, num_map = context[i]->num_map;
-        for(m=0; m<num_map; m++) {
-            if(map[m]->map_type == ORTE_APP_CONTEXT_MAP_HOSTNAME) {
-                char** hosts = opal_argv_split(map[m]->map_data, ',');
-                char** ptr = hosts;
-                while(*ptr) {
-                    orte_ras_node_t* node = OBJ_NEW(orte_ras_node_t);
-                    node->node_name = strdup(*ptr);
-                    opal_list_append(&required, (opal_list_item_t*)node);
-                    ptr++;
-                }
-                opal_argv_free(hosts);
-                *constrained = true;
-            }
-        }
-    }
-
-    /* query all node entries */
-    rc = orte_gpr.get(
-        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
-        ORTE_NODE_SEGMENT,
-        NULL,
-        NULL,
-        &cnt,
-        &values);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* parse the response */
-    for(i=0; i<cnt; i++) {
-        orte_gpr_value_t* value = values[i];
-        orte_ras_node_t* node = OBJ_NEW(orte_ras_node_t);
-        size_t k;
-        bool found = false;
-
-        for(k=0; k<value->cnt; k++) {
-            orte_gpr_keyval_t* keyval = value->keyvals[k];
-            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
-                node->node_name = strdup(keyval->value.strptr);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
-                node->node_arch = strdup(keyval->value.strptr);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_NODE_STATE_KEY) == 0) {
-                node->node_state = keyval->value.node_state;
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
-                node->node_slots = keyval->value.size;
-                continue;
-            }
-            if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
-                node->node_slots_inuse += keyval->value.size;
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_NODE_SLOTS_MAX_KEY) == 0) {
-                node->node_slots_max = keyval->value.size;
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_NODE_USERNAME_KEY) == 0) {
-                node->node_username = strdup(keyval->value.strptr);
-                continue;
-            }
-            if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                node->node_cellid = keyval->value.cellid;
-                continue;
-            }
-        }
-
-        /* contained in app_context? */
-        for(item = opal_list_get_first(&required);
-            item != opal_list_get_end(&required);
-            item = opal_list_get_next(item)) {
-            if(0 == strcmp(((orte_ras_node_t*)item)->node_name,node->node_name)) {
-                opal_list_remove_item(&required, item);
-                OBJ_RELEASE(item);
-                found = true;
-                break;
-            }
-        }
-        if(*constrained == false || found) {
-            opal_list_append(nodes, &node->super);
-        } else {
-            OBJ_RELEASE(node);
-        }
-        OBJ_RELEASE(value);
-    }
-
-    /* append any remaining specified nodes to the list with
-     * with default settings for slots,etc.
-     */
-    if(opal_list_get_size(&required)) {
-        if(ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&required))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        while(NULL != (item = opal_list_remove_first(&required))) {
-            opal_list_append(nodes, item);
-        }
-    }
-    OBJ_DESTRUCT(&required);
-    if (NULL != values) free(values);
-    return ORTE_SUCCESS;
-}
 
 /*
  * Query the registry for all nodes allocated to a specified job
@@ -663,5 +532,35 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     if (NULL != values) free(values);
 
     return rc;
+}
+
+
+int orte_ras_base_node_segment_empty(bool *empty)
+{
+    int ret;
+    opal_list_t nodes;
+    opal_list_item_t *item;
+
+    /* See what's already on the node segment */
+
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+    if (ORTE_SUCCESS != (ret = orte_ras_base_node_query(&nodes))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&nodes);
+        return ret;
+    }
+
+    *empty = opal_list_is_empty(&nodes) ? true : false;
+
+    /* Free the list */
+
+    while (NULL != (item = opal_list_remove_first(&nodes))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&nodes);
+
+    /* All done */
+
+    return ORTE_SUCCESS;
 }
 

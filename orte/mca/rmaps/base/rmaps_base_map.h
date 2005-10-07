@@ -97,7 +97,7 @@ typedef struct orte_rmaps_base_map_t orte_rmaps_base_map_t;
 
 OBJ_CLASS_DECLARATION(orte_rmaps_base_map_t);
 
-
+int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid);
 int orte_rmaps_base_get_map(orte_jobid_t, opal_list_t* mapping);
 int orte_rmaps_base_set_map(orte_jobid_t, opal_list_t* mapping);
 int orte_rmaps_base_get_node_map(orte_cellid_t, orte_jobid_t, const char*, opal_list_t* mapping);

@@ -176,9 +176,9 @@ static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
     mca_rmgr_urm_component.urm_rds = false;
 
     /**
-     * Select RAS component
+     * Find available RAS components
      */
-    if (NULL == (mca_rmgr_urm_component.urm_ras = orte_ras_base_select(NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_ras_base_find_available())) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return NULL;
     }

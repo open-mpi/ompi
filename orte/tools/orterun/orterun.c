@@ -715,11 +715,11 @@ static int parse_globals(int argc, char* argv[])
 
     /* JMS To be changed post-beta to LAM's C/N command line notation */
     /* Don't initialize the MCA parameter here unless we have to,
-     * since it really should be initialized in ras_base_open */
+     * since it really should be initialized in rmaps_base_open */
     if (orterun_globals.by_node || orterun_globals.by_slot) {
         char *policy = NULL;
-        id = mca_base_param_reg_string_name("ras_base", "schedule_policy",
-                                            "Scheduling Policy for RAS. [slot | node]",
+        id = mca_base_param_reg_string_name("rmaps_base", "schedule_policy",
+                                            "Scheduling policy for RMAPS. [slot | node]",
                                             false, false, "slot", &policy);
 
         if (orterun_globals.by_node) {
@@ -1144,6 +1144,10 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             }
             app->map_data[i]->map_type = value[0] - '0';
             app->map_data[i]->map_data = strdup(value2);
+            /* map_data = true; 
+             * JJH - This activates the C/N mapping stuff,
+             * or at least allows us to pass the 'num_procs' check below.
+             * since it is not implemented yet, leave commented. */
         }
     }
 

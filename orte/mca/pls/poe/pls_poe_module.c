@@ -97,7 +97,7 @@ static inline int __poe_argv_append_int(int *argc, char ***argv, int varname, in
 */
 int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
 {
-    opal_list_t nodes;
+    opal_list_t nodes, mapping_list;
     opal_list_item_t* item;
     size_t num_nodes;
     orte_vpid_t vpid;
@@ -114,10 +114,12 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     int i;
     int status;
     FILE *hfp, *cfp;
-                                                                                                       
-    /* query the list of nodes allocated to the job - don't need the entire
-     * mapping - as the daemon/proxy is responsibe for determining the apps
-     * to launch on each node.
+
+    /* Query the list of nodes allocated and mapped to this job.
+     * We need the entire mapping for a couple of reasons:
+     *  - need the prefix to start with.
+     *  - need to know if we are launching on a subset of the allocated nodes
+     * All other mapping responsibilities fall to orted in the fork PLS
      */
     if (mca_pls_poe_component.verbose > 10) opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
 
@@ -127,7 +129,8 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     if((cfp=fopen(mca_pls_poe_component.cmdfile,"w"))==NULL) return ORTE_ERR_OUT_OF_RESOURCE;
 
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    rc = orte_ras_base_node_query_alloc(&nodes, jobid);
+    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
+    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
     }
@@ -290,6 +293,12 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
+
+    while(NULL != (item = opal_list_remove_first(&mapping_list))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&mapping_list);
+
     if (mca_pls_poe_component.verbose > 10) opal_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
     return rc;
 }
@@ -446,7 +455,7 @@ __poe_launch_interactive - launch an interactive job
 */
 static inline int __poe_launch_interactive(orte_jobid_t jobid)
 {
-    opal_list_t map, nodes;
+    opal_list_t map, nodes, mapping_list;
     opal_list_item_t* item;
     orte_vpid_t vpid_start, vpid_range;
     size_t num_nodes, num_procs;
@@ -468,7 +477,8 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     mca_pls_poe_component.jobid = jobid;
 
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    rc = orte_ras_base_node_query_alloc(&nodes, jobid);
+    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
+    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
     if(ORTE_SUCCESS != rc) { goto cleanup; }
      
     num_nodes = opal_list_get_size(&nodes);
@@ -581,6 +591,11 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
+
+    while(NULL != (item = opal_list_remove_first(&mapping_list))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&mapping_list);
 
     if(mca_pls_poe_component.verbose>10) {
         opal_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);

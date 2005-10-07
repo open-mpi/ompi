@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 noinst_LTLIBRARIES = libmca_ras_base.la
 
 # Source code files
@@ -28,12 +26,12 @@ headers = \
 libmca_ras_base_la_SOURCES = \
         $(headers) \
         ras_base_alloc.c \
+        ras_base_allocate.c \
         ras_base_close.c \
+        ras_base_find_available.c \
 	ras_base_node.h \
         ras_base_node.c \
-        ras_base_open.c \
-        ras_base_select.c
-
+        ras_base_open.c
 
 # Conditionally install the header files
 

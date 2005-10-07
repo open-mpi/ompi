@@ -20,10 +20,9 @@
 
 #include "include/orte_constants.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-
-#include "mca/ras/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/ras/base/base.h"
 
 
 int orte_ras_base_finalize(void)
@@ -31,13 +30,19 @@ int orte_ras_base_finalize(void)
     opal_list_item_t* item;
 
     /* Finalize all available modules */
-    while((item = opal_list_remove_first(&orte_ras_base.ras_available)) != NULL) {
-        orte_ras_base_cmp_t* cmp = (orte_ras_base_cmp_t*)item;
-        cmp->module->finalize();
-        OBJ_RELEASE(cmp);
+    if (orte_ras_base.ras_available_valid) {
+        while (NULL != 
+               (item = opal_list_remove_first(&orte_ras_base.ras_available))) {
+            orte_ras_base_cmp_t* cmp = (orte_ras_base_cmp_t*)item;
+            cmp->module->finalize();
+            OBJ_RELEASE(cmp);
+        }
+        OBJ_DESTRUCT(&orte_ras_base.ras_available);
     }
-    return OMPI_SUCCESS;
+
+    return ORTE_SUCCESS;
 }
+
 
 int orte_ras_base_close(void)
 {
@@ -47,7 +52,6 @@ int orte_ras_base_close(void)
     mca_base_components_close(orte_ras_base.ras_output, 
                               &orte_ras_base.ras_opened, NULL);
   
-    OBJ_DESTRUCT(&orte_ras_base.ras_available);
     return ORTE_SUCCESS;
 }
 

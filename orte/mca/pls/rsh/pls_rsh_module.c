@@ -375,7 +375,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
 int orte_pls_rsh_launch(orte_jobid_t jobid)
 {
-    opal_list_t nodes;
+    opal_list_t nodes, mapping_list;
     opal_list_item_t* item;
     size_t num_nodes;
     orte_vpid_t vpid;
@@ -394,13 +394,15 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     bool remote_bash = false, remote_csh = false;
     bool local_bash = false, local_csh = false;
 
-    /* query the list of nodes allocated to the job - don't need the entire
-     * mapping - as the daemon/proxy is responsibe for determining the apps
-     * to launch on each node.
+    /* Query the list of nodes allocated and mapped to this job.
+     * We need the entire mapping for a couple of reasons:
+     *  - need the prefix to start with.
+     *  - need to know if we are launching on a subset of the allocated nodes
+     * All other mapping responsibilities fall to orted in the fork PLS
      */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-
-    rc = orte_ras_base_node_query_alloc(&nodes, jobid);
+    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
+    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
@@ -944,8 +946,15 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
+
+    while (NULL != (item = opal_list_remove_first(&mapping_list))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&mapping_list);
+
     free(jobid_string);  /* done with this variable */
     opal_argv_free(argv);
+
     return rc;
 }
 

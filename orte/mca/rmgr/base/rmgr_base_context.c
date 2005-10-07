@@ -103,7 +103,7 @@ int orte_rmgr_base_put_app_context(
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
     }
-    rc = orte_rmgr_base_set_job_slots(jobid, job_slots);
+    rc = orte_rmgr_base_set_job_slots(jobid, job_slots); /* JJH C/N napping breaks here */
 
 cleanup:
     OBJ_RELEASE(value);

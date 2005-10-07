@@ -55,7 +55,6 @@ orte_ras_base_module_t orte_ras_slurm_module = {
     finalize
 };
 
-
 /**
  * Discover available (pre-allocated) nodes.  Allocate the
  * requested number of nodes/process slots to the job.
@@ -81,7 +80,8 @@ static int allocate(orte_jobid_t jobid)
                     "ras:slurm:allocate: discover failed!");
         return ret;
     }
-    ret = orte_ras_base_allocate_nodes_by_slot(jobid, &nodes);
+
+    ret = orte_ras_base_allocate_nodes(jobid, &nodes);
 
     while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
