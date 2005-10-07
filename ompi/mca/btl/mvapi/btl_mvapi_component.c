@@ -570,7 +570,7 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_SQ_SEND_DATA :
             case VAPI_CQE_SQ_RDMA_READ:
             case VAPI_CQE_SQ_RDMA_WRITE:
-                frag = (mca_btl_mvapi_frag_t*) comp.id; 
+                frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id; 
                 /* Process a completed send or an rdma write  */
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
@@ -595,7 +595,7 @@ int mca_btl_mvapi_component_progress()
                 
                 /* Process a RECV  */ 
                 BTL_VERBOSE(("Got a recv completion")); 
-                frag = (mca_btl_mvapi_frag_t*) comp.id;
+                frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id;
                 endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
 
                 frag->rc=OMPI_SUCCESS; 
@@ -611,7 +611,7 @@ int mca_btl_mvapi_component_progress()
                     MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 0); 
                 } else { 
                     OPAL_THREAD_ADD32(&endpoint->rr_posted_high, -1); 
-                    MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
+                    MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(((mca_btl_mvapi_frag_t*) (unsigned long) comp.id)->endpoint, 0); 
                 }
                 count++; 
                 break;
@@ -642,7 +642,7 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_SQ_SEND_DATA :
                 
                 /* Process a completed send */
-                frag = (mca_btl_mvapi_frag_t*) comp.id; 
+                frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id; 
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
@@ -684,7 +684,7 @@ int mca_btl_mvapi_component_progress()
             case VAPI_CQE_RQ_SEND_DATA:
                 
                 BTL_VERBOSE(("Got a recv completion")); 
-                frag = (mca_btl_mvapi_frag_t*) comp.id;
+                frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id;
                 endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
                 frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
@@ -699,7 +699,7 @@ int mca_btl_mvapi_component_progress()
                     MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 0); 
                 } else {
                     OPAL_THREAD_ADD32(&endpoint->rr_posted_low, -1); 
-                    MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
+                    MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(((mca_btl_mvapi_frag_t*) (unsigned long) comp.id)->endpoint, 0); 
                 }
                 count++; 
                 break;
