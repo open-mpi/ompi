@@ -80,10 +80,10 @@ static int orte_rmaps_round_robin_open(void)
 
     /* JMS To be changed post-beta to LAM's C/N command line notation */
 
-    id = mca_base_param_find("ras_base", NULL, "schedule_policy");
+    id = mca_base_param_find("rmaps_base", NULL, "schedule_policy");
     if (0 > id) {
-        id = mca_base_param_reg_string_name("ras_base", "schedule_policy",
-                                            "Scheduling Policy for RAS. [slot | node]",
+        id = mca_base_param_reg_string_name("rmaps_base", "schedule_policy",
+                                            "Scheduling Policy for RMAPS. [slot | node]",
                                             false, false, "slot", 
                                             &mca_rmaps_round_robin_component.schedule_policy);
     }

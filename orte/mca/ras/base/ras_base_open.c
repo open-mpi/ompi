@@ -33,51 +33,12 @@
 
 #include "orte/mca/ras/base/static-components.h"
 
-/**
- * Local functions.
- */
-
-static void orte_ras_base_cmp_constructor(orte_ras_base_cmp_t *cmp)
-{
-    cmp->component = NULL;
-    cmp->module = NULL;
-    cmp->priority = -1;
-}
-
-static void orte_ras_base_cmp_destructor(orte_ras_base_cmp_t *cmp)
-{
-}
-
-/*
- * Need to make this an *opposite* compare (this is invoked by qsort)
- * so that we get the highest priority first (i.e., so the sort is
- * highest->lowest, not lowest->highest)
- */
-static int compare(opal_list_item_t **a, opal_list_item_t **b)
-{
-    orte_ras_base_cmp_t *aa = *((orte_ras_base_cmp_t **) a);
-    orte_ras_base_cmp_t *bb = *((orte_ras_base_cmp_t **) b);
-                                                                                                                                    
-    if (bb->priority > aa->priority) {
-        return 1;
-    } else if (bb->priority == aa->priority) {
-        return 0;
-    } else {
-        return -1;
-    }
-}
-
 
 /*
  * Global variables
  */
 orte_ras_base_module_t orte_ras;
 orte_ras_base_t orte_ras_base;
-OBJ_CLASS_INSTANCE(
-    orte_ras_base_cmp_t, 
-    opal_list_item_t,
-    orte_ras_base_cmp_constructor, 
-    orte_ras_base_cmp_destructor);
 
 
 /**
@@ -86,32 +47,24 @@ OBJ_CLASS_INSTANCE(
  */
 int orte_ras_base_open(void)
 {
-    opal_list_item_t *item;
-    mca_base_component_list_item_t *cli;
-    orte_ras_base_component_t *component;
-    orte_ras_base_module_t *module;
-    int param, priority, value;
-    orte_ras_base_cmp_t *cmp;
-    char * policy;
+    int value;
 
     /* Debugging / verbose output */
 
     orte_ras_base.ras_output = opal_output_open(NULL);
-    param = mca_base_param_reg_int_name("ras_base", "verbose", 
-                                        "Verbosity level for the ras framework",
-                                        false, false, 0, &value);
+    mca_base_param_reg_int_name("ras_base", "verbose", 
+                                "Enable debugging for the RAS framework (nonzero = enabled)",
+                                false, false, 0, &value);
     if (value != 0) {
         orte_ras_base.ras_output = opal_output_open(NULL);
     } else {
         orte_ras_base.ras_output = -1;
     }
 
-    param = mca_base_param_reg_string_name("ras_base", "schedule_policy",
-                                           "Scheduling Policy for RAS. [slot | node]",
-                                           false, false, "slot", &policy);
-    if (0 == strcmp(policy, "node")) {
-        mca_base_param_set_string(param, "node");
-    }
+    /* Defaults */
+
+    orte_ras_base.ras_opened_valid = false;
+    orte_ras_base.ras_available_valid = false;
 
     /* Open up all available components */
 
@@ -121,48 +74,10 @@ int orte_ras_base_open(void)
                                  &orte_ras_base.ras_opened, true)) {
         return ORTE_ERROR;
     }
-    OBJ_CONSTRUCT(&orte_ras_base.ras_available, opal_list_t);
-
-    for (item = opal_list_get_first(&orte_ras_base.ras_opened);
-         opal_list_get_end(&orte_ras_base.ras_opened) != item;
-         item = opal_list_get_next(item)) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_ras_base_component_t *) cli->cli_component;
-        opal_output(orte_ras_base.ras_output,
-                    "orte:base:open: querying component %s",
-                    component->ras_version.mca_component_name);
-
-        /* Call the component's init function and see if it wants to be
-           selected */
-
-        module = component->ras_init(&priority);
-
-        /* If we got a non-NULL module back, then the component wants
-           to be considered for selection */
-
-        if (NULL != module) {
-            opal_output(orte_ras_base.ras_output,
-                        "orte:base:open: component %s returns priority %d",
-                        component->ras_version.mca_component_name,
-                        priority);
-
-            cmp = OBJ_NEW(orte_ras_base_cmp_t);
-            cmp->component = component;
-            cmp->module = module;
-            cmp->priority = priority;
-
-            opal_list_append(&orte_ras_base.ras_available, &cmp->super);
-        } else {
-            opal_output(orte_ras_base.ras_output,
-                        "orte:base:open: component %s does NOT want to be considered for selection",
-                        component->ras_version.mca_component_name);
-        }
-    }
-
-    /* Sort the resulting available list in priority order */
-    opal_list_sort(&orte_ras_base.ras_available, compare);
 
     /* All done */
+
+    orte_ras_base.ras_opened_valid = true;
     return ORTE_SUCCESS;
 }
 

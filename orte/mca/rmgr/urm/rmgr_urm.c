@@ -123,7 +123,7 @@ static int orte_rmgr_urm_create(
         return rc;
     }
 
-    /* create and initialize job segment */
+    /* create and initialize job segment */ /* JJH C/N mapping before this */
     if (ORTE_SUCCESS != 
         (rc = orte_rmgr_base_put_app_context(*jobid, app_context, 
                                              num_context))) {
@@ -144,9 +144,9 @@ static int orte_rmgr_urm_create(
 
 static int orte_rmgr_urm_allocate(orte_jobid_t jobid)
 {
-     OPAL_TRACE(1);
+    OPAL_TRACE(1);
     
-   return mca_rmgr_urm_component.urm_ras->allocate(jobid);
+    return orte_ras_base_allocate(jobid, &mca_rmgr_urm_component.urm_ras);
 }
 
 static int orte_rmgr_urm_deallocate(orte_jobid_t jobid)
@@ -308,7 +308,7 @@ static int orte_rmgr_urm_spawn(
 
     /*
      * Initialize job segment and allocate resources
-     */
+     */ /* JJH Insert C/N mapping stuff here */
     if (ORTE_SUCCESS != 
         (rc = orte_rmgr_urm_create(app_context,num_context,jobid))) {
         ORTE_ERROR_LOG(rc);

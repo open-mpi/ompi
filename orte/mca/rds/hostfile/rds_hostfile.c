@@ -20,20 +20,21 @@
 #include <errno.h>
 #include <string.h>
 
-#include "include/orte_constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
-#include "util/sys_info.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ras/ras.h"
-#include "mca/rds/rds.h"
-#include "mca/rds/base/base.h"
-#include "mca/rds/hostfile/rds_hostfile.h"
-#include "mca/rds/hostfile/rds_hostfile_lex.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/include/orte_constants.h"
+#include "orte/util/sys_info.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/rds/rds.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/rds/hostfile/rds_hostfile.h"
+#include "orte/mca/rds/hostfile/rds_hostfile_lex.h"
 
 #include "runtime/runtime_types.h"
 
@@ -334,7 +335,7 @@ static int orte_rds_hostfile_query(void)
     OBJ_CONSTRUCT(&existing, opal_list_t);
     OBJ_CONSTRUCT(&updates, opal_list_t);
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
-    rc = orte_ras.node_query(&existing);
+    rc = orte_ras_base_node_query(&existing);
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
     }
@@ -418,7 +419,7 @@ static int orte_rds_hostfile_query(void)
          * resources listed in the hostfile have been
          * already allocated for our use.
          */
-        rc = orte_ras.node_insert(&updates);
+        rc = orte_ras_base_node_insert(&updates);
         if (ORTE_SUCCESS != rc) {
             goto cleanup;
         }

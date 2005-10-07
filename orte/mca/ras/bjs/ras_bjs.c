@@ -113,11 +113,10 @@ static int orte_ras_bjs_discover(
     opal_list_item_t* item;
     opal_list_t new_nodes;
     int rc;
-    bool constrained;
-
+    
     /* query the nodelist from the registry */
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_context(nodelist, context, num_context, &constrained))) {
+    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist))) {
         ORTE_ERROR_LOG(rc); 
         return rc;
     }
@@ -158,10 +157,7 @@ static int orte_ras_bjs_discover(
         }
         item = next;
     }
-    if(constrained) {
-        return ORTE_SUCCESS;
-    }
-
+    
 
     /* parse the node list and check node status/access */
     nodes = getenv("NODES");
@@ -254,11 +250,8 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    if (0 == strcmp(mca_ras_bjs_component.schedule_policy, "node")) {
-        rc = orte_ras_base_allocate_nodes_by_node(jobid, &nodes);
-    } else {
-        rc = orte_ras_base_allocate_nodes_by_slot(jobid, &nodes);
-    }
+
+    rc = orte_ras_base_allocate_nodes(jobid, &nodes);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }

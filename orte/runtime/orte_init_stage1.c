@@ -40,6 +40,7 @@
 #include "mca/sds/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "mca/ras/base/base.h"
+#include "mca/ras/base/ras_base_node.h"
 #include "mca/rds/base/base.h"
 #include "mca/rmgr/base/base.h"
 #include "mca/rmaps/base/base.h"
@@ -427,6 +428,7 @@ int orte_init_stage1(bool infrastructure)
             orte_rds_cell_desc_t *rds_item;
             orte_rds_cell_attr_t *new_attr;
             orte_ras_node_t *ras_item;
+            orte_ras_base_module_t *module;
 
             OBJ_CONSTRUCT(&single_host, opal_list_t);
             OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
@@ -487,12 +489,27 @@ int orte_init_stage1(bool infrastructure)
                 goto error;
             }
 
-            ret = orte_ras.node_insert(&single_host);
+            /* JMS: This isn't quite right and should be fixed after
+               1.0 -- we shouldn't be doing this manually here.  We
+               should somehow be invoking a real RAS component to do
+               this for us. */
+            ret = orte_ras_base_node_insert(&single_host);
             if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
                 error = "orte_ras.node_insert";
                 goto error;;
             }
+
+            /* JMS: Same as above -- fix this after 1.0: force a
+               selection so that orte_ras has initialized pointers in
+               case anywhere else tries to use it.  This may end up
+               putting a bunch more nodes on the node segment (e.g.,
+               if you're in a SLURM allocation and you "./a.out",
+               you'll end up with the localhost *and* all the other
+               nodes in your allocation on the node segment -- which
+               is probably fine) */
+            orte_ras_base_allocate(my_jobid, &module);
+            orte_ras = *module;
 
             OBJ_DESTRUCT(&single_host);
             OBJ_DESTRUCT(&rds_single_host);

@@ -237,7 +237,7 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 
 -(int) launchJob:(orte_jobid_t) jobid
 {
-    opal_list_t nodes;
+    opal_list_t nodes, mapping_list;
     opal_list_item_t *item;
     int ret;
     size_t num_nodes;
@@ -250,7 +250,8 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 
     /* query the list of nodes allocated to the job */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    ret = orte_ras_base_node_query_alloc(&nodes, jobid);
+    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
+    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
     if (ORTE_SUCCESS != ret) goto cleanup;
 
     /* allocate vpids for the daemons */
@@ -356,6 +357,12 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
+
+    while(NULL != (item = opal_list_remove_first(&mapping_list))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&mapping_list);
+
     return ret;
 }
 

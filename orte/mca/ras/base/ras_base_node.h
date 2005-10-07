@@ -13,10 +13,8 @@
  * 
  * $HEADER$
  */
-/**
- * @file
- *
- */
+/** @file */
+
 #ifndef ORTE_RAS_BASE_NODE_H
 #define ORTE_RAS_BASE_NODE_H
 
@@ -24,46 +22,41 @@
 #include "mca/soh/soh_types.h"
 #include "mca/rmgr/rmgr_types.h"
 #include "mca/ras/ras.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-
-/*
- * Convience routines to query/set node state in the registry
- */
 
 /*
  * Query the registry for all available nodes 
  */
 int orte_ras_base_node_query(opal_list_t*);
 
-/*
- * Query the registry for all available nodes that satisfy any
- * constraints specified on the app_context(s)
- */
-int orte_ras_base_node_query_context(opal_list_t*, orte_app_context_t**, size_t num_context, bool* constrained);
-
-/*
+/**
  * Query the registry for all nodes allocated to a specific job
  */
 int orte_ras_base_node_query_alloc(opal_list_t*, orte_jobid_t);
 
-/*
+/**
  * Add the specified node definitions to the registry
  */
 int orte_ras_base_node_insert(opal_list_t*);
 
-/*
+/**
  * Delete the specified nodes from the registry
  */
 int orte_ras_base_node_delete(opal_list_t*);
 
-/*
+/**
  * Assign the allocated slots on the specified nodes to the  
  * indicated jobid.
  */
 int orte_ras_base_node_assign(opal_list_t*, orte_jobid_t);
+
+/**
+ * Check to see if the node segment is empty
+ */
+int orte_ras_base_node_segment_empty(bool *empty);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

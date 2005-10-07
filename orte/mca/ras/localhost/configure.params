@@ -17,5 +17,5 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=ras_host.c
+PARAM_INIT_FILE=ras_localhost_component.c
 PARAM_CONFIG_FILES="Makefile"

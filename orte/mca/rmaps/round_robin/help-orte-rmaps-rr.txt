@@ -21,4 +21,20 @@
 
 Either request fewer slots for your application, or make more slots available
 for use.
+[orte-rmaps-rr:no-mapped-node]
+There are no allocated resources for the application 
+  %s
+that match the requested mapping:
+  %s
 
+Verify that you have mapped the allocated resources properly using the 
+--host specification.
+[orte-rmaps-rr:not-all-mapped-alloc]
+Some of the requested hosts are not included in the current allocation for the
+application:
+  %s
+The requested hosts were:
+  %s
+
+Verify that you have mapped the allocated resources properly using the 
+--host specification.

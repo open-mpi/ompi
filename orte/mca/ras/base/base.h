@@ -56,15 +56,14 @@ typedef struct orte_ras_base_cmp_t orte_ras_base_cmp_t;
  * function definitions
  */
 ORTE_DECLSPEC int orte_ras_base_open(void);
+ORTE_DECLSPEC int orte_ras_base_find_available(void);
+ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job,
+                                         orte_ras_base_module_t **m);
 ORTE_DECLSPEC int orte_ras_base_finalize(void);
 ORTE_DECLSPEC int orte_ras_base_close(void);
-ORTE_DECLSPEC orte_ras_base_module_t* orte_ras_base_select(const char*);
-ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job);
-ORTE_DECLSPEC int orte_ras_base_deallocate(orte_jobid_t job);
-ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid, 
-                                                       opal_list_t* nodes);
-ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid, 
-                                                       opal_list_t* nodes);
+
+ORTE_DECLSPEC int orte_ras_base_allocate_nodes(orte_jobid_t jobid, 
+                                               opal_list_t* nodes);
 
 /*
  * globals that might be needed
@@ -74,7 +73,9 @@ ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
 typedef struct orte_ras_base_t {
     int ras_output;
     opal_list_t ras_opened;
+    bool ras_opened_valid;
     opal_list_t ras_available;
+    bool ras_available_valid;
     size_t ras_num_nodes;
 } orte_ras_base_t;
  
