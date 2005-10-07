@@ -276,6 +276,8 @@ extern "C" {
                                            opal_cmd_line_init_t *table);
 
     /**
+     * \deprecated
+     *
      * Create a command line option.
      *
      * This function is an older [deprecated] form of
