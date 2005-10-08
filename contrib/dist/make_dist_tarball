@@ -117,7 +117,7 @@ fi
 # Sanity check
 #
 echo "*** Sanity check..."
-file="src/mca/ptl/gm/ptl_gm_peer.h"
+file="ompi/mca/btl/gm/btl_gm_component.c"
 if test ! -f "$file"; then
     echo "Configure failed - no file: $file"
     exit 1
@@ -133,12 +133,15 @@ rm -rf autogen.sh
 #
 # make tarball
 #
-echo "*** Running make dist..."
-make dist 2>&1 | tee dist.out
+echo "*** Running make distcheck..."
+save_LD=$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=
+make distcheck 2>&1 | tee dist.out
 if test ! "$?" = "0"; then
     echo "Make dist failed.  Aborting"
     exit 1
 fi
+LD_LIBRARY_PATH=$save_LD
 
 #
 # move
