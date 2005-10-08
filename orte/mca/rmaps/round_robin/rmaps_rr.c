@@ -199,7 +199,7 @@ static int map_app_by_node(
     char **mapped_nodes,
     int num_mapped_nodes)
 {
-    int rc;
+    int rc = ORTE_SUCCESS;
     size_t num_alloc = 0;
     size_t proc_index = 0;
     opal_list_item_t *next;
