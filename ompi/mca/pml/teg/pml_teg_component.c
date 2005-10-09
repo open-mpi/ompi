@@ -95,11 +95,11 @@ int mca_pml_teg_component_open(void)
     mca_pml_teg.teg_num_ptl_progress = 0;
 
     mca_pml_teg.teg_free_list_num =
-        mca_pml_teg_param_register_int("free_list_num", 256);
+        mca_pml_teg_param_register_int("free_list_num", 4);
     mca_pml_teg.teg_free_list_max =
         mca_pml_teg_param_register_int("free_list_max", -1);
     mca_pml_teg.teg_free_list_inc =
-        mca_pml_teg_param_register_int("free_list_inc", 256);
+        mca_pml_teg_param_register_int("free_list_inc", 64);
     mca_pml_teg.teg_poll_iterations =
         mca_pml_teg_param_register_int("poll_iterations", 100000);
     mca_pml_teg.teg_priority =
