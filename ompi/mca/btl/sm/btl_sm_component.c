@@ -107,7 +107,7 @@ int mca_btl_sm_component_open(void)
 {
     /* register SM component parameters */
     mca_btl_sm_component.sm_free_list_num =
-        mca_btl_sm_param_register_int("free_list_num", 256);
+        mca_btl_sm_param_register_int("free_list_num", 8);
     mca_btl_sm_component.sm_free_list_max =
         mca_btl_sm_param_register_int("free_list_max", -1);
     mca_btl_sm_component.sm_free_list_inc =
