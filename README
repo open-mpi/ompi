@@ -66,15 +66,18 @@ base as of this writing (26 Aug 2005):
 
 - The run-time systems that are currently supported are:
   - rsh / ssh
-  - Recent versions of BProc
+  - Recent versions of BProc (e.g., Clustermatic)
   - PBS Pro, Open PBS, Torque (i.e., anything who supports the TM
     interface)
   - SLURM
   - POE
+  - XGrid
+  - Yod
 
-- Complete user and system administrator documentation is missing
-  (this file comprises the majority of the current user
-  documentation).
+- The majority of Open MPI's documentation is here in this file and on
+  the web site FAQ (http://www.open-mpi.org/).  This will eventually
+  be supplemented with cohesive installation and user documentation
+  files.
 
 - MPI-2 one-sided functionality will not be included in the first few
   releases of Open MPI.
@@ -153,6 +156,10 @@ for a full list); a summary of the more important ones follows:
   Specify the directory where the Open IB libraries and header files are
   located.  This enables mVAPI support in Open MPI.
 
+--with-tm=<directory>
+  Specify the directory where the TM libraries and header files are
+  located.  This enables PBS / Torque support in Open MPI.
+
 --with-mpi-param_check(=value)
   "value" can be one of: always, never, runtime.  If no value is
   specified, or this option is not used, "always" is the default.
@@ -219,14 +226,11 @@ clean" and/or remove the entire build tree.
 VPATH builds are fully supported.
 
 Generally speaking, the only thing that users need to do to use Open
-MPI is ensure that <prefix>/bin is in their PATH.  Users may need to
-ensure that this directory is set in their PATH in their shell setup
-files (e.g., .bashrc, .cshrc) so that rsh/ssh-based logins will be
-able to find the Open MPI executables.
-
-Setting LD_LIBRARY_PATH is typically not necessary, but in some cases,
-if libmpi.so cannot be found when MPI applications are run,
-<prefix>/lib should be added to LD_LIBRARY_PATH.
+MPI is ensure that <prefix>/bin is in their PATH and <prefix>/lib is
+in their LD_LIBRARY_PATH.  Users may need to ensure to set the PATH
+and LD_LIBRARY_PATH in their shell setup files (e.g., .bashrc, .cshrc)
+so that rsh/ssh-based logins will be able to find the Open MPI
+executables.
 
 ===========================================================================
 
@@ -279,9 +283,11 @@ shell$ mpicc hello_world_mpi.c -o hello_world_mpi -g
 shell$
 
 All the wrapper compilers do is add a variety of compiler and linker
-flags to the command line and then invoke a back-end compiler.  The
-end result is an MPI executable that is properly linked to all the
-relevant libraries.
+flags to the command line and then invoke a back-end compiler.  To be
+specific: the wrapper compilers do not parse source code at all; they
+are solely command-line manipulators, and have nothing to do with the
+actual compilation or linking of programs.  The end result is an MPI
+executable that is properly linked to all the relevant libraries.
 
 ===========================================================================
 
@@ -301,10 +307,9 @@ are equivalent.  Many of mpiexec's switches (such as -host and -arch)
 are not yet functional, although they will not error if you try to use
 them.  
 
-Since rsh is probably the launcher that you will be using (if you are
-outside of Los Alamos National Laboratory), you can also specify a
--hostfile parameter, indicating an standard mpirun-style hostfile (one
-hostname per line):
+The rsh starter accepts a -hostfile parameter (the option
+"-machinefile" is equivalent); you can specify a -hostfile parameter
+indicating an standard mpirun-style hostfile (one hostname per line):
 
 shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
 
@@ -323,6 +328,9 @@ shell$ mpirun -hostfile my_hostfile -np 8 hello_world_mpi
 
 will launch MPI_COMM_WORLD rank 0 on node1, rank 1 on node2, ranks 2
 and 3 on node3, and ranks 4 through 7 on node4.
+
+Other starters, such as the batch scheduling environments, do not
+require hostfiles (and will ignore the hostfile if it is supplied).
 
 Note that the values of component parameters can be changed on the
 mpirun / mpiexec command line.  This is explained in the section
@@ -347,6 +355,8 @@ coll      - MPI collective algorithms
 io        - MPI-2 I/O
 mpool     - Memory pooling
 pml       - MPI point-to-point management layer
+ptl       - (Outdated / deprecated) MPI point-to-point transport layer
+rcache    - Memory registration cache
 topo      - MPI topology routines
 
 Back-end run-time environment component frameworks:
@@ -363,6 +373,8 @@ rds       - Resource discovery system
 rmaps     - Resource mapping system
 rmgr      - Resource manager
 rml       - RTE message layer
+schema    - Name schemas
+sds       - Startup / discovery service
 soh       - State of health monitor
 
 Miscellaneous frameworks:
@@ -376,9 +388,9 @@ timer     - High-resolution timers
 ---------------------------------------------------------------------------
 
 Each framework typically has one or more components that are used at
-run-time.  For example, the ptl framework is used by MPI to send bytes
-across underlying networks.  The tcp ptl, for example, sends messages
-across TCP-based networks; the gm ptl sends messages across GM
+run-time.  For example, the btl framework is used by MPI to send bytes
+across underlying networks.  The tcp btl, for example, sends messages
+across TCP-based networks; the gm btl sends messages across GM
 Myrinet-based networks.
 
 Each component typically has some tunable parameters that can be
