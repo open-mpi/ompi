@@ -72,10 +72,11 @@ int orte_gpr_replica_process_callbacks(void)
             /* Since this requestor is "local", we simply execute
              * the callbacks ourself.
              */
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             if (ORTE_SUCCESS != (rc = orte_gpr_replica_deliver_notify_msg(cb->message))) {
                 ORTE_ERROR_LOG(rc);
             }
-
+            OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
         } else {  /* remote request - send messages back */
            orte_gpr_replica_remote_notify(cb->requestor, cb->message);
         }
