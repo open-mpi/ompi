@@ -361,7 +361,7 @@ int orte_gpr_base_define_trigger_level(orte_gpr_trigger_id_t *id,
         }
         value.keyvals[i]->key = keys[i];
         value.keyvals[i]->type = ORTE_SIZE;
-        value.keyvals[i]->value.intval = levels[i];
+        value.keyvals[i]->value.size = levels[i];
     }
 
     value.tokens = tokens;
