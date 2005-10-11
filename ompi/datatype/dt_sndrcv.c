@@ -83,8 +83,7 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    /* If send packed. */
    if (sdtype == MPI_PACKED) {
       recv_convertor = OBJ_NEW(ompi_convertor_t);
-      ompi_convertor_prepare( recv_convertor, rdtype, rcount, rbuf );
-      ompi_convertor_prepare_for_recv( recv_convertor, 0, 0, NULL );
+      ompi_convertor_prepare_for_recv( recv_convertor, rdtype, rcount, rbuf );
 
       iov_count = 1;
       iov.iov_len = scount;
@@ -103,10 +102,8 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
 
    send_convertor = OBJ_NEW(ompi_convertor_t);
    recv_convertor = OBJ_NEW(ompi_convertor_t);
-   ompi_convertor_prepare( send_convertor, sdtype, scount, sbuf );
-   ompi_convertor_prepare( recv_convertor, rdtype, rcount, rbuf );
-   ompi_convertor_prepare_for_send( send_convertor, 0, 0, NULL );
-   ompi_convertor_prepare_for_recv( recv_convertor, 0, 0, NULL );
+   ompi_convertor_prepare_for_send( send_convertor, sdtype, scount, sbuf );
+   ompi_convertor_prepare_for_recv( recv_convertor, rdtype, rcount, rbuf );
 
    completed = 0;
    while( !completed ) {
