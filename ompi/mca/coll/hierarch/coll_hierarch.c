@@ -198,6 +198,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     int size, rank, ret=OMPI_SUCCESS;
 
     struct ompi_communicator_t *lcomm=NULL;
+    struct ompi_communicator_t *llcomm=NULL;
     struct mca_coll_base_comm_t *data=NULL;
 
     rank = ompi_comm_rank(comm);
@@ -221,38 +222,44 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	goto exit;
     }
 
+
+    /* allocate a certain number of the hierarch_llead structures, which store
+       information about local leader and the according subcommunicators 
+    */
+    data->hier_llead= (struct mca_coll_hierarch_llead_t *) malloc (HIER_DEFAULT_NUM_LLEAD * 
+							   sizeof(struct mca_coll_hierach_llead_t *));
+    if ( NULL == data->hier_llead ) {
+	goto exit;
+    }
+    data->hier_max_llead = HIER_DEFAULT_NUM_LLEAD;
+    data->hier_num_llead = 1;
+
     /* determine how many local leader there are and who they are */
-    data->hier_num_lleaders = mca_coll_hierarch_count_lleaders (size, data->hier_colorarr);
-    data->hier_lleaders = (int *) malloc ( sizeof(int) * data->hier_num_lleaders);
-    if ( NULL == data->hier_lleaders ) {
+    data->hier_llead[0].num_lleaders = mca_coll_hierarch_count_lleaders (size, data->hier_colorarr);
+    data->hier_llead[0].lleaders = (int *) malloc ( sizeof(int) * data->hier_llead[0].num_lleaders);
+    if ( NULL == data->hier_llead[0].lleaders ) {
 	goto exit;
     }
     mca_coll_hierarch_get_all_lleaders ( data->hier_num_colorarr,
 					 data->hier_colorarr, 
-					 data->hier_num_lleaders,
-					 data->hier_lleaders );
+					 data->hier_llead[0].num_lleaders,
+					 data->hier_llead[0].lleaders );
 
     /* determine my lleader, maybe its me */
-    data->hier_am_lleader=0;       /* false */
-    mca_coll_hierarch_get_lleader ( rank, data, &data->hier_my_lleader );
-    if ( data->hier_colorarr[data->hier_my_lleader] == rank ) {
-	data->hier_am_lleader = 1; /*true */
+    data->hier_llead[0].am_lleader=0;       /* false */
+    mca_coll_hierarch_get_lleader ( rank, data, data->hier_llead[0].my_lleader );
+    if ( data->hier_colorarr[data->hier_llead[0].my_lleader] == rank ) {
+	data->hier_llead[0].am_lleader = 1; /*true */
     }
 
     /* Generate the lleader communicator assuming that all lleaders are the first
        process in the list of processes with the same color. A function generating 
        other lleader-comms will follow soon. */
-    ompi_comm_split ( comm, data->hier_am_lleader, rank, &llcomm, 0);
+    ompi_comm_split ( comm, data->hier_llead[0].am_lleader, rank, &llcomm, 0);
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
-    data->hier_llcomm = (struct ompi_communicator_t *)malloc (HIER_DEFAULT_NUM_LLCOMM * 
-							      sizeof(struct ompi_communicator_t *));
-    if ( NULL == data->hier_llcomm ) {
-	goto exit;
-    }
-    data->hier_num_llcomm = HIER_DEFAULT_NUM_LLCOMM;
-    data->hier_llcomm[0] = llcomm;
+    data->hier_llead[0].llcomm = llcomm;
 
 
     /* This is the point where I will introduce later on a function trying to 
@@ -269,13 +276,15 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	    if ( NULL != data->hier_reqs ) {
 		free ( data->hier_reqs);
 	    }
-	    if ( NULL != data->hier_lleaders ) {
-		free ( data->hier_lleaders);
-	    }
 	    if ( NULL != data->hier_colorarr ) {
 		free ( data->hier_colorarr ) ;
 	    }
-
+	    if ( NULL != data->hier_llead[0].lleaders ) {
+		free ( data->hier_llead[0].lleaders);
+	    }
+	    if ( NULL != data->hier_llead) {
+		free ( data->hier_llead );
+	    }
 	    free ( data );
 	}
 	return NULL;
@@ -292,13 +301,22 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
 {
     struct ompi_communicator_t *lcomm=NULL;
     struct mca_coll_base_comm_t *data=NULL;
+    struct mca_coll_hierarch_llead_t * llead=NULL;
+    
+    int i;
 
     data   = comm->c_coll_selected_data;
     lcomm = data->hier_lcomm;
 
     ompi_comm_free (&lcomm);
     free ( data->hier_reqs );
-    free ( data->hier_lleaders );
+    
+    for ( i=0; i< data->hier_num_llead; i++ ) {
+	if ( data->hier_llead[i].lleaders != NULL ) {
+ 	    free ( data->hier_llead[i].lleaders );
+	}
+    }
+    free ( data->hier_llead );
     free ( data->hier_colorarr );
     free ( data );
     
@@ -426,16 +444,22 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 
 static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
 {
-    int i;
+    int i, j;
 
     printf("Dump of hier-struct for  comm %s cid %u\n", 
 	   c->hier_comm->c_name, c->hier_comm->c_contextid);
-    printf("  no of lleaders %d my_leader %d am_leader %d\n", 
-	   c->hier_num_lleaders, c->hier_my_lleader, c->hier_am_lleader );
-    for (i=0; i<c->hier_num_lleaders; i++ ) {
-	printf("      lleader[%d] = %d\n", i, c->hier_lleaders[i]);
-    }
+    printf("Number of local leader communicators: %d\n", c->hier_max_llead );
+    for ( i=0; i < c->hier_max_llead; i++ ) {
+	printf("  no of lleaders %d my_leader %d am_leader %d\n", 
+	       c->hier_llead[i].num_lleaders, 
+	       c->hier_llead[i].my_lleader, 
+	       c->hier_llead[i].am_lleader 
+	    );
 
+	for (j=0; j<c->hier_llead[i].num_lleaders; i++ ) {
+	    printf("      lleader[%d] = %d\n", i, c->hier_llead[i].lleaders[j]);
+	}
+    }
     
     return;
 }

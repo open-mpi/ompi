@@ -40,31 +40,32 @@ extern int mca_coll_hierarch_walk_through_list_param;
 extern int mca_coll_hierarch_use_next_param;
 
 
-#define HIER_DEFAULT_NUM_LLCOMM 5
+#define HIER_DEFAULT_NUM_LLEAD 5
 /*
  * Data structure for attaching data to the communicator 
  */
 
-    struct mca_coll_hierarch_llead {
-	struct ompi_communicator_t    *hier_llcomm; /* local leader communicator */
-	int                      hier_num_lleaders; /* number of local leaders */
-	int                         *hier_lleaders; /* list of local leaders, ranks in comm */
-	int               hier_my_lleader_on_lcomm; /* rank of my lleader in llcomm */
-	int                        hier_am_lleader; /* am I an lleader? */
-	int                        hier_my_lleader; /* pos. of my lleader in hier_lleaders */
+    struct mca_coll_hierarch_llead_t {
+	struct ompi_communicator_t    *llcomm; /* local leader communicator */
+	int                      num_lleaders; /* number of local leaders */
+	int                         *lleaders; /* list of local leaders, ranks in comm */
+	int               my_lleader_on_lcomm; /* rank of my lleader in llcomm */
+	int                        am_lleader; /* am I an lleader? */
+	int                        my_lleader; /* pos. of my lleader in hier_lleaders */
     };
 
     struct mca_coll_base_comm_t {
-	struct ompi_communicator_t      *hier_comm; /* link back to the attached comm */ 
-	struct ompi_communicator_t     *hier_lcomm; /* low level communicator */
-	struct mca_coll_hierarch_llead *hier_llead; /* structure for lleader communicator */
-	int                         hier_num_llead; /* number of llead structs */
-	int                             hier_level; /* level in the hierarchy. just debugging */
- 	int                          hier_num_reqs; /* num. of requests */
-	ompi_request_t                 **hier_reqs; /* list of requests */
-	int                     hier_type_colorarr; /* format in which the colorarr is stored */
-	int                      hier_num_colorarr; /* size of the colorarr array */
-	int*                         hier_colorarr; /* array containing the color of all procs */
+	struct ompi_communicator_t        *hier_comm; /* link back to the attached comm */ 
+	struct ompi_communicator_t       *hier_lcomm; /* low level communicator */
+	struct mca_coll_hierarch_llead_t *hier_llead; /* structure for lleader communicators */
+	int                           hier_num_llead; /* number of llead structs */
+	int                           hier_max_llead; /* max. number of llead structs */
+	int                               hier_level; /* level in the hierarchy. just debugging */
+ 	int                            hier_num_reqs; /* num. of requests */
+	ompi_request_t                   **hier_reqs; /* list of requests */
+	int                       hier_type_colorarr; /* format in which the colorarr is stored */
+	int                        hier_num_colorarr; /* size of the colorarr array */
+	int*                           hier_colorarr; /* array containing the color of all procs */
     };
 
 /* These are various modes how the colorarr is stored. The reason
@@ -161,12 +162,6 @@ static inline void mca_coll_hierarch_get_all_lleaders ( int size, int *carr, int
     return;
 }
 
-static inline struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm ( int rank, 
-									  struct mca_coll_base_comm_t *data,
-									  int* lleader ) 
-{
-    return NULL;
-}
 
 static inline void mca_coll_hierarch_get_lleader (int rank, struct mca_coll_base_comm_t *data,
 						  int* lleader ) 
@@ -252,6 +247,9 @@ static inline void mca_coll_hierarch_map_rank (int rank, struct mca_coll_base_co
 /*
  * coll API functions
  */
+struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank, struct mca_coll_base_comm_t *data,
+							   int* lrank); 
+
 
 int mca_coll_hierarch_init_query(bool *allow_hierarch_user_threads,
 				 bool *have_hidden_threads);
