@@ -21,19 +21,23 @@
 
 #include "mpi.h"
 #include "communicator/communicator.h"
+#include "proc/proc.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "coll_hierarch.h"
 
-#include "mca/ptl/ptl.h"
-#include "mca/pml/teg/src/pml_teg_proc.h"
-#include "mca/pml/teg/src/pml_teg_ptl.h"
+#include "class/ompi_bitmap.h"
+#include "mca/bml/bml.h"
+#include "mca/bml/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/btl/btl.h"
+
 
 /* local functions and data */
 #define HIER_MAXPROTOCOL 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 
-static char hier_prot[HIER_MAXPROTOCOL][5]={"0","tcp","ib","gm","mx","elan4","sm"};
+static char hier_prot[HIER_MAXPROTOCOL][6]={"0","tcp","gm","mx","mvapi","openib","sm"};
 
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  char *component_name, int *key,
@@ -113,7 +117,6 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     
     /* This module only works for intra-communicators at the moment */
     if ( OMPI_COMM_IS_INTER(comm) ) {
-	*priority = 0;
 	return NULL;
     }
 
@@ -190,13 +193,11 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 const struct mca_coll_base_module_1_0_0_t *
 mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 {
-    int color, ncount;
-    int *colorarr=NULL, *llr=NULL;
+    int color;
+    int *llr=NULL;
     int size, rank, ret=OMPI_SUCCESS;
-    int i, j, c, level;
-    int found;
 
-    struct ompi_communicator_t *llcomm=NULL;
+    struct ompi_communicator_t *lcomm=NULL;
     struct mca_coll_base_comm_t *data=NULL;
 
     rank = ompi_comm_rank(comm);
@@ -207,13 +208,13 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     
     /* Generate the subcommunicator based on the color returned by
        the previous function. */
-    ret = ompi_comm_split ( comm, color, rank, &llcomm, 0 );
+    ret = ompi_comm_split ( comm, color, rank, &lcomm, 0 );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
 
     data->hier_comm     = comm;
-    data->hier_llcomm   = llcomm;
+    data->hier_lcomm    = lcomm;
     data->hier_num_reqs = 2 * size;
     data->hier_reqs     = (ompi_request_t **) malloc (sizeof(ompi_request_t)*size*2);
     if ( NULL == data->hier_reqs ) {
@@ -238,6 +239,21 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	data->hier_am_lleader = 1; /*true */
     }
 
+    /* Generate the lleader communicator assuming that all lleaders are the first
+       process in the list of processes with the same color. A function generating 
+       other lleader-comms will follow soon. */
+    ompi_comm_split ( comm, data->hier_am_lleader, rank, &llcomm, 0);
+    if ( OMPI_SUCCESS != ret ) {
+	goto exit;
+    }
+    data->hier_llcomm = (struct ompi_communicator_t *)malloc (HIER_DEFAULT_NUM_LLCOMM * 
+							      sizeof(struct ompi_communicator_t *));
+    if ( NULL == data->hier_llcomm ) {
+	goto exit;
+    }
+    data->hier_num_llcomm = HIER_DEFAULT_NUM_LLCOMM;
+    data->hier_llcomm[0] = llcomm;
+
 
     /* This is the point where I will introduce later on a function trying to 
        compact the colorarr array. Not done at the moment */
@@ -248,7 +264,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	free (llr);
     }
     if ( OMPI_SUCCESS != ret ) {
-	ompi_comm_free ( &llcomm );
+	ompi_comm_free ( &lcomm );
 	if ( NULL != data ) {
 	    if ( NULL != data->hier_reqs ) {
 		free ( data->hier_reqs);
@@ -274,19 +290,16 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
  */
 int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
 {
-    struct ompi_communicator_t *llcomm=NULL;
+    struct ompi_communicator_t *lcomm=NULL;
     struct mca_coll_base_comm_t *data=NULL;
 
     data   = comm->c_coll_selected_data;
-    llcomm = data->hier_llcomm;
+    lcomm = data->hier_lcomm;
 
-    ompi_comm_free (&llcomm);
+    ompi_comm_free (&lcomm);
     free ( data->hier_reqs );
     free ( data->hier_lleaders );
     free ( data->hier_colorarr );
-    if ( NULL != data->hier_topo.topo_next ) {
-	free (data->hier_topo.topo_next);
-    }
     free ( data );
     
     comm->c_coll_selected_data = NULL;
@@ -316,86 +329,78 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 				       int *key,
 				       int *ncount )
 {
-    mca_pml_proc_t *proc=NULL;
-    mca_ptl_proc_t *ptl_proc=NULL;
-    mca_ptl_base_module_t *ptl_module=NULL;
-    mca_ptl_base_component_t *ptr=NULL;
+    ompi_bitmap_t reachable;
+    ompi_proc_t **procs=NULL;
+    struct mca_bml_base_endpoint_t **bml_endpoints=NULL;
+    struct mca_bml_base_btl_array_t *bml_btl_array=NULL;
+    mca_bml_base_btl_t *bml_btl=NULL;
+    mca_btl_base_component_t *btl=NULL;
 
-    int i, j, size;
+    int i, size, rc;
 
     int counter=0;
     int firstproc=999999;
     int rank = -1;
-
-    int listsize=1;
-    int use_next, walk_through_list;
+    int use_rdma=0;
 
     /* default values in case an error occurs */
     *ncount=0;
     *key=MPI_UNDEFINED;
 
-    /* Shall we just check the first element in the ptl list ? */
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_walk_through_list_param, 
-						  &walk_through_list)) {
+    /* Shall we check the the rdma list instead of send-list in the endpoint-structure? */
+/*    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_rdma_param, 
+						  &use_rdma)) {
 	return;
     }
-
-    /* Shall we use the first_elem list or the next_elem list? */
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_use_next_param, 
-						  &use_next)) {
-	return;
-    }
-
+*/
     
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
+
+    OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
+    rc = ompi_bitmap_init(&reachable, size);
+    if(OMPI_SUCCESS != rc) {
+        return;
+    }
+
+    rc = mca_bml.bml_add_procs ( 
+	size, 
+	procs, 
+	bml_endpoints, 
+	&reachable 
+	);
+
+    if(OMPI_SUCCESS != rc) {
+	return;
+    }
+
     for ( i=0; i<size; i++ ) {
 	if ( rank ==  i ) {
 	    /* skip myself */
 	    continue;
 	}
-
-	proc = mca_pml_teg_proc_lookup_remote (comm, i);
-	if ( use_next ) {
-	    ptl_proc=mca_ptl_array_get_next(&proc->proc_ptl_first);
-	    if ( walk_through_list ) {
-		/* 
-		 * Walking through the listmight be unecessary.  Assumption is,
-		 * that if we did not register this as the first protocol, there is
-		 * a protocol which is faster than this one.  
-		 *
-		 * Example: on a IB-cluster with dual processor nodes, I can talk
-		 * to all procs with IB, however the process on my node will
-		 * hopefully have sm registered as its first protocoll. 
-		 */
-		
-		listsize = mca_ptl_array_get_size(&proc->proc_ptl_first);
-	    }
+	
+	if ( use_rdma ) {
+	    bml_btl_array = &(bml_endpoints[i]->btl_rdma);
 	}
 	else {
-	    ptl_proc=mca_ptl_array_get_next(&proc->proc_ptl_next);
-	    if ( walk_through_list ) {
-		listsize = mca_ptl_array_get_size(&proc->proc_ptl_next);
-	    }
+	    bml_btl_array = &(bml_endpoints[i]->btl_send);
 	}
+	bml_btl = mca_bml_base_btl_array_get_index ( bml_btl_array, 0 );
+	btl = bml_btl->btl->btl_component;
 
-	for ( j=0; j<listsize;j++) {
-	    ptl_module = ptl_proc->ptl;
-	    ptr = ptl_module->ptl_component;
+	/* sanity check */
+	if ( strcmp(btl->btl_version.mca_type_name,"btl") ) {
+	    printf("Oops, got the wrong component! type_name = %s\n",
+		   btl->btl_version.mca_type_name );
+	}
 	    
-	    /* sanity check */
-	    if ( strcmp(ptr->ptlm_version.mca_type_name,"ptl") ) {
-		printf("Oops, got the wrong component! type_name = %s\n",
-		       ptr->ptlm_version.mca_type_name );
-	    }
+	/* check for the required component */
+	if (! strcmp (btl->btl_version.mca_component_name, component_name)){
+	    counter++;
 	    
-	    /* check for the required component */
-	    if (! strcmp (ptr->ptlm_version.mca_component_name, component_name)){
-		counter++;
-		
-		if (i<firstproc ) {
-		    firstproc = i;
-		}
+	    if (i<firstproc ) {
+		firstproc = i;
 	    }
 	}
     }
