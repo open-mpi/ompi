@@ -65,7 +65,7 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                 if (msg->id == local_trigs[i]->id) {
                     trig_cb = local_trigs[i]->callback;
                     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-                    trig_cb(msg);
+                    trig_cb(msg); /* JJH This is a potential thread problem. Needs a deeper look */
                     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
                     processed = true;
                 }
@@ -136,7 +136,7 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                 sub_cb = sub->callback;
                 sub_usertag = sub->user_tag;
                 OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-                sub_cb(data[i], sub->user_tag);
+                sub_cb(data[i], sub_usertag); /* JJH This is a potential thread problem. Needs a deeper look */
                 OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
                 if (data[i]->remove) {
