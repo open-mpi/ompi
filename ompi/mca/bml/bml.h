@@ -48,8 +48,8 @@ struct mca_mpool_base_resources_t;
 
 struct mca_bml_base_btl_t {
     int    btl_index;                             /**< index in endpoint array */
-    int    btl_weight;                            /**< BTL weight for scheduling */
     int    btl_flags;                             /**< support for put/get? */
+    double btl_weight;                            /**< BTL weight for scheduling */
     size_t btl_eager_limit;                       /**< BTL eager limit */
     size_t btl_min_send_size;                     /**< BTL min send size */
     size_t btl_max_send_size;                     /**< BTL max send size */
