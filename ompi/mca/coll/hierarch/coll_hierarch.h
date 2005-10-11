@@ -36,8 +36,7 @@ extern const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component;
 extern int mca_coll_hierarch_priority_param;
 extern int mca_coll_hierarch_verbose_param;
 extern int mca_coll_hierarch_verbose;
-extern int mca_coll_hierarch_walk_through_list_param;
-extern int mca_coll_hierarch_use_next_param;
+extern int mca_coll_hierarch_use_rdma_param;
 
 
 #define HIER_DEFAULT_NUM_LLEAD 5
@@ -251,8 +250,8 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank, struct mca_
 							   int* lrank); 
 
 
-int mca_coll_hierarch_init_query(bool *allow_hierarch_user_threads,
-				 bool *have_hidden_threads);
+int mca_coll_hierarch_init_query(bool allow_hierarch_user_threads,
+				 bool have_hidden_threads);
 const struct mca_coll_base_module_1_0_0_t *
 mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, 
 			     int *priority, struct mca_coll_base_comm_t **data);
