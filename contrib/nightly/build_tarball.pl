@@ -65,6 +65,9 @@ my $max_snapshots = 3;
 # only left if a) you use --leave-install or b) a build fails)
 my $max_build_roots = 3;
 
+# make arguments
+my $make_args = "-j 2";
+
 ############################################################################
 # Shouldn't need to change below this line
 ############################################################################
@@ -92,6 +95,7 @@ my $help_arg;
 my $force_arg;
 my $nocheck_arg;
 my $install_dir_arg;
+my $make_arg;
 
 #--------------------------------------------------------------------------
 
@@ -431,9 +435,9 @@ sub try_build {
     }
 
     # build it
-    $ret = do_command($merge_output, "make all");
+    $ret = do_command($merge_output, "make $make_args all");
     if ($ret->{status} != 0) {
-        $ret->{message} = "Failed to \"make all\"";
+        $ret->{message} = "Failed to \"make $make_args all\"";
         return $ret;
     }
 
@@ -583,7 +587,8 @@ my $ok = Getopt::Long::GetOptions("url|u=s" => \$url_arg,
                                   "install-dir=s" => \$install_dir_arg,
                                   "help|h" => \$help_arg,
                                   "force" => \$force_arg,
-                                  "nocheck" => \$nocheck_arg
+                                  "nocheck" => \$nocheck_arg,
+                                  "make=s" => \$make_arg
                                   );
 
 if (!$ok || $help_arg) {
@@ -612,6 +617,11 @@ if ($file_arg && $url_arg) {
     $tmp = $ENV{TMPDIR}
         if ($ENV{TMPDIR});
     $scratch_root_arg = "$tmp/open-mpi-test-build.$$";
+}
+
+# see if we want to override the make arguments
+if ($make_arg) {
+    $make_args = $make_arg;
 }
 
 # if the --file argument was a relative file, convert it to absolute
