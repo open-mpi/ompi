@@ -24,6 +24,7 @@
 #include "proc/proc.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_hierarch.h"
 
 #include "class/ompi_bitmap.h"
@@ -44,6 +45,8 @@ static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *co
 						  int *done );
 static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c);
 
+static int mca_coll_hierarch_bcast_tmp ( void *buf, int count,  struct ompi_datatype_t *dtype,
+					 int root, struct ompi_communicator_t *comm);
 
 /*
  * Linear set of collective algorithms
@@ -108,6 +111,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     int color, ncount, maxncount;
     struct mca_coll_base_comm_t *tdata=NULL;
     int level;
+    int ret=OMPI_SUCCESS;
 
     /* Get the priority level attached to this module */
     if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_priority_param, 
@@ -145,11 +149,20 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     for ( level = 1; level < mca_coll_hierarch_max_protocol; level++) {
 	mca_coll_hierarch_checkfor_component ( comm, hier_prot[level], &color, &ncount);
  
-	comm->c_coll_basic_module->coll_allreduce (&ncount, &maxncount, 1, MPI_INT, 
-						   MPI_MAX, comm );
-	comm->c_coll_basic_module->coll_allgather (&color, 1, MPI_INT, 
-						   tdata->hier_colorarr, 1, MPI_INT, comm );
-
+	/* This is probably a no-no! but for the moment we agreed with Jeff,
+	   that this might be the best solution. They emulate an allreduce and 
+	   an allgather.
+	*/
+	ret = coll_basic_reduce_intra (&ncount, &maxncount, 1, MPI_INT, 0, 
+				       MPI_MAX, comm );
+	if ( OMPI_SUCCESS != ret ) {
+	    return NULL;
+	}
+	ret = coll_hierarch_bcast_tmp ( &maxncount, 1, MPI_INT, 0, comm );
+	if ( OMPI_SUCCESS != ret ) {
+	    return NULL;
+	}
+	
 	if ( 0 == maxncount ) {
 	    /* 
 	     * this means, no process has a partner to which it can talk with this protocol,
@@ -167,6 +180,16 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	    goto exit;
 	}
 	else {
+	    ret = coll_basic_gather (&color, 1, MPI_INT, tdata->hier_colorarr, 1, MPI_INT, 0, comm );
+	    if ( OMPI_SUCCESS != ret ) {
+		return NULL;
+	    }
+	    ret = coll_hierarch_bcast_tmp ( tdata->hier_colorarr, size, MPI_INT, 0, comm);
+	    if ( OMPI_SUCCESS != ret ) {
+		return NULL;
+	    }
+
+
 	    tdata->hier_level   = level;
 	    *data = tdata;
 	    return &intra;
@@ -221,7 +244,6 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     if ( NULL == data->hier_reqs ) {
 	goto exit;
     }
-
 
     /* allocate a certain number of the hierarch_llead structures, which store
        information about local leader and the according subcommunicators 
@@ -331,6 +353,56 @@ int mca_coll_hierarch_comm_unquery ( struct ompi_communicator_t *comm,
     free ( data );
     return OMPI_SUCCESS;
 }
+
+
+struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank, 
+							   struct mca_coll_base_comm_t *data,
+							   int* lrank) 
+{
+    struct ompi_communicator_t *llcomm=NULL;
+    struct ompi_group_t *llgroup=NULL;
+    struct ompi_group_t *group=NULL;
+    struct mca_coll_hierarch_llead_t *llead=NULL;
+    int found=0; /* false */
+    int i;
+    int rc;
+
+    rc = ompi_comm_group ( data->hier_comm, &group);
+    if ( OMPI_SUCCESS != rc ) {
+	return NULL;
+    }
+
+    for (i=0;i<data->hier_max_llead; i++ ) {
+	llead = &(data->hier_llead[i]);
+	llcomm = llead->llcomm;
+	rc = ompi_comm_group ( llcomm, &llgroup);
+	if ( OMPI_SUCCESS != rc ) {
+	    return NULL;
+	}
+	
+	rc = ompi_comm_translate_ranks ( group, 1, rank, llgroup, lrank);
+	if ( OMPI_SUCCESS != rc ) {
+	    return NULL;
+	}
+
+	ompi_group_free ( &llgroup );
+	if ( MPI_UNDEFINED != *lrank ) {
+	    found = 0;
+	    break;
+	}
+    }
+    
+    if ( !found ) {
+	/* Here we have to introduce later on the code how to create the new 
+	   lleader intercommunicators. For the moment, we just return a NULL communicator.
+	*/
+	llcomm = MPI_COMM_NULL;
+    }
+    ompi_group_free ( &group );
+
+    return llcomm;
+}
+
 
 /**********************************************************************/
 /**********************************************************************/
@@ -462,4 +534,36 @@ static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
     }
     
     return;
+}
+
+static int mca_coll_hierarch_bcast_tmp ( void *buf, int count,  struct ompi_datatype_t *dtype,
+					 int root, struct ompi_communicator_t *comm)
+{
+    int err = OMPI_SUCCESS;
+    int rank = ompi_comm_rank ( comm );
+
+    if ( rank != root ) {
+	err = MCA_PML_CALL(recv(buf, count, dtype, root,
+				MCA_COLL_BASE_TAG_BCAST,
+				comm, MPI_STATUS_IGNORE));
+	if ( OMPI_SUCCESS != err ) {
+	    return err;
+	}
+    }
+    else {
+	int i;
+	int size=ompi_comm_size ( comm );
+
+	for ( i=0; i<size; i++ ) {
+	    err =  MCA_PML_CALL(send(buf, count, dtype, i,
+				     MCA_COLL_BASE_TAG_BCAST,
+				     MCA_PML_BASE_SEND_STANDARD, comm));
+	    if ( OMPI_SUCCESS != err ) {
+		return err;
+	    }
+	}
+	
+    }
+
+    return err;
 }
