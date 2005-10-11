@@ -14,14 +14,6 @@
 # $HEADER$
 #
 
-# Need to use our own AUTOMAKE_OPTIONS -- cannot include
-# Makefile.options from main ompi tree because Automake now defers
-# "include" statements until "make" time.  Hence, if we're building
-# this component outside the ompi tree, the include statement will
-# fail.
-
-AUTOMAKE_OPTIONS	= foreign dist-bzip2
-
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
@@ -37,7 +29,6 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_hierarch_la_SOURCES = $(sources)
-mca_coll_hierarch_la_LIBADD = $(LIBMPI_LA)
 mca_coll_hierarch_la_LDFLAGS = -module -avoid-version
 mca_coll_hierarch_la_LIBADD = \
         $(top_ompi_builddir)/ompi/libmpi.la \
