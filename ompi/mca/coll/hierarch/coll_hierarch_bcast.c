@@ -73,7 +73,7 @@ int mca_coll_hierarch_bcast_intra(void *buff,
        it to the processes in their local, low-leve communicator.
     */
 
-    if ( MPI_COMM_NULL != llcomm ) {
+    if ( MPI_COMM_NULL != lcomm ) {
 	mca_coll_hierarch_get_lleader (root, data, &lleader);
 	ret = lcomm->c_coll.coll_bcast(buff, count, datatype, lleader, lcomm );
     }

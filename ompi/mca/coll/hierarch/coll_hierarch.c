@@ -21,11 +21,15 @@
 
 #include "mpi.h"
 #include "communicator/communicator.h"
+#include "group/group.h"
 #include "proc/proc.h"
+#include "ompi/op/op.h"
+
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_hierarch.h"
+
 
 #include "class/ompi_bitmap.h"
 #include "mca/bml/bml.h"
@@ -45,8 +49,22 @@ static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *co
 						  int *done );
 static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c);
 
+/* These are trivial implementations of these routines used during comm_query/init,
+   since we cannot access any other collectives
+*/
 static int mca_coll_hierarch_bcast_tmp ( void *buf, int count,  struct ompi_datatype_t *dtype,
 					 int root, struct ompi_communicator_t *comm);
+
+static int mca_coll_hierarch_gather_tmp(void *sbuf, int scount,
+					struct ompi_datatype_t *sdtype,
+					void *rbuf, int rcount,
+					struct ompi_datatype_t *rdtype,
+					int root, struct ompi_communicator_t *comm);
+static int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
+					struct ompi_datatype_t *dtype,
+					struct ompi_op_t *op,
+					int root, struct ompi_communicator_t *comm);
+
 
 /*
  * Linear set of collective algorithms
@@ -153,12 +171,12 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	   that this might be the best solution. They emulate an allreduce and 
 	   an allgather.
 	*/
-	ret = coll_basic_reduce_intra (&ncount, &maxncount, 1, MPI_INT, 0, 
-				       MPI_MAX, comm );
+	ret = mca_coll_hierarch_reduce_tmp (&ncount, &maxncount, 1, MPI_INT, 
+					    MPI_MAX, 0, comm );
 	if ( OMPI_SUCCESS != ret ) {
 	    return NULL;
 	}
-	ret = coll_hierarch_bcast_tmp ( &maxncount, 1, MPI_INT, 0, comm );
+	ret = mca_coll_hierarch_bcast_tmp ( &maxncount, 1, MPI_INT, 0, comm );
 	if ( OMPI_SUCCESS != ret ) {
 	    return NULL;
 	}
@@ -180,11 +198,12 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	    goto exit;
 	}
 	else {
-	    ret = coll_basic_gather (&color, 1, MPI_INT, tdata->hier_colorarr, 1, MPI_INT, 0, comm );
+	    ret = mca_coll_hierarch_gather_tmp (&color, 1, MPI_INT, tdata->hier_colorarr, 1, 
+						MPI_INT, 0, comm );
 	    if ( OMPI_SUCCESS != ret ) {
 		return NULL;
 	    }
-	    ret = coll_hierarch_bcast_tmp ( tdata->hier_colorarr, size, MPI_INT, 0, comm);
+	    ret = mca_coll_hierarch_bcast_tmp ( tdata->hier_colorarr, size, MPI_INT, 0, comm);
 	    if ( OMPI_SUCCESS != ret ) {
 		return NULL;
 	    }
@@ -269,7 +288,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 
     /* determine my lleader, maybe its me */
     data->hier_llead[0].am_lleader=0;       /* false */
-    mca_coll_hierarch_get_lleader ( rank, data, data->hier_llead[0].my_lleader );
+    mca_coll_hierarch_get_lleader ( rank, data, &(data->hier_llead[0].my_lleader) );
     if ( data->hier_colorarr[data->hier_llead[0].my_lleader] == rank ) {
 	data->hier_llead[0].am_lleader = 1; /*true */
     }
@@ -323,8 +342,6 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
 {
     struct ompi_communicator_t *lcomm=NULL;
     struct mca_coll_base_comm_t *data=NULL;
-    struct mca_coll_hierarch_llead_t * llead=NULL;
-    
     int i;
 
     data   = comm->c_coll_selected_data;
@@ -380,12 +397,13 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
 	    return NULL;
 	}
 	
-	rc = ompi_comm_translate_ranks ( group, 1, rank, llgroup, lrank);
+	rc = ompi_group_translate_ranks ( group, 1, &rank, llgroup, lrank);
 	if ( OMPI_SUCCESS != rc ) {
 	    return NULL;
 	}
 
-	ompi_group_free ( &llgroup );
+	ompi_group_decrement_proc_count (llgroup);
+	OBJ_RELEASE(llgroup);
 	if ( MPI_UNDEFINED != *lrank ) {
 	    found = 0;
 	    break;
@@ -398,7 +416,9 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
 	*/
 	llcomm = MPI_COMM_NULL;
     }
-    ompi_group_free ( &group );
+    ompi_group_decrement_proc_count (group);
+    OBJ_RELEASE(group);
+
 
     return llcomm;
 }
@@ -566,4 +586,112 @@ static int mca_coll_hierarch_bcast_tmp ( void *buf, int count,  struct ompi_data
     }
 
     return err;
+}
+
+static int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
+					struct ompi_datatype_t *dtype,
+					struct ompi_op_t *op,
+					int root, struct ompi_communicator_t *comm)
+{
+    int i;
+    int rank;
+    int err;
+    int size;
+    char *pml_buffer = NULL;
+    long extent;
+
+    /* If not root, send data to the root. */
+    if (rank != root) {
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
+                                MCA_COLL_BASE_TAG_REDUCE,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        return err;
+    }
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    pml_buffer = malloc(count * extent);
+    if (NULL == pml_buffer) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+    if (MPI_SUCCESS != err) {
+        goto exit;
+    }
+
+    /* Loop receiving and calling reduction function (C or Fortran). */
+    for (i = size - 1; i >= 0; --i) {
+        if (rank == i) {
+	    continue;
+        } else {
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
+                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+		goto exit;
+            }
+        }
+	
+        /* Perform the reduction */
+	ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+    }
+    
+ exit:
+    if (NULL != pml_buffer) {
+        free(pml_buffer);
+    }
+    return MPI_SUCCESS;
+}
+
+
+static int mca_coll_hierarch_gather_tmp(void *sbuf, int scount,
+					struct ompi_datatype_t *sdtype,
+					void *rbuf, int rcount,
+					struct ompi_datatype_t *rdtype,
+					int root, struct ompi_communicator_t *comm)
+{
+    int i;
+    int err;
+    int rank;
+    int size;
+    char *ptmp;
+    MPI_Aint incr;
+    MPI_Aint extent;
+    MPI_Aint lb;
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    /* Everyone but root sends data and returns. */
+    if (rank != root) {
+        return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
+                                 MCA_COLL_BASE_TAG_GATHER,
+                                 MCA_PML_BASE_SEND_STANDARD, comm));
+    }
+
+    /* I am the root, loop receiving the data. */
+    ompi_ddt_get_extent(rdtype, &lb, &extent);
+    incr = extent * rcount;
+    for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
+        if (i == rank) {
+            if (MPI_IN_PLACE != sbuf) {
+                err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
+                                      ptmp, rcount, rdtype);
+            } else {
+                err = MPI_SUCCESS;
+            }
+        } else {
+            err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
+                                    MCA_COLL_BASE_TAG_GATHER,
+                                    comm, MPI_STATUS_IGNORE));
+        }
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+    }
+
+    /* All done */
+    return MPI_SUCCESS;
 }
