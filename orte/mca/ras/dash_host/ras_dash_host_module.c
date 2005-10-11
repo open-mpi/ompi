@@ -131,7 +131,7 @@ static int orte_ras_dash_host_allocate(orte_jobid_t jobid)
            duplicate */
 
         for (i = 0; NULL != mapped_nodes[i]; ++i) {
-            for (item = opal_list_get_begin(&nodes); 
+            for (item = opal_list_get_first(&nodes); 
                  item != opal_list_get_end(&nodes);
                  item = opal_list_get_next(item)) {
                 node = (orte_ras_node_t*) item;
