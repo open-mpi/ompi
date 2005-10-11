@@ -104,15 +104,12 @@ static const mca_coll_base_module_1_0_0_t intra = {
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
  */
-int mca_coll_hierarch_init_query(bool *allow_hierarch_user_threads,
-                             bool *have_hidden_user_threads)
+int mca_coll_hierarch_init_query(bool allow_hierarch_user_threads,
+                             bool have_hidden_user_threads)
 {
-  *allow_hierarch_user_threads = true;
-  *have_hidden_user_threads = false;
 
-  /* All done */
-  
-  return OMPI_SUCCESS;
+    /* Don't ask. All done */
+    return OMPI_SUCCESS;
 }
 
 
@@ -458,11 +455,11 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     *key=MPI_UNDEFINED;
 
     /* Shall we check the the rdma list instead of send-list in the endpoint-structure? */
-/*    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_rdma_param, 
+    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_use_rdma_param, 
 						  &use_rdma)) {
 	return;
     }
-*/
+    
     
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
@@ -473,6 +470,7 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
         return;
     }
 
+    procs = comm->c_local_group->grp_proc_pointers;
     rc = mca_bml.bml_add_procs ( 
 	size, 
 	procs, 

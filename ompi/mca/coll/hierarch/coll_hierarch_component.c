@@ -98,7 +98,7 @@ static int hierarch_open(void)
     mca_coll_hierarch_verbose_param = 
         mca_base_param_register_int("coll", "hierarch", "verbose", NULL, 
                                     mca_coll_hierarch_verbose);
-    mca_coll_hierarch_use_next_param = 
+    mca_coll_hierarch_use_rdma_param = 
         mca_base_param_register_int("coll", "hierarch", "use_rdma", NULL, 0);
 
     return OMPI_SUCCESS;
