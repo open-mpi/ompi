@@ -38,7 +38,7 @@ rule_t* ptr;
 
 ptr = (rule_t*) calloc (1, sizeof(rule_t));
 if (!ptr) {
-    fprintf(stderr,"calloc on mk_rule failed!\n");
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:mk_rule calloc on mk_rule failed!"));
     exit (-1);
 }
 
@@ -56,17 +56,17 @@ condition_t* ptr;
 condition_t* last;
 
 if (!rule) {
-    fprintf(stderr,"rule given in add_condition_to_rule is NULL?!\n");
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:mk_and_add_condition_to_rule rule given is NULL?!\n"));
     return (-2);
 }
 if (param>=PARAMS) {
-    fprintf(stderr,"param given in add_condition_to_rule is %d?!\n", param);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:mk_and_add_condition_to_rule param given is %d?!\n", param));
     return (-3);
 }
 
 ptr = (condition_t*) calloc (1, sizeof(condition_t));
-if (!ptr) {
-    fprintf(stderr,"calloc on add_condition_to_rule failed!\n");
+if (!ptr) { 
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:mk_and_add_condition_to_rule calloc failed!\n"));
     return (-5);
 }
 
@@ -99,25 +99,25 @@ int set_rule_links (rule_t * rule, ifp true_fptr, int* true_extraargs,
 {
 
 if (!rule) {
-    fprintf(stderr,"rule given in set_rule_links is NULL?!\n");
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:set_rule_links rule is NULL?"));
     return (-2);
 }
 
 /* check rule results.. we must have one set for true and one for false */
 if ((true_fptr)&&(true_rule)) {
-    fprintf(stderr,"BAD. Two links for TRUE on rule %d!\n", rule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:set_rule_links BAD. Two links for TRUE on rule %d!", rule->rule_id));
     return (-6);
 }
 if ((false_fptr)&&(false_rule)) {
-    fprintf(stderr,"BAD. Two links for FALSE on rule %d!\n", rule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:set_rule_links BAD. Two links for FALSE on rule %d!", rule->rule_id));
     return (-7);
 }
 if ((!true_fptr)&&(!true_rule)) {
-    fprintf(stderr,"BAD. NO links for TRUE on rule %d!\n", rule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:set_rule_links BAD. NO links for TRUE on rule %d!", rule->rule_id));
     return (-8);
 }
 if ((!false_fptr)&&(!false_rule)) {
-    fprintf(stderr,"BAD. NO links for FALSE on rule %d!\n", rule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:set_rule_links BAD. NO links for FALSE on rule %d!", rule->rule_id));
     return (-9);
 }
 
@@ -141,7 +141,7 @@ condition_t* next;
 int i;
 
 if (!rule) {
-    fprintf(stderr,"rule given in free_rule is NULL?!\n");
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:free_rule rule is NULL?")); 
     return (-2);
 }
 
@@ -169,15 +169,15 @@ condition_t* currentcond;
 int true=1;
 
 if (!rule) {
-    fprintf(stderr,"rule given in eval_rule is NULL?!\n");
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule rule given is NULL?!"));
     return (-2);
 }
 
 /* first special case is a very fast path... sorta not really grr */
 if (!rule->nconditions) {
 #ifdef VERBOSE
-    printf("Rule %d has no conditions so forcing first available\n",
-                    rule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule Rule %d has no conditions so forcing first available",
+                    rule->rule_id));
 #endif /* VERBOSE */
     *fptr = rule->true_fptr;
     return (0);
@@ -190,7 +190,7 @@ currentrule = rule;
 
 while (currentrule) { /* rules to evaluate */
 #ifdef RULEVERBOSE
-    printf("Eval Rule %d  ", currentrule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule evaluating rule %d  ", currentrule->rule_id));
 #endif
 
     /* eval each of the current rules conditions */
@@ -208,7 +208,7 @@ while (currentrule) { /* rules to evaluate */
 
     while ((currentcond)&&(true)) { /* while conditions to eval */
 #ifdef RULEVERBOSE
-       printf("Eval Cond %d ", currentcond->cond_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule eval cond %d ", currentcond->cond_id));
 #endif
        switch (currentcond->op) {
         case LT: if (params->values[currentcond->param] < currentcond->value) {true = 1;}
@@ -227,9 +227,9 @@ while (currentrule) { /* rules to evaluate */
             else {true = 0;}
             break;
         default:
-            fprintf(stderr, "Eval: BAD operator of value %d rule %d cond %d\n",
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule BAD operator of value %d rule %d cond %d",
                     currentcond->op, currentrule->rule_id,
-                    currentcond->cond_id);
+                    currentcond->cond_id));
             true = 0;
             return (-1); /* ?! what else can I do, should have caught before */
        } /* switch on condition operator */
@@ -240,19 +240,20 @@ while (currentrule) { /* rules to evaluate */
 
        if (!true) {
 #ifdef RULEVERBOSE
-       printf("Eval Cond %d returned FALSE\n", currentcond->cond_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule eval cond %d returned FALSE", currentcond->cond_id));
 #endif
            break; /* if false drop out asap */
        }
        if ((true)&&(currentcond->next)) {   /* next condition to check */
 #ifdef RULEVERBOSE
-       printf("Eval Cond %d returned TRUE. Moving to next\n", currentcond->cond_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule eval cond %d returned TRUE. Moving to next",
+                                            currentcond->cond_id));
 #endif
            currentcond = currentcond->next;
        } 
        else { /* we are true with no more conditions to check */
 #ifdef RULEVERBOSE
-       printf("Eval Cond %d (LAST) returned TRUE.\n", currentcond->cond_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule eval cond %d (LAST) returned TRUE.", currentcond->cond_id));
 #endif
            break; /* so return so we can find out what to do next */
        }
@@ -263,7 +264,7 @@ while (currentrule) { /* rules to evaluate */
     /* we do these IFs in the fasted/most important order */
     if ((true)&&(currentrule->true_fptr)) {
 #ifdef RULEVERBOSE
-    printf("Eval Rule %d is TRUE returning fptr\n", currentrule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule rule %d is TRUE returning fptr", currentrule->rule_id));
 #endif
         *fptr = currentrule->true_fptr;
         *extraargs = currentrule->true_extraargs;
@@ -271,7 +272,7 @@ while (currentrule) { /* rules to evaluate */
     }
     if ((!true)&&(currentrule->false_fptr)) {
 #ifdef RULEVERBOSE
-    printf("Eval Rule %d is FALSE returning fptr\n", currentrule->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule rule %d is FALSE returning fptr", currentrule->rule_id));
 #endif
         *fptr = currentrule->false_fptr;
         *extraargs = currentrule->false_extraargs;
@@ -279,23 +280,21 @@ while (currentrule) { /* rules to evaluate */
     }
     if (true) {
 #ifdef RULEVERBOSE
-    printf("Eval Rule %d is TRUE jumping to next rule %d\n", 
-            currentrule->rule_id, 
-            ((rule_t*)(currentrule->next_true_rule))->rule_id);
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule rule %d is TRUE jumping to next rule %d", 
+            currentrule->rule_id, ((rule_t*)(currentrule->next_true_rule))->rule_id));
 #endif
         currentrule = (rule_t *) currentrule->next_true_rule;
     }
     else { /* i.e. not true / lazy eval */
 #ifdef RULEVERBOSE
-    printf("Eval Rule %d is FALSE jumping to next rule %d\n", 
-            currentrule->rule_id, 
-            ((rule_t*)(currentrule->next_false_rule))->rule_id);
+    OPAL_OUTPUT((mca_coll_tuned_stream, "Eval Rule %d is FALSE jumping to next rule %d", 
+            currentrule->rule_id, ((rule_t*)(currentrule->next_false_rule))->rule_id));
 #endif
         currentrule = (rule_t *) currentrule->next_false_rule;
     }
    
    if (!currentrule) {
-    fprintf(stderr, "eval: disaster, we have gone off into the weeds..  panic!\n");
+    OPAL_OUTPUT((mca_colL_tuned_stream, "coll:tuned:dynamic_rules:eval_rule Disaster, we have gone off into the weeds..  panic!"));
     exit (-10);
    }
 }

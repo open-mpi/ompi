@@ -55,7 +55,7 @@ ompi_status_public_t statuses[2];
     return (MPI_SUCCESS);
 
  error_handler:
-    fprintf(stderr,"%s:%d: Error %d occurred\n",__FILE__,line,err);
+    OPAL_OUTPUT ((mca_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
     return (err);
 }
 

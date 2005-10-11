@@ -31,36 +31,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/* temp debug routines */
-static int dump_buf_int (char* ptr, int count, char *comment, int rank);
-
-static int dump_buf_int (char* ptr, int count, char *comment, int rank) {
-int i=0;
-int *tptr;
-int c=0;
-tptr=(int*)ptr;
-printf("%1d ", rank);
-if (comment) printf("%s ", comment);
-if (count <0) {
-    printf("cnt %d?\n", count);
-    return (0);
-}
-
-if (count>5) c = 5;
-else c = count;
-printf("Cnt %1d  ", count);
-for(i=0;i<c;i++) {
-    printf("%1d [%1d] ", i, *tptr++);
-    }
-if (c!=count) {
-    tptr=(int*)ptr;
-    printf(" ... %1d [%1d]", count-1, tptr[count-1]);
-}
-printf("\n");
-return (0);
-}
-
-
 int mca_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype,
                                     void* rbuf, int rcount,
@@ -78,7 +48,7 @@ int mca_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    printf("mca_coll_tuned_alltoall_intra_pairwise rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:alltoall_intra_pairwise rank %d", rank));
 
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
@@ -109,8 +79,7 @@ int mca_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
    return MPI_SUCCESS;
  
  err_hndl:
-   fprintf(stderr,"%s:%4d\tError occurred %d, rank %2d\n",
-           __FILE__,line,err,rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
    return err;
 }
 
@@ -137,7 +106,7 @@ int mca_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    printf("mca_coll_tuned_alltoall_intra_bruck rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:alltoall_intra_bruck rank %d", rank));
 
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
@@ -268,8 +237,7 @@ int mca_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
    return OMPI_SUCCESS;
 
  err_hndl:
-   fprintf(stderr,"%s:%4d\tError occurred %d, rank %2d\n",
-           __FILE__,line,err,rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
    if (tmpbuf != NULL) free(tmpbuf);
    if (packbuf != NULL) free(packbuf);
    if (weallocated) {
@@ -296,7 +264,7 @@ int mca_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
 
     rank = ompi_comm_rank(comm);
 
-    printf("mca_coll_tuned_alltoall_intra_two_procs rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_alltoall_intra_two_procs rank %d", rank));
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
@@ -327,8 +295,7 @@ int mca_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
     return MPI_SUCCESS;
 
  err_hndl:
-   fprintf(stderr,"%s:%4d\tError occurred %d, rank %2d\n",
-           __FILE__,line,err,rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
    return err;
 }
 
@@ -350,7 +317,7 @@ int mca_coll_tuned_alltoall_intra_linear(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    printf("mca_coll_tuned_alltoall_intra_linear rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_alltoall_intra_linear rank %d", rank));
 
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
@@ -360,8 +327,7 @@ int mca_coll_tuned_alltoall_intra_linear(void *sbuf, int scount,
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
  err_hndl:
-   fprintf(stderr,"%s:%4d\tError occurred %d, rank %2d\n",
-           __FILE__,line,err,rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
    return err;
 }
 

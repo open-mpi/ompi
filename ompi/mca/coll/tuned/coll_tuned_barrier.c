@@ -42,7 +42,7 @@ int mca_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
-    printf("mca_coll_tuned_bcast_intra_doublering rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_doublering rank %d", rank));
   
     left = ((rank-1)%size);
     right = ((rank+1)%size);
@@ -87,7 +87,7 @@ int mca_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
     return MPI_SUCCESS;
 
  err_hndl:
-   fprintf(stderr,"%s:%4d\tError occurred %d\n",__FILE__,line,err);
+     OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
    return err;
 }
 
@@ -100,7 +100,7 @@ int mca_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *c
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-    printf("mca_coll_tuned_bcast_intra_recursivedoubling rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_recursivedoubling rank %d", rank));
 
     /* do nearest power of 2 less than size calc */
     adjsize = 1;
@@ -162,7 +162,7 @@ int mca_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *c
     return MPI_SUCCESS;
 
     err_hndl:
-        fprintf(stderr,"%s:%4d\tError occurred %d\n",__FILE__,line,err);
+     OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
         return err;
 }
 
@@ -175,7 +175,7 @@ int mca_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm)
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-    printf("mca_coll_tuned_bcast_intra_bruck rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_bruck rank %d", rank));
 
     /* exchange data with rank-2^k and rank+2^k */
     for (distance = 1; distance < size; distance <<= 1) { 
@@ -190,7 +190,7 @@ int mca_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm)
     return MPI_SUCCESS;
 
     err_hndl:
-        fprintf(stderr,"%s:%4d\tError occurred %d\n",__FILE__,line,err);
+        OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
         return err;
 }
 
@@ -202,7 +202,7 @@ int mca_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm)
     int err=0;
 
     rank = ompi_comm_rank(comm);
-    printf("mca_coll_tuned_bcast_intra_two_procs rank %d\n", rank);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_two_procs rank %d", rank));
 
     if (0==rank) {
         err = coll_tuned_sendrecv (NULL, 0, MPI_BYTE, 1, MCA_COLL_BASE_TAG_BARRIER, 

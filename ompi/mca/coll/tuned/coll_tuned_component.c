@@ -36,11 +36,12 @@ const char *mca_coll_tuned_component_version_string =
 /*
  * Global variable
  */
-int mca_coll_tuned_priority_param = -1;
-int mca_coll_tuned_preallocate_memory_comm_size_limit_param = -1;
-int mca_coll_tuned_use_dynamic_rules_param = -1;
-int mca_coll_tuned_init_tree_fanout_param = -1;
-int mca_coll_tuned_init_chain_fanout_param = -1;
+int mca_coll_tuned_stream = -1;
+int mca_coll_tuned_priority = 30;
+int mca_coll_tuned_preallocate_memory_comm_size_limit = (32*1024);
+int mca_coll_tuned_use_dynamic_rules = 0;
+int mca_coll_tuned_init_tree_fanout = 4;
+int mca_coll_tuned_init_chain_fanout = 4;
 /*
  * Local function
  */
@@ -93,43 +94,54 @@ const mca_coll_base_component_1_0_0_t mca_coll_tuned_component = {
 
 static int tuned_open(void)
 {
-    printf("Tuned_open called\n");
+    int param;
+
 /*     mca_coll_tuned_component_t *ct = &mca_coll_tuned_component; */
 
     /* Use a low priority, but allow other components to be lower */
     
-    mca_coll_tuned_priority_param = 
-        mca_base_param_register_int("coll", "tuned", "priority", NULL, 30);
+    mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "priority",
+                           "Priority of the tuned coll component",
+                           false, false, mca_coll_tuned_priority,
+                           &mca_coll_tuned_priority);
 
-    /* check the parameter for pre-allocated memory requests etc */
-    mca_coll_tuned_preallocate_memory_comm_size_limit_param = 
-        mca_base_param_register_int("coll", "tuned", "pre_allocate_memory", NULL, (32*1024)+1);
+    /* parameter for pre-allocated memory requests etc */
+    mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "pre_allocate_memory_comm_size_limit",
+                           "Size of communicator were we stop pre-allocating memory for the fixed internal buffer used for message requests etc that is hung off the communicator data segment. I.e. if you have a 100'000 nodes you might not want to pre-allocate 200'000 request handle slots per communicator instance!",
+                           false, false, mca_coll_tuned_preallocate_memory_comm_size_limit,
+                           &mca_coll_tuned_preallocate_memory_comm_size_limit);
     
     /* by default DISABLE dynamic rules and force the use of fixed [if] rules */
-    mca_coll_tuned_use_dynamic_rules_param = 
-        mca_base_param_register_int("coll", "tuned", "use_dynamic_rules",
-                                    NULL, 0);
+    mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "use_dynamic_rules",
+                           "Switch used to decide if we use static (if statements) or dynamic (built at runtime) decision function rules",
+                           false, false, mca_coll_tuned_preallocate_memory_comm_size_limit,
+                           &mca_coll_tuned_preallocate_memory_comm_size_limit);
 
     /* some initial guesses at topology parameters */
-    mca_coll_tuned_init_tree_fanout_param = 
-        mca_base_param_register_int("coll", "tuned", "init_tree_fanout", 
-                                    NULL, 4);
+    mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "init_tree_fanout",
+                           "Inital fanout used in the tree topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
+                           false, false, mca_coll_tuned_init_tree_fanout,
+                           &mca_coll_tuned_init_tree_fanout);
 
-    mca_coll_tuned_init_chain_fanout_param = 
-        mca_base_param_register_int("coll", "tuned", "init_chain_fanout", 
-                                    NULL, 4);
+    mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "init_chain_fanout",
+                           "Inital fanout used in the chain (fanout followed by pipeline) topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
+                           false, false, mca_coll_tuned_init_chain_fanout,
+                           &mca_coll_tuned_init_chain_fanout);
 
-/* use the newer interface rsn */
-/*     mca_coll_tuned_priority_param = mca_base_param_reg_int(&(ct->super), "priority", "Priority of the tuned coll component", */
-/*                            false, false, 30, NULL); */
-
-/*     mca_base_param_reg_int(&(ct->super), "init_tree_fanout", "Fan out used for [balanced] tree topologies in the tuned coll component", */
-/*                            false, false, 2, NULL); */
-
-/*     mca_base_param_reg_int(&(ct->super), "init_chain_fanout",  */
-/*                             "Fan out used for chain [1 fanout followed by pipelines] topology in the tuned coll component", */
-/*                            false, false, 2, NULL); */
-
+    param = mca_base_param_find("coll", NULL, "base_verbose");
+    if (param >= 0) {
+        int verbose;
+        mca_base_param_lookup_int(param, &verbose);
+        if (verbose > 0) {
+           mca_coll_tuned_stream = opal_output_open(NULL);
+        }
+    }
+    OPAL_OUTPUT((mca_coll_tuned_stream, "coll:tuned:component_open: done!"));
 
     return OMPI_SUCCESS;
 }

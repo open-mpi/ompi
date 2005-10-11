@@ -46,7 +46,7 @@ int mca_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
     int contig;
     int dsize;
 
-    printf("mca_coll_tuned_bcast_intra_dec_dynamic\n");
+    OPAL_OUTPUT((mca_coll_tuned_stream, "coll:tuned:bcast_intra_dec_dynamic"));
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);

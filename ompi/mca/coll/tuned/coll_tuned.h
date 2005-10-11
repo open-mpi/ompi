@@ -37,7 +37,14 @@ extern "C" {
  */
 
 OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_priority_param;
+
+OMPI_COMP_EXPORT extern int mca_coll_tuned_stream;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_priority;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_preallocate_memory_comm_size_limit;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_use_dynamic_rules;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_init_tree_fanout;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
+
 
 
 /*
