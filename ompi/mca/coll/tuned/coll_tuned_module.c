@@ -253,14 +253,9 @@ const mca_coll_base_module_1_0_0_t *
 mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
                           struct mca_coll_base_comm_t **data)
 {
-    int use_dynamic = -1;
+    OPAL_OUTPUT((mca_coll_tuned_stream, "coll:tuned:module_tuned query called"));
 
-    printf("Tuned query called\n");
-  if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_tuned_priority_param,
-                                                priority)) {
-    return NULL;
-  }
-
+    *priority = mca_coll_tuned_priority;
 
   /* 
    * Choose whether to use [intra|inter] decision functions 
@@ -270,27 +265,20 @@ mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
    *
    */
 
-  if (OMPI_SUCCESS !=
-  mca_base_param_lookup_int(mca_coll_tuned_use_dynamic_rules_param,
-                                                &use_dynamic)) {
-    printf("No use_dynamic param found!\n");
-    return NULL;
-  }
-
   if (OMPI_COMM_IS_INTER(comm)) {
-    if (use_dynamic) {
-printf("using inter_dynamic\n");
+    if (mca_coll_tuned_use_dynamic_rules) {
+      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using inter_dynamic"));
       to_use = &inter_dynamic;
     } else {
-printf("using inter_fixed\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using inter_fixed"));
       to_use = &inter_fixed;
     }
   } else { /* is an intra comm */
-    if (use_dynamic) {
-printf("using intra_dynamic\n");
+    if (mca_coll_tuned_use_dynamic_rules) {
+      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
       to_use = &intra_dynamic;
     } else {
-printf("using intra_fixed\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
       to_use = &intra_fixed;
     }
   }
@@ -307,13 +295,10 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   int size;
   struct mca_coll_base_comm_t *data;
   /* fanout parameters */
-  int tree_fanout_default = 0;
-  int chain_fanout_default = 0;
-  int pre_allocate_limit = -1;
   int pre_allocate = 1;
 
 
-  printf("Tuned init module called.\n");
+  OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init called."));
 
   /* This routine will become more complex and might have to be */
   /* broken into more sections/function calls */
@@ -347,15 +332,8 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    *
    */
 
-  if (OMPI_SUCCESS !=
-    mca_base_param_lookup_int(mca_coll_tuned_preallocate_memory_comm_size_limit_param,
-                                                &pre_allocate_limit)) {
-    printf("No pre_allocate param found!\n");
-    return NULL;
-  }
-
   /* if we within the memory/size limit, allow preallocated data */
-  if (size<=pre_allocate_limit) {
+  if (size<=mca_coll_tuned_preallocate_memory_comm_size_limit) {
     data = malloc(sizeof(struct mca_coll_base_comm_t) +
                  (sizeof(ompi_request_t *) * size * 2));
   
@@ -379,23 +357,10 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    * guess the initial topologies to use rank 0 as root 
    */
 
-  /* get default fanouts is made available via the MCA */
-  if (OMPI_SUCCESS !=
-  mca_base_param_lookup_int(mca_coll_tuned_init_tree_fanout_param,
-                                                &tree_fanout_default)) {
-    printf("warning: no mca_coll_tuned_init_tree_fanout_param found?\n");
-  }
-  if (OMPI_SUCCESS !=
-  mca_base_param_lookup_int(mca_coll_tuned_init_chain_fanout_param,
-                                                &chain_fanout_default)) {
-    printf("warning: no mca_coll_tuned_init_chain_fanout_param found?\n");
-  }
-
- 
   /* general n fan out tree */
-  data->cached_ntree = ompi_coll_tuned_topo_build_tree (tree_fanout_default, comm, 0); 
+  data->cached_ntree = ompi_coll_tuned_topo_build_tree (mca_coll_tuned_init_tree_fanout, comm, 0); 
   data->cached_ntree_root = 0;
-  data->cached_ntree_fanout = tree_fanout_default;
+  data->cached_ntree_fanout = mca_coll_tuned_init_tree_fanout;
 
   /* binary tree */
   data->cached_bintree = ompi_coll_tuned_topo_build_tree (2, comm, 0); 
@@ -413,9 +378,9 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    * will probably change how we cache this later, for now a midsize
    * GEF
    */
-  data->cached_chain = ompi_coll_tuned_topo_build_chain (chain_fanout_default, comm, 0);
+  data->cached_chain = ompi_coll_tuned_topo_build_chain (mca_coll_tuned_init_chain_fanout, comm, 0);
   data->cached_chain_root = 0;
-  data->cached_chain_fanout = chain_fanout_default;
+  data->cached_chain_fanout = mca_coll_tuned_init_chain_fanout;
 
   /* standard pipeline */
   data->cached_pipeline = ompi_coll_tuned_topo_build_chain (1, comm, 0);
@@ -425,7 +390,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
   comm->c_coll_selected_data = data;
 
-  printf("Tuned looks like it is in use :)\n");
+  OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
   return to_use;
 }
 

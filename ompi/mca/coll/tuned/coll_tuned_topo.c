@@ -23,6 +23,7 @@
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "mca/pml/pml.h"
+#include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 
 /*
@@ -71,14 +72,14 @@ ompi_coll_tuned_topo_build_tree( int fanout,
     int i;
     ompi_coll_tree_t* tree;
 
-    printf("Building tuned topo tree: fo %d rt %d\n", fanout, root);
+    OPAL_OUTPUT((mca_coll_tuned_stream, "coll:tuned:topo_build_tree Building fo %d rt %d", fanout, root));
 
     if (fanout<1) {
-        printf("ompi_coll_tuned_topo_build_tree: invalid fanout %d\n", fanout);
+        OPAL_OUTPUT((mca_coll_tuned_stream, "coll:tuned:topo_build_tree invalid fanout %d", fanout));
         return NULL;
     }
     if (fanout>MAXTREEFANOUT) {
-        printf("ompi_coll_tuned_topo_build_tree: invalid fanout %d bigger than max %d\n", fanout, MAXTREEFANOUT);
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo_build_tree invalid fanout %d bigger than max %d", fanout, MAXTREEFANOUT));
         return NULL;
     }
 
@@ -90,8 +91,7 @@ ompi_coll_tuned_topo_build_tree( int fanout,
 
     tree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
     if (!tree) {
-        printf("PANIC:ompi_coll_tuned_topo_build_tree:out of memory\n");
-        fflush(stdout);
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo_build_tree PANIC::out of memory"));
         return NULL;
     }
 
@@ -190,7 +190,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
     ompi_coll_tree_t *bmtree;
     int i;
 
-    printf("Building tuned topo bmtree: rt %d\n", root);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:build_bmtree rt %d", root));
 
     /* 
      * Get size and rank of the process in this communicator 
@@ -202,8 +202,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 
     bmtree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
     if (!bmtree) {
-        printf("PANIC:ompi_coll_tuned_topo_build_bmtree:out of memory\n");
-        fflush(stdout);
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:build_bmtree PANIC out of memory"));
         return NULL;
     }
 
@@ -234,7 +233,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
         remote += root;
         if( remote >= size ) remote -= size;
         if (childs==MAXTREEFANOUT) {
-            printf("ompi_coll_tuned_topo_build_bmtree: max fanout incorrect %d needed %d\n", MAXTREEFANOUT, childs);
+            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d", MAXTREEFANOUT, childs));
             return NULL;
         }
         bmtree->tree_next[childs] = remote;
@@ -258,7 +257,7 @@ ompi_coll_tuned_topo_build_chain( int fanout,
     int mark,head,len;
     ompi_coll_chain_t *chain;
 
-    printf("Building tuned topo chain: fo %d rt %d\n", fanout, root);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:build_chain fo %d rt %d", fanout, root));
 
     /* 
      * Get size and rank of the process in this communicator 
@@ -270,7 +269,7 @@ ompi_coll_tuned_topo_build_chain( int fanout,
         return NULL;
     }
     if (fanout>MAXTREEFANOUT) {
-        printf("ompi_coll_tuned_topo_build_chain: invalid fanout %d bigger than max %d\n", fanout, MAXTREEFANOUT);
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:build_chain invalid fanout %d bigger than max %d", fanout, MAXTREEFANOUT));
         return NULL;
     }
 
@@ -279,7 +278,7 @@ ompi_coll_tuned_topo_build_chain( int fanout,
      */
     chain = (ompi_coll_chain_t*)malloc( sizeof(ompi_coll_chain_t) );
     if (!chain) {
-        printf("PANIC:ompi_coll_tuned_topo_build_chain:out of memory\n");
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:build_chain PANIC out of memory"));
         fflush(stdout);
         return NULL;
     }
@@ -421,24 +420,22 @@ int ompi_coll_tuned_topo_destroy_chain( ompi_coll_chain_t** chain )
 int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank)
 {
 int i;
-printf("%1d tree root %d fanout %d BM %1d nextsize %d prev %d\n", rank, 
-        tree->tree_root, tree->tree_bmtree, tree->tree_fanout, tree->tree_nextsize, tree->tree_prev );
+OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:topo_dump_tree %1d tree root %d fanout %d BM %1d nextsize %d prev %d", rank, 
+        tree->tree_root, tree->tree_bmtree, tree->tree_fanout, tree->tree_nextsize, tree->tree_prev));
 if (tree->tree_nextsize) {
-    for (i=0;i<tree->tree_nextsize;i++) printf("[%1d] %d ", i, tree->tree_next[i]);
+    for (i=0;i<tree->tree_nextsize;i++) OPAL_OUTPUT((mca_coll_tuned_stream,"[%1d] %d", i, tree->tree_next[i]));
 }
-printf("\n");
 return (0);
 }
 
 int ompi_coll_tuned_topo_dump_chain (ompi_coll_chain_t* chain, int rank)
 {
 int i;
-printf("%1d chain root %d fanout %d nextsize %d prev %d\n", rank, 
-        chain->chain_root, chain->chain_numchain, chain->chain_nextsize, chain->chain_prev );
+OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:topo:topo_dump_chain %1d chain root %d fanout %d nextsize %d prev %d\n", rank, 
+        chain->chain_root, chain->chain_numchain, chain->chain_nextsize, chain->chain_prev));
 if (chain->chain_nextsize) {
-    for (i=0;i<chain->chain_nextsize;i++) printf("[%1d] %d ", i, chain->chain_next[i]);
+    for (i=0;i<chain->chain_nextsize;i++) OPAL_OUTPUT((mca_coll_tuned_stream,"[%1d] %d ", i, chain->chain_next[i]));
 }
-printf("\n");
 return (0);
 }
 

@@ -44,7 +44,7 @@ int mca_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
     int contig;
     int dsize;
 
-    printf("mca_coll_tuned_barrier_intra_dec_fixed\n");
+    OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_barrier_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);

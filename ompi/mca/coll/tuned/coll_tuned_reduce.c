@@ -277,7 +277,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         for (segindex = 0; segindex < num_segments; segindex++) {
             if (segindex < num_segments-1) sendcount = segcount;
             else sendcount = count - segindex*segcount;
-            ret = MCA_PML_CALL( send(sendbuf+segindex*realsegsize, sendcount,
+            ret = MCA_PML_CALL( send((char*)sendbuf+segindex*realsegsize, sendcount,
                                      datatype, chain->chain_prev,
                                      MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm) );
             if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
@@ -288,8 +288,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
 
     /* error handler */
  error_hndl:
-    opal_output( 0, "ERROR_HNDL: node %d file %s line %d error %d\n",
-                 rank, __FILE__, line, ret );
+    OPAL_OUTPUT (( mca_coll_tuned_stream, "ERROR_HNDL: node %d file %s line %d error %d\n", rank, __FILE__, line, ret ));
     if( inbuf != NULL ) {
         if( inbuf[0] != NULL ) free(inbuf[0]);
         if( inbuf[1] != NULL ) free(inbuf[1]);

@@ -49,7 +49,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    printf("mca_coll_tuned_bcast_intra_chain rank %d root %d\n", rank, root);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_chain rank %d root %d", rank, root));
 
     if( size == 1 ) {
         return MPI_SUCCESS;
@@ -104,7 +104,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
     /* set the buffer pointer */
     tmpbuf = (char *)buff;
 
-/*     printf("%1d chain root %d num_segments %d\n", rank, root, num_segments); */
+/*     OPAL_OUTPUT((mca_coll_tuned_stream,("%1d chain root %d num_segments %d\n", rank, root, num_segments); */
 
     /* root code */
     if( rank == root ) {
@@ -173,7 +173,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
                                      chain->chain_next[i],
                                      MCA_COLL_BASE_TAG_BCAST,
                                      MCA_PML_BASE_SEND_STANDARD, comm));
-            if (err != MPI_SUCCESS) printf("sendcount %d i %d chain_next %d \n", sendcount, i, chain->chain_next[i]);
+            if (err != MPI_SUCCESS) OPAL_OUTPUT((mca_coll_tuned_stream,"sendcount %d i %d chain_next %d", sendcount, i, chain->chain_next[i]));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         } /* end of for each child */
     } 
@@ -197,7 +197,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
 
     return (MPI_SUCCESS);
  error_hndl:
-    fprintf(stderr,"%s:%d: Error %d occurred\n",__FILE__,line,err);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
     return (err);
 }
 
@@ -213,7 +213,7 @@ mca_coll_tuned_bcast_intra_pipeline ( void *buffer,
 {
     int rank;   /* remove when removing print statement */
     rank = ompi_comm_rank(comm);    /* remove when removing print statement */
-    printf("mca_coll_tuned_bcast_intra_pipeline rank %d root %d\n", rank, root);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_pipeline rank %d root %d", rank, root));
 
     return mca_coll_tuned_bcast_intra_chain ( buffer, count, datatype, root, comm,
                                               segsize, 1 );
@@ -247,7 +247,7 @@ mca_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    printf("mca_coll_tuned_bcast_intra_split_bintree rank %d root %d\n", rank, root);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_split_bintree rank %d root %d", rank, root));
 
     if (size == 1) {
         return MPI_SUCCESS;
@@ -470,7 +470,7 @@ mca_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     return (MPI_SUCCESS);
   
  error_hndl:
-    fprintf(stderr,"[%d]%s:%d: Error %d occurred\n",rank,__FILE__,line,err);
+     OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
     return (err);
 }
 
@@ -502,7 +502,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    printf("mca_coll_tuned_bcast_intra_bintree rank %d root %d\n", rank, root);
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_bintree rank %d root %d", rank, root));
 
     if (size == 1) {
         return MPI_SUCCESS;
@@ -677,7 +677,8 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     return (MPI_SUCCESS);
   
  error_hndl:
-    fprintf(stderr,"[%d]%s:%d: Error %d occurred\n",rank,__FILE__,line,err);
+     OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
     return (err);
 }
+
 
