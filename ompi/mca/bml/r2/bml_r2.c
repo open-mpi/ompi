@@ -347,15 +347,13 @@ int mca_bml_r2_add_procs(
             mca_bml_base_btl_t* bml_btl = 
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t *btl = bml_btl->btl;
-            double weight;
 
             /* compute weighting factor for this r2 */
             if(btl->btl_bandwidth > 0) {
-                weight = btl->btl_bandwidth / total_bandwidth;
+                bml_btl->btl_weight = btl->btl_bandwidth / total_bandwidth;
             } else {
-                weight = 1.0 / n_size;
+                bml_btl->btl_weight = 1.0 / n_size;
             }
-            bml_btl->btl_weight = (int)(weight * 100);
 
             /* check to see if this r2 is already in the array of r2s 
              * used for first fragments - if not add it.

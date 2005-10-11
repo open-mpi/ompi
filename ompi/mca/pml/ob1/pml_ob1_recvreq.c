@@ -606,7 +606,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 mca_btl_base_descriptor_t* dst;
                 mca_btl_base_descriptor_t* ctl;
                 mca_mpool_base_registration_t * reg = NULL;
-                size_t num_btl_avail = recvreq->req_rdma_cnt;
+                size_t num_btl_avail;
                 int rc;
 
                 if(recvreq->req_rdma_cnt) {
@@ -616,11 +616,12 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      * memory.
                     */
                     bml_btl = recvreq->req_rdma[recvreq->req_rdma_idx].bml_btl;
+                    num_btl_avail = recvreq->req_rdma_cnt;
                     reg = recvreq->req_rdma[recvreq->req_rdma_idx].btl_reg;
                     if(++recvreq->req_rdma_idx >= recvreq->req_rdma_cnt)
                         recvreq->req_rdma_idx = 0;
 
-                    if(recvreq->req_rdma_cnt == 1 || bytes_remaining < bml_btl->btl_min_rdma_size) {
+                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_min_rdma_size) {
                         size = bytes_remaining;
 
                     /* otherwise attempt to give the BTL a percentage of the message
@@ -629,7 +630,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      * previously assigned)
                      */
                     } else {
-                        size = (bml_btl->btl_weight * bytes_remaining) / 100;
+                        size = (size_t)(bml_btl->btl_weight * bytes_remaining);
                     }
                      
                 } else {
@@ -639,6 +640,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      * available RDMA nics dynamically registering/deregister
                      * as required.
                     */
+                    num_btl_avail = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
                     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
                     
                     /* if there is only one btl available or the size is less than
@@ -653,7 +655,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      * previously assigned)
                      */
                     } else {
-                        size = (bml_btl->btl_weight * bytes_remaining) / 100;
+                        size = (size_t)(bml_btl->btl_weight * bytes_remaining);
                     }
     
                     /* makes sure that we don't exceed BTL max rdma size */
