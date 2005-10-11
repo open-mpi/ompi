@@ -149,7 +149,7 @@ static int linux_module_set(int id)
     }
     byte = id / 8;
     bit = id % 8;
-    mask[byte] = 1 << bit;
+    ((char *) mask)[byte] = 1 << bit;
 
     ret = sched_setaffinity(0, len, mask);
 
