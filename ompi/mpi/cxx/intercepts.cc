@@ -22,6 +22,11 @@
 extern "C" 
 void ompi_mpi_cxx_throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
 {
+    /* Portland compiler raises a warning if va_start is not used in a
+     * variable argument function */
+    va_list ap;
+    va_start(ap, errcode);
+    va_end(ap);
 #if OMPI_HAVE_CXX_EXCEPTION_SUPPORT
     throw(MPI::Exception(*errcode));
 #else
