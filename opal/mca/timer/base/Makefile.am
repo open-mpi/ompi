@@ -19,7 +19,8 @@
 noinst_LTLIBRARIES = libmca_timer_base.la
 
 headers = \
-        base.h
+        base.h \
+	timer_base_null.h
 
 libmca_timer_base_la_SOURCES = \
         $(headers) \
