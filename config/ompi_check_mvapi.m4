@@ -40,6 +40,7 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
 
     
     ompi_check_mvapi$1_save_CFLAGS="$CFLAGS"
+    ompi_check_mvapi$1_save_CPPFLAGS="$CPPFLAGS"
     
     #ugly hack for topspin which stores include files in include/vapi
     AS_IF([test -d "$ompi_check_mvapi_dir/include/vapi"],  
@@ -70,7 +71,7 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
 		[ompi_check_mvapi_happy="no"])])
     
       
-    CPPFLAGS="$ompi_check_vapi$1_save_CFLAGS"
+    CPPFLAGS="$ompi_check_mvapi$1_save_CPPFLAGS"
 
     AS_IF([test "$ompi_check_mvapi_happy" = "yes"],
           [$2],
