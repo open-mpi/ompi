@@ -616,7 +616,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      * memory.
                     */
                     bml_btl = recvreq->req_rdma[recvreq->req_rdma_idx].bml_btl;
-                    num_btl_avail = recvreq->req_rdma_cnt;
+                    num_btl_avail = recvreq->req_rdma_cnt - recvreq->req_rdma_idx;
                     reg = recvreq->req_rdma[recvreq->req_rdma_idx].btl_reg;
                     if(++recvreq->req_rdma_idx >= recvreq->req_rdma_cnt)
                         recvreq->req_rdma_idx = 0;
