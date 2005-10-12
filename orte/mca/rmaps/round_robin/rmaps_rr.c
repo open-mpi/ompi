@@ -237,12 +237,12 @@ static int map_app_by_node(
 
         /* Remove this node if it has reached its max number of allocatable slots */
         if( 0 != node->node_slots_max  &&
-            node->node_slots_inuse >= node->node_slots_max) {
+            node->node_slots_inuse > node->node_slots_max) {
             opal_list_remove_item(nodes, (opal_list_item_t*)node);
             if(0 >= opal_list_get_size(nodes) ) {
                 /* No more nodes to allocate :( */
                 opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
-                               true, num_alloc, app->num_procs);
+                               true, app->num_procs, app->app);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
             }
@@ -339,12 +339,12 @@ static int map_app_by_slot(
             /* If this node has reached its max number of slots, 
              * take it out of the list, and skip it */
             else if( 0 != node->node_slots_max  && 
-                     node->node_slots_inuse >= node->node_slots_max){
+                     node->node_slots_inuse > node->node_slots_max){
                 opal_list_remove_item(nodes, (opal_list_item_t*)node);
                 if( 0 >= opal_list_get_size(nodes) ) {
                     /* No more nodes to allocate */
                     opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
-                                   true, num_alloc, app->num_procs);
+                                   true, app->num_procs, app->app);
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
                     goto cleanup;
                 }

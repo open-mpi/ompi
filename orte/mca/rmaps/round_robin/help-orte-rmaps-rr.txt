@@ -17,7 +17,9 @@
 # This is the US/English general help file for Open RTE's orterun.
 #
 [orte-rmaps-rr:alloc-error]
-%d slots were requested, but only %d slots were available.
+There are not enough slots available in the system to satisfy the %d slots 
+that were requested by the application:
+  %s
 
 Either request fewer slots for your application, or make more slots available
 for use.
