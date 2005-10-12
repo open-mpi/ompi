@@ -128,7 +128,8 @@
 /* Complex */
 
 #define OMPI_OP_HANDLER_COMPLEX_INTRINSIC(name) \
-  void ompi_mpi_op_##name##_fortran_complex OMPI_OP_PROTO;
+  void ompi_mpi_op_##name##_fortran_complex OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_fortran_double_complex OMPI_OP_PROTO;
 #if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_HANDLER_COMPLEX8(name) \
   void ompi_mpi_op_##name##_fortran_complex8 OMPI_OP_PROTO;

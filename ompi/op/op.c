@@ -187,9 +187,13 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 /** Fortran complex *****************************************************/
 
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
-#define COMPLEX_PLAIN(name) { ompi_mpi_op_##name##_fortran_complex }
+#define COMPLEX_PLAIN(name) \
+  { ompi_mpi_op_##name##_fortran_complex }, \
+  { ompi_mpi_op_##name##_fortran_double_complex }
 #else
-#define COMPLEX_PLAIN(name) { NULL }
+#define COMPLEX_PLAIN(name) \
+  { NULL }, \
+  { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 #define COMPLEX8(name) { ompi_mpi_op_##name##_fortran_complex8 }
@@ -213,7 +217,8 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   COMPLEX16(name),     /* OMPI_OP_TYPE_COMPLEX16 */ \
   COMPLEX32(name)      /* OMPI_OP_TYPE_COMPLEX32 */
 #define COMPLEX_NULL \
-  { NULL },  /* OMPI_OP_TYPE_COMPLEX */ \
+  { NULL },  /* OMPI_OP_TYPE_COMPLEX (single) */ \
+  { NULL },  /* OMPI_OP_TYPE_COMPLEX (double) */ \
   { NULL },  /* OMPI_OP_TYPE_COMPLEX8 */ \
   { NULL },  /* OMPI_OP_TYPE_COMPLEX16 */ \
   { NULL }   /* OMPI_OP_TYPE_COMPLEX32 */
@@ -562,6 +567,7 @@ int ompi_op_init(void)
   ompi_op_ddt_map[DT_DOUBLE] = OMPI_OP_TYPE_DOUBLE;
   ompi_op_ddt_map[DT_LONG_DOUBLE] = OMPI_OP_TYPE_LONG_DOUBLE;
   ompi_op_ddt_map[DT_COMPLEX_FLOAT] = OMPI_OP_TYPE_COMPLEX;
+  ompi_op_ddt_map[DT_COMPLEX_DOUBLE] = OMPI_OP_TYPE_DOUBLE_COMPLEX;
   ompi_op_ddt_map[DT_LOGIC] = OMPI_OP_TYPE_LOGICAL;
   ompi_op_ddt_map[DT_FLOAT_INT] = OMPI_OP_TYPE_FLOAT_INT;
   ompi_op_ddt_map[DT_DOUBLE_INT] = OMPI_OP_TYPE_DOUBLE_INT;
