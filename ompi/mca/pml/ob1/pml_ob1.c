@@ -120,6 +120,12 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
+    bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( nprocs *
+		     sizeof(struct mca_bml_base_endpoint_t*));
+    if ( NULL == bml_endpoints ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+   
     rc = mca_bml.bml_add_procs(
                                nprocs,
                                procs,
@@ -143,6 +149,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                         mca_pml_ob1.free_list_max,
                         mca_pml_ob1.free_list_inc,
                         NULL);
+
+    if ( NULL != bml_endpoints ) {
+	free ( bml_endpoints) ;
+    }
     return rc;
 }
 
