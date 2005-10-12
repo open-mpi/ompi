@@ -42,7 +42,6 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     void *sub_usertag;
     size_t i, j, k, n;
     int rc;
-    bool processed;
 
     OPAL_TRACE(1);
 
@@ -56,9 +55,7 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
         /* use the local trigger callback */
         local_trigs = (orte_gpr_replica_local_trigger_t**)
                             (orte_gpr_replica_globals.local_triggers)->addr;
-        processed = false;
-        for (i=0, j=0; !processed &&
-                       j < orte_gpr_replica_globals.num_local_trigs &&
+        for (i=0, j=0; j < orte_gpr_replica_globals.num_local_trigs &&
                        i < (orte_gpr_replica_globals.local_triggers)->size; i++) {
             if (NULL != local_trigs[i]) {
                 j++;
@@ -66,18 +63,14 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
                     trig_cb = local_trigs[i]->callback;
                     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
                     trig_cb(msg); /* JJH This is a potential thread problem. Needs a deeper look */
-                    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-                    processed = true;
+                    return ORTE_SUCCESS;
                 }
             }
         }
-        if (!processed) { /* trigger could not be found */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-            return ORTE_ERR_NOT_FOUND;
-        }
+        /* trigger could not be found */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-        return ORTE_SUCCESS;
+        return ORTE_ERR_NOT_FOUND;
     }
 
     /* get here if this wasn't a trigger message. Only other allowed message type
