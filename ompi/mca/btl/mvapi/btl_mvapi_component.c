@@ -207,6 +207,8 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_module.super.btl_flags  = 
         mca_btl_mvapi_param_register_int("flags", 
                                       MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET); 
+    mca_btl_mvapi_module.super.btl_bandwidth = 
+        mca_btl_mvapi_param_register_int("bandwidth",  800);
     
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
@@ -372,7 +374,6 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                  
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
                  mca_btl_mvapi_component.ib_num_btls ++; 
-                 
             } 
         }
  

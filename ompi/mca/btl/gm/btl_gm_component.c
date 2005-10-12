@@ -157,6 +157,8 @@ int mca_btl_gm_component_open(void)
 #else
     mca_btl_gm_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
 #endif
+    mca_btl_gm_module.super.btl_bandwidth  = 
+        mca_btl_gm_param_register_int("bandwidth", 250); 
 
     /* compute the eager frag size */
     mca_btl_gm_component.gm_eager_frag_size =
@@ -496,9 +498,15 @@ mca_btl_gm_component_init (int *num_btl_modules,
 
 int mca_btl_gm_component_progress()
 {
+    static int32_t inprogress = 0;
     int count = 0;
     size_t i;
     
+    if(OPAL_THREAD_ADD32(&inprogress, 1) != 1) {
+        OPAL_THREAD_ADD32(&inprogress, -1);
+        return OMPI_SUCCESS;
+    }
+
     for( i = 0; i < mca_btl_gm_component.gm_num_btls; ) {
         mca_btl_gm_module_t* btl = mca_btl_gm_component.gm_btls[i];
         gm_recv_event_t* event = gm_receive(btl->port);
@@ -546,6 +554,7 @@ int mca_btl_gm_component_progress()
                 break;
         }
     }
+    OPAL_THREAD_ADD32(&inprogress, -1);
     return count;
 }
 
