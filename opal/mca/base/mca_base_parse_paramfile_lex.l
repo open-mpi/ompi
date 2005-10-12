@@ -68,7 +68,7 @@ CHAR        [A-Za-z0-9_\-\.]
 {CHAR}+             { return MCA_BASE_PARSE_SINGLE_WORD; }
 
 <VALUE>{WHITE}*\n   { BEGIN(INITIAL); return MCA_BASE_PARSE_NEWLINE; }
-<VALUE>[^\n]*[^\t \n]/[\t ]*\n      { return MCA_BASE_PARSE_VALUE; }
+<VALUE>[^\n]*[^\t \n]/[\t ]*      { return MCA_BASE_PARSE_VALUE; }
 
 .	            { return MCA_BASE_PARSE_ERROR; }
 
