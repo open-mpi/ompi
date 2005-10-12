@@ -470,6 +470,12 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
         return;
     }
 
+    bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( size * 
+								 sizeof(struct mca_bml_base_endpoint_t*));
+    if ( NULL == bml_endpoints ) {
+	return;
+    }
+
     procs = comm->c_local_group->grp_proc_pointers;
     rc = mca_bml.bml_add_procs ( 
 	size, 
@@ -527,6 +533,12 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     }
 
     *key = firstproc;
+
+
+    if ( NULL != bml_endpoints ) {
+	free ( bml_endpoints);
+    }
+
     return;
 }
 
@@ -592,11 +604,11 @@ static int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
 					int root, struct ompi_communicator_t *comm)
 {
     int i;
-    int rank;
     int err;
     int size;
     char *pml_buffer = NULL;
     long extent;
+    int rank=ompi_comm_rank(comm);;
 
     /* If not root, send data to the root. */
     if (rank != root) {
@@ -606,7 +618,6 @@ static int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
         return err;
     }
 
-    rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
     pml_buffer = malloc(count * extent);
