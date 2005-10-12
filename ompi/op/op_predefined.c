@@ -295,6 +295,8 @@ OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
 /* Complex */
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 COMPLEX_OP_FUNC_SUM(fortran_complex, ompi_fortran_complex_t)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
 COMPLEX_OP_FUNC_SUM(fortran_double_complex, ompi_fortran_double_complex_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
@@ -364,6 +366,8 @@ OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, +=)
 /* Complex */
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 COMPLEX_OP_FUNC_PROD(fortran_complex, ompi_fortran_complex_t)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
 COMPLEX_OP_FUNC_PROD(fortran_double_complex, ompi_fortran_double_complex_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
@@ -677,6 +681,8 @@ OP_FUNC(replace, long_double, long double, =)
 /* Complex */
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 OP_FUNC(replace, fortran_complex, ompi_fortran_complex_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
 OP_FUNC(replace, fortran_double_complex, ompi_fortran_double_complex_t, =)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8

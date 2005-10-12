@@ -187,13 +187,14 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 /** Fortran complex *****************************************************/
 
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
-#define COMPLEX_PLAIN(name) \
-  { ompi_mpi_op_##name##_fortran_complex }, \
-  { ompi_mpi_op_##name##_fortran_double_complex }
+#define COMPLEX_PLAIN(name) { ompi_mpi_op_##name##_fortran_complex }
 #else
-#define COMPLEX_PLAIN(name) \
-  { NULL }, \
-  { NULL }
+#define COMPLEX_PLAIN(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
+#define COMPLEX_DOUBLE(name) { ompi_mpi_op_##name##_fortran_double_complex }
+#else
+#define COMPLEX_DOUBLE(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 #define COMPLEX8(name) { ompi_mpi_op_##name##_fortran_complex8 }
@@ -212,13 +213,14 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 #endif
 
 #define COMPLEX(name) \
-  COMPLEX_PLAIN(name), /* OMPI_OP_TYPE_COMPLEX */ \
-  COMPLEX8(name),      /* OMPI_OP_TYPE_COMPLEX8 */ \
-  COMPLEX16(name),     /* OMPI_OP_TYPE_COMPLEX16 */ \
-  COMPLEX32(name)      /* OMPI_OP_TYPE_COMPLEX32 */
+  COMPLEX_PLAIN(name),  /* OMPI_OP_TYPE_COMPLEX */ \
+  COMPLEX_DOUBLE(name), /* OMPI_OP_TYPE_DOUBLE_COMPLEX */ \
+  COMPLEX8(name),       /* OMPI_OP_TYPE_COMPLEX8 */ \
+  COMPLEX16(name),      /* OMPI_OP_TYPE_COMPLEX16 */ \
+  COMPLEX32(name)       /* OMPI_OP_TYPE_COMPLEX32 */
 #define COMPLEX_NULL \
-  { NULL },  /* OMPI_OP_TYPE_COMPLEX (single) */ \
-  { NULL },  /* OMPI_OP_TYPE_COMPLEX (double) */ \
+  { NULL },  /* OMPI_OP_TYPE_COMPLEX */ \
+  { NULL },  /* OMPI_OP_TYPE_DOUBLE_COMPLEX */ \
   { NULL },  /* OMPI_OP_TYPE_COMPLEX8 */ \
   { NULL },  /* OMPI_OP_TYPE_COMPLEX16 */ \
   { NULL }   /* OMPI_OP_TYPE_COMPLEX32 */
