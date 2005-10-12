@@ -251,7 +251,7 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
     /* query the list of nodes allocated to the job */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     OBJ_CONSTRUCT(&mapping_list, opal_list_t);
-    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
+    ret = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
     if (ORTE_SUCCESS != ret) goto cleanup;
 
     /* allocate vpids for the daemons */
