@@ -124,6 +124,9 @@ base as of this writing (26 Aug 2005):
   statically linked, it is recommended you compile Open MPI with the
   --without-memory-manager configure option.
 
+- The XGrid support is experimental - see the Open MPI FAQ for more
+  information.
+
 ===========================================================================
 
 Building Open MPI
