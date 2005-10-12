@@ -122,6 +122,8 @@ enum {
 
   OMPI_OP_TYPE_COMPLEX,
   /**< Complex */
+  OMPI_OP_TYPE_DOUBLE_COMPLEX,
+  /**< Double complex */
   OMPI_OP_TYPE_COMPLEX8,
   /**< Complex8 */
   OMPI_OP_TYPE_COMPLEX16,
