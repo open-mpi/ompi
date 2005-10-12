@@ -715,7 +715,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                  * previously assigned)
                  */
                 } else {
-                    size = (bml_btl->btl_weight * bytes_remaining) / 100;
+                    size = (size_t)(bml_btl->btl_weight * bytes_remaining);
                 } 
 
                 /* makes sure that we don't exceed BTL max send size */
