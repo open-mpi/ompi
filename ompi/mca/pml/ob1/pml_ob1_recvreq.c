@@ -621,7 +621,11 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     if(++recvreq->req_rdma_idx >= recvreq->req_rdma_cnt)
                         recvreq->req_rdma_idx = 0;
 
-                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_min_rdma_size) {
+                    /*
+                     *  If more than one NIC is available - try to use both for anything
+                     *  larger than the eager limit
+                     */
+                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_eager_limit) {
                         size = bytes_remaining;
 
                     /* otherwise attempt to give the BTL a percentage of the message
@@ -643,10 +647,11 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     num_btl_avail = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
                     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
                     
-                    /* if there is only one btl available or the size is less than
-                     * than the min fragment size, schedule the rest via this btl
+                    /*
+                     *  If more than one NIC is available - try to use both for anything
+                     *  larger than the eager limit
                      */
-                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_min_rdma_size) {
+                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_eager_limit) {
                         size = bytes_remaining;
 
                     /* otherwise attempt to give the BTL a percentage of the message
