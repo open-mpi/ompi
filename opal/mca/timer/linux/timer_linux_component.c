@@ -113,20 +113,6 @@ opal_timer_linux_open(void)
     }
 
     if (0 == opal_timer_linux_freq) {
-        /* Alt. find the CPU speed - most timers are 1:1 with CPU speed */
-        loc = find_info(fp, "clock", buf, 1024);
-        if (NULL != loc) {
-            if(strlen(loc) > 4) /* Strip off the 'MHz\n' */
-                loc[strlen(loc)-4] = '\0';
-            ret = sscanf(loc, "%f", &cpu_f);
-            if (1 == ret) {
-                /* numer is in MHz - convert to Hz and make an integer */
-                opal_timer_linux_freq = (opal_timer_t) cpu_f * 1000000;
-            }
-        }
-    }
-
-    if (0 == opal_timer_linux_freq) {
         /* look for the sparc way of getting cpu frequency */
         loc = find_info(fp, "Cpu0ClkTck", buf, 1024);
         if (NULL != loc) {
