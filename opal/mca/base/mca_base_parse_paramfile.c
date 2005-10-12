@@ -107,7 +107,8 @@ static int parse_line(void)
         /* Now we need to see the newline */
 
         val = mca_base_yylex();
-        if (MCA_BASE_PARSE_NEWLINE == val) {
+        if (MCA_BASE_PARSE_NEWLINE == val ||
+            MCA_BASE_PARSE_DONE == val) {
             return OMPI_SUCCESS;
         }
     }
