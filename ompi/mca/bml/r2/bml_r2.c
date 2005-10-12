@@ -171,9 +171,7 @@ int mca_bml_r2_add_procs(
     
     new_procs = (struct ompi_proc_t **) 
         malloc(nprocs * sizeof(struct ompi_proc_t *)); 
-    bml_endpoints = (struct mca_bml_base_endpoint_t **)
-        malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
-    if (NULL == new_procs || NULL == bml_endpoints) {
+    if (NULL == new_procs ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     memset(bml_endpoints, 0, nprocs * sizeof(struct mca_bml_base_endpoint_t*));
@@ -189,6 +187,10 @@ int mca_bml_r2_add_procs(
         } else { 
             new_procs[n_new_procs++] = proc; 
         }
+    }
+
+    if ( 0 == n_new_procs ) {
+	return OMPI_SUCCESS;
     }
     
     procs = new_procs; 
