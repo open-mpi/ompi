@@ -89,23 +89,28 @@ base as of this writing (26 Aug 2005):
   - OS X (10.4), 32 bit, with gcc
 
 - Other systems have been lightly (but not fully tested):
-  - Other compilers on Linux, 32 bit
-  - Other 64 bit platforms (PPC64, Sparc)
+  - Other compilers on Linux, 32 and 64 bit
+  - Other 64 bit platforms (Linux and AIX on PPC64, Sparc)
 
-- There are some cases where after running MPI applications, the
-  directory /tmp/openmpi-sessions-<username>@<hostname>* will exist
-  (but will likely be empty).  It is safe to remove after the run is
-  complete.
+- Building shared libraries on AIX with the xlc compilers is only
+  supported if you supply the following command line option to
+  configure: LDFLAGS=-Wl,-brtl.
+
+- At least some versions of the Intel 8.1 compiler seg fault while
+  compiling certain Open MPI source code files.  As such, it is not
+  supported.
 
 - The MPI and run-time layers do not free all used memory properly
   during MPI_FINALIZE.
 
 - Running on nodes with different endian and/or different datatype
   sizes within a single parallel application is not supported in this
-  beta.
+  release.
 
-- Threading support (both asynchronous progress and
-  MPI_THREAD_MULTIPLE) is included, but is only lightly tested.
+- MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
+
+- Asynchronous message passing progress support is not included in
+  this release.
 
 - Due to limitations in the Libtool 1.5 series, Fortran 90 MPI
   bindings support can only be built as a static library.  It is
