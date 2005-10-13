@@ -215,8 +215,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 		/* this meands, no process talks to a partner with the specified 
 		   protocol *and* no faster protocol is used at all. so we can stop
 		   here and remove us from the list. */
-		printf("%s: nobody talks with %s and no faster protocols are used. We stop here.\n", 
-		       comm->c_name, hier_prot[level]);
+		printf("%s:%d: nobody talks with %s and no faster protocols are used. We stop here.\n", 
+		       comm->c_name, rank, hier_prot[level]);
 		goto exit;
 	    }
 	    else {
@@ -224,8 +224,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 		 * this means, no process has a partner to which it can talk with this protocol,
 		 * so continue to next level, since faster protocols are used.
 		 */
-		printf("%s: nobody talks with %s but faster protocols are used. We continue.\n", 
-		       comm->c_name, hier_prot[level]);
+		printf("%s:%d: nobody talks with %s but faster protocols are used. We continue.\n", 
+		       comm->c_name, rank, hier_prot[level]);
 		continue;
 	    }
         }
@@ -237,20 +237,20 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
              * Its (size-1) because we do not count ourselves.
 	     * maxncount[1] should be zero.
              */
-	    printf("%s: everybody talks with %s. No need to continue\n", 
-		   comm->c_name, hier_prot[level]);
+	    printf("%s:%d: everybody talks with %s. No need to continue\n", 
+		   comm->c_name, rank, hier_prot[level]);
             goto exit;
         }
 	else if ( (maxncount[0] + maxncount[1]) == (size -1) ){
 	     /* still every process would be part of this new comm,
                 so there is no point in creating it. */
-             printf("%s: every process would be part of this comm with prot %s. We continue\n",
-                    comm->c_name, hier_prot[level]);
+             printf("%s:%d: every process would be part of this comm with prot %s. We continue\n",
+                    comm->c_name, rank, hier_prot[level]);
              continue;
         }
         else {
-	    printf("%s: %d  procs talk with %s. Suggesting to use this, key %d rank %d\n", 
-		   comm->c_name, maxncount[0], hier_prot[level], color, rank);
+	    printf("%s:%d: %d  procs talk with %s. Suggesting to use this, key %d maxncount[1] %d\n", 
+		   comm->c_name, rank, maxncount[0], hier_prot[level], color, maxncount[1]);
 
             ret = mca_coll_hierarch_gather_tmp (&color, 1, MPI_INT, tdata->hier_colorarr, 1, 
         					MPI_INT, 0, comm );
@@ -261,7 +261,6 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
             if ( OMPI_SUCCESS != ret ) {
         	return NULL;
             }
-
 
            tdata->hier_level   = level;
            *data = tdata;
@@ -358,7 +357,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 
     /* This is the point where I will introduce later on a function trying to 
        compact the colorarr array. Not done at the moment */
-
+    mca_coll_hierarch_dump_struct (data);
 
  exit:
     if ( NULL != llr ) {
@@ -622,19 +621,22 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
 {
     int i, j;
+    int rank;
 
-    printf("Dump of hier-struct for  comm %s cid %u\n", 
-           c->hier_comm->c_name, c->hier_comm->c_contextid);
-    printf("Number of local leader communicators: %d\n", c->hier_max_llead );
-    for ( i=0; i < c->hier_max_llead; i++ ) {
-        printf("  no of lleaders %d my_leader %d am_leader %d\n", 
+    rank = ompi_comm_rank ( c->hier_comm );
+
+    printf("%d: Dump of hier-struct for  comm %s cid %u\n", 
+           rank, c->hier_comm->c_name, c->hier_comm->c_contextid);
+    printf("%d: Number of local leader communicators: %d\n", rank, c->hier_num_llead );
+    for ( i=0; i < c->hier_num_llead; i++ ) {
+      printf("%d:  no of lleaders %d my_leader %d am_leader %d\n", rank,
                c->hier_llead[i].num_lleaders, 
                c->hier_llead[i].my_lleader, 
                c->hier_llead[i].am_lleader 
             );
 
         for (j=0; j<c->hier_llead[i].num_lleaders; i++ ) {
-            printf("      lleader[%d] = %d\n", i, c->hier_llead[i].lleaders[j]);
+            printf("%d:      lleader[%d] = %d\n", rank, i, c->hier_llead[i].lleaders[j]);
         }
     }
     

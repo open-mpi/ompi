@@ -125,7 +125,15 @@ static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr )
 	return -1;
     }
 
-    for (cnt=0, i=0; i<size; i++ ) {
+    for ( i=0; i<size; i++ ) {
+	if ( carr[i] != MPI_UNDEFINED ) {
+	    llr[0] = carr[i];
+	    break;
+	}
+    }
+
+
+    for (cnt=1, i=0; i<size; i++ ) {
 	for ( found=0, j=0; j<cnt; j++ ) {
 	    if ( carr[i] == llr[j] ) {
 		found = 1;
@@ -146,7 +154,14 @@ static inline void mca_coll_hierarch_get_all_lleaders ( int size, int *carr, int
 {
     int i, j, cnt, found;
 
-    for (cnt=0, i=0; i<size; i++ ) {
+    for ( i=0; i<size; i++ ) {
+	if ( carr[i] != MPI_UNDEFINED ) {
+	    larr[0] = carr[i];
+	    break;
+	}
+    }
+
+    for (cnt=1, i=0; i<size; i++ ) {
 	for ( found=0, j=0; j<cnt; j++ ) {
 	    if ( carr[i] == larr[j] ) {
 		found = 1;
