@@ -22,9 +22,6 @@
 #include "opal/util/output.h"
 #include "communicator/communicator.h"
 #include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
-#include "mca/coll/base/coll_tags.h"
-#include "coll_hierarch.h"
 
 /*
  *	bcast_intra
