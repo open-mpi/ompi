@@ -24,20 +24,27 @@
 
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include "include/orte_constants.h"
-#include "mca/pls/pls.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/ns/ns.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/soh/soh.h"
-#include "util/univ_info.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "pls_poe.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/poe/pls_poe.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/runtime/orte_wait.h"
 
 extern char **environ;
 
@@ -57,10 +64,10 @@ orte_pls_base_module_1_0_0_t orte_pls_poe_module = {
 };
 
 /**
-__poe_set_handler_default - set signal handler to default
+poe_set_handler_default - set signal handler to default
 @param sig signal [IN]
 */
-static void __poe_set_handler_default(int sig)
+static void poe_set_handler_default(int sig)
 {
     struct sigaction act;
                                                                                                       
@@ -71,14 +78,14 @@ static void __poe_set_handler_default(int sig)
 }
 
 /**
-__poe_argv_append_int - append integer variable to argument variable
+poe_argv_append_int - append integer variable to argument variable
 @param argc argument count [OUT]
 @param argv argument variable [OUT]
 @param varname variable name [IN]
 @param min minimum value [IN]
 @param argname argument name [IN]
 */
-static inline int __poe_argv_append_int(int *argc, char ***argv, int varname, int min, char *argname) 
+static inline int poe_argv_append_int(int *argc, char ***argv, int varname, int min, char *argname) 
 {
     char *tmp_string;
     if(varname >= min) {
@@ -95,6 +102,9 @@ static inline int __poe_argv_append_int(int *argc, char ***argv, int varname, in
 /**
 @warning - THIS FUNCTION IS NOT USED. IT WILL BE USED WHEN FAULT-TOLERANCE FEATURE IS NEEDED
 */
+
+#ifdef __FOR_LATER
+
 int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
 {
     opal_list_t nodes, mapping_list;
@@ -121,7 +131,6 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
      *  - need to know if we are launching on a subset of the allocated nodes
      * All other mapping responsibilities fall to orted in the fork PLS
      */
-    if (mca_pls_poe_component.verbose > 10) opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
 
     if((mca_pls_poe_component.hostfile=tempnam(NULL,NULL))==NULL) return ORTE_ERR_OUT_OF_RESOURCE;
     if((mca_pls_poe_component.cmdfile=tempnam(NULL,NULL))==NULL) return ORTE_ERR_OUT_OF_RESOURCE;
@@ -265,9 +274,9 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, "6");
     opal_argv_append(&argc, &argv, "-stdoutmode");
     opal_argv_append(&argc, &argv, "ordered");
-    rc=__poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retry, 0, "-retry");
+    rc=poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retry, 0, "-retry");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-    rc=__poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retrycount, 0, "-retrycount");
+    rc=poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retrycount, 0, "-retrycount");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
     if (mca_pls_poe_component.verbose) {
@@ -285,8 +294,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
        execv(mca_pls_poe_component.path, argv);
        opal_output(0, "orte_pls_poe: execv failed with errno=%d\n", errno);
        exit(-1);
-    } else {
-    }
+    } 
      
 cleanup:
     while(NULL != (item = opal_list_remove_first(&nodes))) {
@@ -303,29 +311,26 @@ cleanup:
     return rc;
 }
 
+#endif
+
 /**
-__poe_wait_job - call back when POE finish
+poe_wait_job - call back when POE finish
 @param pid pid
 @param status status
 @param cbdata call back data
 @return error number
 */
-int __poe_wait_job(pid_t pid, int status, void* cbdata)
+static void poe_wait_job(pid_t pid, int status, void* cbdata)
 {
     opal_list_t map;
     opal_list_item_t* item;
     int rc;
-
-    if(mca_pls_poe_component.verbose > 10) {
-       opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
-    }
 
     /* query allocation for the job */
     OBJ_CONSTRUCT(&map, opal_list_t);
     rc = orte_rmaps_base_get_map(mca_pls_poe_component.jobid,&map);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        goto cleanup;
     }
 
     for(item =  opal_list_get_first(&map);
@@ -344,15 +349,10 @@ int __poe_wait_job(pid_t pid, int status, void* cbdata)
         }
     }
     OBJ_DESTRUCT(&map);
-cleanup:
-    if(mca_pls_poe_component.verbose>10) {
-        opal_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
-    }
-    return rc;
 }
 
 /**
-__poe_create_cmd_file - create POE command file
+poe_create_cmd_file - create POE command file
 @param cfp command file pointer [IN]
 @param context context [IN]
 @param proc proc [IN]
@@ -360,24 +360,18 @@ __poe_create_cmd_file - create POE command file
 @param vpid_range vpid range [IN]
 @return error number
 */
-static int __poe_create_cmd_file(
+static int poe_create_cmd_file(
     FILE *cfp,
     orte_app_context_t* context,
     orte_rmaps_base_proc_t* proc,
     orte_vpid_t vpid_start,
     orte_vpid_t vpid_range)
 {
-    pid_t pid;
-    int rc;
     int i;
 
     char* param;
     char* uri;
     char **environ_copy;
-
-    if(mca_pls_poe_component.verbose > 10) {
-        opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
-    }
 
     /* setup base environment */
     environ_copy = NULL;
@@ -441,19 +435,15 @@ static int __poe_create_cmd_file(
     /* POE will upset if the file doesn't contain end of line. */
     fprintf(cfp,"\n"); 
 
-    if(mca_pls_poe_component.verbose>10) {
-        opal_output(0, "%s: --- END ---\n", __FUNCTION__);
-    } 
-
     return ORTE_SUCCESS;
 }
 
 /**
-__poe_launch_interactive - launch an interactive job
+poe_launch_interactive - launch an interactive job
 @param jobid JOB Identifier [IN]
 @return error number
 */
-static inline int __poe_launch_interactive(orte_jobid_t jobid)
+static inline int poe_launch_interactive(orte_jobid_t jobid)
 {
     opal_list_t map, nodes, mapping_list;
     opal_list_item_t* item;
@@ -462,15 +452,12 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     FILE *hfp, *cfp;
     char** argv;
     int argc;
-    int rc, status, pid;
+    int rc, pid;
     sigset_t sigs;
-
-    if(mca_pls_poe_component.verbose > 10) {
-        opal_output(0, "%s:--- BEGIN ---\n", __FUNCTION__);
-    }
 
     if( (NULL==(mca_pls_poe_component.cmdfile=tempnam(NULL,NULL))) || 
         (NULL==(cfp=fopen(mca_pls_poe_component.cmdfile,"w"))) ) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
@@ -479,11 +466,11 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     OBJ_CONSTRUCT(&mapping_list, opal_list_t);
     rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
-    if(ORTE_SUCCESS != rc) { goto cleanup; }
+    if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
      
     num_nodes = opal_list_get_size(&nodes);
 
-    if(num_nodes > 0) { 
+    if(!strncmp(mca_pls_poe_component.resource_allocation,"hostfile",8)) {
 
         /* Create a tempolary hostlist file if user specify */
 
@@ -501,7 +488,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     }
 
     rc = orte_rmgr_base_get_job_slots(jobid, &num_procs);
-    if(ORTE_SUCCESS != rc) { return rc; }
+    if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
     
     OBJ_CONSTRUCT(&map, opal_list_t);
     rc = orte_rmaps_base_get_map(jobid,&map);
@@ -518,7 +505,7 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
         orte_rmaps_base_map_t* map2 = (orte_rmaps_base_map_t*)item;
         size_t i;
         for(i=0; i<map2->num_procs; i++) {
-            rc = __poe_create_cmd_file(cfp, map2->app, map2->procs[i], vpid_start, vpid_range);
+            rc = poe_create_cmd_file(cfp, map2->app, map2->procs[i], vpid_start, vpid_range);
             if(ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
         }
     }
@@ -529,12 +516,12 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     argv = opal_argv_copy(mca_pls_poe_component.argv);
     argc = mca_pls_poe_component.argc;
 
-    if(num_nodes > 0) {
+    if(!strncmp(mca_pls_poe_component.resource_allocation,"hostfile",8)) {
        opal_argv_append(&argc, &argv, "-hostfile");
        opal_argv_append(&argc, &argv, mca_pls_poe_component.hostfile);
        opal_argv_append(&argc, &argv, "-resd");
        opal_argv_append(&argc, &argv, "no");
-       rc=__poe_argv_append_int(&argc, &argv, num_nodes, 1, "-nodes");
+       rc=poe_argv_append_int(&argc, &argv, num_nodes, 1, "-nodes");
        if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
     }
 
@@ -547,17 +534,17 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, "-stdoutmode");
     opal_argv_append(&argc, &argv, mca_pls_poe_component.mp_stdoutmode);
 
-    rc=__poe_argv_append_int(&argc, &argv, num_procs, 1, "-procs");
+    rc=poe_argv_append_int(&argc, &argv, num_procs, 1, "-procs");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-    rc=__poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retry, 0, "-retry");
+    rc=poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retry, 0, "-retry");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-    rc=__poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retrycount, 0, "-retrycount");
+    rc=poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_retrycount, 0, "-retrycount");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-    rc=__poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_infolevel, 0, "-infolevel");
+    rc=poe_argv_append_int(&argc, &argv, mca_pls_poe_component.mp_infolevel, 0, "-infolevel");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
     if(mca_pls_poe_component.verbose>10) {
-        opal_output(0, "%s:POE cmdline %s\n", __FUNCTION__, opal_argv_join(argv, ' '));
+        opal_output(0, "POE cmdline %s\n", opal_argv_join(argv, ' '));
     }  
 
     /* Start job with POE */
@@ -568,20 +555,21 @@ static inline int __poe_launch_interactive(orte_jobid_t jobid)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     if(pid == 0) {
-        __poe_set_handler_default(SIGTERM);
-        __poe_set_handler_default(SIGINT);
-        __poe_set_handler_default(SIGHUP);
-        __poe_set_handler_default(SIGCHLD);
-        __poe_set_handler_default(SIGPIPE);
+        poe_set_handler_default(SIGTERM);
+        poe_set_handler_default(SIGINT);
+        poe_set_handler_default(SIGHUP);
+        poe_set_handler_default(SIGCHLD);
+        poe_set_handler_default(SIGPIPE);
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
         execv(mca_pls_poe_component.path, argv);
         opal_output(0, "orte_pls_poe: execv failed with errno=%d\n", errno);
         exit(-1);
     } else {
-        orte_wait_cb(pid, __poe_wait_job, NULL);
+        orte_wait_cb(pid, poe_wait_job, NULL);
     }
    
+
 cleanup:
     while(NULL != (item = opal_list_remove_first(&map))) {
         OBJ_RELEASE(item);
@@ -597,9 +585,6 @@ cleanup:
     }
     OBJ_DESTRUCT(&mapping_list);
 
-    if(mca_pls_poe_component.verbose>10) {
-        opal_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
-    } 
     return rc;
 }
 
@@ -612,7 +597,7 @@ pls_poe_launch - launch a POE job
 static int pls_poe_launch(orte_jobid_t jobid)
 {
     if(!strncmp(mca_pls_poe_component.class,"interactive",11)) {
-        return __poe_launch_interactive(jobid);
+        return poe_launch_interactive(jobid);
     }
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -634,15 +619,7 @@ pls_poe_finalize - clean up tempolary files
 */
 static int pls_poe_finalize(void)
 {
-    if (mca_pls_poe_component.verbose > 10) {
-       opal_output(0, "%s: --- BEGIN ---\n", __FUNCTION__);
-    }
-
     unlink(mca_pls_poe_component.cmdfile);
     unlink(mca_pls_poe_component.hostfile);
-
-    if (mca_pls_poe_component.verbose > 10) {
-       opal_output(0, "%s: --- END ---\n", __FUNCTION__);
-    }
     return ORTE_SUCCESS;
 }

@@ -48,6 +48,7 @@ struct orte_pls_poe_component_t {
     int debug;
     char* orted;
     char* class;
+    char* resource_allocation;
     char* hostfile;
     char* cmdfile; 
     char* mp_stdoutmode;
