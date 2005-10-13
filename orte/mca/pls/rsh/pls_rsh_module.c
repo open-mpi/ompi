@@ -586,6 +586,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         char * cur_prefix;
         opal_list_t map;
         opal_list_item_t* item;
+        size_t num_processes;
 
         OBJ_CONSTRUCT(&map, opal_list_t);
         /* Get the mapping of this very node */
@@ -604,11 +605,16 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
          * node, abort.
          */
         cur_prefix = NULL;
+        num_processes = 0;
         for(item =  opal_list_get_first(&map);
             item != opal_list_get_end(&map);
             item =  opal_list_get_next(item)) {
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
             char * app_prefix_dir = map->app->prefix_dir;
+
+            /* Increment the number of processes allocated to this node 
+             * This allows us to accurately test for oversubscription */
+            num_processes += map->num_procs;
 
             /* Check for already set cur_prefix_dir -- if different,
                complain */
@@ -710,10 +716,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
              * NOT being oversubscribed
              */
             if (node->node_slots > 0 &&
-                node->node_slots_inuse > node->node_slots) {
+                num_processes > node->node_slots) {
                 if (mca_pls_rsh_component.debug) {
                     opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
-                                node->node_slots, node->node_slots_inuse);
+                                node->node_slots, num_processes);
                 }
                 free(argv[call_yield_index]);
                 argv[call_yield_index] = strdup("1");
