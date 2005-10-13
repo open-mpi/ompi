@@ -275,6 +275,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
         orte_ras_node_t* node = (orte_ras_node_t*)item;
         orte_process_name_t* name;
         opal_list_t map;
+        size_t num_processes;
 
         OBJ_CONSTRUCT(&map, opal_list_t);
         /* Get the mapping of this very node */
@@ -293,11 +294,16 @@ static int pls_slurm_launch(orte_jobid_t jobid)
            allow one --prefix option for the entire slurm run -- we
            don't support different --prefix'es for different nodes in
            the SLURM pls) */
+        num_processes = 0;
         for (item2 =  opal_list_get_first(&map);
              item2 != opal_list_get_end(&map);
              item2 =  opal_list_get_next(item2)) {
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item2;
             char * app_prefix_dir = map->app->prefix_dir;
+
+            /* Increment the number of processes allocated to this node 
+             * This allows us to accurately test for oversubscription */
+            num_processes += map->num_procs;
 
             /* Check for already set cur_prefix_dir -- if different,
                complain */
@@ -350,9 +356,10 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     /* set the progress engine schedule for this node.  if node_slots
        is set to zero, then we default to NOT being oversubscribed */
     if (node->node_slots > 0 &&
-        node->node_slots_inuse > node->node_slots) {
+        num_processes > node->node_slots) {
         if (mca_pls_slurm_component.debug) {
-            opal_output(0, "pls:slurm: oversubscribed -- setting mpi_yield_when_idle to 1");
+            opal_output(0, "pls:slurm: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
+                        node->node_slots, num_processes);
         }
         var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
         opal_setenv(var, "1", true, &env);
