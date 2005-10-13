@@ -28,8 +28,6 @@
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
-#include "coll_hierarch.h"
-
 
 #include "class/ompi_bitmap.h"
 #include "mca/bml/bml.h"
