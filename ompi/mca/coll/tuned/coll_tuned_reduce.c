@@ -128,12 +128,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
 
 /*     ompi_coll_tuned_topo_dump_chain (chain, rank); */
 
-    /* ----------------------------------------------------------------- */
-    /* MPI_IN_PLACE is not yet supported by ompi.. ?!.. */
-    /* set the char * buffer pointers */
 
-
-#if 0
     if (sendbuf != MPI_IN_PLACE) { 
         sendtmpbuf = (char*) sendbuf; 
     }
@@ -143,26 +138,13 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     accumbuf = (char *) recvbuf;
 
     /* handle special case when size == 1 */
-    if (size == 1) {
+    if (1 == size ) {
        if (sendbuf != MPI_IN_PLACE) {
           ompi_ddt_copy_content_same_ddt( datatype, count, recvbuf, sendbuf );
        }
        return MPI_SUCCESS;
     }
-    /* ----------------------------------------------------------------- */
-    /* MPI_IN_PLACE is not yet supported by ompi.. ?!.. */
 
-#else 
-    /* while MPI_IN_PLACE is not available */
-    if (1 == size) {
-        ompi_ddt_copy_content_same_ddt( datatype, count, recvbuf, sendbuf );
-        return (OMPI_SUCCESS);
-    }
-    else {
-        accumbuf = (char *) recvbuf;
-        sendtmpbuf = (char *) sendbuf;
-    }
-#endif
     /* ----------------------------------------------------------------- */
 
     /* non-leaf nodes -
@@ -199,16 +181,29 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                 if (segindex < num_segments) {
 
                     if (0==i) { /* for the first step (1st child per segment) */
-                                /* we irecv directly into the accumulate buffer so that we */
-                                /* can reduce this with our sendbuf in one step */
-                                /* as op_reduce only has two buffer pointers, this avoids */
+                                /* we might be able to irecv directly into the accumulate buffer so that we */
+                                /* can reduce(op) this with our sendbuf in one step */
+                                /* as ompi_op_reduce only has two buffer pointers, this avoids */
                                 /* an extra memory copy GEF */
-                    ret = MCA_PML_CALL(irecv(accumbuf+segindex*realsegsize,recvcount,datatype,
-                                             chain->chain_next[i],
-                                             MCA_COLL_BASE_TAG_REDUCE,
-                                             comm, &reqs[inbi]));
-                    if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
-                    }
+
+                                /* BUT if we are root and are USING MPI_IN_PLACE this is wrong ek! */
+                                /* check for root might not be needed as it should be checked higher up */
+                        if ((MPI_IN_PLACE==sendbuf)&&(rank==root)) {            
+                            ret = MCA_PML_CALL(irecv(inbuf[inbi],
+                                                  recvcount,datatype,
+                                                  chain->chain_next[i],
+                                                  MCA_COLL_BASE_TAG_REDUCE,
+                                                  comm, &reqs[inbi]));
+                            if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                        } else {
+                            ret = MCA_PML_CALL(irecv(accumbuf+segindex*realsegsize,
+                                                  recvcount,datatype,
+                                                  chain->chain_next[i],
+                                                  MCA_COLL_BASE_TAG_REDUCE,
+                                                  comm, &reqs[inbi]));
+                            if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                        }
+                    } /* if first segment */ 
                     else {  /* perform a irecv into the standard inbuf */
                     ret = MCA_PML_CALL(irecv(inbuf[inbi],recvcount,datatype,
                                              chain->chain_next[i],
@@ -227,7 +222,13 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                     /* apply operation */
                     if (1==i) {
                         /* our first operation is to combine our own [sendbuf] data with the data we recvd from down stream */
-                        ompi_op_reduce(op, sendtmpbuf+segindex*realsegsize, accumbuf+segindex*realsegsize, recvcount, datatype );
+                        /* (but only if we are not root and not using MPI_IN_PLACE) */
+                        if ((MPI_IN_PLACE==sendbuf)&&(rank==root)) {            
+                            ompi_op_reduce(op, inbuf[previnbi], accumbuf+segindex*realsegsize, recvcount, datatype );
+                        }
+                        else {
+                            ompi_op_reduce(op, sendtmpbuf+segindex*realsegsize, accumbuf+segindex*realsegsize, recvcount, datatype );
+                        }
                     }
                     else { /* not the first child, we can accumulate straight into accumbuf normally from the inbuf buffers */
                         ompi_op_reduce(op, inbuf[previnbi], accumbuf+segindex*realsegsize, recvcount, datatype );
@@ -243,7 +244,13 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                         ompi_op_reduce(op, inbuf[previnbi], accumbuf+(segindex-1)*realsegsize, prevcount, datatype );
                     } 
                     else {  /* I have only one child, so I must combine my data (sendbuf) with the accumulated data in accumbuf */
-                        ompi_op_reduce(op, sendtmpbuf+(segindex-1)*realsegsize, accumbuf+(segindex-1)*realsegsize, prevcount, datatype );
+                        /* (but only if we are not root and not using MPI_IN_PLACE) */
+                        if ((MPI_IN_PLACE==sendbuf)&&(rank==root)) {            
+                            ompi_op_reduce(op, inbuf[previnbi], accumbuf+(segindex-1)*realsegsize, prevcount, datatype );
+                        }
+                        else {
+                            ompi_op_reduce(op, sendtmpbuf+(segindex-1)*realsegsize, accumbuf+(segindex-1)*realsegsize, prevcount, datatype );
+                        }
                     }
 
                     /* all reduced on available data this step (i) complete, pass to the next process unless your the root */
