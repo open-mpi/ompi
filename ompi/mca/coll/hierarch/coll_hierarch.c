@@ -99,6 +99,34 @@ static const mca_coll_base_module_1_0_0_t intra = {
 };
 
 
+static const mca_coll_base_module_1_0_0_t null_intra = {
+
+  /* Initialization / finalization functions */
+
+  mca_coll_hierarch_module_init,
+  mca_coll_hierarch_module_finalize,
+
+  /* Collective function pointers */
+  /* function pointers marked with NULL are not yet implemented
+     and will use the functions provided in the basic module */
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL, 
+  NULL, 
+  NULL, 
+  NULL,
+  NULL, 
+  NULL,
+  NULL, 
+  NULL
+};
+
 
 
 /*
@@ -239,8 +267,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 
            tdata->hier_level   = level;
            *data = tdata;
-	   /*            return &intra; */
-	   goto exit;
+	   return &null_intra;
         }
     }
         
@@ -417,7 +444,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
         return NULL;
     }
 
-    for (i=0;i<data->hier_max_llead; i++ ) {
+    for (i=0;i<data->hier_num_llead; i++ ) {
         llead = &(data->hier_llead[i]);
         llcomm = llead->llcomm;
         rc = ompi_comm_group ( llcomm, &llgroup);
@@ -433,7 +460,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
 	/*        ompi_group_decrement_proc_count (llgroup);
 		  OBJ_RELEASE(llgroup); */
         if ( MPI_UNDEFINED != *lrank ) {
-            found = 0;
+            found = 1;
             break;
         }
     }
