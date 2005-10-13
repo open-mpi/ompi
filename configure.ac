@@ -1043,7 +1043,7 @@ AC_CACHE_SAVE
 ompi_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
-    dlfcn.h execinfo.h err.h fcntl.h inttypes.h libgen.h \
+    dlfcn.h execinfo.h err.h fcntl.h inttypes.h libgen.h libutil.h \
     net/if.h netdb.h netinet/in.h netinet/tcp.h \
     poll.h pthread.h pty.h pwd.h sched.h stdint.h \
     string.h strings.h stropts.h sys/fcntl.h sys/ipc.h \
@@ -1200,6 +1200,35 @@ AC_MSG_RESULT([$MSG])
 # does the glibs "not implemented" check.  Will use the current LIBS,
 # so will check in -lrt if we decided we needed it above
 AC_CHECK_FUNCS([sched_yield])
+
+#
+# FreeBSD has backtrace in -lexecinfo.  Can't use a simple AC_CHECK_LIB,
+# though, because Linux has backtrace in glic (so linking in libexecinfo
+# will "find" backtrace, even though it would have been found anyway
+# -- so -lexecinfo would be useless [and potentially harmful?] in this
+# case).
+# 
+
+AC_MSG_CHECKING([if we need -lexecinfo for backtrace])
+AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *backtrace;]],
+[[char *bar = backtrace;]]),
+[MSG=no],[MSG=not_found])
+if test "$MSG" = "not_found"; then
+    LIBS_save="$LIBS"
+    LIBS="$LIBS -lexecinfo"
+    AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *backtrace;]],
+[[char *bar = backtrace;]]),
+[MSG=yes],[MSG=not_found])
+    if test "$MSG" = "not_found"; then
+        LIBS="$LIBS_save"
+    fi
+fi
+AC_MSG_RESULT([$MSG])
+
+# see if we actually have backtrace.  Use AC_CHECK_FUNCS so that it
+# does the glibs "not implemented" check.  Will use the current LIBS,
+# so will check in -lexecinfo if we decided we needed it above
+AC_CHECK_FUNCS([backtrace])
 
 #
 # See if we need the math library explicitly linked in

@@ -46,6 +46,8 @@
  * to a user-specified signal (e.g. SIGFPE or SIGSEGV).
  * For Linux/Glibc, it then uses backtrace and backtrace_symbols
  * to figure the current stack and then prints that out to stdout.
+ * Where available, the BSD libexecinfo is used to provide Linux/Glibc
+ * compatable backtrace and backtrace_symbols functions.
  * Yes, printf and malloc are not signal-safe per se, but should be 
  * on Linux?
  *
@@ -58,7 +60,7 @@
 #if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(WIN32)
 static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 {   
-#ifdef __GLIBC__
+#if HAVE_BACKTRACE
     int i;
     int trace_size;
     void * trace[32];
@@ -87,15 +89,21 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
       case SIGILL:
         switch (info->si_code)
           {
+#ifdef ILL_ILLOPC
             case ILL_ILLOPC: str = "ILL_ILLOPC"; break;
+#endif
 #ifdef ILL_ILLOPN
             case ILL_ILLOPN: str = "ILL_ILLOPN"; break;
 #endif
 #ifdef ILL_ILLADR
             case ILL_ILLADR: str = "ILL_ILLADR"; break;
 #endif
+#ifdef ILL_ILLTRP
             case ILL_ILLTRP: str = "ILL_ILLTRP"; break;
+#endif
+#ifdef ILL_PRVOPC
             case ILL_PRVOPC: str = "ILL_PRVOPC"; break;
+#endif
 #ifdef ILL_PRVREG
             case ILL_PRVREG: str = "ILL_PRVREG"; break;
 #endif
@@ -129,14 +137,20 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
       case SIGSEGV:
         switch (info->si_code)
           {
+#ifdef SEGV_MAPERR
             case SEGV_MAPERR: str = "SEGV_MAPERR"; break;
+#endif
+#ifdef SEGV_ACCERR
             case SEGV_ACCERR: str = "SEGV_ACCERR"; break;
+#endif
           }
         break;
       case SIGBUS:
         switch (info->si_code)
           {
+#ifdef BUS_ADRALN
             case BUS_ADRALN: str = "BUS_ADRALN"; break;
+#endif
 #ifdef BUSADRERR
             case BUS_ADRERR: str = "BUS_ADRERR"; break;
 #endif
@@ -159,12 +173,24 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
       case SIGCHLD:
         switch (info->si_code)
           {
+#ifdef CLD_EXITED
             case CLD_EXITED: str = "CLD_EXITED"; break;
+#endif
+#ifdef CLD_KILLED
             case CLD_KILLED: str = "CLD_KILLED"; break;
+#endif
+#ifdef CLD_DUMPED
             case CLD_DUMPED: str = "CLD_DUMPED"; break;
+#endif
+#ifdef CLD_WTRAPPED
             case CLD_TRAPPED: str = "CLD_TRAPPED"; break;
+#endif
+#ifdef CLD_STOPPED
             case CLD_STOPPED: str = "CLD_STOPPED"; break;
+#endif
+#ifdef CLD_CONTINUED
             case CLD_CONTINUED: str = "CLD_CONTINUED"; break;
+#endif
           }
         break;
 #ifdef SIGPOLL
@@ -196,6 +222,9 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
             case SI_USER: str = "SI_USER"; break;
 #ifdef SI_KERNEL
             case SI_KERNEL: str = "SI_KERNEL"; break;
+#endif
+#ifdef SI_UNDEFINED
+            case SI_UNDEFINED: str = "SI_UNDEFINED"; break;
 #endif
           }
     }
@@ -245,7 +274,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     write(1, print_buffer, size);
     fflush(stderr);
 
-#ifdef __GLIBC__
+#ifdef HAVE_BACKTRACE
     trace_size = backtrace (trace, 32);
     messages = backtrace_symbols (trace, trace_size);
 
