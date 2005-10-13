@@ -220,6 +220,7 @@ pls_tm_launch(orte_jobid_t jobid)
         char* name_string;
         char** env;
         char* var;
+        size_t num_processes;
 
         OBJ_CONSTRUCT(&map, opal_list_t);
         /* Get the mapping of this very node */
@@ -236,11 +237,16 @@ pls_tm_launch(orte_jobid_t jobid)
            corresponding app_context.  If there are multiple,
            different prefix's for this node, complain */
         cur_prefix = NULL;
+        num_processes = 0;
         for (item2 =  opal_list_get_first(&map);
              item2 != opal_list_get_end(&map);
              item2 =  opal_list_get_next(item2)) {
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item2;
             char * app_prefix_dir = map->app->prefix_dir;
+
+            /* Increment the number of processes allocated to this node 
+             * This allows us to accurately test for oversubscription */
+            num_processes += map->num_procs;
 
             /* Check for already set cur_prefix -- if different,
                complain */
@@ -344,9 +350,10 @@ pls_tm_launch(orte_jobid_t jobid)
          * NOT being oversubscribed
          */
         if (node->node_slots > 0 &&
-            node->node_slots_inuse > node->node_slots) {
+            num_processes > node->node_slots) {
             if (mca_pls_tm_component.debug) {
-                opal_output(0, "pls:tm: oversubscribed -- setting mpi_yield_when_idle to 1");
+                opal_output(0, "pls:tm: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
+                            node->node_slots, num_processes);
             }
             var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
             opal_setenv(var, "1", true, &env);
