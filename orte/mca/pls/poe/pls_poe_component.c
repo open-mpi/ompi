@@ -86,57 +86,54 @@ orte_pls_poe_component_t mca_pls_poe_component = {
 };
 
 /**
-orte_pls_poe_param_reg_int - register and lookup a integer parameter 
-@param param_name parameter name [INPUT]
-@param default_value default value [INPUT]
-@return parameter value
-*/
-int orte_pls_poe_param_reg_int(char * param_name, int default_value)
-{
-    int id, param_value;
-    id = mca_base_param_register_int("pls","poe",param_name,NULL,default_value);
-    param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-/**
-orte_pls_poe_param_reg_string - register and lookup a string parameter 
-@param param_name parameter name [INPUT]
-@param default_value default value [INPUT]
-@return parameter value
-*/
-char* orte_pls_poe_param_reg_string(char* param_name, char* default_value)
-{
-    char *param_value;
-    int id;
-    id = mca_base_param_register_string("pls","poe",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-/**
 orte_pls_poe_component_open - open component and register all parameters
 @return error number
 */
 int orte_pls_poe_component_open(void)
 {
     char *param;
+    mca_base_component_t *c = &mca_pls_poe_component.super.pls_version;
 
-    mca_pls_poe_component.mp_retry = orte_pls_poe_param_reg_int("mp_retry", 0); 
-    mca_pls_poe_component.mp_retrycount = orte_pls_poe_param_reg_int("mp_retrycount", 0); 
-    mca_pls_poe_component.mp_infolevel = orte_pls_poe_param_reg_int("mp_infolevel", 0); 
-    mca_pls_poe_component.mp_labelio = orte_pls_poe_param_reg_string("mp_labelio","no");
-    mca_pls_poe_component.mp_stdoutmode = orte_pls_poe_param_reg_string("mp_stdoutmode","unordered");
+    mca_base_param_reg_int(c, "mp_retry",
+                           "specifies the interval (in seconds) to wait before repeating the node request",
+                           true, false, 0, &mca_pls_poe_component.mp_retry);
+    mca_base_param_reg_int(c, "mp_retrycount",
+                           "specifies the number of times the Partition Manager should make the request before returning",
+                           true, false, 0, &mca_pls_poe_component.mp_retrycount);
+    mca_base_param_reg_int(c, "mp_infolevel",
+                           "specify the level of messages you want from POE (0-6)",
+                           true, false, 0, &mca_pls_poe_component.mp_infolevel);
+    mca_base_param_reg_string(c, "mp_labelio",
+                           "Whether or not to label message output with task identifiers (yes or no)",
+                           true, false, "no", &mca_pls_poe_component.mp_labelio);
+    mca_base_param_reg_string(c, "mp_stdoutmode",
+                           "standard output mode (ordered, unordered or taskID)",
+                           true, false, "unordered", &mca_pls_poe_component.mp_stdoutmode);
 
-    mca_pls_poe_component.debug = orte_pls_poe_param_reg_int("debug",0);
-    mca_pls_poe_component.verbose = orte_pls_poe_param_reg_int("verbose",0);
-    mca_pls_poe_component.priority = orte_pls_poe_param_reg_int("priority", 100);
-    mca_pls_poe_component.orted = orte_pls_poe_param_reg_string("orted","orted"); 
-    mca_pls_poe_component.class = orte_pls_poe_param_reg_string("class","interactive"); 
-    mca_pls_poe_component.env = orte_pls_poe_param_reg_string("progenv","env");
-
-    param = orte_pls_poe_param_reg_string("progpoe","poe");
+    mca_base_param_reg_int(c, "debug",
+                           "Whether or not to enable debugging output for the poe pls component (0 or 1)",
+                           false, false, 0, &mca_pls_poe_component.debug);
+    mca_base_param_reg_int(c, "verbose",
+                           "Verbose level",
+                           true, false, 0, &mca_pls_poe_component.verbose);
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the poe pls component",
+                           false , false, 100, &mca_pls_poe_component.priority);
+    mca_base_param_reg_string(c, "orted",
+                           "The command name that the poe pls component will invoke for the ORTE daemon",
+                           false, false, "orted", &mca_pls_poe_component.orted);
+    mca_base_param_reg_string(c, "class",
+                           "class (interactive or batch)",
+                           true, false, "interactive", &mca_pls_poe_component.class);
+    mca_base_param_reg_string(c, "resource_allocation",
+                           "resource_allocation mode (hostfile or automatic)",
+                           false, false, "hostfile", &mca_pls_poe_component.resource_allocation);
+    mca_base_param_reg_string(c, "progenv",
+                           "The command name that setup environment",
+                           false, false, "env", &mca_pls_poe_component.env);
+    mca_base_param_reg_string(c, "progpoe",
+                           "The POE command",
+                           false, false, "poe", &param);
     mca_pls_poe_component.argv = opal_argv_split(param, ' ');
     mca_pls_poe_component.argc = opal_argv_count(mca_pls_poe_component.argv);
     if (mca_pls_poe_component.argc > 0) {
@@ -146,6 +143,8 @@ int orte_pls_poe_component_open(void)
         mca_pls_poe_component.path = NULL;
         return ORTE_ERR_BAD_PARAM;
     }
+
+
     return ORTE_SUCCESS;
 }
 
