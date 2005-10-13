@@ -215,7 +215,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 		/* this meands, no process talks to a partner with the specified 
 		   protocol *and* no faster protocol is used at all. so we can stop
 		   here and remove us from the list. */
-		printf("%s: nobody talks with %s and no faster protocol used. We stop here.\n", 
+		printf("%s: nobody talks with %s and no faster protocols are used. We stop here.\n", 
 		       comm->c_name, hier_prot[level]);
 		goto exit;
 	    }
@@ -224,7 +224,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 		 * this means, no process has a partner to which it can talk with this protocol,
 		 * so continue to next level, since faster protocols are used.
 		 */
-		printf("%s: nobody talks with %s but faster protocol are used. We continue.\n", 
+		printf("%s: nobody talks with %s but faster protocols are used. We continue.\n", 
 		       comm->c_name, hier_prot[level]);
 		continue;
 	    }
@@ -405,7 +405,8 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
     
     for ( i=0; i< data->hier_num_llead; i++ ) {
         if ( data->hier_llead[i].lleaders != NULL ) {
-             free ( data->hier_llead[i].lleaders );
+	    ompi_comm_free ( &(data->hier_llead[i].llcomm));
+	    free ( data->hier_llead[i].lleaders );
 	}
     }
     free ( data->hier_llead );
