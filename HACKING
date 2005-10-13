@@ -86,17 +86,18 @@ section.
 
 If you are building Open MPI from a developer's tree, you must first
 install fairly recent versions of the GNU tools Autoconf, Automake,
-and Libtool.  As of August 2005, the following versions are known to
+and Libtool.  As of October 2005, the following versions are known to
 work:
 
 Autoconf: v2.59
 Automake: v1.9.6
-Libtool:  v1.5.18
+Libtool:  v1.5.20
 
-More generally, we have never found that the most recent versions of
-these tools cause problems with our configure / build process.  When
-in doubt, it is safe to upgrade these tools (at least for Open MPI!).
-You can check what versions you have installed with the following:
+More generally, we have found that using the most recent versions of
+these tools usually results in the greatest probability of a
+successful configure / build.  When in doubt, it is safe to upgrade
+these tools (at least for Open MPI!).  You can check what versions you
+have installed with the following:
 
 shell$ autoconf --version
 shell$ automake --version
@@ -163,14 +164,14 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../automake-1.9
+      shell$ cd ../automake-1.9.6
       shell$ ./configure --prefix=PREFIX
       shell$ make all install
 
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../libtool-1.5
+      shell$ cd ../libtool-1.5.20
       shell$ ./configure --prefix=PREFIX
       shell$ make all install
 
