@@ -62,10 +62,10 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot);
 
     /* Bcast on the upper level among the local leaders */
-    if ( MPI_UNDEFINED == llroot ) {
-	llcomm->c_coll.coll_bcast(buff, count, datatype, llroot, llcomm);
-	if ( OMPI_SUCCESS != ret ) {
-	    return ret;
+    if ( MPI_UNDEFINED != llroot ) {
+	ret = llcomm->c_coll.coll_bcast(buff, count, datatype, llroot, llcomm);
+        if ( OMPI_SUCCESS != ret ) {
+           return ret;
 	}
     }
 
