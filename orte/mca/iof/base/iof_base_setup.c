@@ -47,6 +47,9 @@
 #  include <termio.h>
 # endif
 #endif
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
+#endif
 
 #include "mca/iof/base/iof_base_setup.h"
 
