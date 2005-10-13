@@ -42,7 +42,7 @@
 #define HIER_MAXPROTOCOL 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 
-static char hier_prot[HIER_MAXPROTOCOL][6]={"0","tcp","gm","mx","mvapi","openib","sm"};
+static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","gm","mx","mvapi","openib","sm"};
 
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  int component_level,
@@ -123,7 +123,7 @@ const mca_coll_base_module_1_0_0_t *
 mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
                              struct mca_coll_base_comm_t **data)
 {
-    int size;
+    int size, rank;
     int color, ncount[2], maxncount[2];
     struct mca_coll_base_comm_t *tdata=NULL;
     int level;
@@ -141,6 +141,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     }
 
     size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
 
     /* allocate the data structure holding all information */
     tdata = calloc ( 1, sizeof(struct mca_coll_base_comm_t));
@@ -214,7 +215,17 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 		   comm->c_name, hier_prot[level]);
             goto exit;
         }
+	else if ( (maxncount[0] + maxncount[1]) == (size -1) ){
+	     /* still every process would be part of this new comm,
+                so there is no point in creating it. */
+             printf("%s: every process would be part of this comm with prot %s. We continue\n",
+                    comm->c_name, hier_prot[level]);
+             continue;
+        }
         else {
+	    printf("%s: %d  procs talk with %s. Suggesting to use this, key %d rank %d\n", 
+		   comm->c_name, maxncount[0], hier_prot[level], color, rank);
+
             ret = mca_coll_hierarch_gather_tmp (&color, 1, MPI_INT, tdata->hier_colorarr, 1, 
         					MPI_INT, 0, comm );
             if ( OMPI_SUCCESS != ret ) {
@@ -228,7 +239,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 
            tdata->hier_level   = level;
            *data = tdata;
-            return &intra;
+	   /*            return &intra; */
+	   goto exit;
         }
     }
         
@@ -418,8 +430,8 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
             return NULL;
         }
 
-        ompi_group_decrement_proc_count (llgroup);
-        OBJ_RELEASE(llgroup);
+	/*        ompi_group_decrement_proc_count (llgroup);
+		  OBJ_RELEASE(llgroup); */
         if ( MPI_UNDEFINED != *lrank ) {
             found = 0;
             break;
@@ -432,8 +444,8 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
         */
         llcomm = MPI_COMM_NULL;
     }
-    ompi_group_decrement_proc_count (group);
-    OBJ_RELEASE(group);
+    /*    ompi_group_decrement_proc_count (group);
+	  OBJ_RELEASE(group); */
 
 
     return llcomm;
@@ -538,7 +550,12 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
         /* check for the required component */
         if (! strcmp (btl->btl_version.mca_component_name, component_name)){
             counter++;
+	    if (i<firstproc ) {
+	      firstproc = i;
+	    }
+	    continue;
 	}	    
+
 	/* check for any faster components */
 	for ( j=component_level+1; j< mca_coll_hierarch_max_protocol; j++) {
 	    if (!strcmp(btl->btl_version.mca_component_name, hier_prot[j])) {
@@ -546,8 +563,9 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 		if (i<firstproc ) {
 		    firstproc = i;
 		}
+		break;
 	    }
-	}
+        }
     }
 
     ncount[0] = counter; 
