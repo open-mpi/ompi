@@ -33,7 +33,13 @@ static int pown( int fanout, int num )
 {
     int j, p = 1;
     if( num < 0 ) return 0;
-    for( j = 0; j < num; j++ ) p*= fanout;
+    if (1==num) return fanout;
+    if (2==fanout) {
+        return p<<num;
+    }
+    else {
+        for( j = 0; j < num; j++ ) { p*= fanout; }
+    }
     return p;
 }
 
