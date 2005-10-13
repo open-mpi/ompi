@@ -32,7 +32,6 @@
 # User-configurable stuff
 #
 OMPI_PREFIX="/usr/local"
-OMPI_BOOT="ssh"
 OMPI_OPTIONS="--disable-f77 --without-cs-fs"
 OMPI_PACKAGE="openmpi"
 OMPI_VER_PACKAGE="openmpi"
@@ -51,7 +50,6 @@ OMPI_STARTDIR=`pwd`
 echo "--> Configuration options:"
 echo "    Package Name:   $OMPI_PACKAGE"
 echo "    Prefix:         $OMPI_PREFIX"
-echo "    Boot:           $OMPI_BOOT"
 echo "    Config Options: $OMPI_OPTIONS"
 
 ########################################################################
@@ -159,7 +157,7 @@ fi
 # Run configure
 # 
 cd $srcdir
-config="./configure --prefix=$OMPI_PREFIX --with-rsh=$OMPI_BOOT $OMPI_OPTIONS"
+config="./configure --prefix=$OMPI_PREFIX $OMPI_OPTIONS"
 echo "--> Running configure: $config"
 eval $config > "$BUILD_TMP/configure.out" 2>&1
 
@@ -218,7 +216,7 @@ fi
 #
 # Prep package info
 #
-debug_file="$TMP_DIR/disk.out"
+debug_file="${BUILD_TMP}/disk.out"
 touch "$debug_file"
 echo "--> Creating Package Info:"
 
