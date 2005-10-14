@@ -31,12 +31,19 @@ static const char FUNC_NAME[] = "MPI_Pcontrol";
 
 int MPI_Pcontrol(const int level, ...) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    va_list arglist;
 
-  /* There's nothing to do here */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-  return MPI_SUCCESS;
+    /* Silence some compiler warnings */
+
+    va_start(arglist, level);
+    va_end(arglist);
+
+    /* There's nothing to do here */
+
+    return MPI_SUCCESS;
 }
 
