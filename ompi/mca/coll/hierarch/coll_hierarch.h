@@ -45,28 +45,29 @@ extern int mca_coll_hierarch_ignore_sm_param;
  * Data structure for attaching data to the communicator 
  */
 
-    struct mca_coll_hierarch_llead_t {
-	struct ompi_communicator_t    *llcomm; /* local leader communicator */
-	int                      num_lleaders; /* number of local leaders */
-	int                         *lleaders; /* list of local leaders, ranks in comm */
-	int               my_lleader_on_lcomm; /* rank of my lleader in llcomm */
-	int                        am_lleader; /* am I an lleader? */
-	int                        my_lleader; /* pos. of my lleader in hier_lleaders */
-    };
-
     struct mca_coll_base_comm_t {
 	struct ompi_communicator_t        *hier_comm; /* link back to the attached comm */ 
 	struct ompi_communicator_t       *hier_lcomm; /* low level communicator */
-	struct mca_coll_hierarch_llead_t *hier_llead; /* structure for lleader communicators */
-	int                           hier_num_llead; /* number of llead structs */
-	int                           hier_max_llead; /* max. number of llead structs */
+	ompi_pointer_array_t              hier_llead; /* local leader communicator structure */
+	int                        hier_num_lleaders; /* number of local leaders */
 	int                               hier_level; /* level in the hierarchy. just debugging */
  	int                            hier_num_reqs; /* num. of requests */
 	ompi_request_t                   **hier_reqs; /* list of requests */
 	int                       hier_type_colorarr; /* format in which the colorarr is stored */
 	int                        hier_num_colorarr; /* size of the colorarr array */
-	int*                           hier_colorarr; /* array containing the color of all procs */
+	int                                *hier_llr; /* color array compacted (1 entry per color)*/
+	int                           *hier_colorarr; /* array containing the color of all procs */
     };
+
+    struct mca_coll_hierarch_llead_t {
+	struct ompi_communicator_t    *llcomm; /* local leader communicator */
+	int                         *lleaders; /* list of local leaders, ranks in comm */
+	int               my_lleader_on_lcomm; /* rank of my lleader in llcomm */
+	int                        am_lleader; /* am I an lleader? */
+	int                        my_lleader; /* pos. of my lleader in hier_lleaders */
+    };
+    
+    typedef struct mca_coll_hierarch_llead_t mca_coll_hierarch_llead_t;
 
 /* These are various modes how the colorarr is stored. The reason
    for the various versions is to minimize the memory requirement
@@ -116,10 +117,15 @@ extern int mca_coll_hierarch_ignore_sm_param;
 #define MCA_COLL_HIERARCH_COLORARR_STRIDE2  2
 #define MCA_COLL_HIERARCH_COLORARR_STRIDE4  3
 
-static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr, int *llr ) 
+static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr)
 {
     int cnt, i, j, found;
+    int *llr=NULL;
 
+    llr = (int *) malloc ( size * sizeof(int));
+    if (NULL == llr ){
+	return -1;
+    }
 
     for ( i=0; i<size; i++ ) {
 	if ( carr[i] != MPI_UNDEFINED ) {
@@ -141,7 +147,36 @@ static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr, int *l
 	}
     }
 
+    free (llr);
+
     return cnt;
+}
+
+static inline void mca_coll_hierarch_get_llr ( int size, int *carr, int *llr )
+{
+    int i,j,cnt, found;
+
+    for ( i=0; i<size; i++ ) {
+	if ( carr[i] != MPI_UNDEFINED ) {
+	    llr[0] = carr[i];
+	    break;
+	}
+    }
+
+
+    for (cnt=1, i=0; i<size; i++ ) {
+	for ( found=0, j=0; j<cnt; j++ ) {
+	    if ( carr[i] == llr[j] ) {
+		found = 1;
+		break;
+	    }
+	}
+	if ( !found && (MPI_UNDEFINED != carr[i]) ) {
+	    llr[cnt++] = carr[i];
+	}
+    }
+
+    return;
 }
     
 static inline void mca_coll_hierarch_get_all_lleaders ( int size, int *carr, int lsize,
@@ -169,9 +204,15 @@ static inline void mca_coll_hierarch_get_all_lleaders ( int size, int *carr, int
     return;
 }
 
+static inline int mca_coll_hierarch_get_offset ( int rank, int size, int *carr) 
+{
+    int offset=1;
+    return offset;
+}
+
 
 static inline void mca_coll_hierarch_get_lleader (int rank, struct mca_coll_base_comm_t *data,
-						  int* lleader ) 
+						  int* lleader, int *am_lleader, int offset ) 
 {
     int color, i;
 
@@ -198,47 +239,6 @@ static inline void mca_coll_hierarch_get_lleader (int rank, struct mca_coll_base
 		}
 	    }
 	    
-	    break;
-	case MCA_COLL_HIERARCH_COLORARR_RANGE:
-	case MCA_COLL_HIERARCH_COLORARR_STRIDE2:
-	case MCA_COLL_HIERARCH_COLORARR_STRIDE4:
-	case MCA_COLL_HIERARCH_COLORARR_INVALID:
-	default:
-	    break;
-    }
-    
-    return;
-}
-
-static inline void mca_coll_hierarch_map_rank (int rank, struct mca_coll_base_comm_t *data,
-					       int* lrank ) 
-{
-    int i, color, tmprank=-1;
-
-    /* initialize it to MPI_UNDEFINED */
-    *lrank = MPI_UNDEFINED;
-    
-    switch ( data->hier_type_colorarr ) 
-    {
-	case MCA_COLL_HIERARCH_COLORARR_LINEAR:
-	    /* sanity check */
-	    if ( rank > data->hier_num_colorarr-1 ) {
-		return;
-	    }
-
-	    /* Get the color of this process */
-	    color = data->hier_colorarr[rank];
-
-	    /* walk through the array until we reach 'rank' and calculate
-	       how many processes had the same color */
-	    for ( i=0; i< rank+1; i++ ) {
-		if ( data->hier_colorarr[i] == color ) {
-		    tmprank++;
-		    break;
-		}
-	    }
-
-	    *lrank = tmprank;
 	    break;
 	case MCA_COLL_HIERARCH_COLORARR_RANGE:
 	case MCA_COLL_HIERARCH_COLORARR_STRIDE2:
