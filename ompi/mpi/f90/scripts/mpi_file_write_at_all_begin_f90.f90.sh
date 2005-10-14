@@ -4,10 +4,17 @@
 
 procedure='MPI_File_write_at_all_begin'
 
+# JMS: Override -- need to make the back-end function less than 31
+# characters because F90 standard says that symbol max lengths are 31
+# characters.  So change the value of $procedure to something slightly
+# shorter.  $proc, hard code it to something slightly different.
+# #$%@#$%@#$%
+short=MPI_File_wr_at_all_begin
+
 rank=0
 for kind in $lkinds
 do
-  proc="${procedure}${rank}DL${kind}"
+  proc="${short}${rank}DL${kind}"
   echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
   echo "  use mpi_kinds"
@@ -27,7 +34,7 @@ done
 rank=0
 for kind in $ikinds
 do
-  proc="${procedure}${rank}DI${kind}"
+  proc="${short}${rank}DI${kind}"
   echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
   echo "  use mpi_kinds"
@@ -47,7 +54,7 @@ done
 rank=0
 for kind in $rkinds
 do
-  proc="${procedure}${rank}DR${kind}"
+  proc="${short}${rank}DR${kind}"
   echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
   echo "  use mpi_kinds"
@@ -67,7 +74,7 @@ done
 rank=0
 for kind in $ckinds
 do
-  proc="${procedure}${rank}DC${kind}"
+  proc="${short}${rank}DC${kind}"
   echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
   echo "  use mpi_kinds"
@@ -97,7 +104,7 @@ do
 
   for kind in $lkinds
   do
-    proc="${procedure}${rank}DL${kind}"
+    proc="${short}${rank}DL${kind}"
     echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
     echo "  use mpi_kinds"
@@ -116,7 +123,7 @@ do
 
   for kind in $ikinds
   do
-    proc="${procedure}${rank}DI${kind}"
+    proc="${short}${rank}DI${kind}"
     echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
     echo "  use mpi_kinds"
@@ -135,7 +142,7 @@ do
 
   for kind in $rkinds
   do
-    proc="${procedure}${rank}DR${kind}"
+    proc="${short}${rank}DR${kind}"
     echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
     echo "  use mpi_kinds"
@@ -154,7 +161,7 @@ do
 
   for kind in $ckinds
   do
-    proc="${procedure}${rank}DC${kind}"
+    proc="${short}${rank}DC${kind}"
     echo "subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)"
     echo "  use mpi_kinds"

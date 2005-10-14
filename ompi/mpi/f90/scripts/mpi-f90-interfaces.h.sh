@@ -5516,6 +5516,14 @@ procedure='MPI_File_read_ordered_begin'
 echo "interface ${procedure}"
 echo
 rank=0
+
+# JMS: Override -- need to make the back-end function less than 31
+# characters because F90 standard says that symbol max lengths are 31
+# characters.  So change the value of $procedure to something slightly
+# shorter.  $proc, hard code it to something slightly different.
+# #$%@#$%@#$%
+procedure=MPI_File_read_ord_begin
+
 for kind in $lkinds
 do
   proc="${procedure}${rank}DL${kind}"
@@ -5636,6 +5644,9 @@ do
   done
   echo
 done
+# JMS: Override -- see above.  Put it back to the full name.
+# #$%@#$%@#$%
+procedure=MPI_File_read_ordered_begin
 echo
 echo "end interface ${procedure}"
 echo
@@ -6917,6 +6928,14 @@ procedure='MPI_File_write_at_all_begin'
 echo "interface ${procedure}"
 echo
 rank=0
+
+# JMS: Override -- need to make the back-end function less than 31
+# characters because F90 standard says that symbol max lengths are 31
+# characters.  So change the value of $procedure to something slightly
+# shorter.  $proc, hard code it to something slightly different.
+# #$%@#$%@#$%
+procedure=MPI_File_wr_at_all_begin
+
 for kind in $lkinds
 do
   proc="${procedure}${rank}DL${kind}"
@@ -7053,6 +7072,9 @@ do
   done
   echo
 done
+# JMS: Override -- see above.  Put it back to the full name.
+# #$%@#$%@#$%
+procedure=MPI_File_write_at_all_begin
 echo
 echo "end interface ${procedure}"
 echo
