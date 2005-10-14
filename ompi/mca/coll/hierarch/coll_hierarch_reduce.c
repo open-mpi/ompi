@@ -52,8 +52,9 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
 
+    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lleader);
+
     if ( MPI_COMM_NULL != lcomm ) {
-	mca_coll_hierarch_get_lleader ( root, data, &lleader );
 	
 	lrank = ompi_comm_rank (lcomm);
 	if ( lrank == lleader ) {
@@ -80,7 +81,6 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
 	}
     }
 
-    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot);
     if ( MPI_UNDEFINED != llroot ) {
 	ret = llcomm->c_coll.coll_reduce (tmpbuf, rbuf, count, dtype,
 					  op, llroot, llcomm);
