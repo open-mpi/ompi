@@ -32,7 +32,7 @@ static const char FUNC_NAME[] = "MPI_Group_free";
 
 int MPI_Group_free(MPI_Group *group)
 {
-    ompi_group_t *l_group;
+    int ret;
 
     /* check to make sure we don't free GROUP_EMPTY or GROUP_NULL */
     if (MPI_PARAM_CHECK) {
@@ -45,10 +45,8 @@ int MPI_Group_free(MPI_Group *group)
 
     }
 
-    l_group = (ompi_group_t *) *group;
-    ompi_group_decrement_proc_count (l_group);
-    OBJ_RELEASE(l_group);
+    ret = ompi_group_free ( group);
+    OMPI_ERRHANDLER_CHECK(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
 
-    *group = MPI_GROUP_NULL;
     return MPI_SUCCESS;
 }

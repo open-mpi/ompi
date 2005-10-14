@@ -152,6 +152,12 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 
+
+/** 
+ * Abstracting MPI_Group_free, since it is required by some internal functions...
+ */
+int ompi_group_free (ompi_group_t **group);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
