@@ -98,7 +98,12 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
 void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
 					 int *error_code, ...)
 {
-  /* Don't need anything more -- just need this function to exist */
+    /* Don't need anything more -- just need this function to exist */
+    /* Silence some compiler warnings */
+    
+    va_list arglist;
+    va_start(arglist, error_code);
+    va_end(arglist);
 }
 
 
@@ -106,6 +111,11 @@ void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
 					 int *error_code, ...)
 {
     /* Don't need anything more -- just need this function to exist */
+    /* Silence some compiler warnings */
+    
+    va_list arglist;
+    va_start(arglist, error_code);
+    va_end(arglist);
 }
 
 
@@ -113,7 +123,12 @@ void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
 void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
 					int *error_code, ...)
 {
-  /* Don't need anything more -- just need this function to exist */
+    /* Don't need anything more -- just need this function to exist */
+    /* Silence some compiler warnings */
+    
+    va_list arglist;
+    va_start(arglist, error_code);
+    va_end(arglist);
 }
 #endif
 
