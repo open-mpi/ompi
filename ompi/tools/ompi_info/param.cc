@@ -321,6 +321,7 @@ void ompi_info::do_arch(opal_cmd_line_t *cmd_line)
 //
 void ompi_info::do_config(bool want_all)
 {
+  const string cxx(OMPI_WANT_CXX_BINDINGS ? "yes" : "no");
   const string f77(OMPI_WANT_F77_BINDINGS ? string("yes (") +
                    (OMPI_HAVE_WEAK_SYMBOLS ? "all" :
                     (OMPI_F77_CAPS ? "caps" :
@@ -365,7 +366,7 @@ void ompi_info::do_config(bool want_all)
   out("Built host", "build:host", OMPI_BUILD_HOST);
 
   out("C bindings", "bindings:c", "yes");
-  out("C++ bindings", "bindings:cxx", "yes");
+  out("C++ bindings", "bindings:cxx", cxx);
   out("Fortran77 bindings", "bindings:f77", f77);
   out("Fortran90 bindings", "bindings:f90", f90);
 
