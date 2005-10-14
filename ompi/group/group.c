@@ -19,6 +19,18 @@
 #include "ompi/include/constants.h"
 #include "mpi.h"
 
+int ompi_group_free ( ompi_group_t **group )
+{
+    ompi_group_t *l_group;
+
+    l_group = (ompi_group_t *) *group;
+    ompi_group_decrement_proc_count (l_group);
+    OBJ_RELEASE(l_group);
+
+    *group = MPI_GROUP_NULL;
+    return OMPI_SUCCESS;
+}
+
 int ompi_group_translate_ranks ( ompi_group_t *group1, 
                                  int n_ranks, int *ranks1,
                                  ompi_group_t *group2, 
