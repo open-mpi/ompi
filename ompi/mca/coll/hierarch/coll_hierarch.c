@@ -198,7 +198,6 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     }
     
     tdata->hier_num_colorarr  = size;
-    tdata->hier_type_colorarr = MCA_COLL_HIERARCH_COLORARR_LINEAR; 
     tdata->hier_colorarr      = (int *) malloc ( sizeof(int) * size);
     if ( NULL == tdata->hier_colorarr ) {
         *priority = 0;
@@ -378,7 +377,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
         				 llead->lleaders, 
 					 1 );        
     /* determine my lleader, maybe its me */
-    mca_coll_hierarch_get_lleader ( rank, data, &(llead->my_lleader), 1 );
+    mca_coll_hierarch_get_lleader ( rank, data, &(llead->my_lleader), &(llead->am_lleader), 1 );
     
     /* Generate the lleader communicator assuming that all lleaders are the first
        process in the list of processes with the same color. A function generating 
@@ -392,8 +391,6 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     /* Store it now on the data structure */
     ompi_pointer_array_set_item ( &(data->hier_llead), 0, &(llead));
     
-    /* This is the point where I will introduce later on a function trying to 
-       compact the colorarr array. Not done at the moment */
     mca_coll_hierarch_dump_struct (data);
     
  exit:
@@ -469,9 +466,10 @@ int mca_coll_hierarch_comm_unquery ( struct ompi_communicator_t *comm,
 }
 
 
-struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank, 
+struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root, 
 							   struct mca_coll_base_comm_t *data,
-							   int* lrank) 
+							   int* llroot,
+							   int* lleader) 
 {
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_group_t *llgroup=NULL;
@@ -497,13 +495,13 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
             return NULL;
 	}
         
-        rc = ompi_group_translate_ranks ( group, 1, &rank, llgroup, lrank);
+        rc = ompi_group_translate_ranks ( group, 1, &root, llgroup, llroot);
         if ( OMPI_SUCCESS != rc ) {
             return NULL;
         }
 
 	/* ompi_group_free (&llgroup) */
-        if ( MPI_UNDEFINED != *lrank ) {
+        if ( MPI_UNDEFINED != *llroot ) {
             found = 1;
             break;
         }
@@ -513,7 +511,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
 	int offset;
 
 	/* determine what our offset of root is in the colorarr */
-	offset = mca_coll_hierarch_get_offset ( rank, data->hier_num_colorarr, data->hier_colorarr );
+	offset = mca_coll_hierarch_get_offset ( root, data->hier_num_colorarr, data->hier_colorarr );
 	
         /* allocate a new llead element */
 	llead = (struct mca_coll_hierarch_llead_t *) malloc (sizeof(struct mca_coll_hierarch_llead_t));
@@ -535,7 +533,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
 
 	 
 	 /* create new lleader subcommunicator */
-	 rc = ompi_comm_split ( data->hier_comm, llead->am_lleader, rank, &llcomm, 0);
+	 rc = ompi_comm_split ( data->hier_comm, llead->am_lleader, root, &llcomm, 0);
 	 if ( OMPI_SUCCESS != rc ) {
 	     return NULL;
 	 }

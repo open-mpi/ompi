@@ -56,7 +56,7 @@ int mca_coll_hierarch_bcast_intra(void *buff,
        also the reason, that *every* process in comm has to call 
        this function
     */
-    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot);
+    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lleader);
 
     /* Bcast on the upper level among the local leaders */
     if ( MPI_UNDEFINED != llroot ) {
@@ -71,7 +71,6 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     */
 
     if ( MPI_COMM_NULL != lcomm ) {
-	mca_coll_hierarch_get_lleader (root, data, &lleader);
 	ret = lcomm->c_coll.coll_bcast(buff, count, datatype, lleader, lcomm );
     }
 

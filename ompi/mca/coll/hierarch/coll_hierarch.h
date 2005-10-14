@@ -45,6 +45,13 @@ extern int mca_coll_hierarch_ignore_sm_param;
  * Data structure for attaching data to the communicator 
  */
 
+/* Clarifying some terminology:
+ *  comm:    the input communicator, consisting of several lower level communicators.
+ *  lcomm:   low level communicator, often refered to as subcommunicator
+ *  lleader: local leader, a dedicated process of each low level communicator
+ *  llcomm:  local leader communicator, grouping all local leaders of a comm.
+*/
+
     struct mca_coll_base_comm_t {
 	struct ompi_communicator_t        *hier_comm; /* link back to the attached comm */ 
 	struct ompi_communicator_t       *hier_lcomm; /* low level communicator */
@@ -53,7 +60,6 @@ extern int mca_coll_hierarch_ignore_sm_param;
 	int                               hier_level; /* level in the hierarchy. just debugging */
  	int                            hier_num_reqs; /* num. of requests */
 	ompi_request_t                   **hier_reqs; /* list of requests */
-	int                       hier_type_colorarr; /* format in which the colorarr is stored */
 	int                        hier_num_colorarr; /* size of the colorarr array */
 	int                                *hier_llr; /* color array compacted (1 entry per color)*/
 	int                           *hier_colorarr; /* array containing the color of all procs */
@@ -62,60 +68,12 @@ extern int mca_coll_hierarch_ignore_sm_param;
     struct mca_coll_hierarch_llead_t {
 	struct ompi_communicator_t    *llcomm; /* local leader communicator */
 	int                         *lleaders; /* list of local leaders, ranks in comm */
-	int               my_lleader_on_lcomm; /* rank of my lleader in llcomm */
+	int                        my_lleader; /* rank of my lleader in lcomm */
 	int                        am_lleader; /* am I an lleader? */
-	int                        my_lleader; /* pos. of my lleader in hier_lleaders */
     };
     
     typedef struct mca_coll_hierarch_llead_t mca_coll_hierarch_llead_t;
 
-/* These are various modes how the colorarr is stored. The reason
-   for the various versions is to minimize the memory requirement
-   for this task, since in most real-world scenarios, the information
-   can be stored significantly more compact that storing the whole array
-   
-   MCA_COLL_HIERARCH_COLORARR_LINEAR: 
-          contains an array of size hier_num_colorarr. Each element 
-	  contains the color of the according process
-   MCA_COLL_HIERARCH_COLORARR_RANGE:
-          the ranks beeing in the same subcommunicator are consecutive
-	  ranks  (e.g. ranks 0-8 are in subgroup1, 9-16 in subgroup2 etc)
-
-          hier_colorarr[0] : number of blocks
-	  hier_colorarr[2*i+1] : first rank of block i, i=0,(hier_colorarr[0]-1)
-	  hier_colorarr[2*i+2] : last rank of block i
-
-	  hier_num_coloarr = hier_coloarr[0] + 1;
-
-   MCA_COLL_HIERARCH_COLORARR_STRIDE2:
-          the processes are in two subgroups with a stride of two,
-	  e.g. (0,2,4,6,...) are in subgroup 1, (1,3,5,7,...) in subgroup2
-	  This scenario might happen on dual-processor nodes if the scheduler
-	  has distributed the processes in a round-robin fashion.
-
-	  hier_colorarr[0] = first rank of first subgroup
-	  hier_colorarr[1] = first rank of second subgroup
-	  hier_num_colorarr = 2
-
-   MCA_COLL_HIERARCH_COLORARR_STRIDE4:
-          the processes are in four subgroups with a stride of four,
-	  e.g. (0,4,8,12,...) are in subgroup 1, (1,5,9,13,...) in subgroup2 etc.
-	  This scenario might happen on quad-processor nodes if the scheduler
-	  has distributed the processes in a round-robin fashion.
-
-	  hier_colorarr[0] = first rank of first subgroup
-	  hier_colorarr[1] = first rank of second subgroup
-	  hier_colorarr[2] = first rank of third subgroup
-	  hier_colorarr[3] = first rank of forth subgroup
-	  hier_num_colorarr = 4
-
-*/
-
-#define MCA_COLL_HIERARCH_COLORARR_INVALID -1
-#define MCA_COLL_HIERARCH_COLORARR_LINEAR   0
-#define MCA_COLL_HIERARCH_COLORARR_RANGE    1
-#define MCA_COLL_HIERARCH_COLORARR_STRIDE2  2
-#define MCA_COLL_HIERARCH_COLORARR_STRIDE4  3
 
 static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr)
 {
@@ -219,43 +177,31 @@ static inline void mca_coll_hierarch_get_lleader (int rank, struct mca_coll_base
     /* initialize it to be undefined */
     *lleader = MPI_UNDEFINED;
 
-    switch ( data->hier_type_colorarr ) 
-    {
-	case MCA_COLL_HIERARCH_COLORARR_LINEAR:
-	    /* sanity check */
-	    if ( rank > data->hier_num_colorarr-1 ) {
-		return;
-	    }
-
-	    /* Get the color of this rank */
-	    color = data->hier_colorarr[rank];
-	    
-	    /* get the first rank having this color. this is
-	       currently by definition the local leader */
-	    for ( i=0; i< data->hier_num_colorarr-1; i++ ) {
-		if ( data->hier_colorarr[i] == color ) {
-		    *lleader = i;
-		    break;
-		}
-	    }
-	    
-	    break;
-	case MCA_COLL_HIERARCH_COLORARR_RANGE:
-	case MCA_COLL_HIERARCH_COLORARR_STRIDE2:
-	case MCA_COLL_HIERARCH_COLORARR_STRIDE4:
-	case MCA_COLL_HIERARCH_COLORARR_INVALID:
-	default:
-	    break;
+    /* sanity check */
+    if ( rank > data->hier_num_colorarr-1 ) {
+	return;
     }
     
+    /* Get the color of this rank */
+    color = data->hier_colorarr[rank];
+    
+    /* get the first rank having this color. this is
+       currently by definition the local leader */
+    for ( i=0; i< data->hier_num_colorarr-1; i++ ) {
+	if ( data->hier_colorarr[i] == color ) {
+	    *lleader = i;
+	    break;
+	}
+    }
+	    
     return;
 }
 
 /*
  * coll API functions
  */
-struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank, struct mca_coll_base_comm_t *data,
-							   int* lrank); 
+struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rroot, struct mca_coll_base_comm_t *data,
+							   int* llroot, int* lleader); 
 
 
 int mca_coll_hierarch_init_query(bool allow_hierarch_user_threads,
