@@ -79,6 +79,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     char *sendtmpbuf = NULL;
     long ext, lb;
     int  typelng;
+    int  allocedaccumbuf;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
 
@@ -135,7 +136,6 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     else { 
         sendtmpbuf = (char *) recvbuf; 
     }
-    accumbuf = (char *) recvbuf;
 
     /* handle special case when size == 1 */
     if (1 == size ) {
@@ -143,6 +143,17 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
           ompi_ddt_copy_content_same_ddt( datatype, count, recvbuf, sendbuf );
        }
        return MPI_SUCCESS;
+    }
+
+    /* handle non existant recv buffer (i.e. its NULL.. like basic allreduce uses!) */
+    if (recvbuf) {
+        accumbuf = (char *) recvbuf;
+        allocedaccumbuf = 0;
+    }
+    else {
+        accumbuf = (char*) malloc(realsegsize);
+        if (accumbuf == NULL) { line = __LINE__; ret = -1; goto error_hndl; }
+        allocedaccumbuf = 1;
     }
 
     /* ----------------------------------------------------------------- */
@@ -275,6 +286,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         if (inbuf!=NULL) {
             if (inbuf[0] != NULL) free(inbuf[0]);
             if (inbuf[1] != NULL) free(inbuf[1]);
+            if (allocedaccumbuf) free(accumbuf);
         }
     }
 
@@ -299,6 +311,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     if( inbuf != NULL ) {
         if( inbuf[0] != NULL ) free(inbuf[0]);
         if( inbuf[1] != NULL ) free(inbuf[1]);
+        if (allocedaccumbuf) free(accumbuf);
     }
     return ret;
 }
