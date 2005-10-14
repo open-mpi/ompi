@@ -39,6 +39,7 @@ int mca_coll_hierarch_priority_param = -1;
 int mca_coll_hierarch_verbose_param = -1;
 int mca_coll_hierarch_verbose = 0;
 int mca_coll_hierarch_use_rdma_param=-1;   
+int mca_coll_hierarch_ignore_sm_param=-1;   
 
 
 /*
@@ -100,6 +101,9 @@ static int hierarch_open(void)
                                     mca_coll_hierarch_verbose);
     mca_coll_hierarch_use_rdma_param = 
         mca_base_param_register_int("coll", "hierarch", "use_rdma", NULL, 0);
+
+    mca_coll_hierarch_ignore_sm_param = 
+        mca_base_param_register_int("coll", "hierarch", "ignore_sm", NULL, 0);
 
     return OMPI_SUCCESS;
 }

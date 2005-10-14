@@ -37,10 +37,18 @@
 
 
 /* local functions and data */
-#define HIER_MAXPROTOCOL 7
+/* #define HIER_MAXPROTOCOL 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 
 static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","gm","mx","mvapi","openib","sm"};
+
+*/
+
+#define HIER_MAXPROTOCOL 4
+static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
+static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","openib","sm"};
+
+
 
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  int component_level,
@@ -154,10 +162,18 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     struct mca_coll_base_comm_t *tdata=NULL;
     int level;
     int ret=OMPI_SUCCESS;
+    int ignore_sm=0;
 
     /* Get the priority level attached to this module */
     if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_priority_param, 
 						  priority)) {
+        return NULL;
+    }
+
+    /* Check whether we should ignore sm. This might be necessary to take advantage
+       of the some ib or gm collectives. */
+    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_ignore_sm_param, 
+						  &ignore_sm)) {
         return NULL;
     }
     
@@ -189,6 +205,9 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
      * is feasable. 
      * Later we start with level=0, and introduce the multi-cell check 
     */
+    if ( ignore_sm ) {
+	mca_coll_hierarch_max_protocol = HIER_MAXPROTOCOL - 1;
+    }
     for ( level = 1; level < mca_coll_hierarch_max_protocol; level++) {
         mca_coll_hierarch_checkfor_component ( comm, 
 					       level, 
@@ -289,8 +308,8 @@ const struct mca_coll_base_module_1_0_0_t *
 mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 {
     int color;
-    int *llr=NULL;
     int size, rank, ret=OMPI_SUCCESS;
+    int *llr=NULL;
 
     struct ompi_communicator_t *lcomm=NULL;
     struct ompi_communicator_t *llcomm=NULL;
@@ -329,15 +348,23 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     data->hier_num_llead = 1;
 
     /* determine how many local leader there are and who they are */
-    data->hier_llead[0].num_lleaders = mca_coll_hierarch_count_lleaders (size, data->hier_colorarr);
-    data->hier_llead[0].lleaders = (int *) malloc ( sizeof(int) * data->hier_llead[0].num_lleaders);
+    llr = (int *) malloc ( sizeof(int)  * size);
+    if ( NULL == llr ) {
+	goto exit;
+    }
+    data->hier_llead[0].num_lleaders = mca_coll_hierarch_count_lleaders (size, 
+									 data->hier_colorarr, 
+									 llr);
+    data->hier_llead[0].lleaders = (int *) malloc (sizeof(int) * data->hier_llead[0].num_lleaders);
     if ( NULL == data->hier_llead[0].lleaders ) {
         goto exit;
     }
     mca_coll_hierarch_get_all_lleaders ( data->hier_num_colorarr,
         				 data->hier_colorarr, 
         				 data->hier_llead[0].num_lleaders,
-        				 data->hier_llead[0].lleaders );        
+					 llr,
+        				 data->hier_llead[0].lleaders, 
+					 1 );        
     /* determine my lleader, maybe its me */
     data->hier_llead[0].am_lleader=0;       /* false */
     mca_coll_hierarch_get_lleader ( rank, data, &(data->hier_llead[0].my_lleader) );
@@ -361,7 +388,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 
  exit:
     if ( NULL != llr ) {
-        free (llr);
+	free ( llr );
     }
     if ( OMPI_SUCCESS != ret ) {
         ompi_comm_free ( &lcomm );
@@ -455,8 +482,8 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
             return NULL;
         }
 
-	/*        ompi_group_decrement_proc_count (llgroup);
-		  OBJ_RELEASE(llgroup); */
+	/* ompi_group_decrement_proc_count (llgroup);
+	   OBJ_RELEASE(llgroup);  */
         if ( MPI_UNDEFINED != *lrank ) {
             found = 1;
             break;
@@ -464,14 +491,26 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int rank,
     }
     
     if ( !found ) {
+	int offset;
         /* Here we have to introduce later on the code how to create the new 
            lleader intercommunicators. For the moment, we just return a NULL communicator.
         */
         llcomm = MPI_COMM_NULL;
-    }
-    /*    ompi_group_decrement_proc_count (group);
-	  OBJ_RELEASE(group); */
+#if 0
+	offset = mca_coll_hierarch_get_offset ( root, colorarr );
+	
+	/* determine what our offset of root is in the colorarr */
+	/* generate the list of lleaders with this offset */
+	/* allocate a new llead element */
+	/* create new lleader subcommunicator */
+	/* set the structure */
+#endif
 
+    }
+ 
+    /* ompi_group_decrement_proc_count (group);
+    OBJ_RELEASE(group); 
+    */
 
     return llcomm;
 }
