@@ -37,6 +37,7 @@ extern int mca_coll_hierarch_priority_param;
 extern int mca_coll_hierarch_verbose_param;
 extern int mca_coll_hierarch_verbose;
 extern int mca_coll_hierarch_use_rdma_param;
+extern int mca_coll_hierarch_ignore_sm_param;
 
 
 #define HIER_DEFAULT_NUM_LLEAD 5
@@ -115,15 +116,10 @@ extern int mca_coll_hierarch_use_rdma_param;
 #define MCA_COLL_HIERARCH_COLORARR_STRIDE2  2
 #define MCA_COLL_HIERARCH_COLORARR_STRIDE4  3
 
-static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr ) 
+static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr, int *llr ) 
 {
     int cnt, i, j, found;
-    int *llr=NULL;
 
-    llr  = (int *) calloc (1, sizeof(int) * size);
-    if (NULL == llr ) {
-	return -1;
-    }
 
     for ( i=0; i<size; i++ ) {
 	if ( carr[i] != MPI_UNDEFINED ) {
@@ -145,34 +141,31 @@ static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr )
 	}
     }
 
-    free (llr);
     return cnt;
 }
     
 static inline void mca_coll_hierarch_get_all_lleaders ( int size, int *carr, int lsize,
-							int *larr)
+							int *llr, int *larr, int offset)
 {
-    int i, j, cnt, found;
+    int i, j, k;
+    int *cntarr=NULL;
 
-    for ( i=0; i<size; i++ ) {
-	if ( carr[i] != MPI_UNDEFINED ) {
-	    larr[0] = carr[i];
-	    break;
-	}
+    cntarr = (int *)calloc (1, sizeof (int)*lsize );
+    if ( NULL == cntarr ) {
+	return;
     }
 
-    for (cnt=1, i=0; i<size; i++ ) {
-	for ( found=0, j=0; j<cnt; j++ ) {
-	    if ( carr[i] == larr[j] ) {
-		found = 1;
+    for ( k=0, i=0;i<size;i++) {
+	for ( j=0; j<lsize; j++) {
+	    if ( carr[i] == llr[j] && cntarr[j] < offset) {
+		cntarr[j]++;
+		larr[j] = i;
 		break;
 	    }
 	}
-	if ( !found && (MPI_UNDEFINED != carr[i]) ) {
-	    larr[cnt++] = carr[i];
-	}
     }
-    
+
+
     return;
 }
 
