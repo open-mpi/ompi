@@ -26,6 +26,7 @@
 #include "datatype/datatype.h"
 #include "mca/coll/coll.h"
 
+extern int mca_coll_hier_verbose;
 
 /*
  *	reduce_intra
@@ -51,6 +52,12 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
     rank   = ompi_comm_rank ( comm );
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
+
+    if ( mca_coll_hier_verbose ) {
+      printf("%s:%d: executing hierarchical reduce with cnt=%d and root=%d\n",
+	     comm->c_name, rank, count, root );
+    }
+
 
     llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
 

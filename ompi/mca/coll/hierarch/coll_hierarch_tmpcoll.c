@@ -59,6 +59,7 @@ int mca_coll_hierarch_allgather_tmp(void *sbuf, int scount,
 				    struct ompi_communicator_t *comm)
 {
     int ret;
+    int size = ompi_comm_size (comm);
 
     ret = mca_coll_hierarch_gather_tmp ( sbuf, scount, sdtype, rbuf, rcount,
 					 rdtype, 0, comm);
@@ -66,7 +67,7 @@ int mca_coll_hierarch_allgather_tmp(void *sbuf, int scount,
     if ( OMPI_SUCCESS != ret ) {
 	return ret;
     }
-    ret = mca_coll_hierarch_bcast_tmp ( rbuf, rcount, rdtype, 0, comm);
+    ret = mca_coll_hierarch_bcast_tmp ( rbuf, rcount*size, rdtype, 0, comm);
     return ret;
 }    
 
