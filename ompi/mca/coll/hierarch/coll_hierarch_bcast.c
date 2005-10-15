@@ -31,8 +31,6 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 
-extern int mca_coll_hier_verbose;
-
 
 int mca_coll_hierarch_bcast_intra(void *buff, 
 				  int count,

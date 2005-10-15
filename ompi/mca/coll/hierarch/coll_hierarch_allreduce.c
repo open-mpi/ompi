@@ -34,10 +34,10 @@
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype, 
-                               struct ompi_op_t *op,
-                               int root, struct ompi_communicator_t *comm)
+int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
+				      struct ompi_datatype_t *dtype, 
+				      struct ompi_op_t *op,
+				      struct ompi_communicator_t *comm)
 {
     struct mca_coll_base_comm_t *data=NULL;
     struct ompi_communicator_t *llcomm=NULL;
@@ -47,14 +47,15 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
     long extent, true_extent, lb, true_lb;
     char *tmpbuf=NULL, *tbuf=NULL;
     int ret;
+    int root=0;
 
     rank   = ompi_comm_rank ( comm );
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
 
     if ( mca_coll_hier_verbose ) {
-      printf("%s:%d: executing hierarchical reduce with cnt=%d and root=%d\n",
-	     comm->c_name, rank, count, root );
+      printf("%s:%d: executing hierarchical allreduce with cnt=%d \n",
+	     comm->c_name, rank, count );
     }
 
     llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
@@ -86,9 +87,14 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
     }
 
     if ( MPI_UNDEFINED != llroot ) {
-	ret = llcomm->c_coll.coll_reduce (tmpbuf, rbuf, count, dtype,
-					  op, llroot, llcomm);
+	ret = llcomm->c_coll.coll_allreduce (tmpbuf, rbuf, count, dtype,
+					     op, llcomm);
     }
+
+    if ( MPI_COMM_NULL != lcomm ) {
+	ret = lcomm->c_coll.coll_bcast(rbuf, count, dtype, lroot, lcomm );
+    }
+
 
  exit:
     if ( NULL != tmpbuf ) {
