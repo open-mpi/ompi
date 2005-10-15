@@ -164,7 +164,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 						  &ignore_sm)) {
         return NULL;
     }
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_verbose, 
+    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_verbose_param, 
 						  &mca_coll_hier_verbose)) {
         return NULL;
     }
@@ -360,7 +360,9 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     OBJ_CONSTRUCT(&(data->hier_llead), ompi_pointer_array_t);
     ompi_pointer_array_add ( &(data->hier_llead), llead);
     
-    mca_coll_hierarch_dump_struct (data);
+    if ( mca_coll_hier_verbose ) {
+      mca_coll_hierarch_dump_struct (data);
+    }
     
  exit:
     if ( NULL != llr ) {
@@ -578,6 +580,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	if ( OMPI_SUCCESS != rc ) {
 	    return NULL;
 	}
+	llead->llcomm = llcomm;
 
 	/* Store the new element on the data struct */
 	ompi_pointer_array_add ( &(data->hier_llead), llead);

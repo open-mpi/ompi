@@ -51,17 +51,18 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
 
-    if ( mca_coll_hier_verbose ) {
+    if ( mca_coll_hier_verbose ) { 
       printf("%s:%d: executing hierarchical bcast with cnt=%d and root=%d\n",
 	     comm->c_name, rank, count, root );
-    }
+    } 
 
-    /* This function returns the local leader communicator
-       which *always* contains the root of this operation.
-       This might involve creating a new communicator. This is 
-       also the reason, that *every* process in comm has to call 
-       this function
-    */
+    /* 
+     * This function returns the local leader communicator
+     * which *always* contains the root of this operation.
+     * This might involve creating a new communicator. This is 
+     * also the reason, that *every* process in comm has to call 
+     * this function
+     */
     llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
 
     /* Bcast on the upper level among the local leaders */
@@ -73,9 +74,8 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     }
 
     /* once the local leaders got the data from the root, they can distribute
-       it to the processes in their local, low-leve communicator.
-    */
-
+     * it to the processes in their local, low-leve communicator.
+     */
     if ( MPI_COMM_NULL != lcomm ) {
 	ret = lcomm->c_coll.coll_bcast(buff, count, datatype, lroot, lcomm );
     }

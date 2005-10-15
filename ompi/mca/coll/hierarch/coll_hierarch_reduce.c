@@ -58,12 +58,10 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
 	     comm->c_name, rank, count, root );
     }
 
-
     llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
 
     if ( MPI_COMM_NULL != lcomm ) {
-	
-	lrank = ompi_comm_rank (lcomm);
+      lrank = ompi_comm_rank (lcomm);
 	if ( lrank == lroot ) {
 	    ompi_ddt_get_extent(dtype, &lb, &extent);
 	    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
