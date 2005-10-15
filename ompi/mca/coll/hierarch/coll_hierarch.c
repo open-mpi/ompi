@@ -467,7 +467,8 @@ int mca_coll_hierarch_get_all_lleaders ( int rank, struct mca_coll_base_comm_t *
     }
 
     mycolor = data->hier_colorarr[rank];
-    for ( i=0; i< data->hier_num_colorarr; i++ ) {
+    llead->am_lleader = 0;
+    for ( i=0; i< data->hier_num_lleaders; i++ ) {
 	if ( data->hier_llr[i] == mycolor ) {
 	    llead->my_lleader = cntarr[i]-1;
 	    if ( llead->lleaders[i] == rank ) {
