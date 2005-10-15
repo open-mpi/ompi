@@ -48,4 +48,5 @@ sources = \
         coll_hierarch_barrier.c \
         coll_hierarch_bcast.c \
         coll_hierarch_component.c \
-        coll_hierarch_reduce.c 
+        coll_hierarch_reduce.c \
+	coll_hierarch_tmpcoll.c

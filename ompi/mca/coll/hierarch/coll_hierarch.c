@@ -35,7 +35,6 @@
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 
-#include "coll_hierarch.h"
 
 /* local functions and data */
 /* #define HIER_MAXPROTOCOL 7
@@ -56,23 +55,6 @@ static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *co
 						  char *component_name, 
 						  int *key, int *ncount);
 static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c);
-
-/* These are trivial implementations of these routines used during comm_query/init,
-   since we cannot access any other collectives
-*/
-static int mca_coll_hierarch_bcast_tmp ( void *buf, int count,  struct ompi_datatype_t *dtype,
-					 int root, struct ompi_communicator_t *comm);
-
-static int mca_coll_hierarch_gather_tmp(void *sbuf, int scount,
-					struct ompi_datatype_t *sdtype,
-					void *rbuf, int rcount,
-					struct ompi_datatype_t *rdtype,
-					int root, struct ompi_communicator_t *comm);
-static int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
-					struct ompi_datatype_t *dtype,
-					struct ompi_op_t *op,
-					int root, struct ompi_communicator_t *comm);
-
 
 /*
  * Linear set of collective algorithms
@@ -223,35 +205,33 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
            that this might be the best solution. These functions emulate an 
 	   allreduce and  an allgather.
         */
-        ret = mca_coll_hierarch_reduce_tmp (ncount, maxncount, 2, MPI_INT, 
-        				    MPI_MAX, 0, comm );
+        ret = mca_coll_hierarch_allreduce_tmp (ncount, maxncount, 2, MPI_INT, 
+					       MPI_MAX, comm );
         if ( OMPI_SUCCESS != ret ) {
             return NULL;
         }
-        ret = mca_coll_hierarch_bcast_tmp ( maxncount, 2, MPI_INT, 0, comm );
-        if ( OMPI_SUCCESS != ret ) {
-                    return NULL;
-        }
-	
+
         if ( 0 == maxncount[0] ) {
 	    if ( 0 == maxncount[1] ) {
 		/* this meands, no process talks to a partner with the specified 
 		   protocol *and* no faster protocol is used at all. so we can stop
 		   here and remove us from the list. */
 		if ( hier_verbose ) {
-		    printf("%s:%d: nobody talks with %s and no faster protocols are used. "
-			   "We stop here.\n",  comm->c_name, rank, hier_prot[level]);
+		    printf("%s:%d: nobody talks with %s and no faster protocols are "
+			   "used. We stop here.\n",  comm->c_name, rank, 
+			   hier_prot[level]);
 		}
 		goto exit;
 	    }
 	    else {
 		/* 
-		 * this means, no process has a partner to which it can talk with this protocol,
-		 * so continue to next level, since faster protocols are used.
+		 * this means, no process has a partner to which it can talk with this 
+		 * protocol, so continue to next level, since faster protocols are 
+		 * used.
 		 */
 		if ( hier_verbose ) {
-		    printf("%s:%d: nobody talks with %s but faster protocols are used. "
-			   "We continue.\n", comm->c_name, rank, hier_prot[level]);
+		    printf("%s:%d: nobody talks with %s but faster protocols are used."
+			   " We continue.\n", comm->c_name, rank, hier_prot[level]);
 		}
 		continue;
 	    }
@@ -281,16 +261,13 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
         }
         else {
 	    if ( hier_verbose ) {
-		printf("%s:%d: %d  procs talk with %s. Suggesting to use this, key %d\n", 
+		printf("%s:%d: %d procs talk with %s. Usse this protocol, key %d\n", 
 		       comm->c_name, rank, maxncount[0], hier_prot[level], color);
 	    }
 
-            ret = mca_coll_hierarch_gather_tmp (&color, 1, MPI_INT, tdata->hier_colorarr, 1, 
-        					MPI_INT, 0, comm );
-            if ( OMPI_SUCCESS != ret ) {
-        	return NULL;
-            }
-            ret = mca_coll_hierarch_bcast_tmp ( tdata->hier_colorarr, size, MPI_INT, 0, comm);
+            ret = mca_coll_hierarch_allgather_tmp (&color, 1, MPI_INT, 
+						   tdata->hier_colorarr, 1, 
+						   MPI_INT, comm );
             if ( OMPI_SUCCESS != ret ) {
         	return NULL;
             }
@@ -354,30 +331,20 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     /* allocate a certain number of the hierarch_llead structures, which store
        information about local leader and the according subcommunicators 
     */
-    llead = (struct mca_coll_hierarch_llead_t *) malloc (sizeof(struct mca_coll_hierarch_llead_t));
+    llead = (struct mca_coll_hierarch_llead_t * ) malloc ( 
+	sizeof(struct mca_coll_hierarch_llead_t));
     if ( NULL == llead ) {
         goto exit;
     }
-    /* determine how many local leader there are and who they are */
-    data->hier_num_lleaders = mca_coll_hierarch_count_lleaders (size, data->hier_colorarr);
-    data->hier_llr = (int *) malloc (data->hier_num_lleaders * sizeof(int));
-    if ( NULL == data->hier_llr ){
-	goto exit;
-    }
-    mca_coll_hierarch_get_llr ( size, data->hier_colorarr, data->hier_llr);
 
-    llead->lleaders = (int *) malloc (sizeof(int) * data->hier_num_lleaders);
-    if ( NULL == llead->lleaders ) {
-        goto exit;
-    }
-    mca_coll_hierarch_get_all_lleaders ( data->hier_num_colorarr,
-        				 data->hier_colorarr, 
-        				 data->hier_num_lleaders,
-					 data->hier_llr,
-        				 llead->lleaders, 
-					 1 );        
-    /* determine my lleader, maybe its me */
-    mca_coll_hierarch_get_lleader ( rank, data, &(llead->my_lleader), &(llead->am_lleader), 1 );
+    /* These two routines set all relevant entries in the mca_coll_base_comm_t 
+     * structure. The first one makes all entries which are independent of the 
+     * offset (and have to be done only once per module. The second one is 
+     * depending on the offset, and has to be called therefore every time we need 
+     * a new llcomm 
+     */
+    mca_coll_hierarch_get_llr ( data );
+    mca_coll_hierarch_get_all_lleaders ( rank, data, llead, 1 );        
     
     /* Generate the lleader communicator assuming that all lleaders are the first
        process in the list of processes with the same color. A function generating 
@@ -466,88 +433,171 @@ int mca_coll_hierarch_comm_unquery ( struct ompi_communicator_t *comm,
 }
 
 
+int mca_coll_hierarch_get_all_lleaders ( int rank, struct mca_coll_base_comm_t *data,
+					  struct mca_coll_hierarch_llead_t * llead, 
+					  int offset )
+{
+    int i, j, ret=OMPI_SUCCESS;
+    int *cntarr=NULL;
+    int mycolor;
+
+    cntarr = (int *)calloc (1, sizeof (int)* data->hier_num_lleaders );
+    if ( NULL == cntarr ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    llead->lleaders = (int *) malloc (sizeof(int) * data->hier_num_lleaders);
+    if ( NULL == llead->lleaders ) {
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
+    }
+    llead->offset = offset;
+
+    for ( i=0; i<data->hier_num_colorarr; i++) {
+	for ( j=0; j<data->hier_num_lleaders; j++) {
+	    if ( cntarr[j] >= offset ) {
+		continue;
+	    }
+	    if ( data->hier_colorarr[i] == data->hier_llr[j]) {
+		cntarr[j]++;
+		llead->lleaders[j] = i;
+		break;
+	    }
+	}
+    }
+
+    mycolor = data->hier_colorarr[rank];
+    for ( i=0; i< data->hier_num_colorarr; i++ ) {
+	if ( data->hier_llr[i] == mycolor ) {
+	    llead->my_lleader = cntarr[i];
+	    if ( llead->lleaders[i] == rank ) {
+		llead->am_lleader = 1; 
+	    }
+	    break;
+	}
+    }
+
+ exit:
+    if ( NULL != cntarr ) {
+	free ( cntarr );
+    }
+    
+    return ret;
+}
+
+int mca_coll_hierarch_get_llr ( struct mca_coll_base_comm_t *data )
+{
+    int i, j, cnt, found;
+    int ncount;
+
+    ncount = mca_coll_hierarch_count_lleaders ( data->hier_num_colorarr, 
+						data->hier_colorarr);
+    data->hier_num_lleaders = ncount;
+    data->hier_llr = (int *) malloc ( data->hier_num_lleaders * sizeof(int));
+    data->hier_max_offset = (int *) calloc ( 1, data->hier_num_lleaders * sizeof(int));
+    if ( ( NULL != data->hier_llr) || ( NULL != data->hier_max_offset )) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for ( i=0; i<data->hier_num_colorarr; i++ ) {
+	if ( data->hier_colorarr[i] != MPI_UNDEFINED ) {
+	    data->hier_llr[0] = data->hier_colorarr[i];
+	    data->hier_max_offset[0]++;
+	    break;
+	}
+    }
+
+    for ( cnt=1, i=0; i<data->hier_num_colorarr; i++ ) {
+	for ( found=0, j=0; j<cnt; j++ ) {
+	    if ( data->hier_llr[j]  == data->hier_colorarr[i]) {
+		data->hier_max_offset[j]++;
+		found = 1;
+		break;
+	    }
+	}
+	if ( !found && (MPI_UNDEFINED != data->hier_colorarr[i]) ) {
+	    data->hier_llr[cnt] = data->hier_colorarr[i];
+	    data->hier_max_offset[cnt]++;
+	    cnt++;
+	}
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
 struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root, 
-							   struct mca_coll_base_comm_t *data,
-							   int* llroot,
-							   int* lleader) 
+						     struct mca_coll_base_comm_t *data,
+						     int* llroot,
+						     int* lroot) 
 {
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_group_t *llgroup=NULL;
     struct ompi_group_t *group=NULL;
     struct mca_coll_hierarch_llead_t *llead=NULL;
-    int found=0; /* false */
-    int i;
-    int rc;
-    int num_llead=-1;
-
-    rc = ompi_comm_group ( data->hier_comm, &group);
-    if ( OMPI_SUCCESS != rc ) {
-        return NULL;
-    }
-
+    int found, i, rc, num_llead, offset;
+    int rank = ompi_comm_rank (data->hier_comm);
+    
+    /* determine what our offset of root is in the colorarr */
+    offset = mca_coll_hierarch_get_offset ( root, 
+					    data->hier_num_colorarr, 
+					    data->hier_colorarr );
+    
     num_llead = ompi_pointer_array_get_size ( &(data->hier_llead) );
-    for (i=0;i<num_llead; i++ ) {
+    for ( found=0, i=0; i < num_llead; i++ ) {
         llead = (struct mca_coll_hierarch_llead_t *) ompi_pointer_array_get_item (
 	    &(data->hier_llead), i );
-        llcomm = llead->llcomm;
-        rc = ompi_comm_group ( llcomm, &llgroup);
-        if ( OMPI_SUCCESS != rc ) {
-            return NULL;
-	}
-        
-        rc = ompi_group_translate_ranks ( group, 1, &root, llgroup, llroot);
-        if ( OMPI_SUCCESS != rc ) {
-            return NULL;
-        }
 
-	/* ompi_group_free (&llgroup) */
-        if ( MPI_UNDEFINED != *llroot ) {
-            found = 1;
-            break;
-        }
+	if (llead->offset >= offset ) {
+	    found = 1;
+	    break;
+	}
     }
     
     if ( !found ) {
-	int offset;
-
-	/* determine what our offset of root is in the colorarr */
-	offset = mca_coll_hierarch_get_offset ( root, data->hier_num_colorarr, data->hier_colorarr );
-	
-        /* allocate a new llead element */
-	llead = (struct mca_coll_hierarch_llead_t *) malloc (sizeof(struct mca_coll_hierarch_llead_t));
+	/* allocate a new llead element */
+	llead = (struct mca_coll_hierarch_llead_t *) malloc (
+	    sizeof(struct mca_coll_hierarch_llead_t));
 	if ( NULL == llead ) {
 	    return NULL;
 	}
-
+	
 	/* generate the list of lleaders with this offset */
-	 llead->lleaders = (int *) malloc (sizeof(int) * data->hier_num_lleaders);
-	 if ( NULL == llead->lleaders ) {
-	     return NULL;
-	 }
-	 mca_coll_hierarch_get_all_lleaders ( data->hier_num_colorarr,
-					      data->hier_colorarr, 
-					      data->hier_num_lleaders,
-					      data->hier_llr,
-					      llead->lleaders, 
-					      offset );   
+	mca_coll_hierarch_get_all_lleaders ( rank, data, llead, offset );   
+	
+	/* create new lleader subcommunicator */
+	rc = ompi_comm_split ( data->hier_comm, llead->am_lleader, root, &llcomm, 0);
+	if ( OMPI_SUCCESS != rc ) {
+	    return NULL;
+	}
 
-	 
-	 /* create new lleader subcommunicator */
-	 rc = ompi_comm_split ( data->hier_comm, llead->am_lleader, root, &llcomm, 0);
-	 if ( OMPI_SUCCESS != rc ) {
-	     return NULL;
-	 }
-	 llead->llcomm = llcomm;
-
-	 /* Store the new element on the data struct */
-	 ompi_pointer_array_add ( &(data->hier_llead), &llead);
-
-	 /* determine all other information */
-
+	/* Store the new element on the data struct */
+	ompi_pointer_array_add ( &(data->hier_llead), &llead);
     }
- 
-    /* ompi_group_free (&group); */
 
+    llcomm = llead->llcomm;
+    *lroot  = llead->my_lleader;
+    *llroot = MPI_UNDEFINED;
+
+    if ( MPI_COMM_NULL != llcomm ) {
+	rc = ompi_comm_group ( data->hier_comm, &group);
+	if ( OMPI_SUCCESS != rc ) {
+	    return NULL;
+	}
+
+	rc = ompi_comm_group ( llcomm, &llgroup);
+	if ( OMPI_SUCCESS != rc ) {
+	    return NULL;
+	}
+	
+	rc = ompi_group_translate_ranks ( group, 1, &root, llgroup, llroot);
+	if ( OMPI_SUCCESS != rc ) {
+	    return NULL;
+	}
+	/* ompi_group_free (&llgroup) */
+	/* ompi_group_free (&group); */
+    }
+     
     return llcomm;
 }
 
@@ -716,144 +766,3 @@ static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
     return;
 }
 
-/********************************************************************************/
-/********************************************************************************/
-/********************************************************************************/
-static int mca_coll_hierarch_bcast_tmp ( void *buf, int count,  struct ompi_datatype_t *dtype,
-        				 int root, struct ompi_communicator_t *comm)
-{
-    int err = OMPI_SUCCESS;
-    int rank = ompi_comm_rank ( comm );
-
-    if ( rank != root ) {
-        err = MCA_PML_CALL(recv(buf, count, dtype, root,
-        			MCA_COLL_BASE_TAG_BCAST,
-        			comm, MPI_STATUS_IGNORE));
-        if ( OMPI_SUCCESS != err ) {
-            return err;
-        }
-    }
-    else {
-        int i;
-        int size=ompi_comm_size ( comm );
-
-        for ( i=0; i<size; i++ ) {
-            err =  MCA_PML_CALL(send(buf, count, dtype, i,
-        			     MCA_COLL_BASE_TAG_BCAST,
-        			     MCA_PML_BASE_SEND_STANDARD, comm));
-            if ( OMPI_SUCCESS != err ) {
-        	return err;
-            }
-        }        	
-    }
-
-    return err;
-}
-
-static int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
-        				struct ompi_datatype_t *dtype,
-        				struct ompi_op_t *op,
-        				int root, struct ompi_communicator_t *comm)
-{
-    int i;
-    int err;
-    int size;
-    char *pml_buffer = NULL;
-    long extent, lb;
-    int rank=ompi_comm_rank(comm);;
-
-    /* If not root, send data to the root. */
-    if (rank != root) {
-        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
-				MCA_COLL_BASE_TAG_REDUCE,
-                                MCA_PML_BASE_SEND_STANDARD, comm));
-        return err;
-    }
-
-    size = ompi_comm_size(comm);
-
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    pml_buffer = malloc(count * extent);
-    if (NULL == pml_buffer) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
-    if (MPI_SUCCESS != err) {
-        goto exit;
-    }
-
-    /* Loop receiving and calling reduction function (C or Fortran). */
-    for (i = size - 1; i >= 0; --i) {
-        if (rank == i) {
-            continue;
-        } else {
-            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
-                                    MCA_COLL_BASE_TAG_REDUCE, comm,
-                                    MPI_STATUS_IGNORE));
-            if (MPI_SUCCESS != err) {
-                goto exit;
-            }
-        }
-        
-        /* Perform the reduction */
-        ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
-    }
-    
- exit:
-    if (NULL != pml_buffer) {
-        free(pml_buffer);
-    }
-    return MPI_SUCCESS;
-}
-
-
-static int mca_coll_hierarch_gather_tmp(void *sbuf, int scount,
-					struct ompi_datatype_t *sdtype,
-					void *rbuf, int rcount,
-					struct ompi_datatype_t *rdtype,
-					int root, struct ompi_communicator_t *comm)
-{
-    int i;
-    int err;
-    int rank;
-    int size;
-    char *ptmp;
-    MPI_Aint incr;
-    MPI_Aint extent;
-    MPI_Aint lb;
-
-    size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
-
-    /* Everyone but root sends data and returns. */
-    if (rank != root) {
-        return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-                                 MCA_COLL_BASE_TAG_GATHER,
-                                 MCA_PML_BASE_SEND_STANDARD, comm));
-    }
-
-    /* I am the root, loop receiving the data. */
-    ompi_ddt_get_extent(rdtype, &lb, &extent);
-    incr = extent * rcount;
-    for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
-        if (i == rank) {
-            if (MPI_IN_PLACE != sbuf) {
-                err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
-                                      ptmp, rcount, rdtype);
-            } else {
-                err = MPI_SUCCESS;
-            }
-        } else {
-            err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
-                                    MCA_COLL_BASE_TAG_GATHER,
-                                    comm, MPI_STATUS_IGNORE));
-        }
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
-    }
-
-    /* All done */
-    return MPI_SUCCESS;
-}

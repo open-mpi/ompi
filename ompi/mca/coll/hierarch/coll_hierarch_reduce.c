@@ -43,21 +43,21 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;
     int rank, lrank;
-    int ret;
-    int lleader, llroot;
+    int lroot, llroot;
     long extent, true_extent, lb, true_lb;
     char *tmpbuf=NULL, *tbuf=NULL;
+    int ret;
 
     rank   = ompi_comm_rank ( comm );
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
 
-    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lleader);
+    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
 
     if ( MPI_COMM_NULL != lcomm ) {
 	
 	lrank = ompi_comm_rank (lcomm);
-	if ( lrank == lleader ) {
+	if ( lrank == lroot ) {
 	    ompi_ddt_get_extent(dtype, &lb, &extent);
 	    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
@@ -70,11 +70,11 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
 
 	if ( MPI_IN_PLACE != sbuf ) {
 	    ret = lcomm->c_coll.coll_reduce (sbuf, tmpbuf, count, dtype, 
-					     op, lleader, lcomm);
+					     op, lroot, lcomm);
 	}
 	else {
             ret = lcomm->c_coll.coll_reduce (rbuf, tmpbuf, count, dtype, 
-					     op, lleader, lcomm);
+					     op, lroot, lcomm);
 	}
 	if ( OMPI_SUCCESS != ret ) {
 	    goto exit;
