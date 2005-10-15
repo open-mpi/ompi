@@ -36,7 +36,7 @@
 #include "mca/btl/btl.h"
 
 
-/* local functions and data */
+/* Local functions and data */
 /* #define HIER_MAXPROTOCOL 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 
@@ -48,7 +48,7 @@ static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","gm","mx","mvapi","openib"
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","openib","sm"};
 
-static int hier_verbose=0;
+int mca_coll_hier_verbose=0;
 
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  int component_level,
@@ -141,7 +141,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
                              struct mca_coll_base_comm_t **data)
 {
     int size, rank;
-    int color, ncount[2], maxncount[2];
+    int color, ncount[3], maxncount[3];
     struct mca_coll_base_comm_t *tdata=NULL;
     int level;
     int ret=OMPI_SUCCESS;
@@ -165,7 +165,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
         return NULL;
     }
     if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_verbose, 
-						  &hier_verbose)) {
+						  &mca_coll_hier_verbose)) {
         return NULL;
     }
     
@@ -205,7 +205,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
            that this might be the best solution. These functions emulate an 
 	   allreduce and  an allgather.
         */
-        ret = mca_coll_hierarch_allreduce_tmp (ncount, maxncount, 2, MPI_INT, 
+	ncount[2] = ncount[0] + ncount[1];
+        ret = mca_coll_hierarch_allreduce_tmp (ncount, maxncount, 3, MPI_INT, 
 					       MPI_MAX, comm );
         if ( OMPI_SUCCESS != ret ) {
             return NULL;
@@ -216,7 +217,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 		/* this meands, no process talks to a partner with the specified 
 		   protocol *and* no faster protocol is used at all. so we can stop
 		   here and remove us from the list. */
-		if ( hier_verbose ) {
+		if ( mca_coll_hier_verbose ) {
 		    printf("%s:%d: nobody talks with %s and no faster protocols are "
 			   "used. We stop here.\n",  comm->c_name, rank, 
 			   hier_prot[level]);
@@ -229,7 +230,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 		 * protocol, so continue to next level, since faster protocols are 
 		 * used.
 		 */
-		if ( hier_verbose ) {
+		if ( mca_coll_hier_verbose ) {
 		    printf("%s:%d: nobody talks with %s but faster protocols are used."
 			   " We continue.\n", comm->c_name, rank, hier_prot[level]);
 		}
@@ -244,24 +245,24 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
              * Its (size-1) because we do not count ourselves.
 	     * maxncount[1] should be zero.
              */
-	    if ( hier_verbose ) {
+	    if ( mca_coll_hier_verbose ) {
 		printf("%s:%d: everybody talks with %s. No need to continue\n", 
 		       comm->c_name, rank, hier_prot[level]);
 	    }
             goto exit;
         }
-	else if ( (maxncount[0] + maxncount[1]) == (size -1) ){
+	else if ( (maxncount[2]) == (size -1) ){
 	     /* still every process would be part of this new comm,
                 so there is no point in creating it. */
-	    if ( hier_verbose ) {
+	    if ( mca_coll_hier_verbose ) {
 		printf("%s:%d: every process would be part of this comm with prot %s. "
 		       "We continue\n", comm->c_name, rank, hier_prot[level]);
 	    }
 	    continue;
         }
         else {
-	    if ( hier_verbose ) {
-		printf("%s:%d: %d procs talk with %s. Usse this protocol, key %d\n", 
+	    if ( mca_coll_hier_verbose ) {
+		printf("%s:%d: %d procs talk with %s. Use this protocol, key %d\n", 
 		       comm->c_name, rank, maxncount[0], hier_prot[level], color);
 	    }
 
@@ -356,7 +357,8 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     llead->llcomm = llcomm;
     
     /* Store it now on the data structure */
-    ompi_pointer_array_set_item ( &(data->hier_llead), 0, &(llead));
+    OBJ_CONSTRUCT(&(data->hier_llead), ompi_pointer_array_t);
+    ompi_pointer_array_add ( &(data->hier_llead), llead);
     
     mca_coll_hierarch_dump_struct (data);
     
@@ -416,6 +418,7 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
 	free ( current );
     }
     ompi_pointer_array_remove_all ( &(data->hier_llead));
+    OBJ_DESTRUCT (&(data->hier_llead));
     free ( data->hier_colorarr );
     free ( data->hier_llr);
     free ( data );
@@ -549,6 +552,9 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
     for ( found=0, i=0; i < num_llead; i++ ) {
         llead = (struct mca_coll_hierarch_llead_t *) ompi_pointer_array_get_item (
 	    &(data->hier_llead), i );
+	if ( llead == NULL ) {
+	  continue;
+	}
 
 	if (llead->offset >= offset ) {
 	    found = 1;
@@ -574,7 +580,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	}
 
 	/* Store the new element on the data struct */
-	ompi_pointer_array_add ( &(data->hier_llead), &llead);
+	ompi_pointer_array_add ( &(data->hier_llead), llead);
     }
 
     llcomm = llead->llcomm;
@@ -752,16 +758,22 @@ static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
 
     printf("%d: Dump of hier-struct for  comm %s cid %u\n", 
            rank, c->hier_comm->c_name, c->hier_comm->c_contextid);
+
     printf("%d: No of llead communicators: %d No of lleaders: %d\n", 
 	   rank, ompi_pointer_array_get_size ( &(c->hier_llead)),
 	   c->hier_num_lleaders );
+
     for ( i=0; i < ompi_pointer_array_get_size(&(c->hier_llead)); i++ ) {
 	current = ompi_pointer_array_get_item (&(c->hier_llead), i);
+	if ( current == NULL ) {
+	  continue;
+	}
+
 	printf("%d:  my_leader %d am_leader %d\n", rank,
                current->my_lleader, current->am_lleader );
 
-        for (j=0; j<c->hier_num_lleaders; i++ ) {
-            printf("%d:      lleader[%d] = %d\n", rank, i, current->lleaders[j]);
+        for (j=0; j<c->hier_num_lleaders; j++ ) {
+            printf("%d:      lleader[%d] = %d\n", rank, j, current->lleaders[j]);
         }
     }
     

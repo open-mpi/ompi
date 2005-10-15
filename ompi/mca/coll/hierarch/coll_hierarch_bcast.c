@@ -31,7 +31,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 
-
+extern int mca_coll_hier_verbose;
 
 
 int mca_coll_hierarch_bcast_intra(void *buff, 
@@ -45,10 +45,16 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     struct ompi_communicator_t *lcomm=NULL;
     int lroot, llroot;
     int rank, ret;
+    
 
     rank   = ompi_comm_rank ( comm );
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
+
+    if ( mca_coll_hier_verbose ) {
+      printf("%s:%d: executing hierarchical bcast with cnt=%d and root=%d\n",
+	     comm->c_name, rank, count, root );
+    }
 
     /* This function returns the local leader communicator
        which *always* contains the root of this operation.
