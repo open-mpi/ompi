@@ -35,7 +35,6 @@ extern "C" {
 extern const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component;
 extern int mca_coll_hierarch_priority_param;
 extern int mca_coll_hierarch_verbose_param;
-extern int mca_coll_hierarch_verbose;
 extern int mca_coll_hierarch_use_rdma_param;
 extern int mca_coll_hierarch_ignore_sm_param;
 
