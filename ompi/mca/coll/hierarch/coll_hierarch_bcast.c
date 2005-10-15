@@ -43,8 +43,8 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     struct mca_coll_base_comm_t *data=NULL;
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;
-    int lleader;
-    int rank, ret, llroot;
+    int lroot, llroot;
+    int rank, ret;
 
     rank   = ompi_comm_rank ( comm );
     data   = comm->c_coll_selected_data;
@@ -56,7 +56,7 @@ int mca_coll_hierarch_bcast_intra(void *buff,
        also the reason, that *every* process in comm has to call 
        this function
     */
-    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lleader);
+    llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
 
     /* Bcast on the upper level among the local leaders */
     if ( MPI_UNDEFINED != llroot ) {
@@ -71,7 +71,7 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     */
 
     if ( MPI_COMM_NULL != lcomm ) {
-	ret = lcomm->c_coll.coll_bcast(buff, count, datatype, lleader, lcomm );
+	ret = lcomm->c_coll.coll_bcast(buff, count, datatype, lroot, lcomm );
     }
 
     return  ret;
