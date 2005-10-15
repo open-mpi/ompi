@@ -469,7 +469,7 @@ int mca_coll_hierarch_get_all_lleaders ( int rank, struct mca_coll_base_comm_t *
     mycolor = data->hier_colorarr[rank];
     for ( i=0; i< data->hier_num_colorarr; i++ ) {
 	if ( data->hier_llr[i] == mycolor ) {
-	    llead->my_lleader = cntarr[i];
+	    llead->my_lleader = cntarr[i]-1;
 	    if ( llead->lleaders[i] == rank ) {
 		llead->am_lleader = 1; 
 	    }
@@ -488,14 +488,14 @@ int mca_coll_hierarch_get_all_lleaders ( int rank, struct mca_coll_base_comm_t *
 int mca_coll_hierarch_get_llr ( struct mca_coll_base_comm_t *data )
 {
     int i, j, cnt, found;
-    int ncount;
+    int ncount, start;
 
     ncount = mca_coll_hierarch_count_lleaders ( data->hier_num_colorarr, 
 						data->hier_colorarr);
     data->hier_num_lleaders = ncount;
     data->hier_llr = (int *) malloc ( data->hier_num_lleaders * sizeof(int));
     data->hier_max_offset = (int *) calloc ( 1, data->hier_num_lleaders * sizeof(int));
-    if ( ( NULL != data->hier_llr) || ( NULL != data->hier_max_offset )) {
+    if ( ( NULL == data->hier_llr) || ( NULL == data->hier_max_offset )) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -503,11 +503,12 @@ int mca_coll_hierarch_get_llr ( struct mca_coll_base_comm_t *data )
 	if ( data->hier_colorarr[i] != MPI_UNDEFINED ) {
 	    data->hier_llr[0] = data->hier_colorarr[i];
 	    data->hier_max_offset[0]++;
+	    start=i+1;
 	    break;
 	}
     }
 
-    for ( cnt=1, i=0; i<data->hier_num_colorarr; i++ ) {
+    for ( cnt=1, i=start; i<data->hier_num_colorarr; i++ ) {
 	for ( found=0, j=0; j<cnt; j++ ) {
 	    if ( data->hier_llr[j]  == data->hier_colorarr[i]) {
 		data->hier_max_offset[j]++;
