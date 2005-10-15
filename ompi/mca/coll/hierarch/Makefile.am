@@ -45,6 +45,7 @@ libmca_coll_hierarch_la_LDFLAGS = -module -avoid-version
 sources = \
         coll_hierarch.h \
         coll_hierarch.c \
+        coll_hierarch_allreduce.c \
         coll_hierarch_barrier.c \
         coll_hierarch_bcast.c \
         coll_hierarch_component.c \

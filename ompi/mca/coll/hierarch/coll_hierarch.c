@@ -69,22 +69,22 @@ static const mca_coll_base_module_1_0_0_t intra = {
   /* Collective function pointers */
   /* function pointers marked with NULL are not yet implemented
      and will use the functions provided in the basic module */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
+  NULL, /* allgather */
+  NULL, /* allgatherv */
+  mca_coll_hierarch_allreduce_intra, 
+  NULL, /* alltoall */
+  NULL, /* alltoallv */
+  NULL, /* alltoallw */
   mca_coll_hierarch_barrier_intra,
   mca_coll_hierarch_bcast_intra,
-  NULL, 
-  NULL, 
-  NULL, 
+  NULL,  /* exscan */
+  NULL,  /* gather */
+  NULL,  /* gatherv */
   mca_coll_hierarch_reduce_intra,
-  NULL, 
-  NULL,
-  NULL, 
-  NULL
+  NULL,  /* reduce_scatter */
+  NULL,  /* scan */
+  NULL,  /* scatter */
+  NULL   /* scatterv */
 };
 
 
