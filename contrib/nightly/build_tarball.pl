@@ -314,10 +314,10 @@ sub find_program {
     # loop through the list and save the first one that we find
     my $i = 0;
     while ($i <= $#names) {
-        my $ret = system("which $names[$i] 2>&1 >/dev/null");
-        my $status = $ret >> 8;
-        if ($status == 0) {
-            return $names[$i];
+        foreach my $dir (split(/:/, $ENV{PATH})) {
+            if (-x "$dir/$names[$i]") {
+                return $names[$i];
+            }
         }
         ++$i;
     }
