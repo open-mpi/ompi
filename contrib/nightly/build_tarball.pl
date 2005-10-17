@@ -746,7 +746,7 @@ if ($url_arg) {
     # compare the md5sum
     my $md5_file = `grep $version.tar.gz $md5_checksums`;
     chomp($md5_file);
-    my $md5sum = find_program(qw(md5sum));
+    my $md5sum = find_program(qw(md5sum gmd5sum));
     if (!defined($md5sum)) {
         push(@email_output,
 "WARNING: Could not find md5sum executable, so I will not be able to check
@@ -767,7 +767,7 @@ WARNING: checksums.  Proceeding anyway...\n\n");
     # compare the sha1sum
     my $sha1_file = `grep $version.tar.gz $sha1_checksums`;
     chomp($sha1_file);
-    my $sha1sum = find_program(qw(sha1sum));
+    my $sha1sum = find_program(qw(sha1sum gsha1sum));
     if (!defined($sha1sum)) {
         push(@email_output,
 "WARNING: Could not find sha1sum executable, so I will not be able to check
