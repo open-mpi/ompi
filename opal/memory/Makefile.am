@@ -14,25 +14,12 @@
 # $HEADER$
 #
 
-
-
-noinst_LTLIBRARIES = libopalmemory.la
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 # Source code files
+headers += \
+	memory/memory.h \
+	memory/memory_internal.h
 
-headers = \
-	memory.h \
-	memory_internal.h
-
-libopalmemory_la_SOURCES = \
-        $(headers) \
-	memory.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/memory
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libopal_la_SOURCES += \
+	memory/memory.c

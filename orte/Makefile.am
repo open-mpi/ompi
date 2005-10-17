@@ -14,26 +14,47 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
+
 SUBDIRS = \
-        include \
-        class \
-	dps \
-        mca \
-        runtime \
-        util \
+	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
+	$(MCA_orte_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
-        dynamic-mca \
-        tools
+	$(MCA_orte_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
+
+DIST_SUBDIRS = \
+	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
+	$(MCA_orte_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 # Build the main ORTE library
 
 lib_LTLIBRARIES = liborte.la
 liborte_la_SOURCES =
 liborte_la_LIBADD = \
-        class/libclass.la \
-        dps/libdps.la \
-        runtime/libruntime.la \
-        util/liborteutil.la \
-	$(MCA_orte_FRAMEWORK_LIBS) $(top_ompi_builddir)/opal/libopal.la
-
+	$(MCA_orte_FRAMEWORK_LIBS) \
+	$(top_ompi_builddir)/opal/libopal.la
 liborte_la_DEPENDENCIES = $(liborte_la_LIBADD)
+
+
+# included subdirectory Makefile.am's and appended-to variables
+headers =
+noinst_LTLIBRARIES =
+nobase_orte_HEADERS = 
+dist_pkgdata_DATA =
+liborte_la_SOURCES += $(headers)
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ortedir = $(includedir)/openmpi/orte
+nobase_orte_HEADERS += $(headers)
+else
+ortedir = $(includedir)
+endif
+
+include include/Makefile.am
+include class/Makefile.am
+include dps/Makefile.am
+include runtime/Makefile.am
+include util/Makefile.am
+include tools/Makefile.am

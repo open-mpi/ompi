@@ -15,33 +15,19 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
+headers += \
+        errhandler/errclass.h \
+        errhandler/errcode.h \
+        errhandler/errcode-internal.h \
+        errhandler/errhandler.h \
+        errhandler/errhandler_predefined.h
 
-noinst_LTLIBRARIES = liberrhandler.la
-
-# Source code files
-
-headers = \
-        errclass.h \
-        errcode.h \
-        errcode-internal.h \
-        errhandler.h \
-        errhandler_predefined.h
-
-liberrhandler_la_SOURCES = \
-        $(headers) \
-        errhandler.c \
-        errhandler_invoke.c \
-        errhandler_predefined.c \
-        errcode.c \
-        errclass.c  \
-        errcode-internal.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/errhandler
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        errhandler/errhandler.c \
+        errhandler/errhandler_invoke.c \
+        errhandler/errhandler_predefined.c \
+        errhandler/errcode.c \
+        errhandler/errclass.c  \
+        errhandler/errcode-internal.c

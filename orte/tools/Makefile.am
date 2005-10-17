@@ -15,6 +15,18 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
+SUBDIRS += \
+	tools/console \
+	tools/openmpi \
+	tools/orted \
+	tools/orteprobe \
+	tools/orterun
 
-SUBDIRS = console openmpi orted orteprobe orterun
+DIST_SUBDIRS += \
+	tools/console \
+	tools/openmpi \
+	tools/orted \
+	tools/orteprobe \
+	tools/orterun

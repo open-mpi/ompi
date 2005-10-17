@@ -101,48 +101,64 @@ f77_pmpi_lib =
 endif
 
 SUBDIRS = \
-        include \
-        attribute \
-        class \
-        communicator \
-        datatype \
         debuggers \
-        errhandler \
-        file \
-        group \
-        info \
-        mca \
         mpi \
-        op \
-        proc \
-        request \
-        runtime \
-        win \
+	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
+	$(MCA_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
-        dynamic-mca \
-        tools
+	$(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
+
+DIST_SUBDIRS = \
+	debuggers \
+	mpi \
+	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
+	$(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 # Build the main MPI library
 
 lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =
 libmpi_la_LIBADD = \
-        attribute/libattribute.la \
-        class/libclass.la \
-        communicator/libcommunicator.la \
-        datatype/libdatatype.la \
         debuggers/libdebuggers.la \
-        errhandler/liberrhandler.la \
-        file/libfile.la \
-        group/libgroup.la \
-        info/libinfo.la \
-        mpi/c/libmpi_c.la $(c_mpi_lib) $(c_pmpi_lib) \
-        $(f77_base_lib) $(f77_mpi_lib) $(f77_pmpi_lib) \
-        runtime/libmpiruntime.la \
-        op/libop.la \
-        proc/libproc.la \
-        request/librequest.la \
-	$(MCA_ompi_FRAMEWORK_LIBS) $(top_ompi_builddir)/orte/liborte.la
-
-
+        mpi/c/libmpi_c.la \
+	$(c_mpi_lib) \
+	$(c_pmpi_lib) \
+        $(f77_base_lib) \
+	$(f77_mpi_lib) \
+	$(f77_pmpi_lib) \
+	$(MCA_ompi_FRAMEWORK_LIBS) \
+	$(top_ompi_builddir)/orte/liborte.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
+
+# included subdirectory Makefile.am's and appended-to variables
+headers =
+noinst_LTLIBRARIES =
+nobase_ompi_HEADERS = 
+dist_pkgdata_DATA =
+libmpi_la_SOURCES += $(headers)
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/ompi
+nobase_ompi_HEADERS += $(headers)
+else
+ompidir = $(includedir)
+endif
+
+include include/Makefile.am
+include class/Makefile.am
+
+include attribute/Makefile.am
+include communicator/Makefile.am
+include datatype/Makefile.am
+include errhandler/Makefile.am
+include file/Makefile.am
+include group/Makefile.am
+include info/Makefile.am
+include op/Makefile.am
+include proc/Makefile.am
+include request/Makefile.am
+include runtime/Makefile.am
+include win/Makefile.am
+include tools/Makefile.am

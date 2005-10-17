@@ -32,7 +32,7 @@ libmca_maffinity_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/maffinity/base
+ompidir = $(includedir)/openmpi/opal/mca/maffinity/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

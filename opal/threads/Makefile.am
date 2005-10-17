@@ -15,30 +15,17 @@
 # $HEADER$
 #
 
-
-
-noinst_LTLIBRARIES = libthreads.la
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 # Source code files
+headers += \
+        threads/condition.h \
+        threads/mutex.h \
+        threads/mutex_unix.h \
+        threads/mutex_windows.h \
+        threads/threads.h
 
-headers = \
-        condition.h \
-        mutex.h \
-        mutex_unix.h \
-        mutex_windows.h \
-        threads.h
-
-libthreads_la_SOURCES = \
-        $(headers) \
-        condition.c \
-        mutex.c \
-        thread.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/threads
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libopal_la_SOURCES += \
+        threads/condition.c \
+        threads/mutex.c \
+        threads/thread.c

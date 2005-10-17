@@ -14,11 +14,7 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = base $(MCA_rml_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_rml_ALL_SUBDIRS)
-
+SUBDIRS = base
 
 # Source code files
 

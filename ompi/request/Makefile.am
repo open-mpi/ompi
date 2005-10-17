@@ -15,28 +15,14 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
+headers += \
+        request/grequest.h \
+        request/request.h
 
-noinst_LTLIBRARIES = librequest.la
-
-# Source code files
-
-headers = \
-        grequest.h \
-        request.h
-
-librequest_la_SOURCES = \
-        $(headers) \
-        grequest.c \
-        request.c \
-        req_test.c \
-        req_wait.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/request
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        request/grequest.c \
+        request/request.c \
+        request/req_test.c \
+        request/req_wait.c

@@ -14,21 +14,21 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
+headers += \
+	include/sys/architecture.h \
+	include/sys/atomic.h \
+	include/sys/atomic_impl.h \
+	include/sys/cache.h \
+	include/sys/timer.h
 
-SUBDIRS = alpha amd64 ia32 ia64 mips powerpc sparc sparcv9 win32
-
-noinst_HEADERS = architecture.h \
-	atomic.h \
-	atomic_impl.h \
-	cache.h \
-	timer.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+include include/sys/alpha/Makefile.am
+include include/sys/amd64/Makefile.am
+include include/sys/ia32/Makefile.am
+include include/sys/ia64/Makefile.am
+include include/sys/mips/Makefile.am
+include include/sys/powerpc/Makefile.am
+include include/sys/sparc/Makefile.am
+include include/sys/sparcv9/Makefile.am
+include include/sys/win32/Makefile.am

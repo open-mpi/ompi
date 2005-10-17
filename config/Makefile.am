@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 EXTRA_DIST = \
         distscript.csh \
         c_get_alignment.m4 \

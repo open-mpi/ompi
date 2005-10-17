@@ -15,24 +15,10 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
+headers += \
+        proc/proc.h
 
-noinst_LTLIBRARIES = libproc.la
-
-# Source code files
-
-headers = \
-        proc.h
-
-libproc_la_SOURCES = \
-        $(headers) \
-        proc.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/proc
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        proc/proc.c

@@ -14,18 +14,9 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
+headers += \
+        include/constants.h
 
-SUBDIRS = sys
-
-noinst_HEADERS = \
-        constants.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/include
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+include include/sys/Makefile.am

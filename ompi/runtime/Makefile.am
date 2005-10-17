@@ -14,30 +14,16 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -I$(top_builddir)/src/event
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-noinst_LTLIBRARIES = libmpiruntime.la
+dist_pkgdata_DATA += runtime/help-mpi-runtime.txt
 
-dist_pkgdata_DATA = help-mpi-runtime.txt
+headers += \
+        runtime/mpiruntime.h \
+        runtime/params.h
 
-# Source code files
-
-headers = \
-        mpiruntime.h \
-        params.h
-
-libmpiruntime_la_SOURCES = \
-        $(headers) \
-        ompi_mpi_abort.c \
-        ompi_mpi_init.c \
-        ompi_mpi_finalize.c \
-        ompi_mpi_params.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/runtime
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        runtime/ompi_mpi_abort.c \
+        runtime/ompi_mpi_init.c \
+        runtime/ompi_mpi_finalize.c \
+        runtime/ompi_mpi_params.c

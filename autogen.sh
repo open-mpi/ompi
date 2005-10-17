@@ -47,7 +47,7 @@ if test ! -z "$AUTOMAKE"; then
     ompi_automake_search="$AUTOMAKE"
 fi
 
-ompi_automake_version="1.7"
+ompi_automake_version="1.9"
 ompi_autoconf_version="2.58"
 ompi_libtool_version="1.5.16"
 

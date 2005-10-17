@@ -15,30 +15,16 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
+headers += \
+        class/orte_proc_table.h \
+        class/orte_bitmap.h \
+        class/orte_pointer_array.h \
+        class/orte_value_array.h
 
-noinst_LTLIBRARIES = libclass.la
-
-# Source code files
-
-headers = \
-        orte_proc_table.h \
-        orte_bitmap.h \
-        orte_pointer_array.h \
-        orte_value_array.h
-
-libclass_la_SOURCES = \
-	$(headers) \
-        orte_proc_table.c \
-        orte_bitmap.c \
-        orte_pointer_array.c \
-        orte_value_array.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/class
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
+liborte_la_SOURCES += \
+        class/orte_proc_table.c \
+        class/orte_bitmap.c \
+        class/orte_pointer_array.c \
+        class/orte_value_array.c

@@ -15,32 +15,19 @@
 # $HEADER$
 #
 
-
-
-noinst_LTLIBRARIES = libclass.la
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 # Source code files
+headers += \
+        class/opal_free_list.h \
+        class/opal_hash_table.h \
+        class/opal_list.h \
+        class/opal_object.h \
+        class/opal_value_array.h
 
-headers = \
-        opal_free_list.h \
-        opal_hash_table.h \
-        opal_list.h \
-        opal_object.h \
-        opal_value_array.h
-
-libclass_la_SOURCES = \
-	$(headers) \
-        opal_free_list.c \
-        opal_hash_table.c \
-        opal_list.c \
-        opal_object.c \
-        opal_value_array.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/class
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libopal_la_SOURCES += \
+        class/opal_free_list.c \
+        class/opal_hash_table.c \
+        class/opal_list.c \
+        class/opal_object.c \
+        class/opal_value_array.c

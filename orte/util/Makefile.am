@@ -14,34 +14,18 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
+headers += \
+        util/proc_info.h \
+        util/session_dir.h \
+        util/sys_info.h \
+        util/universe_setup_file_io.h \
+        util/univ_info.h
 
-AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
-
-noinst_LTLIBRARIES = liborteutil.la
-
-# Source code files
-
-headers = \
-        proc_info.h \
-        session_dir.h \
-        sys_info.h \
-        universe_setup_file_io.h \
-        univ_info.h
-
-liborteutil_la_SOURCES = \
-        $(headers) \
-        proc_info.c \
-        session_dir.c \
-        sys_info.c \
-        universe_setup_file_io.c \
-        univ_info.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/util
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
+liborte_la_SOURCES += \
+        util/proc_info.c \
+        util/session_dir.c \
+        util/sys_info.c \
+        util/universe_setup_file_io.c \
+        util/univ_info.c

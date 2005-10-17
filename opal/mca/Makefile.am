@@ -14,21 +14,8 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = \
-        base \
-	$(MCA_opal_FRAMEWORKS)
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 # Source code files
-
-headers = mca.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/mca
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+headers += \
+	mca/mca.h

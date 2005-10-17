@@ -14,19 +14,10 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-
-noinst_HEADERS = \
-        constants.h \
-        ompi_socket_errno.h \
-        totalview.h \
-        types.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/include
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+headers += \
+        include/constants.h \
+        include/ompi_socket_errno.h \
+        include/totalview.h \
+        include/types.h

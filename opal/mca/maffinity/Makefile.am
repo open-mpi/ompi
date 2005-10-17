@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = base $(MCA_maffinity_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_maffinity_ALL_SUBDIRS)
+SUBDIRS = base 
 
 # Source code files
 
@@ -26,7 +23,7 @@ headers = maffinity.h maffinity_types.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/maffinity
+ompidir = $(includedir)/openmpi/opal/mca/maffinity
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

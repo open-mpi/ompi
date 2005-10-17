@@ -15,26 +15,12 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
+headers += \
+        op/op.h \
+        op/op_predefined.h
 
-noinst_LTLIBRARIES = libop.la
-
-# Source code files
-
-headers = \
-        op.h \
-        op_predefined.h
-
-libop_la_SOURCES = \
-        $(headers) \
-        op.c \
-        op_predefined.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/op
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        op/op.c \
+        op/op_predefined.c
