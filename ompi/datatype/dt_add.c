@@ -84,9 +84,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     if( extent == -1 ) extent = (pdtAdd->ub - pdtAdd->lb);
 
-    /* first make sure that we have enought place to
-     * put the new element inside */
-    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) {
+    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
         /* handle special cases for DT_LB and DT_UB */
         if( pdtAdd == ompi_ddt_basicDatatypes[DT_LB] ) {
             pdtBase->bdt_used |= (1<< DT_LB);
@@ -200,7 +198,11 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         pdtBase->desc.length = newLength;
     }
     pLast = &(pdtBase->desc.desc[pdtBase->desc.used]);
-    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
+    /* The condition to be able to use the optimized path here is to be in presence
+     * of an predefined contiguous datatype. This part is unable to handle any
+     * predefined non contiguous datatypes (like MPI_SHORT_INT).
+     */
+    if( (pdtAdd->flags & (DT_FLAG_PREDEFINED | DT_FLAG_DATA)) == (DT_FLAG_PREDEFINED | DT_FLAG_DATA) ) {
         pdtBase->btypes[pdtAdd->id] += count;
         if( (extent != (long)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
             localFlags = pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS);
