@@ -15,28 +15,14 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
+headers += \
+        communicator/communicator.h
 
-noinst_LTLIBRARIES = libcommunicator.la
-
-# Source code files
-
-headers = \
-        communicator.h
-
-libcommunicator_la_SOURCES = \
-        $(headers) \
-        comm_init.c \
-	comm.c \
-	comm_cid.c \
-	comm_dyn.c \
-	comm_publish.c 
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/communicator
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        communicator/comm_init.c \
+	communicator/comm.c \
+	communicator/comm_cid.c \
+	communicator/comm_dyn.c \
+	communicator/comm_publish.c 

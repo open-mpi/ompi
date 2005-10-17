@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,17 +15,8 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
-
-noinst_HEADERS = \
-        orte_constants.h \
-        orte_types.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/include
-orte_HEADERS = $(noinst_HEADERS)
-else
-ortedir = $(includedir)
-endif
+headers += \
+        include/orte_constants.h \
+        include/orte_types.h

@@ -14,15 +14,8 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
+headers += \
+	include/sys/mips/atomic.h
 
-noinst_HEADERS = atomic.h 
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys/mips
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif

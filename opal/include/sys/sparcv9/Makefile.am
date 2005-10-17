@@ -14,15 +14,8 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
-
-noinst_HEADERS = atomic.h timer.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys/sparc64
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+headers += \
+	include/sys/sparcv9/atomic.h \
+	include/sys/sparcv9/timer.h

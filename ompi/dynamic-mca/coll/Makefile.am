@@ -16,7 +16,7 @@
 
 
 
-SUBDIRS			= $(MCA_coll_DSO_SUBDIRS)
+SUBDIRS			= $(MCA_coll_DSO_COMPONENTS)
 DISTCLEANFILES		= $(SUBDIRS)
 
 # Every directory under here is a sym link to something in the main

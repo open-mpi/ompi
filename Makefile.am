@@ -14,8 +14,6 @@
 # $HEADER$
 #
 
-
-
 SUBDIRS = config include etc contrib $(MCA_PROJECT_SUBDIRS) test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
 

@@ -16,8 +16,7 @@
 
 
 
-SUBDIRS = base $(MCA_io_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_io_ALL_SUBDIRS)
+SUBDIRS = base
 
 # Source code files
 

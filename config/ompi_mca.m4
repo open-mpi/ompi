@@ -259,6 +259,10 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
              [m4_fatal([Could not find mca_$1_framework_list - rerun autogen.sh without -l])])
 
     MCA_$1_FRAMEWORKS=
+    MCA_$1_FRAMEWORKS_SUBDIRS=
+    MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS=
+    MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS=
+    MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS=
     MCA_$1_FRAMEWORK_LIBS=
     
     m4_foreach(mca_framework, [mca_$1_framework_list],
@@ -266,8 +270,16 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
                          [# common has to go up front
                           if test "mca_framework" = "common" ; then
                               MCA_$1_FRAMEWORKS="mca_framework $MCA_$1_FRAMEWORKS"
+                              MCA_$1_FRAMEWORKS_SUBDIRS="[mca/]mca_framework $MCA_$1_FRAMEWORKS_SUBDIRS"
+                              MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="[\$(MCA_]mca_framework[_ALL_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS"
+                              MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="[\$(MCA_]mca_framework[_DSO_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS"
+                              MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="[\$(MCA_]mca_framework[_STATIC_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS"
                           else
                               MCA_$1_FRAMEWORKS="$MCA_$1_FRAMEWORKS mca_framework"
+                              MCA_$1_FRAMEWORKS_SUBDIRS="$MCA_$1_FRAMEWORKS_SUBDIRS [mca/]mca_framework"
+                              MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS [\$(MCA_]mca_framework[_ALL_SUBDIRS)]"
+                              MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS [\$(MCA_]mca_framework[_DSO_SUBDIRS)]"
+                              MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS [\$(MCA_]mca_framework[_STATIC_SUBDIRS)]"
                           fi
                           if test "mca_framework" != "common" ; then
                               MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/base/libmca_]mca_framework[_base.la]"
@@ -278,6 +290,10 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
                                    [MCA_CONFIGURE_FRAMEWORK($1, mca_framework)])])])
 
     AC_SUBST(MCA_$1_FRAMEWORKS)
+    AC_SUBST(MCA_$1_FRAMEWORKS_SUBDIRS)
+    AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
+    AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
+    AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS)
     AC_SUBST(MCA_$1_FRAMEWORK_LIBS)
 ])
 
@@ -316,9 +332,6 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
         outdir=$1/mca/$2/base
     fi
     AS_MKDIR_P([$outdir])
-
-    # ensure that the dynamic-mca base directory exists
-    AS_MKDIR_P([$1/dynamic-mca/$2])
 
     # remove any previously generated #include files
     outfile_real=$outdir/static-components.h
@@ -380,23 +393,25 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                [static_components], [dso_components],
                                                [static_ltlibs])])
 
-    # reminder - the dollar sign 2 substitutions are at autogen time, so
-    # this will actually work in a rational way...
-    MCA_$2_ALL_SUBDIRS="$all_components"
-    MCA_$2_STATIC_SUBDIRS="$static_components"
-    MCA_$2_DSO_SUBDIRS="$dso_components"
+    MCA_$2_ALL_COMPONENTS="$all_components"
+    MCA_$2_STATIC_COMPONENTS="$static_components"
+    MCA_$2_DSO_COMPONENTS="$dso_components"
     MCA_$2_STATIC_LTLIBS="$static_ltlibs"
 
-    AC_SUBST(MCA_$2_ALL_SUBDIRS)
-    AC_SUBST(MCA_$2_STATIC_SUBDIRS)
-    AC_SUBST(MCA_$2_DSO_SUBDIRS)
+    AC_SUBST(MCA_$2_ALL_COMPONENTS)
+    AC_SUBST(MCA_$2_STATIC_COMPONENTS)
+    AC_SUBST(MCA_$2_DSO_COMPONENTS)
     AC_SUBST(MCA_$2_STATIC_LTLIBS)
+
+    OMPI_MCA_MAKE_DIR_LIST(MCA_$2_ALL_SUBDIRS, $2, [$all_components])
+    OMPI_MCA_MAKE_DIR_LIST(MCA_$2_STATIC_SUBDIRS, $2, [$static_components])
+    OMPI_MCA_MAKE_DIR_LIST(MCA_$2_DSO_SUBDIRS, $2, [$dso_components])
 
     # add all the makefiles for the framework to the CONFIG_FILES.
     # Don't add common/base, since it doesn't exist
     m4_if([$2], [common],
-        [AC_CONFIG_FILES([$1/mca/$2/Makefile $1/dynamic-mca/$2/Makefile])],
-        [AC_CONFIG_FILES([$1/mca/$2/Makefile $1/dynamic-mca/$2/Makefile $1/mca/$2/base/Makefile])])
+        [AC_CONFIG_FILES([$1/mca/$2/Makefile])],
+        [AC_CONFIG_FILES([$1/mca/$2/Makefile $1/mca/$2/base/Makefile])])
 
 
     # Create the final .h file that will be included in the type's
@@ -456,9 +471,6 @@ EOF
 AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
     ompi_show_subsubsubtitle "MCA component $2:$3 (no configuration)"
 
-    # remove any possible symlink in the mca-dynamic tree
-    rm -f $1/dynamic-mca/$2/$3
-
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, 
                               [should_build=$8], [should_build=0])
     MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)
@@ -501,9 +513,6 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     ompi_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro)"
-
-    # remove any possible symlink in the mca-dynamic tree
-    rm -f $1/dynamic-mca/$2/$3
 
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
@@ -668,9 +677,6 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
 
     if test "$8" = "dso" ; then
         $6="$$6 $component"
-        rm -f "$project/dynamic-mca/$framework/$component"
-        $LN_S "$OMPI_TOP_BUILDDIR/$project/mca/$framework/$component" \
-            "$project/dynamic-mca/$framework/$component"
     else
         $7="mca/$framework/$component/libmca_${framework}_${component}.la $$7"
         echo "extern const mca_base_component_t mca_${framework}_${component}_component;" >> $outfile.extern
@@ -972,4 +978,15 @@ else
   echo "config.status: creating $2/mca/$1/$1_direct_call.h"
 fi
 rm $2/mca/$1/$1_direct_call.h.template])
+])
+
+
+# OMPI_MCA_MAKE_DIR_LIST(subst'ed variable, framework, shell list)
+# -------------------------------------------------------------------------
+AC_DEFUN([OMPI_MCA_MAKE_DIR_LIST],[
+    $1=
+    for item in $3 ; do
+       $1="$$1 mca/$2/$item"
+    done
+    AC_SUBST($1)
 ])

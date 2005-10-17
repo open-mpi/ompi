@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,33 +15,19 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
+headers += \
+        dps/dps.h \
+        dps/dps_types.h \
+        dps/dps_internal.h
 
-noinst_LTLIBRARIES = libdps.la
-
-# Source code files
-
-headers = \
-        dps.h \
-        dps_types.h \
-        dps_internal.h
-
-libdps_la_SOURCES = \
-        $(headers) \
-        dps_internal_functions.c \
-        dps_load_unload.c \
-        dps_lookup.c \
-        dps_pack.c \
-        dps_peek.c \
-        dps_register.c \
-        dps_unpack.c \
-        orte_dps_open_close.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/dps
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
+liborte_la_SOURCES += \
+        dps/dps_internal_functions.c \
+        dps/dps_load_unload.c \
+        dps/dps_lookup.c \
+        dps/dps_pack.c \
+        dps/dps_peek.c \
+        dps/dps_register.c \
+        dps/dps_unpack.c \
+        dps/orte_dps_open_close.c

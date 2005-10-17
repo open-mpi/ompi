@@ -16,8 +16,7 @@
 
 
 
-SUBDIRS = base $(MCA_bml_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_bml_ALL_SUBDIRS)
+SUBDIRS = base
 
 # Source code files
 

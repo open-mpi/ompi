@@ -15,8 +15,10 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
+EXTRA_DIST += tools/win_makefile
 
-EXTRA_DIST = win_makefile
-
-SUBDIRS = ompi_info wrappers
+SUBDIRS += \
+	tools/ompi_info \
+	tools/wrappers

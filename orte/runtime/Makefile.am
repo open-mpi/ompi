@@ -15,44 +15,28 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
+dist_pkgdata_DATA += runtime/help-orte-runtime.txt
 
-AM_CPPFLAGS = -I$(top_builddir)/src/opal/event
+headers += \
+	runtime/orte_wait.h \
+        runtime/runtime.h \
+        runtime/runtime_internal.h \
+        runtime/runtime_types.h \
+	runtime/orte_setup_hnp.h
 
-noinst_LTLIBRARIES = libruntime.la
-
-# Source code files
-
-dist_pkgdata_DATA = help-orte-runtime.txt
-
-headers = \
-        orte_wait.h \
-        runtime.h \
-        runtime_internal.h \
-        runtime_types.h \
-		orte_setup_hnp.h
-
-libruntime_la_SOURCES = \
-	$(headers) \
-        orte_abort.c \
-        orte_finalize.c \
-        orte_init.c \
-        orte_params.c \
-        orte_init_stage1.c \
-        orte_init_stage2.c \
-        orte_monitor.c \
-        orte_restart.c \
-        orte_setup_hnp.c \
-        orte_system_finalize.c \
-        orte_system_init.c \
-        orte_universe_exists.c \
-        orte_wait.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/runtime
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
+liborte_la_SOURCES += \
+        runtime/orte_abort.c \
+        runtime/orte_finalize.c \
+        runtime/orte_init.c \
+        runtime/orte_params.c \
+        runtime/orte_init_stage1.c \
+        runtime/orte_init_stage2.c \
+        runtime/orte_monitor.c \
+        runtime/orte_restart.c \
+        runtime/orte_setup_hnp.c \
+        runtime/orte_system_finalize.c \
+        runtime/orte_system_init.c \
+        runtime/orte_universe_exists.c \
+        runtime/orte_wait.c

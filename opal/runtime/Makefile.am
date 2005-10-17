@@ -15,31 +15,16 @@
 # $HEADER$
 #
 
-
-
-AM_CPPFLAGS = -I$(top_builddir)/src/event
-
-noinst_LTLIBRARIES = libruntime.la
+# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 # Source code files
+dist_pkgdata_DATA += runtime/help-opal-runtime.txt
 
-dist_pkgdata_DATA = help-opal-runtime.txt
+headers += \
+        runtime/opal_progress.h \
+        runtime/opal.h
 
-headers = \
-        opal_progress.h \
-        opal.h
-
-libruntime_la_SOURCES = \
-        $(headers) \
-        opal_progress.c \
-        opal_finalize.c \
-        opal_init.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/runtime
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libopal_la_SOURCES += \
+        runtime/opal_progress.c \
+        runtime/opal_finalize.c \
+        runtime/opal_init.c

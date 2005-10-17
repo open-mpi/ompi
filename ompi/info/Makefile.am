@@ -15,24 +15,10 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
+headers += \
+        info/info.h
 
-noinst_LTLIBRARIES = libinfo.la
-
-# Source code files
-
-headers = \
-        info.h
-
-libinfo_la_SOURCES = \
-        $(headers) \
-        info.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/info
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        info/info.c

@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = base $(MCA_soh_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_soh_ALL_SUBDIRS)
+SUBDIRS = base
 
 # Source code files
 

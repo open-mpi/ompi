@@ -15,33 +15,19 @@
 # $HEADER$
 #
 
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
+headers += \
+        class/ompi_circular_buffer_fifo.h \
+        class/ompi_fifo.h \
+        class/ompi_free_list.h \
+        class/ompi_bitmap.h \
+        class/ompi_pointer_array.h \
+	class/ompi_rb_tree.h
 
-noinst_LTLIBRARIES = libclass.la
-
-# Source code files
-
-headers = \
-        ompi_circular_buffer_fifo.h \
-        ompi_fifo.h \
-        ompi_free_list.h \
-        ompi_bitmap.h \
-        ompi_pointer_array.h \
-	ompi_rb_tree.h
-
-libclass_la_SOURCES = \
-	$(headers) \
-        ompi_bitmap.c \
-        ompi_free_list.c \
-        ompi_pointer_array.c \
-	ompi_rb_tree.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/class
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+libmpi_la_SOURCES += \
+        class/ompi_bitmap.c \
+        class/ompi_free_list.c \
+        class/ompi_pointer_array.c \
+	class/ompi_rb_tree.c
 

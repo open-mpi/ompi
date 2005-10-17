@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
-
-SUBDIRS = base $(MCA_rcache_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_rcache_ALL_SUBDIRS)
+SUBDIRS = base
 
 # Source code files
 

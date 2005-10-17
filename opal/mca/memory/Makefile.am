@@ -14,10 +14,7 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = base $(MCA_memory_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_memory_ALL_SUBDIRS)
+SUBDIRS = base
 
 # Source code files
 headers = memory.h

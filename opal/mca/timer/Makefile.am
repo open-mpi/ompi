@@ -14,10 +14,8 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = base $(MCA_timer_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_timer_ALL_SUBDIRS)
+SUBDIRS = base
+DIST_SUBDIRS = base
 
 # Source code files
 headers = timer.h

@@ -1665,66 +1665,24 @@ AC_CONFIG_FILES([
     contrib/Makefile
 
     opal/Makefile
-    opal/include/Makefile
-    opal/include/sys/Makefile
-    opal/include/sys/alpha/Makefile
-    opal/include/sys/amd64/Makefile
-    opal/include/sys/ia32/Makefile
-    opal/include/sys/ia64/Makefile
-    opal/include/sys/mips/Makefile
-    opal/include/sys/powerpc/Makefile
-    opal/include/sys/sparc/Makefile
-    opal/include/sys/sparcv9/Makefile
-    opal/include/sys/win32/Makefile
-
     opal/asm/Makefile
-    opal/class/Makefile
     opal/event/Makefile
     opal/event/compat/Makefile
     opal/event/compat/sys/Makefile
-    opal/memory/Makefile
-    opal/runtime/Makefile
-    opal/threads/Makefile
     opal/util/Makefile
-
-    opal/mca/Makefile
-    opal/dynamic-mca/Makefile
     opal/mca/base/Makefile
 
     orte/Makefile
-    orte/include/Makefile
-    orte/class/Makefile
-    orte/dps/Makefile
-    orte/runtime/Makefile
-    orte/util/Makefile
 
-    orte/tools/Makefile
     orte/tools/console/Makefile
     orte/tools/orted/Makefile
     orte/tools/orteprobe/Makefile
     orte/tools/orterun/Makefile
     orte/tools/openmpi/Makefile
 
-    orte/mca/Makefile
-    orte/dynamic-mca/Makefile
-
     ompi/Makefile
-    ompi/include/Makefile
-    ompi/class/Makefile
 
-    ompi/attribute/Makefile
-    ompi/communicator/Makefile
-    ompi/datatype/Makefile
     ompi/debuggers/Makefile
-    ompi/errhandler/Makefile
-    ompi/file/Makefile
-    ompi/group/Makefile
-    ompi/info/Makefile
-    ompi/op/Makefile
-    ompi/proc/Makefile
-    ompi/request/Makefile
-    ompi/runtime/Makefile
-    ompi/win/Makefile
 
     ompi/mpi/Makefile
     ompi/mpi/c/Makefile
@@ -1737,12 +1695,8 @@ AC_CONFIG_FILES([
     ompi/mpi/f90/fortran_sizes.h
     ompi/mpi/f90/scripts/Makefile
 
-    ompi/tools/Makefile
     ompi/tools/ompi_info/Makefile
     ompi/tools/wrappers/Makefile
-
-    ompi/mca/Makefile
-    ompi/dynamic-mca/Makefile
 
     test/Makefile
     test/asm/Makefile
