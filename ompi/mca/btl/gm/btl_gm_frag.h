@@ -28,6 +28,12 @@ extern "C" {
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t);
 
 
+typedef enum {
+    MCA_BTL_GM_SEND,
+    MCA_BTL_GM_PUT,
+    MCA_BTL_GM_GET
+} mca_btl_gm_frag_type_t;
+
 
 /**
  * GM send fragment derived type.
@@ -41,6 +47,7 @@ struct mca_btl_gm_frag_t {
     mca_btl_base_header_t *hdr;
     size_t size; 
     enum gm_priority priority;
+    mca_btl_gm_frag_type_t type;
 }; 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t); 
