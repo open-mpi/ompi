@@ -25,7 +25,7 @@ additional information (which may only be relevant to an Open MPI
 developer):
 
   %s
-  --> Returned value %d instead of OMPI_SUCCESS
+  --> Returned "%s" (%d) instead of "Success" (0)
 [mpi-param-check-enabled-but-compiled-out]
 WARNING: The MCA parameter mpi_param_check has been set to true, but
 parameter checking has been compiled out of Open MPI.  The
