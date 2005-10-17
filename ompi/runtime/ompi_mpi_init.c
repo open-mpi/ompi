@@ -492,9 +492,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
  error:
     if (ret != OMPI_SUCCESS) {
+        const char *err_msg = opal_strerror(ret);
         opal_show_help("help-mpi-runtime",
                        "mpi_init:startup:internal-failure", true,
-                       "MPI_INIT", "MPI_INIT", error, ret);
+                       "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         return ret;
     }
 
