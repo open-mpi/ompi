@@ -60,7 +60,7 @@
 #if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(WIN32)
 static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 {   
-#if HAVE_BACKTRACE
+#ifdef HAVE_BACKTRACE
     int i;
     int trace_size;
     void * trace[32];
