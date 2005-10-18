@@ -71,12 +71,23 @@ static inline int mca_btl_mvapi_endpoint_post_send(
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
         
         /* atomically test and acquire a token */
-        if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,-1) < 0) { 
+        if(!mca_btl_mvapi_component.use_srq &&
+           OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,-1) < 0) { 
             BTL_VERBOSE(("Queing because no send tokens \n"));
             opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
             OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,1);
+            
+            /* OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock); */
+/*             mca_btl_mvapi_component_progress();  */
+/*             OPAL_THREAD_LOCK(&endpoint->endpoint_lock); */
+            
             return OMPI_SUCCESS;
-        } else { 
+        } else if( mca_btl_mvapi_component.use_srq &&
+                   OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_hp,-1) < 0) { 
+            OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_hp,1);
+            opal_list_append(&mvapi_btl->pending_frags_hp, (opal_list_item_t *)frag);
+            return OMPI_SUCCESS;
+        }else { 
             frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_high; 
             qp_hndl = endpoint->lcl_qp_hndl_high; 
         }
@@ -84,10 +95,18 @@ static inline int mca_btl_mvapi_endpoint_post_send(
     } else {
 
         /* atomically test and acquire a token */
-        if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) {
+        if(!mca_btl_mvapi_component.use_srq &&
+           OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0 ) {
             BTL_VERBOSE(("Queing because no send tokens \n"));
             opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag); 
             OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,1);
+            
+            return OMPI_SUCCESS;
+        } else if(mca_btl_mvapi_component.use_srq &&
+                  OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,-1) < 0) {
+            OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,1);
+            opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
+            
             return OMPI_SUCCESS;
         } else { 
             frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
@@ -761,8 +780,8 @@ int mca_btl_mvapi_endpoint_connect(
     }
     
     if(mca_btl_mvapi_component.use_srq) { 
-        MCA_BTL_MVAPI_POST_SRR_HIGH(endpoint->endpoint_btl, 1); 
-        MCA_BTL_MVAPI_POST_SRR_LOW(endpoint->endpoint_btl, 1);
+        MCA_BTL_MVAPI_POST_SRR_HIGH(endpoint->endpoint_btl, 0); 
+        MCA_BTL_MVAPI_POST_SRR_LOW(endpoint->endpoint_btl, 0);
     } else {
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 0); 
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 0); 
