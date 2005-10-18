@@ -32,7 +32,7 @@ libmca_rcache_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/rcache/base
+ompidir = $(includedir)/openmpi/ompi/mca/rcache/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
