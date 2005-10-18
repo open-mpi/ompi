@@ -118,6 +118,7 @@ struct mca_btl_mvapi_component_t {
     uint32_t ib_src_path_bits; 
     /* number of send tokes available */ 
     uint32_t max_wr_sq_tokens; 
+    uint32_t max_total_wr_sq_tokens; 
 
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
 
@@ -174,44 +175,60 @@ struct mca_btl_mvapi_module_t {
     
     uint32_t num_peers; 
     uint32_t rd_buf_max; 
-
+    uint32_t rd_buf_min;
     
+    int32_t                     wr_sq_tokens_hp; 
+    /**< number of high priority frags that  can be outstanding (down counter) */ 
+    int32_t                     wr_sq_tokens_lp; 
+    /**< number of low priority frags that  can be outstanding (down counter) */ 
+    
+    opal_list_t                 pending_frags_hp; 
+    /**< list of pending high priority frags */ 
+
+    opal_list_t                 pending_frags_lp; 
+    /**< list of pending low priority frags */ 
+
+
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
     
 
 
-#define MCA_BTL_MVAPI_POST_SRR_HIGH(post_srr_high_mvapi_btl, \
-                                    post_srr_high_additional) \
+#define MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, \
+                                    additional) \
 { \
-        OPAL_THREAD_LOCK(&post_srr_high_mvapi_btl->ib_lock); \
-        if(post_srr_high_mvapi_btl->srr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+post_srr_high_additional && \
-           post_srr_high_mvapi_btl->srr_posted_high < mca_btl_mvapi_component.ib_rr_buf_max){ \
-           MCA_BTL_MVAPI_POST_SRR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
-                                      post_srr_high_mvapi_btl->srr_posted_high, \
-                                      post_srr_high_mvapi_btl, \
-                                      &post_srr_high_mvapi_btl->recv_free_eager, \
-                                      &post_srr_high_mvapi_btl->srr_posted_high, \
-                                      post_srr_high_mvapi_btl->nic, \
-                                      post_srr_high_mvapi_btl->srq_hndl_high); \
+    do { \
+        OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
+        if(mvapi_btl->srr_posted_high <= mvapi_btl->rd_buf_min+additional && \
+           mvapi_btl->srr_posted_high < mvapi_btl->rd_buf_max){ \
+           MCA_BTL_MVAPI_POST_SRR_SUB(mvapi_btl->rd_buf_max -  \
+                                      mvapi_btl->srr_posted_high, \
+                                      mvapi_btl, \
+                                      &mvapi_btl->recv_free_eager, \
+                                      &mvapi_btl->srr_posted_high, \
+                                      mvapi_btl->nic, \
+                                      mvapi_btl->srq_hndl_high); \
         } \
-        OPAL_THREAD_UNLOCK(&post_srr_high_mvapi_btl->ib_lock); \
+        OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
+    }while(0);\
 }
 
-#define MCA_BTL_MVAPI_POST_SRR_LOW(post_srr_low_mvapi_btl, \
-                                             post_srr_low_additional) \
+#define MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, \
+                                             additional) \
 { \
-    OPAL_THREAD_LOCK(&post_srr_low_mvapi_btl->ib_lock); \
-    if(post_srr_low_mvapi_btl->srr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+post_srr_low_additional && \
-       post_srr_low_mvapi_btl->srr_posted_low < mca_btl_mvapi_component.ib_rr_buf_max){ \
-        MCA_BTL_MVAPI_POST_SRR_SUB(mca_btl_mvapi_component.ib_rr_buf_max -  \
-                                            post_srr_low_mvapi_btl->srr_posted_low, \
-                                            post_srr_low_mvapi_btl, \
-                                            &post_srr_low_mvapi_btl->recv_free_max, \
-                                            &post_srr_low_mvapi_btl->srr_posted_low, \
-                                            post_srr_low_mvapi_btl->nic, \
-                                            post_srr_low_mvapi_btl->srq_hndl_low); \
+  do { \
+    OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
+    if(mvapi_btl->srr_posted_low <= mvapi_btl->rd_buf_min+additional && \
+       mvapi_btl->srr_posted_low < mvapi_btl->rd_buf_max){ \
+        MCA_BTL_MVAPI_POST_SRR_SUB(mvapi_btl->rd_buf_max -  \
+                                            mvapi_btl->srr_posted_low, \
+                                            mvapi_btl, \
+                                            &mvapi_btl->recv_free_max, \
+                                            &mvapi_btl->srr_posted_low, \
+                                            mvapi_btl->nic, \
+                                            mvapi_btl->srq_hndl_low); \
     } \
-    OPAL_THREAD_UNLOCK(&post_srr_low_mvapi_btl->ib_lock); \
+    OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
+  } while(0); \
 }
 
 

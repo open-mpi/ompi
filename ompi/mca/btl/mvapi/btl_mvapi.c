@@ -127,6 +127,9 @@ int mca_btl_mvapi_add_procs(
         mvapi_btl->num_peers += nprocs; 
         if(mca_btl_mvapi_component.use_srq) { 
             mvapi_btl->rd_buf_max = mca_btl_mvapi_component.ib_rr_buf_max + log2(nprocs) * mca_btl_mvapi_component.rd_per_peer; 
+            free(mvapi_btl->rr_desc_post); 
+            mvapi_btl->rr_desc_post = (VAPI_rr_desc_t*) malloc((mvapi_btl->rd_buf_max * sizeof(VAPI_rr_desc_t))); 
+            mvapi_btl->rd_buf_min = mvapi_btl->rd_buf_max / 2;
         }
     }
     return OMPI_SUCCESS;
@@ -568,18 +571,26 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     int rc; 
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
-
+    frag->endpoint = endpoint;
     assert(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED || 
             endpoint->endpoint_state == MCA_BTL_IB_WAITING_ACK);
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
     /* atomically test and acquire a token */
-    if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
+    if(!mca_btl_mvapi_component.use_srq && 
+       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
         BTL_VERBOSE(("Queing because no rdma write tokens \n"));
         BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
                                  endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock, rc); 
+        rc = OMPI_SUCCESS;
+    } else if(mca_btl_mvapi_component.use_srq && 
+              OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,-1) < 0) {
+        opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
+        OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,1);
+        rc = OMPI_SUCCESS;
+        
     } else { 
         
-        frag->endpoint = endpoint;
+      
         
     
         frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
@@ -624,14 +635,22 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     assert(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED ||
            endpoint->endpoint_state == MCA_BTL_IB_WAITING_ACK);
     frag->sr_desc.opcode = VAPI_RDMA_READ; 
-    
+    frag->endpoint = endpoint;
     /* atomically test and acquire a token */
-    if(OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
+    if(!mca_btl_mvapi_component.use_srq &&
+       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
         BTL_VERBOSE(("Queing because no rdma write tokens \n"));
         BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
                                  endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock, rc); 
+        rc = OMPI_SUCCESS;
+    } else if(mca_btl_mvapi_component.use_srq && 
+              OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,-1) < 0) {
+        opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
+        OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,1);
+        rc = OMPI_SUCCESS;
+        
     } else { 
-        frag->endpoint = endpoint;
+        
         frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
         frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
         frag->sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
