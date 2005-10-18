@@ -66,4 +66,6 @@ opal_timer_aix_open(void)
   opal_timer_aix_freq_mhz = 0;
   opal_timer_aix_freq = 0;
 #endif
+
+  return OPAL_SUCCESS;
 }
