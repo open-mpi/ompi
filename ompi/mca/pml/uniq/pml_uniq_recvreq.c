@@ -85,6 +85,7 @@ static void mca_pml_uniq_recv_request_construct(mca_pml_base_recv_request_t* req
     request->req_base.req_ompi.req_fini = mca_pml_uniq_recv_request_fini;
     request->req_base.req_ompi.req_free = mca_pml_uniq_recv_request_free;
     request->req_base.req_ompi.req_cancel = mca_pml_uniq_recv_request_cancel;
+    OBJ_CONSTRUCT( &(request->req_convertor), ompi_convertor_t );
 }
 
 static void mca_pml_uniq_recv_request_destruct(mca_pml_base_recv_request_t* request)

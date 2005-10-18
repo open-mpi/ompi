@@ -83,6 +83,7 @@ static void mca_pml_teg_recv_request_construct(mca_ptl_base_recv_request_t* requ
     request->req_recv.req_base.req_ompi.req_fini = mca_pml_teg_recv_request_fini;
     request->req_recv.req_base.req_ompi.req_free = mca_pml_teg_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_teg_recv_request_cancel;
+    OBJ_CONSTRUCT( &(request->req_recv.req_convertor), ompi_convertor_t );
 }
 
 static void mca_pml_teg_recv_request_destruct(mca_ptl_base_recv_request_t* request)
