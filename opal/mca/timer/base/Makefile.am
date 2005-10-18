@@ -32,8 +32,10 @@ libmca_timer_base_la_SOURCES = \
 if WANT_INSTALL_HEADERS
 ompidir = $(includedir)/openmpi/opal/mca/timer/base
 ompi_HEADERS = $(headers)
+nodist_ompi_HEADERS = base_impl.h
 else
 ompidir = $(includedir)
+nodist_ompi_HEADERS = 
 endif
 
 distclean-local:
