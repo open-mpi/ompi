@@ -237,7 +237,7 @@ int mca_mpool_base_free(void * base)
             rc = current->mpool_module->mpool_find(
                 current->mpool_module,
                 base,
-                0,
+                1,
                 &regs,
                 &cnt
                 );
