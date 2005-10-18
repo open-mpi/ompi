@@ -38,7 +38,7 @@ OBJ_CLASS_DECLARATION(orte_iof_base_endpoint_t);
  */
 
 #define ORTE_IOF_BASE_SEQDIFF(s1,s2)  \
-    ((s1 > s2) ? (s1 - s2) : (s1 + (ULONG_MAX - s2)))
+    ((s1 >= s2) ? (s1 - s2) : (s1 + (ULONG_MAX - s2)))
 
 
 /**
