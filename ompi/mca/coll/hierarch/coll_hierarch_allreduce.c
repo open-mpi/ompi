@@ -61,35 +61,38 @@ int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
     llcomm = mca_coll_hierarch_get_llcomm ( root, data, &llroot, &lroot);
 
     if ( MPI_COMM_NULL != lcomm ) {
-      lrank = ompi_comm_rank (lcomm);
-	if ( lrank == lroot ) {
-	    ompi_ddt_get_extent(dtype, &lb, &extent);
-	    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
-
-	    tbuf = malloc(true_extent + (count - 1) * extent);
-	    if (NULL == tbuf) {
-		return OMPI_ERR_OUT_OF_RESOURCE;
-	    }
-	    tmpbuf = tbuf - lb;
-	}
-
-	if ( MPI_IN_PLACE != sbuf ) {
-	    ret = lcomm->c_coll.coll_reduce (sbuf, tmpbuf, count, dtype, 
-					     op, lroot, lcomm);
-	}
-	else {
-            ret = lcomm->c_coll.coll_reduce (rbuf, tmpbuf, count, dtype, 
-					     op, lroot, lcomm);
-	}
-	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
-	}
+      ompi_ddt_get_extent(dtype, &lb, &extent);
+      ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+      
+      tbuf = malloc(true_extent + (count - 1) * extent);
+      if (NULL == tbuf) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+      }
+      tmpbuf = tbuf - lb;
+      
+      if ( MPI_IN_PLACE != sbuf ) {
+	ret = lcomm->c_coll.coll_reduce (sbuf, tmpbuf, count, dtype, 
+					 op, lroot, lcomm);
+      }
+      else {
+	ret = lcomm->c_coll.coll_reduce (rbuf, tmpbuf, count, dtype, 
+					 op, lroot, lcomm);
+      }
+      if ( OMPI_SUCCESS != ret ) {
+	goto exit;
+      }
     }
 
     if ( MPI_UNDEFINED != llroot ) {
+      if ( MPI_COMM_NULL != lcomm ) {
 	ret = llcomm->c_coll.coll_allreduce (tmpbuf, rbuf, count, dtype,
 					     op, llcomm);
-    }
+      }
+      else {
+	ret = llcomm->c_coll.coll_allreduce (sbuf, rbuf, count, dtype,
+					     op, llcomm);
+      }
+    }	
 
     if ( MPI_COMM_NULL != lcomm ) {
 	ret = lcomm->c_coll.coll_bcast(rbuf, count, dtype, lroot, lcomm );
