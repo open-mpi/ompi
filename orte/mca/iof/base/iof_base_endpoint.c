@@ -162,6 +162,8 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
         if(rc < 0) {
             if(errno == EAGAIN)
                break;
+            if(errno == EINTR)
+               continue;
             orte_iof_base_endpoint_closed(endpoint);
             OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return;
@@ -173,7 +175,6 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
         }
         opal_list_remove_item(&endpoint->ep_frags, &frag->super);
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-        orte_iof_base_endpoint_ack(endpoint, frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len);
         orte_iof_base_frag_ack(frag);
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     }
@@ -392,7 +393,6 @@ int orte_iof_base_endpoint_forward(
     }
 
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
-    endpoint->ep_seq = hdr->msg_seq + hdr->msg_len;
     frag->frag_owner = endpoint;
     frag->frag_src = *src;
     frag->frag_hdr.hdr_msg = *hdr;
@@ -400,7 +400,7 @@ int orte_iof_base_endpoint_forward(
     /* try to write w/out copying data */
     if(opal_list_get_size(&endpoint->ep_frags) == 0) {
         rc = write(endpoint->ep_fd,data,len);
-        if(rc < 0) {
+        if(rc < 0 && (errno != EAGAIN && errno != EINTR)) {
             orte_iof_base_endpoint_closed(endpoint);
             OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return ORTE_SUCCESS;
@@ -419,9 +419,7 @@ int orte_iof_base_endpoint_forward(
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     } else {
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-
         /* acknowledge fragment */
-        orte_iof_base_endpoint_ack(endpoint, frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len);
         orte_iof_base_frag_ack(frag);
     }
     return ORTE_SUCCESS;
@@ -433,6 +431,7 @@ int orte_iof_base_endpoint_forward(
  * previously been disabled as the window closed, and the window
  * is now open, re-enable forwarding.
  */
+
 
 int orte_iof_base_endpoint_ack(
     orte_iof_base_endpoint_t* endpoint,
