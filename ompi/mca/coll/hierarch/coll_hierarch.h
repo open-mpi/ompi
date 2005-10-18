@@ -49,6 +49,8 @@ extern int mca_coll_hier_verbose;
  *  comm:    the input communicator, consisting of several lower level communicators.
  *  lcomm:   low level communicator, often refered to as subcommunicator
  *  lleader: local leader, a dedicated process of each low level communicator
+             ATTENTION: an lleader might be the 'head' of a low level
+	     communicator of size one!
  *  llcomm:  local leader communicator, grouping all local leaders of a comm.
 */
 
@@ -81,42 +83,50 @@ extern int mca_coll_hier_verbose;
 
 static inline int mca_coll_hierarch_count_lleaders ( int size, int *carr)
 {
+
+/* 
+ * Determine the number of local leaders. Please note, that any process
+ * with color = MPI_UNDEFINED will be counted as the head of a group of its own.
+ * Please note furthermore, that every process with color=MPI_UNDEFINED will be
+ * stored in this array on its own...
+ */ 
     int cnt, i, j, found;
     int *llr=NULL;
 
     llr = (int *) malloc ( size * sizeof(int));
     if (NULL == llr ){
-	return -1;
+	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for ( i=0; i<size; i++ ) {
-	if ( carr[i] != MPI_UNDEFINED ) {
-	    llr[0] = carr[i];
-	    break;
+    llr[0] = carr[0];
+    for (cnt=1, i=1; i<size; i++ ) {
+	if ( carr[i] == MPI_UNDEFINED ) {
+	    llr[cnt++] = carr[i];
+	    continue;
 	}
-    }
-
-
-    for (cnt=1, i=0; i<size; i++ ) {
 	for ( found=0, j=0; j<cnt; j++ ) {
 	    if ( carr[i] == llr[j] ) {
 		found = 1;
 		break;
 	    }
 	}
-	if ( !found && (MPI_UNDEFINED != carr[i]) ) {
+	if ( !found ) {
 	    llr[cnt++] = carr[i];
 	}
     }
 
     free (llr);
-
     return cnt;
 }
 
 static inline int mca_coll_hierarch_get_offset ( int rank, int size, int *carr) 
 {
     int offset, i, color = carr[rank];
+
+    if ( color == MPI_UNDEFINED ) {
+	/* always */
+	return 1;
+    }
 
     for ( offset=0, i=0; i<=rank; i++) {
 	if ( carr[i] == color ) {
