@@ -21,6 +21,7 @@ noinst_LTLIBRARIES = libmca_timer_aix.la
 libmca_timer_aix_la_SOURCES = \
     timer_aix.h \
     timer_aix_component.c
+libmca_timer_aix_la_LIBADD = $(timer_aix_LIBS)
 
 EXTRA_DIST = \
     $(doc_DATA)
