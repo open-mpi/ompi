@@ -171,8 +171,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     
     size = ompi_comm_size(comm);
     
-    if ( size == 1 ) {
-	/* No need for hierarchical collectives . */
+    if ( size < 3 ) {
+	/* No need for hierarchical collectives for 1 or 2 procs. */
 	return NULL;
     }
 
@@ -550,10 +550,18 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	  continue;
 	}
 
-	if (llead->offset >= offset ) {
+	if (llead->offset == offset ) {
 	    found = 1;
 	    break;
 	}
+#if 0
+	else if () {
+	  /* the offset of root = maxoffset of this color and
+	   * the offset on llead is larger then offset of root.
+	   * then we can also use this llead structure 
+	   */
+	}
+#endif
     }
     
     if ( !found ) {
