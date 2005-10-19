@@ -123,7 +123,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
         OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);                 \
         OBJ_RELEASE((request)->req_base.req_comm);                        \
         OBJ_RELEASE((request)->req_base.req_datatype);                    \
-        OBJ_DESTRUCT( &((request)->req_convertor) );                      \
+        ompi_convertor_cleanup( &((request)->req_convertor) );            \
     } while (0)
 
 
