@@ -85,11 +85,12 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
  *
  *  @param request (IN)     Receive request.
  */
-#define MCA_PML_BASE_RECV_REQUEST_FINI( request )         \
-    do {                                                  \
-        OMPI_REQUEST_FINI(&(request)->req_base.req_ompi); \
-        OBJ_RELEASE( (request)->req_base.req_comm);       \
-        OBJ_RELEASE( (request)->req_base.req_datatype );  \
+#define MCA_PML_BASE_RECV_REQUEST_FINI( request )             \
+    do {                                                      \
+        OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);     \
+        OBJ_RELEASE( (request)->req_base.req_comm);           \
+        OBJ_RELEASE( (request)->req_base.req_datatype );      \
+        OBJ_DESTRUCT( &((request)->req_convertor) );          \
     } while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
