@@ -390,8 +390,9 @@ int mca_btl_sm_add_procs_same_base_addr(
         if( 0 != mca_btl_sm_component.my_smp_rank ) 
         {
             /* spin unitl local proc 0 initializes the segment */
-            while(!mca_btl_sm_component.mmap_file->map_seg->seg_inited)
-            { ; }
+            while(!mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
+                opal_progress(); 
+            }
         }
                 
         /* set the base of the shared memory segment, and flag
@@ -456,7 +457,9 @@ int mca_btl_sm_add_procs_same_base_addr(
 
         /* spin until this element is allocated */
         while ( NULL == fifo_tmp[j] )
-        { ; }
+        { 
+            opal_progress(); 
+        }
 
         tmp_ptr=(volatile char **)
             ( (char *)mca_btl_sm_component.sm_ctl_header->
