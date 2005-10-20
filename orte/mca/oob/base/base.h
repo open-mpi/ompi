@@ -64,6 +64,7 @@ OMPI_DECLSPEC extern orte_process_name_t mca_oob_name_seed;
 #define MCA_OOB_ALLOC 0x04   /**< flag to oob_recv to request the oob to allocate a buffer of the appropriate
                               * size for the receive and return the allocated buffer and size in the first
                               * element of the iovec array. */
+#define MCA_OOB_PERSISTENT 0x08 /* post receive request persistently - don't remove on match */
 
         
 /**

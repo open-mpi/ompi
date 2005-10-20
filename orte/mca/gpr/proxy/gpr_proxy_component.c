@@ -286,7 +286,7 @@ int orte_gpr_proxy_module_init(void)
 {
     /* issue the non-blocking receive */
     int rc;
-    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
+    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, ORTE_RML_PERSISTENT, orte_gpr_proxy_notify_recv, NULL);
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -399,9 +399,6 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
 
 
 RETURN_ERROR:
-
-    /* reissue non-blocking receive */
-    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
-
+    return;
 }
 

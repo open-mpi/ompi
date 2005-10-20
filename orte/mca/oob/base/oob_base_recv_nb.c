@@ -35,6 +35,7 @@ struct mca_oob_recv_cbdata {
     struct iovec cbiov;
     mca_oob_callback_packed_fn_t cbfunc;
     void* cbdata;
+    bool persistent;
 };
 typedef struct mca_oob_recv_cbdata mca_oob_recv_cbdata_t;
 
@@ -111,7 +112,7 @@ int mca_oob_recv_packed_nb(
     memset(oob_cbdata, 0, sizeof(mca_oob_recv_cbdata_t));
     oob_cbdata->cbfunc = cbfunc;
     oob_cbdata->cbdata = cbdata;
-    
+    oob_cbdata->persistent = (flags & MCA_OOB_PERSISTENT) ? true : false;
     rc = mca_oob.oob_recv_nb(peer, &oob_cbdata->cbiov, 1, tag, flags|MCA_OOB_ALLOC, mca_oob_recv_callback, oob_cbdata);
     if(rc < 0) {
         free(oob_cbdata);
@@ -157,6 +158,8 @@ static void mca_oob_recv_callback(
 
     /* cleanup */
     OBJ_DESTRUCT(&buffer);
-    free(oob_cbdata);
+    if(oob_cbdata->persistent == false) {
+        free(oob_cbdata);
+    }
 }
 
