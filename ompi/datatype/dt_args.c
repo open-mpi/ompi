@@ -165,11 +165,9 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
     /* copy the array of MPI_Aint */
     if( pArgs->a != NULL )
         memcpy( pArgs->a, a, ca * sizeof(MPI_Aint) );
-    /* copy the array of types */
-    if( pArgs->d != NULL )
-        memcpy( pArgs->d, d, cd * sizeof(MPI_Datatype) );
 
     for( pos = 0; pos < cd; pos++ ) {
+        pArgs->d[pos] = d[pos];
         if( !(d[pos]->flags & DT_FLAG_PREDEFINED) ) {
             /* We handle a user defined datatype. We should make sure that the
              * user will not have the oportunity to destroy it before all derived

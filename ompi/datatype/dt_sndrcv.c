@@ -18,9 +18,6 @@
 
 #include "datatype/datatype.h"
 #include "datatype/convertor.h"
-#include "request/request.h"
-#include "mca/pml/pml.h"
-
 
 /*
  *	ompi_dtsndrcv

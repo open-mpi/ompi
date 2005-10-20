@@ -35,18 +35,25 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
     return convertor;
 }
 
+/* The cleanup function will release the reference to the datatype and put the convertor in
+ * exactly the same state as after a call to ompi_convertor_construct. Therefore, all PML
+ * can call OBJ_DESTRUCT on the request's convertors without having to call OBJ_CONSTRUCT
+ * everytime they grab a new one from the cache. The OBJ_CONSTRUCT on the convertor should
+ * be called only on the first creation of a request (not when extracted from the cache).
+ */
 inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 {
     ompi_datatype_t* datatype = (ompi_datatype_t*)convertor->pDesc;
 
     if( convertor->stack_size > DT_STATIC_STACK_SIZE ) {
         free( convertor->pStack );
-        convertor->pStack = NULL;
-        convertor->stack_size = 0;
+        convertor->pStack = convertor->static_stack;
+        convertor->stack_size = DT_STATIC_STACK_SIZE;
     }
     if( !(CONVERTOR_CLONE & convertor->flags) )
         if( NULL != datatype ) OBJ_RELEASE( datatype );
     convertor->pDesc = NULL;
+    convertor->flags = 0;
     return OMPI_SUCCESS;
 }
 
