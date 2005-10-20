@@ -194,6 +194,8 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_param_register_int("flags", "BTL flags, SEND=0, PUT=1, GET=2", 
                                       MCA_BTL_FLAGS_PUT, (int*) &mca_btl_openib_module.super.btl_flags); 
     
+    mca_btl_openib_param_register_int("bandwidth", "Approximate maximum bandwidth of interconnect", 
+                                      800, (int*) &mca_btl_openib_module.super.btl_bandwidth); 
     
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
