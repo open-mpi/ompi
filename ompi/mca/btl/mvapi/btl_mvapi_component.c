@@ -77,24 +77,34 @@ mca_btl_mvapi_component_t mca_btl_mvapi_component = {
  * utility routines for parameter registration
  */
 
-static inline char* mca_btl_mvapi_param_register_string(
-                                                     const char* param_name, 
-                                                     const char* default_value)
+static inline void mca_btl_mvapi_param_register_string(
+                                                       const char* param_name, 
+                                                       const char* param_desc,
+                                                       const char* default_value, 
+                                                       char** out_value)
 {
-    char *param_value;
-    int id = mca_base_param_register_string("btl","mvapi",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
+    mca_base_param_reg_string(&mca_btl_mvapi_component.super.btl_version, 
+                              param_name, 
+                              param_desc, 
+                              false, 
+                              false, 
+                              default_value, 
+                              out_value);
 }
 
-static inline int mca_btl_mvapi_param_register_int(
-        const char* param_name, 
-        int default_value)
+static inline void  mca_btl_mvapi_param_register_int(
+                                                     const char* param_name,
+                                                     const char* param_desc,
+                                                     int default_value, 
+                                                     int* out_value)
 {
-    int id = mca_base_param_register_int("btl","mvapi",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
+    mca_base_param_reg_int(&mca_btl_mvapi_component.super.btl_version, 
+                           param_name, 
+                           param_desc, 
+                           false, 
+                           false, 
+                           default_value, 
+                           out_value); 
 }
 
 /*
@@ -115,119 +125,85 @@ int mca_btl_mvapi_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_mvapi_component.ib_procs, opal_list_t);
 
     /* register IB component parameters */
-    mca_btl_mvapi_component.ib_free_list_num =
-        mca_btl_mvapi_param_register_int ("free_list_num", 8);
-    mca_btl_mvapi_component.ib_free_list_max =
-        mca_btl_mvapi_param_register_int ("free_list_max", -1);
-    mca_btl_mvapi_component.ib_free_list_inc =
-        mca_btl_mvapi_param_register_int ("free_list_inc", 32);
-    mca_btl_mvapi_component.ib_mpool_name = 
-        mca_btl_mvapi_param_register_string("mpool", "mvapi"); 
-    mca_btl_mvapi_component.ib_rr_buf_max = 
-        mca_btl_mvapi_param_register_int("rr_buf_max", 16); 
-    mca_btl_mvapi_component.ib_rr_buf_min = 
-        mca_btl_mvapi_param_register_int("rr_buf_min", 8); 
-    mca_btl_mvapi_component.reg_mru_len = 
-        mca_btl_mvapi_param_register_int("reg_mru_len",  16); 
-    mca_btl_mvapi_component.use_srq = 
-        mca_btl_mvapi_param_register_int("use_srq", 0); 
-
-    mca_btl_mvapi_component.ib_cq_size = 
-        mca_btl_mvapi_param_register_int("ib_cq_size", 
-                                      10000); 
-    mca_btl_mvapi_component.ib_wq_size = 
-        mca_btl_mvapi_param_register_int("ib_wq_size", 
-                                      10000); 
-    mca_btl_mvapi_component.ib_sg_list_size = 
-        mca_btl_mvapi_param_register_int("ib_sg_list_size", 
-                                      16); 
-    mca_btl_mvapi_component.ib_pkey_ix = 
-        mca_btl_mvapi_param_register_int("ib_pkey_ix", 
-                                      0); 
-    mca_btl_mvapi_component.ib_psn = 
-        mca_btl_mvapi_param_register_int("ib_psn", 
-                                      0); 
-    mca_btl_mvapi_component.ib_qp_ous_rd_atom = 
-        mca_btl_mvapi_param_register_int("ib_qp_ous_rd_atom", 
-                                         4); 
-    mca_btl_mvapi_component.ib_mtu = 
-        mca_btl_mvapi_param_register_int("ib_mtu", 
-                                      MTU1024); 
-    mca_btl_mvapi_component.ib_min_rnr_timer = 
-        mca_btl_mvapi_param_register_int("ib_min_rnr_timer", 
-                                         24);
-    mca_btl_mvapi_component.ib_timeout = 
-        mca_btl_mvapi_param_register_int("ib_timeout", 
-                                         10); 
-    mca_btl_mvapi_component.ib_retry_count = 
-        mca_btl_mvapi_param_register_int("ib_retry_count", 
-                                      7); 
-    mca_btl_mvapi_component.ib_rnr_retry = 
-        mca_btl_mvapi_param_register_int("ib_rnr_retry", 
-                                      7); 
-    mca_btl_mvapi_component.ib_max_rdma_dst_ops = 
-        mca_btl_mvapi_param_register_int("ib_max_rdma_dst_ops", 
-                                      16); 
-
-    mca_btl_mvapi_component.ib_service_level = 
-        mca_btl_mvapi_param_register_int("ib_service_level", 
-                                      0); 
-    mca_btl_mvapi_component.ib_static_rate = 
-        mca_btl_mvapi_param_register_int("ib_static_rate", 
-                                      0); 
-    mca_btl_mvapi_component.ib_src_path_bits = 
-        mca_btl_mvapi_param_register_int("ib_src_path_bits", 
-                                      0); 
-    
-    mca_btl_mvapi_component.rd_per_peer = 
-        mca_btl_mvapi_param_register_int("rd_per_peer", 
-                                         16); 
+    mca_btl_mvapi_param_register_int ("free_list_num", "intial size of free lists", 
+                                       8, &mca_btl_mvapi_component.ib_free_list_num);
+    mca_btl_mvapi_param_register_int ("free_list_max", "maximum size of free lists",
+                                       1024, &mca_btl_mvapi_component.ib_free_list_max);
+    mca_btl_mvapi_param_register_int ("free_list_inc", "increment size of free lists", 
+                                       32, &mca_btl_mvapi_component.ib_free_list_inc);
+    mca_btl_mvapi_param_register_string("mpool", "name of the memory pool to be used", 
+                                         "mvapi", &mca_btl_mvapi_component.ib_mpool_name); 
+    mca_btl_mvapi_param_register_int("rd_max", "maximum number of receive descriptors to post to a QP", 
+                                      16, (int*) &mca_btl_mvapi_component.ib_rr_buf_max);  
+    mca_btl_mvapi_param_register_int("rd_min", "minimum number of receive descriptors before reposting occurs", 
+                                      8,  (int*) &mca_btl_mvapi_component.ib_rr_buf_min); 
+    mca_btl_mvapi_param_register_int("reg_mru_len",  "length of the registration cache most recently used list", 
+                                      16, (int*) &mca_btl_mvapi_component.reg_mru_len); 
+    mca_btl_mvapi_param_register_int("use_srq", "if 1 use the IB shared receive queue to post receive descriptors", 
+                                     0, (int*) &mca_btl_mvapi_component.use_srq); 
+    mca_btl_mvapi_param_register_int("ib_cq_size", "size of the IB completion queue",
+                                     10000, (int*) &mca_btl_mvapi_component.ib_cq_size); 
+    mca_btl_mvapi_param_register_int("ib_wq_size", "size of the IB work queue", 
+                                     10000, (int*) &mca_btl_mvapi_component.ib_wq_size); 
+    mca_btl_mvapi_param_register_int("ib_sg_list_size", "size of IB segment list", 
+                                     1, (int*) &mca_btl_mvapi_component.ib_sg_list_size); 
+    mca_btl_mvapi_param_register_int("ib_pkey_ix", "IB pkey index", 
+                                      0, (int*) &mca_btl_mvapi_component.ib_pkey_ix); 
+    mca_btl_mvapi_param_register_int("ib_psn", "IB Packet sequence starting number", 
+                                      0, (int*) &mca_btl_mvapi_component.ib_psn); 
+    mca_btl_mvapi_param_register_int("ib_qp_ous_rd_atom", "IB outstanding atomic reads", 
+                                     4, (int*) &mca_btl_mvapi_component.ib_qp_ous_rd_atom); 
+    mca_btl_mvapi_param_register_int("ib_mtu", "IB MTU", 
+                                     MTU1024, (int*) &mca_btl_mvapi_component.ib_mtu); 
+       
+    mca_btl_mvapi_param_register_int("ib_min_rnr_timer", "IB min rnr timer", 
+                                      5, (int*) &mca_btl_mvapi_component.ib_min_rnr_timer);
+    mca_btl_mvapi_param_register_int("ib_timeout", "IB transmit timeout", 
+                                      10, (int*) &mca_btl_mvapi_component.ib_timeout); 
+    mca_btl_mvapi_param_register_int("ib_retry_count", "IB transmit retry count",
+                                      7, (int*) &mca_btl_mvapi_component.ib_retry_count); 
+    mca_btl_mvapi_param_register_int("ib_rnr_retry", "IB rnr retry", 
+                                     7, (int*) mca_btl_mvapi_component.ib_rnr_retry); 
+    mca_btl_mvapi_param_register_int("ib_max_rdma_dst_ops", "IB max rdma destination operations", 
+                                      16, (int*) &mca_btl_mvapi_component.ib_max_rdma_dst_ops); 
+    mca_btl_mvapi_param_register_int("ib_service_level", "IB service level", 
+                                      0, (int*) &mca_btl_mvapi_component.ib_service_level); 
+    mca_btl_mvapi_param_register_int("ib_static_rate", "IB static rate", 
+                                      0, (int*) &mca_btl_mvapi_component.ib_static_rate); 
+    mca_btl_mvapi_param_register_int("ib_src_path_bits", "IB source path bits", 
+                                      0, (int*) &mca_btl_mvapi_component.ib_src_path_bits); 
+        
     
 
-    mca_btl_mvapi_module.super.btl_exclusivity =
-                                         mca_btl_mvapi_param_register_int ("exclusivity", MCA_BTL_EXCLUSIVITY_DEFAULT);
-    mca_btl_mvapi_module.super.btl_eager_limit = 
-        mca_btl_mvapi_param_register_int ("eager_limit", (32*1024)) 
-        - sizeof(mca_btl_mvapi_header_t); 
-
-    mca_btl_mvapi_module.super.btl_min_send_size =
-        mca_btl_mvapi_param_register_int ("min_send_size", (32*1024))
-        - sizeof(mca_btl_mvapi_header_t);
-
-    mca_btl_mvapi_module.super.btl_max_send_size =
-        mca_btl_mvapi_param_register_int ("max_send_size", (128*1024)) 
-        - sizeof(mca_btl_mvapi_header_t);
-
-    mca_btl_mvapi_module.super.btl_min_rdma_size = 
-        mca_btl_mvapi_param_register_int("min_rdma_size", 
-                                      1024*1024); 
-    mca_btl_mvapi_module.super.btl_max_rdma_size = 
-        mca_btl_mvapi_param_register_int("max_rdma_size", 
-                                      1024*1024); 
-    mca_btl_mvapi_module.super.btl_flags  = 
-        mca_btl_mvapi_param_register_int("flags", 
-                                      MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET); 
-    mca_btl_mvapi_module.super.btl_bandwidth = 
-        mca_btl_mvapi_param_register_int("bandwidth",  800);
+    mca_btl_mvapi_param_register_int("rd_per_peer", "receive descriptors posted per peer, SRQ mode only", 
+                                     16, (int*) &mca_btl_mvapi_component.rd_per_peer); 
+    mca_btl_mvapi_param_register_int ("exclusivity", "BTL exclusivity", 
+                                      MCA_BTL_EXCLUSIVITY_DEFAULT, (int*) &mca_btl_mvapi_module.super.btl_exclusivity);
+    mca_btl_mvapi_param_register_int ("eager_limit", "eager send limit", 
+                                      (32*1024),(int*) &mca_btl_mvapi_module.super.btl_eager_limit);  
+    mca_btl_mvapi_module.super.btl_eager_limit -= sizeof(mca_btl_mvapi_header_t);
+    mca_btl_mvapi_param_register_int ("min_send_size", "minimum send size", 
+                                      (32*1024),(int*)  &mca_btl_mvapi_module.super.btl_min_send_size);
+    mca_btl_mvapi_module.super.btl_min_send_size -= sizeof(mca_btl_mvapi_header_t);
+    mca_btl_mvapi_param_register_int ("max_send_size", "maximum send size", 
+                                      (64*1024), (int*) &mca_btl_mvapi_module.super.btl_max_send_size); 
+    mca_btl_mvapi_module.super.btl_max_send_size -= sizeof(mca_btl_mvapi_header_t);
+    mca_btl_mvapi_param_register_int("min_rdma_size", "minimum rdma size", 
+                                     1024*1024, (int*) &mca_btl_mvapi_module.super.btl_min_rdma_size);
+    mca_btl_mvapi_param_register_int("max_rdma_size", "maximium rdma size", 
+                                     1024*1024, (int*) &mca_btl_mvapi_module.super.btl_max_rdma_size); 
+    mca_btl_mvapi_param_register_int("flags", "BTL flags, SEND=0, PUT=1, GET=2", 
+                                     MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET, (int*) &mca_btl_mvapi_module.super.btl_flags); 
+    mca_btl_mvapi_param_register_int("bandwidth", "Approximate maximum bandwidth of interconnect", 
+                                      800, (int*) &mca_btl_mvapi_module.super.btl_bandwidth); 
+    mca_btl_mvapi_param_register_int("max_wr_sq_tokens", "Maximum number of send/rdma work request tokens", 
+                                     16,  &mca_btl_mvapi_component.max_wr_sq_tokens); 
+    mca_btl_mvapi_param_register_int("max_total_wr_sq_tokens", "Maximum number of send/rdma work request tokens peer btl", 
+                                     32, &mca_btl_mvapi_component.max_total_wr_sq_tokens); 
     
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
     mca_btl_mvapi_component.leave_pinned = value; 
-    mca_base_param_reg_int(&mca_btl_mvapi_component.super.btl_version, 
-                           "max_wr_sq_tokens", 
-                           "Maximum number of send/rdma work request tokens", 
-                           false, 
-                           false, 
-                           16, 
-                           &(mca_btl_mvapi_component.max_wr_sq_tokens)); 
-    
-   mca_base_param_reg_int(&mca_btl_mvapi_component.super.btl_version, 
-                          "max_total_wr_sq_tokens", 
-                          "Maximum number of send/rdma work request tokens peer btl", 
-                          false, 
-                          false, 
-                          32, 
-                          &(mca_btl_mvapi_component.max_total_wr_sq_tokens)); 
     
     mca_btl_mvapi_component.max_send_size = mca_btl_mvapi_module.super.btl_max_send_size; 
     mca_btl_mvapi_component.eager_limit = mca_btl_mvapi_module.super.btl_eager_limit; 
