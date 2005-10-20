@@ -328,7 +328,7 @@ int orte_ns_replica_module_init(void)
     }
     
     /* issue non-blocking receive for call_back function */
-    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS, 0, orte_ns_replica_recv, NULL);
+    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS, ORTE_RML_PERSISTENT, orte_ns_replica_recv, NULL);
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -628,9 +628,6 @@ RETURN_ERROR:
     OBJ_DESTRUCT(&error_answer);
 
 CLEANUP:
-    /* reissue the non-blocking receive */
-    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS, 0, orte_ns_replica_recv, NULL);
-
     /* cleanup */
     OBJ_DESTRUCT(&answer);
 }

@@ -305,7 +305,8 @@ int orte_gpr_replica_module_init(void)
 
     /* issue the non-blocking receive */
     if (!orte_gpr_replica_globals.isolate) {
-        int rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
+        int rc = orte_rml.recv_buffer_nb(
+            ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, ORTE_RML_PERSISTENT, orte_gpr_replica_recv, NULL);
         if(rc < 0) {
             ORTE_ERROR_LOG(rc);
             return rc;
