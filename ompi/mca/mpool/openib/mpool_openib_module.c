@@ -87,11 +87,14 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
     *registration = (mca_mpool_base_registration_t*) OBJ_NEW(mca_mpool_openib_registration_t);    /* (void*) malloc(sizeof(mca_mpool_base_registration_t));  */
     vapi_reg = (mca_mpool_openib_registration_t*) *registration; 
     vapi_reg->base_reg.mpool = mpool;
+    vapi_reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    vapi_reg->base_reg.bound = up_align_addr( (void*) ((char*) addr + size - 1)
+                                              , mca_mpool_base_page_size_log);
         
-    
+    size = vapi_reg->base_reg.bound -vapi_reg->base_reg.base + 1;
     vapi_reg->mr = ibv_reg_mr(
                               mpool_module->resources.ib_pd, 
-                              addr, 
+                              vapi_reg->base_reg.base, 
                               size, 
                               IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ
                               /* IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE */ 
@@ -103,9 +106,6 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
         return OMPI_ERROR; 
     }
     
-    vapi_reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
-    vapi_reg->base_reg.bound = up_align_addr( (void*) ((char*) addr + size - 1)
-                                              , mca_mpool_base_page_size_log);
        
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 
@@ -130,20 +130,15 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
 int mca_mpool_openib_deregister(mca_mpool_base_module_t* mpool, 
                                 mca_mpool_base_registration_t* registration){
     
-    mca_mpool_openib_registration_t * openib_reg; 
-    openib_reg = (mca_mpool_openib_registration_t*) registration; 
-    if(ibv_dereg_mr(openib_reg->mr)){   
-        opal_output(0, "%s: error unpinning openib memory errno says %s\n", __func__, strerror(errno)); 
-        return OMPI_ERROR; 
-    }
     
     if(registration->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_delete(mpool->rcache, 
                                         registration, 
                                         registration->flags); 
+        registration->flags=0;
     }
     
-    return OMPI_SUCCESS; 
+    return mca_mpool_openib_release(mpool, registration); 
 }
 
 /**
@@ -197,8 +192,14 @@ int mca_mpool_openib_release(
                             struct mca_mpool_base_module_t* mpool, 
                             mca_mpool_base_registration_t* registration
                             ){
-    if(0 == OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
-        mpool->mpool_deregister(mpool, registration);
+    if(0 >= OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
+        mca_mpool_openib_registration_t * openib_reg; 
+        openib_reg = (mca_mpool_openib_registration_t*) registration; 
+        if(ibv_dereg_mr(openib_reg->mr)){   
+            opal_output(0, "%s: error unpinning openib memory errno says %s\n", __func__, strerror(errno)); 
+            return OMPI_ERROR; 
+        }
+        OBJ_RELEASE(openib_reg);
     }
     return OMPI_SUCCESS; 
 }
