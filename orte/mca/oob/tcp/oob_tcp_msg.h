@@ -61,6 +61,7 @@ struct mca_oob_tcp_msg_t {
     orte_process_name_t   msg_peer;      /**< the name of the peer */
     opal_mutex_t          msg_lock;      /**< lock for the condition variable */
     opal_condition_t      msg_condition; /**< condition variable for completion */
+    opal_event_t          msg_event;
     struct iovec          msg_iov[MCA_OOB_TCP_IOV_MAX];  /** preallocate space for iovec array */
 };
 
