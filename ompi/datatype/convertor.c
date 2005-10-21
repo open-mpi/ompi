@@ -53,13 +53,13 @@ inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
     if( !(CONVERTOR_CLONE & convertor->flags) )
         if( NULL != datatype ) OBJ_RELEASE( datatype );
     convertor->pDesc = NULL;
-    convertor->flags = 0;
+    convertor->flags = CONVERTOR_HOMOGENEOUS;
     return OMPI_SUCCESS;
 }
 
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
-    convertor->flags             = 0;
+    convertor->flags             = CONVERTOR_HOMOGENEOUS;
     convertor->pDesc             = NULL;
     convertor->pStack            = convertor->static_stack;
     convertor->stack_size        = DT_STATIC_STACK_SIZE;
@@ -188,8 +188,9 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
     pConvertor->pStack[0].index = -1;
     pConvertor->pStack[0].count = pConvertor->count;
     pConvertor->pStack[0].disp  = 0;
-    /* first here we should select which data representation will be used for
-     * this operation: normal one or the optimized version ? */
+    /* The prepare function already make the selection on which data representation
+     * we have to use: normal one or the optimized version ?
+     */
     pElems = pConvertor->use_desc->desc;
     pStack[0].end_loop = pConvertor->use_desc->used;
 
@@ -280,7 +281,7 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
                                    const ompi_datatype_t* datatype, int32_t count,
                                    const void* pUserBuf )
 {
-    uint32_t required_stack_length = datatype->btypes[0 /*DT_LOOP*/] + 3;
+    uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1;
 
     if( !(datatype->flags & DT_FLAG_COMMITED) ) {
         /* this datatype is improper for conversion. Commit it first */
