@@ -123,7 +123,7 @@ int opal_init(void)
 error:
     if (ret != OPAL_SUCCESS) {
         opal_show_help("help-opal-runtime",
-                       "opal_init:startup:internal-failure",
+                       "opal_init:startup:internal-failure", true,
                        error, ret);
     }
 
