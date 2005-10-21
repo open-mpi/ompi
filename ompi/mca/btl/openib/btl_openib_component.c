@@ -196,6 +196,11 @@ int mca_btl_openib_component_open(void)
     
     mca_btl_openib_param_register_int("bandwidth", "Approximate maximum bandwidth of interconnect", 
                                       800, (int*) &mca_btl_openib_module.super.btl_bandwidth); 
+    mca_btl_openib_param_register_int("max_wr_sq_tokens", "Maximum number of send/rdma work request tokens", 
+                                      16,  (int*) &mca_btl_openib_component.max_wr_sq_tokens); 
+    mca_btl_openib_param_register_int("max_total_wr_sq_tokens", "Maximum number of send/rdma work request tokens peer btl", 
+                                     32, (int*) &mca_btl_openib_component.max_total_wr_sq_tokens); 
+    
     
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
@@ -402,9 +407,17 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         free(openib_btl); 
 
         openib_btl = &mca_btl_openib_component.openib_btls[i];
-        
+        openib_btl->rd_buf_max = mca_btl_openib_component.ib_rr_buf_max; 
+        openib_btl->rd_buf_min = mca_btl_openib_component.ib_rr_buf_min;
+        openib_btl->num_peers = 0; 
+        openib_btl->wr_sq_tokens_hp = 
+            openib_btl->wr_sq_tokens_lp = mca_btl_openib_component.max_total_wr_sq_tokens;
+
         /* Initialize module state */
 
+        OBJ_CONSTRUCT(&openib_btl->pending_frags_hp, opal_list_t);
+        OBJ_CONSTRUCT(&openib_btl->pending_frags_lp, opal_list_t);
+            
         OBJ_CONSTRUCT(&openib_btl->ib_lock, opal_mutex_t); 
         OBJ_CONSTRUCT(&openib_btl->send_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->send_free_max, ompi_free_list_t);
@@ -601,6 +614,31 @@ int mca_btl_openib_component_progress()
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
+                /* check and see if we need to progress pending sends */ 
+                if( !mca_btl_openib_component.use_srq && 
+                    OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_hp, 1) > 0
+                    && !opal_list_is_empty(&(frag->endpoint->pending_frags_hp))) { 
+                    opal_list_item_t *frag_item;
+                    OPAL_THREAD_LOCK(&frag->endpoint->endpoint_lock); 
+                    frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_hp));
+                    OPAL_THREAD_UNLOCK(&frag->endpoint->endpoint_lock); 
+                    frag = (mca_btl_openib_frag_t *) frag_item;
+
+                    if(OMPI_SUCCESS !=  mca_btl_openib_endpoint_send(frag->endpoint, frag)) { 
+                        BTL_ERROR(("error in posting pending send\n"));
+                    }
+                }
+                if( mca_btl_openib_component.use_srq && 
+                    OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_hp, 1)  > 0 
+                    && !opal_list_is_empty(&openib_btl->pending_frags_hp)) {
+                    opal_list_item_t *frag_item;
+                    frag_item = opal_list_remove_first(&openib_btl->pending_frags_hp);
+                    frag = (mca_btl_openib_frag_t *) frag_item;
+                    if(OMPI_SUCCESS !=  mca_btl_openib_endpoint_send(frag->endpoint, frag)) { 
+                        BTL_ERROR(("error in posting pending send\n"));
+                    }
+                } 
+                
                 break; 
                     
                                     
@@ -670,6 +708,69 @@ int mca_btl_openib_component_progress()
                 frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
+                if(!mca_btl_openib_component.use_srq && 
+                   OPAL_THREAD_ADD32(&frag->endpoint->wr_sq_tokens_lp, 1) > 0 && 
+                   !opal_list_is_empty(&(frag->endpoint->pending_frags_lp))) { 
+                    opal_list_item_t *frag_item;
+                    OPAL_THREAD_LOCK(&frag->endpoint->endpoint_lock); 
+                    frag_item = opal_list_remove_first(&(frag->endpoint->pending_frags_lp));
+                    OPAL_THREAD_UNLOCK(&frag->endpoint->endpoint_lock); 
+                    frag = (mca_btl_openib_frag_t *) frag_item;
+                    switch(frag->wr_desc.sr_desc.opcode){
+                    case IBV_WR_SEND: 
+                        if(OMPI_SUCCESS !=  mca_btl_openib_endpoint_send(frag->endpoint, frag)) { 
+                            BTL_ERROR(("error in posting pending send\n"));
+                        }
+                        break; 
+                    case IBV_WR_RDMA_WRITE: 
+                        if(OMPI_SUCCESS !=  mca_btl_openib_put((mca_btl_base_module_t*) openib_btl, 
+                                                              frag->endpoint, 
+                                                              (mca_btl_base_descriptor_t*) frag)) { 
+                            BTL_ERROR(("error in posting pending rdma write\n"));
+                        }
+                        break; 
+                    case IBV_WR_RDMA_READ: 
+                        if(OMPI_SUCCESS !=  mca_btl_openib_put((mca_btl_base_module_t *) openib_btl, 
+                                                              frag->endpoint,
+                                                              (mca_btl_base_descriptor_t*) frag)) { 
+                            BTL_ERROR(("error in posting pending rdma read\n"));
+                        }
+                        break;
+                    default: 
+                        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->wr_desc.sr_desc.opcode)); 
+                    }
+                }
+                if(mca_btl_openib_component.use_srq && 
+                   OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp, 1)  > 0 
+                   && !opal_list_is_empty(&openib_btl->pending_frags_lp)) {
+                    opal_list_item_t *frag_item;
+                    frag_item = opal_list_remove_first(&openib_btl->pending_frags_lp);
+                    frag = (mca_btl_openib_frag_t *) frag_item;
+                    switch(frag->wr_desc.sr_desc.opcode){
+                    case IBV_WR_SEND: 
+                        if(OMPI_SUCCESS !=  mca_btl_openib_endpoint_send(frag->endpoint, frag)) { 
+                            BTL_ERROR(("error in posting pending send\n"));
+                        }
+                        break; 
+                    case IBV_WR_RDMA_WRITE: 
+                        if(OMPI_SUCCESS !=  mca_btl_openib_put((mca_btl_base_module_t*) openib_btl, 
+                                                              frag->endpoint, 
+                                                              (mca_btl_base_descriptor_t*) frag)) { 
+                            BTL_ERROR(("error in posting pending rdma write\n"));
+                        }
+                        break; 
+                    case IBV_WR_RDMA_READ: 
+                        if(OMPI_SUCCESS !=  mca_btl_openib_put((mca_btl_base_module_t *) openib_btl, 
+                                                              frag->endpoint,
+                                                              (mca_btl_base_descriptor_t*) frag)) { 
+                            BTL_ERROR(("error in posting pending rdma read\n"));
+                        }
+                        break;
+                    default: 
+                        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->wr_desc.sr_desc.opcode)); 
+                    }
+                }
+                
                 break;
                 
             default:

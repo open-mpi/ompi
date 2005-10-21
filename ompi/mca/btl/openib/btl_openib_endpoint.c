@@ -74,9 +74,40 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     frag->sg_entry.addr = (uintptr_t) frag->hdr; 
     
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= openib_btl->super.btl_eager_limit){ 
-        ib_qp = endpoint->lcl_qp_high; 
+        
+        /* atomically test and acquire a token */
+        if(!mca_btl_openib_component.use_srq &&
+           OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,-1) < 0) { 
+            BTL_VERBOSE(("Queing because no send tokens \n"));
+            opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
+            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_hp,1);
+            return OMPI_SUCCESS;
+        } else if( mca_btl_openib_component.use_srq &&
+                   OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_hp,-1) < 0) { 
+            OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_hp,1);
+            opal_list_append(&openib_btl->pending_frags_hp, (opal_list_item_t *)frag);
+            return OMPI_SUCCESS;
+        } else { 
+            ib_qp = endpoint->lcl_qp_high; 
+        }
     } else {
-        ib_qp = endpoint->lcl_qp_low; 
+        /* atomically test and acquire a token */
+        if(!mca_btl_openib_component.use_srq &&
+           OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0 ) {
+            BTL_VERBOSE(("Queing because no send tokens \n"));
+            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag); 
+            OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,1);
+            
+            return OMPI_SUCCESS;
+        } else if(mca_btl_openib_component.use_srq &&
+                  OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,-1) < 0) {
+            OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,1);
+            opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag); 
+            
+            return OMPI_SUCCESS;
+        } else { 
+            ib_qp = endpoint->lcl_qp_low; 
+        }
     } 
     
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
@@ -132,15 +163,21 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_tstamp = 0.0;
     endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
     endpoint->endpoint_retries = 0;
-    OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&endpoint->endpoint_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->pending_frags_hp, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->pending_frags_lp, opal_list_t);
+    
     endpoint->lcl_qp_attr_high = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 
     endpoint->lcl_qp_attr_low = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 
     memset(endpoint->lcl_qp_attr_high, 0, sizeof(struct ibv_qp_attr)); 
     memset(endpoint->lcl_qp_attr_low, 0, sizeof(struct ibv_qp_attr)); 
     endpoint->rr_posted_high = 0; 
     endpoint->rr_posted_low = 0; 
+    
+    endpoint->wr_sq_tokens_hp = mca_btl_openib_component.max_wr_sq_tokens; 
+    endpoint->wr_sq_tokens_lp = mca_btl_openib_component.max_wr_sq_tokens; 
+    
     endpoint->rem_info.rem_qp_num_high = 0; 
     endpoint->rem_info.rem_qp_num_low = 0; 
     endpoint->rem_info.rem_lid = 0; 
@@ -656,7 +693,7 @@ int mca_btl_openib_endpoint_send(
     int rc;
     mca_btl_openib_module_t *openib_btl; 
     
-    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     
     switch(endpoint->endpoint_state) {
         case MCA_BTL_IB_CONNECTING:
@@ -707,7 +744,7 @@ int mca_btl_openib_endpoint_send(
         rc = OMPI_ERR_UNREACH;
     }
     
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     
     return rc;
 }
@@ -796,8 +833,8 @@ int mca_btl_openib_endpoint_create_qp(
 
         qp_init_attr.send_cq = cq; 
         qp_init_attr.recv_cq = cq; 
-        qp_init_attr.cap.max_send_wr =  mca_btl_openib_component.ib_wq_size; 
-        qp_init_attr.cap.max_recv_wr = mca_btl_openib_component.ib_wq_size; 
+        qp_init_attr.cap.max_send_wr =  mca_btl_openib_component.max_wr_sq_tokens; 
+        qp_init_attr.cap.max_recv_wr = mca_btl_openib_component.ib_rr_buf_max; 
         qp_init_attr.cap.max_send_sge =  mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.qp_type = IBV_QPT_RC; 

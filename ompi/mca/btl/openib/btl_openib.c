@@ -123,6 +123,10 @@ int mca_btl_openib_add_procs(
         openib_btl->num_peers += nprocs; 
         if(mca_btl_openib_component.use_srq) { 
             openib_btl->rd_buf_max = mca_btl_openib_component.ib_rr_buf_max + log2(nprocs) * mca_btl_openib_component.rd_per_peer; 
+            free(openib_btl->rr_desc_post); 
+            openib_btl->rr_desc_post = (struct ibv_recv_wr*) malloc((openib_btl->rd_buf_max * sizeof(struct ibv_recv_wr))); 
+            openib_btl->rd_buf_min = openib_btl->rd_buf_max / 2;
+       
         }
     }
 #endif 
@@ -577,38 +581,52 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     frag->endpoint = endpoint;
     frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_WRITE; 
-    frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-    frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
-    frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
-    frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
-    frag->sg_entry.length  = frag->base.des_src->seg_len; 
-    
-    BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
-                  , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
-                  , frag->wr_desc.sr_desc.wr.rdma.rkey
-                  , frag->sg_entry.addr
-                  , frag->sg_entry.length)); 
+    if(!mca_btl_openib_component.use_srq && 
+       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
+        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
+        BTL_OPENIB_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
+                                  endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock); 
+        return OMPI_SUCCESS;
+    } else if(mca_btl_openib_component.use_srq && 
+              OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,-1) < 0) {
+        opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag); 
+        OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,1);
+        return OMPI_SUCCESS;
+        
+    } else { 
+        
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
+        frag->sg_entry.addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
+        frag->sg_entry.length  = frag->base.des_src->seg_len; 
+        
+        BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
+                     , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
+                     , frag->wr_desc.sr_desc.wr.rdma.rkey
+                     , frag->sg_entry.addr
+                     , frag->sg_entry.length)); 
 
-    if(ibv_post_send(endpoint->lcl_qp_low, 
-                     &frag->wr_desc.sr_desc, 
-                     &bad_wr)){ 
-        BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
-        return OMPI_ERROR; 
-    }  
+        if(ibv_post_send(endpoint->lcl_qp_low, 
+                         &frag->wr_desc.sr_desc, 
+                         &bad_wr)){ 
+            BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
+            return OMPI_ERROR; 
+        }  
     
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
-    if(mca_btl_openib_component.use_srq) { 
-        MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
-        MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 1);         
-    } else { 
+        if(mca_btl_openib_component.use_srq) { 
+            MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
+            MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 1);         
+        } else { 
 #endif 
-        MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
-        MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+            MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+            MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    }
+        }
 #endif 
+    }
     return OMPI_SUCCESS; 
-
 }
 
 
@@ -625,38 +643,53 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     frag->endpoint = endpoint;
     frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_READ; 
-    frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-    frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
-    frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
-    frag->sg_entry.addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
-    frag->sg_entry.length  = frag->base.des_dst->seg_len; 
+    /* atomically test and acquire a token */
+    if(!mca_btl_openib_component.use_srq &&
+       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
+        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
+        BTL_OPENIB_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
+                                  endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock); 
+        return OMPI_SUCCESS;
+    } else if(mca_btl_openib_component.use_srq && 
+              OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,-1) < 0) {
+        opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag); 
+        OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,1);
+        return OMPI_SUCCESS;
+        
+    } else { 
     
-    BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
-                  , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
-                  , frag->wr_desc.sr_desc.wr.rdma.rkey
-                  , frag->sg_entry.addr
-                  , frag->sg_entry.length)); 
-
-    if(ibv_post_send(endpoint->lcl_qp_low, 
-                     &frag->wr_desc.sr_desc, 
-                     &bad_wr)){ 
-        BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
-        return OMPI_ERROR; 
-    }  
-    
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uintptr_t) frag->base.des_src->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
+        frag->sg_entry.addr = (uintptr_t) frag->base.des_dst->seg_addr.pval; 
+        frag->sg_entry.length  = frag->base.des_dst->seg_len; 
+        
+        BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
+                     , frag->wr_desc.sr_desc.wr.rdma.remote_addr 
+                     , frag->wr_desc.sr_desc.wr.rdma.rkey
+                     , frag->sg_entry.addr
+                     , frag->sg_entry.length)); 
+        
+        if(ibv_post_send(endpoint->lcl_qp_low, 
+                         &frag->wr_desc.sr_desc, 
+                         &bad_wr)){ 
+            BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
+            return OMPI_ERROR; 
+        }  
+        
         
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
-    if(mca_btl_openib_component.use_srq) { 
-        MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
-        MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 1);         
-    } else { 
+        if(mca_btl_openib_component.use_srq) { 
+            MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
+            MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 1);         
+        } else { 
 #endif 
-        MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
-        MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
+            MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
+            MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    }
+        }
 #endif 
-    
+    }
     return OMPI_SUCCESS; 
 
 }

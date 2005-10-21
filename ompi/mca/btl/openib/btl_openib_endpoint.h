@@ -118,15 +118,26 @@ struct mca_btl_base_endpoint_t {
     double                      endpoint_tstamp;
     /**< timestamp of when the first connection was attempted */
 
-    opal_mutex_t                endpoint_send_lock;
+    opal_mutex_t                endpoint_lock;
     /**< lock for concurrent access to endpoint state */
-
-    opal_mutex_t                endpoint_recv_lock;
-    /**< lock for concurrent access to endpoint state */
-
+    
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpotint */
     
+    opal_list_t                 pending_frags_hp; 
+    /**< list of pending high priority frags */ 
+
+    opal_list_t                 pending_frags_lp; 
+    /**< list of pending low priority frags */ 
+
+    
+    int32_t                     wr_sq_tokens_hp; 
+    /**< number of high priority frags that  can be outstanding (down counter) */ 
+
+    int32_t                     wr_sq_tokens_lp; 
+    /**< number of low priority frags that  can be outstanding (down counter) */ 
+    
+
     mca_btl_openib_rem_info_t   rem_info;
     
     uint32_t                    lcl_psn_high; 
@@ -221,6 +232,16 @@ void mca_btl_openib_post_recv(void);
     }\
     OPAL_THREAD_ADD32((int32_t*) rr_posted, cnt); \
     } while(0); \
+}
+
+#define BTL_OPENIB_INSERT_PENDING(frag, frag_list, tokens, lock) \
+{ \
+ do{ \
+     OPAL_THREAD_LOCK(&lock); \
+     opal_list_append(&frag_list, (opal_list_item_t *)frag); \
+     OPAL_THREAD_UNLOCK(&lock); \
+     OPAL_THREAD_ADD32(&tokens, 1); \
+ } while(0); \
 }
 
 
