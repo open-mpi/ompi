@@ -537,7 +537,7 @@ error:
     if (ret != ORTE_SUCCESS) {
         opal_show_help("help-orte-runtime",
                        "orte_init:startup:internal-failure",
-                       error, ret);
+                       true, error, ret);
     }
 
     return ret;
