@@ -79,9 +79,11 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                 if( loop->extent == (long)end_loop->size ) {
                     /* the whole loop is contiguous */
                     if( (last_disp + last_length) != (total_disp + loop_disp) ) {
-                        CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
-                        pElemDesc++; nbElems++;
-                        last_length = 0;
+                        if( 0 != last_length ) {
+                            CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
+                            pElemDesc++; nbElems++;
+                            last_length = 0;
+                        }
                         last_disp = total_disp + loop_disp;
                     }
                     last_length += loop->loops * end_loop->size;
@@ -177,130 +179,6 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
     pTypeDesc->used = nbElems - 1;  /* except the last fake END_LOOP */
     return OMPI_SUCCESS;
 }
-
-#define PRINT_MEMCPY( DST, SRC, LENGTH ) \
-{ \
-  printf( "%5d: memcpy dst = %p src %p length %ld bytes (so far %d)[%d]\n", \
-          __index++, (DST), (SRC), (long)(LENGTH), __sofar, __LINE__ ); \
-  __sofar += (LENGTH); \
-}
-
-#if defined(COMPILE_USELSS_CODE)
-static int ompi_ddt_unroll( ompi_datatype_t* pData, int count )
-{
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int pos_desc;         /* actual position in the description of the derived datatype */
-    int type;             /* type at current position */
-    int i;                /* index for basic elements with extent */
-    int stack_pos = 0;    /* position on the stack */
-    long last_disp = 0, last_length = 0;
-    char* pDestBuf;
-    int bConverted = 0, __index = 0, __sofar = 0;
-    dt_elem_desc_t* pElems;
-
-    pDestBuf = NULL;
-
-    if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-        long extent = pData->ub - pData->lb;
-        char* pSrc = (char*)pData->true_lb;
-
-        type = count * pData->size;
-        if( pData->size == extent /* true extent at this point */ ) {
-            /* we can do it with just one memcpy */
-            PRINT_MEMCPY( pDestBuf, pSrc, pData->size * count );
-            bConverted += (pData->size * count);
-        } else {
-            char* pSrcBuf = (char*)pData->true_lb;
-            long extent = pData->ub - pData->lb;
-            for( pos_desc = 0; pos_desc < count; pos_desc++ ) {
-                PRINT_MEMCPY( pDestBuf, pSrcBuf, pData->size );
-                pSrcBuf += extent;
-                pDestBuf += pData->size;
-            }
-            bConverted += type;
-        }
-        return (bConverted == (pData->size * count));
-    }
-    pStack = alloca( sizeof(dt_stack_t) * pData->btypes[DT_LOOP] );
-    pStack->count = count;
-    pStack->index = -1;
-    pStack->disp = 0;
-    pos_desc  = 0;
-
-    if( pData->opt_desc.desc != NULL ) {
-        pElems = pData->opt_desc.desc;
-        pStack->end_loop = pData->opt_desc.used;
-    } else {
-        pElems = pData->desc.desc;
-        pStack->end_loop = pData->desc.used;
-    }
-
-    DDT_DUMP_STACK( pStack, stack_pos, pElems, "starting" );
-    DUMP( "remember position on stack %d last_elem at %d\n", stack_pos, pos_desc );
-    DUMP( "top stack info {index = %d, count = %d}\n", pStack->index, pStack->count );
-
-    while( pos_desc >= 0 ) {
-        if( DT_END_LOOP == pElems[pos_desc].type ) { /* end of the current loop */
-            if( --(pStack->count) == 0 ) { /* end of loop */
-                pStack--;
-                if( --stack_pos == -1 ) break;
-            } else {
-                pos_desc = pStack->index;
-                if( pos_desc == -1 ) {
-                    pStack->disp += (pData->ub - pData->lb);
-                } else {
-                    assert( DT_LOOP == pElems[pos_desc].elem.common.type );
-                    pStack->disp += pElems[pos_desc].loop.extent;
-                }
-            }
-            pos_desc++;
-            continue;
-        }
-        if( DT_LOOP == pElems[pos_desc].type ) {
-            if( pElems[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {
-                dt_elem_desc_t* pLast = &( pElems[pos_desc + pElems[pos_desc].disp]);
-                if( (last_disp + last_length) == (pStack->disp + pElems[pos_desc+1].disp) ) {
-                    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length + pLast->extent );
-                    last_disp = pStack->disp + pElems[pos_desc+1].disp + pLast->extent;
-                    i = 1;
-                } else {
-                    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
-                    last_disp = pStack->disp + pElems[pos_desc + 1].disp;
-                    i = 0;
-                }
-                last_length = pLast->extent;
-                for( ; i < (pElems[pos_desc].count - 1); i++ ) {
-                    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
-                    pDestBuf += pLast->extent;
-                    last_disp += pElems[pos_desc].extent;
-                }
-                pos_desc += pElems[pos_desc].disp + 1;
-                goto next_loop;
-            } else {
-                do {
-                    PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, pElems[pos_desc].loop.loops,
-                                pStack->disp, pos_desc + pElems[pos_desc].loop.items );
-                    pos_desc++;
-                } while( pElems[pos_desc].type == DT_LOOP ); /* let's start another loop */
-            }
-        }
-        /* now here we have a basic datatype */
-        type = pElems[pos_desc].type;
-        if( (last_disp + last_length) == (pStack->disp + pElems[pos_desc].disp) ) {
-            last_length += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
-        } else {
-            PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
-            pDestBuf += last_length;
-            bConverted += last_length;
-            last_disp = pStack->disp + pElems[pos_desc].disp;
-            last_length = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
-        }
-        pos_desc++;  /* advance to the next data */
-    }
-    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
-    return OMPI_SUCCESS;
-}
-#endif  /* COMPILE_USELSS_CODE */
 
 int32_t ompi_ddt_commit( ompi_datatype_t** data )
 {
