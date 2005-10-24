@@ -42,6 +42,10 @@ int mca_coll_tuned_preallocate_memory_comm_size_limit = (32*1024);
 int mca_coll_tuned_use_dynamic_rules = 0;
 int mca_coll_tuned_init_tree_fanout = 4;
 int mca_coll_tuned_init_chain_fanout = 4;
+
+/* forced alogrithm variables */
+int mca_coll_tuned_alltoall_forced_choice = 0;
+int mca_coll_tuned_alltoall_forced_segsize = 0;
 /*
  * Local function
  */
@@ -113,12 +117,12 @@ static int tuned_open(void)
                            false, false, mca_coll_tuned_preallocate_memory_comm_size_limit,
                            &mca_coll_tuned_preallocate_memory_comm_size_limit);
     
-    /* by default DISABLE dynamic rules and force the use of fixed [if] rules */
+    /* by default DISABLE dynamic rules and instead use fixed [if based] rules */
     mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
                            "use_dynamic_rules",
                            "Switch used to decide if we use static (if statements) or dynamic (built at runtime) decision function rules",
-                           false, false, mca_coll_tuned_preallocate_memory_comm_size_limit,
-                           &mca_coll_tuned_preallocate_memory_comm_size_limit);
+                           false, false, mca_coll_tuned_use_dynamic_rules,
+                           &mca_coll_tuned_use_dynamic_rules);
 
     /* some initial guesses at topology parameters */
     mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
