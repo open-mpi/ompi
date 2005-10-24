@@ -70,6 +70,7 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 #define DT_FLAG_DATA_CPP      0x8000
 #define DT_FLAG_DATA_FORTRAN  0xC000
 #define DT_FLAG_DATA_LANGUAGE 0xC000
+
 /* 
  * We should make the difference here between the predefined contiguous and non contiguous
  * datatypes. The DT_FLAG_BASIC is held by all predefined contiguous datatypes.
