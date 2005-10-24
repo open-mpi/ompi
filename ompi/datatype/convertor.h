@@ -53,7 +53,7 @@ struct ompi_datatype_t;
 
 typedef int32_t (*conversion_fct_t)( uint32_t count,
                                      const void* from, uint32_t from_len, long from_extent,
-                                     void* to, uint32_t in_length, long to_extent );
+                                     void* to, uint32_t to_length, long to_extent );
 
 typedef struct ompi_convertor_t ompi_convertor_t;
 typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
