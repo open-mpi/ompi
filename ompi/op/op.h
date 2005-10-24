@@ -231,7 +231,7 @@ struct ompi_op_t {
  * Convenience typedef 
  */
 typedef struct ompi_op_t ompi_op_t;
-
+OBJ_CLASS_DECLARATION(ompi_op_t);
 
 /**
  * Array to map ddt->id values to the corresponding position in the op
