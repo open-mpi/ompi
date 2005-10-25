@@ -51,11 +51,13 @@ static inline void DUMP( char* fmt, ... )
 #      define DUMP(ARGS...)
 #    else
        static inline void DUMP( char* fmt, ...) { 
+#if defined(__PGI)
            /* Some compilers complain if we have ... and no
               corresponding va_start() */
            va_list arglist;
            va_start(arglist, fmt);
            va_end(arglist);
+#endif
        }
 #    endif  /* __GNUC__ && !__STDC__ */
 #  endif  /* ACCEPT_C99 */
