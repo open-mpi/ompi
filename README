@@ -195,10 +195,15 @@ for a full list); a summary of the more important ones follows:
   Allows asynchronous progress in some transports.  See
   --with-threads; this is currently disabled by default.
 
---disable-f77
+--disable-mpi-cxx
+  Disable building the C++ MPI bindings.  Note that this does *not*
+  disable the C++ checks during configure; some of Open MPI's tools
+  are written in C++ and therefore require a C++ compiler to be built.
+
+--disable-mpi-f77
   Disable building the Fortran 77 MPI bindings.
 
---disable-f90
+--disable-mpi-f90
   Disable building the Fortran 90 MPI bindings.  Also related to the
   --with-f90-max-array-dim option.
 
