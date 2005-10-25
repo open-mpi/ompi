@@ -177,7 +177,7 @@ int mca_oob_tcp_component_open(void)
 
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,     opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,         opal_hash_table_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    opal_hash_table_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          opal_free_list_t);
@@ -185,6 +185,7 @@ int mca_oob_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,      opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_completed, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    opal_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_cond,    opal_condition_t);
 
@@ -228,6 +229,7 @@ int mca_oob_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_post);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_recv);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_completed);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_cond);
     return OMPI_SUCCESS;

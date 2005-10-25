@@ -147,15 +147,47 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
  */
 int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
 {
-    opal_mutex_lock(&msg->msg_lock);
+    OPAL_THREAD_LOCK(&msg->msg_lock);
     msg->msg_complete = true;
     if(NULL != msg->msg_cbfunc) {
+        opal_list_item_t* item;
+        OPAL_THREAD_UNLOCK(&msg->msg_lock);
+
+        /* post to a global list of completed messages */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
+        if(opal_list_get_size(&mca_oob_tcp_component.tcp_msg_completed) > 1) {
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            return OMPI_SUCCESS;
+        }
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+
+        /* invoke message callback */
         msg->msg_cbfunc(msg->msg_rc, peer, msg->msg_uiov, msg->msg_ucnt, msg->msg_hdr.msg_tag, msg->msg_cbdata);
-        opal_mutex_unlock(&msg->msg_lock);
+
+        /* dispatch any completed events */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
         MCA_OOB_TCP_MSG_RETURN(msg);
+        while(NULL != 
+            (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_msg_completed))) {
+            msg = (mca_oob_tcp_msg_t*)item;
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            msg->msg_cbfunc(
+                msg->msg_rc, 
+                &msg->msg_peer, 
+                msg->msg_uiov, 
+                msg->msg_ucnt, 
+                msg->msg_hdr.msg_tag, 
+                msg->msg_cbdata);
+            MCA_OOB_TCP_MSG_RETURN(msg);
+            OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        }
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+
     } else {
         opal_condition_broadcast(&msg->msg_condition);
-        opal_mutex_unlock(&msg->msg_lock);
+        OPAL_THREAD_UNLOCK(&msg->msg_lock);
     }
     return OMPI_SUCCESS;
 }
