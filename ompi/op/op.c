@@ -617,6 +617,22 @@ int ompi_op_init(void)
  */
 int ompi_op_finalize(void)
 {
+  /* clean up the intrinsic ops */
+
+  OBJ_DESTRUCT(&ompi_mpi_op_minloc);
+  OBJ_DESTRUCT(&ompi_mpi_op_maxloc);
+  OBJ_DESTRUCT(&ompi_mpi_op_bxor);
+  OBJ_DESTRUCT(&ompi_mpi_op_lxor);
+  OBJ_DESTRUCT(&ompi_mpi_op_bor);
+  OBJ_DESTRUCT(&ompi_mpi_op_lor);
+  OBJ_DESTRUCT(&ompi_mpi_op_band);
+  OBJ_DESTRUCT(&ompi_mpi_op_land);
+  OBJ_DESTRUCT(&ompi_mpi_op_prod);
+  OBJ_DESTRUCT(&ompi_mpi_op_sum);
+  OBJ_DESTRUCT(&ompi_mpi_op_min);
+  OBJ_DESTRUCT(&ompi_mpi_op_max);
+  OBJ_DESTRUCT(&ompi_mpi_op_null);
+        
   /* Remove op F2C table */
   
   OBJ_RELEASE(ompi_op_f_to_c_table);
