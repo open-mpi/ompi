@@ -146,10 +146,10 @@ AC_DEFINE_UNQUOTED(OMPI_ENABLE_DEBUG, $WANT_DEBUG,
 #
 
 AC_MSG_CHECKING([if want Fortran 77 bindings])
-AC_ARG_ENABLE(f77, 
-    AC_HELP_STRING([--enable-f77],
+AC_ARG_ENABLE(mpi-f77, 
+    AC_HELP_STRING([--enable-mpi-f77],
                    [enable f77 MPI bindings (default: enabled)]))
-if test "$enable_f77" != "no"; then
+if test "$enable_mpi_f77" != "no"; then
     AC_MSG_RESULT([yes])
     OMPI_WANT_F77_BINDINGS=1
 else
@@ -163,10 +163,10 @@ fi
 #
 
 AC_MSG_CHECKING([if want Fortran 90 bindings])
-AC_ARG_ENABLE(f90, 
-    AC_HELP_STRING([--enable-f90],
+AC_ARG_ENABLE(mpi-f90, 
+    AC_HELP_STRING([--enable-mpi-f90],
                    [enable f90 MPI bindings (default: enabled)]))
-if test "$enable_f90" != "no"; then
+if test "$enable_mpi_f90" != "no"; then
     AC_MSG_RESULT([yes])
     OMPI_WANT_F90_BINDINGS=1
 else
@@ -174,7 +174,7 @@ else
     OMPI_WANT_F90_BINDINGS=0
 fi
 #################### Early development override ####################
-if test "$OMPI_WANT_F90_BINDINGS" = "1" -a -z "$enable_f90" -a -d .svn; then
+if test "$OMPI_WANT_F90_BINDINGS" = "1" -a -z "$enable_mpi_f90" -a -d .svn; then
     OMPI_WANT_F90_BINDINGS=0
     echo "--> developer override: disable Fortran 90 by default"
 fi
@@ -203,10 +203,10 @@ fi
 #                                                                              
 
 AC_MSG_CHECKING([if want C++ bindings])
-AC_ARG_ENABLE(cxx,
-    AC_HELP_STRING([--enable-cxx],
+AC_ARG_ENABLE(mpi-cxx,
+    AC_HELP_STRING([--enable-mpi-cxx],
                    [enable C++ MPI bindings (default: enabled)]))
-if test "$enable_cxx" != "no"; then
+if test "$enable_mpi_cxx" != "no"; then
     AC_MSG_RESULT([yes])
     WANT_MPI_CXX_SUPPORT=1
 else
