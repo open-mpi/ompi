@@ -323,6 +323,7 @@ struct mca_oob_tcp_component_t {
     opal_list_t        tcp_events;           /**< list of pending events (accepts) */
     opal_list_t        tcp_msg_post;         /**< list of recieves user has posted */
     opal_list_t        tcp_msg_recv;         /**< list of recieved messages */
+    opal_list_t        tcp_msg_completed;    /**< list of completed messages */
     opal_mutex_t       tcp_match_lock;       /**< lock held while searching/posting messages */
     opal_condition_t   tcp_match_cond;       /**< condition variable used in finalize */
     int                tcp_match_count;      /**< number of matched recvs in progress */
