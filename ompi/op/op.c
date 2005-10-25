@@ -555,8 +555,9 @@ int ompi_op_init(void)
 
   /* Fill in the ddt.id->op_position map */
 
-  for (i = 0; i < DT_MAX_PREDEFINED; ++i)
+  for (i = 0; i < DT_MAX_PREDEFINED; ++i) {
     ompi_op_ddt_map[i] = -1;
+  }
 
   ompi_op_ddt_map[DT_BYTE] = OMPI_OP_TYPE_BYTE;
   ompi_op_ddt_map[DT_SHORT] = OMPI_OP_TYPE_SHORT;
@@ -677,21 +678,12 @@ ompi_op_t *ompi_op_create(bool commute,
 
 static int add_intrinsic(ompi_op_t *op, int fort_handle)
 {
-  int ret_val;
-
   /* Add the op to the table */
 
-  ret_val = ompi_pointer_array_add(ompi_op_f_to_c_table, op);
-  if (-1 == ret_val){
-    return OMPI_ERROR;
+  OBJ_CONSTRUCT(op, ompi_op_t);
+  if (op->o_f_to_c_index != fort_handle) {
+      return OMPI_ERROR;
   }
-
-  /* Make sure that the op is in the right location in the table */
-
-  if (fort_handle != ret_val) {
-    return OMPI_ERROR;
-  };
-  op->o_f_to_c_index = ret_val;
 
   /* All done */
 
