@@ -100,6 +100,28 @@ base as of this writing (26 Aug 2005):
   compiling certain Open MPI source code files.  As such, it is not
   supported.
 
+- Early versions of the Portland Group 6.0 compiler have problems
+  creating the C++ MPI bindings as a shared library (e.g., v6.0-1).
+  Tests with later versions show that this has been fixed (e.g.,
+  v6.0-5).
+
+- The Portland Group Fortran compilers use -1 as the default value for
+  .TRUE.  Open MPI does not currently handle this correctly.  As such,
+  the "-Munixlogical" option must be used with the Portland Fortran
+  compiler to force it to use 1 as the value for .TRUE.  This can be
+  added to the "FFLAGS" environment variable when running configure:
+
+  shell$ ./configure FFLAGS=-Munixlogical ...
+
+- For any version of the Intel compiler >= 8.0, the default value for
+  .TRUE. is -1.  Open MPI does not currently handle this correctly.
+  As such, the "-fpscomp logicals" option must be used with the Intel
+  Fortran compiler in to force it to use 1 as the value for .TRUE.
+  This can be added to the FFLAGS environment variable when running
+  configure:
+
+  shell$ ./configure "FFLAGS=-fpscomp logicals" ...
+
 - The MPI and run-time layers do not free all used memory properly
   during MPI_FINALIZE.
 
