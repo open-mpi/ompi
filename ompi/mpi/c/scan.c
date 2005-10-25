@@ -75,7 +75,9 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
 
     /* Call the coll component to actually perform the allgather */
 
+    OBJ_RETAIN(op);
     err = comm->c_coll.coll_scan(sendbuf, recvbuf, count,
                                  datatype, op, comm);
+    OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

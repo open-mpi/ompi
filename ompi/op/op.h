@@ -501,7 +501,6 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
    * :-)
    */
 
-  OBJ_RETAIN(op);
   if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
       dtype->id < DT_MAX_PREDEFINED) {
     if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
@@ -524,7 +523,6 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
   } else {
     op->o_func[0].c_fn(source, target, &count, &dtype);
   }
-  OBJ_RELEASE(op);
 }
 
 #endif /* OMPI_OP_H */
