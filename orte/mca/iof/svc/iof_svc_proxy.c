@@ -40,9 +40,7 @@ void orte_iof_svc_proxy_recv(
     orte_rml_tag_t tag,
     void* cbdata)
 {
-    int rc;
     orte_iof_base_header_t* hdr = (orte_iof_base_header_t*)iov[0].iov_base;
-
     if(status < 0) {
         ORTE_ERROR_LOG(status);
         goto done;
@@ -84,19 +82,6 @@ done:
 
     mca_iof_svc_component.svc_iov[0].iov_base = NULL;
     mca_iof_svc_component.svc_iov[0].iov_len = 0;
-
-    rc = orte_rml.recv_nb(
-        ORTE_RML_NAME_ANY,
-        mca_iof_svc_component.svc_iov,
-        1,
-        ORTE_RML_TAG_IOF_SVC,
-        ORTE_RML_ALLOC,
-        orte_iof_svc_proxy_recv,
-        NULL
-    );
-    if(rc < 0) {
-        ORTE_ERROR_LOG(rc);
-    }
 }
 
 

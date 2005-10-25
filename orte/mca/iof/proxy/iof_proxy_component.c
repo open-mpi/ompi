@@ -127,7 +127,7 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
         mca_iof_proxy_component.proxy_iov,
         1,
         ORTE_RML_TAG_IOF_SVC,
-        ORTE_RML_ALLOC,
+        ORTE_RML_ALLOC|ORTE_RML_PERSISTENT,
         orte_iof_proxy_svc_recv,
         NULL
     );
