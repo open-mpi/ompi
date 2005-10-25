@@ -202,7 +202,6 @@ void orte_iof_proxy_svc_recv(
     void* cbdata)
 {
     orte_iof_base_header_t* hdr = (orte_iof_base_header_t*)msg->iov_base;
-    int rc;
     if(NULL == msg->iov_base) {
         opal_output(0, "orte_iof_proxy_svc_recv: invalid message\n");
         return;
@@ -225,20 +224,6 @@ void orte_iof_proxy_svc_recv(
     /* repost receive */
     mca_iof_proxy_component.proxy_iov[0].iov_base = NULL;
     mca_iof_proxy_component.proxy_iov[0].iov_len = 0;
-                                                                                                              
-    rc = orte_rml.recv_nb(
-        ORTE_RML_NAME_ANY,
-        mca_iof_proxy_component.proxy_iov,
-        1,
-        ORTE_RML_TAG_IOF_SVC,
-        ORTE_RML_ALLOC,
-        orte_iof_proxy_svc_recv,
-        NULL
-    );
-    if(rc < 0) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
 }
 
 

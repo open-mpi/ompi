@@ -166,7 +166,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
         mca_iof_svc_component.svc_iov,
         1,
         ORTE_RML_TAG_IOF_SVC,
-        ORTE_RML_ALLOC,
+        ORTE_RML_ALLOC|ORTE_RML_PERSISTENT,
         orte_iof_svc_proxy_recv,
         NULL
     );
