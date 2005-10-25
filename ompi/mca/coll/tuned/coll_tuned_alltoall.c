@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdio.h>
 
 int mca_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype,
@@ -331,6 +332,67 @@ int mca_coll_tuned_alltoall_intra_linear(void *sbuf, int scount,
    return err;
 }
 
+/* The following are used by dynamic and forced rules */
+
+/* publish details of each algorithm and if its forced/fixed/locked in */
+/* as you add methods/algorithms you must update this and the query/map routines */
+
+int mca_coll_tuned_alltoall_intra_check_forced ( )
+{
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "alltoall_algorithm",
+                           "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
+                           false, false, mca_coll_tuned_alltoall_forced_choice,
+                           &mca_coll_tuned_alltoall_forced_choice);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "alltoall_algorithm_segmentsize",
+                           "Segment size in bytes used by default for alltoall algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                           false, false, mca_coll_tuned_alltoall_forced_segsize,
+                           &mca_coll_tuned_alltoall_forced_segsize);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "alltoall_algorithm_tree_fanout",
+                           "Fanout for n-tree used for alltoall algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                           false, false, 
+                           mca_coll_tuned_init_tree_fanout, /* get system wide default */
+                           &mca_coll_tuned_alltoall_forced_tree_fanout);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "alltoall_algorithm_chain_fanout",
+                           "Fanout for chains used for alltoall algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                           false, false, 
+                           mca_coll_tuned_init_chain_fanout, /* get system wide default */
+                           &mca_coll_tuned_alltoall_forced_chain_fanout);
+
+return (MPI_SUCCESS);
+}
 
 
+int mca_coll_tuned_alltoall_intra_query ( )
+{
+    return (4); /* 4 algorithms available */
+}
+
+
+int mca_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
+                                    struct ompi_datatype_t *sdtype,
+                                    void* rbuf, int rcount,
+                                    struct ompi_datatype_t *rdtype,
+                                    struct ompi_communicator_t *comm)
+{
+switch (mca_coll_tuned_alltoall_forced_choice) {
+    case (0):   return mca_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (1):   return mca_coll_tuned_alltoall_intra_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (2):   return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (3):   return mca_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (4):   return mca_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
+                    mca_coll_tuned_alltoall_forced_choice, mca_coll_tuned_alltoall_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
 

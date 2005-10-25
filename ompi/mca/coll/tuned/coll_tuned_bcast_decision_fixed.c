@@ -45,21 +45,56 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     int rank;
     int err;
     int contig;
-    int dsize;
+    int msgsize;
+    MPI_Aint ext;
+    long lb;
+    int segsize = 0;
+
 
     OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-/*     err = mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm); */
-/*     err = mca_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, (0)); */
-/*     err = mca_coll_tuned_bcast_intra_chain (buff, count, datatype, root, comm, (0), 1); */
-/*     err = mca_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, (8192)); */
-    err = mca_coll_tuned_bcast_intra_split_bintree (buff, count, datatype, root, comm, (100));
-/*     err = mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, (100)); */
+    /* else we need data size for decision function */
+    err = ompi_ddt_get_extent (datatype, &lb, &ext);
+    if (err != MPI_SUCCESS) {
+            OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+        return (err);
+    }
 
-    return err;
+    msgsize = ext * count;   /* needed for decision */
+
+    /* this is based on gige measurements */
+
+    if ((size  < 4)) {
+        segsize = 0;
+        return mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm);
+    }
+    else if (size == 4) {
+       if (msgsize < 524288) segsize = 0;
+       else msgsize = 16384;
+       return mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+    }
+    else if (size > 4 && size <= 8 && msgsize < 4096) {
+       segsize = 0;
+       return mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm);
+    }
+    else if (size > 8 && msgsize >= 32768 && msgsize < 524288) {
+       segsize = 16384;
+       return  mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+    }
+    else if (size > 4 && msgsize >= 524288) {
+       segsize = 16384;
+       return mca_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
+    }
+    else {
+       segsize = 0;
+       /* once tested can swap this back in */
+/*        return mca_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, segsize); */
+       return mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+    }
+
 }
 
 

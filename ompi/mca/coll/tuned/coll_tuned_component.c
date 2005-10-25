@@ -46,6 +46,22 @@ int mca_coll_tuned_init_chain_fanout = 4;
 /* forced alogrithm variables */
 int mca_coll_tuned_alltoall_forced_choice = 0;
 int mca_coll_tuned_alltoall_forced_segsize = 0;
+int mca_coll_tuned_alltoall_forced_chain_fanout = 0;
+int mca_coll_tuned_alltoall_forced_tree_fanout = 0;
+
+int mca_coll_tuned_barrier_forced_choice = 0;
+
+int mca_coll_tuned_bcast_forced_choice = 0;
+int mca_coll_tuned_bcast_forced_segsize = 0;
+int mca_coll_tuned_bcast_forced_chain_fanout = 0;
+int mca_coll_tuned_bcast_forced_tree_fanout = 0;
+
+int mca_coll_tuned_reduce_forced_choice = 0;
+int mca_coll_tuned_reduce_forced_segsize = 0;
+int mca_coll_tuned_reduce_forced_chain_fanout = 0;
+int mca_coll_tuned_reduce_forced_tree_fanout = 0;
+
+
 /*
  * Local function
  */
@@ -145,6 +161,20 @@ static int tuned_open(void)
            mca_coll_tuned_stream = opal_output_open(NULL);
         }
     }
+
+    /* now check that the user hasn't overrode any of the decision functions */
+    /* the user can do this before every comm dup/create if they like */
+    /* this is useful for benchmarking and user knows best tuning */
+   
+    /* intra functions first */
+    mca_coll_tuned_alltoall_intra_check_forced();
+    mca_coll_tuned_barrier_intra_check_forced();
+    mca_coll_tuned_bcast_intra_check_forced();
+    mca_coll_tuned_reduce_intra_check_forced();
+
+
+
+
     OPAL_OUTPUT((mca_coll_tuned_stream, "coll:tuned:component_open: done!"));
 
     return OMPI_SUCCESS;

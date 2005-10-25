@@ -682,3 +682,65 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
 }
 
 
+int mca_coll_tuned_bcast_intra_check_forced ( )
+{
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "bcast_algorithm",
+                           "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: BM tree.",
+                           false, false, mca_coll_tuned_bcast_forced_choice,
+                           &mca_coll_tuned_bcast_forced_choice);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "bcast_algorithm_segmentsize",
+                           "Segment size in bytes used by default for bcast algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                           false, false, mca_coll_tuned_bcast_forced_segsize,
+                           &mca_coll_tuned_bcast_forced_segsize);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "bcast_algorithm_tree_fanout",
+                           "Fanout for n-tree used for bcast algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                           false, false,
+                           mca_coll_tuned_init_tree_fanout, /* get system wide default */
+                           &mca_coll_tuned_bcast_forced_tree_fanout);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "bcast_algorithm_chain_fanout",
+                           "Fanout for chains used for bcast algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                           false, false,
+                           mca_coll_tuned_init_chain_fanout, /* get system wide default */
+                           &mca_coll_tuned_bcast_forced_chain_fanout);
+
+return (MPI_SUCCESS);
+}
+
+
+int mca_coll_tuned_bcast_intra_query ( )
+{
+    return (4); /* 4 algorithms available */
+                /* 2 left to implement + NEC version */
+}
+
+
+int mca_coll_tuned_bcast_intra_do_forced(void *buf, int count,
+                                    struct ompi_datatype_t *dtype,
+                                    int root,
+                                    struct ompi_communicator_t *comm)
+{
+switch (mca_coll_tuned_bcast_forced_choice) {
+    case (0):   return mca_coll_tuned_bcast_intra_dec_fixed (buf, count, dtype, root, comm);
+/*     case (1):   return mca_coll_tuned_bcast_intra_linear (buf, count, dtype, root, comm); */
+    case (2):   return mca_coll_tuned_bcast_intra_chain (buf, count, dtype, root, comm, mca_coll_tuned_bcast_forced_segsize, mca_coll_tuned_bcast_forced_chain_fanout );
+    case (3):   return mca_coll_tuned_bcast_intra_pipeline (buf, count, dtype, root, comm, mca_coll_tuned_bcast_forced_segsize);
+    case (4):   return mca_coll_tuned_bcast_intra_split_bintree (buf, count, dtype, root, comm, mca_coll_tuned_bcast_forced_segsize);
+    case (5):   return mca_coll_tuned_bcast_intra_bintree (buf, count, dtype, root, comm, mca_coll_tuned_bcast_forced_segsize);
+/*     case (6):   return mca_coll_tuned_bcast_intra_bmtree (buf, count, dtype, root, comm,
+ *     mca_coll_tuned_bcast_forced_segsize); */
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:bcast_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+                    mca_coll_tuned_bcast_forced_choice, mca_coll_tuned_bcast_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
+

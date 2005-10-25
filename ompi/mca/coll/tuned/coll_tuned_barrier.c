@@ -224,6 +224,47 @@ int mca_coll_tuned_barrier_intra_linear(struct ompi_communicator_t *comm)
 return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
+/* The following are used by dynamic and forced rules */
+
+/* publish details of each algorithm and if its forced/fixed/locked in */
+/* as you add methods/algorithms you must update this and the query/map routines */
+
+int mca_coll_tuned_barrier_intra_check_forced ( )
+{
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "barrier_algorithm",
+                           "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only, 6: step based bmtree",
+                           false, false, mca_coll_tuned_barrier_forced_choice,
+                           &mca_coll_tuned_barrier_forced_choice);
+
+return (MPI_SUCCESS);
+}
 
 
+
+int mca_coll_tuned_barrier_intra_query ( )
+{
+    return (4); /* 4 algorithms available */ 
+                /* 2 to do */
+}
+
+
+int mca_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm)
+{
+switch (mca_coll_tuned_barrier_forced_choice) {
+    case (0):   return mca_coll_tuned_barrier_intra_dec_fixed (comm);
+/*     case (1):   return mca_coll_tuned_barrier_intra_linear (comm); */
+    case (2):   return mca_coll_tuned_barrier_intra_doublering (comm);
+    case (3):   return mca_coll_tuned_barrier_intra_recursivedoubling (comm);
+    case (4):   return mca_coll_tuned_barrier_intra_bruck (comm);
+    case (5):   return mca_coll_tuned_barrier_intra_two_procs (comm);
+/*     case (6):   return mca_coll_tuned_barrier_intra_bmtree_step (comm); */
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+                    mca_coll_tuned_barrier_forced_choice, mca_coll_tuned_barrier_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
 

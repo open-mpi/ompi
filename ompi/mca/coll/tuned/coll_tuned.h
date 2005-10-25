@@ -45,7 +45,23 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_use_dynamic_rules;
 OMPI_COMP_EXPORT extern int mca_coll_tuned_init_tree_fanout;
 OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
 
+/* forced algorithm choices */
+OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_choice;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_segsize;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_chain_fanout;
 
+OMPI_COMP_EXPORT extern int mca_coll_tuned_barrier_forced_choice;
+
+OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_choice;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_segsize;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_chain_fanout;
+
+OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_choice;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_segsize;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_chain_fanout;
 
 /*
  * coll API functions
@@ -146,6 +162,13 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_intra_check_forced(void);
+  int mca_coll_tuned_alltoall_intra_query (void);
 
   int mca_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype, 
@@ -233,11 +256,14 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
   int mca_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm);
   int mca_coll_tuned_barrier_intra_dec_dynamic(
                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_check_forced(void);
+  int mca_coll_tuned_barrier_intra_query (void);
+
   int mca_coll_tuned_barrier_inter_dec_fixed(struct ompi_communicator_t *comm);
   int mca_coll_tuned_barrier_inter_dec_dynamic(
                                      struct ompi_communicator_t *comm);
 
-    
   int mca_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm);
   int mca_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *comm);
   int mca_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm);
@@ -253,6 +279,12 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
                                      struct ompi_datatype_t *datatype,
                                      int root, 
                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_bcast_intra_do_forced(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype,
+                                     int root, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_bcast_intra_check_forced(void);
+  int mca_coll_tuned_bcast_intra_query (void);
 
   int mca_coll_tuned_bcast_intra_linear(void *buff, int count, 
                                      struct ompi_datatype_t *datatype,
@@ -366,6 +398,12 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
                                       struct ompi_datatype_t *dtype, 
                                       struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_intra_check_forced(void);
+  int mca_coll_tuned_reduce_intra_query (void);
 
   int mca_coll_tuned_reduce_intra_chain(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
