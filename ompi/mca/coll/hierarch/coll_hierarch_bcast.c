@@ -49,7 +49,7 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
 
-    if ( mca_coll_hier_verbose ) { 
+    if ( mca_coll_hierarch_verbose_param ) { 
       printf("%s:%d: executing hierarchical bcast with cnt=%d and root=%d\n",
 	     comm->c_name, rank, count, root );
     } 

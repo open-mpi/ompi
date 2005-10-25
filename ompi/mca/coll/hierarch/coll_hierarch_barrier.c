@@ -45,7 +45,7 @@ int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm)
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
 
-    if ( mca_coll_hier_verbose ) { 
+    if ( mca_coll_hierarch_verbose_param ) { 
       printf("%s:%d: executing hierarchical barrier\n", comm->c_name, rank );
     } 
 
