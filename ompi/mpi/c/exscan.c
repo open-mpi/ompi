@@ -61,7 +61,9 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
 
     /* Invoke the coll component to perform the back-end operation */
 
+    OBJ_RETAIN(op);
     err = comm->c_coll.coll_exscan(sendbuf, recvbuf, count,
                                    datatype, op, comm);
+    OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
