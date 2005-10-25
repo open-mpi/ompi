@@ -37,18 +37,10 @@
 
 
 /* Local functions and data */
-/* #define HIER_MAXPROTOCOL 7
+#define HIER_MAXPROTOCOL 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 
 static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","gm","mx","mvapi","openib","sm"};
-
-*/
-
-#define HIER_MAXPROTOCOL 4
-static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
-static char hier_prot[HIER_MAXPROTOCOL][7]={"0","tcp","openib","sm"};
-
-int mca_coll_hier_verbose=0;
 
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  int component_level,
@@ -148,10 +140,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     int ignore_sm=0;
 
     /* Get the priority level attached to this module */
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_priority_param, 
-						  priority)) {
-        return NULL;
-    }
+    *priority = mca_coll_hierarch_priority_param;
 
     /* This module only works for intra-communicators at the moment */
     if ( OMPI_COMM_IS_INTER(comm) ) {
@@ -160,15 +149,8 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 
     /* Check whether we should ignore sm. This might be necessary to take advantage
        of the some ib or gm collectives. */
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_ignore_sm_param, 
-						  &ignore_sm)) {
-        return NULL;
-    }
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_verbose_param, 
-						  &mca_coll_hier_verbose)) {
-        return NULL;
-    }
-    
+    ignore_sm = mca_coll_hierarch_ignore_sm_param;
+
     size = ompi_comm_size(comm);
     
     if ( size < 3 ) {
@@ -218,7 +200,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
         }
 
         if ( 0 == maxncount ) {
-	    if ( mca_coll_hier_verbose ) {
+	    if ( mca_coll_hierarch_verbose_param ) {
 		printf("%s:%d: nobody talks with %s. Continuing to next level.\n",  
 		       comm->c_name, rank, hier_prot[level]);
 		}
@@ -232,14 +214,14 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
              * Its (size-1) because we do not count ourselves.
 	     * maxncount[1] should be zero.
              */
-	    if ( mca_coll_hier_verbose ) {
+	    if ( mca_coll_hierarch_verbose_param ) {
 		printf("%s:%d: everybody talks with %s. No need to continue\n", 
 		       comm->c_name, rank, hier_prot[level]);
 	    }
             goto exit;
         }
         else {
-	    if ( mca_coll_hier_verbose ) {
+	    if ( mca_coll_hierarch_verbose_param ) {
 		printf("%s:%d: %d procs talk with %s. Use this protocol, key %d\n", 
 		       comm->c_name, rank, maxncount, hier_prot[level], color);
 	    }
@@ -338,7 +320,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     OBJ_CONSTRUCT(&(data->hier_llead), ompi_pointer_array_t);
     ompi_pointer_array_add ( &(data->hier_llead), llead);
     
-    if ( mca_coll_hier_verbose ) {
+    if ( mca_coll_hierarch_verbose_param ) {
       mca_coll_hierarch_dump_struct (data);
     }
     
@@ -654,10 +636,7 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     *key=MPI_UNDEFINED;
 
     /* Shall we check the the rdma list instead of send-list in the endpoint-structure? */
-    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_use_rdma_param, 
-        					  &use_rdma)) {
-        return;
-    }
+    use_rdma = mca_coll_hierarch_use_rdma_param;
     
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );

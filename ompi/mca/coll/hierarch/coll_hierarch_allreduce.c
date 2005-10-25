@@ -53,7 +53,7 @@ int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
     data   = comm->c_coll_selected_data;
     lcomm  = data->hier_lcomm;
 
-    if ( mca_coll_hier_verbose ) {
+    if ( mca_coll_hierarch_verbose_param ) {
       printf("%s:%d: executing hierarchical allreduce with cnt=%d \n",
 	     comm->c_name, rank, count );
     }
