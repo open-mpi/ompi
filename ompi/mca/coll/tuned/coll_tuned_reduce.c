@@ -327,3 +327,67 @@ int mca_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                               segsize, 1 );
 }
 
+/* The following are used by dynamic and forced rules */
+
+/* publish details of each algorithm and if its forced/fixed/locked in */
+/* as you add methods/algorithms you must update this and the query/map routines */
+
+int mca_coll_tuned_reduce_intra_check_forced ( )
+{
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "reduce_algorithm",
+                           "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline",
+                           false, false, mca_coll_tuned_reduce_forced_choice,
+                           &mca_coll_tuned_reduce_forced_choice);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "reduce_algorithm_segmentsize",
+                           "Segment size in bytes used by default for reduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                           false, false, mca_coll_tuned_reduce_forced_segsize,
+                           &mca_coll_tuned_reduce_forced_segsize);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "reduce_algorithm_tree_fanout",
+                           "Fanout for n-tree used for reduce algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                           false, false,
+                           mca_coll_tuned_init_tree_fanout, /* get system wide default */
+                           &mca_coll_tuned_reduce_forced_tree_fanout);
+
+mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+                           "reduce_algorithm_chain_fanout",
+                           "Fanout for chains used for reduce algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                           false, false,
+                           mca_coll_tuned_init_chain_fanout, /* get system wide default */
+                           &mca_coll_tuned_reduce_forced_chain_fanout);
+
+return (MPI_SUCCESS);
+}
+
+
+int mca_coll_tuned_reduce_intra_query ( )
+{
+    return (3); /* 3 algorithms available */
+}
+
+
+int mca_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
+                                      struct ompi_datatype_t *dtype,
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm)
+{
+switch (mca_coll_tuned_reduce_forced_choice) {
+    case (0):   return mca_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, root, comm);
+/*     case (1):   return mca_coll_tuned_reduce_intra_linear (sbuf, rbuf, count, dtype, op, root, comm); */
+    case (2):   return mca_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, dtype, op, root, comm, 
+                        mca_coll_tuned_reduce_forced_segsize, mca_coll_tuned_reduce_forced_chain_fanout);
+    case (3):   return mca_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype, op, root, comm, 
+                        mca_coll_tuned_reduce_forced_segsize);
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+                    mca_coll_tuned_reduce_forced_choice, mca_coll_tuned_reduce_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
+

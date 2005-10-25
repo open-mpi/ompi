@@ -48,21 +48,39 @@ int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     int err;
     int contig;
     int dsize;
+    MPI_Aint sext;
+    long lb;
 
     OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_alltoall_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    /* special case */
     if (size==2) {
         return mca_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
-    else {
-/*         return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm); */
-        return mca_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+
+    /* else we need data size for decision function */
+    err = ompi_ddt_get_extent (sdtype, &lb, &sext);
+    if (err != MPI_SUCCESS) { 
+            OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+        return (err);
     }
 
-/*     return OMPI_ERR_NOT_IMPLEMENTED; */
+    dsize = sext * scount * size;   /* needed for decision */
+
+    if (size >= 12 && dsize <= 768) {
+        return mca_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    }
+    else if (dsize <= 131072) {
+/* not implemented yet.. need to find a 'nice' way to use the basic linear version without duplicating code */
+/*         return mca_coll_tuned_alltoall_intra_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm); */
+        return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    }
+    else {
+        return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    }
 }
 
 
