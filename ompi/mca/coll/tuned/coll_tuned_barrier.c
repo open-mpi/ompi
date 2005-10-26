@@ -254,7 +254,7 @@ int mca_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm)
 {
 switch (mca_coll_tuned_barrier_forced_choice) {
     case (0):   return mca_coll_tuned_barrier_intra_dec_fixed (comm);
-/*     case (1):   return mca_coll_tuned_barrier_intra_linear (comm); */
+/*     case (1):   return mca_coll_tuned_barrier_intra_basic_linear (comm); */
     case (2):   return mca_coll_tuned_barrier_intra_doublering (comm);
     case (3):   return mca_coll_tuned_barrier_intra_recursivedoubling (comm);
     case (4):   return mca_coll_tuned_barrier_intra_bruck (comm);
