@@ -59,8 +59,8 @@ static const mca_coll_base_module_1_0_0_t intra_fixed = {
     NULL,
 /*   mca_coll_tuned_allgatherv_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allreduce_intra_dec_fixed, */
-    NULL,
+  mca_coll_tuned_allreduce_intra_dec_fixed,
+/*     NULL, */
   mca_coll_tuned_alltoall_intra_dec_fixed,
 /*     NULL, */
 /*   mca_coll_tuned_alltoallv_intra_dec_fixed, */
@@ -163,7 +163,7 @@ static const mca_coll_base_module_1_0_0_t inter_fixed = {
     NULL,
 /*   mca_coll_tuned_bcast_inter_dec_fixed, */
     NULL,
-  /* mca_coll_tuned_exscan_inter_dec_fixed, */
+/* mca_coll_tuned_exscan_inter_dec_fixed, */
     NULL,
 /*   mca_coll_tuned_gather_inter_dec_fixed, */
     NULL,
@@ -173,7 +173,7 @@ static const mca_coll_base_module_1_0_0_t inter_fixed = {
     NULL,
 /*   mca_coll_tuned_reduce_scatter_inter_dec_fixed, */
     NULL,
-  /* mca_coll_tuned_scan_inter_dec_fixed, */
+/* mca_coll_tuned_scan_inter_dec_fixed, */
     NULL,
 /*   mca_coll_tuned_scatter_inter_dec_fixed, */
     NULL,
@@ -206,7 +206,7 @@ static const mca_coll_base_module_1_0_0_t inter_dynamic = {
     NULL,
 /*   mca_coll_tuned_bcast_inter_dec_dynamic, */
     NULL,
-  /* mca_coll_tuned_exscan_inter_dec_dynamic, */
+/* mca_coll_tuned_exscan_inter_dec_dynamic, */
     NULL,
 /*   mca_coll_tuned_gather_inter_dec_dynamic, */
     NULL,
@@ -216,7 +216,7 @@ static const mca_coll_base_module_1_0_0_t inter_dynamic = {
     NULL,
 /*   mca_coll_tuned_reduce_scatter_inter_dec_dynamic, */
     NULL,
-  /* mca_coll_tuned_scan_inter_dec_dynamic, */
+/* mca_coll_tuned_scan_inter_dec_dynamic, */
     NULL,
 /*   mca_coll_tuned_scatter_inter_dec_dynamic, */
     NULL,
