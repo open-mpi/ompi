@@ -37,7 +37,6 @@ mca_coll_hierarch_la_LIBADD = \
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_hierarch_la_SOURCES = $(sources)
-libmca_coll_hierarch_la_LIBADD = src/libmca_coll_hierarch.la
 libmca_coll_hierarch_la_LDFLAGS = -module -avoid-version
 
 # Source files
