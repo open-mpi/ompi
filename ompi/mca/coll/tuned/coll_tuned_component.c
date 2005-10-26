@@ -44,6 +44,11 @@ int mca_coll_tuned_init_tree_fanout = 4;
 int mca_coll_tuned_init_chain_fanout = 4;
 
 /* forced alogrithm variables */
+int mca_coll_tuned_allreduce_forced_choice = 0;
+int mca_coll_tuned_allreduce_forced_segsize = 0;
+int mca_coll_tuned_allreduce_forced_chain_fanout = 0;
+int mca_coll_tuned_allreduce_forced_tree_fanout = 0;
+
 int mca_coll_tuned_alltoall_forced_choice = 0;
 int mca_coll_tuned_alltoall_forced_segsize = 0;
 int mca_coll_tuned_alltoall_forced_chain_fanout = 0;
@@ -167,6 +172,7 @@ static int tuned_open(void)
     /* this is useful for benchmarking and user knows best tuning */
    
     /* intra functions first */
+    mca_coll_tuned_allreduce_intra_check_forced();
     mca_coll_tuned_alltoall_intra_check_forced();
     mca_coll_tuned_barrier_intra_check_forced();
     mca_coll_tuned_bcast_intra_check_forced();

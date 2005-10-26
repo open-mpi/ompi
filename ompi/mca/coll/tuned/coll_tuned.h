@@ -46,6 +46,11 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_init_tree_fanout;
 OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
 
 /* forced algorithm choices */
+OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_choice;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_segsize;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_chain_fanout;
+
 OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_choice;
 OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_segsize;
 OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_tree_fanout;
@@ -141,6 +146,27 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_chain_fanout;
                                      struct ompi_datatype_t *dtype, 
                                      struct ompi_op_t *op, 
                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, 
+                                     int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allreduce_intra_check_forced(void);
+  int mca_coll_tuned_allreduce_intra_query(void);
+
+  int mca_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, 
+                                     int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, 
+                                     int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm);
+
+
+
   int mca_coll_tuned_allreduce_inter_dec_fixed(void *sbuf, void *rbuf, 
                                      int count, 
                                      struct ompi_datatype_t *dtype, 
