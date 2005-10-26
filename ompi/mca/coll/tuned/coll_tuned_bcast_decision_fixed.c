@@ -69,7 +69,7 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
 
     if ((size  < 4)) {
         segsize = 0;
-        return mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm);
+        return mca_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
     else if (size == 4) {
        if (msgsize < 524288) segsize = 0;
@@ -78,7 +78,7 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     }
     else if (size > 4 && size <= 8 && msgsize < 4096) {
        segsize = 0;
-       return mca_coll_tuned_bcast_intra_linear (buff, count, datatype, root, comm);
+       return mca_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
     else if (size > 8 && msgsize >= 32768 && msgsize < 524288) {
        segsize = 16384;

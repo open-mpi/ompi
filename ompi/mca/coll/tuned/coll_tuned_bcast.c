@@ -682,12 +682,105 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
 }
 
 
+/*
+ * Linear functions are copied from the BASIC coll module
+ * they do not segment the message and are simple implementations
+ * but for some small number of nodes and/or small data sizes they 
+ * are just as fast as tuned/tree based segmenting operations 
+ * and as such may be selected by the decision functions
+ * These are copied into this module due to the way we select modules
+ * in V1. i.e. in V2 we will handle this differently and so will not
+ * have to duplicate code.
+ * GEF Oct05 after asking Jeff.
+ */
+
+/* copied function (with appropriate renaming) starts here */
+
+/*
+ *  bcast_lin_intra
+ *
+ *  Function:   - broadcast using O(N) algorithm
+ *  Accepts:    - same arguments as MPI_Bcast()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int
+mca_coll_tuned_bcast_intra_basic_linear (void *buff, int count,
+                               struct ompi_datatype_t *datatype, int root,
+                               struct ompi_communicator_t *comm)
+{
+    int i;
+    int size;
+    int rank;
+    int err;
+    ompi_request_t **preq;
+    ompi_request_t **reqs = comm->c_coll_selected_data->mcct_reqs;
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_chain rank %d root %d", rank, root));
+
+
+    /* Non-root receive the data. */
+
+    if (rank != root) {
+        return MCA_PML_CALL(recv(buff, count, datatype, root,
+                                 MCA_COLL_BASE_TAG_BCAST, comm,
+                                 MPI_STATUS_IGNORE));
+    }
+
+    /* Root sends data to all others. */
+
+    for (i = 0, preq = reqs; i < size; ++i) {
+        if (i == rank) {
+            continue;
+        }
+
+        err = MCA_PML_CALL(isend_init(buff, count, datatype, i,
+                                      MCA_COLL_BASE_TAG_BCAST,
+                                      MCA_PML_BASE_SEND_STANDARD,
+                                      comm, preq++));
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+    }
+    --i;
+
+    /* Start your engines.  This will never return an error. */
+
+    MCA_PML_CALL(start(i, reqs));
+
+    /* Wait for them all.  If there's an error, note that we don't
+     * care what the error was -- just that there *was* an error.  The
+     * PML will finish all requests, even if one or more of them fail.
+     * i.e., by the end of this call, all the requests are free-able.
+     * So free them anyway -- even if there was an error, and return
+     * the error after we free everything. */
+
+    err = ompi_request_wait_all(i, reqs, MPI_STATUSES_IGNORE);
+
+    /* Free the reqs */
+
+    mca_coll_tuned_free_reqs(reqs, i);
+
+    /* All done */
+
+    return err;
+}
+
+
+/* copied function (with appropriate renaming) ends here */
+
+
+
+
+
 int mca_coll_tuned_bcast_intra_check_forced ( )
 {
 
 mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
                            "bcast_algorithm",
-                           "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: BM tree.",
+                           "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: BM tree.",
                            false, false, mca_coll_tuned_bcast_forced_choice,
                            &mca_coll_tuned_bcast_forced_choice);
 
@@ -717,8 +810,8 @@ return (MPI_SUCCESS);
 
 int mca_coll_tuned_bcast_intra_query ( )
 {
-    return (4); /* 4 algorithms available */
-                /* 2 left to implement + NEC version */
+    return (5); /* 5 algorithms available */
+                /* 1 left to implement + NEC version */
 }
 
 
@@ -729,7 +822,7 @@ int mca_coll_tuned_bcast_intra_do_forced(void *buf, int count,
 {
 switch (mca_coll_tuned_bcast_forced_choice) {
     case (0):   return mca_coll_tuned_bcast_intra_dec_fixed (buf, count, dtype, root, comm);
-/*     case (1):   return mca_coll_tuned_bcast_intra_linear (buf, count, dtype, root, comm); */
+    case (1):   return mca_coll_tuned_bcast_intra_basic_linear (buf, count, dtype, root, comm);
     case (2):   return mca_coll_tuned_bcast_intra_chain (buf, count, dtype, root, comm, mca_coll_tuned_bcast_forced_segsize, mca_coll_tuned_bcast_forced_chain_fanout );
     case (3):   return mca_coll_tuned_bcast_intra_pipeline (buf, count, dtype, root, comm, mca_coll_tuned_bcast_forced_segsize);
     case (4):   return mca_coll_tuned_bcast_intra_split_bintree (buf, count, dtype, root, comm, mca_coll_tuned_bcast_forced_segsize);

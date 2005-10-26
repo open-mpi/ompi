@@ -206,7 +206,7 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_chain_fanout;
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm);
-  int mca_coll_tuned_alltoall_intra_linear(void *sbuf, int scount, 
+  int mca_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype, 
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
@@ -312,7 +312,7 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_chain_fanout;
   int mca_coll_tuned_bcast_intra_check_forced(void);
   int mca_coll_tuned_bcast_intra_query (void);
 
-  int mca_coll_tuned_bcast_intra_linear(void *buff, int count, 
+  int mca_coll_tuned_bcast_intra_basic_linear(void *buff, int count, 
                                      struct ompi_datatype_t *datatype,
                                      int root, 
                                      struct ompi_communicator_t *comm);
@@ -431,6 +431,10 @@ OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_chain_fanout;
   int mca_coll_tuned_reduce_intra_check_forced(void);
   int mca_coll_tuned_reduce_intra_query (void);
 
+  int mca_coll_tuned_reduce_intra_basic_linear(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm); 
   int mca_coll_tuned_reduce_intra_chain(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
                                       struct ompi_op_t *op, int root,
