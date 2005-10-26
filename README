@@ -113,6 +113,13 @@ base as of this writing (26 Aug 2005):
 
   shell$ ./configure FFLAGS=-Munixlogical ...
 
+  *********************************************************************
+  ***NOTE: It is also necessary to compile all MPI applications with***
+  ***these flags!                                                   ***
+  *********************************************************************
+
+  This will be fixed in a future version of Open MPI.
+
 - For any version of the Intel compiler >= 8.0, the default value for
   .TRUE. is -1.  Open MPI does not currently handle this correctly.
   As such, the "-fpscomp logicals" option must be used with the Intel
@@ -121,6 +128,13 @@ base as of this writing (26 Aug 2005):
   configure:
 
   shell$ ./configure "FFLAGS=-fpscomp logicals" ...
+
+  *********************************************************************
+  ***NOTE: It is also necessary to compile all MPI applications with***
+  ***these flags!                                                   ***
+  *********************************************************************
+
+  This will be fixed in a future version of Open MPI.
 
 - The MPI and run-time layers do not free all used memory properly
   during MPI_FINALIZE.
