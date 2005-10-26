@@ -42,11 +42,11 @@ int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count,
     struct mca_coll_base_comm_t *data=NULL;
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;
-    int rank, lrank;
+    int rank;
     int lroot, llroot;
     long extent, true_extent, lb, true_lb;
     char *tmpbuf=NULL, *tbuf=NULL;
-    int ret;
+    int ret=OMPI_SUCCESS;
     int root=0;
 
     rank   = ompi_comm_rank ( comm );

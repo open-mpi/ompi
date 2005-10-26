@@ -91,27 +91,31 @@ const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component = {
 
 static int hierarch_open(void)
 {
-    mca_base_component_t *c = &mca_coll_hierarch_component.collm_version;
+    
 
     /* Use a high priority, but allow other components to be higher */
-    mca_base_param_reg_int(c, "priority",
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
+			   "priority",
                            "Priority of the hierarchical coll component",
                            false, false, mca_coll_hierarch_priority_param,
                            &mca_coll_hierarch_priority_param);
 
 
-    mca_base_param_reg_int(c, "verbose",
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
+			   "verbose",
                            "Turn verbose message of the hierarchical coll component on/off",
                            false, false, mca_coll_hierarch_verbose_param,
                            &mca_coll_hierarch_verbose_param);
 
-    mca_base_param_reg_int(c, "use_rdma",
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
+			   "use_rdma",
                            "Switch from the send btl list used to detect hierarchies to "
 			   "the rdma btl list",
                            false, false, mca_coll_hierarch_use_rdma_param,
                            &mca_coll_hierarch_use_rdma_param);
 
-    mca_base_param_reg_int(c, "ignore_sm",
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
+			   "ignore_sm",
                            "Ignore sm protocol when detecting hierarchies. "
 			   "Required to enable the usage of protocol"
 			   " specific collective operations",
