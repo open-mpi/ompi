@@ -207,6 +207,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+
+    /* initialize ops. This has to be done *after* ddt_init, but
+       befor mca_coll_base_open, since come collective modules
+       (e.g. the hierarchical) need them in the query function
+    */
+    if (OMPI_SUCCESS != (ret = ompi_op_init())) {
+        error = "ompi_op_init() failed";
+        goto error;
+    }
+
+
     /* Open up MPI-related MCA components */
 
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
@@ -315,12 +326,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* initialize communicators */
     if (OMPI_SUCCESS != (ret = ompi_comm_init())) {
         error = "ompi_comm_init() failed";
-        goto error;
-    }
-
-    /* initialize ops */
-    if (OMPI_SUCCESS != (ret = ompi_op_init())) {
-        error = "ompi_op_init() failed";
         goto error;
     }
 
