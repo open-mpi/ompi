@@ -39,7 +39,7 @@ int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm)
     struct ompi_communicator_t *lcomm=NULL;
     int root=0;
     int lroot, llroot;
-    int rank, ret;
+    int rank, ret=OMPI_SUCCESS;
     
     rank   = ompi_comm_rank ( comm );
     data   = comm->c_coll_selected_data;

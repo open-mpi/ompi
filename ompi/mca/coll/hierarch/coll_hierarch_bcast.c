@@ -42,7 +42,7 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;
     int lroot, llroot;
-    int rank, ret;
+    int rank, ret=OMPI_SUCCESS;
     
 
     rank   = ompi_comm_rank ( comm );
