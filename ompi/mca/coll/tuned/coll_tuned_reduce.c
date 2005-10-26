@@ -87,6 +87,9 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d", rank));
+
+
     /* ----------------------------------------------------------------- */
 
     /* setup the chain topology.
@@ -322,10 +325,149 @@ int mca_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                           ompi_op_t* op, int root,
                                           ompi_communicator_t* comm, uint32_t segsize )
 {
+    int rank;
+
+    rank = ompi_comm_rank(comm);
+
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d", rank));
+
     return mca_coll_tuned_reduce_intra_chain( sendbuf,recvbuf, count,
                                               datatype, op, root, comm,
                                               segsize, 1 );
 }
+
+
+/*
+ * Linear functions are copied from the BASIC coll module
+ * they do not segment the message and are simple implementations
+ * but for some small number of nodes and/or small data sizes they 
+ * are just as fast as tuned/tree based segmenting operations 
+ * and as such may be selected by the decision functions
+ * These are copied into this module due to the way we select modules
+ * in V1. i.e. in V2 we will handle this differently and so will not
+ * have to duplicate code.
+ * GEF Oct05 after asking Jeff.
+ */
+
+/* copied function (with appropriate renaming) starts here */
+
+/*
+ *  reduce_lin_intra
+ *
+ *  Function:   - reduction using O(N) algorithm
+ *  Accepts:    - same as MPI_Reduce()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int
+mca_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                int root, struct ompi_communicator_t *comm)
+{
+    int i;
+    int rank;
+    int err;
+    int size;
+    long true_lb, true_extent, lb, extent;
+    char *free_buffer = NULL;
+    char *pml_buffer = NULL;
+    char *inplace_temp = NULL;
+    char *inbuf;
+
+    /* Initialize */
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_basic_linear rank %d", rank));
+
+    /* If not root, send data to the root. */
+
+    if (rank != root) {
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
+                                MCA_COLL_BASE_TAG_REDUCE,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        return err;
+    }
+
+/* see discussion in mca_coll_basic_reduce_lin_intra about extent and true extend */
+/* for reducing buffer allocation lengths.... */
+
+    ompi_ddt_get_extent(dtype, &lb, &extent);
+    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+        inplace_temp = malloc(true_extent + (count - 1) * extent);
+        if (NULL == inplace_temp) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        rbuf = inplace_temp - lb;
+    }
+
+    if (size > 1) {
+        free_buffer = malloc(true_extent + (count - 1) * extent);
+        if (NULL == free_buffer) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        pml_buffer = free_buffer - lb;
+    }
+
+    /* Initialize the receive buffer. */
+
+    if (rank == (size - 1)) {
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+    } else {
+        err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
+                                MCA_COLL_BASE_TAG_REDUCE, comm,
+                                MPI_STATUS_IGNORE));
+    }
+    if (MPI_SUCCESS != err) {
+        if (NULL != free_buffer) {
+            free(free_buffer);
+        }
+        return err;
+    }
+
+    /* Loop receiving and calling reduction function (C or Fortran). */
+
+    for (i = size - 2; i >= 0; --i) {
+        if (rank == i) {
+            inbuf = sbuf;
+        } else {
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
+                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                if (NULL != free_buffer) {
+                    free(free_buffer);
+                }
+                return err;
+            }
+
+            inbuf = pml_buffer;
+        }
+
+        /* Perform the reduction */
+
+        ompi_op_reduce(op, inbuf, rbuf, count, dtype);
+    }
+
+    if (NULL != inplace_temp) {
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, sbuf, inplace_temp);
+        free(inplace_temp);
+    }
+    if (NULL != free_buffer) {
+        free(free_buffer);
+    }
+
+    /* All done */
+
+    return MPI_SUCCESS;
+}
+
+/* copied function (with appropriate renaming) ends here */
+
 
 /* The following are used by dynamic and forced rules */
 
@@ -378,7 +520,7 @@ int mca_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
 {
 switch (mca_coll_tuned_reduce_forced_choice) {
     case (0):   return mca_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, root, comm);
-/*     case (1):   return mca_coll_tuned_reduce_intra_linear (sbuf, rbuf, count, dtype, op, root, comm); */
+    case (1):   return mca_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, root, comm);
     case (2):   return mca_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, dtype, op, root, comm, 
                         mca_coll_tuned_reduce_forced_segsize, mca_coll_tuned_reduce_forced_chain_fanout);
     case (3):   return mca_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype, op, root, comm, 
