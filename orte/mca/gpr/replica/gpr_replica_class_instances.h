@@ -74,17 +74,37 @@ OBJ_CLASS_INSTANCE(
           orte_gpr_replica_local_trigger_destructor); /* destructor */
 
 
+/*  DICT ENTRY */
+static void orte_gpr_replica_dict_entry_construct(orte_gpr_replica_dict_entry_t* dict_entry)
+{
+    dict_entry->entry = NULL;
+}
+
+static void orte_gpr_replica_dict_entry_destruct(orte_gpr_replica_dict_entry_t* dict_entry)
+{
+    if(NULL != dict_entry->entry) {
+        free(dict_entry->entry);
+    }
+}
+
+/* define instance of orte_gpr_replica_segment_t */
+OBJ_CLASS_INSTANCE(
+          orte_gpr_replica_dict_entry_t,  /* type name */
+          opal_list_item_t, /* parent "class" name */
+          orte_gpr_replica_dict_entry_construct, /* constructor */
+          orte_gpr_replica_dict_entry_destruct); /* destructor */
+
 /*  SEGMENT */
 /* constructor - used to initialize state of segment instance */
 static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 {
     seg->name = NULL;
     seg->itag = ORTE_GPR_REPLICA_ITAG_MAX;
-
-    seg->num_dict_entries = 0;
-    orte_pointer_array_init(&(seg->dict), orte_gpr_array_block_size,
-                            orte_gpr_array_max_size,
-                            orte_gpr_array_block_size);
+    
+    seg->dict_next_itag = 0;
+    OBJ_CONSTRUCT(&seg->dict_hash, opal_hash_table_t);
+    OBJ_CONSTRUCT(&seg->dict_entries, opal_list_t);
+    opal_hash_table_init(&seg->dict_hash, 512);
 
     seg->num_containers = 0;
     orte_pointer_array_init(&(seg->containers), orte_gpr_array_block_size,
@@ -97,27 +117,18 @@ static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
 {
     size_t i, k;
-    orte_gpr_replica_dict_t **dptr;
+    opal_list_item_t* item;
     orte_gpr_replica_container_t **cptr;
 
     if (NULL != seg->name) {
         free(seg->name);
     }
 
-    if (NULL != seg->dict) {
-        dptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
-        for (i=0, k=0; k < seg->num_dict_entries &&
-                       i < (seg->dict)->size; i++) {
-            if (NULL != dptr[i]) {
-                k++;
-                if (NULL != dptr[i]->entry) {
-                    free(dptr[i]->entry);
-                }
-                free(dptr[i]);
-            }
-        }
-        OBJ_RELEASE(seg->dict);
+    while(NULL != (item = opal_list_remove_first(&seg->dict_entries))) {
+        OBJ_RELEASE(item);
     }
+    OBJ_DESTRUCT(&seg->dict_entries);
+    OBJ_DESTRUCT(&seg->dict_hash);
 
     if (NULL != seg->containers) {
         cptr = (orte_gpr_replica_container_t**)((seg->containers)->addr);
