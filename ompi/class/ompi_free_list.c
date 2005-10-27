@@ -104,8 +104,12 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     size_t mod;
     mca_mpool_base_registration_t* user_out = NULL; 
 
-    if (flist->fl_max_to_alloc > 0 && flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    if (flist->fl_max_to_alloc > 0)
+        if (flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
+            num_elements = flist->fl_max_to_alloc - flist->fl_num_allocated;
+
+    if (num_elements == 0)
+   return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (NULL != flist->fl_mpool)
         alloc_ptr = flist->fl_mpool->mpool_alloc(flist->fl_mpool, 

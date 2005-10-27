@@ -590,6 +590,7 @@ int mca_btl_openib_component_progress()
                                                           &frag->base, 
                                                           openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
+                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 if(mca_btl_openib_component.use_srq) { 
                     OPAL_THREAD_ADD32((int32_t*) &openib_btl->srr_posted_high, -1); 
@@ -601,7 +602,6 @@ int mca_btl_openib_component_progress()
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 }
 #endif 
-                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
                 count++; 
                 break; 
 
@@ -683,6 +683,8 @@ int mca_btl_openib_component_progress()
                                                           &frag->base, 
                                                           openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
+                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_max), (opal_list_item_t*) frag); 
+
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 if(mca_btl_openib_component.use_srq) { 
                     OPAL_THREAD_ADD32((int32_t*) &openib_btl->srr_posted_low, -1); 
@@ -695,7 +697,6 @@ int mca_btl_openib_component_progress()
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 }
 #endif 
-                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_max), (opal_list_item_t*) frag); 
                 count++; 
                 break; 
 
