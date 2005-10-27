@@ -249,6 +249,90 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
     return ORTE_SUCCESS;
 }
 
+
+/*
+ * Query the registry for a specific node
+ */
+
+orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* node_name)
+{
+    orte_ras_node_t* node = NULL;
+    size_t i, cnt, num_tokens;
+    orte_gpr_value_t** values;
+    char** tokens = NULL;
+    int rc;
+
+    rc = orte_schema.get_node_tokens(&tokens, &num_tokens, cellid, (char*)node_name);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return NULL;
+    }
+
+    /* query specific entry */
+    rc = orte_gpr.get(
+        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+        ORTE_NODE_SEGMENT,
+        tokens,
+        NULL,
+        &cnt,
+        &values);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return NULL;
+    }
+
+    /* parse the response */
+    for(i=0; i<cnt; i++) {
+        orte_gpr_value_t* value = values[i];
+        size_t k;
+        node = OBJ_NEW(orte_ras_node_t);
+
+        for(k=0; k<value->cnt; k++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[k];
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                node->node_name = strdup(keyval->value.strptr);
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
+                node->node_arch = strdup(keyval->value.strptr);
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_STATE_KEY) == 0) {
+                node->node_state = keyval->value.node_state;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
+                node->node_slots = keyval->value.size;
+                continue;
+            }
+            if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
+                node->node_slots_inuse += keyval->value.size;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_SLOTS_MAX_KEY) == 0) {
+                node->node_slots_max = keyval->value.size;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_USERNAME_KEY) == 0) {
+                node->node_username = strdup(keyval->value.strptr);
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
+                node->node_cellid = keyval->value.cellid;
+                continue;
+            }
+        }
+        OBJ_RELEASE(values[i]);
+        break;
+    }
+    for(i=1; i<cnt; i++)
+        OBJ_RELEASE(values[i]);
+    if (NULL != values) free(values);
+    opal_argv_free(tokens);
+    return node;
+}
+
+
 /*
  * Add the specified node definitions to the registry
  */
