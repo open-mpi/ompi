@@ -483,8 +483,6 @@ int orte_rmaps_base_get_node_map(
         ORTE_NODE_NAME_KEY,
         NULL
     };
-    struct timeval tv1, tv2;
-    gettimeofday(&tv1,NULL);
 
     /* allocate the node */
     node = OBJ_NEW(orte_rmaps_base_node_t);
@@ -635,9 +633,6 @@ int orte_rmaps_base_get_node_map(
     free(jobid_str);
     free(app_context);
     free(mapping);
-
-    gettimeofday(&tv2,NULL);
-    fprintf(stderr, "orte_rmaps_base_get_node_map %lu:%lu %lu:%lu\n", tv1.tv_sec, tv1.tv_usec, tv2.tv_sec, tv2.tv_usec);
     return ORTE_SUCCESS;
 
 cleanup:
