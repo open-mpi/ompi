@@ -30,9 +30,9 @@
 #include "class/orte_pointer_array.h"
 #include "class/orte_value_array.h"
 
+#include "opal/class/opal_hash_table.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-
 #include "mca/ns/ns_types.h"
 
 #include "mca/gpr/base/base.h"
@@ -129,12 +129,15 @@ typedef struct {
  * structure is used to translate those strings into an integer itag value, thus allowing
  * for faster searches of the registry.
  */
-struct orte_gpr_replica_dict_t {
-    size_t index;                  /**< location in dictionary array */
+struct orte_gpr_replica_dict_entry_t {
+    opal_list_item_t super;
     char *entry;                   /**< Char string that defines the itag */
+    size_t len;                    /**< String length */
     orte_gpr_replica_itag_t itag;  /**< Numerical value assigned by registry to represent string */
 };
-typedef struct orte_gpr_replica_dict_t orte_gpr_replica_dict_t;
+typedef struct orte_gpr_replica_dict_entry_t orte_gpr_replica_dict_entry_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_dict_entry_t);
 
 /*
  * Registry "head"
@@ -173,8 +176,9 @@ struct orte_gpr_replica_segment_t {
     opal_object_t super;                /**< Make this an object */
     char *name;                         /**< Name of the segment */
     orte_gpr_replica_itag_t itag;       /**< itag of this segment */
-    orte_gpr_replica_itag_t num_dict_entries;
-    orte_pointer_array_t *dict;         /**< Managed array of dict structs */
+    opal_hash_table_t dict_hash;
+    opal_list_t dict_entries;
+    size_t dict_next_itag;
     size_t num_containers;
     orte_pointer_array_t *containers;   /**< Managed array of pointers to containers on this segment */
 };
