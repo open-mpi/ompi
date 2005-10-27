@@ -245,13 +245,7 @@ ompi_enable_static="$enable_static"
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
-WRAPPER_EXTRA_CFLAGS=
-WRAPPER_EXTRA_CXXFLAGS=
-WRAPPER_EXTRA_FFLAGS=
-WRAPPER_EXTRA_FCFLAGS=
-WRAPPER_EXTRA_LDFLAGS=
-WRAPPER_EXTRA_LIBS=
-
+OMPI_SETUP_WRAPPER_INIT
 
 
 ############################################################################
@@ -1507,12 +1501,11 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $WANT_LIBLTDL,
 OPAL_LTDL_CPPFLAGS='-I$(top_srcdir)/opal/libltdl'
 AC_SUBST(OPAL_LTDL_CPPFLAGS)
 
-
 ############################################################################
-# final wrapper compiler config
+# final compiler config
 ############################################################################
 
-ompi_show_subtitle "Wrapper compiler flags"
+ompi_show_subtitle "Compiler flags"
 
 #
 # This is needed for VPATH builds, so that it will -I the appropriate
@@ -1551,67 +1544,6 @@ AC_SUBST(CFLAGS_WITHOUT_OPTFLAGS)
 AC_SUBST(TOTALVIEW_DEBUG_FLAGS)
 
 #
-# Adding WRAPPER_* flags so that extra flags needed for wrappper compilers
-#
-# WRAPPER_EXTRA_CFLAGS
-#
-AC_MSG_CHECKING([for mpicc CFLAGS])
-OMPI_UNIQ(WRAPPER_EXTRA_CFLAGS)
-AC_SUBST(WRAPPER_EXTRA_CFLAGS)
-AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$WRAPPER_EXTRA_CFLAGS",
-    [Additional CFLAGS to pass through the wrapper compilers])
-AC_MSG_RESULT([$WRAPPER_EXTRA_CFLAGS])
-
-#
-# WRAPPER_EXTRA_CXXFLAGS
-#
-AC_MSG_CHECKING([for mpiCC CXXFLAGS])
-OMPI_UNIQ(WRAPPER_EXTRA_CXXFLAGS)
-AC_SUBST(WRAPPER_EXTRA_CXXFLAGS)
-AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$WRAPPER_EXTRA_CXXFLAGS",
-    [Additional CXXFLAGS to pass through the wrapper compilers])
-AC_MSG_RESULT([$WRAPPER_EXTRA_CXXFLAGS])
-
-#
-# WRAPPER_EXTRA_FFLAGS
-#
-AC_MSG_CHECKING([for mpif77/mpif90 FFLAGS])
-OMPI_UNIQ(WRAPPER_EXTRA_FFLAGS)
-AC_SUBST(WRAPPER_EXTRA_FFLAGS)
-AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FFLAGS, "$WRAPPER_EXTRA_FFLAGS",
-    [Additional FFLAGS to pass through the wrapper compilers])
-AC_MSG_RESULT([$WRAPPER_EXTRA_FFLAGS])
-
-#
-# WRAPPER_EXTRA_FCFLAGS
-#
-AC_MSG_CHECKING([for mpif77/mpif90 FCFLAGS])
-OMPI_UNIQ(WRAPPER_EXTRA_FCFLAGS)
-AC_SUBST(WRAPPER_EXTRA_FCFLAGS)
-AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS, "$WRAPPER_EXTRA_FCFLAGS",
-    [Additional FCFLAGS to pass through the wrapper compilers])
-AC_MSG_RESULT([$WRAPPER_EXTRA_FCFLAGS])
-
-#
-# WRAPPER_EXTRA_LDFLAGS
-#
-AC_MSG_CHECKING([for wrapper compiler LDFLAGS])
-OMPI_UNIQ(WRAPPER_EXTRA_LDFLAGS)
-AC_SUBST(WRAPPER_EXTRA_LDFLAGS)
-AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$WRAPPER_EXTRA_LDFLAGS",
-    [Additional LDFLAGS to pass through the wrapper compilers])
-AC_MSG_RESULT([$WRAPPER_EXTRA_LDFLAGS])
-
-#
-# WRAPPER_EXTRA_LIBS
-#
-AC_MSG_CHECKING([for wrapper compiler LIBS])
-AC_SUBST(WRAPPER_EXTRA_LIBS)
-AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$WRAPPER_EXTRA_LIBS",
-    [Additional LIBS to pass through the wrapper compilers])
-AC_MSG_RESULT([$WRAPPER_EXTRA_LIBS])
-
-#
 # Adding LIBMPI_* flags from the components that are necessary to
 # compile with libmpi
 #
@@ -1645,6 +1577,12 @@ AC_SUBST(CXXCPPFLAGS)
 AC_SUBST(FFLAGS)
 AC_SUBST(FCFLAGS)
 
+############################################################################
+# final wrapper compiler config
+############################################################################
+
+ompi_show_subtitle "Wrapper compiler flags"
+OMPI_SETUP_WRAPPER_FINAL
 
 ############################################################################
 # Party on
