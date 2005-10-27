@@ -301,9 +301,6 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         ORTE_NODE_NAME_KEY,
         NULL
     };
-    struct timeval tv1, tv2;
-
-    gettimeofday(&tv1, NULL);
 
     /* query the application context */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &app_context, &num_context))) {
@@ -429,9 +426,6 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
     free(jobid_str);
     free(app_context);
     free(mapping);
-
-    gettimeofday(&tv2, NULL);
-    fprintf(stderr, "orte_rmaps_base_get_map %lu:%lu %lu:%lu\n", tv1.tv_sec, tv1.tv_usec, tv2.tv_sec, tv2.tv_usec);
     return ORTE_SUCCESS;
 
 cleanup:
