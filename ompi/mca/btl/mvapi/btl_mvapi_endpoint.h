@@ -165,75 +165,81 @@ int  mca_btl_mvapi_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_mvapi_post_recv(void);
 
 
-#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(post_rr_high_endpoint, \
-                                             post_rr_high_additional) \
+#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, \
+                                             additional) \
 { \
-    mca_btl_mvapi_module_t * post_rr_high_mvapi_btl = post_rr_high_endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&post_rr_high_mvapi_btl->ib_lock); \
-    if(post_rr_high_endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+post_rr_high_additional && \
-       post_rr_high_endpoint->rr_posted_high < post_rr_high_mvapi_btl->rd_buf_max){ \
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(post_rr_high_mvapi_btl->rd_buf_max -  \
-                                            post_rr_high_endpoint->rr_posted_high, \
-                                            post_rr_high_endpoint, \
-                                            &post_rr_high_mvapi_btl->recv_free_eager, \
-                                            &post_rr_high_endpoint->rr_posted_high, \
-                                            post_rr_high_mvapi_btl->nic, \
-                                            post_rr_high_endpoint->lcl_qp_hndl_high); \
+  do { \
+    mca_btl_mvapi_module_t * mvapi_btl = endpoint->endpoint_btl; \
+    OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
+    if(endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+additional && \
+       endpoint->rr_posted_high < mvapi_btl->rd_buf_max){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mvapi_btl->rd_buf_max -  \
+                                            endpoint->rr_posted_high, \
+                                            endpoint, \
+                                            &mvapi_btl->recv_free_eager, \
+                                            &endpoint->rr_posted_high, \
+                                            mvapi_btl->nic, \
+                                            endpoint->lcl_qp_hndl_high); \
     } \
-    OPAL_THREAD_UNLOCK(&post_rr_high_mvapi_btl->ib_lock); \
+    OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
+  } while(0); \
 }
 
-#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(post_rr_low_endpoint, \
-                                             post_rr_low_additional) \
+#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, \
+                                             additional) \
 { \
-    mca_btl_mvapi_module_t * post_rr_low_mvapi_btl = post_rr_low_endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&post_rr_low_mvapi_btl->ib_lock); \
-    if(post_rr_low_endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+post_rr_low_additional && \
-       post_rr_low_endpoint->rr_posted_low < post_rr_low_mvapi_btl->rd_buf_max){ \
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(post_rr_low_mvapi_btl->rd_buf_max -  \
-                                            post_rr_low_endpoint->rr_posted_low, \
-                                            post_rr_low_endpoint, \
-                                            &post_rr_low_mvapi_btl->recv_free_max, \
-                                            &post_rr_low_endpoint->rr_posted_low, \
-                                            post_rr_low_mvapi_btl->nic, \
-                                            post_rr_low_endpoint->lcl_qp_hndl_low); \
+   do { \
+    mca_btl_mvapi_module_t * mvapi_btl = endpoint->endpoint_btl; \
+    OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
+    if(endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+additional && \
+       endpoint->rr_posted_low < mvapi_btl->rd_buf_max){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mvapi_btl->rd_buf_max -  \
+                                            endpoint->rr_posted_low, \
+                                            endpoint, \
+                                            &mvapi_btl->recv_free_max, \
+                                            &endpoint->rr_posted_low, \
+                                            mvapi_btl->nic, \
+                                            endpoint->lcl_qp_hndl_low); \
     } \
-    OPAL_THREAD_UNLOCK(&post_rr_low_mvapi_btl->ib_lock); \
+    OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
+  } while(0); \
 }
 
 
-#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(post_rr_sub_cnt, \
-                                            post_rr_sub_endpoint, \
-                                            post_rr_sub_frag_list, \
-                                            post_rr_sub_rr_posted, \
-                                            post_rr_sub_nic, \
-                                            post_rr_sub_qp ) \
+#define MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(cnt, \
+                                            my_endpoint, \
+                                            frag_list, \
+                                            rr_posted, \
+                                            nic, \
+                                            qp ) \
 {\
-    uint32_t post_rr_sub_i; \
-    int post_rr_sub_rc; \
-    opal_list_item_t* post_rr_sub_item; \
-    mca_btl_mvapi_frag_t* post_rr_sub_frag = NULL; \
-    mca_btl_mvapi_module_t *post_rr_sub_mvapi_btl = post_rr_sub_endpoint->endpoint_btl; \
-    VAPI_rr_desc_t* post_rr_sub_desc_post = post_rr_sub_mvapi_btl->rr_desc_post; \
-    for(post_rr_sub_i = 0; post_rr_sub_i < post_rr_sub_cnt; post_rr_sub_i++) { \
-        OMPI_FREE_LIST_WAIT(post_rr_sub_frag_list, post_rr_sub_item, post_rr_sub_rc); \
-        post_rr_sub_frag = (mca_btl_mvapi_frag_t*) post_rr_sub_item; \
-        post_rr_sub_frag->endpoint = post_rr_sub_endpoint; \
-        post_rr_sub_frag->sg_entry.len = post_rr_sub_frag->size + \
-            ((unsigned char*) post_rr_sub_frag->segment.seg_addr.pval-  \
-             (unsigned char*) post_rr_sub_frag->hdr);  \
-       post_rr_sub_desc_post[post_rr_sub_i] = post_rr_sub_frag->rr_desc; \
+  do { \
+    uint32_t i; \
+    int rc; \
+    opal_list_item_t* item; \
+    mca_btl_mvapi_frag_t* frag = NULL; \
+    mca_btl_mvapi_module_t *mvapi_btl = my_endpoint->endpoint_btl; \
+    VAPI_rr_desc_t* desc_post = mvapi_btl->rr_desc_post; \
+    for(i = 0; i < cnt; i++) { \
+        OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
+        frag = (mca_btl_mvapi_frag_t*) item; \
+        frag->endpoint = my_endpoint; \
+        frag->sg_entry.len = frag->size + \
+            ((unsigned char*) frag->segment.seg_addr.pval-  \
+             (unsigned char*) frag->hdr);  \
+       desc_post[i] = frag->rr_desc; \
     }\
-    post_rr_sub_frag->ret = EVAPI_post_rr_list( post_rr_sub_nic, \
-                                                post_rr_sub_qp, \
-                                                post_rr_sub_cnt, \
-                                                post_rr_sub_desc_post); \
-   if(NULL != post_rr_sub_frag && VAPI_OK != post_rr_sub_frag->ret) { \
+    frag->ret = EVAPI_post_rr_list( nic, \
+                                                qp, \
+                                                cnt, \
+                                                desc_post); \
+   if(NULL != frag && VAPI_OK != frag->ret) { \
         BTL_ERROR(("error posting receive descriptors: %s",\
-                   VAPI_strerror(post_rr_sub_frag->ret))); \
-    } else if (NULL != post_rr_sub_frag){\
-        OPAL_THREAD_ADD32(post_rr_sub_rr_posted, post_rr_sub_cnt); \
+                   VAPI_strerror(frag->ret))); \
+    } else if (NULL != frag){\
+        OPAL_THREAD_ADD32(rr_posted, cnt); \
    }\
+  } while(0); \
 }
 
 #define BTL_MVAPI_INSERT_PENDING(frag, frag_list, tokens, lock, rc) \
