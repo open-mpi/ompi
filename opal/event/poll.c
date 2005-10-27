@@ -127,7 +127,7 @@ poll_recalc(void *arg, int max)
 static int
 poll_dispatch(void *arg, struct timeval *tv)
 {
-	int res, i, count, sec, nfds;
+	int res, i, offset, count, sec, nfds;
 	struct opal_event *ev;
 	struct pollop *pop = arg;
 
@@ -183,27 +183,33 @@ poll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 #endif
 
-	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
         opal_mutex_unlock(&opal_event_lock);
-	    res = poll(pop->event_set, nfds, sec);
+        offset = 0;
+        res = 0;
+        count = nfds;
+        while(count > 0) {
+           int num = (count > FD_SETSIZE) ? FD_SETSIZE : count;
+           int ret;
+	       sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
+	       ret = poll(pop->event_set + offset, num, sec);
+	       if (res == -1) {
+		       if (errno != EINTR) {
+			       opal_output(0, "poll failed with errno=%d\n", errno);
+                   opal_mutex_lock(&opal_event_lock);
+			       return (-1);
+		       }
+           } else {
+               res += ret;
+           }
+           offset += num;
+           count -= num;
+        }
         opal_mutex_lock(&opal_event_lock);
 
 #if OPAL_EVENT_USE_SIGNALS
 	if (opal_evsignal_recalc(&pop->evsigmask) == -1)
 		return (-1);
 #endif
-
-	if (res == -1) {
-		if (errno != EINTR) {
-			opal_output(0, "poll failed with errno=%d\n", errno);
-			return (-1);
-		}
-
-#if OPAL_EVENT_USE_SIGNALS
-		opal_evsignal_process();
-#endif
-		return (0);
-	} 
 
 #if OPAL_EVENT_USE_SIGNALS
 	else if (opal_evsignal_caught)
