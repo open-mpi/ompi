@@ -293,13 +293,9 @@ static int orte_rmgr_urm_spawn(
 {
     int rc;
     orte_process_name_t* name;
-    struct timeval tv;
  
     OPAL_TRACE(1);
     
-    gettimeofday(&tv, NULL);
-    fprintf(stderr, "orte_rmgr_urm_spawn: %lu:%lu - resource discovery\n", tv.tv_sec, tv.tv_usec);
-
     /* 
      * Perform resource discovery.
      */
@@ -311,9 +307,6 @@ static int orte_rmgr_urm_spawn(
         mca_rmgr_urm_component.urm_rds = true;
     }
 
-    gettimeofday(&tv, NULL);
-    fprintf(stderr, "orte_rmgr_urm_spawn: %lu:%lu - create job\n", tv.tv_sec, tv.tv_usec);
-
     /*
      * Initialize job segment and allocate resources
      */ /* JJH Insert C/N mapping stuff here */
@@ -323,16 +316,10 @@ static int orte_rmgr_urm_spawn(
         return rc;
     }
 
-    gettimeofday(&tv, NULL);
-    fprintf(stderr, "orte_rmgr_urm_spawn: %lu:%lu - allocate\n", tv.tv_sec, tv.tv_usec);
-
     if (ORTE_SUCCESS != (rc = orte_rmgr_urm_allocate(*jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-    gettimeofday(&tv, NULL);
-    fprintf(stderr, "orte_rmgr_urm_spawn: %lu:%lu - map\n", tv.tv_sec, tv.tv_usec);
 
     if (ORTE_SUCCESS != (rc = orte_rmgr_urm_map(*jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -342,9 +329,6 @@ static int orte_rmgr_urm_spawn(
     /*
      * setup I/O forwarding 
      */
-
-    gettimeofday(&tv, NULL);
-    fprintf(stderr, "orte_rmgr_urm_spawn: %lu:%lu - I/O\n", tv.tv_sec, tv.tv_usec);
 
     if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, *jobid, 0))) {
         ORTE_ERROR_LOG(rc);
@@ -371,9 +355,6 @@ static int orte_rmgr_urm_spawn(
         }
     }
 
-    gettimeofday(&tv, NULL);
-    fprintf(stderr, "orte_rmgr_urm_spawn: %lu:%lu - launch\n", tv.tv_sec, tv.tv_usec);
-
     /*
      * launch the job
      */
@@ -381,9 +362,6 @@ static int orte_rmgr_urm_spawn(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-    gettimeofday(&tv, NULL);
-    fprintf(stderr, "orte_rmgr_urm_spawn: %lu:%lu - launch complete\n", tv.tv_sec, tv.tv_usec);
 
     orte_ns.free_name(&name);
     return ORTE_SUCCESS;
