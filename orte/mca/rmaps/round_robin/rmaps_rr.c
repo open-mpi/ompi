@@ -151,8 +151,8 @@ static int claim_slot(orte_rmaps_base_map_t *map,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    rmaps_node->node_name = strdup(current_node->node_name);
-
+    OBJ_RETAIN(current_node);
+    rmaps_node->node = current_node;
     proc = OBJ_NEW(orte_rmaps_base_proc_t);
     if (NULL == proc) {
         OBJ_RELEASE(rmaps_node);

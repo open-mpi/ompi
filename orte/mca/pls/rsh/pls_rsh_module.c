@@ -375,8 +375,8 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
 int orte_pls_rsh_launch(orte_jobid_t jobid)
 {
-    opal_list_t nodes, mapping_list;
-    opal_list_item_t* item;
+    opal_list_t mapping;
+    opal_list_item_t* m_item, *n_item;
     size_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
@@ -400,17 +400,23 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      *  - need to know if we are launching on a subset of the allocated nodes
      * All other mapping responsibilities fall to orted in the fork PLS
      */
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
-    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
+    OBJ_CONSTRUCT(&mapping, opal_list_t);
+    rc = orte_rmaps_base_get_map(jobid, &mapping);
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
+    }
+
+    num_nodes = 0;
+    for(m_item = opal_list_get_first(&mapping);
+        m_item != opal_list_get_end(&mapping);
+        m_item = opal_list_get_next(m_item)) {
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
+        num_nodes += opal_list_get_size(&map->nodes);
     }
 
     /*
      * Allocate a range of vpids for the daemons.
      */
-    num_nodes = opal_list_get_size(&nodes);
     if (num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
     }
@@ -450,7 +456,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         }
     } else {
         orte_pls_rsh_shell shell;
-        orte_ras_node_t* node = (orte_ras_node_t*)opal_list_get_first(&nodes);
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)opal_list_get_first(&mapping);
+        orte_ras_node_t* node = (orte_ras_node_t*)opal_list_get_first(&map->nodes);
 
         rc = orte_pls_rsh_probe(node, &shell);
 
@@ -572,391 +579,344 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     }
 
     /*
-     * Iterate through each of the nodes and spin
-     * up a daemon.
+     * Iterate through each of the contexts
      */
-    for(item =  opal_list_get_first(&nodes);
-        item != opal_list_get_end(&nodes);
-        item =  opal_list_get_next(item)) {
-        orte_ras_node_t* node = (orte_ras_node_t*)item;
-        orte_process_name_t* name;
-        pid_t pid;
-        char *exec_path;
-        char **exec_argv;
-        char * cur_prefix;
-        opal_list_t map;
-        opal_list_item_t* item;
-        size_t num_processes;
+    for(m_item = opal_list_get_first(&mapping);
+        m_item != opal_list_get_end(&mapping);
+        m_item = opal_list_get_next(m_item)) {
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
+        char * prefix_dir = map->app->prefix_dir;
 
-        OBJ_CONSTRUCT(&map, opal_list_t);
-        /* Get the mapping of this very node */
-        rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
-                                          jobid,
-                                          node->node_name,
-                                          &map);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* Copy the prefix-directory specified within the corresponding
-         * app_context.
-         * If there are multiple (differing) prefix-dir being set for this
-         * node, abort.
+        /*
+         * For each of the contexts - iterate through the nodes.
          */
-        cur_prefix = NULL;
-        num_processes = 0;
-        for(item =  opal_list_get_first(&map);
-            item != opal_list_get_end(&map);
-            item =  opal_list_get_next(item)) {
-            orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
-            char * app_prefix_dir = map->app->prefix_dir;
+        for(n_item =  opal_list_get_first(&map->nodes);
+            n_item != opal_list_get_end(&map->nodes);
+            n_item =  opal_list_get_next(n_item)) {
+            orte_rmaps_base_node_t* rmaps_node = (orte_rmaps_base_node_t*)n_item;
+            orte_ras_node_t* ras_node = rmaps_node->node;
+            orte_process_name_t* name;
+            pid_t pid;
+            char *exec_path;
+            char **exec_argv;
 
-            /* Increment the number of processes allocated to this node 
-             * This allows us to accurately test for oversubscription */
-            num_processes += map->num_procs;
-
-            /* Check for already set cur_prefix_dir -- if different,
-               complain */
-            if (NULL != app_prefix_dir) {
-                if (NULL != cur_prefix &&
-                    0 != strcmp (cur_prefix, app_prefix_dir)) {
-                    opal_show_help("help-pls-rsh.txt", "multiple-prefixes",
-                                   true, cur_prefix, app_prefix_dir);
-                    return ORTE_ERR_FATAL;
-                }
-
-                /* If not yet set, copy it; iff set, then it's the
-                   same anyway */
-                if (NULL == cur_prefix) {
-                    cur_prefix = strdup (map->app->prefix_dir);
-                    if (mca_pls_rsh_component.debug) {
-                        opal_output (0, "pls:rsh: Set prefix:%s\n",
-                                     cur_prefix);
-                    }
-                }
-            }
-        }
-
-        /* setup node name */
-        free(argv[node_name_index1]);
-        if (NULL != node->node_username &&
-            0 != strlen (node->node_username)) {
-            asprintf (&argv[node_name_index1], "%s@%s",
-                      node->node_username, node->node_name);
-        } else {
-            argv[node_name_index1] = strdup(node->node_name);
-        }
-
-        free(argv[node_name_index2]);
-        argv[node_name_index2] = strdup(node->node_name);
-
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* rsh a child to exec the rsh/ssh session */
-#ifdef WIN32
-        printf("Unimplemented feature for windows\n");
-        return;
-#if 0
-        {
-            /* Do fork the windows way: see opal_few() for example */
-            HANDLE new_process;
-            STARTUPINFO si;
-            PROCESS_INFORMATION pi;
-            DWORD process_id;
-
-            ZeroMemory (&si, sizeof(si));
-            ZeroMemory (&pi, sizeof(pi));
-
-            GetStartupInfo (&si);
-            if (!CreateProcess (NULL,
-                                "new process",
-                                NULL,
-                                NULL,
-                                TRUE,
-                                0,
-                                NULL,
-                                NULL,
-                                &si,
-                                &pi)){
-                /* actual error can be got by simply calling GetLastError() */
-                return OMPI_ERROR;
-            }
-            /* get child pid */
-            process_id = GetProcessId(&pi);
-            pid = (int) process_id;
-        }
-#endif
-#else
-        pid = fork();
-#endif
-        if (pid < 0) {
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-
-        /* child */
-        if (pid == 0) {
-            char* name_string;
-            char** env;
-            char* var;
-
-            if (mca_pls_rsh_component.debug) {
-                opal_output(0, "pls:rsh: launching on node %s\n",
-                            node->node_name);
-            }
-
-            /* set the progress engine schedule for this node.
-             * if node_slots is set to zero, then we default to
-             * NOT being oversubscribed
-             */
-            if (node->node_slots > 0 &&
-                num_processes > node->node_slots) {
-                if (mca_pls_rsh_component.debug) {
-                    opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
-                                node->node_slots, num_processes);
-                }
-                free(argv[call_yield_index]);
-                argv[call_yield_index] = strdup("1");
+            /* setup node name */
+            free(argv[node_name_index1]);
+            if (NULL != ras_node->node_username &&
+                0 != strlen (ras_node->node_username)) {
+                asprintf (&argv[node_name_index1], "%s@%s",
+                          ras_node->node_username, ras_node->node_name);
             } else {
-                if (mca_pls_rsh_component.debug) {
-                    opal_output(0, "pls:rsh: not oversubscribed -- setting mpi_yield_when_idle to 0");
-                }
-                free(argv[call_yield_index]);
-                argv[call_yield_index] = strdup("0");
+                argv[node_name_index1] = strdup(ras_node->node_name);
             }
 
-            /* Is this a local launch?
-             *
-             * Not all node names may be resolvable (if we found
-             * localhost in the hostfile, for example).  So first
-             * check trivial case of node_name being same as the
-             * current nodename, which must be local.  If that doesn't
-             * match, check using ifislocal().
-             */
-            if (0 == strcmp(node->node_name, orte_system_info.nodename) ||
-                opal_ifislocal(node->node_name)) {
-                if (mca_pls_rsh_component.debug) {
-                    opal_output(0, "pls:rsh: %s is a LOCAL node\n",
-                                node->node_name);
-                }
-                exec_argv = &argv[local_exec_index];
-                exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
+            free(argv[node_name_index2]);
+            argv[node_name_index2] = strdup(ras_node->node_name);
 
-                if (NULL == exec_path && NULL == cur_prefix) {
-                    rc = orte_pls_rsh_fill_exec_path (&exec_path);
-                    if (ORTE_SUCCESS != rc) {
-                        return rc;
-                    }
-                } else {
-                    if (NULL != cur_prefix) {
-                        asprintf(&exec_path, "%s/bin/orted", cur_prefix);
-                    }
-                    /* If we yet did not fill up the execpath, do so now */
-                    if (NULL == exec_path) {
-                        rc = orte_pls_rsh_fill_exec_path (&exec_path);
-                        if (ORTE_SUCCESS != rc) {
-                            return rc;
-                        }
-                    }
-                }
-
-                /* If we have a prefix, then modify the PATH and
-                   LD_LIBRARY_PATH environment variables.  We're
-                   already in the child process, so it's ok to modify
-                   environ. */
-                if (NULL != cur_prefix) {
-                    char *oldenv, *newenv;
-
-                    /* Reset PATH */
-                    oldenv = getenv("PATH");
-                    if (NULL != oldenv) {
-                        asprintf(&newenv, "%s/bin:%s\n", cur_prefix, oldenv);
-                    } else {
-                        asprintf(&newenv, "%s/bin", cur_prefix);
-                    }
-                    opal_setenv("PATH", newenv, true, &environ);
-                    if (mca_pls_rsh_component.debug) {
-                        opal_output(0, "pls:rsh: reset PATH: %s", newenv);
-                    }
-                    free(newenv);
-
-                    /* Reset LD_LIBRARY_PATH */
-                    oldenv = getenv("LD_LIBRARY_PATH");
-                    if (NULL != oldenv) {
-                        asprintf(&newenv, "%s/lib:%s\n", cur_prefix, oldenv);
-                    } else {
-                        asprintf(&newenv, "%s/lib", cur_prefix);
-                    }
-                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
-                    if (mca_pls_rsh_component.debug) {
-                        opal_output(0, "pls:rsh: reset LD_LIBRARY_PATH: %s",
-                                    newenv);
-                    }
-                    free(newenv);
-                }
-
-                /* Since this is a local execution, we need to
-                   potentially whack the final ")" in the argv (if
-                   sh/csh conditionals, from above).  Note that we're
-                   modifying the argv[] in the child process, so
-                   there's no need to save this and restore it
-                   afterward -- the parent's argv[] is unmodified. */
-                if (NULL != argv[local_exec_index_end]) {
-                    free(argv[local_exec_index_end]);
-                    argv[local_exec_index_end] = NULL;
-                }
-            } else {
-                if (mca_pls_rsh_component.debug) {
-                    opal_output(0, "pls:rsh: %s is a REMOTE node\n",
-                                node->node_name);
-                }
-                exec_argv = argv;
-                exec_path = strdup(mca_pls_rsh_component.path);
-
-                if (NULL != cur_prefix) {
-                    if (remote_bash) {
-                        asprintf (&argv[local_exec_index],
-                                "PATH=%s/bin:$PATH ; export PATH ; "
-                                "LD_LIBRARY_PATH=%s/lib:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
-                                "%s/bin/%s",
-                                cur_prefix,
-                                cur_prefix,
-                                cur_prefix, mca_pls_rsh_component.orted);
-                    }
-                    /*
-                     * This needs cleanup:
-                     * Only if the LD_LIBRARY_PATH is set, prepend our prefix/lib to it....
-                     */
-                    if (remote_csh) {
-                        asprintf (&argv[local_exec_index],
-                                "set path = ( %s/bin $path ) ; "
-                                "if ( \"$?LD_LIBRARY_PATH\" == 1 ) "
-                                "setenv LD_LIBRARY_PATH %s/lib:$LD_LIBRARY_PATH ; "
-                                "if ( \"$?LD_LIBRARY_PATH\" == 0 ) "
-                                "setenv LD_LIBRARY_PATH %s/lib ; "
-                                "%s/bin/%s",
-                                cur_prefix,
-                                cur_prefix,
-                                cur_prefix,
-                                cur_prefix, mca_pls_rsh_component.orted);
-                    }
-                }
-            }
-
-            /* setup process name */
-            rc = orte_ns.get_proc_name_string(&name_string, name);
+            /* initialize daemons process name */
+            rc = orte_ns.create_process_name(&name, ras_node->node_cellid, 0, vpid);
             if (ORTE_SUCCESS != rc) {
-                opal_output(0, "orte_pls_rsh: unable to create process name");
-                exit(-1);
-            }
-            free(argv[proc_name_index]);
-            argv[proc_name_index] = strdup(name_string);
-
-            if (!mca_pls_rsh_component.debug) {
-                 /* setup stdin */
-                int fd = open("/dev/null", O_RDWR);
-                dup2(fd, 0);
-                close(fd);
-            }
-
-            /* Set signal handlers back to the default.  Do this close
-               to the execve() because the event library may (and likely
-               will) reset them.  If we don't do this, the event
-               library may have left some set that, at least on some
-               OS's, don't get reset via fork() or exec().  Hence, the
-               orted could be unkillable (for example). */
-
-            set_handler_default(SIGTERM);
-            set_handler_default(SIGINT);
-#ifndef WIN32
-            set_handler_default(SIGHUP);
-            set_handler_default(SIGPIPE);
-#endif
-            set_handler_default(SIGCHLD);
-
-            /* Unblock all signals, for many of the same reasons that
-               we set the default handlers, above.  This is noticable
-               on Linux where the event library blocks SIGTERM, but we
-               don't want that blocked by the orted (or, more
-               specifically, we don't want it to be blocked by the
-               orted and then inherited by the ORTE processes that it
-               forks, making them unkillable by SIGTERM). */
-#ifndef WIN32
-            sigprocmask(0, 0, &sigs);
-            sigprocmask(SIG_UNBLOCK, &sigs, 0);
-#endif
-
-            /* setup environment */
-            env = opal_argv_copy(environ);
-            var = mca_base_param_environ_variable("seed",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-
-            /* exec the daemon */
-            if (mca_pls_rsh_component.debug) {
-                param = opal_argv_join(exec_argv, ' ');
-                if (NULL != param) {
-                    opal_output(0, "pls:rsh: executing: %s", param);
-                    free(param);
-                }
-            }
-            execve(exec_path, exec_argv, env);
-            opal_output(0, "pls:rsh: execv failed with errno=%d\n", errno);
-            exit(-1);
-
-        } else { /* father */
-            rsh_daemon_info_t *daemon_info;
-
-            OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-            if (mca_pls_rsh_component.num_children++ >=
-                mca_pls_rsh_component.num_concurrent) {
-                opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
-            }
-            OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
-
-            /* save the daemons name on the node */
-            if (ORTE_SUCCESS != (rc = orte_pls_base_proxy_set_node_name(node,jobid,name))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            /* setup callback on sigchild - wait until setup above is complete
-             * as the callback can occur in the call to orte_wait_cb
-             */
-            daemon_info = OBJ_NEW(rsh_daemon_info_t);
-            OBJ_RETAIN(node);
-            daemon_info->node = node;
-            daemon_info->jobid = jobid;
-            orte_wait_cb(pid, orte_pls_rsh_wait_daemon, daemon_info);
+            /* rsh a child to exec the rsh/ssh session */
+    #ifdef WIN32
+            printf("Unimplemented feature for windows\n");
+            return;
+    #if 0
+            {
+                /* Do fork the windows way: see opal_few() for example */
+                HANDLE new_process;
+                STARTUPINFO si;
+                PROCESS_INFORMATION pi;
+                DWORD process_id;
 
-            /* if required - add delay to avoid problems w/ X11 authentication */
-            if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
-                sleep(mca_pls_rsh_component.delay);
+                ZeroMemory (&si, sizeof(si));
+                ZeroMemory (&pi, sizeof(pi));
+
+                GetStartupInfo (&si);
+                if (!CreateProcess (NULL,
+                                    "new process",
+                                    NULL,
+                                    NULL,
+                                    TRUE,
+                                    0,
+                                    NULL,
+                                    NULL,
+                                    &si,
+                                    &pi)){
+                    /* actual error can be got by simply calling GetLastError() */
+                    return OMPI_ERROR;
+                }
+                /* get child pid */
+                process_id = GetProcessId(&pi);
+                pid = (int) process_id;
             }
-            vpid++;
-        }
-        free(name);
-        if (NULL != cur_prefix) {
-            free (cur_prefix);
+    #endif
+    #else
+            pid = fork();
+    #endif
+            if (pid < 0) {
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto cleanup;
+            }
+
+            /* child */
+            if (pid == 0) {
+                char* name_string;
+                char** env;
+                char* var;
+                long fd, fdmax = sysconf(_SC_OPEN_MAX);
+
+                chdir("/tmp");
+                if (mca_pls_rsh_component.debug) {
+                    opal_output(0, "pls:rsh: launching on node %s\n",
+                                ras_node->node_name);
+                }
+
+                /* set the progress engine schedule for this node.
+                 * if node_slots is set to zero, then we default to
+                 * NOT being oversubscribed
+                 */
+                if (ras_node->node_slots > 0 &&
+                    opal_list_get_size(&rmaps_node->node_procs) > ras_node->node_slots) {
+                    if (mca_pls_rsh_component.debug) {
+                        opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
+                                    ras_node->node_slots, opal_list_get_size(&rmaps_node->node_procs));
+                    }
+                    free(argv[call_yield_index]);
+                    argv[call_yield_index] = strdup("1");
+                } else {
+                    if (mca_pls_rsh_component.debug) {
+                        opal_output(0, "pls:rsh: not oversubscribed -- setting mpi_yield_when_idle to 0");
+                    }
+                    free(argv[call_yield_index]);
+                    argv[call_yield_index] = strdup("0");
+                }
+
+                /* Is this a local launch?
+                 *
+                 * Not all node names may be resolvable (if we found
+                 * localhost in the hostfile, for example).  So first
+                 * check trivial case of node_name being same as the
+                 * current nodename, which must be local.  If that doesn't
+                 * match, check using ifislocal().
+                 */
+                if (0 == strcmp(ras_node->node_name, orte_system_info.nodename) ||
+                    opal_ifislocal(ras_node->node_name)) {
+                    if (mca_pls_rsh_component.debug) {
+                        opal_output(0, "pls:rsh: %s is a LOCAL node\n",
+                                    ras_node->node_name);
+                    }
+                    exec_argv = &argv[local_exec_index];
+                    exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
+
+                    if (NULL == exec_path && NULL == prefix_dir) {
+                        rc = orte_pls_rsh_fill_exec_path (&exec_path);
+                        if (ORTE_SUCCESS != rc) {
+                            return rc;
+                        }
+                    } else {
+                        if (NULL != prefix_dir) {
+                            asprintf(&exec_path, "%s/bin/orted", prefix_dir);
+                        }
+                        /* If we yet did not fill up the execpath, do so now */
+                        if (NULL == exec_path) {
+                            rc = orte_pls_rsh_fill_exec_path (&exec_path);
+                            if (ORTE_SUCCESS != rc) {
+                                return rc;
+                            }
+                        }
+                    }
+
+                    /* If we have a prefix, then modify the PATH and
+                       LD_LIBRARY_PATH environment variables.  We're
+                       already in the child process, so it's ok to modify
+                       environ. */
+                    if (NULL != prefix_dir) {
+                        char *oldenv, *newenv;
+
+                        /* Reset PATH */
+                        oldenv = getenv("PATH");
+                        if (NULL != oldenv) {
+                            asprintf(&newenv, "%s/bin:%s\n", prefix_dir, oldenv);
+                        } else {
+                            asprintf(&newenv, "%s/bin", prefix_dir);
+                        }
+                        opal_setenv("PATH", newenv, true, &environ);
+                        if (mca_pls_rsh_component.debug) {
+                            opal_output(0, "pls:rsh: reset PATH: %s", newenv);
+                        }
+                        free(newenv);
+
+                        /* Reset LD_LIBRARY_PATH */
+                        oldenv = getenv("LD_LIBRARY_PATH");
+                        if (NULL != oldenv) {
+                            asprintf(&newenv, "%s/lib:%s\n", prefix_dir, oldenv);
+                        } else {
+                            asprintf(&newenv, "%s/lib", prefix_dir);
+                        }
+                        opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
+                        if (mca_pls_rsh_component.debug) {
+                            opal_output(0, "pls:rsh: reset LD_LIBRARY_PATH: %s",
+                                        newenv);
+                        }
+                        free(newenv);
+                    }
+
+                    /* Since this is a local execution, we need to
+                       potentially whack the final ")" in the argv (if
+                       sh/csh conditionals, from above).  Note that we're
+                       modifying the argv[] in the child process, so
+                       there's no need to save this and restore it
+                       afterward -- the parent's argv[] is unmodified. */
+                    if (NULL != argv[local_exec_index_end]) {
+                        free(argv[local_exec_index_end]);
+                        argv[local_exec_index_end] = NULL;
+                    }
+                } else {
+                    if (mca_pls_rsh_component.debug) {
+                        opal_output(0, "pls:rsh: %s is a REMOTE node\n",
+                                    ras_node->node_name);
+                    }
+                    exec_argv = argv;
+                    exec_path = strdup(mca_pls_rsh_component.path);
+
+                    if (NULL != prefix_dir) {
+                        if (remote_bash) {
+                            asprintf (&argv[local_exec_index],
+                                    "PATH=%s/bin:$PATH ; export PATH ; "
+                                    "LD_LIBRARY_PATH=%s/lib:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+                                    "%s/bin/%s",
+                                    prefix_dir,
+                                    prefix_dir,
+                                    prefix_dir, mca_pls_rsh_component.orted);
+                        }
+                        /*
+                         * This needs cleanup:
+                         * Only if the LD_LIBRARY_PATH is set, prepend our prefix/lib to it....
+                         */
+                        if (remote_csh) {
+                            asprintf (&argv[local_exec_index],
+                                    "set path = ( %s/bin $path ) ; "
+                                    "if ( \"$?LD_LIBRARY_PATH\" == 1 ) "
+                                    "setenv LD_LIBRARY_PATH %s/lib:$LD_LIBRARY_PATH ; "
+                                    "if ( \"$?LD_LIBRARY_PATH\" == 0 ) "
+                                    "setenv LD_LIBRARY_PATH %s/lib ; "
+                                    "%s/bin/%s",
+                                    prefix_dir,
+                                    prefix_dir,
+                                    prefix_dir,
+                                    prefix_dir, mca_pls_rsh_component.orted);
+                        }
+                    }
+                }
+
+                /* setup process name */
+                rc = orte_ns.get_proc_name_string(&name_string, name);
+                if (ORTE_SUCCESS != rc) {
+                    opal_output(0, "orte_pls_rsh: unable to create process name");
+                    exit(-1);
+                }
+                free(argv[proc_name_index]);
+                argv[proc_name_index] = strdup(name_string);
+
+                if (!mca_pls_rsh_component.debug) {
+                     /* setup stdin */
+                    int fd = open("/dev/null", O_RDWR);
+                    dup2(fd, 0);
+                    close(fd);
+                }
+
+                /* close all file descriptors w/ exception of stdin/stdout/stderr */
+                for(fd=3; fd<fdmax; fd++)
+                    close(fd);
+
+                /* Set signal handlers back to the default.  Do this close
+                   to the execve() because the event library may (and likely
+                   will) reset them.  If we don't do this, the event
+                   library may have left some set that, at least on some
+                   OS's, don't get reset via fork() or exec().  Hence, the
+                   orted could be unkillable (for example). */
+
+                set_handler_default(SIGTERM);
+                set_handler_default(SIGINT);
+    #ifndef WIN32
+                set_handler_default(SIGHUP);
+                set_handler_default(SIGPIPE);
+    #endif
+                set_handler_default(SIGCHLD);
+
+                /* Unblock all signals, for many of the same reasons that
+                   we set the default handlers, above.  This is noticable
+                   on Linux where the event library blocks SIGTERM, but we
+                   don't want that blocked by the orted (or, more
+                   specifically, we don't want it to be blocked by the
+                   orted and then inherited by the ORTE processes that it
+                   forks, making them unkillable by SIGTERM). */
+    #ifndef WIN32
+                sigprocmask(0, 0, &sigs);
+                sigprocmask(SIG_UNBLOCK, &sigs, 0);
+    #endif
+
+                /* setup environment */
+                env = opal_argv_copy(environ);
+                var = mca_base_param_environ_variable("seed",NULL,NULL);
+                opal_setenv(var, "0", true, &env);
+
+                /* exec the daemon */
+                if (mca_pls_rsh_component.debug) {
+                    param = opal_argv_join(exec_argv, ' ');
+                    if (NULL != param) {
+                        opal_output(0, "pls:rsh: executing: %s", param);
+                        free(param);
+                    }
+                }
+                execve(exec_path, exec_argv, env);
+                opal_output(0, "pls:rsh: execv failed with errno=%d\n", errno);
+                exit(-1);
+
+            } else { /* father */
+                rsh_daemon_info_t *daemon_info;
+
+                OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
+                if (mca_pls_rsh_component.num_children++ >=
+                    mca_pls_rsh_component.num_concurrent) {
+                    opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
+                }
+                OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+
+                /* save the daemons name on the node */
+                if (ORTE_SUCCESS != (rc = orte_pls_base_proxy_set_node_name(ras_node,jobid,name))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+
+                /* setup callback on sigchild - wait until setup above is complete
+                 * as the callback can occur in the call to orte_wait_cb
+                 */
+                daemon_info = OBJ_NEW(rsh_daemon_info_t);
+                OBJ_RETAIN(ras_node);
+                daemon_info->node = ras_node;
+                daemon_info->jobid = jobid;
+                orte_wait_cb(pid, orte_pls_rsh_wait_daemon, daemon_info);
+
+                /* if required - add delay to avoid problems w/ X11 authentication */
+                if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
+                    sleep(mca_pls_rsh_component.delay);
+                }
+                vpid++;
+            }
+            free(name);
         }
     }
-
 
 cleanup:
-    while (NULL != (item = opal_list_remove_first(&nodes))) {
-        OBJ_RELEASE(item);
+    while (NULL != (m_item = opal_list_remove_first(&mapping))) {
+        OBJ_RELEASE(m_item);
     }
-    OBJ_DESTRUCT(&nodes);
-
-    while (NULL != (item = opal_list_remove_first(&mapping_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&mapping_list);
+    OBJ_DESTRUCT(&mapping);
 
     free(jobid_string);  /* done with this variable */
     opal_argv_free(argv);

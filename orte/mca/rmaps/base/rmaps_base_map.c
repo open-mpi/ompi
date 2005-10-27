@@ -15,6 +15,7 @@
  */
 
 #include "orte_config.h"
+#include <sys/time.h>
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "mca/schema/schema.h"
@@ -37,15 +38,15 @@
 
 static void orte_rmaps_base_node_construct(orte_rmaps_base_node_t* node)
 {
-    node->node_name = NULL;
+    node->node = NULL;
     OBJ_CONSTRUCT(&node->node_procs, opal_list_t);
 }
 
 static void orte_rmaps_base_node_destruct(orte_rmaps_base_node_t* node)
 {
     opal_list_item_t* item;
-    if(NULL != node->node_name)
-        free(node->node_name);
+    if(NULL != node->node)
+        OBJ_RELEASE(node->node);
     while(NULL != (item = opal_list_remove_first(&node->node_procs))) {
         OBJ_RELEASE(item);
     }
@@ -167,35 +168,6 @@ static int orte_rmaps_value_compare(orte_gpr_value_t** val1, orte_gpr_value_t** 
 
 
 /**
- * Lookup node (if it exists) in the list. If it doesn't exist, create a new
- * node and append to the table.
- */
-
-static orte_rmaps_base_node_t* 
-orte_rmaps_lookup_node(opal_list_t* nodes, char* node_name, orte_rmaps_base_proc_t* proc)
-{
-    opal_list_item_t* item;
-    orte_rmaps_base_node_t *node;
-    for(item =  opal_list_get_first(nodes);
-        item != opal_list_get_end(nodes);
-        item =  opal_list_get_next(item)) {
-        node = (orte_rmaps_base_node_t*)item;
-        if(strcmp(node->node_name, node_name) == 0) {
-            OBJ_RETAIN(proc);
-            opal_list_append(&node->node_procs, &proc->super);
-            return node;
-        }
-    }
-    node = OBJ_NEW(orte_rmaps_base_node_t);
-    node->node_cellid = proc->proc_name.cellid;
-    node->node_name = strdup(node_name);
-    OBJ_RETAIN(proc);
-    opal_list_append(&node->node_procs, &proc->super);
-    opal_list_prepend(nodes, &node->super);
-    return node;
-}
-
-/**
  * Obtain the mapping for this job, and the list of nodes confined to that mapping.
  *
  * Use this instead of orte_ras_base_node_query when past the RMAPS framework
@@ -204,26 +176,22 @@ orte_rmaps_lookup_node(opal_list_t* nodes, char* node_name, orte_rmaps_base_proc
  *  where we are allocated 10 nodes from the RAS, but only map to 2 of them
  *  then we don't try to launch orteds on all 10 nodes, just the 2 mapped.
  */
-int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid) {
-    opal_list_t nodes;
+int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid) 
+{
     opal_list_item_t *item_a, *item_m, *item_n;
     int num_mapping = 0;
     int rc = ORTE_SUCCESS;
     bool matched = false;
+    struct timeval tv1, tv2;
 
-    /* get all nodes allocated to this job */
-    OBJ_CONSTRUCT(&nodes, opal_list_t);    
-    rc = orte_ras_base_node_query_alloc(&nodes, jobid);
-    if (ORTE_SUCCESS != rc) {
-        goto cleanup;
-    }
-    
+    gettimeofday(&tv1, NULL);
+
     /* get the mapping for this job */
     rc = orte_rmaps_base_get_map(jobid, mapping_list);
     if (ORTE_SUCCESS != rc) {
-        goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-
     num_mapping = opal_list_get_size(mapping_list);
 
     /* Create a list of nodes that are in the mapping */
@@ -237,52 +205,76 @@ int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* no
         for( item_n  = opal_list_get_first(&(map->nodes));
              item_n != opal_list_get_end(&(map->nodes));
              item_n  = opal_list_get_next(item_n)) {
+            orte_rmaps_base_node_t* rmaps_node = (orte_rmaps_base_node_t*)item_n;
             matched = false;
             
             /* If this node is in the list already, skip it */
-            for( item_a  = opal_list_get_first(nodes_alloc);
-                 item_a != opal_list_get_end(nodes_alloc);
-                 item_a  = opal_list_get_next(item_a)) {
-                if( 0 == strcmp( ((orte_ras_node_t*)        item_a)->node_name, 
-                                 ((orte_rmaps_base_node_t*) item_n)->node_name) ) {
-                    matched = true;
-                    break;
+            if(num_mapping > 1) {
+                for( item_a  = opal_list_get_first(nodes_alloc);
+                     item_a != opal_list_get_end(nodes_alloc);
+                     item_a  = opal_list_get_next(item_a)) {
+                    orte_ras_node_t* ras_node = (orte_ras_node_t*)item_a;
+                    if( rmaps_node->node == ras_node) {
+                        matched = true;
+                        break;
+                    }
                 }
-            }
-            if(matched){
-                continue;
+                if(matched) {
+                    continue;
+                }
             }
 
             /* Otherwise 
-             *  - Find it in the node list from the node segment,
              *  - Add it to the allocated list of nodes
              */
-            matched = false;
-            for( item_a  = opal_list_get_first(&nodes);
-                 item_a != opal_list_get_end(&nodes);
-                 item_a  = opal_list_get_next(item_a)) {
-                if( 0 == strcmp( ((orte_ras_node_t*)        item_a)->node_name,
-                                 ((orte_rmaps_base_node_t*) item_n)->node_name) ) {
-                    matched = true;
-                    break;
-                }
-            }
-            if(!matched) {
-                printf("Unable to find the matched node in the allocation. This should never happen\n");
-                return ORTE_ERROR;
-            }
-            opal_list_remove_item(&nodes, item_a);
-            opal_list_append(nodes_alloc, item_a);
+            OBJ_RETAIN(rmaps_node->node);
+            opal_list_append(nodes_alloc, &rmaps_node->node->super);
         }
     }
-    
- cleanup:
-    while (NULL != (item_a = opal_list_remove_first(&nodes))) {
-        OBJ_RELEASE(item_a);
-    }
 
+    gettimeofday(&tv2, NULL);
+    fprintf(stderr, "orte_rmaps_base_mapped_node_query %lu:%lu %lu:%lu\n", tv1.tv_sec, tv1.tv_usec, tv2.tv_sec, tv2.tv_usec);
     return rc;
 }
+
+
+/**
+ * Lookup node (if it exists) in the list. If it doesn't exist, create a new
+ * node and append to the table.
+ */
+
+static orte_rmaps_base_node_t* 
+orte_rmaps_lookup_node(opal_list_t* rmaps_nodes, opal_list_t* ras_nodes, char* node_name, orte_rmaps_base_proc_t* proc)
+{
+    opal_list_item_t* item;
+    for(item =  opal_list_get_first(rmaps_nodes);
+        item != opal_list_get_end(rmaps_nodes);
+        item =  opal_list_get_next(item)) {
+        orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)item;
+        if(strcmp(node->node->node_name, node_name) == 0) {
+            OBJ_RETAIN(proc);
+            opal_list_append(&node->node_procs, &proc->super);
+            return node;
+        }
+    }
+    for(item = opal_list_get_first(ras_nodes);
+        item != opal_list_get_end(ras_nodes);
+        item = opal_list_get_next(item)) {
+        orte_ras_node_t* ras_node = (orte_ras_node_t*)item;
+        if(strcmp(ras_node->node_name, node_name) == 0) {
+            orte_rmaps_base_node_t* node = OBJ_NEW(orte_rmaps_base_node_t);
+            OBJ_RETAIN(ras_node);
+            node->node = ras_node;
+            OBJ_RETAIN(proc);
+            opal_list_append(&node->node_procs, &proc->super);
+            opal_list_prepend(rmaps_nodes, &node->super);
+            opal_list_remove_item(ras_nodes, item);
+            return node;
+        }
+    }
+    return NULL;
+}
+
 
 /**
  *  Query the process mapping from the registry.
@@ -292,6 +284,8 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
 {
     orte_app_context_t** app_context = NULL;
     orte_rmaps_base_map_t** mapping = NULL;
+    opal_list_t nodes;
+    opal_list_item_t* item;
     size_t i, num_context = 0;
     char* segment = NULL;
     char* jobid_str = NULL;
@@ -307,12 +301,24 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         ORTE_NODE_NAME_KEY,
         NULL
     };
+    struct timeval tv1, tv2;
+
+    gettimeofday(&tv1, NULL);
 
     /* query the application context */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &app_context, &num_context))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+ 
+    /* query the node list */
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(&nodes,jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+    /* build the mapping */
     if(NULL == (mapping = malloc(sizeof(orte_rmaps_base_map_t*) * num_context))) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         ORTE_ERROR_LOG(rc);
@@ -412,7 +418,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
             continue;
         }
         map->procs[map->num_procs++] = proc;
-        proc->proc_node = orte_rmaps_lookup_node(&map->nodes, node_name, proc); 
+        proc->proc_node = orte_rmaps_lookup_node(&map->nodes, &nodes, node_name, proc);
     }
 
     /* release temporary variables */
@@ -423,6 +429,9 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
     free(jobid_str);
     free(app_context);
     free(mapping);
+
+    gettimeofday(&tv2, NULL);
+    fprintf(stderr, "orte_rmaps_base_get_map %lu:%lu %lu:%lu\n", tv1.tv_sec, tv1.tv_usec, tv2.tv_sec, tv2.tv_usec);
     return ORTE_SUCCESS;
 
 cleanup:
@@ -443,6 +452,12 @@ cleanup:
         }
         free(mapping);
     }
+
+    /* cleanup any nodes allocated and not mapped */
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&nodes);
     return rc;
 }
 
@@ -458,6 +473,7 @@ int orte_rmaps_base_get_node_map(
 {
     orte_app_context_t** app_context = NULL;
     orte_rmaps_base_map_t** mapping = NULL;
+    orte_rmaps_base_node_t *node = NULL;
     size_t i, num_context = 0;
     char* segment = NULL;
     char* jobid_str = NULL;
@@ -473,6 +489,19 @@ int orte_rmaps_base_get_node_map(
         ORTE_NODE_NAME_KEY,
         NULL
     };
+    struct timeval tv1, tv2;
+    gettimeofday(&tv1,NULL);
+
+    /* allocate the node */
+    node = OBJ_NEW(orte_rmaps_base_node_t);
+    if(NULL == node) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if(NULL == (node->node = orte_ras_base_node_lookup(cellid,hostname))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
 
     /* query the application context */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &app_context, &num_context))) {
@@ -582,7 +611,9 @@ int orte_rmaps_base_get_node_map(
             continue;
         }
         map->procs[map->num_procs++] = proc;
-        proc->proc_node = orte_rmaps_lookup_node(&map->nodes, node_name, proc); 
+        OBJ_RETAIN(proc);
+        opal_list_append(&node->node_procs, &proc->super);
+        proc->proc_node = node;
     }
 
     /* return mapping for the entries that have procs on this node */
@@ -590,10 +621,15 @@ int orte_rmaps_base_get_node_map(
         orte_rmaps_base_map_t* map = mapping[i];
         if(map->num_procs) {
             opal_list_append(mapping_list, &map->super);
+            OBJ_RETAIN(node);
+            opal_list_append(&map->nodes, &node->super);
         } else {
             OBJ_RELEASE(map);
         }
     }
+
+    /* decrement reference count on node */
+    OBJ_RELEASE(node);
 
     /* release all app context - note the reference count was bumped 
      * if saved in the map
@@ -605,6 +641,9 @@ int orte_rmaps_base_get_node_map(
     free(jobid_str);
     free(app_context);
     free(mapping);
+
+    gettimeofday(&tv2,NULL);
+    fprintf(stderr, "orte_rmaps_base_get_node_map %lu:%lu %lu:%lu\n", tv1.tv_sec, tv1.tv_usec, tv2.tv_sec, tv2.tv_usec);
     return ORTE_SUCCESS;
 
 cleanup:
@@ -717,7 +756,7 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
 
             keyvals[2]->key = strdup(ORTE_NODE_NAME_KEY);
             keyvals[2]->type = ORTE_STRING;
-            keyvals[2]->value.strptr = strdup(proc->proc_node->node_name);
+            keyvals[2]->value.strptr = strdup(proc->proc_node->node->node_name);
 
             keyvals[3]->key = strdup(ORTE_PROC_APP_CONTEXT_KEY);
             keyvals[3]->type = ORTE_SIZE;

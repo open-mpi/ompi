@@ -262,7 +262,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
             orte_rmaps_base_map_t *map = (orte_rmaps_base_map_t*) item;
             for (i = 0; i < map->num_procs; i++) {
                 orte_rmaps_base_proc_t *proc = map->procs[i];
-                MPIR_proctable[i].host_name = proc->proc_node->node_name;
+                MPIR_proctable[i].host_name = proc->proc_node->node->node_name;
                 MPIR_proctable[i].executable_name = proc->app;
                 MPIR_proctable[i].pid = proc->local_pid;
             }
