@@ -39,6 +39,9 @@ static void mca_pml_base_send_request_construct(mca_pml_base_send_request_t* req
 
 static void mca_pml_base_send_request_destruct(mca_pml_base_send_request_t* req)
 {
-    OBJ_DESTRUCT(&req->req_convertor);
+    /* For each request the convertor get cleaned after each message
+     * (in the base _FINI macro). Therefore, as the convertor is a static object
+     * we don't have to call OBJ_DESTRUCT here.
+     */
 }
 

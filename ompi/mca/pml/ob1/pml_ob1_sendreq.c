@@ -77,7 +77,6 @@ static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
     req->req_send.req_base.req_ompi.req_fini = mca_pml_ob1_send_request_fini;
     req->req_send.req_base.req_ompi.req_free = mca_pml_ob1_send_request_free;
     req->req_send.req_base.req_ompi.req_cancel = mca_pml_ob1_send_request_cancel;
-    OBJ_CONSTRUCT(&req->req_send.req_convertor, ompi_convertor_t);
 }
 
 static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
@@ -731,6 +730,12 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
                         ompi_convertor_t convertor;
                         size_t position = sendreq->req_send_offset + size;
+                        /*
+                         * We need this local convertor in order to correctly compute
+                         * the correct position. Therefore we have to correctly construct and
+                         * destruct it.
+                         */
+                        OBJ_CONSTRUCT( &convertor, ompi_convertor_t );
                         ompi_convertor_copy_and_prepare_for_send(
                             &sendreq->req_send.req_convertor,
                             sendreq->req_send.req_base.req_datatype,
@@ -738,6 +743,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                             sendreq->req_send.req_base.req_addr,
                             &convertor);
                         ompi_convertor_set_position(&convertor, &position);
+                        OBJ_DESTRUCT( &convertor );
                         size = position - sendreq->req_send_offset;
                     }
                 }
