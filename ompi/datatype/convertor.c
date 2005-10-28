@@ -47,13 +47,14 @@ inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 
     if( convertor->stack_size > DT_STATIC_STACK_SIZE ) {
         free( convertor->pStack );
-        convertor->pStack = convertor->static_stack;
+        convertor->pStack     = convertor->static_stack;
         convertor->stack_size = DT_STATIC_STACK_SIZE;
     }
     if( !(CONVERTOR_CLONE & convertor->flags) )
         if( NULL != datatype ) OBJ_RELEASE( datatype );
-    convertor->pDesc = NULL;
-    convertor->flags = CONVERTOR_HOMOGENEOUS;
+    convertor->pDesc     = NULL;
+    convertor->flags     = CONVERTOR_HOMOGENEOUS;
+    convertor->stack_pos = 0;
     return OMPI_SUCCESS;
 }
 
