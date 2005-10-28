@@ -656,7 +656,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 
     /* TODO: work only on homogeneous architectures */
     if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
-        convertor->flags |= DT_FLAG_CONTIGUOUS;
+        assert( convertor->flags & DT_FLAG_CONTIGUOUS );
         convertor->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
     return OMPI_SUCCESS;
