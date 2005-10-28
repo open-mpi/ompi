@@ -163,6 +163,72 @@ int orte_gpr_proxy_get(orte_gpr_addr_mode_t mode,
     return ret;
 }
 
+int orte_gpr_proxy_get_conditional(orte_gpr_addr_mode_t mode,
+                       char *segment, char **tokens, char **keys,
+                       size_t num_conditions, orte_gpr_keyval_t **conditions,
+                       size_t *cnt, orte_gpr_value_t ***values)
+
+{
+    orte_buffer_t *cmd;
+    orte_buffer_t *answer;
+    int rc, ret;
+
+    OPAL_TRACE(1);
+
+    *values = NULL;
+    *cnt = 0;
+
+    /* need to protect against errors */
+    if (NULL == segment) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
+    if (orte_gpr_proxy_globals.compound_cmd_mode) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_get_conditional(orte_gpr_proxy_globals.compound_cmd,
+                                        mode, segment, tokens, keys, num_conditions, conditions))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == cmd) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_get_conditional(cmd, mode, segment, tokens, keys, num_conditions, conditions))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_get(answer, &ret, cnt, values))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
+    }
+    OBJ_RELEASE(answer);
+
+    return ret;
+}
+
 int orte_gpr_proxy_get_nb(orte_gpr_addr_mode_t addr_mode,
                           char *segment, char **tokens, char **keys,
                           orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)

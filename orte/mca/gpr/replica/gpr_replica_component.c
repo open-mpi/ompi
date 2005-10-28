@@ -69,6 +69,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_module_init,
     /* BLOCKING OPERATIONS */
     orte_gpr_replica_get,
+    orte_gpr_replica_get_conditional,
     orte_gpr_replica_put,
     orte_gpr_base_put_1,
     orte_gpr_base_put_N,

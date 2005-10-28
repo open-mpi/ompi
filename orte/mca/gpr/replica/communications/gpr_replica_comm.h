@@ -89,6 +89,9 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *input_buffer,
 int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
                                   orte_buffer_t *answer);
                                   
+int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
+                                  orte_buffer_t *output_buffer);
+
 int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *input_buffer,
                                              orte_buffer_t *output_buffer);
 
