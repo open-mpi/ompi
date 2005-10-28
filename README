@@ -177,6 +177,30 @@ base as of this writing (26 Aug 2005):
 - The XGrid support is experimental - see the Open MPI FAQ for more
   information.
 
+- The MX library limits the maximum message fragment size for both
+  on-node and off-node messages.  As of MX v1.0.3, the inter-node
+  maximum fragment size is 32k, and the intra-node maximum fragment
+  size is 16k -- fragments sent larger than these sizes will fail.
+  Open MPI automatically fragments large messages; it currently limits
+  its first fragment size on MX networks to the lower of these two
+  values -- 16k.  As such, increasing the value of the MCA parameter
+  named "btl_mx_first_frag_size" larger than 16k may cause failures in
+  some cases (i.e., when using MX to send large messages to processes
+  on the same node); it will cause failures in all cases if it is set
+  above 32k.  Note that this only affects the *first* fragment of
+  messages; latter fragments do not have this size restriction.  The
+  MCA parameter btl_mx_max_send_size can be used to vary the maximum
+  size of subsequent fragments.
+
+- The current version of the Open MPI point-to-point engine does not
+  yet support hardware-level MPI message matching.  As such, MPI
+  message matching must be performed in software, artifically
+  increasing latency for short messages on certain networks (such as
+  MX and hardware-supported Portals).  Future versions of Open MPI
+  will support hardware matching on networks that provide it, and will
+  eliminate the extra overhead of software MPI message matching where
+  possible.
+
 ===========================================================================
 
 Building Open MPI
