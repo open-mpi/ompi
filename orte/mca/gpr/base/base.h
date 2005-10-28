@@ -211,6 +211,11 @@ typedef uint8_t orte_gpr_cmd_flag_t;
     OMPI_DECLSPEC int orte_gpr_base_pack_get(orte_buffer_t *cmd,
                   orte_gpr_addr_mode_t mode,
                   char *segment, char **tokens, char **keys);
+    OMPI_DECLSPEC int orte_gpr_base_pack_get_conditional(orte_buffer_t *cmd,
+			        orte_gpr_addr_mode_t mode,
+			        char *segment, char **tokens, char **keys,
+			        size_t num_conditions, orte_gpr_keyval_t **conditions);
+			        
     OMPI_DECLSPEC int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret,
                    size_t *cnt, orte_gpr_value_t ***values);
 

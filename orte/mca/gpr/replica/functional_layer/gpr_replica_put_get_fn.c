@@ -503,6 +503,186 @@ CLEANUP:
     return rc;
 }
 
+
+int orte_gpr_replica_get_conditional_fn(orte_gpr_addr_mode_t addr_mode,
+                            orte_gpr_replica_segment_t *seg,
+                            orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
+                            orte_gpr_replica_itag_t *keytags, size_t num_keys,
+                            size_t num_conditions, orte_gpr_replica_itagval_t **conditions,
+                            size_t *cnt, orte_gpr_value_t ***values)
+{
+    opal_list_t get_list;
+    orte_gpr_replica_get_list_t *gptr;
+    orte_gpr_replica_ival_list_t *ival_list;
+    orte_gpr_replica_container_t **cptr, *cptr2;
+    orte_gpr_replica_itagval_t **iptr;
+    orte_gpr_keyval_t **kptr;
+    orte_gpr_replica_addr_mode_t tokmode, keymode;
+    int rc;
+    size_t i, j, k, m, n;
+    
+    OPAL_TRACE(2);
+
+    /* initialize the list of findings */
+    OBJ_CONSTRUCT(&get_list, opal_list_t);
+    *cnt = 0;
+    *values = NULL;
+    
+    tokmode = 0x004f & addr_mode;
+    if (0x00 == tokmode) {  /* default token addressing mode to AND */
+        tokmode = ORTE_GPR_REPLICA_AND;
+    }
+    keymode = ((0x4f00 & addr_mode) >> 8) & 0x004f;
+    if (0x00 == keymode) {  /* default key addressing mode to OR */
+        keymode = ORTE_GPR_REPLICA_OR;
+    }
+    
+    /* find all containers that meet search criteria for tokens */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(seg, tokmode,
+                                    tokentags, num_tokens))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&get_list);
+        return rc;
+    }
+    
+    /* if nothing found, then can return */
+    if (0 == orte_gpr_replica_globals.num_srch_cptr) {
+        OBJ_DESTRUCT(&get_list);
+        return ORTE_SUCCESS;
+    }
+    
+    /* for each container that was found, search it to find all matching keytags
+     * subject to specified mode and conditions. Collect the results on get_list
+     */
+    cptr = (orte_gpr_replica_container_t**)((orte_gpr_replica_globals.srch_cptr)->addr);
+    for (i=0, k=0; k < orte_gpr_replica_globals.num_srch_cptr &&
+                   i < (orte_gpr_replica_globals.srch_cptr)->size; i++) {
+        if (NULL != cptr[i]) {
+            /* see if the conditions are met within this container */
+            for (n=0; n < num_conditions; n++) {
+                if (!orte_gpr_replica_value_in_container(cptr[i], conditions[n])) { /* condition not met */
+                    goto MOVEON;
+                }
+            }
+            /* all conditions must have been met - check for requested keys & return them */
+            if (ORTE_SUCCESS == orte_gpr_replica_search_container(keymode,
+                                    keytags, num_keys, cptr[i]) &&
+                0 < orte_gpr_replica_globals.num_srch_ival) {
+                gptr = OBJ_NEW(orte_gpr_replica_get_list_t);
+                gptr->cptr = cptr[i];
+                iptr = (orte_gpr_replica_itagval_t**)((orte_gpr_replica_globals.srch_ival)->addr);
+                for (j=0, m=0; m < orte_gpr_replica_globals.num_srch_ival &&
+                               j < (orte_gpr_replica_globals.srch_ival)->size; j++) {
+                    if (NULL != iptr[j]) {
+                        m++;
+                        ival_list = OBJ_NEW(orte_gpr_replica_ival_list_t);
+                        ival_list->itag = iptr[j]->itag;
+                        ival_list->type = iptr[j]->type;
+                        if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
+                                    &(ival_list->value), &(iptr[j]->value), iptr[j]->type))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(ival_list);
+                            return rc;
+                        }
+                        opal_list_append(gptr->ival_list, &ival_list->item);
+                    }
+                }
+                opal_list_append(&get_list, &gptr->item);
+                (*cnt)++; /* update number of containers that had something found */
+            }
+MOVEON:
+            k++;
+        }
+    }
+    
+    if (0 == *cnt) {  /* nothing found - report that */
+        rc = ORTE_SUCCESS;
+        goto CLEANUP;
+    }
+    
+    /* if something found, convert it to array of values */
+    *values = (orte_gpr_value_t**)malloc((*cnt) * sizeof(orte_gpr_value_t*));
+    if (NULL == *values) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        goto CLEANUP;
+    }
+    for (i=0; i < *cnt; i++) {
+        gptr = (orte_gpr_replica_get_list_t*)opal_list_remove_first(&get_list);
+        if (NULL == gptr) {
+            rc = ORTE_ERROR;
+            goto CLEANUP;
+        }
+        (*values)[i] = OBJ_NEW(orte_gpr_value_t);
+        if (NULL == (*values)[i]) {
+            *cnt = 0;
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            goto CLEANUP;
+        }
+        (*values)[i]->addr_mode = addr_mode;
+        (*values)[i]->segment = strdup(seg->name);
+        (*values)[i]->cnt = opal_list_get_size(gptr->ival_list);
+        cptr2 = gptr->cptr;
+        (*values)[i]->num_tokens = cptr2->num_itags;
+        (*values)[i]->tokens = (char **)malloc(cptr2->num_itags * sizeof(char*));
+        if (NULL == (*values)[i]->tokens) {
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            goto CLEANUP;
+        }
+        for (j=0; j < cptr2->num_itags; j++) {
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
+                                        &((*values)[i]->tokens[j]), seg, cptr2->itags[j]))) {
+                goto CLEANUP;
+            }
+        }
+        (*values)[i]->keyvals = (orte_gpr_keyval_t**)malloc((*values)[i]->cnt * sizeof(orte_gpr_keyval_t*));
+        if (NULL == (*values)[i]->keyvals) {
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            goto CLEANUP;
+        }
+        
+        kptr = (*values)[i]->keyvals;
+        for (j=0; j < (*values)[i]->cnt; j++) {
+            ival_list = (orte_gpr_replica_ival_list_t*)opal_list_remove_first(gptr->ival_list);
+            if (NULL == ival_list) {
+                rc = ORTE_ERROR;
+                goto CLEANUP;
+            }
+            kptr[j] = OBJ_NEW(orte_gpr_keyval_t);
+            if (NULL == kptr[j]) {
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto CLEANUP;
+            }
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
+                                        &(kptr[j]->key), seg, ival_list->itag))) {
+                goto CLEANUP;
+            }
+            kptr[j]->type = ival_list->type;
+            if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
+                        &(kptr[j]->value), &(ival_list->value), ival_list->type))) {
+                goto CLEANUP;
+            }
+            OBJ_RELEASE(ival_list);
+        }
+        OBJ_RELEASE(gptr);
+    }
+
+CLEANUP:
+    
+    while (NULL != (gptr = (orte_gpr_replica_get_list_t*)opal_list_remove_first(&get_list))) {
+        OBJ_RELEASE(gptr);
+    }
+    OBJ_DESTRUCT(&get_list);
+    
+    if (orte_gpr_replica_globals.debug) {
+        opal_output(0, "[%lu,%lu,%lu] gpr_replica_get: finished search",
+                    ORTE_NAME_ARGS(orte_process_info.my_name));
+    }
+
+    return rc;
+}
+
+
 int orte_gpr_replica_get_nb_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
