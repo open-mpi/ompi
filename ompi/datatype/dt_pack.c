@@ -658,18 +658,20 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
      */
     pSrc = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
+        if( 0 == max_allowed ) break;  /* we're done this time */
         if( iov[iov_count].iov_base == NULL ) {
             /* special case for small data. We avoid allocating memory if we
              * can fill the iovec directly with the address of the remaining
              * data.
              */
             if( (uint32_t)pStack->count < ((*out_size) - iov_count) ) {
+                pStack[1].count = pData->size - (pConv->bConverted % pData->size);
                 for( index = iov_count; i < pConv->count; i++, index++ ) {
                     iov[index].iov_base = pSrc + pStack[0].disp + pStack[1].disp;
                     iov[index].iov_len = pStack[1].count;
                     pStack[0].disp += extent;
                     total_bytes_converted += pStack[1].count;
-                    pStack[1].disp = 0;  /* reset it for the next round */
+                    pStack[1].disp  = 0;  /* reset it for the next round */
                     pStack[1].count = pData->size;
                 }
                 *out_size = iov_count + index;
@@ -710,6 +712,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
 
             if( iov[iov_count].iov_base == NULL ) {
                 size_t length = iov[iov_count].iov_len;
+                if( 0 == length ) length = max_allowed;
                 iov[iov_count].iov_base = pConv->memAlloc_fn( &length, pConv->memAlloc_userdata );
                 iov[iov_count].iov_len = length;
                 (*freeAfter) |= (1 << 0);
@@ -776,7 +779,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
     convertor->fAdvance = ompi_convertor_generic_simple_pack;
 
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
-        convertor->flags |= DT_FLAG_CONTIGUOUS;
+        assert( convertor->flags & DT_FLAG_CONTIGUOUS );
         if( ((datatype->ub - datatype->lb) == (long)datatype->size)
             || (1 >= convertor->count) )  /* gaps or no gaps */
             convertor->fAdvance = ompi_convertor_pack_no_conv_contig;
