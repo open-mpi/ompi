@@ -39,7 +39,7 @@ retry1:
 	bne    $3, $5, done1   
 	or     $2, $6, 0      
 	sc     $2, 0($4)         
-	bne    $2, 1, Lretry1
+	bne    $2, 1, retry1
 done1:                 
 	.set reorder          
 
