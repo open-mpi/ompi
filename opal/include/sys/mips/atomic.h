@@ -91,14 +91,14 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
 
    __asm__ __volatile__ ("\t"
                          ".set noreorder        \n"
-                         "retry:                \n\t"
+                         "1:                \n\t"
                          "ll     %0, %2         \n\t" /* load *addr into ret */
-                         "bne    %0, %3, done   \n\t" /* done if oldval != ret */
+                         "bne    %0, %3, 2f   \n\t" /* done if oldval != ret */
                          "or     %5, %4, 0      \n\t" /* ret = newval */
                          "sc     %5, %2         \n\t" /* store ret in *addr */
                          /* note: ret will be 0 if failed, 1 if succeeded */
-			 "bne    %5, 1, retry   \n\t"
-                         "done:                 \n\t"
+			 "bne    %5, 1, 1b   \n\t"
+                         "2:                 \n\t"
                          ".set reorder          \n"
                          : "=&r"(ret), "=m"(*addr)
                          : "m"(*addr), "r"(oldval), "r"(newval), "r"(tmp)
@@ -140,14 +140,14 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
 
    __asm__ __volatile__ ("\t"
                          ".set noreorder        \n"
-                         "retry:                \n\t"
+                         "1:                \n\t"
                          "lld    %0, %2         \n\t" /* load *addr into ret */
-                         "bne    %0, %3, done   \n\t" /* done if oldval != ret */
+                         "bne    %0, %3, 2f   \n\t" /* done if oldval != ret */
                          "or     %5, %4, 0      \n\t" /* tmp = newval */
                          "scd    %5, %2         \n\t" /* store tmp in *addr */
                          /* note: ret will be 0 if failed, 1 if succeeded */
-			 "bne    %5, 1, retry   \n"
-                         "done:                 \n\t"
+			 "bne    %5, 1, 1b   \n"
+                         "2:                 \n\t"
                          ".set reorder          \n"
                          : "=&r" (ret), "=m" (*addr)
                          : "m" (*addr), "r" (oldval), "r" (newval),
