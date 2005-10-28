@@ -78,7 +78,7 @@ int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, size_t *cnt, orte_
         return rc;
     }
     
-    if (ORTE_GPR_GET_CMD != command || ORTE_GPR_GET_CONDITIONAL_CMD != command) {
+    if (ORTE_GPR_GET_CMD != command && ORTE_GPR_GET_CONDITIONAL_CMD != command) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         return ORTE_ERR_COMM_FAILURE;
     }
