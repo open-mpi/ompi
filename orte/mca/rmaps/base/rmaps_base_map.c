@@ -182,9 +182,6 @@ int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* no
     int num_mapping = 0;
     int rc = ORTE_SUCCESS;
     bool matched = false;
-    struct timeval tv1, tv2;
-
-    gettimeofday(&tv1, NULL);
 
     /* get the mapping for this job */
     rc = orte_rmaps_base_get_map(jobid, mapping_list);
@@ -232,8 +229,6 @@ int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* no
         }
     }
 
-    gettimeofday(&tv2, NULL);
-    fprintf(stderr, "orte_rmaps_base_mapped_node_query %lu:%lu %lu:%lu\n", tv1.tv_sec, tv1.tv_usec, tv2.tv_sec, tv2.tv_usec);
     return rc;
 }
 
