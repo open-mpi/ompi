@@ -45,6 +45,7 @@ static void __get_free_dt_struct( ompi_datatype_t* pData )
     pData->ub              = LONG_MIN;
     pData->d_f_to_c_index  = ompi_pointer_array_add(ompi_datatype_f_to_c_table, pData);
     pData->d_keyhash       = NULL;
+    pData->name[0]         = '\0';
 }
 
 static void __destroy_ddt_struct( ompi_datatype_t* pData )

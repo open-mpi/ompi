@@ -37,6 +37,7 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
     int i, err, size, count;
 
     if (MPI_PARAM_CHECK) {
+        char *msg;
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
@@ -49,10 +50,10 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
 
         else if (MPI_OP_NULL == op) {
           err = MPI_ERR_OP;
-        } else if (ompi_op_is_intrinsic(op) && 
-                   datatype->id < DT_MAX_PREDEFINED &&
-                   -1 == ompi_op_ddt_map[datatype->id]) {
-          err = MPI_ERR_OP;
+        } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
+            int ret = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP, msg);
+            free(msg);
+            return ret;
         } else if (NULL == recvcounts) {
           err = MPI_ERR_COUNT;
         } else if (MPI_IN_PLACE == recvbuf) {

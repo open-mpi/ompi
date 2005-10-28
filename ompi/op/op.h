@@ -453,6 +453,56 @@ static inline bool ompi_op_is_float_assoc(ompi_op_t *op)
 
 
 /**
+ * Check to see if an op is valid on a given datatype
+ *
+ * @param op The op to check
+ * @param ddt The datatype to check
+ *
+ * @returns true If the op is valid on that datatype
+ * @returns false If the op is not valid on that datatype
+ *
+ * Self-explanitory.  This is needed in a few top-level MPI functions;
+ * this function is provided to hide the internal structure field
+ * names.
+ */
+static inline bool ompi_op_is_valid(ompi_op_t *op, ompi_datatype_t *ddt,
+                                    char **msg, const char *func)
+{
+    /* Check:
+       - non-intrinsic ddt's cannot be invoked on intrinsic op's
+       - if intrinsic ddt invoked on intrinsic op:
+           - ensure the datatype is defined in the op map
+           - ensure we have a function pointer for that combination
+    */
+
+    if (ompi_op_is_intrinsic(op)) {
+        if (0 != (ddt->flags & DT_FLAG_PREDEFINED)) {
+            /* Intrinsic ddt on intrinsic op */
+            if ((-1 == ompi_op_ddt_map[ddt->id] ||
+                 (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC) &&
+                  NULL == op->o_func[ompi_op_ddt_map[ddt->id]].fort_fn) ||
+                 (0 == (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC) &&
+                  NULL == op->o_func[ompi_op_ddt_map[ddt->id]].c_fn))) {
+                asprintf(msg, "%s: the reduction operation %s is not defined on the %s datatype", func, op->o_name, ddt->name);
+                return false;
+            }
+        } else {
+            /* Non-intrinsic ddt on intrinsic op */
+            if ('\0' != ddt->name[0]) {
+                asprintf(msg, "%s: the reduction operation %s is not defined for non-intrinsic datatypes (attempted with datatype named \"%s\")", func, op->o_name, ddt->name);
+            } else {
+                asprintf(msg, "%s: the reduction operation %s is not defined for non-intrinsic datatypes", func, op->o_name);
+            }
+            return false;
+        }
+    }
+
+    /* All other cases ok */
+    return true;
+}
+
+
+/**
  * Perform a reduction operation.
  *
  * @param op The operation (IN)
@@ -502,7 +552,7 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
    */
 
   if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
-      dtype->id < DT_MAX_PREDEFINED) {
+      0 != (dtype->flags & DT_FLAG_PREDEFINED)) {
     if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
       f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
       f_count = OMPI_INT_2_FINT(count);
