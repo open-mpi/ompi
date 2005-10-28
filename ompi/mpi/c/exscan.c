@@ -37,6 +37,7 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
     int err;
 
     if (MPI_PARAM_CHECK) {
+        char *msg;
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
@@ -49,10 +50,10 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
 
 	else if (MPI_OP_NULL == op) {
           err = MPI_ERR_OP;
-	} else if (ompi_op_is_intrinsic(op) && 
-                   datatype->id < DT_MAX_PREDEFINED &&
-                   -1 == ompi_op_ddt_map[datatype->id]) {
-          err = MPI_ERR_OP;
+        } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
+            int ret = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP, msg);
+            free(msg);
+            return ret;
         } else {
           OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
