@@ -116,18 +116,18 @@ static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 {
     /* From page 264 of The SPARC Architecture Manual, Version 8 */
     __asm__ __volatile__ (
-                          "retry:               \n\t"
+                          "1:                   \n\t"
                           "ldstub [%0], %%l0    \n\t"
                           "tst    %%l0          \n\t"
-                          "be     out           \n\t"
+                          "be     3f            \n\t"
                           "nop                  \n"
-                          "loop:                \n\t"
+                          "2:                   \n\t"
                           "ldub   [%0], %%l0    \n\t"
                           "tst    %%l0          \n\t"
-                          "bne    loop          \n\t"
+                          "bne    2b            \n\t"
                           "nop                  \n\t"
-                          "ba,a   retry         \n"
-                          "out:                 \n\t"
+                          "ba,a   1b            \n"
+                          "3:                   \n\t"
                           "nop"
                           :
                           : "r"(&(lock->u.sparc_lock))
