@@ -108,15 +108,24 @@ base as of this writing (26 Aug 2005):
 - The Portland Group Fortran compilers use -1 as the default value for
   .TRUE.  Open MPI does not currently handle this correctly.  As such,
   the "-Munixlogical" option must be used with the Portland Fortran
-  compiler to force it to use 1 as the value for .TRUE.  This can be
-  added to the "FFLAGS" environment variable when running configure:
+  compiler to force it to use 1 as the value for .TRUE.  
 
-  shell$ ./configure FFLAGS=-Munixlogical ...
+  ******************************************************************
+  *** NOTE: It is also necessary to compile all MPI applications ***
+  *** with these flags!                                          ***
+  ******************************************************************
 
-  *********************************************************************
-  ***NOTE: It is also necessary to compile all MPI applications with***
-  ***these flags!                                                   ***
-  *********************************************************************
+  The Open MPI team recommends using setting FFLAGS and FCFLAGS as
+  well as using the --with-wrapper-fflags and --with-wrapper-fcflags
+  arguments to configure.  This both compiles Open MPI and all MPI
+  applications (that are compiled with mpif77 or mpif90) with the
+  appropriate compiler flags.  For example:
+
+  shell$ ./configure \
+         FFLAGS=-Munixlogical \
+         FCFLAGS=-Munixlogical \
+         --with-wrapper-fflags=-Munixlogical \
+         --with-wrapper-fcflags=-Munixlogical ...
 
   This will be fixed in a future version of Open MPI.
 
@@ -127,12 +136,17 @@ base as of this writing (26 Aug 2005):
   This can be added to the FFLAGS environment variable when running
   configure:
 
-  shell$ ./configure "FFLAGS=-fpscomp logicals" ...
+  The Open MPI team recommends using setting FFLAGS and FCFLAGS as
+  well as using the --with-wrapper-fflags and --with-wrapper-fcflags
+  arguments to configure.  This both compiles Open MPI and all MPI
+  applications (that are compiled with mpif77 or mpif90) with the
+  appropriate compiler flags.  For example:
 
-  *********************************************************************
-  ***NOTE: It is also necessary to compile all MPI applications with***
-  ***these flags!                                                   ***
-  *********************************************************************
+  shell$ ./configure \
+         "FFLAGS=-fpscomp logicals" \
+         "FCLAGS=-fpscomp logicals" \
+         "--with-wrapper-fflags=-fpscomp logicals" \
+         "--with-wrapper-fcflags=-fpscomp logicals"
 
   This will be fixed in a future version of Open MPI.
 
