@@ -157,6 +157,7 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
 {
     char **ptr;
     orte_gpr_replica_segment_t **segs;
+    char **dict;
     size_t i, j;
 
 
@@ -191,29 +192,28 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
     }
     
     /* must have requested index of a specific segment */
-    if (0 < opal_list_get_size(&seg->dict_entries)) {
-        opal_list_item_t* item;
-
+    if (0 < seg->num_dict_entries) {
         *index = (char**)malloc(orte_gpr_replica.num_segs * sizeof(char*));
         if (NULL == *index) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         ptr = *index;
-       
-        for(item = opal_list_get_first(&seg->dict_entries);
-            item != opal_list_get_end(&seg->dict_entries);
-            item = opal_list_get_next(item)) {
-            orte_gpr_replica_dict_entry_t* value = (orte_gpr_replica_dict_entry_t*)item;
-            ptr[j] = strdup(value->entry);
-            if (NULL == ptr[j]) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                *cnt = j;
-                return ORTE_ERR_OUT_OF_RESOURCE;
+        dict = (char**)(seg->dict)->addr;
+    
+        for (i=0, j=0; j < seg->num_dict_entries &&
+                       i < (seg->dict)->size; i++) {
+            if (NULL != dict[i]) {
+                ptr[j] = strdup(dict[i]);
+                if (NULL == ptr[j]) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    *cnt = j;
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                j++;
             }
-            j++;
         }
-        *cnt = opal_list_get_size(&seg->dict_entries);
+        *cnt = seg->num_dict_entries;
         return ORTE_SUCCESS;
     }
 

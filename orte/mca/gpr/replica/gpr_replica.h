@@ -30,9 +30,9 @@
 #include "class/orte_pointer_array.h"
 #include "class/orte_value_array.h"
 
-#include "opal/class/opal_hash_table.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+
 #include "mca/ns/ns_types.h"
 
 #include "mca/gpr/base/base.h"
@@ -123,31 +123,15 @@ typedef struct {
 } orte_gpr_replica_globals_t;
 
 
-/** Dictionary of string-itag pairs.
- * This structure is used to create a linked list of string-itag pairs. All calls to
- * registry functions pass character strings for programming clarity - the replica_dict
- * structure is used to translate those strings into an integer itag value, thus allowing
- * for faster searches of the registry.
- */
-struct orte_gpr_replica_dict_entry_t {
-    opal_list_item_t super;
-    char *entry;                   /**< Char string that defines the itag */
-    size_t len;                    /**< String length */
-    orte_gpr_replica_itag_t itag;  /**< Numerical value assigned by registry to represent string */
-};
-typedef struct orte_gpr_replica_dict_entry_t orte_gpr_replica_dict_entry_t;
-
-OBJ_CLASS_DECLARATION(orte_gpr_replica_dict_entry_t);
-
 /*
  * Registry "head"
  * The registry "head" contains:
  *
- * (2) the next available itag for the segment dictionary.
- *
  * (3) a managed array of pointers to segment objects.
  *
  * (4) a managed array of pointers to triggers acting on the entire registry
+ *
+ * (4) a managed array of pointers to subscriptions acting on the entire registry
  *
  */
 struct orte_gpr_replica_t {
@@ -176,9 +160,8 @@ struct orte_gpr_replica_segment_t {
     opal_object_t super;                /**< Make this an object */
     char *name;                         /**< Name of the segment */
     orte_gpr_replica_itag_t itag;       /**< itag of this segment */
-    opal_hash_table_t dict_hash;
-    opal_list_t dict_entries;
-    size_t dict_next_itag;
+    orte_gpr_replica_itag_t num_dict_entries;
+    orte_pointer_array_t *dict;         /**< Managed array of dict structs */
     size_t num_containers;
     orte_pointer_array_t *containers;   /**< Managed array of pointers to containers on this segment */
 };

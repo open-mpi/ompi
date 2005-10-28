@@ -26,22 +26,22 @@
 #include "orte_config.h"
 
 #include "orte/class/orte_pointer_array.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "orte/mca/gpr/replica/gpr_replica.h"
 #include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
+
 #include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 
 int
 orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
-    orte_gpr_replica_dict_entry_t *new_dict;
-    size_t len;
+    char **ptr, *new_dict;
+    orte_gpr_replica_itag_t j;
+    size_t i, len, len2, index;
 
     OPAL_TRACE(3);
 
@@ -57,54 +57,50 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
     len = strlen(name);
     
     /* check seg's dictionary to ensure uniqueness */
-    if(opal_list_get_size(&seg->dict_entries)) {
-        opal_list_item_t* item;
-        for(item = opal_list_get_first(&seg->dict_entries);
-            item != opal_list_get_end(&seg->dict_entries);
-            item = opal_list_get_next(item)) {
-            orte_gpr_replica_dict_entry_t* value = (orte_gpr_replica_dict_entry_t*)item;
-            if ((len == value->len && 0 == strncmp(value->entry, name, len))) {
+    ptr = (char**)(seg->dict)->addr;
+    for (i=0, j=0; j < seg->num_dict_entries &&
+                   i < (seg->dict)->size; i++) {
+        if (NULL != ptr[i]) {
+            j++;
+            len2 = strlen(ptr[i]);
+            if ((len == len2 && 0 == strncmp(ptr[i], name, len))) {
                 /* already present */
-                *itag = value->itag;
-                return ORTE_SUCCESS;
+                if (i < ORTE_GPR_REPLICA_ITAG_MAX) {
+                    *itag = (orte_gpr_replica_itag_t)i;
+                    return ORTE_SUCCESS;
+                }
+                /* otherwise, the itag violates the max value */
+                return ORTE_ERR_BAD_PARAM;
             }
         }
     }
 
     /* okay, name is unique - create dictionary entry */
-    
-    /* first check to see if one is available */
-    if (ORTE_GPR_REPLICA_ITAG_MAX-1 < opal_list_get_size(&seg->dict_entries)) {
+    new_dict = strdup(name);
+    if (0 > orte_pointer_array_add(&index, seg->dict, (void*)new_dict)) {
+        free(new_dict);
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
-    new_dict = OBJ_NEW(orte_gpr_replica_dict_entry_t);
-    if (NULL == new_dict) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    new_dict->itag = seg->dict_next_itag++;
-    new_dict->entry = strdup(name);
-    new_dict->len = strlen(name);
 
-    if (OMPI_SUCCESS != opal_hash_table_set_value_uint32(&seg->dict_hash, new_dict->itag, new_dict)) {
-        *itag = ORTE_GPR_REPLICA_ITAG_MAX;
-        OBJ_RELEASE(new_dict);
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+    if ((orte_gpr_replica_itag_t)index < ORTE_GPR_REPLICA_ITAG_MAX) {
+        *itag = (orte_gpr_replica_itag_t)index;
+        (seg->num_dict_entries)++;
+        return ORTE_SUCCESS;
     }
-    opal_list_append(&seg->dict_entries, &new_dict->super);
-    *itag = new_dict->itag;
-    return ORTE_SUCCESS;
+    
+    /* otherwise, the itag violates the max value */
+    free(new_dict);
+    ptr[index] = NULL;
+    
+    return ORTE_ERR_OUT_OF_RESOURCE;
 }
 
 
 int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
 {
-    opal_list_item_t* item;
-    orte_gpr_replica_dict_entry_t *value = NULL;
-    size_t len;
+    char **ptr;
+    orte_gpr_replica_itag_t itag;
     int rc;
 
     OPAL_TRACE(3);
@@ -115,33 +111,33 @@ int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
         return ORTE_ERR_BAD_PARAM;
     }
 
-    /* find dictionary element to delete */ 
-    len = strlen(name);
-    for(item = opal_list_get_first(&seg->dict_entries);
-        item != opal_list_get_end(&seg->dict_entries);
-        item = opal_list_get_next(item)) {
-        value = (orte_gpr_replica_dict_entry_t*)item;
-        if ((len == value->len && 0 == strncmp(value->entry, name, len))) {
-            break;
-        }
-    }
-    if(NULL == value) {
-        return ORTE_SUCCESS;
+    /* find dictionary element to delete */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_lookup(&itag, seg, name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     /* found name in dictionary */
     /* need to search this segment's registry to find all instances
      * that name & delete them
      */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_purge_itag(seg, value->itag))) {
+     if (ORTE_SUCCESS != (rc = orte_gpr_replica_purge_itag(seg, itag))) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }
+     }
 
-    /* free the dictionary element data */
-    opal_hash_table_remove_value_uint32(&seg->dict_hash, value->itag);
-    opal_list_remove_item(&seg->dict_entries, &value->super);
-    OBJ_RELEASE(value);
+     /* free the dictionary element data */
+     ptr = (char**)((seg->dict)->addr);
+     if (NULL == ptr[itag]) {  /* dict element no longer valid */
+         return ORTE_ERR_NOT_FOUND;
+     }
+     free(ptr[itag]);
+     
+     /* remove itag from segment dictionary */
+    orte_pointer_array_set_item(seg->dict, (size_t)itag, NULL);
+    
+    /* decrease the dict counter */
+    (seg->num_dict_entries)--;
     
     return ORTE_SUCCESS;
 }
@@ -151,8 +147,10 @@ int
 orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
-    opal_list_item_t* item;
-    size_t len;
+    char **ptr;
+    size_t i;
+    orte_gpr_replica_itag_t j;
+    size_t len, len2;
     
     OPAL_TRACE(3);
 
@@ -173,13 +171,20 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
     len = strlen(name);
     
     /* want specified token-itag pair in that segment's dictionary */
-    for(item = opal_list_get_first(&seg->dict_entries);
-        item != opal_list_get_next(&seg->dict_entries);
-        item = opal_list_get_next(item)) {
-        orte_gpr_replica_dict_entry_t* value = (orte_gpr_replica_dict_entry_t*)item;
-    	if (len == value->len && 0 == strncmp(value->entry, name, len)) {
-            *itag = value->itag;
-            return ORTE_SUCCESS;
+    ptr = (char**)((seg->dict)->addr);
+    for (i=0, j=0; j < seg->num_dict_entries &&
+                   i < (seg->dict)->size; i++) {
+        if (NULL != ptr[i]) {
+            j++;
+            len2 = strlen(ptr[i]);
+	        if (len == len2 && 0 == strncmp(ptr[i], name, len)) {
+               if (i < ORTE_GPR_REPLICA_ITAG_MAX) {
+                   *itag = (orte_gpr_replica_itag_t)i;
+                   return ORTE_SUCCESS;
+               }
+               /* otherwise, the itag violates the max value */
+               return ORTE_ERR_BAD_PARAM;
+            }
         }
 	}
 
@@ -190,7 +195,7 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
 int orte_gpr_replica_dict_reverse_lookup(char **name,
         orte_gpr_replica_segment_t *seg, orte_gpr_replica_itag_t itag)
 {
-    orte_gpr_replica_dict_entry_t *value;
+    char **ptr;
     orte_gpr_replica_segment_t **segptr;
 
     OPAL_TRACE(3);
@@ -220,13 +225,13 @@ int orte_gpr_replica_dict_reverse_lookup(char **name,
      * note again that itag is the index into this segment's
      * dictionary array
      */
-
-    if(ORTE_SUCCESS == opal_hash_table_get_value_uint32(&seg->dict_hash, itag, (void**)&value)) {
-        *name = strdup(value->entry);
-        return ORTE_SUCCESS;
+    ptr = (char**)((seg->dict)->addr);
+    if (NULL == ptr[itag]) { /* this entry is no longer valid! */
+        return ORTE_ERR_NOT_FOUND;
     }
-    /* get here if entry not found */
-    return ORTE_ERR_NOT_FOUND;
+    *name = strdup(ptr[itag]);
+    
+    return ORTE_SUCCESS;
 }
 
 int
