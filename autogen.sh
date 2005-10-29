@@ -385,7 +385,16 @@ EOF
     if test -f include/mpi.h.in; then
 	rm -rf libltdl opal/libltdl opal/ltdl.h
 	run_and_check $ompi_libtoolize --automake --copy --ltdl
-	mv libltdl opal
+        if test -d libltdl; then
+            mv libltdl opal
+        fi
+        if test ! -r opal/libltdl/ltdl.h; then
+            cat <<EOF
+$ompi_libtoolize --ltdl apparently failed to install libltdl.
+Please check that you have the libltdl development files installed.
+EOF
+            exit 1
+        fi
 
 	echo "Adjusting libltdl for OMPI :-("
 
