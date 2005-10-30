@@ -37,6 +37,7 @@ extern int mca_coll_hierarch_priority_param;
 extern int mca_coll_hierarch_verbose_param;
 extern int mca_coll_hierarch_use_rdma_param;
 extern int mca_coll_hierarch_ignore_sm_param;
+extern int mca_coll_hierarch_symmetric_param;
 
 
 #define HIER_DEFAULT_NUM_LLEAD 5

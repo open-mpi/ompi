@@ -138,18 +138,32 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     int level;
     int ret=OMPI_SUCCESS;
     int ignore_sm=0;
-
-    /* Get the priority level attached to this module */
-    *priority = mca_coll_hierarch_priority_param;
+    int symmetric=0;
 
     /* This module only works for intra-communicators at the moment */
     if ( OMPI_COMM_IS_INTER(comm) ) {
         return NULL;
     }
 
+
+    /* Get the priority level attached to this module. If priority = 0,
+       we assume that we won't be chosen anyway, so we quit and improve
+       therefore the startup time. */
+    *priority = mca_coll_hierarch_priority_param;
+    if ( 0 >= mca_coll_hierarch_priority_param ) {
+	return NULL;
+    }
+
     /* Check whether we should ignore sm. This might be necessary to take advantage
        of the some ib or gm collectives. */
     ignore_sm = mca_coll_hierarch_ignore_sm_param;
+
+
+    /* Check whether we can assume a symmetric configuration. This can save commmunication
+       and improve the startup time, since we can conclude from our configuration onto
+       the configuration of every other process.
+    */
+    symmetric = mca_coll_hierarch_symmetric_param;
 
     size = ompi_comm_size(comm);
     
@@ -193,11 +207,16 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
            that this might be the best solution. These functions emulate an 
 	   allreduce and  an allgather.
         */
-        ret = mca_coll_hierarch_allreduce_tmp (&ncount, &maxncount, 1, MPI_INT, 
-					       MPI_MAX, comm );
-        if ( OMPI_SUCCESS != ret ) {
-            return NULL;
-        }
+	if ( symmetric ) {
+	    maxncount = ncount;
+	}
+	else {
+	    ret = mca_coll_hierarch_allreduce_tmp (&ncount, &maxncount, 1, MPI_INT, 
+						   MPI_MAX, comm );
+	    if ( OMPI_SUCCESS != ret ) {
+		return NULL;
+	    }
+	}
 
         if ( 0 == maxncount ) {
 	    if ( mca_coll_hierarch_verbose_param ) {
