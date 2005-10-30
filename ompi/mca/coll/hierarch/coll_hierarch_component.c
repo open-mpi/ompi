@@ -39,6 +39,7 @@ int mca_coll_hierarch_priority_param = 0;
 int mca_coll_hierarch_verbose_param = 0;
 int mca_coll_hierarch_use_rdma_param=0;   
 int mca_coll_hierarch_ignore_sm_param=0;   
+int mca_coll_hierarch_symmetric_param=0;   
 
 
 /*
@@ -122,6 +123,11 @@ static int hierarch_open(void)
                            false, false, mca_coll_hierarch_ignore_sm_param,
                            &mca_coll_hierarch_ignore_sm_param);
 
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version, 
+			   "symmetric",
+                           "Assume symmetric configuration",
+                           false, false, mca_coll_hierarch_symmetric_param,
+                           &mca_coll_hierarch_symmetric_param);
 
     return OMPI_SUCCESS;
 }
