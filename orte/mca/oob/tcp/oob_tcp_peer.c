@@ -292,6 +292,9 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         return OMPI_ERR_UNREACH;
     }
 
+    /* setup socket options */
+    mca_oob_tcp_set_socket_options(peer->peer_sd);
+
     /* setup event callbacks */
     mca_oob_tcp_peer_event_init(peer);
 
@@ -941,5 +944,34 @@ void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* m
     }
     OPAL_THREAD_UNLOCK(&peer->peer_lock);
 }
+
+
+/**
+ * Set socket buffering
+ */
+
+void mca_oob_tcp_set_socket_options(int sd)
+{
+    int optval;
+#if defined(TCP_NODELAY)
+    optval = 1;
+    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(TCP_NODELAY) failed with errno=%d", __FILE__, __LINE__, ompi_socket_errno);
+    }
+#endif
+#if defined(SO_SNDBUF)
+    if(mca_oob_tcp_component.tcp_sndbuf > 0 &&
+       setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_oob_tcp_component.tcp_sndbuf, sizeof(int)) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(SO_SNDBUF) failed with errno %d", __FILE__, __LINE__, ompi_socket_errno);
+    }
+#endif
+#if defined(SO_RCVBUF)
+    if(mca_oob_tcp_component.tcp_rcvbuf > 0 &&
+       setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_oob_tcp_component.tcp_rcvbuf, sizeof(int)) < 0) {
+        opal_output(0, "[%s:%d] setsockopt(SO_RCVBUF) failed with errno %d", __FILE__, __LINE__, ompi_socket_errno);
+    }
+#endif
+}
+
 
 
