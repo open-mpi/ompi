@@ -110,6 +110,8 @@ struct mca_btl_openib_component_t {
     uint32_t ib_src_path_bits; 
     uint32_t rd_per_peer; /* number of receive descriptors to post per log2(peers) 
                              in SRQ mode */
+    uint32_t max_wr_sq_tokens; 
+    uint32_t max_total_wr_sq_tokens; 
 
 
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
@@ -165,7 +167,20 @@ struct mca_btl_openib_module_t {
 #endif 
     uint32_t num_peers;
     uint32_t rd_buf_max; 
+    uint32_t rd_buf_min;
     
+    int32_t                     wr_sq_tokens_hp; 
+    /**< number of high priority frags that  can be outstanding (down counter) */ 
+    int32_t                     wr_sq_tokens_lp; 
+    /**< number of low priority frags that  can be outstanding (down counter) */ 
+    
+    opal_list_t                 pending_frags_hp; 
+    /**< list of pending high priority frags */ 
+
+    opal_list_t                 pending_frags_lp; 
+    /**< list of pending low priority frags */ 
+
+
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
     
 
@@ -403,9 +418,9 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
 { \
     do{ \
         OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-        if(openib_btl->srr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && \
-           openib_btl->srr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ \
-           MCA_BTL_OPENIB_POST_SRR_SUB(mca_btl_openib_component.ib_rr_buf_max -  \
+        if(openib_btl->srr_posted_high <= openib_btl->rd_buf_min+additional && \
+           openib_btl->srr_posted_high < openib_btl->rd_buf_max){ \
+           MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_buf_max -  \
                                       openib_btl->srr_posted_high, \
                                       openib_btl, \
                                       &openib_btl->recv_free_eager, \
@@ -420,9 +435,9 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
 { \
     do { \
     OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-    if(openib_btl->srr_posted_low <= mca_btl_openib_component.ib_rr_buf_min+additional && \
-       openib_btl->srr_posted_low < mca_btl_openib_component.ib_rr_buf_max){ \
-        MCA_BTL_OPENIB_POST_SRR_SUB(mca_btl_openib_component.ib_rr_buf_max -  \
+    if(openib_btl->srr_posted_low <= openib_btl->rd_buf_min+additional && \
+       openib_btl->srr_posted_low < openib_btl->rd_buf_max){ \
+        MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_buf_max -  \
                                             openib_btl->srr_posted_low, \
                                             openib_btl, \
                                             &openib_btl->recv_free_max, \
