@@ -263,7 +263,6 @@ orte_rmaps_lookup_node(opal_list_t* rmaps_nodes, opal_list_t* ras_nodes, char* n
             OBJ_RETAIN(proc);
             opal_list_append(&node->node_procs, &proc->super);
             opal_list_prepend(rmaps_nodes, &node->super);
-            opal_list_remove_item(ras_nodes, item);
             return node;
         }
     }
@@ -462,7 +461,7 @@ int orte_rmaps_base_get_node_map(
 {
     orte_app_context_t** app_context = NULL;
     orte_rmaps_base_map_t** mapping = NULL;
-    orte_rmaps_base_node_t *node = NULL;
+    orte_ras_node_t *ras_node = NULL;
     size_t i, num_context = 0;
     char* segment = NULL;
     char* jobid_str = NULL;
@@ -480,12 +479,7 @@ int orte_rmaps_base_get_node_map(
     };
 
     /* allocate the node */
-    node = OBJ_NEW(orte_rmaps_base_node_t);
-    if(NULL == node) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    if(NULL == (node->node = orte_ras_base_node_lookup(cellid,hostname))) {
+    if(NULL == (ras_node = orte_ras_base_node_lookup(cellid,hostname))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -544,6 +538,7 @@ int orte_rmaps_base_get_node_map(
     for(v=0; v<num_values; v++) {
         orte_gpr_value_t* value = values[v];
         orte_rmaps_base_map_t* map = NULL;
+        orte_rmaps_base_node_t *node = NULL;
         orte_rmaps_base_proc_t* proc;
         char* node_name = NULL;
         size_t kv;
@@ -574,6 +569,18 @@ int orte_rmaps_base_get_node_map(
                     goto cleanup;
                 }
                 map = mapping[app_index];
+                if(opal_list_get_size(&map->nodes) == 0) {
+                    node = OBJ_NEW(orte_rmaps_base_node_t);
+                    if(NULL == node) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        goto cleanup;
+                    }
+                    OBJ_RETAIN(ras_node);
+                    node->node = ras_node;
+                    opal_list_append(&map->nodes, &node->super);
+                } else {
+                    node = (orte_rmaps_base_node_t*)opal_list_get_first(&map->nodes);
+                }
                 proc->app = strdup(app_context[app_index]->app);
                 continue;
             }
@@ -591,7 +598,7 @@ int orte_rmaps_base_get_node_map(
             }
         }
         /* skip this entry? */
-        if(NULL == map || 
+        if(NULL == map ||
            proc->proc_name.cellid != cellid || 
            strcmp(hostname,node_name)) {
             OBJ_RELEASE(proc);
@@ -608,15 +615,13 @@ int orte_rmaps_base_get_node_map(
         orte_rmaps_base_map_t* map = mapping[i];
         if(map->num_procs) {
             opal_list_append(mapping_list, &map->super);
-            OBJ_RETAIN(node);
-            opal_list_append(&map->nodes, &node->super);
         } else {
             OBJ_RELEASE(map);
         }
     }
 
     /* decrement reference count on node */
-    OBJ_RELEASE(node);
+    OBJ_RELEASE(ras_node);
 
     /* release all app context - note the reference count was bumped 
      * if saved in the map
