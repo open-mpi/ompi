@@ -412,6 +412,11 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         proc->proc_node = orte_rmaps_lookup_node(&map->nodes, &nodes, node_name, proc);
     }
 
+    /* cleanup any nodes allocated and not mapped */
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
+        OBJ_RELEASE(item);
+    }
+
     /* release temporary variables */
     for(i=0; i<num_context; i++) {
         opal_list_append(mapping_list, &mapping[i]->super);
