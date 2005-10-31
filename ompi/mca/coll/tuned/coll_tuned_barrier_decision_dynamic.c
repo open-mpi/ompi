@@ -49,8 +49,13 @@ int mca_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm)
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    if (mca_coll_tuned_barrier_forced_choice) {
+       return mca_coll_tuned_barrier_intra_do_forced (comm);
+    }
+    else {
+       return mca_coll_tuned_barrier_intra_dec_fixed (comm);
+    }
 
-return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 

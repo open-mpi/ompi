@@ -54,6 +54,12 @@ int mca_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    if (mca_coll_tuned_reduce_forced_choice) {
+       return mca_coll_tuned_reduce_intra_do_forced (sendbuf, recvbuf, count, datatype, op, root, comm);
+    }
+    else {
+       return mca_coll_tuned_reduce_intra_dec_fixed (sendbuf, recvbuf, count, datatype, op, root, comm);
+    }
+
 }
 

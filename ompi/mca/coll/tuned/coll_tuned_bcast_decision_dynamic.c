@@ -29,11 +29,11 @@
 #include "coll_tuned.h"
 
 /*
- *	bcast_intra_dec 
+ *   bcast_intra_dec 
  *
- *	Function:	- seletects broadcast algorithm to use
- *	Accepts:	- same arguments as MPI_Bcast()
- *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
+ *   Function:   - seletects broadcast algorithm to use
+ *   Accepts:   - same arguments as MPI_Bcast()
+ *   Returns:   - MPI_SUCCESS or error code (passed from the bcast implementation)
  */
 int mca_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
                                    struct ompi_datatype_t *datatype, int root,
@@ -51,7 +51,13 @@ int mca_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    if (mca_coll_tuned_bcast_forced_choice) {
+       return mca_coll_tuned_bcast_intra_do_forced (buff, count, datatype, root, comm);
+    }
+    else {
+       return mca_coll_tuned_bcast_intra_dec_fixed (buff, count, datatype, root, comm);
+    }
+
 }
 
 

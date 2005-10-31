@@ -487,6 +487,8 @@ int mca_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
                                     struct ompi_datatype_t *rdtype,
                                     struct ompi_communicator_t *comm)
 {
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced selected algorithm %d", mca_coll_tuned_alltoall_forced_choice));
+
 switch (mca_coll_tuned_alltoall_forced_choice) {
     case (0):   return mca_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (1):   return mca_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);

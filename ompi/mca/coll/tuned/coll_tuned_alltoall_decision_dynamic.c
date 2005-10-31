@@ -54,7 +54,12 @@ int mca_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    if (mca_coll_tuned_alltoall_forced_choice) {
+        return mca_coll_tuned_alltoall_intra_do_forced (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    }
+    else {
+        return mca_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    }
 }
 
 
