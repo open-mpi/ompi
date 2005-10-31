@@ -600,6 +600,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             char *exec_path;
             char **exec_argv;
 
+            /* already launched on this node */
+            if(ras_node->node_launched++ != 0)
+                continue;
+
             /* setup node name */
             free(argv[node_name_index1]);
             if (NULL != ras_node->node_username &&

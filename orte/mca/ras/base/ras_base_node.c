@@ -39,6 +39,7 @@ static void orte_ras_base_node_construct(orte_ras_node_t* node)
     node->node_slots_alloc = 0;
     node->node_slots_max = 0;
     node->node_username = NULL;
+    node->node_launched = 0;
 }
 
 static void orte_ras_base_node_destruct(orte_ras_node_t* node)

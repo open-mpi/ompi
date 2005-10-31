@@ -64,6 +64,8 @@ struct orte_ras_node_t {
     size_t node_slots_max;
     /** Username on this node, if specified */
     char * node_username;
+    /** For use by the launcher */
+    int node_launched;
 };
 
 /**
