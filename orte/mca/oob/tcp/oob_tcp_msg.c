@@ -180,8 +180,8 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
                 msg->msg_ucnt, 
                 msg->msg_hdr.msg_tag, 
                 msg->msg_cbdata);
-            MCA_OOB_TCP_MSG_RETURN(msg);
             OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+            MCA_OOB_TCP_MSG_RETURN(msg);
         }
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 

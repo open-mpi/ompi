@@ -200,6 +200,10 @@ int mca_oob_tcp_component_open(void)
         mca_oob_tcp_param_register_str("include", NULL);
     mca_oob_tcp_component.tcp_exclude =
         mca_oob_tcp_param_register_str("exclude", NULL);
+    mca_oob_tcp_component.tcp_sndbuf =
+        mca_oob_tcp_param_register_int("sndbuf", 128*1024);
+    mca_oob_tcp_component.tcp_rcvbuf =
+        mca_oob_tcp_param_register_int("rcvbuf", 128*1024);
 
     /* initialize state */
     mca_oob_tcp_component.tcp_listen_sd = -1;
@@ -260,6 +264,9 @@ static void mca_oob_tcp_accept(void)
             return;
         }
 
+        /* setup socket options */
+        mca_oob_tcp_set_socket_options(sd);
+
         /* log the accept */
         if(mca_oob_tcp_component.tcp_debug) {
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_accept: %s:%d\n",
@@ -291,6 +298,11 @@ static int mca_oob_tcp_create_listen(void)
         opal_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
+
+    /* setup socket options */
+    mca_oob_tcp_set_socket_options(mca_oob_tcp_component.tcp_listen_sd);
+
+    /* bind address */
     memset(&inaddr, 0, sizeof(inaddr));
     inaddr.sin_family = AF_INET;
     inaddr.sin_addr.s_addr = INADDR_ANY;
