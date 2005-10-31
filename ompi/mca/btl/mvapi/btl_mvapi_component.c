@@ -163,7 +163,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_param_register_int("ib_retry_count", "IB transmit retry count",
                                       7, (int*) &mca_btl_mvapi_component.ib_retry_count); 
     mca_btl_mvapi_param_register_int("ib_rnr_retry", "IB rnr retry", 
-                                     7, (int*) mca_btl_mvapi_component.ib_rnr_retry); 
+                                     7, (int*) &mca_btl_mvapi_component.ib_rnr_retry); 
     mca_btl_mvapi_param_register_int("ib_max_rdma_dst_ops", "IB max rdma destination operations", 
                                       16, (int*) &mca_btl_mvapi_component.ib_max_rdma_dst_ops); 
     mca_btl_mvapi_param_register_int("ib_service_level", "IB service level", 
