@@ -208,6 +208,9 @@ int mca_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
 {
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d",
+                    mca_coll_tuned_allreduce_forced_choice));
+
 switch (mca_coll_tuned_allreduce_forced_choice) {
     case (0):   return mca_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
     case (1):   return mca_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);

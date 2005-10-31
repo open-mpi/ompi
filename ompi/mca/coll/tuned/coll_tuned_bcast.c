@@ -820,6 +820,8 @@ int mca_coll_tuned_bcast_intra_do_forced(void *buf, int count,
                                     int root,
                                     struct ompi_communicator_t *comm)
 {
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:bcast_intra_do_forced algorithm %d", mca_coll_tuned_bcast_forced_choice));
+
 switch (mca_coll_tuned_bcast_forced_choice) {
     case (0):   return mca_coll_tuned_bcast_intra_dec_fixed (buf, count, dtype, root, comm);
     case (1):   return mca_coll_tuned_bcast_intra_basic_linear (buf, count, dtype, root, comm);

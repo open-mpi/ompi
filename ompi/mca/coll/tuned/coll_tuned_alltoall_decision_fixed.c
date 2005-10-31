@@ -74,9 +74,7 @@ int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
         return mca_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     else if (dsize <= 131072) {
-/* not implemented yet.. need to find a 'nice' way to use the basic linear version without duplicating code */
-/*         return mca_coll_tuned_alltoall_intra_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm); */
-        return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return mca_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     else {
         return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);

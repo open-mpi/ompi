@@ -53,7 +53,12 @@ mca_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    if (mca_coll_tuned_allreduce_forced_choice) {
+        return mca_coll_tuned_allreduce_intra_do_forced (sbuf, rbuf, count, dtype, op, comm);
+    }
+    else {
+        return mca_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
+    }
 }
 
 
