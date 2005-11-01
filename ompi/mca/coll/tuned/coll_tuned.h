@@ -28,6 +28,29 @@
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
 #include "coll_tuned_topo.h"
 
+/* also need the dynamic rule structures */
+#include "coll_tuned_dynamic_rules.h"
+
+/* some fixed value index vars to simplify certain operations */
+#define ALLGATHER 0
+#define ALLGATHERV 1
+#define ALLREDUCE 2
+#define ALLTOALL 3
+#define ALLTOALLV 4
+#define ALLTOALLW 5
+#define BARRIER 6
+#define BCAST 7
+#define EXSCAN 8
+#define GATHER 9
+#define GATHERV 10
+#define REDUCE 11
+#define REDUCESCATTER 11
+#define SCAN 12
+#define SCATTER 13
+#define SCATTERV 14
+#define COLLCOUNT 15
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -38,35 +61,36 @@ extern "C" {
 
 OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component;
 
-OMPI_COMP_EXPORT extern int mca_coll_tuned_stream;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_priority;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_preallocate_memory_comm_size_limit;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_use_dynamic_rules;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_init_tree_fanout;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_init_chain_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_stream;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_priority;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_preallocate_memory_comm_size_limit;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_use_dynamic_rules;
+OMPI_COMP_EXPORT extern char* mca_coll_tuned_dynamic_rules_filename;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_init_tree_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_init_chain_fanout;
 
 /* forced algorithm choices */
-OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_choice;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_segsize;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_allreduce_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_choice;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_segsize;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_chain_fanout;
 
-OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_choice;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_segsize;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_alltoall_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_choice;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_segsize;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_chain_fanout;
 
-OMPI_COMP_EXPORT extern int mca_coll_tuned_barrier_forced_choice;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_barrier_forced_choice;
 
-OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_choice;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_segsize;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_bcast_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_choice;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_segsize;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_chain_fanout;
 
-OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_choice;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_segsize;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int mca_coll_tuned_reduce_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_choice;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_segsize;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
 
 /*
  * coll API functions
@@ -544,10 +568,6 @@ static inline void mca_coll_tuned_free_reqs(ompi_request_t **reqs, int count)
      ompi_request_free(&reqs[i]);
 }
 
-/* decision table declaraion */
-/* currently a place holder */
-typedef struct rule_s {
-} rule_t;
 
 /*
  * Data structure for hanging data off the communicator 
@@ -596,7 +616,7 @@ struct mca_coll_base_comm_t {
    int cached_pipeline_root;
 
   /* extra data required by the decision functions */
-  rule_t* decision_table;
+  rule_t rules[COLLCOUNT];
 };
 
 #if defined(c_plusplus) || defined(__cplusplus)

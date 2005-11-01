@@ -18,7 +18,7 @@
 #define MCA_COLL_TUNED_DYNAMIC_RULES_EXPORT_H
 
 #include "ompi_config.h"
-#include "coll_tuned.h"
+/* #include "coll_tuned.h" */
 
 #include "mpi.h"
 #include "ompi/include/constants.h"
@@ -97,7 +97,7 @@ typedef struct rule_s {
 
 
 
-rule_t* mk_rule ();
+rule_t* mk_rule (void);
 
 int mk_and_add_condition_to_rule (rule_t* rule, param_index_t param,
                                     condition_op_t op, int target);
