@@ -4,14 +4,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -43,12 +43,12 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     size_t i=0, cnt;
 
     OPAL_TRACE(3);
-    
+
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-            
+
     cnt = 1;
     if (ORTE_SUCCESS != (rc = orte_dps.peek(buffer, &type, &cnt))) {
         ORTE_ERROR_LOG(rc);
@@ -61,14 +61,14 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
         ret = ORTE_ERR_BAD_PARAM;
         goto RETURN_ERROR;
     }
-    
+
     values = (orte_gpr_value_t**)malloc(cnt * sizeof(orte_gpr_value_t*));
     if (NULL == values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         ret = ORTE_ERR_OUT_OF_RESOURCE;
         goto RETURN_ERROR;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, values, &cnt, ORTE_GPR_VALUE))) {
         ORTE_ERROR_LOG(rc);
         free(values);
@@ -78,14 +78,14 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
 
     for (i=0; i < cnt; i++) {
         val = values[i];
-        
+
         /* find the segment */
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, val->segment))) {
             ORTE_ERROR_LOG(rc);
             ret = rc;
             goto RETURN_ERROR;
         }
-    
+
         /* convert tokens to array of itags */
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
                                             val->tokens, &(val->num_tokens)))) {
@@ -93,15 +93,15 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
             ret = rc;
             goto RETURN_ERROR;
         }
-    
+
         if (ORTE_SUCCESS != (ret = orte_gpr_replica_put_fn(val->addr_mode, seg, itags,
                     val->num_tokens, val->cnt, val->keyvals))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }
-    
+
         if (ORTE_SUCCESS == ret) {
-            if (ORTE_SUCCESS != 
+            if (ORTE_SUCCESS !=
                 (rc = orte_gpr_replica_check_events())) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -127,12 +127,12 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
         }
         free(values);
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     return ret;
 }
 
@@ -150,12 +150,12 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     orte_gpr_value_t **values=NULL;
 
     OPAL_TRACE(3);
-    
+
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-            
+
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &addr_mode, &n, ORTE_GPR_ADDR_MODE))) {
         ORTE_ERROR_LOG(ret);
@@ -257,11 +257,11 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
             ret = rc;
         }
     }
-        
+
     if (NULL != segment) {
         free(segment);
     }
-    
+
     if (NULL != tokens) {
         for (i=0; i<num_tokens; i++) {
             free(tokens[i]);
@@ -279,11 +279,11 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     if (NULL != tokentags) {
         free(tokentags);
     }
-    
+
     if (NULL != keytags) {
         free(keytags);
     }
-    
+
     if (NULL != values) {
         for (i=0; i < cnt; i++) {
             if (NULL != values[i])
@@ -291,7 +291,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
         }
         free(values);
     }
- 
+
     /* pack response code */
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
@@ -316,12 +316,12 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     orte_gpr_value_t **values=NULL;
 
     OPAL_TRACE(3);
-    
+
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-            
+
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &addr_mode, &n, ORTE_GPR_ADDR_MODE))) {
         ORTE_ERROR_LOG(ret);
@@ -416,7 +416,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     /* convert conditions to itagvals */
     conds = (orte_gpr_replica_itagval_t**)malloc(num_conditions*sizeof(orte_gpr_replica_itagval_t*));
     memset(conds, 0, num_conditions*sizeof(orte_gpr_replica_itagval_t*)); /* init the space */
-    
+
     if (NULL == conds) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -437,7 +437,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
             goto RETURN_ERROR;
         }
     }
-    
+
     /* get the answer */
     if (ORTE_SUCCESS != (ret = orte_gpr_replica_get_conditional_fn(addr_mode, seg,
                                             tokentags, num_tokens, keytags, num_keys,
@@ -462,11 +462,11 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
             ret = rc;
         }
     }
-        
+
     if (NULL != segment) {
         free(segment);
     }
-    
+
     if (NULL != tokens) {
         for (i=0; i<num_tokens; i++) {
             free(tokens[i]);
@@ -484,11 +484,11 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     if (NULL != tokentags) {
         free(tokentags);
     }
-    
+
     if (NULL != keytags) {
         free(keytags);
     }
-    
+
     if (NULL != values) {
         for (i=0; i < cnt; i++) {
             if (NULL != values[i])
@@ -496,12 +496,14 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
         }
         free(values);
     }
- 
+
     for (i=0; i < num_conditions; i++) {
         if (NULL != conds[i]) OBJ_RELEASE(conds[i]);
+        if (NULL != conditions[i]) OBJ_RELEASE(conditions[i]);
     }
     if (NULL != conds) free(conds);
-    
+    if (NULL != conditions) free(conditions);
+
     /* pack response code */
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
