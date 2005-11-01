@@ -308,7 +308,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *tokentags=NULL, *keytags=NULL;
     orte_gpr_keyval_t **conditions;
-    orte_gpr_replica_itagval_t **conds;
+    orte_gpr_replica_itagval_t **conds = NULL;
     int rc, ret;
     char *segment=NULL, **tokens=NULL, **keys=NULL;
     size_t i=0, cnt=0;
