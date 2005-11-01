@@ -33,6 +33,7 @@
 #include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
+#include "mca/ras/ras_types.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/rmaps/rmaps.h"
 
@@ -54,8 +55,7 @@ extern "C" {
 
 struct orte_rmaps_base_node_t {
     opal_list_item_t super;
-    orte_cellid_t node_cellid;
-    char* node_name;
+    orte_ras_node_t* node;
     opal_list_t node_procs;
 };
 typedef struct orte_rmaps_base_node_t orte_rmaps_base_node_t;

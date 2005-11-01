@@ -14,6 +14,7 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include <sys/time.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
@@ -314,10 +315,12 @@ static int orte_rmgr_urm_spawn(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
     if (ORTE_SUCCESS != (rc = orte_rmgr_urm_allocate(*jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
     if (ORTE_SUCCESS != (rc = orte_rmgr_urm_map(*jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;

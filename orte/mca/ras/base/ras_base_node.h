@@ -32,6 +32,11 @@ extern "C" {
  */
 int orte_ras_base_node_query(opal_list_t*);
 
+/*
+ * Query the registry for a specific node 
+ */
+orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t, const char* nodename);
+
 /**
  * Query the registry for all nodes allocated to a specific job
  */
