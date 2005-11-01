@@ -358,6 +358,32 @@ int orte_gpr_replica_search_container(orte_gpr_replica_addr_mode_t addr_mode,
 }
 
 
+bool orte_gpr_replica_value_in_container(orte_gpr_replica_container_t *cptr,
+                                      orte_gpr_replica_itagval_t *iptr)
+{
+    orte_gpr_replica_itagval_t **ptr;
+    size_t i, j;
+    int cmp, rc;
+
+    ptr = (orte_gpr_replica_itagval_t**)((cptr->itagvals)->addr);
+    for (i=0, j=0; j < cptr->num_itagvals &&
+                   i < (cptr->itagvals)->size; i++) {
+        if (NULL != ptr[i]) {
+            j++;
+            if ((ptr[i]->itag == iptr->itag) && (ptr[i]->type == iptr->type)) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_compare_values(&cmp, ptr[i], iptr))) {
+                    ORTE_ERROR_LOG(rc);
+                    return false;
+                }
+                if (0 == cmp) return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+
 int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
 {
     orte_gpr_value_union_t *src;

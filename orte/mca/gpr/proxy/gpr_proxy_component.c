@@ -69,6 +69,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_module_init,
    /* BLOCKING OPERATIONS */
     orte_gpr_proxy_get,
+    orte_gpr_proxy_get_conditional,
     orte_gpr_proxy_put,
     orte_gpr_base_put_1,
     orte_gpr_base_put_N,

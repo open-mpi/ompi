@@ -313,6 +313,11 @@ typedef int (*orte_gpr_base_module_get_fn_t)(orte_gpr_addr_mode_t addr_mode,
                                 char *segment, char **tokens, char **keys,
                                 size_t *cnt, orte_gpr_value_t ***values);
 
+typedef int (*orte_gpr_base_module_get_conditional_fn_t)(orte_gpr_addr_mode_t addr_mode,
+                                char *segment, char **tokens, char **keys,
+                                size_t num_conditions, orte_gpr_keyval_t **conditions,
+                                size_t *cnt, orte_gpr_value_t ***values);
+
 /*
  * Get data from the registry (NON-BLOCKING)
  * A non-blocking version of get. Data is returned to the callback function in the
@@ -649,6 +654,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_init_fn_t init;
     /* BLOCKING OPERATIONS */
     orte_gpr_base_module_get_fn_t get;
+    orte_gpr_base_module_get_conditional_fn_t get_conditional;
     orte_gpr_base_module_put_fn_t put;
     orte_gpr_base_module_put_1_fn_t put_1;
     orte_gpr_base_module_put_N_fn_t put_N;
