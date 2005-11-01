@@ -146,7 +146,7 @@ int orte_gpr_base_pack_get_conditional(orte_buffer_t *cmd,
 
     OPAL_TRACE(3);
     
-    command = ORTE_GPR_GET_CMD;
+    command = ORTE_GPR_GET_CONDITIONAL_CMD;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);

@@ -93,20 +93,21 @@ extern "C" {
 #define ORTE_GPR_UNSUBSCRIBE_CMD            (uint8_t)  6
 #define ORTE_GPR_CANCEL_TRIGGER_CMD         (uint8_t)  7
 #define ORTE_GPR_GET_CMD                    (uint8_t)  8
-#define ORTE_GPR_TEST_INTERNALS_CMD         (uint8_t)  9
-#define ORTE_GPR_NOTIFY_CMD                 (uint8_t) 10
-#define ORTE_GPR_DUMP_ALL_CMD               (uint8_t) 11
-#define ORTE_GPR_DUMP_SEGMENTS_CMD          (uint8_t) 12
-#define ORTE_GPR_DUMP_TRIGGERS_CMD          (uint8_t) 13
-#define ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD     (uint8_t) 14
-#define ORTE_GPR_DUMP_CALLBACKS_CMD         (uint8_t) 15
-#define ORTE_GPR_INCREMENT_VALUE_CMD        (uint8_t) 16
-#define ORTE_GPR_DECREMENT_VALUE_CMD        (uint8_t) 17
-#define ORTE_GPR_COMPOUND_CMD               (uint8_t) 18
-#define ORTE_GPR_CLEANUP_JOB_CMD            (uint8_t) 19
-#define ORTE_GPR_CLEANUP_PROC_CMD           (uint8_t) 20
-#define ORTE_GPR_DUMP_A_TRIGGER_CMD         (uint8_t) 21
-#define ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD    (uint8_t) 22
+#define ORTE_GPR_GET_CONDITIONAL_CMD        (uint8_t)  9
+#define ORTE_GPR_TEST_INTERNALS_CMD         (uint8_t) 10
+#define ORTE_GPR_NOTIFY_CMD                 (uint8_t) 11
+#define ORTE_GPR_DUMP_ALL_CMD               (uint8_t) 12
+#define ORTE_GPR_DUMP_SEGMENTS_CMD          (uint8_t) 13
+#define ORTE_GPR_DUMP_TRIGGERS_CMD          (uint8_t) 14
+#define ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD     (uint8_t) 15
+#define ORTE_GPR_DUMP_CALLBACKS_CMD         (uint8_t) 16
+#define ORTE_GPR_INCREMENT_VALUE_CMD        (uint8_t) 17
+#define ORTE_GPR_DECREMENT_VALUE_CMD        (uint8_t) 18
+#define ORTE_GPR_COMPOUND_CMD               (uint8_t) 19
+#define ORTE_GPR_CLEANUP_JOB_CMD            (uint8_t) 20
+#define ORTE_GPR_CLEANUP_PROC_CMD           (uint8_t) 21
+#define ORTE_GPR_DUMP_A_TRIGGER_CMD         (uint8_t) 22
+#define ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD    (uint8_t) 23
 #define ORTE_GPR_ERROR                      (uint8_t)0xff
 
 typedef uint8_t orte_gpr_cmd_flag_t;

@@ -303,7 +303,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
 int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
                                   orte_buffer_t *output_buffer)
 {
-    orte_gpr_cmd_flag_t command=ORTE_GPR_GET_CMD;
+    orte_gpr_cmd_flag_t command=ORTE_GPR_GET_CONDITIONAL_CMD;
     orte_gpr_addr_mode_t addr_mode;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *tokentags=NULL, *keytags=NULL;
