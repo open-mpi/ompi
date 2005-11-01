@@ -299,6 +299,11 @@ void mca_oob_tcp_registry_callback(
      orte_gpr_notify_data_t* data,
      void* cbdata);
 
+/**
+ *  Setup socket options
+ */
+
+void mca_oob_tcp_set_socket_options(int sd);
 
 /**
  *  OOB TCP Component
@@ -316,6 +321,8 @@ struct mca_oob_tcp_component_t {
     opal_free_list_t   tcp_peer_free;        /**< free list of peers */
     int                tcp_peer_limit;       /**< max size of tcp peer cache */
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
+    int                tcp_sndbuf;           /**< socket send buffer size */
+    int                tcp_rcvbuf;           /**< socket recv buffer size */
     opal_free_list_t   tcp_msgs;             /**< free list of messages */
     opal_event_t       tcp_send_event;       /**< event structure for sends */
     opal_event_t       tcp_recv_event;       /**< event structure for recvs */

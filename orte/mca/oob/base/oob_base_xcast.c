@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "include/constants.h"
+#include "opal/threads/condition.h"
 #include "opal/util/output.h"
 #include "util/proc_info.h"
 #include "orte/dps/dps.h"
@@ -41,6 +42,44 @@
  *  received and interpreted by the application prior to the broadcast
  *  continuing to forward data along the distribution tree.
  */
+
+
+struct mca_oob_xcast_t {
+    opal_object_t super;
+    opal_mutex_t mutex;
+    opal_condition_t cond;
+    size_t counter;
+};
+typedef struct mca_oob_xcast_t mca_oob_xcast_t;
+
+static void mca_oob_xcast_construct(mca_oob_xcast_t* xcast)
+{
+    OBJ_CONSTRUCT(&xcast->mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&xcast->cond, opal_condition_t);
+}
+
+static void mca_oob_xcast_destruct(mca_oob_xcast_t* xcast)
+{
+    OBJ_DESTRUCT(&xcast->mutex);
+    OBJ_DESTRUCT(&xcast->cond);
+}
+
+static OBJ_CLASS_INSTANCE(
+    mca_oob_xcast_t,
+    opal_object_t,
+    mca_oob_xcast_construct,
+    mca_oob_xcast_destruct);
+
+static void mca_oob_xcast_cb(int status, orte_process_name_t* peer, orte_buffer_t* buffer, int tag, void* cbdata)
+{
+    mca_oob_xcast_t* xcast = (mca_oob_xcast_t*)cbdata;
+    OPAL_THREAD_LOCK(&xcast->mutex);
+    if(--xcast->counter == 0) {
+        opal_condition_signal(&xcast->cond);
+    }
+    OPAL_THREAD_UNLOCK(&xcast->mutex);
+}
+
                                                                                                   
 int mca_oob_xcast(
     orte_process_name_t* root,
@@ -59,6 +98,8 @@ int mca_oob_xcast(
     /* check to see if I am the root process name */
     cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, root, orte_process_info.my_name);
     if(NULL != root && 0 == cmpval) {
+        mca_oob_xcast_t *xcast = OBJ_NEW(mca_oob_xcast_t);
+        xcast->counter = num_peers;
         for(i=0; i<num_peers; i++) {
             /* check status of peer to ensure they are alive */
             if (ORTE_SUCCESS != (rc = orte_soh.get_proc_soh(&state, &status, peers+i))) {
@@ -66,13 +107,22 @@ int mca_oob_xcast(
                 return rc;
             }
             if (state != ORTE_PROC_STATE_TERMINATED) {
-                rc = mca_oob_send_packed(peers+i, buffer, tag, 0);
+                rc = mca_oob_send_packed_nb(peers+i, buffer, tag, 0, mca_oob_xcast_cb, xcast);
                 if (rc < 0) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
             }
         }
+
+        /* wait for all non-blocking operations to complete */
+        OPAL_THREAD_LOCK(&xcast->mutex);
+        while(xcast->counter > 0) {
+            opal_condition_wait(&xcast->cond, &xcast->mutex);
+        }
+        OPAL_THREAD_UNLOCK(&xcast->mutex);
+        OBJ_RELEASE(xcast);
+
     } else {
         orte_buffer_t rbuf;
         orte_gpr_notify_message_t *msg;
