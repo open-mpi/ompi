@@ -123,28 +123,15 @@ typedef struct {
 } orte_gpr_replica_globals_t;
 
 
-/** Dictionary of string-itag pairs.
- * This structure is used to create a linked list of string-itag pairs. All calls to
- * registry functions pass character strings for programming clarity - the replica_dict
- * structure is used to translate those strings into an integer itag value, thus allowing
- * for faster searches of the registry.
- */
-struct orte_gpr_replica_dict_t {
-    size_t index;                  /**< location in dictionary array */
-    char *entry;                   /**< Char string that defines the itag */
-    orte_gpr_replica_itag_t itag;  /**< Numerical value assigned by registry to represent string */
-};
-typedef struct orte_gpr_replica_dict_t orte_gpr_replica_dict_t;
-
 /*
  * Registry "head"
  * The registry "head" contains:
  *
- * (2) the next available itag for the segment dictionary.
- *
  * (3) a managed array of pointers to segment objects.
  *
  * (4) a managed array of pointers to triggers acting on the entire registry
+ *
+ * (4) a managed array of pointers to subscriptions acting on the entire registry
  *
  */
 struct orte_gpr_replica_t {

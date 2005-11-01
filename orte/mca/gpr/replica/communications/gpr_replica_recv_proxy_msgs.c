@@ -35,6 +35,20 @@
 
 #include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 
+
+static void orte_gpr_replica_send_cb(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* buffer,
+    orte_rml_tag_t tag,
+    void *cbdata)
+{
+    if(0 > status) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+    }
+	OBJ_RELEASE(buffer);
+}
+
 /* 
  * handle message from proxies
  */
@@ -55,12 +69,11 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     if (ORTE_SUCCESS == orte_gpr_replica_process_command_buffer(buffer, sender, &answer)) {
-        if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
+        if (0 > orte_rml.send_buffer_nb(sender, answer, tag, 0, orte_gpr_replica_send_cb, NULL)) {
 		   ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
 	    }
 	}
 
-	OBJ_RELEASE(answer);
 	if (orte_gpr_replica_globals.debug) {
 	    opal_output(0, "gpr replica: msg processing complete - processing callbacks");
 	}

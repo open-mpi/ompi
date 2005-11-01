@@ -39,9 +39,9 @@ int
 orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
-    orte_gpr_replica_dict_t **ptr, *new_dict;
+    char **ptr, *new_dict;
     orte_gpr_replica_itag_t j;
-    size_t i, len, len2;
+    size_t i, len, len2, index;
 
     OPAL_TRACE(3);
 
@@ -57,55 +57,50 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
     len = strlen(name);
     
     /* check seg's dictionary to ensure uniqueness */
-    ptr = (orte_gpr_replica_dict_t**)(seg->dict)->addr;
+    ptr = (char**)(seg->dict)->addr;
     for (i=0, j=0; j < seg->num_dict_entries &&
                    i < (seg->dict)->size; i++) {
         if (NULL != ptr[i]) {
             j++;
-            len2 = strlen(ptr[i]->entry);
-            if ((len == len2 && 0 == strncmp(ptr[i]->entry, name, len))) {
+            len2 = strlen(ptr[i]);
+            if ((len == len2 && 0 == strncmp(ptr[i], name, len))) {
                 /* already present */
-                *itag = ptr[i]->itag;
-                return ORTE_SUCCESS;
+                if (i < ORTE_GPR_REPLICA_ITAG_MAX) {
+                    *itag = (orte_gpr_replica_itag_t)i;
+                    return ORTE_SUCCESS;
+                }
+                /* otherwise, the itag violates the max value */
+                return ORTE_ERR_BAD_PARAM;
             }
         }
     }
 
     /* okay, name is unique - create dictionary entry */
-    
-    /* first check to see if one is available */
-    if (ORTE_GPR_REPLICA_ITAG_MAX-1 < seg->num_dict_entries) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    
-    new_dict = (orte_gpr_replica_dict_t*)malloc(sizeof(orte_gpr_replica_dict_t));
-    if (NULL == new_dict) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    new_dict->entry = strdup(name);
-    if (0 > orte_pointer_array_add(&(new_dict->index), seg->dict, (void*)new_dict)) {
-        *itag = ORTE_GPR_REPLICA_ITAG_MAX;
-        free(new_dict->entry);
+    new_dict = strdup(name);
+    if (0 > orte_pointer_array_add(&index, seg->dict, (void*)new_dict)) {
         free(new_dict);
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    *itag = seg->num_dict_entries;
-    new_dict->itag = *itag;
-    (seg->num_dict_entries)++;
-
-    return ORTE_SUCCESS;
+    if ((orte_gpr_replica_itag_t)index < ORTE_GPR_REPLICA_ITAG_MAX) {
+        *itag = (orte_gpr_replica_itag_t)index;
+        (seg->num_dict_entries)++;
+        return ORTE_SUCCESS;
+    }
+    
+    /* otherwise, the itag violates the max value */
+    free(new_dict);
+    ptr[index] = NULL;
+    
+    return ORTE_ERR_OUT_OF_RESOURCE;
 }
 
 
 int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
 {
-    orte_gpr_replica_dict_t **ptr;
+    char **ptr;
     orte_gpr_replica_itag_t itag;
-    size_t index;
     int rc;
 
     OPAL_TRACE(3);
@@ -132,18 +127,14 @@ int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
      }
 
      /* free the dictionary element data */
-     ptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
+     ptr = (char**)((seg->dict)->addr);
      if (NULL == ptr[itag]) {  /* dict element no longer valid */
          return ORTE_ERR_NOT_FOUND;
-     }
-     index = ptr[itag]->index;
-     if (NULL != ptr[itag]->entry) {
-         free(ptr[itag]->entry);
      }
      free(ptr[itag]);
      
      /* remove itag from segment dictionary */
-    orte_pointer_array_set_item(seg->dict, index, NULL);
+    orte_pointer_array_set_item(seg->dict, (size_t)itag, NULL);
     
     /* decrease the dict counter */
     (seg->num_dict_entries)--;
@@ -156,7 +147,7 @@ int
 orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
-    orte_gpr_replica_dict_t **ptr;
+    char **ptr;
     size_t i;
     orte_gpr_replica_itag_t j;
     size_t len, len2;
@@ -180,15 +171,19 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
     len = strlen(name);
     
     /* want specified token-itag pair in that segment's dictionary */
-    ptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
+    ptr = (char**)((seg->dict)->addr);
     for (i=0, j=0; j < seg->num_dict_entries &&
                    i < (seg->dict)->size; i++) {
         if (NULL != ptr[i]) {
             j++;
-            len2 = strlen(ptr[i]->entry);
-    	       if (len == len2 && 0 == strncmp(ptr[i]->entry, name, len)) {
-                *itag = ptr[i]->itag;
-                return ORTE_SUCCESS;
+            len2 = strlen(ptr[i]);
+	        if (len == len2 && 0 == strncmp(ptr[i], name, len)) {
+               if (i < ORTE_GPR_REPLICA_ITAG_MAX) {
+                   *itag = (orte_gpr_replica_itag_t)i;
+                   return ORTE_SUCCESS;
+               }
+               /* otherwise, the itag violates the max value */
+               return ORTE_ERR_BAD_PARAM;
             }
         }
 	}
@@ -200,11 +195,8 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
 int orte_gpr_replica_dict_reverse_lookup(char **name,
         orte_gpr_replica_segment_t *seg, orte_gpr_replica_itag_t itag)
 {
-    orte_gpr_replica_dict_t **ptr;
+    char **ptr;
     orte_gpr_replica_segment_t **segptr;
-    size_t i;
-    orte_gpr_replica_itag_t j;
-
 
     OPAL_TRACE(3);
 
@@ -233,20 +225,13 @@ int orte_gpr_replica_dict_reverse_lookup(char **name,
      * note again that itag is the index into this segment's
      * dictionary array
      */
-    ptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
-    for (i=0, j=0; j < seg->num_dict_entries &&
-                   i < (seg->dict)->size; i++) {
-        if (NULL != ptr[i]) {
-            j++;
-            if (itag == ptr[i]->itag) { /* entry found! */
-                *name = strdup(ptr[i]->entry);
-                return ORTE_SUCCESS;
-            }
-        }
+    ptr = (char**)((seg->dict)->addr);
+    if (NULL == ptr[itag]) { /* this entry is no longer valid! */
+        return ORTE_ERR_NOT_FOUND;
     }
-    /* get here if entry not found */
+    *name = strdup(ptr[itag]);
     
-    return ORTE_ERR_NOT_FOUND;
+    return ORTE_SUCCESS;
 }
 
 int

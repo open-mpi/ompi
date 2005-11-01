@@ -157,7 +157,7 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
 {
     char **ptr;
     orte_gpr_replica_segment_t **segs;
-    orte_gpr_replica_dict_t **dict;
+    char **dict;
     size_t i, j;
 
 
@@ -199,12 +199,12 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         ptr = *index;
-        dict = (orte_gpr_replica_dict_t**)(seg->dict)->addr;
+        dict = (char**)(seg->dict)->addr;
     
         for (i=0, j=0; j < seg->num_dict_entries &&
                        i < (seg->dict)->size; i++) {
             if (NULL != dict[i]) {
-                ptr[j] = strdup(dict[i]->entry);
+                ptr[j] = strdup(dict[i]);
                 if (NULL == ptr[j]) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     *cnt = j;
