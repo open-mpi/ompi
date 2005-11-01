@@ -416,6 +416,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
     while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
+    OBJ_DESTRUCT(&nodes);
 
     /* release temporary variables */
     for(i=0; i<num_context; i++) {
