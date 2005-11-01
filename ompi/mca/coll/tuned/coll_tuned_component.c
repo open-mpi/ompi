@@ -36,12 +36,13 @@ const char *mca_coll_tuned_component_version_string =
 /*
  * Global variable
  */
-int mca_coll_tuned_stream = -1;
-int mca_coll_tuned_priority = 30;
-int mca_coll_tuned_preallocate_memory_comm_size_limit = (32*1024);
-int mca_coll_tuned_use_dynamic_rules = 0;
-int mca_coll_tuned_init_tree_fanout = 4;
-int mca_coll_tuned_init_chain_fanout = 4;
+int   mca_coll_tuned_stream = -1;
+int   mca_coll_tuned_priority = 30;
+int   mca_coll_tuned_preallocate_memory_comm_size_limit = (32*1024);
+int   mca_coll_tuned_use_dynamic_rules = 0;
+char* mca_coll_tuned_dynamic_rules_filename = (char*) NULL;
+int   mca_coll_tuned_init_tree_fanout = 4;
+int   mca_coll_tuned_init_chain_fanout = 4;
 
 /* forced alogrithm variables */
 int mca_coll_tuned_allreduce_forced_choice = 0;
@@ -144,6 +145,17 @@ static int tuned_open(void)
                            "Switch used to decide if we use static (if statements) or dynamic (built at runtime) decision function rules",
                            false, false, mca_coll_tuned_use_dynamic_rules,
                            &mca_coll_tuned_use_dynamic_rules);
+
+    /* if dynamic rules allowed then look up dynamic rules config filename, else we leave it an empty filename (NULL) */
+    if (mca_coll_tuned_use_dynamic_rules) {
+/*         char *default_name; */
+/*         asprintf(&default_name, "~/.openmpi/openmpi-coll-tuned-params.conf"); */
+        mca_base_param_reg_string(&mca_coll_tuned_component.collm_version,
+                               "dynamic_rules_filename",
+                               "Filename of configuration file that contains the dynamic (@runtime) decision function rules",
+                               false, false, mca_coll_tuned_dynamic_rules_filename,
+                               &mca_coll_tuned_dynamic_rules_filename);
+    }
 
     /* some initial guesses at topology parameters */
     mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,

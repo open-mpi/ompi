@@ -27,13 +27,6 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 
-/* from component.. shouldn't it be cached on the component somehow */
-extern int mca_coll_tuned_use_dynamic_rules_param;
-extern int mca_coll_tuned_init_tree_fanout_param;
-extern int mca_coll_tuned_init_chain_fanout_param;
-extern int mca_coll_tuned_preallocate_memory_comm_size_limit_param;
-
-
 
 /*
  * Which set are we using?
@@ -292,7 +285,7 @@ mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
 const struct mca_coll_base_module_1_0_0_t *
 mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
 {
-  int size;
+  int size, rank;
   struct mca_coll_base_comm_t *data;
   /* fanout parameters */
   int pre_allocate = 1;
@@ -318,6 +311,41 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
       size = ompi_comm_remote_size(comm);
   } else {
       size = ompi_comm_size(comm);
+  }
+
+  /*
+   * If using dynamic and you are MPI_COMM_WORLD and you want to use a parameter file..
+   * then this effects how much storage space you need
+   * (This is a basic version of what will go into V2)
+   *
+   */
+
+
+  rank = ompi_comm_rank(comm);	/* find rank as only MCW:0 opens any tuned conf files */
+
+
+  if (!rank) {
+     if (&ompi_mpi_comm_world==comm) {
+        if (mca_coll_tuned_use_dynamic_rules) {
+            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
+            if (mca_coll_tuned_dynamic_rules_filename) {
+	   OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
+	           mca_coll_tuned_dynamic_rules_filename));
+            }
+
+        }
+        else {
+            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init MCW & NOT Dynamic"));
+        }
+     }
+     else {
+        if (mca_coll_tuned_use_dynamic_rules) {
+            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
+        }
+        else {
+            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & NOT Dynamic"));
+        }
+     }
   }
 
   /* 
@@ -347,9 +375,10 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
      data = malloc(sizeof(struct mca_coll_base_comm_t)); 
   
      if (NULL == data) {
-         data->mcct_reqs = (ompi_request_t **) NULL;
-         data->mcct_num_reqs = 0;
+         return NULL;
      }
+     data->mcct_reqs = (ompi_request_t **) NULL;
+     data->mcct_num_reqs = 0;
   }
 
   /* 
@@ -437,3 +466,4 @@ int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
   }
   return OMPI_SUCCESS;
 }
+
