@@ -147,15 +147,47 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
  */
 int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
 {
-    opal_mutex_lock(&msg->msg_lock);
+    OPAL_THREAD_LOCK(&msg->msg_lock);
     msg->msg_complete = true;
     if(NULL != msg->msg_cbfunc) {
+        opal_list_item_t* item;
+        OPAL_THREAD_UNLOCK(&msg->msg_lock);
+
+        /* post to a global list of completed messages */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
+        if(opal_list_get_size(&mca_oob_tcp_component.tcp_msg_completed) > 1) {
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            return OMPI_SUCCESS;
+        }
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+
+        /* invoke message callback */
         msg->msg_cbfunc(msg->msg_rc, peer, msg->msg_uiov, msg->msg_ucnt, msg->msg_hdr.msg_tag, msg->msg_cbdata);
-        opal_mutex_unlock(&msg->msg_lock);
+
+        /* dispatch any completed events */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
         MCA_OOB_TCP_MSG_RETURN(msg);
+        while(NULL != 
+            (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_msg_completed))) {
+            msg = (mca_oob_tcp_msg_t*)item;
+            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            msg->msg_cbfunc(
+                msg->msg_rc, 
+                &msg->msg_peer, 
+                msg->msg_uiov, 
+                msg->msg_ucnt, 
+                msg->msg_hdr.msg_tag, 
+                msg->msg_cbdata);
+            MCA_OOB_TCP_MSG_RETURN(msg);
+            OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        }
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+
     } else {
         opal_condition_broadcast(&msg->msg_condition);
-        opal_mutex_unlock(&msg->msg_lock);
+        OPAL_THREAD_UNLOCK(&msg->msg_lock);
     }
     return OMPI_SUCCESS;
 }
@@ -383,15 +415,12 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     mca_oob_tcp_msg_t* post;
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
-    /* queue of posted receives is stored in network byte order - 
-     * the message header has already been converted back to host -
-     * so must convert back to network to match.
-    */
+    /* match msg against posted receives */
     post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag);
     if(NULL != post) {
-                                                                                                                          
+
         if(post->msg_flags & MCA_OOB_ALLOC) {
-                                                                                                                          
+
             /* set the users iovec struct to point to pre-allocated buffer */
             if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
                 post->msg_rc = OMPI_ERR_BAD_PARAM;
@@ -401,12 +430,12 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 */
                 post->msg_uiov[0].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
                 post->msg_uiov[0].iov_len = msg->msg_hdr.msg_size;
-		       post->msg_rc = msg->msg_hdr.msg_size;
+		        post->msg_rc = msg->msg_hdr.msg_size;
                 msg->msg_rwbuf = NULL;
             }
-                                                                                                                          
+
         } else {
-                                                                                                                          
+
             /* copy msg data into posted recv */
             post->msg_rc = mca_oob_tcp_msg_copy(msg, post->msg_uiov, post->msg_ucnt);
             if(post->msg_flags & MCA_OOB_TRUNC) {
@@ -416,7 +445,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                  post->msg_rc = size;
             }
         }
-                                                                                                                          
+
         if(post->msg_flags & MCA_OOB_PEEK) {
             /* will need message for actual receive */
             opal_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super);
@@ -426,7 +455,17 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         mca_oob_tcp_component.tcp_match_count++;
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
-        mca_oob_tcp_msg_complete(post, &peer->peer_name);
+        if(post->msg_flags & MCA_OOB_PERSISTENT) {
+            post->msg_cbfunc(
+                post->msg_rc, 
+                &peer->peer_name, 
+                post->msg_uiov, 
+                post->msg_ucnt, 
+                post->msg_hdr.msg_tag, 
+                post->msg_cbdata);
+        } else {
+            mca_oob_tcp_msg_complete(post, &peer->peer_name);
+        }
 
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
         if(--mca_oob_tcp_component.tcp_match_count == 0)
@@ -529,12 +568,10 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
 
         if((0 == cmpval1) || (0 == cmpval2)) {
             if (msg->msg_hdr.msg_tag == tag) {
-                if((msg->msg_flags & MCA_OOB_PEEK) == 0) {
+                if((msg->msg_flags & MCA_OOB_PERSISTENT) == 0) {
                     opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
-                    return msg;
-                } else {
-                    return NULL;
                 }
+                return msg;
             }
         }
     }
