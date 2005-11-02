@@ -657,16 +657,15 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             if(mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd) == false) {
                 break;
             }
-            btl_endpoint->endpoint_send_frag = NULL;
+            /* progress any pending sends */
+            btl_endpoint->endpoint_send_frag = (mca_btl_tcp_frag_t*)
+                opal_list_remove_first(&btl_endpoint->endpoint_frags);
 
             /* if required - update request status and release fragment */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
             OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
-            /* progress any pending sends */
-            btl_endpoint->endpoint_send_frag = (mca_btl_tcp_frag_t*)
-                opal_list_remove_first(&btl_endpoint->endpoint_frags);
         } while (NULL != btl_endpoint->endpoint_send_frag);
 
         /* if nothing else to do unregister for send event notifications */
