@@ -497,12 +497,22 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
         free(values);
     }
 
-    for (i=0; i < num_conditions; i++) {
-        if (NULL != conds[i]) OBJ_RELEASE(conds[i]);
-        if (NULL != conditions[i]) OBJ_RELEASE(conditions[i]);
+    if (NULL != conds) {
+        for (i=0; i < num_conditions; i++) {
+            if (NULL != conds[i]) {
+                OBJ_RELEASE(conds[i]);
+            }
+        }
+        free(conds);
     }
-    if (NULL != conds) free(conds);
-    if (NULL != conditions) free(conditions);
+    if (NULL != conditions) {
+        for (i=0; i < num_conditions; i++) {
+            if (NULL != conditions[i]) {
+                OBJ_RELEASE(conditions[i]);
+            }
+        }
+        free(conditions);
+    }
 
     /* pack response code */
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
