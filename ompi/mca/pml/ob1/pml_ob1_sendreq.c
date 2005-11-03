@@ -392,7 +392,7 @@ int mca_pml_ob1_send_request_start_copy(
     int rc;
 
     /* allocate descriptor */
-    MCA_PML_OB1_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_ob1_match_hdr_t) + size);
+    mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_ob1_match_hdr_t) + size);
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
