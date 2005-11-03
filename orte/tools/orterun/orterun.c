@@ -919,7 +919,9 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     char *param, *value, *value2;
     orte_app_context_t *app = NULL;
     extern char **environ;
+#if 0 /* Used only in the C/N notion case, remove to silence compiler warnings */
     size_t l, len;
+#endif
     bool map_data = false, save_arg, cmd_line_made = false;
     int new_argc = 0;
     char **new_argv = NULL;
@@ -941,6 +943,18 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     for (i = 0; i < argc; ++i) {
         map_data = false;
         save_arg = true;
+
+    /* JJH To fix in the future
+     * Currently C/N notation is not supported so don't execute this check
+     * Bug: Make this context sensitive since it will not behave properly 
+     *      with the following argument set:
+     *      $ orterun -np 2 -host c2,c3,c12 hostname
+     *      Since it will see the hosts c2, c3, and c12 as C options instead
+     *      of hostnames.
+     */
+        if(false) { ; } /* Wrapper to preserve logic continuation while the below
+                           is commented out */
+#if 0
         if (0 == strcmp(argv[i], "C") ||
             0 == strcmp(argv[i], "N")) {
             map_data = true;
@@ -965,6 +979,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 }
             }
         }
+#endif
 
 #if 0
         /* JMS commented out because we don't handle this in any
