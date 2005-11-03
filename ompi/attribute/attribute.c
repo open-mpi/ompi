@@ -750,7 +750,7 @@ int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object,
 int ompi_attr_get_c(opal_hash_table_t *keyhash, int key, 
                     void **attribute, int *flag)
 {
-    attribute_value_t *val;
+    attribute_value_t *val = NULL;
     int ret;
 
     ret = get_value(keyhash, key, &val, flag);
@@ -769,7 +769,7 @@ int ompi_attr_get_c(opal_hash_table_t *keyhash, int key,
 int ompi_attr_get_fortran_mpi1(opal_hash_table_t *keyhash, int key, 
                                MPI_Fint *attribute, int *flag)
 {
-    attribute_value_t *val;
+    attribute_value_t *val = NULL;
     int ret;
 
     ret = get_value(keyhash, key, &val, flag);
@@ -788,7 +788,7 @@ int ompi_attr_get_fortran_mpi1(opal_hash_table_t *keyhash, int key,
 int ompi_attr_get_fortran_mpi2(opal_hash_table_t *keyhash, int key, 
                                MPI_Aint *attribute, int *flag)
 {
-    attribute_value_t *val;
+    attribute_value_t *val = NULL;
     int ret;
 
     ret = get_value(keyhash, key, &val, flag);
