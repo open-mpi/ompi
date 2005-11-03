@@ -428,7 +428,7 @@ int mca_pml_ob1_send_request_start_copy(
     sendreq->req_rdma_offset = max_data;
 
     /* short message */
-    descriptor->des_cbfunc = mca_pml_ob1_match_completion_cache;
+    descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
 
