@@ -605,7 +605,9 @@ int ompi_op_init(void)
       add_intrinsic(&ompi_mpi_op_maxloc, 
                     OMPI_OP_FORTRAN_MAXLOC) != OMPI_SUCCESS ||
       add_intrinsic(&ompi_mpi_op_minloc, 
-                    OMPI_OP_FORTRAN_MINLOC) != OMPI_SUCCESS) {
+                    OMPI_OP_FORTRAN_MINLOC) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_replace, 
+                    OMPI_OP_FORTRAN_REPLACE) != OMPI_SUCCESS) {
     return OMPI_ERROR;
   }
 
