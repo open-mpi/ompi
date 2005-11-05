@@ -81,7 +81,26 @@ sub wanted {
     1;
 }
 
+find (\&wanted, ".");
+my $counts;
+my $max_count = -1;
+foreach my $file (sort keys %files_found) {
+    open FILE, $file;
+    my @found = grep(/\$COPYRIGHT\$/, <FILE>);
+    close(FILE);
+    if ($#found >= 0) {
+        print "Found file: $file\n";
+        
+        # Added to fix IU/UTK copyrights, 5/Nov/2005
+        if (1) {
+            fix_iu_utk_copyright($file);
+        } else {
+            add_copyright($file);
+        }
+    }
+}
 
+#---------------------------------------------------------------------------
 
 my $new_iu1 = "Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana";
 my $new_iu2 = "University Research and Technology";
@@ -91,59 +110,50 @@ my $new_utk1 = "Copyright (c) 2004-2005 The University of Tennessee and The Univ
 my $new_utk2 = "of Tennessee Research Foundation.  All rights";
 my $new_utk3 = "reserved.";
 
+sub fix_iu_utk_copyright {
+    my ($file) = @_;
 
-find (\&wanted, ".");
-my $counts;
-my $max_count = -1;
-foreach my $file (sort keys %files_found) {
-     open FILE, $file;
-    my @found = grep(/\$COPYRIGHT\$/, <FILE>);
-    close(FILE);
-    if ($#found >= 0) {
-        print "Found file: $file\n";
-        open FILE, $file;
-        my @lines = <FILE>;
-        close FILE;
+    open FILE, $file;
+    my @lines = <FILE>;
+    close FILE;
 
-#my $old_iu1 = "Copyright \(c\) 2004-2005 The Trustees of Indiana University\.";
-#my $old_iu2 = "All rights reserved.";
+    my $text = join('', @lines);
+    $text =~ s/([ \*\!\#\%\/dnl]*)Copyright \(c\) 2004-2005 The Trustees of Indiana University\.\n([ \*\!\#\%\/dnl]*)All rights reserved\.\n/$1$new_iu1\n$2$new_iu2\n$2$new_iu3\n/;
+    $text =~ s/([ \*\!\#\%\/dnl]*)Copyright \(c\) 2004-2005 The Trustees of the University of Tennessee\.\n([ \*\!\#\%\/dnl]*)All rights reserved\.\n/$1$new_utk1\n$2$new_utk2\n$2$new_utk3\n/;
+    
+    open FILENEW, ">$file.new" || die "could not open $file.new\n";
+    print FILENEW $text;
+    close FILENEW;
 
-#my $old_utk1 = "Copyright (c) 2004-2005 The Trustees of the University of Tennessee.";
-#my $old_utk2 = "All rights reserved.";
-        
-        my $text = join('', @lines);
-        $text =~ s/([ \*\!\#\%\/dnl]*)Copyright \(c\) 2004-2005 The Trustees of Indiana University\.\n([ \*\!\#\%\/dnl]*)All rights reserved\.\n/$1$new_iu1\n$2$new_iu2\n$2$new_iu3\n/;
-        $text =~ s/([ \*\!\#\%\/dnl]*)Copyright \(c\) 2004-2005 The Trustees of the University of Tennessee\.\n([ \*\!\#\%\/dnl]*)All rights reserved\.\n/$1$new_utk1\n$2$new_utk2\n$2$new_utk3\n/;
-        
-        open FILENEW, ">$file.new" || die "could not open $file.new\n";
-        print FILENEW $text;
-        close FILENEW;
+    system("cp $file.new $file");
+    unlink("$file.new");
+}
 
-        system("cp $file.new $file");
-        unlink("$file.new");
+#---------------------------------------------------------------------------
 
-        if (0) {
-        while (<FILE>) {
-            chomp;
-            my $line = $_;
-            if ($line =~ /\$COPYRIGHT\$/) {
-                my $prefix = $line;
-                $prefix =~ s/(.+)\$COPYRIGHT\$.*$/\1/;
-                if ($prefix ne "\$COPYRIGHT\$") {
-                    my $c = $prefix . $copy;
-                    $c =~ s/\n/\n$prefix/g;
-                    print FILENEW "$c\n";
-                } else {
-                    print FILENEW "$copy\n";
-                }
+sub add_copyright {
+    my ($file) = @_;
+
+    open FILE, $file;
+    while (<FILE>) {
+        chomp;
+        my $line = $_;
+        if ($line =~ /\$COPYRIGHT\$/) {
+            my $prefix = $line;
+            $prefix =~ s/(.+)\$COPYRIGHT\$.*$/\1/;
+            if ($prefix ne "\$COPYRIGHT\$") {
+                my $c = $prefix . $copy;
+                $c =~ s/\n/\n$prefix/g;
+                print FILENEW "$c\n";
             } else {
-                print FILENEW "$line\n";
+                print FILENEW "$copy\n";
             }
+        } else {
+            print FILENEW "$line\n";
         }
-        close(FILENEW);
-        close(FILE);
-        system("cp $file.new $file");
-        unlink("$file.new");
     }
-    }
+    close(FILENEW);
+    close(FILE);
+    system("cp $file.new $file");
+    unlink("$file.new");
 }
