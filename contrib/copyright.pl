@@ -1,9 +1,11 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University.
-#                         All rights reserved.
-# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
-#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
@@ -20,8 +22,6 @@
 # script will need to be modified, but it's got all the relevant
 # File::Find code, etc.).
 
-
-
 use strict;
 use File::Find;
 use Cwd;
@@ -30,10 +30,12 @@ my $verbose = 0;
 my %files_found;
 my @skip_dirs = ( "doxygen", ".svn", ".deps", ".libs", "libltdl", "autom4te.cache" );
 
-my $iu = "Copyright (c) 2004-2005 The Trustees of Indiana University.
-                        All rights reserved.";
-my $ut = "Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
-                        All rights reserved.";
+my $iu = "Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+                        University Research and Technology
+                        Corporation.  All rights reserved.";
+my $utk = "Copyright (c) 2004-2005 The University of Tennessee and The University
+                        of Tennessee Research Foundation.  All rights
+                        reserved.";
 my $osu = "Copyright (c) 2004 The Ohio State University
                         All rights reserved.";
 my $hlrs = "Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -79,6 +81,17 @@ sub wanted {
     1;
 }
 
+
+
+my $new_iu1 = "Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana";
+my $new_iu2 = "University Research and Technology";
+my $new_iu3 = "Corporation.  All rights reserved.";
+
+my $new_utk1 = "Copyright (c) 2004-2005 The University of Tennessee and The University";
+my $new_utk2 = "of Tennessee Research Foundation.  All rights";
+my $new_utk3 = "reserved.";
+
+
 find (\&wanted, ".");
 my $counts;
 my $max_count = -1;
@@ -89,7 +102,27 @@ foreach my $file (sort keys %files_found) {
     if ($#found >= 0) {
         print "Found file: $file\n";
         open FILE, $file;
-        open FILENEW, ">$file.new";
+        my @lines = <FILE>;
+        close FILE;
+
+#my $old_iu1 = "Copyright \(c\) 2004-2005 The Trustees of Indiana University\.";
+#my $old_iu2 = "All rights reserved.";
+
+#my $old_utk1 = "Copyright (c) 2004-2005 The Trustees of the University of Tennessee.";
+#my $old_utk2 = "All rights reserved.";
+        
+        my $text = join('', @lines);
+        $text =~ s/([ \*\!\#\%\/dnl]*)Copyright \(c\) 2004-2005 The Trustees of Indiana University\.\n([ \*\!\#\%\/dnl]*)All rights reserved\.\n/$1$new_iu1\n$2$new_iu2\n$2$new_iu3\n/;
+        $text =~ s/([ \*\!\#\%\/dnl]*)Copyright \(c\) 2004-2005 The Trustees of the University of Tennessee\.\n([ \*\!\#\%\/dnl]*)All rights reserved\.\n/$1$new_utk1\n$2$new_utk2\n$2$new_utk3\n/;
+        
+        open FILENEW, ">$file.new" || die "could not open $file.new\n";
+        print FILENEW $text;
+        close FILENEW;
+
+        system("cp $file.new $file");
+        unlink("$file.new");
+
+        if (0) {
         while (<FILE>) {
             chomp;
             my $line = $_;
@@ -111,5 +144,6 @@ foreach my $file (sort keys %files_found) {
         close(FILE);
         system("cp $file.new $file");
         unlink("$file.new");
+    }
     }
 }
