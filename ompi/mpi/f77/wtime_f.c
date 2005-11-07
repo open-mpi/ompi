@@ -20,12 +20,17 @@
 
 #include "mpi/f77/bindings.h"
 
+/* The OMPI_GENERATE_F77_BINDINGS work only for the most common F77 bindings, the
+ * one that does not return any value. There are 2 exceptions MPI_Wtick and MPI_Wtime.
+ * For these 2 we can insert the bindings manually.
+ */
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WTIME = mpi_wtime_f
 #pragma weak pmpi_wtime = mpi_wtime_f
 #pragma weak pmpi_wtime_ = mpi_wtime_f
 #pragma weak pmpi_wtime__ = mpi_wtime_f
 #elif OMPI_PROFILE_LAYER
+/*
 OMPI_GENERATE_F77_BINDINGS (PMPI_WTIME,
                            pmpi_wtime,
                            pmpi_wtime_,
@@ -33,6 +38,11 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WTIME,
                            pmpi_wtime_f,
                            (),
                            () )
+*/
+double PMPI_WTIME(void) { return pmpi_wtime_f(); }
+double pmpi_wtime(void) { return pmpi_wtime_f(); }
+double pmpi_wtime_(void) { return pmpi_wtime_f(); }
+double pmpi_wtime__(void) { return pmpi_wtime_f(); }
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -43,6 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WTIME,
 #endif
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+/*
 OMPI_GENERATE_F77_BINDINGS (MPI_WTIME,
                            mpi_wtime,
                            mpi_wtime_,
@@ -50,6 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WTIME,
                            mpi_wtime_f,
                            (),
                            () )
+*/
+double MPI_WTIME(void) { return mpi_wtime_f(); }
+double mpi_wtime(void) { return mpi_wtime_f(); }
+double mpi_wtime_(void) { return mpi_wtime_f(); }
+double mpi_wtime__(void) { return mpi_wtime_f(); }
 #endif
 
 
