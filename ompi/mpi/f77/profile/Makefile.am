@@ -300,7 +300,9 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pwaitall_f.c \
         pwaitany_f.c \
         pwait_f.c \
-        pwaitsome_f.c
+        pwaitsome_f.c \
+	pwtick_f.c \
+	pwtime_f.c
 
 if WANT_MPI2_ONE_SIDED
 nodist_libmpi_f77_pmpi_la_SOURCES += \

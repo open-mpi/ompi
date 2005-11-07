@@ -20,33 +20,41 @@
 
 #include "mpi/f77/bindings.h"
 
-/* As the standard allow us to implement this function as a macro
- * we cannot have profiling interface.
- */
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#pragma weak PMPI_WTIME = mpi_wtime_f
+#pragma weak pmpi_wtime = mpi_wtime_f
+#pragma weak pmpi_wtime_ = mpi_wtime_f
+#pragma weak pmpi_wtime__ = mpi_wtime_f
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_WTIME,
+                           pmpi_wtime,
+                           pmpi_wtime_,
+                           pmpi_wtime__,
+                           pmpi_wtime_f,
+                           (),
+                           () )
+#endif
+
 #if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WTIME = mpi_wtime_f
 #pragma weak mpi_wtime = mpi_wtime_f
 #pragma weak mpi_wtime_ = mpi_wtime_f
 #pragma weak mpi_wtime__ = mpi_wtime_f
+#endif
 
-#else
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_WTIME,
+                           mpi_wtime,
+                           mpi_wtime_,
+                           mpi_wtime__,
+                           mpi_wtime_f,
+                           (),
+                           () )
+#endif
 
-    double mpi_wtime(void) {
-        return MPI_Wtime();
-    }
 
-    double mpi_wtime_(void) {
-        return MPI_Wtime();
-    }
-
-    double mpi_wtime__(void) {
-        return MPI_Wtime();
-    }
-
-    double MPI_WTIME(void) {
-        return MPI_Wtime();
-    }
-
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#include "mpi/f77/profile/defines.h"
 #endif
 
 double mpi_wtime_f(void)
