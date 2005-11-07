@@ -166,10 +166,10 @@ struct ddt_loop_desc {
 typedef struct ddt_loop_desc ddt_loop_desc_t;
 
 struct ddt_endloop_desc {
-    ddt_elem_id_description common;       /**< basic data description and flags */
-    uint32_t                items;        /**< number of elements */
-    long                    total_extent; /**< total extent of the loop taking in account the repetitions */
-    uint32_t                size;         /**< real size of the data in the loop */
+    ddt_elem_id_description common;           /**< basic data description and flags */
+    uint32_t                items;            /**< number of elements */
+    long                    first_elem_disp;  /**< total extent of the loop taking in account the repetitions */
+    uint32_t                size;             /**< real size of the data in the loop */
 };
 typedef struct ddt_endloop_desc ddt_endloop_desc_t;
 
@@ -188,22 +188,22 @@ do { \
     (_place)->loop.extent        = (_extent); \
 } while(0)
 
-#define CREATE_LOOP_END( _place, _items, _total_extent, _size, _flags ) \
-do { \
-   (_place)->end_loop.common.type = DT_END_LOOP; \
-   (_place)->end_loop.common.flags = (_flags) & ~DT_FLAG_DATA; \
-   (_place)->end_loop.items = (_items); \
-   (_place)->end_loop.total_extent = (_total_extent);  /* the final extent for the loop */ \
-   (_place)->end_loop.size = (_size);                  /* the size inside the loop */ \
-} while(0)
+#define CREATE_LOOP_END( _place, _items, _first_item_disp, _size, _flags ) \
+    do {                                                                   \
+        (_place)->end_loop.common.type = DT_END_LOOP;                      \
+        (_place)->end_loop.common.flags = (_flags) & ~DT_FLAG_DATA;        \
+        (_place)->end_loop.items = (_items);                               \
+        (_place)->end_loop.first_elem_disp = (_first_item_disp);           \
+        (_place)->end_loop.size = (_size);  /* the size inside the loop */ \
+    } while(0)
 
-#define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent ) \
-do { \
-    (_place)->elem.common.flags = (_flags) | DT_FLAG_DATA; \
-    (_place)->elem.common.type  = (_type); \
-    (_place)->elem.count        = (_count); \
-    (_place)->elem.disp         = (_disp); \
-    (_place)->elem.extent       = (_extent); \
+#define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent )        \
+do {                                                                        \
+    (_place)->elem.common.flags = (_flags) | DT_FLAG_DATA_C | DT_FLAG_DATA; \
+    (_place)->elem.common.type  = (_type);                                  \
+    (_place)->elem.count        = (_count);                                 \
+    (_place)->elem.disp         = (_disp);                                  \
+    (_place)->elem.extent       = (_extent);                                \
 } while(0)
 
 typedef struct {
@@ -246,10 +246,6 @@ do { \
 
 #define MEMCPY( DST, SRC, BLENGTH ) \
 do { \
-    /* unsigned int _i; */ \
-    /* for (_i=0; _i < (BLENGTH); _i++) */ \
-      /* opal_output( 0, "index:%d src = %x dest = %x\n", _i, ((char*)(SRC))[_i] & 0xff, ((char*)(DST))[_i] & 0xff); */ \
-    /* opal_output( 0, "\n\n"); */ \
     /*opal_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
     memcpy( (DST), (SRC), (BLENGTH) ); \
 } while (0)
@@ -266,11 +262,11 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
     __lower_bound += (PDATA)->true_lb; \
     __upper_bound = (INITPTR) + ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1) + (PDATA)->true_ub; \
     if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
+        ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
         opal_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
                      __FILE__, __LINE__, (ACTPTR), (LENGTH), __lower_bound, __upper_bound, \
                      (INITPTR), (COUNT) ); \
         ompi_ddt_dump( (PDATA) ); \
-        ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
     } \
 }
 
