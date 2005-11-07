@@ -593,38 +593,33 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
 {
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
-    char *pSrc;
+    char *source_base = NULL;
     size_t length = pData->size * pConv->count - pConv->bConverted;
     uint32_t iov_count, initial_amount = pConv->bConverted;
+    ddt_endloop_desc_t* _end_loop = &(pConv->use_desc->desc[pConv->use_desc->used].end_loop);
 
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
      */
-    pSrc = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         if( 0 == length ) break;
         if( (size_t)iov[iov_count].iov_len > length )
             iov[iov_count].iov_len = length;
+        source_base = (pConv->pBaseBuf + _end_loop->first_elem_disp
+                       + pStack[0].disp + pStack[1].disp);
         if( iov[iov_count].iov_base == NULL ) {
-            iov[iov_count].iov_base = pSrc;
+            iov[iov_count].iov_base = source_base;
         } else {
             /* contiguous data just memcpy the smallest data in the user buffer */
-            OMPI_DDT_SAFEGUARD_POINTER( pSrc, iov[iov_count].iov_len,
+            OMPI_DDT_SAFEGUARD_POINTER( source_base, iov[iov_count].iov_len,
                                         pConv->pBaseBuf, pData, pConv->count );
-            MEMCPY( iov[iov_count].iov_base, pSrc, iov[iov_count].iov_len);
+            MEMCPY( iov[iov_count].iov_base, source_base, iov[iov_count].iov_len);
         }
         length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
-        pStack[0].disp += iov[iov_count].iov_len + pStack[1].disp;
-        pSrc = pConv->pBaseBuf + pStack[0].disp;
+        pStack[0].disp += iov[iov_count].iov_len;
     }
-    /* The logic here should be quite simple. As the data is contiguous we will just copy data
-     * (we dont have to do any conversion). Then the only thing that is interesting is to
-     * be sure that the bConverted is the correct displacement. So we can always set the
-     * stack[1].disp to ZERO and keep the stack[1].disp equal to bConverted (by lower bound) .
-     */
-    pStack[1].disp = 0;
 
     /* update the return value */
     *max_data = pConv->bConverted - initial_amount;
@@ -644,12 +639,16 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
     char *pSrc, *pDest;
     size_t length = pData->size * pConv->count;
     long extent;
-    uint32_t max_allowed = *max_data;
-    uint32_t i, index;
+    uint32_t max_allowed, i, index;
     uint32_t iov_count, total_bytes_converted = 0;
 
     extent = pData->ub - pData->lb;
     assert( (pData->flags & DT_FLAG_CONTIGUOUS) && ((long)pData->size != extent) );
+
+    /* Limit the amount of packed data to the data left over on this convertor */
+    max_allowed = (pConv->count * pData->size) - pConv->bConverted;
+    if( max_allowed > (*max_data) )
+        max_allowed = (*max_data);
 
     i = pConv->bConverted / pData->size;  /* how many we already pack */
     pSrc = pConv->pBaseBuf + pStack->disp;  /* actual starting point for the conversion */
