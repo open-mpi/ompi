@@ -46,4 +46,6 @@ libmpi_la_SOURCES += \
 	datatype/dt_match_size.c \
 	datatype/convertor.c \
 	datatype/new_pack.c \
-	datatype/new_unpack.c
+	datatype/new_unpack.c \
+	datatype/new_position.c
+
