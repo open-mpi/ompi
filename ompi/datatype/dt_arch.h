@@ -242,7 +242,7 @@ static inline int32_t ompi_arch_ldisintel( void )
 {
     long double ld = 2.0;
     int i, j;
-    uint32_t* pui = (uint32_t*) &ld;
+    uint32_t* pui = (uint32_t*)(void*)&ld;
 
     j = LDBL_MANT_DIG / 32;
     i = (LDBL_MANT_DIG % 32) - 1;
