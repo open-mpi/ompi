@@ -30,15 +30,6 @@
 #pragma weak pmpi_wtick_ = mpi_wtick_f
 #pragma weak pmpi_wtick__ = mpi_wtick_f
 #elif OMPI_PROFILE_LAYER
-/*
-OMPI_GENERATE_F77_BINDINGS (PMPI_WTICK,
-                           pmpi_wtick,
-                           pmpi_wtick_,
-                           pmpi_wtick__,
-                           pmpi_wtick_f,
-                           (),
-                           () )
-*/
 double PMPI_WTICK(void) { return pmpi_wtick_f(); }
 double pmpi_wtick(void) { return pmpi_wtick_f(); }
 double pmpi_wtick_(void) { return pmpi_wtick_f(); }
@@ -53,15 +44,6 @@ double pmpi_wtick__(void) { return pmpi_wtick_f(); }
 #endif
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
-/*
-OMPI_GENERATE_F77_BINDINGS (MPI_WTICK,
-                           mpi_wtick,
-                           mpi_wtick_,
-                           mpi_wtick__,
-                           mpi_wtick_f,
-                           (),
-                           () )
-*/
 double MPI_WTICK(void) { return mpi_wtick_f(); }
 double mpi_wtick(void) { return mpi_wtick_f(); }
 double mpi_wtick_(void) { return mpi_wtick_f(); }
