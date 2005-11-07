@@ -70,6 +70,7 @@ static void ompi_convertor_construct( ompi_convertor_t* convertor )
     convertor->memAlloc_fn       = NULL;
     convertor->memAlloc_userdata = NULL;
     convertor->stack_pos         = 0;
+    convertor->remoteArch        = 0;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
@@ -92,10 +93,10 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     /* protect against over packing data */
     if( pConv->bConverted == (pConv->pDesc->size * pConv->count) ) {
-	iov[0].iov_len = 0;
-	*out_size = 0;
+        iov[0].iov_len = 0;
+        *out_size = 0;
         *max_data = 0;
-	return 1;  /* nothing to do */
+        return 1;  /* nothing to do */
     }
     assert( pConv->bConverted < (pConv->pDesc->size * pConv->count) );
     /* We dont allocate any memory. The packing function should allocate it
@@ -134,15 +135,11 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
     long extent;
 
     pStack = pConvertor->pStack;
-
-    pStack[0].type     = DT_LOOP;  /* the first one is always the loop */
-    pStack[0].count    = pConvertor->count;
-    pStack[0].index    = -1;
-
+    /* The prepare function already make the selection on which data representation
+     * we have to use: normal one or the optimized version ?
+     */
     pElems = pConvertor->use_desc->desc;
-    pStack[0].end_loop = pConvertor->use_desc->used;
 
-    /* Special case for contiguous datatypes */
     if( pData->size == 0 ) {  /* special case for empty datatypes */
         count = pConvertor->count;
     } else {
@@ -150,8 +147,11 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
     }
     extent = pData->ub - pData->lb;
 
-    pStack[0].disp = count * extent;
-    pStack[0].count -= count;
+    pStack[0].type     = DT_LOOP;  /* the first one is always the loop */
+    pStack[0].count    = pConvertor->count - count;
+    pStack[0].index    = -1;
+    pStack[0].end_loop = pConvertor->use_desc->used;
+    pStack[0].disp     = count * extent;
 
     /* now compute the number of pending bytes */
     count = starting_point - count * pData->size;
@@ -178,48 +178,31 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 static inline
 int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const int* sizes )
 {
-    dt_stack_t* pStack;
+    dt_stack_t* pStack = pConvertor->pStack;
     dt_elem_desc_t* pElems;
-    int index = 0;
 
-    pConvertor->stack_pos = 0;
-    pStack = pConvertor->pStack;
+    pConvertor->stack_pos = 1;
     /* Fill the first position on the stack. This one correspond to the
      * last fake DT_END_LOOP that we add to the data representation and
      * allow us to move quickly inside the datatype when we have a count.
      */
-    pConvertor->pStack[0].index = -1;
-    pConvertor->pStack[0].count = pConvertor->count;
-    pConvertor->pStack[0].disp  = 0;
+    pStack[0].index = -1;
+    pStack[0].count = pConvertor->count;
+    pStack[0].disp  = 0;
+    pStack[0].end_loop = pConvertor->use_desc->used;
     /* The prepare function already make the selection on which data representation
      * we have to use: normal one or the optimized version ?
      */
     pElems = pConvertor->use_desc->desc;
-    pStack[0].end_loop = pConvertor->use_desc->used;
 
-    /* In the case where the datatype start with loops, we should push them on the stack.
-     * Otherwise when we reach the end_loop field we will pop too many entries and finish
-     * by overriding other places in memory. Now the big question is when to stop creating
-     * the entries on the stack ? Should I stop when I reach the first data element or
-     * should I stop on the first contiguous loop ?
-     */
-    while( pElems[index].elem.common.type == DT_LOOP ) {
-        PUSH_STACK( pStack, pConvertor->stack_pos, index, DT_LOOP,
-                    pElems[index].loop.loops, 0, pElems[index].loop.items );
-        index++;
+    pStack[1].index = 0;
+    pStack[1].disp = 0;
+    pStack[1].end_loop = 0;
+    if( pElems[0].elem.common.type == DT_LOOP ) {
+        pStack[1].count = pElems[0].loop.loops;
+    } else {
+        pStack[1].count = pElems[0].elem.count;
     }
-    if( pElems[index].elem.common.flags & DT_FLAG_DATA ) {  /* let's stop here */
-        PUSH_STACK( pStack, pConvertor->stack_pos, index, pElems[index].elem.common.type,
-                    pElems[index].elem.count, pElems[index].elem.disp, 0 );
-    } 
-#if 0
-    /* JMS: Why is this here?  Intel tests seem to pass even without
-       any further processing... */
-    else {
-        opal_output( 0, "Here we should have a data in the datatype description\n" );
-	ompi_ddt_dump( pConvertor->pDesc );
-    }
-#endif
     pConvertor->bConverted = 0;
     return OMPI_SUCCESS;
 }
@@ -243,6 +226,7 @@ inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t*
     if( (convertor->pDesc->size * convertor->count) <= *position ) {
         convertor->flags |= CONVERTOR_COMPLETED;
         convertor->bConverted = convertor->pDesc->size * convertor->count;
+        *position = convertor->bConverted;
         return OMPI_SUCCESS;
     }
     /*
@@ -257,8 +241,7 @@ inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t*
         rc = ompi_convertor_create_stack_with_pos_contig( convertor, (*position),
                                                           ompi_ddt_local_sizes );
     } else {
-        rc = ompi_convertor_create_stack_with_pos_general( convertor, (*position),
-                                                           ompi_ddt_local_sizes );
+        rc = ompi_convertor_generic_simple_position( convertor, position );
     }
     *position = convertor->bConverted;
     return rc;
@@ -338,16 +321,16 @@ ompi_convertor_clone( const ompi_convertor_t* source,
                       ompi_convertor_t* destination,
                       int32_t copy_stack )
 {
-    /* copy all properties */
-    destination->remoteArch  = source->remoteArch;
-    destination->flags       = source->flags | CONVERTOR_CLONE;
-    destination->pDesc       = source->pDesc;
-    destination->use_desc    = source->use_desc;
-    destination->count       = source->count;
-    destination->pBaseBuf    = source->pBaseBuf;
-    destination->fAdvance    = source->fAdvance;
-    destination->memAlloc_fn = source->memAlloc_fn;
-    destination->pFunctions  = source->pFunctions;
+    destination->remoteArch        = source->remoteArch;
+    destination->flags             = source->flags | CONVERTOR_CLONE;
+    destination->pDesc             = source->pDesc;
+    destination->use_desc          = source->use_desc;
+    destination->count             = source->count;
+    destination->pBaseBuf          = source->pBaseBuf;
+    destination->fAdvance          = source->fAdvance;
+    destination->memAlloc_fn       = source->memAlloc_fn;
+    destination->memAlloc_userdata = source->memAlloc_userdata;
+    destination->pFunctions        = source->pFunctions;
     /* create the stack */
     if( source->stack_size > DT_STATIC_STACK_SIZE ) {
         destination->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * source->stack_size );
@@ -361,7 +344,7 @@ ompi_convertor_clone( const ompi_convertor_t* source,
         destination->bConverted = -1;
         destination->stack_pos  = -1;
     } else {
-        bcopy( source->pStack, destination->pStack, sizeof(dt_stack_t) * source->stack_size );
+        memcpy( destination->pStack, source->pStack, sizeof(dt_stack_t) * (source->stack_pos+1) );
         destination->bConverted = source->bConverted;
         destination->stack_pos  = source->stack_pos;
     }
