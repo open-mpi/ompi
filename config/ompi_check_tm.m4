@@ -25,31 +25,27 @@ AC_DEFUN([OMPI_CHECK_TM],[
                 [AC_HELP_STRING([--with-tm],
                                 [Directory where the tm software is installed])])
 
+    AS_IF([test "$with_tm" = "no"],
+          [ompi_check_tm_hapy="no"],
+          [ompi_check_tm_happy="yes"
+           AS_IF([test ! -z "$with_tm" -a "$with_tm" != "yes"],
+                 [ompi_check_tm_dir="$with_tm"],
+                 [ompi_check_tm_dir=""])])
 
-    ompi_check_tm_save_CPPFLAGS="$CPPFLAGS"
-    ompi_check_tm_save_LDFLAGS="$LDFLAGS"
-    ompi_check_tm_save_LIBS="$LIBS"
+    AS_IF([test "$ompi_check_tm_happy" = "yes"],
+          [OMPI_CHECK_PACKAGE([$1],
+                              [tm.h],
+                              [pbs],
+                              [tm_init],
+                              [],
+                              [$ompi_check_tm_dir],
+                              [],
+                              [ompi_check_tm_happy="yes"],
+                              [ompi_check_tm_happy="no"])])
 
-    AS_IF([test ! -z "$with_tm"], 
-          [CPPFLAGS="$CPPFLAGS -I$with_tm/include"
-           LDFLAGS="$LDFLAGS -L$with_tm/lib"])
-    AC_CHECK_HEADERS([tm.h],
-                     [AC_CHECK_LIB([pbs], 
-                                   [tm_init],
-                                   [ompi_check_tm_happy="yes"],
-                                   [ompi_check_tm_happy="no"])],
-                     [ompi_check_tm_happy="no"])
-
-    CPPFLAGS="$ompi_check_tm_save_CPPFLAGS"
-    LDFLAGS="$ompi_check_tm_save_LDFLAGS"
-    LIBS="$ompi_check_tm_save_LIBS"
-
-
-    AS_IF([test "$ompi_check_tm_happy" = "yes"], 
-          [AS_IF([test ! -z "$with_tm"], 
-                 [$1_CPPFLAGS="$$1_CPPFLAGS -I$with_tm/include"
-                  $1_LDFLAGS="$$1_LDFLAGS -L$with_tm/lib"
-                  $1_LIBS="$$1_LIBS -lpbs"])
-           $2], 
-          [$3])
+    AS_IF([test "$ompi_check_tm_happy" = "yes"],
+          [$2],
+          [AS_IF([test ! -z "$with_tm" -a "$with_tm" != "no"],
+                 [AC_MSG_ERROR([TM support requested but not found.  Aborting])])
+           $3])
 ])
