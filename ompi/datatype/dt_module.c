@@ -97,7 +97,12 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_double = INIT_BASIC_DATA( long doubl
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_double = INIT_BASIC_DATA( void*, 0, UNAVAILABLE, 0 );
 #endif  /* HAVE_LONG_DOUBLE */
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_packed = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, PACKED, 0 );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_BASIC_TYPE( DT_WCHAR, WCHAR );
+#if OMPI_ALIGNMENT_WCHAR != 0
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_BASIC_DATA( wchar_t, OMPI_ALIGNMENT_WCHAR, WCHAR, DT_FLAG_DATA_C );
+#else
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_BASIC_DATA( void*, 0, UNAVAILABLE, 0 );
+#endif  /* FTMPI_HAVE_WCHAR_T */
+
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( SIZEOF_BOOL, OMPI_ALIGNMENT_CXX_BOOL, CXX_BOOL, DT_FLAG_DATA_CPP );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logic = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGIC, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL, 0 );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer = INIT_BASIC_FORTRAN_TYPE( DT_INTEGER, INTEGER, OMPI_SIZEOF_FORTRAN_INTEGER, OMPI_ALIGNMENT_FORTRAN_INTEGER, DT_FLAG_DATA_INT );
@@ -293,10 +298,11 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         displ[0] -= base;                                               \
         if( displ[0] != (displ[1] + (long)sizeof(type2)) )              \
             ptype->ub = displ[0];  /* force a new extent for the datatype */ \
-        ptype->flags |= DT_FLAG_PREDEFINED | (FLAGS);                   \
+        ptype->flags |= (FLAGS);                                        \
         ptype->id = MPIDDT;                                             \
         ompi_ddt_commit( &ptype );                                      \
         COPY_DATA_DESC( PDATA, ptype );                                 \
+        (PDATA)->flags |= DT_FLAG_PREDEFINED;                           \
         ptype->desc.desc = NULL;                                        \
         ptype->opt_desc.desc = NULL;                                    \
         OBJ_RELEASE( ptype );                                           \
@@ -309,10 +315,11 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
     do {                                                                             \
         ompi_datatype_t *ptype;                                                      \
         ompi_ddt_create_contiguous( 2, ompi_ddt_basicDatatypes[MPIType], &ptype );   \
-        ptype->flags |= DT_FLAG_PREDEFINED | (FLAGS);                                \
+        ptype->flags |= (FLAGS);                                                     \
         ptype->id = (MPIDDT);                                                        \
         ompi_ddt_commit( &ptype );                                                   \
         COPY_DATA_DESC( (PDATA), ptype );                                            \
+        (PDATA)->flags |= DT_FLAG_PREDEFINED;                                        \
         ptype->desc.desc = NULL;                                                     \
         ptype->opt_desc.desc = NULL;                                                 \
         OBJ_RELEASE( ptype );                                                        \
@@ -342,11 +349,11 @@ int32_t ompi_ddt_init( void )
         datatype->desc.desc[0].elem.disp         = 0;
         datatype->desc.desc[0].elem.extent       = datatype->size;
 
-        datatype->desc.desc[1].elem.common.flags = 0;
-        datatype->desc.desc[1].elem.common.type  = DT_END_LOOP;
-        datatype->desc.desc[1].elem.count        = 1;
-        datatype->desc.desc[1].elem.disp         = datatype->ub - datatype->lb;
-        datatype->desc.desc[1].elem.extent       = datatype->size;
+        datatype->desc.desc[1].end_loop.common.flags    = 0;
+        datatype->desc.desc[1].end_loop.common.type     = DT_END_LOOP;
+        datatype->desc.desc[1].end_loop.items           = 1;
+        datatype->desc.desc[1].end_loop.first_elem_disp = datatype->desc.desc[0].elem.disp;
+        datatype->desc.desc[1].end_loop.size            = datatype->size;
 
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
@@ -517,11 +524,18 @@ int32_t ompi_ddt_init( void )
     MOOG(cxx_dblcplex);
     MOOG(cxx_ldblcplex);
 
-#if defined(VERBOSE)
+#if OMPI_ENABLE_DEBUG
     {
         ompi_ddt_dfd = opal_output_open( NULL );
+        for( i = DT_CHAR; i < DT_UNAVAILABLE; i++ ) {
+            ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_ddt_basicDatatypes[i];
+            if( 0 == datatype->size ) {
+                opal_output( ompi_ddt_dfd, "On this architecture the type %s is not defined\n",
+                             datatype->name );
+            }
+        }
     }
-#endif  /* VERBOSE */
+#endif  /* OMPI_ENABLE_DEBUG */
 
     ompi_ddt_default_convertors_init();
     return OMPI_SUCCESS;
@@ -618,9 +632,9 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
                                (int)pDesc->loop.loops, (int)pDesc->loop.items,
                                (int)pDesc->loop.extent );
 	else if( DT_END_LOOP == pDesc->elem.common.type )
-	    index += snprintf( ptr + index, length - index, "prev %d elements total true extent %d size of data %d\n",
-                               (int)pDesc->end_loop.items, (int)pDesc->end_loop.total_extent,
-                               (int)pDesc->end_loop.size );
+	    index += snprintf( ptr + index, length - index, "prev %d elements first elem displacement %ld size of data %d\n",
+                           (int)pDesc->end_loop.items, pDesc->end_loop.first_elem_disp,
+                           (int)pDesc->end_loop.size );
         else
             index += snprintf( ptr + index, length - index, "count %d disp 0x%lx (%ld) extent %d\n",
                                (int)pDesc->elem.count, pDesc->elem.disp, pDesc->elem.disp,
@@ -658,13 +672,13 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
     length = pData->opt_desc.used + pData->desc.used;
     length = length * 100 + 500;
     buffer = (char*)malloc( length );
-    index += snprintf( buffer, length - index, "Datatype %p[%s] size %ld align %d id %d length %d used %d\n\
-   true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n \
-   nbElems %d loops %d flags %X (",
-                 (void*)pData, pData->name, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
-                 pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
-                 pData->lb, pData->ub, pData->ub - pData->lb,
-                 (int)pData->nbElems, (int)pData->btypes[DT_LOOP], (int)pData->flags );
+    index += snprintf( buffer, length - index, "Datatype %p[%s] size %ld align %d id %d length %d used %d\n"
+                                               "true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n"
+                                               "nbElems %d loops %d flags %X (",
+                     (void*)pData, pData->name, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
+                     pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
+                     pData->lb, pData->ub, pData->ub - pData->lb,
+                     (int)pData->nbElems, (int)pData->btypes[DT_LOOP], (int)pData->flags );
     /* dump the flags */
     if( pData->flags == DT_FLAG_PREDEFINED )
         index += snprintf( buffer + index, length - index, "predefined " );
