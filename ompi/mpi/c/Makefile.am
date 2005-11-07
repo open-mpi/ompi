@@ -336,7 +336,9 @@ libmpi_c_mpi_la_SOURCES = \
         wait.c \
         waitall.c \
         waitany.c \
-        waitsome.c
+        waitsome.c \
+	wtime.c \
+	wtick.c
 
 if WANT_MPI2_ONE_SIDED
 libmpi_c_mpi_la_SOURCES += \

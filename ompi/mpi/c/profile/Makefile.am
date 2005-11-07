@@ -318,7 +318,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwait.c \
         pwaitall.c \
         pwaitany.c \
-        pwaitsome.c
+        pwaitsome.c \
+	pwtime.c \
+	pwtick.c
 
 if WANT_MPI2_ONE_SIDED
 nodist_libmpi_c_pmpi_la_SOURCES += \
