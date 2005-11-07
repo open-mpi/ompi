@@ -115,6 +115,24 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     description = pConvertor->use_desc->desc;
 
     base_pointer = pConvertor->pBaseBuf;
+
+    /* We dont want to have to parse the datatype multiple times. What we are interested in
+     * here is to compute the number of completed datatypes that we can move forward, update
+     * the the counters and finally compute the position taking in account only the remaining
+     * elements. The only problem is that we have to modify all the elements on the stack.
+     */
+    iov_len_local = *position - pConvertor->bConverted;
+    if( iov_len_local > pConvertor->pDesc->size ) {
+        long extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
+
+        count_desc = iov_len_local / pConvertor->pDesc->size;
+        for( type = 0; type <= pConvertor->stack_pos; type++ )
+            pConvertor->pStack[type].disp += extent;
+        pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
+        iov_len_local = *position - pConvertor->bConverted;
+        pConvertor->pStack[0].count -= count_desc;
+    }
+
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc      = pStack->index;
     base_pointer += pStack->disp;
@@ -129,7 +147,6 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                            pos_desc, count_desc, base_pointer - pConvertor->pBaseBuf,
                            pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
 
-    iov_len_local = *position;
     while( 1 ) {
         if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
             DO_DEBUG( opal_output( 0, "pack end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
