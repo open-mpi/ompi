@@ -309,7 +309,7 @@ ompi_op_t ompi_mpi_op_null = {
 ompi_op_t ompi_mpi_op_max = {
     { NULL, 0 },
 
-    "MPI_OP_MAX",
+    "MPI_MAX",
     FLAGS,
     { C_INTEGER(max),
       FORTRAN_INTEGER(max),
@@ -327,7 +327,7 @@ ompi_op_t ompi_mpi_op_max = {
 ompi_op_t ompi_mpi_op_min = {
     { NULL, 0 },
 
-    "MPI_OP_MIN",
+    "MPI_MIN",
     FLAGS,
     { C_INTEGER(min),
       FORTRAN_INTEGER(min),
@@ -345,7 +345,7 @@ ompi_op_t ompi_mpi_op_min = {
 ompi_op_t ompi_mpi_op_sum = {
     { NULL, 0 },
 
-    "MPI_OP_SUM",
+    "MPI_SUM",
     FLAGS_NO_FLOAT,
     { C_INTEGER(sum),
       FORTRAN_INTEGER(sum),
@@ -363,7 +363,7 @@ ompi_op_t ompi_mpi_op_sum = {
 ompi_op_t ompi_mpi_op_prod = {
     { NULL, 0 },
 
-    "MPI_OP_PROD",
+    "MPI_PROD",
     FLAGS_NO_FLOAT,
     { C_INTEGER(prod),
       FORTRAN_INTEGER(prod),
@@ -381,7 +381,7 @@ ompi_op_t ompi_mpi_op_prod = {
 ompi_op_t ompi_mpi_op_land = {
     { NULL, 0 },
 
-    "MPI_OP_LAND",
+    "MPI_LAND",
     FLAGS,
     { C_INTEGER(land),
       FORTRAN_INTEGER_NULL,
@@ -399,7 +399,7 @@ ompi_op_t ompi_mpi_op_land = {
 ompi_op_t ompi_mpi_op_band = {
     { NULL, 0 },
 
-    "MPI_OP_BAND",
+    "MPI_BAND",
     FLAGS,
     { C_INTEGER(band),
       FORTRAN_INTEGER(band),
@@ -417,7 +417,7 @@ ompi_op_t ompi_mpi_op_band = {
 ompi_op_t ompi_mpi_op_lor = {
     { NULL, 0 },
 
-    "MPI_OP_LOR",
+    "MPI_LOR",
     FLAGS,
     { C_INTEGER(lor),
       FORTRAN_INTEGER_NULL,
@@ -435,7 +435,7 @@ ompi_op_t ompi_mpi_op_lor = {
 ompi_op_t ompi_mpi_op_bor = {
     { NULL, 0 },
 
-    "MPI_OP_BOR",
+    "MPI_BOR",
     FLAGS,
     { C_INTEGER(bor),
       FORTRAN_INTEGER(bor),
@@ -453,7 +453,7 @@ ompi_op_t ompi_mpi_op_bor = {
 ompi_op_t ompi_mpi_op_lxor = {
     { NULL, 0 },
 
-    "MPI_OP_LXOR",
+    "MPI_LXOR",
     FLAGS,
     { C_INTEGER(lxor),
       FORTRAN_INTEGER_NULL,
@@ -471,7 +471,7 @@ ompi_op_t ompi_mpi_op_lxor = {
 ompi_op_t ompi_mpi_op_bxor = {
     { NULL, 0 },
 
-    "MPI_OP_BXOR",
+    "MPI_BXOR",
     FLAGS,
     { C_INTEGER(bxor),
       FORTRAN_INTEGER(bxor),
@@ -489,7 +489,7 @@ ompi_op_t ompi_mpi_op_bxor = {
 ompi_op_t ompi_mpi_op_maxloc = {
     { NULL, 0 },
 
-    "MPI_OP_MAXLOC",
+    "MPI_MAXLOC",
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
     { C_INTEGER_NULL,
       FORTRAN_INTEGER_NULL,
@@ -507,7 +507,7 @@ ompi_op_t ompi_mpi_op_maxloc = {
 ompi_op_t ompi_mpi_op_minloc = {
     { NULL, 0 },
 
-    "MPI_OP_MINLOC",
+    "MPI_MINLOC",
     FLAGS,
     { C_INTEGER_NULL,
       FORTRAN_INTEGER_NULL,
@@ -520,18 +520,22 @@ ompi_op_t ompi_mpi_op_minloc = {
 
 /*
  * MPI_OP_REPLACE
+ * (MPI_ACCUMULATE is handled differently than the other reductions,
+ * so just zero out its function impementations here to ensure that
+ * users don't invoke MPI_REPLACE with any reduction operations other
+ * than ACCUMULATE)
  */
 ompi_op_t ompi_mpi_op_replace = {
     { NULL, 0 },
 
-    "MPI_OP_REPLACE",
+    "MPI_REPLACE",
     FLAGS,
-    { C_INTEGER(replace),
-      FORTRAN_INTEGER(replace),
-      FLOATING_POINT(replace),
-      LOGICAL(replace),
-      COMPLEX(replace),
-      BYTE(replace),
+    { C_INTEGER_NULL,
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE_NULL,
       TWOLOC_NULL }
 };
 
