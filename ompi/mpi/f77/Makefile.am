@@ -66,9 +66,7 @@ headers = \
 libmpi_f77_la_SOURCES   = \
         constants_f.c \
         attr_fn_f.c \
-        strings.c \
-        wtick_f.c \
-        wtime_f.c
+        strings.c
 
 #
 # libmpi_c_mpi.la is only built in some cases (see above)
@@ -332,7 +330,9 @@ libmpi_f77_mpi_la_SOURCES = \
         waitall_f.c \
         waitany_f.c \
         wait_f.c \
-        waitsome_f.c
+        waitsome_f.c \
+        wtick_f.c \
+        wtime_f.c
 
 if WANT_MPI2_ONE_SIDED
 libmpi_f77_mpi_la_SOURCES += \
