@@ -249,6 +249,13 @@ ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
                                       size_t* max_data,
                                       int32_t* freeAfter );
 
+    /*
+     *
+     */
+    OMPI_DECLSPEC int32_t
+    ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
+                                            size_t* position );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
