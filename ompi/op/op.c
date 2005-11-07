@@ -53,9 +53,29 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 /*
  * Helpful defines, because there's soooo many names!
+ *
+ * **NOTE** These #define's are strictly ordered!  A series of macros
+ * are built up to assemble a list of function names (or NULLs) that
+ * are put into the intrinsict ompi_op_t's in the middle of this
+ * file.  The order of these function names is critical, and must be
+ * the same as the OMPI_OP_TYPE_* enums in op.h (i.e., the enum's
+ * starting with OMPI_OP_TYPE_INT -- at the time of this writing,
+ * this is op.h:78).
  */
 
 /** C integer ***********************************************************/
+
+#ifdef HAVE_LONG_LONG
+#define C_INTEGER_LONG_LONG(name) \
+  { ompi_mpi_op_##name##_long_long },      /* OMPI_OP_TYPE_LONG_LONG */ \
+  { ompi_mpi_op_##name##_long_long_int },  /* OMPI_OP_TYPE_LONG_LONG_INT */ \
+  { ompi_mpi_op_##name##_unsigned_long_long } /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
+#else
+#define C_INTEGER_LONG_LONG(name) \
+  { NULL }, /* OMPI_OP_TYPE_LONG_LONG */ \
+  { NULL }, /* OMPI_OP_TYPE_LONG_LONG_INT */ \
+  { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
+#endif
 
 #define C_INTEGER(name) \
   { ompi_mpi_op_##name##_int },            /* OMPI_OP_TYPE_INT */ \
@@ -63,14 +83,18 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   { ompi_mpi_op_##name##_short },          /* OMPI_OP_TYPE_SHORT */ \
   { ompi_mpi_op_##name##_unsigned_short }, /* OMPI_OP_TYPE_UNSIGNED_SHORT */ \
   { ompi_mpi_op_##name##_unsigned },       /* OMPI_OP_TYPE_UNSIGNED */ \
-  { ompi_mpi_op_##name##_unsigned_long }   /* OMPI_OP_TYPE_UNSIGNED_LONG */
+  { ompi_mpi_op_##name##_unsigned_long },  /* OMPI_OP_TYPE_UNSIGNED_LONG */ \
+  C_INTEGER_LONG_LONG(name)
 #define C_INTEGER_NULL \
   { NULL }, /* OMPI_OP_TYPE_INT */ \
   { NULL }, /* OMPI_OP_TYPE_LONG */ \
   { NULL }, /* OMPI_OP_TYPE_SHORT */ \
   { NULL }, /* OMPI_OP_TYPE_UNSIGNED_SHORT */ \
   { NULL }, /* OMPI_OP_TYPE_UNSIGNED */ \
-  { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG */
+  { NULL }, /* OMPI_OP_TYPE_UNSIGNED_LONG */ \
+  { NULL }, /* OMPI_OP_TYPE_LONG_LONG */ \
+  { NULL }, /* OMPI_OP_TYPE_LONG_LONG_ING */ \
+  { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
 
 /** All the Fortran integers ********************************************/
 
