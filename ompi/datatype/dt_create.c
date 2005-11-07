@@ -50,40 +50,42 @@ static void __get_free_dt_struct( ompi_datatype_t* pData )
     pData->name[0]         = '\0';
 }
 
-static void __destroy_ddt_struct( ompi_datatype_t* pData )
+static void __destroy_ddt_struct( ompi_datatype_t* datatype )
 {
-    if( pData->desc.desc != NULL ) free( pData->desc.desc );
-    pData->desc.desc   = NULL;
-    pData->desc.length = 0;
-    pData->desc.used   = 0;
-    if( pData->opt_desc.desc != NULL ) free( pData->opt_desc.desc );
-    pData->opt_desc.desc   = NULL;
-    pData->opt_desc.length = 0;
-    pData->opt_desc.used   = 0;
-    if( pData->args != NULL ) ompi_ddt_release_args( pData );
-    pData->args = NULL;
-    if( NULL != ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, pData->d_f_to_c_index) ){
-        ompi_pointer_array_set_item( ompi_datatype_f_to_c_table, pData->d_f_to_c_index, NULL );
+    if( datatype->desc.desc != NULL ) free( datatype->desc.desc );
+    datatype->desc.desc   = NULL;
+    datatype->desc.length = 0;
+    datatype->desc.used   = 0;
+    if( datatype->opt_desc.desc != NULL ) free( datatype->opt_desc.desc );
+    datatype->opt_desc.desc   = NULL;
+    datatype->opt_desc.length = 0;
+    datatype->opt_desc.used   = 0;
+    if( datatype->args != NULL ) ompi_ddt_release_args( datatype );
+    datatype->args = NULL;
+    if( NULL != ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
+        ompi_pointer_array_set_item( ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
     }
     /* any pending attributes ? */
-    if (NULL != pData->d_keyhash) {
-        ompi_attr_delete_all( TYPE_ATTR, pData, pData->d_keyhash );
-        OBJ_RELEASE( pData->d_keyhash );
+    if (NULL != datatype->d_keyhash) {
+        ompi_attr_delete_all( TYPE_ATTR, datatype, datatype->d_keyhash );
+        OBJ_RELEASE( datatype->d_keyhash );
     }
+    /* make sure the name is set to empty */
+    datatype->name[0] = '\0';
 }
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_object_t, __get_free_dt_struct, __destroy_ddt_struct );
 
 ompi_datatype_t* ompi_ddt_create( int32_t expectedSize )
 {
-    ompi_datatype_t* pdt = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);
+    ompi_datatype_t* datatype = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);
 
     if( expectedSize == -1 ) expectedSize = DT_INCREASE_STACK;
-    pdt->desc.length = expectedSize + 1;  /* one for the fake elem at the end */
-    pdt->desc.used   = 0;
-    pdt->desc.desc   = (dt_elem_desc_t*)calloc(pdt->desc.length, sizeof(dt_elem_desc_t));
-    memset( pdt->name, 0, MPI_MAX_OBJECT_NAME );
-    return pdt;
+    datatype->desc.length = expectedSize + 1;  /* one for the fake elem at the end */
+    datatype->desc.used   = 0;
+    datatype->desc.desc   = (dt_elem_desc_t*)calloc(datatype->desc.length, sizeof(dt_elem_desc_t));
+    memset( datatype->name, 0, MPI_MAX_OBJECT_NAME );
+    return datatype;
 }
 
 int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, long lb, long extent, ompi_datatype_t** newType )
