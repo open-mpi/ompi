@@ -174,11 +174,15 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
 
     /* Now that we have the new ub and the alignment we should update the ub to match
      * the new alignement. We have to add an epsilon that is the least nonnegative increment
-     * needed to roung the extent to the next multiple of the alignment.
+     * needed to roung the extent to the next multiple of the alignment. This rule
+     * apply only if there is user specified upper bound as stated in the MPI
+     * standard MPI 1.2 page 71.
      */
-    epsilon = (pdtBase->ub - pdtBase->lb) % pdtBase->align;
-    if( 0 != epsilon ) {
-        pdtBase->ub += (pdtBase->align - epsilon);
+    if( !(pdtBase->flags & DT_FLAG_USER_UB) ) {
+        epsilon = (pdtBase->ub - pdtBase->lb) % pdtBase->align;
+        if( 0 != epsilon ) {
+            pdtBase->ub += (pdtBase->align - epsilon);
+        }
     }
 
     /*
