@@ -283,10 +283,11 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
     /* As we change (or set) the datatype on this convertor we should reset the datatype
      * part of the convertor flags to the default value.
      */
-    convertor->flags &= CONVERTOR_TYPE_MASK;
-    convertor->flags |= (CONVERTOR_DATATYPE_MASK & datatype->flags);
-    convertor->pDesc = (ompi_datatype_t*)datatype;
-    convertor->bConverted = 0;
+    convertor->flags         &= CONVERTOR_TYPE_MASK;
+    convertor->flags         |= (CONVERTOR_DATATYPE_MASK & datatype->flags);
+    convertor->pDesc          = (ompi_datatype_t*)datatype;
+    convertor->bConverted     = 0;
+    convertor->pending_length = 0;
 
     /* Decide which data representation will be used for the conversion. */
     if( (NULL != datatype->opt_desc.desc) && (convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
