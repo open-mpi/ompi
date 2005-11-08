@@ -1073,7 +1073,7 @@ void mca_btl_mvapi_endpoint_send_credits(
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->sg_entry.len = sizeof(mca_btl_mvapi_header_t);
 
-    rc = EVAPI_post_inline_sr(btl->nic, endpoint->lcl_qp_hndl_hp, &frag->sr_desc); 
+    rc = EVAPI_post_inline_sr(btl->nic, local_qp, &frag->sr_desc); 
     if(VAPI_SUCCESS != rc) {
         BTL_ERROR(("error calling EVAPI_post_inline_sr: %s\n", VAPI_strerror(rc)));
         MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag);
