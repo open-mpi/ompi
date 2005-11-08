@@ -326,53 +326,53 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 						     int32_t* freeAfter )
 {
     const ompi_datatype_t *pData = pConv->pDesc;
-    char* pDstBuf = pConv->pBaseBuf, *pSrcBuf;
+    char* user_memory_base = pConv->pBaseBuf, *packed_buffer;
     uint32_t iov_count, initial_bytes_converted = pConv->bConverted;
     long extent = pData->ub - pData->lb;
     uint32_t bConverted, length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        pSrcBuf = (char*)iov[iov_count].iov_base;
+        packed_buffer = (char*)iov[iov_count].iov_base;
         remaining = pConv->count * pData->size - pConv->bConverted;
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
 
         if( (long)pData->size == extent ) {
-            pDstBuf += pData->true_lb + pConv->bConverted;
+            user_memory_base += pData->true_lb + pConv->bConverted;
 
             /* contiguous data or basic datatype with count */
-            OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, remaining,
+            OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, remaining,
                                         pConv->pBaseBuf, pData, pConv->count );
-            MEMCPY( pDstBuf, pSrcBuf, remaining);
+            MEMCPY( user_memory_base, packed_buffer, remaining);
         } else {
-            pDstBuf += stack->disp;
+            user_memory_base += pData->true_lb + stack->disp;
 
             length = pConv->bConverted / pData->size;  /* already done */
             length = pConv->bConverted - length * pData->size;  /* still left on the last element */
             /* complete the last copy */
             if( length != 0 ) {
-                OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, length, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( pDstBuf, pSrcBuf, length );
-                pSrcBuf += length;
-                pDstBuf += (extent - length);
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, length, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( user_memory_base, packed_buffer, length );
+                packed_buffer += length;
+                user_memory_base += (extent - length);
                 remaining -= length;
             }
             for( i = 0; pData->size <= remaining; i++ ) {
-                OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, pData->size, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( pDstBuf, pSrcBuf, pData->size );
-                pSrcBuf += pData->size;
-                pDstBuf += extent;
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, pData->size, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( user_memory_base, packed_buffer, pData->size );
+                packed_buffer += pData->size;
+                user_memory_base += extent;
                 remaining -= pData->size;
             }
             /* copy the last bits */
             if( remaining != 0 ) {
-                OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, remaining, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( pDstBuf, pSrcBuf, remaining );
-                pDstBuf += remaining;
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, remaining, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( user_memory_base, packed_buffer, remaining );
+                user_memory_base += remaining;
             }
-            stack->disp = pDstBuf - pConv->pBaseBuf;  /* save the position */
+            stack->disp = user_memory_base - pData->true_lb - pConv->pBaseBuf;  /* save the position */
         }
         pConv->bConverted += bConverted;
     }
