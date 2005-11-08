@@ -506,7 +506,7 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
     mca_btl_mvapi_module_t* mvapi_btl; 
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
 
-#if 1     
+#if 0     
     if(mvapi_btl->send_free_eager.fl_num_allocated != 
        mvapi_btl->send_free_eager.super.opal_list_length){ 
         opal_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
