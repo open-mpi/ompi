@@ -267,16 +267,6 @@ extern "C" {
  */
   OMPI_OP_HANDLER_2TYPE(minloc)
 
-/**
- * Handler functions for MPI_REPLACE (only for MPI_ACCUMULATE)
- */
-  OMPI_OP_HANDLER_C_INTEGER(replace)
-  OMPI_OP_HANDLER_FORTRAN_INTEGER(replace)
-  OMPI_OP_HANDLER_FLOATING_POINT(replace)
-  OMPI_OP_HANDLER_LOGICAL(replace)
-  OMPI_OP_HANDLER_COMPLEX(replace)
-  OMPI_OP_HANDLER_BYTE(replace)
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
