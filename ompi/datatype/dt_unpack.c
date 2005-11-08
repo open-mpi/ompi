@@ -326,7 +326,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 						     int32_t* freeAfter )
 {
     const ompi_datatype_t *pData = pConv->pDesc;
-    char* user_memory_base = pConv->pBaseBuf, *packed_buffer;
+    char *user_memory, *packed_buffer;
     uint32_t iov_count, initial_bytes_converted = pConv->bConverted;
     long extent = pData->ub - pData->lb;
     uint32_t bConverted, length, remaining, i;
@@ -338,41 +338,56 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
+        user_memory = pConv->pBaseBuf + pData->true_lb;
+
+        /*opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %d\n",
+          user_memory, packed_buffer, remaining );*/
 
         if( (long)pData->size == extent ) {
-            user_memory_base += pData->true_lb + pConv->bConverted;
+            user_memory += pConv->bConverted;
 
             /* contiguous data or basic datatype with count */
-            OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, remaining,
+            OMPI_DDT_SAFEGUARD_POINTER( user_memory, remaining,
                                         pConv->pBaseBuf, pData, pConv->count );
-            MEMCPY( user_memory_base, packed_buffer, remaining);
+            /*opal_output( 0, "1. unpack contig dest %p src %p length %d\n",
+              user_memory, packed_buffer, remaining );*/
+            MEMCPY( user_memory, packed_buffer, remaining);
         } else {
-            user_memory_base += pData->true_lb + stack->disp;
+            user_memory += stack->disp;
 
             length = pConv->bConverted / pData->size;  /* already done */
             length = pConv->bConverted - length * pData->size;  /* still left on the last element */
             /* complete the last copy */
             if( length != 0 ) {
-                OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, length, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( user_memory_base, packed_buffer, length );
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory, length, pConv->pBaseBuf,
+                                            pData, pConv->count );
+                /*opal_output( 0, "1. unpack dest %p src %p length %d\n",
+                  user_memory, packed_buffer, length );*/
+                MEMCPY( user_memory, packed_buffer, length );
                 packed_buffer += length;
-                user_memory_base += (extent - length);
-                remaining -= length;
+                user_memory   += (extent - (pData->size - length));
+                remaining     -= length;
             }
             for( i = 0; pData->size <= remaining; i++ ) {
-                OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, pData->size, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( user_memory_base, packed_buffer, pData->size );
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory, pData->size, pConv->pBaseBuf,
+                                            pData, pConv->count );
+                /*opal_output( 0, "2. unpack dest %p src %p length %d\n",
+                  user_memory, packed_buffer, pData->size );*/
+                MEMCPY( user_memory, packed_buffer, pData->size );
                 packed_buffer += pData->size;
-                user_memory_base += extent;
-                remaining -= pData->size;
+                user_memory   += extent;
+                remaining     -= pData->size;
             }
             /* copy the last bits */
             if( remaining != 0 ) {
-                OMPI_DDT_SAFEGUARD_POINTER( user_memory_base, remaining, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( user_memory_base, packed_buffer, remaining );
-                user_memory_base += remaining;
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory, remaining, pConv->pBaseBuf,
+                                            pData, pConv->count );
+                /*opal_output( 0, "3. unpack dest %p src %p length %d\n",
+                  user_memory, packed_buffer, remaining );*/
+                MEMCPY( user_memory, packed_buffer, remaining );
+                user_memory += remaining;
             }
-            stack->disp = user_memory_base - pData->true_lb - pConv->pBaseBuf;  /* save the position */
+            stack->disp = user_memory - pData->true_lb - pConv->pBaseBuf;  /* save the position */
         }
         pConv->bConverted += bConverted;
     }
