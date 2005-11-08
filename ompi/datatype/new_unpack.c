@@ -60,7 +60,7 @@ static inline void unpack_predefined_data( ompi_convertor_t* CONVERTOR, /* the c
         if( 0 == _copy_count ) return;  /* nothing to do */
     }
 
-    if( _copy_blength == (uint32_t)_elem->disp ) {
+    if( _copy_blength == (uint32_t)_elem->extent ) {
         _copy_blength *= _copy_count;
         /* the extent and the size of the basic datatype are equals */
         OMPI_DDT_SAFEGUARD_POINTER( _destination, _copy_blength, (CONVERTOR)->pBaseBuf,
