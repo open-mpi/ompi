@@ -34,7 +34,11 @@ extern "C" {
 #endif
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_mvapi_frag_t);
 
-typedef mca_btl_base_header_t mca_btl_mvapi_header_t; 
+struct mca_btl_mvapi_header_t {
+    mca_btl_base_tag_t tag;
+    int16_t credits;
+};
+typedef struct mca_btl_mvapi_header_t mca_btl_mvapi_header_t;
 
 
 typedef enum { 
@@ -140,6 +144,33 @@ OBJ_CLASS_DECLARATION(mca_btl_mvapi_recv_frag_max_t);
 
 
 
+#define MCA_BTL_IB_FRAG_PROGRESS(frag) \
+do { \
+    switch(frag->sr_desc.opcode) { \
+    case VAPI_SEND: \
+        if(OMPI_SUCCESS !=  mca_btl_mvapi_endpoint_send(frag->endpoint, frag)) { \
+            BTL_ERROR(("error in posting pending send\n")); \
+        } \
+        break; \
+    case VAPI_RDMA_WRITE: \
+        if(OMPI_SUCCESS !=  mca_btl_mvapi_put((mca_btl_base_module_t*) mvapi_btl, \
+            frag->endpoint, \
+            (mca_btl_base_descriptor_t*) frag)) { \
+            BTL_ERROR(("error in posting pending rdma write\n")); \
+        } \
+        break; \
+    case VAPI_RDMA_READ: \
+        if(OMPI_SUCCESS !=  mca_btl_mvapi_get((mca_btl_base_module_t *) mvapi_btl, \
+                                                              frag->endpoint, \
+                                                              (mca_btl_base_descriptor_t*) frag)) { \
+            BTL_ERROR(("error in posting pending rdma read\n")); \
+        } \
+        break; \
+    default: \
+        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->sr_desc.opcode)); \
+        break; \
+    } \
+} while (0)
 
 
 struct mca_btl_mvapi_module_t;

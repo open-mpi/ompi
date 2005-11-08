@@ -34,7 +34,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-#define MAX_POST_RR (16) 
 OBJ_CLASS_DECLARATION(mca_btl_mvapi_endpoint_t);
 
 
@@ -77,10 +76,10 @@ typedef enum {
 
 struct mca_btl_mvapi_rem_info_t { 
     
-    VAPI_qp_num_t               rem_qp_num_high;
+    VAPI_qp_num_t               rem_qp_num_hp;
     /* High priority remote side QP number */
 
-    VAPI_qp_num_t               rem_qp_num_low; 
+    VAPI_qp_num_t               rem_qp_num_lp; 
     /* Low prioirty remote size QP number */ 
 
     IB_lid_t                    rem_lid;
@@ -124,36 +123,27 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpoint */
  
-    opal_list_t                 pending_frags_hp; 
-    /**< list of pending high priority frags */ 
+    opal_list_t                 pending_frags_hp;  /**< list of pending high priority frags */ 
+    opal_list_t                 pending_frags_lp;  /**< list of pending low priority frags */ 
+    opal_list_t                 pending_frags_get; /**< list of pending get operations */
 
-    opal_list_t                 pending_frags_lp; 
-    /**< list of pending low priority frags */ 
-
-    int32_t                     wr_sq_tokens_hp; 
-    /**< number of high priority frags that  can be outstanding (down counter) */ 
-
-    int32_t                     wr_sq_tokens_lp; 
-    /**< number of low priority frags that  can be outstanding (down counter) */ 
-    
     mca_btl_mvapi_rem_info_t    rem_info; 
 
-    VAPI_qp_hndl_t              lcl_qp_hndl_high;
-    /* High priority local QP handle */
+    VAPI_qp_hndl_t              lcl_qp_hndl_hp; /* High priority local QP handle */
+    VAPI_qp_hndl_t              lcl_qp_hndl_lp; /* Low priority local QP handle */
+
+    VAPI_qp_prop_t              lcl_qp_prop_hp; /* High priority local QP properties */
+    VAPI_qp_prop_t              lcl_qp_prop_lp; /* Low priority local QP properties */
+
+    int32_t                     sd_tokens_hp;  /**< number of high priority send tokens */
+    int32_t                     sd_tokens_lp;  /**< number of low priority send tokens */
+    int32_t                     get_tokens;    /**< number of available get tokens */
     
-    VAPI_qp_hndl_t              lcl_qp_hndl_low;
-    /* Low priority local QP handle */
-
-    VAPI_qp_prop_t              lcl_qp_prop_high;
-    /* High priority local QP properties */
-
-    VAPI_qp_prop_t              lcl_qp_prop_low;
-    /* Low priority local QP properties */
-
+    int32_t rd_posted_hp;   /**< number of high priority descriptors posted to the nic*/ 
+    int32_t rd_posted_lp;   /**< number of low priority descriptors posted to the nic*/ 
+    int32_t rd_credits_hp;  /**< number of high priority credits to return to peer */
+    int32_t rd_credits_lp;  /**< number of low priority credits to return to peer */
     
-    uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
-    uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
-
     uint32_t subnet; 
 #if 0
     mca_btl_mvapi_rdma_buf_t   *rdma_buf;
@@ -164,6 +154,11 @@ typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_mvapi_endpoint_t;
 int  mca_btl_mvapi_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_btl_mvapi_frag_t* frag);
 int  mca_btl_mvapi_endpoint_connect(mca_btl_base_endpoint_t*);
+void mca_btl_mvapi_endpoint_send_credits(
+   mca_btl_base_endpoint_t*, 
+   VAPI_qp_hndl_t local, 
+   VAPI_qp_num_t rem, 
+   int32_t* credits);
 void mca_btl_mvapi_post_recv(void);
 
 
@@ -173,15 +168,16 @@ void mca_btl_mvapi_post_recv(void);
   do { \
     mca_btl_mvapi_module_t * mvapi_btl = endpoint->endpoint_btl; \
     OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
-    if(endpoint->rr_posted_high <= mca_btl_mvapi_component.ib_rr_buf_min+additional && \
-       endpoint->rr_posted_high < mvapi_btl->rd_buf_max){ \
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mvapi_btl->rd_buf_max -  \
-                                            endpoint->rr_posted_high, \
+    if(endpoint->rd_posted_hp <= mca_btl_mvapi_component.rd_low+additional && \
+       endpoint->rd_posted_hp < mvapi_btl->rd_num){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mvapi_btl->rd_num -  \
+                                            endpoint->rd_posted_hp, \
                                             endpoint, \
                                             &mvapi_btl->recv_free_eager, \
-                                            &endpoint->rr_posted_high, \
+                                            endpoint->rd_posted_hp, \
+                                            endpoint->rd_credits_hp, \
                                             mvapi_btl->nic, \
-                                            endpoint->lcl_qp_hndl_high); \
+                                            endpoint->lcl_qp_hndl_hp); \
     } \
     OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
   } while(0); \
@@ -193,15 +189,16 @@ void mca_btl_mvapi_post_recv(void);
    do { \
     mca_btl_mvapi_module_t * mvapi_btl = endpoint->endpoint_btl; \
     OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
-    if(endpoint->rr_posted_low <= mca_btl_mvapi_component.ib_rr_buf_min+additional && \
-       endpoint->rr_posted_low < mvapi_btl->rd_buf_max){ \
-        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mvapi_btl->rd_buf_max -  \
-                                            endpoint->rr_posted_low, \
+    if(endpoint->rd_posted_lp <= mca_btl_mvapi_component.rd_low+additional && \
+       endpoint->rd_posted_lp < mvapi_btl->rd_num){ \
+        MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(mvapi_btl->rd_num -  \
+                                            endpoint->rd_posted_lp, \
                                             endpoint, \
                                             &mvapi_btl->recv_free_max, \
-                                            &endpoint->rr_posted_low, \
+                                            endpoint->rd_posted_lp, \
+                                            endpoint->rd_credits_lp, \
                                             mvapi_btl->nic, \
-                                            endpoint->lcl_qp_hndl_low); \
+                                            endpoint->lcl_qp_hndl_lp); \
     } \
     OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
   } while(0); \
@@ -211,18 +208,20 @@ void mca_btl_mvapi_post_recv(void);
 #define MCA_BTL_MVAPI_ENDPOINT_POST_RR_SUB(cnt, \
                                             my_endpoint, \
                                             frag_list, \
-                                            rr_posted, \
+                                            rd_posted, \
+                                            rd_credits, \
                                             nic, \
                                             qp ) \
-{\
-  do { \
-    uint32_t i; \
+{  \
+do { \
+    int32_t i; \
     int rc; \
-    opal_list_item_t* item; \
-    mca_btl_mvapi_frag_t* frag = NULL; \
+    int32_t num_post = cnt; \
     mca_btl_mvapi_module_t *mvapi_btl = my_endpoint->endpoint_btl; \
     VAPI_rr_desc_t* desc_post = mvapi_btl->rr_desc_post; \
-    for(i = 0; i < cnt; i++) { \
+    for(i = 0; i < num_post; i++) { \
+        opal_list_item_t* item; \
+        mca_btl_mvapi_frag_t* frag = NULL; \
         OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
         frag = (mca_btl_mvapi_frag_t*) item; \
         frag->endpoint = my_endpoint; \
@@ -231,28 +230,20 @@ void mca_btl_mvapi_post_recv(void);
              (unsigned char*) frag->hdr);  \
        desc_post[i] = frag->rr_desc; \
     }\
-    frag->ret = EVAPI_post_rr_list( nic, \
-                                                qp, \
-                                                cnt, \
-                                                desc_post); \
-   if(NULL != frag && VAPI_OK != frag->ret) { \
+    rc = EVAPI_post_rr_list( nic, \
+                             qp, \
+                             num_post, \
+                             desc_post); \
+   if(VAPI_OK != rc) { \
         BTL_ERROR(("error posting receive descriptors: %s",\
-                   VAPI_strerror(frag->ret))); \
-    } else if (NULL != frag){\
-        OPAL_THREAD_ADD32(rr_posted, cnt); \
+                   VAPI_strerror(rc))); \
+    } else { \
+        /* fprintf(stderr, "posting: %d to %d\n", num_post, rd_posted); */ \
+        OPAL_THREAD_ADD32(&(rd_posted), num_post); \
+        /* fprintf(stderr, "credits: %d to %d\n", num_post, rd_credits); */ \
+        OPAL_THREAD_ADD32(&(rd_credits), num_post); \
    }\
   } while(0); \
-}
-
-#define BTL_MVAPI_INSERT_PENDING(frag, frag_list, tokens, lock, rc) \
-{ \
- do{ \
-     OPAL_THREAD_LOCK(&lock); \
-     opal_list_append(&frag_list, (opal_list_item_t *)frag); \
-     OPAL_THREAD_UNLOCK(&lock); \
-     OPAL_THREAD_ADD32(&tokens, 1); \
-     rc =  OMPI_SUCCESS; \
- } while(0); \
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
