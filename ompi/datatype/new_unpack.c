@@ -178,6 +178,27 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
 
         packed_buffer = iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
+        if( 0 != pConvertor->pending_length ) {
+            uint32_t element_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
+            uint32_t missing_length = element_length - pConvertor->pending_length;
+
+            assert( pElem->elem.common.flags & DT_FLAG_DATA );
+            memcpy( pConvertor->pending + pConvertor->pending_length, packed_buffer, missing_length );
+            packed_buffer = pConvertor->pending;
+            DO_DEBUG( opal_output( 0, "unpack pending from the last unpack %d out of %d bytes\n",
+                                   pConvertor->pending_length, ompi_ddt_basicDatatypes[pElem->elem.common.type]->size ); );
+            UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                        packed_buffer, user_memory_base, element_length );
+            if( 0 == count_desc ) {
+                user_memory_base = pConvertor->pBaseBuf + pStack->disp;
+                pos_desc++;  /* advance to the next data */
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            }
+            assert( 0 == element_length );
+            packed_buffer = (char*)iov[iov_count].iov_base + missing_length;
+            iov_len_local -= missing_length;
+            pConvertor->pending_length = 0;  /* nothing more inside */
+        }
         while( 1 ) {
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "unpack end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
