@@ -164,8 +164,12 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                 pStack--;
                 pos_desc++;
             } else {
-                assert( DT_LOOP == description[pStack->index].loop.common.type );
-                pStack->disp += description[pStack->index].loop.extent;
+                if( pStack->index == -1 ) {
+                    pStack->disp += (pConvertor->pDesc->ub - pConvertor->pDesc->lb);
+                } else {
+                    assert( DT_LOOP == description[pStack->index].loop.common.type );
+                    pStack->disp += description[pStack->index].loop.extent;
+                }
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
