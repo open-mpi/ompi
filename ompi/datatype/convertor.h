@@ -92,6 +92,8 @@ struct ompi_convertor_t {
     /* All others fields get modified for every call to pack/unpack functions */
     uint32_t                      stack_pos;    /**< the actual position on the stack */
     size_t                        bConverted;   /**< # of bytes already converted */
+    char                          pending[16];  /**< bytes pending from the last conversion */
+    uint32_t                      pending_length; /**< # bytes pending ... */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
