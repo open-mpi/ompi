@@ -618,7 +618,8 @@ struct mca_coll_base_comm_t {
    int cached_pipeline_root;
 
   /* extra data required by the decision functions */
-  rule_t rules[COLLCOUNT];
+  ompi_coll_alg_rule_t *all_base_rules;       /* stored only on MCW, all other coms ref it */
+  ompi_coll_com_rule_t *com_rules[COLLCOUNT]; /* the communicator rules for each MPI collective for ONLY my comsize */
 };
 
 #if defined(c_plusplus) || defined(__cplusplus)

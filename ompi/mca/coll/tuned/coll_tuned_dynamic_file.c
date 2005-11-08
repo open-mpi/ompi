@@ -1,0 +1,287 @@
+
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "mpi.h"
+#include "mca/mca.h"
+#include "mca/coll/coll.h"
+#include "request/request.h"
+#include "mca/pml/pml.h"
+
+/* need to include our own topo prototypes so we can malloc data on the comm correctly */
+#include "coll_tuned_topo.h"
+
+/* also need the dynamic rule structures */
+#include "coll_tuned_dynamic_rules.h"
+
+/* and our own prototypes */
+#include "coll_tuned_dynamic_file.h"
+
+
+#define MYEOF   -999
+
+static void skiptonewline (FILE *fptr); /* local function */
+static int getnext (FILE *fptr); /* local function */
+
+static int fileline=0; /* used for verbose error messages */
+
+/* 
+ * Reads a rule file called fname
+ * Builds the algorithm rule table for a max of n_collectives
+ *
+ * If an error occurs it removes rule table and then exits with a very verbose
+ * error message (this stops the user using a half baked rule table
+ *
+ * Returns the number of actual collectives that a rule exists for
+ * (note 0 is NOT an error)
+ *
+ */
+
+int coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules, int n_collectives)
+{
+   FILE *fptr = (FILE*) NULL;
+   int X;
+   int CI;
+   int NCS;
+   int CS;
+   int NMS;
+   int MS, ALG, SS;
+   int x, ci, ncs, cs, nms;
+   int i;
+
+   ompi_coll_alg_rule_t *alg_rules = (ompi_coll_alg_rule_t*) NULL;   /* complete table of rules */
+
+   /* individual pointers to sections of rules */
+   ompi_coll_alg_rule_t *alg_p = (ompi_coll_alg_rule_t*) NULL;
+   ompi_coll_com_rule_t *com_p = (ompi_coll_com_rule_t*) NULL;
+   ompi_coll_msg_rule_t *msg_p = (ompi_coll_msg_rule_t*) NULL;
+
+   /* stats info */
+   int total_alg_count = 0;
+   int total_com_count = 0;
+   int total_msg_count = 0;
+
+   if (!fname) {
+      fprintf(stderr,"Gave NULL as rule table configuration file for tuned collectives... ignoring!\n");
+      return (-1);
+   }
+
+   if (!rules) {
+      fprintf(stderr,"Gave NULL as rule table result ptr!... ignoring!\n");
+      return (-2);
+   }
+
+   if (n_collectives<1) {
+      fprintf(stderr,"Gave %d as max number of collectives in the rule table configuration file for tuned collectives!... ignoring!\n", n_collectives);
+      return (-3);
+   }
+
+   fptr = fopen (fname, "r");
+   if (!fptr) {
+      fprintf(stderr,"cannot read rules file [%s]\n", fname);
+      goto on_file_error;
+   }
+
+   /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
+   alg_rules = coll_tuned_mk_alg_rules (n_collectives);
+
+   X = getnext(fptr);
+   if (X<0) {
+      fprintf(stderr,"Could not read number of collectives in configuration file around line %d\n", fileline);
+      goto on_file_error;
+   }
+   if (X>n_collectives) {
+      fprintf(stderr,"Number of collectives in configuration file %d is greater than number of MPI collectives possible %d ??? error around line %d\n", X, n_collectives, fileline);
+      goto on_file_error;
+   }
+
+   for (x=0;x<X;x++) { /* for each collective */
+
+      CI = getnext (fptr);
+      if (CI<0) {
+         fprintf(stderr,"Could not read next Collective id in configuration file around line %d\n", fileline);
+         goto on_file_error;
+      }
+      if (CI>=n_collectives) {
+         fprintf(stderr,"Collective id in configuration file %d is greater than MPI collectives possible %d. Error around line %d\n", CI, n_collectives, fileline);
+         goto on_file_error;
+      }
+
+      if (alg_rules[CI].alg_rule_id != CI) {
+         printf("Internal error in handling collective ID %d\n", CI);
+         coll_tuned_free_all_rules (*rules, n_collectives);
+         return (-4);
+      }
+
+      alg_p = &alg_rules[CI];
+
+      alg_p->alg_rule_id = CI;
+      alg_p->n_com_sizes = 0;
+      alg_p->com_rules = (ompi_coll_com_rule_t *) NULL;
+
+      NCS = getnext (fptr);
+      if (NCS<0) {
+         fprintf(stderr,"Couldnot read count of communicators for collective ID %d at around line %d\n", CI, fileline);
+         goto on_file_error;
+      }
+
+      alg_p->n_com_sizes = NCS;
+      alg_p->com_rules = coll_tuned_mk_com_rules (NCS, CI);
+
+      for (ncs=0;ncs<NCS;ncs++) {	/* for each comm size */
+
+         com_p = &(alg_p->com_rules[ncs]);
+        
+         CS = getnext (fptr);
+         if (CS<0) {
+            fprintf(stderr,"Couldnot read communicator size for collective ID %d com rule %d at around line %d\n", CI, ncs, fileline);
+            goto on_file_error;
+         }
+
+         com_p->mpi_comsize = CS;
+
+         NMS = getnext (fptr);
+         if (NMS<0) {
+            fprintf(stderr,"Couldnot read number of message sizes for collective ID %d com rule %d at around line %d\n", CI, ncs, fileline);
+            goto on_file_error;
+         }
+
+         com_p->n_msg_sizes = NMS;
+         com_p->msg_rules = coll_tuned_mk_msg_rules (NMS, CI, ncs, CS);
+
+         msg_p = com_p->msg_rules;
+
+         for (nms=0;nms<NMS;nms++) {	/* for each msg size */
+
+            msg_p = &(com_p->msg_rules[nms]);
+
+            MS = getnext (fptr);
+            if (MS<0) {
+                fprintf(stderr,"Couldnot read message size for collective ID %d com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline);
+                goto on_file_error;
+            }
+            msg_p->msg_size = MS;
+
+            ALG = getnext (fptr);
+            if (ALG<0) {
+                fprintf(stderr,"Couldnot read target algorithm method for collective ID %d com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline);
+                goto on_file_error;
+            }
+            msg_p->result_alg = ALG;
+
+            SS = getnext (fptr);
+            if (SS<0) {
+                fprintf(stderr,"Couldnot read target segment size for collective ID %d com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline);
+                goto on_file_error;
+            }
+            msg_p->result_segsize = SS;
+
+            if (!nms && MS) {
+               fprintf(stderr,"All algorithms must specify a rule for message size of zero upwards always first!\n");
+               fprintf(stderr,"Message size was %d for collective ID %d com rule %d msg rule %d at around line %d\n", MS, CI, ncs, nms, fileline);
+               goto on_file_error;
+            }
+
+            total_msg_count++;
+
+         } /* msg size */
+
+        total_com_count++;
+
+      } /* comm size */
+
+      total_alg_count++;
+
+   } /* per collective */
+   
+   fclose (fptr);
+
+   printf("\nStats\n");
+   printf("Collectives with rules\t\t\t: %5d\n", total_alg_count);
+   printf("Communicator sizes with rules\t\t: %5d\n", total_com_count);
+   printf("Message sizes with rules\t\t: %5d\n", total_msg_count);
+   printf("Lines in configuration file read\t\t: %5d\n", fileline);
+   printf("\n");
+
+   /* return the rules to the caller */
+   *rules = alg_rules;
+
+   return (total_alg_count);
+
+
+on_file_error:
+
+   /* here we close out the file and delete any memory allocated nicely */
+   /* we return back a verbose message and a count of -1 algorithms read */
+   /* draconian but its better than having a bad collective decision table */
+
+   fprintf(stderr,"read_rules_config_file: bad configure file [%s]. Read afar as line %d\n", fname, fileline);
+   fprintf(stderr,"Ignoring user supplied tuned collectives configuration decision file.\n");
+   fprintf(stderr,"Switching back to [compiled in] fixed decision table.\n");
+   fprintf(stderr,"Fix errors as listed above and try again.\n");
+
+   /* deallocate memory if allocated */
+   if (alg_rules) coll_tuned_free_all_rules (alg_rules, n_collectives);
+
+   /* close file */
+   if (fptr) fclose (fptr);
+
+   *rules = (ompi_coll_alg_rule_t*) NULL;
+   return (-1);
+}
+
+
+static int getnext (FILE *fptr)
+{
+   int val;
+   int rc;
+   char trash;
+
+   do {
+      rc = fscanf(fptr, "%d", &val);
+      if (rc==EOF) return (MYEOF);
+      if (1==rc) return (val);
+      else { 
+         rc = fread(&trash, 1, 1, fptr);
+         if ('\n'==trash) fileline++;
+         if ('#'==trash) skiptonewline (fptr);
+      }
+   } while (1);
+
+return rc;
+}
+
+static void skiptonewline (FILE *fptr)
+{
+   char val;
+   int rc;
+
+   do {
+      rc = fread(&val, 1, 1, fptr);
+      if (0==rc) return;
+      if ((1==rc)&&('\n'==val)) {
+         fileline++;
+         return;
+      }
+   } while (1);
+}
+
