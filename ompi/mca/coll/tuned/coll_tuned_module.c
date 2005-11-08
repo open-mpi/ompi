@@ -28,6 +28,8 @@
 #include "mca/coll/base/base.h"
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
+#include "coll_tuned_dynamic_rules.h"
+#include "coll_tuned_dynamic_file.h"
 
 
 /*
@@ -291,6 +293,8 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   struct mca_coll_base_comm_t *data;
   /* fanout parameters */
   int pre_allocate = 1;
+  int rc=0;
+  int i;
 
 
   OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init called."));
@@ -315,40 +319,6 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
       size = ompi_comm_size(comm);
   }
 
-  /*
-   * If using dynamic and you are MPI_COMM_WORLD and you want to use a parameter file..
-   * then this effects how much storage space you need
-   * (This is a basic version of what will go into V2)
-   *
-   */
-
-
-  rank = ompi_comm_rank(comm);	/* find rank as only MCW:0 opens any tuned conf files */
-
-
-  if (!rank) {
-     if (&ompi_mpi_comm_world==comm) {
-        if (mca_coll_tuned_use_dynamic_rules) {
-            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
-            if (mca_coll_tuned_dynamic_rules_filename) {
-	   OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
-	           mca_coll_tuned_dynamic_rules_filename));
-            }
-
-        }
-        else {
-            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init MCW & NOT Dynamic"));
-        }
-     }
-     else {
-        if (mca_coll_tuned_use_dynamic_rules) {
-            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
-        }
-        else {
-            OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & NOT Dynamic"));
-        }
-     }
-  }
 
   /* 
    * we still malloc data as it is used by the TUNED modules
@@ -381,6 +351,77 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
      }
      data->mcct_reqs = (ompi_request_t **) NULL;
      data->mcct_num_reqs = 0;
+  }
+
+
+  /*
+   * If using dynamic and you are MPI_COMM_WORLD and you want to use a parameter file..
+   * then this effects how much storage space you need
+   * (This is a basic version of what will go into V2)
+   *
+   */
+
+
+  size = ompi_comm_size(comm);  /* find size so we can (A) decide if to access the file directly */
+                                /* (B) so we can get our very own customised ompi_coll_com_rule_t ptr */
+                                /* which only has rules in it for our com size */
+
+  rank = ompi_comm_rank(comm);	/* find rank as only MCW:0 opens any tuned conf files */
+                                /* actually if they are below a threadhold, they all open it */
+                                /* have to build a collective in here.. but just for MCW.. */
+                                /* but we have to make sure we have the same rules everywhere :( */
+
+  /* if using dynamic rules make sure all overrides are NULL before we start override anything accidently */
+  if (mca_coll_tuned_use_dynamic_rules) {
+        /* base rules */
+        data->all_base_rules = (ompi_coll_alg_rule_t*) NULL;
+
+        /* each collective rule for my com size */
+        for (i=0;i<COLLCOUNT;i++) {
+           data->com_rules[i] = (ompi_coll_com_rule_t*) NULL;
+        }
+  }
+
+
+  if (&ompi_mpi_comm_world==comm) {
+
+     if (mca_coll_tuned_use_dynamic_rules) {
+
+         OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
+
+         if (mca_coll_tuned_dynamic_rules_filename) {
+             OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
+                           mca_coll_tuned_dynamic_rules_filename));
+             rc = coll_tuned_read_rules_config_file (mca_coll_tuned_dynamic_rules_filename,
+                                     &(data->all_base_rules), COLLCOUNT);
+             if (rc>=0) {
+                OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Read %d valid rules\n", rc));
+             }
+             else { /* failed to read config file, thus make sure its a NULL... */
+                 data->all_base_rules = (ompi_coll_alg_rule_t*) NULL;
+             }
+
+         } /* end if a config filename exists */
+
+     } /* end if dynamic_rules */
+
+  } /* end if MCW */
+  
+  /* ok, if using dynamic rules and we are just any rank and a base set of rules exist.. ref them */
+  if ((mca_coll_tuned_use_dynamic_rules)&&((ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules)) {
+     if (!(&ompi_mpi_comm_world==comm)) { /* not if we are MCW.. that would be wrong */
+
+         OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
+
+         /* this will, erm fail if MCW doesn't exist which it should! */
+         data->all_base_rules = (ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules;
+     }
+
+     /* at this point we all have a base set of rules if they exist atall */
+     /* now we can get our customized communicator sized rule set, for each collective */
+     for (i=0;i<COLLCOUNT;i++) {
+        data->com_rules[i] = coll_tuned_get_com_rule_ptr (data->all_base_rules, i, size);
+     }
   }
 
   /* 
@@ -459,6 +500,16 @@ int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
   if (comm->c_coll_selected_data->cached_pipeline) { /* destroy pipeline if defined */
         ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_pipeline);
   }
+
+  /* if any algorithm rules are cached on the communicator, only free them if its MCW */
+  /* as this is the only place they are allocated by reading the decision configure file */
+  if ((mca_coll_tuned_use_dynamic_rules)&&(&ompi_mpi_comm_world==comm)) {
+     if (comm->c_coll_selected_data->all_base_rules) {
+        coll_tuned_free_all_rules (comm->c_coll_selected_data->all_base_rules, COLLCOUNT);
+     }
+  }
+
+
 
 
   /* if allocated memory free it */
