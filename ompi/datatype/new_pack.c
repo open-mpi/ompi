@@ -28,9 +28,12 @@
 #endif
 #include <stdlib.h>
 
-static int ompi_pack_debug=0;
-
+#if OMPI_ENABLE_DEBUG
+int32_t ompi_pack_debug = 0;
 #define DO_DEBUG(INST)  if( ompi_pack_debug ) { INST }
+#else
+#define DO_DEBUG(INST)
+#endif  /* OMPI_ENABLE_DEBUG */
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
  * all basic functionalities, hence using them as basic blocks for all conversion functions.
@@ -114,8 +117,8 @@ static inline void pack_contiguous_loop( ompi_convertor_t* CONVERTOR,
     for( _i = 0; _i < _copy_loops; _i++ ) {
         OMPI_DDT_SAFEGUARD_POINTER( _source, _end_loop->size, (CONVERTOR)->pBaseBuf,
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
-        DO_DEBUG( opal_output( 0, "pack 3. memcpy( %p, %p, %ld )\n",
-                               *(DESTINATION), _source, _end_loop->size ); );
+        DO_DEBUG( opal_output( 0, "pack 3. memcpy( %p, %p, %ld ) => space %ld\n",
+                               *(DESTINATION), _source, _end_loop->size, *(SPACE) - _i * _end_loop->size ); );
         MEMCPY( *(DESTINATION), _source, _end_loop->size );
         *(DESTINATION) += _end_loop->size;
         _source        += _loop->extent;
@@ -150,8 +153,8 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     char *source_base, *destination;
     uint32_t iov_len_local, iov_count, required_space = 0;
 
-    DUMP( "ompi_convertor_generic_simple_pack( %p, {%p, %d}, %d )\n", (void*)pConvertor,
-          iov[0].iov_base, iov[0].iov_len, *out_size );
+    DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_pack( %p, {%p, %d}, %d )\n", (void*)pConvertor,
+                           iov[0].iov_base, iov[0].iov_len, *out_size ); );
 
     description = pConvertor->use_desc->desc;
 
