@@ -86,14 +86,13 @@ struct mca_btl_mvapi_component_t {
 
     char* ib_mpool_name; 
     /**< name of ib memory pool */ 
-   
-    uint32_t ib_rr_buf_max; 
-    /**< the maximum number of posted rr */  
-   
-    uint32_t ib_rr_buf_min; 
-    /**< the minimum number of posted rr */ 
+  
+    int32_t rd_num; /**< the number of receive descriptors to post to each queue pair */  
+    int32_t rd_low; /**< low water mark to reach before posting additional receive descriptors */
+    int32_t rd_win; /**< ack credits when window size exceeded */
+    int32_t rd_rsv; /**< descriptors held in reserve for control messages */ 
     
-    uint32_t rd_per_peer; 
+    int32_t rd_per_peer; 
     /**< the number of recv desc posted per log(peer) in SRQ mode */ 
 
     size_t eager_limit; 
@@ -144,8 +143,8 @@ struct mca_btl_mvapi_module_t {
     VAPI_hca_hndl_t nic;           /**< NIC handle */
     VAPI_pd_hndl_t  ptag;          /**< Protection Domain tag */
     
-    VAPI_cq_hndl_t cq_hndl_high;    /**< High Priority Completion Queue handle */ 
-    VAPI_cq_hndl_t  cq_hndl_low;       /**< Low Priority Completion Queue handle */
+    VAPI_cq_hndl_t cq_hndl_hp;    /**< High Priority Completion Queue handle */ 
+    VAPI_cq_hndl_t  cq_hndl_lp;       /**< Low Priority Completion Queue handle */
     
     EVAPI_async_handler_hndl_t async_handler;
     /**< Async event handler used to detect weird/unknown events */
@@ -163,32 +162,26 @@ struct mca_btl_mvapi_module_t {
     opal_list_t repost;            /**< list of buffers to repost */
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
-    VAPI_rr_desc_t*                          rr_desc_post;
-    VAPI_srq_hndl_t srq_hndl_high; /**< A high priority shared receive queue 
+    VAPI_rr_desc_t*  rr_desc_post; /**< an array to allow posting of rr in one swoop */ 
+    VAPI_srq_hndl_t srq_hndl_hp; /**< A high priority shared receive queue 
                                          runtime optional, can also use a receive queue 
                                          per queue pair.. */ 
-    VAPI_srq_hndl_t srq_hndl_low; /**< A low priority shared receive queue */ 
+    VAPI_srq_hndl_t srq_hndl_lp; /**< A low priority shared receive queue */ 
         
-    uint32_t srr_posted_high;  /**< number of high priority shared rr posted to the nic*/ 
-    uint32_t srr_posted_low;  /**< number of low priority shared rr posted to the nic*/ 
-
-    /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
-    
-    uint32_t num_peers; 
-    uint32_t rd_buf_max; 
-    uint32_t rd_buf_min;
-    
-    int32_t                     wr_sq_tokens_hp; 
-    /**< number of high priority frags that  can be outstanding (down counter) */ 
-    int32_t                     wr_sq_tokens_lp; 
-    /**< number of low priority frags that  can be outstanding (down counter) */ 
-    
-    opal_list_t                 pending_frags_hp; 
-    /**< list of pending high priority frags */ 
+    int32_t num_peers; 
 
-    opal_list_t                 pending_frags_lp; 
-    /**< list of pending low priority frags */ 
+    int32_t srd_posted_hp;  /**< number of high priority shared receive descriptors posted to the nic*/ 
+    int32_t srd_posted_lp;  /**< number of low priority shared receive descriptors posted to the nic*/ 
+    
+    int32_t rd_num;      /**< number of receive descriptors to post to srq */
+    int32_t rd_low;      /**< low water mark before reposting descriptors to srq */
+    
+    int32_t  sd_tokens_hp;  /**< number of send tokens available on high priority srq */
+    int32_t  sd_tokens_lp;  /**< number of send tokens available on low priority srq */
+    
+    opal_list_t pending_frags_hp; /**< list of pending high priority frags */ 
+    opal_list_t pending_frags_lp; /**< list of pending low priority frags */ 
 
 
 }; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
@@ -200,15 +193,15 @@ struct mca_btl_mvapi_module_t {
 { \
     do { \
         OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
-        if(mvapi_btl->srr_posted_high <= mvapi_btl->rd_buf_min+additional && \
-           mvapi_btl->srr_posted_high < mvapi_btl->rd_buf_max){ \
-           MCA_BTL_MVAPI_POST_SRR_SUB(mvapi_btl->rd_buf_max -  \
-                                      mvapi_btl->srr_posted_high, \
+        if(mvapi_btl->srd_posted_hp <= mvapi_btl->rd_low+additional && \
+           mvapi_btl->srd_posted_hp < mvapi_btl->rd_num){ \
+           MCA_BTL_MVAPI_POST_SRR_SUB(mvapi_btl->rd_num -  \
+                                      mvapi_btl->srd_posted_hp, \
                                       mvapi_btl, \
                                       &mvapi_btl->recv_free_eager, \
-                                      &mvapi_btl->srr_posted_high, \
+                                      &mvapi_btl->srd_posted_hp, \
                                       mvapi_btl->nic, \
-                                      mvapi_btl->srq_hndl_high); \
+                                      mvapi_btl->srq_hndl_hp); \
         } \
         OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
     }while(0);\
@@ -219,15 +212,15 @@ struct mca_btl_mvapi_module_t {
 { \
   do { \
     OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); \
-    if(mvapi_btl->srr_posted_low <= mvapi_btl->rd_buf_min+additional && \
-       mvapi_btl->srr_posted_low < mvapi_btl->rd_buf_max){ \
-        MCA_BTL_MVAPI_POST_SRR_SUB(mvapi_btl->rd_buf_max -  \
-                                            mvapi_btl->srr_posted_low, \
+    if(mvapi_btl->srd_posted_lp <= mvapi_btl->rd_low+additional && \
+       mvapi_btl->srd_posted_lp < mvapi_btl->rd_num){ \
+        MCA_BTL_MVAPI_POST_SRR_SUB(mvapi_btl->rd_num -  \
+                                            mvapi_btl->srd_posted_lp, \
                                             mvapi_btl, \
                                             &mvapi_btl->recv_free_max, \
-                                            &mvapi_btl->srr_posted_low, \
+                                            &mvapi_btl->srd_posted_lp, \
                                             mvapi_btl->nic, \
-                                            mvapi_btl->srq_hndl_low); \
+                                            mvapi_btl->srq_hndl_lp); \
     } \
     OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); \
   } while(0); \
@@ -237,12 +230,12 @@ struct mca_btl_mvapi_module_t {
 #define MCA_BTL_MVAPI_POST_SRR_SUB(cnt, \
                                    mvapi_btl, \
                                    frag_list, \
-                                   srr_posted, \
+                                   srd_posted, \
                                    nic, \
                                    srq_hndl) \
 {\
     do { \
-    uint32_t i; \
+    int32_t i; \
     VAPI_ret_t ret; \
     uint32_t rwqe_posted = 0; \
     int rc; \
@@ -268,7 +261,7 @@ struct mca_btl_mvapi_module_t {
    } else if(rwqe_posted < 1) { \
        BTL_ERROR(("error posting receive descriptors to shared receive queue, number of entries posted is %d", rwqe_posted)); \
    } else {\
-        OPAL_THREAD_ADD32(srr_posted, cnt); \
+        OPAL_THREAD_ADD32(srd_posted, cnt); \
    }\
    } while(0);\
 }

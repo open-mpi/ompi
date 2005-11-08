@@ -128,10 +128,10 @@ int mca_btl_mvapi_add_procs(
     if( 0 == mvapi_btl->num_peers ) { 
         mvapi_btl->num_peers += nprocs; 
         if(mca_btl_mvapi_component.use_srq) { 
-            mvapi_btl->rd_buf_max = mca_btl_mvapi_component.ib_rr_buf_max + log2(nprocs) * mca_btl_mvapi_component.rd_per_peer; 
+            mvapi_btl->rd_num = mca_btl_mvapi_component.rd_num + log2(nprocs) * mca_btl_mvapi_component.rd_per_peer; 
             free(mvapi_btl->rr_desc_post); 
-            mvapi_btl->rr_desc_post = (VAPI_rr_desc_t*) malloc((mvapi_btl->rd_buf_max * sizeof(VAPI_rr_desc_t))); 
-            mvapi_btl->rd_buf_min = mvapi_btl->rd_buf_max / 2;
+            mvapi_btl->rr_desc_post = (VAPI_rr_desc_t*) malloc((mvapi_btl->rd_num * sizeof(VAPI_rr_desc_t))); 
+            mvapi_btl->rd_low = mvapi_btl->rd_num / 2;
         }
     }
     return OMPI_SUCCESS;
@@ -506,7 +506,7 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
     mca_btl_mvapi_module_t* mvapi_btl; 
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
 
-#if 0     
+#if 1     
     if(mvapi_btl->send_free_eager.fl_num_allocated != 
        mvapi_btl->send_free_eager.super.opal_list_length){ 
         opal_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
@@ -579,30 +579,33 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
     /* atomically test and acquire a token */
     if(!mca_btl_mvapi_component.use_srq && 
-       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
-        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
-        BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
-                                 endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock, rc); 
+       OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0) { 
+
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
         rc = OMPI_SUCCESS;
+
     } else if(mca_btl_mvapi_component.use_srq && 
-              OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,-1) < 0) {
+              OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
+
+        OPAL_THREAD_LOCK(&mvapi_btl->btl_lock);
         opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-        OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,1);
+        OPAL_THREAD_UNLOCK(&mvapi_btl->btl_lock);
+        OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
         rc = OMPI_SUCCESS;
         
     } else { 
         
-      
-        
-    
-        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
+        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
         frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
         frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_src->seg_len; 
         
         frag->ret = VAPI_post_sr(mvapi_btl->nic, 
-                                 endpoint->lcl_qp_hndl_low, 
+                                 endpoint->lcl_qp_hndl_lp, 
                                  &frag->sr_desc); 
         if(VAPI_OK != frag->ret){ 
             rc =  OMPI_ERROR; 
@@ -640,27 +643,41 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     frag->endpoint = endpoint;
     /* atomically test and acquire a token */
     if(!mca_btl_mvapi_component.use_srq &&
-       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
-        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
-        BTL_MVAPI_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
-                                 endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock, rc); 
+       OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0) { 
+
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
         rc = OMPI_SUCCESS;
+
     } else if(mca_btl_mvapi_component.use_srq && 
-              OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,-1) < 0) {
+              OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
+
+        OPAL_THREAD_LOCK(&mvapi_btl->btl_lock);
         opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-        OPAL_THREAD_ADD32(&mvapi_btl->wr_sq_tokens_lp,1);
+        OPAL_THREAD_UNLOCK(&mvapi_btl->btl_lock);
+        OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
         rc = OMPI_SUCCESS;
         
-    } else { 
+    } else if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
+
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
+        rc = OMPI_SUCCESS;
+
+    } else {
         
-        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_low; 
+        frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
         frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
         frag->sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_dst->seg_len; 
 
         frag->ret = VAPI_post_sr(mvapi_btl->nic, 
-                                 endpoint->lcl_qp_hndl_low, 
+                                 endpoint->lcl_qp_hndl_lp, 
                                  &frag->sr_desc); 
         if(VAPI_OK != frag->ret){ 
             rc =  OMPI_ERROR; 
@@ -720,7 +737,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
             
     case VAPI_SRQ_LIMIT_REACHED: 
         { 
-            int i;
+            size_t i;
             BTL_ERROR(("SRQ limit is reached, posting more buffers %s\n", VAPI_event_record_sym(event_p->type))); 
             for(i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) { 
                 mca_btl_mvapi_module_t* mvapi_btl = &mca_btl_mvapi_component.mvapi_btls[i]; 
@@ -731,7 +748,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         }
         
     case VAPI_RECEIVE_QUEUE_DRAINED: { 
-        
+        fprintf(stderr, "VAPI_RECEIVE_QUEUE_DRAINEDD\n");
         
     }
     default:
@@ -763,8 +780,8 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
     }
     
     if(mca_btl_mvapi_component.use_srq) { 
-        mvapi_btl->srr_posted_high = 0; 
-        mvapi_btl->srr_posted_low = 0; 
+        mvapi_btl->srd_posted_hp = 0; 
+        mvapi_btl->srd_posted_lp = 0; 
         srq_attr.pd_hndl = mvapi_btl->ptag; 
         srq_attr.max_outs_wr = mca_btl_mvapi_component.ib_wq_size; 
         srq_attr.max_sentries = mca_btl_mvapi_component.ib_sg_list_size; 
@@ -772,7 +789,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         srq_attr_mod.srq_limit =  16;/* mca_btl_mvapi_component.ib_wq_size;  */
         ret = VAPI_create_srq(mvapi_btl->nic, 
                               &srq_attr, 
-                              &mvapi_btl->srq_hndl_high, 
+                              &mvapi_btl->srq_hndl_hp, 
                               &srq_attr_out); 
         if(ret != VAPI_OK) {
             BTL_ERROR(("error in VAPI_create_srq: %s", VAPI_strerror(ret)));
@@ -785,7 +802,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         ret = VAPI_modify_srq 
             ( 
              mvapi_btl->nic, 
-             mvapi_btl->srq_hndl_high, 
+             mvapi_btl->srq_hndl_hp, 
              &srq_attr_mod, 
              srq_attr_mask, 
              &max_outs_wr 
@@ -798,7 +815,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         
         ret = VAPI_create_srq(mvapi_btl->nic, 
                               &srq_attr, 
-                              &mvapi_btl->srq_hndl_low, 
+                              &mvapi_btl->srq_hndl_lp, 
                               &srq_attr_out); 
         if(ret != VAPI_OK) {
             BTL_ERROR(("error in VAPI_create_srq: %s", VAPI_strerror(ret)));
@@ -811,7 +828,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         ret = VAPI_modify_srq 
             ( 
              mvapi_btl->nic, 
-             mvapi_btl->srq_hndl_low, 
+             mvapi_btl->srq_hndl_lp, 
              &srq_attr_mod, 
              srq_attr_mask, 
              &max_outs_wr 
@@ -824,11 +841,11 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         
 
     } else { 
-        mvapi_btl->srq_hndl_high = VAPI_INVAL_SRQ_HNDL; 
-        mvapi_btl->srq_hndl_low = VAPI_INVAL_SRQ_HNDL; 
+        mvapi_btl->srq_hndl_hp = VAPI_INVAL_SRQ_HNDL; 
+        mvapi_btl->srq_hndl_lp = VAPI_INVAL_SRQ_HNDL; 
     } 
     ret = VAPI_create_cq(mvapi_btl->nic, mca_btl_mvapi_component.ib_cq_size,
-                         &mvapi_btl->cq_hndl_low, &cqe_cnt);
+                         &mvapi_btl->cq_hndl_lp, &cqe_cnt);
 
     
     if( VAPI_OK != ret) {  
@@ -837,7 +854,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
     }
     
     ret = VAPI_create_cq(mvapi_btl->nic, mca_btl_mvapi_component.ib_cq_size,
-                         &mvapi_btl->cq_hndl_high, &cqe_cnt);
+                         &mvapi_btl->cq_hndl_hp, &cqe_cnt);
 
     
     if( VAPI_OK != ret) {  
