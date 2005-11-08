@@ -19,11 +19,15 @@
 sources = \
         coll_tuned.h \
         coll_tuned_topo.h \
-        coll_tuned_topo.c \
         coll_tuned_util.h \
+        coll_tuned_dynamic_file.h \
+        coll_tuned_dynamic_rules.h \
+        coll_tuned_topo.c \
         coll_tuned_util.c \
         coll_tuned_decision_fixed.c \
         coll_tuned_decision_dynamic.c \
+        coll_tuned_dynamic_file.c \
+        coll_tuned_dynamic_rules.c \
         coll_tuned_allreduce.c \
         coll_tuned_alltoall.c \
         coll_tuned_barrier.c \
