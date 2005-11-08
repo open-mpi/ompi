@@ -396,10 +396,16 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
                                      &(data->all_base_rules), COLLCOUNT);
              if (rc>=0) {
                 OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Read %d valid rules\n", rc));
+                /* at this point we all have a base set of rules */
+                /* now we can get our customized communicator sized rule set, for each collective */
+                for (i=0;i<COLLCOUNT;i++) {
+                    data->com_rules[i] = coll_tuned_get_com_rule_ptr (data->all_base_rules, i, size);
+                }
              }
              else { /* failed to read config file, thus make sure its a NULL... */
                  data->all_base_rules = (ompi_coll_alg_rule_t*) NULL;
              }
+
 
          } /* end if a config filename exists */
 
@@ -407,15 +413,15 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
   } /* end if MCW */
   
-  /* ok, if using dynamic rules and we are just any rank and a base set of rules exist.. ref them */
-  if ((mca_coll_tuned_use_dynamic_rules)&&((ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules)) {
-     if (!(&ompi_mpi_comm_world==comm)) { /* not if we are MCW.. that would be wrong */
+  /* ok, if using dynamic rules, not MCW and we are just any rank and a base set of rules exist.. ref them */
+  /* order of eval is important here, if we are MCW ompi_mpi_comm_world.c_coll_selected_data is NULL still.. */
+  if ((mca_coll_tuned_use_dynamic_rules)&&(!(&ompi_mpi_comm_world==comm))&&
+        ((ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules)) {
 
-         OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
+     OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
 
-         /* this will, erm fail if MCW doesn't exist which it should! */
-         data->all_base_rules = (ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules;
-     }
+     /* this will, erm fail if MCW doesn't exist which it should! */
+     data->all_base_rules = (ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules;
 
      /* at this point we all have a base set of rules if they exist atall */
      /* now we can get our customized communicator sized rule set, for each collective */
