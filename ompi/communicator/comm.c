@@ -1361,9 +1361,8 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
     ompi_group_increment_proc_count(comm->c_local_group);
         
     /* set the rank information */
-    ompi_set_group_rank(comm->c_local_group, 
-            comm->c_local_group->grp_proc_pointers[my_rank]);
-    comm->c_my_rank = comm->c_local_group->grp_my_rank;
+    comm->c_local_group->grp_my_rank = my_rank;
+    comm->c_my_rank = my_rank;
 
     /* verify whether to set the flag, that this comm
        contains process from more than one jobid. */
