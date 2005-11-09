@@ -278,8 +278,8 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 CREATE_LOOP_END( pLast, pdtAdd->desc.used + 1, pLoop[index].elem.disp,
                                  pdtAdd->size, pLoop->loop.common.flags );
             }
-	    }
-	    /* should I add some space until the extent of this datatype ? */
+        }
+        /* should I add some space until the extent of this datatype ? */
     }
 
     /* Is the data still contiguous ?

@@ -48,6 +48,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
       if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
       else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                      \
       else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;     \
+      else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;         \
    } while (0)
 
 #define OMPI_CHECK_DATATYPE_FOR_RECV( RC, DDT, COUNT ) \
@@ -57,6 +58,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
       else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                      \
       else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;     \
       else if( ompi_ddt_is_overlapped((DDT)) ) (RC) = MPI_ERR_TYPE;     \
+      else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;         \
    } while (0)
 
 #define OMPI_CHECK_DATATYPE_FOR_ONE_SIDED( RC, DDT, COUNT )             \
@@ -67,6 +69,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
       else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;     \
       else if( ompi_ddt_is_overerlapped((DDT)) ) (RC) = MPI_ERR_TYPE;   \
       else if( !ompi_ddt_is_acceptable_for_one_sided((DDT)) ) (RC) = MPI_ERR_TYPE; \
+      else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;         \
    } while(0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
