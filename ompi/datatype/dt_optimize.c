@@ -76,7 +76,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
     int32_t type = DT_LOOP, last_length = 0, nbElems = 0, changes = 0, last_extent = 1;
     uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
     long total_disp = 0;
-    int32_t optimized = 0;
+    int32_t optimized = 0, continuity;
 
     pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
     SAVE_STACK( pStack, -1, 0, count, 0, pData->desc.used );
@@ -87,7 +87,11 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
 
     SET_EMPTY_ELEMENT( &opt_elem );
     assert( DT_END_LOOP == pData->desc.desc[pData->desc.used].elem.common.type );
+    opt_elem.common.type = DT_LOOP;
+    opt_elem.common.flags = 0xFFFF;  /* keep all for the first datatype */
+    opt_elem.count = 0;
     opt_elem.disp = pData->desc.desc[pData->desc.used].end_loop.first_elem_disp;
+    opt_elem.extent = 0;
 
     while( stack_pos >= 0 ) {
         if( DT_END_LOOP == pData->desc.desc[pos_desc].elem.common.type ) { /* end of the current loop */
@@ -116,12 +120,13 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
             int index = GET_FIRST_NON_LOOP( &(pData->desc.desc[pos_desc]) );
             long loop_disp = pData->desc.desc[pos_desc + index].elem.disp;
 
+            continuity = ((last_disp + last_length * (long)ompi_ddt_basicDatatypes[last_type]->size)
+                              == (total_disp + loop_disp));
             if( loop->common.flags & DT_FLAG_CONTIGUOUS ) {
                 /* the loop is contiguous or composed by contiguous elements with a gap */
                 if( loop->extent == (long)end_loop->size ) {
                     /* the whole loop is contiguous */
-                    if( (last_disp + last_length * (long)ompi_ddt_basicDatatypes[last_type]->size)
-                        != (total_disp + loop_disp) ) {
+                    if( !continuity ) {
                         if( 0 != last_length ) {
                             CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                             pElemDesc++; nbElems++;
@@ -129,8 +134,8 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                         }
                         last_disp = total_disp + loop_disp;
                     }
-                    last_length = last_length * ompi_ddt_basicDatatypes[last_type]->size
-                                  + loop->loops * end_loop->size;
+                    last_length = (last_length * ompi_ddt_basicDatatypes[last_type]->size
+                                   + loop->loops * end_loop->size);
                     last_type   = DT_BYTE;
                     last_extent = 1;
                     optimized++;
@@ -138,7 +143,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                     int counter = loop->loops;
                     /* if the previous data is contiguous with this piece and it has a length not ZERO */
                     if( last_length != 0 ) {
-                        if( (last_disp + last_length) == (total_disp + loop_disp) ) {
+                        if( continuity ) {
                             last_length *= ompi_ddt_basicDatatypes[last_type]->size;
                             last_length += end_loop->size;
                             last_type    = DT_BYTE;
@@ -185,9 +190,10 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
         while( pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_DATA ) {  /* keep doing it until we reach a non datatype element */
             /* now here we have a basic datatype */
             type = pData->desc.desc[pos_desc].elem.common.type;
+            continuity = ((last_disp + last_length * (long)ompi_ddt_basicDatatypes[last_type]->size)
+                          == (total_disp + pData->desc.desc[pos_desc].elem.disp));
 
-            if( (pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_CONTIGUOUS) &&
-                (last_disp + last_length) == (total_disp + pData->desc.desc[pos_desc].elem.disp) &&
+            if( (pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_CONTIGUOUS) && continuity &&
                 (pData->desc.desc[pos_desc].elem.extent == (int32_t)ompi_ddt_basicDatatypes[type]->size) ) {
                 if( type == last_type ) {
                     last_length += pData->desc.desc[pos_desc].elem.count;
