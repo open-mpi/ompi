@@ -590,9 +590,9 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     } else if(mca_btl_mvapi_component.use_srq && 
               OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
 
-        OPAL_THREAD_LOCK(&mvapi_btl->btl_lock);
+        OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
         opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-        OPAL_THREAD_UNLOCK(&mvapi_btl->btl_lock);
+        OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
         OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
         rc = OMPI_SUCCESS;
         
@@ -654,9 +654,9 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     } else if(mca_btl_mvapi_component.use_srq && 
               OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
 
-        OPAL_THREAD_LOCK(&mvapi_btl->btl_lock);
+        OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
         opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-        OPAL_THREAD_UNLOCK(&mvapi_btl->btl_lock);
+        OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
         OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
         rc = OMPI_SUCCESS;
         
