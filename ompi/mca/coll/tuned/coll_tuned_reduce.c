@@ -89,7 +89,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d", rank));
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d fo %d ss %5d", rank, fanout, segsize));
 
 
     /* ----------------------------------------------------------------- */
@@ -331,7 +331,7 @@ int mca_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
 
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d", rank));
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d ss %5d", rank, segsize));
 
     return mca_coll_tuned_reduce_intra_chain( sendbuf,recvbuf, count,
                                               datatype, op, root, comm,

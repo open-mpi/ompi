@@ -51,7 +51,7 @@ mca_coll_tuned_bcast_intra_chain ( void *buff, int count,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_chain rank %d root %d", rank, root));
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_chain rank %d root %d fo %d ss %7d", rank, root, chains, segsize));
 
     if( size == 1 ) {
         return MPI_SUCCESS;
@@ -215,7 +215,7 @@ mca_coll_tuned_bcast_intra_pipeline ( void *buffer,
 {
     int rank;   /* remove when removing print statement */
     rank = ompi_comm_rank(comm);    /* remove when removing print statement */
-    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_pipeline rank %d root %d", rank, root));
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_pipeline rank %d root %d ss %5d", rank, root, segsize));
 
     return mca_coll_tuned_bcast_intra_chain ( buffer, count, datatype, root, comm,
                                               segsize, 1 );
@@ -249,7 +249,7 @@ mca_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_split_bintree rank %d root %d", rank, root));
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_split_bintree rank %d root %d ss %5d", rank, root, segsize));
 
     if (size == 1) {
         return MPI_SUCCESS;
@@ -504,7 +504,7 @@ mca_coll_tuned_bcast_intra_bintree ( void* buffer,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_bintree rank %d root %d", rank, root));
+    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_bintree rank %d root %d ss %5d", rank, root, segsize));
 
     if (size == 1) {
         return MPI_SUCCESS;
