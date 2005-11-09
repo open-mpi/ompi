@@ -256,6 +256,7 @@ do {                                                                            
           reg->mpool->mpool_release(reg->mpool, reg);                                     \
         }                                                                                 \
     }                                                                                     \
+    sendreq->req_rdma_cnt = 0;                                                            \
                                                                                           \
     /* user has already released the request so simply free it */                         \
     if((sendreq)->req_send.req_base.req_free_called) {                                    \
