@@ -245,8 +245,17 @@ do {                                                                            
  */
 #define MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq)                                    \
 do {                                                                                      \
+    size_t r;                                                                             \
     /* request completed at pml level */                                                  \
     (sendreq)->req_send.req_base.req_pml_complete = true;                                 \
+                                                                                          \
+    /* return mpool resources */                                                          \
+    for(r=0; r<sendreq->req_rdma_cnt; r++) {                                              \
+        mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;                \
+        if( NULL != reg ) {                                                               \
+          reg->mpool->mpool_release(reg->mpool, reg);                                     \
+        }                                                                                 \
+    }                                                                                     \
                                                                                           \
     /* user has already released the request so simply free it */                         \
     if((sendreq)->req_send.req_base.req_free_called) {                                    \
@@ -301,13 +310,6 @@ do {                                                                            
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                            \
 {                                                                           \
     /*  Let the base handle the reference counts */                         \
-    size_t r;                                                               \
-    for(r=0; r<sendreq->req_rdma_cnt; r++) {                                \
-        mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;  \
-        if( NULL != reg ) {                                                 \
-          reg->mpool->mpool_release(reg->mpool, reg);                       \
-        }                                                                   \
-    }                                                                       \
     MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));                 \
     OMPI_FREE_LIST_RETURN(                                                  \
         &mca_pml_ob1.send_requests, (opal_list_item_t*)sendreq);            \
