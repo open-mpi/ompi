@@ -62,6 +62,7 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 #define DT_FLAG_IN_LOOP       0x0080  /**< we are inside a loop */
 #define DT_FLAG_DATA          0x0100  /**< data or control structure */
 #define DT_FLAG_ONE_SIDED     0x0200  /**< datatype can be used for one sided operations */
+#define DT_FLAG_UNAVAILABLE   0x0400  /**< datatypes unavailable on thie build (OS or compiler dependant) */
 /* Keep trace of the type of the predefined datatypes */
 #define DT_FLAG_DATA_INT      0x1000
 #define DT_FLAG_DATA_FLOAT    0x2000
@@ -130,6 +131,9 @@ static inline int32_t ompi_ddt_is_overlapped( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_OVERLAP) == DT_FLAG_OVERLAP); }
 static inline int32_t ompi_ddt_is_acceptable_for_one_sided( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_ONE_SIDED) == DT_FLAG_ONE_SIDED); }
+static inline int32_t ompi_ddt_is_valid( const ompi_datatype_t* type )
+{ return !((type->flags & DT_FLAG_UNAVAILABLE) == DT_FLAG_UNAVAILABLE); }
+
 void ompi_ddt_dump( const ompi_datatype_t* pData );
 /* data creation functions */
 OMPI_DECLSPEC int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
