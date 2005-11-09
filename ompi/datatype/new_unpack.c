@@ -148,8 +148,8 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
     char *user_memory_base, *packed_buffer;
     uint32_t iov_len_local, iov_count, required_space = 0;
 
-    DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_unpack( %p, {%p, %d}, %d )\n", (void*)pConvertor,
-                           iov[0].iov_base, iov[0].iov_len, *out_size ); );
+    DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_unpack( %p, {%p, %lu}, %u )\n",
+                           (void*)pConvertor, iov[0].iov_base, (size_t)iov[0].iov_len, *out_size ); );
 
     description = pConvertor->use_desc->desc;
 
@@ -269,15 +269,15 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
         total_unpacked += iov[iov_count].iov_len;
         pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
         assert( iov_len_local >= 0 );
-        if( 0 != iov_len_local ) {
+        if( !(pConvertor->flags & CONVERTOR_COMPLETED) && (0 != iov_len_local) ) {
             /* We have some partial data here. Let's copy it into the convertor
              * and keep it hot until the next round.
              */
             assert( iov_len_local < 16 );
             memcpy( pConvertor->pending, packed_buffer, iov_len_local );
             DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
+            pConvertor->pending_length = iov_len_local;
         }
-        pConvertor->pending_length = iov_len_local;
     }
     *max_data = total_unpacked;
     *out_size = iov_count;
