@@ -196,11 +196,12 @@ opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
     opal_list_append(&callback_list, (opal_list_item_t*) new_cbitem);
 
  done:
+    opal_atomic_unlock(&callback_lock);
+
     if (OMPI_EXISTS == ret && NULL != new_cbitem) {
         OBJ_RELEASE(new_cbitem);
     }
 
-    opal_atomic_unlock(&callback_lock);
     return ret;
 }
 
