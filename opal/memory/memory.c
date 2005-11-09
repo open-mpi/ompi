@@ -52,6 +52,7 @@ static int have_been_called = 0;
 int
 opal_mem_free_init(void)
 {
+    void *tmp;
     OBJ_CONSTRUCT(&callback_list, opal_list_t);
     opal_atomic_init(&callback_lock, OPAL_ATOMIC_UNLOCKED);
 
@@ -60,10 +61,9 @@ opal_mem_free_init(void)
     run_callbacks = false;
     opal_atomic_mb();
 
-    /* make sure that things really work  - we munmap something that
-       won't matter (a NULL, 0 pair) and see if have_been_called flips
-       from 0 to 1.  If so, we're all good. */
-    munmap(NULL, 0);
+    /* make sure things actually work - map then unmap a page */
+    tmp = mmap(0, 1, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
+    munmap(tmp, 1);
     if (0 == have_been_called) {
         if (have_free_support) {
             opal_output(0, "WARNING: free() and munmap() hooks inoperative"
