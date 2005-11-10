@@ -26,23 +26,9 @@ static void mca_btl_openib_frag_common_constructor( mca_btl_openib_frag_t* frag)
     mca_mpool_openib_registration_t* registration = 
         (mca_mpool_openib_registration_t*) frag->base.super.user_data;
     
-    frag->hdr = (mca_btl_openib_header_t*) (frag+1);    /* initialize the btl header to point to start at end of frag */ 
-#if 0   
-    mod = (unsigned long) frag->hdr % MCA_BTL_IB_FRAG_ALIGN; 
-    
-    if(mod != 0) {
-        frag->hdr = (mca_btl_openib_header_t*) ((unsigned char*) frag->hdr + (MCA_BTL_IB_FRAG_ALIGN - mod));
-    }
-#endif 
-    
-    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  /* init the segment address to start after the btl header */ 
-    
-#if 0 
-    mod = (frag->segment.seg_addr.lval) % MCA_BTL_IB_FRAG_ALIGN; 
-    if(mod != 0) {
-        frag->segment.seg_addr.lval += (MCA_BTL_IB_FRAG_ALIGN - mod);
-    }
-#endif 
+    frag->hdr = (mca_btl_openib_header_t*) (frag+1);    /* initialize the btl header to start at end of frag */ 
+    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  
+    /* init the segment address to start after the btl header */ 
     
     frag->mr = registration->mr; 
     frag->segment.seg_len = frag->size;
@@ -80,10 +66,10 @@ static void mca_btl_openib_recv_frag_common_constructor(mca_btl_openib_frag_t* f
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
    
-    frag->wr_desc.rr_desc.wr_id = (unsigned long) frag; 
-    frag->wr_desc.rr_desc.sg_list = &frag->sg_entry; 
-    frag->wr_desc.rr_desc.num_sge = 1; 
-    frag->wr_desc.rr_desc.next = NULL; 
+    frag->wr_desc.rd_desc.wr_id = (unsigned long) frag; 
+    frag->wr_desc.rd_desc.sg_list = &frag->sg_entry; 
+    frag->wr_desc.rd_desc.num_sge = 1; 
+    frag->wr_desc.rd_desc.next = NULL; 
 }
 
 static void mca_btl_openib_send_frag_eager_constructor(mca_btl_openib_frag_t* frag) 

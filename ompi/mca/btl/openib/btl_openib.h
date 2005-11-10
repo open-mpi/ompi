@@ -83,20 +83,20 @@ struct mca_btl_openib_component_t {
     char* ib_mpool_name; 
     /**< name of ib memory pool */ 
    
-    uint32_t ib_rr_buf_max; 
-    /**< the maximum number of posted rr */  
-   
-    uint32_t ib_rr_buf_min; 
-    /**< the minimum number of posted rr */ 
-    
+    int32_t rd_num; /**< the number of receive descriptors to post to each queue pair */
+    int32_t rd_low; /**< low water mark to reach before posting additional receive descriptors */
+    int32_t rd_win; /**< ack credits when window size exceeded */
+    int32_t rd_rsv; /**< descriptors held in reserve for control messages */
+
+    int32_t srq_rd_per_peer; /* number of receive descriptors to post per log2(peers) in SRQ mode */
+    int32_t srq_sd_per_proc; /* maximum number of send descriptors posted */
+
     size_t eager_limit; 
     size_t max_send_size; 
-    uint32_t leave_pinned; 
     uint32_t reg_mru_len; 
     uint32_t use_srq; 
     
     uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */  
-    uint32_t ib_wq_size;   /**< Max outstanding WR on the WQ */ 
     uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/ 
     uint32_t ib_pkey_ix; 
     uint32_t ib_psn; 
@@ -110,10 +110,6 @@ struct mca_btl_openib_component_t {
     uint32_t ib_service_level; 
     uint32_t ib_static_rate; 
     uint32_t ib_src_path_bits; 
-    uint32_t rd_per_peer; /* number of receive descriptors to post per log2(peers) 
-                             in SRQ mode */
-    uint32_t max_wr_sq_tokens; 
-    uint32_t max_total_wr_sq_tokens; 
 
 
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
@@ -136,23 +132,20 @@ struct mca_btl_openib_module_t {
     struct ibv_device *ib_dev;  /* the ib device */ 
     struct ibv_context *ib_dev_context; 
     struct ibv_pd *ib_pd; 
-    struct ibv_cq *ib_cq_high;
-    struct ibv_cq *ib_cq_low; 
+    struct ibv_cq *ib_cq_hp;
+    struct ibv_cq *ib_cq_lp; 
     struct ibv_port_attr* ib_port_attr; 
-    struct ibv_recv_wr* rr_desc_post;
+    struct ibv_recv_wr* rd_desc_post;
 
+    ompi_free_list_t send_free_eager;  /**< free list of eager buffer descriptors */
+    ompi_free_list_t send_free_max;    /**< free list of max buffer descriptors */ 
+    ompi_free_list_t send_free_frag;   /**< free list of frags only... used for pining memory */ 
     
-    ompi_free_list_t send_free_eager;    /**< free list of eager buffer descriptors */
-    ompi_free_list_t send_free_max; /**< free list of max buffer descriptors */ 
-    ompi_free_list_t send_free_frag; /**< free list of frags only... used for pining memory */ 
-    
-    ompi_free_list_t recv_free_eager;    /**< High priority free list of buffer descriptors */
-    ompi_free_list_t recv_free_max;      /**< Low priority free list of buffer descriptors */ 
+    ompi_free_list_t recv_free_eager;  /**< High priority free list of buffer descriptors */
+    ompi_free_list_t recv_free_max;    /**< Low priority free list of buffer descriptors */ 
 
-    opal_list_t reg_mru_list;   /**< a most recently used list of mca_mpool_openib_registration_t 
+    opal_list_t reg_mru_list;      /**< a most recently used list of mca_mpool_openib_registration_t 
                                        entries, this allows us to keep a working set of memory pinned */ 
-    
-    opal_list_t repost;            /**< list of buffers to repost */
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
     
@@ -162,18 +155,18 @@ struct mca_btl_openib_module_t {
     
     
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    struct ibv_srq *srq_high; 
-    struct ibv_srq *srq_low;
-    uint32_t srr_posted_high; 
-    uint32_t srr_posted_low; 
+    struct ibv_srq *srq_hp; 
+    struct ibv_srq *srq_lp;
+    int32_t srd_posted_hp; 
+    int32_t srd_posted_lp; 
 #endif 
-    uint32_t num_peers;
-    uint32_t rd_buf_max; 
-    uint32_t rd_buf_min;
+    int32_t num_peers;
+    int32_t  rd_num; 
+    int32_t  rd_low;
     
-    int32_t                     wr_sq_tokens_hp; 
+    int32_t sd_tokens_hp; 
     /**< number of high priority frags that  can be outstanding (down counter) */ 
-    int32_t                     wr_sq_tokens_lp; 
+    int32_t sd_tokens_lp; 
     /**< number of low priority frags that  can be outstanding (down counter) */ 
     
     opal_list_t                 pending_frags_hp; 
@@ -420,14 +413,14 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
 { \
     do{ \
         OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-        if(openib_btl->srr_posted_high <= openib_btl->rd_buf_min+additional && \
-           openib_btl->srr_posted_high < openib_btl->rd_buf_max){ \
-           MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_buf_max -  \
-                                      openib_btl->srr_posted_high, \
+        if(openib_btl->srd_posted_hp <= openib_btl->rd_low+additional && \
+           openib_btl->srd_posted_hp < openib_btl->rd_num){ \
+           MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_num -  \
+                                      openib_btl->srd_posted_hp, \
                                       openib_btl, \
                                       &openib_btl->recv_free_eager, \
-                                      &openib_btl->srr_posted_high, \
-                                      openib_btl->srq_high); \
+                                      &openib_btl->srd_posted_hp, \
+                                      openib_btl->srq_hp); \
         } \
         OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
     } while(0); \
@@ -437,14 +430,14 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
 { \
     do { \
     OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-    if(openib_btl->srr_posted_low <= openib_btl->rd_buf_min+additional && \
-       openib_btl->srr_posted_low < openib_btl->rd_buf_max){ \
-        MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_buf_max -  \
-                                            openib_btl->srr_posted_low, \
+    if(openib_btl->srd_posted_lp <= openib_btl->rd_low+additional && \
+       openib_btl->srd_posted_lp < openib_btl->rd_num){ \
+        MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_num -  \
+                                            openib_btl->srd_posted_lp, \
                                             openib_btl, \
                                             &openib_btl->recv_free_max, \
-                                            &openib_btl->srr_posted_low, \
-                                            openib_btl->srq_low); \
+                                            &openib_btl->srd_posted_lp, \
+                                            openib_btl->srq_lp); \
     } \
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
     } while(0); \
@@ -454,28 +447,29 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
 #define MCA_BTL_OPENIB_POST_SRR_SUB(cnt, \
                                    openib_btl, \
                                    frag_list, \
-                                   srr_posted, \
+                                   srd_posted, \
                                    srq) \
 {\
     do { \
-    uint32_t i; \
+    int32_t i; \
+    int32_t num_post = cnt; \
     opal_list_item_t* item = NULL; \
     mca_btl_openib_frag_t* frag = NULL; \
     struct ibv_recv_wr *bad_wr; \
     int32_t rc; \
-    for(i = 0; i < cnt; i++) { \
+    for(i = 0; i < num_post; i++) { \
         OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
         frag = (mca_btl_openib_frag_t*) item; \
         frag->sg_entry.length = frag->size + \
             ((unsigned char*) frag->segment.seg_addr.pval-  \
              (unsigned char*) frag->hdr);  \
-       if(ibv_post_srq_recv(srq, &frag->wr_desc.rr_desc, &bad_wr)) { \
+       if(ibv_post_srq_recv(srq, &frag->wr_desc.rd_desc, &bad_wr)) { \
            BTL_ERROR(("error posting receive descriptors to shared receive queue: %s",\
                    strerror(errno))); \
            return OMPI_ERROR; \
        }\
     }\
-    OPAL_THREAD_ADD32((int32_t*) srr_posted,  cnt); \
+    OPAL_THREAD_ADD32(srd_posted,  num_post); \
    } while(0);\
 }
 
