@@ -237,9 +237,7 @@ do { \
         BTL_ERROR(("error posting receive descriptors: %s",\
                    VAPI_strerror(rc))); \
     } else { \
-        /* fprintf(stderr, "posting: %d to %d\n", num_post, rd_posted); */ \
         OPAL_THREAD_ADD32(&(rd_posted), num_post); \
-        /* fprintf(stderr, "credits: %d to %d\n", num_post, rd_credits); */ \
         OPAL_THREAD_ADD32(&(rd_credits), num_post); \
    }\
   } while(0); \
