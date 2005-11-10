@@ -125,7 +125,6 @@ struct mca_btl_base_endpoint_t {
  
     opal_list_t                 pending_frags_hp;  /**< list of pending high priority frags */ 
     opal_list_t                 pending_frags_lp;  /**< list of pending low priority frags */ 
-    opal_list_t                 pending_frags_get; /**< list of pending get operations */
 
     mca_btl_mvapi_rem_info_t    rem_info; 
 

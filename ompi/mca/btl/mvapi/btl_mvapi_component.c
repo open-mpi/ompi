@@ -21,7 +21,6 @@
 #include <unistd.h>
 #include "ompi/include/constants.h"
 #include "opal/event/event.h"
-#include "opal/include/sys/timer.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
