@@ -17,6 +17,4 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = console openmpi orted orteprobe orterun
+SUBDIRS = orted orteprobe orterun

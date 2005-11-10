@@ -1639,11 +1639,9 @@ AC_CONFIG_FILES([
     orte/util/Makefile
 
     orte/tools/Makefile
-    orte/tools/console/Makefile
     orte/tools/orted/Makefile
     orte/tools/orteprobe/Makefile
     orte/tools/orterun/Makefile
-    orte/tools/openmpi/Makefile
 
     orte/mca/Makefile
     orte/dynamic-mca/Makefile
