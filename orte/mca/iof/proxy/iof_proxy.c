@@ -237,12 +237,15 @@ int orte_iof_proxy_subscribe(
     const orte_process_name_t* src_name,  
     orte_ns_cmp_bitmask_t src_mask,
     orte_iof_base_tag_t src_tag,
-    orte_iof_base_callback_fn_t cb,
+    orte_iof_base_callback_fn_t cbfunc,
     void* cbdata)
 {
     int rc;
 
     /* create a local registration to reflect the callback */
+    rc = orte_iof_base_callback_create(ORTE_RML_NAME_SELF,src_tag,cbfunc,cbdata);
+    if(rc != OMPI_SUCCESS)
+        return rc;
 
     /* send a subscription message to the service */
     rc = orte_iof_proxy_svc_subscribe(
@@ -270,8 +273,10 @@ int orte_iof_proxy_unsubscribe(
         ORTE_RML_NAME_SELF,
         ORTE_NS_CMP_ALL,
         src_tag);
-
+    if(rc != OMPI_SUCCESS)
+        return rc;
+  
     /* remove local callback */
-    return ORTE_ERROR;
+    return orte_iof_base_callback_delete(src_name,src_tag);
 }
 

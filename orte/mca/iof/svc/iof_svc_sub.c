@@ -72,9 +72,26 @@ int orte_iof_svc_sub_create(
     orte_ns_cmp_bitmask_t dst_mask,
     orte_iof_base_tag_t dst_tag)
 {
+    orte_iof_svc_sub_t* sub;
     opal_list_item_t* item;
-    orte_iof_svc_sub_t* sub = OBJ_NEW(orte_iof_svc_sub_t);
 
+    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    for(item =  opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
+        item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed);
+        item =  opal_list_get_next(item)) {
+        sub = (orte_iof_svc_sub_t*)item;
+        if (sub->src_mask == src_mask &&
+            orte_ns.compare(sub->src_mask,&sub->src_name,src_name) == 0 &&
+            sub->src_tag == src_tag &&
+            sub->dst_mask == dst_mask &&
+            orte_ns.compare(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
+            sub->dst_tag == dst_tag) {
+                OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+                return ORTE_SUCCESS;
+        }
+    }
+
+    sub = OBJ_NEW(orte_iof_svc_sub_t);
     sub->src_name = *src_name;
     sub->src_mask = src_mask;
     sub->src_tag = src_tag;
