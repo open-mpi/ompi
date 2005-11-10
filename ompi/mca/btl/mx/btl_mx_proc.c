@@ -160,11 +160,18 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
                                 mx_peers[i].nic_id, mx_peers[i].endpoint_id,
                                 mca_btl_mx_component.mx_filter, 500, &mx_remote_addr );
         if( MX_SUCCESS != mx_status ) {
-            opal_output( 0, "mx_connect fail for %dth remote address key %x (error %s)\n", 
-                         i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
             if( MX_TIMEOUT == mx_status )
-                if( num_retry++ < 5 )
+                if( num_retry++ < 10 )
                     goto retry_connect;
+            {
+                char peer_name[MX_MAX_HOSTNAME_LEN];
+
+                if( MX_SUCCESS != mx_nic_id_to_hostname( mx_peers[i].nic_id, peer_name ) )
+                    sprintf( peer_name, "unknown %lx nic_id", mx_peers[i].nic_id );
+
+                opal_output( 0, "mx_connect fail for %s(%dth remote address) with key %x (error %s)\n", 
+                             peer_name, i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
+            }
             continue;
         }
         module_endpoint->mx_peer.nic_id = mx_peers[i].nic_id;
