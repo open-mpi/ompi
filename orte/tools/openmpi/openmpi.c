@@ -39,7 +39,12 @@
 #endif
 #include <errno.h>
 
+#if 0
+ /* for some reason, including this header and never calling opal_init
+    causes linker errors with XLC on OS X.  sigh.
+  */
 #include "opal/event/event.h"
+#endif
 #include "include/constants.h"
 
 #include "opal/util/argv.h"
