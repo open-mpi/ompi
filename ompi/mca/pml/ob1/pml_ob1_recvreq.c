@@ -84,6 +84,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
      * broadcast the condition on the request in order to allow the other threa ds
      * to complete their test/wait functions.
      */
+    ompi_request_completed++;
     if(ompi_request_waiting) {
        opal_condition_broadcast(&ompi_request_cond);
     }
@@ -158,6 +159,7 @@ static void mca_pml_ob1_put_completion(
         recvreq->req_recv.req_base.req_pml_complete = true; 
         recvreq->req_recv.req_base.req_ompi.req_complete = true;
 
+        ompi_request_completed++;
         if(ompi_request_waiting) {
             opal_condition_broadcast(&ompi_request_cond);
         }
@@ -326,6 +328,8 @@ static void mca_pml_ob1_rget_completion(
         recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
         recvreq->req_recv.req_base.req_pml_complete = true;
         recvreq->req_recv.req_base.req_ompi.req_complete = true;
+
+        ompi_request_completed++;
         if(ompi_request_waiting) {
             opal_condition_broadcast(&ompi_request_cond);
         }
@@ -529,6 +533,7 @@ void mca_pml_ob1_recv_request_progress(
         recvreq->req_recv.req_base.req_pml_complete = true; 
         recvreq->req_recv.req_base.req_ompi.req_complete = true;
 
+        ompi_request_completed++;
         if(ompi_request_waiting) {
             opal_condition_broadcast(&ompi_request_cond);
         }
@@ -581,6 +586,7 @@ void mca_pml_ob1_recv_request_matched_probe(
     recvreq->req_recv.req_base.req_pml_complete = true; 
     recvreq->req_recv.req_base.req_ompi.req_complete = true;
 
+    ompi_request_completed++;
     if(ompi_request_waiting) {
         opal_condition_broadcast(&ompi_request_cond);
     }

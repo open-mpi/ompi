@@ -139,7 +139,8 @@ typedef struct ompi_request_t ompi_request_t;
  * Globals used for tracking requests and request completion.
  */
 OMPI_DECLSPEC extern ompi_pointer_array_t  ompi_request_f_to_c_table;
-OMPI_DECLSPEC extern volatile int          ompi_request_waiting;
+OMPI_DECLSPEC extern size_t                ompi_request_waiting;
+OMPI_DECLSPEC extern size_t                ompi_request_completed;
 OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC extern int                   ompi_request_poll_iterations;

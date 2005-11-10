@@ -132,6 +132,7 @@ int ompi_request_wait_all(
      * unless required 
      */
     if (completed != count) {
+
         /*
          * acquire lock and test for completion - if all requests are
          * not completed pend on condition variable until a request
@@ -139,7 +140,22 @@ int ompi_request_wait_all(
          */
         OPAL_THREAD_LOCK(&ompi_request_lock);
         ompi_request_waiting++;
+
         do {
+            /* check number of pending requests */
+            size_t start = ompi_request_completed;
+            size_t pending = count - completed;
+
+            /*
+             * wait until at least pending requests complete 
+            */
+            while (pending > ompi_request_completed - start) {
+                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            }
+
+            /*
+             * confirm that all pending operations have completed
+            */
             completed = 0;
             rptr = requests;
             for (i = 0; i < count; i++) {
@@ -147,9 +163,6 @@ int ompi_request_wait_all(
                 if (request->req_complete == true) {
                     completed++;
                 }
-            }
-            if (completed != count) {
-                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             }
         } while (completed != count);
         ompi_request_waiting--;
