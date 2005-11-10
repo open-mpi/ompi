@@ -162,7 +162,6 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->pending_frags_hp, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->pending_frags_lp, opal_list_t);
-    OBJ_CONSTRUCT(&endpoint->pending_frags_get, opal_list_t);
     
     endpoint->rd_posted_hp = 0;
     endpoint->rd_posted_lp = 0;
@@ -194,7 +193,6 @@ static void mca_btl_mvapi_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     OBJ_DESTRUCT(&endpoint->pending_send_frags);
     OBJ_DESTRUCT(&endpoint->pending_frags_hp);
     OBJ_DESTRUCT(&endpoint->pending_frags_lp);
-    OBJ_DESTRUCT(&endpoint->pending_frags_get);
 }
 
 /*
