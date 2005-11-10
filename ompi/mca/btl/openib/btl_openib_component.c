@@ -177,10 +177,12 @@ int mca_btl_openib_component_open(void)
                                       8,  (int*) &mca_btl_openib_component.rd_win);
     mca_btl_openib_component.rd_rsv = ((mca_btl_openib_component.rd_num<<1)-1) / mca_btl_openib_component.rd_win;
 
+    mca_btl_openib_param_register_int("srq_rd_max", "Max number of receive descriptors posted per SRQ.",
+                                      1000, (int*) &mca_btl_openib_component.srq_rd_max);
     mca_btl_openib_param_register_int("srq_rd_per_peer", "Number of receive descriptors posted per peer. (SRQ)",
                                       16, (int*) &mca_btl_openib_component.srq_rd_per_peer);
-    mca_btl_openib_param_register_int("srq_sd_per_proc", "Maximum number of send descriptors posted. (SRQ)",
-                                      16,  &mca_btl_openib_component.srq_sd_per_proc);
+    mca_btl_openib_param_register_int("srq_sd_max", "Maximum number of send descriptors posted. (SRQ)",
+                                      8,  &mca_btl_openib_component.srq_sd_max);
 
     mca_btl_openib_param_register_int ("eager_limit", "eager send limit", 
                                        (64*1024),(int*) &mca_btl_openib_module.super.btl_eager_limit);  
@@ -429,7 +431,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         openib_btl->rd_num = mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv;
         openib_btl->rd_low = mca_btl_openib_component.rd_low;
         openib_btl->num_peers = 0; 
-        openib_btl->sd_tokens_hp = openib_btl->sd_tokens_lp = mca_btl_openib_component.srq_sd_per_proc;
+        openib_btl->sd_tokens_hp = openib_btl->sd_tokens_lp = mca_btl_openib_component.srq_sd_max;
 
         /* Initialize module state */
 
