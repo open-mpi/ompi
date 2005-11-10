@@ -62,7 +62,18 @@ fi
 
 if test "$ofc_have_type" = "1"; then
 
-    # What is the size of this type?
+    # What is the size of this type?  
+
+    # NOTE: Some Fortran compilers actually will return that a type
+    # exists even if it doesn't support it -- the compiler will
+    # automatically convert the unsupported type to a type that it
+    # *does* support.  For example, if you try to use INTEGER*16 and
+    # the compiler doesn't support it, it may well automatically
+    # convert it to INTEGER*8 for you (!).  So we have to check the
+    # actual size of the type once we determine that the compiler
+    # doesn't error if we try to use it (i.e,. the compiler *might*
+    # support that type).  If the size doesn't match the expected
+    # size, then the compiler doesn't really support it.
 
     OMPI_F77_GET_SIZEOF([$1], [ofc_type_size])
     if test "$ofc_expected_size" != "-1" -a "$ofc_type_size" != "$ofc_expected_size"; then
