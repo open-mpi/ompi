@@ -88,8 +88,9 @@ struct mca_btl_openib_component_t {
     int32_t rd_win; /**< ack credits when window size exceeded */
     int32_t rd_rsv; /**< descriptors held in reserve for control messages */
 
+    int32_t srq_rd_max; /* maximum number of receive descriptors posted */
     int32_t srq_rd_per_peer; /* number of receive descriptors to post per log2(peers) in SRQ mode */
-    int32_t srq_sd_per_proc; /* maximum number of send descriptors posted */
+    int32_t srq_sd_max; /* maximum number of send descriptors posted */
 
     size_t eager_limit; 
     size_t max_send_size; 

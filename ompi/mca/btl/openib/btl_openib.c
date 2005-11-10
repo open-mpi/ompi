@@ -125,9 +125,11 @@ int mca_btl_openib_add_procs(
         openib_btl->num_peers += nprocs; 
         if(mca_btl_openib_component.use_srq) { 
             openib_btl->rd_num = mca_btl_openib_component.rd_num + log2(nprocs) * mca_btl_openib_component.srq_rd_per_peer; 
+            if(openib_btl->rd_num > mca_btl_openib_component.srq_rd_max)
+               openib_btl->rd_num = mca_btl_openib_component.srq_rd_max;
+            openib_btl->rd_low = openib_btl->rd_num - 1;
             free(openib_btl->rd_desc_post); 
             openib_btl->rd_desc_post = (struct ibv_recv_wr*) malloc((openib_btl->rd_num * sizeof(struct ibv_recv_wr))); 
-            openib_btl->rd_low = openib_btl->rd_num * 0.75;
        
         }
     }
@@ -743,7 +745,7 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     if(mca_btl_openib_component.use_srq) { 
         
         struct ibv_srq_init_attr attr; 
-        attr.attr.max_wr = openib_btl->rd_num;
+        attr.attr.max_wr = mca_btl_openib_component.srq_rd_max;
         attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
 
         openib_btl->srd_posted_hp = 0; 
