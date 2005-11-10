@@ -389,7 +389,14 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     }
 
     /* get conditions */
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &conditions, &num_conditions, ORTE_KEYVAL))) {
+    if(NULL == (conditions = malloc(sizeof(orte_gpr_keyval_t*)*num_conditions))) {
+        ret = ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(ret);
+        goto RETURN_ERROR;
+    }
+
+    memset(conditions, 0, sizeof(orte_gpr_keyval_t*)*num_conditions);
+    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, conditions, &num_conditions, ORTE_KEYVAL))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }

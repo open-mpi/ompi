@@ -470,6 +470,8 @@ int orte_rmaps_base_get_node_map(
     orte_app_context_t** app_context = NULL;
     orte_rmaps_base_map_t** mapping = NULL;
     orte_ras_node_t *ras_node = NULL;
+    orte_gpr_keyval_t keyval;
+    orte_gpr_keyval_t *condition;
     size_t i, num_context = 0;
     char* segment = NULL;
     char* jobid_str = NULL;
@@ -524,6 +526,26 @@ int orte_rmaps_base_get_node_map(
         mapping[i] = map;
     }
     asprintf(&segment, "%s-%s", ORTE_JOB_SEGMENT, jobid_str);
+
+                                                                                                                  
+    /* setup condition/filter for query - return only processes that
+     * are assigned to the specified node name
+     */
+    keyval.key = ORTE_NODE_NAME_KEY;
+    keyval.type = ORTE_STRING;
+    keyval.value.strptr = strdup(hostname);
+    condition = &keyval;
+
+    /* query the process list from the registry */
+    rc = orte_gpr.get_conditional(
+         ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+         segment,
+         NULL,
+         keys,
+         1,
+         &condition,
+         &num_values,
+         &values);
 
     /* query the process list from the registry */
     rc = orte_gpr.get(
