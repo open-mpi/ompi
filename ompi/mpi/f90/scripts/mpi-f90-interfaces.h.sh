@@ -7354,13 +7354,18 @@ echo
 
 
 procedure='MPI_File_write_ordered_begin'
-# allow for 2 char rank, 2 char for type, 2 char for kind and
-# still be 31 characters or less
-procedure="`echo ${procedure} | cut -c1-25`"
 
 echo "interface ${procedure}"
 echo
 rank=0
+
+
+# JMS: Override -- need to make the back-end function less than 31
+# characters because F90 standard says that symbol max lengths are 31
+# characters.  So change the value of $procedure to something slightly
+# shorter.  $proc, hard code it to something slightly different.
+# #$%@#$%@#$%
+procedure=MPI_File_wr_ord_begin
 for kind in $lkinds
 do
   proc="${procedure}${rank}DL${kind}"
@@ -7482,6 +7487,9 @@ do
   echo
 done
 echo
+# JMS: Override -- see above.  Put it back to the full name.
+# #$%@#$%@#$%
+procedure=MPI_File_write_ordered_begin
 echo "end interface ${procedure}"
 echo
 echo
