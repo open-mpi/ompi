@@ -124,10 +124,10 @@ int mca_btl_openib_add_procs(
     if( 0 == openib_btl->num_peers ) { 
         openib_btl->num_peers += nprocs; 
         if(mca_btl_openib_component.use_srq) { 
-            openib_btl->rd_buf_max = mca_btl_openib_component.ib_rr_buf_max + log2(nprocs) * mca_btl_openib_component.rd_per_peer; 
-            free(openib_btl->rr_desc_post); 
-            openib_btl->rr_desc_post = (struct ibv_recv_wr*) malloc((openib_btl->rd_buf_max * sizeof(struct ibv_recv_wr))); 
-            openib_btl->rd_buf_min = openib_btl->rd_buf_max / 2;
+            openib_btl->rd_num = mca_btl_openib_component.rd_num + log2(nprocs) * mca_btl_openib_component.srq_rd_per_peer; 
+            free(openib_btl->rd_desc_post); 
+            openib_btl->rd_desc_post = (struct ibv_recv_wr*) malloc((openib_btl->rd_num * sizeof(struct ibv_recv_wr))); 
+            openib_btl->rd_low = openib_btl->rd_num * 0.75;
        
         }
     }
@@ -562,12 +562,9 @@ int mca_btl_openib_send(
     
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
-        
     frag->hdr->tag = tag; 
     frag->type = MCA_BTL_IB_FRAG_SEND; 
-    frag->rc = mca_btl_openib_endpoint_send(endpoint, frag);
-           
-    return frag->rc;
+    return mca_btl_openib_endpoint_send(endpoint, frag);
 }
 
 /*
@@ -578,23 +575,30 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* endpoint,
                     mca_btl_base_descriptor_t* descriptor)
 {
+    int rc;
     struct ibv_send_wr* bad_wr; 
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     frag->endpoint = endpoint;
     frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_WRITE; 
     if(!mca_btl_openib_component.use_srq && 
-       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
-        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
-        BTL_OPENIB_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
-                                  endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock); 
-        return OMPI_SUCCESS;
+       OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0) { 
+
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
+        rc = OMPI_SUCCESS;
+
     } else if(mca_btl_openib_component.use_srq && 
-              OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,-1) < 0) {
-        opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-        OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,1);
-        return OMPI_SUCCESS;
+              OPAL_THREAD_ADD32(&openib_btl->sd_tokens_lp,-1) < 0) {
         
+        OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+        opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag);
+        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+        OPAL_THREAD_ADD32(&openib_btl->sd_tokens_lp,1);
+        rc = OMPI_SUCCESS;
+
     } else { 
         
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
@@ -609,12 +613,13 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                      , frag->sg_entry.addr
                      , frag->sg_entry.length)); 
 
-        if(ibv_post_send(endpoint->lcl_qp_low, 
+        if(ibv_post_send(endpoint->lcl_qp_lp, 
                          &frag->wr_desc.sr_desc, 
                          &bad_wr)){ 
-            BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        }  
+            rc = OMPI_ERROR;
+        } else {
+            rc = OMPI_SUCCESS;
+        }
     
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
         if(mca_btl_openib_component.use_srq) { 
@@ -628,7 +633,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         }
 #endif 
     }
-    return OMPI_SUCCESS; 
+    return rc; 
 }
 
 
@@ -640,24 +645,40 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* endpoint,
                     mca_btl_base_descriptor_t* descriptor)
 {
+    int rc;
     struct ibv_send_wr* bad_wr; 
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     frag->endpoint = endpoint;
     frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_READ; 
+
     /* atomically test and acquire a token */
     if(!mca_btl_openib_component.use_srq &&
-       OPAL_THREAD_ADD32(&endpoint->wr_sq_tokens_lp,-1) < 0) { 
-        BTL_VERBOSE(("Queing because no rdma write tokens \n"));
-        BTL_OPENIB_INSERT_PENDING(frag, endpoint->pending_frags_lp, 
-                                  endpoint->wr_sq_tokens_lp, endpoint->endpoint_lock); 
-        return OMPI_SUCCESS;
+        OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0) { 
+
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
+        rc = OMPI_SUCCESS;
+
     } else if(mca_btl_openib_component.use_srq && 
-              OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,-1) < 0) {
-        opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-        OPAL_THREAD_ADD32(&openib_btl->wr_sq_tokens_lp,1);
-        return OMPI_SUCCESS;
-        
+              OPAL_THREAD_ADD32(&openib_btl->sd_tokens_lp,-1) < 0) {
+
+        OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+        opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag);
+        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+        OPAL_THREAD_ADD32(&openib_btl->sd_tokens_lp,1);
+        rc = OMPI_SUCCESS;
+
+    } else if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
+                                                                                                                             
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
+        rc = OMPI_SUCCESS;
+
     } else { 
     
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
@@ -672,13 +693,14 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
                      , frag->sg_entry.addr
                      , frag->sg_entry.length)); 
         
-        if(ibv_post_send(endpoint->lcl_qp_low, 
+        if(ibv_post_send(endpoint->lcl_qp_lp, 
                          &frag->wr_desc.sr_desc, 
                          &bad_wr)){ 
             BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
-            return OMPI_ERROR; 
-        }  
-        
+            rc = ORTE_ERROR;
+        }  else {
+            rc = ORTE_SUCCESS;
+        }
         
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
         if(mca_btl_openib_component.use_srq) { 
@@ -692,8 +714,7 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
         }
 #endif 
     }
-    return OMPI_SUCCESS; 
-
+    return rc; 
 }
 
 /* 
@@ -722,41 +743,41 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     if(mca_btl_openib_component.use_srq) { 
         
         struct ibv_srq_init_attr attr; 
-        attr.attr.max_wr = mca_btl_openib_component.ib_wq_size;
+        attr.attr.max_wr = openib_btl->rd_num;
         attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
 
-        openib_btl->srr_posted_high = 0; 
-        openib_btl->srr_posted_low = 0; 
+        openib_btl->srd_posted_hp = 0; 
+        openib_btl->srd_posted_lp = 0; 
         
-        openib_btl->srq_high = ibv_create_srq(openib_btl->ib_pd, &attr); 
-        if(NULL == openib_btl->srq_high) { 
+        openib_btl->srq_hp = ibv_create_srq(openib_btl->ib_pd, &attr); 
+        if(NULL == openib_btl->srq_hp) { 
             BTL_ERROR(("error in ibv_create_srq\n")); 
             return OMPI_ERROR; 
         }
         
-        openib_btl->srq_low = ibv_create_srq(openib_btl->ib_pd, &attr); 
-        if(NULL == openib_btl->srq_high) { 
+        openib_btl->srq_lp = ibv_create_srq(openib_btl->ib_pd, &attr); 
+        if(NULL == openib_btl->srq_hp) { 
             BTL_ERROR(("error in ibv_create_srq\n")); 
             return OMPI_ERROR; 
         }
                 
     } else { 
-        openib_btl->srq_high = NULL; 
-        openib_btl->srq_low = NULL;
+        openib_btl->srq_hp = NULL; 
+        openib_btl->srq_lp = NULL;
     } 
 #endif
     
     /* Create the low and high priority queue pairs */ 
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
-    openib_btl->ib_cq_low = 
+    openib_btl->ib_cq_lp = 
         ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
 #else
-    openib_btl->ib_cq_low = 
+    openib_btl->ib_cq_lp = 
         ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size,
                       NULL, NULL, 0); 
 #endif
     
-    if(NULL == openib_btl->ib_cq_low) {
+    if(NULL == openib_btl->ib_cq_lp) {
         BTL_ERROR(("error creating low priority cq for %s errno says %s\n",
                   ibv_get_device_name(openib_btl->ib_dev), 
                   strerror(errno))); 
@@ -764,15 +785,15 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
     }
 
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
-    openib_btl->ib_cq_high = 
+    openib_btl->ib_cq_hp = 
         ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size, NULL); 
 #else
-    openib_btl->ib_cq_high = 
+    openib_btl->ib_cq_hp = 
         ibv_create_cq(ctx, mca_btl_openib_component.ib_cq_size,
                       NULL, NULL, 0); 
 #endif    
 
-    if(NULL == openib_btl->ib_cq_high) {
+    if(NULL == openib_btl->ib_cq_hp) {
         BTL_ERROR(("error creating high priority cq for %s errno says %s\n", 
                   ibv_get_device_name(openib_btl->ib_dev), 
                   strerror(errno))); 
