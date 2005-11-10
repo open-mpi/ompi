@@ -176,6 +176,7 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->sd_tokens_hp = mca_btl_mvapi_component.rd_num; 
     endpoint->sd_tokens_lp = mca_btl_mvapi_component.rd_num; 
     endpoint->get_tokens = mca_btl_mvapi_component.ib_qp_ous_rd_atom;
+
     endpoint->rem_info.rem_qp_num_hp = 0; 
     endpoint->rem_info.rem_qp_num_lp = 0; 
     endpoint->rem_info.rem_lid = 0; 
@@ -1037,7 +1038,7 @@ static void mca_btl_mvapi_endpoint_control_cb(
 }
 
 /**
- *
+ * Return credits to peer
  */
 
 void mca_btl_mvapi_endpoint_send_credits(
@@ -1050,7 +1051,6 @@ void mca_btl_mvapi_endpoint_send_credits(
     mca_btl_mvapi_frag_t* frag;
     int rc;
 
-    /* fprintf(stderr, "sending credits %d\n", *credits); */
     MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
     if(NULL == frag) {
         BTL_ERROR(("error allocating fragment"));

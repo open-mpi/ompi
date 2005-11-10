@@ -92,13 +92,15 @@ struct mca_btl_mvapi_component_t {
     int32_t rd_win; /**< ack credits when window size exceeded */
     int32_t rd_rsv; /**< descriptors held in reserve for control messages */ 
     
-    int32_t rd_per_peer; 
+    /* number of srq send tokes available */ 
+    int32_t srq_sd_max; 
+    int32_t srq_rd_max;
+    int32_t srq_rd_per_peer; 
     /**< the number of recv desc posted per log(peer) in SRQ mode */ 
 
     size_t eager_limit; 
     size_t max_send_size; 
 
-    uint32_t leave_pinned; 
     uint32_t reg_mru_len; 
     uint32_t use_srq; 
     
@@ -117,9 +119,6 @@ struct mca_btl_mvapi_component_t {
     uint32_t ib_service_level; 
     uint32_t ib_static_rate; 
     uint32_t ib_src_path_bits; 
-    /* number of send tokes available */ 
-    uint32_t max_wr_sq_tokens; 
-    uint32_t max_total_wr_sq_tokens; 
 
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
 
@@ -156,10 +155,6 @@ struct mca_btl_mvapi_module_t {
     ompi_free_list_t recv_free_eager;    /**< High priority free list of buffer descriptors */
     ompi_free_list_t recv_free_max;      /**< Low priority free list of buffer descriptors */ 
 
-    opal_list_t reg_mru_list;   /**< a most recently used list of mca_mpool_mvapi_registration_t 
-                                       entries, this allows us to keep a working set of memory pinned */ 
-    
-    opal_list_t repost;            /**< list of buffers to repost */
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
     VAPI_rr_desc_t*  rr_desc_post; /**< an array to allow posting of rr in one swoop */ 
@@ -251,10 +246,10 @@ struct mca_btl_mvapi_module_t {
        desc_post[i] = frag->rr_desc; \
     }\
     ret = VAPI_post_srq( nic, \
-                               srq_hndl, \
-                               cnt, \
-                               desc_post, \
-                               &rwqe_posted); \
+                         srq_hndl, \
+                         cnt, \
+                         desc_post, \
+                         &rwqe_posted); \
    if(VAPI_OK != ret) { \
         BTL_ERROR(("error posting receive descriptors to shared receive queue: %s",\
                    VAPI_strerror(ret))); \
