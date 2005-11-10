@@ -174,11 +174,15 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
 
     /* Now that we have the new ub and the alignment we should update the ub to match
      * the new alignement. We have to add an epsilon that is the least nonnegative increment
-     * needed to roung the extent to the next multiple of the alignment.
+     * needed to roung the extent to the next multiple of the alignment. This rule
+     * apply only if there is user specified upper bound as stated in the MPI
+     * standard MPI 1.2 page 71.
      */
-    epsilon = (pdtBase->ub - pdtBase->lb) % pdtBase->align;
-    if( 0 != epsilon ) {
-        pdtBase->ub += (pdtBase->align - epsilon);
+    if( !(pdtBase->flags & DT_FLAG_USER_UB) ) {
+        epsilon = (pdtBase->ub - pdtBase->lb) % pdtBase->align;
+        if( 0 != epsilon ) {
+            pdtBase->ub += (pdtBase->align - epsilon);
+        }
     }
 
     /*
@@ -216,7 +220,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             pLast->elem.extent       = pdtAdd->size;
             pLast->elem.common.flags = localFlags | DT_FLAG_CONTIGUOUS;
             pLast++;
-            CREATE_LOOP_END( pLast, 2, true_ub, pdtAdd->size, localFlags );
+            CREATE_LOOP_END( pLast, 2, disp, pdtAdd->size, localFlags );
             pdtBase->desc.used += 3;
             pdtBase->btypes[DT_LOOP]     = 1;
             pdtBase->btypes[DT_END_LOOP] = 1;
@@ -260,17 +264,22 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             for( i = 0; i < pdtAdd->desc.used; i++ ) {
                 pLast->elem               = pdtAdd->desc.desc[i].elem;
                 pLast->elem.common.flags |= localFlags;
-                if( DT_FLAG_DATA & pdtAdd->desc.desc[i].elem.common.flags )
+                if( DT_FLAG_DATA & pLast->elem.common.flags )
                     pLast->elem.disp += disp;
+                else if( DT_END_LOOP == pLast->elem.common.type ) {
+                    pLast->end_loop.first_elem_disp += disp;
+                }
                 pLast++;
             }
             pdtBase->desc.used += pdtAdd->desc.used;
             if( pLoop != NULL ) {
-                CREATE_LOOP_END( pLast, pdtAdd->desc.used + 1, true_ub - true_lb,
+                int index = GET_FIRST_NON_LOOP( pLoop );
+                assert( pLoop[index].elem.common.flags & DT_FLAG_DATA );
+                CREATE_LOOP_END( pLast, pdtAdd->desc.used + 1, pLoop[index].elem.disp,
                                  pdtAdd->size, pLoop->loop.common.flags );
             }
-	    }
-	    /* should I add some space until the extent of this datatype ? */
+        }
+        /* should I add some space until the extent of this datatype ? */
     }
 
     /* Is the data still contiguous ?

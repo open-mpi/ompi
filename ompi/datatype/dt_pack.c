@@ -593,38 +593,33 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
 {
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
-    char *pSrc;
+    char *source_base = NULL;
     size_t length = pData->size * pConv->count - pConv->bConverted;
     uint32_t iov_count, initial_amount = pConv->bConverted;
+    ddt_endloop_desc_t* _end_loop = &(pConv->use_desc->desc[pConv->use_desc->used].end_loop);
 
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
      */
-    pSrc = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         if( 0 == length ) break;
         if( (size_t)iov[iov_count].iov_len > length )
             iov[iov_count].iov_len = length;
+        source_base = (pConv->pBaseBuf + _end_loop->first_elem_disp
+                       + pStack[0].disp + pStack[1].disp);
         if( iov[iov_count].iov_base == NULL ) {
-            iov[iov_count].iov_base = pSrc;
+            iov[iov_count].iov_base = source_base;
         } else {
             /* contiguous data just memcpy the smallest data in the user buffer */
-            OMPI_DDT_SAFEGUARD_POINTER( pSrc, iov[iov_count].iov_len,
+            OMPI_DDT_SAFEGUARD_POINTER( source_base, iov[iov_count].iov_len,
                                         pConv->pBaseBuf, pData, pConv->count );
-            MEMCPY( iov[iov_count].iov_base, pSrc, iov[iov_count].iov_len);
+            MEMCPY( iov[iov_count].iov_base, source_base, iov[iov_count].iov_len);
         }
         length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
-        pStack[0].disp += iov[iov_count].iov_len + pStack[1].disp;
-        pSrc = pConv->pBaseBuf + pStack[0].disp;
+        pStack[0].disp += iov[iov_count].iov_len;
     }
-    /* The logic here should be quite simple. As the data is contiguous we will just copy data
-     * (we dont have to do any conversion). Then the only thing that is interesting is to
-     * be sure that the bConverted is the correct displacement. So we can always set the
-     * stack[1].disp to ZERO and keep the stack[1].disp equal to bConverted (by lower bound) .
-     */
-    pStack[1].disp = 0;
 
     /* update the return value */
     *max_data = pConv->bConverted - initial_amount;
@@ -641,24 +636,28 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
 {
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
-    char *pSrc, *pDest;
+    char *user_memory, *packed_buffer;
     size_t length = pData->size * pConv->count;
     long extent;
-    uint32_t max_allowed = *max_data;
-    uint32_t i, index;
+    uint32_t max_allowed, i, index;
     uint32_t iov_count, total_bytes_converted = 0;
 
     extent = pData->ub - pData->lb;
     assert( (pData->flags & DT_FLAG_CONTIGUOUS) && ((long)pData->size != extent) );
 
+    /* Limit the amount of packed data to the data left over on this convertor */
+    max_allowed = (pConv->count * pData->size) - pConv->bConverted;
+    if( max_allowed > (*max_data) )
+        max_allowed = (*max_data);
+
     i = pConv->bConverted / pData->size;  /* how many we already pack */
-    pSrc = pConv->pBaseBuf + pStack->disp;  /* actual starting point for the conversion */
+    user_memory = pConv->pBaseBuf + pStack->disp;  /* actual starting point for the conversion */
 
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
      */
-    pSrc = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
+    user_memory = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         if( iov[iov_count].iov_base == NULL ) {
             /* special case for small data. We avoid allocating memory if we
@@ -667,7 +666,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
              */
             if( (uint32_t)pStack->count < ((*out_size) - iov_count) ) {
                 for( index = iov_count; i < pConv->count; i++, index++ ) {
-                    iov[index].iov_base = pSrc + pStack[0].disp + pStack[1].disp;
+                    iov[index].iov_base = user_memory + pStack[0].disp + pStack[1].disp;
                     iov[index].iov_len = pStack[1].count;
                     pStack[0].disp += extent;
                     total_bytes_converted += pStack[1].count;
@@ -687,15 +686,15 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                 for( index = iov_count; (i < pConv->count) && (index < (*out_size));
                      i++, index++ ) {
                     if( max_allowed < pData->size ) {
-                        iov[index].iov_base = pSrc;
+                        iov[index].iov_base = user_memory;
                         iov[index].iov_len = max_allowed;
                         max_allowed = 0;
                         printf( "%s:%d Possible problem here\n", __FILE__, __LINE__ );
                         break;
                     } else {
-                        iov[index].iov_base = pSrc;
+                        iov[index].iov_base = user_memory;
                         iov[index].iov_len = pData->size;
-                        pSrc += extent;
+                        user_memory += extent;
                     }
                     max_allowed -= iov[index].iov_len;
                     total_bytes_converted += iov[index].iov_len;
@@ -720,36 +719,36 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                 else
                     max_allowed = iov[iov_count].iov_len;
             }
-            pDest = iov[iov_count].iov_base;
+            packed_buffer = iov[iov_count].iov_base;
             done = pConv->bConverted - i * pData->size;  /* how much data left last time */
-            pSrc += done;
+            user_memory += done;
             if( done != 0 ) {  /* still some data to copy from the last time */
                 done = pData->size - done;
-                OMPI_DDT_SAFEGUARD_POINTER( pSrc, done, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( pDest, pSrc, done );
-                pDest += done;
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory, done, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( packed_buffer, user_memory, done );
+                packed_buffer += done;
                 max_allowed -= done;
                 i++;  /* just to compute the correct source pointer */
                 total_bytes_converted += done;
             }
-            pSrc = pConv->pBaseBuf + pData->true_lb + i * extent;
+            user_memory = pConv->pBaseBuf + pData->true_lb + i * extent;
             counter = max_allowed / pData->size;
             if( counter > pConv->count ) counter = pConv->count;
             for( i = 0; i < counter; i++ ) {
-                OMPI_DDT_SAFEGUARD_POINTER( pSrc, pData->size, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( pDest, pSrc, pData->size );
-                pDest += pData->size;
-                pSrc += extent;
+                OMPI_DDT_SAFEGUARD_POINTER( user_memory, pData->size, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( packed_buffer, user_memory, pData->size );
+                packed_buffer+= pData->size;
+                user_memory += extent;
             }
             max_allowed -= (counter * pData->size);
             iov[iov_count].iov_len -= max_allowed;
             total_bytes_converted += iov[iov_count].iov_len;
         }
-        /* Now update the pSrc pointer. At the end of each parth we have to update
+        /* Now update the user_memory pointer. At the end of each parth we have to update
          * the pStack[0].disp field. BEWARE here we remove the pStack[1].disp as
          * it's supposed to be useless from now.
          */
-        pSrc = pConv->pBaseBuf + pStack[0].disp;
+        user_memory = pConv->pBaseBuf + pStack[0].disp;
     }
     *max_data = total_bytes_converted;
     pConv->bConverted += total_bytes_converted;
