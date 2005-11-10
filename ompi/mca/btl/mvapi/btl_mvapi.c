@@ -192,11 +192,13 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
     
     if(size <= mca_btl_mvapi_component.eager_limit){ 
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
+        if(NULL == frag) return NULL;
         frag->segment.seg_len = 
             size <= mca_btl_mvapi_component.eager_limit ? 
             size: mca_btl_mvapi_component.eager_limit ; 
     } else { 
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
+        if(NULL == frag) return NULL;
         frag->segment.seg_len = 
             size <= mca_btl_mvapi_component.max_send_size ? 
             size: mca_btl_mvapi_component.max_send_size ; 
@@ -506,7 +508,7 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
     mca_btl_mvapi_module_t* mvapi_btl; 
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
 
-#if 0     
+#if 0
     if(mvapi_btl->send_free_eager.fl_num_allocated != 
        mvapi_btl->send_free_eager.super.opal_list_length){ 
         opal_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
