@@ -25,23 +25,9 @@
 static void mca_btl_mvapi_frag_common_constructor( mca_btl_mvapi_frag_t* frag) 
 {
     mca_mpool_mvapi_registration_t* mem_hndl = (mca_mpool_mvapi_registration_t*) frag->base.super.user_data; 
-    frag->hdr = (mca_btl_mvapi_header_t*) (frag+1);    /* initialize the btl header to point to start at end of frag */ 
-#if 0   
-    mod = (unsigned long) frag->hdr % MCA_BTL_IB_FRAG_ALIGN; 
-    
-    if(mod != 0) {
-        frag->hdr = (mca_btl_mvapi_header_t*) ((unsigned char*) frag->hdr + (MCA_BTL_IB_FRAG_ALIGN - mod));
-    }
-#endif 
-    
-    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_mvapi_header_t);  /* init the segment address to start after the btl header */ 
-    
-#if 0 
-    mod = (frag->segment.seg_addr.lval) % MCA_BTL_IB_FRAG_ALIGN; 
-    if(mod != 0) {
-        frag->segment.seg_addr.lval += (MCA_BTL_IB_FRAG_ALIGN - mod);
-    }
-#endif 
+    frag->hdr = (mca_btl_mvapi_header_t*) (frag+1);  /* initialize btl header to point to start at end of frag */ 
+    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_mvapi_header_t);  
+    /* init the segment address to start after the btl header */ 
     
     /* frag->mem_hndl = mem_hndl->hndl;  */
     frag->segment.seg_len = frag->size;
@@ -49,7 +35,6 @@ static void mca_btl_mvapi_frag_common_constructor( mca_btl_mvapi_frag_t* frag)
     frag->sg_entry.lkey = mem_hndl->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->base.des_flags = 0; 
-
 }
 
  
