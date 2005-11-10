@@ -92,6 +92,7 @@ do {                                                               \
     comm,                                                          \
     persistent)                                                    \
 do {                                                               \
+    (request)->req_rdma_cnt = 0;                                   \
     MCA_PML_BASE_RECV_REQUEST_INIT(                                \
         &(request)->req_recv,                                      \
         addr,                                                      \
