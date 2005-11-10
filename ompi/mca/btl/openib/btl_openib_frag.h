@@ -32,7 +32,11 @@ extern "C" {
 #endif
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t);
 
-typedef mca_btl_base_header_t mca_btl_openib_header_t; 
+struct mca_btl_openib_header_t {
+    mca_btl_base_tag_t tag;
+    int16_t credits;
+};
+typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
 
 
 typedef enum { 
@@ -54,7 +58,7 @@ struct mca_btl_openib_frag_t {
     size_t size; 
     int rc; 
     union{ 
-        struct ibv_recv_wr rr_desc; 
+        struct ibv_recv_wr rd_desc; 
         struct ibv_send_wr sr_desc; 
     } wr_desc;  
     struct ibv_sge sg_entry;  
@@ -135,6 +139,36 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
     OMPI_FREE_LIST_RETURN(&((mca_btl_openib_module_t*)btl)->send_free_frag, (opal_list_item_t*)(frag)); \
 }
 
+
+#define MCA_BTL_IB_FRAG_PROGRESS(frag) \
+do { \
+    switch(frag->wr_desc.sr_desc.opcode) { \
+    case IBV_WR_SEND: \
+        if(OMPI_SUCCESS !=  mca_btl_openib_endpoint_send(frag->endpoint, frag)) { \
+            BTL_ERROR(("error in posting pending send\n")); \
+        } \
+        break; \
+    case IBV_WR_RDMA_WRITE: \
+        if(OMPI_SUCCESS !=  mca_btl_openib_put((mca_btl_base_module_t*) openib_btl, \
+            frag->endpoint, \
+            (mca_btl_base_descriptor_t*) frag)) { \
+            BTL_ERROR(("error in posting pending rdma write\n")); \
+        } \
+        break; \
+    case IBV_WR_RDMA_READ: \
+        if(OMPI_SUCCESS !=  mca_btl_openib_get((mca_btl_base_module_t *) openib_btl, \
+                                                              frag->endpoint, \
+                                                              (mca_btl_base_descriptor_t*) frag)) { \
+            BTL_ERROR(("error in posting pending rdma read\n")); \
+        } \
+        break; \
+    default: \
+        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->wr_desc.sr_desc.opcode)); \
+        break; \
+    } \
+} while (0)
+                                                                                                                             
+                                                                                                                             
 
 
 
