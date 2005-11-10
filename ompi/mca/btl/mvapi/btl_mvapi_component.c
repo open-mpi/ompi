@@ -118,9 +118,6 @@ static inline void  mca_btl_mvapi_param_register_int(
 
 int mca_btl_mvapi_component_open(void)
 {
-
-    int param, value; 
-    
     /* initialize state */
     mca_btl_mvapi_component.ib_num_btls=0;
     mca_btl_mvapi_component.mvapi_btls=NULL;
@@ -143,8 +140,6 @@ int mca_btl_mvapi_component_open(void)
                                      0, (int*) &mca_btl_mvapi_component.use_srq); 
     mca_btl_mvapi_param_register_int("ib_cq_size", "size of the IB completion queue",
                                      10000, (int*) &mca_btl_mvapi_component.ib_cq_size); 
-    mca_btl_mvapi_param_register_int("ib_wq_size", "size of the IB work queue", 
-                                     10000, (int*) &mca_btl_mvapi_component.ib_wq_size); 
     mca_btl_mvapi_param_register_int("ib_sg_list_size", "size of IB segment list", 
                                      1, (int*) &mca_btl_mvapi_component.ib_sg_list_size); 
     mca_btl_mvapi_param_register_int("ib_pkey_ix", "IB pkey index", 
@@ -181,8 +176,13 @@ int mca_btl_mvapi_component_open(void)
                                       8,  (int*) &mca_btl_mvapi_component.rd_win); 
     mca_btl_mvapi_component.rd_rsv = ((mca_btl_mvapi_component.rd_num<<1)-1) / mca_btl_mvapi_component.rd_win;
 
-    mca_btl_mvapi_param_register_int("rd_per_peer", "receive descriptors posted per peer, SRQ mode only", 
-                                      16, (int*) &mca_btl_mvapi_component.rd_per_peer); 
+    mca_btl_mvapi_param_register_int("srq_rd_max", "Maximum number of receive descriptors posted per SRQ.\n",
+                                      1000, (int*) &mca_btl_mvapi_component.srq_rd_max); 
+    mca_btl_mvapi_param_register_int("srq_rd_per_peer", "receive descriptors posted per peer, SRQ mode only", 
+                                      16, (int*) &mca_btl_mvapi_component.srq_rd_per_peer); 
+    mca_btl_mvapi_param_register_int("srq_sd_max", "Maximum number of send descriptors posted per process", 
+                                      8,  &mca_btl_mvapi_component.srq_sd_max); 
+
     mca_btl_mvapi_param_register_int ("exclusivity", "BTL exclusivity", 
                                       MCA_BTL_EXCLUSIVITY_DEFAULT, (int*) &mca_btl_mvapi_module.super.btl_exclusivity);
     mca_btl_mvapi_param_register_int ("eager_limit", "eager send limit", 
@@ -202,14 +202,6 @@ int mca_btl_mvapi_component_open(void)
                                      MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET, (int*) &mca_btl_mvapi_module.super.btl_flags); 
     mca_btl_mvapi_param_register_int("bandwidth", "Approximate maximum bandwidth of interconnect", 
                                       800, (int*) &mca_btl_mvapi_module.super.btl_bandwidth); 
-    mca_btl_mvapi_param_register_int("max_wr_sq_tokens", "Maximum number of send/rdma work request tokens", 
-                                     16,  &mca_btl_mvapi_component.max_wr_sq_tokens); 
-    mca_btl_mvapi_param_register_int("max_total_wr_sq_tokens", "Maximum number of send/rdma work request tokens peer btl", 
-                                     32, &mca_btl_mvapi_component.max_total_wr_sq_tokens); 
-    
-    param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
-    mca_base_param_lookup_int(param, &value); 
-    mca_btl_mvapi_component.leave_pinned = value; 
     
     mca_btl_mvapi_component.max_send_size = mca_btl_mvapi_module.super.btl_max_send_size; 
     mca_btl_mvapi_component.eager_limit = mca_btl_mvapi_module.super.btl_eager_limit; 
@@ -430,7 +422,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         mvapi_btl->rd_num = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_rsv;
         mvapi_btl->rd_low = mca_btl_mvapi_component.rd_low;
         mvapi_btl->num_peers = 0; 
-        mvapi_btl->sd_tokens_hp = mvapi_btl->sd_tokens_lp = mca_btl_mvapi_component.max_wr_sq_tokens;
+        mvapi_btl->sd_tokens_hp = mvapi_btl->sd_tokens_lp = mca_btl_mvapi_component.srq_sd_max;
 
         /* Initialize module state */
 
@@ -446,11 +438,6 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&mvapi_btl->recv_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&mvapi_btl->recv_free_max, ompi_free_list_t);
         
-
-        OBJ_CONSTRUCT(&mvapi_btl->repost, opal_list_t);
-        OBJ_CONSTRUCT(&mvapi_btl->reg_mru_list, opal_list_t); 
-        
-
         if(mca_btl_mvapi_module_init(mvapi_btl) != OMPI_SUCCESS) {
             free(hca_ids);
             return NULL;
@@ -596,10 +583,7 @@ int mca_btl_mvapi_component_progress()
                 /* Process a completed send */
                 frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id; 
                 endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
-
-                frag->rc = OMPI_SUCCESS; 
-                frag->base.des_cbfunc(&mvapi_btl->super, endpoint, &frag->base, frag->rc); 
-                count++;
+                frag->base.des_cbfunc(&mvapi_btl->super, endpoint, &frag->base, OMPI_SUCCESS); 
 
                 /* check and see if we need to progress pending sends */ 
                 if( mca_btl_mvapi_component.use_srq && 
@@ -612,6 +596,7 @@ int mca_btl_mvapi_component_progress()
                         BTL_ERROR(("error in posting pending send\n"));
                     }
                 } 
+                count++;
                 break;
                 
             case VAPI_CQE_RQ_SEND_DATA:
@@ -621,6 +606,12 @@ int mca_btl_mvapi_component_progress()
                 endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
                 credits = frag->hdr->credits;
 
+                /* advance the segment address past the header and subtract from the length..*/ 
+                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
+                /* call registered callback */
+                mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
+                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
+                
                 /* repost receive descriptors */
                 if(mca_btl_mvapi_component.use_srq) { 
                     OPAL_THREAD_ADD32(&mvapi_btl->srd_posted_hp, -1); 
@@ -630,13 +621,6 @@ int mca_btl_mvapi_component_progress()
                     MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 0); 
                 }
 
-                /* advance the segment address past the header and subtract from the length..*/ 
-                frag->rc=OMPI_SUCCESS; 
-                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
-                /* call registered callback */
-                mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
-                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
-                
                 /* check to see if we need to progress any pending desciptors */
                 if( !mca_btl_mvapi_component.use_srq && 
                     OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp, credits) > 0
@@ -659,7 +643,11 @@ int mca_btl_mvapi_component_progress()
                 /* check to see if we need to return credits */
                 if( !mca_btl_mvapi_component.use_srq &&
                     endpoint->rd_credits_hp >= mca_btl_mvapi_component.rd_win) {
-                    mca_btl_mvapi_endpoint_send_credits(endpoint, endpoint->lcl_qp_hndl_hp, endpoint->rem_info.rem_qp_num_hp, &endpoint->rd_credits_hp);
+                    mca_btl_mvapi_endpoint_send_credits(
+                        endpoint, 
+                        endpoint->lcl_qp_hndl_hp, 
+                        endpoint->rem_info.rem_qp_num_hp, 
+                        &endpoint->rd_credits_hp);
                 }
                 count++; 
                 break;
@@ -691,8 +679,7 @@ int mca_btl_mvapi_component_progress()
                 
                 /* Process a completed send - receiver must return tokens */
                 frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id; 
-                frag->rc = OMPI_SUCCESS; 
-                frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
+                frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
                 count++;
 
                 /* if we have tokens, process pending sends */
@@ -714,12 +701,10 @@ int mca_btl_mvapi_component_progress()
 
             case VAPI_CQE_SQ_RDMA_WRITE:
 
-                /* Process a completed write - returns send tokens immediately */
+                /* Process a completed write - returns tokens immediately */
                 frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id; 
                 endpoint = frag->endpoint;
-                frag->rc = OMPI_SUCCESS; 
-                frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, frag->rc); 
-                count++;
+                frag->base.des_cbfunc(&mvapi_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS); 
 
                 if(mca_btl_mvapi_component.use_srq && 
                    OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp, 1)  > 0 
@@ -739,6 +724,7 @@ int mca_btl_mvapi_component_progress()
                     frag = (mca_btl_mvapi_frag_t *) frag_item;
                     MCA_BTL_IB_FRAG_PROGRESS(frag);
                 }
+                count++;
                 break;
                 
             case VAPI_CQE_RQ_SEND_DATA:
@@ -747,7 +733,14 @@ int mca_btl_mvapi_component_progress()
                 endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
                 credits = frag->hdr->credits;
 
-                /* post descriptors before processing receive */
+                /* process received frag */
+                frag->rc=OMPI_SUCCESS; 
+                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
+                /* call registered callback */
+                mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
+                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
+
+                /* post descriptors */
                 if(mca_btl_mvapi_component.use_srq) { 
                     OPAL_THREAD_ADD32(&mvapi_btl->srd_posted_lp, -1); 
                     MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 0); 
@@ -755,13 +748,6 @@ int mca_btl_mvapi_component_progress()
                     OPAL_THREAD_ADD32(&endpoint->rd_posted_lp, -1); 
                     MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 0); 
                 }
-
-                /* process received frag */
-                frag->rc=OMPI_SUCCESS; 
-                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
-                /* advance the segment address past the header and subtract from the length..*/ 
-                mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
-                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
 
                 /* check to see if we need to progress pending descriptors */ 
                 if(!mca_btl_mvapi_component.use_srq && 
@@ -781,7 +767,11 @@ int mca_btl_mvapi_component_progress()
                 /* check to see if we need to return credits */
                 if( !mca_btl_mvapi_component.use_srq &&
                     endpoint->rd_credits_lp >= mca_btl_mvapi_component.rd_win) {
-                    mca_btl_mvapi_endpoint_send_credits(endpoint, endpoint->lcl_qp_hndl_lp, endpoint->rem_info.rem_qp_num_lp, &endpoint->rd_credits_lp);
+                    mca_btl_mvapi_endpoint_send_credits(
+                        endpoint, 
+                        endpoint->lcl_qp_hndl_lp, 
+                        endpoint->rem_info.rem_qp_num_lp, 
+                       &endpoint->rd_credits_lp);
                 }
                 count++; 
                 break;

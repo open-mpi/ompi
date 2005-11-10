@@ -128,10 +128,12 @@ int mca_btl_mvapi_add_procs(
     if( 0 == mvapi_btl->num_peers ) { 
         mvapi_btl->num_peers += nprocs; 
         if(mca_btl_mvapi_component.use_srq) { 
-            mvapi_btl->rd_num = mca_btl_mvapi_component.rd_num + log2(nprocs) * mca_btl_mvapi_component.rd_per_peer; 
+            mvapi_btl->rd_num = mca_btl_mvapi_component.rd_num + log2(nprocs) * mca_btl_mvapi_component.srq_rd_per_peer; 
+            if(mvapi_btl->rd_num > mca_btl_mvapi_component.srq_rd_max)
+               mvapi_btl->rd_num = mca_btl_mvapi_component.srq_rd_max;
+            mvapi_btl->rd_low = mvapi_btl->rd_num - 1;
             free(mvapi_btl->rr_desc_post); 
             mvapi_btl->rr_desc_post = (VAPI_rr_desc_t*) malloc((mvapi_btl->rd_num * sizeof(VAPI_rr_desc_t))); 
-            mvapi_btl->rd_low = mvapi_btl->rd_num / 2;
         }
     }
     return OMPI_SUCCESS;
@@ -560,8 +562,7 @@ int mca_btl_mvapi_send(
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
     frag->hdr->tag = tag; 
-    frag->rc = mca_btl_mvapi_endpoint_send(endpoint, frag);
-    return frag->rc;
+    return mca_btl_mvapi_endpoint_send(endpoint, frag);
 }
 
 /*
@@ -785,10 +786,10 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         mvapi_btl->srd_posted_hp = 0; 
         mvapi_btl->srd_posted_lp = 0; 
         srq_attr.pd_hndl = mvapi_btl->ptag; 
-        srq_attr.max_outs_wr = mca_btl_mvapi_component.ib_wq_size; 
+        srq_attr.max_outs_wr = mca_btl_mvapi_component.srq_rd_max;
         srq_attr.max_sentries = mca_btl_mvapi_component.ib_sg_list_size; 
         
-        srq_attr_mod.srq_limit =  16;/* mca_btl_mvapi_component.ib_wq_size;  */
+        srq_attr_mod.srq_limit = mvapi_btl->rd_num * 0.9;
         ret = VAPI_create_srq(mvapi_btl->nic, 
                               &srq_attr, 
                               &mvapi_btl->srq_hndl_hp, 
