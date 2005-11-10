@@ -29,6 +29,8 @@
 #include "mca/coll/coll.h"
 #include "coll_tuned.h"
 
+#include "opal/util/output.h"
+
 /*
  * Public string showing the coll ompi_tuned component version number
  */
