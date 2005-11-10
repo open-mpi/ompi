@@ -73,6 +73,7 @@ static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int c
      * broadcast the condition on the request in order to allow the other threa ds
      * to complete their test/wait functions.
      */
+    ompi_request_completed++;
     if(ompi_request_waiting) {
        opal_condition_broadcast(&ompi_request_cond);
     }
@@ -117,6 +118,7 @@ void mca_pml_teg_recv_request_progress(
         req->req_recv.req_base.req_ompi.req_status._count = req->req_bytes_delivered;
         req->req_recv.req_base.req_pml_complete = true; 
         req->req_recv.req_base.req_ompi.req_complete = true;
+        ompi_request_completed++;
         if(ompi_request_waiting) {
             opal_condition_broadcast(&ompi_request_cond);
         }

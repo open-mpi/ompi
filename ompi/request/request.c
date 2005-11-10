@@ -22,13 +22,14 @@
 #include "request/request.h"
 #include "ompi/include/constants.h"
 
-ompi_pointer_array_t  ompi_request_f_to_c_table;
-OMPI_DECLSPEC volatile int          ompi_request_waiting = 0;
-OMPI_DECLSPEC opal_mutex_t          ompi_request_lock;
-OMPI_DECLSPEC opal_condition_t      ompi_request_cond;
-OMPI_DECLSPEC ompi_request_t        ompi_request_null;
-OMPI_DECLSPEC ompi_request_t        ompi_request_empty;
-ompi_status_public_t  ompi_status_empty;
+ompi_pointer_array_t             ompi_request_f_to_c_table;
+OMPI_DECLSPEC size_t             ompi_request_waiting = 0;
+OMPI_DECLSPEC size_t             ompi_request_completed = 0;
+OMPI_DECLSPEC opal_mutex_t       ompi_request_lock;
+OMPI_DECLSPEC opal_condition_t   ompi_request_cond;
+OMPI_DECLSPEC ompi_request_t     ompi_request_null;
+OMPI_DECLSPEC ompi_request_t     ompi_request_empty;
+ompi_status_public_t             ompi_status_empty;
 
 
 static void ompi_request_construct(ompi_request_t* req)
@@ -149,6 +150,7 @@ int ompi_request_finalize(void)
 int ompi_request_complete(ompi_request_t* request)
 {
     OPAL_THREAD_LOCK(&ompi_request_lock);
+    ompi_request_completed++;
     request->req_complete = true;
     if(ompi_request_waiting)
         opal_condition_signal(&ompi_request_cond);
