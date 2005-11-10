@@ -70,9 +70,18 @@ int mca_btl_mx_add_procs(
     ompi_bitmap_t* reachable)
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
-    int i, rc;
+    int i, rc, index;
 
-    for(i = 0; i < (int) nprocs; i++) {
+    /* MX seems to not be very scalable if all the processes start to connect in
+     * same time to the same destinattion. We can help it here if we first compute
+     * our rank in the list, and then we setup the connections starting with
+     * the next processor in the list in a round-robin fashion.
+     */
+    for( i = 0; i < (int)nprocs; i++ ) {
+        if( ompi_procs[i] == ompi_proc_local_proc )
+            break;
+    }
+    for( i = i % nprocs, index = 0; index < (int) nprocs; index++, i = (i + 1) % nprocs ) {
 
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_mx_proc_t* mx_proc;
