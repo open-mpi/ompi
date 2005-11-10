@@ -183,6 +183,7 @@ void mca_pml_teg_send_request_progress(
             req->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
             req->req_send.req_base.req_ompi.req_status._count = req->req_bytes_sent;
             req->req_send.req_base.req_ompi.req_complete = true;
+            ompi_request_completed++;
             if(ompi_request_waiting) {
                 opal_condition_broadcast(&ompi_request_cond);
             }

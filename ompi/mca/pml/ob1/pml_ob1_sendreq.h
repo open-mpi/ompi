@@ -233,6 +233,7 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status._count =                              \
         (sendreq)->req_send.req_bytes_packed;                                             \
    (sendreq)->req_send.req_base.req_ompi.req_complete = true;                             \
+   ompi_request_completed++;                                                              \
    if(ompi_request_waiting) {                                                             \
        opal_condition_broadcast(&ompi_request_cond);                                      \
    }                                                                                      \
