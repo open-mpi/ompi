@@ -33,6 +33,16 @@ fi
 echo "Reading Fortran KIND information..." >&2
 . "$1/fortran_kinds.sh"
 
+# Do we want the 2 buffer functions?  (see comment in
+# ompi/mpi/f90/Makefile.am)
+
+WANT_2BUFFER_FUNCTIONS=$2
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
+    echo "Generating 2 buffer function interfaces: yes" >&2
+else
+    echo "Generating 2 buffer function interfaces: no" >&2
+fi
+
 # Do the work
 
 echo "Generating F90 interface functions..." >&2
@@ -419,6 +429,9 @@ echo
 echo
 
 
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
+
 procedure='MPI_Allgather'
 
 echo "interface ${procedure}"
@@ -581,6 +594,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Allgatherv'
 
@@ -752,6 +769,7 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
 
 procedure='MPI_Alloc_mem'
 
@@ -770,6 +788,9 @@ echo "end interface ${procedure}"
 echo
 echo
 
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Allreduce'
 
@@ -925,6 +946,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Alltoall'
 
@@ -1088,6 +1113,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Alltoallv'
 
@@ -1267,6 +1296,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Alltoallw'
 
@@ -1446,6 +1479,7 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
 
 procedure='MPI_Attr_delete'
 
@@ -2887,6 +2921,9 @@ echo
 echo
 
 
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
+
 procedure='MPI_Exscan'
 
 echo "interface ${procedure}"
@@ -3041,6 +3078,7 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
 
 procedure='MPI_File_call_errhandler'
 
@@ -7354,13 +7392,18 @@ echo
 
 
 procedure='MPI_File_write_ordered_begin'
-# allow for 2 char rank, 2 char for type, 2 char for kind and
-# still be 31 characters or less
-procedure="`echo ${procedure} | cut -c1-25`"
 
 echo "interface ${procedure}"
 echo
 rank=0
+
+
+# JMS: Override -- need to make the back-end function less than 31
+# characters because F90 standard says that symbol max lengths are 31
+# characters.  So change the value of $procedure to something slightly
+# shorter.  $proc, hard code it to something slightly different.
+# #$%@#$%@#$%
+procedure=MPI_File_wr_ord_begin
 for kind in $lkinds
 do
   proc="${procedure}${rank}DL${kind}"
@@ -7482,6 +7525,9 @@ do
   echo
 done
 echo
+# JMS: Override -- see above.  Put it back to the full name.
+# #$%@#$%@#$%
+procedure=MPI_File_write_ordered_begin
 echo "end interface ${procedure}"
 echo
 echo
@@ -7895,6 +7941,9 @@ echo
 echo
 
 
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
+
 procedure='MPI_Gather'
 
 echo "interface ${procedure}"
@@ -8065,6 +8114,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Gatherv'
 
@@ -8244,6 +8297,7 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
 
 procedure='MPI_Get'
 
@@ -11056,6 +11110,9 @@ echo
 echo
 
 
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
+
 procedure='MPI_Reduce'
 
 echo "interface ${procedure}"
@@ -11218,6 +11275,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Reduce_scatter'
 
@@ -11373,6 +11434,7 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
 
 procedure='MPI_Register_datarep'
 
@@ -11747,6 +11809,9 @@ echo
 echo
 
 
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
+
 procedure='MPI_Scan'
 
 echo "interface ${procedure}"
@@ -11901,6 +11966,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Scatter'
 
@@ -12072,6 +12141,10 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
+
+# JMS see comment in ompi/mpi/f90/Makefile.am about WANT_2BUFFER_FUNCTIONS
+if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
 
 procedure='MPI_Scatterv'
 
@@ -12251,6 +12324,7 @@ echo "end interface ${procedure}"
 echo
 echo
 
+fi
 
 procedure='MPI_Send'
 

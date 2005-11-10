@@ -97,6 +97,22 @@ mpi-f90-interfaces.h: fortran_kinds.sh
 
 CLEANFILES += mpi-f90-interfaces.h
 
+# SIDENOTE: We currently have code in mpi-f90-interfaces.h.sh to
+# generate interface declarations for all the "two buffer" functions
+# (e.g., MPI_Reduce).  This actually creates a problem for most
+# compilers, because it results in an exponential explosion of
+# functions generated -- most compilers will segv (particularly with
+# --with-f90-mcx-array-dim values of >2).  But this code is useful,
+# and I don't want to delete it (yes, we could get it back from SVN
+# history, but I don't want to re-integrate it) -- f90 compilers *may*
+# someday be able to handle this (i.e., our *code* is not wrong -- the
+# *compilers* are wrong).  So I'm simply adding a hard-coded value
+# here to disable the interface generation stuff in the script; it can
+# be made a condition (e.g., via configure test or --enable option, or
+# somesuch) later if necessary.
+
+WANT_2BUFFER_FUNCTIONS=0
+
 # Run scripts to generate the f90 source files.  We only need to
 # generate the .f90 files once, so the "test" checks to see if the
 # file exists before running the script.  However, the
@@ -107,8 +123,8 @@ CLEANFILES += mpi-f90-interfaces.h
 
 mpi-f90-interfaces.h:
 	@ p="`pwd`"; \
-	echo $(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p \> $@; \
-	$(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p > $@
+	echo $(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p $(WANT_2BUFFER_FUNCTIONS) \> $@; \
+	$(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p $(WANT_2BUFFER_FUNCTIONS) > $@
 
 # Ensure that the mpi_kinds F90 module is generated before compiling
 # any of the sources (because many/all of these sources "use
