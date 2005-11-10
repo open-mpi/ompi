@@ -39,6 +39,7 @@ static void orte_iof_base_endpoint_construct(orte_iof_base_endpoint_t* endpoint)
     endpoint->ep_fd = -1;
     memset(&endpoint->ep_event,0,sizeof(endpoint->ep_event));
     OBJ_CONSTRUCT(&endpoint->ep_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->ep_callbacks, opal_list_t);
 }
 
 static void orte_iof_base_endpoint_destruct(orte_iof_base_endpoint_t* endpoint)
@@ -47,6 +48,7 @@ static void orte_iof_base_endpoint_destruct(orte_iof_base_endpoint_t* endpoint)
         opal_event_del(&endpoint->ep_event);
     }
     OBJ_DESTRUCT(&endpoint->ep_frags);
+    OBJ_DESTRUCT(&endpoint->ep_callbacks);
 }
 
 OBJ_CLASS_INSTANCE(
@@ -54,6 +56,27 @@ OBJ_CLASS_INSTANCE(
     opal_list_item_t,
     orte_iof_base_endpoint_construct,
     orte_iof_base_endpoint_destruct);
+
+/**
+ *  Construct/Destructor
+ */
+
+static void orte_iof_base_callback_construct(orte_iof_base_callback_t* cb)
+{
+    cb->cb_func = 0;
+    cb->cb_data = NULL;
+}
+
+static void orte_iof_base_callback_destruct(orte_iof_base_callback_t* cb)
+{
+}
+
+OBJ_CLASS_INSTANCE(
+    orte_iof_base_callback_t,
+    opal_list_item_t,
+    orte_iof_base_callback_construct,
+    orte_iof_base_callback_destruct);
+
 
 
 /*
@@ -243,14 +266,15 @@ int orte_iof_base_endpoint_create(
     endpoint->ep_tag = tag;
     endpoint->ep_fd = fd;
 
-    /* set file descriptor to be non-blocking */
+    /* set to non-blocking */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(0, "orte_iof_base_endpoint_create: fcntl(F_GETFL) failed with errno=%d\n", errno);
+        opal_output(0, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+            __FILE__, __LINE__, errno);
     } else {
         flags |= O_NONBLOCK;
         fcntl(fd, F_SETFL, flags);
     }
-    
+
     /* setup event handler */
     switch(mode) {
         case ORTE_IOF_SOURCE:
@@ -378,6 +402,7 @@ int orte_iof_base_endpoint_forward(
     orte_iof_base_msg_header_t* hdr,
     const unsigned char* data)
 {
+    opal_list_item_t* item;
     orte_iof_base_frag_t* frag;
     size_t len = hdr->msg_len;
     int rc = 0;
@@ -397,26 +422,45 @@ int orte_iof_base_endpoint_forward(
     frag->frag_src = *src;
     frag->frag_hdr.hdr_msg = *hdr;
 
-    /* try to write w/out copying data */
-    if(opal_list_get_size(&endpoint->ep_frags) == 0) {
-        rc = write(endpoint->ep_fd,data,len);
-        if(rc < 0 && (errno != EAGAIN && errno != EINTR)) {
-            orte_iof_base_endpoint_closed(endpoint);
-            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-            return ORTE_SUCCESS;
-         } 
-    } 
+    /* call any registered callbacks */ 
+    for(item =  opal_list_get_first(&endpoint->ep_callbacks);
+        item != opal_list_get_end(&endpoint->ep_callbacks);
+        item =  opal_list_get_next(item)) {
+        orte_iof_base_callback_t* cb = (orte_iof_base_callback_t*)item;
+        cb->cb_func(
+           &hdr->msg_src, 
+            hdr->msg_tag, 
+            cb->cb_data, 
+            data, 
+            hdr->msg_len);
+    }
 
-    frag->frag_len = len - rc;
-    if(frag->frag_len > 0) {
-        /* handle incomplete write */
-        frag->frag_ptr = frag->frag_data;
-        memcpy(frag->frag_ptr, data+rc, frag->frag_len);
-        opal_list_append(&endpoint->ep_frags, &frag->super);
-        if(opal_list_get_size(&endpoint->ep_frags) == 1) {
-            opal_event_add(&endpoint->ep_event,0);
+    if(endpoint->ep_fd >= 0) {
+        /* try to write w/out copying data */
+        if(opal_list_get_size(&endpoint->ep_frags) == 0) {
+            rc = write(endpoint->ep_fd,data,len);
+            if(rc < 0 && (errno != EAGAIN && errno != EINTR)) {
+                orte_iof_base_endpoint_closed(endpoint);
+                OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+                return ORTE_SUCCESS;
+             } 
+        } 
+
+        frag->frag_len = len - rc;
+        if(frag->frag_len > 0) {
+            /* handle incomplete write */
+            frag->frag_ptr = frag->frag_data;
+            memcpy(frag->frag_ptr, data+rc, frag->frag_len);
+            opal_list_append(&endpoint->ep_frags, &frag->super);
+            if(opal_list_get_size(&endpoint->ep_frags) == 1) {
+                opal_event_add(&endpoint->ep_event,0);
+            }
+            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+        } else {
+            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+            /* acknowledge fragment */
+            orte_iof_base_frag_ack(frag);
         }
-        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     } else {
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         /* acknowledge fragment */
@@ -424,6 +468,71 @@ int orte_iof_base_endpoint_forward(
     }
     return ORTE_SUCCESS;
 }
+
+
+/**
+ * Register a callback
+ */
+
+int orte_iof_base_callback_create(
+    const orte_process_name_t* proc,
+    int tag,
+    orte_iof_base_callback_fn_t cbfunc,
+    void *cbdata)
+{
+    orte_iof_base_callback_t* cb = OBJ_NEW(orte_iof_base_callback_t);
+    orte_iof_base_endpoint_t* endpoint;
+    if(NULL == cb)
+        return ORTE_ERR_OUT_OF_RESOURCE;
+
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
+    if((endpoint = orte_iof_base_endpoint_lookup(proc,ORTE_IOF_SINK,tag)) == NULL) {
+        endpoint = OBJ_NEW(orte_iof_base_endpoint_t);
+        if(NULL == endpoint) {
+            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        endpoint->ep_name = *proc;
+        endpoint->ep_mode = ORTE_IOF_SINK;
+        endpoint->ep_tag = tag;
+        endpoint->ep_fd = -1;
+        opal_list_append(&orte_iof_base.iof_endpoints, &endpoint->super);
+    } else {
+        OBJ_RELEASE(endpoint);
+    }
+    cb->cb_func = cbfunc;
+    cb->cb_data = cbdata;
+    opal_list_append(&endpoint->ep_callbacks, (opal_list_item_t*)cb);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    return ORTE_SUCCESS;
+}
+
+
+/**
+ * Remove a callback
+ */
+
+int orte_iof_base_callback_delete(
+    const orte_process_name_t* proc,
+    int tag)
+{
+    orte_iof_base_endpoint_t* endpoint;
+    opal_list_item_t* item;
+    
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock); 
+    if(NULL == (endpoint = orte_iof_base_endpoint_lookup(proc,ORTE_IOF_SINK, tag))) {
+        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    while(NULL != (item = opal_list_remove_first(&endpoint->ep_callbacks))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_RELEASE(endpoint);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    return ORTE_SUCCESS;
+}
+
 
 
 /**

@@ -14,6 +14,19 @@ enum {
 };
 
 /**
+ * Structure store callbacks
+ */
+
+struct orte_iof_base_callback_t {
+    opal_list_item_t super;
+    orte_iof_base_callback_fn_t cb_func;
+    void* cb_data;
+};
+typedef struct orte_iof_base_callback_t orte_iof_base_callback_t;
+
+OBJ_CLASS_DECLARATION(orte_iof_base_callback_t);
+
+/**
  *  Structure that represents a published endpoint.
  */
 
@@ -28,6 +41,7 @@ struct orte_iof_base_endpoint_t {
     uint32_t ep_ack;
     opal_event_t ep_event;
     opal_list_t ep_frags;
+    opal_list_t ep_callbacks;
 };
 typedef struct orte_iof_base_endpoint_t orte_iof_base_endpoint_t;
 
@@ -55,6 +69,25 @@ int orte_iof_base_endpoint_create(
    orte_iof_base_mode_t mode,
    int tag,
    int fd);
+
+/**
+ * Associate a callback on receipt of data.
+ * 
+ * @param name    Process name corresponding to endpoint.
+ * @param cbfunc  Logical tag for matching.
+ * @aram  cbdata  Local file descriptor corresponding to endpoint.
+ */
+
+int orte_iof_base_callback_create(
+    const orte_process_name_t *name,
+    int tag,
+    orte_iof_base_callback_fn_t cbfunc,
+    void* cbdata);
+
+int orte_iof_base_callback_delete(
+    const orte_process_name_t *name,
+    int tag);
+
 
 /**
  * Delete all local endpoints matching the specified 
