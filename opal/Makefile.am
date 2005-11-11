@@ -73,7 +73,7 @@ endif
 
 include include/Makefile.am
 include class/Makefile.am
-include memory/Makefile.am
+include memoryhooks/Makefile.am
 include runtime/Makefile.am
 include threads/Makefile.am
 include mca/Makefile.am

@@ -28,7 +28,7 @@
 #include "mca/mca.h"
 #include "mca/mpool/mpool.h"
 #include "opal/threads/mutex.h" 
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -24,7 +24,7 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 #include "opal/util/show_help.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/memory/base/base.h"

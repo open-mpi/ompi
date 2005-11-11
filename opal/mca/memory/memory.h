@@ -20,7 +20,7 @@
    set of function pointers that must be called or set interface or
    any of that.  The only two functions that a component must call
    (note: call, not implement) are defined in
-   opal/memory/memory_internal.h.  Other than that, to each his
+   opal/memoryhooks/memory_internal.h.  Other than that, to each his
    own.. 
 
    Components should make some attempt to provide a component struct

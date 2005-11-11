@@ -25,7 +25,7 @@
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/if.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "orte/include/orte_constants.h"

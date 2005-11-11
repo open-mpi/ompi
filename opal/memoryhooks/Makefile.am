@@ -20,8 +20,8 @@
 
 # Source code files
 headers += \
-	memory/memory.h \
-	memory/memory_internal.h
+	memoryhooks/memory.h \
+	memoryhooks/memory_internal.h
 
 libopal_la_SOURCES += \
-	memory/memory.c
+	memoryhooks/memory.c
