@@ -556,7 +556,7 @@ int mca_pml_ob1_send_request_start_rdma(
 
          /* build match header */
          hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-         hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_PIN;
+         hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
          hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RGET;
          hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
          hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
@@ -584,7 +584,7 @@ int mca_pml_ob1_send_request_start_rdma(
             
          /* build hdr */
          hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-         hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_PIN;
+         hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
          hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
          hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
          hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
@@ -621,7 +621,8 @@ int mca_pml_ob1_send_request_start_rdma(
 int mca_pml_ob1_send_request_start_rndv(
     mca_pml_ob1_send_request_t* sendreq,
     mca_bml_base_btl_t* bml_btl,
-    size_t size)
+    size_t size,
+    int flags)
 {
     mca_btl_base_descriptor_t* des;
     mca_btl_base_segment_t* segment;
@@ -652,7 +653,7 @@ int mca_pml_ob1_send_request_start_rndv(
 
     /* build hdr */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_flags = flags;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;

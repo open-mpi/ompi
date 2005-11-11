@@ -186,7 +186,7 @@ do {                                                                            
         if(size <= eager_limit) {                                                         \
             switch(sendreq->req_send.req_send_mode) {                                     \
             case MCA_PML_BASE_SEND_SYNCHRONOUS:                                           \
-                rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size);         \
+                rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);      \
                 break;                                                                    \
             case MCA_PML_BASE_SEND_BUFFERED:                                              \
                 rc = mca_pml_ob1_send_request_start_copy(sendreq, bml_btl, size);         \
@@ -204,15 +204,18 @@ do {                                                                            
             if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {           \
                 rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);     \
             } else if                                                                     \
-              (ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false &&  \
-               0 != (sendreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(                       \
-                   sendreq->req_endpoint,                                                 \
-                   sendreq->req_send.req_addr,                                            \
-                   sendreq->req_send.req_bytes_packed,                                    \
-                   sendreq->req_rdma))) {                                                 \
-                rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl, size);         \
+              (ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false) {  \
+                if( 0 != (sendreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(                  \
+                    sendreq->req_endpoint,                                                \
+                    sendreq->req_send.req_addr,                                           \
+                    sendreq->req_send.req_bytes_packed,                                   \
+                    sendreq->req_rdma))) {                                                \
+                    rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl, size);     \
+                } else {                                                                  \
+                    rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, MCA_PML_OB1_HDR_FLAGS_CONTIG);  \
+                }                                                                         \
             } else {                                                                      \
-                rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size);         \
+                rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);      \
             }                                                                             \
         }                                                                                 \
     }                                                                                     \
@@ -381,7 +384,8 @@ int mca_pml_ob1_send_request_start_rdma(
 int mca_pml_ob1_send_request_start_rndv(
     mca_pml_ob1_send_request_t* sendreq,
     mca_bml_base_btl_t* bml_btl,
-    size_t size);
+    size_t size,
+    int flags);
 
 /**
  *  Schedule additional fragments 

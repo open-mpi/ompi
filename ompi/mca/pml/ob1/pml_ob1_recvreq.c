@@ -207,7 +207,8 @@ static void mca_pml_ob1_recv_request_ack(
          * registered. 
          */
 
-        if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
+        if(ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0 &&
+           hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG) {
             recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                 bml_endpoint,
                 recvreq->req_recv.req_base.req_addr,
