@@ -107,6 +107,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
         /* peer has closed the connection */
         orte_iof_base_endpoint_closed(endpoint);
         rc = 0;
+        return;
     }
     /* Do not append the fragment before we know that we have some data (even 0 bytes it's OK) */
     frag->frag_owner = endpoint;
@@ -313,6 +314,7 @@ int orte_iof_base_endpoint_delete(
 
 int orte_iof_base_endpoint_close(orte_iof_base_endpoint_t* endpoint)
 { 
+    opal_list_item_t* item;
     endpoint->ep_state = ORTE_IOF_EP_CLOSING;
     switch(endpoint->ep_mode) {
     case ORTE_IOF_SOURCE:
@@ -326,6 +328,16 @@ int orte_iof_base_endpoint_close(orte_iof_base_endpoint_t* endpoint)
             endpoint->ep_state = ORTE_IOF_EP_CLOSED;
         }
         break;
+    }
+    
+    /* Since we detached from the event handler we need to make sure all the 
+     * datastructres are stable, so we don't hang in orte_iof_base_flush() 
+     */
+    if(endpoint->ep_ack != endpoint->ep_seq) {
+        endpoint->ep_ack = endpoint->ep_seq;
+    }
+    while(NULL != (item = opal_list_remove_first(&endpoint->ep_frags))) {
+        ORTE_IOF_BASE_FRAG_RETURN(item)
     }
     return ORTE_SUCCESS;
 }
