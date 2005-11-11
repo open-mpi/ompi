@@ -23,7 +23,10 @@
 #include "mca/mca.h"
 #include "mca/coll/coll.h"
 #include "request/request.h"
-#include "mca/pml/pml.h"
+#include "ompi/include/constants.h"
+#include "datatype/datatype.h"
+#include "communicator/communicator.h"
+#include "coll_tuned.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
 #include "coll_tuned_topo.h"
@@ -33,6 +36,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+
+
+
+
+#include "coll_tuned_util.h"
+
 
 
 ompi_coll_alg_rule_t* coll_tuned_mk_alg_rules (int n_alg)
@@ -83,9 +92,10 @@ ompi_coll_msg_rule_t* coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rule_id,
        msg_rules[i].alg_rule_id = alg_rule_id;
        msg_rules[i].com_rule_id = com_rule_id;
        msg_rules[i].msg_rule_id = i;
-       msg_rules[i].msg_size = 0; /* unknown */
-       msg_rules[i].result_alg = 0; /* unknown */
-       msg_rules[i].result_segsize = 0; /* unknown */
+       msg_rules[i].msg_size = 0;               /* unknown */
+       msg_rules[i].result_alg = 0;             /* unknown */
+       msg_rules[i].result_topo_faninout = 0;   /* unknown */
+       msg_rules[i].result_segsize = 0;         /* unknown */
     }
     return (msg_rules);
 }
@@ -100,14 +110,15 @@ ompi_coll_msg_rule_t* coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rule_id,
 int coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
 {
    if (!msg_p) {
-      fprintf(stderr,"Message rule was a NULL ptr?!\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"Message rule was a NULL ptr?!\n"));
       return (-1);
    }
 
-   printf("alg_id %3d\tcom_id %3d\tcom_size %3d\tmsg_id %3d\t", msg_p->alg_rule_id, msg_p->com_rule_id, 
-                                                                msg_p->mpi_comsize, msg_p->msg_rule_id);
+   OPAL_OUTPUT((mca_coll_tuned_stream,"alg_id %3d\tcom_id %3d\tcom_size %3d\tmsg_id %3d\t", msg_p->alg_rule_id, 
+                            msg_p->com_rule_id, msg_p->mpi_comsize, msg_p->msg_rule_id));
 
-   printf("msg_size %6d -> algorithm %2d\tsegsize %5d\n", msg_p->msg_size, msg_p->result_alg, msg_p->result_segsize);
+   OPAL_OUTPUT((mca_coll_tuned_stream,"msg_size %6d -> algorithm %2d\ttopo in/out %2d\tsegsize %5ld\n", 
+                msg_p->msg_size, msg_p->result_alg, msg_p->result_topo_faninout, msg_p->result_segsize));
 
    return (0);
 }
@@ -116,21 +127,20 @@ int coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
 int coll_tuned_dump_com_rule (ompi_coll_com_rule_t* com_p)
 {
    int i;
-   ompi_coll_msg_rule_t* msg_p;
 
    if (!com_p) {
-      fprintf(stderr,"Com rule was a NULL ptr?!\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"Com rule was a NULL ptr?!\n"));
       return (-1);
    }
 
-   printf("alg_id %3d\tcom_id %3d\tcom_size %3d\t", com_p->alg_rule_id, com_p->com_rule_id, com_p->mpi_comsize);
+   OPAL_OUTPUT((mca_coll_tuned_stream, "alg_id %3d\tcom_id %3d\tcom_size %3d\t", com_p->alg_rule_id, com_p->com_rule_id, com_p->mpi_comsize));
 
    if (!com_p->n_msg_sizes) {
-      printf("no msgsizes defined\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"no msgsizes defined\n"));
       return (0);
    }
 
-   printf("number of message sizes %3d\n", com_p->n_msg_sizes);
+   OPAL_OUTPUT((mca_coll_tuned_stream,"number of message sizes %3d\n", com_p->n_msg_sizes));
 
    for (i=0;i<com_p->n_msg_sizes;i++) {
       coll_tuned_dump_msg_rule (&(com_p->msg_rules[i]));
@@ -143,21 +153,20 @@ int coll_tuned_dump_com_rule (ompi_coll_com_rule_t* com_p)
 int coll_tuned_dump_alg_rule (ompi_coll_alg_rule_t* alg_p)
 {
    int i;
-   ompi_coll_com_rule_t* com_p;
 
    if (!alg_p) {
-      fprintf(stderr,"Algorithm rule was a NULL ptr?!\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"Algorithm rule was a NULL ptr?!\n"));
       return (-1);
    }
 
-   printf("alg_id %3d\t", alg_p->alg_rule_id);
+   OPAL_OUTPUT((mca_coll_tuned_stream,"alg_id %3d\t", alg_p->alg_rule_id));
 
    if (!alg_p->n_com_sizes) {
-      printf("no coms defined\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"no coms defined\n"));
       return (0);
    }
 
-   printf("number of com sizes %3d\n", alg_p->n_com_sizes);
+   OPAL_OUTPUT((mca_coll_tuned_stream,"number of com sizes %3d\n", alg_p->n_com_sizes));
 
    for (i=0;i<alg_p->n_com_sizes;i++) {
       coll_tuned_dump_com_rule (&(alg_p->com_rules[i]));
@@ -172,16 +181,17 @@ int coll_tuned_dump_all_rules (ompi_coll_alg_rule_t* alg_p, int n_rules)
    int i;
 
    if (!alg_p) {
-      fprintf(stderr,"Algorithm rule was a NULL ptr?!\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"Algorithm rule was a NULL ptr?!\n"));
       return (-1);
    }
 
-   printf("Number of algorithm rules %3d\n", n_rules);
+   OPAL_OUTPUT((mca_coll_tuned_stream,"Number of algorithm rules %3d\n", n_rules));
 
    for (i=0;i<n_rules;i++) {
       coll_tuned_dump_alg_rule (&(alg_p[i]));
    }
 
+   return (0);
 }
 
 
@@ -197,7 +207,7 @@ int coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
    ompi_coll_msg_rule_t* msg_p;
 
    if (!com_p) {
-      fprintf(stderr,"attempt to free NULL com_rule ptr\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"attempt to free NULL com_rule ptr\n"));
       return (-1);
    }
 
@@ -205,7 +215,7 @@ int coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
       msg_p = com_p->msg_rules;
 
       if (!msg_p) {
-         fprintf(stderr,"attempt to free NULL msg_rules when msg count was %d\n", com_p->n_msg_sizes);
+         OPAL_OUTPUT((mca_coll_tuned_stream,"attempt to free NULL msg_rules when msg count was %d\n", com_p->n_msg_sizes));
          rc = -1; /* some error */
       }
       else {
@@ -230,7 +240,7 @@ int coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
    ompi_coll_com_rule_t* com_p;
 
    if (!alg_p) {
-      fprintf(stderr,"attempt to free NULL alg_rule ptr\n");
+      OPAL_OUTPUT((mca_coll_tuned_stream,"attempt to free NULL alg_rule ptr\n"));
       return (-1);
    }
 
@@ -238,7 +248,7 @@ int coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
       com_p = alg_p->com_rules;
 
       if (!com_p) {
-         fprintf(stderr,"attempt to free NULL com_rules when com count was %d\n", alg_p->n_com_sizes);
+         OPAL_OUTPUT((mca_coll_tuned_stream,"attempt to free NULL com_rules when com count was %d\n", alg_p->n_com_sizes));
       }
       else {
         /* ok, memory exists for the com rules so free their message rules first */
@@ -275,7 +285,7 @@ int coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs)
 
 /* 
  * query functions
- * i.e. the functions that get me the algorithm and segment size fast
+ * i.e. the functions that get me the algorithm, topo fanin/out and segment size fast
  * and also get the rules that are needed by each communicator as needed
  *
  */
@@ -313,15 +323,15 @@ ompi_coll_com_rule_t* coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, 
    i = best = 0;
 
    while (i<alg_p->n_com_sizes) {
-      printf("checking comsize %d against alg_id %d com_id %d index %d com_size %d", 
-            mpi_comsize, com_p->alg_rule_id, com_p->com_rule_id, i, com_p->mpi_comsize);
+/*       OPAL_OUTPUT((mca_coll_tuned_stream,"checking comsize %d against alg_id %d com_id %d index %d com_size %d",  */
+/*             mpi_comsize, com_p->alg_rule_id, com_p->com_rule_id, i, com_p->mpi_comsize)); */
       if (com_p->mpi_comsize <= mpi_comsize) {
          best = i;
          best_com_p = com_p;
-         printf(":ok\n");
+/*          OPAL_OUTPUT((mca_coll_tuned_stream(":ok\n")); */
       }
       else {
-         printf(":nop\n");
+/*          OPAL_OUTPUT((mca_coll_tuned_stream(":nop\n")); */
          break;
       }
       /* go to the next entry */
@@ -329,7 +339,7 @@ ompi_coll_com_rule_t* coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, 
       i++;
    }
 
-  printf("Selected the following com rule id %d\n", best_com_p->com_rule_id);
+  OPAL_OUTPUT((mca_coll_tuned_stream,"Selected the following com rule id %d\n", best_com_p->com_rule_id));
   coll_tuned_dump_com_rule (best_com_p);
 
   return (best_com_p);
@@ -338,25 +348,30 @@ ompi_coll_com_rule_t* coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, 
 /* 
  * This function takes a com_rule ptr (from the communicators coll tuned data structure) 
  * (Which is chosen for a particular MPI collective)
- * and a (total_)msg_size and it returns (0) and a algorithm to use and a recommended segment size
+ * and a (total_)msg_size and it returns (0) and a algorithm to use and a recommended topo faninout and segment size
  * all based on the user supplied rules
  *
  * Just like the above functions it uses a less than or equal msg size 
  * (hense config file must have a default defined for '0' if we reach this point)
- * else if no rules match we return '0' + '0' or used fixed decision table with no segmentation
+ * else if no rules match we return '0' + '0,0' or used fixed decision table with no topo chand and no segmentation
  * of users data.. shame.
  *
  * On error return 0 so we default to fixed rules anyway :)
  *
  */
 
-int coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, int mpi_msgsize, int* result_segsize)
+int coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, int mpi_msgsize, int *result_topo_faninout, 
+                                        int* result_segsize)
 {
    ompi_coll_msg_rule_t*  msg_p = (ompi_coll_msg_rule_t*) NULL;
    ompi_coll_msg_rule_t*  best_msg_p = (ompi_coll_msg_rule_t*) NULL;
    int i, best;
 
    if (!base_com_rule) {
+      return (0);
+   }
+
+   if (!result_topo_faninout) {
       return (0);
    }
 
@@ -375,15 +390,15 @@ int coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, in
    i = best = 0;
 
    while (i<base_com_rule->n_msg_sizes) {
-      printf("checking mpi_msgsize %d against com_id %d msg_id %d index %d msg_size %d", 
-            mpi_msgsize, msg_p->com_rule_id, msg_p->msg_rule_id, i, msg_p->msg_size);
+/*       OPAL_OUTPUT((mca_coll_tuned_stream,"checking mpi_msgsize %d against com_id %d msg_id %d index %d msg_size %d",  */
+/*             mpi_msgsize, msg_p->com_rule_id, msg_p->msg_rule_id, i, msg_p->msg_size)); */
       if (msg_p->msg_size <= mpi_msgsize) {
          best = i;
          best_msg_p = msg_p;
-         printf(":ok\n");
+/*          OPAL_OUTPUT((mca_coll_tuned_stream(":ok\n")); */
       }
       else {
-         printf(":nop\n");
+/*          OPAL_OUTPUT((mca_coll_tuned_stream(":nop\n")); */
          break;
       }
       /* go to the next entry */
@@ -391,11 +406,16 @@ int coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, in
       i++;
    }
 
-  printf("Selected the following msg rule id %d\n", best_msg_p->msg_rule_id);
+  OPAL_OUTPUT((mca_coll_tuned_stream,"Selected the following msg rule id %d\n", best_msg_p->msg_rule_id));
   coll_tuned_dump_msg_rule (best_msg_p);
 
   /* return the segment size */
+  *result_topo_faninout = best_msg_p->result_topo_faninout;
+
+  /* return the segment size */
   *result_segsize = best_msg_p->result_segsize;
-  return (best_msg_p->result_alg);
+
+  /* return the algorithm/method to use */
+  return (best_msg_p->result_alg);  
 }
 

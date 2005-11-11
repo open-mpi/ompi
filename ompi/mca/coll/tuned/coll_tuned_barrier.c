@@ -221,10 +221,79 @@ int mca_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm)
 }
 
 
-int mca_coll_tuned_barrier_intra_linear(struct ompi_communicator_t *comm)
+/*
+ * Linear functions are copied from the BASIC coll module
+ * they do not segment the message and are simple implementations
+ * but for some small number of nodes and/or small data sizes they
+ * are just as fast as tuned/tree based segmenting operations
+ * and as such may be selected by the decision functions
+ * These are copied into this module due to the way we select modules
+ * in V1. i.e. in V2 we will handle this differently and so will not
+ * have to duplicate code.
+ * GEF Oct05 after asking Jeff.
+ */
+
+/* copied function (with appropriate renaming) starts here */
+
+int mca_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t *comm)
 {
-return OMPI_ERR_NOT_IMPLEMENTED;
+    int i;
+    int err;
+    int size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(comm);
+
+    /* All non-root send & receive zero-length message. */
+
+    if (rank > 0) {
+        err =
+            MCA_PML_CALL(send
+                         (NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
+                          MCA_PML_BASE_SEND_STANDARD, comm));
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+
+        err =
+            MCA_PML_CALL(recv
+                         (NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
+                          comm, MPI_STATUS_IGNORE));
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+    }
+
+    /* The root collects and broadcasts the messages. */
+
+    else {
+        for (i = 1; i < size; ++i) {
+            err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
+                                    MCA_COLL_BASE_TAG_BARRIER,
+                                    comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                return err;
+            }
+        }
+
+
+        for (i = 1; i < size; ++i) {
+            err =
+                MCA_PML_CALL(send
+                             (NULL, 0, MPI_BYTE, i,
+                              MCA_COLL_BASE_TAG_BARRIER,
+                              MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                return err;
+            }
+        }
+    }
+
+    /* All done */
+
+    return MPI_SUCCESS;
+
 }
+/* copied function (with appropriate renaming) ends here */
+
 
 /* The following are used by dynamic and forced rules */
 
@@ -247,7 +316,7 @@ return (MPI_SUCCESS);
 
 int mca_coll_tuned_barrier_intra_query ( )
 {
-    return (4); /* 4 algorithms available */ 
+    return (5); /* 4 algorithms available */ 
                 /* 2 to do */
 }
 
@@ -258,7 +327,7 @@ int mca_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm)
 
 switch (mca_coll_tuned_barrier_forced_choice) {
     case (0):   return mca_coll_tuned_barrier_intra_dec_fixed (comm);
-/*     case (1):   return mca_coll_tuned_barrier_intra_basic_linear (comm);  */
+    case (1):   return mca_coll_tuned_barrier_intra_basic_linear (comm); 
     case (2):   return mca_coll_tuned_barrier_intra_doublering (comm);
     case (3):   return mca_coll_tuned_barrier_intra_recursivedoubling (comm);
     case (4):   return mca_coll_tuned_barrier_intra_bruck (comm);
@@ -267,6 +336,27 @@ switch (mca_coll_tuned_barrier_forced_choice) {
     default:
         OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
                     mca_coll_tuned_barrier_forced_choice, mca_coll_tuned_barrier_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
+
+
+int mca_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm, int choice, int faninout, int segsize)
+{
+   OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", choice, faninout));
+
+switch (choice) {
+    case (0):   return mca_coll_tuned_barrier_intra_dec_fixed (comm);
+    case (1):   return mca_coll_tuned_barrier_intra_basic_linear (comm); 
+    case (2):   return mca_coll_tuned_barrier_intra_doublering (comm);
+    case (3):   return mca_coll_tuned_barrier_intra_recursivedoubling (comm);
+    case (4):   return mca_coll_tuned_barrier_intra_bruck (comm);
+    case (5):   return mca_coll_tuned_barrier_intra_two_procs (comm);
+/*     case (6):   return mca_coll_tuned_barrier_intra_bmtree_step (comm); */
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:barrier_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+                    choice, mca_coll_tuned_barrier_intra_query()));
         return (MPI_ERR_ARG);
     } /* switch */
 

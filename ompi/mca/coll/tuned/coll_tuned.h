@@ -172,11 +172,19 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
                                      struct ompi_datatype_t *dtype, 
                                      struct ompi_op_t *op, 
                                      struct ompi_communicator_t *comm);
+
   int mca_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, 
                                      int count, 
                                      struct ompi_datatype_t *dtype, 
                                      struct ompi_op_t *op, 
                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, 
+                                     int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm,
+                                     int choice, int faninout, int segsize);
+
   int mca_coll_tuned_allreduce_intra_check_forced(void);
   int mca_coll_tuned_allreduce_intra_query(void);
 
@@ -214,11 +222,19 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm);
+
   int mca_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype, 
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm);
+  int mca_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm,
+                                    int choice, int faninout, int segsize);
+
   int mca_coll_tuned_alltoall_intra_check_forced(void);
   int mca_coll_tuned_alltoall_intra_query (void);
 
@@ -308,7 +324,10 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
   int mca_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm);
   int mca_coll_tuned_barrier_intra_dec_dynamic(
                                      struct ompi_communicator_t *comm);
+
   int mca_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm);
+  int mca_coll_tuned_barrier_intra_do_this(struct ompi_communicator_t *comm, int choice, int faninout, int segsize);
+
   int mca_coll_tuned_barrier_intra_check_forced(void);
   int mca_coll_tuned_barrier_intra_query (void);
 
@@ -331,10 +350,17 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
                                      struct ompi_datatype_t *datatype,
                                      int root, 
                                      struct ompi_communicator_t *comm);
+
   int mca_coll_tuned_bcast_intra_do_forced(void *buff, int count, 
                                      struct ompi_datatype_t *datatype,
                                      int root, 
                                      struct ompi_communicator_t *comm);
+  int mca_coll_tuned_bcast_intra_do_this(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype,
+                                     int root, 
+                                     struct ompi_communicator_t *comm,
+                                     int choice, int faninout, int segsize);
+
   int mca_coll_tuned_bcast_intra_check_forced(void);
   int mca_coll_tuned_bcast_intra_query (void);
 
@@ -450,10 +476,17 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
                                       struct ompi_datatype_t *dtype, 
                                       struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm);
+
   int mca_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count, 
                                       struct ompi_datatype_t *dtype, 
                                       struct ompi_op_t *op, int root,
                                       struct ompi_communicator_t *comm);
+  int mca_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm,
+                                      int choice, int faninout, int segsize);
+
   int mca_coll_tuned_reduce_intra_check_forced(void);
   int mca_coll_tuned_reduce_intra_query (void);
 

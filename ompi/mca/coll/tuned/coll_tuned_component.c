@@ -150,6 +150,7 @@ static int tuned_open(void)
                            false, false, mca_coll_tuned_use_dynamic_rules,
                            &mca_coll_tuned_use_dynamic_rules);
 
+
     /* if dynamic rules allowed then look up dynamic rules config filename, else we leave it an empty filename (NULL) */
     if (mca_coll_tuned_use_dynamic_rules) {
 /*         char *default_name; */
