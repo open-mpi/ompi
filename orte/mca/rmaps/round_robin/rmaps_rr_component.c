@@ -68,7 +68,7 @@ orte_rmaps_round_robin_component_t mca_rmaps_round_robin_component = {
   */
 static int orte_rmaps_round_robin_open(void)
 {
-    size_t id;
+    int id;
 
     mca_base_param_reg_int(&mca_rmaps_round_robin_component.super.rmaps_version, "debug",
                            "Toggle debug output for Round Robin RMAPS component",
