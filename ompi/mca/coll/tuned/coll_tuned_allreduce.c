@@ -210,8 +210,8 @@ int mca_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
 {
-        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d",
-                    mca_coll_tuned_allreduce_forced_choice));
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d", 
+                               mca_coll_tuned_allreduce_forced_choice));
 
 switch (mca_coll_tuned_allreduce_forced_choice) {
     case (0):   return mca_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
@@ -220,6 +220,28 @@ switch (mca_coll_tuned_allreduce_forced_choice) {
     default:
         OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
                     mca_coll_tuned_allreduce_forced_choice, mca_coll_tuned_allreduce_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
+
+
+int mca_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
+                               struct ompi_datatype_t *dtype,
+                               struct ompi_op_t *op,
+                               struct ompi_communicator_t *comm,
+                               int choice, int faninout, int segsize)
+{
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d", 
+                            choice, faninout, segsize));
+
+switch (choice) {
+    case (0):   return mca_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
+    case (1):   return mca_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);
+    case (2):   return mca_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm);
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+                    choice, mca_coll_tuned_allreduce_intra_query()));
         return (MPI_ERR_ARG);
     } /* switch */
 

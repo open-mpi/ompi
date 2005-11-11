@@ -43,17 +43,13 @@ mca_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
 {
-    int i;
-    int size;
-    int rank;
-    int err;
-    int contig;
-    int dsize;
+/*     int size; */
+/*     int contig; */
+/*     int dsize; */
 
     OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_allreduce_intra_dec_fixed"));
 
-    size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
+/*     size = ompi_comm_size(comm); */
 
     return (mca_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm));
 
@@ -74,11 +70,9 @@ int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm)
 {
-    int i;
     int size;
     int rank;
     int err;
-    int contig;
     int dsize;
     MPI_Aint sext;
     long lb;
@@ -123,17 +117,11 @@ int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
  */
 int mca_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
 {
-    int i;
     int size;
-    int rank;
-    int err;
-    int contig;
-    int dsize;
 
     OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_barrier_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
 
     if (2==size)
         return mca_coll_tuned_barrier_intra_two_procs(comm);
@@ -157,11 +145,9 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                    struct ompi_datatype_t *datatype, int root,
                                    struct ompi_communicator_t *comm)
 {
-    int i;
     int size;
     int rank;
     int err;
-    int contig;
     int msgsize;
     MPI_Aint ext;
     long lb;
@@ -227,11 +213,10 @@ int mca_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                           struct ompi_op_t* op, int root,
                                           struct ompi_communicator_t* comm)
 {
-    int i;
     int size;
     int rank;
     int err;
-    int contig;
+/*     int contig; */
     int msgsize;
     MPI_Aint ext;
     long lb;

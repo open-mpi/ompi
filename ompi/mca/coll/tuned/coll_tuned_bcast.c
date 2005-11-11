@@ -841,3 +841,31 @@ switch (mca_coll_tuned_bcast_forced_choice) {
 
 }
 
+
+int mca_coll_tuned_bcast_intra_do_this(void *buf, int count,
+                                    struct ompi_datatype_t *dtype,
+                                    int root,
+                                    struct ompi_communicator_t *comm,
+                                    int choice, int faninout, int segsize)
+
+{
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:bcast_intra_do_this algorithm %d topo faninout %d segsize %d", 
+                                        choice, faninout, segsize));
+
+switch (choice) {
+    case (0):   return mca_coll_tuned_bcast_intra_dec_fixed (buf, count, dtype, root, comm);
+    case (1):   return mca_coll_tuned_bcast_intra_basic_linear (buf, count, dtype, root, comm);
+    case (2):   return mca_coll_tuned_bcast_intra_chain (buf, count, dtype, root, comm, segsize, faninout );
+    case (3):   return mca_coll_tuned_bcast_intra_pipeline (buf, count, dtype, root, comm, segsize);
+    case (4):   return mca_coll_tuned_bcast_intra_split_bintree (buf, count, dtype, root, comm, segsize);
+    case (5):   return mca_coll_tuned_bcast_intra_bintree (buf, count, dtype, root, comm, segsize);
+/*     case (6):   return mca_coll_tuned_bcast_intra_bmtree (buf, count, dtype, root, comm,
+ *     segsize); */
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:bcast_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+                    choice, mca_coll_tuned_bcast_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
+

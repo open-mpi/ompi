@@ -537,3 +537,28 @@ switch (mca_coll_tuned_reduce_forced_choice) {
 
 }
 
+
+int mca_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
+                                      struct ompi_datatype_t *dtype,
+                                      struct ompi_op_t *op, int root,
+                                      struct ompi_communicator_t *comm,
+                                      int choice, int faninout, int segsize)
+{
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d",
+                            choice, faninout, segsize));
+
+switch (choice) {
+    case (0):   return mca_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, root, comm);
+    case (1):   return mca_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, root, comm);
+    case (2):   return mca_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, dtype, op, root, comm, 
+                        segsize, faninout);
+    case (3):   return mca_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype, op, root, comm, 
+                        segsize);
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+                    choice, mca_coll_tuned_reduce_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
+

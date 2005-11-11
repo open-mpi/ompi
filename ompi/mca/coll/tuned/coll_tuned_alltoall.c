@@ -505,3 +505,28 @@ switch (mca_coll_tuned_alltoall_forced_choice) {
 
 }
 
+
+int mca_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
+                                    struct ompi_datatype_t *sdtype,
+                                    void* rbuf, int rcount,
+                                    struct ompi_datatype_t *rdtype,
+                                    struct ompi_communicator_t *comm,
+                                    int choice, int faninout, int segsize)
+{
+    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
+                                        choice, faninout, segsize));
+
+switch (choice) {
+    case (0):   return mca_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (1):   return mca_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (2):   return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (3):   return mca_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    case (4):   return mca_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+    default:
+        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
+                    choice, mca_coll_tuned_alltoall_intra_query()));
+        return (MPI_ERR_ARG);
+    } /* switch */
+
+}
+
