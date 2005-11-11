@@ -35,7 +35,7 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 #include "mca/base/mca_base_param.h"
 #include "tools/ompi_info/ompi_info.h"
 

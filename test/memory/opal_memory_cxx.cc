@@ -23,7 +23,7 @@
 
 #include "ompi/include/constants.h"
 #include "opal/runtime/opal.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 
 using namespace std;
 

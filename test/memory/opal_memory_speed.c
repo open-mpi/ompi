@@ -24,7 +24,7 @@
 
 #include "ompi/include/constants.h"
 #include "opal/runtime/opal.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 
 #define iters 100000
 #define mask 0xfff

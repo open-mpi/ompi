@@ -26,7 +26,7 @@
 
 #include "opal/include/constants.h"
 #include "opal/mca/memory/memory.h"
-#include "opal/memory/memory_internal.h"
+#include "opal/memoryhooks/memory_internal.h"
 
 static int opal_memory_malloc_interpose_open(void);
 
