@@ -25,7 +25,7 @@
 
 #include "opal/include/constants.h"
 #include "opal/mca/memory/memory.h"
-#include "opal/memory/memory_internal.h"
+#include "opal/memoryhooks/memory_internal.h"
 
 static int opal_memory_darwin_open(void);
 static void opal_memory_darwin_free(struct _malloc_zone_t *zone, void *ptr);

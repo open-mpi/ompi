@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include <string.h>
 #include "opal/util/output.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 #include "mca/mpool/mvapi/mpool_mvapi.h"
 #include <vapi.h>
 #include <vapi_types.h> 

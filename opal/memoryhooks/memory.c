@@ -22,8 +22,8 @@
 #include <sys/mman.h>
 
 #include "opal/util/output.h"
-#include "opal/memory/memory.h"
-#include "opal/memory/memory_internal.h"
+#include "opal/memoryhooks/memory.h"
+#include "opal/memoryhooks/memory_internal.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "ompi/include/constants.h"

@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "opal/memory/memory_internal.h"
+#include "opal/memoryhooks/memory_internal.h"
 
 /*
  * Not all systems have sbrk() declared, since it's technically not a

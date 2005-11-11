@@ -18,7 +18,7 @@
 
 #include <sys/types.h>
 
-#include "opal/memory/memory_internal.h"
+#include "opal/memoryhooks/memory_internal.h"
 
 #include <stdlib.h>
 #include <sys/mman.h>

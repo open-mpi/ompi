@@ -53,7 +53,7 @@
 #include "opal/util/daemon_init.h"
 #include "util/universe_setup_file_io.h"
 #include "opal/util/malloc.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memory/base/base.h"
 

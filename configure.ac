@@ -1612,7 +1612,7 @@ AC_CONFIG_FILES([
     opal/event/Makefile
     opal/event/compat/Makefile
     opal/event/compat/sys/Makefile
-    opal/memory/Makefile
+    opal/memoryhooks/Makefile
     opal/runtime/Makefile
     opal/threads/Makefile
     opal/util/Makefile

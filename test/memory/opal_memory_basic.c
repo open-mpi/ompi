@@ -24,7 +24,7 @@
 
 #include "ompi/include/constants.h"
 #include "opal/runtime/opal.h"
-#include "opal/memory/memory.h"
+#include "opal/memoryhooks/memory.h"
 
 int ret = 2;
 int size = 10 * 1024 * 1024;

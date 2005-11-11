@@ -23,7 +23,7 @@ SUBDIRS = \
         class \
         event \
         mca \
-        memory \
+        memoryhooks \
         runtime \
         threads \
         util \
@@ -40,7 +40,7 @@ libopal_la_LIBADD = \
         class/libclass.la \
         event/libevent.la \
         mca/base/libmca_base.la \
-	memory/libopalmemory.la \
+	memoryhooks/libopalmemory.la \
         runtime/libruntime.la \
         threads/libthreads.la \
         util/libopalutil.la \

@@ -23,7 +23,7 @@
 #include <dlfcn.h>
 #include <malloc.h>
 
-#include "opal/memory/memory_internal.h"
+#include "opal/memoryhooks/memory_internal.h"
      
 /* Prototypes for our hooks.  */
 void opal_memory_malloc_hooks_init(void);
