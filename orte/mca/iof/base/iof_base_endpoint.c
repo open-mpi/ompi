@@ -338,6 +338,7 @@ int orte_iof_base_endpoint_delete(
 
 int orte_iof_base_endpoint_close(orte_iof_base_endpoint_t* endpoint)
 { 
+    opal_list_item_t* item;
     endpoint->ep_state = ORTE_IOF_EP_CLOSING;
     switch(endpoint->ep_mode) {
     case ORTE_IOF_SOURCE:
@@ -359,10 +360,9 @@ int orte_iof_base_endpoint_close(orte_iof_base_endpoint_t* endpoint)
     if(endpoint->ep_ack != endpoint->ep_seq) {
         endpoint->ep_ack = endpoint->ep_seq;
     }
-    while(!opal_list_is_empty(&endpoint->ep_frags)) {
-        opal_list_remove_first(&endpoint->ep_frags);
+    while(NULL != (item = opal_list_remove_first(&endpoint->ep_frags))) {
+        ORTE_IOF_BASE_FRAG_RETURN(item)
     }
-
     return ORTE_SUCCESS;
 }
 
