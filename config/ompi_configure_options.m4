@@ -194,10 +194,13 @@ AC_ARG_ENABLE(mpi-profile,
 if test "$enable_mpi_profile" != "no"; then
     AC_MSG_RESULT([yes])
     WANT_MPI_PROFILING=1
+    MPIF_H_PMPI_W_FUNCS=", PMPI_WTICK, PMPI_WTIME"
 else
     AC_MSG_RESULT([no])
     WANT_MPI_PROFILING=0
+    MPIF_H_PMPI_W_FUNCS=
 fi
+AC_SUBST(MPIF_H_PMPI_W_FUNCS)
 
 
 #                                                                              
