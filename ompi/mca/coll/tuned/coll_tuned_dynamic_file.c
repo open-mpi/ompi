@@ -26,6 +26,7 @@
 #include "mca/coll/coll.h"
 #include "request/request.h"
 #include "mca/pml/pml.h"
+#include "opal/util/output.h"
 #include "coll_tuned.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
