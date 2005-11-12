@@ -103,17 +103,25 @@ int mca_btl_mx_component_open(void)
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
-    mca_btl_mx_component.mx_max_btls = 
-        mca_btl_mx_param_register_int( "max_btls", 1 );
-    mca_btl_mx_component.mx_filter = 
-        mca_btl_mx_param_register_int( "filter", 0xdeadbeef );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_btls",
+                            "Maximum number of accepted Myrinet cards",
+                            false, false, 1, &mca_btl_mx_component.mx_max_btls );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "timeout",
+                            "Timeout for connections",
+                            false, false, 10000, &mca_btl_mx_component.mx_timeout );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "filter",
+                            "Unique ID for the application (used to connect to the peers)",
+                            false, false, 0xdeadbeef, &mca_btl_mx_component.mx_filter );
 
-    mca_btl_mx_component.mx_free_list_num =
-        mca_btl_mx_param_register_int ("free_list_num", 8);
-    mca_btl_mx_component.mx_free_list_inc =
-        mca_btl_mx_param_register_int ("free_list_inc", 32);
-    mca_btl_mx_component.mx_free_list_max =
-        mca_btl_mx_param_register_int ("free_list_max", 1024);
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_num",
+                            "Number of allocated default request",
+                            false, false, 8, &mca_btl_mx_component.mx_free_list_num );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_inc",
+                            "Number of request we allocate each time we miss some",
+                            false, false, 32, &mca_btl_mx_component.mx_free_list_inc );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_max",
+                            "Maximum number of request this device is allowed to allocate",
+                            false, false, 128, &mca_btl_mx_component.mx_free_list_max );
     /* The ompi_free_list has a problem if the (max - num) is not
      * divisible by the increament. So make sure it is ...
      */
@@ -124,23 +132,31 @@ int mca_btl_mx_component_open(void)
         mca_btl_mx_component.mx_free_list_max -= overhead;
     }
 
-    mca_btl_mx_component.mx_max_posted_recv  = 
-        mca_btl_mx_param_register_int("max_posted_recv", 16); 
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_posted_recv",
+                            "Number of received posted in advance. Increasing this number for communication bound application can lead to visible improvement in performances",
+                            false, false, 16, &mca_btl_mx_component.mx_max_posted_recv );
 
-    mca_btl_mx_module.super.btl_exclusivity =
-        mca_btl_mx_param_register_int ("exclusivity", 0);
-    mca_btl_mx_module.super.btl_eager_limit = 
-        mca_btl_mx_param_register_int ("first_frag_size", 16*1024);
-    mca_btl_mx_module.super.btl_min_send_size =
-        mca_btl_mx_param_register_int ("min_send_size", 32*1024);
-    mca_btl_mx_module.super.btl_max_send_size =
-        mca_btl_mx_param_register_int ("max_send_size", 128*1024);
-    mca_btl_mx_module.super.btl_min_rdma_size = 
-        mca_btl_mx_param_register_int("min_rdma_size", 1024*1024); 
-    mca_btl_mx_module.super.btl_max_rdma_size = 
-        mca_btl_mx_param_register_int("max_rdma_size", 1024*1024); 
-    mca_btl_mx_module.super.btl_flags  = 
-        mca_btl_mx_param_register_int("flags", MCA_BTL_FLAGS_PUT); 
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "exclusivity",
+                            "Priority compared with the others devices (used only when several devices are available",
+                            false, false, 50, (int*)&mca_btl_mx_module.super.btl_exclusivity );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "first_frag_size",
+                            "Size of the first fragment for the rendez-vous protocol over MX",
+                            true, true, 16*1024, (int*)&mca_btl_mx_module.super.btl_eager_limit );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_send_size",
+                            "Minimum send fragment size ...",
+                            false, false, 32*1024, (int*)&mca_btl_mx_module.super.btl_min_send_size );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_send_size",
+                            "Maximum send fragment size withour RDMA ...",
+                            false, false, 128*1024, (int*)&mca_btl_mx_module.super.btl_max_send_size );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_rdma_size",
+                            "Minimum size of fragment for the RDMA protocol",
+                            false, false, 1024*1024, (int*)&mca_btl_mx_module.super.btl_min_rdma_size );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_rdma_size",
+                            "Maximum size of fragment for the RDMA protocol",
+                            false, false, 1024*1024, (int*)&mca_btl_mx_module.super.btl_max_rdma_size );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "flags",
+                            "Flags to activate/deactivate the RDMA",
+                            true, false, MCA_BTL_FLAGS_PUT, (int*)&mca_btl_mx_module.super.btl_max_rdma_size );
 
     return OMPI_SUCCESS;
 }
@@ -247,7 +263,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 {
     mca_btl_base_module_t** btls;
     mx_return_t status;
-    uint32_t i, size, count;
+    uint32_t size, count;
+    int32_t i;
     uint64_t *nic_addrs;
     mca_btl_mx_addr_t *mx_addrs;
 
@@ -387,8 +404,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
  */
 int mca_btl_mx_component_progress()
 {
-    int num_progressed = 0;
-    size_t i;
+    int32_t num_progressed = 0, i;
     mx_status_t mx_status;
     mx_return_t mx_return;
     mx_segment_t mx_segment;

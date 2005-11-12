@@ -35,7 +35,7 @@ void mca_btl_mx_proc_construct(mca_btl_mx_proc_t* proc)
 {
     proc->proc_ompi           = 0;
     proc->proc_addr_index     = 0;
-    proc->proc_endpoints      = 0;
+    proc->proc_endpoints      = NULL;
     proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
     /* add to list of all proc instance */
@@ -158,7 +158,7 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
     retry_connect:
         mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint,
                                 mx_peers[i].nic_id, mx_peers[i].endpoint_id,
-                                mca_btl_mx_component.mx_filter, 500, &mx_remote_addr );
+                                mca_btl_mx_component.mx_filter, mca_btl_mx_component.mx_timeout, &mx_remote_addr );
         if( MX_SUCCESS != mx_status ) {
             if( MX_TIMEOUT == mx_status )
                 if( num_retry++ < 10 )
