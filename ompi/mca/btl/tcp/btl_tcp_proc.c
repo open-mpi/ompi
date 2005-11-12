@@ -161,16 +161,23 @@ int mca_btl_tcp_proc_insert(
         if(net1 == net2) {
             btl_endpoint->endpoint_addr = endpoint_addr;
             break;
-        } else if(btl_endpoint->endpoint_addr != 0)
+        } else if(btl_endpoint->endpoint_addr != 0) {
             btl_endpoint->endpoint_addr = endpoint_addr;
+	}
     }
-
+    
     /* Make sure there is a common interface */
     if( NULL != btl_endpoint->endpoint_addr ) {
         btl_endpoint->endpoint_addr->addr_inuse++;
         return OMPI_SUCCESS;
     }
-    return OMPI_ERR_UNREACH;
+    /* No common interface.. grab the first one and hope for the best */ 
+    else if(btl_proc->proc_addr_count){
+      btl_endpoint->endpoint_addr = btl_proc->proc_addrs;
+      return OMPI_SUCCESS;
+    } else { 
+      return OMPI_ERR_UNREACH;
+    }
 }
 
 /*
