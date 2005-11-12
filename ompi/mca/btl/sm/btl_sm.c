@@ -119,6 +119,7 @@ int mca_btl_sm_add_procs_same_base_addr(
     bool same_sm_base;
     ssize_t diff;
     volatile char **tmp_ptr;
+    volatile int *tmp_int_ptr;
 
     /* initializion */
     for(i=0 ; i < nprocs ; i++ ) {
@@ -379,6 +380,12 @@ int mca_btl_sm_add_procs_same_base_addr(
                                segment_header.base_shared_mem_segment) -
                       (char *)(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
 
+	    mca_btl_sm_component.sm_ctl_header->segment_header.
+	      base_shared_mem_flags = (volatile int *)
+                ( ((char *) mca_btl_sm_component.sm_ctl_header->
+                   segment_header.base_shared_mem_flags) -
+                  (char *) (mca_btl_sm_component.sm_mpool_base));
+
             /* allow other procs to use this shared memory map */
             mca_btl_sm_component.mmap_file->map_seg->seg_inited=true;
 
@@ -409,8 +416,12 @@ int mca_btl_sm_add_procs_same_base_addr(
          *  flags are set */
         opal_atomic_mb();
 
-        mca_btl_sm_component.sm_ctl_header->segment_header.
-            base_shared_mem_flags[mca_btl_sm_component.my_smp_rank]=1;
+	/* Set my flag to 1 (convert from relative address first) */
+        tmp_int_ptr=(volatile int *)
+            ( ((char *) mca_btl_sm_component.sm_ctl_header->segment_header.
+               base_shared_mem_flags) +
+              ((long) mca_btl_sm_component.sm_mpool_base));
+	tmp_int_ptr[mca_btl_sm_component.my_smp_rank]=1;
 
         /*
          * initialize the array of fifo's "owned" by this process
@@ -607,15 +618,14 @@ int mca_btl_sm_add_procs(
     /* set connectivity */
     n_local_procs=0;
     for(proc = 0 ; proc < nprocs ; proc++ ) {
-        if( (SM_CONNECTED_DIFFERENT_BASE_ADDR ==
-                    mca_btl_sm_component.sm_proc_connect[proc]) ||
-                (SM_CONNECTED ==
-                    mca_btl_sm_component.sm_proc_connect[proc]) ) {
+        /* Same base address base */
+        if (SM_CONNECTED == mca_btl_sm_component.sm_proc_connect[proc]) {
             n_local_procs++;
         }
 
-        if( (SM_CONNECTED_DIFFERENT_BASE_ADDR ==
-                    mca_btl_sm_component.sm_proc_connect[proc]) ) {
+        /* Different base address case */
+        else if (SM_CONNECTED_DIFFERENT_BASE_ADDR ==
+                mca_btl_sm_component.sm_proc_connect[proc]) {
 
             /* add this proc to shared memory accessability list */
             return_code=ompi_bitmap_set_bit(reachability,proc);
