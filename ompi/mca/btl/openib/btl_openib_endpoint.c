@@ -74,6 +74,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     struct ibv_qp* ib_qp; 
     struct ibv_send_wr* bad_wr; 
     frag->sg_entry.addr = (uintptr_t) frag->hdr; 
+    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
     
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= openib_btl->super.btl_eager_limit){ 
         
@@ -116,7 +117,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
         }
     } 
     
-    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
+    
     
     frag->sg_entry.length = 
         frag->segment.seg_len + 
