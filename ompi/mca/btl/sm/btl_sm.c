@@ -45,6 +45,43 @@
 #include "btl_sm_fifo.h"
 #include "ompi/proc/proc.h"
 
+/**
+ * @file
+ *
+ * Note that there are effectively two versions of the btl sm module
+ * -- one that assumes that the base address of the shared memory
+ * segment is the same between pairs of processes (i.e., mmap()
+ * returned the same virtual address for the same segment in both
+ * processes), and one that assumes that the base addresses are
+ * different.
+ *
+ * In the former, no translation is necessary -- all pointers can be
+ * stored directly as-is and used in both processes.
+ *
+ * In the latter, we calculate the difference between the base virtual
+ * address of the two process' shared memory segments and cache it.
+ * This difference is used to access memory and pointers written by
+ * the other process.
+ *
+ * Specifically, a good portion of this btl is implemented in the
+ * ompi_fifo_t and ompi_circular_buffer_t classes.  These classes
+ * *always* store absolute virtual addresses in their data structures.
+ * The virtual addresses are always meaningful in the *sender's*
+ * process space.  If the base address is the same in both processes,
+ * then we get the happy side effect that the virtual addresses are
+ * also valid in the receiver's process space, and therefore no
+ * address translation needs to be done when the reader accesses the
+ * data.
+ *
+ * However, in the case where the base addresses are different, the
+ * receiver must translate every pointer address in the ompi_fifo_t
+ * and ompi_circular_buffer_t data structures (even when writing back
+ * to those data structures, such as updating a head or tail pointer).
+ *
+ * In short, we use a "receiver makes right" scheme, and in some
+ * cases, the receiver doesn't have to do anything.
+ */
+
 mca_btl_sm_t mca_btl_sm[2] = {
     {
         {
@@ -465,6 +502,10 @@ int mca_btl_sm_add_procs_same_base_addr(
     fifo_tmp=(ompi_fifo_t * volatile *)
         ( (char *)(mca_btl_sm_component.sm_ctl_header->fifo) +
           (long)(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
+    tmp_ptr=(volatile char **)
+        ( (char *)mca_btl_sm_component.sm_ctl_header->
+          segment_header.base_shared_mem_segment +
+          (long)mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool));
     for( j=mca_btl_sm_component.num_smp_procs ; j <
             mca_btl_sm_component.num_smp_procs+n_local_procs ; j++ ) {
 
@@ -474,16 +515,11 @@ int mca_btl_sm_add_procs_same_base_addr(
             opal_progress(); 
         }
 
-        tmp_ptr=(volatile char **)
-            ( (char *)mca_btl_sm_component.sm_ctl_header->
-              segment_header.base_shared_mem_segment +
-              (long)mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool));
-        diff= tmp_ptr[mca_btl_sm_component.my_smp_rank]-tmp_ptr[j];
+        /* Calculate the difference as (my_base - their_base) */
+        diff = tmp_ptr[mca_btl_sm_component.my_smp_rank] - tmp_ptr[j];
         mca_btl_sm_component.fifo[j]=
             ( ompi_fifo_t *)( (char *)fifo_tmp[j]+diff);
-        mca_btl_sm_component.sm_offset[j]=tmp_ptr[j]-
-            tmp_ptr[mca_btl_sm_component.my_smp_rank];
-                
+        mca_btl_sm_component.sm_offset[j] = diff;
     }
 
     /* initialize some of the free-lists */
@@ -626,6 +662,7 @@ int mca_btl_sm_add_procs(
         /* Different base address case */
         else if (SM_CONNECTED_DIFFERENT_BASE_ADDR ==
                 mca_btl_sm_component.sm_proc_connect[proc]) {
+            printf("=================== different base ===============\n");
 
             /* add this proc to shared memory accessability list */
             return_code=ompi_bitmap_set_bit(reachability,proc);

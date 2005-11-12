@@ -343,7 +343,10 @@ int mca_btl_sm_component_progress(void)
         }
 
         /* get pointer - pass in offset to change queue pointer
-         * addressing from that of the sender */
+         * addressing from that of the sender.  In this case, we know
+         * that we have the same base address as the sender, so no
+         * translation is necessary when accessing the fifo.  Hence,
+         * we use the _same_base_addr varient. */
         frag = (mca_btl_sm_frag_t *)
 	    ompi_fifo_read_from_tail_same_base_addr( fifo );
         if( OMPI_CB_FREE == frag ) {
@@ -422,7 +425,11 @@ int mca_btl_sm_component_progress(void)
         }
 
         /* get pointer - pass in offset to change queue pointer
-         * addressing from that of the sender */
+         * addressing from that of the sender.  In this case, we do
+         * *not* have the same base address as the sender, so we must
+         * translate every access into the fifo to be relevant to our
+         * memory space.  Hence, we do *not* use the _same_base_addr
+         * variant. */
         frag=(mca_btl_sm_frag_t *)ompi_fifo_read_from_tail( fifo,
                 mca_btl_sm_component.sm_offset[peer_smp_rank]);
         if( OMPI_CB_FREE == frag ) {
@@ -440,7 +447,7 @@ int mca_btl_sm_component_progress(void)
 
         /* change the address from address relative to the shared
          * memory address, to a true virtual address */
-        frag = (mca_btl_sm_frag_t *)( (char *)frag+
+        frag = (mca_btl_sm_frag_t *)( (char *)frag +
                 mca_btl_sm_component.sm_offset[peer_smp_rank]);
 
         /* dispatch fragment by type */
@@ -449,29 +456,29 @@ int mca_btl_sm_component_progress(void)
             {
                 /* completion callback */
                 frag->base.des_src = 
-                    ( mca_btl_base_segment_t* )((unsigned char*)frag->base.des_dst - mca_btl_sm_component.sm_offset[peer_smp_rank]);
+                    ( mca_btl_base_segment_t* )((unsigned char*)frag->base.des_dst + mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_src->seg_addr.pval =
-                    ((unsigned char*)frag->base.des_src->seg_addr.pval - 
+                    ((unsigned char*)frag->base.des_src->seg_addr.pval +
                      mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_src_cnt = frag->base.des_dst_cnt;
                 frag->base.des_dst = NULL;
                 frag->base.des_dst_cnt = 0;
-                frag->base.des_cbfunc(&mca_btl_sm[0].super, frag->endpoint, &frag->base, frag->rc);
+                frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint, &frag->base, frag->rc);
                 break;
             }
             case MCA_BTL_SM_FRAG_SEND:
             {
                 /* recv upcall */
-                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[0].sm_reg + frag->tag;
+                mca_btl_sm_recv_reg_t* reg = mca_btl_sm[1].sm_reg + frag->tag;
                 frag->base.des_dst = (mca_btl_base_segment_t*)
                     ((unsigned char*)frag->base.des_src + mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_dst->seg_addr.pval = 
-                    ((unsigned char*)frag->base.des_dst->seg_addr.pval + 
+                    ((unsigned char*)frag->base.des_dst->seg_addr.pval +
                     mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_dst_cnt = frag->base.des_src_cnt;
                 frag->base.des_src = NULL;
                 frag->base.des_src_cnt = 0;
-                reg->cbfunc(&mca_btl_sm[0].super,frag->tag,&frag->base,reg->cbdata);
+                reg->cbfunc(&mca_btl_sm[1].super,frag->tag,&frag->base,reg->cbdata);
                 frag->type = MCA_BTL_SM_FRAG_ACK;
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
                                        my_smp_rank, peer_smp_rank, frag, rc );
