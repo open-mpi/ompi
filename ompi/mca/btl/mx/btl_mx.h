@@ -52,28 +52,29 @@ extern "C" {
 struct mca_btl_mx_component_t {
     mca_btl_base_component_1_0_0_t          super;  /**< base BTL component */ 
     
-    uint32_t                                mx_num_btls;
-    uint32_t                                mx_max_btls;
+    int32_t                                 mx_num_btls;
+    int32_t                                 mx_max_btls;
     /**< number of hcas available to the MX component */
 
-    struct mca_btl_mx_module_t** mx_btls;
+    struct mca_btl_mx_module_t**            mx_btls;
     /**< array of available BTL modules */
 
-    int mx_free_list_num;
+    int32_t                                 mx_free_list_num;
     /**< initial size of free lists */
 
-    int mx_free_list_max;
+    int32_t                                 mx_free_list_max;
     /**< maximum size of free lists */
 
-    int mx_max_posted_recv;
+    int32_t                                 mx_max_posted_recv;
     /**< number of posted receives on each NIC */
 
-    int mx_free_list_inc;
+    int32_t                                 mx_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
     opal_list_t mx_procs;  /**< list of mx proc structures */
 
-    uint32_t mx_filter;
+    int32_t                                 mx_filter;
+    int32_t                                 mx_timeout;
 
     ompi_free_list_t mx_send_eager_frags;      /**< free list of mx eager send fragments */
     ompi_free_list_t mx_send_user_frags;       /**< free list of mx user send fragments */
@@ -101,7 +102,7 @@ struct mca_btl_mx_module_t {
     mx_endpoint_addr_t mx_endpoint_addr;   /**<  */
     opal_list_t        mx_peers;           /**<  */
 
-    uint32_t           mx_posted_request;  /**< number of posted MX request */
+    int32_t            mx_posted_request;  /**< number of posted MX request */
     opal_mutex_t       mx_lock;            /**< lock for accessing module state */
 
 #if MCA_BTL_HAS_MPOOL
