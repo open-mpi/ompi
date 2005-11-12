@@ -56,12 +56,12 @@ fi
 export HAVE_SOLARIS_THREADS
 
 #
-# Ask what threading we want (allow solaris / pthread right now)
+# Ask what threading we want (allow solaris / posix right now)
 #
 AC_MSG_CHECKING([for type of thread support])
 AC_ARG_WITH(threads, 
   	AC_HELP_STRING([--with-threads],
-		       [Set thread type (solaris / pthread)]),
+		       [Set thread type (solaris / posix)]),
 	[THREAD_TYPE=$withval])
 
 if test "$THREAD_TYPE" = "solaris"; then
