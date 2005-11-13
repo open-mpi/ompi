@@ -850,7 +850,8 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
 
 /*
  *  this routine tries to match a posted receive.  If a match is found,
- *  it places the request in the appropriate matched receive list. 
+ *  it places the request in the appropriate matched receive list. This
+ *  function has to be called with the communicator matching lock held.
 */
 
 static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
