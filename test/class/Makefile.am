@@ -19,11 +19,8 @@
 
 AM_CPPFLAGS="-I$(top_srcdir)/test/support"
 
-
 check_PROGRAMS = \
 	ompi_bitmap \
-	ompi_circular_buffer_fifo \
-	ompi_fifo \
 	opal_hash_table \
 	opal_list \
 	opal_value_array \
@@ -42,21 +39,21 @@ ompi_bitmap_LDADD = \
         $(top_builddir)/test/support/libsupport.a
 ompi_bitmap_DEPENDENCIES = $(ompi_bitmap_LDADD)
 
-ompi_circular_buffer_fifo_SOURCES = ompi_circular_buffer_fifo.c 
-ompi_circular_buffer_fifo_LDADD = \
-        $(top_builddir)/ompi/libmpi.la \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la \
-        $(top_builddir)/test/support/libsupport.a
-ompi_circular_buffer_fifo_DEPENDENCIES = $(ompi_circular_buffer_fifo_LDADD)
+#ompi_circular_buffer_fifo_SOURCES = ompi_circular_buffer_fifo.c 
+#ompi_circular_buffer_fifo_LDADD = \
+#        $(top_builddir)/ompi/libmpi.la \
+#        $(top_builddir)/orte/liborte.la \
+#        $(top_builddir)/opal/libopal.la \
+#        $(top_builddir)/test/support/libsupport.a
+#ompi_circular_buffer_fifo_DEPENDENCIES = $(ompi_circular_buffer_fifo_LDADD)
 
-ompi_fifo_SOURCES = ompi_fifo.c 
-ompi_fifo_LDADD = \
-        $(top_builddir)/ompi/libmpi.la \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la \
-        $(top_builddir)/test/support/libsupport.a
-ompi_fifo_DEPENDENCIES = $(ompi_fifo_LDADD)
+#ompi_fifo_SOURCES = ompi_fifo.c 
+#ompi_fifo_LDADD = \
+#        $(top_builddir)/ompi/libmpi.la \
+#        $(top_builddir)/orte/liborte.la \
+#        $(top_builddir)/opal/libopal.la \
+#        $(top_builddir)/test/support/libsupport.a
+#ompi_fifo_DEPENDENCIES = $(ompi_fifo_LDADD)
 
 opal_list_SOURCES = opal_list.c 
 opal_list_LDADD = \
