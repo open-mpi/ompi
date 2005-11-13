@@ -75,6 +75,8 @@ struct ompi_fifo_t {
     opal_atomic_lock_t head_lock;
     opal_atomic_lock_t tail_lock;
 
+    /* locks for multi-process synchronization */
+    opal_atomic_lock_t fifo_lock;
 };
 
 typedef struct ompi_fifo_t ompi_fifo_t;
@@ -91,43 +93,6 @@ struct cb_slot_t {
 };
 
 typedef struct cb_slot_t cb_slot_t;
-
-/**
- * Try to read pointer from the tail of the queue
- *
- * @param fifo Pointer to data structure defining this fifo (IN)
- *
- * @param offset Offset relative to base of the memory segement (IN)
- *
- * @returncode Pointer - OMPI_CB_FREE indicates no data to read
- *
- */
-static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo, 
-                                             ssize_t offset) 
-{
-    /* local parameters */
-    void *return_value;
-    bool queue_empty;
-    volatile ompi_cb_fifo_wrapper_t *t_ptr;
-
-    t_ptr = (volatile ompi_cb_fifo_wrapper_t *) 
-        (((char*) fifo->tail) + offset);
-
-    /* get next element */
-    return_value=ompi_cb_fifo_read_from_tail(
-            (ompi_cb_fifo_t *)&(t_ptr->cb_fifo),
-            t_ptr->cb_overflow, &queue_empty, offset);
-
-    /* check to see if need to move on to next cb_fifo in the link list */
-    if( queue_empty ) {
-        /* queue_emptied - move on to next element in fifo */
-        t_ptr->cb_overflow = false;
-        fifo->tail = t_ptr->next_fifo_wrapper;
-    }
-
-    /* return */
-    return return_value;
-}
 
 /**
  * Initialize a fifo 
@@ -180,9 +145,8 @@ static inline int ompi_fifo_init_same_base_addr(int size_of_cb_fifo,
     }
 
     /* finish head initialization */
-    fifo->head->next_fifo_wrapper=
-        (volatile struct ompi_cb_fifo_wrapper_t *)fifo->head;  /* only one element 
-                                                            in the link list */
+    opal_atomic_init(&(fifo->fifo_lock), OPAL_ATOMIC_UNLOCKED);
+    fifo->head->next_fifo_wrapper = fifo->head;
     fifo->head->cb_overflow=false;  /* no attempt to overflow the queue */
 
     /* set the tail */
@@ -190,23 +154,6 @@ static inline int ompi_fifo_init_same_base_addr(int size_of_cb_fifo,
 
     /* return */
     return error_code;
-}
-
-/**
- * Write pointer to the specified slot
- *
- * @param slot Slot addressing (IN)
- *
- * @param data Pointer value to write in specified slot (IN)
- *
- * @returncode Slot index data written to
- *
- */
-static inline int ompi_fifo_write_to_slot_same_base_addr(cb_slot_t *slot, 
-                                                         void* data)
-{
-    return ompi_cb_fifo_write_to_slot_same_base_addr(slot->index,data,
-            slot->cb);
 }
 
 /**
@@ -225,7 +172,6 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
     int error_code=OMPI_SUCCESS;
     size_t len_to_allocate;
     ompi_cb_fifo_wrapper_t *next_ff;
-    bool available;
 
     /* attempt to write data to head ompi_fifo_cb_fifo_t */
     error_code=ompi_cb_fifo_write_to_head_same_base_addr(data,
@@ -234,6 +180,7 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
         /*
          * queue is full
          */
+        opal_atomic_lock(&(fifo->fifo_lock));
 
         /* mark queue as overflown */
         fifo->head->cb_overflow=true;
@@ -241,16 +188,15 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
         /* see if next queue is available - while the next queue
          * has not been emptied, it will be marked as overflowen*/
         next_ff=(ompi_cb_fifo_wrapper_t *)fifo->head->next_fifo_wrapper;
-        available=!(next_ff->cb_overflow);
 
         /* if next queue not available, allocate new queue */
-        if( !available ) {
-
+        if (next_ff->cb_overflow) {
             /* allocate head ompi_cb_fifo_t structure */
             len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);
             next_ff=fifo_allocator->mpool_alloc
                 (fifo_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
             if ( NULL == next_ff) {
+                opal_atomic_unlock(&(fifo->fifo_lock));
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -264,17 +210,19 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
                     &(next_ff->cb_fifo),
                     fifo_allocator);
             if ( OMPI_SUCCESS != error_code ) {
+                opal_atomic_unlock(&(fifo->fifo_lock));
                 return error_code;
             }
 
             /* finish new element initialization */
             next_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one element in the link list */
             next_ff->cb_overflow=false;  /* no attempt to overflow the queue */
+            fifo->head->next_fifo_wrapper=next_ff;
         }
 
         /* reset head pointer */
-        fifo->head->next_fifo_wrapper=next_ff;
         fifo->head=next_ff;
+        opal_atomic_unlock(&(fifo->fifo_lock));
 
         /* write data to new head structure */
         error_code=ompi_cb_fifo_write_to_head_same_base_addr(data,
@@ -287,89 +235,6 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
     return error_code;
 }
 
-
-/**
- * Reserve slot in the fifo array
- *
- * @param fifo Pointer to data structure defining this fifo (IN)
- *
- * @returncode Slot index to which data is written
- *
- * @returncode OMPI_CB_ERROR failed to allocate index
- *
- */
-static inline cb_slot_t ompi_fifo_get_slot_same_base_addr(ompi_fifo_t *fifo,
-        mca_mpool_base_module_t *fifo_allocator)
-{
-    size_t len_to_allocate;
-    volatile ompi_cb_fifo_wrapper_t *next_ff;
-    bool available;
-    cb_slot_t return_params;
-
-    /* attempt to write data to head ompi_fifo_cb_fifo_t */
-    return_params.index=ompi_cb_fifo_get_slot_same_base_addr(
-            (ompi_cb_fifo_t *)&(fifo->head->cb_fifo));
-    if( OMPI_CB_ERROR == return_params.index ) {
-        /* 
-         * queue is full 
-         */
-
-        /* mark queue as overflown */
-        fifo->head->cb_overflow=true;
-
-        /* see if next queue is available - while the next queue
-         * has not been emptied, it will be marked as overflowen*/
-        next_ff=fifo->head->next_fifo_wrapper;
-        available=!(next_ff->cb_overflow);
-
-        /* if next queue not available, allocate new queue */
-        if( !available ) {
-
-            /* allocate head ompi_cb_fifo_t structure */
-            len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);
-            next_ff=fifo_allocator->mpool_alloc
-                (fifo_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
-            if ( NULL == next_ff) {
-                return_params.index=OMPI_ERR_OUT_OF_RESOURCE;
-                return return_params;
-            }
-
-            /* initialize the circular buffer fifo head structure */
-            return_params.index=ompi_cb_fifo_init_same_base_addr(
-                    fifo->head->cb_fifo.size, 
-                    fifo->head->cb_fifo.lazy_free_frequency,
-                    fifo->head->cb_fifo.fifo_memory_locality_index, 
-                    fifo->head->cb_fifo.head_memory_locality_index, 
-                    fifo->head->cb_fifo.tail_memory_locality_index, 
-                    (ompi_cb_fifo_t *)&(next_ff->cb_fifo),
-                    fifo_allocator);
-            if ( OMPI_SUCCESS != return_params.index ) {
-                return return_params;
-            }
-
-
-            /* finish new element initialization */
-            next_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one element in 
-                                                         the link list */
-            next_ff->cb_overflow=false;  /* no attempt to overflow the queue */
-        }
-
-        /* reset head pointer */
-        fifo->head->next_fifo_wrapper=next_ff;
-        fifo->head=next_ff;
-
-        /* write data to new head structure */
-        return_params.index=ompi_cb_fifo_get_slot_same_base_addr(
-                (ompi_cb_fifo_t *)&(fifo->head->cb_fifo));
-        if( OMPI_CB_ERROR == return_params.index ) {
-            return return_params;
-        }
-    }
-
-    /* return */
-    return_params.cb=(ompi_cb_fifo_t *)&(fifo->head->cb_fifo);
-    return return_params;
-}
 
 /**
  * Try to read pointer from the tail of the queue
@@ -396,11 +261,53 @@ void *ompi_fifo_read_from_tail_same_base_addr( ompi_fifo_t *fifo)
 
     /* check to see if need to move on to next cb_fifo in the link list */
     if( queue_empty ) {
+        opal_atomic_lock(&(fifo->fifo_lock));
         /* queue_emptied - move on to next element in fifo */
         fifo->tail->cb_overflow=false;
         fifo->tail=fifo->tail->next_fifo_wrapper;
+        opal_atomic_unlock(&(fifo->fifo_lock));
     }
 
+    return return_value;
+}
+
+/**
+ * Try to read pointer from the tail of the queue, and the base
+ * pointer is different so we must convert.
+ *
+ * @param fifo Pointer to data structure defining this fifo (IN)
+ *
+ * @param offset Offset relative to base of the memory segement (IN)
+ *
+ * @returncode Pointer - OMPI_CB_FREE indicates no data to read
+ *
+ */
+static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo, 
+                                             ssize_t offset) 
+{
+    /* local parameters */
+    void *return_value;
+    bool queue_empty;
+    volatile ompi_cb_fifo_wrapper_t *t_ptr;
+
+    t_ptr = (volatile ompi_cb_fifo_wrapper_t *) 
+        (((char*) fifo->tail) + offset);
+
+    /* get next element */
+    return_value=ompi_cb_fifo_read_from_tail(
+            (ompi_cb_fifo_t *)&(t_ptr->cb_fifo),
+            t_ptr->cb_overflow, &queue_empty, offset);
+
+    /* check to see if need to move on to next cb_fifo in the link list */
+    if( queue_empty ) {
+        opal_atomic_lock(&(fifo->fifo_lock));
+        /* queue_emptied - move on to next element in fifo */
+        t_ptr->cb_overflow = false;
+        fifo->tail = t_ptr->next_fifo_wrapper;
+        opal_atomic_unlock(&(fifo->fifo_lock));
+    }
+
+    /* return */
     return return_value;
 }
 
