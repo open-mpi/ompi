@@ -192,7 +192,7 @@ static inline int32_t ompi_ddt_is_contiguous_memory_layout( ompi_datatype_t* dat
 
 OMPI_DECLSPEC int32_t ompi_ddt_get_element_count( const ompi_datatype_t* pData, int32_t iSize );
 OMPI_DECLSPEC int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* pData, int32_t count,
-                                                      char* pDestBuf, const char* pSrcBuf );
+                                                      char* pDestBuf, char* pSrcBuf );
 
 OMPI_DECLSPEC const ompi_datatype_t* ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang );
 

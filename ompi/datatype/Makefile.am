@@ -42,6 +42,7 @@ libmpi_la_SOURCES += \
 	datatype/fake_stack.c \
 	datatype/dt_args.c \
 	datatype/dt_arch.c \
+	datatype/dt_copy.c \
 	datatype/dt_external32.c \
 	datatype/dt_match_size.c \
 	datatype/convertor.c \
