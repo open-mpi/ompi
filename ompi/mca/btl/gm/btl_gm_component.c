@@ -505,7 +505,7 @@ int mca_btl_gm_component_progress()
     size_t i;
     
     /* could get into deadlock in this case as we post recvs after callback completes */
-    if(OPAL_THREAD_ADD32(&inprogress, 1) >= mca_btl_gm_component.gm_num_repost) {
+    if(OPAL_THREAD_ADD32(&inprogress, 1) > 1) {
         OPAL_THREAD_ADD32(&inprogress, -1);
         return OMPI_SUCCESS;
     }
