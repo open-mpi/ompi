@@ -176,7 +176,7 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
                                             recvreq->req_recv.req_base.req_count > sendreq->req_ptl.req_send.req_count ?
                                             sendreq->req_ptl.req_send.req_count : recvreq->req_recv.req_base.req_count,
                                             (char *)recvreq->req_recv.req_base.req_addr, 
-                                            (const char *)sendreq->req_ptl.req_send.req_addr );
+                                            (char *)sendreq->req_ptl.req_send.req_addr );
         } else {
             ompi_convertor_t *send_convertor, *recv_convertor;
             struct iovec iov[1];
