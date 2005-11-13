@@ -228,7 +228,10 @@ static inline  void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base
 
 static inline void mca_bml_base_free(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
     bml_btl->btl_free( bml_btl->btl, des );   
-    des->des_context = NULL;                  
+    /* The previous function is supposed to release the des object
+     * so we should not touch it anymore.
+     */
+    /*des->des_context = NULL;*/
 }
 
 static inline int mca_bml_base_send(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des, mca_btl_base_tag_t tag) { 
