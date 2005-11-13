@@ -662,7 +662,6 @@ int mca_btl_sm_add_procs(
         /* Different base address case */
         else if (SM_CONNECTED_DIFFERENT_BASE_ADDR ==
                 mca_btl_sm_component.sm_proc_connect[proc]) {
-            printf("=================== different base ===============\n");
 
             /* add this proc to shared memory accessability list */
             return_code=ompi_bitmap_set_bit(reachability,proc);
