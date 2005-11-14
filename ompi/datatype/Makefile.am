@@ -25,6 +25,7 @@ headers = datatype.h datatype_internal.h dt_arch.h convertor.h
 
 libdatatype_la_SOURCES = $(headers) \
 	dt_add.c \
+    dt_copy.c \
 	dt_create.c \
 	dt_create_array.c \
 	dt_create_dup.c \

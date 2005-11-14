@@ -117,8 +117,6 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
         }
     } 
     
-    
-    
     frag->sg_entry.length = 
         frag->segment.seg_len + 
         ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  
