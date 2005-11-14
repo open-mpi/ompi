@@ -119,8 +119,8 @@ static int orte_pls_bproc_node_array(orte_rmaps_base_map_t* map,
     for(item =  opal_list_get_first(&map->nodes);
         item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
-        if(*node_array_len < atol(((orte_rmaps_base_node_t*)item)->node_name)) {
-            *node_array_len = atol(((orte_rmaps_base_node_t*)item)->node_name);
+        if(*node_array_len < atol(((orte_rmaps_base_node_t*)item)->node->node_name)) {
+            *node_array_len = atol(((orte_rmaps_base_node_t*)item)->node->node_name);
         }
     }
     (*node_array_len)++;
@@ -137,7 +137,7 @@ static int orte_pls_bproc_node_array(orte_rmaps_base_map_t* map,
         item =  opal_list_get_next(item)) {
         orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)item;
         num_on_node = opal_list_get_size(&node->node_procs);
-        (*node_array)[atol(node->node_name)] += num_on_node;
+        (*node_array)[atol(node->node->node_name)] += num_on_node;
         num_procs += num_on_node;
     }
     return num_procs;
