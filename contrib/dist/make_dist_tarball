@@ -95,6 +95,17 @@ for file in $version_files; do
     rm $file.new
 done
 
+if test "$1" = "-nogreek" -o "$1" = "--nogreek"; then
+    echo "*** REMOVING ALL GREEK FROM VERSION NUMBERS!!"
+    for file in $version_files; do
+        echo " - $file"
+        sed -e 's/^greek=.*/greek=/' $file > $file.new
+        cp -f $file.new $file
+        rm $file.new
+    done
+fi
+
+
 #
 # Autogen
 #
