@@ -112,6 +112,9 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "filter",
                             "Unique ID for the application (used to connect to the peers)",
                             false, false, 0xdeadbeef, &mca_btl_mx_component.mx_filter );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
+                            "Enable the MX support for shared memory",
+                            false, true, 0, &mca_btl_mx_component.mx_support_sharedmem );
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_num",
                             "Number of allocated default request",
