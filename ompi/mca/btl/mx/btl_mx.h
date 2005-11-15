@@ -71,6 +71,9 @@ struct mca_btl_mx_component_t {
     int32_t                                 mx_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
+    int32_t                                 mx_support_sharedmem;
+    /**< true if we want to activate the MX support for shared memory */
+
     opal_list_t mx_procs;  /**< list of mx proc structures */
 
     int32_t                                 mx_filter;

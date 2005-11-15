@@ -87,8 +87,15 @@ int mca_btl_mx_add_procs(
         mca_btl_mx_proc_t* mx_proc;
         mca_btl_base_endpoint_t* mx_endpoint;
 
-        if( ompi_procs[i] == ompi_proc_local_proc ) {
+        if( ompi_procs[i] == ompi_proc_local_proc) {
             /* Do not alllow to connect to ourselfs ... */
+            continue;
+        }
+        if( (0 == mca_btl_mx_component.mx_support_sharedmem) &&
+            (ompi_procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL) ) {
+            /* Do not use MX for any of the procs on the same node, 
+             * let the SM device handle that by now
+             */
             continue;
         }
 
