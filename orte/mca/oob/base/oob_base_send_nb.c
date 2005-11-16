@@ -149,7 +149,7 @@ static void mca_oob_send_callback(
     /* validate status */
     mca_oob_send_cbdata_t *oob_cbdata = cbdata;
     if(status < 0) {
-        oob_cbdata->cbfunc(status, peer, NULL, tag, oob_cbdata->cbdata);
+        oob_cbdata->cbfunc(status, peer, oob_cbdata->cbbuf, tag, oob_cbdata->cbdata);
         free(oob_cbdata);
         return;
     }
