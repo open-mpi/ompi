@@ -127,8 +127,10 @@ static inline int mca_btl_mvapi_endpoint_post_send(
                                  &frag->sr_desc); 
     }
 
-    if(VAPI_OK != frag->ret)
+    if(VAPI_OK != frag->ret) {
+        BTL_ERROR(("VAPI_post_sr: %s\n", VAPI_strerror(frag->ret)));
         return OMPI_ERROR; 
+    }
     if(mca_btl_mvapi_component.use_srq) { 
         MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
         MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1);

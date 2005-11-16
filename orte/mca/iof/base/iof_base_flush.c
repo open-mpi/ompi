@@ -64,6 +64,12 @@ int orte_iof_base_flush(void)
     struct timeval tv = { 0, 0 };
     int flushed = 0;
     size_t pending;
+    static int32_t lock = 0;
+
+    if(OPAL_THREAD_ADD32(&lock,1) > 1) {
+        OPAL_THREAD_ADD32(&lock,-1);
+        return;
+    }
 
     /* flush any pending output */
     fflush(NULL);
@@ -109,6 +115,7 @@ int orte_iof_base_flush(void)
     }
     orte_iof_base.iof_waiting--;
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_ADD32(&lock,-1);
     return OMPI_SUCCESS;
 }
 
