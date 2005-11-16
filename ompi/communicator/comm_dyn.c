@@ -414,6 +414,14 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         }
         asprintf(&(apps[i]->env[0]), "OMPI_PARENT_PORT=%s", port_name);
         apps[i]->env[1] = NULL;
+        for (j = 0; NULL != environ[j]; ++j) {
+            if (0 == strncmp("OMPI_", environ[j], 5)) {
+                opal_argv_append(&apps[i]->num_env, 
+                                 &apps[i]->env, 
+                                 environ[j]);
+            }
+        }
+
         /* Check for the 'wdir' and later potentially for the
            'path' Info object */
         have_wdir = 0; 
