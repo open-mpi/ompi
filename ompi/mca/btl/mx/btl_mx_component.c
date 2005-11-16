@@ -107,6 +107,9 @@ int mca_btl_mx_component_open(void)
         mca_btl_mx_param_register_int( "max_btls", 1 );
     mca_btl_mx_component.mx_filter = 
         mca_btl_mx_param_register_int( "filter", 0xdeadbeef );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
+                            "Enable the MX support for shared memory",
+                            false, true, 0, &mca_btl_mx_component.mx_support_sharedmem );
 
     mca_btl_mx_component.mx_free_list_num =
         mca_btl_mx_param_register_int ("free_list_num", 8);
