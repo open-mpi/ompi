@@ -861,8 +861,8 @@ int mca_btl_mvapi_endpoint_create_qp(
     switch(transport_type) {
 
     case VAPI_TS_RC: /* Set up RC qp parameters */
-        qp_init_attr.cap.max_oust_wr_rq = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_rsv;
-        qp_init_attr.cap.max_oust_wr_sq = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_rsv;
+        qp_init_attr.cap.max_oust_wr_rq = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_num;
+        qp_init_attr.cap.max_oust_wr_sq = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_num;
         qp_init_attr.cap.max_sg_size_rq = mca_btl_mvapi_component.ib_sg_list_size;
         qp_init_attr.cap.max_sg_size_sq = mca_btl_mvapi_component.ib_sg_list_size;
         qp_init_attr.pd_hndl            = ptag;
