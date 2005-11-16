@@ -135,18 +135,8 @@ static void orte_rmgr_urm_recv(
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-                                                                                                                          
+
 cleanup:
-                                                                                                                          
-    rc = orte_rml.recv_buffer_nb(
-        ORTE_RML_NAME_ANY,
-        ORTE_RML_TAG_RMGR_SVC,
-        0,
-        orte_rmgr_urm_recv,
-        NULL);
-    if(rc < 0) {
-        ORTE_ERROR_LOG(rc);
-    }
     OBJ_DESTRUCT(&rsp);
 }
 
@@ -206,7 +196,7 @@ static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
     if (0 > (rc = orte_rml.recv_buffer_nb(
         ORTE_RML_NAME_ANY,
         ORTE_RML_TAG_RMGR_SVC,
-        0,
+        ORTE_RML_PERSISTENT,
         orte_rmgr_urm_recv,
         NULL))) {
         ORTE_ERROR_LOG(rc);
