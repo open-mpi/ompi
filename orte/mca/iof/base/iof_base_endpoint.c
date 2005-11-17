@@ -129,6 +129,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
 
         /* peer has closed the connection */
         orte_iof_base_endpoint_closed(endpoint);
+        OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         rc = 0;
         return;
     }
