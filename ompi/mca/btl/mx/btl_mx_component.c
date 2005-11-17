@@ -144,10 +144,10 @@ int mca_btl_mx_component_open(void)
                             false, false, 50, (int*)&mca_btl_mx_module.super.btl_exclusivity );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "first_frag_size",
                             "Size of the first fragment for the rendez-vous protocol over MX",
-                            true, true, 16*1024, (int*)&mca_btl_mx_module.super.btl_eager_limit );
+                            true, true, 16*1024 - 20, (int*)&mca_btl_mx_module.super.btl_eager_limit );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_send_size",
                             "Minimum send fragment size ...",
-                            false, false, 32*1024, (int*)&mca_btl_mx_module.super.btl_min_send_size );
+                            false, false, 32*1024 - 40, (int*)&mca_btl_mx_module.super.btl_min_send_size );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_send_size",
                             "Maximum send fragment size withour RDMA ...",
                             false, false, 128*1024, (int*)&mca_btl_mx_module.super.btl_max_send_size );
@@ -272,6 +272,15 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     mca_btl_mx_addr_t *mx_addrs;
 
     *num_btl_modules = 0;
+
+    /* set the MX error handle to always return. This function is the only MX function
+     * allowed to be called before mx_init in order to make sure that if the MX is not
+     * up and running the MX library does not exit the application.
+     */
+    mx_set_error_handler(MX_ERRORS_RETURN);
+    /* Until this BTL reach a stable state let MX library generate assert for the errors */
+    /*mx_set_error_handler(MX_ERRORS_ARE_FATAL);*/
+
     /* First check if MX is available ... */
     if( MX_SUCCESS != (status = mx_init()) ) {
         opal_output( 0, "mca_btl_mx_component_init: mx_init() failed with status = %d (%s)\n",
@@ -313,11 +322,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     /* intialize process hash table */
     OBJ_CONSTRUCT( &mca_btl_mx_component.mx_procs, opal_list_t );
-
-    /* set the MX error handle to always return */
-    mx_set_error_handler(MX_ERRORS_RETURN);
-    /* Until this BTL reach a stable state let MX library generate assert for the errors */
-    /*mx_set_error_handler(MX_ERRORS_ARE_FATAL);*/
 
     /* get the number of card available on the system */
     if( (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
