@@ -18,8 +18,10 @@
  */
 
 #include "orte_config.h"
+#include <sys/bproc.h>
 
 #include "include/orte_constants.h"
+#include "orte/util/sys_info.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/sds/sds.h"
 #include "mca/sds/base/base.h"
@@ -148,6 +150,10 @@ int orte_sds_bproc_set_name(void)
             ORTE_ERROR_LOG(rc);
             return(rc);
         }
+
+        if(NULL != orte_system_info.nodename)
+            free(orte_system_info.nodename);
+        asprintf(&orte_system_info.nodename, "%d", bproc_currnode());
     }
     return ORTE_SUCCESS;
 }
