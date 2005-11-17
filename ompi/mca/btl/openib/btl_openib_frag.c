@@ -33,7 +33,7 @@ static void mca_btl_openib_frag_common_constructor( mca_btl_openib_frag_t* frag)
     frag->mr = registration->mr; 
     frag->segment.seg_len = frag->size;
     frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
-    frag->sg_entry.addr = (uintptr_t) frag->hdr; 
+    frag->sg_entry.addr = (uint64_t) frag->hdr; 
     frag->sg_entry.length = frag->size; 
     frag->sg_entry.lkey = frag->mr->lkey; 
     frag->base.des_flags = 0; 
@@ -49,7 +49,7 @@ static void mca_btl_openib_send_frag_common_constructor(mca_btl_openib_frag_t* f
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     
-    frag->wr_desc.sr_desc.wr_id = (unsigned long) frag; 
+    frag->wr_desc.sr_desc.wr_id = (uint64_t) frag; 
     frag->wr_desc.sr_desc.sg_list = &frag->sg_entry; 
     frag->wr_desc.sr_desc.num_sge = 1; 
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
@@ -66,7 +66,7 @@ static void mca_btl_openib_recv_frag_common_constructor(mca_btl_openib_frag_t* f
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
    
-    frag->wr_desc.rd_desc.wr_id = (unsigned long) frag; 
+    frag->wr_desc.rd_desc.wr_id = (uint64_t) frag; 
     frag->wr_desc.rd_desc.sg_list = &frag->sg_entry; 
     frag->wr_desc.rd_desc.num_sge = 1; 
     frag->wr_desc.rd_desc.next = NULL; 

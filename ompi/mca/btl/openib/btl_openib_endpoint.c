@@ -73,7 +73,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     
     struct ibv_qp* ib_qp; 
     struct ibv_send_wr* bad_wr; 
-    frag->sg_entry.addr = (uintptr_t) frag->hdr; 
+    frag->sg_entry.addr = (uint64_t) frag->hdr; 
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
     
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= openib_btl->super.btl_eager_limit){ 
@@ -120,10 +120,8 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     
     
     frag->sg_entry.length = 
-        frag->segment.seg_len + 
-        ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  
-
-    
+        frag->segment.seg_len + sizeof(mca_btl_openib_header_t);
+        
     if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
         frag->wr_desc.sr_desc.send_flags |= IBV_SEND_INLINE;
     } else { 
@@ -986,16 +984,13 @@ void mca_btl_openib_endpoint_send_credits(
     OPAL_THREAD_ADD32(credits, -frag->hdr->credits);
 
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
-    frag->sg_entry.length =
-        frag->segment.seg_len +
-        ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);
+    frag->sg_entry.length = sizeof(mca_btl_openib_header_t);
                                                                                                                      
-    if(frag->sg_entry.length <= openib_btl->ib_inline_max) {
-        frag->wr_desc.sr_desc.send_flags |= IBV_SEND_INLINE;
-    } else {
-        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED;
-    }
-                                                                                                                     
+    frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | 
+        IBV_SEND_SIGNALED; 
+    frag->sg_entry.addr = (uint64_t) frag->hdr; 
+    
+
     if(ibv_post_send(ib_qp,
                      &frag->wr_desc.sr_desc,
                      &bad_wr)) {
