@@ -131,11 +131,11 @@ int mca_btl_mx_component_open(void)
         mca_btl_mx_param_register_int("max_posted_recv", 16); 
 
     mca_btl_mx_module.super.btl_exclusivity =
-        mca_btl_mx_param_register_int ("exclusivity", 0);
+        mca_btl_mx_param_register_int ("exclusivity", 50);
     mca_btl_mx_module.super.btl_eager_limit = 
-        mca_btl_mx_param_register_int ("first_frag_size", 16*1024);
+        mca_btl_mx_param_register_int ("first_frag_size", 16*1024 - 20);
     mca_btl_mx_module.super.btl_min_send_size =
-        mca_btl_mx_param_register_int ("min_send_size", 32*1024);
+        mca_btl_mx_param_register_int ("min_send_size", 32*1024 - 40);
     mca_btl_mx_module.super.btl_max_send_size =
         mca_btl_mx_param_register_int ("max_send_size", 128*1024);
     mca_btl_mx_module.super.btl_min_rdma_size = 
@@ -255,6 +255,15 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     mca_btl_mx_addr_t *mx_addrs;
 
     *num_btl_modules = 0;
+
+    /* set the MX error handle to always return. This function is the only MX function
+     * allowed to be called before mx_init in order to make sure that if the MX is not
+     * up and running the MX library does not exit the application.
+     */
+    mx_set_error_handler(MX_ERRORS_RETURN);
+    /* Until this BTL reach a stable state let MX library generate assert for the errors */
+    /*mx_set_error_handler(MX_ERRORS_ARE_FATAL);*/
+
     /* First check if MX is available ... */
     if( MX_SUCCESS != (status = mx_init()) ) {
         opal_output( 0, "mca_btl_mx_component_init: mx_init() failed with status = %d (%s)\n",
@@ -296,11 +305,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     /* intialize process hash table */
     OBJ_CONSTRUCT( &mca_btl_mx_component.mx_procs, opal_list_t );
-
-    /* set the MX error handle to always return */
-    mx_set_error_handler(MX_ERRORS_RETURN);
-    /* Until this BTL reach a stable state let MX library generate assert for the errors */
-    /*mx_set_error_handler(MX_ERRORS_ARE_FATAL);*/
 
     /* get the number of card available on the system */
     if( (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
