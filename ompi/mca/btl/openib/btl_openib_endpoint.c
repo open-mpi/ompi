@@ -501,7 +501,6 @@ static void mca_btl_openib_endpoint_recv(
     size_t cnt = 1; 
     mca_btl_openib_rem_info_t rem_info; 
     
-    ib_endpoint = (mca_btl_openib_endpoint_t*) endpoint;
     /* start by unpacking data first so we know who is knocking at 
        our door */ 
     
@@ -576,7 +575,7 @@ static void mca_btl_openib_endpoint_recv(
             opal_list_get_end(&mca_btl_openib_component.ib_procs);
             ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
 
-        if(ib_proc->proc_guid.vpid == endpoint->vpid) {
+        if(orte_ns.compare(ORTE_NS_CMP_ALL, &ib_proc->proc_guid, endpoint) == 0) {
             bool found = false;
             
             /* Try to get the endpoint instance of this proc */
@@ -675,10 +674,6 @@ static void mca_btl_openib_endpoint_recv(
             break;
         }
     }
-
-    /* Okay, now that we are done receiving,
-     * re-post the buffer */
-    mca_btl_openib_post_recv();
 }
 
 /* 
@@ -690,7 +685,7 @@ void mca_btl_openib_post_recv()
     orte_rml.recv_buffer_nb(
         ORTE_RML_NAME_ANY, 
         ORTE_RML_TAG_DYNAMIC-1, 
-        0,
+        ORTE_RML_PERSISTENT,
         mca_btl_openib_endpoint_recv,
         NULL);
 }
