@@ -49,6 +49,8 @@
 #include "runtime/runtime.h"
 #include "opal/util/printf.h"
 
+extern char **environ;
+
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                orte_process_name_t *port, int send_first,
                                ompi_communicator_t **newcomm, orte_rml_tag_t tag )
@@ -416,9 +418,12 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         apps[i]->env[1] = NULL;
         for (j = 0; NULL != environ[j]; ++j) {
             if (0 == strncmp("OMPI_", environ[j], 5)) {
-                opal_argv_append(&apps[i]->num_env, 
+                /* for some reason, num_env is a size_t.  cope */
+                int tmp_num_env = apps[i]->num_env;
+                opal_argv_append(&tmp_num_env, 
                                  &apps[i]->env, 
                                  environ[j]);
+                apps[i]->num_env = tmp_num_env;
             }
         }
 
