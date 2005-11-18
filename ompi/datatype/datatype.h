@@ -120,6 +120,7 @@ typedef struct ompi_datatype_t {
 
 OBJ_CLASS_DECLARATION( ompi_datatype_t );
 
+int ompi_ddt_register_params(void);
 int32_t ompi_ddt_init( void );
 int32_t ompi_ddt_finalize( void );
 ompi_datatype_t* ompi_ddt_create( int32_t expectedSize );
