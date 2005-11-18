@@ -279,7 +279,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     int32_t free_after; 
     int rc; 
     
-    
     openib_btl = (mca_btl_openib_module_t*) btl; 
     openib_reg = (mca_mpool_openib_registration_t*) registration; 
 
@@ -308,7 +307,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->mr = openib_reg->mr; 
         frag->sg_entry.length = max_data; 
         frag->sg_entry.lkey = frag->mr->lkey; 
-        frag->sg_entry.addr = (uint64_t) iov.iov_base; 
+        
+        frag->sg_entry.addr = (unsigned long) iov.iov_base;
         
         frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
         
@@ -352,7 +352,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         frag->mr = openib_reg->mr; 
         frag->sg_entry.length = max_data; 
         frag->sg_entry.lkey = openib_reg->mr->lkey;
-        frag->sg_entry.addr = (uint64_t) iov.iov_base; 
+        
+        frag->sg_entry.addr = (unsigned long) iov.iov_base;
         
         frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->rkey; 
             
@@ -605,9 +606,9 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     } else { 
         
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uint64_t) frag->base.des_dst->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
         frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
-        frag->sg_entry.addr = (uint64_t) frag->base.des_src->seg_addr.pval; 
+        frag->sg_entry.addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
         frag->sg_entry.length  = frag->base.des_src->seg_len; 
         
         BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 
@@ -685,9 +686,9 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     } else { 
     
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (uint64_t) frag->base.des_src->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
         frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
-        frag->sg_entry.addr = (uint64_t) frag->base.des_dst->seg_addr.pval; 
+        frag->sg_entry.addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
         frag->sg_entry.length  = frag->base.des_dst->seg_len; 
         
         BTL_VERBOSE(("frag->wr_desc.sr_desc.wr.rdma.remote_addr = %llu .rkey = %lu frag->sg_entry.addr = %llu .length = %lu" 

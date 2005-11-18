@@ -590,7 +590,7 @@ int mca_btl_openib_component_progress()
             case IBV_WC_SEND :
                     
                 /* Process a completed send or rdma write*/
-                frag = (mca_btl_openib_frag_t*) (void*) (uint64_t) wc.wr_id; 
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
                 endpoint = frag->endpoint;
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS); 
 
@@ -611,7 +611,7 @@ int mca_btl_openib_component_progress()
             case IBV_WC_RECV: 
 
                 /* Process a RECV */ 
-                frag = (mca_btl_openib_frag_t*) (void*) (uint64_t) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 credits = frag->hdr->credits;
 
@@ -698,7 +698,7 @@ int mca_btl_openib_component_progress()
             case IBV_WC_SEND:
 
                 /* Process a completed send - receiver must return tokens */
-                frag = (mca_btl_openib_frag_t*) (uint64_t) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
 
                 /* if we have tokens, process pending sends */
@@ -715,14 +715,14 @@ int mca_btl_openib_component_progress()
 
             case IBV_WC_RDMA_READ: 
                                     
-                frag = (mca_btl_openib_frag_t*) (uint64_t) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 OPAL_THREAD_ADD32(&frag->endpoint->get_tokens, 1);
                 /* fall through */
 
             case IBV_WC_RDMA_WRITE: 
 
                 /* Process a completed write - returns tokens immediately */
-                frag = (mca_btl_openib_frag_t*) (uint64_t) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 endpoint = frag->endpoint;
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
 
@@ -749,7 +749,7 @@ int mca_btl_openib_component_progress()
                 
             case IBV_WC_RECV: 
 
-                frag = (mca_btl_openib_frag_t*) (uint64_t) wc.wr_id;
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint;
                 credits = frag->hdr->credits;
                 
@@ -768,8 +768,10 @@ int mca_btl_openib_component_progress()
                 } else { 
 #endif
                     OPAL_THREAD_ADD32((int32_t*) &endpoint->rd_posted_lp, -1); 
-                    MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(((mca_btl_openib_frag_t*) (void*) 
-                                                         (uint64_t)wc.wr_id)->endpoint, 0); 
+                    MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(
+                                                        ((mca_btl_openib_frag_t*) 
+                                                         (unsigned long)wc.wr_id)->endpoint
+                                                        , 0); 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 }
 #endif 
