@@ -29,7 +29,7 @@
 #include <stdlib.h>
 
 #if OMPI_ENABLE_DEBUG
-int32_t ompi_pack_debug = 0;
+int ompi_pack_debug = 0;
 #define DO_DEBUG(INST)  if( ompi_pack_debug ) { INST }
 #else
 #define DO_DEBUG(INST)

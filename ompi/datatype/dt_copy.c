@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 #if OMPI_ENABLE_DEBUG
-int32_t ompi_copy_debug = 0;
+int ompi_copy_debug = 0;
 #define DO_DEBUG(INST)  if( ompi_copy_debug ) { INST }
 #else
 #define DO_DEBUG(INST)

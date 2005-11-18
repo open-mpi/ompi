@@ -18,13 +18,15 @@
 
 #include "ompi_config.h"
 
+#include <time.h>
+
 #include "ompi/include/constants.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
+#include "ompi/datatype/datatype.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/runtime/mpiruntime.h"
-#include "ompi/runtime/params.h"
-#include <time.h>
 
 /*
  * Global variables
@@ -141,9 +143,9 @@ int ompi_mpi_register_params(void)
                                 true, false, 
                                 -1, NULL);
 
-    /* All done */
+    /* The ddt engine has a few parameters */
 
-    return OMPI_SUCCESS;
+    return ompi_ddt_register_params();
 }
 
 int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
