@@ -493,7 +493,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     frag->mr = openib_reg->mr; 
     frag->sg_entry.length = *size; 
     frag->sg_entry.lkey = openib_reg->mr->lkey; 
-    frag->sg_entry.addr = (uint64_t) frag->segment.seg_addr.pval; 
+    frag->sg_entry.addr = (unsigned long) frag->segment.seg_addr.pval; 
     
     frag->segment.seg_key.key32[0] = frag->mr->rkey; 
     
