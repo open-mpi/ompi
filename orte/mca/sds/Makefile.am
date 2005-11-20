@@ -21,8 +21,7 @@ noinst_LTLIBRARIES = libmca_sds.la
 libmca_sds_la_SOURCES =
 
 # header setup
-nobase_orte_HEADERS = $(headers)
-ortedir = $(includedir)/openmpi/orte/mca/sds
+nobase_orte_HEADERS =
 
 # local files
 headers = sds.h
@@ -31,6 +30,9 @@ libmca_sds_la_SOURCES += $(headers)
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/errmgr
+else
+ortedir = $(includedir)
 endif
 
 include base/Makefile.am
