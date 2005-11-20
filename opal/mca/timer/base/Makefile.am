@@ -16,29 +16,12 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+	base/timer_base_null.h
 
+libmca_timer_la_SOURCES += \
+        base/timer_base_close.c \
+        base/timer_base_open.c
 
-noinst_LTLIBRARIES = libmca_timer_base.la
-
-headers = \
-        base.h \
-	timer_base_null.h
-
-libmca_timer_base_la_SOURCES = \
-        $(headers) \
-        timer_base_close.c \
-        timer_base_open.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/mca/timer/base
-ompi_HEADERS = $(headers)
-nodist_ompi_HEADERS = base_impl.h
-else
-ompidir = $(includedir)
-nodist_ompi_HEADERS = 
-endif
-
-distclean-local:
-	rm -f static-components.h
+nodist_headers += base/base_impl.h

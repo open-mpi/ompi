@@ -16,35 +16,13 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
 
-
-noinst_LTLIBRARIES = libmca_ns_base.la
-
-# Source code files
-
-headers = \
-        base.h
-
-# Library
-
-libmca_ns_base_la_SOURCES = \
-        $(headers) \
-        ns_base_close.c \
-        ns_base_select.c \
-        ns_base_open.c \
-        ns_base_local_fns.c \
-        data_type_support/ns_data_type_packing_fns.c \
-        data_type_support/ns_data_type_unpacking_fns.c
-
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/ns/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_ns_la_SOURCES += \
+        base/ns_base_close.c \
+        base/ns_base_select.c \
+        base/ns_base_open.c \
+        base/ns_base_local_fns.c \
+        base/data_type_support/ns_data_type_packing_fns.c \
+        base/data_type_support/ns_data_type_unpacking_fns.c

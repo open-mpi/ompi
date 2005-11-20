@@ -16,19 +16,24 @@
 # $HEADER$
 #
 
-SUBDIRS = base
+# main library setup
+noinst_LTLIBRARIES = libmca_rmgr.la
+libmca_rmgr_la_SOURCES =
 
-# Source code files
+# header setup
+nobase_orte_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/rmgr
 
-headers = \
-	rmgr_types.h \
-	rmgr.h
+# local files
+headers = rmgr.h rmgr_types.h
+libmca_rmgr_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/rmgr
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
+nobase_orte_HEADERS += $(headers)
 endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

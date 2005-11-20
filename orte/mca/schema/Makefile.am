@@ -16,18 +16,24 @@
 # $HEADER$
 #
 
-SUBDIRS = base
+# main library setup
+noinst_LTLIBRARIES = libmca_schema.la
+libmca_schema_la_SOURCES =
 
-# Source code files
+# header setup
+nobase_orte_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/schema
 
-headers = schema.h \
-	  schema_types.h
+# local files
+headers = schema.h schema_types.h
+libmca_schema_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/schema
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
+nobase_orte_HEADERS += $(headers)
 endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

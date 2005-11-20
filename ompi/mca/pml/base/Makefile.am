@@ -16,40 +16,20 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+        base/pml_base_bsend.h \
+        base/pml_base_module_exchange.h \
+        base/pml_base_request.h \
+        base/pml_base_recvreq.h \
+        base/pml_base_sendreq.h
 
-
-noinst_LTLIBRARIES = libmca_pml_base.la
-
-# Source code files
-
-headers = \
-        base.h \
-        pml_base_bsend.h \
-        pml_base_module_exchange.h \
-        pml_base_request.h \
-        pml_base_recvreq.h \
-        pml_base_sendreq.h
-
-libmca_pml_base_la_SOURCES = \
-        $(headers) \
-        pml_base_bsend.c \
-        pml_base_close.c \
-        pml_base_module_exchange.c \
-        pml_base_open.c \
-        pml_base_recvreq.c \
-        pml_base_request.c \
-        pml_base_select.c \
-        pml_base_sendreq.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/pml/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_pml_la_SOURCES += \
+        base/pml_base_bsend.c \
+        base/pml_base_close.c \
+        base/pml_base_module_exchange.c \
+        base/pml_base_open.c \
+        base/pml_base_recvreq.c \
+        base/pml_base_request.c \
+        base/pml_base_select.c \
+        base/pml_base_sendreq.c

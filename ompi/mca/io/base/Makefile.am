@@ -16,34 +16,15 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+        base/io_base_request.h
 
-AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
-
-noinst_LTLIBRARIES = libmca_io_base.la
-
-headers = \
-        base.h \
-        io_base_request.h
-
-libmca_io_base_la_SOURCES = \
-        $(headers) \
-        io_base_component_list.c \
-        io_base_close.c \
-        io_base_delete.c \
-        io_base_file_select.c \
-        io_base_find_available.c \
-        io_base_open.c \
-        io_base_request.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/io/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_io_la_SOURCES += \
+        base/io_base_component_list.c \
+        base/io_base_close.c \
+        base/io_base_delete.c \
+        base/io_base_file_select.c \
+        base/io_base_find_available.c \
+        base/io_base_open.c \
+        base/io_base_request.c

@@ -16,33 +16,11 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
 
-
-noinst_LTLIBRARIES = libmca_errmgr_base.la
-
-# Source code files
-
-headers = \
-        base.h
-
-# Library
-
-libmca_errmgr_base_la_SOURCES = \
-        $(headers) \
-        errmgr_base_close.c \
-        errmgr_base_select.c \
-        errmgr_base_open.c \
-        errmgr_base_fns.c
-
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/errmgr/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_errmgr_la_SOURCES += \
+        base/errmgr_base_close.c \
+        base/errmgr_base_select.c \
+        base/errmgr_base_open.c \
+        base/errmgr_base_fns.c

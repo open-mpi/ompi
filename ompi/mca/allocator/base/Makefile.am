@@ -16,29 +16,9 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h 
 
-
-noinst_LTLIBRARIES = libmca_allocator_base.la
-
-# Source code files
-
-headers = \
-        base.h 
-
-libmca_allocator_base_la_SOURCES = \
-        $(headers) \
-        allocator_base_open.c \
-        allocator_base_close.c 
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/allocator/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_allocator_la_SOURCES += \
+        base/allocator_base_open.c \
+        base/allocator_base_close.c 

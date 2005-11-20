@@ -16,38 +16,18 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+        base/iof_base_header.h \
+        base/iof_base_endpoint.h \
+        base/iof_base_fragment.h \
+	base/iof_base_setup.h
 
-AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
-
-noinst_LTLIBRARIES = libmca_iof_base.la
-
-# Source code files
-
-headers = \
-        base.h \
-        iof_base_header.h \
-        iof_base_endpoint.h \
-        iof_base_fragment.h \
-	iof_base_setup.h
-
-libmca_iof_base_la_SOURCES = \
-        $(headers) \
-        iof_base_close.c \
-        iof_base_open.c \
-        iof_base_flush.c \
-        iof_base_endpoint.c \
-        iof_base_fragment.c \
-	iof_base_select.c \
-	iof_base_setup.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/iof/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_iof_la_SOURCES += \
+        base/iof_base_close.c \
+        base/iof_base_open.c \
+        base/iof_base_flush.c \
+        base/iof_base_endpoint.c \
+        base/iof_base_fragment.c \
+	base/iof_base_select.c \
+	base/iof_base_setup.c

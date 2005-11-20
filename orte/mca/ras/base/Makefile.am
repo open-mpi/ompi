@@ -16,33 +16,14 @@
 # $HEADER$
 #
 
-noinst_LTLIBRARIES = libmca_ras_base.la
+headers += \
+        base/base.h
 
-# Source code files
-
-headers = \
-        base.h
-
-# Library
-
-libmca_ras_base_la_SOURCES = \
-        $(headers) \
-        ras_base_alloc.c \
-        ras_base_allocate.c \
-        ras_base_close.c \
-        ras_base_find_available.c \
-	ras_base_node.h \
-        ras_base_node.c \
-        ras_base_open.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/ras/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_ras_la_SOURCES += \
+        base/ras_base_alloc.c \
+        base/ras_base_allocate.c \
+        base/ras_base_close.c \
+        base/ras_base_find_available.c \
+	base/ras_base_node.h \
+        base/ras_base_node.c \
+        base/ras_base_open.c

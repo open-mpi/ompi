@@ -16,29 +16,11 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
 
-noinst_LTLIBRARIES = libmca_schema_base.la
-
-# Source code files
-
-headers = \
-        base.h
-
-libmca_schema_base_la_SOURCES = \
-        $(headers) \
-        schema_base_open.c \
-        schema_base_close.c \
-        schema_base_select.c \
-        schema_base_fns.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/schema/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_schema_la_SOURCES += \
+        base/schema_base_open.c \
+        base/schema_base_close.c \
+        base/schema_base_select.c \
+        base/schema_base_fns.c

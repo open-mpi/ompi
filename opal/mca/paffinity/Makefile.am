@@ -16,18 +16,24 @@
 # $HEADER$
 #
 
-SUBDIRS = base
-DIST_SUBDIRS = base
+# main library setup
+noinst_LTLIBRARIES = libmca_paffinity.la
+libmca_paffinity_la_SOURCES =
 
-# Source code files
+# header setup
+nobase_opal_HEADERS =
+opaldir = $(includedir)/openmpi/opal/mca/paffinity
 
+# local files
 headers = paffinity.h
+libmca_paffinity_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/mca/paffinity
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
+nobase_opal_HEADERS += $(headers)
 endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

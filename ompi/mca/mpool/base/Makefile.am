@@ -16,34 +16,14 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+	base/mpool_base_mem_cb.h
 
-
-noinst_LTLIBRARIES = libmca_mpool_base.la
-
-# Source code files
-
-headers = \
-        base.h \
-	mpool_base_mem_cb.h
-
-libmca_mpool_base_la_SOURCES = \
-        $(headers) \
-        mpool_base_open.c \
-        mpool_base_close.c \
-        mpool_base_init.c \
-        mpool_base_lookup.c \
-        mpool_base_alloc.c \
-        mpool_base_mem_cb.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/mpool/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_mpool_la_SOURCES += \
+        base/mpool_base_open.c \
+        base/mpool_base_close.c \
+        base/mpool_base_init.c \
+        base/mpool_base_lookup.c \
+        base/mpool_base_alloc.c \
+        base/mpool_base_mem_cb.c

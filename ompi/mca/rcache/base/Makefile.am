@@ -16,30 +16,10 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+headers += \
+        base/base.h 
 
-noinst_LTLIBRARIES = libmca_rcache_base.la
-
-# Source code files
-
-headers = \
-        base.h 
-
-libmca_rcache_base_la_SOURCES = \
-        $(headers) \
-	rcache_base_open.c \
-	rcache_base_create.c \
-	rcache_base_close.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/rcache/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_rcache_la_SOURCES += \
+	base/rcache_base_open.c \
+	base/rcache_base_create.c \
+	base/rcache_base_close.c

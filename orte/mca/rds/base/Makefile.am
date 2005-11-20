@@ -16,34 +16,12 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
 
-
-noinst_LTLIBRARIES = libmca_rds_base.la
-
-# Source code files
-
-headers = \
-        base.h
-
-# Library
-
-libmca_rds_base_la_SOURCES = \
-        $(headers) \
-        rds_base_close.c \
-        rds_base_select.c \
-        rds_base_open.c \
-        rds_base_query.c \
-        rds_base_registry_fns.c
-
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/rds/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_rds_la_SOURCES += \
+        base/rds_base_close.c \
+        base/rds_base_select.c \
+        base/rds_base_open.c \
+        base/rds_base_query.c \
+        base/rds_base_registry_fns.c

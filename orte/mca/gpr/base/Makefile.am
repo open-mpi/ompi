@@ -16,47 +16,30 @@
 # $HEADER$
 #
 
-
-
-noinst_LTLIBRARIES = libmca_gpr_base.la
-
 # Source code files
 
-headers = \
-        base.h
+headers += \
+        base/base.h
 
-libmca_gpr_base_la_SOURCES = \
-        $(headers) \
-        gpr_base_open.c \
-        gpr_base_close.c \
-        gpr_base_select.c \
-        gpr_base_simplified_put.c \
-        gpr_base_simplified_subscribe.c \
-        gpr_base_xfer_payload.c \
-        data_type_support/gpr_data_type_packing_fns.c \
-        data_type_support/gpr_data_type_unpacking_fns.c \
-        unpack_api_response/gpr_base_unpack_cleanup.c \
-        unpack_api_response/gpr_base_unpack_del_index.c \
-        unpack_api_response/gpr_base_print_dump.c \
-        unpack_api_response/gpr_base_dump_notify.c \
-        unpack_api_response/gpr_base_unpack_arithmetic_ops.c \
-        unpack_api_response/gpr_base_unpack_put_get.c \
-        unpack_api_response/gpr_base_unpack_subscribe.c \
-        pack_api_cmd/gpr_base_pack_cleanup.c \
-        pack_api_cmd/gpr_base_pack_del_index.c \
-        pack_api_cmd/gpr_base_pack_dump.c \
-        pack_api_cmd/gpr_base_pack_arithmetic_ops.c \
-        pack_api_cmd/gpr_base_pack_put_get.c \
-        pack_api_cmd/gpr_base_pack_subscribe.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/gpr/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_gpr_la_SOURCES += \
+        base/gpr_base_open.c \
+        base/gpr_base_close.c \
+        base/gpr_base_select.c \
+        base/gpr_base_simplified_put.c \
+        base/gpr_base_simplified_subscribe.c \
+        base/gpr_base_xfer_payload.c \
+        base/data_type_support/gpr_data_type_packing_fns.c \
+        base/data_type_support/gpr_data_type_unpacking_fns.c \
+        base/unpack_api_response/gpr_base_unpack_cleanup.c \
+        base/unpack_api_response/gpr_base_unpack_del_index.c \
+        base/unpack_api_response/gpr_base_print_dump.c \
+        base/unpack_api_response/gpr_base_dump_notify.c \
+        base/unpack_api_response/gpr_base_unpack_arithmetic_ops.c \
+        base/unpack_api_response/gpr_base_unpack_put_get.c \
+        base/unpack_api_response/gpr_base_unpack_subscribe.c \
+        base/pack_api_cmd/gpr_base_pack_cleanup.c \
+        base/pack_api_cmd/gpr_base_pack_del_index.c \
+        base/pack_api_cmd/gpr_base_pack_dump.c \
+        base/pack_api_cmd/gpr_base_pack_arithmetic_ops.c \
+        base/pack_api_cmd/gpr_base_pack_put_get.c \
+        base/pack_api_cmd/gpr_base_pack_subscribe.c

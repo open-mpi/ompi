@@ -16,19 +16,24 @@
 # $HEADER$
 #
 
-SUBDIRS = base
+# main library setup
+noinst_LTLIBRARIES = libmca_rmaps.la
+libmca_rmaps_la_SOURCES =
 
-# Source code files
+# header setup
+nobase_orte_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/rmaps
 
-headers = \
-	rmaps_types.h \
-	rmaps.h
+# local files
+headers = rmaps.h rmaps_types.h
+libmca_rmaps_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/rmaps
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
+nobase_orte_HEADERS += $(headers)
 endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

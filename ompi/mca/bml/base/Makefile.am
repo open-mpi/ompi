@@ -16,36 +16,16 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+        base/bml_base_btl.h \
+        base/bml_base_endpoint.h
 
-
-noinst_LTLIBRARIES = libmca_bml_base.la
-
-# Source code files
-
-headers = \
-        base.h \
-        bml_base_btl.h \
-        bml_base_endpoint.h
-
-libmca_bml_base_la_SOURCES = \
-        $(headers) \
-        bml_base_btl.c \
-	bml_base_btl.h \
-	bml_base_endpoint.h \
-        bml_base_endpoint.c \
-	bml_base_init.c \
-	bml_base_close.c \
-	bml_base_open.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/bml/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_bml_la_SOURCES += \
+        base/bml_base_btl.c \
+	base/bml_base_btl.h \
+	base/bml_base_endpoint.h \
+        base/bml_base_endpoint.c \
+	base/bml_base_init.c \
+	base/bml_base_close.c \
+	base/bml_base_open.c

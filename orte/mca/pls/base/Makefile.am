@@ -16,31 +16,12 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
 
-
-noinst_LTLIBRARIES = libmca_pls_base.la
-
-# Source code files
-
-headers = \
-        base.h
-
-libmca_pls_base_la_SOURCES = \
-        $(headers) \
-        pls_base_close.c \
-        pls_base_open.c \
-        pls_base_select.c \
-	pls_base_state.c \
-	pls_base_proxy.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/pls/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_pls_la_SOURCES += \
+        base/pls_base_close.c \
+        base/pls_base_open.c \
+        base/pls_base_select.c \
+	base/pls_base_state.c \
+	base/pls_base_proxy.c
