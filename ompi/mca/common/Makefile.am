@@ -16,6 +16,3 @@
 # $HEADER$
 #
 
-
-
-SUBDIRS = 

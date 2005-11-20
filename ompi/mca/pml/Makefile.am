@@ -16,24 +16,24 @@
 # $HEADER$
 #
 
+# main library setup
+noinst_LTLIBRARIES = libmca_pml.la
+libmca_pml_la_SOURCES =
 
+# header setup
+nobase_ompi_HEADERS = $(headers)
+ompidir = $(includedir)/openmpi/ompi/mca/pml
 
-SUBDIRS = base
-
-# Source code files
-
+# local files
 headers = pml.h
-nodist_headers = pml_direct_call.h
+libmca_pml_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/pml
-dist_ompi_HEADERS = $(headers)
-nodist_ompi_HEADERS = $(nodist_headers)
-else
-ompidir = $(includedir)
+nobase_ompi_HEADERS += $(headers)
 endif
 
+include base/Makefile.am
+
 distclean-local:
-	rm -f pml_direct_call.h
+	rm -f base/static-components.h

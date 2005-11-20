@@ -16,33 +16,15 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
+dist_pkgdata_DATA = base/help-mca-coll-base.txt
 
-noinst_LTLIBRARIES = libmca_coll_base.la
+headers += \
+        base/base.h \
+        base/coll_tags.h
 
-dist_pkgdata_DATA = help-mca-coll-base.txt
-
-headers = \
-        base.h \
-        coll_tags.h
-
-libmca_coll_base_la_SOURCES = \
-        $(headers) \
-        coll_base_close.c \
-        coll_base_comm_select.c \
-        coll_base_comm_unselect.c \
-        coll_base_find_available.c \
-        coll_base_open.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/coll/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_coll_la_SOURCES += \
+        base/coll_base_close.c \
+        base/coll_base_comm_select.c \
+        base/coll_base_comm_unselect.c \
+        base/coll_base_find_available.c \
+        base/coll_base_open.c

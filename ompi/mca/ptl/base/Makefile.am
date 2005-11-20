@@ -16,45 +16,25 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+        base/ptl_base_comm.h \
+        base/ptl_base_fragment.h \
+        base/ptl_base_header.h \
+        base/ptl_base_match.h \
+        base/ptl_base_recvfrag.h \
+        base/ptl_base_recvreq.h \
+        base/ptl_base_sendfrag.h \
+        base/ptl_base_sendreq.h
 
-
-noinst_LTLIBRARIES = libmca_ptl_base.la
-
-# Source code files
-
-headers = \
-        base.h \
-        ptl_base_comm.h \
-        ptl_base_fragment.h \
-        ptl_base_header.h \
-        ptl_base_match.h \
-        ptl_base_recvfrag.h \
-        ptl_base_recvreq.h \
-        ptl_base_sendfrag.h \
-        ptl_base_sendreq.h
-
-libmca_ptl_base_la_SOURCES = \
-        $(headers) \
-        ptl_base_close.c \
-        ptl_base_comm.c \
-        ptl_base_fragment.c \
-        ptl_base_match.c \
-        ptl_base_open.c \
-        ptl_base_recvfrag.c \
-        ptl_base_recvreq.c \
-        ptl_base_select.c \
-        ptl_base_sendfrag.c \
-        ptl_base_sendreq.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/ptl/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_ptl_la_SOURCES += \
+        base/ptl_base_close.c \
+        base/ptl_base_comm.c \
+        base/ptl_base_fragment.c \
+        base/ptl_base_match.c \
+        base/ptl_base_open.c \
+        base/ptl_base_recvfrag.c \
+        base/ptl_base_recvreq.c \
+        base/ptl_base_select.c \
+        base/ptl_base_sendfrag.c \
+        base/ptl_base_sendreq.c

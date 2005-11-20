@@ -16,30 +16,10 @@
 # $HEADER$
 #
 
+headers += \
+    base/base.h 
 
-AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
-
-noinst_LTLIBRARIES = libmca_rml_base.la
-
-# Source code files
-
-headers = \
-    base.h 
-
-libmca_rml_base_la_SOURCES = \
-    $(headers) \
-	rml_base_open.c \
-	rml_base_close.c \
-	rml_base_select.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/rml/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_rml_la_SOURCES += \
+	base/rml_base_open.c \
+	base/rml_base_close.c \
+	base/rml_base_select.c

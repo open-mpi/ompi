@@ -284,7 +284,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
                               MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS [\$(MCA_]mca_framework[_STATIC_SUBDIRS)]"
                           fi
                           if test "mca_framework" != "common" ; then
-                              MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/base/libmca_]mca_framework[_base.la]"
+                              MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/libmca_]mca_framework[.la]"
                           fi
                           MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]mca_framework[_STATIC_LTLIBS)]"
                           m4_ifdef([MCA_]mca_framework[_CONFIG],
@@ -411,10 +411,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
 
     # add all the makefiles for the framework to the CONFIG_FILES.
     # Don't add common/base, since it doesn't exist
-    m4_if([$2], [common],
-        [AC_CONFIG_FILES([$1/mca/$2/Makefile])],
-        [AC_CONFIG_FILES([$1/mca/$2/Makefile $1/mca/$2/base/Makefile])])
-
+    AC_CONFIG_FILES([$1/mca/$2/Makefile])
 
     # Create the final .h file that will be included in the type's
     # top-level glue.  This lists all the static components.  We don't

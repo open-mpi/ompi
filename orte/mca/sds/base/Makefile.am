@@ -16,32 +16,13 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
 
-AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
-
-noinst_LTLIBRARIES = libmca_sds_base.la
-
-# Source code files
-headers = \
-        base.h
-
-libmca_sds_base_la_SOURCES = \
-        $(headers) \
-        sds_base_close.c \
-        sds_base_open.c \
-	sds_base_select.c \
-	sds_base_interface.c \
-	sds_base_universe.c \
-	sds_base_put.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/sds/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_sds_la_SOURCES += \
+        base/sds_base_close.c \
+        base/sds_base_open.c \
+	base/sds_base_select.c \
+	base/sds_base_interface.c \
+	base/sds_base_universe.c \
+	base/sds_base_put.c

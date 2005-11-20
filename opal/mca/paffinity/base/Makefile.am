@@ -16,29 +16,12 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h \
+        base/internal.h
 
-
-noinst_LTLIBRARIES = libmca_paffinity_base.la
-
-headers = \
-        base.h \
-        internal.h
-
-libmca_paffinity_base_la_SOURCES = \
-        $(headers) \
-        paffinity_base_close.c \
-        paffinity_base_select.c \
-        paffinity_base_open.c \
-        paffinity_base_wrappers.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/mca/paffinity/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_paffinity_la_SOURCES += \
+        base/paffinity_base_close.c \
+        base/paffinity_base_select.c \
+        base/paffinity_base_open.c \
+        base/paffinity_base_wrappers.c

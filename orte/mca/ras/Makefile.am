@@ -16,19 +16,24 @@
 # $HEADER$
 #
 
-SUBDIRS = base
+# main library setup
+noinst_LTLIBRARIES = libmca_ras.la
+libmca_ras_la_SOURCES =
 
-# Source code files
+# header setup
+nobase_orte_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/ras
 
-headers = \
-	ras_types.h \
-	ras.h
+# local files
+headers = ras.h ras_types.h
+libmca_ras_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/ras
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
+nobase_orte_HEADERS += $(headers)
 endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

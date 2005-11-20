@@ -16,26 +16,9 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
 
-
-noinst_LTLIBRARIES = libmca_memory_base.la
-
-headers = \
-        base.h
-
-libmca_memory_base_la_SOURCES = \
-        $(headers) \
-        memory_base_close.c \
-        memory_base_open.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/mca/memory/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+libmca_memory_la_SOURCES += \
+        base/memory_base_close.c \
+        base/memory_base_open.c

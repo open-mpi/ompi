@@ -16,20 +16,24 @@
 # $HEADER$
 #
 
+# main library setup
+noinst_LTLIBRARIES = libmca_bml.la
+libmca_bml_la_SOURCES =
 
+# header setup
+nobase_ompi_HEADERS = $(headers)
+ompidir = $(includedir)/openmpi/ompi/mca/bml
 
-SUBDIRS = base
-
-# Source code files
-
+# local files
 headers = bml.h
+libmca_bml_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/bml
-dist_ompi_HEADERS = $(headers)
-nodist_ompi_HEADERS = $(nodist_headers)
-else
-ompidir = $(includedir)
+nobase_ompi_HEADERS += $(headers)
 endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

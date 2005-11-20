@@ -16,34 +16,14 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
+dist_pkgdata_DATA = base/help-mpi-btl-base.txt
 
-noinst_LTLIBRARIES = libmca_btl_base.la
+headers += \
+        base/base.h \
+	base/btl_base_error.h
 
-# Source code files
-
-dist_pkgdata_DATA = help-mpi-btl-base.txt
-
-headers = \
-        base.h \
-	btl_base_error.h
-
-libmca_btl_base_la_SOURCES = \
-        $(headers) \
-        btl_base_close.c \
-        btl_base_error.c \
-        btl_base_open.c \
-        btl_base_select.c
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/btl/base
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
-
-
-distclean-local:
-	rm -f static-components.h
+libmca_btl_la_SOURCES += \
+        base/btl_base_close.c \
+        base/btl_base_error.c \
+        base/btl_base_open.c \
+        base/btl_base_select.c
