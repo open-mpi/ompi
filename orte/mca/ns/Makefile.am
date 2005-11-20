@@ -21,8 +21,7 @@ noinst_LTLIBRARIES = libmca_ns.la
 libmca_ns_la_SOURCES =
 
 # header setup
-nobase_orte_HEADERS = $(headers)
-ortedir = $(includedir)/openmpi/orte/mca/ns
+nobase_orte_HEADERS =
 
 # local files
 headers = ns.h ns_types.h
@@ -31,6 +30,9 @@ libmca_ns_la_SOURCES += $(headers)
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/errmgr
+else
+ortedir = $(includedir)
 endif
 
 include base/Makefile.am

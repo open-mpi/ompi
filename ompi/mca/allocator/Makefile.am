@@ -21,8 +21,7 @@ noinst_LTLIBRARIES = libmca_allocator.la
 libmca_allocator_la_SOURCES =
 
 # header setup
-nobase_ompi_HEADERS = $(headers)
-ompidir = $(includedir)/openmpi/ompi/mca/allocator
+nobase_ompi_HEADERS =
 
 # local files
 headers = allocator.h
@@ -31,6 +30,9 @@ libmca_allocator_la_SOURCES += $(headers)
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 nobase_ompi_HEADERS += $(headers)
+ompidir = $(includedir)/openmpi/ompi/mca/allocator
+else
+ompidir = $(includedir)
 endif
 
 include base/Makefile.am

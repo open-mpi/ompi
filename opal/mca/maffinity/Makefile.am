@@ -22,7 +22,6 @@ libmca_maffinity_la_SOURCES =
 
 # header setup
 nobase_opal_HEADERS =
-opaldir = $(includedir)/openmpi/opal/mca/maffinity
 
 # local files
 headers = maffinity.h maffinity_types.h
@@ -31,6 +30,9 @@ libmca_maffinity_la_SOURCES += $(headers)
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 nobase_opal_HEADERS += $(headers)
+opaldir = $(includedir)/openmpi/opal/mca/maffinity
+else
+opaldir = $(includedir)
 endif
 
 include base/Makefile.am
