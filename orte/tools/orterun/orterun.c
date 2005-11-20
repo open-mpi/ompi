@@ -94,6 +94,7 @@ struct globals_t {
     bool no_wait_for_job_completion;
     bool by_node;
     bool by_slot;
+    bool debugger;
     size_t num_procs;
     int exit_status;
     char *hostfile;
@@ -191,8 +192,20 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
+
+    /* User-level debugger arguments */
+    { NULL, NULL, NULL, '\0', "tv", "tv", 0,
+      &orterun_globals.debugger, OPAL_CMD_LINE_TYPE_BOOL,
+      "Deprecated backwards compatibility flag; synonym for \"--debug\"" },
+    { NULL, NULL, NULL, '\0', "debug", "debug", 0,
+      &orterun_globals.debugger, OPAL_CMD_LINE_TYPE_BOOL,
+      "Invoke the user-level debugger indicated by the orte_base_user_debugger MCA parameter" },
+    { "orte", "base", "user_debugger", '\0', "debugger", "debugger", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Sequence of debuggers to search for when \"--debug\" is used" },
+
     /* OpenRTE arguments */
-    { "orte", "debug", NULL, 'd', NULL, "debug", 0,
+    { "orte", "debug", NULL, 'd', NULL, "debug-devel", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
     { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
@@ -236,6 +249,11 @@ int orterun(int argc, char *argv[])
     orte_app_context_t **apps;
     int rc, i, num_apps, array_size, j;
     int id, iparam;
+
+    /* Setup MCA params */
+
+    mca_base_param_init();
+    orte_register_params(false);
 
     /* Setup the abort message (for use in the signal handler) */
 
@@ -652,6 +670,7 @@ static int init_globals(void)
         false,
         false,
         false,
+        false,
         0,
         0,
         NULL,
@@ -689,7 +708,6 @@ static int parse_globals(int argc, char* argv[])
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
-    orte_totalview_cmd_line_setup(&cmd_line);
     if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true,
                                                    argc, argv)) ) {
         return ret;
@@ -708,9 +726,11 @@ static int parse_globals(int argc, char* argv[])
         exit(0);
     }
 
-    /* Do we want totalview? */
+    /* Do we want a user-level debugger? */
 
-    orte_totalview_cmd_line_process(&cmd_line, orterun_basename, argc, argv);
+    if (orterun_globals.debugger) {
+        orte_run_debugger(orterun_basename, argc, argv);
+    }
 
     /* Allocate and map by node or by slot?  Shortcut for setting an
        MCA param. */

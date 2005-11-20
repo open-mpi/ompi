@@ -91,9 +91,30 @@ that there are no runaway processes still executing.
 A prefix was supplied to %s that only contained slashes.  
 
 This is a fatal error; %s will now abort.  No processes were launched.
-[totalview-exec-failed]
-%s was unable to launch the totalview debugger.  Things to check:
+#
+[debugger-mca-param-not-found]
+Internal error -- the orte_base_debugger MCA parameter was not able to
+be found.  Please contact the Open RTE developers; this should not
+happen.
+#
+[debugger-orte_base_user_debugger-empty]
+The MCA parameter "orte_base_user_debugger" was empty, indicating that
+no user-level debuggers have been defined.  Please set this MCA
+parameter to a value and try again.
+#
+[debugger-not-found]
+A suitable debugger could not be found in your PATH.  Check the values
+specified in the orte_base_user_debugger MCA parameter for the list of
+debuggers that was searched.
+#
+[debugger-exec-failed]
+%s was unable to launch the specified debugger.  This is what was
+launched:
 
-    - Ensure that TotalView is installed properly
-    - Ensure that the "totalview" executable is in your path
-    - Ensure that valid licenses are available to run the TotalView debugger
+    %s
+
+Things to check:
+
+    - Ensure that the debugger is installed properly
+    - Ensure that the "%s" executable is in your path
+    - Ensure that any required licenses are available to run the debugger
