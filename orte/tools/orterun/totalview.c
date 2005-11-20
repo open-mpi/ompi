@@ -136,7 +136,6 @@ void orte_totalview_cmd_line_process(opal_cmd_line_t *cmd, char *basename,
     if (opal_cmd_line_is_taken(cmd, "tv")) {
         int i;
         char **new_argv = NULL;
-        printf("found -tv\n");
 
         opal_argv_append_nosize(&new_argv, "totalview");
         opal_argv_append_nosize(&new_argv, argv[0]);
