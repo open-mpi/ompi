@@ -25,12 +25,17 @@
 
 int orte_register_params(bool infrastructure)
 {
-    int id;
+    mca_base_param_reg_int_name("orte", "infrastructure",
+                                "Whether we are ORTE infrastructure or an ORTE application",
+                                true, true, (int)infrastructure, NULL);
 
-    id = mca_base_param_reg_int_name("orte", "infrastructure",
-                                     "Whether we are ORTE infrastructure or an ORTE application",
-                                     true, true, (int)infrastructure, NULL);
+    /* User-level debugger info string */
 
+    mca_base_param_reg_string_name("orte", "base_user_debugger",
+                                   "Sequence of user-level debuggers to search for in orterun",
+                                   false, false, "totalview @mpirun@ -a @mpirun_args@ : fx2 @mpirun@ -a @mpirun_args@", NULL);
+
+    /* All done */
     
     return ORTE_SUCCESS;
 }

@@ -43,6 +43,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <ctype.h>
 
 /*
  * The environment
@@ -53,6 +54,7 @@ extern char **environ;
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
+#include "opal/util/path.h"
 #include "opal/class/opal_list.h"
 #include "mca/base/base.h"
 #include "mca/errmgr/errmgr.h"
@@ -117,39 +119,164 @@ static void dump(void)
     }
 }
 
-
-/**
- * Add "-tv" to the command line parsing options
+/*
+ * Process one line from the orte_base_user_debugger MCA param and
+ * look for that debugger in the path.  If we find it, fill in
+ * new_argv.
  */
-void orte_totalview_cmd_line_setup(opal_cmd_line_t *cmd)
+static int process(char *orig_line, char *basename, int argc, char **argv, 
+                   char ***new_argv) 
 {
-    opal_cmd_line_make_opt3(cmd, '\0', "tv", "tv", 0,
-                            "Convenience option to re-exec under the TotalView debugger");
+    int i;
+    char *line, *full_line = strdup(orig_line);
+    char *user_argv, *tmp, **tmp_argv;
+    char cwd[PATH_MAX];
+
+    line = full_line;
+    if (NULL == line) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Trim off whitespace at the beginning and ending of line */
+
+    for (i = 0; '\0' != line[i] && isspace(line[i]); ++line) {
+        continue;
+    }
+    for (i = strlen(line) - 2; i > 0 && isspace(line[i]); ++i) {
+        line[i] = '\0';
+    }
+    if (strlen(line) <= 0) {
+        return ORTE_ERROR;
+    }
+
+    /* Remove --debug and --debugger from the user command line
+       params */
+
+    if (1 == argc) {
+        user_argv = strdup("");
+    } else {
+        tmp_argv = opal_argv_copy(argv);
+        for (i = 0; NULL != tmp_argv[i]; ++i) {
+            if (0 == strcmp(tmp_argv[i], "-debug") ||
+                0 == strcmp(tmp_argv[i], "--debug")) {
+                free(tmp_argv[i]);
+                tmp_argv[i] = strdup("");
+            } else if (0 == strcmp(tmp_argv[i], "--debugger") ||
+                       0 == strcmp(tmp_argv[i], "-debugger")) {
+                free(tmp_argv[i]);
+                tmp_argv[i] = strdup("");
+                if (NULL != tmp_argv[i + 1]) {
+                    ++i;
+                    free(tmp_argv[i]);
+                    tmp_argv[i] = strdup("");
+                }
+            }
+        }
+        user_argv = opal_argv_join(tmp_argv + 1, ' ');
+        opal_argv_free(tmp_argv);
+    }
+
+    /* Replace @@ tokens */
+
+    for (i = 0; i < strlen(line); ++i) {
+        tmp = NULL;
+        if (0 == strncmp(line + i, "@mpirun@", 8)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, argv[0], line + i + 8);
+        } else if (0 == strncmp(line + i, "@orterun@", 9)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, argv[0], line + i + 9);
+        } else if (0 == strncmp(line + i, "@mpirun_args@", 13)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, user_argv, line + i + 13);
+        } else if (0 == strncmp(line + i, "@orterun_args@", 14)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, user_argv, line + i + 14);
+        }
+
+        if (NULL != tmp) {
+            free(full_line);
+            full_line = line = tmp;
+            --i;
+        }
+    }
+
+    /* Split up into argv */
+
+    *new_argv = opal_argv_split(line, ' ');
+    free(line);
+
+    /* Can we find argv[0] in the path? */
+
+    getcwd(cwd, PATH_MAX);
+    tmp = opal_path_findv((*new_argv)[0], 0, environ, cwd);
+    if (NULL != tmp) {
+        free(tmp);
+        return ORTE_SUCCESS;
+    }
+
+    /* All done -- didn't find it */
+
+    opal_argv_free(*new_argv);
+    *new_argv = NULL;
+    return ORTE_ERR_NOT_FOUND;
 }
 
 /**
- * If -tv was given, re-exec under totalview
+ * Run a user-level debugger
  */
-void orte_totalview_cmd_line_process(opal_cmd_line_t *cmd, char *basename,
-                                     int argc, char *argv[])
+void orte_run_debugger(char *basename, int argc, char *argv[])
 {
-    if (opal_cmd_line_is_taken(cmd, "tv")) {
-        int i;
-        char **new_argv = NULL;
-        printf("found -tv\n");
+    int i, id;
+    char **new_argv = NULL;
+    char *value, **lines;
 
-        opal_argv_append_nosize(&new_argv, "totalview");
-        opal_argv_append_nosize(&new_argv, argv[0]);
-        opal_argv_append_nosize(&new_argv, "-a");
-        for (i = 1; i < argc; ++i) {
-            opal_argv_append_nosize(&new_argv, argv[i]);
-        }
-
-        execvp(new_argv[0], new_argv);
-        opal_show_help("help-orterun.txt", "totalview-exec-failed",
-                       true, basename);
+    /* Get the orte_base_debug MCA parameter and search for a debugger
+       that can run */
+    
+    id = mca_base_param_find("orte", NULL, "base_user_debugger");
+    if (id < 0) {
+        opal_show_help("help-orterun.txt", "debugger-mca-param-not-found", 
+                       true);
         exit(1);
     }
+    value = NULL;
+    mca_base_param_lookup_string(id, &value);
+    if (NULL == value) {
+        opal_show_help("help-orterun.txt", "debugger-orte_base_user_debugger-empty",
+                       true);
+        exit(1);
+    }
+
+    /* Look through all the values in the MCA param */
+
+    lines = opal_argv_split(value, ':');
+    free(value);
+    for (i = 0; NULL != lines[i]; ++i) {
+        if (ORTE_SUCCESS == process(lines[i], basename, argc, argv, 
+                                    &new_argv)) {
+            break;
+        }
+    }
+
+    /* If we didn't find one, abort */
+
+    if (NULL == lines[i]) {
+        opal_show_help("help-orterun.txt", "debugger-not-found", true);
+        free(str);
+        exit(1);
+    }
+    opal_argv_free(lines);
+
+    /* We found one */
+
+    execvp(new_argv[0], new_argv);
+    value = opal_argv_join(new_argv, ' ');
+    opal_show_help("help-orterun.txt", "debugger-exec-failed",
+                   true, basename, value, new_argv[0]);
+    free(value);
+    opal_argv_free(new_argv);
+    exit(1);
 }
 
 
