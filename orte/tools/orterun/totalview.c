@@ -176,9 +176,10 @@ static int process(char *orig_line, char *basename, int argc, char **argv,
         opal_argv_free(tmp_argv);
     }
 
-    /* Replace @@ tokens */
+    /* Replace @@ tokens - line should never realistically be bigger
+       than MAX_INT, so just cast to int to remove compiler warning */
 
-    for (i = 0; i < strlen(line); ++i) {
+    for (i = 0; i < (int) strlen(line); ++i) {
         tmp = NULL;
         if (0 == strncmp(line + i, "@mpirun@", 8)) {
             line[i] = '\0';
@@ -263,7 +264,6 @@ void orte_run_debugger(char *basename, int argc, char *argv[])
 
     if (NULL == lines[i]) {
         opal_show_help("help-orterun.txt", "debugger-not-found", true);
-        free(str);
         exit(1);
     }
     opal_argv_free(lines);
