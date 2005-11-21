@@ -89,5 +89,19 @@ static int linux_open(void)
                            "Priority of the linux paffinity component",
                            false, false, 10, NULL);
 
+    mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
+                           "have_cpu_set_t",
+                           "Whether this component was compiled on a system with the type cpu_set_t or not (1 = yes, 0 = no)",
+                           false, true, HAVE_cpu_set_t, NULL);
+    mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
+                           "CPU_ZERO_ok",
+                           "Whether this component was compiled on a system where CPU_ZERO() is functional or broken (1 = functional, 0 = broken)",
+                           false, true, HAVE_CPU_ZERO, NULL);
+    mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
+                           "sched_setaffinity_num_params",
+                           "The number of parameters that sched_set_affinity() takes on the machine where this component was compiled",
+                           false, true, 
+                           OPAL_PAFFINITY_LINUX_SCHED_SETAFF_NUM_PARAMS, NULL);
+
     return OPAL_SUCCESS;
 }
