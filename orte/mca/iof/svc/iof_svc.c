@@ -216,15 +216,28 @@ int orte_iof_svc_buffer(
  */
 
 int orte_iof_svc_subscribe(
-    const orte_process_name_t* src_name,  
+    const orte_process_name_t* src_name,
     orte_ns_cmp_bitmask_t src_mask,
     orte_iof_base_tag_t src_tag,
-    orte_iof_base_callback_fn_t cb,
+    orte_iof_base_callback_fn_t cbfunc,
     void* cbdata)
 {
-    /* setup local callback on receipt of data */
+    int rc;
+
+    /* create a local registration to reflect the callback */
+    rc = orte_iof_base_callback_create(ORTE_RML_NAME_SELF,src_tag,cbfunc,cbdata);
+    if(rc != OMPI_SUCCESS)
+        return rc;
+
     /* setup local subscription */
-    return OMPI_ERROR;
+    rc = orte_iof_svc_sub_create(
+        src_name,
+        src_mask,
+        src_tag,
+        ORTE_RML_NAME_SELF,
+        ORTE_NS_CMP_ALL,
+        src_tag);
+    return rc;
 }
 
 int orte_iof_svc_unsubscribe(
@@ -232,7 +245,20 @@ int orte_iof_svc_unsubscribe(
     orte_ns_cmp_bitmask_t src_mask,
     orte_iof_base_tag_t src_tag)
 {
-    /* cleanup any local resouces associated with this subscription */
-    return OMPI_ERROR;
+    int rc;
+
+    /* delete local subscription */
+    rc = orte_iof_svc_sub_delete(
+        src_name,
+        src_mask,
+        src_tag,
+        ORTE_RML_NAME_SELF,
+        ORTE_NS_CMP_ALL,
+        src_tag);
+    if(ORTE_SUCCESS != rc)
+        return rc;
+
+    /* cleanup any locally registered callback */
+    return orte_iof_base_callback_delete(ORTE_RML_NAME_SELF,src_tag);
 }
 

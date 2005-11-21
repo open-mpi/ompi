@@ -355,6 +355,7 @@ static int orte_rmgr_urm_spawn(
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        cbfunc(*jobid, ORTE_PROC_STATE_INIT);
     }
 
     /*

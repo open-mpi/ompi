@@ -68,7 +68,7 @@ int orte_iof_base_flush(void)
 
     if(OPAL_THREAD_ADD32(&lock,1) > 1) {
         OPAL_THREAD_ADD32(&lock,-1);
-        return ORTE_SUCCESS;
+        return;
     }
 
     /* flush any pending output */
