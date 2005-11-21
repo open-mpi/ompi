@@ -33,7 +33,7 @@ int orte_register_params(bool infrastructure)
 
     mca_base_param_reg_string_name("orte", "base_user_debugger",
                                    "Sequence of user-level debuggers to search for in orterun",
-                                   false, false, "totalview @mpirun@ -a @mpirun_args@ : fx2 @mpirun@ -a @mpirun_args@", NULL);
+                                   false, false, "totalview @mpirun@ -a @mpirun_args@ : fxp @mpirun@ -a @mpirun_args@", NULL);
 
     /* All done */
     
