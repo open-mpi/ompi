@@ -245,7 +245,20 @@ int orte_iof_svc_unsubscribe(
     orte_ns_cmp_bitmask_t src_mask,
     orte_iof_base_tag_t src_tag)
 {
-    /* cleanup any local resouces associated with this subscription */
-    return OMPI_ERROR;
+    int rc;
+
+    /* delete local subscription */
+    rc = orte_iof_svc_sub_delete(
+        src_name,
+        src_mask,
+        src_tag,
+        ORTE_RML_NAME_SELF,
+        ORTE_NS_CMP_ALL,
+        src_tag);
+    if(ORTE_SUCCESS != rc)
+        return rc;
+
+    /* cleanup any locally registered callback */
+    return orte_iof_base_callback_delete(ORTE_RML_NAME_SELF,src_tag);
 }
 
