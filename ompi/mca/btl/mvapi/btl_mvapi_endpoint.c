@@ -497,12 +497,13 @@ static void mca_btl_mvapi_endpoint_recv(
     void* cbdata)
 {
     mca_btl_mvapi_proc_t *ib_proc;
-    mca_btl_mvapi_endpoint_t *ib_endpoint;
+    mca_btl_mvapi_endpoint_t *ib_endpoint = NULL;
     int endpoint_state;
     int rc; 
     uint32_t i;
     size_t cnt = 1; 
     mca_btl_mvapi_rem_info_t rem_info; 
+
 
     /* start by unpacking data first so we know who is knocking at 
        our door */ 
