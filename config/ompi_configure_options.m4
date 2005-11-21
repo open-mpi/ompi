@@ -340,6 +340,8 @@ if test "$enable_mpi2_one_sided" = "yes"; then
     OMPI_F77_WIN_NULL_COPY_FN="external MPI_WIN_NULL_COPY_FN"
     OMPI_F77_WIN_NULL_DELETE_FN="external MPI_WIN_NULL_DELETE_FN"
     OMPI_F77_WIN_DUP_FN="external MPI_WIN_DUP_FN"
+    OMPI_F77_WIN_NULL="integer MPI_WIN_NULL"
+    OMPI_F77_WIN_NULL_VALUE="parameter (MPI_WIN_NULL=0)"
 else
     mpi2_one_sided=no
     value=0
@@ -353,6 +355,8 @@ else
     OMPI_F77_WIN_NULL_COPY_FN=
     OMPI_F77_WIN_NULL_DELETE_FN=
     OMPI_F77_WIN_DUP_FN=
+    OMPI_F77_WIN_NULL=
+    OMPI_F77_WIN_NULL_VALUE=
 fi
 AC_MSG_RESULT([$mpi2_one_sided])
 AC_DEFINE_UNQUOTED(OMPI_WANT_MPI2_ONE_SIDED, $value,
@@ -365,6 +369,8 @@ AC_SUBST(OMPI_F77_WIN_ATTR_DISP_VALUE)
 AC_SUBST(OMPI_F77_WIN_NULL_COPY_FN)
 AC_SUBST(OMPI_F77_WIN_NULL_DELETE_FN)
 AC_SUBST(OMPI_F77_WIN_DUP_FN)
+AC_SUBST(OMPI_F77_WIN_NULL)
+AC_SUBST(OMPI_F77_WIN_NULL_VALUE)
 
 #
 # What is the max array rank that we want to support in the f90 bindings?
