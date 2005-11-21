@@ -15,9 +15,6 @@ Additional copyrights may follow
 $HEADER$
 
 ===========================================================================
-This is a preliminary README file.  It will be scrubbed formally
-before release.
-===========================================================================
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
@@ -41,7 +38,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (26 Aug 2005):
+base as of this writing (21 Nov 2005):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -72,7 +69,6 @@ base as of this writing (26 Aug 2005):
   - PBS Pro, Open PBS, Torque (i.e., anything who supports the TM
     interface)
   - SLURM
-  - POE
   - XGrid
   - Yod
 
@@ -82,7 +78,8 @@ base as of this writing (26 Aug 2005):
   files.
 
 - MPI-2 one-sided functionality will not be included in the first few
-  releases of Open MPI.
+  releases of Open MPI.  Attempting to use any MPI-2 one-sided
+  function will result in an run-time MPI exception.
 
 - Systems that have been tested are:
   - Linux, 32 bit, with gcc
@@ -135,8 +132,11 @@ base as of this writing (26 Aug 2005):
   .TRUE. is -1.  Open MPI does not currently handle this correctly.
   As such, the "-fpscomp logicals" option must be used with the Intel
   Fortran compiler in to force it to use 1 as the value for .TRUE.
-  This can be added to the FFLAGS environment variable when running
-  configure:
+
+  ******************************************************************
+  *** NOTE: It is also necessary to compile all MPI applications ***
+  *** with these flags!                                          ***
+  ******************************************************************
 
   The Open MPI team recommends using setting FFLAGS and FCFLAGS as
   well as using the --with-wrapper-fflags and --with-wrapper-fcflags
@@ -383,8 +383,8 @@ executable that is properly linked to all the relevant libraries.
 Running Open MPI Applications
 -----------------------------
 
-Open MPI supports both mpirun and mpiexec (they are actually the
-same).  For example:
+Open MPI supports both mpirun and mpiexec (they are exactly
+equivalent).  For example:
 
 shell$ mpirun -np 2 hello_world_mpi
 
@@ -392,7 +392,7 @@ or
 
 shell$ mpiexec -np 1 hello_world_mpi : -np 1 hello_world_mpi
 
-are equivalent.  Many of mpiexec's switches (such as -host and -arch)
+are equivalent.  Some of mpiexec's switches (such as -host and -arch)
 are not yet functional, although they will not error if you try to use
 them.  
 
