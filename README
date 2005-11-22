@@ -127,7 +127,7 @@ base as of this writing (21 Nov 2005):
          --with-wrapper-fcflags=-Munixlogical ...
 
   This will be fixed in a future version of Open MPI.
-
+                                   
 - For any version of the Intel compiler >= 8.0, the default value for
   .TRUE. is -1.  Open MPI does not currently handle this correctly.
   As such, the "-fpscomp logicals" option must be used with the Intel
@@ -151,6 +151,38 @@ base as of this writing (21 Nov 2005):
          "--with-wrapper-fcflags=-fpscomp logicals"
 
   This will be fixed in a future version of Open MPI.
+
+- Open MPI will build bindings suitable for all common forms of
+  Fortran 77 compiler symbol mangling on platforms that support it
+  (e.g., Linux).  On platforms that do not support weak symbols (e.g.,
+  OS X), Open MPI will build Fortran 77 bindings just for the compiler
+  that Open MPI was configured with.  
+
+  Hence, on platforms that support it, if you configure Open MPI with
+  a Fortran 77 compiler that uses one symbol mangling scheme, you can
+  successfully compile and link MPI Fortran 77 applications with a
+  Fortran 77 compiler that uses a different symbol mangling scheme.
+
+  NOTE: For platforms that support the multi-Fortran-compiler bindings
+  (i.e., weak symbols are supported), due to limitations in the MPI
+  standard and in Fortran compilers, it is not possible to hide these
+  differences in all cases.  Specifically, the following two cases may
+  not be portable between different Fortran compilers:
+
+  1. The C constants MPI_F_STATUS_IGNORE and MPI_F_STATUSES_IGNORE
+     will only compare properly to Fortran applications that were
+     created with Fortran compilers that that use the same
+     name-mangling scheme as the Fortran compiler that Open MPI was
+     configured with.
+
+  2. Fortran compilers may have different values for the logical
+     .TRUE. constant.  As such, any MPI function that uses the fortran
+     LOGICAL type may only get .TRUE. values back that correspond to
+     the the .TRUE. value of the Fortran compiler that Open MPI was
+     configured with.
+
+  You can use the ompi_info command to see the Fortran compiler that
+  Open MPI was configured with.
 
 - The MPI and run-time layers do not free all used memory properly
   during MPI_FINALIZE.
