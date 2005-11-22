@@ -235,7 +235,7 @@ int mca_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm)
 
 /* copied function (with appropriate renaming) starts here */
 
-int mca_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t *comm)
+static int mca_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t *comm)
 {
     int i;
     int err;

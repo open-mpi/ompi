@@ -32,35 +32,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/* temp debug routines */
-static int dump_buf_int (char* ptr, int count, char *comment, int rank);
-
-static int dump_buf_int (char* ptr, int count, char *comment, int rank) {
-int i=0;
-int *tptr;
-int c=0;
-tptr=(int*)ptr;
-printf("%1d ", rank);
-if (comment) printf("%s ", comment);
-if (count <0) {
-    printf("cnt %d?\n", count);
-    return (0);
-}
-
-if (count>5) c = 5;
-else c = count;
-printf("Cnt %1d  ", count);
-for(i=0;i<c;i++) {
-    printf("%1d [%1d] ", i, *tptr++);
-    }
-if (c!=count) {
-    tptr=(int*)ptr;
-    printf(" ... %1d [%1d]", count-1, tptr[count-1]);
-}
-printf("\n");
-return (0);
-}
-
 /* Attention: this version of the reduce operations does not
    work for:
    - non-commutative operations
