@@ -29,6 +29,8 @@ version 1.0.
 1.0.1
 -----
 
+- Fix missing MPI_F_STATUS_IGNORE and MPI_F_STATUSES_IGNORE
+  instanatiations.  Thanks to Anthony Chan for pointing this out.
 - Add a missing value for MPI_WIN_NULL in mpif.h.
 - Bring over some fixes for the sm btl that somehow didn't make it
   over from the trunk before v1.0.  Thanks to Beth Tibbitts and Bill
