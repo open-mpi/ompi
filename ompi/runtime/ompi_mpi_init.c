@@ -117,22 +117,26 @@ bool ompi_mpi_maffinity_setup = false;
  * (MPI_Fint*).  Hence, we have to cast to make compilers not
  * complain.
  */
-
-#if OMPI_F77_CAPS
+#if OMPI_WANT_F77_BINDINGS
+#  if OMPI_F77_CAPS
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUS_IGNORE;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUSES_IGNORE;
-#elif OMPI_F77_PLAIN
+#  elif OMPI_F77_PLAIN
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore;
-#elif OMPI_F77_SINGLE_UNDERSCORE
+#  elif OMPI_F77_SINGLE_UNDERSCORE
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore_;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore_;
-#elif OMPI_F77_DOUBLE_UNDERSCORE
+#  elif OMPI_F77_DOUBLE_UNDERSCORE
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore__;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore__;
+#  else
+#    error Unrecognized Fortran 77 name mangling scheme
+#  endif
 #else
-#error Unrecognized Fortran 77 name mangling scheme
-#endif
+MPI_Fint *MPI_F_STATUS_IGNORE = NULL;
+MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
+#endif  /* OMPI_WANT_F77_BINDINGS */
 
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
