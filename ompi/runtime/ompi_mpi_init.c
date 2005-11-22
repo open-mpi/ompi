@@ -45,6 +45,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/include/constants.h"
+#include "ompi/mpi/f77/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
@@ -86,6 +87,52 @@ int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 opal_thread_t *ompi_mpi_main_thread = NULL;
 
 bool ompi_mpi_maffinity_setup = false;
+
+/*
+ * These variables are here, rather than under ompi/mpi/c/foo.c
+ * because it is not sufficient to have a .c file that only contains
+ * variables -- you must have a function that is invoked from
+ * elsewhere in the code to guarantee that all linkers will pull in
+ * the .o file from the library.  Hence, although these are MPI
+ * constants, we might as well just define them here (i.e., in a file
+ * that already has a function that is guaranteed to be linked in,
+ * rather than make a new .c file with the constants and a
+ * corresponding dummy function that is invoked from this function).
+ *
+ * NOTE: See the big comment in ompi/mpi/f77/constants.h about why we
+ * have four symbols for each of the common blocks (e.g., the Fortran
+ * equivalent(s) of MPI_STATUS_IGNORE).  Here, we can only have *one*
+ * value (not four).  So the only thing we can do is make it equal to
+ * the fortran compiler convention that was selected at configure
+ * time.  Note that this is also true for the value of .TRUE. from the
+ * Fortran compiler, so even though Open MPI supports all four Fortran
+ * symbol conventions, it can only support one convention for the two
+ * C constants (MPI_FORTRAN_STATUS[ES]_IGNORE) and only support one
+ * compiler for the value of .TRUE.  Ugh!!
+ *
+ * Note that the casts here are ok -- we're *only* comparing pointer
+ * values (i.e., they'll never be de-referenced).  The global symbols
+ * are actually of type (ompi_fortran_common_t) (for alignment
+ * issues), but MPI says that MPI_F_STATUS[ES]_IGNORE must be of type
+ * (MPI_Fint*).  Hence, we have to cast to make compilers not
+ * complain.
+ */
+
+#if OMPI_F77_CAPS
+MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUS_IGNORE;
+MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUSES_IGNORE;
+#elif OMPI_F77_PLAIN
+MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore;
+MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore;
+#elif OMPI_F77_SINGLE_UNDERSCORE
+MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore_;
+MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore_;
+#elif OMPI_F77_DOUBLE_UNDERSCORE
+MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore__;
+MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore__;
+#else
+#error Unrecognized Fortran 77 name mangling scheme
+#endif
 
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
