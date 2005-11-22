@@ -294,10 +294,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         iov.iov_base = NULL; 
         
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
+        *size = max_data;
         
         frag->segment.seg_len = max_data; 
         frag->segment.seg_addr.pval = iov.iov_base; 
-        
         reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
 
         frag->sg_entry.len = max_data; 
@@ -337,7 +337,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         iov.iov_base = NULL; 
         
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
-        
+        *size = max_data;
         
         frag->segment.seg_len = max_data; 
         frag->segment.seg_addr.pval = iov.iov_base; 
