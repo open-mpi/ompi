@@ -96,7 +96,13 @@ static int linux_open(void)
     mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
                            "CPU_ZERO_ok",
                            "Whether this component was compiled on a system where CPU_ZERO() is functional or broken (1 = functional, 0 = broken)",
-                           false, true, HAVE_CPU_ZERO, NULL);
+                           false, true, 
+#ifdef HAVE_CPU_ZERO
+                           HAVE_CPU_ZERO,
+#else
+                           0,
+#endif
+                           NULL);
     mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
                            "sched_setaffinity_num_params",
                            "The number of parameters that sched_set_affinity() takes on the machine where this component was compiled",
