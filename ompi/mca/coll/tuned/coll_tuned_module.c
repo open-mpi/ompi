@@ -292,7 +292,6 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   int size, rank;
   struct mca_coll_base_comm_t *data;
   /* fanout parameters */
-  int pre_allocate = 1;
   int rc=0;
   int i;
 

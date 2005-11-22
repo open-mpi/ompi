@@ -66,7 +66,6 @@ mca_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
 
        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
-/*         int contig; */
         int dsize;
 
         ompi_ddt_type_size (dtype, &dsize);
@@ -237,7 +236,6 @@ int mca_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
         int dsize;
-        int contig;
 
         ompi_ddt_type_size (datatype, &dsize);
         dsize *= count;
