@@ -42,7 +42,7 @@ extern "C" {
     */
    struct mca_ptl_proc_t {
       struct mca_ptl_base_peer_t* ptl_peer; /**< PTL addressing info */
-      struct mca_pml_base_ptl_t* ptl_base;  /**< PML specific PTL info */
+      struct mca_pml_uniq_ptl_t* ptl_base;  /**< PML specific PTL info */
       mca_ptl_base_module_t *ptl;           /**< PTL module */
    };
    typedef struct mca_ptl_proc_t mca_ptl_proc_t;

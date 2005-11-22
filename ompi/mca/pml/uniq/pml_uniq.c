@@ -274,17 +274,17 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
                     ptl->ptl_cache_bytes > 0 &&
                     NULL != ptl->ptl_request_init &&
                     NULL != ptl->ptl_request_fini) {
-                    
-                    mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
+
+                    mca_pml_uniq_ptl_t* ptl_base = OBJ_NEW(mca_pml_uniq_ptl_t);
                     ptl_base->ptl = ptl;
                     ptl_base->ptl_cache_size = ptl->ptl_cache_size;
-                    ptl->ptl_base = ptl_base;
+                    ptl->ptl_base = (struct mca_pml_base_ptl_t*)ptl_base;
                 }
-                proc_pml->proc_ptl_first.ptl_base = ptl->ptl_base;
+                proc_pml->proc_ptl_first.ptl_base = (mca_pml_base_ptl_t*)ptl->ptl_base;
                 proc_pml->proc_ptl_first.ptl_peer = ptl_peers[p];
                 proc_pml->proc_ptl_first.ptl = ptl;
 #if PML_UNIQ_ACCEPT_NEXT_PTL
-                proc_pml->proc_ptl_next.ptl_base = ptl->ptl_base;
+                proc_pml->proc_ptl_next.ptl_base = (mca_pml_base_ptl_t*)ptl->ptl_base;
                 proc_pml->proc_ptl_next.ptl_peer = ptl_peers[p];
                 proc_pml->proc_ptl_next.ptl = ptl;
 #endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
