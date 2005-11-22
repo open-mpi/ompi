@@ -90,7 +90,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_recv_request_t);
  * @param request (IN)   Request to match.
  */
 void mca_pml_uniq_recv_request_match_wild(mca_ptl_base_recv_request_t* request);
-                                                                                                                                 
+
 /**
  * Attempt to match the request against the unexpected fragment list
  * for a specific source rank.
@@ -98,7 +98,7 @@ void mca_pml_uniq_recv_request_match_wild(mca_ptl_base_recv_request_t* request);
  * @param request (IN)   Request to match.
  */
 void mca_pml_uniq_recv_request_match_specific(mca_ptl_base_recv_request_t* request);
-                                                                                                                                 
+
 /**
  * Start an initialized request.
  *
