@@ -248,7 +248,7 @@ static int output(bool want_error_header, char **lines,
 {
     int i, count;
     size_t len;
-    char *concat, *formatted;
+    char *concat;
 
     /* See how much space we need */
 
@@ -290,16 +290,10 @@ static int output(bool want_error_header, char **lines,
     }
 
     /* Apply formatting */
-
-    vasprintf(&formatted, concat, arglist);
-
-    /* Print it out */
-
-    fprintf(stderr, formatted);
+    vfprintf( stderr, concat, arglist );
 
     /* All done */
 
-    free(formatted);
     free(concat);
     return OMPI_SUCCESS;
 }
