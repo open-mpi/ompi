@@ -1,0 +1,653 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+#include "ompi_config.h"
+#include <sched.h>
+#include "ompi/include/constants.h"
+#include "mca/pml/pml.h"
+#include "mca/btl/btl.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/mpool/mpool.h" 
+#include "pml_dr.h"
+#include "pml_dr_hdr.h"
+#include "pml_dr_proc.h"
+#include "pml_dr_sendreq.h"
+#include "pml_dr_recvreq.h"
+#include "pml_dr_endpoint.h"
+#include "mca/bml/base/base.h"
+
+                                                                                                         
+static int mca_pml_dr_send_request_fini(struct ompi_request_t** request)
+{
+    mca_pml_dr_send_request_t* sendreq = *(mca_pml_dr_send_request_t**)(request); 
+    if(sendreq->req_send.req_base.req_persistent) {
+       if(sendreq->req_send.req_base.req_free_called) {
+           MCA_PML_DR_FREE(request);
+       } else {
+           sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; 
+           /* rewind convertor */
+           if(sendreq->req_send.req_bytes_packed) {
+               size_t offset = 0;
+               ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
+           }
+           /* if buffered send - release any resources */
+           if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
+               sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
+               mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
+           }
+       }
+    } else {
+        MCA_PML_DR_FREE(request);
+    }
+    return OMPI_SUCCESS;
+}
+
+static int mca_pml_dr_send_request_free(struct ompi_request_t** request)
+{
+    MCA_PML_DR_FREE(request);
+    return OMPI_SUCCESS;
+}
+
+static int mca_pml_dr_send_request_cancel(struct ompi_request_t* request, int complete)
+{
+    /* we dont cancel send requests by now */
+    return OMPI_SUCCESS;
+}
+
+static void mca_pml_dr_send_request_construct(mca_pml_dr_send_request_t* req)
+{
+    req->req_send.req_base.req_type = MCA_PML_REQUEST_SEND;
+    req->req_send.req_base.req_ompi.req_fini = mca_pml_dr_send_request_fini;
+    req->req_send.req_base.req_ompi.req_free = mca_pml_dr_send_request_free;
+    req->req_send.req_base.req_ompi.req_cancel = mca_pml_dr_send_request_cancel;
+}
+
+static void mca_pml_dr_send_request_destruct(mca_pml_dr_send_request_t* req)
+{
+}
+
+
+OBJ_CLASS_INSTANCE(
+    mca_pml_dr_send_request_t,
+    mca_pml_base_send_request_t,
+    mca_pml_dr_send_request_construct,
+    mca_pml_dr_send_request_destruct);
+
+/**
+ * Completion of a short message - nothing left to schedule.
+ */
+
+void mca_pml_dr_match_completion_cache(
+    struct mca_btl_base_module_t* btl,  
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status)
+{
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
+
+    /* check completion status */
+    if(OMPI_SUCCESS != status) {
+        /* TSW - FIX */
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_errmgr.abort();
+    }
+
+    /* attempt to cache the descriptor */
+    MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor ); 
+
+    /* signal request completion */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+}
+
+/**
+ * Completion of a short message - nothing left to schedule.
+ */
+
+void mca_pml_dr_match_completion_free(
+    struct mca_btl_base_module_t* btl,  
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status)
+{
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
+
+    /* check completion status */
+    if(OMPI_SUCCESS != status) {
+        /* TSW - FIX */
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_errmgr.abort();
+    }
+
+    /* free the descriptor */
+    mca_bml_base_free( bml_btl, descriptor ); 
+
+    /* signal request completion */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+}
+
+/*
+ *  Completion of the first fragment of a long message that 
+ *  requires an acknowledgement
+ */
+static void mca_pml_dr_rndv_completion(
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status)
+{
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)  descriptor->des_context; 
+    /* check completion status */
+    if(OMPI_SUCCESS != status) {
+        /* TSW - FIX */
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_errmgr.abort();
+    }
+
+    /* count bytes of user data actually delivered */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,descriptor,sizeof(mca_pml_dr_rendezvous_hdr_t));
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    /* return the descriptor */
+    mca_bml_base_free(bml_btl, descriptor); 
+
+    /* advance the request */
+    MCA_PML_DR_SEND_REQUEST_ADVANCE(sendreq);
+
+    /* check for pending requests */
+    MCA_PML_DR_SEND_REQUEST_PROCESS_PENDING();
+}
+
+
+/**
+ * Completion of additional fragments of a large message - may need
+ * to schedule additional fragments.
+ */
+
+static void mca_pml_dr_frag_completion(
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status)
+{
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
+    bool schedule;
+
+    /* check completion status */
+    if(OMPI_SUCCESS != status) {
+        /* TSW - FIX */
+        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_errmgr.abort();
+    }
+
+    /* check for request completion */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+
+    /* count bytes of user data actually delivered */
+    MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,descriptor,sizeof(mca_pml_dr_frag_hdr_t));
+    if (OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1) == 0 &&
+        sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+        MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq); 
+        schedule = false;
+    } else {
+        schedule = true;
+    }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    if(schedule) {
+        mca_pml_dr_send_request_schedule(sendreq);
+    }
+
+    /* return the descriptor */
+    mca_bml_base_free(bml_btl, descriptor);
+
+    /* check for pending requests */
+    MCA_PML_DR_SEND_REQUEST_PROCESS_PENDING();
+}
+
+
+
+/**
+ *  Buffer the entire message and mark as complete.
+ */
+
+int mca_pml_dr_send_request_start_buffered(
+    mca_pml_dr_send_request_t* sendreq,
+    mca_bml_base_btl_t* bml_btl,
+    size_t size)
+{
+    mca_btl_base_descriptor_t* descriptor;
+    mca_btl_base_segment_t* segment;
+    mca_pml_dr_hdr_t* hdr;
+    struct iovec iov;
+    unsigned int iov_count;
+    size_t max_data;
+    int32_t free_after;
+    int rc;
+
+    /* allocate descriptor */
+    mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_dr_rendezvous_hdr_t) + size);
+    if(NULL == descriptor) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    } 
+    segment = descriptor->des_src;
+
+    /* pack the data into the BTL supplied buffer */
+    iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + 
+             sizeof(mca_pml_dr_rendezvous_hdr_t));
+    iov.iov_len = size;
+    iov_count = 1;
+    max_data = size;
+    if((rc = ompi_convertor_pack(
+        &sendreq->req_send.req_convertor,
+        &iov,
+        &iov_count,
+        &max_data,
+        &free_after)) < 0) {
+        mca_bml_base_free(bml_btl, descriptor);
+        return rc;
+    }
+
+    /* build rendezvous header */
+    hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_RNDV;
+    hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+    hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+    hdr->hdr_rndv.hdr_src_req.pval = sendreq;
+
+    /* update lengths */
+    segment->seg_len = sizeof(mca_pml_dr_rendezvous_hdr_t) + max_data;
+    sendreq->req_send_offset = max_data;
+
+    descriptor->des_cbfunc = mca_pml_dr_rndv_completion;
+    descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
+    descriptor->des_cbdata = sendreq;
+
+    /* buffer the remainder of the message */
+    rc = mca_pml_base_bsend_request_alloc((ompi_request_t*)sendreq);
+    if(OMPI_SUCCESS != rc) {
+        mca_bml_base_free(bml_btl, descriptor);
+        return rc;
+    }
+
+    iov.iov_base = (void*)(((unsigned char*)sendreq->req_send.req_addr) + sendreq->req_send_offset);
+    iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - sendreq->req_send_offset;
+
+    if((rc = ompi_convertor_pack(
+            &sendreq->req_send.req_convertor,
+            &iov,
+            &iov_count,
+            &max_data,
+            &free_after)) < 0) {
+            mca_bml_base_free(bml_btl, descriptor);
+            return rc;
+    }
+
+    /* re-init convertor for packed data */
+    ompi_convertor_prepare_for_send(
+            &sendreq->req_send.req_convertor,
+            sendreq->req_send.req_datatype,
+            sendreq->req_send.req_count,
+            sendreq->req_send.req_addr);
+
+    /* request is complete at mpi level */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    /* send */
+    rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
+    if(OMPI_SUCCESS != rc) {
+        mca_bml_base_free(bml_btl, descriptor );
+    }
+    return rc;
+}
+
+
+/**
+ *  BTL requires "specially" allocated memory. Request a segment that
+ *  is used for initial hdr and any eager data.
+ */
+
+int mca_pml_dr_send_request_start_copy(
+    mca_pml_dr_send_request_t* sendreq,
+    mca_bml_base_btl_t* bml_btl,
+    size_t size)
+{
+    mca_btl_base_descriptor_t* descriptor;
+    mca_btl_base_segment_t* segment;
+    mca_pml_dr_hdr_t* hdr;
+    struct iovec iov;
+    unsigned int iov_count;
+    size_t max_data;
+    int32_t free_after;
+    int rc;
+
+    /* allocate descriptor */
+    mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_dr_match_hdr_t) + size);
+    if(NULL == descriptor) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    } 
+    segment = descriptor->des_src;
+
+    /* pack the data into the supplied buffer */
+    iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_dr_match_hdr_t));
+    iov.iov_len = size;
+    iov_count = 1;
+    max_data = size;
+    if((rc = ompi_convertor_pack(
+            &sendreq->req_send.req_convertor,
+            &iov,
+            &iov_count,
+            &max_data,
+            &free_after)) < 0) {
+            mca_bml_base_free(bml_btl, descriptor);
+            return rc;
+    }
+
+    /* build match header */
+    hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_MATCH;
+    hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+
+    /* update lengths */
+    segment->seg_len = sizeof(mca_pml_dr_match_hdr_t) + max_data;
+    sendreq->req_send_offset = max_data;
+
+    /* short message */
+    descriptor->des_cbfunc = mca_pml_dr_match_completion_free;
+    descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
+    descriptor->des_cbdata = sendreq;
+
+    /* signal request completion */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    /* send */
+    rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
+    if(OMPI_SUCCESS != rc) {
+        mca_bml_base_free(bml_btl, descriptor );
+    } 
+    return rc;
+}
+
+/**
+ *  BTL can send directly from user buffer so allow the BTL
+ *  to prepare the segment list.
+ */
+
+int mca_pml_dr_send_request_start_prepare(
+    mca_pml_dr_send_request_t* sendreq,
+    mca_bml_base_btl_t* bml_btl,
+    size_t size)
+{
+    mca_btl_base_descriptor_t* descriptor;
+    mca_btl_base_segment_t* segment;
+    mca_pml_dr_hdr_t* hdr;
+    int rc;
+
+    /* prepare descriptor */
+    mca_bml_base_prepare_src(
+            bml_btl, 
+            NULL,
+            &sendreq->req_send.req_convertor,
+            sizeof(mca_pml_dr_match_hdr_t),
+            &size,
+            &descriptor);
+    if(NULL == descriptor) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    } 
+    segment = descriptor->des_src;
+
+    /* build match header */
+    hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_MATCH;
+    hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+
+    /* short message */
+    descriptor->des_cbfunc = mca_pml_dr_match_completion_free;
+    descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
+    descriptor->des_cbdata = sendreq;
+       
+    /* update lengths */
+    sendreq->req_send_offset = size;
+
+    /* send */
+    rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML); 
+    if(OMPI_SUCCESS != rc) {
+        mca_bml_base_free(bml_btl, descriptor );
+    }
+    return rc;
+}
+
+
+/**
+ *  Rendezvous is required. Eager send up to
+ *  the btls eager limit.
+ */
+
+int mca_pml_dr_send_request_start_rndv(
+    mca_pml_dr_send_request_t* sendreq,
+    mca_bml_base_btl_t* bml_btl,
+    size_t size,
+    int flags)
+{
+    mca_btl_base_descriptor_t* des;
+    mca_btl_base_segment_t* segment;
+    mca_pml_dr_hdr_t* hdr;
+    int rc;
+
+    /* prepare descriptor */
+    if(size == 0) {
+        mca_bml_base_alloc(
+                           bml_btl, 
+                           &des, 
+                           sizeof(mca_pml_dr_rendezvous_hdr_t)
+                           ); 
+    } else {
+        mca_bml_base_prepare_src(
+                                 bml_btl, 
+                                 NULL,
+                                 &sendreq->req_send.req_convertor,
+                                 sizeof(mca_pml_dr_rendezvous_hdr_t),
+                                 &size,
+                                 &des);
+    }
+
+    if(NULL == des) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    } 
+    segment = des->des_src;
+
+    /* build hdr */
+    hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;
+    hdr->hdr_common.hdr_flags = flags;
+    hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_RNDV;
+    hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+    hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+    hdr->hdr_rndv.hdr_src_req.pval = sendreq;
+
+    /* first fragment of a long message */
+    des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
+    des->des_cbdata = sendreq;
+    des->des_cbfunc = mca_pml_dr_rndv_completion;
+    sendreq->req_send_offset = size;
+
+    /* send */
+    rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
+    if(OMPI_SUCCESS != rc) {
+        mca_bml_base_free(bml_btl, des );
+    }
+    return rc;
+}
+
+
+/**
+ *  Schedule pipeline of send descriptors for the given request,
+ *  using send protocol.
+ */
+
+int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
+{ 
+    /*
+     * Only allow one thread in this routine for a given request.
+     * However, we cannot block callers on a mutex, so simply keep track
+     * of the number of times the routine has been called and run through
+     * the scheduling logic once for every call.
+    */
+    
+    mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
+    
+    if(OPAL_THREAD_ADD32(&sendreq->req_lock,1) == 1) {
+        do {
+            /* allocate remaining bytes to BTLs */
+            size_t bytes_remaining = sendreq->req_send.req_bytes_packed - sendreq->req_send_offset;
+            while(bytes_remaining > 0 && 
+                  sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
+                
+                mca_pml_dr_frag_hdr_t* hdr;
+                mca_btl_base_descriptor_t* des;
+                int rc;
+                size_t size; 
+                mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send); 
+                size_t num_btl_avail = bml_endpoint->btl_send.arr_size; 
+                
+                if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_min_send_size) {
+                    size = bytes_remaining;
+
+                /* otherwise attempt to give the BTL a percentage of the message
+                 * based on a weighting factor. for simplicity calculate this as
+                 * a percentage of the overall message length (regardless of amount
+                 * previously assigned)
+                 */
+                } else {
+                    size = (size_t)(bml_btl->btl_weight * bytes_remaining);
+                } 
+
+                /* makes sure that we don't exceed BTL max send size */
+                if (bml_btl->btl_max_send_size != 0 && 
+                    size > bml_btl->btl_max_send_size - sizeof(mca_pml_dr_frag_hdr_t)) {
+                    size = bml_btl->btl_max_send_size - sizeof(mca_pml_dr_frag_hdr_t);
+
+                    /* very expensive - however for buffered sends we need to send on a 
+                     * boundary that the receiver will be able to unpack completely
+                     * using the native datatype
+                     */
+                    if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
+                        ompi_convertor_t convertor;
+                        size_t position = sendreq->req_send_offset + size;
+                        /*
+                         * We need this local convertor in order to correctly compute
+                         * the correct position. Therefore we have to correctly construct and
+                         * destruct it.
+                         */
+                        OBJ_CONSTRUCT( &convertor, ompi_convertor_t );
+                        ompi_convertor_copy_and_prepare_for_send(
+                            &sendreq->req_send.req_convertor,
+                            sendreq->req_send.req_base.req_datatype,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_addr,
+                            &convertor);
+                        ompi_convertor_set_position(&convertor, &position);
+                        OBJ_DESTRUCT( &convertor );
+                        size = position - sendreq->req_send_offset;
+                    }
+                }
+                
+                
+                /* pack into a descriptor */
+                ompi_convertor_set_position(&sendreq->req_send.req_convertor, 
+                                            &sendreq->req_send_offset);
+                
+                mca_bml_base_prepare_src(
+                                         bml_btl, 
+                                         NULL, 
+                                         &sendreq->req_send.req_convertor,
+                                         sizeof(mca_pml_dr_frag_hdr_t),
+                                         &size,
+                                         &des
+                                         );
+                
+                if(des == NULL) {
+                    OPAL_THREAD_LOCK(&mca_pml_dr.lock);
+                    opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
+                    OPAL_THREAD_UNLOCK(&mca_pml_dr.lock);
+                    break;
+                }
+                des->des_cbfunc = mca_pml_dr_frag_completion;
+                des->des_cbdata = sendreq;
+
+                /* setup header */
+                hdr = (mca_pml_dr_frag_hdr_t*)des->des_src->seg_addr.pval;
+                hdr->hdr_common.hdr_flags = 0;
+                hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_FRAG;
+                hdr->hdr_frag_offset = sendreq->req_send_offset;
+                hdr->hdr_src_req.pval = sendreq;
+                hdr->hdr_dst_req = sendreq->req_recv;
+
+                /* update state */
+                sendreq->req_send_offset += size;
+                OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
+
+                /* initiate send - note that this may complete before the call returns */
+                rc = mca_bml_base_send( bml_btl, des, MCA_BTL_TAG_PML);
+                
+                if(rc == OMPI_SUCCESS) {
+                    bytes_remaining -= size;
+                } else {
+                    sendreq->req_send_offset -= size;
+                    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
+                    mca_bml_base_free(bml_btl,des);
+                    OPAL_THREAD_LOCK(&mca_pml_dr.lock);
+                    opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
+                    OPAL_THREAD_UNLOCK(&mca_pml_dr.lock);
+                    break;
+                }
+                mca_pml_dr_progress(); 
+            }
+        } while (OPAL_THREAD_ADD32(&sendreq->req_lock,-1) > 0);
+    }
+    return OMPI_SUCCESS;
+} 
+
