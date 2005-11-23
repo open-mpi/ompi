@@ -78,6 +78,7 @@ struct mca_btl_mx_component_t {
 
     int32_t                                 mx_filter;
     int32_t                                 mx_timeout;
+    int32_t                                 mx_connection_retries;
 
     ompi_free_list_t mx_send_eager_frags;      /**< free list of mx eager send fragments */
     ompi_free_list_t mx_send_user_frags;       /**< free list of mx user send fragments */

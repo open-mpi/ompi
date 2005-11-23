@@ -109,6 +109,9 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "timeout",
                             "Timeout for connections",
                             false, false, 10000, &mca_btl_mx_component.mx_timeout );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "retries",
+                            "Number of retries for each new connection before considering the peer as unreacheable",
+                            false, false, 20, &mca_btl_mx_component.mx_connection_retries );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "filter",
                             "Unique ID for the application (used to connect to the peers)",
                             false, false, 0xdeadbeef, &mca_btl_mx_component.mx_filter );
