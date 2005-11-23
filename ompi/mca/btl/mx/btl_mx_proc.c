@@ -37,6 +37,8 @@ void mca_btl_mx_proc_construct(mca_btl_mx_proc_t* proc)
     proc->proc_addr_index     = 0;
     proc->proc_endpoints      = NULL;
     proc->proc_endpoint_count = 0;
+    proc->mx_peers_count      = 0;
+    proc->mx_peers            = NULL;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
     /* add to list of all proc instance */
     OPAL_THREAD_LOCK(&mca_btl_mx_component.mx_lock);
@@ -56,8 +58,13 @@ void mca_btl_mx_proc_destruct(mca_btl_mx_proc_t* proc)
     OPAL_THREAD_UNLOCK(&mca_btl_mx_component.mx_lock);
 
     /* release resources */
-    if(NULL != proc->proc_endpoints) {
+    if( NULL != proc->proc_endpoints ) {
         free(proc->proc_endpoints);
+        proc->proc_endpoints = NULL;
+    }
+    if( NULL != proc->mx_peers ) {
+        free(proc->mx_peers);
+        proc->mx_peers = NULL;
     }
 }
 
@@ -72,11 +79,9 @@ static mca_btl_mx_proc_t* mca_btl_mx_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 
     OPAL_THREAD_LOCK(&mca_btl_mx_component.mx_lock);
 
-    for(mx_proc = (mca_btl_mx_proc_t*)
-            opal_list_get_first(&mca_btl_mx_component.mx_procs);
-            mx_proc != (mca_btl_mx_proc_t*)
-            opal_list_get_end(&mca_btl_mx_component.mx_procs);
-            mx_proc  = (mca_btl_mx_proc_t*)opal_list_get_next(mx_proc)) {
+    for( mx_proc = (mca_btl_mx_proc_t*)opal_list_get_first(&mca_btl_mx_component.mx_procs);
+         mx_proc != (mca_btl_mx_proc_t*)opal_list_get_end(&mca_btl_mx_component.mx_procs);
+         mx_proc  = (mca_btl_mx_proc_t*)opal_list_get_next(mx_proc) ) {
 
         if(mx_proc->proc_ompi == ompi_proc) {
             OPAL_THREAD_UNLOCK(&mca_btl_mx_component.mx_lock);
@@ -115,7 +120,7 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 
     module_proc = OBJ_NEW(mca_btl_mx_proc_t);
 
-    module_proc->proc_ompi = ompi_proc;
+    module_proc->proc_ompi      = ompi_proc;
 
     return module_proc;
 }
@@ -124,15 +129,13 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 /*
  * Note that this routine must be called with the lock on the process
  * already held.  Insert a btl instance into the proc array and assign 
- * it an address.
+* it an address.
  */
 int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc, 
                             mca_btl_mx_endpoint_t* module_endpoint )
 {
-    mx_return_t mx_status;
-    mx_endpoint_addr_t mx_remote_addr;
     mca_btl_mx_addr_t  *mx_peers;
-    int num_retry = 0, rc, count, i;
+    int rc;
     size_t size;
 
     /* query for the peer address info */
@@ -151,53 +154,68 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
         OBJ_RELEASE(module_proc);
         return OMPI_ERROR;
     }
-    count = size / sizeof(mca_btl_mx_addr_t);
+    module_proc->mx_peers_count = size / sizeof(mca_btl_mx_addr_t);
+    if( 0 == module_proc->mx_peers_count ) {  /* no available connection */
+        return OMPI_ERROR;
+    }
 
-    for( i = module_proc->proc_addr_index; i < count; i++ ) {
+    module_proc->status = MCA_BTL_MX_NOT_CONNECTED;
+    module_proc->mx_peers = mx_peers;
+
+    if( NULL == module_proc->proc_endpoints ) {
+        module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+            malloc(module_proc->mx_peers_count * sizeof(mca_btl_base_endpoint_t*));
+        if( NULL == module_proc->proc_endpoints ) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+    }
+    /* insert into endpoint array */
+    module_endpoint->endpoint_proc = module_proc;
+
+    return OMPI_SUCCESS;
+}
+
+int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
+{
+    int num_retry = 0, i;
+    mx_return_t mx_status;
+    mx_endpoint_addr_t mx_remote_addr;
+    mca_btl_mx_proc_t* module_proc = module_endpoint->endpoint_proc;
+
+    for( i = module_proc->proc_addr_index; i < module_proc->mx_peers_count; i++ ) {
         
     retry_connect:
         mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint,
-                                mx_peers[i].nic_id, mx_peers[i].endpoint_id,
+                                module_proc->mx_peers[i].nic_id, module_proc->mx_peers[i].endpoint_id,
                                 mca_btl_mx_component.mx_filter, mca_btl_mx_component.mx_timeout, &mx_remote_addr );
         if( MX_SUCCESS != mx_status ) {
             if( MX_TIMEOUT == mx_status )
-                if( num_retry++ < 10 )
+                if( num_retry++ < mca_btl_mx_component.mx_connection_retries )
                     goto retry_connect;
             {
                 char peer_name[MX_MAX_HOSTNAME_LEN];
 
-                if( MX_SUCCESS != mx_nic_id_to_hostname( mx_peers[i].nic_id, peer_name ) )
-                    sprintf( peer_name, "unknown %lx nic_id", mx_peers[i].nic_id );
+                if( MX_SUCCESS != mx_nic_id_to_hostname( module_proc->mx_peers[i].nic_id, peer_name ) )
+                    sprintf( peer_name, "unknown %lx nic_id", module_proc->mx_peers[i].nic_id );
 
                 opal_output( 0, "mx_connect fail for %s(%dth remote address) with key %x (error %s)\n", 
                              peer_name, i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
             }
             continue;
         }
-        module_endpoint->mx_peer.nic_id = mx_peers[i].nic_id;
-        module_endpoint->mx_peer.endpoint_id = mx_peers[i].endpoint_id;
-        module_endpoint->mx_peer_addr = mx_remote_addr;
-        module_proc->proc_addr_index = i;
+        module_endpoint->mx_peer.nic_id      = module_proc->mx_peers[i].nic_id;
+        module_endpoint->mx_peer.endpoint_id = module_proc->mx_peers[i].endpoint_id;
+        module_endpoint->mx_peer_addr        = mx_remote_addr;
+        module_proc->proc_addr_index         = i;
+        module_proc->status                  = MCA_BTL_MX_CONNECTED;
         break;
     }
 
-    free( mx_peers );
-
-    if( i == count ) {  /* no available connection */
+    if( i == module_proc->mx_peers_count ) {  /* no available connection */
+        module_proc->status = MCA_BTL_MX_NOT_REACHEABLE;
         return OMPI_ERROR;
     }
 
-    if( NULL == module_proc->proc_endpoints ) {
-        module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-            malloc(count * sizeof(mca_btl_base_endpoint_t*));
-        if(NULL == module_proc->proc_endpoints) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-    }
-        
-    /* insert into endpoint array */
-    module_endpoint->endpoint_proc = module_proc;
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
-
     return OMPI_SUCCESS;
 }

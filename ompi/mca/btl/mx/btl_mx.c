@@ -61,53 +61,33 @@ mca_btl_mx_module_t mca_btl_mx_module = {
 /**
  *
  */
-
-int mca_btl_mx_add_procs(
-    struct mca_btl_base_module_t* btl, 
-    size_t nprocs, 
-    struct ompi_proc_t **ompi_procs, 
-    struct mca_btl_base_endpoint_t** peers, 
-    ompi_bitmap_t* reachable)
+int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl, 
+                          size_t nprocs, 
+                          struct ompi_proc_t **ompi_procs, 
+                          struct mca_btl_base_endpoint_t** peers, 
+                          ompi_bitmap_t* reachable )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
-    int i, rc, index;
+    int i, rc;
 
-    /* MX seems to not be very scalable if all the processes start to connect in
-     * same time to the same destinattion. We can help it here if we first compute
-     * our rank in the list, and then we setup the connections starting with
-     * the next processor in the list in a round-robin fashion.
-     */
-    for( i = 0; i < (int)nprocs; i++ ) {
-        if( ompi_procs[i] == ompi_proc_local_proc )
-            break;
-    }
-    for( i = i % nprocs, index = 0; index < (int) nprocs; index++, i = (i + 1) % nprocs ) {
+    for( i = 0; i < (int) nprocs; i++ ) {
 
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_mx_proc_t* mx_proc;
         mca_btl_base_endpoint_t* mx_endpoint;
 
-        if( ompi_procs[i] == ompi_proc_local_proc) {
-            /* Do not alllow to connect to ourselfs ... */
-            continue;
-        }
-        if( (0 == mca_btl_mx_component.mx_support_sharedmem) &&
-            (ompi_procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL) ) {
-            /* Do not use MX for any of the procs on the same node, 
-             * let the SM device handle that by now
-             */
-            continue;
-        }
-
-        if(NULL == (mx_proc = mca_btl_mx_proc_create(ompi_proc))) {
-            continue;
-        }
-
-        /*
-         * Check to make sure that the peer has at least as many interface 
-         * addresses exported as we are trying to use. If not, then 
-         * don't bind this PTL instance to the proc.
+        /* We have special BTLs for processes on the same node as well as for all communications
+         * inside the same process. Therefore, MX will not be used for any of them.
          */
+        if( (ompi_procs[i] == ompi_proc_local_proc) ||
+            ( (0 == mca_btl_mx_component.mx_support_sharedmem) &&
+              (ompi_procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL) ) ) {
+            continue;
+        }
+
+        if( NULL == (mx_proc = mca_btl_mx_proc_create(ompi_proc)) ) {
+            continue;
+        }
 
         OPAL_THREAD_LOCK(&mx_proc->proc_lock);
 
@@ -122,14 +102,13 @@ int mca_btl_mx_add_procs(
         }
 
         mx_endpoint->endpoint_btl = mx_btl;
-        rc = mca_btl_mx_proc_insert(mx_proc, mx_endpoint);
-        if(rc != OMPI_SUCCESS) {
+        rc = mca_btl_mx_proc_insert( mx_proc, mx_endpoint );
+        if( rc != OMPI_SUCCESS ) {
             OBJ_RELEASE(mx_endpoint);
             OBJ_RELEASE(mx_proc);
             OPAL_THREAD_UNLOCK(&mx_proc->proc_lock);
             continue;
         }
-
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&mx_proc->proc_lock);
         peers[i] = mx_endpoint;
@@ -600,6 +579,12 @@ int mca_btl_mx_send(
     mx_segment_t mx_segment[2];
     mx_return_t mx_return;
     uint64_t total_length;
+
+    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->endpoint_proc->status ) {
+        if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->endpoint_proc->status )
+            return OMPI_ERROR;
+        mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint );
+    }
 
     frag->endpoint = endpoint;
     frag->tag      = tag;
