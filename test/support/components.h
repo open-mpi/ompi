@@ -20,8 +20,8 @@
 #ifndef OMPI_SUPPORT_COMPONENTS_H
 #define OMPI_SUPPORT_COMPONENTS_H
 
-#include "libltdl/ltdl.h"
-#include "mca/mca.h"
+#include "opal/libltdl/ltdl.h"
+#include "opal/mca/mca.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

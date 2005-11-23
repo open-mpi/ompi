@@ -24,9 +24,7 @@
 #include <stdlib.h>
 
 #if OMPI_WANT_LIBLTDL
-/* Ensure to get the right <ltdl.h> -- a -I should be setup in this
-   directory's Makefile.am to get opal/libltdl */ 
-#include "ltdl.h"
+#include "opal/libltdl/ltdl.h"
 #endif
 
 #include "opal/util/output.h"

@@ -22,9 +22,7 @@
 #include "ompi_config.h"
 
 #if OMPI_WANT_LIBLTDL
-/* Ensure to get the right <ltdl.h> -- a -I should be setup in this
-   directory's Makefile.am to get opal/libltdl */ 
-#include "ltdl.h"
+#include "opal/libltdl/ltdl.h"
 #else
 /* if we don't have libltdl, provide dummy handle type */
 typedef void* lt_dlhandle;

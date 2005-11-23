@@ -20,7 +20,6 @@
 # (by default)
 
 AM_CPPFLAGS = \
-        $(OPAL_LTDL_CPPFLAGS) \
         -DOMPI_PKGLIBDIR=\"$(pkglibdir)\" \
         -DOMPI_SYSCONFDIR=\"$(sysconfdir)\"
 AM_LFLAGS = -Pmca_base_yy
