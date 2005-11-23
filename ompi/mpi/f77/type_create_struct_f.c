@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_STRUCT,
                            pmpi_type_create_struct_,
                            pmpi_type_create_struct__,
                            pmpi_type_create_struct_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Aint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_block_lengths, array_of_displacements, array_of_types, newtype, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
                            mpi_type_create_struct_,
                            mpi_type_create_struct__,
                            mpi_type_create_struct_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Aint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_block_lengths, array_of_displacements, array_of_types, newtype, ierr) )
 #endif
 
@@ -64,13 +64,12 @@ static const char FUNC_NAME[] = "MPI_TYPE_CREATE_STRUCT";
 
 void mpi_type_create_struct_f(MPI_Fint *count, 
 			      MPI_Fint *array_of_block_lengths,
-			      MPI_Fint *array_of_displacements, 
+			      MPI_Aint *array_of_displacements, 
 			      MPI_Fint *array_of_types, MPI_Fint *newtype,
 			      MPI_Fint *ierr)
 {
     MPI_Datatype c_new;
     MPI_Datatype *c_type_old_array;
-    MPI_Aint *c_disp_array;
     int i;
     OMPI_ARRAY_NAME_DECL(array_of_block_lengths);
 
@@ -81,10 +80,8 @@ void mpi_type_create_struct_f(MPI_Fint *count,
                                        FUNC_NAME);
         return;
     }
-    c_disp_array = (MPI_Aint*) c_type_old_array + *count;
 
     for (i = 0; i < *count; i++) {
-        c_disp_array[i] = (MPI_Aint) array_of_displacements[i];
         c_type_old_array[i] = MPI_Type_f2c(array_of_types[i]);
     }
 
@@ -92,7 +89,7 @@ void mpi_type_create_struct_f(MPI_Fint *count,
 
     *ierr = OMPI_INT_2_FINT(MPI_Type_create_struct(OMPI_FINT_2_INT(*count),
 			   OMPI_ARRAY_NAME_CONVERT(array_of_block_lengths),
-                           c_disp_array, c_type_old_array, &c_new));
+                           array_of_displacements, c_type_old_array, &c_new));
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_block_lengths);
 
