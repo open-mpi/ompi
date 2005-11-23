@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_TRUE_EXTENT,
                            pmpi_type_get_true_extent_,
                            pmpi_type_get_true_extent__,
                            pmpi_type_get_true_extent_f,
-                           (MPI_Fint *datatype, MPI_Fint *true_lb, MPI_Fint *true_extent, MPI_Fint *ierr),
+                           (MPI_Fint *datatype, MPI_Aint *true_lb, MPI_Aint *true_extent, MPI_Fint *ierr),
                            (datatype, true_lb, true_extent, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_TRUE_EXTENT,
                            mpi_type_get_true_extent_,
                            mpi_type_get_true_extent__,
                            mpi_type_get_true_extent_f,
-                           (MPI_Fint *datatype, MPI_Fint *true_lb, MPI_Fint *true_extent, MPI_Fint *ierr),
+                           (MPI_Fint *datatype, MPI_Aint *true_lb, MPI_Aint *true_extent, MPI_Fint *ierr),
                            (datatype, true_lb, true_extent, ierr) )
 #endif
 
@@ -57,18 +57,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_TRUE_EXTENT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_get_true_extent_f(MPI_Fint *datatype, MPI_Fint *true_lb, MPI_Fint *true_extent, MPI_Fint *ierr)
+void mpi_type_get_true_extent_f(MPI_Fint *datatype, MPI_Aint *true_lb, MPI_Aint *true_extent, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);
-    MPI_Aint c_true_lb;
-    MPI_Aint c_true_extent;
 
     *ierr = OMPI_INT_2_FINT(MPI_Type_get_true_extent(c_type,
-						     &c_true_lb,
-						     &c_true_extent));
+						     true_lb,
+						     true_extent));
 
-    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        *true_lb = OMPI_FINT_2_INT(c_true_lb);
-        *true_extent = OMPI_FINT_2_INT(c_true_extent);
-    }
 }

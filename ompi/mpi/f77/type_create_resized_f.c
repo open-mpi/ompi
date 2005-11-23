@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_RESIZED,
                            pmpi_type_create_resized_,
                            pmpi_type_create_resized__,
                            pmpi_type_create_resized_f,
-                           (MPI_Fint *oldtype, MPI_Fint *lb, MPI_Fint *extent, MPI_Fint *newtype, MPI_Fint *ierr),
+                           (MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *newtype, MPI_Fint *ierr),
                            (oldtype, lb, extent, newtype, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
                            mpi_type_create_resized_,
                            mpi_type_create_resized__,
                            mpi_type_create_resized_f,
-                           (MPI_Fint *oldtype, MPI_Fint *lb, MPI_Fint *extent, MPI_Fint *newtype, MPI_Fint *ierr),
+                           (MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *newtype, MPI_Fint *ierr),
                            (oldtype, lb, extent, newtype, ierr) )
 #endif
 
@@ -57,8 +57,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_create_resized_f(MPI_Fint *oldtype, MPI_Fint *lb,
-			       MPI_Fint *extent, MPI_Fint *newtype, 
+void mpi_type_create_resized_f(MPI_Fint *oldtype, MPI_Aint *lb,
+			       MPI_Aint *extent, MPI_Fint *newtype, 
 			       MPI_Fint *ierr)
 {
     MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
