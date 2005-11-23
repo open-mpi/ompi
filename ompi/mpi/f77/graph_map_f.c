@@ -75,7 +75,7 @@ void mpi_graph_map_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *index,
 					  OMPI_ARRAY_NAME_CONVERT(index),
 					  OMPI_ARRAY_NAME_CONVERT(edges),
 					  OMPI_SINGLE_NAME_CONVERT(nrank)));
-    if (OMPI_FINT_2_INT(*ierr)) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_SINGLE_INT_2_FINT(nrank);
     }
     OMPI_ARRAY_FINT_2_INT_CLEANUP(edges);
