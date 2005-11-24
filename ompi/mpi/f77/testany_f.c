@@ -34,7 +34,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTANY,
                            pmpi_testany_,
                            pmpi_testany__,
                            pmpi_testany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, index, flag, status, ierr) )
 #endif
 
@@ -51,7 +51,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
                            mpi_testany_,
                            mpi_testany__,
                            mpi_testany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, index, flag, status, ierr) )
 #endif
 
@@ -63,12 +63,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
 static const char FUNC_NAME[] = "MPI_TESTANY";
 
 
-void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
+void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status c_status;
     int i;
-    OMPI_SINGLE_NAME_DECL(flag);
+    OMPI_LOGICAL_NAME_DECL(flag);
     OMPI_SINGLE_NAME_DECL(index);
 
     c_req = malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
@@ -85,15 +85,16 @@ void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index
 
     *ierr = OMPI_INT_2_FINT(MPI_Testany(OMPI_FINT_2_INT(*count), c_req,
                                         OMPI_SINGLE_NAME_CONVERT(index),
-                                        OMPI_SINGLE_NAME_CONVERT(flag),
+                                        OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                                         &c_status));
 
+    OMPI_SINGLE_INT_2_LOGICAL(flag);
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
 
         /* Increment index by one for fortran conventions */
 
         OMPI_SINGLE_INT_2_FINT(index);
-        if (1 == OMPI_INT_2_FINT(*flag) &&
+        if (*flag &&
             MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(index))) {
             array_of_requests[OMPI_INT_2_FINT(*index)] =
                 c_req[OMPI_INT_2_FINT(*index)]->req_f_to_c_index;

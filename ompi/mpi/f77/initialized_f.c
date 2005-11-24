@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INITIALIZED,
                            pmpi_initialized_,
                            pmpi_initialized__,
                            pmpi_initialized_f,
-                           (MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Flogical *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INITIALIZED,
                            mpi_initialized_,
                            mpi_initialized__,
                            mpi_initialized_f,
-                           (MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Flogical *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
 
@@ -57,11 +57,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INITIALIZED,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_initialized_f(MPI_Fint *flag, MPI_Fint *ierr)
+void mpi_initialized_f(MPI_Flogical *flag, MPI_Fint *ierr)
 {
-    OMPI_SINGLE_NAME_DECL(flag);
-    *ierr = OMPI_INT_2_FINT(MPI_Initialized(OMPI_SINGLE_NAME_CONVERT(flag)));
+    OMPI_LOGICAL_NAME_DECL(flag);
+    *ierr = OMPI_INT_2_FINT(MPI_Initialized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        OMPI_SINGLE_INT_2_FINT(flag);
+        OMPI_SINGLE_INT_2_LOGICAL(flag);
     }
 }

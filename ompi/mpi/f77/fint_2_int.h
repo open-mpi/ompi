@@ -139,7 +139,92 @@
     } \
     free(OMPI_ARRAY_NAME_CONVERT(in))
 
-
 #endif
+
+/*
+ * Define MACROS to take account of different size of logical from int
+ */
+
+#if OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT
+#  define OMPI_LOGICAL_NAME_DECL(in)               /* Not needed for int==logical */
+#  define OMPI_LOGICAL_NAME_CONVERT(in)        in  /* Not needed for int==logical */
+#  define OMPI_LOGICAL_SINGLE_NAME_CONVERT(in) in /* Not needed for int==logical */
+#  define OMPI_LOGICAL_ARRAY_NAME_DECL(in)         /* Not needed for int==logical */
+#  define OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)  in  /* Not needed for int==logical */
+#  define OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in,n)     /* Not needed for int==logical */
+#  define OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in)     /* Not needed for int==logical */
+
+#  if OMPI_FORTRAN_VALUE_TRUE == 1
+#    define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    0
+#    define OMPI_LOGICAL_2_INT(a) a
+#    define OMPI_INT_2_LOGICAL(a) a
+#    define OMPI_ARRAY_LOGICAL_2_INT(in, n)
+#    define OMPI_ARRAY_INT_2_LOGICAL(in, n)
+#    define OMPI_SINGLE_INT_2_LOGICAL(a)            /* Single-OUT variable -- Not needed for int==logical, true=1 */
+#  else
+#    define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    1
+#    define OMPI_LOGICAL_2_INT(a) ((a)==0? 0 : 1)
+#    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OMPI_FORTRAN_VALUE_TRUE)
+#    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(*a))
+#    define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
+       int __n = (n); \
+       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n); \
+       while (__n > 0) { \
+         OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
+         __n--; \
+       } \
+     } while (0)
+#    define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
+       int __n = (n); \
+       while (__n > 0) { \
+         in[__n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]); \
+         __n--; \
+       } \
+     }  while (0) \
+     /* free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)) * No Need to free, here */
+
+#  endif
+#else
+/*
+ * For anything other than Fortran-logical == C-int, we have to convert
+ */
+#  define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    1
+#  define OMPI_LOGICAL_NAME_DECL(in)           int c_##in
+#  define OMPI_LOGICAL_NAME_CONVERT(in)        c_##in
+#  define OMPI_LOGICAL_SINGLE_NAME_CONVERT(in) &c_##in
+#  define OMPI_LOGICAL_ARRAY_NAME_DECL(in)     int * c_##in
+#  define OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)  c_##in
+#  define OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in,n) \
+      OMPI_LOGICAL_ARRAY_NAME_CONVERT(in) = malloc(n * sizeof(int))
+#  define OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in) \
+      free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in))
+
+#  if OMPI_FORTRAN_VALUE_TRUE == 1
+#    define OMPI_LOGICAL_2_INT(a) (int)a
+#    define OMPI_INT_2_LOGICAL(a) (MPI_Flogical)a
+#    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=(OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(a)))
+#  else
+#    define OMPI_LOGICAL_2_INT(a) ((a)==0? 0 : 1)
+#    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OMPI_FORTRAN_VALUE_TRUE)
+#    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=(OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(a)))
+#  endif
+#  define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
+       int __n = (n); \
+       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n); \
+       while (__n > 0) { \
+         OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
+         __n--; \
+       } \
+     } while (0)
+#  define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
+       int __n = (n); \
+       while (__n > 0) { \
+         in[__n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]); \
+         __n--; \
+       } \
+     }  while (0) \
+     /* free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)) * No Need to free, here */
+#endif /* OMPI_SIZEOF_FORTRAN_LOGICAL */
+
 
 #endif /* OMPI_FINT_2_INT_H */

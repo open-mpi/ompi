@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ATTR,
                            pmpi_type_get_attr_,
                            pmpi_type_get_attr__,
                            pmpi_type_get_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
                            mpi_type_get_attr_,
                            mpi_type_get_attr__,
                            mpi_type_get_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -60,11 +60,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
 #endif
 
 void mpi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
-			 MPI_Aint *attribute_val, MPI_Fint *flag, 
+                         MPI_Aint *attribute_val, MPI_Flogical *flag,
                          MPI_Fint *ierr)
 {
-    int c_err, c_flag;
+    int c_err;
     MPI_Datatype c_type = MPI_Type_f2c(*type);
+    OMPI_LOGICAL_NAME_DECL(flag);
 
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */
@@ -72,7 +73,7 @@ void mpi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
     c_err = ompi_attr_get_fortran_mpi2(c_type->d_keyhash,
                                        OMPI_FINT_2_INT(*type_keyval),
                                        attribute_val,
-                                       &c_flag);
+                                       OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     *ierr = OMPI_INT_2_FINT(c_err);
-    *flag = OMPI_INT_2_FINT(c_flag);
+    OMPI_SINGLE_INT_2_LOGICAL(flag);
 }

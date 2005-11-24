@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET,
                            pmpi_info_get_,
                            pmpi_info_get__,
                            pmpi_info_get_f,
-                           (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Flogical *flag, MPI_Fint *ierr),
                            (info, key, valuelen, value, flag, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET,
                            mpi_info_get_,
                            mpi_info_get__,
                            mpi_info_get_f,
-                           (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Flogical *flag, MPI_Fint *ierr),
                            (info, key, valuelen, value, flag, ierr) )
 #endif
 
@@ -58,18 +58,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET,
 #endif
 
 void mpi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
-		    char *value, MPI_Fint *flag, MPI_Fint *ierr)
+                    char *value, MPI_Flogical *flag, MPI_Fint *ierr)
 {
     MPI_Info c_info;
-    OMPI_SINGLE_NAME_DECL(flag);
+    OMPI_LOGICAL_NAME_DECL(flag);
 
     c_info = MPI_Info_f2c(*info);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Info_get(c_info, key, 
-					 OMPI_FINT_2_INT(*valuelen),
-					 value,
-					 OMPI_SINGLE_NAME_CONVERT(flag)));
+    *ierr = OMPI_INT_2_FINT(MPI_Info_get(c_info, key,
+                                         OMPI_FINT_2_INT(*valuelen),
+                                         value,
+                                         OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        OMPI_SINGLE_INT_2_FINT(flag);
+        OMPI_SINGLE_INT_2_LOGICAL(flag);
     }
 }
