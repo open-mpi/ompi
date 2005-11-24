@@ -408,6 +408,12 @@ void ompi_info::do_config(bool want_all)
     out("Fort integer size", "compiler:fortran:sizeof:integer", 
         OMPI_SIZEOF_FORTRAN_INTEGER);
 
+    out("Fort logical size", "compiler:fortran:sizeof:logical", 
+        OMPI_SIZEOF_FORTRAN_LOGICAL);
+    out("Fort logical value true", "compiler:fortran:value:true",
+        OMPI_FORTRAN_VALUE_TRUE);
+
+
     // May or may not have the other Fortran sizes
 
     if (OMPI_WANT_F77_BINDINGS || OMPI_WANT_F90_BINDINGS) {

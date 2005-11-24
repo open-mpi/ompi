@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_TEST_INTER,
                            pmpi_comm_test_inter_,
                            pmpi_comm_test_inter__,
                            pmpi_comm_test_inter_f,
-                           (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Flogical *flag, MPI_Fint *ierr),
                            (comm, flag, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_TEST_INTER,
                            mpi_comm_test_inter_,
                            mpi_comm_test_inter__,
                            mpi_comm_test_inter_f,
-                           (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Flogical *flag, MPI_Fint *ierr),
                            (comm, flag, ierr) )
 #endif
 
@@ -57,14 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_TEST_INTER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_comm_test_inter_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr)
+void mpi_comm_test_inter_f(MPI_Fint *comm, MPI_Flogical *flag, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = MPI_Comm_f2c (*comm);
-    OMPI_SINGLE_NAME_DECL(flag);
+    OMPI_LOGICAL_NAME_DECL(flag);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Comm_test_inter(c_comm, 
-					OMPI_SINGLE_NAME_CONVERT(flag)));
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_test_inter(c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        OMPI_SINGLE_INT_2_FINT(flag);
+        OMPI_SINGLE_INT_2_LOGICAL(flag);
     }
 }

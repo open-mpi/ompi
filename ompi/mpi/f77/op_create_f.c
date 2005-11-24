@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_CREATE,
                            pmpi_op_create_,
                            pmpi_op_create__,
                            pmpi_op_create_f,
-                           (ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr),
+                           (ompi_op_fortran_handler_fn_t* function, MPI_Flogical *commute, MPI_Fint *op, MPI_Fint *ierr),
                            (function, commute, op, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_CREATE,
                            mpi_op_create_,
                            mpi_op_create__,
                            mpi_op_create_f,
-                           (ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr),
+                           (ompi_op_fortran_handler_fn_t* function, MPI_Flogical *commute, MPI_Fint *op, MPI_Fint *ierr),
                            (function, commute, op, ierr) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_op_create_f(ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute,
+void mpi_op_create_f(ompi_op_fortran_handler_fn_t* function, MPI_Flogical *commute,
 		     MPI_Fint *op, MPI_Fint *ierr)
 {
     MPI_Op c_op;
@@ -66,8 +66,8 @@ void mpi_op_create_f(ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute,
        (void*) for function pointers in this function */
 
     *ierr = OMPI_INT_2_FINT(MPI_Op_create((MPI_User_function *) function,
-					  OMPI_FINT_2_INT(*commute),
-					  &c_op));
+                                          OMPI_LOGICAL_2_INT(*commute),
+                                          &c_op));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         c_op->o_flags |= OMPI_OP_FLAGS_FORTRAN_FUNC;
         *op = MPI_Op_c2f(c_op);

@@ -36,6 +36,8 @@ m4_include(config/f77_find_ext_symbol_convention.m4)
 m4_include(config/f77_get_alignment.m4)
 m4_include(config/f77_get_fortran_handle_max.m4)
 m4_include(config/f77_get_sizeof.m4)
+m4_include(config/f77_get_value_true.m4)
+m4_include(config/f77_check_logical_array.m4)
 m4_include(config/f77_purge_unsupported_kind.m4)
 
 m4_include(config/f90_check_type.m4)

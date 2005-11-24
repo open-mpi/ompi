@@ -51,10 +51,11 @@
  * top-level always builds MPI_* bindings and bottom level will always build
  * PMPI_* bindings. This means that top-level includes "src/mpi/interface/f77"
  * .h files and lower-level includes "src/mpi/interface/f77/profile" .h files
+ *
+ * Both prototypes for all MPI- PMPI functions is moved into prototypes_mpi.h
  */
 
 #include "mpi/f77/prototypes_mpi.h"
-#include "mpi/f77/profile/prototypes_pmpi.h"
 
 #include "mpi/f77/fint_2_int.h"
 
