@@ -196,7 +196,7 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
                 char peer_name[MX_MAX_HOSTNAME_LEN];
 
                 if( MX_SUCCESS != mx_nic_id_to_hostname( module_proc->mx_peers[i].nic_id, peer_name ) )
-                    sprintf( peer_name, "unknown %lx nic_id", module_proc->mx_peers[i].nic_id );
+                    sprintf( peer_name, "unknown %lx nic_id", (long)module_proc->mx_peers[i].nic_id );
 
                 opal_output( 0, "mx_connect fail for %s(%dth remote address) with key %x (error %s)\n", 
                              peer_name, i, mca_btl_mx_component.mx_filter, mx_strerror(mx_status) );
