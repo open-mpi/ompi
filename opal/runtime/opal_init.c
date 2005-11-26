@@ -89,13 +89,13 @@ int opal_init(void)
     if (OPAL_SUCCESS != (ret = opal_error_register("OPAL",
             OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
         error = "opal_error_register";
-        goto error;
+        goto return_error;
     }
 
     /* initialize the mca */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
         error = "mca_base_open";
-        goto error;
+        goto return_error;
     }
 
     /* open the processor affinity base */
@@ -108,27 +108,25 @@ int opal_init(void)
        without good initialization routine support */
     if (OPAL_SUCCESS != (ret = opal_memory_base_open())) {
         error = "opal_memory_base_open";
-        goto error;
+        goto return_error;
     }
 
     /* initialize the memory manager / tracker */
     if (OPAL_SUCCESS != opal_mem_free_init()) {
         error = "opal_mem_free_init";
-        goto error;
+        goto return_error;
     }
 
     if (OPAL_SUCCESS != (ret = opal_timer_base_open())) {
         error = "opal_timer_base_open";
-        goto error;
+        goto return_error;
     }
+    return OPAL_SUCCESS;
 
-error:
-    if (ret != OPAL_SUCCESS) {
-        opal_show_help("help-opal-runtime",
-                       "opal_init:startup:internal-failure", true,
-                       error, ret);
-    }
-
+ return_error:
+    opal_show_help( "help-opal-runtime",
+                    "opal_init:startup:internal-failure", true,
+                    error, ret );
     return ret;
 }
 
