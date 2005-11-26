@@ -271,7 +271,6 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
         iov.iov_base = (void*)(((unsigned char*)(frag+1)) + reserve);
 
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
         if( rc < 0 ) {
             mca_btl_tcp_free(btl, &frag->base);
             return NULL;
@@ -287,7 +286,6 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
         iov.iov_base = NULL;
 
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
         if( rc < 0 ) {
             mca_btl_tcp_free(btl, &frag->base);
             return NULL;
