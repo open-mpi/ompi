@@ -296,9 +296,7 @@ extern mca_btl_base_module_t** mca_btl_mvapi_component_init(
 /**
  * IB component progress.
  */
-extern int mca_btl_mvapi_component_progress(
-                                         void
-);
+extern int mca_btl_mvapi_component_progress( void );
 
 
 /**

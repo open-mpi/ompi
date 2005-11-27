@@ -48,7 +48,7 @@ mca_btl_mvapi_component_t mca_btl_mvapi_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
-
+        
         {
             /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
@@ -544,7 +544,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
  */
 
 
-int mca_btl_mvapi_component_progress()
+int mca_btl_mvapi_component_progress( void )
 {
     uint32_t i;
     int count = 0;
