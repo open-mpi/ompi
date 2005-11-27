@@ -273,7 +273,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     mca_btl_mvapi_frag_t* frag; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
     struct iovec iov; 
-    int32_t iov_count = 1; 
+    uint32_t iov_count = 1; 
     size_t max_data = *size; 
     int32_t free_after; 
     int rc; 
