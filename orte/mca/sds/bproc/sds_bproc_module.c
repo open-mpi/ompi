@@ -22,6 +22,7 @@
 
 #include "include/orte_constants.h"
 #include "orte/util/sys_info.h"
+#include "opal/util/output.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/sds/sds.h"
 #include "mca/sds/base/base.h"
