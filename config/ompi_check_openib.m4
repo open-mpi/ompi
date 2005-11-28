@@ -62,19 +62,19 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 	  [ompi_check_openib_my_libdir=$ompi_check_openib_libdir]) 
 
     AS_IF([test -d "$ompi_check_openib_my_libdir/lib64/infiniband"], 
-	[ompi_check_openib_libflag=" -L $ompi_check_openib_my_libdir/lib64/infiniband" 
-	      LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib64/infiniband"], 
+	[ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib64/infiniband" 
+	      LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64/infiniband"], 
 	[AS_IF([test -d "$ompi_check_openib_my_libdir/lib/infiniband"], 
 		[ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib/infiniband"
-		    LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib/infiniband"])])
+		    LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib/infiniband"])])
     
     
     AS_IF([test -d "$ompi_check_openib_my_libdir/lib64"], 
-	[ompi_check_openib_libflag="$ompi_check_openib_libflag -L $ompi_check_openib_my_libdir/lib64" 
-	      LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib64"], 
+	[ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib64" 
+	      LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64"], 
 	[AS_IF([test -d "$ompi_check_openib_my_libdir/lib"], 
 		[ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib"
-		    LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib"])])
+		    LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib"])])
     
     
     AC_CHECK_LIB([cm], [cm_timeout],
