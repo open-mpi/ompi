@@ -29,6 +29,7 @@ version 1.0.
 1.0.1
 -----
 
+- Improved scalability of MX startup.
 - Fix datatype offset handling in the coll basic component's
   MPI_SCATTERV implementation.
 - Fix EOF handling on stdin.
