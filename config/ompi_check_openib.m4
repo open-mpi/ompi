@@ -31,10 +31,10 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
        [AC_HELP_STRING([--with-openib-libdir=IBLIBDIR],
                        [directory where the IB library can be found, if it is not in OPENIB_DIR/lib or OPENIB_DIR/lib64])])
 
-    AS_IF([test ! -z "$with_btl_openib" -a "$with_btl_openib" != "yes"],
-          [ompi_check_openib_dir="$with_btl_openib"])
-    AS_IF([test ! -z "$with_btl_openib_libdir" -a "$with_btl_openib_libdir" != "yes"],
-          [ompi_check_openib_libdir="$with_btl_openib_libdir"])
+    AS_IF([test ! -z "$with_openib" -a "$with_openib" != "yes"],
+          [ompi_check_openib_dir="$with_openib"])
+    AS_IF([test ! -z "$with_openib_libdir" -a "$with_openib_libdir" != "yes"],
+          [ompi_check_openib_libdir="$with_openib_libdir"])
 
     # check for pthreads and emit a warning that things might go south...
     AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
@@ -53,7 +53,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
     AS_IF([test "$ompi_check_openib_sysfs" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_btl_openib" -a "$with_btl_openib" != "no"],
+          [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
                  [AC_MSG_ERROR([OPENIB support requested but required sysfs not found.  Aborting])])
            $3])
     
@@ -67,7 +67,16 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 	[AS_IF([test -d "$ompi_check_openib_my_libdir/lib/infiniband"], 
 		[ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib/infiniband"
 		    LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib/infiniband"])])
-
+    
+    
+    AS_IF([test -d "$ompi_check_openib_my_libdir/lib64"], 
+	[ompi_check_openib_libflag="$ompi_check_openib_libflag -L $ompi_check_openib_my_libdir/lib64" 
+	      LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib64"], 
+	[AS_IF([test -d "$ompi_check_openib_my_libdir/lib"], 
+		[ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib"
+		    LDFLAGS="$LDFLAGS -L $ompi_check_openib_my_libdir/lib"])])
+    
+    
     AC_CHECK_LIB([cm], [cm_timeout],
                  [ompi_check_openib_libdeps="-lcm"]
                  [ompi_check_openib_libdeps=""])
@@ -84,7 +93,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
     # ok, now see if ibv_create_cq takes 3 arguments or 6
     CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
-    LDFLAGS="$LDPFLAGS $$1_LDFLAGS"
+    LDFLAGS="$LDFLAGS $$1_LDFLAGS"
     LIBS="$LIBS $$1_LIBS"
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
@@ -119,9 +128,11 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_btl_openib" -a "$with_btl_openib" != "no"],
+          [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
                  [AC_MSG_ERROR([Open IB support requested but not found.  Aborting])])
            $3])
+    
     $1_LDFLAGS="$$1_LDFLAGS $ompi_check_openib_libflag"
+    
 ])
 
