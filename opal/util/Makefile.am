@@ -57,6 +57,7 @@ libopalutil_la_SOURCES = \
         argv.c \
         basename.c \
         cmd_line.c \
+        crc.c \
         convert.c \
         daemon_init.c \
         error.c \
