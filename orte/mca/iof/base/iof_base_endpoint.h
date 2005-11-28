@@ -7,11 +7,6 @@
 #include "mca/iof/iof.h"
 #include "mca/iof/base/iof_base_header.h"
 
-enum {
-    ORTE_IOF_EP_OPEN,
-    ORTE_IOF_EP_CLOSING,
-    ORTE_IOF_EP_CLOSED
-};
 
 /**
  * Structure store callbacks
@@ -36,7 +31,6 @@ struct orte_iof_base_endpoint_t {
     orte_process_name_t ep_name;
     int ep_tag;
     int ep_fd;
-    int ep_state;
     uint32_t ep_seq;
     uint32_t ep_ack;
     opal_event_t ep_event;
