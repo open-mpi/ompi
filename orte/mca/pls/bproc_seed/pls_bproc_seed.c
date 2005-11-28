@@ -82,7 +82,7 @@ static int orte_pls_bproc_nodelist(orte_rmaps_base_map_t* map, int** nodelist, s
         item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
         orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)item;
-        (*nodelist)[index++] = atol(node->node_name);
+        (*nodelist)[index++] = atol(node->node->node_name);
     }
     *num_nodes = count;
     return OMPI_SUCCESS;
@@ -514,7 +514,7 @@ static int orte_pls_bproc_launch_app(
         }
         if(mca_pls_bproc_seed_component.debug) {
             opal_output(0, "orte_pls_bproc: node=%s name=%d.%d.%d procs=%d\n", 
-                node->node_name, 
+			node->node->node_name, 
                 orte_process_info.my_name->cellid, 0, 
                 daemon_vpid_start+rank,
                 opal_list_get_size(&node->node_procs));
@@ -528,7 +528,7 @@ static int orte_pls_bproc_launch_app(
         }
         
         /* save the daemons pid in the registry */
-        rc = orte_pls_base_set_node_pid(node->node_cellid, node->node_name, jobid, getpid());
+        rc = orte_pls_base_set_node_pid(node->node->node_cellid, node->node->node_name, jobid, getpid());
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             _exit(-1);
