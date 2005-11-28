@@ -21,6 +21,7 @@
 #include <sys/bproc.h>
 
 #include "include/orte_constants.h"
+#include "opal/util/output.h"
 #include "orte/util/sys_info.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/sds/sds.h"
