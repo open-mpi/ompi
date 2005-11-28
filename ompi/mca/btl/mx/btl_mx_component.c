@@ -69,28 +69,6 @@ mca_btl_mx_component_t mca_btl_mx_component = {
 };
 
 /*
- * utility routines for parameter registration
- */
-
-static inline char* mca_btl_mx_param_register_string( const char* param_name, 
-                                                      const char* default_value )
-{
-    char *param_value;
-    int id = mca_base_param_register_string("btl","mx",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-static inline int mca_btl_mx_param_register_int( const char* param_name, 
-                                                 int default_value )
-{
-    int id = mca_base_param_register_int("btl","mx",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-/*
  *  Called by MCA framework to open the component, registers
  *  component parameters.
  */
