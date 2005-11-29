@@ -52,6 +52,7 @@ struct ompi_datatype_t;
 #define CONVERTOR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
 #define CONVERTOR_COMPLETED        0x08000000
+#define CONVERTOR_COMPUTE_CRC      0x10000000
 
 typedef int32_t (*conversion_fct_t)( uint32_t count,
                                      const void* from, uint32_t from_len, long from_extent,
@@ -92,6 +93,7 @@ struct ompi_convertor_t {
     /* All others fields get modified for every call to pack/unpack functions */
     uint32_t                      stack_pos;    /**< the actual position on the stack */
     size_t                        bConverted;   /**< # of bytes already converted */
+    uint32_t                      checksum;     /**< checksum computed by pack/unpack operation */
     char                          pending[16];  /**< bytes pending from the last conversion */
     uint32_t                      pending_length; /**< # bytes pending ... */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */
@@ -104,6 +106,15 @@ OMPI_DECLSPEC extern ompi_convertor_t* ompi_mpi_local_convertor;
 OMPI_DECLSPEC extern uint32_t          ompi_mpi_local_arch;
 
 extern conversion_fct_t ompi_ddt_copy_functions[];
+
+/*
+ *
+ */
+static inline uint32_t
+ompi_convertor_get_checksum( ompi_convertor_t* convertor )
+{
+    return convertor->checksum;
+}
 
 /*
  *

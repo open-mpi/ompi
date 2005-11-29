@@ -91,6 +91,7 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                                     struct iovec* iov, uint32_t* out_size,
                                     size_t* max_data, int32_t* freeAfter )
 {
+    pConv->checksum = 0;
     /* protect against over packing data */
     if( pConv->bConverted == (pConv->pDesc->size * pConv->count) ) {
         iov[0].iov_len = 0;
@@ -112,6 +113,7 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 {
     const ompi_datatype_t *pData = pConv->pDesc;
 
+    pConv->checksum = 0;
     /* protect against over unpacking data */
     if( pConv->bConverted == (pData->size * pConv->count) ) {
         iov[0].iov_len = 0;
@@ -176,7 +178,8 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 }
 
 static inline
-int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const int* sizes )
+int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor,
+                                             const int* sizes )
 {
     dt_stack_t* pStack = pConvertor->pStack;
     dt_elem_desc_t* pElems;
