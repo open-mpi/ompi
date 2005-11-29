@@ -80,6 +80,9 @@
 /* MPI_Fint is the same as ompi_fortran_INTEGER_t */
 #define MPI_Fint ompi_fortran_integer_t
 
+/* MPI_Flogical is the same as the ompi_fortran_logical_t */
+#define MPI_Flogical ompi_fortran_logical_t
+
 /* Do we have thread support? */
 #define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
 

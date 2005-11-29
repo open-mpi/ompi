@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_MERGE,
                            pmpi_intercomm_merge_,
                            pmpi_intercomm_merge__,
                            pmpi_intercomm_merge_f,
-                           (MPI_Fint *intercomm, MPI_Fint *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
+                           (MPI_Fint *intercomm, MPI_Flogical *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
                            (intercomm, high, newintercomm, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
                            mpi_intercomm_merge_,
                            mpi_intercomm_merge__,
                            mpi_intercomm_merge_f,
-                           (MPI_Fint *intercomm, MPI_Fint *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
+                           (MPI_Fint *intercomm, MPI_Flogical *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
                            (intercomm, high, newintercomm, ierr) )
 #endif
 
@@ -57,15 +57,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Fint *high,
-			   MPI_Fint *newintracomm, 
+void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Flogical *high,
+                           MPI_Fint *newintracomm, 
                            MPI_Fint *ierr)
 {
     MPI_Comm c_newcomm;
     MPI_Comm c_intercomm = MPI_Comm_f2c(*intercomm);
 
-    *ierr = MPI_Intercomm_merge (c_intercomm, OMPI_FINT_2_INT(*high),
-				 &c_newcomm );
+    *ierr = MPI_Intercomm_merge (c_intercomm, OMPI_LOGICAL_2_INT(*high),
+                                 &c_newcomm);
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *newintracomm = MPI_Comm_c2f (c_newcomm);
     }

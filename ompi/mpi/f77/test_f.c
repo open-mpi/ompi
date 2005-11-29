@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TEST,
                            pmpi_test_,
                            pmpi_test__,
                            pmpi_test_f,
-                           (MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST,
                            mpi_test_,
                            mpi_test__,
                            mpi_test_f,
-                           (MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
 #endif
 
@@ -59,18 +59,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_test_f(MPI_Fint *request, MPI_Fint *flag,
-		MPI_Fint *status, MPI_Fint *ierr)
+void mpi_test_f(MPI_Fint *request, MPI_Flogical *flag,
+                MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request c_req = MPI_Request_f2c(*request);
     MPI_Status c_status;
-    OMPI_SINGLE_NAME_DECL(flag);
+    OMPI_LOGICAL_NAME_DECL(flag);
 
     *ierr = OMPI_INT_2_FINT(MPI_Test(&c_req, 
-				     OMPI_SINGLE_NAME_CONVERT(flag),
-				     &c_status));
+                                     OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
+                                     &c_status));
 
-    OMPI_SINGLE_INT_2_FINT(flag);
+    OMPI_SINGLE_INT_2_LOGICAL(flag);
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);

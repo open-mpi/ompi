@@ -516,6 +516,14 @@ OMPI_F77_CHECK(COMPLEX*32, COMPLEX32, [], no, [], 32)
 OMPI_F77_GET_FORTRAN_HANDLE_MAX
 
 #
+# Check for Fortran compilers value of TRUE and for the correct assumption
+# on LOGICAL for conversion into what C considers to be a true value
+#
+OMPI_F77_GET_VALUE_TRUE
+OMPI_F77_CHECK_LOGICAL_ARRAY
+
+
+#
 # There are 2 layers to the MPI f77 layer. The only extra thing that
 # determine f77 bindings is that fortran can be disabled by user. In
 # such cases, we need to not build the target at all.  One layer

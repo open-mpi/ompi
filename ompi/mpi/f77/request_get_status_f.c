@@ -32,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS,
                            pmpi_request_get_status_,
                            pmpi_request_get_status__,
                            pmpi_request_get_status_f,
-                           (MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
 #endif
 
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
                            mpi_request_get_status_,
                            mpi_request_get_status__,
                            mpi_request_get_status_f,
-                           (MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
 #endif
 
@@ -58,24 +58,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_request_get_status_f(MPI_Fint *request, MPI_Fint *flag,
-			      MPI_Fint *status, MPI_Fint *ierr)
+void mpi_request_get_status_f(MPI_Fint *request, MPI_Flogical *flag,
+                              MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Status c_status;
     MPI_Request c_req = MPI_Request_f2c( *request ); 
-    OMPI_SINGLE_NAME_DECL(flag);
+    OMPI_LOGICAL_NAME_DECL(flag);
 
     /* This seems silly, but someone will do it */
 
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-        *flag = OMPI_INT_2_FINT(0);
+        *flag = OMPI_INT_2_LOGICAL(0);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     } else {
         *ierr = OMPI_INT_2_FINT(MPI_Request_get_status(c_req, 
-                                                       OMPI_SINGLE_NAME_CONVERT(flag),
+                                                       OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                                                        &c_status));
-        
-        OMPI_SINGLE_INT_2_FINT(flag);
+        OMPI_SINGLE_INT_2_LOGICAL(flag);
         MPI_Status_c2f( &c_status, status );
     }
 }

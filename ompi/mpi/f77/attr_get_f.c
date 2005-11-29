@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_GET,
                            pmpi_attr_get_,
                            pmpi_attr_get__,
                            pmpi_attr_get_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
                            mpi_attr_get_,
                            mpi_attr_get__,
                            mpi_attr_get_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -60,18 +60,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
 #endif
 
 void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
-		    MPI_Fint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
+                    MPI_Fint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr)
 {
-    int c_err, c_flag;
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
-    
+    OMPI_LOGICAL_NAME_DECL(flag);
+
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */
 
-    c_err = ompi_attr_get_fortran_mpi1(c_comm->c_keyhash, 
-                                       OMPI_FINT_2_INT(*keyval),
-                                       attribute_val, 
-                                       &c_flag);
-    *ierr = OMPI_INT_2_FINT(c_err);
-    *flag = OMPI_INT_2_FINT(c_flag);
+    *ierr = OMPI_INT_2_FINT(ompi_attr_get_fortran_mpi1(c_comm->c_keyhash, 
+                                                       OMPI_FINT_2_INT(*keyval),
+                                                       attribute_val,
+                                                       OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag)));
+    OMPI_SINGLE_INT_2_LOGICAL(flag);
 }

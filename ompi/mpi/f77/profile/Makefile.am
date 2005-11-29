@@ -39,8 +39,7 @@ noinst_LTLIBRARIES +=
 endif
 
 headers = \
-    defines.h \
-    prototypes_pmpi.h
+    defines.h
 
 nodist_libmpi_f77_pmpi_la_SOURCES = \
         pabort_f.c \

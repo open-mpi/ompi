@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ADDRESS,
                            pmpi_address_,
                            pmpi_address__,
                            pmpi_address_f,
-                           (char *location, MPI_Fint *address, MPI_Fint *ierr),
+                           (char *location, MPI_Aint *address, MPI_Fint *ierr),
                            (location, address, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADDRESS,
                            mpi_address_,
                            mpi_address__,
                            mpi_address_f,
-                           (char *location, MPI_Fint *address, MPI_Fint *ierr),
+                           (char *location, MPI_Aint *address, MPI_Fint *ierr),
                            (location, address, ierr) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADDRESS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_address_f(char *location, MPI_Fint *address, MPI_Fint *ierr)
+void mpi_address_f(char *location, MPI_Aint *address, MPI_Fint *ierr)
 {
     MPI_Aint addr;
 

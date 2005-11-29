@@ -104,54 +104,6 @@ base as of this writing (21 Nov 2005):
   Tests with later versions show that this has been fixed (e.g.,
   v6.0-5).
 
-- The Portland Group Fortran compilers use -1 as the default value for
-  .TRUE.  Open MPI does not currently handle this correctly.  As such,
-  the "-Munixlogical" option must be used with the Portland Fortran
-  compiler to force it to use 1 as the value for .TRUE.  
-
-  ******************************************************************
-  *** NOTE: It is also necessary to compile all MPI applications ***
-  *** with these flags!                                          ***
-  ******************************************************************
-
-  The Open MPI team recommends using setting FFLAGS and FCFLAGS as
-  well as using the --with-wrapper-fflags and --with-wrapper-fcflags
-  arguments to configure.  This both compiles Open MPI and all MPI
-  applications (that are compiled with mpif77 or mpif90) with the
-  appropriate compiler flags.  For example:
-
-  shell$ ./configure \
-         FFLAGS=-Munixlogical \
-         FCFLAGS=-Munixlogical \
-         --with-wrapper-fflags=-Munixlogical \
-         --with-wrapper-fcflags=-Munixlogical ...
-
-  This will be fixed in a future version of Open MPI.
-                                   
-- For any version of the Intel compiler >= 8.0, the default value for
-  .TRUE. is -1.  Open MPI does not currently handle this correctly.
-  As such, the "-fpscomp logicals" option must be used with the Intel
-  Fortran compiler in to force it to use 1 as the value for .TRUE.
-
-  ******************************************************************
-  *** NOTE: It is also necessary to compile all MPI applications ***
-  *** with these flags!                                          ***
-  ******************************************************************
-
-  The Open MPI team recommends using setting FFLAGS and FCFLAGS as
-  well as using the --with-wrapper-fflags and --with-wrapper-fcflags
-  arguments to configure.  This both compiles Open MPI and all MPI
-  applications (that are compiled with mpif77 or mpif90) with the
-  appropriate compiler flags.  For example:
-
-  shell$ ./configure \
-         "FFLAGS=-fpscomp logicals" \
-         "FCLAGS=-fpscomp logicals" \
-         "--with-wrapper-fflags=-fpscomp logicals" \
-         "--with-wrapper-fcflags=-fpscomp logicals"
-
-  This will be fixed in a future version of Open MPI.
-
 - Open MPI will build bindings suitable for all common forms of
   Fortran 77 compiler symbol mangling on platforms that support it
   (e.g., Linux).  On platforms that do not support weak symbols (e.g.,
@@ -179,7 +131,10 @@ base as of this writing (21 Nov 2005):
      .TRUE. constant.  As such, any MPI function that uses the fortran
      LOGICAL type may only get .TRUE. values back that correspond to
      the the .TRUE. value of the Fortran compiler that Open MPI was
-     configured with.
+     configured with.  Note that some Fortran compilers allow forcing
+     .TRUE. to be 1 and .FALSE. to be 0.  For example, the Portland
+     Group compilers provide the "-Munixlogical" option, and Intel
+     compilers (version >= 8.) provide the "-fpscomp logicals" option.
 
   You can use the ompi_info command to see the Fortran compiler that
   Open MPI was configured with.

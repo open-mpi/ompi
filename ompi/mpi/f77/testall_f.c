@@ -34,7 +34,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTALL,
                            pmpi_testall_,
                            pmpi_testall__,
                            pmpi_testall_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Flogical *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, flag, array_of_statuses, ierr) )
 #endif
 
@@ -51,7 +51,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTALL,
                            mpi_testall_,
                            mpi_testall__,
                            mpi_testall_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Flogical *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, flag, array_of_statuses, ierr) )
 #endif
 
@@ -62,15 +62,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTALL,
 
 static const char FUNC_NAME[] = "MPI_TESTALL";
 
-
-void mpi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr)
+void mpi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Flogical *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status *c_status;
     int i;
-    OMPI_SINGLE_NAME_DECL(flag);
+    OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_req = malloc(OMPI_FINT_2_INT(*count) * 
+    c_req = malloc(OMPI_FINT_2_INT(*count) *
                    (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req){
         *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
@@ -83,12 +82,15 @@ void mpi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *flag,
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Testall(OMPI_FINT_2_INT(*count), c_req, 
-                                        OMPI_SINGLE_NAME_CONVERT(flag), 
+    *ierr = OMPI_INT_2_FINT(MPI_Testall(OMPI_FINT_2_INT(*count), c_req,
+                                        OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                                         c_status));
 
-    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) && 
-        1 == *(OMPI_SINGLE_NAME_CONVERT(flag))) {
+    OMPI_SINGLE_INT_2_LOGICAL(flag);
+    /*
+     * All Fortran Compilers have FALSE == 0 -- we just need a TRUE value, i.e. *flag != 0
+     */
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) && *flag) {
         for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
             if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
