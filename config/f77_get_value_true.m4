@@ -68,11 +68,7 @@ void $ompi_ac_print_logical_fn(ompi_fortran_logical_t * logical)
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
 
-    if( 1 == sizeof(ompi_fortran_logical_t) ) {
-        fprintf(f, "%d\n", (int)*logical);
-    } else if( 2 == sizeof(ompi_fortran_logical_t) ) {
-        fprintf(f, "%d\n", (int)*logical);
-    } else if( 4 == sizeof(ompi_fortran_logical_t) ) {
+    if( SIZEOF_INT >= sizeof(ompi_fortran_logical_t) ) {
         fprintf(f, "%d\n", (int)*logical);
     } else {
         exit(1);
