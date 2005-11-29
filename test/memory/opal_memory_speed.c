@@ -44,7 +44,8 @@ main(int argc, char *argv[])
     long time;
 
     opal_init();
-    if (!opal_mem_free_is_supported()) {
+    if (0 == ((OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MALLOC_SUPPORT) &
+              opal_mem_hooks_support_level())) {
         printf("no memory registration supported.  skipping\n");
         return 77;
     }
@@ -72,7 +73,7 @@ main(int argc, char *argv[])
            iters, time, (double) time / iters);
 
     printf("speed with empty handler:\n");
-    retval = opal_mem_free_register_handler(callback, NULL);
+    retval = opal_mem_hooks_register_release(callback, NULL);
     if (retval != OMPI_SUCCESS) {
         printf("handler registration failed\n");
         return retval;
@@ -97,7 +98,7 @@ main(int argc, char *argv[])
         (end.tv_usec - start.tv_usec);
     printf("  free: %d calls in %ld microseconds.  %lf microseconds/call\n",
            iters, time, (double) time / iters);
-    opal_mem_free_unregister_handler(callback);
+    opal_mem_hooks_unregister_release(callback);
 
     printf("speed without a handler:\n");
 
@@ -122,7 +123,7 @@ main(int argc, char *argv[])
            iters, time, (double) time / iters);
 
     printf("speed with empty handler:\n");
-    retval = opal_mem_free_register_handler(callback, NULL);
+    retval = opal_mem_hooks_register_release(callback, NULL);
     if (retval != OMPI_SUCCESS) {
         printf("handler registration failed\n");
         return retval;
@@ -147,7 +148,7 @@ main(int argc, char *argv[])
         (end.tv_usec - start.tv_usec);
     printf("  free: %d calls in %ld microseconds.  %lf microseconds/call\n",
            iters, time, (double) time / iters);
-    opal_mem_free_unregister_handler(callback);
+    opal_mem_hooks_unregister_release(callback);
 
     opal_finalize();
 

@@ -30,14 +30,16 @@
 #ifndef OPAL_MEMORY_MEMORY_H
 #define OPAl_MEMORY_MEMORY_H
 
+#include "memory_internal.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
 
-int opal_mem_free_init(void);
+int opal_mem_hooks_init(void);
 
-int opal_mem_free_finalize(void);
+int opal_mem_hooks_finalize(void);
 
 
 /**
@@ -56,26 +58,10 @@ int opal_mem_free_finalize(void);
  * @param cbdata  Pointer-length of information passed to 
  *                the handler registration function.
  */
-typedef void (opal_mem_free_unpin_fn_t)(void *buf, size_t length, void *cbdata);
+typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length, void *cbdata);
 
 
-/**
- * Query functionality of memory callbacks
- *
- * Query whether the system is capable of providing callbacks when
- * memory is about to be released by a process.
- *
- * @retval true opal_mem_free_register_handler() will not return 
- *              \c OMPI_ERR_NOT_SUPPORTED.
- * @retval false opal_mem_free_register_handler() will always return
- *              \c OMPI_ERR_NOT_SUPPORTED.
- *
- * \note There is no reason you have to call this function before
- * calling opal_mem_free_register_handler().  It exists for component
- * selection logic that may want to see what the status of the memory
- * hook support is without actually registering anything.
- */
-bool opal_mem_free_is_supported(void);
+int opal_mem_hooks_support_level(void);
 
 
 /**
@@ -94,7 +80,9 @@ bool opal_mem_free_is_supported(void);
  * @retval OMPI_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be released
  */
-int opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata);
+int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata);
+
+int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, void *cbdata);
 
 
 /**
@@ -107,7 +95,8 @@ int opal_mem_free_register_handler(opal_mem_free_unpin_fn_t *func, void *cbdata)
  * @retval OMPI_SUCCESS The function was successfully deregistered
  * @retval OMPI_ERR_NOT_FOUND The function was not previously registered
  */
-int opal_mem_free_unregister_handler(opal_mem_free_unpin_fn_t *func);
+int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func);
+int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

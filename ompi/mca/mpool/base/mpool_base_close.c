@@ -59,8 +59,9 @@ int mca_mpool_base_close(void)
                             &mca_mpool_base_components, NULL);
 
   /* deregister memory free callback */
-  if(mca_mpool_base_use_mem_hooks && opal_mem_free_is_supported()) {
-      opal_mem_free_unregister_handler(mca_mpool_base_mem_cb);
+  if(mca_mpool_base_use_mem_hooks && 
+     0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+      opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
   }
   /* All done */
 
