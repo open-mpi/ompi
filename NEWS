@@ -31,6 +31,8 @@ version 1.0.
 1.0.1
 -----
 
+- Fixed several Fortran MPI API implementations that incorrectly used
+  integers instead of logicals or address-sized integers.
 - Fix so that Open MPI correctly handles the Fortran value for .TRUE.,
   regardless of what the Fortran compiler's value for .TRUE. is.
 - Improved scalability of MX startup.
