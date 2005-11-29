@@ -31,6 +31,9 @@ version 1.0.
 1.0.1
 -----
 
+- Improved latency of TCP BTL.
+- Fixed index value in MPI_TESTANY to be MPI_UNDEFINED if some
+  requests were not MPI_REQUEST_NULL, but no requests finished.
 - Fixed several Fortran MPI API implementations that incorrectly used
   integers instead of logicals or address-sized integers.
 - Fix so that Open MPI correctly handles the Fortran value for .TRUE.,
