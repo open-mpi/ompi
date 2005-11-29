@@ -20,7 +20,7 @@ opal_mem_free_ptmalloc2_sbrk(int inc)
 {
   if (inc < 0) {
     long oldp = (long) sbrk(0);
-    opal_mem_free_release_hook((void*) (oldp + inc), -inc);
+    opal_mem_hooks_release_hook((void*) (oldp + inc), -inc);
   }
 
   return sbrk(inc);

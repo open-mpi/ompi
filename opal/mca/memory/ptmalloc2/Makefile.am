@@ -45,8 +45,6 @@ libmca_memory_ptmalloc2_la_SOURCES = \
    malloc.c \
    malloc-stats.c \
    malloc.h
-libmca_memory_ptmalloc2_la_LIBADD = \
-   $(top_ompi_builddir)/opal/libopal.la
             
 # these are included directly and shouldn't be built solo
 EXTRA_libmca_memory_ptmalloc2_la_SOURCES = \

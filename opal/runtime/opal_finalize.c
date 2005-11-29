@@ -64,7 +64,7 @@ int opal_finalize(void)
     mca_base_close();
 
     /* finalize the memory manager / tracker */
-    opal_mem_free_finalize();
+    opal_mem_hooks_finalize();
 
     /* finalize the memory allocator */
     opal_malloc_finalize();

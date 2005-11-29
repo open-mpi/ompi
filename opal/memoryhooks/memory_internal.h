@@ -19,7 +19,22 @@
 #ifndef OPAL_MEMORY_MEMORY_INTERNAL_H
 #define OPAL_MEMORY_MEMORY_INTERNAL_H
 
-void opal_mem_free_set_free_support(int support);
-void opal_mem_free_release_hook(void *buf, size_t length);
+#define OPAL_MEMORY_FREE_SUPPORT   0x0001
+#define OPAL_MEMORY_MALLOC_SUPPORT 0x0002
+#define OPAL_MEMORY_CHUNK_SUPPORT  0x0004
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+void opal_mem_hooks_set_support(int support);
+
+void opal_mem_hooks_release_hook(void *buf, size_t length);
+void opal_mem_hooks_alloc_hook(void *buf, size_t length);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 
 #endif /* OPAL_MEMORY_MEMORY_INTERNAL_H */

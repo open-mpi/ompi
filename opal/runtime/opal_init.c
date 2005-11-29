@@ -112,7 +112,7 @@ int opal_init(void)
     }
 
     /* initialize the memory manager / tracker */
-    if (OPAL_SUCCESS != opal_mem_free_init()) {
+    if (OPAL_SUCCESS != opal_mem_hooks_init()) {
         error = "opal_mem_free_init";
         goto return_error;
     }

@@ -33,7 +33,7 @@ int
 munmap(void* addr, size_t len)
 {
     /* dispatch about the pending release */
-    opal_mem_free_release_hook(addr, len);
+    opal_mem_hooks_release_hook(addr, len);
 
     if (NULL == realmunmap) {
         realmunmap = (int (*)(void*, size_t)) dlsym(RTLD_NEXT, "munmap");
@@ -47,7 +47,7 @@ munmap(void* addr, size_t len)
 int
 opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
 {
-    opal_mem_free_release_hook(start, length);
+    opal_mem_hooks_release_hook(start, length);
 
     if (NULL == realmunmap) {
         realmunmap = (int (*)(void*, size_t)) dlsym(RTLD_NEXT, "munmap");

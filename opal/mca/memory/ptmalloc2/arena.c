@@ -468,7 +468,7 @@ ptmalloc_init __MALLOC_P((void))
 /********************** BEGIN OMPI CHANGES *****************************/
   /* don't use __hook for this, as someone might want to use those
      features */
-  opal_mem_free_set_free_support(1);
+  opal_mem_hooks_set_support(OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_CHUNK_SUPPORT);
 /********************* BEGIN OMPI CHANGES ******************************/
 
   __malloc_initialized = 1;

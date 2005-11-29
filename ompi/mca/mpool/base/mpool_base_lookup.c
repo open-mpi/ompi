@@ -84,8 +84,8 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     /* on the very first creation of a module we init the memory callback*/ 
     if(mca_mpool_base_use_mem_hooks &&
        opal_list_get_size(&mca_mpool_base_modules) == 1 &&
-       opal_mem_free_is_supported()) {
-        opal_mem_free_register_handler(mca_mpool_base_mem_cb, NULL);
+       0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+        opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
     }
     return module; 
 }

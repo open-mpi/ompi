@@ -65,6 +65,8 @@ AC_DEFUN([MCA_memory_darwin_CONFIG],[
          [AC_MSG_ERROR([Darwin memory management requested but not available.  Aborting.])])
 
     AS_IF([test "$memory_darwin_happy" = "yes"],
-          [memory_darwin_WRAPPER_EXTRA_LDFLAGS="-Wl,-u,_munmap -Wl,-multiply_defined,suppress"
+          [# Yes, we really do want to screw with LDFLAGS here...
+           LDFLAGS="$LDFLAGS -Wl,-multiply_defined,suppress"
+           memory_darwin_WRAPPER_EXTRA_LDFLAGS="-Wl,-u,_munmap -Wl,-multiply_defined,suppress"
            $1], [$2])
 ])

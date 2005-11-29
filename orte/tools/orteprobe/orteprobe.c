@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     opal_malloc_init();
 
     /* initialize the memory manager / tracker */
-    opal_mem_free_init();
+    opal_mem_hooks_init();
 
     opal_memory_base_open();
 

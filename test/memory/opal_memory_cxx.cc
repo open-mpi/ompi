@@ -46,12 +46,13 @@ main(int argc, char *argv[])
 
     opal_init();
 
-    if (0 == (int) opal_mem_free_is_supported()) {
+    if (0 == ((OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MALLOC_SUPPORT) &
+              opal_mem_hooks_support_level())) {
         printf("no memory registration supported.  skipping\n");
         return 77;
     }
 
-    retval = opal_mem_free_register_handler(callback, NULL);
+    retval = opal_mem_hooks_register_release(callback, NULL);
     if (retval != OMPI_SUCCESS) return retval;
 
     vector<int> *big_vec;
@@ -71,7 +72,7 @@ main(int argc, char *argv[])
 
     printf("    - all done\n");
 
-    retval = opal_mem_free_unregister_handler(callback);
+    retval = opal_mem_hooks_unregister_release(callback);
     if (retval != OMPI_SUCCESS) return retval;
 
     opal_finalize();
