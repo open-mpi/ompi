@@ -1,6 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*  
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
 #include "mpi.h"
-#include "mpio.h"  /* not necessary with MPICH 1.1.1 or HPMPI 1.4 */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -40,6 +43,22 @@ struct ADIO_cb_name_arrayD {
 };  
 typedef struct ADIO_cb_name_arrayD *ADIO_cb_name_array;
 
+void handle_error(int errcode, char *str);
+int cb_copy_name_array(MPI_Comm comm, 
+		       int *keyval, 
+		       void *extra, 
+		       void *attr_in,
+		       void **attr_out, 
+		       int *flag);
+int cb_delete_name_array(MPI_Comm comm, 
+			 int *keyval, 
+			 void *attr_val, 
+			 void *extra);
+int cb_gather_name_array(MPI_Comm comm, ADIO_cb_name_array *arrayp);
+void default_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
+void reverse_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
+void reverse_alternating_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
+void simple_shuffle_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
 
 
 void handle_error(int errcode, char *str) 
@@ -244,9 +263,9 @@ void default_str(int mynod, int len, ADIO_cb_name_array array, char *dest)
 		    p = snprintf(ptr, len, "%s,", array->names[i]);
 		    ptr += p;
 	    }
+	    /* chop off that last comma */
+	    dest[strlen(dest) - 1] = '\0';
 	}
-	/* chop off that last comma */
-	dest[strlen(dest) - 1] = '\0';
 	MPI_Bcast(dest, len, MPI_CHAR, 0, MPI_COMM_WORLD);
 }
 void reverse_str(int mynod, int len, ADIO_cb_name_array array, char *dest) 
@@ -259,8 +278,8 @@ void reverse_str(int mynod, int len, ADIO_cb_name_array array, char *dest)
 		    p = snprintf(ptr, len, "%s,", array->names[i]);
 		    ptr += p;
 	    }
+	    dest[strlen(dest) - 1] = '\0';
 	}
-	dest[strlen(dest) - 1] = '\0';
 	MPI_Bcast(dest, len, MPI_CHAR, 0, MPI_COMM_WORLD);
 }
 
@@ -280,9 +299,9 @@ void reverse_alternating_str(int mynod, int len, ADIO_cb_name_array array, char 
 		    p = snprintf(ptr, len, "%s,", array->names[i]);
 		    ptr += p;
 	    }
-    }
-	dest[strlen(dest) - 1] = '\0';
-    MPI_Bcast(dest, len, MPI_CHAR, 0, MPI_COMM_WORLD);
+	    dest[strlen(dest) - 1] = '\0';
+	}
+	MPI_Bcast(dest, len, MPI_CHAR, 0, MPI_COMM_WORLD);
 }
 
 void simple_shuffle_str(int mynod, int len, ADIO_cb_name_array array, char *dest)
@@ -299,8 +318,8 @@ void simple_shuffle_str(int mynod, int len, ADIO_cb_name_array array, char *dest
 		    p = snprintf(ptr, len, "%s,", array->names[i]);
 		    ptr += p;
 	    }
+	    dest[strlen(dest) - 1] = '\0';
 	}
-	dest[strlen(dest) - 1] = '\0';
 	MPI_Bcast(dest, len, MPI_CHAR, 0, MPI_COMM_WORLD);
 }
 
@@ -316,6 +335,7 @@ int main(int argc, char **argv)
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod); 
+
     
     /* process 0 takes the file name as a command-line argument and 
    broadcasts it to other processes */
@@ -391,7 +411,7 @@ int main(int argc, char **argv)
 	 
     if (!mynod) {
 	    if (sum_errs) fprintf(stderr, "Found %d error cases\n", sum_errs);
-	    else printf("No errors.\n");
+	    else printf(" No Errors\n");
     }
     free(filename);
     free(cb_config_string);
@@ -411,8 +431,13 @@ int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, char *msg,
     int SIZE = (STARTING_SIZE/nprocs)*nprocs;
     MPI_Info info;
 
+    if (mynod==0 && verbose) fprintf(stderr, "%s\n", msg);
+
     buf = (int *) malloc(SIZE*sizeof(int));
-    if (verbose) fprintf(stderr, "[%d/%d] caller buffer: %p\n",mynod, nprocs, buf);
+    if (buf == NULL) {
+	    perror("test_file");
+	    MPI_Abort(MPI_COMM_WORLD, -1);
+    }
 
 
     if (cb_hosts != NULL ) {

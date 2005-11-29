@@ -1,7 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_testfs_read.c,v 1.6 2002/10/24 17:01:05 gropp Exp $    
- *
  *   Copyright (C) 2001 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
@@ -29,7 +27,7 @@ void ADIOI_TESTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	fd->fp_ind += datatype_size * count;
 	fd->fp_sys_posn = fd->fp_ind;
 #if 0
-	FPRINTF(stdout, "[%d/%d]    new file position is %Ld\n", myrank, 
+	FPRINTF(stdout, "[%d/%d]    new file position is %lld\n", myrank, 
 		nprocs, (long long) fd->fp_ind);
 #endif
     }
@@ -37,8 +35,8 @@ void ADIOI_TESTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	fd->fp_sys_posn = offset + datatype_size * count;
     }
 
-    FPRINTF(stdout, "[%d/%d]    reading (buf = 0x%x, loc = %Ld, sz = %Ld)\n",
-	    myrank, nprocs, (int) buf, (long long) offset, 
+    FPRINTF(stdout, "[%d/%d]    reading (buf = %p, loc = %lld, sz = %lld)\n",
+	    myrank, nprocs, buf, (long long) offset, 
 	    (long long) datatype_size * count);
 
 #ifdef HAVE_STATUS_SET_BYTES

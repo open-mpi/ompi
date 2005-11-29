@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/*  $Id: mpio_error.h,v 1.5 2002/11/15 16:26:23 gropp Exp $
+/*  $Id: mpio_error.h,v 1.6 2005/05/23 23:27:50 rross Exp $
  *
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
@@ -54,6 +54,7 @@
 #define MPIR_ERR_NO_XFS 17
 #define MPIR_ERR_NO_SFS 19
 #define MPIR_ERR_NO_PVFS 21
+#define MPIR_ERR_NO_PANFS 22
 #define MPIR_ERR_MULTIPLE_SPLIT_COLL 23
 #define MPIR_ERR_NO_SPLIT_COLL 25
 #define MPIR_ERR_ASYNC_OUTSTANDING 27

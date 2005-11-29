@@ -28,6 +28,8 @@ libromio_dist_la_SOURCES =
 libromio_dist_la_LIBADD  = \
 	adio/libadio.la \
 	mpi-io/libmpi-io.la \
-	$(MCA_io_romio_STATIC_LTLIBS)
+	mpi-io/glue/openmpi/libglue.la \
+	$(MCA_io_romio_STATIC_LTLIBS) \
+	@ROMIO_LIBLIST@
 libromio_dist_la_DEPENDENCIES = \
 	$(libromio_dist_la_LIBADD)

@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_pfs_read.c,v 1.6 2002/10/24 17:00:52 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -16,9 +15,7 @@ void ADIOI_PFS_ReadContig(ADIO_File fd, void *buf, int count,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
     int err=-1, datatype_size, len;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_PFS_READCONTIG";
-#endif
 
     MPI_Type_size(datatype, &datatype_size);
     len = datatype_size * count;
@@ -68,24 +65,11 @@ void ADIOI_PFS_ReadContig(ADIO_File fd, void *buf, int count,
     if (err != -1) MPIR_Status_set_bytes(status, datatype, err);
 #endif
 
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
     if (err == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);	    
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**io",
+					   "**io %s", strerror(errno));
     }
     else *error_code = MPI_SUCCESS;
-#endif
-}
-
-
-void ADIOI_PFS_ReadStrided(ADIO_File fd, void *buf, int count,
-                       MPI_Datatype datatype, int file_ptr_type,
-                       ADIO_Offset offset, ADIO_Status *status, int
-                       *error_code)
-{
-    ADIOI_GEN_ReadStrided(fd, buf, count, datatype, file_ptr_type,
-                        offset, status, error_code);
 }

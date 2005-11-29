@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_pfs_hints.c,v 1.4 2002/10/24 17:00:51 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,7 +14,7 @@ void ADIOI_PFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     struct sattr attr;
     int err, myrank, fd_sys, perm, amode, old_mask;
 
-    if (!(fd->info)) {
+    if ( (fd->info) == MPI_INFO_NULL) {
 	/* This must be part of the open call. can set striping parameters 
            if necessary. */ 
 	MPI_Info_create(&(fd->info));
@@ -31,10 +30,14 @@ void ADIOI_PFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		str_factor=atoi(value);
 		tmp_val = str_factor;
 		MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
+		/* --BEGIN ERROR HANDLING-- */
 		if (tmp_val != str_factor) {
-		    FPRINTF(stderr, "ADIOI_PFS_SetInfo: the value for key \"striping_factor\" must be the same on all processes\n");
-		    MPI_Abort(MPI_COMM_WORLD, 1);
+		    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
+						       "striping_factor",
+						       error_code);
+		    return;
 		}
+		/* --END ERROR HANDLING-- */
 	    }
 
 	    MPI_Info_get(users_info, "striping_unit", MPI_MAX_INFO_VAL, 
@@ -43,10 +46,14 @@ void ADIOI_PFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		str_unit=atoi(value);
 		tmp_val = str_unit;
 		MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
+		/* --BEGIN ERROR HANDLING-- */
 		if (tmp_val != str_unit) {
-		    FPRINTF(stderr, "ADIOI_PFS_SetInfo: the value for key \"striping_unit\" must be the same on all processes\n");
-		    MPI_Abort(MPI_COMM_WORLD, 1);
+		    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
+						       "striping_unit",
+						       error_code);
+		    return;
 		}
+		/* --END ERROR HANDLING-- */
 	    }
 
 	    MPI_Info_get(users_info, "start_iodevice", MPI_MAX_INFO_VAL, 
@@ -55,10 +62,14 @@ void ADIOI_PFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		start_iodev=atoi(value);
 		tmp_val = start_iodev;
 		MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
+		/* --BEGIN ERROR HANDLING-- */
 		if (tmp_val != start_iodev) {
-		    FPRINTF(stderr, "ADIOI_PFS_SetInfo: the value for key \"start_iodevice\" must be the same on all processes\n");
-		    MPI_Abort(MPI_COMM_WORLD, 1);
+		    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname,
+						       "start_iodevice",
+						       error_code);
+		    return;
 		}
+		/* --END ERROR HANDLING-- */
 	    }
 
          /* if user has specified striping info, process 0 tries to set it */

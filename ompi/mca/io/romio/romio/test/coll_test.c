@@ -1,6 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*  
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
 #include "mpi.h"
-#include "mpio.h"  /* not necessary with MPICH 1.1.1 or HPMPI 1.4 */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -15,6 +18,17 @@
 
 /* Note that the file access pattern is noncontiguous. */
    
+void handle_error(int errcode, char *str);
+
+void handle_error(int errcode, char *str)
+{
+	char msg[MPI_MAX_ERROR_STRING];
+	int resultlen;
+	MPI_Error_string(errcode, msg, &resultlen);
+	fprintf(stderr, "%s: %s\n", str, msg);
+	MPI_Abort(MPI_COMM_WORLD, 1);
+}
+
 int main(int argc, char **argv)
 {
     MPI_Datatype newtype;
@@ -23,9 +37,12 @@ int main(int argc, char **argv)
     int array_of_dargs[3], array_of_psizes[3];
     int *readbuf, *writebuf, bufcount, mynod, *tmpbuf, array_size;
     char *filename;
+    int errs=0, toterrs;
     MPI_File fh;
     MPI_Status status;
     MPI_Request request;
+    MPI_Info info = MPI_INFO_NULL;
+    int errcode;
 
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod);
@@ -108,28 +125,64 @@ int main(int argc, char **argv)
     }
 /* end of initialization */
 
+#if 0 
+    /* XXX: make the romio testcases handle more than one command line 
+     * argument.. like --aggregation  */
+    
+    /* for deferred open: hint stuff */
+    MPI_Info_create(&info);
+    MPI_Info_set(info, "romio_no_indep_rw", "true");
+    MPI_Info_set(info, "romio_cb_read", "enable");
+    MPI_Info_set(info, "romio_cb_write", "enable");
+    MPI_Info_set(info, "cb_nodes", "1");
+    MPI_Info_set(info, "cb_config_list", "schwinn.mcs.anl.gov:1");
+#endif
+
+
     /* write the array to the file */
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
-                  MPI_INFO_NULL, &fh);
-    MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
-    MPI_File_write_all(fh, writebuf, bufcount, MPI_INT, &status);
-    MPI_File_close(&fh);
+    errcode = MPI_File_open(MPI_COMM_WORLD, filename, 
+		    MPI_MODE_CREATE | MPI_MODE_RDWR, info, &fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
+   
+    errcode = MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", info);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_set_view");
+
+    errcode = MPI_File_write_all(fh, writebuf, bufcount, MPI_INT, &status);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_write_all");
+    errcode = MPI_File_close(&fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_close");
 
 
     /* now read it back */
     readbuf = (int *) malloc(bufcount * sizeof(int));
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
-                  MPI_INFO_NULL, &fh);
-    MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
-    MPI_File_read_all(fh, readbuf, bufcount, MPI_INT, &status);
-    MPI_File_close(&fh);
+    errcode = MPI_File_open(MPI_COMM_WORLD, filename, 
+		    MPI_MODE_CREATE | MPI_MODE_RDWR, info, &fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
+
+    errcode = MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", info);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_set_view");
+    errcode = MPI_File_read_all(fh, readbuf, bufcount, MPI_INT, &status);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_read_all");
+    errcode = MPI_File_close(&fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_close");
 
     /* check the data read */
-    for (i=0; i<bufcount; i++) 
-	if (readbuf[i] != writebuf[i])
+    for (i=0; i<bufcount; i++) {
+	if (readbuf[i] != writebuf[i]) {
+	    errs++;
 	    fprintf(stderr, "Process %d, readbuf %d, writebuf %d, i %d\n", mynod, readbuf[i], writebuf[i], i);
+	}
+    }
 
-    if (!mynod) fprintf(stderr, "Done\n");
+    MPI_Allreduce( &errs, &toterrs, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+    if (mynod == 0) {
+	if( toterrs > 0) {
+	    fprintf( stderr, "Found %d errors\n", toterrs );
+	}
+	else {
+	    fprintf( stdout, " No Errors\n" );
+	}
+    }
 
     MPI_Type_free(&newtype);
     free(readbuf);

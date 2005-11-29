@@ -1,25 +1,18 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_nfs_wait.c,v 1.8 2002/10/24 17:00:48 gropp Exp $    
- *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_nfs.h"
 
-void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *error_code)  
+void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status,
+			    int *error_code)
 {
-#ifndef NO_AIO
-#ifndef PRINT_ERR_MSG
-    static char myname[] = "ADIOI_NFS_READCOMPLETE";
-#endif
-#ifdef AIO_SUN 
-    aio_result_t *result=0, *tmp;
-#else
+#ifdef ROMIO_HAVE_WORKING_AIO
     int err;
-#endif
-#ifdef AIO_HANDLE_IN_AIOCB
+    static char myname[] = "ADIOI_NFS_READCOMPLETE";
+#ifdef ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_HANDLE
     struct aiocb *tmp1;
 #endif
 #endif
@@ -28,45 +21,9 @@ void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *err
 	*error_code = MPI_SUCCESS;
 	return;
     }
-
-#ifdef AIO_SUN
-    if ((*request)->queued) {  /* dequeue it */
-	tmp = (aio_result_t *) (*request)->handle;
-	while (tmp->aio_return == AIO_INPROGRESS) usleep(1000); 
-	/* sleep for 1 ms., until done. Is 1 ms. a good number? */
-	/* when done, dequeue any one request */
-	result = (aio_result_t *) aiowait(0);
-
-        (*request)->nbytes = tmp->aio_return;
-
-#ifdef PRINT_ERR_MSG
-	*error_code = (tmp->aio_return == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
-	if (tmp->aio_return == -1) {
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			  myname, "I/O Error", "%s", strerror(tmp->aio_errno));
-	    ADIOI_Error((*request)->fd, *error_code, myname);	    
-	}
-	else *error_code = MPI_SUCCESS;
-#endif
-
-/* aiowait only dequeues a request. The completion of a request can be
-   checked by just checking the aio_return flag in the handle passed
-   to the original aioread()/aiowrite(). Therefore, I need to ensure
-   that aiowait() is called exactly once for each previous
-   aioread()/aiowrite(). This is also taken care of in ADIOI_xxxDone */
-    }
-    else *error_code = MPI_SUCCESS;
-
-#ifdef HAVE_STATUS_SET_BYTES
-    if ((*request)->nbytes != -1)
-	MPIR_Status_set_bytes(status, (*request)->datatype, (*request)->nbytes);
-#endif
-
-#endif
     
-#ifdef AIO_HANDLE_IN_AIOCB
-/* IBM */
+#ifdef ROMIO_HAVE_AIO_SUSPEND_TWO_ARGS
+/* old IBM */
     if ((*request)->queued) {
 	do {
 #if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
@@ -88,29 +45,26 @@ void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *err
    IBM man pages don't indicate what function to use for dequeue.
    I'm assuming it is aio_return! */
 
-#ifdef PRINT_ERR_MSG
-	*error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
 	if (err == -1) {
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-	 	            myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error((*request)->fd, *error_code, myname);	    
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE, myname,
+					       __LINE__, MPI_ERR_IO, "**io",
+					       "**io %s", strerror(errno));
 	}
 	else *error_code = MPI_SUCCESS;
-#endif
     }
-    else *error_code = MPI_SUCCESS;
+    else *error_code = MPI_SUCCESS;  /* if ( (*request)->queued ) */
 
 #ifdef HAVE_STATUS_SET_BYTES
     if ((*request)->nbytes != -1)
 	MPIR_Status_set_bytes(status, (*request)->datatype, (*request)->nbytes);
 #endif
 
-#elif (!defined(NO_AIO) && !defined(AIO_SUN))
-/* DEC, SGI IRIX 5 and 6 */
+#elif defined(ROMIO_HAVE_WORKING_AIO)
+/* all other aio types */
     if ((*request)->queued) {
 	do {
-	    err = aio_suspend((const aiocb_t **) &((*request)->handle), 1, 0);
+	    err = aio_suspend((const struct aiocb **) &((*request)->handle), 1, 0);
 	} while ((err == -1) && (errno == EINTR));
 
 	if (err != -1) {
@@ -120,25 +74,22 @@ void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *err
 	}
 	else (*request)->nbytes = -1;
 
-#ifdef PRINT_ERR_MSG
-	*error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
 	if (err == -1) {
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-	 	            myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error((*request)->fd, *error_code, myname);	    
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE, myname,
+					       __LINE__, MPI_ERR_IO, "**io",
+					       "**io %s", strerror(errno));
 	}
 	else *error_code = MPI_SUCCESS;
-#endif
     }
-    else *error_code = MPI_SUCCESS;
+    else *error_code = MPI_SUCCESS;  /* if ((*request)->queued) ... */
 #ifdef HAVE_STATUS_SET_BYTES
     if ((*request)->nbytes != -1)
 	MPIR_Status_set_bytes(status, (*request)->datatype, (*request)->nbytes);
 #endif
 #endif
 
-#ifndef NO_AIO
+#ifdef ROMIO_HAVE_WORKING_AIO
     if ((*request)->queued != -1) {
 
 	/* queued = -1 is an internal hack used when the request must
@@ -160,7 +111,7 @@ void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *err
     }
 
 #else
-/* HP, FreeBSD, Linux */
+/* no aio */
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, (*request)->datatype, (*request)->nbytes);
@@ -173,7 +124,8 @@ void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *err
 }
 
 
-void ADIOI_NFS_WriteComplete(ADIO_Request *request, ADIO_Status *status, int *error_code)  
+void ADIOI_NFS_WriteComplete(ADIO_Request *request, ADIO_Status *status,
+			     int *error_code)
 {
     ADIOI_NFS_ReadComplete(request, status, error_code);
 }

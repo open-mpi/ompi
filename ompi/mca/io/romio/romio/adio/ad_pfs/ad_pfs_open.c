@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_pfs_open.c,v 1.6 2002/10/24 17:00:52 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -16,9 +15,7 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
     int perm, amode, old_mask, np_comm, np_total, err, flag;
     char *value;
     struct sattr attr;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_PFS_OPEN";
-#endif
 
     if (fd->perm == ADIO_PERM_NULL) {
 	old_mask = umask(022);
@@ -46,11 +43,12 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
     MPE_Log_event(1, 0, "start open");
 #endif
     if (np_total == np_comm) 
-	fd->fd_sys = _gopen(fd->filename,amode,fd->iomode,perm);
+	fd->fd_sys = _gopen(fd->filename, amode, M_ASYNC, perm);
     else fd->fd_sys = open(fd->filename, amode, perm);
 #ifdef PROFILE
     MPE_Log_event(2, 0, "end open");
 #endif
+    fd->fd_direct = -1;
 
     if (fd->fd_sys != -1) {
 	value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
@@ -71,13 +69,13 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
 	err = fcntl(fd->fd_sys, F_GETSATTR, &attr);
 
 	if (!err) {
-	    sprintf(value, "%d", attr.s_sunitsize);
+	    ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", attr.s_sunitsize);
 	    MPI_Info_set(fd->info, "striping_unit", value);
 
-	    sprintf(value, "%d", attr.s_sfactor);
+	    ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", attr.s_sfactor);
 	    MPI_Info_set(fd->info, "striping_factor", value);
 
-	    sprintf(value, "%d", attr.s_start_sdir);
+	    ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", attr.s_start_sdir);
 	    MPI_Info_set(fd->info, "start_iodevice", value);
 	}
 	ADIOI_Free(value);
@@ -86,14 +84,11 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
 	    fd->fp_ind = fd->fp_sys_posn = lseek(fd->fd_sys, 0, SEEK_END);
     }
 
-#ifdef PRINT_ERR_MSG
-    *error_code = (fd->fd_sys == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
     if (fd->fd_sys == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(ADIO_FILE_NULL, *error_code, myname);	    
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**io",
+					   "**io %s", strerror(errno));
     }
     else *error_code = MPI_SUCCESS;
-#endif
 }

@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_nfs_getsh.c,v 1.7 2002/10/24 17:00:46 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -19,16 +18,17 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
     ADIO_Offset new_fp;
     int err;
     MPI_Comm dupcommself;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_NFS_GET_SHARED_FP";
-#endif
 
     if (fd->shared_fp_fd == ADIO_FILE_NULL) {
 	MPI_Comm_dup(MPI_COMM_SELF, &dupcommself);
-	fd->shared_fp_fd = ADIO_Open(MPI_COMM_SELF, dupcommself, fd->shared_fp_fname, 
-             fd->file_system, ADIO_CREATE | ADIO_RDWR | ADIO_DELETE_ON_CLOSE, 
-             0, MPI_BYTE, MPI_BYTE, M_ASYNC, MPI_INFO_NULL, 
-             ADIO_PERM_NULL, error_code);
+	fd->shared_fp_fd = ADIO_Open(MPI_COMM_SELF, dupcommself,
+				     fd->shared_fp_fname, 
+				     fd->file_system,
+				     fd->fns,
+				     ADIO_CREATE | ADIO_RDWR | ADIO_DELETE_ON_CLOSE, 
+				     0, MPI_BYTE, MPI_BYTE, 0, MPI_INFO_NULL, 
+				     ADIO_PERM_NULL, error_code);
 	if (*error_code != MPI_SUCCESS) return;
 	*shared_fp = 0;
 	ADIOI_WRITE_LOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
@@ -39,34 +39,34 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
     }
     else {
 	ADIOI_WRITE_LOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
-	lseek(fd->shared_fp_fd->fd_sys, 0, SEEK_SET);
-	err = read(fd->shared_fp_fd->fd_sys, shared_fp, sizeof(ADIO_Offset));
+
+	err = lseek(fd->shared_fp_fd->fd_sys, 0, SEEK_SET);
+	if (err == 0) {
+	    err = read(fd->shared_fp_fd->fd_sys, shared_fp,
+		       sizeof(ADIO_Offset));
+	}
 	if (err == -1) {
 	    ADIOI_UNLOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
-#ifdef PRINT_ERR_MSG
-	    *error_code = MPI_ERR_UNKNOWN;
-#else
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error(fd, *error_code, myname);	    
-#endif
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE, myname,
+					       __LINE__, MPI_ERR_IO, "**io",
+					       "**io %s", strerror(errno));
 	    return;
 	}
     }
 
     new_fp = *shared_fp + incr;
 
-    lseek(fd->shared_fp_fd->fd_sys, 0, SEEK_SET);
-    err = write(fd->shared_fp_fd->fd_sys, &new_fp, sizeof(ADIO_Offset));
+    err = lseek(fd->shared_fp_fd->fd_sys, 0, SEEK_SET);
+    if (err == 0) {
+	err = write(fd->shared_fp_fd->fd_sys, &new_fp, sizeof(ADIO_Offset));
+    }
     ADIOI_UNLOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
     if (err == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);	    
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**io",
+					   "**io %s", strerror(errno));
     }
     else *error_code = MPI_SUCCESS;
-#endif
 }

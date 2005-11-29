@@ -25,7 +25,7 @@ $set 32 MPI_ERR_IO
 32	1	"I/O Error"
 32	2	"%s"	1
 32	3	"Only an integral number of etypes can be accessed"
-32	5	"Can't determine the file-system type. Check the filename/path you provided and try again. Otherwise, prefix the filename with a string to indicate the type of file sytem (piofs:, pfs:, nfs:, ufs:, hfs:, xfs:, sfs:, pvfs:)"
+32	5	"Can't determine the file-system type. Check the filename/path you provided and try again. Otherwise, prefix the filename with a string to indicate the type of file system (piofs:, pfs:, nfs:, ufs:, hfs:, xfs:, sfs:, pvfs:, pvfs2:, ftp:, gsiftp:)"
 32	7	"ROMIO has not been configured to use the PFS file system"
 32	9	"ROMIO has not been configured to use the PIOFS file system"
 32	11	"ROMIO has not been configured to use the UFS file system"

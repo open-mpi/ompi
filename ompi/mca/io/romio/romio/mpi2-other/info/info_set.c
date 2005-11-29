@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: info_set.c,v 1.7 2002/10/24 17:01:29 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -78,8 +77,8 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
 
     while (curr) {
 	if (!strcmp(curr->key, key)) {
-	    free(curr->value);  /* not ADIOI_Free, because it was strdup'ed */
-	    curr->value = strdup(value);
+	    ADIOI_Free(curr->value); 
+	    curr->value = ADIOI_Strdup(value);
 	    break;
 	}
 	prev = curr;
@@ -90,8 +89,8 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
 	prev->next = (MPI_Info) ADIOI_Malloc(sizeof(struct MPIR_Info));
 	curr = prev->next;
 	curr->cookie = 0;  /* cookie not set on purpose */
-	curr->key = strdup(key);
-	curr->value = strdup(value);
+	curr->key = ADIOI_Strdup(key);
+	curr->value = ADIOI_Strdup(value);
 	curr->next = 0;
     }
 

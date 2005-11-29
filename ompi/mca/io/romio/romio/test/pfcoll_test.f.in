@@ -2,7 +2,7 @@
       implicit none
 
       include 'mpif.h'
-      include 'mpiof.h'
+      @F77MPIOINC@
 
 !     This is the same as fcoll_test.f, but uses the PMPI versions
 !     of all functions in order to test the profiling interface.
@@ -26,9 +26,11 @@
       integer mynod, tmpbuf(FILESIZE), array_size, argc, iargc
       integer fh, status(MPI_STATUS_SIZE), request, ierr
       character*1024 str    ! used to store the filename
+      integer errs, toterrs
       @FORTRAN_MPI_OFFSET@ disp
       @FTESTDEFINE@
 
+      errs = 0
       call PMPI_INIT(ierr)
       call PMPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierr)
       call PMPI_COMM_RANK(MPI_COMM_WORLD, mynod, ierr)
@@ -45,7 +47,7 @@
             @F77GETARG@
          end do
          if (i .ge. argc) then
-	    print *
+            print *
             print *, '*#  Usage: fcoll_test -fname filename'
             print *
             call PMPI_ABORT(MPI_COMM_WORLD, 1, ierr)
@@ -109,7 +111,7 @@
      &     MPI_COMM_WORLD, ierr)
       call PMPI_WAIT(request, status, ierr)
 
-      j = 0
+      j = 1
       array_size = array_of_gsizes(1) * array_of_gsizes(2) *            &
      &     array_of_gsizes(3)
       do i=1, array_size
@@ -147,15 +149,22 @@
 !     check the data read
       do i=1, bufcount
          if (readbuf(i) .ne. writebuf(i)) then
+	     errs = errs + 1
              print *, 'Node ', mynod, '  readbuf ', readbuf(i),         &
      &          '  writebuf ', writebuf(i), '  i', i
          end if
       end do
 
       call PMPI_TYPE_FREE(newtype, ierr)
+      call MPI_Allreduce( errs, toterrs, 1, MPI_INTEGER, MPI_SUM,       &
+     $     MPI_COMM_WORLD, ierr )  
       if (mynod .eq. 0) then
-         print *, ' Done'
-      end if 
+        if( toterrs .gt. 0 ) then
+           print *, 'Found ', toterrs, ' errors'
+        else
+           print *, ' No Errors'
+        endif
+      endif
 
       call PMPI_FINALIZE(ierr)
 

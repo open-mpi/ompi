@@ -1,19 +1,22 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_end.c,v 1.6 2002/10/24 17:01:11 gropp Exp $    
- *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "adio.h"
 #include "adio_extern.h"
+#ifdef ROMIO_INSIDE_MPICH2
+#include "mpiimpl.h"
+#endif
 
 void ADIO_End(int *error_code)
 {
     ADIOI_Flatlist_node *curr, *next;
     ADIOI_Malloc_async *tmp;
     ADIOI_Malloc_req *tmp1;
+    ADIOI_Datarep *datarep, *datarep_next;
+    static char myname[] = "ADIO_END";
     
 /*    FPRINTF(stderr, "reached end\n"); */
 
@@ -28,10 +31,16 @@ void ADIO_End(int *error_code)
     }
     ADIOI_Flatlist = NULL;
 
+    /* --BEGIN ERROR HANDLING-- */
     if (ADIOI_Async_list_head) {
-	FPRINTF(stderr, "ADIO_End: Error! There are outstanding nonblocking I/O operations!\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					   MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__,
+					   MPI_ERR_IO,
+					   "Error: outstanding nonblocking I/O operations", 0);
+	return;
     }
+    /* --END ERROR HANDLING-- */
 
 /* free list of available ADIOI_Async_nodes. */
     while (ADIOI_Malloc_async_head) {
@@ -59,6 +68,20 @@ void ADIO_End(int *error_code)
     if (MPIR_Infotable) ADIOI_Free(MPIR_Infotable);
 #endif
 
+
+/* free the memory allocated for a new data representation, if any */
+    datarep = ADIOI_Datarep_head;
+    while (datarep) {
+        datarep_next = datarep->next;
+#ifdef MPICH2
+        MPIU_Free(datarep->name);
+#else
+        ADIOI_Free(datarep->name);
+#endif
+        ADIOI_Free(datarep);
+        datarep = datarep_next;
+    }
+
     *error_code = MPI_SUCCESS;
 }
 
@@ -71,6 +94,11 @@ int ADIOI_End_call(MPI_Comm comm, int keyval, void *attribute_val, void
 		  *extra_state)
 {
     int error_code;
+
+    ADIOI_UNREFERENCED_ARG(comm);
+    ADIOI_UNREFERENCED_ARG(keyval);
+    ADIOI_UNREFERENCED_ARG(attribute_val);
+    ADIOI_UNREFERENCED_ARG(extra_state);
 
     ADIO_End(&error_code);
     return error_code;

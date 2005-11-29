@@ -44,22 +44,16 @@ noinst_LTLIBRARIES = libadio_nfs.la
 libadio_nfs_la_SOURCES = \
         io_romio_ad_nfs.c \
         ad_nfs.h \
-        io_romio_ad_nfs_close.c \
         io_romio_ad_nfs_done.c \
         io_romio_ad_nfs_fcntl.c \
-        io_romio_ad_nfs_flush.c \
         io_romio_ad_nfs_getsh.c \
         io_romio_ad_nfs_hints.c \
         io_romio_ad_nfs_iread.c \
         io_romio_ad_nfs_iwrite.c \
         io_romio_ad_nfs_open.c \
-        io_romio_ad_nfs_rdcoll.c \
         io_romio_ad_nfs_read.c \
-        io_romio_ad_nfs_resize.c \
-        io_romio_ad_nfs_seek.c \
         io_romio_ad_nfs_setsh.c \
         io_romio_ad_nfs_wait.c \
-        io_romio_ad_nfs_wrcoll.c \
         io_romio_ad_nfs_write.c
 
 #

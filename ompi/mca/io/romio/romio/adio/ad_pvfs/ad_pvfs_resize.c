@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_pvfs_resize.c,v 1.7 2002/10/24 17:00:58 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -11,19 +10,23 @@
 void ADIOI_PVFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 {
     int err;
-#ifndef PRINT_ERR_MSG
+    int rank;
     static char myname[] = "ADIOI_PVFS_RESIZE";
-#endif
-    
-    err = pvfs_ftruncate64(fd->fd_sys, size);
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == 0) ? MPI_SUCCESS : MPI_ERR_UNKNOWN;
-#else
+
+    /* because MPI_File_set_size is a collective operation, and PVFS1 clients
+     * do not cache metadata locally, one client can resize and broadcast the
+     * result to the others */
+    MPI_Comm_rank(fd->comm, &rank);
+    if (rank == fd->hints->ranklist[0]) {
+	err = pvfs_ftruncate64(fd->fd_sys, size);
+    }
+    MPI_Bcast(&err, 1, MPI_INT, 0, fd->comm);
+
     if (err == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);	    
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**io",
+					   "**io %s", strerror(errno));
     }
     else *error_code = MPI_SUCCESS;
-#endif
 }

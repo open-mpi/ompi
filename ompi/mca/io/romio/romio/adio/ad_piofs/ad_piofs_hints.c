@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_piofs_hints.c,v 1.4 2002/10/24 17:00:55 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -16,7 +15,7 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     int flag, tmp_val, str_factor=-1, str_unit=-1, start_iodev=-1;
     int err, myrank, perm, old_mask, nioservers;
 
-    if (!(fd->info)) {
+    if ((fd->info) == MPI_INFO_NULL) {
 	/* This must be part of the open call. can set striping parameters 
            if necessary. */ 
 	MPI_Info_create(&(fd->info));
@@ -68,6 +67,8 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	    if ((str_factor > 0) || (str_unit > 0) || (start_iodev >= 0)) {
 		MPI_Comm_rank(fd->comm, &myrank);
 		if (!myrank) {
+		    int len;
+
 		    if (fd->perm == ADIO_PERM_NULL) {
 			old_mask = umask(022);
 			umask(old_mask);
@@ -78,23 +79,24 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		    /* to find out the number of I/O servers, I need
                        the path to the directory containing the file */
 
-		    path = strdup(fd->filename);
+		    path = ADIOI_Strdup(fd->filename);
+		    len = strlen(path) + 1;
 		    slash = strrchr(path, '/');
-		    if (!slash) strcpy(path, ".");
+		    if (!slash) ADIOI_Strncpy(path, ".", len);
 		    else {
 			if (slash == path) *(path + 1) = '\0';
 			else *slash = '\0';
 		    }
-		    strcpy(piofs_statfs.name, path);
+		    ADIOI_Strncpy(piofs_statfs.name, path, len);
 		    err = piofsioctl(0, PIOFS_STATFS, &piofs_statfs);
 		    nioservers = (err) ? -1 : piofs_statfs.f_nodes;
 
-		    free(path);
+		    ADIOI_Free(path);
 
 		    str_factor = ADIOI_MIN(nioservers, str_factor);
 		    if (start_iodev >= nioservers) start_iodev = -1;
 
-		    strcpy(piofs_create.name, fd->filename);
+		    ADIOI_Strncpy(piofs_create.name, fd->filename, len);
 		    piofs_create.bsu = (str_unit > 0) ? str_unit : -1;
 		    piofs_create.cells = (str_factor > 0) ? str_factor : -1;
 		    piofs_create.permissions = perm;

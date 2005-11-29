@@ -2,7 +2,7 @@
       implicit none
 
       include 'mpif.h'
-      include 'mpiof.h'
+      @F77MPIOINC@
 
 !     Fortran equivalent of perf.c
 
@@ -39,7 +39,7 @@
             @F77GETARG@
          end do
          if (i .ge. argc) then
-	    print *
+            print *
             print *, '*#  Usage: fperf -fname filename'
             print *
             call MPI_ABORT(MPI_COMM_WORLD, 1, ierr)

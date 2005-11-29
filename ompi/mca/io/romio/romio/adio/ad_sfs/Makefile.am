@@ -31,6 +31,8 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/ompi/include \
         -I$(top_srcdir)/adio/include
 
+EXTRA_DIST = README
+
 # It is unfortunately necessary to make all the filenames in the ROMIO
 # distribtion confrom to the MCA prefix name rule -- there is at least
 # one or two filename conflicts that potentially create problems when
@@ -44,21 +46,9 @@ noinst_LTLIBRARIES = libadio_sfs.la
 libadio_sfs_la_SOURCES = \
         io_romio_ad_sfs.c \
         ad_sfs.h \
-        io_romio_ad_sfs_close.c \
-        io_romio_ad_sfs_done.c \
         io_romio_ad_sfs_fcntl.c \
         io_romio_ad_sfs_flush.c \
-        io_romio_ad_sfs_hints.c \
-        io_romio_ad_sfs_iread.c \
-        io_romio_ad_sfs_iwrite.c \
-        io_romio_ad_sfs_open.c \
-        io_romio_ad_sfs_rdcoll.c \
-        io_romio_ad_sfs_read.c \
-        io_romio_ad_sfs_resize.c \
-        io_romio_ad_sfs_seek.c \
-        io_romio_ad_sfs_wait.c \
-        io_romio_ad_sfs_wrcoll.c \
-        io_romio_ad_sfs_write.c
+        io_romio_ad_sfs_open.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule

@@ -48,7 +48,7 @@ atomicity.c: Tests whether atomicity semantics are satisfied for
 
 large_file.c: Tests access to large files. Writes a 4-Gbyte file and
       reads it back. Run it only on one process and on a file system
-      on which ROMIO supports large files, i.e., PIOFS, XFS, SFS, and HFS.
+      on which ROMIO supports large files.
 
 large_array.c: Tests writing and reading a 4-Gbyte distributed array using
       the distributed array datatype constructor. Works only on file

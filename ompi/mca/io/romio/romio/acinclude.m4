@@ -7,20 +7,6 @@ dnl
 dnl Get the format of Fortran names.  Uses F77, FFLAGS, and sets WDEF.
 dnl If the test fails, sets NOF77 to 1, HAVE_FORTRAN to 0.
 dnl
-dnl Open MPI changes to this file:
-dnl
-dnl Removed definitions for:
-dnl - AC_PROG_ECH_N
-dnl - AC_FD_MSG
-dnl - AC_MSG_CHECKING
-dnl - AC_MSG
-dnl - AC_CHECKING
-dnl - AC_MSG_WARN
-dnl - AC_MSG_RESULT
-dnl - AC_TRY_LINK
-dnl
-dnl Changed all function defintions from "define(name...)" to 
-dnl "AC_DEFUN([name]...")
 dnl
 AC_DEFUN([PAC_GET_FORTNAMES],[
    rm -f confftest.f confftest.o
@@ -33,23 +19,25 @@ AC_DEFUN([PAC_GET_FORTNAMES],[
 EOF
    $F77 $FFLAGS -c confftest.f > /dev/null 2>&1
    if test ! -s confftest.o ; then
-        print_error "Unable to test Fortran compiler"
-        print_error "(compiling a test program failed to produce an "
-        print_error "object file)."
+	AC_MSG_WARN([Unable to test Fortran compiler.  Compiling a test 
+program failed to produce an object file])
 	NOF77=1
    elif test -z "$FORTRANNAMES" ; then
-    if test $arch_CRAY ; then
+     # MAC OS X (and probably FreeBSD need strings - (not strings -a)
      # Cray doesn't accept -a ...
-     nameform1=`strings confftest.o | grep mpir_init_fop_  | head -1`
-     nameform2=`strings confftest.o | grep MPIR_INIT_FOP   | head -1`
-     nameform3=`strings confftest.o | grep mpir_init_fop   | head -1`
-     nameform4=`strings confftest.o | grep mpir_init_fop__ | head -1`
-    else
-     nameform1=`strings -a confftest.o | grep mpir_init_fop_  | head -1`
-     nameform2=`strings -a confftest.o | grep MPIR_INIT_FOP   | head -1`
-     nameform3=`strings -a confftest.o | grep mpir_init_fop   | head -1`
-     nameform4=`strings -a confftest.o | grep mpir_init_fop__ | head -1`
-    fi
+     allstrings="-a"
+     if test $arch_CRAY ; then 
+	allstrings="" 
+     elif strings - confftest.o < /dev/null >/dev/null 2>&1 ; then
+         allstrings="-"
+     elif strings -a confftest.o < /dev/null >/dev/null 2>&1 ; then
+         allstrings="-a"
+     fi
+    
+     nameform1=`strings $allstrings confftest.o | grep mpir_init_fop_  | head -n 1`
+     nameform2=`strings $allstrings confftest.o | grep MPIR_INIT_FOP   | head -n 1`
+     nameform3=`strings $allstrings confftest.o | grep mpir_init_fop   | head -n 1`
+     nameform4=`strings $allstrings confftest.o | grep mpir_init_fop__ | head -n 1`
     rm -f confftest.f confftest.o
     if test -n "$nameform4" ; then
 	echo "Fortran externals are lower case and have two trailing underscores"
@@ -65,145 +53,19 @@ EOF
 	echo "Fortran externals are lower case"
 	FORTRANNAMES="FORTRANNOUNDERSCORE"
     else
-	print_error "Unable to determine the form of Fortran external names"
-	print_error "Make sure that the compiler $F77 can be run on this system"
-	print_error "Turning off Fortran (-nof77 being assumed)."
+	AC_MSG_WARN([Unable to determine the form of Fortran external names.
+Make sure that the compiler $F77 can be run on this system.
+Turning off Fortran (-nof77 being assumed)])
 	NOF77=1
     fi
     fi
     if test -n "$FORTRANNAMES" ; then
         WDEF="-D$FORTRANNAMES"
     fi
+    rm -f confftest.f confftest.o
     ])dnl
 dnl
-dnl
-dnl
-dnl PAC_GETWD(varname [, filename ] )
-dnl
-dnl This is from the aclocal.m4 of MPICH. 
-dnl Set varname to current directory.  Use filename (relative to current
-dnl directory) if provided to double check.
-dnl
-dnl Need a way to use "automounter fix" for this.
-dnl
-AC_DEFUN([PAC_GETWD],[
-$1=$PWD
-if test "${$1}" != "" -a -d "${$1}" ; then 
-    if test -r ${$1}/.foo$$ ; then
-        /bin/rm -f ${$1}/.foo$$
-        /bin/rm -f .foo$$
-    fi
-    if test -r ${$1}/.foo$$ -o -r .foo$$ ; then
-        $1=
-    else
-        echo "test" > ${$1}/.foo$$
-        if test ! -r .foo$$ ; then
-            /bin/rm -f ${$1}/.foo$$
-            $1=
-        else
-            /bin/rm -f ${$1}/.foo$$
-        fi
-    fi
-fi
-if test "${$1}" = "" ; then
-    $1=`pwd | sed -e 's%/tmp_mnt/%/%g'`
-fi
-dnl
-dnl First, test the PWD is sensible
-ifelse($2,,,
-if test ! -r ${$1}/$2 ; then
-    dnl PWD must be messed up
-    $1=`pwd`
-    if test ! -r ${$1}/$2 ; then
-        print_error "Cannot determine the root directory!" 
-        exit 1
-    fi
-    $1=`pwd | sed -e 's%/tmp_mnt/%/%g'`
-    if test ! -d ${$1} ; then 
-        print_error "Warning: your default path uses the automounter; this may"
-        print_error "cause some problems if you use other NFS-connected systems.
-"
-        $1=`pwd`
-    fi
-fi)
-if test -z "${$1}" ; then
-    $1=`pwd | sed -e 's%/tmp_mnt/%/%g'`
-    if test ! -d ${$1} ; then 
-        print_error "Warning: your default path uses the automounter; this may"
-        print_error "cause some problems if you use other NFS-connected systems.
-"
-        $1=`pwd`
-    fi
-fi
-])
-dnl
-dnl
-dnl PAC_GET_TYPE_SIZE(typename,var_for_size)
-dnl
-dnl sets var_for_size to the size.  Ignores if the size cannot be determined
-dnl (see aclocal.m4 in MPICH)
-dnl
-AC_DEFUN([PAC_GET_TYPE_SIZE],
-[Pac_name="$1"
- Pac_varname=`echo "$Pac_name" | sed -e 's/ /_/g' -e 's/\*/star/g'`
-eval Pac_testval=\$"${Pac_varname}_len"
-if test -z "$Pac_testval" ; then
-   changequote(<<,>>)
-   define(<<AC_TYPE_NAME>>,translit(CROSS_SIZEOF_$1,[a-z *],[A-Z_P]))dnl
-   changequote([,])
-   eval Pac_testval=\$"AC_TYPE_NAME"
-fi
-if test -n "$Pac_testval" ; then
-    Pac_CV_NAME=$Pac_testval
-else
-AC_MSG_CHECKING([for size of $1])
-dnl Check for existing size or for CROSS_SIZEOF_name
-/bin/rm -f conftestval
-AC_TEST_PROGRAM([#include <stdio.h>
-#include <stdlib.h>
-int
-main(int argc, char *argv[]) { 
-  FILE *f=fopen("conftestval","w");
-  if (!f) exit(1);
-  fprintf( f, "%ld\n", sizeof($1));
-  exit(0);
-}],Pac_CV_NAME=`cat conftestval`,Pac_CV_NAME="")
-/bin/rm -f conftestval
-if test -n "$Pac_CV_NAME" -a "$Pac_CV_NAME" != 0 ; then
-    AC_MSG_RESULT($Pac_CV_NAME)
-    eval ${Pac_varname}_len=$Pac_CV_NAME
-else
-    AC_MSG_RESULT(unavailable)
-fi
-fi
-$2=$Pac_CV_NAME
-])dnl
-dnl
-dnl
-dnl
-AC_DEFUN([PAC_INT_LT_POINTER],[
-if test -z "$intsize" ; then
-    PAC_GET_TYPE_SIZE(int,intsize)
-fi
-if test -z "$pointersize" ; then
-    PAC_GET_TYPE_SIZE(void *,pointersize)
-fi
-AC_MSG_CHECKING([for int large enough for pointers])
-if test -n "$pointersize" -a -n "$intsize" ; then
-    if test $pointersize -le $intsize ; then
-       AC_MSG_RESULT(yes)
-    else
-       AC_DEFINE(INT_LT_POINTER,,[Define if int smaller than pointer])
-       AC_MSG_RESULT(no)
-    fi
-else
-    AC_MSG_RESULT(cannot determine; assuming it is;)
-    echo "use '-intsize' and '-ptrsize' to indicate otherwise"
-fi
-])dnl
-dnl
-dnl
-AC_DEFUN([PAC_GET_SPECIAL_SYSTEM_INFO],[
+define(PAC_GET_SPECIAL_SYSTEM_INFO,[
 #
 if test -n "$arch_IRIX"; then
    AC_MSG_CHECKING(for IRIX OS version)
@@ -212,21 +74,25 @@ if test -n "$arch_IRIX"; then
    dnl  For example
    dnl  IRIX_5_4400 (IRIX 5.x, using MIPS 4400)
    osversion=`uname -r | sed 's/\..*//'`
+   dnl Note that we need to allow brackets here, so we briefly turn off 
+   dnl the macro quotes
+   changequote(,)dnl
    dnl Get the second field (looking for 6.1)
-   osvminor=`uname -r | sed 's/[[]0-9[]]\.\([[]0-9[]]*\)\..*/\1/'`
+   osvminor=`uname -r | sed 's/[0-9]\.\([0-9]*\)\..*/\1/'`
+   changequote([,])dnl
    AC_MSG_RESULT($osversion)
    dnl Get SGI processor count by quick hack
    AC_MSG_CHECKING(for IRIX cpucount)
-   cpucount=`hinv | grep '[[]0-9[]]* [[]0-9[]]* MHZ IP[[]0-9[]]* Proc' | cut -f 1 -d' '`
+   changequote(,)dnl
+   cpucount=`hinv | grep '[0-9]* [0-9]* MHZ IP[0-9]* Proc' | cut -f 1 -d' '`
    if test "$cpucount" = "" ; then
-     cpucount=`hinv | grep 'Processor [[]0-9[]]*:' | wc -l | sed -e 's/ //g'`
+     cpucount=`hinv | grep 'Processor [0-9]*:' | wc -l | sed -e 's/ //g'`
    fi
+   changequote([,])dnl
    if test "$cpucount" = "" ; then
-     print_error "Could not determine cpucount."
-     print_error "Please send "
+     AC_MSG_RESULT([Could not determine cpucount.  Please send])
      hinv
-     print_error "to romio-maint@mcs.anl.gov"
-     exit 1
+     AC_MSG_ERROR([to romio-maint@mcs.anl.gov])
    fi
    AC_MSG_RESULT($cpucount)
    dnl
@@ -236,23 +102,19 @@ if test -n "$arch_IRIX"; then
    dnl -comm=shared
    cputype=`hinv -t cpu | tail -1 | cut -f 3 -d' '`
    if test -z "$cputype" ; then
-        print_error "Could not get cputype from hinv -t cpu command."
-        print_error "Please send "
+        AC_MSG_RESULT([Could not get cputype from hinv -t cpu command. Please send])
         hinv -t cpu 2>&1
         hinv -t cpu | cut -f 3 -d' ' 2>&1
-        print_error "to romio-maint@mcs.anl.gov" 
-        exit 1
+	AC_MSG_ERROR([to romio-maint@mcs.anl.gov])
    fi
    AC_MSG_RESULT($cputype)
    dnl echo "checking for osversion and cputype"
    dnl cputype may contain R4400, R2000A/R3000, or something else.  
    dnl We may eventually need to look at it.
    if test -z "$osversion" ; then
-        print_error "Could not determine OS version.  Please send" 
-        print_error " " 
+        AC_MSG_RESULT([Could not determine OS version.  Please send])
         uname -a
-        print_error "to romio-maint@mcs.anl.gov" 
-        exit 1
+        AC_MSG_ERROR([to romio-maint@mcs.anl.gov])
    elif test $osversion = 4 ; then
         true
    elif test $osversion = 5 ; then
@@ -260,14 +122,12 @@ if test -n "$arch_IRIX"; then
    elif test $osversion = 6 ; then
         true
    else 
-       print_error "Could not recognize the version of IRIX (got $osversion)"
-       print_error "ROMIO knows about versions 4, 5 and 6; the version being"
-       print_error "returned from uname -r is $osversion."
-       print_error "Please send"
+       AC_MSG_RESULT([Could not recognize the version of IRIX (got $osversion).
+ROMIO knows about versions 4, 5 and 6; the version being returned from 
+uname -r is $osversion.  Please send])
        uname -a 2>&1
        hinv 2>&1
-       print_error "to romio-maint@mcs.anl.gov"
-       exit 1
+       AC_MSG_ERROR([to romio-maint@mcs.anl.gov])
    fi
    AC_MSG_CHECKING(for cputype)
    OLD_ARCH=IRIX
@@ -286,15 +146,12 @@ if test -n "$arch_IRIX"; then
         10000);;
 	12000);;
         *)
-        print_error "Unexpected IRIX/MIPS chipset $cputype.  Please send the output"
-        print_error " "
+	AC_MSG_WARN([Unexpected IRIX/MIPS chipset $cputype.  Please send the output])
         uname -a 2>&1
         hinv 2>&1 
-        print_error " " 
-        print_error "to romio-maint@mcs.anl.gov" 
-        print_error "ROMIO will continue and assume that the cputype is"
-        print_error "compatible with a MIPS 4400 processor."
-        print_error " " 
+        AC_MSG_WARN([to romio-maint@mcs.anl.gov
+ROMIO will continue and assume that the cputype is
+compatible with a MIPS 4400 processor.])
         cputype=4400
         ;;
    esac
@@ -305,55 +162,7 @@ fi
 ])dnl
 dnl
 dnl
-dnl On an SGI check whether to link 32 bit objects or 64 bit objects
-dnl for the MPI-2 datatype accessor functions
-dnl
-AC_DEFUN([PAC_CHECK_SGI_3264],[
-AC_MSG_CHECKING(for 32-bit or 64-bit objects)
-cat <<EOF >bittest.c
-main()
-{
-  int i;
-  i = 0;
-}
-EOF
-$CC $CFLAGS -c bittest.c > /dev/null 2>&1
-if test $MIPS = 4 ; then
-    testlink='$CC $CFLAGS -o bittest bittest.o adio/sgi/mpi2/mips4.64/get_contents.o $MPI_LIB >/dev/null 2>&1'
-    if eval $testlink ; then
-       BITS=64
-    else
-        testlink='$CC $CFLAGS -o bittest bittest.o adio/sgi/mpi2/mips4.32/get_contents.o $MPI_LIB >/dev/null 2>&1'
-        if eval $testlink ; then
-           BITS=32
-        else
-            echo "Error: Can't link with either 32-bit or 64-bit"
-            echo "Send email to romio-maint@mcs.anl.gov"
-            exit 1
-        fi
-    fi
-else
-    testlink='$CC $CFLAGS -o bittest bittest.o adio/sgi/mpi2/mips3.64/get_contents.o $MPI_LIB >/dev/null 2>&1'
-    if eval $testlink ; then
-       BITS=64
-    else
-        testlink='$CC $CFLAGS -o bittest bittest.o adio/sgi/mpi2/mips3.32/get_contents.o $MPI_LIB >/dev/null 2>&1'
-        if eval $testlink ; then
-           BITS=32
-        else
-            echo "Error: Can't link with either 32-bit or 64-bit"
-            echo "Send email to romio-maint@mcs.anl.gov"
-            exit 1
-        fi
-    fi
-fi
-rm -f bittest*
-AC_MSG_RESULT($BITS bit)
-])
-dnl
-dnl
-dnl
-AC_DEFUN([PAC_TEST_MPI],[
+define(PAC_TEST_MPI,[
   AC_MSG_CHECKING(if a simple MPI program compiles and links)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
@@ -367,12 +176,10 @@ EOF
   rm -f conftest
   $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
   if test ! -x conftest ; then
-      echo " "
-      print_error "Unable to compile a simple MPI program"
-      print_error "Use the -mpi, -mpiincdir, and -mpilib options to configure to specify the"
-      print_error "MPI implementation, the include path for mpi.h, and the MPI library to link"
       rm -f conftest mpitest.c
-      exit 1
+      AC_MSG_ERROR([Unable to compile a simple MPI program.
+Use environment variables to provide the location of MPI libraries and
+include directories])
   else
       rm -f conftest mpitest.c
   fi
@@ -381,7 +188,7 @@ AC_MSG_RESULT(yes)
 dnl
 dnl
 dnl
-AC_DEFUN([PAC_NEEDS_FINT],[
+define(PAC_NEEDS_FINT,[
   AC_MSG_CHECKING(if MPI_Fint is defined in the MPI implementation)
   cat > mpitest1.c <<EOF
 #include "mpi.h"
@@ -405,23 +212,7 @@ EOF
   fi
 ])dnl
 dnl
-dnl
-dnl
-AC_DEFUN([PAC_LONG_64],[
-if test -z "$longsize" ; then
-    PAC_GET_TYPE_SIZE(long,longsize)
-fi
-if test -n "$longsize" ; then
-   if test $longsize = 8 ; then
-       AC_DEFINE(HAVE_LONG_64,,[Define if long is 64 bits])
-   fi
-else
-   echo "assuming size of long is NOT 8 bytes; use '-longsize' to indicate otherwise"
-fi
-])dnl
-dnl
-dnl
-AC_DEFUN([PAC_MPI_LONG_LONG_INT],[
+define(PAC_MPI_LONG_LONG_INT,[
   AC_MSG_CHECKING(if MPI_LONG_LONG_INT is defined in mpi.h)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
@@ -445,79 +236,9 @@ EOF
   rm -f conftest mpitest.c
 ])dnl
 dnl
-dnl Check that the compile accepts ANSI prototypes. 
-dnl PAC_CHECK_CC_PROTOTYPES()
-dnl
-AC_DEFUN([PAC_CHECK_CC_PROTOTYPES],[
-AC_MSG_CHECKING(that the compiler $CC accepts ANSI prototypes)
-AC_COMPILE_CHECK(,[int f(double a){return 0;}],,eval "ac_cv_ccworks=yes",eval "ac_cv_ccworks=no")
-AC_MSG_RESULT($ac_cv_ccworks)
-if test $ac_cv_ccworks = "yes" ; then
-   AC_DEFINE(HAVE_PROTOTYPES,,[Define if C compiler supports prototypes])
-fi
-])dnl
-dnl
-dnl
-dnl PAC_TEST_LONG_LONG()
-dnl
-dnl tests if the compiler prints long long correctly and whether to use
-dnl %ld or %lld. Called from within PAC_LONG_LONG_64.
-dnl
-AC_DEFUN([PAC_TEST_LONG_LONG],
-[AC_MSG_CHECKING([if the compiler prints long longs correctly with %lld])
-rm -f conftestll
-AC_TEST_PROGRAM([#include <stdio.h>
-main() {
-  long long i=8; 
-  FILE *f=fopen("conftestll","w");
-  if (!f) exit(1);
-  fprintf( f, "%lld\n", i);
-  exit(0);
-}],Pac_CV_NAME=`cat conftestll`,Pac_CV_NAME="")
-rm -f conftestll
-if test "$Pac_CV_NAME" = 8 ; then
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(HAVE_LONG_LONG_64,,[Define if have 64 bit long long])
-    DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
-    FORTRAN_MPI_OFFSET="integer*8"
-    echo "defining MPI_Offset as long long in C and integer*8 in Fortran"
-    LL="\%lld"
-else
-    AC_MSG_RESULT(no)
-    AC_MSG_CHECKING([if the compiler prints long longs correctly with %ld])
-    AC_TEST_PROGRAM([#include <stdio.h>
-    main() {
-      long long i=8; 
-      FILE *f=fopen("conftestll","w");
-      if (!f) exit(1);
-      fprintf( f, "%ld\n", i);
-      exit(0);
-    }],Pac_CV_NAME=`cat conftestll`,Pac_CV_NAME="")
-    rm -f conftestll
-    if test "$Pac_CV_NAME" = 8 ; then
-       AC_MSG_RESULT(yes)
-       AC_DEFINE(HAVE_LONG_LONG_64,,[Define if long long is 64 bits])
-       DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
-       FORTRAN_MPI_OFFSET="integer*8"
-       echo "defining MPI_Offset as long long in C and integer*8 in Fortran"
-       LL="\%ld"
-    else
-       AC_MSG_RESULT(no!!)
-       echo "the compiler doesn't print long longs correctly!"
-       echo "defining MPI_Offset as long in C and integer in Fortran" 
-       DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
-       FORTRAN_MPI_OFFSET="integer"
-       LL="\%ld"
-       MPI_OFFSET_KIND1="!"
-       MPI_OFFSET_KIND2="!"
-    fi
-fi
-])dnl
-dnl
-dnl
 dnl PAC_LONG_LONG_64: check if there is a 64-bit long long
 dnl
-AC_DEFUN([PAC_LONG_LONG_64],[
+define(PAC_LONG_LONG_64,[
 if test -n "$longlongsize" ; then
     if test "$longlongsize" = 8 ; then
        echo "defining MPI_Offset as long long in C and integer*8 in Fortran" 
@@ -589,7 +310,7 @@ fi
 ])dnl
 dnl
 dnl
-AC_DEFUN([PAC_MPI_INFO],[
+define(PAC_MPI_INFO,[
   AC_MSG_CHECKING(if MPI_Info functions are defined in the MPI implementation)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
@@ -606,7 +327,7 @@ EOF
   $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
   if test -x conftest ; then
       AC_MSG_RESULT(yes)
-      AC_DEFINE(HAVE_MPI_INFO,,[Define if MPI_Info available])
+      AC_DEFINE(HAVE_MPI_INFO,1,[Define if MPI_Info available])
       HAVE_MPI_INFO="#define HAVE_MPI_INFO"
       MPI_FINFO1="!"
       MPI_FINFO2="!"
@@ -624,7 +345,7 @@ EOF
 ])dnl
 dnl
 dnl
-AC_DEFUN([PAC_MPI_DARRAY_SUBARRAY],[
+define(PAC_MPI_DARRAY_SUBARRAY,[
   AC_MSG_CHECKING(if darray and subarray constructors are defined in the MPI implementation)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
@@ -667,8 +388,8 @@ EOF
 ])dnl
 dnl
 dnl
-AC_DEFUN([PAC_CHECK_MPI_SGI_INFO_NULL],[
-  AC_MSG_CHECKING(if MPI_INFO_NULL is defined in mpi.h)
+define(PAC_CHECK_MPI_SGI_INFO_NULL,[
+  AC_MSG_CHECKING([if MPI_INFO_NULL is defined in mpi.h])
   rm -f mpitest.c
   cat > mpitest.c <<EOF
 #include "mpi.h"
@@ -691,7 +412,7 @@ EOF
 dnl
 dnl
 dnl
-AC_DEFUN([PAC_CHECK_MPIOF_H],[
+define(PAC_CHECK_MPIOF_H,[
   AC_MSG_CHECKING(if mpiof.h is included in mpif.h)
   rm -f mpitest.f
   cat > mpitest.f <<EOF
@@ -717,7 +438,7 @@ dnl
 dnl
 dnl check if pread64 is defined in IRIX. needed on IRIX 6.5
 dnl
-AC_DEFUN([PAC_HAVE_PREAD64],[
+define(PAC_HAVE_PREAD64,[
   AC_MSG_CHECKING(if pread64 is defined)
   rm -f conftest.c
   cat > conftest.c <<EOF
@@ -741,7 +462,7 @@ rm -f conftest conftest.c
 ])dnl
 dnl
 dnl
-AC_DEFUN([PAC_TEST_MPI_SGI_type_is_contig],[
+define(PAC_TEST_MPI_SGI_type_is_contig,[
   AC_MSG_CHECKING(if MPI_SGI_type_is_contig is defined)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
@@ -769,7 +490,7 @@ EOF
 dnl
 dnl
 dnl
-AC_DEFUN([PAC_TEST_MPI_COMBINERS],[
+define(PAC_TEST_MPI_COMBINERS,[
   AC_MSG_CHECKING(if MPI-2 combiners are defined in mpi.h)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
@@ -799,14 +520,43 @@ dnl PAC_MPI_OFFSET_KIND()
 dnl
 dnl tries to determine the Fortran 90 kind parameter for 8-byte integers
 dnl
-AC_DEFUN([PAC_MPI_OFFSET_KIND],
-[AC_MSG_CHECKING([for Fortran 90 KIND parameter for 8-byte integers])
-rm -f kind.f kind.o kind
-cat <<EOF > kind.f
+define(PAC_MPI_OFFSET_KIND,
+[rm -f conftest*
+# Determine the extension for Fortran 90 files (not all compilers accept
+# .f and not all accept .f90)
+if test -z "$ac_f90ext" ; then
+    if test -z "$F90" ; then
+       AC_CHECK_PROGS(F90,f90 xlf90 pgf90 ifort epcf90 f95 fort xlf95 lf95 pathf90 g95 fc ifc efc)
+    fi
+    AC_MSG_CHECKING([for extension for Fortran 90 programs])
+    ac_f90ext="f90"
+    ac_f90compile='${F90-f90} -c $F90FLAGS conftest.$ac_f90ext 1>&AC_FD_CC'
+    cat > conftest.$ac_f90ext <<EOF
+      program conftest
+      end
+EOF
+    if AC_TRY_EVAL(ac_f90compile) ; then
+        AC_MSG_RESULT([f90])
+    else
+        rm -f conftest*
+        ac_f90ext="f"
+        cat > conftest.$ac_f90ext <<EOF
+      program conftest
+      end
+EOF
+        if AC_TRY_EVAL(ac_f90compile) ; then
+            AC_MSG_RESULT([f])
+        else
+            AC_MSG_RESULT([unknown!])
+        fi
+    fi
+fi
+AC_MSG_CHECKING([for Fortran 90 KIND parameter for 8-byte integers])
+cat <<EOF > conftest.$ac_f90ext
       program main
       integer i
       i = selected_int_kind(16)
-      open(8, file="k.out", form="formatted")
+      open(8, file="conftest.out", form="formatted")
       write (8,*) i
       close(8)
       stop
@@ -816,13 +566,13 @@ if test -z "$F90" ; then
    F90=f90
 fi
 KINDVAL=""
-if $F90 -o kind kind.f >/dev/null 2>&1 ; then
-    ./kind >/dev/null 2>&1
-    if test -s k.out ; then 
-        KINDVAL=`cat k.out`
+if $F90 -o conftest conftest.$ac_f90ext >/dev/null 2>&1 ; then
+    ./conftest >/dev/null 2>&1
+    if test -s conftest.out ; then 
+        KINDVAL=`cat conftest.out`
     fi
 fi
-rm -f kind k.out kind.f kind.o k.out
+rm -f conftest*
 if test -n "$KINDVAL" -a "$KINDVAL" != "-1" ; then
    AC_MSG_RESULT($KINDVAL)
    MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
@@ -833,7 +583,7 @@ fi
 ])dnl
 dnl
 dnl
-AC_DEFUN([PAC_TEST_MPI_HAVE_OFFSET_KIND],[
+define(PAC_TEST_MPI_HAVE_OFFSET_KIND,[
   AC_MSG_CHECKING(if MPI_OFFSET_KIND is defined in mpif.h)
   rm -f mpitest.f
   cat > mpitest.f <<EOF
@@ -861,7 +611,7 @@ dnl
 dnl PAC_GET_XFS_MEMALIGN
 dnl 
 dnl
-AC_DEFUN([PAC_GET_XFS_MEMALIGN],
+define(PAC_GET_XFS_MEMALIGN,
 [AC_MSG_CHECKING([for memory alignment needed for direct I/O])
 /bin/rm -f memalignval
 /bin/rm -f /tmp/romio_tmp.bin
@@ -890,6 +640,7 @@ else
 fi
 ])dnl
 dnl
+
 dnl
 dnl Look for a style of VPATH.  Known forms are
 dnl VPATH = .:dir
@@ -899,7 +650,7 @@ dnl Defines VPATH or .PATH with . $(srcdir)
 dnl Requires that vpath work with implicit targets
 dnl NEED TO DO: Check that $< works on explicit targets.
 dnl
-AC_DEFUN([PAC_MAKE_VPATH],[
+define(PAC_MAKE_VPATH,[
 AC_SUBST(VPATH)
 AC_MSG_CHECKING(for virtual path format)
 rm -rf conftest*
@@ -936,48 +687,7 @@ fi
 rm -rf conftest*
 ])dnl
 dnl
-dnl
-dnl There is a bug in AC_PREPARE that sets the srcdir incorrectly (it
-dnl is correct in configure, but it puts an absolute path into config.status,
-dnl which is a big problem for scripts like mpireconfig that are wrappers
-dnl around config.status).  The bug is in not recognizing that ./ and .//
-dnl are the same  directory as . (in fact, ./[/]* is the same).
-dnl
-AC_DEFUN([PAC_FIXUP_SRCDIR],[
-# Find the source files, if location was not specified.
-if test "$srcdirdefaulted" = "yes" ; then
-  srcdir=""
-  # Try the directory containing this script, then `..'.
-  prog=[$]0
-changequote(,)dnl
-  confdir=`echo $prog|sed 's%/[^/][^/]*$%%'`
-  # Remove all trailing /'s 
-  confdir=`echo $confdir|sed 's%[/*]$%%'`
-changequote([,])dnl
-  test "X$confdir" = "X$prog" && confdir=.
-  srcdir=$confdir
-  if test ! -r $srcdir/$unique_file; then
-    srcdir=..
-  fi
-fi
-if test ! -r $srcdir/$unique_file; then
-  if test x$srcdirdefaulted = xyes; then
-    echo "configure: Cannot find sources in \`${confdir}' or \`..'." 1>&2
-  else
-    echo "configure: Cannot find sources in \`${srcdir}'." 1>&2
-  fi
-  exit 1
-fi
-# Preserve a srcdir of `.' to avoid automounter screwups with pwd.
-# (and preserve ./ and .//)
-# But we can't avoid them for `..', to make subdirectories work.
-case $srcdir in
-  .|./|.//|/*|~*) ;;
-  *) srcdir=`cd $srcdir; pwd` ;; # Make relative path absolute.
-esac
-])
-dnl
-AC_DEFUN([PAC_HAVE_MOUNT_NFS],[
+define(PAC_HAVE_MOUNT_NFS,[
   AC_MSG_CHECKING([if MOUNT_NFS is defined in the include files])
   rm -f conftest.c
   cat > conftest.c <<EOF
@@ -992,8 +702,10 @@ EOF
   $CC $USER_CFLAGS -o conftest conftest.c > /dev/null 2>&1
   if test -x conftest ; then
      AC_MSG_RESULT(yes)
+     ROMIO_HAVE_MOUNT_NFS=1
      AC_DEFINE(HAVE_MOUNT_NFS,,[Define if MOUNT_NFS defined])
   else
+     ROMIO_HAVE_MOUNT_NFS=0
      AC_MSG_RESULT(no)
   fi
   rm -f conftest conftest.c
@@ -1004,7 +716,7 @@ dnl PAC_MPI_OFFSET_KIND_4BYTE()
 dnl
 dnl tries to determine the Fortran 90 kind parameter for 4-byte integers
 dnl
-AC_DEFUN([PAC_MPI_OFFSET_KIND_4BYTE],
+define(PAC_MPI_OFFSET_KIND_4BYTE,
 [AC_MSG_CHECKING([for Fortran 90 KIND parameter for 4-byte integers])
 rm -f kind.f kind.o kind
 cat <<EOF > kind.f
@@ -1038,7 +750,7 @@ fi
 ])dnl
 dnl
 dnl
-AC_DEFUN([PAC_FUNC_STRERROR],[
+define(PAC_FUNC_STRERROR,[
   AC_MSG_CHECKING([for strerror()])
   rm -f conftest.c
   cat > conftest.c <<EOF
@@ -1079,68 +791,7 @@ changequote([,])
   rm -f conftest conftest.c
 ])dnl
 dnl
-dnl
-dnl
-AC_DEFUN([PAC_C_INLINE],[
-AC_MSG_CHECKING([for inline])
-if eval "test \"`echo '$''{'pac_cv_c_inline'+set}'`\" = set"; then
-   AC_MSG_RESULT([(cached)])
-else
-  AC_COMPILE_CHECK(,[inline int a( int b ){return b+1;}],[int a;],
-pac_cv_c_inline="yes",pac_cv_c_inline="no")
-fi
-AC_MSG_RESULT($pac_cv_c_inline)
-if test "$pac_cv_c_inline" = "no" ; then
-    AC_DEFINE(inline,,[Define if inline is not supported])
-fi
-])dnl
-dnl
-dnl PAC_CHECK_HEADER(HEADER-FILE, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND],
-dnl PRE-REQ-HEADERS )
-dnl
-dnl BUG: AIX 4.1 can't handle a \055 (octal for -) in a tr string (sometimes;
-dnl it works from the shell but not within a file)
-dnl I've removed that and hoped that no header will include a - in the
-dnl name
-dnl
-dnl This can fail if the header needs OTHER headers for the compile
-dnl to succeed.  Those headers should be specified in the "pre-req-headers"
-dnl For example 
-dnl PAC_CHECK_HEADER(sys/vfs.h,AC_DEFINE(HAVE_SYS_VFS_H),,
-dnl                  [#include <sys/types.h>])
-dnl
-AC_DEFUN([PAC_CHECK_HEADER],dnl
-[dnl Do the transliteration at runtime so arg 1 can be a shell variable.
-changequote(,)dnl
-ac_safe=`echo "$1" | tr '[a-z]./' '[A-Z]__'`
-changequote([,])dnl
-AC_MSG_CHECKING([for $1])
-dnl AC_CACHE_VAL(ac_cv_header_$ac_safe,[dnl
-AC_COMPILE_CHECK(,[$4]
-[#include <$1>],main();,eval "ac_cv_header_$ac_safe=yes",
-  eval "ac_cv_header_$ac_safe=no")dnl])dnl
-if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
-  AC_MSG_RESULT(yes)
-  ifelse([$2], , :, [$2])
-else
-  AC_MSG_RESULT(no)
-ifelse([$3], , , [$3
-])dnl
-fi
-])dnl
-dnl
-dnl PAC_CHECK_HEADERS(HEADER-FILE... [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
-AC_DEFUN([PAC_CHECK_HEADERS],[for ac_hdr in $1
-do
-PAC_CHECK_HEADER($ac_hdr,
-[changequote(, )dnl
-  ac_tr_hdr=HAVE_`echo $ac_hdr | tr '[a-z]./' '[A-Z]__'`
-changequote([, ])dnl
-  AC_DEFINE($ac_tr_hdr) $2], $3)dnl
-done
-])dnl
-dnl
-AC_DEFUN([PAC_TEST_MPIR_STATUS_SET_BYTES],[
+define(PAC_TEST_MPIR_STATUS_SET_BYTES,[
   AC_MSG_CHECKING(if MPIR_Status_set_bytes is defined)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
@@ -1166,7 +817,172 @@ EOF
   fi
   rm -f conftest mpitest.c
 ])dnl
+define(PAC_TEST_MPI_GREQUEST,[
+  AC_MSG_CHECKING(support for generalized requests)
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+#include "stdio.h"
+    main(int argc, char **argv)
+    {
+       MPI_Request request;
+       MPI_Init(&argc, &argv);
+       MPI_Grequest_start(NULL, NULL, NULL, NULL, &request);
+       MPI_Finalize();
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+     AC_MSG_RESULT(yes)
+     AC_DEFINE(HAVE_MPI_GREQUEST,,[Define if generalized requests avaliable])
+  else
+     AC_MSG_RESULT(no)
+  fi
+  rm -f conftest mpitest.c
+])dnl
+dnl
+dnl/*D
+dnl PAC_FUNC_NEEDS_DECL - Set NEEDS_<funcname>_DECL if a declaration is needed
+dnl
+dnl Synopsis:
+dnl PAC_FUNC_NEEDS_DECL(headerfiles,funcname)
+dnl
+dnl Output Effect:
+dnl Sets 'NEEDS_<funcname>_DECL' if 'funcname' is not declared by the 
+dnl headerfiles.
+dnl
+dnl Approach:
+dnl Try to compile a program with the function, but passed with an incorrect
+dnl calling sequence.  If the compilation fails, then the declaration
+dnl is provided within the header files.  If the compilation succeeds,
+dnl the declaration is required.
+dnl
+dnl We use a 'double' as the first argument to try and catch varargs
+dnl routines that may use an int or pointer as the first argument.
+dnl 
+dnl D*/
+AC_DEFUN([PAC_FUNC_NEEDS_DECL],[
+AC_CACHE_CHECK([whether $2 needs a declaration],
+[pac_cv_func_decl_$2],[
+AC_TRY_COMPILE([$1],[int a=$2(1.0,27,1.0,"foo");],
+pac_cv_func_decl_$2=yes,pac_cv_func_decl_$2=no)])
+if test "$pac_cv_func_decl_$2" = "yes" ; then
+changequote(<<,>>)dnl
+define(<<PAC_FUNC_NAME>>, translit(NEEDS_$2_DECL, [a-z *], [A-Z__]))dnl
+changequote([, ])dnl
+    AC_DEFINE_UNQUOTED(PAC_FUNC_NAME,1,[Define if $2 needs a declaration])
+undefine([PAC_FUNC_NAME])
+fi
+])dnl
+dnl
+dnl/*D
+dnl PAC_C_RESTRICT - Check if C supports restrict
+dnl
+dnl Synopsis:
+dnl PAC_C_RESTRICT
+dnl
+dnl Output Effect:
+dnl Defines 'restrict' if some version of restrict is supported; otherwise
+dnl defines 'restrict' as empty.  This allows you to include 'restrict' in 
+dnl declarations in the same way that 'AC_C_CONST' allows you to use 'const'
+dnl in declarations even when the C compiler does not support 'const'
+dnl
+dnl Note that some compilers accept restrict only with additional options.
+dnl DEC/Compaq/HP Alpha Unix (Tru64 etc.) -accept restrict_keyword
+dnl
+dnl D*/
+AC_DEFUN([PAC_C_RESTRICT],[
+AC_CACHE_CHECK([for restrict],
+[pac_cv_c_restrict],[
+AC_TRY_COMPILE(,[int * restrict a;],pac_cv_c_restrict="restrict",
+pac_cv_c_restrict="no")
+if test "$pac_cv_c_restrict" = "no" ; then
+   AC_TRY_COMPILE(,[int * _Restrict a;],pac_cv_c_restrict="_Restrict",
+   pac_cv_c_restrict="no")
+fi
+if test "$pac_cv_c_restrict" = "no" ; then
+   AC_TRY_COMPILE(,[int * __restrict a;],pac_cv_c_restrict="__restrict",
+   pac_cv_c_restrict="no")
+fi
+])
+if test "$pac_cv_c_restrict" = "no" ; then
+  restrict_val=""
+elif test "$pac_cv_c_restrict" != "restrict" ; then
+  restrict_val=$pac_cv_c_restrict
+fi
+if test "$restrict_val" != "restrict" ; then 
+  AC_DEFINE_UNQUOTED(restrict,$restrict_val,[if C does not support restrict])
+fi
+])dnl
 dnl
 dnl
+dnl
+dnl This is a replacement for AC_PROG_CC that does not prefer gcc and
+dnl that does not mess with CFLAGS.  See acspecific.m4 for the original defn.
+dnl
+dnl/*D
+dnl PAC_PROG_CC - Find a working C compiler
+dnl
+dnl Synopsis:
+dnl PAC_PROG_CC
+dnl
+dnl Output Effect:
+dnl   Sets the variable CC if it is not already set
+dnl
+dnl Notes:
+dnl   Unlike AC_PROG_CC, this does not prefer gcc and does not set CFLAGS.
+dnl   It does check that the compiler can compile a simple C program.
+dnl   It also sets the variable GCC to yes if the compiler is gcc.  It does
+dnl   not yet check for some special options needed in particular for 
+dnl   parallel computers, such as -Tcray-t3e, or special options to get
+dnl   full ANSI/ISO C, such as -Aa for HP.
+dnl
+dnl D*/
+dnl 2.52 doesn't have AC_PROG_CC_GNU
+ifdef([AC_PROG_CC_GNU],,[AC_DEFUN([AC_PROG_CC_GNU],)])
+AC_DEFUN([PAC_PROG_CC],[
+AC_PROVIDE([AC_PROG_CC])
+AC_CHECK_PROGS([CC, cc xlC xlc pgcc icc gcc])
+test -z "$CC" && AC_MSG_ERROR([no acceptable cc found in \$PATH])
+PAC_PROG_CC_WORKS
+AC_PROG_CC_GNU
+if test "$ac_cv_prog_gcc" = yes; then
+  GCC=yes
+else
+  GCC=
+fi
+])
+dnl
+dnl
+dnl PAC_C_GNU_ATTRIBUTE - See if the GCC __attribute__ specifier is allow.
+dnl Use the following
+dnl #ifndef HAVE_GCC_ATTRIBUTE
+dnl #define __attribute__(a)
+dnl #endif
+dnl If *not*, define __attribute__(a) as null
+dnl
+dnl We start by requiring Gcc.  Some other compilers accept __attribute__
+dnl but generate warning messages, or have different interpretations 
+dnl (which seems to make __attribute__ just as bad as #pragma) 
+dnl For example, the Intel icc compiler accepts __attribute__ and
+dnl __attribute__((pure)) but generates warnings for __attribute__((format...))
+dnl
+AC_DEFUN([PAC_C_GNU_ATTRIBUTE],[
+AC_REQUIRE([AC_PROG_CC])
+if test "$ac_cv_prog_gcc" = "yes" ; then
+    AC_CACHE_CHECK([whether __attribute__ allowed],
+pac_cv_gnu_attr_pure,[
+AC_TRY_COMPILE([int foo(int) __attribute__ ((pure));],[int a;],
+pac_cv_gnu_attr_pure=yes,pac_cv_gnu_attr_pure=no)])
+AC_CACHE_CHECK([whether __attribute__((format)) allowed],
+pac_cv_gnu_attr_format,[
+AC_TRY_COMPILE([int foo(char *,...) __attribute__ ((format(printf,1,2)));],[int a;],
+pac_cv_gnu_attr_format=yes,pac_cv_gnu_attr_format=no)])
+    if test "$pac_cv_gnu_attr_pure" = "yes" -a "$pac_cv_gnu_attr_format" = "yes" ; then
+        AC_DEFINE(HAVE_GCC_ATTRIBUTE,1,[Define if GNU __attribute__ is supported])
+    fi
+fi
+])
 dnl
 

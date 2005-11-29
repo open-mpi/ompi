@@ -1,8 +1,112 @@
           ROMIO: A High-Performance, Portable MPI-IO Implementation
 
-                      Version 1.2.4, May 2002
+                      Version 2005-06-09
 
-Major Changes in this Version:
+Major Changes in this version:
+------------------------------
+* Fixed performance problems with the darray and subarray datatypes
+  when using MPICH2.
+
+* Better support for building against existing MPICH and MPICH2 versions.
+
+  When building against an existing MPICH installation, use the
+  "--with-mpi=mpich" option to ROMIO configure.  For MPICH2, use the
+  "--with-mpi=mpich2" option.  These will allow ROMIO to take advantage
+  of internal features of these implementations.
+
+* Deprecation of SFS, HFS, and PIOFS implementations.
+
+  These are no longer actively supported, although the code will continue
+  to be distributed for now.
+
+* Initial support for the Panasas PanFS filesystem.
+
+  PanFS allows users to specify the layout of a file at file-creation time.
+  Layout information includes the number of StorageBlades (SB)
+  across which the data is stored, the number of SBs across which a 
+  parity stripe is written, and the number of consecutive stripes that 
+  are placed on the same set of SBs.   The panfs_layout_* hints are only 
+  used if supplied at file-creation time.
+ 
+  panfs_layout_type - Specifies the layout of a file:
+                      2 = RAID0
+                      3 = RAID5 Parity Stripes
+  panfs_layout_stripe_unit - The size of the stripe unit in bytes
+  panfs_layout_total_num_comps - The total number of StorageBlades a file
+                                 is striped across.
+  panfs_layout_parity_stripe_width - If the layout type is RAID5 Parity
+                                     Stripes, this hint specifies the 
+                                     number of StorageBlades in a parity
+                                     stripe.
+  panfs_layout_parity_stripe_depth - If the layout type is RAID5 Parity
+                                     Stripes, this hint specifies the
+                                     number of contiguous parity stripes written 
+                                     across the same set of SBs.
+  panfs_layout_visit_policy - If the layout type is RAID5 Parity Stripes, 
+                              the policy used to determine the parity 
+                              stripe a given file offset is written to:
+                              1 = Round Robin
+
+  PanFS supports the "concurrent write" (CW) mode, where groups of cooperating 
+  clients can disable the PanFS consistency mechanisms and use their own 
+  consistency protocol.  Clients participating in concurrent write mode use 
+  application specific information to improve performance while maintaining 
+  file consistency.  All clients accessing the file(s) must enable concurrent 
+  write mode.  If any client does not enable concurrent write mode, then the 
+  PanFS consistency protocol will be invoked.  Once a file is opened in CW mode 
+  on a machine, attempts to open a file in non-CW mode will fail with 
+  EACCES.  If a file is already opened in non-CW mode, attempts to open 
+  the file in CW mode will fail with EACCES.  The following hint is 
+  used to enable concurrent write mode.
+
+  panfs_concurrent_write - If set to 1 at file open time, the file 
+                           is opened using the PanFS concurrent write 
+                           mode flag.  Concurrent write mode is not a
+                           persistent attribute of the file.
+
+  Below is an example PanFS layout using the following parameters:
+ 
+  - panfs_layout_type                = 3
+  - panfs_layout_total_num_comps     = 100
+  - panfs_layout_parity_stripe_width = 10
+  - panfs_layout_parity_stripe_depth = 8
+  - panfs_layout_visit_policy        = 1
+
+   Parity Stripe Group 1     Parity Stripe Group 2  . . . Parity Stripe Group 10
+  ----------------------    ----------------------        --------------------
+   SB1    SB2  ... SB10     SB11    SB12 ...  SB20  ...   SB91   SB92 ... SB100
+  -----------------------   -----------------------       ---------------------
+   D1     D2   ...  D10      D91    D92  ...  D100        D181   D182  ... D190
+   D11    D12       D20      D101   D102      D110        D191   D192      D193
+   D21    D22       D30      . . .                        . . .
+   D31    D32       D40
+   D41    D42       D50
+   D51    D52       D60
+   D61    D62       D70
+   D71    D72       D80
+   D81    D82       D90      D171   D172      D180        D261   D262   D270
+   D271   D272      D273     . . .                        . . .
+   ...
+
+* Initial support for the Globus GridFTP filesystem.  Work contributed by Troy
+  Baer (troy@osc.edu).  
+
+Major Changes in Version 1.2.5:
+------------------------------
+
+* Initial support for MPICH-2
+
+* fix for a bug in which ROMIO would get confused for some permutations
+  of the aggregator list
+
+* direct io on IRIX's XFS should work now
+
+* fixed an issue with the Fortran bindings that would cause them to fail
+   when some compilers tried to build them.
+
+* Initial support for deferred opens
+
+Major Changes in Version 1.2.4:
 ------------------------------
 * Added section describing ROMIO MPI_FILE_SYNC and MPI_FILE_CLOSE behavior to 
   User's Guide
@@ -246,10 +350,11 @@ Using ROMIO on NFS
 
 To use ROMIO on NFS, file locking with fcntl must work correctly on
 the NFS installation. On some installations, fcntl locks don't work.
-To get them to work, you need to use Version 3 of NFS and
-have the system administrator mount the NFS file system with the 
-"noac" option (no attribute caching). Turning off attribute caching 
-may reduce performance, but it is necessary for correct behavior.
+To get them to work, you need to use Version 3 of NFS, ensure that the
+lockd daemon is running on all the machines, and have the system
+administrator mount the NFS file system with the "noac" option (no
+attribute caching). Turning off attribute caching may reduce
+performance, but it is necessary for correct behavior.
 
 The following are some instructions we received from Ian Wells of HP
 for setting the noac option on NFS. We have not tried them

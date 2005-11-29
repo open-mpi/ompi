@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: set_size.c,v 1.8 2002/10/24 15:54:44 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -33,13 +32,13 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_set_size(MPI_File fh, MPI_Offset size)
+int MPI_File_set_size(MPI_File mpi_fh, MPI_Offset size)
 {
     int error_code;
-#ifndef PRINT_ERR_MSG
+    ADIO_File fh;
     static char myname[] = "MPI_FILE_SET_SIZE";
-#endif
     MPI_Offset tmp_sz;
+
 #ifdef MPI_hpux
     int fl_xmpi;
 
@@ -47,45 +46,48 @@ int MPI_File_set_size(MPI_File fh, MPI_Offset size)
 		  MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_set_size: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
+
+    fh = MPIO_File_resolve(mpi_fh);
+
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
 
     if (size < 0) {
-#ifdef PRINT_ERR_MSG
-        FPRINTF(stderr, "MPI_File_set_size: Invalid size argument\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_ARG, MPIR_ERR_SIZE_ARG,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);
-#endif
+	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					  myname, __LINE__, MPI_ERR_ARG,
+					  "**iobadsize", 0);
+	error_code = MPIO_Err_return_file(fh, error_code);
+	goto fn_exit;
     }
+    /* --END ERROR HANDLING-- */
 
     tmp_sz = size;
     MPI_Bcast(&tmp_sz, 1, ADIO_OFFSET, 0, fh->comm);
 
+    /* --BEGIN ERROR HANDLING-- */
     if (tmp_sz != size) {
-#ifdef PRINT_ERR_MSG
-	FPRINTF(stderr, "MPI_File_set_size: size argument must be the same on all processes\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_ARG, MPIR_ERR_SIZE_ARG_NOT_SAME,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);
-#endif
+	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					  myname, __LINE__, MPI_ERR_ARG,
+					  "**notsame", 0);
+	error_code = MPIO_Err_return_file(fh, error_code);
+	goto fn_exit;
     }
+    /* --END ERROR HANDLING-- */
+
+    ADIOI_TEST_DEFERRED(fh, "MPI_File_set_size", &error_code);
 
     ADIO_Resize(fh, size, &error_code);
+    /* TODO: what to do with error code? */
     
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, fh, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
+
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
 
     return error_code;
 }

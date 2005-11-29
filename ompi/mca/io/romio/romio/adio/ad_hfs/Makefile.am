@@ -31,6 +31,8 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/ompi/include \
         -I$(top_srcdir)/adio/include
 
+EXTRA_DIST = README
+
 # It is unfortunately necessary to make all the filenames in the ROMIO
 # distribtion confrom to the MCA prefix name rule -- there is at least
 # one or two filename conflicts that potentially create problems when
@@ -44,20 +46,10 @@ noinst_LTLIBRARIES = libadio_hfs.la
 libadio_hfs_la_SOURCES = \
         ad_hfs.h \
         io_romio_ad_hfs.c \
-        io_romio_ad_hfs_close.c \
-        io_romio_ad_hfs_done.c \
         io_romio_ad_hfs_fcntl.c \
-        io_romio_ad_hfs_flush.c \
-        io_romio_ad_hfs_hints.c \
-        io_romio_ad_hfs_iread.c \
-        io_romio_ad_hfs_iwrite.c \
         io_romio_ad_hfs_open.c \
-        io_romio_ad_hfs_rdcoll.c \
         io_romio_ad_hfs_read.c \
         io_romio_ad_hfs_resize.c \
-        io_romio_ad_hfs_seek.c \
-        io_romio_ad_hfs_wait.c \
-        io_romio_ad_hfs_wrcoll.c \
         io_romio_ad_hfs_write.c
 
 #

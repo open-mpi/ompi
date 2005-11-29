@@ -1,6 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*  
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
 #include "mpi.h"
-#include "mpio.h"  /* not necessary with MPICH 1.1.1 or HPMPI 1.4 */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -13,6 +16,7 @@ int main(int argc, char **argv)
 {
     int *buf, i, rank, nints, len, count, elements;
     char *filename, *tmp;
+    int errs=0, toterrs;
     MPI_File fh;
     MPI_Status status;
 
@@ -59,12 +63,27 @@ int main(int argc, char **argv)
     MPI_Get_count(&status, MPI_INT, &count);
     MPI_Get_elements(&status, MPI_INT, &elements);
     if (!rank) {
-	printf("count = %d, should be %d\n", count, nints);
-	printf("elements = %d, should be %d\n", elements, nints);
+	if (count != nints) {
+	    errs++;
+	    printf("count = %d, should be %d\n", count, nints);
+	}
+	if (elements != nints) {
+	    errs++;
+	    printf("elements = %d, should be %d\n", elements, nints);
+	}
     }
 
     MPI_File_close(&fh);
 
+    MPI_Allreduce( &errs, &toterrs, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+    if (rank == 0) {
+	if( toterrs > 0) {
+	    fprintf( stderr, "Found %d errors\n", toterrs );
+	}
+	else {
+	    fprintf( stdout, " No Errors\n" );
+	}
+    }
     free(buf);
     free(filename);
     free(tmp);

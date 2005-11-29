@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: info_getnthf.c,v 1.7 2002/10/24 17:01:30 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -104,14 +103,14 @@ void mpi_info_get_nthkey_(MPI_Fint *info, int *n, char *key, int *ierr,
     tmpkeylen = strlen(tmpkey);
 
     if (tmpkeylen <= keylen) {
-	strncpy(key, tmpkey, tmpkeylen);
+	ADIOI_Strncpy(key, tmpkey, tmpkeylen);
 
 	/* blank pad the remaining space */
 	for (i=tmpkeylen; i<keylen; i++) key[i] = ' ';
     }
     else {
 	/* not enough space */
-	strncpy(key, tmpkey, keylen);
+	ADIOI_Strncpy(key, tmpkey, keylen);
 	/* this should be flagged as an error. */
 	*ierr = MPI_ERR_UNKNOWN;
     }

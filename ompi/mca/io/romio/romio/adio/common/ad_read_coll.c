@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_read_coll.c,v 1.17 2002/12/19 17:56:51 rross Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -69,12 +68,13 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
        whose request lies in this process's file domain. */
 
     int i, filetype_is_contig, nprocs, nprocs_for_coll, myrank;
-    int *len_list, contig_access_count, interleave_count;
+    int contig_access_count=0, interleave_count = 0, buftype_is_contig;
     int *count_my_req_per_proc, count_my_req_procs, count_others_req_procs;
-    int buftype_is_contig, *buf_idx;
-    ADIO_Offset *offset_list, start_offset, end_offset, *st_offsets, orig_fp;
-    ADIO_Offset *fd_start, *fd_end, fd_size, min_st_offset, *end_offsets;
-    ADIO_Offset off;
+    ADIO_Offset start_offset, end_offset, orig_fp, fd_size, min_st_offset, off;
+    ADIO_Offset *offset_list = NULL, *st_offsets = NULL, *fd_start = NULL,
+	*fd_end = NULL, *end_offsets = NULL;
+    int *len_list = NULL, *buf_idx = NULL;
+
 #ifdef HAVE_STATUS_SET_BYTES
     int bufsize, size;
 #endif
@@ -88,41 +88,45 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
 
     /* number of aggregators, cb_nodes, is stored in the hints */
     nprocs_for_coll = fd->hints->cb_nodes;
-
-/* For this process's request, calculate the list of offsets and
-   lengths in the file and determine the start and end offsets. */
-
-/* Note: end_offset points to the last byte-offset that will be accessed.
-         e.g., if start_offset=0 and 100 bytes to be read, end_offset=99*/
-
     orig_fp = fd->fp_ind;
-    ADIOI_Calc_my_off_len(fd, count, datatype, file_ptr_type, offset,
-			   &offset_list, &len_list, &start_offset,
-			   &end_offset, &contig_access_count); 
+
+    /* only check for interleaving if cb_read isn't disabled */
+    if (fd->hints->cb_read != ADIOI_HINT_DISABLE) {
+	/* For this process's request, calculate the list of offsets and
+	   lengths in the file and determine the start and end offsets. */
+
+	/* Note: end_offset points to the last byte-offset that will be accessed.
+	   e.g., if start_offset=0 and 100 bytes to be read, end_offset=99*/
+
+	ADIOI_Calc_my_off_len(fd, count, datatype, file_ptr_type, offset,
+			      &offset_list, &len_list, &start_offset,
+			      &end_offset, &contig_access_count); 
     
-/*    for (i=0; i<contig_access_count; i++) {
-	FPRINTF(stderr, "rank %d  off %ld  len %d\n", myrank, offset_list[i], 
-	        len_list[i]);
-    }*/
+	/*    for (i=0; i<contig_access_count; i++) {
+	      FPRINTF(stderr, "rank %d  off %ld  len %d\n", myrank, offset_list[i], 
+	      len_list[i]);
+	      }*/
 
-/* each process communicates its start and end offsets to other 
-   processes. The result is an array each of start and end offsets stored
-   in order of process rank. */ 
+	/* each process communicates its start and end offsets to other 
+	   processes. The result is an array each of start and end offsets stored
+	   in order of process rank. */ 
     
-    st_offsets = (ADIO_Offset *) ADIOI_Malloc(nprocs*sizeof(ADIO_Offset));
-    end_offsets = (ADIO_Offset *) ADIOI_Malloc(nprocs*sizeof(ADIO_Offset));
+	st_offsets = (ADIO_Offset *) ADIOI_Malloc(nprocs*sizeof(ADIO_Offset));
+	end_offsets = (ADIO_Offset *) ADIOI_Malloc(nprocs*sizeof(ADIO_Offset));
 
-    MPI_Allgather(&start_offset, 1, ADIO_OFFSET, st_offsets, 1, ADIO_OFFSET, 
-		  fd->comm);
-    MPI_Allgather(&end_offset, 1, ADIO_OFFSET, end_offsets, 1, ADIO_OFFSET, 
-		  fd->comm);
+	MPI_Allgather(&start_offset, 1, ADIO_OFFSET, st_offsets, 1,
+		      ADIO_OFFSET, fd->comm);
+	MPI_Allgather(&end_offset, 1, ADIO_OFFSET, end_offsets, 1,
+		      ADIO_OFFSET, fd->comm);
 
-/* are the accesses of different processes interleaved? */
-    interleave_count = 0;
-    for (i=1; i<nprocs; i++)
-	if (st_offsets[i] < end_offsets[i-1]) interleave_count++;
-/* This is a rudimentary check for interleaving, but should suffice
-   for the moment. */
+	/* are the accesses of different processes interleaved? */
+	for (i=1; i<nprocs; i++)
+	    if ((st_offsets[i] < end_offsets[i-1]) && 
+                (st_offsets[i] <= end_offsets[i]))
+                interleave_count++;
+	/* This is a rudimentary check for interleaving, but should suffice
+	   for the moment. */
+    }
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
 
@@ -130,10 +134,12 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
 	|| (!interleave_count && (fd->hints->cb_read == ADIOI_HINT_AUTO))) 
     {
 	/* don't do aggregation */
-	ADIOI_Free(offset_list);
-	ADIOI_Free(len_list);
-	ADIOI_Free(st_offsets);
-	ADIOI_Free(end_offsets);	
+	if (fd->hints->cb_read != ADIOI_HINT_DISABLE) {
+	    ADIOI_Free(offset_list);
+	    ADIOI_Free(len_list);
+	    ADIOI_Free(st_offsets);
+	    ADIOI_Free(end_offsets);
+	}
 
 	fd->fp_ind = orig_fp;
 	ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
@@ -930,8 +936,10 @@ static void ADIOI_Fill_user_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
     int i, p, flat_buf_idx, size, buf_incr;
     int flat_buf_sz, size_in_buf, n_buftypes;
     ADIO_Offset off, len, rem_len, user_buf_idx;
-
     int *curr_from_proc, *done_from_proc, *recv_buf_idx;
+
+    ADIOI_UNREFERENCED_ARG(requests);
+    ADIOI_UNREFERENCED_ARG(statuses);
 
 /*  curr_from_proc[p] = amount of data recd from proc. p that has already
                         been accounted for so far

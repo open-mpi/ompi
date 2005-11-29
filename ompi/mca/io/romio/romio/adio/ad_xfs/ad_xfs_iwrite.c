@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_xfs_iwrite.c,v 1.6 2002/10/24 17:01:09 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -9,13 +8,12 @@
 #include "ad_xfs.h"
 
 void ADIOI_XFS_IwriteContig(ADIO_File fd, void *buf, int count, 
-                MPI_Datatype datatype, int file_ptr_type,
-                ADIO_Offset offset, ADIO_Request *request, int *error_code)  
+			    MPI_Datatype datatype, int file_ptr_type,
+			    ADIO_Offset offset, ADIO_Request *request,
+			    int *error_code)  
 {
-    int len, typesize, err=-1;
-#ifndef PRINT_ERR_MSG
+    int len, typesize, aio_errno = 0;
     static char myname[] = "ADIOI_XFS_IWRITECONTIG";
-#endif
 
     *request = ADIOI_Malloc_request();
     (*request)->optype = ADIOI_WRITE;
@@ -26,27 +24,24 @@ void ADIOI_XFS_IwriteContig(ADIO_File fd, void *buf, int count,
     len = count * typesize;
 
     if (file_ptr_type == ADIO_INDIVIDUAL) offset = fd->fp_ind;
-    err = ADIOI_XFS_aio(fd, buf, len, offset, 1, &((*request)->handle));
+    aio_errno = ADIOI_XFS_aio(fd, buf, len, offset, 1, &((*request)->handle));
     if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind += len;
 
     (*request)->queued = 1;
     ADIOI_Add_req_to_list(request);
 
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
-    if (err == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);	    
-    }
-    else *error_code = MPI_SUCCESS;
-#endif
+    fd->fp_sys_posn = -1;
 
-    fd->fp_sys_posn = -1;   /* set it to null. */
+    /* --BEGIN ERROR HANDLING-- */
+    if (aio_errno != 0) {
+	MPIO_ERR_CREATE_CODE_ERRNO(myname, aio_errno, error_code);
+	return;
+    }
+    /* --END ERROR HANDLING-- */
+
+    *error_code = MPI_SUCCESS;
     fd->async_count++;
 }
-
 
 
 void ADIOI_XFS_IwriteStrided(ADIO_File fd, void *buf, int count, 
@@ -67,8 +62,8 @@ void ADIOI_XFS_IwriteStrided(ADIO_File fd, void *buf, int count,
     (*request)->handle = 0;
 
 /* call the blocking version. It is faster because it does data sieving. */
-    ADIOI_XFS_WriteStrided(fd, buf, count, datatype, file_ptr_type, 
-                            offset, &status, error_code);  
+    ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type, 
+		      offset, &status, error_code);  
 
     fd->async_count++;
 
@@ -82,9 +77,11 @@ void ADIOI_XFS_IwriteStrided(ADIO_File fd, void *buf, int count,
 
 
 /* This function is for implementation convenience. It is not user-visible.
-   It takes care of the differences in the interface for nonblocking I/O
-   on various Unix machines! If wr==1 write, wr==0 read. */
-
+ * It takes care of the differences in the interface for nonblocking I/O
+ * on various Unix machines! If wr==1 write, wr==0 read.
+ *
+ * Returns 0 on success, -errno on failure.
+ */
 int ADIOI_XFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
 		  int wr, void *handle)
 {
@@ -115,16 +112,18 @@ int ADIOI_XFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     if (wr) err = aio_write64(aiocbp);
     else err = aio_read64(aiocbp);
 
-    if (err == -1) {
+    if (err != 0) {
 	if (errno == EAGAIN) {
         /* exceeded the max. no. of outstanding requests.
 	   complete all previous async. requests and try again. */
 
 	    ADIOI_Complete_async(&error_code);
+	    if (error_code != MPI_SUCCESS) return -EIO;
+
 	    if (wr) err = aio_write64(aiocbp);
 	    else err = aio_read64(aiocbp);
 
-	    while (err == -1) {
+	    while (err != 0) {
 		if (errno == EAGAIN) {
 		    /* sleep and try again */
 		    sleep(1);
@@ -132,17 +131,15 @@ int ADIOI_XFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
 		    else err = aio_read64(aiocbp);
 		}
 		else {
-		    FPRINTF(stderr, "Unknown errno %d in ADIOI_XFS_aio\n", errno);
-		    MPI_Abort(MPI_COMM_WORLD, 1);
+		    return -errno;
 		}
 	    }
         }
         else {
-            FPRINTF(stderr, "Unknown errno %d in ADIOI_XFS_aio\n", errno);
-            MPI_Abort(MPI_COMM_WORLD, 1);
+	    return -errno;
         }
     }
 
     *((aiocb64_t **) handle) = aiocbp;
-    return err;
+    return 0;
 }

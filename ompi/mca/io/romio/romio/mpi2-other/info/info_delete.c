@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: info_delete.c,v 1.7 2002/10/24 17:01:28 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -64,8 +63,8 @@ int MPI_Info_delete(MPI_Info info, char *key)
 
     while (curr) {
 	if (!strcmp(curr->key, key)) {
-	    free(curr->key);   /* not ADIOI_Free, because it was strdup'ed */
-	    free(curr->value);
+	    ADIOI_Free(curr->key); 
+	    ADIOI_Free(curr->value);
 	    prev->next = curr->next;
 	    ADIOI_Free(curr);
 	    done = 1;

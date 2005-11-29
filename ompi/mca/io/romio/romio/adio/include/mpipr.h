@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/*  $Id: mpipr.h,v 1.6 2003/01/07 21:31:22 thakur Exp $
- *
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -61,6 +60,8 @@
 #define MPI_Cart_sub PMPI_Cart_sub
 #undef MPI_Cartdim_get
 #define MPI_Cartdim_get PMPI_Cartdim_get
+#undef MPI_Comm_call_errhandler
+#define MPI_Comm_call_errhandler PMPI_Comm_call_errhandler
 #undef MPI_Comm_compare
 #define MPI_Comm_compare PMPI_Comm_compare
 #undef MPI_Comm_create
@@ -149,6 +150,7 @@
 #define MPI_Group_union PMPI_Group_union
 #undef MPI_Ibsend
 #define MPI_Ibsend PMPI_Ibsend
+#if 0
 #undef MPI_Info_create
 #define MPI_Info_create PMPI_Info_create
 #undef MPI_Info_delete
@@ -167,6 +169,7 @@
 #define MPI_Info_get_valuelen PMPI_Info_get_valuelen
 #undef MPI_Info_set
 #define MPI_Info_set PMPI_Info_set
+#endif /* only conditionally set the info */
 #undef MPI_Init
 #define MPI_Init PMPI_Init
 #undef MPI_Initialized
@@ -275,6 +278,8 @@
 #define MPI_Type_get_contents PMPI_Type_get_contents
 #undef MPI_Type_get_envelope
 #define MPI_Type_get_envelope PMPI_Type_get_envelope
+#undef MPI_Type_get_true_extent
+#define MPI_Type_get_true_extent PMPI_Type_get_true_extent
 #undef MPI_Type_hindexed
 #define MPI_Type_hindexed PMPI_Type_hindexed
 #undef MPI_Type_hvector
@@ -340,8 +345,10 @@
 #undef MPI_Status_f2c
 #define MPI_Status_f2c PMPI_Status_f2c
 
+#undef MPI_Status_set_elements
+#define MPI_Status_set_elements PMPI_Status_set_elements
 
-#ifndef MPI_INFO_SRC  /* everywhere except in info source directory */
+#ifndef HAVE_MPI_INFO_SRC  /* everywhere except in info source directory */
 #undef MPI_Info_create
 #define MPI_Info_create PMPI_Info_create
 #undef MPI_Info_set
@@ -360,6 +367,12 @@
 #define MPI_Info_dup PMPI_Info_dup
 #undef MPI_Info_free
 #define MPI_Info_free PMPI_Info_free
+#undef MPI_Grequest_start
+#define MPI_Grequest_start PMPI_Grequest_start
+#undef MPI_Grequest_complete
+#define MPI_Grequest_complete PMPI_Grequest_complete
+#undef MPI_Status_set_cancelled
+#define MPI_Status_set_cancelled PMPI_Status_set_cancelled
 /* #undef MPI_Info_c2f
 #define MPI_Info_c2f PMPI_Info_c2f
 #undef MPI_Info_f2c

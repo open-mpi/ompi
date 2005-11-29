@@ -1,7 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: adio.h,v 1.18 2002/10/24 17:01:15 gropp Exp $    
- *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
@@ -61,11 +59,28 @@
 # define FORTRAN_API
 #endif
 
+/* Use this macro for each parameter to a function that is not referenced in the body of the function */
+#ifdef HAVE_WINDOWS_H
+#define ADIOI_UNREFERENCED_ARG(a) a
+#else
+#define ADIOI_UNREFERENCED_ARG(a)
+#endif
+
+/* Include romioconf.h if we haven't already (some include files may
+   need to include romioconf before some system includes) */
+#ifndef ROMIOCONF_H_INCLUDED
 #include "romioconf.h"
+#define ROMIOCONF_H_INCLUDED
+#endif
 
 #include "mpi.h"
+#include "mpio.h"
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <sys/stat.h>
 #include <string.h>
 #include <stdio.h>
@@ -172,13 +187,31 @@ MPI_Info PMPI_Info_f2c(MPI_Fint info);
 
 #endif
 
+/* style: allow:strdup:1 sig:0 */
+
+#if defined(HAVE_STRDUP) && defined(NEEDS_STRDUP_DECL) && !defined(strdup)
+char *strdup(const char *s);
+# endif
+#if defined(HAVE_READLINK) && defined(NEEDS_READLINK_DECL) && !defined(readlink)
+int readlink(const char *path, char *buf, size_t bufsiz);
+# endif
+#if defined(HAVE_LSTAT) && defined(NEEDS_LSTAT_DECL) && !defined(lstat)
+int lstat(const char *file_name, struct stat *buf);
+# endif
+#if defined(HAVE_FSYNC) && defined(NEEDS_FSYNC_DECL) && !defined(fsync)
+int fsync(int fd);
+# endif
+#if defined(HAVE_FTRUNCATE) && defined(NEEDS_FTRUNCATE_DECL) && !defined(ftruncate)
+int ftruncate(int fd, off_t length);
+# endif
+
+
 typedef struct ADIOI_Fns_struct ADIOI_Fns;
 typedef struct ADIOI_Hints_struct ADIOI_Hints;
 
-struct ADIOI_FileD {
+typedef struct ADIOI_FileD {
     int cookie;              /* for error checking */
     FDTYPE fd_sys;              /* system file descriptor */
-#ifdef XFS
     int fd_direct;           /* On XFS, this is used for direct I/O; 
                                 fd_sys is used for buffered I/O */
     int direct_read;         /* flag; 1 means use direct read */
@@ -188,31 +221,39 @@ struct ADIOI_FileD {
     unsigned d_miniosz;      /* min xfer size, xfer size multiple,
                                 and file seek offset alignment */
     unsigned d_maxiosz;      /* max xfer size */
-#endif
     ADIO_Offset fp_ind;      /* individual file pointer in MPI-IO (in bytes)*/
     ADIO_Offset fp_sys_posn; /* current location of the system file-pointer
                                 in bytes */
     ADIOI_Fns *fns;          /* struct of I/O functions to use */
     MPI_Comm comm;           /* communicator indicating who called open */
+    MPI_Comm agg_comm;      /* deferred open: aggregators who called open */
+    int io_worker;	    /* bool: if one proc should do io, is it me? */
+    int is_open;	    /* deferred open: 0: not open yet 1: is open */
     char *filename;          
     int file_system;         /* type of file system */
-    int access_mode;         
+    int access_mode;         /* Access mode (sequential, append, etc.) */
     ADIO_Offset disp;        /* reqd. for MPI-IO */
     MPI_Datatype etype;      /* reqd. for MPI-IO */
     MPI_Datatype filetype;   /* reqd. for MPI-IO */
     int etype_size;          /* in bytes */
     ADIOI_Hints *hints;      /* structure containing fs-indep. info values */
     MPI_Info info;
+
+    /* The following support the split collective operations */
     int split_coll_count;    /* count of outstanding split coll. ops. */
+    MPI_Status split_status; /* status used for split collectives */
+    MPI_Datatype split_datatype; /* datatype used for split collectives */
+
+    /* The following support the shared file operations */
     char *shared_fp_fname;   /* name of file containing shared file pointer */
     struct ADIOI_FileD *shared_fp_fd;  /* file handle of file 
                                          containing shared fp */
     int async_count;         /* count of outstanding nonblocking operations */
     int perm;
     int atomicity;          /* true=atomic, false=nonatomic */
-    int iomode;             /* reqd. to implement Intel PFS modes */
     MPI_Errhandler err_handler;
-};
+    void *fs_ptr;            /* file-system specific information */
+} ADIOI_FileD;
 
 typedef struct ADIOI_FileD *ADIO_File;
 
@@ -233,12 +274,10 @@ typedef struct ADIOI_RequestD *ADIO_Request;
 
 /* fcntl structure */
 typedef struct {
-    ADIO_Offset disp; 
+    ADIO_Offset disp;
     MPI_Datatype etype;
     MPI_Datatype filetype;
-    MPI_Info info;   
-    int iomode;              /* to change PFS I/O mode. for MPI-IO
-				implementation, just set it to M_ASYNC. */  
+    MPI_Info info;
     int atomicity;
     ADIO_Offset fsize;       /* for get_fsize only */
     ADIO_Offset diskspace;   /* for file preallocation */
@@ -275,29 +314,20 @@ typedef struct {
 #define ADIO_PVFS                157   /* PVFS for Linux Clusters from Clemson Univ. */
 #define ADIO_NTFS                158   /* NTFS for Windows NT */
 #define ADIO_TESTFS              159   /* fake file system for testing */
+#define ADIO_PVFS2               160   /* PVFS2: 2nd generation PVFS */
+#define ADIO_PANFS               161   /* Panasas FS */
+#define ADIO_GRIDFTP             162   /* Globus GridFTP */
 
 #define ADIO_SEEK_SET            SEEK_SET
 #define ADIO_SEEK_CUR            SEEK_CUR
 #define ADIO_SEEK_END            SEEK_END
 
-#define ADIO_FCNTL_SET_VIEW      176
 #define ADIO_FCNTL_SET_ATOMICITY 180
-#define ADIO_FCNTL_SET_IOMODE    184
 #define ADIO_FCNTL_SET_DISKSPACE 188
 #define ADIO_FCNTL_GET_FSIZE     200
 
 /* for default file permissions */
 #define ADIO_PERM_NULL           -1
-
-/* PFS file-pointer modes */
-#ifndef M_ASYNC 
-#define M_UNIX                    0
-/*#define M_LOG                     1  redefined in malloc.h on SGI! */
-#define M_SYNC                    2
-#define M_RECORD                  3
-#define M_GLOBAL                  4
-#define M_ASYNC                   5
-#endif
 
 #define ADIOI_FILE_COOKIE 2487376
 #define ADIOI_REQ_COOKIE 3493740
@@ -309,11 +339,12 @@ typedef struct {
 
 void ADIO_Init(int *argc, char ***argv, int *error_code);
 void ADIO_End(int *error_code);
-ADIO_File ADIO_Open(MPI_Comm orig_comm, MPI_Comm comm, char *filename, 
-		    int file_system,
-                    int access_mode, ADIO_Offset disp, MPI_Datatype etype, 
-                    MPI_Datatype filetype, int iomode, 
-                    MPI_Info info, int perm, int *error_code);
+MPI_File ADIO_Open(MPI_Comm orig_comm, MPI_Comm comm, char *filename, 
+		   int file_system, ADIOI_Fns *ops,
+		   int access_mode, ADIO_Offset disp, MPI_Datatype etype, 
+		   MPI_Datatype filetype, int iomode, 
+		   MPI_Info info, int perm, int *error_code);
+void ADIO_ImmediateOpen(ADIO_File fd, int *error_code);
 void ADIO_Close(ADIO_File fd, int *error_code);
 void ADIO_ReadContig(ADIO_File fd, void *buf, int count, MPI_Datatype datatype,
                     int file_ptr_type,  ADIO_Offset offset, 
@@ -382,9 +413,39 @@ void ADIO_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, int *error_code);
 void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype, 
 		MPI_Datatype filetype, MPI_Info info,  int *error_code);
 
+/* functions to help deal with the array datatypes */
+int ADIO_Type_create_subarray(int ndims,
+                              int *array_of_sizes,
+                              int *array_of_subsizes,
+                              int *array_of_starts,
+                              int order,
+                              MPI_Datatype oldtype,
+                              MPI_Datatype *newtype);
+int ADIO_Type_create_darray(int size, int rank, int ndims, 
+			    int *array_of_gsizes, int *array_of_distribs, 
+			    int *array_of_dargs, int *array_of_psizes, 
+			    int order, MPI_Datatype oldtype, 
+			    MPI_Datatype *newtype);
+
+/* MPI_File management functions (in mpio_file.c) */
+MPI_File MPIO_File_create(int size);
+ADIO_File MPIO_File_resolve(MPI_File mpi_fh);
+void MPIO_File_free(MPI_File *mpi_fh);
+MPI_File MPIO_File_f2c(MPI_Fint fh);
+MPI_Fint MPIO_File_c2f(MPI_File fh);
+int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
+			 int line, int error_class, const char generic_msg[],
+			 const char specific_msg[], ... );
+int MPIO_Err_return_file(MPI_File mpi_fh, int error_code);
+int MPIO_Err_return_comm(MPI_Comm mpi_comm, int error_code);
 
 #include "adioi.h"
 #include "adioi_fs_proto.h"
 #include "mpio_error.h"
 #include "mpipr.h"
+
+/* these two defines don't appear to be in any other header file */
+#define MPIR_ERR_FATAL 1
+#define MPIR_ERR_RECOVERABLE 0
+
 #endif

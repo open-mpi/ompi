@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: rd_atalle.c,v 1.7 2002/10/24 17:01:18 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -25,7 +24,8 @@
 #endif
 
 /*@
-    MPI_File_read_at_all_end - Complete a split collective read using explict offset
+    MPI_File_read_at_all_end - Complete a split collective read using
+    explict offset
 
 Input Parameters:
 . fh - file handle (handle)
@@ -36,34 +36,13 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status)
+int MPI_File_read_at_all_end(MPI_File mpi_fh, void *buf, MPI_Status *status)
 {
-#ifndef PRINT_ERR_MSG
     int error_code;
     static char myname[] = "MPI_FILE_READ_AT_ALL_END";
-#endif
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_read_at_all_end: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
 
-    if (!(fh->split_coll_count)) {
-#ifdef PRINT_ERR_MSG
-        FPRINTF(stderr, "MPI_File_read_at_all_end: Does not match a previous MPI_File_read_at_all_begin\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ERR_NO_SPLIT_COLL,
-                              myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);
-#endif
-    }
+    error_code = MPIOI_File_read_all_end(mpi_fh, buf, myname, status);
 
-    fh->split_coll_count = 0;
-
-    return MPI_SUCCESS;
+    return error_code;
 }
