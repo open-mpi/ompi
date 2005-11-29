@@ -106,6 +106,8 @@
 /* Section 4.14.5 */
 #define MPI_Type_create_darray ROMIO_PREFIX(MPI_Type_create_darray)
 
+#define MPI_Register_datarep ROMIO_PREFIX(MPI_Register_datarep)
+
 /* JMS these don't seem to work... */
 #define MPI_File_f2c ROMIO_PREFIX(MPI_File_f2c)
 #define MPI_File_c2f ROMIO_PREFIX(MPI_File_c2f)
