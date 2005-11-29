@@ -267,6 +267,11 @@ extern "C" {
 
     OMPI_DECLSPEC int mca_io_base_component_run_progress(void);
 
+    OMPI_DECLSPEC int mca_io_base_register_datarep(char *,
+                                              MPI_Datarep_conversion_function*,
+                                              MPI_Datarep_conversion_function*,
+                                              MPI_Datarep_extent_function*,
+                                              void*);
 
 /*
  * Globals

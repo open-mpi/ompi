@@ -27,4 +27,5 @@ libmca_io_la_SOURCES += \
         base/io_base_file_select.c \
         base/io_base_find_available.c \
         base/io_base_open.c \
-        base/io_base_request.c
+        base/io_base_request.c \
+	base/io_base_register_datarep.c

@@ -19,8 +19,9 @@
 #ifndef MCA_IO_H
 #define MCA_IO_H
 
-#include "mca/mca.h"
-#include "request/request.h"
+#include "mpi.h"
+#include "opal/mca/mca.h"
+#include "ompi/request/request.h"
 
 /*
  * Forward declaration for private data on io components and modules.
@@ -100,6 +101,14 @@ typedef int (*mca_io_base_component_file_delete_unselect_fn_t)
 
 typedef int (*mca_io_base_component_progress_fn_t)(void);
 
+typedef int (*mca_io_base_component_register_datarep_fn_t)(
+                                              char *,
+                                              MPI_Datarep_conversion_function*,
+                                              MPI_Datarep_conversion_function*,
+                                              MPI_Datarep_extent_function*,
+                                              void*);
+
+
 /* IO component version and interface functions. */
 struct mca_io_base_component_1_0_0_t {
     mca_base_component_t io_version;
@@ -119,6 +128,8 @@ struct mca_io_base_component_1_0_0_t {
     mca_io_base_component_file_delete_select_fn_t io_delete_select;
 
     mca_io_base_component_progress_fn_t io_progress;
+
+    mca_io_base_component_register_datarep_fn_t io_register_datarep;
 };
 typedef struct mca_io_base_component_1_0_0_t mca_io_base_component_1_0_0_t;
 
