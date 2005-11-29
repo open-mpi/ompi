@@ -1,7 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_seek.c,v 1.12 2002/10/24 17:01:13 gropp Exp $    
- *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
@@ -12,30 +10,19 @@
 #include "mpe.h"
 #endif
 
-#ifdef SX4
-#define lseek llseek
-#endif
-
-#ifdef tflops
-#define lseek eseek
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset, 
-		      int whence, int *error_code)
+				     int whence, int *error_code)
 {
 /* implemented for whence=SEEK_SET only. SEEK_CUR and SEEK_END must
    be converted to the equivalent with SEEK_SET before calling this 
    routine. */
 /* offset is in units of etype relative to the filetype */
 
-#ifndef PRINT_ERR_MSG
-    static char myname[] = "ADIOI_GEN_SEEKINDIVIDUAL";
-#endif
-    ADIO_Offset off, err;
+    ADIO_Offset off;
     ADIOI_Flatlist_node *flat_file;
 
     int i, n_etypes_in_filetype, n_filetypes, etype_in_filetype;
@@ -43,6 +30,8 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
     int size_in_filetype, sum;
     int filetype_size, etype_size, filetype_is_contig;
     MPI_Aint filetype_extent;
+
+    ADIOI_UNREFERENCED_ARG(whence);
 
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
     etype_size = fd->etype_size;
@@ -82,26 +71,17 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
                 abs_off_in_filetype;
     }
 
-#ifdef PROFILE
-    MPE_Log_event(11, 0, "start seek");
-#endif
-    err = lseek(fd->fd_sys, off, SEEK_SET);
-#ifdef PROFILE
-    MPE_Log_event(12, 0, "end seek");
-#endif
+/*
+ * we used to call lseek here and update both fp_ind and fp_sys_posn, but now
+ * we don't seek and only update fp_ind (ROMIO's idea of where we are in the
+ * file).  We leave the system file descriptor and fp_sys_posn alone. 
+ * The fs-specifc ReadContig and WriteContig will seek to the correct place in
+ * the file before reading/writing if the 'offset' parameter doesn't match
+ * fp_sys_posn
+ */
     fd->fp_ind = off;
-    fd->fp_sys_posn = off;
 
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
-    if (err == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(MPI_FILE_NULL, *error_code, myname);	    
-    }
-    else *error_code = MPI_SUCCESS;
-#endif
+    *error_code = MPI_SUCCESS;
 
     return off;
 }

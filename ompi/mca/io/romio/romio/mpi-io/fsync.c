@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: fsync.c,v 1.8 2002/10/24 15:54:39 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -33,30 +32,42 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_sync(MPI_File fh)
+int MPI_File_sync(MPI_File mpi_fh)
 {
     int error_code;
-#ifndef PRINT_ERR_MSG
+    ADIO_File fh;
     static char myname[] = "MPI_FILE_SYNC";
-#endif
 #ifdef MPI_hpux
     int fl_xmpi;
 
-    HPMP_IO_START(fl_xmpi, BLKMPIFILESYNC, TRDTBLOCK, fh, MPI_DATATYPE_NULL, -1);
+    HPMP_IO_START(fl_xmpi, BLKMPIFILESYNC, TRDTBLOCK, fh,
+		  MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_sync: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
+    fh = MPIO_File_resolve(mpi_fh);
+    /* --BEGIN ERROR HANDLING-- */
+    if ((fh <= (MPI_File) 0) || ((fh)->cookie != ADIOI_FILE_COOKIE))
+    {
+	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					  myname, __LINE__, MPI_ERR_ARG,
+					  "**iobadfh", 0);
+	error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
+	goto fn_exit;
     }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
+    /* --END ERROR HANDLING-- */
+
+    ADIOI_TEST_DEFERRED(fh, "MPI_File_sync", &error_code);
 
     ADIO_Flush(fh, &error_code);
+
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, fh, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
+ 
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
     return error_code;
 }

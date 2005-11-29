@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: eof_offset.c,v 1.4 2002/10/24 17:01:14 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,7 +14,7 @@
 void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
 {
     int error_code, filetype_is_contig, etype_size, filetype_size;
-    ADIO_Offset fsize, disp, sum, size_in_file;
+    ADIO_Offset fsize, disp, sum=0, size_in_file;
     int n_filetypes, flag, i, rem;
     ADIO_Fcntl_t *fcntl_struct;
     MPI_Aint filetype_extent;

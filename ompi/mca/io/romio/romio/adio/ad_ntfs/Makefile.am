@@ -48,16 +48,12 @@ libadio_ntfs_la_SOURCES = \
         io_romio_ad_ntfs_done.c \
         io_romio_ad_ntfs_fcntl.c \
         io_romio_ad_ntfs_flush.c \
-        io_romio_ad_ntfs_hints.c \
         io_romio_ad_ntfs_iread.c \
         io_romio_ad_ntfs_iwrite.c \
         io_romio_ad_ntfs_open.c \
-        io_romio_ad_ntfs_rdcoll.c \
         io_romio_ad_ntfs_read.c \
         io_romio_ad_ntfs_resize.c \
-        io_romio_ad_ntfs_seek.c \
         io_romio_ad_ntfs_wait.c \
-        io_romio_ad_ntfs_wrcoll.c \
         io_romio_ad_ntfs_write.c
 
 #

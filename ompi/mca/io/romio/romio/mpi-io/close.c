@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: close.c,v 1.8 2002/10/24 17:01:16 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -32,38 +31,49 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_close(MPI_File *fh)
+int MPI_File_close(MPI_File *mpi_fh)
 {
     int error_code;
-#ifndef PRINT_ERR_MSG
+    ADIO_File fh;
     static char myname[] = "MPI_FILE_CLOSE";
-#endif
 #ifdef MPI_hpux
     int fl_xmpi;
 
     HPMP_IO_WSTART(fl_xmpi, BLKMPIFILECLOSE, TRDTBLOCK, *fh);
 #endif /* MPI_hpux */
 
-#ifdef PRINT_ERR_MSG
-    if ((*fh <= (MPI_File) 0) || ((*fh)->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_close: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
+
+    fh = MPIO_File_resolve(*mpi_fh);
+
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    /* --END ERROR HANDLING-- */
+
+    if (((fh)->file_system != ADIO_PIOFS) &&
+	((fh)->file_system != ADIO_PVFS) &&
+	((fh)->file_system != ADIO_PVFS2) &&
+	((fh)->file_system != ADIO_GRIDFTP))
+    {
+	ADIOI_Free((fh)->shared_fp_fname);
+        /* need a barrier because the file containing the shared file
+        pointer is opened with COMM_SELF. We don't want it to be
+	deleted while others are still accessing it. */ 
+        MPI_Barrier((fh)->comm);
+	if ((fh)->shared_fp_fd != ADIO_FILE_NULL)
+	    ADIO_Close((fh)->shared_fp_fd, &error_code);
     }
-#else
-    ADIOI_TEST_FILE_HANDLE(*fh, myname);
-#endif
 
-    if (((*fh)->file_system != ADIO_PIOFS) && ((*fh)->file_system != ADIO_PVFS)) {
-	ADIOI_Free((*fh)->shared_fp_fname);
-	if ((*fh)->shared_fp_fd != ADIO_FILE_NULL)
-	    ADIO_Close((*fh)->shared_fp_fd, &error_code);
-    }
+    ADIO_Close(fh, &error_code);
+    MPIO_File_free(mpi_fh);
 
-    ADIO_Close(*fh, &error_code);
-
-    *fh = MPI_FILE_NULL;
 #ifdef MPI_hpux
     HPMP_IO_WEND(fl_xmpi);
 #endif /* MPI_hpux */
+
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
     return error_code;
 }

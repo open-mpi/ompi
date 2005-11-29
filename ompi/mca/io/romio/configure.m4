@@ -20,8 +20,6 @@
 # MCA_io_romio_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_io_romio_CONFIG],[
-    io_romio_LIBS="$LIBS"
-
     AC_ARG_ENABLE([io-romio],
                   [AC_HELP_STRING([--disable-io-romio],
                                   [Disable the ROMIO MPI-IO component])])
@@ -51,19 +49,27 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                    AS_IF([test -n "$prefix" -a "$prefix" != "NONE"], 
                          [io_romio_prefix_arg="--prefix=$prefix"], 
                          [io_romio_prefix_arg=])
-                   io_romio_flags="CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg"
-
-                   AC_CHECK_LIB(aio, main)
+                   io_romio_flags="CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi"
 
                    ompi_show_subtitle "Configuring ROMIO distribution"
                    OMPI_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 
                                       [$io_romio_flags],
                                       [io_romio_happy=1], [io_romio_happy=0])
 
+                   # grab the libraries list from ROMIO.  We don't
+                   # need this for building the component, as libtool
+                   # will figure that part out.  But we do need it for
+                   # the wrapper settings
+                   io_romio_save_LIBS="$LIBS"
+                   LIBS=
+                   . ompi/mca/io/romio/romio/localdefs
+                   io_romio_LIBS="$LIBS"
+                   LIBS="$io_romio_save_LIBS"
+
                    AS_IF([test "$io_romio_happy" = "1"],
                          [echo "ROMIO distribution configured successfully"
+                          io_romio_WRAPPER_EXTRA_LIBS="$io_romio_LIBS"
                           $1],
-                         [LIBS="$io_romio_LIBS"
-                          AC_MSG_WARN([ROMIO distribution did not configure successfully])
+                         [AC_MSG_WARN([ROMIO distribution did not configure successfully])
                           $2])])])
 ])

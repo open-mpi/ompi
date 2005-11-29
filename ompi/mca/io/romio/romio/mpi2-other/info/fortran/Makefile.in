@@ -32,10 +32,12 @@ all: $(LIBNAME)
 
 profile: $(MPIO_TMP_POBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_REAL_POBJECTS)
+	$(RANLIB) $(LIBNAME) 
 	@rm -f _*.o
 
 $(LIBNAME): $(MPIO_OBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_OBJECTS)
+	$(RANLIB) $(LIBNAME) 
 
 clean:
 	@rm -f *.o

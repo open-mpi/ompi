@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: malloc.c,v 1.9 2002/10/24 17:01:15 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -26,6 +25,17 @@
 /* Open MPI: This seemes to have been missing */
 #include "adio.h"
 
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
+/* for the style checker */
+/* style: allow:malloc:1 sig:0 */
+/* style: allow:free:1 sig:0 */
+/* style: allow:calloc:1 sig:0 */
+/* style: allow:realloc:1 sig:0 */
+
+
 #define FPRINTF fprintf
 void *ADIOI_Malloc_fn(size_t size, int lineno, char *fname);
 void *ADIOI_Calloc_fn(size_t nelem, size_t elsize, int lineno, char *fname);
@@ -36,7 +46,7 @@ void *ADIOI_Malloc_fn(size_t size, int lineno, char *fname)
 {
     void *new;
 
-#ifdef XFS
+#ifdef ROMIO_XFS
     new = (void *) memalign(XFS_MEMALIGN, size);
 #else
     new = (void *) malloc(size);
@@ -86,4 +96,5 @@ void ADIOI_Free_fn(void *ptr, int lineno, char *fname)
 
     free(ptr);
 }
+
 

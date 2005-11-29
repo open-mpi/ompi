@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_pfs_wait.c,v 1.5 2002/10/24 17:00:53 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -8,12 +7,11 @@
 
 #include "ad_pfs.h"
 
-void ADIOI_PFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *error_code)  
+void ADIOI_PFS_ReadComplete(ADIO_Request *request, ADIO_Status *status,
+			    int *error_code)
 {
     int err=0;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_PFS_READCOMPLETE";
-#endif
 
     if (*request == ADIO_REQUEST_NULL) {
         *error_code = MPI_SUCCESS;
@@ -22,17 +20,14 @@ void ADIOI_PFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *err
 
     if ((*request)->queued) {
 	err = _iowait(*((long *) (*request)->handle));
-#ifdef PRINT_ERR_MSG
-	*error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
 	if (err == -1) {
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			  myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error((*request)->fd, *error_code, myname);	    
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE, myname,
+					       __LINE__, MPI_ERR_IO, "**io",
+					       "**io %s", strerror(errno));
 	}
 	else *error_code = MPI_SUCCESS;
-#endif
-    }
+    } /* if ((*request)->queued) ... */
     else *error_code = MPI_SUCCESS;
 #ifdef HAVE_STATUS_SET_BYTES
     if ((*request)->nbytes != -1)

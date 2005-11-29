@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_piofs_write.c,v 1.8 2002/10/24 17:00:56 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -69,16 +68,19 @@ void ADIOI_PIOFS_WriteContig(ADIO_File fd, void *buf, int count,
     if (err != -1) MPIR_Status_set_bytes(status, datatype, err);
 #endif
 
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
     if (err == -1) {
+#ifdef MPICH2
+	*error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
+	    "**io %s", strerror(errno));
+#elif defined(PRINT_ERR_MSG)
+	*error_code =  MPI_ERR_UNKNOWN;
+#else
 	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
 	ADIOI_Error(fd, *error_code, myname);
+#endif
     }
     else *error_code = MPI_SUCCESS;
-#endif
 }
 
 
@@ -172,17 +174,20 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
 
 	ADIOI_Free(iov);
-#ifdef PRINT_ERR_MSG
-	*error_code = (err_flag) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
 	if (err_flag) {
+#ifdef MPICH2
+	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
+		"**io %s", strerror(errno));
+#elif defined(PRINT_ERR_MSG) 
+	    *error_code =  MPI_ERR_UNKNOWN;
+#else /* MPICH-1 */
 	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
 	    ADIOI_Error(fd, *error_code, myname);
+#endif
 	}
 	else *error_code = MPI_SUCCESS;
-#endif
-    }
+    } /* if (!buftype_is_contig && filetype_is_contig) ... */
 
     else {  /* noncontiguous in file */
 
@@ -355,17 +360,20 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	}
 
         if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
-#ifdef PRINT_ERR_MSG
-	*error_code = (err_flag) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
 	if (err_flag) {
+#ifdef MPICH2
+	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
+		"**io %s", strerror(errno));
+#elif defined(PRINT_ERR_MSG)
+	    *error_code = MPI_ERR_UNKNOWN;
+#else /* MPICH-1 */
 	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
 	    ADIOI_Error(fd, *error_code, myname);
+#endif
 	}
 	else *error_code = MPI_SUCCESS;
-#endif
-    }
+    } 
 
     fd->fp_sys_posn = -1;   /* set it to null. */
 

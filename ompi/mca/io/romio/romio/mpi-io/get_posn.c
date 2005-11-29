@@ -1,12 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: get_posn.c,v 1.8 2002/10/24 17:01:17 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "mpioimpl.h"
+#include "adioi.h"
 
 #ifdef HAVE_WEAK_SYMBOLS
 
@@ -37,34 +37,27 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_position(MPI_File fh, MPI_Offset *offset)
+int MPI_File_get_position(MPI_File mpi_fh, MPI_Offset *offset)
 {
-#ifndef PRINT_ERR_MSG
     int error_code;
+    ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_POSITION";
-#endif
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_get_position: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
 
-    if (fh->access_mode & MPI_MODE_SEQUENTIAL) {
-#ifdef PRINT_ERR_MSG
-	FPRINTF(stderr, "MPI_File_get_position: Can't use this function because file was opened with MPI_MODE_SEQUENTIAL\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_UNSUPPORTED_OPERATION, MPIR_ERR_AMODE_SEQ,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);
-#endif
-    }
+    fh = MPIO_File_resolve(mpi_fh);
+
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    MPIO_CHECK_NOT_SEQUENTIAL_MODE(fh, myname, error_code);
+    /* --END ERROR HANDLING-- */
 
     ADIOI_Get_position(fh, offset);
+
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
 
     return MPI_SUCCESS;
 }

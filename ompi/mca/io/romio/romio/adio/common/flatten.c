@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: flatten.c,v 1.9 2003/01/08 19:31:22 thakur Exp $    
+ *   $Id: flatten.c,v 1.22 2005/08/12 18:56:56 thakur Exp $
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -8,15 +8,23 @@
 
 #include "adio.h"
 #include "adio_extern.h"
-#ifdef MPISGI
+/* #ifdef MPISGI
 #include "mpisgi2.h"
-#endif
+#endif */
 
 void ADIOI_Optimize_flattened(ADIOI_Flatlist_node *flat_type);
+void ADIOI_Flatten_copy_type(ADIOI_Flatlist_node *flat,
+			     int old_type_start,
+			     int old_type_end,
+			     int new_type_start,
+			     ADIO_Offset offset_adjustment);
 
 /* flatten datatype and add it to Flatlist */
 void ADIOI_Flatten_datatype(MPI_Datatype datatype)
 {
+#ifdef HAVE_MPIR_TYPE_FLATTEN
+    MPI_Aint flatten_idx;
+#endif
     int curr_index=0, is_contig;
     ADIOI_Flatlist_node *flat, *prev=0;
 
@@ -29,7 +37,9 @@ void ADIOI_Flatten_datatype(MPI_Datatype datatype)
     /* has it already been flattened? */
     flat = ADIOI_Flatlist;
     while (flat) {
-	if (flat->type == datatype) return;
+	if (flat->type == datatype) {
+		return;
+	}
 	else {
 	    prev = flat;
 	    flat = flat->next;
@@ -47,6 +57,9 @@ void ADIOI_Flatten_datatype(MPI_Datatype datatype)
     flat->indices = NULL;
 
     flat->count = ADIOI_Count_contiguous_blocks(datatype, &curr_index);
+#if 0
+    FPRINTF(stderr, "cur_idx = %d\n", curr_index);
+#endif
 /*    FPRINTF(stderr, "%d\n", flat->count);*/
 
     if (flat->count) {
@@ -56,23 +69,35 @@ void ADIOI_Flatten_datatype(MPI_Datatype datatype)
     }
 	
     curr_index = 0;
-
+#ifdef HAVE_MPIR_TYPE_FLATTEN
+    flatten_idx = (MPI_Aint) flat->count;
+    MPIR_Type_flatten(datatype, flat->indices, flat->blocklens, &flatten_idx);
+#else
     ADIOI_Flatten(datatype, flat, 0, &curr_index);
 
     ADIOI_Optimize_flattened(flat);
+#endif
 /* debug */
-    /*FPRINTF(stderr, "blens: ");
-    for (i=0; i<flat->count; i++) 
-	FPRINTF(stderr, "%d ", flat->blocklens[i]);
-    FPRINTF(stderr, "\n\n");
-    FPRINTF(stderr, "indices: ");
-    for (i=0; i<flat->count; i++) 
-	FPRINTF(stderr, "%ld ", flat->indices[i]);
-    FPRINTF(stderr, "\n\n");*/
+#if 0
+    {
+	int i;
+	FPRINTF(stderr, "blens: ");
+	for (i=0; i<flat->count; i++) 
+	    FPRINTF(stderr, "%d ", flat->blocklens[i]);
+	FPRINTF(stderr, "\n\n");
+	FPRINTF(stderr, "indices: ");
+	for (i=0; i<flat->count; i++) 
+	    FPRINTF(stderr, "%ld ", (long) flat->indices[i]);
+	FPRINTF(stderr, "\n\n");
+    }
+#endif
 
 }
 
-
+/* ADIOI_Flatten()
+ *
+ * Assumption: input datatype is not a basic!!!!
+ */
 void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat, 
 		  ADIO_Offset st_offset, int *curr_index)  
 {
@@ -91,7 +116,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
     MPI_Type_get_contents(datatype, nints, nadds, ntypes, ints, adds, types);
 
     switch (combiner) {
-#ifdef MPICH2
+#ifdef MPIIMPL_HAVE_MPI_COMBINER_DUP
     case MPI_COMBINER_DUP:
         MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
 			      &old_ntypes, &old_combiner); 
@@ -99,6 +124,45 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig))
             ADIOI_Flatten(types[0], flat, st_offset, curr_index);
         break;
+#endif
+#ifdef MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY
+    case MPI_COMBINER_SUBARRAY:
+        {
+	    int dims = ints[0];
+	    MPI_Datatype stype;
+
+	    ADIO_Type_create_subarray(dims,
+				      &ints[1],        /* sizes */
+				      &ints[dims+1],   /* subsizes */
+				      &ints[2*dims+1], /* starts */
+				      ints[3*dims+1],  /* order */
+				      types[0],        /* type */
+				      &stype);
+	    ADIOI_Flatten(stype, flat, st_offset, curr_index);
+	    MPI_Type_free(&stype);
+	}
+	break;
+#endif
+#ifdef MPIIMPL_HAVE_MPI_COMBINER_DARRAY
+    case MPI_COMBINER_DARRAY:
+	{
+	    int dims = ints[2];
+	    MPI_Datatype dtype;
+
+	    ADIO_Type_create_darray(ints[0],         /* size */
+				    ints[1],         /* rank */
+				    dims,
+				    &ints[3],        /* gsizes */
+				    &ints[dims+3],   /* distribs */
+				    &ints[2*dims+3], /* dargs */
+				    &ints[3*dims+3], /* psizes */
+				    ints[4*dims+3],  /* order */
+				    types[0],
+				    &dtype);
+	    ADIOI_Flatten(dtype, flat, st_offset, curr_index);
+	    MPI_Type_free(&dtype);
+	}
+	break;
 #endif
     case MPI_COMBINER_CONTIGUOUS:
 	top_count = ints[0];
@@ -406,6 +470,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
  	break;
 
     default:
+	/* TODO: FIXME (requires changing prototypes to return errors...) */
 	FPRINTF(stderr, "Error: Unsupported datatype passed to ADIOI_Flatten\n");
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -423,15 +488,27 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
     ADIOI_Free(ints);
     ADIOI_Free(adds);
     ADIOI_Free(types);
-}
 
+}
 
 /********************************************************/
 
-
-
+/* ADIOI_Count_contiguous_blocks
+ *
+ * Returns number of contiguous blocks in type, and also updates
+ * curr_index to reflect the space for the additional blocks.
+ *
+ * ASSUMES THAT TYPE IS NOT A BASIC!!!
+ */
 int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
 {
+#ifdef HAVE_MPIR_TYPE_GET_CONTIG_BLOCKS
+    /* MPICH2 can get us this value without all the envelope/contents calls */
+    int blks;
+    MPIR_Type_get_contig_blocks(datatype, &blks);
+    *curr_index = blks;
+    return blks;
+#else
     int count=0, i, n, num, basic_num, prev_index;
     int top_count, combiner, old_combiner, old_is_contig;
     int nints, nadds, ntypes, old_nints, old_nadds, old_ntypes;
@@ -446,15 +523,64 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
     MPI_Type_get_contents(datatype, nints, nadds, ntypes, ints, adds, types);
 
     switch (combiner) {
-#ifdef MPICH2
+#ifdef MPIIMPL_HAVE_MPI_COMBINER_DUP
     case MPI_COMBINER_DUP:
         MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
                               &old_ntypes, &old_combiner); 
 	ADIOI_Datatype_iscontig(types[0], &old_is_contig);
 	if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig))
 	    count = ADIOI_Count_contiguous_blocks(types[0], curr_index);
-	else count = 1;
+	else {
+		count = 1;
+		(*curr_index)++;
+	}
         break;
+#endif
+#ifdef MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY
+    case MPI_COMBINER_SUBARRAY:
+        {
+	    int dims = ints[0];
+	    MPI_Datatype stype;
+
+	    ADIO_Type_create_subarray(dims,
+				      &ints[1],        /* sizes */
+				      &ints[dims+1],   /* subsizes */
+				      &ints[2*dims+1], /* starts */
+				      ints[3*dims+1],  /* order */
+				      types[0],        /* type */
+				      &stype);
+	    count = ADIOI_Count_contiguous_blocks(stype, curr_index);
+	    /* curr_index will have already been updated; just pass
+	     * count back up.
+	     */
+	    MPI_Type_free(&stype);
+
+	}
+	break;
+#endif
+#ifdef MPIIMPL_HAVE_MPI_COMBINER_DARRAY
+    case MPI_COMBINER_DARRAY:
+	{
+	    int dims = ints[2];
+	    MPI_Datatype dtype;
+
+	    ADIO_Type_create_darray(ints[0],         /* size */
+				    ints[1],         /* rank */
+				    dims,
+				    &ints[3],        /* gsizes */
+				    &ints[dims+3],   /* distribs */
+				    &ints[2*dims+3], /* dargs */
+				    &ints[3*dims+3], /* psizes */
+				    ints[4*dims+3],  /* order */
+				    types[0],
+				    &dtype);
+	    count = ADIOI_Count_contiguous_blocks(dtype, curr_index);
+	    /* curr_index will have already been updated; just pass
+	     * count back up.
+	     */
+	    MPI_Type_free(&dtype);
+	}
+	break;
 #endif
     case MPI_COMBINER_CONTIGUOUS:
         top_count = ints[0];
@@ -574,6 +700,7 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
 	}
 	break;
     default:
+	/* TODO: FIXME */
 	FPRINTF(stderr, "Error: Unsupported datatype passed to ADIOI_Count_contiguous_blocks\n");
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -592,6 +719,7 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
     ADIOI_Free(adds);
     ADIOI_Free(types);
     return count;
+#endif /* HAVE_MPIR_TYPE_GET_CONTIG_BLOCKS */
 }
 
 
@@ -602,6 +730,8 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
  * Scans the blocks of a flattened type and merges adjacent blocks 
  * together, resulting in a shorter blocklist (and thus fewer
  * contiguous operations).
+ *
+ * Q: IS IT SAFE TO REMOVE THE 0-LENGTH BLOCKS TOO?
  */
 void ADIOI_Optimize_flattened(ADIOI_Flatlist_node *flat_type)
 {
@@ -646,8 +776,6 @@ void ADIOI_Optimize_flattened(ADIOI_Flatlist_node *flat_type)
     return;
 }
 
-/****************************************************************/
-
 void ADIOI_Delete_flattened(MPI_Datatype datatype)
 {
     ADIOI_Flatlist_node *flat, *prev;
@@ -662,6 +790,28 @@ void ADIOI_Delete_flattened(MPI_Datatype datatype)
 	if (flat->blocklens) ADIOI_Free(flat->blocklens);
 	if (flat->indices) ADIOI_Free(flat->indices);
 	ADIOI_Free(flat);
+    }
+}
+
+/* ADIOI_Flatten_copy_type()
+ * flat - pointer to flatlist node holding offset and lengths
+ * start - starting index of src type in arrays
+ * end - one larger than ending index of src type (makes loop clean)
+ * offset_adjustment - amount to add to "indices" (offset) component
+ *                     of each off/len pair copied
+ */
+void ADIOI_Flatten_copy_type(ADIOI_Flatlist_node *flat,
+			     int old_type_start,
+			     int old_type_end,
+			     int new_type_start,
+			     ADIO_Offset offset_adjustment)
+{
+    int i, out_index = new_type_start;
+
+    for (i=old_type_start; i < old_type_end; i++) {
+	flat->indices[out_index]   = flat->indices[i] + offset_adjustment;
+	flat->blocklens[out_index] = flat->blocklens[i];
+	out_index++;
     }
 }
 

@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: write_atf.c,v 1.14 2002/10/24 17:01:26 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,12 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+extern FORTRAN_API void FORT_CALL MPI_FILE_WRITE_AT( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Status*, MPI_Fint * );
 #pragma weak MPI_FILE_WRITE_AT = PMPI_FILE_WRITE_AT
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_write_at__( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Status*, MPI_Fint * );
 #pragma weak mpi_file_write_at__ = pmpi_file_write_at__
 #elif !defined(FORTRANUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_write_at( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Status*, MPI_Fint * );
 #pragma weak mpi_file_write_at = pmpi_file_write_at
 #else
+extern FORTRAN_API void FORT_CALL mpi_file_write_at_( MPI_Fint *, MPI_Offset *, void*, MPI_Fint *, MPI_Fint *, MPI_Status*, MPI_Fint * );
 #pragma weak mpi_file_write_at_ = pmpi_file_write_at_
 #endif
 
@@ -89,12 +92,12 @@
 #if defined(MPIHP) || defined(MPILAM)
 /* Prototype to keep compiler happy */
 void mpi_file_write_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                      int *count,MPI_Fint *datatype,
-			MPI_Status *status, int *ierr );
+                      MPI_Fint *count,MPI_Fint *datatype,
+			MPI_Status *status, MPI_Fint *ierr );
 
 void mpi_file_write_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                      int *count,MPI_Fint *datatype,
-                      MPI_Status *status, int *ierr )
+                      MPI_Fint *count,MPI_Fint *datatype,
+                      MPI_Status *status, MPI_Fint *ierr )
 {
     MPI_File fh_c;
     MPI_Datatype datatype_c;
@@ -107,12 +110,12 @@ void mpi_file_write_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
 #else
 /* Prototype to keep compiler happy */
 FORTRAN_API void FORT_CALL mpi_file_write_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                      int *count,MPI_Datatype *datatype,
-			MPI_Status *status, int *ierr );
+                      MPI_Fint *count,MPI_Fint *datatype,
+			MPI_Status *status, MPI_Fint *ierr );
 
 FORTRAN_API void FORT_CALL mpi_file_write_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-                      int *count,MPI_Datatype *datatype,
-                      MPI_Status *status, int *ierr )
+                      MPI_Fint *count,MPI_Fint *datatype,
+                      MPI_Status *status, MPI_Fint *ierr )
 {
     MPI_File fh_c;
     

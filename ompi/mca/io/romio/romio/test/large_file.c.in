@@ -1,5 +1,4 @@
 #include "mpi.h"
-#include "mpio.h"  /* not necessary with MPICH 1.1.1 or HPMPI 1.4 */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -70,7 +69,7 @@ int main(int argc, char **argv)
     }
 
     MPI_File_get_size(fh, &size);
-    fprintf(stderr, "file size = @LL@ bytes\n", size);
+    fprintf(stderr, "file size = %@LL@ bytes\n", size);
 
     MPI_File_seek(fh, 0, MPI_SEEK_SET);
 
@@ -87,7 +86,7 @@ int main(int argc, char **argv)
 	}
 	for (j=0; j<SIZE; j++) 
 	    if (buf[j] != i*SIZE + j) {
-		fprintf(stderr, "error: buf %d is @LL@, should be @LL@ \n", j, buf[j], 
+		fprintf(stderr, "error: buf %d is %@LL@, should be %@LL@ \n", j, buf[j], 
                                  i*SIZE + j);
 		flag = 1;
 	    }

@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_pvfs_write.c,v 1.10 2002/10/24 17:01:00 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -17,13 +16,12 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 #endif
 
 void ADIOI_PVFS_WriteContig(ADIO_File fd, void *buf, int count, 
-                     MPI_Datatype datatype, int file_ptr_type,
-		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
+			    MPI_Datatype datatype, int file_ptr_type,
+			    ADIO_Offset offset, ADIO_Status *status,
+			    int *error_code)
 {
     int err=-1, datatype_size, len;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_PVFS_WRITECONTIG";
-#endif
 
     MPI_Type_size(datatype, &datatype_size);
     len = datatype_size * count;
@@ -47,24 +45,21 @@ void ADIOI_PVFS_WriteContig(ADIO_File fd, void *buf, int count,
     if (err != -1) MPIR_Status_set_bytes(status, datatype, err);
 #endif
 
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
     if (err == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**io",
+					   "**io %s", strerror(errno));
     }
     else *error_code = MPI_SUCCESS;
-#endif
 }
 
 
 
 void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
-                       MPI_Datatype datatype, int file_ptr_type,
-                       ADIO_Offset offset, ADIO_Status *status, int
-                       *error_code)
+			     MPI_Datatype datatype, int file_ptr_type,
+			     ADIO_Offset offset, ADIO_Status *status, int
+			     *error_code)
 {
 /* Since PVFS does not support file locking, can't do buffered writes
    as on Unix */
@@ -72,7 +67,6 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 /* offset is in units of etype relative to the filetype. */
 
     ADIOI_Flatlist_node *flat_buf, *flat_file;
-    struct iovec *iov;
     int i, j, k, err=-1, bwr_size, fwr_size=0, st_index=0;
     int bufsize, num, size, sum, n_etypes_in_filetype, size_in_filetype;
     int n_filetypes, etype_in_filetype;
@@ -82,9 +76,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset off, disp;
     int flag, new_bwr_size, new_fwr_size, err_flag=0;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_PVFS_WRITESTRIDED";
-#endif
 
 #ifdef HAVE_PVFS_LISTIO
     if ( fd->hints->fs_hints.pvfs.listio_write == ADIOI_HINT_ENABLE ) {
@@ -95,10 +87,15 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 #endif
     /* if hint set to DISABLE or AUTOMATIC, don't use listio */
 
+    /* --BEGIN ERROR HANDLING-- */
     if (fd->atomicity) {
-	FPRINTF(stderr, "ROMIO cannot guarantee atomicity of noncontiguous accesses in atomic mode, as PVFS doesn't support file locking. Use nonatomic mode and its associated semantics.\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__,
+					   MPI_ERR_INTERN,
+					   "Atomic mode set in PVFS I/O function", 0);
+	return;
     }
+    /* --END ERROR HANDLING-- */
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
@@ -117,59 +114,89 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
     bufsize = buftype_size * count;
 
     if (!buftype_is_contig && filetype_is_contig) {
-
+	char *combine_buf, *combine_buf_ptr;
+	ADIO_Offset combine_buf_remain;
 /* noncontiguous in memory, contiguous in file. use writev */
 
 	ADIOI_Flatten_datatype(datatype);
 	flat_buf = ADIOI_Flatlist;
 	while (flat_buf->type != datatype) flat_buf = flat_buf->next;
 
-/* There is a limit of 16 on the number of iovecs for readv/writev! */
+	/* allocate our "combine buffer" to pack data into before writing */
+	combine_buf = (char *) ADIOI_Malloc(fd->hints->ind_wr_buffer_size);
+	combine_buf_ptr = combine_buf;
+	combine_buf_remain = fd->hints->ind_wr_buffer_size;
 
-	iov = (struct iovec *) ADIOI_Malloc(16*sizeof(struct iovec));
-
+	/* seek to the right spot in the file */
 	if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
 	    off = fd->disp + etype_size * offset;
 	    pvfs_lseek64(fd->fd_sys, off, SEEK_SET);
 	}
 	else off = pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
 
-	k = 0;
-	for (j=0; j<count; j++) 
+	/* loop through all the flattened pieces.  combine into buffer until
+	 * no more will fit, then write.
+	 *
+	 * special case of a given piece being bigger than the combine buffer
+	 * is also handled.
+	 */
+	for (j=0; j<count; j++) {
 	    for (i=0; i<flat_buf->count; i++) {
-		iov[k].iov_base = ((char *) buf) + j*buftype_extent +
-		    flat_buf->indices[i]; 
-		iov[k].iov_len = flat_buf->blocklens[i];
-		/*FPRINTF(stderr, "%d %d\n", iov[k].iov_base, iov[k].iov_len);*/
-
-		off += flat_buf->blocklens[i];
-		k = (k+1)%16;
-
-		if (!k) {
-		    err = pvfs_writev(fd->fd_sys, iov, 16);
+		if (flat_buf->blocklens[i] > combine_buf_remain && combine_buf != combine_buf_ptr) {
+		    /* there is data in the buffer; write out the buffer so far */
+		    err = pvfs_write(fd->fd_sys,
+				     combine_buf,
+				     fd->hints->ind_wr_buffer_size - combine_buf_remain);
 		    if (err == -1) err_flag = 1;
+
+		    /* reset our buffer info */
+		    combine_buf_ptr = combine_buf;
+		    combine_buf_remain = fd->hints->ind_wr_buffer_size;
+		}
+
+		/* TODO: heuristic for when to not bother to use combine buffer? */
+		if (flat_buf->blocklens[i] >= combine_buf_remain) {
+		    /* special case: blocklen is as big as or bigger than the combine buf;
+		     * write directly
+		     */
+		    err = pvfs_write(fd->fd_sys,
+				     ((char *) buf) + j*buftype_extent + flat_buf->indices[i],
+				     flat_buf->blocklens[i]);
+		    if (err == -1) err_flag = 1;
+		    off += flat_buf->blocklens[i]; /* keep up with the final file offset too */
+		}
+		else {
+		    /* copy more data into combine buffer */
+		    memcpy(combine_buf_ptr,
+			   ((char *) buf) + j*buftype_extent + flat_buf->indices[i],
+			   flat_buf->blocklens[i]);
+		    combine_buf_ptr += flat_buf->blocklens[i];
+		    combine_buf_remain -= flat_buf->blocklens[i];
+		    off += flat_buf->blocklens[i]; /* keep up with the final file offset too */
 		}
 	    }
+	}
 
-	if (k) {
-	    err = pvfs_writev(fd->fd_sys, iov, k);
+	if (combine_buf_ptr != combine_buf) {
+	    /* data left in buffer to write */
+	    err = pvfs_write(fd->fd_sys,
+			     combine_buf,
+			     fd->hints->ind_wr_buffer_size - combine_buf_remain);
 	    if (err == -1) err_flag = 1;
 	}
 
 	if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
 
-	ADIOI_Free(iov);
-#ifdef PRINT_ERR_MSG
-	*error_code = (err_flag) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
+	ADIOI_Free(combine_buf);
+
 	if (err_flag) {
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error(fd, *error_code, myname);
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE, myname,
+					       __LINE__, MPI_ERR_IO, "**io",
+					       "**io %s", strerror(errno));
 	}
 	else *error_code = MPI_SUCCESS;
-#endif
-    }
+    } /* if (!buftype_is_contig && filetype_is_contig)  ... */
 
     else {  /* noncontiguous in file */
 
@@ -342,16 +369,13 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	}
 
         if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
-#ifdef PRINT_ERR_MSG
-	*error_code = (err_flag) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
 	if (err_flag) {
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error(fd, *error_code, myname);
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE, myname,
+					       __LINE__, MPI_ERR_IO, "**io",
+					       "**io %s", strerror(errno));
 	}
 	else *error_code = MPI_SUCCESS;
-#endif
     }
 
     fd->fp_sys_posn = -1;   /* set it to null. */
@@ -406,23 +430,20 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
     int start_k, start_j, new_file_write, new_buffer_write;
     int start_mem_offset;
 #define MAX_ARRAY_SIZE 1024
-
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_PVFS_WRITESTRIDED";
-#endif
 
 /* PFS file pointer modes are not relevant here, because PFS does
    not support strided accesses. */
 
-    if ((fd->iomode != M_ASYNC) && (fd->iomode != M_UNIX)) {
-	FPRINTF(stderr, "ADIOI_PVFS_WriteStrided: only M_ASYNC and M_UNIX iomodes are valid\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-
+    /* --BEGIN ERROR HANDLING-- */
     if (fd->atomicity) {
-	FPRINTF(stderr, "ROMIO cannot guarantee atomicity of noncontiguous accesses in atomic mode, as PVFS doesn't support file locking. Use nonatomic mode and its associated semantics.\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__,
+					   MPI_ERR_INTERN,
+					   "Atomic mode set in PVFS I/O function", 0);
+	return;
     }
+    /* --END ERROR HANDLING-- */
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
@@ -508,16 +529,22 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 
 	if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
 
-#ifdef PRINT_ERR_MSG
-	*error_code = (err_flag) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
 	if (err_flag) {
-	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error(fd, *error_code, myname);
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+					       MPIR_ERR_RECOVERABLE, myname,
+					       __LINE__, MPI_ERR_IO, "**io",
+					       "**io %s", strerror(errno));
 	}
 	else *error_code = MPI_SUCCESS;
+
+	fd->fp_sys_posn = -1;   /* clear this. */
+
+#ifdef HAVE_STATUS_SET_BYTES
+	MPIR_Status_set_bytes(status, datatype, bufsize);
+/* This is a temporary way of filling in status. The right way is to 
+   keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
+
 	ADIOI_Delete_flattened(datatype);
 	return;
     } /* if (!buftype_is_contig && filetype_is_contig) */
@@ -555,7 +582,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		}
 	    }
 	} /* while (!flag) */
-    } /* if (file_ptr_type == ADIOI_INDIVIDUAL) */
+    } /* if (file_ptr_type == ADIO_INDIVIDUAL) */
     else {
         n_etypes_in_filetype = filetype_size/etype_size;
 	n_filetypes = (int) (offset / n_etypes_in_filetype);
@@ -577,7 +604,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	/* abs. offset in bytes in the file */
 	offset = disp + (ADIO_Offset) n_filetypes*filetype_extent +
 	    abs_off_in_filetype;
-    } /* else [file_ptr_type != ADIOI_INDIVIDUAL] */
+    } /* else [file_ptr_type != ADIO_INDIVIDUAL] */
 
     start_off = offset;
     st_fwr_size = fwr_size;
@@ -1043,17 +1070,13 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
     ADIOI_Free(file_lengths);
 
     if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
-#ifdef PRINT_ERR_MSG
-    *error_code = (err_flag) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
     if (err_flag) {
-        *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-				      myname, "I/O Error", "%s",
-				      strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**io",
+					   "**io %s", strerror(errno));
     }
     else *error_code = MPI_SUCCESS;
-#endif
 
     fd->fp_sys_posn = -1;   /* set it to null. */
 

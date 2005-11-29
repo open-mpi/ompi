@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/*  $Id: adioi_errmsg.h,v 1.3 2002/11/15 16:26:22 gropp Exp $
+/*  $Id: adioi_errmsg.h,v 1.5 2005/05/23 23:27:49 rross Exp $
  *
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
@@ -43,7 +43,7 @@ MPI_ERR_REQUEST
 
 MPI_ERR_IO
     MPIR_ERR_ETYPE_FRACTIONAL "Only an integral number of etypes can be accessed"
-    MPIR_ERR_NO_FSTYPE "Can't determine the file-system type. Check the filename/path you provided and try again. Otherwise, prefix the filename with a string to indicate the type of file sytem (piofs:, pfs:, nfs:, ufs:, hfs:, xfs:, sfs:, pvfs:)"
+    MPIR_ERR_NO_FSTYPE "Can't determine the file-system type. Check the filename/path you provided and try again. Otherwise, prefix the filename with a string to indicate the type of file sytem (piofs:, pfs:, nfs:, ufs:, hfs:, xfs:, sfs:, pvfs:, panfs: ftp: gsiftp:)"
     MPIR_ERR_NO_PFS "ROMIO has not been configured to use the PFS file system"
     MPIR_ERR_NO_PIOFS "ROMIO has not been configured to use the PIOFS file system"
     MPIR_ERR_NO_UFS "ROMIO has not been configured to use the UFS file system"
@@ -52,6 +52,7 @@ MPI_ERR_IO
     MPIR_ERR_NO_XFS "ROMIO has not been configured to use the XFS file system"
     MPIR_ERR_NO_SFS "ROMIO has not been configured to use the SFS file system"
     MPIR_ERR_NO_PVFS "ROMIO has not been configured to use the PVFS file system"
+    MPIR_ERR_NO_PANFS "ROMIO has not been configured to use the PANFS file system"
     MPIR_ERR_MULTIPLE_SPLIT_COLL "Only one active split collective I/O operation allowed per file handle"
     MPIR_ERR_NO_SPLIT_COLL "No previous split collective begin"
     MPIR_ERR_ASYNC_OUTSTANDING "There are outstanding nonblocking I/O operations on this file"
@@ -60,6 +61,7 @@ MPI_ERR_IO
     MPIR_PREALLOC_PERM "To preallocate disk space, ROMIO needs to read the file and write it back, but is unable to read the file. Please give the file read permission and open it with MPI_MODE_RDWR."
     MPIR_ERR_FILETYPE  "Filetype must be constructed out of one or more etypes"
     MPIR_ERR_NO_TESTFS "ROMIO has not been configured to use the TESTFS file system"
+    MPIR_ERR_DEFERRED "independent IO attempted even though no_indep_rw hint given"
 
 MPI_ERR_COMM
     MPIR_ERR_COMM_NULL (null communicator. from MPICH)

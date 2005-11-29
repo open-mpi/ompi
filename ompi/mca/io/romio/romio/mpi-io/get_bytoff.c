@@ -1,12 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: get_bytoff.c,v 1.8 2002/10/24 15:54:40 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "mpioimpl.h"
+#include "adioi.h" /* ADIOI_Get_byte_offset() prototype */
 
 #ifdef HAVE_WEAK_SYMBOLS
 
@@ -38,44 +38,39 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp)
+int MPI_File_get_byte_offset(MPI_File mpi_fh,
+			     MPI_Offset offset,
+			     MPI_Offset *disp)
 {
-#ifndef PRINT_ERR_MSG
     int error_code;
+    ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_BYTE_OFFSET";
-#endif
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_get_byte_offset: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
 
-    if (offset < 0) {
-#ifdef PRINT_ERR_MSG
-        FPRINTF(stderr, "MPI_File_get_byte_offset: Invalid offset argument\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_ARG, MPIR_ERR_OFFSET_ARG,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);	    
-#endif
+    fh = MPIO_File_resolve(mpi_fh);
+
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+
+    if (offset < 0)
+    {
+	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					  myname, __LINE__, MPI_ERR_ARG,
+					  "**iobadoffset", 0);
+	error_code = MPIO_Err_return_file(fh, error_code);
+	goto fn_exit;
     }
 
-    if (fh->access_mode & MPI_MODE_SEQUENTIAL) {
-#ifdef PRINT_ERR_MSG
-	FPRINTF(stderr, "MPI_File_get_byte_offset: Can't use this function because file was opened with MPI_MODE_SEQUENTIAL\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_UNSUPPORTED_OPERATION, MPIR_ERR_AMODE_SEQ,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);
-#endif
-    }
+    MPIO_CHECK_NOT_SEQUENTIAL_MODE(fh, myname, error_code);
+    /* --END ERROR HANDLING-- */
 
     ADIOI_Get_byte_offset(fh, offset, disp);
+
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
+
     return MPI_SUCCESS;
 }

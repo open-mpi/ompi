@@ -1,6 +1,0 @@
-
-testing noncontiguous in memory, noncontiguous in file using collective I/O
-
-testing noncontiguous in memory, contiguous in file using collective I/O
-
-testing contiguous in memory, noncontiguous in file using collective I/O

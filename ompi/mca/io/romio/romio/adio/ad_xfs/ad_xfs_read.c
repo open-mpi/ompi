@@ -1,12 +1,16 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_xfs_read.c,v 1.9 2002/10/24 17:01:10 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_xfs.h"
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
+/* style: allow:free:2 sig:0 */
 
 static void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len, 
 					     ADIO_Offset offset, int *err);
@@ -17,9 +21,7 @@ void ADIOI_XFS_ReadContig(ADIO_File fd, void *buf, int count,
 {
     int err=-1, datatype_size, len, diff, size, nbytes;
     void *newbuf;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_XFS_READCONTIG";
-#endif
 
     MPI_Type_size(datatype, &datatype_size);
     len = datatype_size * count;
@@ -87,16 +89,12 @@ void ADIOI_XFS_ReadContig(ADIO_File fd, void *buf, int count,
     if (err != -1) MPIR_Status_set_bytes(status, datatype, err);
 #endif
 
-#ifdef PRINT_ERR_MSG
-    *error_code = (err == -1) ? MPI_ERR_UNKNOWN : MPI_SUCCESS;
-#else
     if (err == -1) {
-	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
-			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO, "**io",
+					   "**io %s", strerror(errno));
     }
     else *error_code = MPI_SUCCESS;
-#endif
 }
 
 
@@ -149,14 +147,4 @@ void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len,
 	nbytes += pread(fd->fd_sys, (char *)buf + size, rem, offset+size);
 	*err = nbytes;
     }
-}
-
-
-void ADIOI_XFS_ReadStrided(ADIO_File fd, void *buf, int count,
-                       MPI_Datatype datatype, int file_ptr_type,
-                       ADIO_Offset offset, ADIO_Status *status, int
-                       *error_code)
-{
-    ADIOI_GEN_ReadStrided(fd, buf, count, datatype, file_ptr_type,
-                        offset, status, error_code);
 }

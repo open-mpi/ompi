@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: get_groupf.c,v 1.15 2002/10/24 17:01:20 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,12 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+extern FORTRAN_API void FORT_CALL MPI_FILE_GET_GROUP( MPI_Fint *, MPI_Group*, MPI_Fint * );
 #pragma weak MPI_FILE_GET_GROUP = PMPI_FILE_GET_GROUP
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_get_group__( MPI_Fint *, MPI_Group*, MPI_Fint * );
 #pragma weak mpi_file_get_group__ = pmpi_file_get_group__
 #elif !defined(FORTRANUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_get_group( MPI_Fint *, MPI_Group*, MPI_Fint * );
 #pragma weak mpi_file_get_group = pmpi_file_get_group
 #else
+extern FORTRAN_API void FORT_CALL mpi_file_get_group_( MPI_Fint *, MPI_Group*, MPI_Fint * );
 #pragma weak mpi_file_get_group_ = pmpi_file_get_group_
 #endif
 
@@ -88,9 +91,9 @@
 
 #if defined(MPIHP) || defined(MPILAM)
 /* Prototype to keep compiler happy */
-void mpi_file_get_group_(MPI_Fint *fh,MPI_Fint *group, int *ierr );
+void mpi_file_get_group_(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr );
 
-void mpi_file_get_group_(MPI_Fint *fh,MPI_Fint *group, int *ierr )
+void mpi_file_get_group_(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr )
 {
     MPI_File fh_c;
     MPI_Group group_c;
