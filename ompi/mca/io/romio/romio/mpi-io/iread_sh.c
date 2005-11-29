@@ -149,7 +149,7 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
     MPIO_CHECK_COUNT(fh, count, myname, error_code);
-    MPIO_CHECK_DATATYPE(fh, count, myname, error_code);
+    MPIO_CHECK_DATATYPE(fh, datatype, myname, error_code);
     /* --END ERROR HANDLING-- */
 
     MPI_Type_size(datatype, &datatype_size);
