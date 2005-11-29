@@ -116,10 +116,13 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 
 bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 {
-    int cnt=-1;
+    int cnt;
     size_t i, num_vecs;
 
+repeat:
+
     /* non-blocking read, but continue if interrupted */
+    cnt = -1;
     while(cnt < 0) {
         cnt = readv(sd, frag->iov_ptr, frag->iov_cnt);
         if(cnt < 0) {
@@ -167,13 +170,13 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     if(frag->iov_cnt == 0) {
         switch(frag->hdr.type) {
             case MCA_BTL_TCP_HDR_TYPE_SEND:
-                if(frag->iov_idx == 1) {
+                if(frag->iov_idx == 1 && frag->hdr.size) {
                     frag->iov[1].iov_base = (void*)(frag+1);
                     frag->iov[1].iov_len = frag->hdr.size;
                     frag->segments[0].seg_addr.pval = frag+1;
                     frag->segments[0].seg_len = frag->hdr.size;
                     frag->iov_cnt++;
-                    return false;
+                    goto repeat;
                 }
                 break;
             case MCA_BTL_TCP_HDR_TYPE_PUT:
@@ -181,14 +184,14 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                     frag->iov[1].iov_base = (void*)frag->segments;
                     frag->iov[1].iov_len = frag->hdr.count * sizeof(mca_btl_base_segment_t);
                     frag->iov_cnt++;
-                    return false;
+                    goto repeat;
                 } else if (frag->iov_idx == 2) {
                     for(i=0; i<frag->hdr.count; i++) {
                         frag->iov[i+2].iov_base = frag->segments[i].seg_addr.pval;
                         frag->iov[i+2].iov_len = frag->segments[i].seg_len;
                         frag->iov_cnt++;
                     }
-                    return false;
+                    goto repeat;
                 }
                 break;
             case MCA_BTL_TCP_HDR_TYPE_GET:
