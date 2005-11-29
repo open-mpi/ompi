@@ -53,13 +53,13 @@ int ompi_request_test_any(
     }
 
     /* Only fall through here if we found nothing */
+    *index = MPI_UNDEFINED;
     if(num_requests_null_inactive != count) {
         *completed = false;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
         opal_progress();
 #endif
     } else {
-        *index = MPI_UNDEFINED;
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_status_empty;
