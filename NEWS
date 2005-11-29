@@ -29,6 +29,8 @@ version 1.0.
 1.0.1
 -----
 
+- Fix so that Open MPI correctly handles the Fortran value for .TRUE.,
+  regardless of what the Fortran compiler's value for .TRUE. is.
 - Improved scalability of MX startup.
 - Fix datatype offset handling in the coll basic component's
   MPI_SCATTERV implementation.
