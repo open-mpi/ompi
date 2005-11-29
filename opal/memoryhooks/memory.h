@@ -19,10 +19,18 @@
 /**
  * @file@
  *
- * Hooks for catching release of memory from the current process
+ * Hooks for receiving callbacks when memory is allocated or deallocated
  *
- * Hooks for catching the release of memory from the current process.
- * For linking reasons, this is not a component framework (some of
+ * Hooks for receiving callbacks when memory is allocated or
+ * deallocated from the current process.  Intended to be used with
+ * RDMA communication devices that require "pinning" of virtual
+ * memory.  The hooks allow for a "lazy unpinning" approach, which
+ * provides better latency when application buffer reuse is high.
+ * Most operating systems do not respond well to memory being freed
+ * from a process while still pinned, so some type of callback to
+ * unpin is necessary before the memory is returned to the OS.
+ *
+ * \note For linking reasons, this is not a component framework (some of
  * these require tight coupling into libopal and the wrapper compilers
  * and that entire stack).
  */
@@ -37,37 +45,106 @@ extern "C" {
 #endif
 
 
+/**
+ * Initialize the memory hooks subsystem
+ *
+ * Initialize the memory hooks subsystem.  This is generally called
+ * during opal_init() and should be called before any other function
+ * in the interface is called.  
+ *
+ * \note Note that some back-end functionality is activated pre-main,
+ * so not calling this function does not prevent the memory hooks from
+ * becoming active.
+ *
+ * @retval OPAL_SUCCESS Initialization completed successfully
+ */
 int opal_mem_hooks_init(void);
 
+
+/**
+ * Finalize the memory hooks subsystem
+ *
+ * Finalize the memory hooks subsystem.  This is generally called
+ * during opal_finalize() and no other memory hooks functions should
+ * be called after this function is called.  opal_mem_hooks_finalize()
+ * will automatically deregister any callbacks that have not already
+ * been deregistered.  In a multi-threaded application, it is possible
+ * that one thread will have a memory hook callback while the other
+ * thread is in opal_mem_hooks_finalize(), however, no threads will
+ * receive a callback once the calling thread has exited
+ * opal_mem_hooks_finalize().
+ *
+ * @retval OPAL_SUCCESS Shutdown completed successfully
+ */
 int opal_mem_hooks_finalize(void);
 
 
 /**
- * Callback when memory is about to be released by the process
+ * Query level of support provided by memory hooks
  *
- * Callback when the process is about to release memory (but before it
- * actually does so).  It is not specified whether this means that
- * free() is being called on that piece of memory and the memory may
- * remain associated with the process or if the memory is being given
- * back to the system through sbrk() or munmap().
+ * Query memory hooks subsystem about the level of support provided by
+ * the current system configuration.  The return value is \c 0 if no
+ * support is provided or a bit-wise OR of the available return values
+ * if support is provided.
+ *
+ * @retval OPAL_MEMORY_FREE_SUPPORT   Memory hooks subsytem can trigger
+ *                                    callback events when memory is going 
+ *                                    to be released by the process.
+ * @retval OPAL_MEMORY_MALLOC_SUPPORT Memory hooks subsystem can trigger
+ *                                    callback events when memory is being
+ *                                    allocated by the process.
+ * @retval OPAL_MEMORY_CHUNK_SUPPORT  Memory hooks subsystem will only 
+ *                                    trigger callback events when the
+ *                                    process is giving memory back to the
+ *                                    operating system, not at ever call
+ *                                    to malloc/realloc/free/etc.
+ *
+ * \note This function must be called after opal_mem_hooks_init().
+ */
+int opal_mem_hooks_support_level(void);
+
+
+/**
+ * Memory status change callback
+ *
+ * Typedef for callbacks triggered when memory has been allocated or
+ * is about to be freed.  The callback will be triggered according to
+ * the note in opal_mem_hooks_register_alloc() or
+ * opal_mem_hooks_register_release().
  *
  * @param buf     Pointer to the start of the allocation 
- *                to be released
- * @param lentgh  Length of the allocation to be released
- *                (starting at \c buf)
- * @param cbdata  Pointer-length of information passed to 
- *                the handler registration function.
+ * @param lentgh  Length of the allocation
+ * @param cbdata  Data passed to memory hooks when callback
+ *                was registered
  */
-typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length, void *cbdata);
+typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length, 
+                                            void *cbdata);
 
 
-int opal_mem_hooks_support_level(void);
+/**
+ * Register callback for when memory has been allocated
+ *
+ * Register a \c opal_mem_hooks_callback_fn_t function pointer to be
+ * called whenever the current process has allocated memory
+ *
+ * @param func    Function pointer to call when memory has been allocated
+ * @param cbdata  A pointer-length field to be passed to func when it is
+ *                invoked.
+ *
+ * @retval OMPI_SUCCESS The registration completed successfully.
+ * @retval OMPI_EXISTS  The function is already registered and will not
+ *                      be registered again.
+ * @retval OMPI_ERR_NOT_SUPPORTED There are no hooks available for 
+ *                      receiving callbacks when memory is to be allocated
+ */
+int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, 
+                                  void *cbdata);
 
 
 /**
  * Register callback for when memory is to be released
  *
- * Register a \c opal_memory_unpin_fn_t function pointer to be called
+ * Register a \c opal_mem_hooks_callback_fn_t function pointer to be called
  * whenever the current process is about to release memory.
  *
  * @param func    Function pointer to call when memory is to be released
@@ -80,15 +157,27 @@ int opal_mem_hooks_support_level(void);
  * @retval OMPI_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be released
  */
-int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata);
-
-int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, void *cbdata);
+int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, 
+                                    void *cbdata);
 
 
 /**
- * Unregister previously registered callback
+ * Unregister previously registered alloc callback
  *
- * Unregister previously registered callback.
+ * Unregister previously registered alloc callback.
+ *
+ * @param func   Function pointer to registered callback to remove
+ *
+ * @retval OMPI_SUCCESS The function was successfully deregistered
+ * @retval OMPI_ERR_NOT_FOUND The function was not previously registered
+ */
+int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
+
+
+/**
+ * Unregister previously registered release callback
+ *
+ * Unregister previously registered release callback.
  *
  * @param func   Function pointer to registered callback to remove
  *
@@ -96,7 +185,7 @@ int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, void *cbda
  * @retval OMPI_ERR_NOT_FOUND The function was not previously registered
  */
 int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func);
-int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
