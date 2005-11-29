@@ -31,6 +31,7 @@ headers = \
         basename.h \
         bit_ops.h \
         cmd_line.h \
+        crc.h \
         convert.h \
         daemon_init.h \
         error.h \

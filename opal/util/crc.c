@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
-#include "crc.h"
+#include "opal/util/crc.h"
 
 
 #if (OMPI_ALIGNMENT_LONG == 8)
