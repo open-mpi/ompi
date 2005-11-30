@@ -34,6 +34,7 @@
 
 #include "include/orte_constants.h"
 
+#include "opal/runtime/opal.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
@@ -144,6 +145,10 @@ int main(int argc, char *argv[])
     pid_t pid;
 
 #if defined(HAVE_FORK) && defined(HAVE_PIPE)
+
+    if (ORTE_SUCCESS != (ret = opal_init())) {
+        return ret;
+    }
     
     /* setup to check common command line options that just report and die */
     memset(&orteprobe_globals, 0, sizeof(orteprobe_globals));
@@ -176,34 +181,11 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
-    
-    /* Open up the output streams */
-    if (!opal_output_init()) {
-        return OMPI_ERROR;
-    }
 
     /* 
      * If threads are supported - assume that we are using threads - and reset otherwise. 
      */
     opal_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-
-    /* For malloc debugging */
-    opal_malloc_init();
-
-    /* initialize the memory manager / tracker */
-    opal_mem_hooks_init();
-
-    opal_memory_base_open();
-
-    /* Initialize the timer */
-    opal_timer_base_open();
-
-    /*
-     * Initialize the MCA framework 
-     */
-    if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        return ret;
-    }
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
@@ -473,6 +455,8 @@ int main(int argc, char *argv[])
 
     /* finalize the system */
     orte_finalize();
+
+    opal_finalize();
 
     exit(0);
 #else /* HAVE_FORK && HAVE_PIPE */
