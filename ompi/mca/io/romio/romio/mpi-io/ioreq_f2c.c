@@ -41,12 +41,11 @@ MPIO_Request MPIO_Request_f2c(MPI_Fint request) {
 #else
 MPIO_Request MPIO_Request_f2c(MPI_Fint request)
 {
-    int error_code;
-    static char myname[] = "MPIO_REQUEST_F2C";
-
 #ifndef INT_LT_POINTER
     return (MPIO_Request) request;
 #else
+    int error_code;
+    static char myname[] = "MPIO_REQUEST_F2C";
 
     MPID_CS_ENTER();
     
