@@ -29,7 +29,7 @@ MPI::Info::Create()
 inline void
 MPI::Info::Delete(const char* key)
 {
-   (void)MPI_Info_delete(mpi_info, (char*)key);
+   (void)MPI_Info_delete(mpi_info, const_cast<char *>(key));
 }
 
 inline MPI::Info 
@@ -50,7 +50,7 @@ inline bool
 MPI::Info::Get(const char* key, int valuelen, char* value) const
 {
   int flag;
-  (void)MPI_Info_get(mpi_info, (char*)key, valuelen, value, &flag);
+  (void)MPI_Info_get(mpi_info, const_cast<char *>(key), valuelen, value, &flag);
   return (bool) flag;
 }
 
@@ -72,12 +72,12 @@ inline bool
 MPI::Info::Get_valuelen(const char* key, int& valuelen) const
 {
   int flag;
-  (void) MPI_Info_get_valuelen(mpi_info, (char*)key, &valuelen, &flag);
+  (void) MPI_Info_get_valuelen(mpi_info, const_cast<char *>(key), &valuelen, &flag);
   return (bool) flag;
 }
 
 inline void
 MPI::Info::Set(const char* key, const char* value)
 {
-  (void) MPI_Info_set(mpi_info, (char*)key, (char*)value);
+  (void) MPI_Info_set(mpi_info, const_cast<char *>(key), const_cast<char *>(value));
 }
