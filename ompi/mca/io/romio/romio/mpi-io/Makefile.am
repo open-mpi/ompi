@@ -63,8 +63,6 @@ libmpi_io_la_SOURCES = \
         io_romio_get_posn_sh.c \
         io_romio_get_size.c \
         io_romio_get_view.c \
-        io_romio_ioreq_c2f.c \
-        io_romio_ioreq_f2c.c \
         io_romio_iotest.c \
         io_romio_iowait.c \
         io_romio_iread_at.c \
