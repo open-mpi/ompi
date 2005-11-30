@@ -196,7 +196,7 @@ MPI::Free_mem(void* base)
 inline void
 MPI::Close_port(const char* port_name) 
 {
-  (void) MPI_Close_port((char *) port_name);
+  (void) MPI_Close_port(const_cast<char *>(port_name));
 }
 
 
@@ -205,7 +205,7 @@ MPI::Lookup_name(const char * service_name,
 			const MPI::Info& info,
 			char* port_name)
 {
-  (void) MPI_Lookup_name((char *) service_name, info, port_name);
+  (void) MPI_Lookup_name(const_cast<char *>(service_name), info, port_name);
 }
 
 
@@ -221,8 +221,8 @@ MPI::Publish_name(const char* service_name,
 			 const MPI::Info& info,
 			 const char* port_name)
 {
-  (void) MPI_Publish_name((char *) service_name, info,
-			 (char *) port_name);
+  (void) MPI_Publish_name(const_cast<char *>(service_name), info,
+                          const_cast<char *>(port_name));
 }
 
 
@@ -231,8 +231,8 @@ MPI::Unpublish_name(const char* service_name,
 			   const MPI::Info& info,
 			   const char* port_name)
 {
-  (void)MPI_Unpublish_name((char *) service_name, info,
-                         (char *) port_name);
+  (void)MPI_Unpublish_name(const_cast<char *>(service_name), info,
+                           const_cast<char *>(port_name));
 }
 
 

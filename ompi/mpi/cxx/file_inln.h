@@ -27,7 +27,7 @@ MPI::File::Close()
 inline void 
 MPI::File::Delete(const char* filename, const MPI::Info& info) 
 {
-  (void) MPI_File_delete((char*)filename, info);
+  (void) MPI_File_delete(const_cast<char *>(filename), info);
 }
 
 
@@ -163,7 +163,7 @@ MPI::File::Iwrite(const void* buf, int count,
 			 const MPI::Datatype& datatype)
 {
   MPI_Request req;
-  (void) MPI_File_iwrite(mpi_file, (void*) buf, count, datatype, &req);
+  (void) MPI_File_iwrite(mpi_file, const_cast<void *>(buf), count, datatype, &req);
   return req;
 }
 
@@ -173,7 +173,7 @@ MPI::File::Iwrite_at(MPI::Offset offset, const void* buf,
 			    int count, const MPI::Datatype& datatype)
 {
   MPI_Request req;
-  (void) MPI_File_iwrite_at(mpi_file, offset, (void*) buf, count, datatype,
+  (void) MPI_File_iwrite_at(mpi_file, offset, const_cast<void *>(buf), count, datatype,
 			    &req);
   return req;
 }
@@ -184,7 +184,7 @@ MPI::File::Iwrite_shared(const void* buf, int count,
 				const MPI::Datatype& datatype)
 {
   MPI_Request req;
-  (void) MPI_File_iwrite_shared(mpi_file, (void*) buf, count, datatype, &req);
+  (void) MPI_File_iwrite_shared(mpi_file, const_cast<void *>(buf), count, datatype, &req);
   return req;
 }
 
@@ -195,7 +195,7 @@ MPI::File::Open(const MPI::Intracomm& comm,
 				 const MPI::Info& info)
 {
   MPI_File fh;
-  (void) MPI_File_open(comm, (char*) filename, amode, info, &fh);
+  (void) MPI_File_open(comm, const_cast<char *>(filename), amode, info, &fh);
   return fh;
 }
 
@@ -432,7 +432,7 @@ MPI::File::Set_view(MPI::Offset disp,
 			   const char* datarep,
 			   const MPI::Info& info)
 {
-  (void) MPI_File_set_view(mpi_file, disp, etype, filetype, (char*) datarep,
+  (void) MPI_File_set_view(mpi_file, disp, etype, filetype, const_cast<char *>(datarep),
 			   info);
 }
 
@@ -449,7 +449,7 @@ MPI::File::Write(const void* buf, int count,
 		      const MPI::Datatype& datatype)
 {
   MPI_Status status;
-  (void) MPI_File_write(mpi_file, (void*) buf, count, datatype, &status);
+  (void) MPI_File_write(mpi_file, const_cast<void *>(buf), count, datatype, &status);
 }
 
 
@@ -458,7 +458,7 @@ MPI::File::Write(const void* buf, int count,
 			const MPI::Datatype& datatype,
 			MPI::Status& status)
 {
-  (void) MPI_File_write(mpi_file, (void*) buf, count, datatype, 
+  (void) MPI_File_write(mpi_file, const_cast<void *>(buf), count, datatype, 
                         &status.mpi_status);
 }
 
@@ -468,7 +468,7 @@ MPI::File::Write_all(const void* buf, int count,
 			    const MPI::Datatype& datatype)
 {
   MPI_Status status;
-  (void) MPI_File_write_all(mpi_file, (void*) buf, count, datatype, &status);
+  (void) MPI_File_write_all(mpi_file, const_cast<void *>(buf), count, datatype, &status);
 }
 
 
@@ -478,7 +478,7 @@ MPI::File::Write_all(const void* buf, int count,
 			    const MPI::Datatype& datatype,
 			    MPI::Status& status)
 {
-  (void) MPI_File_write_all(mpi_file, (void*) buf, count, datatype, 
+  (void) MPI_File_write_all(mpi_file, const_cast<void *>(buf), count, datatype, 
                             &status.mpi_status);
 }
 
@@ -487,7 +487,7 @@ inline void
 MPI::File::Write_all_begin(const void* buf, int count,
 				  const MPI::Datatype& datatype)
 {
-  (void) MPI_File_write_all_begin(mpi_file, (void*) buf, count, datatype);
+  (void) MPI_File_write_all_begin(mpi_file, const_cast<void *>(buf), count, datatype);
 }
 
 
@@ -495,14 +495,14 @@ inline void
 MPI::File::Write_all_end(const void* buf)
 {
   MPI_Status status;
-  (void) MPI_File_write_all_end(mpi_file, (void*) buf, &status);
+  (void) MPI_File_write_all_end(mpi_file, const_cast<void *>(buf), &status);
 }
 
 
 inline void 
 MPI::File::Write_all_end(const void* buf, MPI::Status& status)
 {
-  (void) MPI_File_write_all_end(mpi_file, (void*) buf, &status.mpi_status);
+  (void) MPI_File_write_all_end(mpi_file, const_cast<void *>(buf), &status.mpi_status);
 }
 
 
@@ -512,7 +512,7 @@ MPI::File::Write_at(MPI::Offset offset,
 			   const MPI::Datatype& datatype)
 {
   MPI_Status status;
-  (void) MPI_File_write_at(mpi_file, offset, (void*) buf, count,
+  (void) MPI_File_write_at(mpi_file, offset, const_cast<void *>(buf), count,
 			   datatype, &status);
 }
 
@@ -523,7 +523,7 @@ MPI::File::Write_at(MPI::Offset offset,
 			   const MPI::Datatype& datatype,
 			   MPI::Status& status)
 {
-  (void) MPI_File_write_at(mpi_file, offset, (void*) buf, count,
+  (void) MPI_File_write_at(mpi_file, offset, const_cast<void *>(buf), count,
 			   datatype, &status.mpi_status);
 }
 
@@ -534,7 +534,7 @@ MPI::File::Write_at_all(MPI::Offset offset,
 			       const MPI::Datatype& datatype)
 {
   MPI_Status status;
-  (void) MPI_File_write_at_all(mpi_file, offset, (void*) buf, count,
+  (void) MPI_File_write_at_all(mpi_file, offset, const_cast<void *>(buf), count,
 			       datatype, &status);
 }
 
@@ -545,7 +545,7 @@ MPI::File::Write_at_all(MPI::Offset offset,
 			       const MPI::Datatype& datatype,
 			       MPI::Status& status)
 {
-  (void) MPI_File_write_at_all(mpi_file, offset, (void*) buf, count, 
+  (void) MPI_File_write_at_all(mpi_file, offset, const_cast<void *>(buf), count, 
 			       datatype, &status.mpi_status);
 }
 
@@ -555,7 +555,7 @@ MPI::File::Write_at_all_begin(MPI::Offset offset,
 				     const void* buf, int count,
 				     const MPI::Datatype& datatype)
 {
-  (void) MPI_File_write_at_all_begin(mpi_file, offset, (void*) buf, count,
+  (void) MPI_File_write_at_all_begin(mpi_file, offset, const_cast<void *>(buf), count,
 				     datatype);
 }
 
@@ -564,14 +564,14 @@ inline void
 MPI::File::Write_at_all_end(const void* buf)
 {
   MPI_Status status;
-  (void) MPI_File_write_at_all_end(mpi_file, (void*) buf, &status);
+  (void) MPI_File_write_at_all_end(mpi_file, const_cast<void *>(buf), &status);
 }
 
 
 inline void 
 MPI::File::Write_at_all_end(const void* buf, MPI::Status& status)
 {
-  (void) MPI_File_write_at_all_end(mpi_file, (void*) buf, &status.mpi_status);
+  (void) MPI_File_write_at_all_end(mpi_file, const_cast<void *>(buf), &status.mpi_status);
 }
 
 
@@ -580,7 +580,7 @@ MPI::File::Write_ordered(const void* buf, int count,
 			      const MPI::Datatype& datatype)
 {
   MPI_Status status;
-  (void) MPI_File_write_ordered(mpi_file, (void*) buf, count, datatype,
+  (void) MPI_File_write_ordered(mpi_file, const_cast<void *>(buf), count, datatype,
 				&status);
 }
 
@@ -590,7 +590,7 @@ MPI::File::Write_ordered(const void* buf, int count,
 				const MPI::Datatype& datatype,
 				MPI::Status& status)
 {
-  (void) MPI_File_write_ordered(mpi_file, (void*) buf, count, datatype,
+  (void) MPI_File_write_ordered(mpi_file, const_cast<void *>(buf), count, datatype,
 				&status.mpi_status);
 }
 
@@ -599,7 +599,7 @@ inline void
 MPI::File::Write_ordered_begin(const void* buf, int count, 
 				    const MPI::Datatype& datatype)
 {
-  (void) MPI_File_write_ordered_begin(mpi_file, (void*) buf, count, datatype);
+  (void) MPI_File_write_ordered_begin(mpi_file, const_cast<void *>(buf), count, datatype);
 }
 
 
@@ -607,7 +607,7 @@ inline void
 MPI::File::Write_ordered_end(const void* buf)
 {
   MPI_Status status;
-  (void) MPI_File_write_ordered_end(mpi_file, (void*) buf, &status);
+  (void) MPI_File_write_ordered_end(mpi_file, const_cast<void *>(buf), &status);
 }
 
 
@@ -615,7 +615,7 @@ inline void
 MPI::File::Write_ordered_end(const void* buf,
 				    MPI::Status& status)
 {
-  (void) MPI_File_write_ordered_end(mpi_file, (void*) buf, &status.mpi_status);
+  (void) MPI_File_write_ordered_end(mpi_file, const_cast<void *>(buf), &status.mpi_status);
 }
 
 
@@ -624,7 +624,7 @@ MPI::File::Write_shared(const void* buf, int count,
 			     const MPI::Datatype& datatype)
 {
   MPI_Status status;
-  (void) MPI_File_write_shared(mpi_file, (void*) buf, count,
+  (void) MPI_File_write_shared(mpi_file, const_cast<void *>(buf), count,
 			       datatype, &status);
 }
 
@@ -633,7 +633,7 @@ inline void
 MPI::File::Write_shared(const void* buf, int count,
 			     const MPI::Datatype& datatype, MPI::Status& status)
 {
-  (void) MPI_File_write_shared(mpi_file, (void*) buf, count,
+  (void) MPI_File_write_shared(mpi_file, const_cast<void *>(buf), count,
 			       datatype, &status.mpi_status);
 }
 

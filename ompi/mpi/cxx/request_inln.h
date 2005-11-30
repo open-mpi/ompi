@@ -265,7 +265,7 @@ MPI::Request::Testsome(int incount, MPI::Request req_array[],
 inline void
 MPI::Request::Cancel(void) const
 {
-  (void)MPI_Cancel((MPI_Request*)&mpi_request);
+  (void)MPI_Cancel(const_cast<MPI_Request *>(&mpi_request));
 }
 
 inline void
