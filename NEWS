@@ -31,6 +31,12 @@ version 1.0.
 1.0.1
 -----
 
+- Converted all the C++ MPI bindings to use proper const_cast<>'s
+  instead of old C-style casts to get rid of const-ness.  Thanks to
+  Martin Audet for raising the issue with us.
+- Converted MPI_Offset to be a typedef instead of a #define because it
+  causes problems for some C++ parsers.  Thanks to Martin Audet for
+  bringing this to our attention.
 - Improved latency of TCP BTL.
 - Fixed index value in MPI_TESTANY to be MPI_UNDEFINED if some
   requests were not MPI_REQUEST_NULL, but no requests finished.
