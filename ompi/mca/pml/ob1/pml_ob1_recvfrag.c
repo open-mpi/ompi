@@ -475,7 +475,9 @@ int mca_pml_ob1_recv_frag_match(
              */
             if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
 
-                /* Match a probe, rollback the next expected sequence number */
+                /* Matched a probe, rollback the next expected sequence number, as 
+                 * it will be incremented in the recursive call 
+                 */
                 (proc->expected_sequence)--;
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
@@ -566,7 +568,6 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
     int match_found;
     uint16_t next_msg_seq_expected, frag_seq;
     mca_pml_ob1_recv_frag_t *frag;
-    mca_pml_ob1_recv_request_t *match = NULL;
     bool match_made = false;
 
     /*
@@ -599,6 +600,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
             frag_seq=frag->hdr.hdr_match.hdr_seq;
             if (frag_seq == next_msg_seq_expected) {
                 mca_pml_ob1_match_hdr_t* hdr = &frag->hdr.hdr_match;
+                mca_pml_ob1_recv_request_t *match = NULL;
 
                 /* We're now expecting the next sequence number. */
                 (proc->expected_sequence)++;
@@ -639,24 +641,37 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                 /* if match found, process data */
                 if (match) {
 
-                    /* associate the receive descriptor with the fragment
-                     * descriptor */
-                    frag->request=match;
-
-                    /* add this fragment descriptor to the list of
-                     * descriptors to be processed later
+                    /*
+                     * If this was a probe need to queue fragment on unexpected list
                      */
-                    if(match_made == false) {
-                        match_made = true;
-                        OBJ_CONSTRUCT(additional_matches, opal_list_t);
+                    if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
+
+                        /* complete the probe */
+                        mca_pml_ob1_recv_request_matched_probe(match,frag->btl,frag->segments,frag->num_segments);
+
+                        /* append fragment to unexpected list */
+                        opal_list_append( &proc->unexpected_frags, (opal_list_item_t *)frag);
+
+                    } else {
+
+                        /* associate the receive descriptor with the fragment
+                         * descriptor */
+                        frag->request=match;
+
+                        /* add this fragment descriptor to the list of
+                         * descriptors to be processed later
+                         */
+                        if(match_made == false) {
+                            match_made = true;
+                            OBJ_CONSTRUCT(additional_matches, opal_list_t);
+                        }
+                        opal_list_append(additional_matches, (opal_list_item_t *)frag);
                     }
-                    opal_list_append(additional_matches, (opal_list_item_t *)frag);
 
                 } else {
     
                     /* if no match found, place on unexpected queue */
                     opal_list_append( &proc->unexpected_frags, (opal_list_item_t *)frag);
-
                 }
 
                 /* c_frags_cant_match is not an ordered list, so exit loop
