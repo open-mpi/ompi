@@ -71,6 +71,7 @@ static void ompi_convertor_construct( ompi_convertor_t* convertor )
     convertor->memAlloc_userdata = NULL;
     convertor->stack_pos         = 0;
     convertor->remoteArch        = 0;
+    convertor->pending_length    = 0;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
