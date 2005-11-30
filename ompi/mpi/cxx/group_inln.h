@@ -42,7 +42,7 @@ MPI::Group::Translate_ranks (const MPI::Group& group1, int n,
 				    const int ranks1[], 
 				    const MPI::Group& group2, int ranks2[])
 {
-  (void)MPI_Group_translate_ranks(group1, n, (int*)ranks1, group2, (int*)ranks2);
+  (void)MPI_Group_translate_ranks(group1, n, const_cast<int *>(ranks1), group2, const_cast<int *>(ranks2));
 }
 
 inline int
@@ -81,7 +81,7 @@ inline MPI::Group
 MPI::Group::Incl(int n, const int ranks[]) const
 {
   MPI_Group newgroup;
-  (void)MPI_Group_incl(mpi_group, n, (int*)ranks, &newgroup);
+  (void)MPI_Group_incl(mpi_group, n, const_cast<int *>(ranks), &newgroup);
   return newgroup;
 }
 
@@ -89,7 +89,7 @@ inline MPI::Group
 MPI::Group::Excl(int n, const int ranks[]) const
 {
   MPI_Group newgroup;
-  (void)MPI_Group_excl(mpi_group, n, (int*)ranks, &newgroup);
+  (void)MPI_Group_excl(mpi_group, n, const_cast<int *>(ranks), &newgroup);
   return newgroup;
 }
 
@@ -97,7 +97,7 @@ inline MPI::Group
 MPI::Group::Range_incl(int n, const int ranges[][3]) const
 {
   MPI_Group newgroup;
-  (void)MPI_Group_range_incl(mpi_group, n, (int(*)[3])ranges, &newgroup);
+  (void)MPI_Group_range_incl(mpi_group, n, const_cast<int(*)[3]>(ranges), &newgroup);
   return newgroup;
 }
 
@@ -105,7 +105,7 @@ inline MPI::Group
 MPI::Group::Range_excl(int n, const int ranges[][3]) const
 {
   MPI_Group newgroup;
-  (void)MPI_Group_range_excl(mpi_group, n, (int(*)[3])ranges, &newgroup);
+  (void)MPI_Group_range_excl(mpi_group, n, const_cast<int(*)[3]>(ranges), &newgroup);
   return newgroup;
 }
 

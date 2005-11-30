@@ -63,7 +63,7 @@ MPI::Win::Accumulate(const void* origin_addr, int origin_count,
 	       	const MPI::Datatype& target_datatype,
 	       	const MPI::Op& op) const 
 {
-  (void) MPI_Accumulate((void*) origin_addr, origin_count, origin_datatype,
+  (void) MPI_Accumulate(const_cast<void *>(origin_addr), origin_count, origin_datatype,
 			target_rank, target_disp, target_count, 
 			target_datatype, op, mpi_win);
   
@@ -83,7 +83,7 @@ MPI::Win::Create(const void* base, MPI::Aint size,
 			const MPI::Intracomm& comm) 
 {
   MPI_Win newwin;
-  (void) MPI_Win_create((void *)base, size, disp_unit, info, comm, &newwin);
+  (void) MPI_Win_create(const_cast<void *>(base), size, disp_unit, info, comm, &newwin);
   return newwin;
 }
 
@@ -109,7 +109,7 @@ MPI::Win::Get(const void *origin_addr, int origin_count,
 		     int target_count, 
 		     const MPI::Datatype& target_datatype) const 
 {
-  (void) MPI_Get((void*) origin_addr, origin_count, origin_datatype,
+  (void) MPI_Get(const_cast<void *>(origin_addr), origin_count, origin_datatype,
 		     target_rank, target_disp, 
 		     target_count, target_datatype, mpi_win);
 
@@ -146,7 +146,7 @@ MPI::Win::Put(const void* origin_addr, int origin_count,
 		     int target_count, 
 		     const MPI::Datatype& target_datatype) const 
 {
-  (void) MPI_Put((void*) origin_addr, origin_count, origin_datatype, 
+  (void) MPI_Put(const_cast<void *>(origin_addr), origin_count, origin_datatype, 
 		 target_rank, target_disp, target_count,
 		 target_datatype, mpi_win);
   
@@ -243,14 +243,14 @@ MPI::Win::Get_name(char* win_name, int& resultlen) const
 inline void 
 MPI::Win::Set_attr(int win_keyval, const void* attribute_val) 
 {
-  (void) MPI_Win_set_attr(mpi_win, win_keyval,(void *) attribute_val);
+  (void) MPI_Win_set_attr(mpi_win, win_keyval, const_cast<void *>(attribute_val));
 }
 
 
 inline void 
 MPI::Win::Set_name(const char* win_name) 
 {
-  (void) MPI_Win_set_name(mpi_win, (char *)win_name);
+  (void) MPI_Win_set_name(mpi_win, const_cast<char *>(win_name));
 }
 
 

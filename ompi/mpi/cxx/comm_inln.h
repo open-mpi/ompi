@@ -25,7 +25,7 @@ inline void
 MPI::Comm::Send(const void *buf, int count, 
 		const MPI::Datatype & datatype, int dest, int tag) const
 {
-  (void)MPI_Send((void *)buf, count, datatype, dest, tag, mpi_comm);
+  (void)MPI_Send(const_cast<void *>(buf), count, datatype, dest, tag, mpi_comm);
 }
 
 inline void
@@ -47,7 +47,7 @@ inline void
 MPI::Comm::Bsend(const void *buf, int count,
 		 const MPI::Datatype & datatype, int dest, int tag) const
 {
-  (void)MPI_Bsend((void *)buf, count, datatype, 
+  (void)MPI_Bsend(const_cast<void *>(buf), count, datatype, 
 		  dest, tag, mpi_comm);
 }
 
@@ -55,7 +55,7 @@ inline void
 MPI::Comm::Ssend(const void *buf, int count, 
 		 const MPI::Datatype & datatype, int dest, int tag) const 
 {
-  (void)MPI_Ssend((void *)buf, count,  datatype, dest, 
+  (void)MPI_Ssend(const_cast<void *>(buf), count,  datatype, dest, 
 		  tag, mpi_comm);
 }
 
@@ -63,7 +63,7 @@ inline void
 MPI::Comm::Rsend(const void *buf, int count,
 		 const MPI::Datatype & datatype, int dest, int tag) const
 {
-  (void)MPI_Rsend((void *)buf, count, datatype, 
+  (void)MPI_Rsend(const_cast<void *>(buf), count, datatype, 
 		  dest, tag, mpi_comm);
 }
 
@@ -72,7 +72,7 @@ MPI::Comm::Isend(const void *buf, int count,
 		 const MPI::Datatype & datatype, int dest, int tag) const
 {
   MPI_Request request;
-  (void)MPI_Isend((void *)buf, count, datatype, 
+  (void)MPI_Isend(const_cast<void *>(buf), count, datatype, 
 		  dest, tag, mpi_comm, &request);
   return request;
 }
@@ -82,7 +82,7 @@ MPI::Comm::Ibsend(const void *buf, int count,
 		  const MPI::Datatype & datatype, int dest, int tag) const
 {
   MPI_Request request;    
-  (void)MPI_Ibsend((void *)buf, count, datatype, 
+  (void)MPI_Ibsend(const_cast<void *>(buf), count, datatype, 
 		   dest, tag, mpi_comm, &request);
   return request;
 }
@@ -92,7 +92,7 @@ MPI::Comm::Issend(const void *buf, int count,
 		  const MPI::Datatype & datatype, int dest, int tag) const
 {
   MPI_Request request;        
-  (void)MPI_Issend((void *)buf, count, datatype,
+  (void)MPI_Issend(const_cast<void *>(buf), count, datatype,
 		   dest, tag, mpi_comm, &request);
   return request;
 }
@@ -102,7 +102,7 @@ MPI::Comm::Irsend(const void *buf, int count,
 		  const MPI::Datatype & datatype, int dest, int tag) const
 {
   MPI_Request request;
-  (void)MPI_Irsend((void *) buf, count, datatype, 
+  (void)MPI_Irsend(const_cast<void *>(buf), count, datatype, 
 		   dest, tag, mpi_comm, &request);
   return request;
 }
@@ -151,7 +151,7 @@ MPI::Comm::Send_init(const void *buf, int count,
 		     const MPI::Datatype & datatype, int dest, int tag) const
 { 
   MPI_Request request;
-  (void)MPI_Send_init((void *)buf, count, datatype, 
+  (void)MPI_Send_init(const_cast<void *>(buf), count, datatype, 
 		      dest, tag, mpi_comm, &request);
   return request;
 }
@@ -161,7 +161,7 @@ MPI::Comm::Bsend_init(const void *buf, int count,
 		      const MPI::Datatype & datatype, int dest, int tag) const
 {
   MPI_Request request; 
-  (void)MPI_Bsend_init((void *)buf, count, datatype, 
+  (void)MPI_Bsend_init(const_cast<void *>(buf), count, datatype, 
 		       dest, tag, mpi_comm, &request);
   return request;
 }
@@ -171,7 +171,7 @@ MPI::Comm::Ssend_init(const void *buf, int count,
 		      const MPI::Datatype & datatype, int dest, int tag) const
 {
   MPI_Request request; 
-  (void)MPI_Ssend_init((void *)buf, count, datatype,
+  (void)MPI_Ssend_init(const_cast<void *>(buf), count, datatype,
 		       dest, tag, mpi_comm, &request);
   return request;
 }
@@ -181,7 +181,7 @@ MPI::Comm::Rsend_init(const void *buf, int count,
 		      const MPI::Datatype & datatype, int dest, int tag) const
 {
   MPI_Request request; 
-  (void)MPI_Rsend_init((void *)buf, count,  datatype,
+  (void)MPI_Rsend_init(const_cast<void *>(buf), count,  datatype,
 		       dest, tag, mpi_comm, &request);
   return request;
 }
@@ -203,7 +203,7 @@ MPI::Comm::Sendrecv(const void *sendbuf, int sendcount,
 		    const MPI::Datatype & recvtype, int source,
 		    int recvtag, MPI::Status & status) const
 {
-  (void)MPI_Sendrecv((void *)sendbuf, sendcount, 
+  (void)MPI_Sendrecv(const_cast<void *>(sendbuf), sendcount, 
 		     sendtype,
 		     dest, sendtag, recvbuf, recvcount, 
 		     recvtype, 
@@ -217,7 +217,7 @@ MPI::Comm::Sendrecv(const void *sendbuf, int sendcount,
 		    const MPI::Datatype & recvtype, int source,
 		    int recvtag) const
 {
-  (void)MPI_Sendrecv((void *)sendbuf, sendcount, 
+  (void)MPI_Sendrecv(const_cast<void *>(sendbuf), sendcount, 
 		     sendtype,
 		     dest, sendtag, recvbuf, recvcount, 
 		     recvtype, 
@@ -334,7 +334,7 @@ MPI::Comm::Get_name(char* comm_name, int& resultlen) const
 inline void
 MPI::Comm::Set_name(const char* comm_name) 
 {
-  (void) MPI_Comm_set_name(mpi_comm, (char *)comm_name);
+  (void) MPI_Comm_set_name(mpi_comm, const_cast<char *>(comm_name));
 }
   
 //

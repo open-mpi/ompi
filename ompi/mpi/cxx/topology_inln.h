@@ -80,7 +80,7 @@ inline int
 MPI::Cartcomm::Get_cart_rank(const int coords[]) const 
 {
   int rank;
-  (void)MPI_Cart_rank(mpi_comm, (int*)coords, &rank);
+  (void)MPI_Cart_rank(mpi_comm, const_cast<int *>(coords), &rank);
   return rank;
 }
   
@@ -120,7 +120,7 @@ MPI::Cartcomm::Map(int ndims, const int dims[], const bool periods[]) const
     int_periods[i] = (int) periods[i];
   }
   int newrank;
-  (void)MPI_Cart_map(mpi_comm, ndims, (int*)dims, int_periods, &newrank);
+  (void)MPI_Cart_map(mpi_comm, ndims, const_cast<int *>(dims), int_periods, &newrank);
   delete [] int_periods;
   return newrank;
 }
@@ -203,7 +203,7 @@ MPI::Graphcomm::Map(int nnodes, const int index[],
     const int edges[]) const 
 {
   int newrank;
-  (void)MPI_Graph_map(mpi_comm, nnodes, (int*)index, (int*)edges, &newrank);
+  (void)MPI_Graph_map(mpi_comm, nnodes, const_cast<int *>(index), const_cast<int *>(edges), &newrank);
   return newrank;
 }
 

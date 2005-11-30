@@ -45,8 +45,8 @@ MPI::Datatype::Create_indexed(int count,
 				     const int array_of_displacements[]) const
 {
   MPI_Datatype newtype;
-  (void)MPI_Type_indexed(count, (int *) array_of_blocklengths, 
-			 (int *) array_of_displacements, mpi_datatype, &newtype);
+  (void)MPI_Type_indexed(count, const_cast<int *>(array_of_blocklengths), 
+			 const_cast<int *>(array_of_displacements), mpi_datatype, &newtype);
   return newtype;
 }
 
@@ -61,8 +61,8 @@ MPI::Datatype::Create_struct(int count, const int array_of_blocklengths[],
   for (i=0; i < count; i++)
     type_array[i] = array_of_types[i];
 
-  (void)MPI_Type_create_struct(count, (int*)array_of_blocklengths,
-                               (MPI_Aint*)array_of_displacements, 
+  (void)MPI_Type_create_struct(count, const_cast<int *>(array_of_blocklengths),
+                               const_cast<MPI_Aint*>(array_of_displacements), 
                                type_array, &newtype);
   delete[] type_array;
   return newtype;
@@ -73,8 +73,8 @@ MPI::Datatype::Create_hindexed(int count, const int array_of_blocklengths[],
 				      const MPI::Aint array_of_displacements[]) const
 {
   MPI_Datatype newtype;
-  (void)MPI_Type_create_hindexed(count, (int*)array_of_blocklengths,
-                                 (MPI_Aint*)array_of_displacements,
+  (void)MPI_Type_create_hindexed(count, const_cast<int *>(array_of_blocklengths),
+                                 const_cast<MPI_Aint*>(array_of_displacements),
                                  mpi_datatype, &newtype) ;
   return newtype;
 }
@@ -121,7 +121,7 @@ MPI::Datatype::Pack(const void* inbuf, int incount,
 			   void *outbuf, int outsize,
 			   int& position, const MPI::Comm &comm) const
 {
-  (void)MPI_Pack((void *) inbuf, incount,  mpi_datatype, outbuf,
+  (void)MPI_Pack(const_cast<void *>(inbuf), incount,  mpi_datatype, outbuf,
 		 outsize, &position, comm);
 }
 
@@ -130,7 +130,7 @@ MPI::Datatype::Unpack(const void* inbuf, int insize,
 			     void *outbuf, int outcount, int& position,
 			     const MPI::Comm& comm) const 
 {
-  (void)MPI_Unpack((void *) inbuf, insize, &position,
+  (void)MPI_Unpack(const_cast<void *>(inbuf), insize, &position,
 		   outbuf, outcount, mpi_datatype, comm);
 }
 
@@ -154,9 +154,10 @@ MPI::Datatype::Create_subarray(int ndims, const int array_of_sizes[],
   const
 {
   MPI_Datatype type;
-  (void) MPI_Type_create_subarray(ndims, (int *) array_of_sizes, 
-			   (int *) array_of_subsizes, (int *) array_of_starts,
-			   order, mpi_datatype, &type);
+  (void) MPI_Type_create_subarray(ndims, const_cast<int *>(array_of_sizes), 
+                                  const_cast<int *>(array_of_subsizes),
+                                  const_cast<int *>(array_of_starts),
+                                  order, mpi_datatype, &type);
   return type;
 }
 
@@ -222,9 +223,9 @@ MPI::Datatype::Get_contents(int max_integers, int max_addresses,
   const
 {
   (void) MPI_Type_get_contents(mpi_datatype, max_integers, max_addresses,
-			       max_datatypes, (int *)array_of_integers, 
-			       (MPI_Aint*) array_of_addresses,
-			       (MPI_Datatype *) array_of_datatypes);
+			       max_datatypes, const_cast<int *>(array_of_integers), 
+			       const_cast<MPI_Aint*>(array_of_addresses),
+			       (MPI_Datatype *)(array_of_datatypes));
 }
 
 inline void
@@ -245,14 +246,14 @@ MPI::Datatype::Get_name(char* type_name, int& resultlen) const
 inline void
 MPI::Datatype::Set_attr(int type_keyval, const void* attribute_val)
 {
-  (void) MPI_Type_set_attr(mpi_datatype, type_keyval, (void *) attribute_val);
+  (void) MPI_Type_set_attr(mpi_datatype, type_keyval, const_cast<void *>(attribute_val));
 }
 
 
 inline void
 MPI::Datatype::Set_name(const char* type_name)
 {
-  (void) MPI_Type_set_name(mpi_datatype, (char *)type_name);
+  (void) MPI_Type_set_name(mpi_datatype, const_cast<char *>(type_name));
 }
 
 
