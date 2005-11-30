@@ -1278,7 +1278,7 @@ if test "$MPI_OFFSET_TYPE" = "not found"; then
 	AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset])
 	AC_MSG_ERROR([Cannot continue])
 fi
-AC_DEFINE_UNQUOTED(MPI_Offset, $MPI_OFFSET_TYPE, [Type of MPI_Offset])
+AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
 
 #
 # If we haven't already, figure out an MPI datatype that corresponds
