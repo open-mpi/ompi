@@ -579,7 +579,7 @@ void mca_pml_ob1_recv_request_matched_probe(
             break;
     }
 
-    /* check completion status */
+    /* set completion status */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_match.hdr_src;
