@@ -38,10 +38,11 @@ my @comp_suffixes = (".so");
 my @lib_acceptable = ("ompi_" , "mpi_", "MPI_", "OMPI_", "MPI::", "PMPI_", "PMPI::", "mca_", "lt_", "orte_", "epoll", "opal_", "MPIR_",
 # Portland Group compiler adds a bunch of these
                       "pghpf_",
+);
+my @comp_acceptable = ("mca_", "orte_", "opal_",
 # The latest incarnation of ROMIO adds these
                       "MPIO_", "MPIOI_", "ADIO_", "ADIOI_", "MPIU_",
 );
-my @comp_acceptable = ("mca_", "orte_", "opal_");
 
 # Subject line for e-mail
 
