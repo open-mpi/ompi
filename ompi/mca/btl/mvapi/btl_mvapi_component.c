@@ -126,6 +126,8 @@ int mca_btl_mvapi_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_mvapi_component.ib_procs, opal_list_t);
 
     /* register IB component parameters */
+    mca_btl_mvapi_param_register_int ("max_btls", "maximum number of HCAs/ports to use", 
+                                       4, &mca_btl_mvapi_component.ib_max_btls);
     mca_btl_mvapi_param_register_int ("free_list_num", "intial size of free lists", 
                                        8, &mca_btl_mvapi_component.ib_free_list_num);
     mca_btl_mvapi_param_register_int ("free_list_max", "maximum size of free lists",
@@ -341,7 +343,9 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     OBJ_CONSTRUCT(&mca_btl_mvapi_component.ib_lock, opal_mutex_t);
 
 
-    for(i = 0; i < num_hcas; i++){  
+    for(i = 0; 
+        i < num_hcas && mca_btl_mvapi_component.ib_num_btls < mca_btl_mvapi_component.ib_max_btls; 
+        i++){  
         vapi_ret = EVAPI_get_hca_hndl(hca_ids[i], &hca_hndl); 
         if(VAPI_OK != vapi_ret) { 
             BTL_ERROR(("error getting hca handle: %s", VAPI_strerror(vapi_ret))); 
@@ -380,10 +384,10 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                  mvapi_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
                  
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
-                 mca_btl_mvapi_component.ib_num_btls ++; 
+                 if(++mca_btl_mvapi_component.ib_num_btls >= mca_btl_mvapi_component.ib_max_btls)
+                     break;
             } 
         }
- 
     }
     
     if(0 == mca_btl_mvapi_component.ib_num_btls){ 
