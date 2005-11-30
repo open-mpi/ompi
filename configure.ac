@@ -1474,9 +1474,10 @@ if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
         WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
         LDFLAGS="-export-dynamic $LDFLAGS"
     else
-        LIBLTDL_SUBDIR=
-        LIBLTDL_LTLIB=
-        WANT_LIBLTDL=0
+        AC_MSG_ERROR([Failed to build GNU libltdl.  This usually means that something
+is incorrectly setup with your environment.  There may be useful information in
+opal/libltdl/config.log.  You can also disable GNU libltdl (which will disable
+dynamic shared object loading) by configuring with --disable-dlopen.])
     fi
     CFLAGS="$CFLAGS_save"
 else
