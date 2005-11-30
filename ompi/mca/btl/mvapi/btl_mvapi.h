@@ -57,6 +57,9 @@ extern "C" {
 struct mca_btl_mvapi_component_t {
     mca_btl_base_component_1_0_0_t          super;  /**< base BTL component */ 
     
+    uint32_t                                ib_max_btls;
+    /**< maximum number of hcas available to the IB component */
+
     uint32_t                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
