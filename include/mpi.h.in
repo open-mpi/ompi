@@ -67,8 +67,8 @@
 /* The size of a `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* Type of MPI_Offset */
-#undef MPI_Offset
+/* Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's */
+#undef OMPI_MPI_OFFSET_TYPE
 
 /* Whether we want MPI cxx support or not */
 #undef OMPI_WANT_CXX_BINDINGS
@@ -140,6 +140,7 @@ extern "C" {
  * Typedefs
  */
 typedef long MPI_Aint;
+typedef OMPI_MPI_OFFSET_TYPE MPI_Offset;
 typedef struct ompi_communicator_t *MPI_Comm;
 typedef struct ompi_datatype_t *MPI_Datatype;
 typedef struct ompi_errhandler_t *MPI_Errhandler;
