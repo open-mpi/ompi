@@ -31,6 +31,9 @@ version 1.0.
 1.0.1
 -----
 
+- Allow hostfiles to have integer host names (for BProc clusters)
+- Fixed a problem with message matching of out-of-order fragments in
+  multiple network device scenarios.
 - Converted all the C++ MPI bindings to use proper const_cast<>'s
   instead of old C-style casts to get rid of const-ness.  Thanks to
   Martin Audet for raising the issue with us.
