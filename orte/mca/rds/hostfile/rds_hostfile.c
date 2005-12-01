@@ -106,6 +106,7 @@ static orte_ras_node_t* orte_rds_hostfile_lookup(opal_list_t* nodes, const char*
 
 static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_list_t* updates)
 {
+    char buff[64];
     int rc;
     orte_ras_node_t* node;
     bool update = false;
@@ -113,12 +114,21 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
 
     if (ORTE_RDS_HOSTFILE_STRING == token ||
         ORTE_RDS_HOSTFILE_HOSTNAME == token ||
+        ORTE_RDS_HOSTFILE_INT == token ||
         ORTE_RDS_HOSTFILE_IPV4 == token) {
-        char* value = orte_rds_hostfile_value.sval;
-        char** argv = opal_argv_split (value, '@');
+        char* value;
+        char** argv;
         char* node_name = NULL;
         char* username = NULL;
         int cnt;
+
+        if(ORTE_RDS_HOSTFILE_INT == token) {
+            sprintf(buff,"%d", orte_rds_hostfile_value.ival);
+            value = buff;
+        } else {
+            value = orte_rds_hostfile_value.sval;
+        }
+        argv = opal_argv_split (value, '@');
 
         cnt = opal_argv_count (argv);
         if (1 == cnt) {
@@ -298,6 +308,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
          *   hostname.domain and user@hostname.domain
          */
         case ORTE_RDS_HOSTFILE_STRING:
+        case ORTE_RDS_HOSTFILE_INT:
         case ORTE_RDS_HOSTFILE_HOSTNAME:
         case ORTE_RDS_HOSTFILE_IPV4:
             rc = orte_rds_hostfile_parse_line(token, existing, updates);
