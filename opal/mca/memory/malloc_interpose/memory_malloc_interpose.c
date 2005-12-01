@@ -68,30 +68,6 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_interpose_component =
         } \
     } while (0);
 
-#define FIND_REALCALLOC() \
-    do { \
-        if (NULL == realcalloc) { \
-            union { \
-                void* (*calloc_fp)(size_t, size_t); \
-                void* calloc_p; \
-            } tmp; \
-            tmp.calloc_p = dlsym(RTLD_NEXT, "calloc"); \
-            realcalloc = tmp.calloc_fp; \
-        } \
-    } while (0);
-
-#define FIND_REALMALLOC() \
-    do { \
-        if (NULL == realmalloc) { \
-            union { \
-                void* (*malloc_fp)(size_t); \
-                void* malloc_p; \
-            } tmp; \
-            tmp.malloc_p = dlsym(RTLD_NEXT, "malloc"); \
-            realmalloc = tmp.malloc_fp; \
-        } \
-    } while (0);
-
 #define FIND_REALREALLOC() \
     do { \
         if (NULL == realrealloc) { \
@@ -101,18 +77,6 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_interpose_component =
             } tmp; \
             tmp.realloc_p = dlsym(RTLD_NEXT, "realloc"); \
             realrealloc = tmp.realloc_fp; \
-        } \
-    } while (0);
-
-#define FIND_REALMMAP() \
-    do { \
-        if (NULL == realmmap) { \
-            union { \
-                void* (*mmap_fp)(void*, size_t, int, int, int, off_t); \
-                void *mmap_p; \
-            } tmp; \
-            tmp.mmap_p = dlsym(RTLD_NEXT, "mmap"); \
-            realmmap = tmp.mmap_fp; \
         } \
     } while (0);
 
@@ -129,23 +93,19 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_interpose_component =
     } while (0);
 
 static void (*realfree)(void*);
-static void* (*realcalloc)(size_t, size_t);
-static void* (*realmalloc)(size_t);
 static void* (*realrealloc)(void*, size_t);
-static void* (*realmmap)(void*, size_t, int, int, int, off_t);
 static int (*realmunmap)(void*, size_t);
 
 static int
 opal_memory_malloc_interpose_open(void)
 {
-    opal_mem_hooks_set_support(OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MALLOC_SUPPORT);
+    opal_mem_hooks_set_support(OPAL_MEMORY_FREE_SUPPORT);
 
     FIND_REALFREE();
     FIND_REALREALLOC();
     FIND_REALMUNMAP();
 
-    if (NULL == realfree || NULL == realcalloc || NULL == realmalloc ||
-        NULL == realrealloc || NULL == realmmap || NULL == realmunmap) {
+    if (NULL == realfree || NULL == realrealloc || NULL == realmunmap) {
         /* this shoudl really never happen */
         fprintf(stderr, 
                 "Could not find real memory functions.  Aborting in dispair\n");
@@ -168,30 +128,6 @@ free(void *ptr)
 
 
 void*
-calloc(size_t nmemb, size_t size)
-{
-    void *ret;
-
-    FIND_REALCALLOC();
-    ret = realcalloc(nmemb, size);
-    opal_mem_hooks_alloc_hook(ret, malloc_usable_size(ret));
-    return ret;
-}
-
-
-void*
-malloc(size_t size)
-{
-    void *ret;
-
-    FIND_REALMALLOC();
-    ret = realmalloc(size);
-    opal_mem_hooks_alloc_hook(ret, malloc_usable_size(ret));
-    return ret;
-}
-
-
-void*
 realloc(void *ptr, size_t size)
 {
     void *ret;
@@ -200,18 +136,6 @@ realloc(void *ptr, size_t size)
     opal_mem_hooks_release_hook(ptr, malloc_usable_size(ptr));
     ret = realrealloc(ptr, size);
     opal_mem_hooks_alloc_hook(ret, malloc_usable_size(ret));
-    return ret;
-}
-
-
-void*
-mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
-{
-    void *ret;
-
-    FIND_REALMMAP();
-    ret = realmmap(start, length, prot, flags, fd, offset);
-    opal_mem_hooks_alloc_hook(ret, length);
     return ret;
 }
 
