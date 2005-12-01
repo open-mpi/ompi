@@ -52,6 +52,79 @@ EOF
     fi
 }
 
+#
+# Subroutine to actually make a tarball
+#
+
+make_tarball() {
+    #
+    # Autogen
+    #
+    echo "*** Running autogen.sh..."
+    ./autogen.sh 2>&1 | tee auto.out
+    if test ! "$?" = "0"; then
+        echo "Autogen failed.  Aborting"
+        exit 1
+    fi
+
+    #
+    # Configure
+    #
+    echo "*** Running configure..."
+    ./configure --enable-dist 2>&1 | tee config.out
+    if test ! "$?" = "0"; then 
+        echo "Configure failed.  Aborting"
+        exit 1
+    fi
+
+    #
+    # Sanity check
+    #
+    echo "*** Sanity check..."
+    file="ompi/mca/btl/gm/btl_gm_component.c"
+    if test ! -f "$file"; then
+        echo "Configure failed - no file: $file"
+        exit 1
+    fi
+
+    #
+    # Remove autogen.sh (just to ensure users don't try to run it)
+    #
+    echo "*** Removing autogen.sh from the tarball before make dist"
+    rm -rf autogen.sh
+
+    #
+    # make tarball
+    #
+    echo "*** Running make distcheck..."
+    save_LD=$LD_LIBRARY_PATH
+    LD_LIBRARY_PATH=
+    make dist 2>&1 | tee dist.out
+# JMS RESTORE MAKE DISTCHECK
+    if test ! "$?" = "0"; then
+        echo "Make dist failed.  Aborting"
+        exit 1
+    fi
+    LD_LIBRARY_PATH=$save_LD
+
+    #
+    # move
+    #
+    echo "*** Moving tarballs..."
+    mv openmpi-* ..
+
+    echo "*** All done"
+
+    #
+    # bring back autogen.sh
+    #
+    svn up autogen.sh
+}
+
+#########################################################################
+# main
+#########################################################################
+
 echo "*** Checking GNU tools versions..."
 check_gnu_version automake $AM_TARGET_VERSION
 check_gnu_version autoconf $AC_TARGET_VERSION
@@ -95,7 +168,26 @@ for file in $version_files; do
     rm $file.new
 done
 
-if test "$1" = "-nogreek" -o "$1" = "--nogreek"; then
+#
+# Make 2 tarballs:
+#
+# - one with the greek
+# - one without the greek
+#
+# unless the user specifically said --greekonly, then only make the
+# greek tarball.  Making both tarballs at once allows us to guarantee
+# to have 1 tarballs -- one greek and one not -- that have exactly the
+# same SVN r number.
+#
+
+# First, make greek tarball
+
+echo "*** Making greek tarball"
+make_tarball
+
+# Now if ! --greekonly, make the non-greek tarball
+
+if test "$1" != "-greekonly" -a "$1" != "--greekonly"; then
     echo "*** REMOVING ALL GREEK FROM VERSION NUMBERS!!"
     for file in $version_files; do
         echo " - $file"
@@ -103,69 +195,7 @@ if test "$1" = "-nogreek" -o "$1" = "--nogreek"; then
         cp -f $file.new $file
         rm $file.new
     done
+    echo "Making non-greek tarball"
+    make_tarball
 fi
 
-
-#
-# Autogen
-#
-echo "*** Running autogen.sh..."
-./autogen.sh 2>&1 | tee auto.out
-if test ! "$?" = "0"; then
-    echo "Autogen failed.  Aborting"
-    exit 1
-fi
-
-#
-# Configure
-#
-echo "*** Running configure..."
-./configure --enable-dist 2>&1 | tee config.out
-if test ! "$?" = "0"; then 
-    echo "Configure failed.  Aborting"
-    exit 1
-fi
-
-#
-# Sanity check
-#
-echo "*** Sanity check..."
-file="ompi/mca/btl/gm/btl_gm_component.c"
-if test ! -f "$file"; then
-    echo "Configure failed - no file: $file"
-    exit 1
-fi
-
-#
-# Remove autogen.sh 
-#
-
-echo "*** Removing autogen.sh from the tarball before make dist"
-rm -rf autogen.sh
-
-#
-# make tarball
-#
-echo "*** Running make distcheck..."
-save_LD=$LD_LIBRARY_PATH
-LD_LIBRARY_PATH=
-make distcheck 2>&1 | tee dist.out
-if test ! "$?" = "0"; then
-    echo "Make dist failed.  Aborting"
-    exit 1
-fi
-LD_LIBRARY_PATH=$save_LD
-
-#
-# move
-#
-echo "*** Moving tarballs..."
-mv openmpi-* ..
-
-echo "*** All done"
-
-#
-# bring back autogen.sh
-#
-
-svn up autogen.sh
