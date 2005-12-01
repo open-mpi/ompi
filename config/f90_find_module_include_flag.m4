@@ -41,7 +41,7 @@ module OMPI_MOD_FLAG
 end module OMPI_MOD_FLAG
 EOF
 
-OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90], ,
+OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90 $LDFLAGS $LIBS], ,
                  AC_MSG_RESULT([Whoops!])
                  AC_MSG_WARN([*** Cannot seem to compile an f90 module])
                  AC_MSG_ERROR([Cannot continue]))
@@ -61,7 +61,7 @@ EOF
 OMPI_FC_MODULE_FLAG=
 for flag in $possible_flags; do
     if test "$OMPI_FC_MODULE_FLAG" = ""; then
-        OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir],
+        OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir $LDFLAGS $LIBS],
                         [OMPI_FC_MODULE_FLAG="$flag"])
     fi
 done
