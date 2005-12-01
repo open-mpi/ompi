@@ -34,6 +34,7 @@
 /*
  * Include what we can and define what is missing.
  */
+#include <limits.h>
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -181,6 +182,18 @@ typedef unsigned long long uintptr_t;
 #error Failed to define pointer-sized integer types
 
 #endif
+
+/* fix up some constants that may be missing */
+#ifndef SIZE_MAX
+#if SIZEOF_VOID_P == SIZEOF_INT
+#define SIZE_MAX UINT_MAX
+#elif SIZEOF_VOID_P == SIZEOF_LONG
+#define SIZE_MAX ULONG_MAX
+#else
+#error Failed to find value for SIZE_MAX
+#endif
+
+#endif /* ifndef SIZE_MAX */
 
 #endif /* HAVE_STDINT_H */
 

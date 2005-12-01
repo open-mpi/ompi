@@ -24,6 +24,11 @@
 #define ORTE_RML_H_
 
 #include "orte_config.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "include/orte_constants.h"
 
 #include "mca/mca.h"
