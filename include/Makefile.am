@@ -26,10 +26,8 @@ dist_noinst_HEADERS = \
 nodist_noinst_HEADERS = \
 	ompi_config.h		
 
-dist_include_HEADERS = \
-	mpi.h
-
 nodist_include_HEADERS = \
+        mpi.h \
 	mpif.h
 
 # Conditionally install the header files
