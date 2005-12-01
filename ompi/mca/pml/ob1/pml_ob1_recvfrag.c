@@ -610,6 +610,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                 opal_list_remove_item(&proc->frags_cant_match,
                         (opal_list_item_t *)frag);
 
+rematch:
                 /*
                  * figure out what sort of matching logic to use, if need to
                  *   look only at "specific" receives, or "wild" receives,
@@ -645,8 +646,9 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                         /* complete the probe */
                         mca_pml_ob1_recv_request_matched_probe(match,frag->btl,frag->segments,frag->num_segments);
 
-                        /* append fragment to unexpected list */
-                        opal_list_append( &proc->unexpected_frags, (opal_list_item_t *)frag);
+                        /* retry the match */
+                        match = NULL;
+                        goto rematch;
 
                     } else {
 
