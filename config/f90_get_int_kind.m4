@@ -35,7 +35,7 @@ EOF
 # Try the compilation and run.
 #
 
-OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90],
+OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
 	OMPI_LOG_COMMAND([./conftest], [HAPPY=1], [HAPPY=0]), [HAPPY=0])
 
 ompi_ac_int_kind=-1

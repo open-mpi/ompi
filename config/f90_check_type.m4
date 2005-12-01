@@ -33,7 +33,7 @@ EOF
 # Try the compilation and run.
 #
 
-OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90],
+OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
 	                 [HAPPY=1
                           AC_MSG_RESULT([yes])],
                          [HAPPY=0
