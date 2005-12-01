@@ -25,6 +25,10 @@
 
 #include "orte_config.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "dps/dps_types.h"
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
