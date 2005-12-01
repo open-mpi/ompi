@@ -31,6 +31,7 @@ version 1.0.
 1.0.1
 -----
 
+- Fixed compile errors for IRIX.
 - Allow hostfiles to have integer host names (for BProc clusters)
 - Fixed a problem with message matching of out-of-order fragments in
   multiple network device scenarios.
