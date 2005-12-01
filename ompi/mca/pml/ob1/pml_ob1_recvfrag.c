@@ -127,7 +127,7 @@ void mca_pml_ob1_recv_frag_callback(
  * set by the upper level routine.
  */
 
-#define MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
+#define MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr,comm,proc,match_probe,return_match) \
 do { \
     /* local parameters */ \
     opal_list_t* wild_receives = &comm->wild_receives; \
@@ -159,6 +159,11 @@ do { \
                 ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) )  ) \
  \
         { \
+            if (match_probe == false && wild_recv->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) { \
+                /* already matched a probe - cannot match another with same fragment */ \
+                break; \
+            } \
+ \
             /* \
              * Mark that this is the matching irecv, and go to process it. \
              */ \
@@ -189,7 +194,7 @@ do { \
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-#define MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
+#define MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr,comm,proc,match_probe,return_match) \
 do { \
     /* local variables */ \
     opal_list_t* specific_receives = &proc->specific_receives; \
@@ -214,6 +219,11 @@ do { \
         recv_tag = specific_recv->req_recv.req_base.req_tag; \
         if ( (frag_tag == recv_tag) || \
              ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) { \
+ \
+            if (match_probe == false && specific_recv->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) { \
+                /* already matched a probe - cannot match another with same fragment */ \
+                break; \
+            } \
  \
             /* \
              * Match made \
@@ -247,7 +257,7 @@ do { \
  */
 
 #define MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH( \
-    hdr,comm,proc,return_match) \
+    hdr,comm,proc,match_probe,return_match) \
 do {  \
     /* local variables */  \
     mca_pml_ob1_recv_request_t *specific_recv, *wild_recv; \
@@ -280,6 +290,12 @@ do {  \
             wild_recv_tag = wild_recv->req_recv.req_base.req_tag;  \
             if ( (frag_tag == wild_recv_tag) ||  \
                  ( (wild_recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) {  \
+ \
+                if (match_probe == false && wild_recv->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) { \
+                    /* already matched a probe - cannot match another with same fragment */ \
+                    break; \
+                } \
+ \
                 /*  \
                  * Match made  \
                  */  \
@@ -304,7 +320,7 @@ do {  \
             if (wild_recv == (mca_pml_ob1_recv_request_t *)  \
                     opal_list_get_end(&comm->wild_receives) )   \
             {   \
-                MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
+                MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, return_match);  \
                 break;  \
             }  \
   \
@@ -322,6 +338,12 @@ do {  \
             if ( (frag_tag == specific_recv_tag) || \
                  ( (specific_recv_tag == OMPI_ANY_TAG) && (0<=frag_tag)) )   \
             {  \
+ \
+                if (match_probe == false && specific_recv->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) { \
+                    /* already matched a probe - cannot match another with same fragment */ \
+                    break; \
+                } \
+ \
                 /*  \
                  * Match made  \
                  */  \
@@ -345,7 +367,7 @@ do {  \
             if (specific_recv == (mca_pml_ob1_recv_request_t *)  \
                     opal_list_get_end(&(proc)->specific_receives))  \
             {  \
-                MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
+                MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, return_match);  \
                 break; \
             }  \
             /*  \
@@ -411,6 +433,7 @@ int mca_pml_ob1_recv_frag_match(
     mca_pml_ob1_comm_t *comm;
     mca_pml_ob1_comm_proc_t *proc;
     bool additional_match=false;
+    bool match_probe = true;
     opal_list_t additional_matches;
     int rc;
 
@@ -443,6 +466,7 @@ int mca_pml_ob1_recv_frag_match(
 
         /* We're now expecting the next sequence number. */
         (proc->expected_sequence)++;
+rematch:
 
         /*
          * figure out what sort of matching logic to use, if need to
@@ -453,18 +477,18 @@ int mca_pml_ob1_recv_frag_match(
             /*
              * There are only wild irecvs, so specialize the algorithm.
              */
-            MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match);
+            MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, match);
     
         } else if (opal_list_get_size(&comm->wild_receives) == 0 ) {
             /*
              * There are only specific irecvs, so specialize the algorithm.
              */
-            MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, match);
+            MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, match);
         } else {
             /*
              * There are some of each.
              */
-            MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match);
+            MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, match);
         }
 
         /* if match found, process data */
@@ -475,17 +499,13 @@ int mca_pml_ob1_recv_frag_match(
              */
             if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
 
-                /* Matched a probe, rollback the next expected sequence number, as 
-                 * it will be incremented in the recursive call 
-                 */
-                (proc->expected_sequence)--;
-                OPAL_THREAD_UNLOCK(&comm->matching_lock);
-
                 /* complete the probe */
                 mca_pml_ob1_recv_request_matched_probe(match,btl,segments,num_segments);
 
-                /* attempt to match actual request */
-                return mca_pml_ob1_recv_frag_match(btl,hdr,segments,num_segments);
+                /* attempt to match against posted receive */
+                match = NULL;
+                match_probe = false;
+                goto rematch;
             }
         } else {
 
@@ -569,6 +589,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
     uint16_t next_msg_seq_expected, frag_seq;
     mca_pml_ob1_recv_frag_t *frag;
     bool match_made = false;
+    bool match_probe = true;
 
     /*
      * Loop over all the out of sequence messages.  No ordering is assumed
@@ -613,6 +634,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                  */
                 opal_list_remove_item(&proc->frags_cant_match,
                         (opal_list_item_t *)frag);
+rematch:
 
                 /*
                  * figure out what sort of matching logic to use, if need to
@@ -624,17 +646,17 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                     /*
                      * There are only wild irecvs, so specialize the algorithm.
                      */
-                    MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match);
+                    MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, match);
                 } else if (opal_list_get_size(&comm->wild_receives) == 0 ) {
                     /*
                      * There are only specific irecvs, so specialize the algorithm.
                      */
-                    MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, match);
+                    MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, match);
                 } else {
                     /*
                      * There are some of each.
                      */
-                    MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match);
+                    MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, match_probe, match);
 
                 }
 
@@ -649,8 +671,10 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                         /* complete the probe */
                         mca_pml_ob1_recv_request_matched_probe(match,frag->btl,frag->segments,frag->num_segments);
 
-                        /* append fragment to unexpected list */
-                        opal_list_append( &proc->unexpected_frags, (opal_list_item_t *)frag);
+                        /* retry the match */
+                        match = NULL;
+                        match_probe = false;
+                        goto rematch;
 
                     } else {
 
