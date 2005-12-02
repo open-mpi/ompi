@@ -42,20 +42,16 @@ static void (*old_free_hook)(void*, const void*);
 static void* (*old_realloc_hook)(void*, size_t, const void*);
 static void* (*old_malloc_hook)(size_t, const void*);
 
-static int initialized = 0;
+int opal_memory_malloc_hooks_initialized = 0;
 
 void
 opal_memory_malloc_hooks_init(void)
 {
-    /* for some dumb reason, when libopal is compiled statically a C
-       application will fire this at malloc initialization time, but a
-       C++ application will not.  So we also try to set our hooks from
-       the module initialization */
-    if (initialized != 0) {
+    if (opal_memory_malloc_hooks_initialized != 0) {
         return;
     }
 
-    initialized = 1;
+    opal_memory_malloc_hooks_initialized = 1;
 
     old_free_hook = __free_hook;
     old_malloc_hook = __malloc_hook;
