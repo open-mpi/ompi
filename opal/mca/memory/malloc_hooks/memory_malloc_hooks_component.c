@@ -18,8 +18,12 @@
 
 #include "ompi_config.h"
 
+#include <stdlib.h>
+
 #include "opal/mca/memory/memory.h"
 #include "opal/include/constants.h"
+
+extern int opal_memory_malloc_hooks_initialized;
 
 extern void opal_memory_malloc_hooks_init(void);
 
@@ -55,6 +59,15 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_hooks_component = {
 static int
 opal_memory_malloc_open(void)
 {
-    opal_memory_malloc_hooks_init();
+    void *a;
+    /* allocate some memory to make sure that malloc has been called,
+       then make sure we initialized */
+    a = malloc(1);
+    free(a);
+
+    if (0 == opal_memory_malloc_hooks_initialized) {
+        printf("memory_malloc_hooks not properly initialized\n");
+    }
+
     return OPAL_SUCCESS;
 }
