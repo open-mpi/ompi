@@ -167,7 +167,13 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
             term_attrs.c_lflag &= ~ (ECHO | ECHOE | ECHOK |
                                      ECHOCTL | ECHOKE | ECHONL);
             term_attrs.c_iflag &= ~ (ICRNL | INLCR | ISTRIP | INPCK | IXON);
-            term_attrs.c_oflag &= ~ (OCRNL | ONLCR);
+            term_attrs.c_oflag &= ~ (
+#ifdef OCRNL
+                                     /* OS X 10.3 does not have this
+                                        value defined */
+                                     OCRNL | 
+#endif
+                                     ONLCR);
             if (tcsetattr(opts->p_stdout[1], TCSANOW, &term_attrs) == -1) {
                 return ORTE_ERROR;
             }
