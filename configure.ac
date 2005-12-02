@@ -1166,63 +1166,15 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
 
 AC_CHECK_DECLS(__func__)
 
-#
-# Solaris has sched_yield in -lrt.  Can't use a simple AC_CHECK_LIB,
-# though, because Linux has sched_yield in glic (so linking in librt
-# will "find" sched_yield, even though it would have been found anyway
-# -- so -lrt would be useless [and potentially harmful?] in this
-# case).
-# 
 
-AC_MSG_CHECKING([if we need -lrt for sched_yield])
-AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *sched_yield;]],
-[[char *bar = sched_yield;]]),
-[MSG=no],[MSG=not_found])
-if test "$MSG" = "not_found"; then
-    LIBS_save="$LIBS"
-    LIBS="$LIBS -lrt"
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *sched_yield;]],
-[[char *bar = sched_yield;]]),
-[MSG=yes],[MSG=not_found])
-    if test "$MSG" = "not_found"; then
-        LIBS="$LIBS_save"
-    fi
-fi
-AC_MSG_RESULT([$MSG])
+# Solaris has sched_yeild in -lrt, usually in libc
+OMPI_CHECK_FUNC_LIB([sched_yield], [rt])
 
-# see if we actually have sched_yeild.  Use AC_CHECK_FUNCS so that it
-# does the glibs "not implemented" check.  Will use the current LIBS,
-# so will check in -lrt if we decided we needed it above
-AC_CHECK_FUNCS([sched_yield])
+# FreeBSD has backtrace in -lexecinfo, usually in libc
+OMPI_CHECK_FUNC_LIB([backtrace], [execinfo])
 
-#
-# FreeBSD has backtrace in -lexecinfo.  Can't use a simple AC_CHECK_LIB,
-# though, because Linux has backtrace in glic (so linking in libexecinfo
-# will "find" backtrace, even though it would have been found anyway
-# -- so -lexecinfo would be useless [and potentially harmful?] in this
-# case).
-# 
-
-AC_MSG_CHECKING([if we need -lexecinfo for backtrace])
-AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *backtrace;]],
-[[char *bar = backtrace;]]),
-[MSG=no],[MSG=not_found])
-if test "$MSG" = "not_found"; then
-    LIBS_save="$LIBS"
-    LIBS="$LIBS -lexecinfo"
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *backtrace;]],
-[[char *bar = backtrace;]]),
-[MSG=yes],[MSG=not_found])
-    if test "$MSG" = "not_found"; then
-        LIBS="$LIBS_save"
-    fi
-fi
-AC_MSG_RESULT([$MSG])
-
-# see if we actually have backtrace.  Use AC_CHECK_FUNCS so that it
-# does the glibs "not implemented" check.  Will use the current LIBS,
-# so will check in -lexecinfo if we decided we needed it above
-AC_CHECK_FUNCS([backtrace])
+# IRIX has dirname in -lgen, usually in libc
+OMPI_CHECK_FUNC_LIB([dirname], [gen])
 
 #
 # See if we need the math library explicitly linked in
