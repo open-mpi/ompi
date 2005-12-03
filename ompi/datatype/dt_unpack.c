@@ -400,12 +400,19 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     return 0;
 }
 
-/* Return value:
- *     0 : nothing has been done
- * positive value: number of item converted.
- * negative value: -1 * number of items converted, less data provided than expected
- *                and there are less data than the size on the remote host of the
- *                basic datatype.
+/* 
+ * This function is used to copy data from one buffer to another.  The assumption
+ *     is that the number of bytes per element to copy at the source and destination 
+ *     are the same.
+ *   count - number of instances of a given data-type to copy
+ *   from - point to the source buffer
+ *   to - pointer to the destination buffer
+ *   from_len - length of source buffer (in bytes)
+ *   to_len - length of destination buffer (in bytes)
+ *   from_extent - extent of the source data type (in bytes)
+ *   to_extent - extent of the destination data type (in bytes)
+ *   
+ * Return value: Number of elements of type TYPE copied
  */
 #define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
 static int copy_##TYPENAME( uint32_t count,                             \
@@ -416,6 +423,7 @@ static int copy_##TYPENAME( uint32_t count,                             \
     uint32_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */      \
     uint32_t local_TYPE_size = (COUNT) * sizeof(TYPE);                  \
                                                                         \
+    /* make sure the remote buffer is large enough to hold the data */  \
     if( (remote_TYPE_size * count) > from_len ) {                       \
         count = from_len / remote_TYPE_size;                            \
         if( (count * remote_TYPE_size) != from_len ) {                  \
@@ -430,8 +438,10 @@ static int copy_##TYPENAME( uint32_t count,                             \
                                                                         \
     if( (from_extent == (long)local_TYPE_size) &&                       \
         (to_extent == (long)remote_TYPE_size) ) {                       \
+        /* copy of contigous data at both source and destination */     \
         MEMCPY( to, from, count * local_TYPE_size );                    \
     } else {                                                            \
+        /* source or destination are non-contigous */                   \
         for( i = 0; i < count; i++ ) {                                  \
             MEMCPY( to, from, local_TYPE_size );                        \
             to += to_extent;                                            \
@@ -441,6 +451,20 @@ static int copy_##TYPENAME( uint32_t count,                             \
     return count;                                                       \
 }
 
+/* 
+ * This function is used to copy data from one buffer to another.  The assumption
+ *     is that the number of bytes per element to copy at the source and destination 
+ *     are the same.
+ *   count - number of instances of a given data-type to copy
+ *   from - point to the source buffer
+ *   to - pointer to the destination buffer
+ *   from_len - length of source buffer (in bytes)
+ *   to_len - length of destination buffer (in bytes)
+ *   from_extent - extent of the source data type (in bytes)
+ *   to_extent - extent of the destination data type (in bytes)
+ *   
+ * Return value: Number of elements of type TYPE copied
+ */
 #define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
 static int copy_##TYPENAME##_##COUNT( uint32_t count,                   \
                                       char* from, uint32_t from_len, long from_extent, \
@@ -475,6 +499,7 @@ static int copy_##TYPENAME##_##COUNT( uint32_t count,                   \
     return count;                                                       \
 }
 
+/* set up copy functions for the basic C MPI data types */
 COPY_TYPE( char, char, 1 )
 COPY_TYPE( short, short, 1 )
 COPY_TYPE( int, int, 1 )
@@ -557,6 +582,7 @@ COPY_CONTIGUOUS_BYTES( bytes, 16 )
 COPY_CONTIGUOUS_BYTES( bytes, 20 )
 #endif  /* REQUIRE_COPY_BYTES_20 */
 
+/* table of predefined copy functions - one for each MPI type */
 conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                      /* DT_LOOP                */
    (conversion_fct_t)NULL,                      /* DT_END_LOOP            */
