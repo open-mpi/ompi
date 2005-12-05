@@ -201,7 +201,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
     int rc;
 
     /* non-contigous data */
-    if(ompi_convertor_need_buffers(convertor) || max_data < mca_btl_self.btl_max_send_size ) {
+    if(ompi_convertor_need_buffers(convertor) || max_data < mca_btl_self.btl_max_send_size || reserve != 0) {
         MCA_BTL_SELF_FRAG_ALLOC_SEND(frag, rc);
         if(NULL == frag) {
             return NULL;
@@ -237,7 +237,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
             return NULL;
         }
         frag->segment.seg_addr.pval = iov.iov_base;
-        frag->segment.seg_len = reserve + max_data;
+        frag->segment.seg_len = max_data;
         frag->base.des_src = &frag->segment;
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = NULL;
@@ -326,7 +326,7 @@ extern int mca_btl_self_rdma(
     mca_btl_base_segment_t* dst = des->des_dst;
     size_t src_cnt = des->des_src_cnt;
     size_t dst_cnt = des->des_dst_cnt;
-    unsigned char* src_addr = dst->seg_addr.pval;
+    unsigned char* src_addr = src->seg_addr.pval;
     size_t src_len = src->seg_len;
     unsigned char* dst_addr = dst->seg_addr.pval;
     size_t dst_len = dst->seg_len;
