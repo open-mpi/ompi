@@ -387,27 +387,28 @@ fi
 if test -n "$OPTFLAGSC" ; then
     C_OPT_FLAG="$C_OPT_FLAG $OPTFLAGSC"
 fi
+# Open MPI: ignore all setting of CC, f77, FC, etc. in this section
 case $ARCH in 
      solaris|solaris86)
-     CC=${CC:-cc}
-     F77=${FC:-f77}
+     #CC=${CC:-cc}
+     #F77=${FC:-f77}
      if test "$CC" != "gcc" ; then
 	C_DEBUG_FLAG="-g -v"
      fi
      ;;
      
      rs6000)
-     F77=${FC}
+     #F77=${FC}
      # Try to use mpcc if no CC specified
-     AC_PROGRAMS_CHECK(CC, mpcc, cc)
-     if test $NOF77 = 0 && test -z "$F77"; then 
-        AC_PROGRAMS_CHECK(F77, mpxlf, f77)
-     fi
+     #AC_PROGRAMS_CHECK(CC, mpcc, cc)
+     #if test $NOF77 = 0 && test -z "$F77"; then 
+     #   AC_PROGRAMS_CHECK(F77, mpxlf, f77)
+     #fi
      ;;
 
      tflop|tflops)
-     CC=${CC:-pgcc}
-     F77=${FC:-pgf77}
+     #CC=${CC:-pgcc}
+     #F77=${FC:-pgf77}
      CFLAGS="$CFLAGS -cougar -D__PUMA"
      if test "$CC" = "pgcc" ; then
          C_OPT_FLAG="-Knoieee -Mvect -O3"
@@ -415,18 +416,18 @@ case $ARCH in
      ;;
      
      freebsd|LINUX|netbsd|openbsd|LINUX_ALPHA)
-     CC=${CC:-gcc}
+     #CC=${CC:-gcc}
      # Let the prog_f77 file g77/f77/others
-     F77=${FC} 
+     #F77=${FC} 
      ;;
 
      SX4)
-     CC=${CC:-mpicc}
-     F77=${FC:-mpif90}
-     if test $DEBUG != "yes" ; then
-        USER_FFLAGS="$FFLAGS -Chopt"
-        F77_OPT_FLAG="-Chopt"
-    fi
+     #CC=${CC:-mpicc}
+     #F77=${FC:-mpif90}
+     #if test $DEBUG != "yes" ; then
+     #   USER_FFLAGS="$FFLAGS -Chopt"
+     #   F77_OPT_FLAG="-Chopt"
+     #fi
     ;;
 
     hpux|sppux)
@@ -434,24 +435,24 @@ case $ARCH in
     ;;
 
     alpha|ALPHA)
-    CC=${CC:-cc}
-    F77=${FC:-f77}
-    dnl CFLAGS="$CFLAGS -g -std1 -warnprotos -verbose"
-    C_DEBUG_FLAG="-g -verbose"
+    #CC=${CC:-cc}
+    #F77=${FC:-f77}
+    #dnl CFLAGS="$CFLAGS -g -std1 -warnprotos -verbose"
+    #C_DEBUG_FLAG="-g -verbose"
     ;;
 
     CRAY)
-    CC=${CC:-cc}
-    F77=${FC:-f90}
-    NOF77=1
+    #CC=${CC:-cc}
+    #F77=${FC:-f90}
+    #NOF77=1
     CFLAGS="$CFLAGS -D_UNICOS"
     ;;
 
     sgi|IRIX64|IRIX32|IRIXN32)
     arch_IRIX=1
-    CC=${CC:-cc}
-    F77=${FC:-f77}
-    C_DEBUG_FLAG="-g -fullwarn"
+    #CC=${CC:-cc}
+    #F77=${FC:-f77}
+    #C_DEBUG_FLAG="-g -fullwarn"
     ;;
 
     sgi5)
@@ -459,7 +460,7 @@ case $ARCH in
 
     *)
     # Fall-through case.  Take FC 
-    F77=${FC:-f77}
+    #F77=${FC:-f77}
     ;;
 esac
 

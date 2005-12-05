@@ -56,18 +56,18 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                                       [$io_romio_flags],
                                       [io_romio_happy=1], [io_romio_happy=0])
 
-                   # grab the libraries list from ROMIO.  We don't
-                   # need this for building the component, as libtool
-                   # will figure that part out.  But we do need it for
-                   # the wrapper settings
-                   io_romio_save_LIBS="$LIBS"
-                   LIBS=
-                   . ompi/mca/io/romio/romio/localdefs
-                   io_romio_LIBS="$LIBS"
-                   LIBS="$io_romio_save_LIBS"
-
                    AS_IF([test "$io_romio_happy" = "1"],
-                         [echo "ROMIO distribution configured successfully"
+                         [ # grab the libraries list from ROMIO.  We don't
+                           # need this for building the component, as libtool
+                           # will figure that part out.  But we do need it for
+                           # the wrapper settings
+                          io_romio_save_LIBS="$LIBS"
+                          LIBS=
+                          . ompi/mca/io/romio/romio/localdefs
+                          io_romio_LIBS="$LIBS"
+                          LIBS="$io_romio_save_LIBS"
+
+                          echo "ROMIO distribution configured successfully"
                           io_romio_WRAPPER_EXTRA_LIBS="$io_romio_LIBS"
                           $1],
                          [AC_MSG_WARN([ROMIO distribution did not configure successfully])
