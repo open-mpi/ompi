@@ -31,6 +31,9 @@ version 1.0.
 1.0.1
 -----
 
+- Fixed long messages in the send-to-self case.
+- Ensure that when the "leave_pinned" option is used, the memory hooks
+  are also enabled.  Thanks to Gleb Natapov for pointing this out.
 - Fixed compile errors for IRIX.
 - Allow hostfiles to have integer host names (for BProc clusters)
 - Fixed a problem with message matching of out-of-order fragments in
