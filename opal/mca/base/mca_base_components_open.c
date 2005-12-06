@@ -170,7 +170,7 @@ static int parse_requested(int mca_param, bool *include_mode,
   if (OMPI_ERROR == mca_base_param_lookup_string(mca_param, &requested)) {
     return OMPI_ERROR;
   }
-  if (NULL == requested) {
+  if (NULL == requested || 0 == strlen(requested)) {
     return OMPI_SUCCESS;
   }
   *requested_component_names = opal_argv_split(requested, ',');
