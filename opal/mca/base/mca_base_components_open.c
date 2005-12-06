@@ -163,6 +163,7 @@ static int parse_requested(int mca_param, bool *include_mode,
   char *tmp;
 
   *requested_component_names = NULL;
+  *include_mode = true;
 
   /* See if the user requested anything */
 
@@ -176,7 +177,6 @@ static int parse_requested(int mca_param, bool *include_mode,
 
   /* Are we including or excluding? */
 
-  *include_mode = true;
   for (i = 0; NULL != (*requested_component_names)[i]; ++i) {
       if (negate == *((*requested_component_names)[i])) {
           tmp = strdup((*requested_component_names)[i] + 1);
