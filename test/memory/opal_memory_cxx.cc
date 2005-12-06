@@ -60,10 +60,10 @@ main(int argc, char *argv[])
     printf("    - allocating big vector\n");
     big_vec = new vector<int>;
 
-    big_vec->reserve(10000);
+    big_vec->reserve(size);
     /* touch all the locations, just to make sure C++ isn't smarter
        than I am */
-    for (int i = 0 ; i < 10000 ; ++i) {
+    for (int i = 0 ; i < size ; ++i) {
         (*big_vec)[i] = i;
     }
 
