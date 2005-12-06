@@ -18,9 +18,6 @@
 
 #include "ompi_config.h"
 
-
-#include "opal/memoryhooks/memory_internal.h"
-
 #include <sys/types.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -33,6 +30,8 @@
 #define __USE_GNU
 #include <dlfcn.h>
 #endif
+
+#include "opal/memoryhooks/memory_internal.h"
 
 /*
  * munmap is always intercepted
