@@ -22,13 +22,13 @@ AM_CPPFLAGS = -DMALLOC_DEBUG=0
 
 if OMPI_HAVE_POSIX_THREADS
 AM_CPPFLAGS +=  -DUSE_TSD_DATA_HACK \
-    -Isysdeps/pthread
+    -I$(srcdir)/sysdeps/pthread
 endif
 if OMPI_HAVE_SOLARIS_THREADS
-AM_CPPFLAGS += -Isysdeps/solaris
+AM_CPPFLAGS += -I$(srcdir)/sysdeps/solaris
 endif
 # this must come *after* the threads -Is
-AM_CPPFLAGS += -Isysdeps/generic
+AM_CPPFLAGS += -I$(srcdir)/sysdeps/generic
 
 # ptmalloc requires us to include the copyright notice in the
 # software.  So install it in the same place that we install ROMIO's
