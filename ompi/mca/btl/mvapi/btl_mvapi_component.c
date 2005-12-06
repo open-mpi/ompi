@@ -18,7 +18,14 @@
 
 
 #include "ompi_config.h"
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
 #include "ompi/include/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
@@ -40,8 +47,6 @@
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 #include "btl_mvapi_endpoint.h"
 #include "mca/pml/base/pml_base_module_exchange.h"
-#include <malloc.h>
-
 
 
 mca_btl_mvapi_component_t mca_btl_mvapi_component = {
@@ -118,6 +123,8 @@ static inline void  mca_btl_mvapi_param_register_int(
 
 int mca_btl_mvapi_component_open(void)
 {
+    int tmp_int;
+
     /* initialize state */
     mca_btl_mvapi_component.ib_num_btls=0;
     mca_btl_mvapi_component.mvapi_btls=NULL;
@@ -127,7 +134,8 @@ int mca_btl_mvapi_component_open(void)
 
     /* register IB component parameters */
     mca_btl_mvapi_param_register_int ("max_btls", "maximum number of HCAs/ports to use", 
-                                       4, &mca_btl_mvapi_component.ib_max_btls);
+                                      4, &tmp_int);
+    mca_btl_mvapi_component.ib_max_btls = tmp_int;
     mca_btl_mvapi_param_register_int ("free_list_num", "intial size of free lists", 
                                        8, &mca_btl_mvapi_component.ib_free_list_num);
     mca_btl_mvapi_param_register_int ("free_list_max", "maximum size of free lists",
@@ -138,8 +146,12 @@ int mca_btl_mvapi_component_open(void)
                                          "mvapi", &mca_btl_mvapi_component.ib_mpool_name); 
     mca_btl_mvapi_param_register_int("reg_mru_len",  "length of the registration cache most recently used list", 
                                       16, (int*) &mca_btl_mvapi_component.reg_mru_len); 
+#ifdef VAPI_FEATURE_SRQ 
     mca_btl_mvapi_param_register_int("use_srq", "if 1 use the IB shared receive queue to post receive descriptors", 
                                      0, (int*) &mca_btl_mvapi_component.use_srq); 
+#else
+    mca_btl_mvapi_component.use_srq = 0;
+#endif
     mca_btl_mvapi_param_register_int("ib_cq_size", "size of the IB completion queue",
                                      10000, (int*) &mca_btl_mvapi_component.ib_cq_size); 
     mca_btl_mvapi_param_register_int("ib_sg_list_size", "size of IB segment list", 
@@ -617,10 +629,13 @@ int mca_btl_mvapi_component_progress( void )
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
                 
                 /* repost receive descriptors */
+#ifdef VAPI_FEATURE_SRQ
                 if(mca_btl_mvapi_component.use_srq) { 
                     OPAL_THREAD_ADD32(&mvapi_btl->srd_posted_hp, -1); 
                     MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 0); 
-                } else { 
+                } else 
+#endif
+                { 
                     OPAL_THREAD_ADD32(&endpoint->rd_posted_hp, -1); 
                     MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 0); 
                 }
@@ -745,10 +760,13 @@ int mca_btl_mvapi_component_progress( void )
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
 
                 /* post descriptors */
+#ifdef VAPI_FEATURE_SRQ
                 if(mca_btl_mvapi_component.use_srq) { 
                     OPAL_THREAD_ADD32(&mvapi_btl->srd_posted_lp, -1); 
                     MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 0); 
-                } else {
+                } else 
+#endif
+                {
                     OPAL_THREAD_ADD32(&endpoint->rd_posted_lp, -1); 
                     MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 0); 
                 }
