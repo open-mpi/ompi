@@ -45,8 +45,8 @@ struct mca_pml_ob1_send_request_t {
     volatile int32_t req_state;
     volatile int32_t req_lock;
 #else
-    volatile int32_t req_state;
-    volatile int32_t req_lock;
+    int32_t req_state;
+    int32_t req_lock;
 #endif
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
