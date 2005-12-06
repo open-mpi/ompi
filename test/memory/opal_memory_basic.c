@@ -72,6 +72,7 @@ alloc_free_test(void)
     foo = malloc(bigsize);
     assert(counter >= 1);
     printf("  - free of big buffer\n");
+    counter = 1;
     free(foo);
     assert(counter == 0);
 
@@ -110,7 +111,8 @@ main(int argc, char *argv[])
     if (0 == support) {
         printf("no memory registration supported.  skipping test.\n");
         ret = 77;
-    } else if ((OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MALLOC_SUPPORT) & support) {
+    } else if ((OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MALLOC_SUPPORT) ==
+               ((OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MALLOC_SUPPORT) & support)) {
         ret = alloc_free_test();
     } else if (OPAL_MEMORY_FREE_SUPPORT & support) {
         ret  = free_only_test();

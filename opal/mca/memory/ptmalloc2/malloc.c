@@ -11,7 +11,7 @@
  * Not all systems have sbrk() declared, since it's technically not a
  * POSIX function.
  */
-#if !OMPI_HAVE_DECL_SBRK
+#if !HAVE_DECL_SBRK
 void *sbrk();
 #endif
 
@@ -21,15 +21,24 @@ opal_mem_free_ptmalloc2_sbrk(int inc)
   if (inc < 0) {
     long oldp = (long) sbrk(0);
     opal_mem_hooks_release_hook((void*) (oldp + inc), -inc);
+#if defined(HAVE_SYSCALL) || defined(HAVE___MMAP)
+  } else if (inc > 0) {
+    long oldp = (long) sbrk(0);
+    opal_mem_hooks_alloc_hook((void*) oldp, inc);
   }
+#endif
 
   return sbrk(inc);
 }
 
 extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length);
+extern void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length, 
+                                           int prot, int flags, 
+                                           int fd, off_t offset);
 
 #define MORECORE opal_mem_free_ptmalloc2_sbrk
 #define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b)
+#define mmap(a, b, c, d, e, f) opal_mem_free_ptmalloc2_mmap(a, b, c, d, e, f)
 /* easier to just not use mremap - having it makes tracking more
    difficult */
 #define HAVE_MREMAP 0
@@ -44,7 +53,7 @@ extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length);
 #define __const const
 #endif
 
-/********************* BEGIN OMPI CHANGES ******************************/
+/********************* END OMPI CHANGES ******************************/
 
 
 

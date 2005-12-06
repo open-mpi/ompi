@@ -40,12 +40,12 @@ doc_DATA    = ptmalloc2-COPYRIGHT
 noinst_LTLIBRARIES = libmca_memory_ptmalloc2.la
 
 libmca_memory_ptmalloc2_la_SOURCES = \
-   ptmalloc2_component.c \
-   ptmalloc2_munmap.c \
+   opal_ptmalloc2_component.c \
+   opal_ptmalloc2_munmap.c \
    malloc.c \
    malloc-stats.c \
    malloc.h
-            
+
 # these are included directly and shouldn't be built solo
 EXTRA_libmca_memory_ptmalloc2_la_SOURCES = \
     arena.c \
