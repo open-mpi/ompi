@@ -615,10 +615,13 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
         } else { 
             rc = OMPI_SUCCESS; 
         }
+#ifdef VAPI_FEATURE_SRQ
         if(mca_btl_mvapi_component.use_srq) { 
             MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
             MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
-        } else { 
+        } else 
+#endif
+        { 
             MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
             MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
         }
@@ -687,10 +690,13 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
         } else { 
             rc = OMPI_SUCCESS; 
         }
+#ifdef VAPI_FEATURE_SRQ
         if(mca_btl_mvapi_component.use_srq) { 
             MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
             MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1); 
-        } else { 
+        } else 
+#endif
+        { 
             MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
             MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
         }
@@ -737,7 +743,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
                        VAPI_event_syndrome_sym(event_p->syndrome)));
             break;
         }
-            
+#ifdef VAPI_FEATURE_SRQ
     case VAPI_SRQ_LIMIT_REACHED: 
         { 
             size_t i;
@@ -749,11 +755,16 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
                 MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1);
             }
         }
-        
+#endif 
+
+/* BWB - is this right? */       
+#ifdef VAPI_FEATURE_SRQ
     case VAPI_RECEIVE_QUEUE_DRAINED: { 
         fprintf(stderr, "VAPI_RECEIVE_QUEUE_DRAINEDD\n");
         
     }
+#endif
+
     default:
         BTL_ERROR(("Warning!! Got an undefined "
                    "asynchronous event %s", VAPI_event_record_sym(event_p->type)));
@@ -772,16 +783,19 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
     /* Allocate Protection Domain */ 
     VAPI_ret_t ret;
     uint32_t cqe_cnt = 0;
+#ifdef VAPI_FEATURE_SRQ
     VAPI_srq_attr_t srq_attr, srq_attr_out, srq_attr_mod; 
     VAPI_srq_attr_mask_t srq_attr_mask;
     uint32_t max_outs_wr; 
+#endif
     ret = VAPI_alloc_pd(mvapi_btl->nic, &mvapi_btl->ptag);
     
     if(ret != VAPI_OK) {
         BTL_ERROR(("error in VAPI_alloc_pd: %s", VAPI_strerror(ret)));
         return OMPI_ERROR;
     }
-    
+
+#ifdef VAPI_FEATURE_SRQ    
     if(mca_btl_mvapi_component.use_srq) { 
         mvapi_btl->srd_posted_hp = 0; 
         mvapi_btl->srd_posted_lp = 0; 
@@ -843,10 +857,11 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
         }
         
 
-    } else { 
+    } else {
         mvapi_btl->srq_hndl_hp = VAPI_INVAL_SRQ_HNDL; 
         mvapi_btl->srq_hndl_lp = VAPI_INVAL_SRQ_HNDL; 
     } 
+#endif /* VAPI_FEATURE_SRQ */
     ret = VAPI_create_cq(mvapi_btl->nic, mca_btl_mvapi_component.ib_cq_size,
                          &mvapi_btl->cq_hndl_lp, &cqe_cnt);
 

@@ -161,11 +161,12 @@ struct mca_btl_mvapi_module_t {
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
     VAPI_rr_desc_t*  rr_desc_post; /**< an array to allow posting of rr in one swoop */ 
+#ifdef VAPI_FEATURE_SRQ
     VAPI_srq_hndl_t srq_hndl_hp; /**< A high priority shared receive queue 
                                          runtime optional, can also use a receive queue 
                                          per queue pair.. */ 
     VAPI_srq_hndl_t srq_hndl_lp; /**< A low priority shared receive queue */ 
-        
+#endif
     size_t ib_inline_max; /**< max size of inline send*/ 
     int32_t num_peers; 
 
