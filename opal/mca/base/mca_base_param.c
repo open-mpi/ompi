@@ -115,7 +115,7 @@ OBJ_CLASS_INSTANCE(mca_base_param_info_t, opal_list_item_t,
 int mca_base_param_init(void)
 {
     int id;
-    char *files, *new_files;
+    char *files, *new_files = NULL;
 
     if (!initialized) {
 
