@@ -31,7 +31,7 @@
 #include <sys/select.h>
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 /*
  *  Increase FD_SETSIZE
  */
@@ -48,7 +48,7 @@
 #endif
 
 struct ompi_fd_set_t {
-  int i;
+    int i;
     uint32_t fds_bits[OMPI_FD_SETSIZE / NFDBITS];
 };
 typedef struct ompi_fd_set_t ompi_fd_set_t;
@@ -59,7 +59,7 @@ typedef struct ompi_fd_set_t ompi_fd_set_t;
 #define OMPI_FD_ISSET(fd,fds) FD_ISSET((fd),(fd_set*)(fds))
 
 #else /* if we are on windows */
-    
+#include <Winsock2.h>    
 typedef fd_set ompi_fd_set_t;
 #define OMPI_FD_ZERO(fds)     FD_ZERO((fds))
 #define OMPI_FD_SET(fd,fds)   FD_SET((fd),(fds))
@@ -93,7 +93,7 @@ typedef union {
  * handle differences in iovec
  */
 
-#if defined(__APPLE__) || defined(WIN32)
+#if defined(__APPLE__) || defined(_WIN32)
 typedef char* ompi_iov_base_ptr_t;
 #else
 typedef void* ompi_iov_base_ptr_t;
