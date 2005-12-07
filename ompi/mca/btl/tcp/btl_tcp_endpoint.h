@@ -31,6 +31,7 @@ extern "C" {
 
 OBJ_CLASS_DECLARATION(mca_btl_tcp_endpoint_t);
 
+#define MCA_BTL_TCP_ENDPOINT_CACHE 1
 
 /**
  * State of TCP endpoint connection.
@@ -54,20 +55,25 @@ typedef enum {
 
 struct mca_btl_base_endpoint_t {
     opal_list_item_t                super;
-    struct mca_btl_tcp_module_t*    endpoint_btl;        /**< BTL instance that created this connection */
-    struct mca_btl_tcp_proc_t*      endpoint_proc;       /**< proc structure corresponding to endpoint */
-    struct mca_btl_tcp_addr_t*      endpoint_addr;        /**< address of endpoint */
-    int                             endpoint_sd;          /**< socket connection to endpoint */
-    struct mca_btl_tcp_frag_t*      endpoint_send_frag;   /**< current send frag being processed */
-    struct mca_btl_tcp_frag_t*      endpoint_recv_frag;   /**< current recv frag being processed */
-    mca_btl_tcp_state_t             endpoint_state;       /**< current state of the connection */
-    size_t                          endpoint_retries;     /**< number of connection retries attempted */
-    opal_list_t                     endpoint_frags;       /**< list of pending frags to send */
-    opal_mutex_t                    endpoint_send_lock;   /**< lock for concurrent access to endpoint state */
-    opal_mutex_t                    endpoint_recv_lock;   /**< lock for concurrent access to endpoint state */
-    opal_event_t                    endpoint_send_event;  /**< event for async processing of send frags */
-    opal_event_t                    endpoint_recv_event;  /**< event for async processing of recv frags */
-    bool                            endpoint_nbo;         /**< convert headers to network byte order? */
+    struct mca_btl_tcp_module_t*    endpoint_btl;          /**< BTL instance that created this connection */
+    struct mca_btl_tcp_proc_t*      endpoint_proc;         /**< proc structure corresponding to endpoint */
+    struct mca_btl_tcp_addr_t*      endpoint_addr;         /**< address of endpoint */
+    int                             endpoint_sd;           /**< socket connection to endpoint */
+#if MCA_BTL_TCP_ENDPOINT_CACHE
+    char*                           endpoint_cache;        /**< cache for the recv (reduce the number of recv syscall */
+    size_t                          endpoint_cache_pos;    /**< */
+    size_t                          endpoint_cache_length; /**< */
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+    struct mca_btl_tcp_frag_t*      endpoint_send_frag;    /**< current send frag being processed */
+    struct mca_btl_tcp_frag_t*      endpoint_recv_frag;    /**< current recv frag being processed */
+    mca_btl_tcp_state_t             endpoint_state;        /**< current state of the connection */
+    size_t                          endpoint_retries;      /**< number of connection retries attempted */
+    opal_list_t                     endpoint_frags;        /**< list of pending frags to send */
+    opal_mutex_t                    endpoint_send_lock;    /**< lock for concurrent access to endpoint state */
+    opal_mutex_t                    endpoint_recv_lock;    /**< lock for concurrent access to endpoint state */
+    opal_event_t                    endpoint_send_event;   /**< event for async processing of send frags */
+    opal_event_t                    endpoint_recv_event;   /**< event for async processing of recv frags */
+    bool                            endpoint_nbo;          /**< convert headers to network byte order? */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;

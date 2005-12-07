@@ -33,7 +33,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-                                                                                                      
+
 /* Open MPI includes */
 #include "opal/event/event.h"
 #include "opal/util/output.h"
@@ -64,6 +64,7 @@ struct mca_btl_tcp_component_t {
     int tcp_free_list_num;                  /**< initial size of free lists */
     int tcp_free_list_max;                  /**< maximum size of free lists */
     int tcp_free_list_inc;                  /**< number of elements to alloc when growing free lists */
+    int tcp_endpoint_cache;                 /**< amount of cache on each endpoint */
     opal_hash_table_t tcp_procs;            /**< hash table of tcp proc structures */
     opal_list_t tcp_events;                 /**< list of pending tcp events */
     opal_mutex_t tcp_lock;                  /**< lock for accessing module state */
@@ -209,7 +210,7 @@ extern int mca_btl_tcp_del_procs(
 extern int mca_btl_tcp_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor, 
+    struct mca_btl_base_descriptor_t* descriptor,
     mca_btl_base_tag_t tag
 );
 
@@ -221,7 +222,7 @@ extern int mca_btl_tcp_send(
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-                                                                                                    
+
 extern int mca_btl_tcp_put(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
@@ -236,7 +237,7 @@ extern int mca_btl_tcp_put(
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-                                                                                                    
+
 extern int mca_btl_tcp_get(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,

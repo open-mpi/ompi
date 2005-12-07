@@ -73,6 +73,11 @@ static void mca_btl_tcp_endpoint_construct(mca_btl_tcp_endpoint_t* endpoint)
     endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
     endpoint->endpoint_retries = 0;
     endpoint->endpoint_nbo = false;
+#if MCA_BTL_TCP_ENDPOINT_CACHE
+    endpoint->endpoint_cache        = NULL;
+    endpoint->endpoint_cache_pos    = 0;
+    endpoint->endpoint_cache_length = 0;
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
     OBJ_CONSTRUCT(&endpoint->endpoint_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
@@ -177,6 +182,10 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
 
 static inline void mca_btl_tcp_endpoint_event_init(mca_btl_base_endpoint_t* btl_endpoint, int sd)
 {
+#if MCA_BTL_TCP_ENDPOINT_CACHE
+    btl_endpoint->endpoint_cache = (char*)malloc(mca_btl_tcp_component.tcp_endpoint_cache);
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+
     opal_event_set(
         &btl_endpoint->endpoint_recv_event, 
         btl_endpoint->endpoint_sd, 
@@ -342,6 +351,10 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
         opal_event_del(&btl_endpoint->endpoint_send_event);
         close(btl_endpoint->endpoint_sd);
         btl_endpoint->endpoint_sd = -1;
+#if MCA_BTL_TCP_ENDPOINT_CACHE
+        free( btl_endpoint->endpoint_cache );
+        btl_endpoint->endpoint_cache = NULL;
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
     }
     btl_endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
     btl_endpoint->endpoint_retries++;
@@ -501,7 +514,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         if(fcntl(btl_endpoint->endpoint_sd, F_SETFL, flags) < 0)
             BTL_ERROR(("fcntl(F_SETFL) failed with errno=%d", ompi_socket_errno));
     }
-                                                                                                              
+
     /* start the connect - will likely fail with EINPROGRESS */
     endpoint_addr.sin_family = AF_INET;
     endpoint_addr.sin_addr = btl_endpoint->endpoint_addr->addr_inet;
@@ -582,57 +595,67 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECT_ACK:
         {
-        mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
-        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-        break;
+            mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
+            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+            break;
         }
     case MCA_BTL_TCP_CONNECTED:
         {
-        mca_btl_tcp_frag_t* frag = btl_endpoint->endpoint_recv_frag;
-        if(NULL == frag) {
-            int rc;
-            MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc);
-            if(NULL == frag) {
-                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-                return;
-            }
-            MCA_BTL_TCP_FRAG_INIT_DST(frag, btl_endpoint);
-        }
+            mca_btl_tcp_frag_t* frag;
 
-        /* check for completion of non-blocking recv on the current fragment */
-        if(mca_btl_tcp_frag_recv(frag, sd) == false) {
-            btl_endpoint->endpoint_recv_frag = frag;
-            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-        } else {
-            btl_endpoint->endpoint_recv_frag = NULL;
-            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-            switch(frag->hdr.type) {
-                case MCA_BTL_TCP_HDR_TYPE_SEND:
-                {
-                    mca_btl_base_recv_reg_t* reg = frag->btl->tcp_reg + frag->hdr.base.tag;
-                    reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
-                    break;
+#if MCA_BTL_TCP_ENDPOINT_CACHE
+            btl_endpoint->endpoint_cache_pos    = 0;
+        data_still_pending_on_endpoint:
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+            frag = btl_endpoint->endpoint_recv_frag;
+            if(NULL == frag) {
+                int rc;
+                MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc);
+                if(NULL == frag) {
+                    OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+                    return;
                 }
-                default:
-                {
-                    break;
-                }
+                MCA_BTL_TCP_FRAG_INIT_DST(frag, btl_endpoint);
             }
-            MCA_BTL_TCP_FRAG_RETURN_MAX(frag);
-        }
-        break;
+
+            /* check for completion of non-blocking recv on the current fragment */
+            if(mca_btl_tcp_frag_recv(frag, sd) == false) {
+                btl_endpoint->endpoint_recv_frag = frag;
+                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+            } else {
+                btl_endpoint->endpoint_recv_frag = NULL;
+                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+                switch(frag->hdr.type) {
+                case MCA_BTL_TCP_HDR_TYPE_SEND:
+                    {
+                        mca_btl_base_recv_reg_t* reg = frag->btl->tcp_reg + frag->hdr.base.tag;
+                        reg->cbfunc(&frag->btl->super, frag->hdr.base.tag, &frag->base, reg->cbdata);
+                        break;
+                    }
+                default:
+                    {
+                        break;
+                    }
+                }
+                MCA_BTL_TCP_FRAG_RETURN_MAX(frag);
+#if MCA_BTL_TCP_ENDPOINT_CACHE
+                if( 0 != btl_endpoint->endpoint_cache_length )
+                    goto data_still_pending_on_endpoint;
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+            }
+            break;
         }
     case MCA_BTL_TCP_SHUTDOWN:
         {
-        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-        break;
+            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+            break;
         }
     default:
         {
-        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-        BTL_ERROR(("invalid socket state(%d)", btl_endpoint->endpoint_state));
-        mca_btl_tcp_endpoint_close(btl_endpoint);
-        break;
+            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+            BTL_ERROR(("invalid socket state(%d)", btl_endpoint->endpoint_state));
+            mca_btl_tcp_endpoint_close(btl_endpoint);
+            break;
         }
     }
 }
