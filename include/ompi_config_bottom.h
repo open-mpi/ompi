@@ -133,7 +133,7 @@ typedef struct {
  *
  **********************************************************************/
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #  if OMPI_BUILDING
 #    include "win32/win_compat.h"
 #  endif
@@ -180,7 +180,7 @@ typedef struct {
                 assumption that the C++ bool is the same size and has
                 the same alignment. */
 #            include <stdbool.h>
-#        elif defined(WIN32)
+#        elif defined(_WIN32)
 #            define bool BOOL
 #            define false FALSE
 #            define true TRUE

@@ -29,7 +29,7 @@
 
 #include <errno.h>
 #include "ompi/include/constants.h"
-#ifdef WIN32
+#ifdef _WIN32
 #define ompi_socket_errno ompi_get_socket_errno()
 
 #define EWOULDBLOCK       WSAEWOULDBLOCK       
