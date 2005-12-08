@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST=
+
 # We always have C bindings, but do we have profiling?
 
 if WANT_MPI_BINDINGS_LAYER
