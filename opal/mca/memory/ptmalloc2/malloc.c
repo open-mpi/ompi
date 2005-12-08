@@ -5501,12 +5501,13 @@ int mALLOPt(param_number, value) int param_number; int value;
 */
 
 
-#ifdef _LIBC
+/* OMPI: Need to expose our own posix_memalign, or the wrong one will
+  be used */
 # include <sys/param.h>
 
 /* We need a wrapper function for one of the additions of POSIX.  */
 int
-__posix_memalign (void **memptr, size_t alignment, size_t size)
+posix_memalign (void **memptr, size_t alignment, size_t size)
 {
   void *mem;
   __malloc_ptr_t (*hook) __MALLOC_PMT ((size_t, size_t,
@@ -5534,6 +5535,7 @@ __posix_memalign (void **memptr, size_t alignment, size_t size)
 
   return ENOMEM;
 }
+#ifdef _LIBC
 weak_alias (__posix_memalign, posix_memalign)
 
 strong_alias (__libc_calloc, __calloc) weak_alias (__libc_calloc, calloc)
