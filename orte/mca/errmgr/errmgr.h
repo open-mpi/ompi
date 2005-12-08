@@ -29,10 +29,10 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "mca/schema/schema.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/schema/schema.h"
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
