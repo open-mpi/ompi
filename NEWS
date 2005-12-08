@@ -31,6 +31,8 @@ version 1.0.
 1.0.1
 -----
 
+- Fixed assembly on Solaris AMD platforms.  Thanks to Pierre Valiron
+  for bringing this to our attention.
 - Fixed long messages in the send-to-self case.
 - Ensure that when the "leave_pinned" option is used, the memory hooks
   are also enabled.  Thanks to Gleb Natapov for pointing this out.
