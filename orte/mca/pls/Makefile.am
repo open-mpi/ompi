@@ -30,7 +30,7 @@ libmca_pls_la_SOURCES += $(headers)
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 nobase_orte_HEADERS += $(headers)
-ortedir = $(includedir)/openmpi/orte/mca/errmgr
+ortedir = $(includedir)/openmpi/orte/mca/pls
 else
 ortedir = $(includedir)
 endif
