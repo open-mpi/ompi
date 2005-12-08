@@ -17,7 +17,8 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
+        base/rmaps_base_map.h
 
 libmca_rmaps_la_SOURCES += \
         base/rmaps_base_close.c \
