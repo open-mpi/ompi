@@ -760,13 +760,7 @@ case "${host}" in
         ompi_cv_asm_arch="WINDOWS"
     ;;
 
-    i?86-*)
-        ompi_cv_asm_arch="IA32"
-        OMPI_ASM_SUPPORT_64BIT=1
-        OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
-    ;;
-
-    x86_64*)
+    i?86-*|x86_64*)
         if test "$ac_cv_sizeof_long" = "4" ; then
                 ompi_cv_asm_arch="IA32"
         else

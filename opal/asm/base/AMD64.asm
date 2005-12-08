@@ -34,9 +34,7 @@ START_FUNC(opal_atomic_cmpset_32)
 	movl	-16(%rbp), %ecx
 	movq	-8(%rbp), %rdx
 	movl	-12(%rbp), %eax
-#APP
 	cmpxchgl %ecx,(%rdx)
-#NO_APP
 	movq	%rax, -24(%rbp)
 	movl	-24(%rbp), %eax
 	movl	%eax, -28(%rbp)
@@ -60,10 +58,8 @@ START_FUNC(opal_atomic_cmpset_64)
 	movq	-24(%rbp), %rcx
 	movq	-8(%rbp), %rdx
 	movq	-16(%rbp), %rax
-#APP
 	cmpxchgq %rcx,(%rdx)   
 	
-#NO_APP
 	movq	%rax, -32(%rbp)
 	movq	-32(%rbp), %rax
 	cmpq	-16(%rbp), %rax
@@ -75,9 +71,7 @@ END_FUNC(opal_atomic_cmpset_64)
 
 
 START_FUNC(opal_sys_timer_get_cycles)
-#APP
         rdtsc
-#NO_APP
         salq    $32, %rdx
         mov     %eax, %eax
         orq     %rdx, %rax
