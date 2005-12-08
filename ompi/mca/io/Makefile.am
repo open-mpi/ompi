@@ -30,7 +30,7 @@ libmca_io_la_SOURCES += $(headers)
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 nobase_ompi_HEADERS += $(headers)
-ompidir = $(includedir)/openmpi/ompi/mca/allocator
+ompidir = $(includedir)/openmpi/ompi/mca/io
 else
 ompidir = $(includedir)
 endif

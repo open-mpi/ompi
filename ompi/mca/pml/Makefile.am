@@ -33,7 +33,7 @@ libmca_pml_la_SOURCES += $(headers) $(nodist_headers)
 if WANT_INSTALL_HEADERS
 nobase_ompi_HEADERS += $(headers)
 nobase_nodist_ompi_HEADERS += $(nodist_headers)
-ompidir = $(includedir)/openmpi/ompi/mca/allocator
+ompidir = $(includedir)/openmpi/ompi/mca/pml
 else
 ompidir = $(includedir)
 endif
