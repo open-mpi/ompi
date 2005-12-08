@@ -64,20 +64,22 @@ AC_DEFUN([OMPI_CHECK_MX],[
     ompi_check_mx_$1_save_LDFLAGS="$LDFLAGS"
     ompi_check_mx_$1_save_LIBS="$LIBS"
 
-    AS_IF([test ! -z "$with_mx" -a "$with_mx" != "yes"],
-          [ompi_check_mx_dir="$with_mx"])
-    AS_IF([test ! -z "$with_mx_libdir" -a "$with_mx_libdir" != "yes"],
-          [ompi_check_mx_libdir="$with_mx_libdir"])
+    AS_IF([test "$with_mx" != "no"],
+          [AS_IF([test ! -z "$with_mx" -a "$with_mx" != "yes"],
+                 [ompi_check_mx_dir="$with_mx"])
+           AS_IF([test ! -z "$with_mx_libdir" -a "$with_mx_libdir" != "yes"],
+                 [ompi_check_mx_libdir="$with_mx_libdir"])
 
-    OMPI_CHECK_PACKAGE([$1],
-                       [myriexpress.h],
-                       [myriexpress],
-                       [mx_finalize],
-                       [],
-                       [$ompi_check_mx_dir],
-                       [$ompi_check_mx_libdir],
-                       [ompi_check_mx_happy="yes"],
-                       [ompi_check_mx_happy="no"])
+           OMPI_CHECK_PACKAGE([$1],
+                              [myriexpress.h],
+                              [myriexpress],
+                              [mx_finalize],
+                              [],
+                              [$ompi_check_mx_dir],
+                              [$ompi_check_mx_libdir],
+                              [ompi_check_mx_happy="yes"],
+                              [ompi_check_mx_happy="no"])],
+          [ompi_check_mx_happy="no"])
 
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
           [_OMPI_CHECK_MX_CONFIG($1, [ompi_check_mx_happy="yes"],
