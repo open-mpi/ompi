@@ -17,7 +17,8 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
+        base/ras_base_node.h
 
 libmca_ras_la_SOURCES += \
         base/ras_base_alloc.c \
