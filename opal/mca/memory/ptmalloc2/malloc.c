@@ -15,13 +15,16 @@
 void *sbrk();
 #endif
 
+
+#if OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+
 static void*
 opal_mem_free_ptmalloc2_sbrk(int inc)
 {
   if (inc < 0) {
     long oldp = (long) sbrk(0);
     opal_mem_hooks_release_hook((void*) (oldp + inc), -inc);
-#if defined(HAVE_SYSCALL) || defined(HAVE___MMAP)
+#if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
   } else if (inc > 0) {
     long oldp = (long) sbrk(0);
     opal_mem_hooks_alloc_hook((void*) oldp, inc);
@@ -32,13 +35,24 @@ opal_mem_free_ptmalloc2_sbrk(int inc)
 }
 
 extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length);
+#if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
 extern void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length, 
                                            int prot, int flags, 
                                            int fd, off_t offset);
+#endif
 
+/* if we are trying to catch only allocations from and releases to the
+   operating system, intercept sbrk, mmap, and munmap.  If we want to
+   intercept every call to malloc/realloc/free/etc., don't do this, as
+   we need to add something into each of those calls anyway. */
 #define MORECORE opal_mem_free_ptmalloc2_sbrk
 #define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b)
-#define mmap(a, b, c, d, e, f) opal_mem_free_ptmalloc2_mmap(a, b, c, d, e, f)
+#if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
+#define mmap(a,b,c,d,e,f) opal_mem_free_ptmalloc2_mmap(a,b,c,d,e,f)
+#endif
+
+#endif /* OMPI_MEMORY_PTMALLOC2_OPT_SBRK */
+
 /* easier to just not use mremap - having it makes tracking more
    difficult */
 #define HAVE_MREMAP 0
@@ -3430,6 +3444,12 @@ public_mALLOc(size_t bytes)
     (void)mutex_unlock(&ar_ptr->mutex);
   assert(!victim || chunk_is_mmapped(mem2chunk(victim)) ||
 	 ar_ptr == arena_for_chunk(mem2chunk(victim)));
+
+  /* OMPI Change */
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(victim, mUSABLe(victim));
+#endif
+
   return victim;
 }
 #ifdef libc_hidden_def
@@ -3448,6 +3468,10 @@ public_fREe(Void_t* mem)
     (*hook)(mem, RETURN_ADDRESS (0));
     return;
   }
+  /* OMPI change */
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_release_hook(mem, mUSABLe(mem));
+#endif
 
   if (mem == 0)                              /* free(0) has no effect */
     return;
@@ -3496,6 +3520,10 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
     __realloc_hook;
   if (hook != NULL)
     return (*hook)(oldmem, bytes, RETURN_ADDRESS (0));
+  /* OMPI change */
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_release_hook(mem, mUSABLe(mem));
+#endif
 
 #if REALLOC_ZERO_BYTES_FREES
   if (bytes == 0 && oldmem != NULL) { public_fREe(oldmem); return 0; }
@@ -3516,15 +3544,29 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
 
 #if HAVE_MREMAP
     newp = mremap_chunk(oldp, nb);
-    if(newp) return chunk2mem(newp);
+    if(newp) {
+  /* OMPI Change */
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+      opal_mem_hooks_alloc_hook(newp, mUSABLe(newp));
+#endif
+      return chunk2mem(newp);
+    }
 #endif
     /* Note the extra SIZE_SZ overhead. */
-    if(oldsize - SIZE_SZ >= nb) return oldmem; /* do nothing */
+    if(oldsize - SIZE_SZ >= nb) {
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+      opal_mem_hooks_alloc_hook(oldmem, mUSABLe(oldmem));
+#endif
+      return oldmem; /* do nothing */
+    }
     /* Must alloc, copy, free. */
     newmem = public_mALLOc(bytes);
     if (newmem == 0) return 0; /* propagate failure */
     MALLOC_COPY(newmem, oldmem, oldsize - 2*SIZE_SZ);
     munmap_chunk(oldp);
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+    opal_mem_hooks_alloc_hook(newmem, mUSABLe(newmem));
+#endif
     return newmem;
   }
 #endif
@@ -3551,6 +3593,9 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
   (void)mutex_unlock(&ar_ptr->mutex);
   assert(!newp || chunk_is_mmapped(mem2chunk(newp)) ||
 	 ar_ptr == arena_for_chunk(mem2chunk(newp)));
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(newp, mUSABLe(newp));
+#endif
   return newp;
 }
 #ifdef libc_hidden_def
@@ -3599,6 +3644,9 @@ public_mEMALIGn(size_t alignment, size_t bytes)
   }
   assert(!p || chunk_is_mmapped(mem2chunk(p)) ||
 	 ar_ptr == arena_for_chunk(mem2chunk(p)));
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(p, mUSABLe(p));
+#endif
   return p;
 }
 #ifdef libc_hidden_def
@@ -3618,6 +3666,9 @@ public_vALLOc(size_t bytes)
     return 0;
   p = _int_valloc(ar_ptr, bytes);
   (void)mutex_unlock(&ar_ptr->mutex);
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(p, mUSABLe(p));
+#endif
   return p;
 }
 
@@ -3632,6 +3683,9 @@ public_pVALLOc(size_t bytes)
   arena_get(ar_ptr, bytes + 2*mp_.pagesize + MINSIZE);
   p = _int_pvalloc(ar_ptr, bytes);
   (void)mutex_unlock(&ar_ptr->mutex);
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(p, mUSABLe(p));
+#endif
   return p;
 }
 
@@ -3668,6 +3722,9 @@ public_cALLOc(size_t n, size_t elem_size)
     return memset(mem, 0, sz);
 #else
     while(sz > 0) ((char*)mem)[--sz] = 0; /* rather inefficient */
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(mem, mUSABLe(mem));
+#endif
     return mem;
 #endif
   }
@@ -3722,8 +3779,12 @@ public_cALLOc(size_t n, size_t elem_size)
 
   /* Two optional cases in which clearing not necessary */
 #if HAVE_MMAP
-  if (chunk_is_mmapped(p))
+  if (chunk_is_mmapped(p)) {
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(mem, mUSABLe(mem));
+#endif
     return mem;
+  }
 #endif
 
   csz = chunksize(p);
@@ -3764,6 +3825,9 @@ public_cALLOc(size_t n, size_t elem_size)
     }
   }
 
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(mem, mUSABLe(mem));
+#endif
   return mem;
 }
 
@@ -3779,6 +3843,9 @@ public_iCALLOc(size_t n, size_t elem_size, Void_t** chunks)
 
   m = _int_icalloc(ar_ptr, n, elem_size, chunks);
   (void)mutex_unlock(&ar_ptr->mutex);
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(m, mUSABLe(m));
+#endif
   return m;
 }
 
@@ -3794,6 +3861,9 @@ public_iCOMALLOc(size_t n, size_t sizes[], Void_t** chunks)
 
   m = _int_icomalloc(ar_ptr, n, sizes, chunks);
   (void)mutex_unlock(&ar_ptr->mutex);
+#if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
+  opal_mem_hooks_alloc_hook(m, mUSABLe(m));
+#endif
   return m;
 }
 

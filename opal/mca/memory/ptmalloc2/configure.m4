@@ -33,6 +33,21 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
                        [Use TYPE for intercepting memory management
                         calls to control memory pinning.])])
 
+    AC_ARG_ENABLE([ptmalloc2-opt-sbrk],
+        [AC_HELP_STRING([--enable-ptmalloc2-opt-sbrk],
+            [Only trigger callbacks when sbrk is used for small
+             allocations, rather than every call to malloc/free.
+             (default: enabled)])])
+
+    if test "$enable_ptmalloc2_opt_sbrk" = "no" ; then
+        memory_ptmalloc2_opt_sbrk=0
+    else
+        memory_ptmalloc2_opt_sbrk=1
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_MEMORY_PTMALLOC2_OPT_SBRK],
+                       [$memory_ptmalloc2_opt_sbrk],
+                       [Trigger callbacks on sbrk instead of malloc or free])
+
     AS_IF([test "$with_memory_manager" = "ptmalloc2"],
           [if test "`echo $host | grep apple-darwin`" != "" ; then
             AC_MSG_WARN([*** Using ptmalloc with OS X will result in failure.])
@@ -43,11 +58,6 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
           [memory_ptmalloc2_should_use=0
            AS_IF([test "$with_memory_manager" = ""],
                  [memory_ptmalloc2_happy="yes"],
-                 [memory_ptmalloc2_happy="no"])])
-
-    AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
-          [AS_IF([test "$enable_mpi_threads" = "yes" -o \
-                       "$enable_progress_threads" = "yes"],
                  [memory_ptmalloc2_happy="no"])])
 
     AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
@@ -74,28 +84,35 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
     #
     AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
           [memory_ptmalloc2_mmap=0
-           AS_IF([test "$memory_ptmalloc2_mmap" = "0"],
-                 [AC_CHECK_HEADER([syscall.h], 
-                      [AC_CHECK_FUNCS([syscall], [memory_ptmalloc2_mmap=1])])])
+           memory_ptmalloc2_munmap=1
 
-           AS_IF([test "$memory_ptmalloc2_mmap" = "0"],
-                 [AC_CHECK_FUNCS([__munmap], [memory_ptmalloc2_mmap=1])
-                  AC_CHECK_FUNCS([__mmap])])
+           # it's nearly impossible to call mmap from syscall(), so
+           # only go this route if we can't get at munmap any other 
+           # way.
+           AC_CHECK_HEADER([syscall.h], 
+               [AC_CHECK_FUNCS([syscall], [], [memory_ptmalloc2_munmap=0])])
 
+           # Always look for __munmap and __mmap
+           AC_CHECK_FUNCS([__munmap], [memory_ptmalloc2_mmap=1])
+           AC_CHECK_FUNCS([__mmap])
+
+           # only allow dlsym (and therefore add -ldl) if we
+           # really need to
            AS_IF([test "$memory_ptmalloc2_mmap" = "0"],
                  [memory_ptmalloc2_LIBS_SAVE="$LIBS"
                   AC_CHECK_LIB([dl],
                                [dlsym],
-                               [memory_ptmalloc2_LIBS="-ldl"
+                               [LIBS="$LIBS -ldl"
+                                memory_ptmalloc2_LIBS="-ldl"
                                 memory_ptmalloc2_mmap=1])
                   AC_CHECK_FUNCS([dlsym])
                   LIBS="$memory_ptmalloc2_LIBS_SAVE"])
 
-           AS_IF([test "$memory_ptmalloc2_mmap" = "0"],
+           AS_IF([test "$memory_ptmalloc2_mmap" = "0" -a "$memory_ptmalloc2_munmap" = "0"],
                  [memory_ptmalloc2_happy="no"])])
 
-    AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
-          [memory_ptmalloc2_WRAPPER_EXTRA_LIBS="$memory_ptmalloc2_LIBS"])
+   AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
+         [memory_ptmalloc2_WRAPPER_EXTRA_LIBS="$memory_ptmalloc2_LIBS"])
 
    AS_IF([test "$memory_ptmalloc2_happy" = "no" -a \
                "$memory_malloc_hoooks_should_use" = "1"],

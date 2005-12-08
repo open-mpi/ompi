@@ -21,14 +21,16 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-#if defined(HAVE_SYSCALL)
+#if defined(HAVE___MUNMAP)
+/* here so we only include dlfcn if we absolutely have to */
+#elif defined(HAVE_DLSYM)
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
+#include <dlfcn.h>
+#elif defined(HAVE_SYSCALL)
 #include <syscall.h>
 #include <unistd.h>
-#elif defined(HAVE___MUNMAP)
-/* here only so that we only include dlfcn.h if needed */
-#elif defined(HAVE_DLSYM)
-#define __USE_GNU
-#include <dlfcn.h>
 #endif
 
 #include "opal/memoryhooks/memory_internal.h"
@@ -37,7 +39,7 @@
  * munmap is always intercepted
  */
 int opal_mem_free_ptmalloc2_munmap(void *start, size_t length);
-#if defined(HAVE_SYSCALL) || defined(HAVE___MUNMAP)
+#if defined(HAVE___MUNMAP)
 int  __munmap(void* addr, size_t len);
 #endif
 
@@ -50,16 +52,6 @@ munmap(void* addr, size_t len)
 }
 
 
-/* with syscall, we can safely intercept this as well */
-#if defined(HAVE_SYSCALL)
-int 
-__munmap(void* addr, size_t len)
-{
-    return opal_mem_free_ptmalloc2_munmap(addr, len);
-}
-#endif
-         
-
 /* three ways to call munmap.  Prefered is to just call syscall, so
    that we can intercept both munmap and __munmap.  If that isn't
    possible, try calling __munmap from munmap and let __munmap go.  If
@@ -67,29 +59,35 @@ __munmap(void* addr, size_t len)
 int
 opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
 {
-#ifdef HAVE_DLSYM
+#if !defined(HAVE___MUNMAP) && defined(HAVE_DLSYM)
     static int (*realmunmap)(void*, size_t);
 #endif
 
     opal_mem_hooks_release_hook(start, length);
 
-#if defined(HAVE_SYSCALL)
-    return syscall(__NR_munmap, start, length);
-#elif defined(HAVE___MUNMAP)
+#if defined(HAVE___MUNMAP)
     return __munmap(start, length);
 #elif defined(HAVE_DLSYM)
     if (NULL == realmunmap) {
-        realmunmap = (int (*)(void*, size_t)) dlsym(RTLD_NEXT, "munmap");
+        union { 
+            int (*munmap_fp)(void*, size_t);
+            void *munmap_p;
+        } tmp;
+
+        tmp.munmap_p = dlsym(RTLD_NEXT, "munmap");
+        realmunmap = tmp.munmap_fp;
     }
 
     return realmunmap(start, length);
+#elif defined(HAVE_SYSCALL)
+    return syscall(__NR_munmap, start, length);
 #else
     #error "Can not determine how to call munmap"
 #endif
 }
 
 
-#if defined(HAVE_SYSCALL) || defined(HAVE___MMAP)
+#if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
 /*
  * mmap is only intercepted if we have a chance of finding it (ie, a
  * syscall or weak symbol)
@@ -98,8 +96,10 @@ void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length,
                                     int prot, int flags, 
                                     int fd, off_t offset);
 
+#if defined(HAVE___MMAP)
 void* __mmap(void *start, size_t length, int prot, int flags, 
              int fd, off_t offset);
+#endif
 
 
 void* 
@@ -109,37 +109,38 @@ mmap(void *start, size_t length, int prot, int flags,
     return opal_mem_free_ptmalloc2_mmap(start, length, prot, flags,
                                         fd, offset);
 }
-
-#if defined(HAVE_SYSCALL)
-/* with syscall, we can safely intercept this as well */
-void* 
-__mmap(void *start, size_t length, int prot, int flags, 
-       int fd, off_t offset)
-{
-    return opal_mem_free_ptmalloc2_mmap(start, length, prot, flags,
-                                        fd, offset);
-}
-#endif
          
 
-/* three ways to call mmap.  Prefered is to just call syscall, so that
-   we can intercept both munmap and __munmap.  If that isn't possible,
-   try calling __mmap from mmap and let __mmap go.  Do not try to
-   dlsym, as that generally requires calling mmap.
-*/
 void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length, 
                                     int prot, int flags, 
                                     int fd, off_t offset)
 {
-    opal_mem_hooks_alloc_hook(start, length);
+#if !defined(HAVE___MMAP) && defined(HAVE_DLSYM)
+    static void* (*realmmap)(void *, size_t, int, int, int, off_t);
+#endif
+    void *tmp;
 
-#if defined(HAVE_SYSCALL)
-    return (void*) syscall(__NR_mmap, start, length, prot, flags, fd, offset);
-#elif defined(HAVE___MUNMAP)
-    return __mmap(start, length, prot, flags, fd, offset);
+#if defined(HAVE___MUNMAP)
+    tmp = __mmap(start, length, prot, flags, fd, offset);
+#elif defined(HAVE_DLSYM)
+    if (NULL == realmmap) {
+        union { 
+            void* (*mmap_fp)(void *, size_t, int, int, int, off_t);
+            void *mmap_p;
+        } tmp;
+
+        tmp.mmap_p = dlsym(RTLD_NEXT, "mmap");
+        realmmap = tmp.mmap_fp;
+    }
+    tmp = realmmap(start, length, prot, flags, fd, offset);
+
 #else
     #error "Can not determine how to call mmap"
 #endif
+
+    opal_mem_hooks_alloc_hook(tmp, length);
+
+    return tmp;
 }
 
-#endif /* #if defined(HAVE_SYSCALL) || defined(HAVE___MMAP) */
+#endif /* defined(HAVE___MMAP) || defined(HAVE_DLSYM) */
