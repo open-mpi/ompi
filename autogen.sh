@@ -363,6 +363,7 @@ EOF
     find_and_delete config.guess
     find_and_delete config.sub
     find_and_delete depcomp
+    find_and_delete compile
     find_and_delete install-sh
     find_and_delete ltconfig
     find_and_delete ltmain.sh
