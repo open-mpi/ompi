@@ -61,6 +61,54 @@ int i = 3;
     fi
 ])
 
+AC_DEFUN([_OMPI_C_IFDEF],
+  [AC_COMPILE_IFELSE([#ifndef $1
+                      # error "Macro $1 is undefined!"
+                      /* For some compilers (eg. SGI's CC), #error is not
+                         enough...  */
+                      please, do fail
+                      #endif],
+                     [$2], [$3])])
+
+AC_DEFUN([_OMPI_C_COMPILER_VENDOR],
+#
+# Arguments: 
+#   optional 1 and 2 for the compiler vendor and the compiler nickname
+#
+# Depdencies: None
+#
+# Check to see if the C++ compiler can handle exceptions
+#
+# Sets OMPI_CXX_EXCEPTIONS to 1 if compiler has exceptions, 0 if not
+#
+  [AC_CACHE_CHECK([the C compiler vendor],
+                  [ac_cv_c_compiler_vendor],
+                  [_OMPI_C_IFDEF([__GNU__],
+                               [ac_cv_c_compiler_vendor=gnu],
+                               [dnl SGI CC
+                                _OMPI_C_IFDEF([__sgi],
+                                            [ac_cv_c_compiler_vendor=sgi],
+                                            [_OMPI_C_IFDEF([_MSC_VER],
+                                                        [ac_cv_c_compiler_vendor=microsoft],
+                                                        [ac_cv_c_compiler_vendor=unknown]
+                                                       )
+                                            ]
+                                           )
+                               ]
+                              )
+                  ]
+   )
+
+   ifelse([$1], , [], [$1="$ac_cv_c_compiler_vendor"])
+
+   dnl The compiler nickname
+   ifelse([$2], , [],
+     [case "$ac_cv_c_compiler_vendor" in
+        gnu)       $2=gcc;;
+        microsoft) $2=cl;;
+        *)         $2=unknown;;
+      esac])
+])
 
 AC_DEFUN([OMPI_SETUP_CC],[
 # Modularize this setup so that sub-configure.in scripts can use this
@@ -71,6 +119,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
     AC_REQUIRE([_OMPI_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
     AC_REQUIRE([_OMPI_PROG_CC_IMPERSONATE_GCC])
+    AC_REQUIRE([_OMPI_C_COMPILER_VENDOR])
 
 # Do we want code coverage
 if test "$WANT_COVERAGE" = "1"; then 
