@@ -83,7 +83,7 @@ AC_DEFUN([_OMPI_C_COMPILER_VENDOR],
 #
   [AC_CACHE_CHECK([the C compiler vendor],
                   [ac_cv_c_compiler_vendor],
-                  [_OMPI_C_IFDEF([__GNU__],
+                  [_OMPI_C_IFDEF([__GNUC__],
                                [ac_cv_c_compiler_vendor=gnu],
                                [dnl SGI CC
                                 _OMPI_C_IFDEF([__sgi],
