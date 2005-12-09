@@ -120,7 +120,7 @@ void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length,
 #endif
     void *tmp;
 
-#if defined(HAVE___MUNMAP)
+#if defined(HAVE___MMAP)
     tmp = __mmap(start, length, prot, flags, fd, offset);
 #elif defined(HAVE_DLSYM)
     if (NULL == realmmap) {
