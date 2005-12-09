@@ -20,18 +20,13 @@
 #define OMPI_COMMUNICATOR_H
 
 #include "opal/class/opal_object.h"
-#include "class/opal_hash_table.h"
 #include "errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
 
-#include "opal/util/output.h"
 #include "mpi.h"
 #include "group/group.h"
 #include "mca/coll/coll.h"
-#include "mca/topo/topo.h"
-#include "mca/gpr/gpr_types.h"
 #include "mca/oob/oob_types.h"
-#include "request/request.h"
 #include "ompi/proc/proc.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -105,7 +100,7 @@ struct ompi_communicator_t {
     ompi_group_t       *c_remote_group;
 
     /* Attributes */
-    opal_hash_table_t       *c_keyhash;
+    struct opal_hash_table_t       *c_keyhash;
 
     /**< inscribing cube dimension */
     int c_cube_dim;
@@ -113,10 +108,10 @@ struct ompi_communicator_t {
     /* Hooks for topo module to hang things */
     mca_base_component_t *c_topo_component;
 
-    const mca_topo_base_module_1_0_0_t *c_topo;
+    const struct mca_topo_base_module_1_0_0_t* c_topo; 
     /**< structure of function pointers */
 
-    mca_topo_base_comm_t *c_topo_comm;
+    struct mca_topo_base_comm_1_0_0_t* c_topo_comm; 
     /**< structure containing basic information about the topology */
 
     struct mca_topo_base_module_comm_t *c_topo_module;
@@ -488,10 +483,10 @@ struct ompi_communicator_t {
     */
 
     struct ompi_comm_disconnect_obj {
-        ompi_communicator_t *comm;
-        int                  size;
-        ompi_request_t     **reqs;
-        int                   buf;
+        ompi_communicator_t       *comm;
+        int                       size;
+        struct ompi_request_t     **reqs;
+        int                       buf;
     };
     typedef struct ompi_comm_disconnect_obj ompi_comm_disconnect_obj;
 
