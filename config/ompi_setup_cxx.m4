@@ -41,6 +41,53 @@ int i = 3;
     fi
 ])
 
+AC_DEFUN([_OMPI_CXX_COMPILER_VENDOR],
+#
+# Arguments:
+#   Optional 1 and 2 : compiler vendor and compiler nickname.
+#
+# Depdencies: _OMPI_C_IFDEF
+#
+#
+  [AC_CACHE_CHECK([the C++ compiler vendor],
+    [ac_cv_cxx_compiler_vendor],
+
+    [AC_LANG_PUSH([C++])
+
+     dnl GNU C++
+     _OMPI_C_IFDEF([__GNUG__],
+       [ac_cv_cxx_compiler_vendor=gnu],
+       [_OMPI_C_IFDEF([__DECCXX],
+         [ac_cv_cxx_compiler_vendor=compaq],
+         [dnl HP's aCC
+          _OMPI_C_IFDEF([__HP_aCC],
+           [ac_cv_cxx_compiler_vendor=hp],
+           [dnl SGI CC
+            _OMPI_C_IFDEF([__sgi],
+             [ac_cv_cxx_compiler_vendor=sgi],
+             [dnl Note:  We are using the C compiler because VC++ doesn't
+              dnl recognize `.cc'(which is used by `configure') as a C++ file
+              dnl extension and requires `/TP' to be passed.
+              AC_LANG_PUSH([C])
+              _OMPI_C_IFDEF([_MSC_VER],
+                [ac_cv_cxx_compiler_vendor=microsoft],
+                [ac_cv_cxx_compiler_vendor=unknown])
+              AC_LANG_POP()])])])])
+
+     AC_LANG_POP()])
+   ifelse([$1], , [], [$1="$ac_cv_cxx_compiler_vendor"])
+
+   dnl The compiler nickname
+   ifelse([$2], , [],
+     [case "$ac_cv_cxx_compiler_vendor" in
+        gnu)       $2=g++;;
+        compaq)    $2=cxx;;
+        hp)        $2=aCC;;
+        sgi)       $2=CC;;
+        microsoft) $2=cl;;
+        *)         $2=unknown;;
+      esac])
+])
 
 AC_DEFUN([OMPI_SETUP_CXX],[
 
@@ -59,6 +106,7 @@ OMPI_CXX_ABSOLUTE="`which $CXX`"
 AC_SUBST(OMPI_CXX_ABSOLUTE)
 
     _OMPI_PROG_CXX_IMPERSONATE_GCC
+    _OMPI_CXX_COMPILER_VENDOR
 
 # Do we want code coverage
 if test "$WANT_COVERAGE" = "1"; then 
