@@ -28,6 +28,7 @@
 #include "btl_gm_proc.h"
 #include "btl_gm_endpoint.h"
 #include "datatype/convertor.h" 
+#include "datatype/datatype.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
@@ -379,6 +380,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
 #if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
     mca_btl_gm_frag_t* frag;
     mca_mpool_base_module_t* mpool = btl->btl_mpool;
+    long lb;
     int rc;
 
     MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
@@ -386,8 +388,9 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
         return NULL;
     }
 
+    ompi_ddt_type_lb(convertor, &lb);
     frag->segment.seg_len = *size;
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

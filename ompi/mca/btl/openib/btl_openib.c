@@ -29,6 +29,7 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_endpoint.h"
 #include "datatype/convertor.h" 
+#include "datatype/datatype.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/openib/mpool_openib.h" 
@@ -455,6 +456,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     mca_btl_openib_frag_t* frag; 
     mca_mpool_openib_registration_t * openib_reg; 
     int rc; 
+    long lb;
     size_t reg_len; 
 
     openib_btl = (mca_btl_openib_module_t*) btl; 
@@ -466,9 +468,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         return NULL; 
     }
     
-    
+    ompi_ddt_type_lb(convertor, &lb);
     frag->segment.seg_len = *size; 
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
+    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted; 
     frag->base.des_flags = 0; 
 
     if(NULL!= openib_reg){ 
