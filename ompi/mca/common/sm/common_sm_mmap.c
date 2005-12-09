@@ -58,7 +58,7 @@ static int mca_common_sm_mmap_open(char* path)
     int fd = -1;
     struct timespec ts;
 
-    /* loop until file can be opened, or until an erro, other than
+    /* loop until file can be opened, or until an error, other than
      * access error, occurs */
     while (fd < 0) {
         fd = open(path, O_CREAT|O_RDWR, 0000); 
