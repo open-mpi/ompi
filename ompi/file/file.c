@@ -97,6 +97,9 @@ int ompi_file_open(struct ompi_communicator_t *comm, char *filename,
     OBJ_RETAIN(comm);
 
     if (MPI_INFO_NULL != info) {
+        if(NULL == file->f_info) {
+            file->f_info = OBJ_NEW(ompi_info_t);
+        }
         if (OMPI_SUCCESS != (ret = ompi_info_dup(info, &file->f_info))) {
             OBJ_RELEASE(file);
             return ret;
