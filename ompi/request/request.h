@@ -28,8 +28,6 @@
 #include "opal/class/opal_list.h"
 #include "class/ompi_pointer_array.h"
 #include "errhandler/errhandler.h"
-#include "opal/runtime/opal_progress.h"
-#include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
                                                                                                                             
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -143,7 +141,6 @@ OMPI_DECLSPEC extern size_t                ompi_request_waiting;
 OMPI_DECLSPEC extern size_t                ompi_request_completed;
 OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
-OMPI_DECLSPEC extern int                   ompi_request_poll_iterations;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_empty;
 OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;

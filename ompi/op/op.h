@@ -29,7 +29,6 @@
 #include "mpi.h"
 #include "datatype/datatype.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_pointer_array.h"
 #include "mpi/f77/fint_2_int.h"
 
 
@@ -347,7 +346,7 @@ OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_replace;
 /**
  * Table for Fortran <-> C op handle conversion
  */
-OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_op_f_to_c_table;
+OMPI_DECLSPEC extern struct ompi_pointer_array_t *ompi_op_f_to_c_table;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

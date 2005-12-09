@@ -31,7 +31,6 @@
 #include "ompi_config.h"
 #include "ompi/include/constants.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_bitmap.h"
 #include "class/opal_hash_table.h"
 #include "mca/gpr/gpr_types.h"
 
@@ -173,11 +172,11 @@ int ompi_attr_hash_init(opal_hash_table_t **keyhash)
 {
    *keyhash = OBJ_NEW(opal_hash_table_t);
     if (NULL == keyhash) {
-	fprintf(stderr, "Error while creating the local attribute list\n");
-	return MPI_ERR_SYSRESOURCE;
+        fprintf(stderr, "Error while creating the local attribute list\n");
+        return MPI_ERR_SYSRESOURCE;
     }
     if (OMPI_SUCCESS != opal_hash_table_init(*keyhash, ATTR_HASH_SIZE)) {
-	return MPI_ERR_SYSRESOURCE;
+        return MPI_ERR_SYSRESOURCE;
     }
   
     return MPI_SUCCESS;
@@ -498,7 +497,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
  */
 int ompi_attr_create_predefined(void);
 
-
+struct orte_gpr_notify_data_t;
 /**
  * \internal
  * Callback function to get data from registry and create predefined attributes
