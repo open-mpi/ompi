@@ -603,10 +603,6 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
         {
             mca_btl_tcp_frag_t* frag;
 
-#if MCA_BTL_TCP_ENDPOINT_CACHE
-            btl_endpoint->endpoint_cache_pos    = 0;
-        data_still_pending_on_endpoint:
-#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
             frag = btl_endpoint->endpoint_recv_frag;
             if(NULL == frag) {
                 int rc;
@@ -618,13 +614,16 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 MCA_BTL_TCP_FRAG_INIT_DST(frag, btl_endpoint);
             }
 
+#if MCA_BTL_TCP_ENDPOINT_CACHE
+            btl_endpoint->endpoint_cache_pos = 0;
+        data_still_pending_on_endpoint:
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
             /* check for completion of non-blocking recv on the current fragment */
             if(mca_btl_tcp_frag_recv(frag, sd) == false) {
                 btl_endpoint->endpoint_recv_frag = frag;
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
             } else {
                 btl_endpoint->endpoint_recv_frag = NULL;
-                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
                 switch(frag->hdr.type) {
                 case MCA_BTL_TCP_HDR_TYPE_SEND:
                     {
@@ -637,11 +636,14 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                         break;
                     }
                 }
-                MCA_BTL_TCP_FRAG_RETURN_MAX(frag);
 #if MCA_BTL_TCP_ENDPOINT_CACHE
-                if( 0 != btl_endpoint->endpoint_cache_length )
+                if( 0 != btl_endpoint->endpoint_cache_length ) {
+                    MCA_BTL_TCP_FRAG_INIT_DST(frag, btl_endpoint);
                     goto data_still_pending_on_endpoint;
+                }
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
+                MCA_BTL_TCP_FRAG_RETURN_MAX(frag);
+                OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
             }
             break;
         }
