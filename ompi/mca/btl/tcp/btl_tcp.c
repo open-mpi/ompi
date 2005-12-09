@@ -28,6 +28,7 @@
 #include "btl_tcp_proc.h"
 #include "btl_tcp_endpoint.h"
 #include "datatype/convertor.h" 
+#include "datatype/datatype.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
@@ -330,6 +331,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     size_t* size)
 {
     mca_btl_tcp_frag_t* frag;
+    long lb;
     int rc;
 
     MCA_BTL_TCP_FRAG_ALLOC_USER(frag, rc);
@@ -337,8 +339,9 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
         return NULL;
     }
 
+    ompi_ddt_type_lb(convertor, &lb);
     frag->segments->seg_len = *size;
-    frag->segments->seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    frag->segments->seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

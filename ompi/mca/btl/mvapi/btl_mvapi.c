@@ -28,6 +28,7 @@
 #include "btl_mvapi_proc.h"
 #include "btl_mvapi_endpoint.h"
 #include "datatype/convertor.h" 
+#include "datatype/datatype.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
@@ -454,6 +455,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     mca_btl_mvapi_module_t* mvapi_btl; 
     mca_btl_mvapi_frag_t* frag; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
+    long lb;
     int rc; 
     
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
@@ -465,9 +467,9 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         return NULL; 
     }
     
-    
+    ompi_ddt_type_lb(convertor, &lb);
     frag->segment.seg_len = *size; 
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
+    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted; 
     frag->base.des_flags = 0; 
 
     if(NULL!= vapi_reg){ 

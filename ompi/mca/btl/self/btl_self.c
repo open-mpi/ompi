@@ -27,6 +27,7 @@
 
 #include "opal/threads/mutex.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype.h"
 #include "include/sys/atomic.h"
 #include "opal/util/output.h"
 #include "opal/util/if.h"
@@ -261,6 +262,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
 {
     mca_btl_self_frag_t* frag;
     size_t max_data = *size;
+    long lb;
     int rc;
 
     MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc);
@@ -269,7 +271,8 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
     }
 
     /* setup descriptor to point directly to user buffer */
-    frag->segment.seg_addr.pval = (unsigned char*)convertor->pBaseBuf + convertor->bConverted;
+    ompi_ddt_type_lb( convertor->pDesc, &lb );
+    frag->segment.seg_addr.pval = (unsigned char*)convertor->pBaseBuf + lb + convertor->bConverted; 
     frag->segment.seg_len = reserve + max_data;
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
