@@ -76,13 +76,6 @@ static inline int mca_pml_uniq_param_register_int(
 
 int mca_pml_uniq_component_open(void)
 {
-#ifdef WIN32
-     WSADATA win_sock_data;
-     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-         opal_output (0, "failed to initialise windows sockets: %d\n", WSAGetLastError());
-         return OMPI_ERROR;
-      }
-#endif
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_recv_requests, ompi_free_list_t);
@@ -120,10 +113,6 @@ int mca_pml_uniq_component_close(void)
 
     if( OMPI_SUCCESS != (rc = mca_ptl_base_close()) )
         return rc;
-                                                                                                                   
-#ifdef WIN32
-    WSACleanup();
-#endif
 
 #if OMPI_ENABLE_DEBUG
     if (mca_pml_uniq.uniq_recv_requests.fl_num_allocated !=
