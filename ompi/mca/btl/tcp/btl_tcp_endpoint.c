@@ -39,8 +39,12 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
+#ifdef HAVE_TIME_H
 #include <time.h>
+#endif  /* HAVE_TIME_H */
 #include "include/types.h"
 #include "mca/ns/base/base.h"
 #include "mca/oob/base/base.h"

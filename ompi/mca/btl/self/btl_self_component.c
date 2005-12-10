@@ -16,13 +16,15 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
+#ifdef HAVE_STRING_H
 #include <string.h>
-#include <fcntl.h>
+#endif  /* HAVE_STRING_H */
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>  /* for mkfifo */
+#endif  /* HAVE_SYS_TYPES_H */
 
 #include "ompi/include/constants.h"
 #include "include/sys/cache.h"

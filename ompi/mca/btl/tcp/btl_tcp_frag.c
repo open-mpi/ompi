@@ -6,7 +6,9 @@
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 
 #include "include/ompi_socket_errno.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
