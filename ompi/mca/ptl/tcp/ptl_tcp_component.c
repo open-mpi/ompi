@@ -163,7 +163,7 @@ static inline int mca_ptl_tcp_param_register_int(
 
 int mca_ptl_tcp_component_open(void)
 {
-#ifdef WIN32
+#ifdef __WINDOWS__
     WSADATA win_sock_data;
     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
         opal_output (0, "mca_ptl_tcp_component_init: failed to initialise windows sockets:%d\n", WSAGetLastError());
@@ -226,7 +226,7 @@ int mca_ptl_tcp_component_open(void)
 int mca_ptl_tcp_component_close(void)
 {
     opal_list_item_t* item;
-#ifdef WIN32
+#ifdef __WINDOWS__
     WSACleanup();
 #endif
 #if OMPI_ENABLE_DEBUG

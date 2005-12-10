@@ -16,9 +16,9 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <unistd.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#include <sys/errno.h>
+#endif  /* HAVE_SYS_TYPES_H */
 #include "include/types.h"
 #include "datatype/datatype.h"
 #include "ptl_sm.h"
