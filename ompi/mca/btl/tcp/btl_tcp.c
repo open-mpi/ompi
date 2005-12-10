@@ -339,7 +339,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
         return NULL;
     }
 
-    ompi_ddt_type_lb(convertor, &lb);
+    ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segments->seg_len = *size;
     frag->segments->seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 
