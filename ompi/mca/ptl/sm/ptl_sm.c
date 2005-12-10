@@ -413,6 +413,12 @@ int mca_ptl_sm_add_procs_same_base_addr(
 #ifdef HAVE_SCHED_YIELD
             while(!mca_ptl_sm_component.mmap_file->map_seg->seg_inited)
             { sched_yield(); }
+#else
+#if defined(__WINDOWS__)
+            sleep(50);     /* milliseconds */
+#else
+            usleep(50000); /* microseconds */
+#endif
 #endif  /* HAVE_SCHED_YIELD */
         }
                 
