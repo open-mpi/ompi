@@ -521,10 +521,9 @@ rematch:
         opal_list_append(&proc->frags_cant_match, (opal_list_item_t *)frag);
 
     }
+    /* release matching lock before processing fragment */
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
-
-    /* release matching lock before processing fragment */
     if(match != NULL) {
         mca_pml_ob1_recv_request_progress(match,btl,segments,num_segments);
     } 
