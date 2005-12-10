@@ -20,7 +20,6 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
-#include <sched.h>
 #include "ompi/include/constants.h"
 #include "orte/util/proc_info.h"
 #include "mca/pml/pml.h"

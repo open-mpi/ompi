@@ -20,7 +20,9 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
+#ifdef HAVE_SCHED_H
 #include <sched.h>
+#endif  /* HAVE_SCHED_H */
 #include "ompi/include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
