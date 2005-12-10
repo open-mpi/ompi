@@ -31,7 +31,7 @@
 #include <sys/select.h>
 #endif
 
-#ifndef _WIN32
+#ifndef __WINDOWS__
 /*
  *  Increase FD_SETSIZE
  */
@@ -93,7 +93,7 @@ typedef union {
  * handle differences in iovec
  */
 
-#if defined(__APPLE__) || defined(_WIN32)
+#if defined(__APPLE__) || defined(__WINDOWS__)
 typedef char* ompi_iov_base_ptr_t;
 #else
 typedef void* ompi_iov_base_ptr_t;
