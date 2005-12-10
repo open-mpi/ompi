@@ -54,7 +54,7 @@ void ompi_wait_for_totalview(void)
                                 &wait_for_totalview);
     if (wait_for_totalview) {
         while (MPIR_debug_gate == 0) {
-#if defined(WIN32)
+#if defined(__WINDOWS__)
             sleep(100);     /* milliseconds */
 #else
             usleep(100000); /* microseconds */

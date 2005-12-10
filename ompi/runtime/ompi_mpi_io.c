@@ -26,7 +26,7 @@ int ompi_mpi_init_io(void)
     int fds[2];
     int rc;
 
-#ifndef WIN32
+#ifndef __WINDOWS__
     /* We need to add a NULL component for iof. Until then, this will have to do */
     /* setup stdin */
     rc = pipe(fds);

@@ -35,7 +35,7 @@
  * statements and the definition of an array of pointers to each
  * component's public mca_base_component_t struct.
  */
-#ifdef WIN32
+#ifdef __WINDOWS__
     const mca_base_component_t *mca_io_base_static_components[] = {NULL};
 #else 
 #include "ompi/mca/io/base/static-components.h"
