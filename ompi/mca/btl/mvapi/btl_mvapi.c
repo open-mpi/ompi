@@ -467,7 +467,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         return NULL; 
     }
     
-    ompi_ddt_type_lb(convertor, &lb);
+    ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segment.seg_len = *size; 
     frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted; 
     frag->base.des_flags = 0; 
