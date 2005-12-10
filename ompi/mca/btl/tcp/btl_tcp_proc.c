@@ -60,7 +60,7 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc)
     /* release resources */
     if(NULL != proc->proc_endpoints) {
         free(proc->proc_endpoints);
-    OBJ_DESTRUCT(&proc->proc_lock);
+        OBJ_DESTRUCT(&proc->proc_lock);
     }
 }
 
