@@ -187,9 +187,7 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
  * outside. The data preparation should use the specialized prepare_for_send and
  * prepare_for_recv functions.
  */
-#ifdef WIN32
 OMPI_DECLSPEC
-#endif
 int ompi_convertor_prepare( ompi_convertor_t* convertor,
                             const struct ompi_datatype_t* datatype, int32_t count,
                             const void* pUserBuf );
