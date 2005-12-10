@@ -3522,7 +3522,7 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
     return (*hook)(oldmem, bytes, RETURN_ADDRESS (0));
   /* OMPI change */
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_release_hook(mem, mUSABLe(mem));
+  opal_mem_hooks_release_hook(oldmem, mUSABLe(oldmem));
 #endif
 
 #if REALLOC_ZERO_BYTES_FREES
