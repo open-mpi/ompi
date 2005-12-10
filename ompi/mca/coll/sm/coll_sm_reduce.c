@@ -45,11 +45,12 @@ static int reduce_no_order(void *sbuf, void* rbuf, int count,
 /*
  * Useful utility routine
  */
+#if !defined(__WINDOWS__)
 static inline int min(int a, int b)
 {
     return (a < b) ? a : b;
 }
-
+#endif  /* !defined(__WINDOWS__) */
 
 /**
  * Shared memory reduction.
