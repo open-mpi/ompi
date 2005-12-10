@@ -36,17 +36,17 @@ extern "C" {
 /* 
  * create a module by name
  */
-mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name); 
+OMPI_DECLSPEC mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name); 
 
 /*
  * opens all rcache components
  */ 
-int mca_rcache_base_open(void); 
+OMPI_DECLSPEC int mca_rcache_base_open(void); 
 
 /* 
  * close all rcache components and call finalize on any open modules 
  */ 
-int mca_rcache_base_close(void); 
+OMPI_DECLSPEC int mca_rcache_base_close(void); 
 
 
 struct mca_rcache_base_selected_module_t {
@@ -60,7 +60,6 @@ OBJ_CLASS_DECLARATION(mca_rcache_base_selected_module_t);
 
 
 OMPI_DECLSPEC mca_rcache_base_component_t* mca_rcache_base_component_lookup(const char* name);
-OMPI_DECLSPEC mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name); 
 OMPI_DECLSPEC mca_rcache_base_module_t* mca_rcache_base_module_lookup(const char* name);
  
 /*
