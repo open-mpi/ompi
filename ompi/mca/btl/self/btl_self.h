@@ -21,12 +21,12 @@
 #ifndef MCA_BTL_SELF_H
 #define MCA_BTL_SELF_H
 
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif  /* HAVE_STDLIB_H */
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#include <sys/socket.h>
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
+#endif  /* HAVE_SYS_TYPES_H */
 #include "class/ompi_free_list.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_fifo.h"

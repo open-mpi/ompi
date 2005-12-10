@@ -170,7 +170,7 @@ static void mca_btl_tcp_component_recv_handler(int, short, void*);
 
 int mca_btl_tcp_component_open(void)
 {
-#ifdef WIN32
+#ifdef __WINDOWS__
     WSADATA win_sock_data;
     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
         BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
@@ -234,7 +234,7 @@ int mca_btl_tcp_component_open(void)
 int mca_btl_tcp_component_close(void)
 {
     opal_list_item_t* item;
-#ifdef WIN32
+#ifdef __WINDOWS__
     WSACleanup();
 #endif
 

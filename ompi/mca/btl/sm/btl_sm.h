@@ -23,14 +23,18 @@
 #define MCA_BTL_SM_H
 
 #include <stdlib.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif  /* HAVE_SYS_SOCKET_H */
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#endif
+#endif  /* HAVE_NETINET_IN_H */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+#endif  /* HAVE_UNISTD_H */
 #include "class/ompi_free_list.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_fifo.h"
