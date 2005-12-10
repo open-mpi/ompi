@@ -19,12 +19,22 @@
 #include "ompi_config.h"
 
 #include <string.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif  /* HAVE_STDLIB_H */
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif  /* HAVE_SYS_STAT_H */
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif  /* HAVE_FCNTL_H */
 #include <errno.h>
+#ifdef HAVE_SCHED_H
 #include <sched.h>
+#endif  /* HAVE_SCHED_H */
 
 #include "opal/util/output.h"
 #include "opal/util/if.h"
@@ -399,9 +409,11 @@ int mca_ptl_sm_add_procs_same_base_addr(
          * structures before any of the other procs can progress */
         if( 0 != mca_ptl_sm_component.my_smp_rank ) 
         {
-            /* spin unitl local proc 0 initializes the segment */
+            /* spin until local proc 0 initializes the segment */
+#ifdef HAVE_SCHED_YIELD
             while(!mca_ptl_sm_component.mmap_file->map_seg->seg_inited)
             { sched_yield(); }
+#endif  /* HAVE_SCHED_YIELD */
         }
                 
         /* set the base of the shared memory segment, and flag

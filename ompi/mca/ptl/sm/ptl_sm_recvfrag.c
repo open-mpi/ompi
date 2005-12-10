@@ -16,9 +16,7 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <unistd.h>
 #include <sys/types.h>
-#include <sys/errno.h>
 #include "ptl_sm.h"
 #include "ptl_sm_recvfrag.h"
 
