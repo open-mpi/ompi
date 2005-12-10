@@ -22,7 +22,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 
 #include "opal/mca/base/base.h"
 #include "debuggers.h"
