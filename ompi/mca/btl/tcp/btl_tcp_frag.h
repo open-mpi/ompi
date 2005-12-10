@@ -38,7 +38,7 @@ extern "C" {
 #endif
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_t);
 
-
+#define MCA_BTL_TCP_FRAG_IOVEC_NUMBER  4
 
 /**
  * TCP fragment derived type.
@@ -49,7 +49,7 @@ struct mca_btl_tcp_frag_t {
     struct mca_btl_base_endpoint_t *endpoint; 
     struct mca_btl_tcp_module_t* btl;
     mca_btl_tcp_hdr_t hdr;
-    struct iovec iov[4];
+    struct iovec iov[MCA_BTL_TCP_FRAG_IOVEC_NUMBER];
     struct iovec *iov_ptr;
     size_t iov_cnt;
     size_t iov_idx;
