@@ -29,9 +29,6 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-
 /* Attention: this version of the reduce operations does not
    work for:
    - non-commutative operations

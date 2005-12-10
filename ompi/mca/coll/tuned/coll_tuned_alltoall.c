@@ -30,10 +30,6 @@
 #include "coll_tuned_topo.h"
 #include "coll_tuned_util.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdio.h>
-
 int mca_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype,
                                     void* rbuf, int rcount,

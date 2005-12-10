@@ -30,10 +30,6 @@
 #include "coll_tuned_topo.h"
 #include "coll_tuned_util.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-
-
 int mca_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
 {
     int rank, size;

@@ -29,9 +29,6 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-
 /*
  * mca_coll_tuned_allreduce_intra_nonoverlapping
  *
