@@ -93,7 +93,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
                                                        num_subs, subscriptions,
                                                        num_trigs, trigs))) {
             ORTE_ERROR_LOG(rc);
-            goto ERROR;
+            goto subscribe_error;
         }
 
         /* done */
@@ -106,7 +106,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     if (NULL == cmd) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto subscribe_error;
     }
 
     /* pack the command and send it */
@@ -115,14 +115,14 @@ orte_gpr_proxy_subscribe(size_t num_subs,
                                                 num_trigs, trigs))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
-        goto ERROR;
+        goto subscribe_error;
     }
 
     if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         rc = ORTE_ERR_COMM_FAILURE;
-        goto ERROR;
+        goto subscribe_error;
     }
 
     OBJ_RELEASE(cmd);
@@ -132,14 +132,14 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     if (NULL == answer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto subscribe_error;
     }
 
     if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         rc = ORTE_ERR_COMM_FAILURE;
-        goto ERROR;
+        goto subscribe_error;
     }
 
     /* unpack the reply - should contain an echo of the subscribe command
@@ -152,7 +152,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_subscribe(answer, &ret))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
-        goto ERROR;
+        goto subscribe_error;
     }
 
     OBJ_RELEASE(answer);
@@ -167,7 +167,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
      * of how many triggers were generated so we can identify them, and the
      * numbers are NOT re-used.
      */
-ERROR:
+subscribe_error:
     subs = (orte_gpr_proxy_subscriber_t**)(orte_gpr_proxy_globals.subscriptions)->addr;
     for (i=0; i < num_subs; i++) {
         /* find the subscription on the local tracker */
