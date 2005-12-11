@@ -25,8 +25,9 @@
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
 #include "ompi/include/constants.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h> 
-
+#endif  /* HAVE_UNISTD_H */
 
 /*
  * The following file was created by configure.  It contains extern
