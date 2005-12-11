@@ -19,7 +19,9 @@
 
 #include "ompi_config.h"
 #include <stdio.h>
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif  /* HAVE_STRING_H */
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
