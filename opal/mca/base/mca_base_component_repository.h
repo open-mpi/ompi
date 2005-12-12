@@ -21,6 +21,12 @@
 
 #include "ompi_config.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+    OMPI_DECLSPEC int mca_base_component_repository_init(void);
+
 /* This file provide the external interface to our base component module.
  * At this level we don't need a proper definition for the lt_dlhandle,
  * just a void* is enought. Except for all file that really require the
@@ -30,18 +36,12 @@
  * all files needing the ltdl.h header have to includ it before including
  * this one.
  */
-#if !defined(LTDL_H)
-typedef void* lt_dlhandle;
-#endif
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
-    OMPI_DECLSPEC int mca_base_component_repository_init(void);
+#if defined(LTDL_H)
     OMPI_DECLSPEC int mca_base_component_repository_retain(char *type, 
                               lt_dlhandle component_handle, 
                               const mca_base_component_t *component_struct);
+#endif
+
     OMPI_DECLSPEC int mca_base_component_repository_retain_component(const char *type, 
                               const char *name);
     OMPI_DECLSPEC int mca_base_component_repository_link(const char *src_type, 
