@@ -320,7 +320,7 @@ static inline bool opal_set_using_threads(bool have)
 }
 #endif
 
-#ifdef WIN32
+#ifdef __WINDOWS__
 #include "mutex_windows.h"
 #else
 #include "mutex_unix.h"
