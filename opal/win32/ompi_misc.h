@@ -46,7 +46,7 @@ static __inline unsigned int sleep(unsigned int seconds) {
 }
 
 /* this function can currently ONLY return the page size. for it to 
-   do the entire sysconf range it needs to beb extended */
+   do the entire sysconf range it needs to be extended */
 static __inline size_t sysconf(int option) {
     
     SYSTEM_INFO sys_info;
@@ -55,11 +55,10 @@ static __inline size_t sysconf(int option) {
     if (_SC_PAGESIZE == option){
         return (size_t)sys_info.dwPageSize;
     }
-    else {
-        printf("This functionality is not supported: line: %d\tfile: %s\n",
-                                                                    __LINE__, __FILE__);
-        abort();
-    }
+    printf( "This functionality is not supported: line: %d\tfile: %s\n",
+            __LINE__, __FILE__);
+    abort();
+    return 0;
 }
 
 #define F_GETFL 0
