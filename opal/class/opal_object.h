@@ -115,7 +115,9 @@
 #define OPAL_OBJECT_H
 
 #include <assert.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif  /* HAVE_STDLIB_H */
 
 #include "include/sys/atomic.h"
 

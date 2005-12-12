@@ -34,7 +34,7 @@
 
 int opal_few(char *argv[], int *status)
 {
-#ifndef WIN32
+#ifndef __WINDOWS__
 #if defined(HAVE_FORK) && defined(HAVE_EXECVE) && defined(HAVE_WAITPID)
     pid_t pid, ret;
 

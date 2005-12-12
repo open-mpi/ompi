@@ -29,7 +29,7 @@ char *opal_basename(const char *filename)
 {
     size_t i;
     char *tmp, *ret = NULL;
-#ifdef WIN32
+#ifdef __WINDOWS__
     const char sep = '\\';
 #else
     const char sep = '/';
@@ -43,7 +43,7 @@ char *opal_basename(const char *filename)
 
     /* On Windows, automatically exclude a drive designator */
 
-#ifdef WIN32
+#ifdef __WINDOWS__
     if (strlen(filename) == 2 &&
         isalpha(filename[0]) && ':' == filename[1]) {
         return strdup(filename);

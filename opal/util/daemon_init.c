@@ -35,7 +35,7 @@
 int opal_daemon_init(char *working_dir)
 {
 #if defined(HAVE_FORK)
-#ifndef WIN32
+#ifndef __WINDOWS__
     /* it seems that there is an entirely different way to write daemons in 
        WINDOWS land. Firstly, they are called services and the way to 
        go about it is to get a service handle annd then call CreateService()

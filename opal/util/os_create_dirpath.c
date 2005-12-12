@@ -32,7 +32,7 @@
 #include "opal/util/argv.h"
 #include "ompi/include/constants.h"
 
-#ifdef WIN32
+#ifdef __WINDOWS__
 #define PATH_SEP "\\"
 #else
 #define PATH_SEP "/"
@@ -100,7 +100,7 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
     for (i = 0; i < len; ++i) {
         if (i == 0) {
 
-#ifdef WIN32         
+#ifdef __WINDOWS__
             /* In the Windows case, check for "<drive>:" case (i.e.,
                an absolute pathname).  If this is the case, ensure
                that it ends in a path_sep. */

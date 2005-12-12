@@ -215,7 +215,7 @@ static void find_dyn_components(const char *path, const char *type_name,
   dir = path_to_use;
   if (NULL != dir) {
     do {
-#ifdef WIN32
+#ifdef __WINDOWS__
       end = strchr(dir, ';');
 #else
       end = strchr(dir, ':');

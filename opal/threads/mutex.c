@@ -26,7 +26,7 @@
 bool opal_uses_threads = (bool) OMPI_HAVE_THREAD_SUPPORT;
 
 
-#ifdef WIN32
+#ifdef __WINDOWS__
 
 #include <windows.h>
 

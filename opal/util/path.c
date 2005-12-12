@@ -29,7 +29,7 @@
 /*
  * PATH environment variable separator
  */
-#ifdef WIN32
+#ifdef __WINDOWS__
 #define PATHENVSEP  ';'
 #else
 #define PATHENVSEP  ':'

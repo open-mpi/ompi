@@ -18,8 +18,12 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif  /* HAVE_SYS_MMAN_H */
 
 #include "opal/include/constants.h"
 #include "opal/util/output.h"
