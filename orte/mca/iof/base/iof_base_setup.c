@@ -86,7 +86,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
     ret = -1;
 #endif
 
-#if defined(WIN32)
+#if defined(__WINDOWS__)
     /* Windows doesn't have a 'pipe' function.
      * So we need to do something a bit more complex */
     /* XXX Implement this properly JJH
@@ -127,7 +127,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
     if (opts->usepty) {
 
         if (opts->connect_stdin) {
-#ifndef WIN32
+#ifndef __WINDOWS__
             /* disable new-line translation */
             struct termios term_attrs;
             if (tcgetattr(opts->p_stdin[0], &term_attrs) < 0) {
@@ -157,7 +157,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
                 close(fd);
             }
         }
-#ifndef WIN32
+#ifndef __WINDOWS__
         {
             /* disable echo */
             struct termios term_attrs;

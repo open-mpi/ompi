@@ -17,7 +17,6 @@
  */
 
 #include "orte_config.h"
-#include <sys/time.h>
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "mca/schema/schema.h"

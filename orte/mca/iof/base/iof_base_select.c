@@ -21,7 +21,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_component_repository.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 

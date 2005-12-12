@@ -56,7 +56,7 @@ int orte_sys_info(void)
     struct utsname sys_info;
     int uid;
 
-#ifndef WIN32
+#ifndef __WINDOWS__
 	struct passwd *pwdent;
 	char *sep = "/";
 #else
@@ -108,7 +108,7 @@ int orte_sys_info(void)
     orte_system_info.path_sep = strdup(sep);
 
 	/* get the name of the user */
-#ifndef WIN32
+#ifndef __WINDOWS__
     uid = getuid();
 #ifdef HAVE_GETPWUID
     pwdent = getpwuid(uid);

@@ -16,10 +16,16 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif  /* HAVE_STRING_H */
 
 #include "opal/util/trace.h"
 

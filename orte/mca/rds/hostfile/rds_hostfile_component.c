@@ -69,7 +69,7 @@ orte_rds_hostfile_component_t mca_rds_hostfile_component = {
   */
 static int orte_rds_hostfile_open(void)
 {
-#ifdef WIN32
+#ifdef __WINDOWS__
    printf("Unimplemented feature for windows\n");
    return ORTE_ERROR;
 #else

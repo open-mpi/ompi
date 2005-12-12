@@ -24,10 +24,10 @@
 #include "mca/iof/iof.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-#ifndef HAVE_UIO_H
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
-#endif
+#endif  /* HAVE_SYS_UIO_H */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
