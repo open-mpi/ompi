@@ -28,13 +28,13 @@ extern "C" {
     OMPI_DECLSPEC int mca_base_component_repository_init(void);
 
 /* This file provide the external interface to our base component module.
- * At this level we don't need a proper definition for the lt_dlhandle,
- * just a void* is enought. Except for all file that really require the
- * header ltdl.h because they use functions declared inside. As the ltdl.h
- * header file define LTDL_H when it get included, we can use it to detect
- * if we have to furnish our fake definition for the lt_dlhandle. However,
- * all files needing the ltdl.h header have to includ it before including
- * this one.
+ * Most of the components that depend on it, will use the retain_component
+ * function to increase the reference count on a particular component. But
+ * it's convenient to have all the functions exported from one source file
+ * in the same header. That's why we keep the retain function here. However,
+ * because this function require the definition of the lt_dlhandle type,
+ * therefore it will be included only when the ltdl.h has been previously
+ * included in the headers list.
  */
 #if defined(LTDL_H)
     OMPI_DECLSPEC int mca_base_component_repository_retain(char *type, 
