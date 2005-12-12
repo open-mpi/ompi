@@ -17,233 +17,162 @@ dnl
 dnl $HEADER$
 dnl
 
-# _OMPI_PROG_CXX_IMPERSONATE_GCC()
-# --------------------------------
-# Check for compilers that impersonate g++
-AC_DEFUN([_OMPI_PROG_CXX_IMPERSONATE_GCC],[
-    AC_CACHE_CHECK([if compiler impersonates g++],
-                   [ompi_cv_prog_cxx_impersonate_gcc],
-                   [ompi_cv_prog_cxx_impersonate_gcc="no"
-                    TRULY_GXX=$GXX
-                    if test "$GXX" = "yes"; then
-                        AC_TRY_COMPILE([], [
-int i = 3;
-#if __INTEL_COMPILER
-#error Yes, I am lying about being g++.
-#endif
-                            ], [], [ompi_cv_prog_cxx_impersonate_gcc="yes"])
-                    fi])
-
-    if test "$GXX" = "yes" -a "$ompi_cv_prog_cxx_impersonate_gcc" = "no" ; then
-        TRULY_GXX=yes
-    else
-        TRULY_GXX=no
-    fi
-])
-
-AC_DEFUN([_OMPI_CXX_COMPILER_VENDOR],
-#
-# Arguments:
-#   Optional 1 and 2 : compiler vendor and compiler nickname.
-#
-# Depdencies: _OMPI_C_IFDEF
-#
-#
-  [AC_CACHE_CHECK([the C++ compiler vendor],
-    [ac_cv_cxx_compiler_vendor],
-
-    [AC_LANG_PUSH([C++])
-
-     dnl GNU C++
-     _OMPI_C_IFDEF([__GNUG__],
-       [ac_cv_cxx_compiler_vendor=gnu],
-       [_OMPI_C_IFDEF([__DECCXX],
-         [ac_cv_cxx_compiler_vendor=compaq],
-         [dnl HP's aCC
-          _OMPI_C_IFDEF([__HP_aCC],
-           [ac_cv_cxx_compiler_vendor=hp],
-           [dnl SGI CC
-            _OMPI_C_IFDEF([__sgi],
-             [ac_cv_cxx_compiler_vendor=sgi],
-             [dnl Note:  We are using the C compiler because VC++ doesn't
-              dnl recognize `.cc'(which is used by `configure') as a C++ file
-              dnl extension and requires `/TP' to be passed.
-              AC_LANG_PUSH([C])
-              _OMPI_C_IFDEF([_MSC_VER],
-                [ac_cv_cxx_compiler_vendor=microsoft],
-                [ac_cv_cxx_compiler_vendor=unknown])
-              AC_LANG_POP()])])])])
-
-     AC_LANG_POP()])
-   ifelse([$1], , [], [$1="$ac_cv_cxx_compiler_vendor"])
-
-   dnl The compiler nickname
-   ifelse([$2], , [],
-     [case "$ac_cv_cxx_compiler_vendor" in
-        gnu)       $2=g++;;
-        compaq)    $2=cxx;;
-        hp)        $2=aCC;;
-        sgi)       $2=CC;;
-        microsoft) $2=cl;;
-        *)         $2=unknown;;
-      esac])
-])
-
+# OMPI_SETUP_CXX()
+# ----------------
+# Do everything required to setup the C++ compiler.  Safe to AC_REQUIRE
+# this macro.
 AC_DEFUN([OMPI_SETUP_CXX],[
 
-# Modularize this setup so that sub-configure.in scripts can use this
-# same setup code.
+    AC_REQUIRE([_OMPI_START_SETUP_CXX])
+    AC_REQUIRE([_OMPI_PROG_CXX])
 
-ompi_show_subtitle "C++ compiler and preprocessor" 
+    OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])
 
-ompi_cxxflags_save="$CXXFLAGS"
-AC_PROG_CXX
-AC_PROG_CXXCPP
-BASECXX="`basename $CXX`"
-CXXFLAGS="$ompi_cxxflags_save"
-AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
-OMPI_CXX_ABSOLUTE="`which $CXX`"
-AC_SUBST(OMPI_CXX_ABSOLUTE)
+    # Do we want code coverage
+    if test "$WANT_COVERAGE" = "1"; then 
+        if test "$ompi_cxx_vendor" = "gnu" ; then
+            AC_MSG_WARN([-fprofile-arcs -ftest-coverage has been added to CFLAGS (--enable-coverage)])
+            WANT_DEBUG=1
+            CXXFLAGS="-ftest-coverage -fprofile-arcs ${CXXFLAGS}"
+            WRAPPER_EXTRA_CXXFLAGS="-ftest-coverage -fprofile-arcs ${WRAPPER_EXTRA_CXXFLAGS}"
+        else
+            AC_MSG_WARN([Code coverage functionality is currently available only with GCC suite])
+            AC_MSG_ERROR([Configure: cannot continue])
+        fi
+    fi
 
-    _OMPI_PROG_CXX_IMPERSONATE_GCC
-    _OMPI_CXX_COMPILER_VENDOR
+    # Do we want debugging?
+    if test "$WANT_DEBUG" = "1"; then
+        CXXFLAGS="$CXXFLAGS -g"
+        OMPI_UNIQ(CXXFLAGS)
+        AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
+    fi
 
-# Do we want code coverage
-if test "$WANT_COVERAGE" = "1"; then 
-     if test "$TRULY_GXX" = "yes"; then 
-         AC_MSG_WARN([-fprofile-arcs -ftest-coverage has been added to CFLAGS (--enable-coverage)])
-         WANT_DEBUG=1
-         CXXFLAGS="-ftest-coverage -fprofile-arcs ${CXXFLAGS}"
-         WRAPPER_EXTRA_CXXFLAGS="-ftest-coverage -fprofile-arcs ${WRAPPER_EXTRA_CXXFLAGS}"
-      else
-         AC_MSG_WARN([Code coverage functionality is currently available only with GCC suite])
-         AC_MSG_ERROR([Configure: cannot continue])
-      fi
-fi
+    # These flags are generally g++-specific; even the g++-impersonating
+    # compilers won't accept them.
+    OMPI_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
+    if test "$WANT_PICKY_COMPILER" = 1 -a "$ompi_cxx_vendor" = "gnu"; then
+        add="-Wall -Wundef -Wno-long-long"
 
-# Do we want debugging?
-
-if test "$WANT_DEBUG" = "1"; then
-    CXXFLAGS="$CXXFLAGS -g"
-    OMPI_UNIQ(CXXFLAGS)
-    AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
-fi
-
-# These flags are generally g++-specific; even the g++-impersonating
-# compilers won't accept them.
-
-OMPI_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
-if test "$TRULY_GXX" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
-    add="-Wall -Wundef -Wno-long-long"
-
-    # see if -Wno-long-double works...
-    AC_LANG_PUSH(C++)
-    CXXFLAGS_orig="$CXXFLAGS"
-    CXXFLAGS="$CXXFLAGS -Wno-long-double"
-    AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
+        # see if -Wno-long-double works...
+        AC_LANG_PUSH(C++)
+        CXXFLAGS_orig="$CXXFLAGS"
+        CXXFLAGS="$CXXFLAGS -Wno-long-double"
+        AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
                    [ompi_cv_cxx_wno_long_double],
                    [AC_TRY_COMPILE([], [], 
                                    [ompi_cv_cxx_wno_long_double="yes"],
                                    [ompi_cv_cxx_wno_long_double="no"])])
-    CXXFLAGS="$CXXFLAGS_orig"
-    AC_LANG_POP(C++)
-    if test "$ompi_cv_cxx_wno_long_double" = "yes" ; then
-        add="$add -Wno-long-double"
+        CXXFLAGS="$CXXFLAGS_orig"
+        AC_LANG_POP(C++)
+        if test "$ompi_cv_cxx_wno_long_double" = "yes" ; then
+            add="$add -Wno-long-double"
+        fi
+
+        CXXFLAGS="$CXXFLAGS $add"
+        OMPI_UNIQ(CXXFLAGS)
+        if test "$add" != "" ; then
+            AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
+        fi
+        unset add
     fi
 
-    CXXFLAGS="$CXXFLAGS $add"
-    OMPI_UNIQ(CXXFLAGS)
-    if test "$add" != "" ; then
-        AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
-    fi
-    unset add
-fi
-
-# See if this version of g++ allows -finline-functions
-
-if test "$GXX" = "yes"; then
-    CXXFLAGS_orig="$CXXFLAGS"
-    CXXFLAGS="$CXXFLAGS -finline-functions"
-    add=
-    AC_CACHE_CHECK([if $CXX supports -finline-functions],
+    # See if this version of g++ allows -finline-functions
+    if test "$GXX" = "yes"; then
+        CXXFLAGS_orig="$CXXFLAGS"
+        CXXFLAGS="$CXXFLAGS -finline-functions"
+        add=
+        AC_CACHE_CHECK([if $CXX supports -finline-functions],
                    [ompi_cv_cxx_finline_functions],
                    [AC_TRY_COMPILE([], [],
                                    [ompi_cv_cxx_finline_functions="yes"],
                                    [ompi_cv_cxx_finline_functions="no"])])
-    if test "$ompi_cv_cxx_finline_functions" = "yes" ; then
-        add=" -finline-functions"
+        if test "$ompi_cv_cxx_finline_functions" = "yes" ; then
+            add=" -finline-functions"
+        fi
+        CXXFLAGS="$CXXFLAGS_orig$add"
+        OMPI_UNIQ(CXXFLAGS)
+        if test "$add" != "" ; then
+            AC_MSG_WARN([$add has been added to CXXFLAGS])
+        fi
+        unset add
     fi
-    CXXFLAGS="$CXXFLAGS_orig$add"
-    OMPI_UNIQ(CXXFLAGS)
-    if test "$add" != "" ; then
-        AC_MSG_WARN([$add has been added to CXXFLAGS])
+
+    # Check for special things due to C++ exceptions
+    ENABLE_CXX_EXCEPTIONS=no
+    HAVE_CXX_EXCEPTIONS=0
+    AC_ARG_ENABLE([cxx-exceptions], 
+        [AC_HELP_STRING([--enable-cxx-exceptions],
+	                [enable support for C++ exceptions])],
+        [ENABLE_CXX_EXCEPTIONS="$enableval"])
+
+    AC_MSG_CHECKING([if want C++ exception handling])
+    AC_MSG_RESULT([$ENABLE_CXX_EXCEPTIONS])
+    if test "$ENABLE_CXX_EXCEPTIONS" = "yes"; then
+        # config/cxx_have_exceptions.m4
+        OMPI_CXX_HAVE_EXCEPTIONS
+        # config/cxx_find_exception_flags.m4
+        OMPI_CXX_FIND_EXCEPTION_FLAGS
+        if test "$OMPI_CXX_EXCEPTIONS" = "1"; then
+            HAVE_CXX_EXCEPTIONS=1
+            CFLAGS="$CFLAGS $OMPI_CXX_EXCEPTIONS_CFLAGS"
+            FFLAGS="$FFLAGS $OMPI_CXX_EXCEPTIONS_FFLAGS"
+            CXXFLAGS="$CXXFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
+            LDFLAGS="$LDFLAGS $OMPI_CXX_EXCEPTIONS_LDFLAGS"
+
+            WRAPPER_EXTRA_CFLAGS="$OMPI_CXX_EXCEPTIONS_CFLAGS ${WRAPPER_EXTRA_CFLAGS}"
+            WRAPPER_EXTRA_FFLAGS="$OMPI_CXX_EXCEPTIONS_FFLAGS ${WRAPPER_EXTRA_FFLAGS}"
+            WRAPPER_EXTRA_CXXFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS ${WRAPPER_EXTRA_CXXFLAGS}"
+        fi
     fi
-    unset add
-fi
+    AC_DEFINE_UNQUOTED(OMPI_HAVE_CXX_EXCEPTION_SUPPORT, $HAVE_CXX_EXCEPTIONS,
+        [Whether or not we have compiled with C++ exceptions support])
 
-# Check for special things due to C++ exceptions
+    # Find some more characteristics of the C++ compiler
 
-ENABLE_CXX_EXCEPTIONS=no
-HAVE_CXX_EXCEPTIONS=0
-AC_ARG_ENABLE(cxx-exceptions, 
-  AC_HELP_STRING([--enable-cxx-exceptions],
-		 [enable support for C++ exceptions]),
-  [ENABLE_CXX_EXCEPTIONS="$enableval"])
+    # config/cxx_find_template_repository.m4
+    OMPI_CXX_FIND_TEMPLATE_REPOSITORY
+    # config/cxx_find_template_parameters.m4
+    OMPI_CXX_FIND_TEMPLATE_PARAMETERS
 
-AC_MSG_CHECKING([if want C++ exception handling])
-AC_MSG_RESULT([$ENABLE_CXX_EXCEPTIONS])
-if test "$ENABLE_CXX_EXCEPTIONS" = "yes"; then
-    # config/cxx_have_exceptions.m4
-    OMPI_CXX_HAVE_EXCEPTIONS
-    # config/cxx_find_exception_flags.m4
-    OMPI_CXX_FIND_EXCEPTION_FLAGS
-    if test "$OMPI_CXX_EXCEPTIONS" = "1"; then
-	HAVE_CXX_EXCEPTIONS=1
-	CFLAGS="$CFLAGS $OMPI_CXX_EXCEPTIONS_CFLAGS"
-	FFLAGS="$FFLAGS $OMPI_CXX_EXCEPTIONS_FFLAGS"
-	CXXFLAGS="$CXXFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
-	LDFLAGS="$LDFLAGS $OMPI_CXX_EXCEPTIONS_LDFLAGS"
+    # If we are on HP-UX, ensure that we're using aCC
+    case "$host" in
+    *hpux*)
+        if test "$BASECXX" = "CC"; then
+            AC_MSG_WARN([*** You will probably have problems compiling the MPI 2])
+            AC_MSG_WARN([*** C++ bindings with the HP-UX CC compiler.  You should])
+            AC_MSG_WARN([*** probably be using the aCC compiler.  Re-run configure])
+            AC_MSG_WARN([*** with the environment variable "CXX=aCC".])
+        fi
+        ;;
+    esac
 
-	WRAPPER_EXTRA_CFLAGS="$OMPI_CXX_EXCEPTIONS_CFLAGS ${WRAPPER_EXTRA_CFLAGS}"
-	WRAPPER_EXTRA_FFLAGS="$OMPI_CXX_EXCEPTIONS_FFLAGS ${WRAPPER_EXTRA_FFLAGS}"
-	WRAPPER_EXTRA_CXXFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS ${WRAPPER_EXTRA_CXXFLAGS}"
+    # Note: gcc-imperonating compilers accept -O3
+    if test "$GXX" = yes; then
+        OPTFLAGS="-O3"
+    else
+        OPTFLAGS="-O"
     fi
-fi
-AC_DEFINE_UNQUOTED(OMPI_HAVE_CXX_EXCEPTION_SUPPORT, $HAVE_CXX_EXCEPTIONS,
-    [Whether or not we have compiled with C++ exceptions support])
+    # config/ompi_check_optflags.m4
+    OMPI_CHECK_OPTFLAGS(["$CXXFLAGS"])
+    AC_MSG_CHECKING([for C++ optimization flags])
+    AC_MSG_RESULT([$co_result])
+    CXXFLAGS="$co_result"
+])
 
-# Find some more characteristics of the C++ compiler
 
-# config/cxx_find_template_repository.m4
-OMPI_CXX_FIND_TEMPLATE_REPOSITORY
-# config/cxx_find_template_parameters.m4
-OMPI_CXX_FIND_TEMPLATE_PARAMETERS
+AC_DEFUN([_OMPI_START_SETUP_CXX],[
+    ompi_show_subtitle "C++ compiler and preprocessor" 
+])
 
-# If we are on HP-UX, ensure that we're using aCC
-case "$host" in
-*hpux*)
-    if test "$BASECXX" = "CC"; then
-	AC_MSG_WARN([*** You will probably have problems compiling the MPI 2])
-	AC_MSG_WARN([*** C++ bindings with the HP-UX CC compiler.  You should])
-	AC_MSG_WARN([*** probably be using the aCC compiler.  Re-run configure])
-	AC_MSG_WARN([*** with the environment variable "CXX=aCC".])
-    fi
-    ;;
-esac
 
-# Same rationale for g++ as with gcc in OMPI_SETUP_CC.
-
-# Note: gcc-imperonating compilers accept -O3, so there's no need for
-# $TRULY_GCC here.
-
-if test "$GXX" = yes; then
-    OPTFLAGS="-O3"
-else
-    OPTFLAGS="-O"
-fi
-# config/ompi_check_optflags.m4
-OMPI_CHECK_OPTFLAGS("$CXXFLAGS")
-AC_MSG_CHECKING([for C++ optimization flags])
-AC_MSG_RESULT([$co_result])
-CXXFLAGS="$co_result"
+AC_DEFUN([_OMPI_PROG_CXX],[
+    ompi_cxxflags_save="$CXXFLAGS"
+    AC_PROG_CXX
+    AC_PROG_CXXCPP
+    BASECXX="`basename $CXX`"
+    CXXFLAGS="$ompi_cxxflags_save"
+    AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
+    OMPI_CXX_ABSOLUTE="`which $CXX`"
+    AC_SUBST(OMPI_CXX_ABSOLUTE)
 ])
