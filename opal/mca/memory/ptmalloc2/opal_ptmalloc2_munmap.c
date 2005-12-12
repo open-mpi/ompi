@@ -87,7 +87,6 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
 }
 
 
-#if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
 /*
  * mmap is only intercepted if we have a chance of finding it (ie, a
  * syscall or weak symbol)
@@ -99,7 +98,6 @@ void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length,
 #if defined(HAVE___MMAP)
 void* __mmap(void *start, size_t length, int prot, int flags, 
              int fd, off_t offset);
-#endif
 
 
 void* 
@@ -109,38 +107,23 @@ mmap(void *start, size_t length, int prot, int flags,
     return opal_mem_free_ptmalloc2_mmap(start, length, prot, flags,
                                         fd, offset);
 }
-         
+
+#endif /* defined(HAVE___MMAP) */
+ 
 
 void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length, 
                                     int prot, int flags, 
                                     int fd, off_t offset)
 {
-#if !defined(HAVE___MMAP) && defined(HAVE_DLSYM)
-    static void* (*realmmap)(void *, size_t, int, int, int, off_t);
-#endif
     void *tmp;
 
 #if defined(HAVE___MMAP)
     tmp = __mmap(start, length, prot, flags, fd, offset);
-#elif defined(HAVE_DLSYM)
-    if (NULL == realmmap) {
-        union { 
-            void* (*mmap_fp)(void *, size_t, int, int, int, off_t);
-            void *mmap_p;
-        } tmp;
-
-        tmp.mmap_p = dlsym(RTLD_NEXT, "mmap");
-        realmmap = tmp.mmap_fp;
-    }
-    tmp = realmmap(start, length, prot, flags, fd, offset);
-
 #else
-    #error "Can not determine how to call mmap"
+    tmp = mmap(start, length, prot, flags, fd, offset);
 #endif
 
     opal_mem_hooks_alloc_hook(tmp, length);
 
     return tmp;
 }
-
-#endif /* defined(HAVE___MMAP) || defined(HAVE_DLSYM) */
