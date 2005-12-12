@@ -98,7 +98,7 @@ static void orte_setup_hnp_wait(pid_t wpid, int status, void *data);
  */
 int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 {
-#ifndef WIN32
+#ifndef __WINDOWS__
     char **argv, *param, *uri, *uid, *hn=NULL;
     char *path, *name_string, *orteprobe;
     int argc, rc=ORTE_SUCCESS, id, intparam;

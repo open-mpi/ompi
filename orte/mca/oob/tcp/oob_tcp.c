@@ -169,7 +169,7 @@ static inline char* mca_oob_tcp_param_register_str(
  */
 int mca_oob_tcp_component_open(void)
 {
-#ifdef WIN32
+#ifdef __WINDOWS__
     WSADATA win_sock_data;
     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
         opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
@@ -220,7 +220,7 @@ int mca_oob_tcp_component_open(void)
 
 int mca_oob_tcp_component_close(void)
 {
-#ifdef WIN32
+#ifdef __WINDOWS__
     WSACleanup();
 #endif
 
@@ -747,7 +747,7 @@ int mca_oob_tcp_init(void)
     size_t i, num_tokens;
 
     /* random delay to stagger connections back to seed */
-#if defined(WIN32)
+#if defined(__WINDOWS__)
     sleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
 #else
     usleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);

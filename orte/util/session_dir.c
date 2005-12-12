@@ -64,7 +64,7 @@ static void orte_dir_empty(char *pathname);
 
 static bool orte_is_empty(char *pathname);
 
-#ifdef WIN32
+#ifdef __WINDOWS__
 #define OMPI_DEFAULT_TMPDIR "C:\\TEMP"
 #else
 #define OMPI_DEFAULT_TMPDIR "/tmp"
@@ -74,7 +74,7 @@ static bool orte_is_empty(char *pathname);
 
 static int orte_check_dir(bool create, char *directory)
 {
-#ifndef WIN32
+#ifndef __WINDOWS__
     struct stat buf;
     mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
 #else
@@ -82,7 +82,7 @@ static int orte_check_dir(bool create, char *directory)
     mode_t my_mode = _S_IREAD | _S_IWRITE | _S_IEXEC;
 #endif
 
-#ifndef WIN32
+#ifndef __WINDOWS__
     if (0 == stat(directory, &buf)) { /* exists - check access */
 #else
     if (0 == _stat64(directory, &buf)) { /* exist -- check */
@@ -467,7 +467,7 @@ CLEANUP:
 static void
 orte_dir_empty(char *pathname)
 {
-#ifndef WIN32
+#ifndef __WINDOWS__
     DIR *dp;
     struct dirent *ep;
     char *filenm;
@@ -557,7 +557,7 @@ orte_dir_empty(char *pathname)
 /* tests if the directory is empty */
 static bool orte_is_empty(char *pathname)
 {
-#ifndef WIN32
+#ifndef __WINDOWS__
     DIR *dp;
     struct dirent *ep;
     if (NULL != pathname) {  /* protect against error */
@@ -606,5 +606,5 @@ static bool orte_is_empty(char *pathname)
 
     FindClose(&file_data);
     return true;
-#endif /* ifndef WIN32 */
+#endif /* ifndef __WINDOWS__ */
 }

@@ -287,7 +287,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
        This should somehow be pushed up to the calling level, but we
        don't really have a way to do that just yet.
     */
-#ifdef WIN32
+#ifdef __WINDOWS__
     printf("This is not implemented yet for windows\n");
     ORTE_ERROR_LOG(ORTE_ERROR);
     return;
@@ -354,7 +354,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             opal_output(0, "No extra status information is available: %d.", status);
         }
     }
-#endif /* WIN32 */
+#endif /* __WINDOWS__ */
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
@@ -627,7 +627,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             }
 
             /* rsh a child to exec the rsh/ssh session */
-    #ifdef WIN32
+    #ifdef __WINDOWS__
             printf("Unimplemented feature for windows\n");
             return;
     #if 0
@@ -848,7 +848,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
                 set_handler_default(SIGTERM);
                 set_handler_default(SIGINT);
-    #ifndef WIN32
+    #ifndef __WINDOWS__
                 set_handler_default(SIGHUP);
                 set_handler_default(SIGPIPE);
     #endif
@@ -861,7 +861,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                    specifically, we don't want it to be blocked by the
                    orted and then inherited by the ORTE processes that it
                    forks, making them unkillable by SIGTERM). */
-    #ifndef WIN32
+    #ifndef __WINDOWS__
                 sigprocmask(0, 0, &sigs);
                 sigprocmask(SIG_UNBLOCK, &sigs, 0);
     #endif
@@ -1035,7 +1035,7 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
 
 static void set_handler_default(int sig)
 {
-#ifndef WIN32
+#ifndef __WINDOWS__
     struct sigaction act;
 
     act.sa_handler = SIG_DFL;

@@ -75,7 +75,7 @@ int orte_system_finalize(void)
 
     opal_event_fini();
 
-#ifndef WIN32
+#ifndef __WINDOWS__
     orte_session_dir_finalize(orte_process_info.my_name);
 #endif
 

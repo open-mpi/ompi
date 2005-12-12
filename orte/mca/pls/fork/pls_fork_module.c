@@ -101,7 +101,7 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     orte_iof.iof_flush();
 
     /* set the state of this process */
-#ifdef WIN32
+#ifdef __WINDOWS__
     printf("Unimplemented feature for windows\n");
     rc = ORTE_ERROR;
 #else
@@ -165,7 +165,7 @@ static int orte_pls_fork_proc(
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-#ifdef WIN32
+#ifdef __WINDOWS__
     printf("Unimplemented feature for windows\n");
     return ORTE_ERROR;
 #if 0
@@ -348,7 +348,7 @@ static int orte_pls_fork_proc(
 
         set_handler_default(SIGTERM);
         set_handler_default(SIGINT);
-#ifndef WIN32
+#ifndef __WINDOWS__
         set_handler_default(SIGHUP);
         set_handler_default(SIGPIPE);
 #endif
@@ -358,7 +358,7 @@ static int orte_pls_fork_proc(
            set the default handlers, above.  This is noticable on
            Linux where the event library blocks SIGTERM, but we don't
            want that blocked by the launched process. */
-#ifndef WIN32
+#ifndef __WINDOWS__
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
 #endif
@@ -619,7 +619,7 @@ static int orte_pls_fork_launch_threaded(orte_jobid_t jobid)
 
 static void set_handler_default(int sig)
 {
-#ifndef WIN32 
+#ifndef __WINDOWS__
     struct sigaction act;
 
     act.sa_handler = SIG_DFL;
