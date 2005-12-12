@@ -90,6 +90,8 @@ extern "C" {
 #include "include/sys/sparcv9/timer.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 #include "include/sys/sparcv9/timer.h"
+#elif OMPI_ASSEMBLY_ARCH == OMPI_WINDOWS
+#include "include/sys/win32/timer.h"
 #endif
 
 #ifndef DOXYGEN
