@@ -30,7 +30,7 @@ opal_timer_base_get_cycles(void)
 {
     LARGE_INTEGER now;
     QueryPerformanceCounter( &now );
-    return (opal_timer_t)now;
+    return now.QuadPart;
 }
 
 

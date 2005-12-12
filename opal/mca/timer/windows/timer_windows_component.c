@@ -56,7 +56,10 @@ opal_timer_base_component_1_0_0_t mca_timer_windows_component = {
 int
 opal_timer_windows_open(void)
 {
-    QueryPerformanceFrequency( &opal_timer_windows_freq );
+    LARGE_INTEGER now;
+
+    QueryPerformanceFrequency( &now );
+    opal_timer_windows_freq = now.QuadPart;
 
     return OPAL_SUCCESS;
 }
