@@ -23,9 +23,9 @@
 #include "opal/mca/base/base.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
 
 orte_iof_base_module_t orte_iof;
-
 
 /**
  * Call the init function on all available components to find out if
