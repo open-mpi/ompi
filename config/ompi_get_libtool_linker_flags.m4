@@ -64,7 +64,7 @@ ompi_check_linker_flags_work() {
 # First make a sample library with the current LDFLAGS and LIBS
 #
 
-cmd="$libtool --mode=compile --tag=CC $CC $CFLAGS foo.c -c -o foo.o"
+cmd="$libtool --mode=compile --tag=CC $CC $CFLAGS -c -o foo.o foo.c"
 ompi_check_linker_flags_work
 cmd="$libtool --mode=link --tag=CC $CC $CFLAGS foo.lo $LDFLAGS $LIBS -o libfoo.la"
 ompi_check_linker_flags_work
