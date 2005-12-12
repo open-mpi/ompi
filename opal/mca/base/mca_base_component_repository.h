@@ -21,10 +21,16 @@
 
 #include "ompi_config.h"
 
-#if OMPI_WANT_LIBLTDL
-#include "opal/libltdl/ltdl.h"
-#else
-/* if we don't have libltdl, provide dummy handle type */
+/* This file provide the external interface to our base component module.
+ * At this level we don't need a proper definition for the lt_dlhandle,
+ * just a void* is enought. Except for all file that really require the
+ * header ltdl.h because they use functions declared inside. As the ltdl.h
+ * header file define LTDL_H when it get included, we can use it to detect
+ * if we have to furnish our fake definition for the lt_dlhandle. However,
+ * all files needing the ltdl.h header have to includ it before including
+ * this one.
+ */
+#if !defined(LTDL_H)
 typedef void* lt_dlhandle;
 #endif
 
