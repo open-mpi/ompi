@@ -39,7 +39,7 @@ static __inline char *basename(char *path) {
     
     while (*p != '\0') p++;
     while (*p != '\\') p--;
-    ret = strdup(++p);
+    ret = _strdup(++p);
     
     return ret;
 }
@@ -53,7 +53,7 @@ static __inline char *dirname(char *path) {
     char *base;
 	
 	base = basename(path);
-	dirname = strdup(path);
+	dirname = _strdup(path);
 
     strncpy(dirname, path, strlen(path)-strlen(base));
     dirname[strlen(path)-strlen(base)] = '\0';
