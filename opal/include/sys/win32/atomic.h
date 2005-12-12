@@ -60,7 +60,7 @@ static inline void opal_atomic_wmb(void)
  *********************************************************************/
 
 #define OPAL_HAVE_ATOMIC_CMPSET_32 1
-static inline int32_t opal_atomic_cmpset_acq_32( volatile int32_t *addr,
+static inline int opal_atomic_cmpset_acq_32( volatile int32_t *addr,
                                              int32_t oldval, int32_t newval)
 {
    int32_t ret = InterlockedCompareExchangeAcquire ((long volatile*) addr,
@@ -69,7 +69,7 @@ static inline int32_t opal_atomic_cmpset_acq_32( volatile int32_t *addr,
 }
 
 
-static inline int32_t opal_atomic_cmpset_rel_32( volatile int32_t *addr,
+static inline int opal_atomic_cmpset_rel_32( volatile int32_t *addr,
                                              int32_t oldval, int32_t newval)
 {
    int32_t ret = InterlockedCompareExchangeRelease ((long volatile*) addr,
@@ -77,7 +77,7 @@ static inline int32_t opal_atomic_cmpset_rel_32( volatile int32_t *addr,
    return (oldval == ret) ? 1: 0;
 }
 
-static inline int32_t opal_atomic_cmpset_32( volatile int32_t *addr,
+static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                                          int32_t oldval, int32_t newval)
 {
    int32_t ret = InterlockedCompareExchange ((long volatile*) addr,
