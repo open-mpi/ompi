@@ -28,6 +28,13 @@ version 1.0.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
 
 
+1.0.2
+-----
+
+- Fixes for some cases where the use of MPI_BOTTOM could cause
+  problems.
+
+
 1.0.1
 -----
 
@@ -37,7 +44,7 @@ version 1.0.
 - Ensure that when the "leave_pinned" option is used, the memory hooks
   are also enabled.  Thanks to Gleb Natapov for pointing this out.
 - Fixed compile errors for IRIX.
-- Allow hostfiles to have integer host names (for BProc clusters)
+- Allow hostfiles to have integer host names (for BProc clusters).
 - Fixed a problem with message matching of out-of-order fragments in
   multiple network device scenarios.
 - Converted all the C++ MPI bindings to use proper const_cast<>'s
