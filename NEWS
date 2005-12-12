@@ -20,6 +20,13 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.0.2
+-----
+
+- Fixes for some cases where the use of MPI_BOTTOM could cause
+  problems.
+
+
 1.0.1
 -----
 
@@ -29,7 +36,7 @@ version 1.0.
 - Ensure that when the "leave_pinned" option is used, the memory hooks
   are also enabled.  Thanks to Gleb Natapov for pointing this out.
 - Fixed compile errors for IRIX.
-- Allow hostfiles to have integer host names (for BProc clusters)
+- Allow hostfiles to have integer host names (for BProc clusters).
 - Fixed a problem with message matching of out-of-order fragments in
   multiple network device scenarios.
 - Converted all the C++ MPI bindings to use proper const_cast<>'s
