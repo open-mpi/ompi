@@ -117,7 +117,7 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  *********************************************************************/
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */ 
-#elif OMPI_ASSEMBLY_ARCH == OMPI_WINDOWS || defined(WIN32)
+#elif OMPI_ASSEMBLY_ARCH == OMPI_WINDOWS
 /* windows first, as they have API-level primitives for this stuff */
 #include "include/sys/win32/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_ALPHA
