@@ -34,7 +34,7 @@
 #include "opal/util/os_path.h"
 #include "ompi/include/constants.h"
 
-#ifdef WIN32
+#ifdef __WINDOWS__
 #define PATH_SEP "\\"
 #else
 #define PATH_SEP "/"
@@ -70,7 +70,7 @@ char *opal_os_path(bool relative, ...)
             strcat(path, path_sep);
     	}
     	else {
-#ifndef WIN32
+#ifndef __WINDOWS__
     	    strcpy(path, path_sep);
 #endif
     	}

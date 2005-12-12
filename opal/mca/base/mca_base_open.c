@@ -69,7 +69,7 @@ int mca_base_open(void)
 
   /* Register some params */
 
-#ifdef WIN32
+#ifdef __WINDOWS__
   asprintf(&value, "%s;~/.openmpi/components", OMPI_PKGLIBDIR);
 #else
   asprintf(&value, "%s:~/.openmpi/components", OMPI_PKGLIBDIR);
@@ -121,7 +121,7 @@ static void set_defaults(opal_output_stream_t *lds)
     /* Load up defaults */
 
     OBJ_CONSTRUCT(lds, opal_output_stream_t);
-#ifndef WIN32
+#ifndef __WINDOWS__
     lds->lds_syslog_priority = LOG_INFO;
 #endif
     lds->lds_syslog_ident = "ompi";
@@ -154,7 +154,7 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
     }
 
     if (0 == strcasecmp(ptr, "syslog")) {
-#ifndef WIN32 /* there is no syslog */
+#ifndef __WINDOWS__  /* there is no syslog */
 		lds->lds_want_syslog = true;
       have_output = true;
     }

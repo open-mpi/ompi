@@ -19,10 +19,18 @@
 
 #include "ompi_config.h"
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif  /* HAVE_STDLIB_H */
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif  /* HAVE_STRINGS_H */
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif  /* HAVE_STRING_H */
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 #include "opal/util/crc.h"
 
 

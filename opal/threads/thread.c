@@ -45,7 +45,7 @@ static void opal_thread_construct(opal_thread_t *t)
 }
 
 
-#if defined(WIN32)
+#ifdef __WINDOWS__
 
 /************************************************************************
  * Windows threads

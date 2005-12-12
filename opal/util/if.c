@@ -84,7 +84,7 @@ struct opal_if_t {
     opal_list_item_t     super;
     char                if_name[IF_NAMESIZE];
     int                 if_index;
-#ifndef WIN32
+#ifndef __WINDOWS__
     int                 if_flags;
 #else
     u_long              if_flags;
@@ -92,7 +92,7 @@ struct opal_if_t {
     int                 if_speed;
     struct sockaddr_in  if_addr;
     struct sockaddr_in  if_mask;
-#ifdef WIN32
+#ifdef __WINDOWS__
     struct sockaddr_in  if_bcast;
 #endif
     uint32_t            if_bandwidth;
@@ -111,7 +111,7 @@ static bool already_done = false;
 
 static int opal_ifinit(void) 
 {
-#ifndef WIN32
+#ifndef __WINDOWS__
     int sd;
     int lastlen, num, rem;
     char *ptr;
@@ -284,7 +284,7 @@ static int opal_ifinit(void)
     free(ifconf.ifc_req);
     close(sd);
     
-#else /* WIN32 implementation begins */
+#else /* __WINDOWS__ implementation begins */
 
     /* 
        1. check if the interface info list is already populated. If so, return
@@ -395,7 +395,7 @@ static int opal_ifinit(void)
 int opal_iffinalize(void) 
 {
     if (already_done) {
-#ifndef WIN32
+#ifndef __WINDOWS__
         opal_if_t *intf_ptr;
     
         while (NULL != 
@@ -465,7 +465,7 @@ int opal_ifnametoindex(const char* if_name)
 int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 {
     opal_if_t* intf;
-#ifndef WIN32
+#ifndef __WINDOWS__
     in_addr_t inaddr;
 #else 
     unsigned long inaddr;

@@ -19,7 +19,7 @@
 #ifndef OPAL_THREAD_H
 #define OPAL_THREAD_H 1
 
-#ifdef WIN32
+#ifdef __WINDOWS__
 #include <windows.h>
 #elif OMPI_HAVE_POSIX_THREADS
 #include <pthread.h>
@@ -39,7 +39,7 @@ struct opal_thread_t {
     opal_object_t super;
     opal_thread_fn_t t_run;
     void* t_arg;
-#ifdef WIN32
+#ifdef __WINDOWS__
     HANDLE t_handle;
 #elif OMPI_HAVE_POSIX_THREADS
     pthread_t t_handle;

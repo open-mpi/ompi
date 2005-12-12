@@ -295,7 +295,7 @@ opal_progress(void)
 #endif
     }
 
-#if !defined(WIN32) && defined(HAVE_SCHED_YIELD)
+#if !defined(__WINDOWS__) && defined(HAVE_SCHED_YIELD)
     if (call_yield && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
