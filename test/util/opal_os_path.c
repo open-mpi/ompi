@@ -28,7 +28,7 @@
 #include "opal/util/os_path.h"
 #include "support.h"
 
-#ifdef WIN32
+#ifdef __WINDOWS__
 #define PATH_SEP "\\"
 #else
 #define PATH_SEP "/"
