@@ -41,7 +41,9 @@ int mca_btl_mvapi_endpoint_create_qp(
     VAPI_hca_hndl_t nic,
     VAPI_pd_hndl_t ptag, 
     VAPI_cq_hndl_t cq_hndl, 
+#ifdef VAPI_FEATURE_SRQ
     VAPI_srq_hndl_t srq_hndl, 
+#endif
     VAPI_qp_hndl_t* qp_hndl, 
     VAPI_qp_prop_t* qp_prop, 
     int transport_type
@@ -131,10 +133,13 @@ static inline int mca_btl_mvapi_endpoint_post_send(
         BTL_ERROR(("VAPI_post_sr: %s\n", VAPI_strerror(frag->ret)));
         return OMPI_ERROR; 
     }
+#ifdef VAPI_FEATURE_SRQ
     if(mca_btl_mvapi_component.use_srq) { 
         MCA_BTL_MVAPI_POST_SRR_HIGH(mvapi_btl, 1); 
         MCA_BTL_MVAPI_POST_SRR_LOW(mvapi_btl, 1);
-    } else {
+    } else
+#endif
+    {
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
     }
@@ -333,7 +338,9 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
                                                               endpoint->endpoint_btl->nic, 
                                                               endpoint->endpoint_btl->ptag, 
                                                               endpoint->endpoint_btl->cq_hndl_hp, 
+#ifdef VAPI_FEATURE_SRQ
                                                               endpoint->endpoint_btl->srq_hndl_hp, 
+#endif
                                                               &endpoint->lcl_qp_hndl_hp, 
                                                               &endpoint->lcl_qp_prop_hp, 
                                                               VAPI_TS_RC))) {
@@ -347,7 +354,9 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
                                                               endpoint->endpoint_btl->nic, 
                                                               endpoint->endpoint_btl->ptag, 
                                                               endpoint->endpoint_btl->cq_hndl_lp, 
+#ifdef VAPI_FEATURE_SRQ
                                                               endpoint->endpoint_btl->srq_hndl_lp, 
+#endif
                                                               &endpoint->lcl_qp_hndl_lp, 
                                                               &endpoint->lcl_qp_prop_lp, 
                                                               VAPI_TS_RC))) {
@@ -395,7 +404,9 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
                                                               endpoint->endpoint_btl->nic, 
                                                               endpoint->endpoint_btl->ptag, 
                                                               endpoint->endpoint_btl->cq_hndl_hp, 
+#ifdef VAPI_FEATURE_SRQ
                                                               endpoint->endpoint_btl->srq_hndl_hp, 
+#endif
                                                               &endpoint->lcl_qp_hndl_hp, 
                                                               &endpoint->lcl_qp_prop_hp, 
                                                               VAPI_TS_RC))) {
@@ -409,7 +420,9 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
                                                               endpoint->endpoint_btl->nic, 
                                                               endpoint->endpoint_btl->ptag, 
                                                               endpoint->endpoint_btl->cq_hndl_lp, 
+#ifdef VAPI_FEATURE_SRQ
                                                               endpoint->endpoint_btl->srq_hndl_lp, 
+#endif
                                                               &endpoint->lcl_qp_hndl_lp, 
                                                               &endpoint->lcl_qp_prop_lp, 
                                                               VAPI_TS_RC))) {
@@ -786,10 +799,13 @@ int mca_btl_mvapi_endpoint_connect(
         return rc;
     }
     
+#ifdef VAPI_FEATURE_SRQ
     if(mca_btl_mvapi_component.use_srq) { 
         MCA_BTL_MVAPI_POST_SRR_HIGH(endpoint->endpoint_btl, 0); 
         MCA_BTL_MVAPI_POST_SRR_LOW(endpoint->endpoint_btl, 0);
-    } else {
+    } else 
+#endif
+    {
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 0); 
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 0); 
     }
@@ -841,7 +857,9 @@ int mca_btl_mvapi_endpoint_create_qp(
                                   VAPI_hca_hndl_t nic,
                                   VAPI_pd_hndl_t ptag, 
                                   VAPI_cq_hndl_t cq_hndl, 
+#ifdef VAPI_FEATURE_SRQ
                                   VAPI_srq_hndl_t srq_hndl, 
+#endif
                                   VAPI_qp_hndl_t* qp_hndl, 
                                   VAPI_qp_prop_t* qp_prop, 
                                   int transport_type)
@@ -849,7 +867,9 @@ int mca_btl_mvapi_endpoint_create_qp(
     
     VAPI_ret_t ret;
     VAPI_qp_init_attr_t qp_init_attr;
+#ifdef VAPI_FEATURE_SRQ
     VAPI_qp_init_attr_ext_t qp_init_attr_ext;
+#endif
 
     /* worst case number of credit messages could be queued */
     switch(transport_type) {
@@ -881,7 +901,8 @@ int mca_btl_mvapi_endpoint_create_qp(
         default:
             return OMPI_ERR_NOT_IMPLEMENTED;
     }
-    
+
+#ifdef VAPI_FEATURE_SRQ    
     if(mca_btl_mvapi_component.use_srq) { 
         qp_init_attr_ext.srq_hndl = srq_hndl; 
         
@@ -890,8 +911,9 @@ int mca_btl_mvapi_endpoint_create_qp(
                                  &qp_init_attr_ext,  
                                  qp_hndl, 
                                  qp_prop);
-    }
-    else { 
+    } else 
+#endif
+    { 
         ret = VAPI_create_qp(nic, 
                              &qp_init_attr, 
                              qp_hndl, 
