@@ -56,7 +56,7 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_probe,
     mca_pml_teg_start,
     32768,
-    (0x7fffffff)
+    (0x7fffffff)              /* XXX should be INT_MAX, as in ob1 */
     }
 };
 
@@ -100,13 +100,14 @@ static int mca_pml_teg_add_ptls(void)
     mca_ptl_base_selected_module_t* selected_ptl;
     size_t num_ptls = opal_list_get_size(&mca_ptl_base_modules_initialized);
     size_t cache_bytes = 0;
+
     mca_pml_teg.teg_num_ptl_modules = 0;
     mca_pml_teg.teg_num_ptl_progress = 0;
     mca_pml_teg.teg_num_ptl_components = 0;
     mca_pml_teg.teg_ptl_modules = (mca_ptl_base_module_t **)malloc(sizeof(mca_ptl_base_module_t*) * num_ptls);
     mca_pml_teg.teg_ptl_progress = (mca_ptl_base_component_progress_fn_t*)malloc(sizeof(mca_ptl_base_component_progress_fn_t) * num_ptls);
     mca_pml_teg.teg_ptl_components = (mca_ptl_base_component_t **)malloc(sizeof(mca_ptl_base_component_t*) * num_ptls);
-    if (NULL == mca_pml_teg.teg_ptl_modules || 
+    if (NULL == mca_pml_teg.teg_ptl_modules ||
         NULL == mca_pml_teg.teg_ptl_progress ||
         NULL == mca_pml_teg.teg_ptl_components) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -121,43 +122,44 @@ static int mca_pml_teg_add_ptls(void)
         size_t i;
 
         mca_pml_teg.teg_ptl_modules[mca_pml_teg.teg_num_ptl_modules++] = ptl;
-        for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
-          if(mca_pml_teg.teg_ptl_components[i] == ptl->ptl_component) {
+        for(i=0; i < mca_pml_teg.teg_num_ptl_components; i++) {
+            if(mca_pml_teg.teg_ptl_components[i] == ptl->ptl_component) {
                 break;
-          }
+            }
         }
         if(i == mca_pml_teg.teg_num_ptl_components) {
             mca_pml_teg.teg_ptl_components[mca_pml_teg.teg_num_ptl_components++] = ptl->ptl_component;
         }
 
-        /* 
-         *setup ptl 
+        /*
+         *setup ptl
          */
 
         /* set pointer to fragment matching logic routine, if this
-         *   not already set by the ptl */
-       if( NULL == ptl->ptl_match)
-           ptl->ptl_match = mca_pml_teg_recv_frag_match;
-         ptl->ptl_send_progress = mca_pml_teg_send_request_progress;
-         ptl->ptl_recv_progress = mca_pml_teg_recv_request_progress;
-         ptl->ptl_stack = ptl;
-         ptl->ptl_base = NULL;
+         *   not already set by the ptl
+         */
+        if(NULL == ptl->ptl_match) {
+            ptl->ptl_match = mca_pml_teg_recv_frag_match;
+        }
+        ptl->ptl_send_progress = mca_pml_teg_send_request_progress;
+        ptl->ptl_recv_progress = mca_pml_teg_recv_request_progress;
+        ptl->ptl_stack = ptl;
+        ptl->ptl_base = NULL;
 
-         /* find maximum required size for cache */
-         if(ptl->ptl_cache_bytes > cache_bytes) {
-             cache_bytes = ptl->ptl_cache_bytes;
-         }
+        /* find maximum required size for cache */
+        if(ptl->ptl_cache_bytes > cache_bytes) {
+            cache_bytes = ptl->ptl_cache_bytes;
+        }
     }
 
     /* setup send fragments based on largest required send request */
-    ompi_free_list_init(
-        &mca_pml_teg.teg_send_requests,
-        sizeof(mca_pml_teg_send_request_t) + cache_bytes,
-        OBJ_CLASS(mca_pml_teg_send_request_t),
-        mca_pml_teg.teg_free_list_num,
-        mca_pml_teg.teg_free_list_max,
-        mca_pml_teg.teg_free_list_inc,
-        NULL);
+    ompi_free_list_init( &mca_pml_teg.teg_send_requests,
+                         sizeof(mca_pml_teg_send_request_t) + cache_bytes,
+                         OBJ_CLASS(mca_pml_teg_send_request_t),
+                         mca_pml_teg.teg_free_list_num,
+                         mca_pml_teg.teg_free_list_max,
+                         mca_pml_teg.teg_free_list_inc,
+                         NULL );
 
     /* sort ptl list by exclusivity */
     qsort(mca_pml_teg.teg_ptl_modules, mca_pml_teg.teg_num_ptl_modules, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
@@ -167,13 +169,13 @@ static int mca_pml_teg_add_ptls(void)
 /*
  * Called by the base PML in order to notify the PMLs about their selected status. After the init pass,
  * the base module will choose one PML (depending on informations provided by the init function) and then
- * it will call the pml_enable function with true (for the selected one) and with false for all the 
+ * it will call the pml_enable function with true (for the selected one) and with false for all the
  * others. The selected one can then pass control information through to all PTL modules.
  */
 
-int mca_pml_teg_enable(bool enable) 
+int mca_pml_teg_enable(bool enable)
 {
-    size_t i=0;
+    size_t i;
     int value = enable;
 
     /* If I'm not selected then prepare for close */
@@ -182,7 +184,7 @@ int mca_pml_teg_enable(bool enable)
     /* recv requests */
     ompi_free_list_init( &mca_pml_teg.teg_recv_requests,
                          sizeof(mca_pml_teg_recv_request_t),
-                         OBJ_CLASS(mca_pml_teg_recv_request_t), 
+                         OBJ_CLASS(mca_pml_teg_recv_request_t),
                          mca_pml_teg.teg_free_list_num,
                          mca_pml_teg.teg_free_list_max,
                          mca_pml_teg.teg_free_list_inc,
@@ -192,7 +194,7 @@ int mca_pml_teg_enable(bool enable)
     mca_pml_teg_add_ptls();
 
     /* and now notify them about the status */
-    for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
+    for(i=0; i < mca_pml_teg.teg_num_ptl_components; i++) {
         if(NULL != mca_pml_teg.teg_ptl_components[i]->ptlm_control) {
             int rc = mca_pml_teg.teg_ptl_components[i]->ptlm_control(MCA_PTL_ENABLE,&value,sizeof(value));
             if(rc != OMPI_SUCCESS)
@@ -215,7 +217,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     struct mca_ptl_base_peer_t** ptl_peers = NULL;
     int rc;
     size_t p_index;
-    
+
     if(nprocs == 0)
         return OMPI_SUCCESS;
 
@@ -244,66 +246,70 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
         }
 
         /* for each proc that is reachable - add the ptl to the procs array(s) */
-        for(p=0; p<nprocs; p++) {
-            if(ompi_bitmap_is_set_bit(&reachable, p)) {
-                ompi_proc_t *proc = procs[p];
-                mca_pml_teg_proc_t* proc_pml = (mca_pml_teg_proc_t*) proc->proc_pml;
-                mca_ptl_proc_t* proc_ptl;
-                size_t size;
+        for(p=0; p < nprocs; p++) {
+            ompi_proc_t *proc;
+            mca_pml_teg_proc_t* proc_pml;
+            mca_ptl_proc_t* proc_ptl;
+            size_t size;
 
-                /* this ptl can be used */
-                ptl_inuse++;
+            if( !ompi_bitmap_is_set_bit(&reachable, p) ) continue;
 
-                /* initialize each proc */
-                if(NULL == proc_pml) {
+            proc = procs[p];
+            proc_pml = (mca_pml_teg_proc_t*) proc->proc_pml;
 
-                    /* allocate pml specific proc data */
-                    proc_pml = OBJ_NEW(mca_pml_teg_proc_t);
-                    if (NULL == proc_pml) {
-                        opal_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
-                        free(ptl_peers);
-                        return OMPI_ERR_OUT_OF_RESOURCE;
-                    }
+            /* this ptl can be used */
+            ptl_inuse++;
 
-                    /* preallocate space in array for max number of ptls */
-                    mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptl_modules);
-                    mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptl_modules);
-                    proc_pml->base.proc_ompi = proc;
-                    proc->proc_pml = (mca_pml_proc_t*) proc_pml;
+            /* initialize each proc */
+            if(NULL == proc_pml) {
+
+                /* allocate pml specific proc data */
+                proc_pml = OBJ_NEW(mca_pml_teg_proc_t);
+                if (NULL == proc_pml) {
+                    opal_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
+                    free(ptl_peers);
+                    return OMPI_ERR_OUT_OF_RESOURCE;
                 }
 
-                /* dont allow an additional PTL with a lower exclusivity ranking */
-                size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next);
-                if(size > 0) {
-                    proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, size-1);
-                    /* skip this ptl if the exclusivity is less than the previous */
-                    if(proc_ptl->ptl->ptl_exclusivity > ptl->ptl_exclusivity) {
-                        if(ptl_peers[p] != NULL) {
-                            ptl->ptl_del_procs(ptl, 1, &proc, &ptl_peers[p]);
-                        }
-                        continue;
-                    }
-                }
-               
-                /* cache the ptl on the proc */
-                proc_ptl = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
-                proc_ptl->ptl = ptl;
-                proc_ptl->ptl_peer = ptl_peers[p];
-                proc_ptl->ptl_weight = 0;
-                proc_pml->proc_ptl_flags |= ptl->ptl_flags;
+                /* preallocate space in array for max number of ptls */
+                mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptl_modules);
+                mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptl_modules);
+                proc_pml->base.proc_ompi = proc;
+                proc->proc_pml = (mca_pml_proc_t*) proc_pml;
             }
+
+            /* dont allow an additional PTL with a lower exclusivity ranking */
+            size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next);
+            if(size > 0) {
+                proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, size-1);
+                /* skip this ptl if the exclusivity is less than the previous */
+                if(proc_ptl->ptl->ptl_exclusivity > ptl->ptl_exclusivity) {
+                    if(ptl_peers[p] != NULL) {
+                        ptl->ptl_del_procs(ptl, 1, &proc, &ptl_peers[p]);
+                    }
+                    continue;
+                }
+            }
+
+            /* cache the ptl on the proc */
+            proc_ptl = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
+            proc_ptl->ptl = ptl;
+            proc_ptl->ptl_peer = ptl_peers[p];
+            proc_ptl->ptl_weight = 0;
+            proc_pml->proc_ptl_flags |= ptl->ptl_flags;
         }
+
         if(ptl_inuse > 0 && NULL != ptl->ptl_component->ptlm_progress) {
             size_t p;
             bool found = false;
-            for(p=0; p<mca_pml_teg.teg_num_ptl_progress; p++) {
+            for(p=0; p < mca_pml_teg.teg_num_ptl_progress; p++) {
                 if(mca_pml_teg.teg_ptl_progress[p] == ptl->ptl_component->ptlm_progress) {
                     found = true;
                     break;
                 }
             }
             if(found == false) {
-                mca_pml_teg.teg_ptl_progress[mca_pml_teg.teg_num_ptl_progress] = 
+                mca_pml_teg.teg_ptl_progress[mca_pml_teg.teg_num_ptl_progress] =
                     ptl->ptl_component->ptlm_progress;
                 mca_pml_teg.teg_num_ptl_progress++;
             }
@@ -328,11 +334,11 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
          *     note that we need to do this here, as we may already have ptls configured
          * (2) determine the highest priority ranking for latency
          */
-        n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next); 
+        n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next);
         for(n_index = 0; n_index < n_size; n_index++) {
             struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
             struct mca_ptl_base_module_t* ptl = proc_ptl->ptl;
-            total_bandwidth += proc_ptl->ptl->ptl_bandwidth; 
+            total_bandwidth += proc_ptl->ptl->ptl_bandwidth;
             if(ptl->ptl_latency > latency)
                 latency = ptl->ptl_latency;
         }
@@ -358,7 +364,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
              * save/create ptl extension for use by pml
              */
             proc_ptl->ptl_base = ptl->ptl_base;
-            if (NULL == proc_ptl->ptl_base && 
+            if (NULL == proc_ptl->ptl_base &&
                 ptl->ptl_cache_bytes > 0 &&
                 NULL != ptl->ptl_request_init &&
                 NULL != ptl->ptl_request_fini) {
@@ -376,7 +382,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                 struct mca_ptl_proc_t* proc_new = mca_ptl_array_insert(&proc_pml->proc_ptl_first);
                 *proc_new = *proc_ptl;
             }
-        
+
         }
     }
     return OMPI_SUCCESS;
@@ -396,19 +402,19 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
         mca_pml_teg_proc_t* proc_pml = (mca_pml_teg_proc_t*) proc->proc_pml;
         size_t f_index, f_size;
         size_t n_index, n_size;
- 
+
         /* notify each ptl that the proc is going away */
         f_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
         for(f_index = 0; f_index < f_size; f_index++) {
             mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
             mca_ptl_base_module_t* ptl = ptl_proc->ptl;
-            
-            rc = ptl->ptl_del_procs(ptl,1,&proc,&ptl_proc->ptl_peer);
+
+            rc = ptl->ptl_del_procs(ptl, 1, &proc, &ptl_proc->ptl_peer);
             if(OMPI_SUCCESS != rc) {
                 return rc;
             }
 
-            /* remove this from next array so that we dont call it twice w/ 
+            /* remove this from next array so that we dont call it twice w/
              * the same address pointer
              */
             n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
@@ -432,7 +438,7 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
                     return rc;
             }
         }
-        
+
         /* do any required cleanup */
         OBJ_RELEASE(proc_pml);
         proc->proc_pml = NULL;
