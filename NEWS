@@ -33,6 +33,9 @@ version 1.0.
 
 - Fixes for some cases where the use of MPI_BOTTOM could cause
   problems.
+- Properly handle the case where an mVAPI does not have shared receive
+  queue support (such as the one shipped by SilverStorm / Infinicon
+  for OS X).
 
 
 1.0.1
