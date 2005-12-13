@@ -111,3 +111,12 @@ SPARCV9_64	default-.text-.globl-:--.L-#-1-0-1-1	sparcv9-64-solaris
 # means that we can use the same code either way.  Woo hoo!
 
 MIPS	default-.text-.globl-:--L--1-1-1-1	mips-irix
+
+######################################################################
+#
+# On windows we don't need assembly as they provide all the 
+# atomic functions we need as intrinsics in windows.h
+#
+######################################################################
+
+WINDOWS	default-.code _TEXT-PUBLIC-:--L--0-0-1-0	none
