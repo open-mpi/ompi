@@ -1,0 +1,28 @@
+The actual version of Open MPI compile and run under Windows. The simplest
+way to get access to a windows distribution is to download one from the
+download section on the Open MPI web site (http://www.open-mpi.org).
+
+The rest of this document is only for confirmed developpers, who has spare
+time or an urgent necessity to compile their own windows version.
+
+Compiling Open MPI natively on Windows require several tools. Of course
+one need the Microsoft Visual Studio for their C/C++ compiler as well as
+for the ml (assembler compiler) and the link utilities. But the current
+version require some GNU tools as well. Here is the list of such tools:
+1. Download any Unix for Windows environment. I have sucesfully used
+  cygwin and minGW.
+2. Make the default shell ash.exe (install it if it's not installed by
+  default) as it will higly decrease the configuration and compilation
+  time.
+3. Download a very recent libtool (I'm using the pre 2.0 from their CVS HEAD).
+
+Now you should be set. The most difficult part is done. Just use your favorite
+shell to get a window, go in the ompi directory and ... do like in any
+UNIX environments: configure and make.
+
+All questions, complaints and requests about the Windows port should be sent 
+by email to bosilca at open-mpi dot org.
+
+  And don't forget: have as much fun as I had doing this port :)
+    george.
+
