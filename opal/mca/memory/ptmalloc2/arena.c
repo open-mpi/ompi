@@ -739,7 +739,10 @@ arena_get2(a_tsd, size) mstate a_tsd; size_t size;
   /* Add the new arena to the global list.  */
   (void)mutex_lock(&list_lock);
   a->next = main_arena.next;
+/* OMPI: use our barriers 
   atomic_write_barrier ();
+*/
+  opal_atomic_wmb();
   main_arena.next = a;
   (void)mutex_unlock(&list_lock);
 
