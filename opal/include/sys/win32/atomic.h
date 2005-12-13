@@ -86,6 +86,24 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
    return (oldval == ret) ? 1: 0;
 }
 
+#define OPAL_HAVE_ATOMIC_MATH_32 1
+
+#define OPAL_HAVE_ATOMIC_ADD_32 1
+static inline int32_t opal_atomic_add_32(volatile int32_t *addr, int32_t delta)
+{
+   return InterlockedExchangeAdd ((LONG volatile *) addr,
+                                  (LONG) delta);
+}
+
+#define OPAL_HAVE_ATOMIC_SUB_32 1
+static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
+{
+   return InterlockedExchangeAdd( (LONG volatile *) addr,
+                                  (LONG) (-delta));
+}
+
+#if HAVE_INTERLOCKEDCOMPAREEXCHANGE64
+#define OPAL_HAVE_ATOMIC_CMPSET_64 1
 static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
@@ -94,83 +112,50 @@ static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dllproc/base/interlockedcompareexchange64.asp
  */
 #endif  /* OMPI_ENABLE_DEBUG */
-#if defined(OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC)
-#define OPAL_HAVE_ATOMIC_CMPSET_64 1
     int64_t ret = InterlockedCompareExchangeAcquire64 ((int64_t volatile*) addr,
                                                       (int64_t) newval, (int64_t) oldval);
     return (oldval == ret) ? 1: 0;
-#else
-#define OPAL_HAVE_ATOMIC_CMPSET_64 0
-    return 0;
-#endif  /* OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC */
 }
 
 static inline int opal_atomic_cmpset_rel_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
-#if defined(OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC)
     int64_t ret = InterlockedCompareExchangeRelease64 ((int64_t volatile*) addr,
                                                        (int64_t) newval, (int64_t) oldval);
     return (oldval == ret) ? 1: 0;
-#else
-    return 0;
-#endif  /* OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC */
 }
 
 
 static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
-#if defined(OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC)
     int64_t ret = InterlockedCompareExchange64 ((int64_t volatile*) addr,
                                                  (int64_t) newval, (int64_t) oldval);
     return (oldval == ret) ? 1: 0;
-#else
-    return 0;
-#endif  /* OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC */
 }
 
-#define OPAL_HAVE_ATOMIC_MATH_32 1
-
-#define OPAL_HAVE_ATOMIC_ADD_32 1
-static inline int32_t opal_atomic_add_32(volatile int32_t *addr, int32_t delta)
-{
-   return InterlockedExchangeAdd ((LONG volatile *) addr,
-                                  (LONG) delta);
-   
-}
-
-static inline int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
-{
-#if defined(OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC)
 #define OPAL_HAVE_ATOMIC_MATH_64 1
 #define OPAL_HAVE_ATOMIC_ADD_64 1
+static inline int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
+{
     return InterlockedExchangeAdd64 ((int64_t volatile *) addr,
                                      (int64_t) delta);
-#else
-#define OPAL_HAVE_ATOMIC_MATH_64 0
-#define OPAL_HAVE_ATOMIC_ADD_64 0
-    return 0;
-#endif  /* OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC */
 }
 
-#define OPAL_HAVE_ATOMIC_SUB_32 1
-static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
-{
-   return InterlockedExchangeAdd( (LONG volatile *) addr,
-                                  (LONG) (-delta));
-
-}
-
+#define OPAL_HAVE_ATOMIC_SUB_64 1
 static inline int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 {
-#if defined(OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC)
-#define OPAL_HAVE_ATOMIC_SUB_64 1
     return InterlockedExchangeAdd64 ((int64_t volatile *) addr,
                                      (int64_t) (-delta));
-#else
-#define OPAL_HAVE_ATOMIC_SUB_64 0
-    return 0;
-#endif  /* OMPI_WINDOWS_HAVE_SUPPORT_FOR_64_BITS_ATOMIC */
 }
+
+#else
+
+#define OPAL_HAVE_ATOMIC_CMPSET_64 0
+#define OPAL_HAVE_ATOMIC_MATH_64 0
+#define OPAL_HAVE_ATOMIC_ADD_64 0
+#define OPAL_HAVE_ATOMIC_SUB_64 0
+
+#endif  /* HAVE_INTERLOCKEDCOMPAREEXCHANGE64 */
+
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
