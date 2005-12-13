@@ -30,9 +30,9 @@
 #include "mca/ptl/base/ptl_base_header.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "pml_uniq_proc.h"
 #include "pml_uniq.h"
 #include "pml_uniq_component.h"
+#include "pml_uniq_proc.h"
 #include "pml_uniq_ptl.h"
 #include "pml_uniq_recvreq.h"
 #include "pml_uniq_sendreq.h"
@@ -57,7 +57,7 @@ mca_pml_uniq_t mca_pml_uniq = {
     mca_pml_uniq_probe,
     mca_pml_uniq_start,
     32768,
-    (0x7fffffff)
+    (0x7fffffff)              /* XXX should be INT_MAX, as in ob1 */
     }
 };
 
@@ -77,7 +77,7 @@ int mca_pml_uniq_add_comm(ompi_communicator_t* comm)
 int mca_pml_uniq_del_comm(ompi_communicator_t* comm)
 {
     OBJ_RELEASE(comm->c_pml_comm);
-    comm->c_pml_comm = 0;
+    comm->c_pml_comm = NULL;  /* make sure it's set to NULL */
     return OMPI_SUCCESS;
 }
 
@@ -95,7 +95,7 @@ static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
 }
 
 
-static int mca_pml_uniq_add_ptls( void )
+static int mca_pml_uniq_add_ptls(void)
 {
     /* build an array of ptls and ptl modules */
     mca_ptl_base_selected_module_t* selected_ptl;
@@ -108,13 +108,13 @@ static int mca_pml_uniq_add_ptls( void )
     mca_pml_uniq.uniq_ptl_modules = (mca_ptl_base_module_t **)malloc(sizeof(mca_ptl_base_module_t*) * num_ptls);
     mca_pml_uniq.uniq_ptl_progress = (mca_ptl_base_component_progress_fn_t*)malloc(sizeof(mca_ptl_base_component_progress_fn_t) * num_ptls);
     mca_pml_uniq.uniq_ptl_components = (mca_ptl_base_component_t **)malloc(sizeof(mca_ptl_base_component_t*) * num_ptls);
-    if (NULL == mca_pml_uniq.uniq_ptl_modules || 
+    if (NULL == mca_pml_uniq.uniq_ptl_modules ||
         NULL == mca_pml_uniq.uniq_ptl_progress ||
         NULL == mca_pml_uniq.uniq_ptl_components) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for(selected_ptl =  (mca_ptl_base_selected_module_t*)
+    for(selected_ptl = (mca_ptl_base_selected_module_t*)
             opal_list_get_first(&mca_ptl_base_modules_initialized);
         selected_ptl != (mca_ptl_base_selected_module_t*)
             opal_list_get_end(&mca_ptl_base_modules_initialized);
@@ -123,31 +123,34 @@ static int mca_pml_uniq_add_ptls( void )
         size_t i;
 
         mca_pml_uniq.uniq_ptl_modules[mca_pml_uniq.uniq_num_ptl_modules++] = ptl;
-        for( i = 0; i < mca_pml_uniq.uniq_num_ptl_components; i++ ) {
+        for(i=0; i < mca_pml_uniq.uniq_num_ptl_components; i++) {
             if(mca_pml_uniq.uniq_ptl_components[i] == ptl->ptl_component) {
                 break;
             }
         }
-        if( i == mca_pml_uniq.uniq_num_ptl_components ) {
+        if(i == mca_pml_uniq.uniq_num_ptl_components) {
             mca_pml_uniq.uniq_ptl_components[mca_pml_uniq.uniq_num_ptl_components++] = ptl->ptl_component;
         }
 
-        /* 
-         *setup ptl 
+        /*
+         *setup ptl
          */
 
         /* set pointer to fragment matching logic routine, if this
-         *   not already set by the ptl */
-        if( NULL == ptl->ptl_match)
+         *   not already set by the ptl
+         */
+        if(NULL == ptl->ptl_match) {
             ptl->ptl_match = mca_pml_uniq_recv_frag_match;
+        }
         ptl->ptl_send_progress = mca_pml_uniq_send_request_progress;
         ptl->ptl_recv_progress = mca_pml_uniq_recv_request_progress;
         ptl->ptl_stack = ptl;
         ptl->ptl_base = NULL;
 
         /* find maximum required size for cache */
-        if(ptl->ptl_cache_bytes > cache_bytes)
+        if(ptl->ptl_cache_bytes > cache_bytes) {
             cache_bytes = ptl->ptl_cache_bytes;
+        }
     }
 
     /* setup send fragments based on largest required send request */
@@ -171,7 +174,7 @@ static int mca_pml_uniq_add_ptls( void )
  * others. The selected one can then pass control information through to all PTL modules.
  */
 
-int mca_pml_uniq_enable( bool enable )
+int mca_pml_uniq_enable(bool enable)
 {
     size_t i;
     int value = enable;
@@ -182,7 +185,7 @@ int mca_pml_uniq_enable( bool enable )
     /* recv requests */
     ompi_free_list_init( &mca_pml_uniq.uniq_recv_requests,
                          sizeof(mca_pml_uniq_recv_request_t),
-                         OBJ_CLASS(mca_pml_uniq_recv_request_t), 
+                         OBJ_CLASS(mca_pml_uniq_recv_request_t),
                          mca_pml_uniq.uniq_free_list_num,
                          mca_pml_uniq.uniq_free_list_max,
                          mca_pml_uniq.uniq_free_list_inc,
@@ -191,7 +194,8 @@ int mca_pml_uniq_enable( bool enable )
     /* Grab all the PTLs and prepare them */
     mca_pml_uniq_add_ptls();
 
-    for( i = 0; i < mca_pml_uniq.uniq_num_ptl_components; i++ ) {
+    /* and now notify them about the status */
+    for(i=0; i < mca_pml_uniq.uniq_num_ptl_components; i++) {
         if(NULL != mca_pml_uniq.uniq_ptl_components[i]->ptlm_control) {
             int rc = mca_pml_uniq.uniq_ptl_components[i]->ptlm_control(MCA_PTL_ENABLE,&value,sizeof(value));
             if(rc != OMPI_SUCCESS)
@@ -214,18 +218,18 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
     struct mca_ptl_base_peer_t** ptl_peers = NULL;
     int rc;
     size_t p_index;
-    
-    if( nprocs == 0 )
+
+    if(nprocs == 0)
         return OMPI_SUCCESS;
 
-    OBJ_CONSTRUCT( &reachable, ompi_bitmap_t );
-    rc = ompi_bitmap_init( &reachable, nprocs );
-    if( OMPI_SUCCESS != rc )
+    OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
+    rc = ompi_bitmap_init(&reachable, nprocs);
+    if(OMPI_SUCCESS != rc)
         return rc;
 
     /* attempt to add all procs to each ptl */
     ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
-    for( p_index = 0; p_index < mca_pml_uniq.uniq_num_ptl_modules; p_index++ ) {
+    for(p_index = 0; p_index < mca_pml_uniq.uniq_num_ptl_modules; p_index++) {
         mca_ptl_base_module_t* ptl = mca_pml_uniq.uniq_ptl_modules[p_index];
         int ptl_inuse = 0;
 
@@ -243,7 +247,7 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
         }
 
         /* for each proc that is reachable - add the ptl to the procs array(s) */
-        for( p = 0; p < nprocs; p++) {
+        for(p=0; p < nprocs; p++) {
             ompi_proc_t *proc;
             mca_pml_uniq_proc_t* proc_pml;
 
@@ -296,10 +300,11 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
 #if PML_UNIQ_ACCEPT_NEXT_PTL
 #endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
             }
+
             /* dont allow an additional PTL with a lower exclusivity ranking */
             if( NULL != proc_pml->proc_ptl_first.ptl ) {
+                /* skip this ptl if the exclusivity is less than the previous */
                 if( proc_pml->proc_ptl_first.ptl->ptl_exclusivity > ptl->ptl_exclusivity ) {
-                    /* skip this ptl if the exclusivity is less than the previous */
                     if(ptl_peers[p] != NULL) {
                         ptl->ptl_del_procs(ptl, 1, &proc, &ptl_peers[p]);
                     }
@@ -312,14 +317,14 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
         if(ptl_inuse > 0 && NULL != ptl->ptl_component->ptlm_progress) {
             size_t p;
             bool found = false;
-            for( p = 0; p < mca_pml_uniq.uniq_num_ptl_progress; p++ ) {
+            for(p=0; p < mca_pml_uniq.uniq_num_ptl_progress; p++) {
                 if(mca_pml_uniq.uniq_ptl_progress[p] == ptl->ptl_component->ptlm_progress) {
                     found = true;
                     break;
                 }
             }
             if(found == false) {
-                mca_pml_uniq.uniq_ptl_progress[mca_pml_uniq.uniq_num_ptl_progress] = 
+                mca_pml_uniq.uniq_ptl_progress[mca_pml_uniq.uniq_num_ptl_progress] =
                     ptl->ptl_component->ptlm_progress;
                 mca_pml_uniq.uniq_num_ptl_progress++;
             }
@@ -344,7 +349,7 @@ int mca_pml_uniq_del_procs(ompi_proc_t** procs, size_t nprocs)
         mca_pml_uniq_proc_t* proc_pml = (mca_pml_uniq_proc_t*) proc->proc_pml;
         mca_ptl_proc_t* ptl_proc;
         mca_ptl_base_module_t* ptl;
- 
+
         /* If the PTL used for the first fragment and the one use for the others is not
          * the same then we have to remove the processor from both of them.
          */
@@ -365,7 +370,7 @@ int mca_pml_uniq_del_procs(ompi_proc_t** procs, size_t nprocs)
             }
         }
 #endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
-        
+
         /* do any required cleanup */
         OBJ_RELEASE(proc_pml);
         proc->proc_pml = NULL;
