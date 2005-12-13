@@ -132,8 +132,14 @@ typedef struct {
  * Windows library interface declaration code
  *
  **********************************************************************/
+#ifndef __WINDOWS__
+#  if defined(_WIN32) || defined(WIN32)
+#    define __WINDOWS__
+#  endif
+#endif
 
-#if defined(_WIN32)
+#if defined(__WINDOWS__)
+
 #  if OMPI_BUILDING
 #    include "win32/win_compat.h"
 #  endif
@@ -142,22 +148,23 @@ typedef struct {
         struct */
 #    define OMPI_COMP_EXPORT __declspec(dllexport)
 #    define OMPI_DECLSPEC __declspec(dllimport)
-#  elif OMPI_BUILDING
-     /* building libmpi (or something in libmpi) - need to export libmpi
-        interface */
-#    define OMPI_COMP_EXPORT
-#    define OMPI_DECLSPEC __declspec(dllexport)
 #  else
-     /* building something using libmpi - export the libmpi interface */
-#    define OMPI_COMP_EXPORT
-#    define OMPI_DECLSPEC __declspec(dllimport)
+#    if OMPI_BUILDING
+       /* building libmpi (or something in libmpi) - need to export libmpi
+          interface */
+#      define OMPI_COMP_EXPORT
+#      define OMPI_DECLSPEC __declspec(dllexport)
+#    else
+       /* building something using libmpi - export the libmpi interface */
+#      define OMPI_COMP_EXPORT
+#      define OMPI_DECLSPEC __declspec(dllimport)
+#    endif
 #  endif
 #else
    /* On Unix - get rid of the defines */ 
 #  define OMPI_COMP_EXPORT
 #  define OMPI_DECLSPEC
 #endif
-
 
 /***********************************************************************
  *
@@ -180,7 +187,7 @@ typedef struct {
                 assumption that the C++ bool is the same size and has
                 the same alignment. */
 #            include <stdbool.h>
-#        elif defined(_WIN32)
+#        elif defined(__WINDOWS__)
 #            define bool BOOL
 #            define false FALSE
 #            define true TRUE
@@ -222,7 +229,7 @@ typedef long long bool;
 /*
  * Set the compile-time path-separator on this system
  */
-#ifdef WIN32
+#ifdef __WINDOWS__
 #define OMPI_PATH_SEP "\\"
 #else
 #define OMPI_PATH_SEP "/"
@@ -343,8 +350,10 @@ typedef long long bool;
  * On some homogenous big-iron machines (Sandia's Red Storm), there
  * are no htonl and friends.  If that's the case, provide stubs.  I
  * would hope we never find a platform that doesn't have these macros
- * and would want to talk to the outside world...
+ * and would want to talk to the outside world... On other platforms
+ * (like Windows) we fail to detect them correctly.
  */
+#ifndef __WINDOWS__
 #ifndef HAVE_HTONL
 static inline uint32_t htonl(uint32_t hostvar) { return hostvar; }
 #endif
@@ -357,7 +366,7 @@ static inline uint16_t htons(uint16_t hostvar) { return hostvar; }
 #ifndef HAVE_NTOHS
 static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #endif
-
+#endif  /* WINDOWS */
 
 /*
  * Define __func__-preprocessor directive if the compiler does not
