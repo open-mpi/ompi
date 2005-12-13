@@ -37,10 +37,16 @@ int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses)
 {
     int rc;
     if ( MPI_PARAM_CHECK ) {
+        int i;
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (requests == NULL) {
             rc = MPI_ERR_REQUEST;
+        }
+        for (i = 0; i < count; i++) {
+            if (NULL == requests[i]) {
+                rc = MPI_ERR_REQUEST;
+            }
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
