@@ -47,9 +47,9 @@
 #include <shellapi.h>
 #include <winperf.h>
 #include <winsock2.h>
-#include <ws2tcpip.h>
+/*#include <ws2tcpip.h>*/
 #include <process.h>
-#include <io.h>
+/*#include <io.h>*/
 #include <signal.h>
 /*#if defined(OMPI_BUILDING) && OMPI_BUILDING */
 #include "win32/ompi_uio.h"
@@ -76,10 +76,18 @@ typedef unsigned int uint;
 #define mkdir _mkdir
 
 #define UINT32_MAX _UI32_MAX
-#define INT32_MAX _I32_MAX
+#define INT32_MAX  _I32_MAX
+#define UINT8_MAX  _UI8_MAX
 
 #define SIZEOF_SIZE_T 4
+
+/* If we now support __func__ set the HAVE_DECL___FUNC__ */
 #define __func__ __FUNCTION__
+#undef HAVE_DECL___FUNC__
+#define HAVE_DECL___FUNC__ 1
+
+/* Microsoft claim that strdup is deprecated and that we should use _strdup. */
+#define strdup _strdup
 
 /* Ugly signal mapping since windows doesn't support the full spectrum
  * just a very small subset... :/
