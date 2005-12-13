@@ -130,7 +130,7 @@ static bool try_dlopen(const char *dir, const char *fw, const char *comp,
 {
     char component_name[BUFSIZ];
     char file_name[BUFSIZ];
-#ifdef WIN32
+#ifdef __WINDOWS__
     char dirsep = '\\';
 #else
     char dirsep = '/';
@@ -184,7 +184,7 @@ static char *dir_concat(const char *a, const char *b)
     name[0] = '\0';
     if (NULL != a) {
         strcat(name, a);
-#ifdef WIN32
+#ifdef __WINDOWS__
         strcat(name, "\\");
 #else
         strcat(name, "/");

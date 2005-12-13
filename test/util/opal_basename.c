@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
   test("/yow.c/", "yow.c");
   test("//", "/");
 
-#ifdef WIN32
+#ifdef __WINDOWS__
   test("C:\\foo\\bar\\baz", "baz");
   test("D:foo.txt", "foo.txt");
   test("E:\\yow.c", "yow.c");
