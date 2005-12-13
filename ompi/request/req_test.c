@@ -25,7 +25,7 @@ int ompi_request_test_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
-    int *completed, 
+    int *completed,
     ompi_status_public_t * status)
 {
     size_t i;
@@ -72,7 +72,7 @@ int ompi_request_test_any(
 int ompi_request_test_all(
     size_t count,
     ompi_request_t ** requests,
-    int *completed, 
+    int *completed,
     ompi_status_public_t * statuses)
 {
     size_t i;
@@ -84,7 +84,7 @@ int ompi_request_test_all(
     rptr = requests;
     for (i = 0; i < count; i++, rptr++) {
         request = *rptr;
-        if (request == MPI_REQUEST_NULL || 
+        if (request == MPI_REQUEST_NULL ||
             request->req_state == OMPI_REQUEST_INACTIVE ||
             request->req_complete) {
             num_completed++;
@@ -106,7 +106,7 @@ int ompi_request_test_all(
         for (i = 0; i < count; i++) {
             int rc;
             request  = *rptr;
-            if(request == MPI_REQUEST_NULL || 
+            if(request == MPI_REQUEST_NULL ||
                request->req_state == OMPI_REQUEST_INACTIVE) {
                 statuses[i] = ompi_status_empty;
             } else {
