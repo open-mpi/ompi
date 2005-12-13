@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "opal/include/sys/atomic.h"
 #include "opal/memoryhooks/memory_internal.h"
 
 /*
