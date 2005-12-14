@@ -270,7 +270,7 @@ int coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
 int coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs)
 {
    int i;
-   int rc;
+   int rc = 0;
 
    for(i=0;i<n_algs;i++) {
      rc += coll_tuned_free_coms_in_alg_rule (&(alg_p[i]));
