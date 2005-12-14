@@ -121,12 +121,14 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
 
   int mca_coll_tuned_init_query(bool enable_progress_threads,
                                 bool enable_mpi_threads);
+
   const struct mca_coll_base_module_1_0_0_t *
     mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
                               struct mca_coll_base_comm_t **data);
 
   const struct mca_coll_base_module_1_0_0_t *
     mca_coll_tuned_module_init(struct ompi_communicator_t *comm);
+
   int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm);
 
   /* API functions of decision functions and any implementations */

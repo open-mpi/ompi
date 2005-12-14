@@ -49,7 +49,7 @@ int mca_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     char *sendtmpbuf = NULL;
     long ext, lb;
     int  typelng;
-    int  allocedaccumbuf;
+    int  allocedaccumbuf = 0;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
 
