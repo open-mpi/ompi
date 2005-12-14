@@ -123,8 +123,6 @@ static inline void  mca_btl_mvapi_param_register_int(
 
 int mca_btl_mvapi_component_open(void)
 {
-    int tmp_int;
-
     /* initialize state */
     mca_btl_mvapi_component.ib_num_btls=0;
     mca_btl_mvapi_component.mvapi_btls=NULL;
