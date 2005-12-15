@@ -61,13 +61,13 @@ void ompi_mpi_cxx_errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
   }
 }
 
-MPI::Op* MPI::Intracomm::current_op;
+MPI::Op* MPI::Comm::current_op;
 
 extern "C" void
 ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len, 
                           MPI_Datatype *datatype)
 {
-  MPI::Op* op = MPI::Intracomm::current_op;
+  MPI::Op* op = MPI::Comm::current_op;
   MPI::Datatype thedata = *datatype;
   ((MPI::User_function*)op->op_user_function)(invec, outvec, *len, thedata);
   //JGS the above cast is a bit of a hack, I'll explain:

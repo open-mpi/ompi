@@ -365,6 +365,9 @@ public: // JGS hmmm, these used by errhandler_intercept
   void init() {
     my_errhandler = (Errhandler*)0;
   }
+
+  static Op* current_op;
+
 #endif
 
 };
