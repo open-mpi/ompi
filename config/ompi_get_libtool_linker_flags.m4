@@ -15,7 +15,7 @@ dnl
 dnl Additional copyrights may follow
 dnl 
 dnl $HEADER$
-denl
+dnl
 
 AC_DEFUN([OMPI_CHECK_LINKER_FLAGS],[
 #
@@ -83,12 +83,13 @@ while test -n "[$]1"; do
     libtool:) ;;
     link:) ;;
     $CC) ;;
-    .libs/bar*) ;;
+    *.libs/bar*) ;;
     bar*) ;;
     -I*) ;;
     -L*) ;;
     -R*) ;;
     -lfoo) ;;
+    *.libs/libfoo.*) ;;
     -o) ;;
     *.so) ;;
     *.a) ;;
