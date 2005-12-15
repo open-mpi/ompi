@@ -161,7 +161,7 @@ MPI::Intracomm::Alltoallw(const void *sendbuf, const int sendcounts[],
                         data_type_tbl, recvbuf,
                         const_cast<int *>(recvcounts), 
                         const_cast<int *>(rdispls),
-                        data_type_tbl[comm_size], mpi_comm);
+                        &data_type_tbl[comm_size], mpi_comm);
 
     delete[] data_type_tbl;
 }

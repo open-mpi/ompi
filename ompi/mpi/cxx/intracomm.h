@@ -233,10 +233,4 @@ protected:
   // eventually deleted.
   static inline MPI_Info *convert_info_to_mpi_info(int p_nbr, 
                                                    const Info p_info_tbl[]);
-
-public: // JGS see above about friend decls
-#if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
-  static Op* current_op;
-#endif
-
 };
