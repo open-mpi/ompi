@@ -22,10 +22,11 @@ MPI::Intracomm::Intracomm(const MPI_Comm& data) {
   int flag;
   if (MPI::Is_initialized() && (data != MPI_COMM_NULL)) {
     (void)MPI_Comm_test_inter(data, &flag);
-    if (flag)
+    if (flag) {
       mpi_comm = MPI_COMM_NULL;
-    else
+    } else {
       mpi_comm = data;
+    }
   }
   else {
     mpi_comm = data;
@@ -140,9 +141,9 @@ MPI::Intracomm::Alltoallv(const void *sendbuf, const int sendcounts[],
 
 inline void
 MPI::Intracomm::Alltoallw(const void *sendbuf, const int sendcounts[],
-	const int sdispls[], const Datatype sendtypes[],
+	const int sdispls[], const MPI::Datatype sendtypes[],
 	void *recvbuf, const int recvcounts[],
-	const int rdispls[], const Datatype recvtypes[]) const
+	const int rdispls[], const MPI::Datatype recvtypes[]) const
 {
     const int comm_size = Get_size();
     MPI_Datatype *const data_type_tbl = new MPI_Datatype [2*comm_size];

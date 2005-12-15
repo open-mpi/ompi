@@ -25,7 +25,6 @@ inline int
 MPI::Status::Get_count(const MPI::Datatype& datatype) const
 {
   int count;
-  //(MPI_Status*) is to cast away the const
   (void)MPI_Get_count(const_cast<MPI_Status*>(&mpi_status), datatype, &count);
   return count;
 }
