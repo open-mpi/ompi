@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: get_amodef.c,v 1.13 2002/10/24 17:01:19 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,12 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+extern FORTRAN_API void FORT_CALL MPI_FILE_GET_AMODE( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak MPI_FILE_GET_AMODE = PMPI_FILE_GET_AMODE
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_get_amode__( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak mpi_file_get_amode__ = pmpi_file_get_amode__
 #elif !defined(FORTRANUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_get_amode( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak mpi_file_get_amode = pmpi_file_get_amode
 #else
+extern FORTRAN_API void FORT_CALL mpi_file_get_amode_( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak mpi_file_get_amode_ = pmpi_file_get_amode_
 #endif
 
@@ -87,9 +90,9 @@
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_get_amode_(MPI_Fint *fh,int *amode, int *ierr );
+FORTRAN_API void FORT_CALL mpi_file_get_amode_(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr );
 
-FORTRAN_API void FORT_CALL mpi_file_get_amode_(MPI_Fint *fh,int *amode, int *ierr )
+FORTRAN_API void FORT_CALL mpi_file_get_amode_(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr )
 {
     MPI_File fh_c;
     

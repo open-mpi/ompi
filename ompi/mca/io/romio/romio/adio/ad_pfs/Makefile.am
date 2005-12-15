@@ -43,7 +43,6 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libadio_pfs.la
 libadio_pfs_la_SOURCES = \
         io_romio_ad_pfs.c \
-        io_romio_ad_pfs_close.c \
         io_romio_ad_pfs_done.c \
         io_romio_ad_pfs_fcntl.c \
         io_romio_ad_pfs_flush.c \
@@ -52,12 +51,8 @@ libadio_pfs_la_SOURCES = \
         io_romio_ad_pfs_iread.c \
         io_romio_ad_pfs_iwrite.c \
         io_romio_ad_pfs_open.c \
-        io_romio_ad_pfs_rdcoll.c \
         io_romio_ad_pfs_read.c \
-        io_romio_ad_pfs_resize.c \
-        io_romio_ad_pfs_seek.c \
         io_romio_ad_pfs_wait.c \
-        io_romio_ad_pfs_wrcoll.c \
         io_romio_ad_pfs_write.c
 
 #

@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: mpioprof.h,v 1.8 2002/10/24 17:01:18 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -11,7 +10,16 @@
    building the profiling interface
  */
 
-#ifdef MPIO_BUILD_PROFILING
+/*
+ * Open MPI: Unfortunately, ROMIO doesn't seem to be able to build
+ * without a profiling interface, but we don't want a profiling
+ * interface, since we are just using ROMIO "behind the scenes".
+ * So enable all the profiling defines, only compile once, and don't
+ * do all the name mangling.  The effect is about the same, but without
+ * modification to all the files in the mpi-io directory.
+ */
+#if 0
+#ifdef MPIO_BUILD_PROFILING 
 
 #undef MPI_File_open
 #define MPI_File_open PMPI_File_open
@@ -115,6 +123,8 @@
 
 #undef MPI_File_get_type_extent
 #define MPI_File_get_type_extent PMPI_File_get_type_extent
+#undef MPI_Register_datarep
+#define MPI_Register_datarep PMPI_Register_datarep
 #undef MPI_File_set_atomicity
 #define MPI_File_set_atomicity PMPI_File_set_atomicity
 #undef MPI_File_get_atomicity
@@ -140,15 +150,29 @@
 #endif
 
 #undef MPIO_Test
+#undef PMPIO_Test
 #define MPIO_Test PMPIO_Test
 #undef MPIO_Wait
+#undef PMPIO_Wait
 #define MPIO_Wait PMPIO_Wait
+#undef MPIO_Testall
+#define MPIO_Testall PMPIO_Testall
+#undef MPIO_Waitall
+#define MPIO_Waitall PMPIO_Waitall
+#undef MPIO_Testany
+#define MPIO_Testany PMPIO_Testany
+#undef MPIO_Waitany
+#define MPIO_Waitany PMPIO_Waitany
+#undef MPIO_Testsome
+#define MPIO_Testsome PMPIO_Testsome
+#undef MPIO_Waitsome
+#define MPIO_Waitsome PMPIO_Waitsome
 #undef MPIO_Request_f2c
 #define MPIO_Request_f2c PMPIO_Request_f2c
 #undef MPIO_Request_c2f
 #define MPIO_Request_c2f PMPIO_Request_c2f
 
-#ifdef MPI_INFO_SRC  /* only in info source directory */
+#if defined(HAVE_MPI_INFO_SRC)  /* only in info source directory */
 
 #undef MPI_Info_create
 #define MPI_Info_create PMPI_Info_create
@@ -175,4 +199,12 @@
 
 #endif
 
+#undef MPI_Grequest_start
+#define MPI_Grequest_start PMPI_Grequest_start
+#undef MPI_Grequest_complete
+#define MPI_Grequest_complete PMPI_Grequest_complete
+#undef MPI_Status_set_cancelled
+#define MPI_Status_set_cancelled PMPI_Status_set_cancelled
+
+#endif
 #endif

@@ -17,6 +17,7 @@
  */
 
 #include "ompi_config.h"
+
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
@@ -45,6 +46,12 @@ static int delete_query(char *filename, struct ompi_info_t *info,
 static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
 static int progress(void);
+
+static int register_datarep(char *,
+                            MPI_Datarep_conversion_function*,
+                            MPI_Datarep_conversion_function*,
+                            MPI_Datarep_extent_function*,
+                            void*);
 
 /*
  * Private variables
@@ -114,7 +121,8 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
 
     /* Progression of non-blocking requests */
 
-    (mca_io_base_component_progress_fn_t) progress
+    (mca_io_base_component_progress_fn_t) progress,
+    register_datarep
 };
 
 
@@ -133,6 +141,9 @@ static int open_component(void)
                                "Delete priority of the io romio component",
                                false, false, 10, NULL);
 
+    /* Create the mutex */
+    OBJ_CONSTRUCT(&mca_io_romio_mutex, opal_mutex_t);
+
     /* Create the list of pending requests */
 
     OBJ_CONSTRUCT(&mca_io_romio_pending_requests, opal_list_t);
@@ -148,6 +159,8 @@ static int close_component(void)
        were not destroyed / completed upon MPI_FINALIZE */
 
     OBJ_DESTRUCT(&mca_io_romio_pending_requests);
+
+    OBJ_DESTRUCT(&mca_io_romio_mutex);
 
     return OMPI_SUCCESS;
 }
@@ -289,4 +302,23 @@ static int progress()
     /* Return how many requests completed */
 
     return count;
+}
+
+
+
+static int
+register_datarep(char * datarep,
+                 MPI_Datarep_conversion_function* read_fn,
+                 MPI_Datarep_conversion_function* write_fn,
+                 MPI_Datarep_extent_function* extent_fn,
+                 void* state)
+{
+    int ret;
+
+    OPAL_THREAD_LOCK(&mca_io_romio_mutex);
+    ret = ROMIO_PREFIX(MPI_Register_datarep(datarep, read_fn, write_fn,
+                                            extent_fn, state));
+    OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
+
+    return ret;
 }

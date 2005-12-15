@@ -1,6 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*  
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
 #include "mpi.h"
-#include "mpio.h"  /* not necessary with MPICH 1.1.1 or HPMPI 1.4 */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -15,6 +18,7 @@ int main(int argc, char **argv)
 {
     int *buf, i, rank, nints, len;
     char *filename, *tmp;
+    int errs=0, toterrs;
     MPI_File fh;
     MPI_Status status;
     MPIO_Request request;
@@ -61,7 +65,11 @@ int main(int argc, char **argv)
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
     MPI_File_iwrite(fh, buf, nints, MPI_INT, &request);
+#ifdef MPIO_USES_MPI_REQUEST
+    MPI_Wait( &request, &status );
+#else    
     MPIO_Wait(&request, &status);
+#endif
     MPI_File_close(&fh);
 
     /* reopen the file and read the data back */
@@ -71,15 +79,31 @@ int main(int argc, char **argv)
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
     MPI_File_iread(fh, buf, nints, MPI_INT, &request);
+#ifdef MPIO_USES_MPI_REQUEST
+    MPI_Wait( &request, &status );
+#else
     MPIO_Wait(&request, &status);
+#endif
+
     MPI_File_close(&fh);
 
     /* check if the data read is correct */
-    for (i=0; i<nints; i++) 
-	if (buf[i] != (rank*100000 + i))
+    for (i=0; i<nints; i++) {
+	if (buf[i] != (rank*100000 + i)) {
+	    errs++;
 	    fprintf(stderr, "Process %d: error, read %d, should be %d\n", rank, buf[i], rank*100000+i);
+	}
+    }
 
-    if (!rank) fprintf(stderr, "Done\n");
+    MPI_Allreduce( &errs, &toterrs, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+    if (rank == 0) {
+	if( toterrs > 0) {
+	    fprintf( stderr, "Found %d errors\n", toterrs );
+	}
+	else {
+	    fprintf( stdout, " No Errors\n" );
+	}
+    }
 
     free(buf);
     free(filename);

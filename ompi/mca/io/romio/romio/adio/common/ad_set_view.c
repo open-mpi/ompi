@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_set_view.c,v 1.2 2002/10/24 17:01:13 gropp Exp $
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -9,6 +8,10 @@
 #include "adio.h"
 #include "adio_extern.h"
 
+/* this used to be implemented in every file system as an fcntl.  It makes
+ * deferred open easier if we know ADIO_Fcntl will always need a file to really
+ * be open. set_view doesn't modify anything related to the open files.
+ */
 void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype, 
 		MPI_Datatype filetype, MPI_Info info,  int *error_code) 
 {

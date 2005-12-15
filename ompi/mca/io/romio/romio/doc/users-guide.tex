@@ -36,7 +36,7 @@ Technical Memorandum No.\ 234
 
 
 \vspace{1.4in}
-Revised May 2002
+Revised May 2004
 
 \end{center}
 
@@ -255,7 +255,11 @@ applied to collective write operations.  Valid values are
 \texttt{enable}, \texttt{disable}, and \texttt{automatic}.  Default is 
 \texttt{automatic}.  See the description of \texttt{romio\_cb\_read} for
 an explanation of the values.
-\item \texttt{romio\_no\_indep\_rw} -- Currently this hint is ignored.
+\item \texttt{romio\_no\_indep\_rw} -- This hint controls when ``deferred
+open'' is used.  When set to \texttt{true}, ROMIO will make an effort to avoid
+performing any file operation on non-aggregator nodes.  The application is
+expected to use only collective operations.  This is discussed in further
+detail below.
 \item \texttt{cb\_config\_list} -- Provides explicit control over 
 aggregators.  This is discussed in further detail below.
 \end{itemize}
@@ -343,6 +347,16 @@ number in \texttt{cb\_config\_list} should be used.
 The implementation is also encouraged to assign processes in the order
 that they are listed in \texttt{cb\_config\_list}.
 
+The following hint controls the deferred open feature of romio and are also
+applicable to all file system types: 
+\begin{itemize}
+\item \texttt{no\_indep\_rw} -- If the application plans on performing only 
+   collecitve operations and this hint is set to ``true'', then ROMIO can
+   have just the aggregators open a file.   The \texttt{cb\_config\_list} and
+   \texttt{cb\_nodes} hints can be given to further control which nodes are
+   aggregators.  
+\end{itemize}
+
 For PVFS, PIOFS, and PFS:
 \begin{itemize}
 \item \texttt{striping\_factor} -- Controls the number of I/O devices to
@@ -391,14 +405,21 @@ will be ignored. The values of hints being used by ROMIO for a file
 can be obtained at any time via {\tt MPI\_File\_get\_info}.
 
 \subsection{Using ROMIO on NFS}
-To use ROMIO on NFS, file locking with {\tt fcntl} must work correctly on
-the NFS installation. On some installations, fcntl locks don't work.
-To get them to work, you need to use Version~3 of NFS and 
-have the system administrator mount the NFS file system with the 
-``{\tt noac}'' option (no attribute caching). Turning off attribute caching 
-may reduce performance, but it is necessary for correct behavior.  
-Some NFS server implementations also need the lockd and rpc.statd servers
-running. 
+
+It is worth first mentioning that in no way do we encourage the use
+of ROMIO on NFS volumes.  NFS is not a high-performance protocol, nor
+are NFS servers typically very good at handling the types of concurrent
+access seen from MPI-IO applications.  Nevertheless, NFS is a very popular
+mechanism for providing access to a shared space, and ROMIO does support
+MPI-IO to NFS volumes, provided that they are configured properly.
+
+To use ROMIO on NFS, file locking with {\tt fcntl} must work correctly
+on the NFS installation. On some installations, fcntl locks don't
+work.  To get them to work, you need to use Version~3 of NFS, ensure
+that the lockd daemon is running on all the machines, and have the system
+administrator mount the NFS file system with the ``{\tt noac}'' option
+(no attribute caching). Turning off attribute caching may reduce
+performance, but it is necessary for correct behavior.
 
 The following are some instructions we received from Ian Wells of HP
 for setting the {\tt noac} option on NFS. We have not tried them
@@ -443,6 +464,25 @@ commands.
    >gershwin:/epm1 /rmt/gershwin/epm1 nfs
    >noac,acregmin=0,acregmax=0,acdirmin=0,acdirmax=0 0 0 899911504
 \end{verbatim}
+
+\subsubsection{ROMIO, NFS, and Synchronization}
+
+NFS has a ``sync'' option that specifies that the server should put data on
+the disk before replying that an operation is complete.  This means that
+the actual I/O cost on the server side cannot be hidden with caching,
+etc. when this option is selected.
+                                                                                
+In the ``async'' mode the server can get the data into a buffer (and
+perhaps put it in the write queue; this depends on the implementation)
+and reply right away.  Obviously if the server were to go down after the
+reply was sent but before the data was written, the system would be in
+a strange state, which is why so many articles suggest the "sync" option.
+
+Some systems default to ``sync'', while others default to ``async'',
+and the default can change from version to version of the NFS software.  If
+you find that access to an NFS volume through MPI-IO is particularly slow,
+this is one thing to check out.
+
 
 \subsection{Using testfs}
 The testfs ADIO implementation provides a harness for testing components

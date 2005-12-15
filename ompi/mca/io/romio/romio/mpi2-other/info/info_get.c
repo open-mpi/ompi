@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: info_get.c,v 1.7 2002/10/24 17:01:29 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -77,7 +76,7 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen, char *value, int *flag)
 
     while (curr) {
 	if (!strcmp(curr->key, key)) {
-	    strncpy(value, curr->value, valuelen);
+	    ADIOI_Strncpy(value, curr->value, valuelen);
 	    value[valuelen] = '\0';
 	    *flag = 1;
 	    break;

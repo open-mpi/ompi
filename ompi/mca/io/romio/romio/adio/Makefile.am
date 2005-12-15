@@ -20,6 +20,14 @@ include $(top_ompi_srcdir)/config/Makefile.options
 
 # Conditionals whether to build each subdir or not
 
+if BUILD_GRIDFTP
+GRIDFTP_DIR = ad_gridftp
+GRIDFTP_LIB = ad_gridftp/libadio_gridftp.la
+else
+GRIDFTP_DIR =
+GRIDFTP_LIB =
+endif
+
 if BUILD_HFS
 HFS_DIR = ad_hfs
 HFS_LIB = ad_hfs/libadio_hfs.la
@@ -45,6 +53,14 @@ endif
 #NTFS_LIB =
 #endif
 
+if BUILD_PANFS
+PANFS_DIR = ad_panfs
+PANFS_LIB = ad_panfs/libadio_panfs.la
+else
+PANFS_DIR =
+PANFS_LIB =
+endif
+
 if BUILD_PFS
 PFS_DIR = ad_pfs
 PFS_LIB = ad_pfs/libadio_pfs.la
@@ -67,6 +83,14 @@ PVFS_LIB = ad_pvfs/libadio_pvfs.la
 else
 PVFS_DIR =
 PVFS_LIB =
+endif
+
+if BUILD_PVFS2
+PVFS2_DIR = ad_pvfs2
+PVFS2_LIB = ad_pvfs2/libadio_pvfs2.la
+else
+PVFS2_DIR =
+PVFS2_LIB =
 endif
 
 if BUILD_SFS
@@ -102,11 +126,12 @@ XFS_LIB =
 endif
 
 SUBDIRS = common include \
-        $(HFS_DIR) $(NFS_DIR) $(NTFS_DIR) $(PFS_DIR) $(PIOFS_DIR) \
-        $(PVFS_DIR) $(SFS_DIR) $(TESTFS_DIR) $(UFS_DIR) $(XFS_DIR)
+	$(GRIDFTP_DIR) $(HFS_DIR) $(NFS_DIR) $(NTFS_DIR) $(PANFS_DIR) \
+	$(PFS_DIR) $(PIOFS_DIR) $(PVFS_DIR) $(PVFS2_DIR) $(SFS_DIR) \
+	$(TESTFS_DIR) $(UFS_DIR) $(XFS_DIR)
 DIST_SUBDIRS = common include \
-        ad_hfs ad_nfs ad_ntfs ad_pfs ad_piofs ad_pvfs \
-        ad_sfs ad_testfs ad_ufs ad_xfs
+        ad_gridftp ad_hfs ad_nfs ad_ntfs ad_panfs ad_pfs ad_piofs ad_pvfs \
+	ad_pvfs2 ad_sfs ad_testfs ad_ufs ad_xfs
 
 # Library
 noinst_LTLIBRARIES = libadio.la

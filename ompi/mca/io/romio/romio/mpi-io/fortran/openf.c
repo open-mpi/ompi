@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: openf.c,v 1.15 2002/10/24 17:01:22 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -18,12 +17,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+extern FORTRAN_API void FORT_CALL MPI_FILE_OPEN( MPI_Fint *, char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint *, MPI_File*, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak MPI_FILE_OPEN = PMPI_FILE_OPEN
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_open__( MPI_Fint *, char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint *, MPI_File*, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak mpi_file_open__ = pmpi_file_open__
 #elif !defined(FORTRANUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_open( MPI_Fint *, char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint *, MPI_File*, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak mpi_file_open = pmpi_file_open
 #else
+extern FORTRAN_API void FORT_CALL mpi_file_open_( MPI_Fint *, char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint *, MPI_File*, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak mpi_file_open_ = pmpi_file_open_
 #endif
 
@@ -91,11 +94,11 @@
 
 #if defined(MPIHP) || defined(MPILAM)
 /* Prototype to keep compiler happy */
-void mpi_file_open_(MPI_Fint *comm,char *filename,int *amode,
-		    MPI_Fint *info, MPI_Fint *fh, int *ierr, int str_len );
+void mpi_file_open_(MPI_Fint *comm,char *filename,MPI_Fint *amode,
+		    MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int str_len );
 
-void mpi_file_open_(MPI_Fint *comm,char *filename,int *amode,
-                  MPI_Fint *info, MPI_Fint *fh, int *ierr, int str_len )
+void mpi_file_open_(MPI_Fint *comm,char *filename,MPI_Fint *amode,
+                  MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int str_len )
 {
     char *newfname;
     MPI_File fh_c;
@@ -119,7 +122,7 @@ void mpi_file_open_(MPI_Fint *comm,char *filename,int *amode,
     real_len = i + 1;
 
     newfname = (char *) ADIOI_Malloc((real_len+1)*sizeof(char));
-    strncpy(newfname, filename, real_len);
+    ADIOI_Strncpy(newfname, filename, real_len);
     newfname[real_len] = '\0';
 
     *ierr = MPI_File_open(comm_c, newfname, *amode, info_c, &fh_c);
@@ -131,8 +134,8 @@ void mpi_file_open_(MPI_Fint *comm,char *filename,int *amode,
 #else
 
 #ifdef _UNICOS
-void mpi_file_open_(MPI_Comm *comm,_fcd filename_fcd,int *amode,
-                  MPI_Fint *info, MPI_Fint *fh, int *ierr)
+void mpi_file_open_(MPI_Fint *comm,_fcd filename_fcd,MPI_Fint *amode,
+                  MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr)
 {
     char *filename = _fcdtocp(filename_fcd);
     int str_len = _fcdlen(filename_fcd);
@@ -146,11 +149,11 @@ FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename,int *amo
                   MPI_Fint *info, MPI_Fint *fh, int *ierr, int str_len )
 */
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename FORT_MIXED_LEN_DECL,int *amode,
-		    MPI_Fint *info, MPI_Fint *fh, int *ierr FORT_END_LEN_DECL);
+FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Fint *comm,char *filename FORT_MIXED_LEN_DECL,MPI_Fint *amode,
+		    MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr FORT_END_LEN_DECL);
 
-FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename FORT_MIXED_LEN(str_len),int *amode,
-                  MPI_Fint *info, MPI_Fint *fh, int *ierr FORT_END_LEN(str_len))
+FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Fint *comm,char *filename FORT_MIXED_LEN(str_len),MPI_Fint *amode,
+                  MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr FORT_END_LEN(str_len))
 {
 #endif
     char *newfname;
@@ -173,10 +176,10 @@ FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename FORT_MIX
     real_len = i + 1;
 
     newfname = (char *) ADIOI_Malloc((real_len+1)*sizeof(char));
-    strncpy(newfname, filename, real_len);
+    ADIOI_Strncpy(newfname, filename, real_len);
     newfname[real_len] = '\0';
 
-    *ierr = MPI_File_open(*comm, newfname, *amode, info_c, &fh_c);
+    *ierr = MPI_File_open((MPI_Comm)(*comm), newfname, *amode, info_c, &fh_c);
 
     *fh = MPI_File_c2f(fh_c);
     ADIOI_Free(newfname);

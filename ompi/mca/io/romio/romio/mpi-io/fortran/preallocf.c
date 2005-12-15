@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: preallocf.c,v 1.13 2002/10/24 17:01:22 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,12 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+extern FORTRAN_API void FORT_CALL MPI_FILE_PREALLOCATE( MPI_Fint *, MPI_Offset *, MPI_Fint * );
 #pragma weak MPI_FILE_PREALLOCATE = PMPI_FILE_PREALLOCATE
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_preallocate__( MPI_Fint *, MPI_Offset *, MPI_Fint * );
 #pragma weak mpi_file_preallocate__ = pmpi_file_preallocate__
 #elif !defined(FORTRANUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_preallocate( MPI_Fint *, MPI_Offset *, MPI_Fint * );
 #pragma weak mpi_file_preallocate = pmpi_file_preallocate
 #else
+extern FORTRAN_API void FORT_CALL mpi_file_preallocate_( MPI_Fint *, MPI_Offset *, MPI_Fint * );
 #pragma weak mpi_file_preallocate_ = pmpi_file_preallocate_
 #endif
 
@@ -87,9 +90,9 @@
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_preallocate_(MPI_Fint *fh,MPI_Offset *size, int *ierr );
+FORTRAN_API void FORT_CALL mpi_file_preallocate_(MPI_Fint *fh,MPI_Offset *size, MPI_Fint *ierr );
 
-FORTRAN_API void FORT_CALL mpi_file_preallocate_(MPI_Fint *fh,MPI_Offset *size, int *ierr )
+FORTRAN_API void FORT_CALL mpi_file_preallocate_(MPI_Fint *fh,MPI_Offset *size, MPI_Fint *ierr )
 {
     MPI_File fh_c;
     

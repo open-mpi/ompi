@@ -43,22 +43,8 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libadio_ufs.la
 libadio_ufs_la_SOURCES = \
         io_romio_ad_ufs.c \
-        io_romio_ad_ufs_close.c \
-        io_romio_ad_ufs_done.c \
-        io_romio_ad_ufs_fcntl.c \
-        io_romio_ad_ufs_flush.c \
         ad_ufs.h \
-        io_romio_ad_ufs_hints.c \
-        io_romio_ad_ufs_iread.c \
-        io_romio_ad_ufs_iwrite.c \
-        io_romio_ad_ufs_open.c \
-        io_romio_ad_ufs_rdcoll.c \
-        io_romio_ad_ufs_read.c \
-        io_romio_ad_ufs_resize.c \
-        io_romio_ad_ufs_seek.c \
-        io_romio_ad_ufs_wait.c \
-        io_romio_ad_ufs_wrcoll.c \
-        io_romio_ad_ufs_write.c
+        io_romio_ad_ufs_open.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule

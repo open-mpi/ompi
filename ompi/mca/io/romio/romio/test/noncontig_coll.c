@@ -1,6 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*  
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
 #include "mpi.h"
-#include "mpio.h"  /* not necessary with MPICH 1.1.1 or HPMPI 1.4 */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,9 +12,11 @@
 
 #define SIZE 5000
 
+#define VERBOSE 0
 int main(int argc, char **argv)
 {
     int *buf, i, mynod, nprocs, len, b[3];
+    int errs=0, toterrs;
     MPI_Aint d[3];
     MPI_File fh;
     MPI_Status status;
@@ -69,7 +74,9 @@ int main(int argc, char **argv)
     MPI_Type_free(&typevec);
 
     if (!mynod) {
+#if VERBOSE
 	fprintf(stderr, "\ntesting noncontiguous in memory, noncontiguous in file using collective I/O\n");
+#endif
 	MPI_File_delete(filename, MPI_INFO_NULL);
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -90,16 +97,28 @@ int main(int argc, char **argv)
 
     for (i=0; i<SIZE; i++) {
 	if (!mynod) {
-	    if ((i%2) && (buf[i] != -1))
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", mynod, i, buf[i]);
-	    if (!(i%2) && (buf[i] != i))
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", mynod, i, buf[i], i);
+	    if ((i%2) && (buf[i] != -1)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+			mynod, i, buf[i]);
+	    }
+	    if (!(i%2) && (buf[i] != i)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+			mynod, i, buf[i], i);
+	    }
 	}
 	else {
-	    if ((i%2) && (buf[i] != i + mynod*SIZE))
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", mynod, i, buf[i], i + mynod*SIZE);
-	    if (!(i%2) && (buf[i] != -1))
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", mynod, i, buf[i]);
+	    if ((i%2) && (buf[i] != i + mynod*SIZE)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+			mynod, i, buf[i], i + mynod*SIZE);
+	    }
+	    if (!(i%2) && (buf[i] != -1)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+			mynod, i, buf[i]);
+	    }
 	}
     }
 
@@ -108,7 +127,9 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (!mynod) {
+#if VERBOSE
 	fprintf(stderr, "\ntesting noncontiguous in memory, contiguous in file using collective I/O\n");
+#endif
 	MPI_File_delete(filename, MPI_INFO_NULL);
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -127,16 +148,28 @@ int main(int argc, char **argv)
 
     for (i=0; i<SIZE; i++) {
 	if (!mynod) {
-	    if ((i%2) && (buf[i] != -1))
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", mynod, i, buf[i]);
-	    if (!(i%2) && (buf[i] != i))
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", mynod, i, buf[i], i);
+	    if ((i%2) && (buf[i] != -1)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+			mynod, i, buf[i]);
+	    }
+	    if (!(i%2) && (buf[i] != i)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+			mynod, i, buf[i], i);
+	    }
 	}
 	else {
-	    if ((i%2) && (buf[i] != i + mynod*SIZE))
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", mynod, i, buf[i], i + mynod*SIZE);
-	    if (!(i%2) && (buf[i] != -1))
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", mynod, i, buf[i]);
+	    if ((i%2) && (buf[i] != i + mynod*SIZE)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+			mynod, i, buf[i], i + mynod*SIZE);
+	    }
+	    if (!(i%2) && (buf[i] != -1)) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+			mynod, i, buf[i]);
+	    }
 	}
     }
 
@@ -145,7 +178,9 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (!mynod) {
+#if VERBOSE
 	fprintf(stderr, "\ntesting contiguous in memory, noncontiguous in file using collective I/O\n");
+#endif
 	MPI_File_delete(filename, MPI_INFO_NULL);
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -166,17 +201,32 @@ int main(int argc, char **argv)
 
     for (i=0; i<SIZE; i++) {
 	if (!mynod) {
-	    if (buf[i] != i)
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", mynod, i, buf[i], i);
+	    if (buf[i] != i) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+			mynod, i, buf[i], i);
+	    }
 	}
 	else {
-	    if (buf[i] != i + mynod*SIZE)
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", mynod, i, buf[i], i + mynod*SIZE);
+	    if (buf[i] != i + mynod*SIZE) {
+		errs++;
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+			mynod, i, buf[i], i + mynod*SIZE);
+	    }
 	}
     }
 
     MPI_File_close(&fh);
 
+    MPI_Allreduce( &errs, &toterrs, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+    if (mynod == 0) {
+	if( toterrs > 0) {
+	    fprintf( stderr, "Found %d errors\n", toterrs );
+	}
+	else {
+	    fprintf( stdout, " No Errors\n" );
+	}
+    }
 
     MPI_Type_free(&newtype);
     free(buf);

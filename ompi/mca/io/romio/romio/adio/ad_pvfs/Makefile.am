@@ -46,19 +46,12 @@ libadio_pvfs_la_SOURCES = \
         ad_pvfs.h \
         io_romio_ad_pvfs_close.c \
         io_romio_ad_pvfs_delete.c \
-        io_romio_ad_pvfs_done.c \
         io_romio_ad_pvfs_fcntl.c \
         io_romio_ad_pvfs_flush.c \
         io_romio_ad_pvfs_hints.c \
-        io_romio_ad_pvfs_iread.c \
-        io_romio_ad_pvfs_iwrite.c \
         io_romio_ad_pvfs_open.c \
-        io_romio_ad_pvfs_rdcoll.c \
         io_romio_ad_pvfs_read.c \
         io_romio_ad_pvfs_resize.c \
-        io_romio_ad_pvfs_seek.c \
-        io_romio_ad_pvfs_wait.c \
-        io_romio_ad_pvfs_wrcoll.c \
         io_romio_ad_pvfs_write.c
 
 #

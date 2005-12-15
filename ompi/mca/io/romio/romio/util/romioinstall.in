@@ -15,22 +15,23 @@ PREFIX=@prefix@
 ROMIO_HOME=@ROMIO_HOME@
 ARCH=@ARCH@
 RANLIB=@RANLIB@
+TOP_BUILD_DIR=@top_build_dir@
 # LAM Do we want to install or uninstall?
 WANT_INSTALL=1
 #
 # Default paths (set at configure time)
-    prefix=@prefix@
-    exec_prefix=@exec_prefix@
-    bindir=@bindir@
-    sbindir=@sbindir@
-    includedir=@includedir@
-    #sysconfdir=@sysconfdir@
-    libdir=@libdir@
-    #sharedlib_dir=@sharedlib_dir@
-    mandir=@mandir@
-    htmldir=@htmldir@
-    #datadir=@datadir@
-    docdir=@docdir@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+sbindir=@sbindir@
+includedir=@includedir@
+#sysconfdir=@sysconfdir@
+libdir=@libdir@
+#sharedlib_dir=@sharedlib_dir@
+mandir=@mandir@
+htmldir=@htmldir@
+#datadir=@datadir@
+docdir=@docdir@
 ## Location of sources
 #top_srcdir=@top_srcdir@
 #
@@ -40,6 +41,8 @@ XMODE=0755
 replace=1
 verbose=0
 
+failmode=soft
+
 # Shell procedures to copy files and create directories
 #
 # We could use install, but install is too different and too hard to 
@@ -48,16 +51,16 @@ verbose=0
 CP=cp
 #
 MkDir() {
-	if [ ! -e $1 ]; then mkdir $1 ; fi
+    if [ ! -e $1 ]; then mkdir $1 ; fi
 }
 CopyFile() {
 if [ -z "$3" ] ; then
-    mode=$MODE
+mode=$MODE
 else
-    mode=$3
+mode=$3
 fi
 if [ -d $2 ] ; then
-    dest=$2/`basename $1`
+dest=$2/`basename $1`
 else
     dest=$2
 fi
@@ -76,7 +79,7 @@ else
     # We don't delete the file in the event that we are copying the
     # file over itself (we SHOULD check for that separately, by checking 
     # that directories are distinct)
-    #if [ -f $dest ] ; then $Show /bin/rm -f $dest ; fi
+    #if [ -f $dest ] ; then $Show rm -f $dest ; fi
     $Show $CP $1 $dest
     rc=$?
     if [ $rc != 0 ] ; then
@@ -84,7 +87,7 @@ else
         errs=`expr $errs + 1`
         if [ $failmode = "hard" ] ; then exit $rc ; fi
     else
-	echo "/bin/rm -f $dest" >> $UNINSTALLFILE
+	echo "rm -f $dest" >> $UNINSTALLFILE
     fi
     $Show chmod $mode $dest
     rc=$?
@@ -99,7 +102,7 @@ fi
 #
 # A version of copy file that preserves file dates
 CopyFileP() {
-    CP="$CPRP -p"
+    CP="cp -p"
     CopyFile $1 $2 $3
     CP=cp
 }
@@ -152,10 +155,11 @@ if test "$WANT_INSTALL" = "1"; then
         CopyFile $file $includedir
     done
 
-    echo "copying directory $ROMIO_HOME/lib to $libdir"
+    MkDir $libdir
+    echo "copying directory $TOP_BUILD_DIR/lib to $libdir"
     #cp -r $ROMIO_HOME/lib $PREFIX
     #chmod 755 $PREFIX/lib
-    for file in $ROMIO_HOME/lib/* ; do
+    for file in $TOP_BUILD_DIR/lib/* ; do
 	if [ -f $file ] ; then 
             CopyFileP $file $libdir 
         fi
@@ -199,7 +203,8 @@ if test "$WANT_INSTALL" = "1"; then
     mv $exampledir/.romiotmp $exampledir/Makefile
     
     #
-    echo "/bin/rm -f $UNINSTALLFILE" >> $UNINSTALLFILE
+    MkDir $sbindir
+    echo "rm -f $UNINSTALLFILE" >> $UNINSTALLFILE
     # Add the directory removes to the UNINSTALL file
     for dir in $dirlist ; do
         echo "if [ -d $dir ] ; then rmdir $dir ; fi" >> $UNINSTALLFILE

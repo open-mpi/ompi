@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: get_info.c,v 1.8 2002/10/24 17:01:17 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -35,21 +34,25 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
+int MPI_File_get_info(MPI_File mpi_fh, MPI_Info *info_used)
 {
-#ifndef PRINT_ERR_MSG
     int error_code;
+    ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_INFO";
-#endif
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_get_info: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
 
-    return MPI_Info_dup(fh->info, info_used);
+    fh = MPIO_File_resolve(mpi_fh);
+
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    /* --END ERROR HANDLING-- */
+
+    error_code = MPI_Info_dup(fh->info, info_used);
+
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
+    return  error_code;
 }

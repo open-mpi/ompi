@@ -31,6 +31,8 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/ompi/include \
         -I$(top_srcdir)/adio/include
 
+EXTRA_DIST = README
+
 # It is unfortunately necessary to make all the filenames in the ROMIO
 # distribtion confrom to the MCA prefix name rule -- there is at least
 # one or two filename conflicts that potentially create problems when
@@ -44,20 +46,10 @@ noinst_LTLIBRARIES = libadio_piofs.la
 libadio_piofs_la_SOURCES = \
         io_romio_ad_piofs.c \
         ad_piofs.h \
-        io_romio_ad_piofs_close.c \
-        io_romio_ad_piofs_done.c \
         io_romio_ad_piofs_fcntl.c \
-        io_romio_ad_piofs_flush.c \
         io_romio_ad_piofs_hints.c \
-        io_romio_ad_piofs_iread.c \
-        io_romio_ad_piofs_iwrite.c \
         io_romio_ad_piofs_open.c \
-        io_romio_ad_piofs_rdcoll.c \
         io_romio_ad_piofs_read.c \
-        io_romio_ad_piofs_resize.c \
-        io_romio_ad_piofs_seek.c \
-        io_romio_ad_piofs_wait.c \
-        io_romio_ad_piofs_wrcoll.c \
         io_romio_ad_piofs_write.c
 
 #

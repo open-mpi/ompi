@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: deletef.c,v 1.14 2002/10/24 17:01:19 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -18,12 +17,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+extern FORTRAN_API void FORT_CALL MPI_FILE_DELETE( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak MPI_FILE_DELETE = PMPI_FILE_DELETE
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_delete__( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak mpi_file_delete__ = pmpi_file_delete__
 #elif !defined(FORTRANUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_delete( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak mpi_file_delete = pmpi_file_delete
 #else
+extern FORTRAN_API void FORT_CALL mpi_file_delete_( char * FORT_MIXED_LEN_DECL, MPI_Fint *, MPI_Fint * FORT_END_LEN_DECL );
 #pragma weak mpi_file_delete_ = pmpi_file_delete_
 #endif
 
@@ -102,15 +105,15 @@ void mpi_file_delete_(_fcd filename_fcd, MPI_Fint *info, int *ierr)
 FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename, MPI_Fint *info, int *ierr, int str_len)
 */
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN_DECL, MPI_Fint *info, int *ierr FORT_END_LEN_DECL);
+FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN_DECL, MPI_Fint *info, MPI_Fint *ierr FORT_END_LEN_DECL);
 
 #ifdef _UNICOS
-void mpi_file_delete_(_fcd filename_fcd, MPI_Fint *info, int *ierr)
+void mpi_file_delete_(_fcd filename_fcd, MPI_Fint *info, MPI_Fint *ierr)
 {
     char *filename = _fcdtocp(filename_fcd);
     int str_len = _fcdlen(filename_fcd);
 #else
-FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN(str_len), MPI_Fint *info, int *ierr FORT_END_LEN(str_len))
+FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN(str_len), MPI_Fint *info, MPI_Fint *ierr FORT_END_LEN(str_len))
 {
 #endif
     char *newfname;
@@ -132,7 +135,7 @@ FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN(str_le
     real_len = i + 1;
 
     newfname = (char *) ADIOI_Malloc((real_len+1)*sizeof(char));
-    strncpy(newfname, filename, real_len);
+    ADIOI_Strncpy(newfname, filename, real_len);
     newfname[real_len] = '\0';
 
     *ierr = MPI_File_delete(newfname, info_c);

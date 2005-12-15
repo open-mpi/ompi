@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: gencheck.c,v 1.3 2002/10/24 17:01:14 gropp Exp $
  *
  *   Copyright (C) 2002 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.

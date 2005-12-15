@@ -16,7 +16,7 @@ struct ADIOI_Fns_struct ADIO_NTFS_operations = {
     ADIOI_NTFS_WriteContig, /* WriteContig */
     ADIOI_GEN_ReadStridedColl, /* ReadStridedColl */
     ADIOI_GEN_WriteStridedColl, /* WriteStridedColl */
-    ADIOI_NTFS_SeekIndividual, /* SeekIndividual */
+    ADIOI_GEN_SeekIndividual, /* SeekIndividual */
     ADIOI_NTFS_Fcntl, /* Fcntl */
     ADIOI_GEN_SetInfo, /* SetInfo */
     ADIOI_GEN_ReadStrided, /* ReadStrided */
@@ -28,8 +28,8 @@ struct ADIOI_Fns_struct ADIO_NTFS_operations = {
     ADIOI_NTFS_WriteDone, /* WriteDone */
     ADIOI_NTFS_ReadComplete, /* ReadComplete */
     ADIOI_NTFS_WriteComplete, /* WriteComplete */
-    ADIOI_NTFS_IreadStrided, /* IreadStrided */
-    ADIOI_NTFS_IwriteStrided, /* IwriteStrided */
+    ADIOI_FAKE_IreadStrided, /* IreadStrided */
+    ADIOI_FAKE_IwriteStrided, /* IwriteStrided */
     ADIOI_NTFS_Flush, /* Flush */
     ADIOI_NTFS_Resize, /* Resize */
     ADIOI_GEN_Delete, /* Delete */

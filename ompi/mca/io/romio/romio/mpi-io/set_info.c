@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: set_info.c,v 1.8 2002/10/24 15:54:43 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -33,24 +32,28 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_set_info(MPI_File fh, MPI_Info info)
+int MPI_File_set_info(MPI_File mpi_fh, MPI_Info info)
 {
     int error_code;
-#ifndef PRINT_ERR_MSG
     static char myname[] = "MPI_FILE_SET_INFO";
-#endif
+    ADIO_File fh;
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_set_info: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
+
+    fh = MPIO_File_resolve(mpi_fh);
+
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    /* --END ERROR HANDLING-- */
 
     /* set new info */
     ADIO_SetInfo(fh, info, &error_code);
+    /* TODO: what to do with error code? */
+
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
 
     return error_code;
 }

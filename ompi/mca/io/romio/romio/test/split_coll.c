@@ -1,6 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*  
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
 #include "mpi.h"
-#include "mpio.h"  /* not necessary with MPICH 1.1.1 or HPMPI 1.4 */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -22,6 +25,7 @@ int main(int argc, char **argv)
     int order, nprocs, j, len;
     int array_of_dargs[3], array_of_psizes[3];
     int *readbuf, *writebuf, bufcount, mynod, *tmpbuf, array_size;
+    int errs=0, toterrs;
     char *filename;
     MPI_File fh;
     MPI_Status status;
@@ -127,11 +131,23 @@ int main(int argc, char **argv)
     MPI_File_close(&fh);
 
     /* check the data read */
-    for (i=0; i<bufcount; i++) 
-	if (readbuf[i] != writebuf[i])
-	    fprintf(stderr, "Process %d, readbuf %d, writebuf %d, i %d\n", mynod, readbuf[i], writebuf[i], i);
+    for (i=0; i<bufcount; i++) {
+	if (readbuf[i] != writebuf[i]) {
+	    errs++;
+	    fprintf(stderr, "Process %d, readbuf %d, writebuf %d, i %d\n", 
+		    mynod, readbuf[i], writebuf[i], i);
+	}
+    }
 
-    if (!mynod) fprintf(stderr, "Done\n");
+    MPI_Allreduce( &errs, &toterrs, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+    if (mynod == 0) {
+	if( toterrs > 0) {
+	    fprintf( stderr, "Found %d errors\n", toterrs );
+	}
+	else {
+	    fprintf( stdout, " No Errors\n" );
+	}
+    }
 
     MPI_Type_free(&newtype);
     free(readbuf);

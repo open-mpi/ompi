@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: set_errhf.c,v 1.8 2002/10/24 17:01:25 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,12 +14,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+extern FORTRAN_API void FORT_CALL MPI_FILE_SET_ERRHANDLER( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak MPI_FILE_SET_ERRHANDLER = PMPI_FILE_SET_ERRHANDLER
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_set_errhandler__( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak mpi_file_set_errhandler__ = pmpi_file_set_errhandler__
 #elif !defined(FORTRANUNDERSCORE)
+extern FORTRAN_API void FORT_CALL mpi_file_set_errhandler( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak mpi_file_set_errhandler = pmpi_file_set_errhandler
 #else
+extern FORTRAN_API void FORT_CALL mpi_file_set_errhandler_( MPI_Fint *, MPI_Fint *, MPI_Fint * );
 #pragma weak mpi_file_set_errhandler_ = pmpi_file_set_errhandler_
 #endif
 
@@ -87,9 +90,9 @@
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_set_errhandler_(MPI_Fint *fh, MPI_Fint *err_handler, int *ierr);
+FORTRAN_API void FORT_CALL mpi_file_set_errhandler_(MPI_Fint *fh, MPI_Fint *err_handler, MPI_Fint *ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_set_errhandler_(MPI_Fint *fh, MPI_Fint *err_handler, int *ierr)
+FORTRAN_API void FORT_CALL mpi_file_set_errhandler_(MPI_Fint *fh, MPI_Fint *err_handler, MPI_Fint *ierr)
 {
     MPI_File fh_c;
     MPI_Errhandler err_handler_c;

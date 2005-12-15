@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: file_f2c.c,v 1.9 2002/10/24 15:54:39 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -36,18 +35,5 @@ Return Value:
 @*/
 MPI_File MPI_File_f2c(MPI_Fint fh)
 {
-#ifndef INT_LT_POINTER
-    return (MPI_File) ((void *) fh);  
-    /* the extra cast is to get rid of a compiler warning on Exemplar.
-       The warning is because MPI_File points to a structure containing
-       longlongs, which may be 8-byte aligned. But MPI_Fint itself
-       may not be 8-byte aligned.*/
-#else
-    if (!fh) return MPI_FILE_NULL;
-    if ((fh < 0) || (fh > ADIOI_Ftable_ptr)) {
-	FPRINTF(stderr, "MPI_File_f2c: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-    return ADIOI_Ftable[fh];
-#endif
+    return MPIO_File_f2c(fh);
 }

@@ -44,22 +44,16 @@ noinst_LTLIBRARIES = libadio_xfs.la
 libadio_xfs_la_SOURCES = \
         io_romio_ad_xfs.c \
         ad_xfs.h \
-        io_romio_ad_xfs_close.c \
         io_romio_ad_xfs_done.c \
         io_romio_ad_xfs_fcntl.c \
-        io_romio_ad_xfs_flush.c \
         io_romio_ad_xfs_hints.c \
         io_romio_ad_xfs_iread.c \
         io_romio_ad_xfs_iwrite.c \
         io_romio_ad_xfs_open.c \
-        io_romio_ad_xfs_rdcoll.c \
         io_romio_ad_xfs_read.c \
         io_romio_ad_xfs_resize.c \
-        io_romio_ad_xfs_seek.c \
         io_romio_ad_xfs_wait.c \
-        io_romio_ad_xfs_wrcoll.c \
         io_romio_ad_xfs_write.c
-
 
 #
 # Sym link the sources to conform to the MCA prefix name rule

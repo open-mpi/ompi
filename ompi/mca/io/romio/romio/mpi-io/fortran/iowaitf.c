@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: iowaitf.c,v 1.13 2002/10/24 17:01:21 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -14,12 +13,16 @@
 #if defined(HAVE_WEAK_SYMBOLS)
 #if defined(HAVE_PRAGMA_WEAK)
 #if defined(FORTRANCAPS)
+FORTRAN_API void FORT_CALL MPIO_WAIT(MPI_Fint *request,MPI_Status *status, MPI_Fint *ierr );
 #pragma weak MPIO_WAIT = PMPIO_WAIT
 #elif defined(FORTRANDOUBLEUNDERSCORE)
+FORTRAN_API void FORT_CALL mpio_wait__(MPI_Fint *request,MPI_Status *status, MPI_Fint *ierr );
 #pragma weak mpio_wait__ = pmpio_wait__
 #elif !defined(FORTRANUNDERSCORE)
+FORTRAN_API void FORT_CALL mpio_wait(MPI_Fint *request,MPI_Status *status, MPI_Fint *ierr );
 #pragma weak mpio_wait = pmpio_wait
 #else
+FORTRAN_API void FORT_CALL mpio_wait_(MPI_Fint *request,MPI_Status *status, MPI_Fint *ierr );
 #pragma weak mpio_wait_ = pmpio_wait_
 #endif
 
@@ -86,9 +89,9 @@
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpio_wait_(MPI_Fint *request,MPI_Status *status, int *ierr );
+FORTRAN_API void FORT_CALL mpio_wait_(MPI_Fint *request,MPI_Status *status, MPI_Fint *ierr );
 
-FORTRAN_API void FORT_CALL mpio_wait_(MPI_Fint *request,MPI_Status *status, int *ierr )
+FORTRAN_API void FORT_CALL mpio_wait_(MPI_Fint *request,MPI_Status *status, MPI_Fint *ierr )
 {
     MPIO_Request req_c;
     

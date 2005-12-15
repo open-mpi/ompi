@@ -1,7 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: ad_aggregate.c,v 1.5 2002/10/24 17:01:11 gropp Exp $    
- *
  *   Copyright (C) 1997-2001 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
@@ -82,15 +80,23 @@ int ADIOI_Calc_aggregator(ADIO_File fd,
     int rank_index, rank;
     ADIO_Offset avail_bytes;
 
+    ADIOI_UNREFERENCED_ARG(fd_start);
+
 #ifdef AGG_DEBUG
 #if 0
-    FPRINTF(stdout, "off = %Ld, min_off = %Ld, len = %Ld, fd_size = %Ld\n",
+    FPRINTF(stdout, "off = %lld, min_off = %lld, len = %lld, fd_size = %lld\n",
 	    off, min_off, *len, fd_size);
 #endif
 #endif
     
     /* get an index into our array of aggregators */
     rank_index = (int) ((off - min_off + fd_size)/ fd_size - 1);
+
+    /* we index into fd_end with rank_index, and fd_end was allocated to be no
+     * bigger than fd->hins->cb_nodes.   If we ever violate that, we're
+     * overrunning arrays.  Obviously, we should never ever hit this abort */
+    if (rank_index >= fd->hints->cb_nodes)
+	    MPI_Abort(MPI_COMM_WORLD, 1);
 
     /* remember here that even in Rajeev's original code it was the case that
      * different aggregators could end up with different amounts of data to
@@ -222,6 +228,10 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
      * contig_access_count was calculated way back in ADIOI_Calc_my_off_len()
      */
     for (i=0; i < contig_access_count; i++) {
+	/* short circuit offset/len processing if len == 0 
+	 * 	(zero-byte  read/write */
+	if (len_list[i] == 0) 
+		continue;
 	off = offset_list[i];
 	fd_len = len_list[i];
 	/* note: we set fd_len to be the total size of the access.  then
@@ -272,6 +282,10 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
 /* now fill in my_req */
     curr_idx = 0;
     for (i=0; i<contig_access_count; i++) { 
+	/* short circuit offset/len processing if len == 0 
+	 * 	(zero-byte  read/write */
+	if (len_list[i] == 0)
+		continue;
 	off = offset_list[i];
 	fd_len = len_list[i];
 	proc = ADIOI_Calc_aggregator(fd, off, min_st_offset, &fd_len, fd_size, 
@@ -318,7 +332,7 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
 	    FPRINTF(stdout, "data needed from %d (count = %d):\n", i, 
 		    my_req[i].count);
 	    for (l=0; l < my_req[i].count; l++) {
-		FPRINTF(stdout, "   off[%d] = %Ld, len[%d] = %d\n", l,
+		FPRINTF(stdout, "   off[%d] = %lld, len[%d] = %d\n", l,
 			my_req[i].offsets[l], l, my_req[i].lens[l]);
 	    }
 	}

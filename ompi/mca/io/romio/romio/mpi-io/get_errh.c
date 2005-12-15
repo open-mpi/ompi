@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: get_errh.c,v 1.3 2002/10/24 15:54:40 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -36,25 +35,34 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_errhandler(MPI_File fh, MPI_Errhandler *errhandler)
+int MPI_File_get_errhandler(MPI_File mpi_fh, MPI_Errhandler *errhandler)
 {
     int error_code = MPI_SUCCESS;
-#ifndef PRINT_ERR_MSG
+    ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_ERRHANDLER";
-#endif
 
-    if (fh == MPI_FILE_NULL) *errhandler = ADIOI_DFLT_ERR_HANDLER;
-    else if (fh->cookie != ADIOI_FILE_COOKIE) {
-#ifdef PRINT_ERR_MSG
-	FPRINTF(stderr, "MPI_File_close: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_FILE, MPIR_ERR_FILE_CORRUPT, 
-              myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(MPI_FILE_NULL, error_code, myname);
-#endif
+    MPID_CS_ENTER();
+
+    if (mpi_fh == MPI_FILE_NULL) {
+	*errhandler = ADIOI_DFLT_ERR_HANDLER;
     }
-    else *errhandler = fh->err_handler;
+    else {
+	fh = MPIO_File_resolve(mpi_fh);
+	/* --BEGIN ERROR HANDLING-- */
+	if ((fh <= (MPI_File) 0) || ((fh)->cookie != ADIOI_FILE_COOKIE))
+	{
+	    error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					      myname, __LINE__, MPI_ERR_ARG,
+					      "**iobadfh", 0);
+	    error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
+	    goto fn_exit;
+	}
+	/* --END ERROR HANDLING-- */
 
-    return error_code;
+	*errhandler = fh->err_handler;
+    }
+
+fn_exit:
+    MPID_CS_EXIT();
+    return MPI_SUCCESS;
 }

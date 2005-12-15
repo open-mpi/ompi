@@ -16,7 +16,6 @@
 # $HEADER$
 #
 
-
 AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
 
 noinst_LTLIBRARIES = libmca_io_base.la
@@ -33,7 +32,8 @@ libmca_io_base_la_SOURCES = \
         io_base_file_select.c \
         io_base_find_available.c \
         io_base_open.c \
-        io_base_request.c
+        io_base_request.c \
+        io_base_register_datarep.c
 
 # Conditionally install the header files
 
@@ -43,7 +43,6 @@ ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
 endif
-
 
 distclean-local:
 	rm -f static-components.h

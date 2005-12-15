@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: info_getvlnf.c,v 1.7 2002/10/24 17:01:31 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -112,7 +111,7 @@ void mpi_info_get_valuelen_(MPI_Fint *info, char *key, int *valuelen,
     key += lead_blanks;
 
     newkey = (char *) ADIOI_Malloc((new_keylen+1)*sizeof(char));
-    strncpy(newkey, key, new_keylen);
+    ADIOI_Strncpy(newkey, key, new_keylen);
     newkey[new_keylen] = '\0';
 
     info_c = MPI_Info_f2c(*info);

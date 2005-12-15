@@ -22,6 +22,8 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+SUBDIRS = glue/openmpi
+
 AM_CPPFLAGS = \
         -DOMPI_BUILDING=1 \
         -I$(top_ompi_srcdir) \
@@ -61,8 +63,6 @@ libmpi_io_la_SOURCES = \
         io_romio_get_posn_sh.c \
         io_romio_get_size.c \
         io_romio_get_view.c \
-        io_romio_ioreq_c2f.c \
-        io_romio_ioreq_f2c.c \
         io_romio_iotest.c \
         io_romio_iowait.c \
         io_romio_iread_at.c \
@@ -105,7 +105,11 @@ libmpi_io_la_SOURCES = \
         io_romio_write_ordb.c \
         io_romio_write_ord.c \
         io_romio_write_orde.c \
-        io_romio_write_sh.c
+        io_romio_write_sh.c \
+	io_romio_register_datarep.c \
+	io_romio_mpiu_greq.c \
+	mpiu_greq.h \
+	io_romio_mpich2_fileutil.c
 
 #
 # Sym link the sources to conform to the MCA prefix name rule

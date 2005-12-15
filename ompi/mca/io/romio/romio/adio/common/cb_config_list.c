@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: cb_config_list.c,v 1.4 2002/10/24 17:01:14 gropp Exp $    
  *
  *   Copyright (C) 2001 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -83,7 +82,7 @@ int ADIOI_cb_bcast_rank_map(ADIO_File fd)
     /* TEMPORARY -- REMOVE WHEN NO LONGER UPDATING INFO FOR
      * FS-INDEP. */
     value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-    sprintf(value, "%d", fd->hints->cb_nodes);
+    ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", fd->hints->cb_nodes);
     MPI_Info_set(fd->info, "cb_nodes", value);
     ADIOI_Free(value);
 
@@ -330,7 +329,7 @@ int ADIOI_cb_config_list_parse(char *config_list,
 	else {
 	    /* AGG_STRING is the only remaining case */
 	    /* save procname (for now) */
-	    strcpy(cur_procname, yylval);
+	    ADIOI_Strncpy(cur_procname, yylval, MPI_MAX_INFO_VAL+1);
 	    cur_procname_p = cur_procname;
 	}
 
@@ -368,6 +367,10 @@ int ADIOI_cb_copy_name_array(MPI_Comm comm,
 {
     ADIO_cb_name_array array;
 
+    ADIOI_UNREFERENCED_ARG(comm);
+    ADIOI_UNREFERENCED_ARG(keyval);
+    ADIOI_UNREFERENCED_ARG(extra);
+
     array = (ADIO_cb_name_array) attr_in;
     array->refct++;
 
@@ -386,6 +389,10 @@ int ADIOI_cb_delete_name_array(MPI_Comm comm,
 {
     int i;
     ADIO_cb_name_array array;
+
+    ADIOI_UNREFERENCED_ARG(comm);
+    ADIOI_UNREFERENCED_ARG(keyval);
+    ADIOI_UNREFERENCED_ARG(extra);
 
     array = (ADIO_cb_name_array) attr_val;
     array->refct--;
@@ -673,7 +680,7 @@ static int cb_config_list_lex(void)
 
     if (*token_ptr == '\0') return AGG_EOS;
 
-    slen = strcspn(token_ptr, ":,");
+    slen = (int)strcspn(token_ptr, ":,");
 
     if (*token_ptr == ':') {
 	token_ptr++;
@@ -700,7 +707,7 @@ static int cb_config_list_lex(void)
      * should ensure that no one tries to use wildcards with strings 
      * (e.g. "ccn*").
      */
-    strncpy(yylval, token_ptr, slen);
+    ADIOI_Strncpy(yylval, token_ptr, slen);
     yylval[slen] = '\0';
     token_ptr += slen;
     return AGG_STRING;

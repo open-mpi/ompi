@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /* 
- *   $Id: read_ord.c,v 1.7 2002/10/24 15:54:42 gropp Exp $    
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -40,86 +39,64 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_read_ordered(MPI_File fh, void *buf, int count, 
+int MPI_File_read_ordered(MPI_File mpi_fh, void *buf, int count, 
                           MPI_Datatype datatype, MPI_Status *status)
 {
-    int error_code, datatype_size, nprocs, myrank, i, incr;
-#ifndef PRINT_ERR_MSG
+    int error_code, datatype_size, nprocs, myrank, incr;
+    int source, dest;
     static char myname[] = "MPI_FILE_READ_ORDERED";
-#endif
-    ADIO_Offset shared_fp;
+    ADIO_Offset shared_fp=0;
+    ADIO_File fh;
 
-#ifdef PRINT_ERR_MSG
-    if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE)) {
-	FPRINTF(stderr, "MPI_File_read_ordered: Invalid file handle\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-#else
-    ADIOI_TEST_FILE_HANDLE(fh, myname);
-#endif
+    MPID_CS_ENTER();
+    MPIR_Nest_incr();
 
-    if (count < 0) {
-#ifdef PRINT_ERR_MSG
-	FPRINTF(stderr, "MPI_File_read_ordered: Invalid count argument\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_ARG, MPIR_ERR_COUNT_ARG,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);
-#endif
-    }
+    fh = MPIO_File_resolve(mpi_fh);
 
-    if (datatype == MPI_DATATYPE_NULL) {
-#ifdef PRINT_ERR_MSG
-        FPRINTF(stderr, "MPI_File_read_ordered: Invalid datatype\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_TYPE, MPIR_ERR_TYPE_NULL,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);	    
-#endif
-    }
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    MPIO_CHECK_COUNT(fh, count, myname, error_code);
+    MPIO_CHECK_DATATYPE(fh, datatype, myname, error_code);
+    /* --END ERROR HANDLING-- */
 
     MPI_Type_size(datatype, &datatype_size);
-    if ((count*datatype_size) % fh->etype_size != 0) {
-#ifdef PRINT_ERR_MSG
-        FPRINTF(stderr, "MPI_File_read_ordered: Only an integral number of etypes can be accessed\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ERR_ETYPE_FRACTIONAL,
-				     myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);	    
-#endif
-    }
 
-    if ((fh->file_system == ADIO_PIOFS) || (fh->file_system == ADIO_PVFS)) {
-#ifdef PRINT_ERR_MSG
-	FPRINTF(stderr, "MPI_File_read_ordered: Shared file pointer not supported on PIOFS and PVFS\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-	error_code = MPIR_Err_setmsg(MPI_ERR_UNSUPPORTED_OPERATION, 
-                    MPIR_ERR_NO_SHARED_FP, myname, (char *) 0, (char *) 0);
-	return ADIOI_Error(fh, error_code, myname);
-#endif
-    }
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_INTEGRAL_ETYPE(fh, count, datatype_size, myname, error_code);
+    MPIO_CHECK_FS_SUPPORTS_SHARED(fh, myname, error_code);
+    /* --END ERROR HANDLING-- */
+
+    ADIOI_TEST_DEFERRED(fh, "MPI_File_read_ordered", &error_code);
 
     MPI_Comm_size(fh->comm, &nprocs);
     MPI_Comm_rank(fh->comm, &myrank);
 
     incr = (count*datatype_size)/fh->etype_size;
-    for (i=0; i<nprocs; i++) {
-	if (i == myrank) {
-	    ADIO_Get_shared_fp(fh, incr, &shared_fp, &error_code);
-	    if (error_code != MPI_SUCCESS) {
-		FPRINTF(stderr, "MPI_File_read_ordered: Error! Could not access shared file pointer.\n");
-		MPI_Abort(MPI_COMM_WORLD, 1);
-	    }
-	}
-	MPI_Barrier(fh->comm);
+    
+    /* Use a message as a 'token' to order the operations */
+    source = myrank - 1;
+    dest   = myrank + 1;
+    if (source < 0) source = MPI_PROC_NULL;
+    if (dest >= nprocs) dest = MPI_PROC_NULL;
+    MPI_Recv(NULL, 0, MPI_BYTE, source, 0, fh->comm, MPI_STATUS_IGNORE);
+
+    ADIO_Get_shared_fp(fh, incr, &shared_fp, &error_code);
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS) {
+	error_code = MPIO_Err_return_file(fh, error_code);
+	goto fn_exit;
     }
+    /* --END ERROR HANDLING-- */
+
+    MPI_Send(NULL, 0, MPI_BYTE, dest, 0, fh->comm);
 
     ADIO_ReadStridedColl(fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
 			 shared_fp, status, &error_code);
 
+fn_exit:
+    MPIR_Nest_decr();
+    MPID_CS_EXIT();
+
+    /* FIXME: Check for error code from ReadStridedColl? */
     return error_code;
 }
