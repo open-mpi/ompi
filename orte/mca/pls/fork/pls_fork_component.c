@@ -28,12 +28,13 @@
 #include <unistd.h>
 #endif
 
-#include "include/orte_constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
-#include "mca/pls/pls.h"
-#include "mca/pls/fork/pls_fork.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/util/proc_info.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/fork/pls_fork.h"
 
 
 /*
@@ -88,32 +89,25 @@ orte_pls_fork_component_t mca_pls_fork_component = {
 
 
 
-/**
- *  Convience functions to lookup MCA parameter values.
- */
-                                                                                                  
-static  int orte_pls_fork_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("pls","fork",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-                                                                                                  
-
 int orte_pls_fork_component_open(void)
 {
+    mca_base_component_t *c = &mca_pls_fork_component.super.pls_version;
+
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_pls_fork_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_fork_component.cond, opal_condition_t);
 
     /* lookup parameters */
-    mca_pls_fork_component.reap = orte_pls_fork_param_register_int("reap",1);
-    mca_pls_fork_component.priority = orte_pls_fork_param_register_int("priority",1);
-    mca_pls_fork_component.debug = orte_pls_fork_param_register_int("debug",0);
-    if(mca_pls_fork_component.debug == 0) {
+    mca_base_param_reg_int(c, "reap", 
+                           "Whether to wait to reap all children before finalizing or not",
+                           false, false, 1, &mca_pls_fork_component.reap);
+    mca_base_param_reg_int(c, "priority", 
+                           "Priority of this component",
+                           false, false, 1, &mca_pls_fork_component.priority);
+    mca_base_param_reg_int(c, "debug", 
+                           "Whether to enable debugging output or not",
+                           false, false, 0, &mca_pls_fork_component.debug);
+    if (mca_pls_fork_component.debug == 0) {
         int id = mca_base_param_register_int("debug",NULL,NULL,NULL,0);
         int value;
         mca_base_param_lookup_int(id,&value);
@@ -125,8 +119,13 @@ int orte_pls_fork_component_open(void)
 
 orte_pls_base_module_t *orte_pls_fork_component_init(int *priority)
 {
-    *priority = mca_pls_fork_component.priority;
-    return &orte_pls_fork_module;
+    /* Only return a module if we're in the orted */
+    if (orte_process_info.daemon) {
+        *priority = mca_pls_fork_component.priority;
+        return &orte_pls_fork_module;
+    } else {
+        return NULL;
+    }
 }
 
 
