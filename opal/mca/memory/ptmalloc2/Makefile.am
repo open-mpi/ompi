@@ -45,6 +45,8 @@ libmca_memory_ptmalloc2_la_SOURCES = \
    malloc.c \
    malloc-stats.c \
    malloc.h
+libmca_memory_ptmalloc2_la_LDFLAGS = -module -avoid-version $(memory_ptmalloc2_LDFLAGS)
+libmca_memory_ptmalloc2_la_LIBADD = $(memory_ptmalloc2_LIBS)
 
 # these are included directly and shouldn't be built solo
 EXTRA_libmca_memory_ptmalloc2_la_SOURCES = \
