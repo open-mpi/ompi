@@ -27,20 +27,46 @@ extern "C" {
 
     OMPI_DECLSPEC int mca_base_component_repository_init(void);
 
-/* This file provide the external interface to our base component module.
- * Most of the components that depend on it, will use the retain_component
- * function to increase the reference count on a particular component. But
- * it's convenient to have all the functions exported from one source file
- * in the same header. That's why we keep the retain function here. However,
- * because this function require the definition of the lt_dlhandle type,
- * therefore it will be included only when the ltdl.h has been previously
- * included in the headers list.
+/* This file provide the external interface to our base component
+ * module.  Most of the components that depend on it, will use the
+ * retain_component() function to increase the reference count on a
+ * particular component (as opposed to the retain() function, which is
+ * internal to the opal/mca/base).  But it's convenient to have all
+ * the functions exported from one header file rather than to separate
+ * retain_component() and retain() into two separate header files
+ * (i.e., have a separate header file just for retain()).
+ *
+ * Note that internal to opal/mca/base, <ltdl.h> will *always* be
+ * included before this file, and <ltdl.h> is not included anywhere
+ * else in the OMPI tree.  So checking for the LTDL_H preprocessor
+ * macro is a good indicator as to whether this file is being included
+ * from an opal/mca/base source file or not.  If we are, then we need
+ * already have a real definition of lt_dlhandle.  If we are being
+ * included from elsewhere, then <ltdl.h> will not previously have
+ * been included, LTDL_H will not be defined, and we need a fake
+ * definition of lt_dlhandle (or we'll get compile errors).  So just
+ * typedef it to (void*).
+ *
+ * One more case that this handles is the --disable-dlopen case.  In
+ * that case, even in opal/mca/base, we *won't* be including <ltdl.h>.
+ * Hence, LTDL_H won't be defined, so we'll end up typedefing
+ * lt_dlhandle to (void *).  "But why does that matter?" you ask, "If
+ * we configure with --disable-dlopen, then lt_dlhandle shouldn't be
+ * used anywhere."  Incorrect, Grasshopper.  A small number of places
+ * (like the retain() function) are still prototyped, but have 99% of
+ * their innards #if'ed out -- i.e., they just return
+ * OMPI_ERR_NOT_SUPPORTED.  Why was it coded up this way?  I'm not
+ * entirely sure -- there may be a reason (and that reason may just be
+ * conservative coding), but I'm not really too inspired to look into
+ * it any further at this point.  :-)
  */
-#if defined(LTDL_H)
+#if !defined(LTDL_H)
+    typedef void *lt_dlhandle;
+#endif
+
     OMPI_DECLSPEC int mca_base_component_repository_retain(char *type, 
                               lt_dlhandle component_handle, 
                               const mca_base_component_t *component_struct);
-#endif
 
     OMPI_DECLSPEC int mca_base_component_repository_retain_component(const char *type, 
                               const char *name);
