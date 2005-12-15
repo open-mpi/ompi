@@ -210,7 +210,7 @@ static int process(char *orig_line, char *basename, int argc, char **argv,
     /* Can we find argv[0] in the path? */
 
     getcwd(cwd, PATH_MAX);
-    tmp = opal_path_findv((*new_argv)[0], 0, environ, cwd);
+    tmp = opal_path_findv((*new_argv)[0], X_OK, environ, cwd);
     if (NULL != tmp) {
         free(tmp);
         return ORTE_SUCCESS;
