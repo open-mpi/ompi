@@ -50,7 +50,7 @@ ompi_check_linker_flags_work() {
     OMPI_LOG_MSG([$cmd], [yes])
     eval $cmd >&5 2>&5
     if test -n "[$]1"; then
-	output="`eval $cmd 2>/dev/null`"
+	output="`eval $cmd 2>/dev/null | head -n 1`"
     fi
     status="$?"
     OMPI_LOG_MSG([\$? = $status], [yes])
@@ -80,7 +80,10 @@ eval "set $output"
 extra_ldflags=
 while test -n "[$]1"; do
     case "[$]1" in
+    libtool:) ;;
+    link:) ;;
     $CC) ;;
+    .libs/bar*) ;;
     bar*) ;;
     -I*) ;;
     -L*) ;;
