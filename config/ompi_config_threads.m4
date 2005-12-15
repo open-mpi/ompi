@@ -141,7 +141,7 @@ elif test "$THREAD_TYPE" = "posix"; then
     THREAD_LIBS="$PTHREAD_LIBS"
 
     OMPI_CHECK_PTHREAD_PIDS
-elif test "$THREAD_TYPE" = "none"; then
+else
     AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 0)
     AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 0)
     AC_DEFINE(OMPI_THREADS_HAVE_DIFFERENT_PIDS, 0)
@@ -153,8 +153,8 @@ elif test "$THREAD_TYPE" = "none"; then
     THREAD_CXXCPPFLAGS=
     THREAD_LDFLAGS=
     THREAD_LIBS=
-else
-    cat <<EOF
+    if test "$THREAD_TYPE" != "none" ; then
+        cat <<EOF
 
 ************************************************************************
 
@@ -165,13 +165,10 @@ we are not aware of any users that do not have thread support - so we
 need you to e-mail us at ompi@ompi-mpi.org and let us know about this
 problem.
 
-To build this version of Open MPI without thread support, re-run
-configure with the '--without-threads' option.
-
 ************************************************************************
 
 EOF
-    AC_MSG_ERROR(["*** Can not continue."])
+    fi
 fi
 
 AM_CONDITIONAL(OMPI_HAVE_POSIX_THREADS, test "$thread_type" = "posix")

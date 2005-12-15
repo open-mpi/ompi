@@ -27,14 +27,20 @@ dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_TEXT],[
     AC_MSG_CHECKING([directive for setting text section])
     ompi_cv_asm_text=""
-    case $host in
-        *-aix*)
-            ompi_cv_asm_text=[".csect .text[PR]"]
-        ;;
-        *)
-            ompi_cv_asm_text=".text"
-        ;;
-    esac
+    if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
+        # text section will be brought in with the rest of
+        # header for MS - leave blank for now
+        ompi_cv_asm_text=""
+    else
+        case $host in
+            *-aix*)
+                ompi_cv_asm_text=[".csect .text[PR]"]
+            ;;
+            *)
+                ompi_cv_asm_text=".text"
+            ;;
+        esac
+    fi
     AC_MSG_RESULT([$ompi_cv_asm_text])
     AC_DEFINE_UNQUOTED([OMPI_ASM_TEXT], ["$ompi_cv_asm_text"],
                        [Assembly directive for setting text section])
@@ -56,11 +62,15 @@ dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_GLOBAL],[
     AC_MSG_CHECKING([directive for exporting symbols])
     ompi_cv_asm_global=""
-    case $host in
-        *)
+    if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
+        ompi_cv_asm_global="PUBLIC"
+    else
+        case $host in
+            *)
                 ompi_cv_asm_global=".globl"
-        ;;
-    esac
+            ;;
+        esac
+    fi
     AC_MSG_RESULT([$ompi_cv_asm_global])
     AC_DEFINE_UNQUOTED([OMPI_ASM_GLOBAL], ["$ompi_cv_asm_global"],
                        [Assembly directive for exporting symbols])
@@ -761,13 +771,18 @@ case "${host}" in
     ;;
 
     i?86-*|x86_64*)
-        if test "$ac_cv_sizeof_long" = "4" ; then
-                ompi_cv_asm_arch="IA32"
+        if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
+            ompi_cv_asm_arch="WINDOWS"
+            OMPI_GCC_INLINE_ASSIGN='"MOVL [$]0, %0" : "=&r"(ret)'
         else
+            if test "$ac_cv_sizeof_long" = "4" ; then
+                ompi_cv_asm_arch="IA32"
+            else
                 ompi_cv_asm_arch="AMD64"
+            fi
+            OMPI_ASM_SUPPORT_64BIT=1
+            OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
         fi
-        OMPI_ASM_SUPPORT_64BIT=1
-        OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
     ;;
 
     ia64-*)
@@ -917,6 +932,8 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_FGREP])
+
+if test "$ompi_cv_asm_arch" != "WINDOWS" ; then
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already
@@ -964,6 +981,10 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
         fi
     fi
     rm -f conftest.*
+else
+    # On windows with VC++, atomics are done with compiler primitives
+    ompi_cv_asm_file=""
+fi
 
     AC_MSG_CHECKING([for atomic assembly filename])
     if test "$ompi_cv_asm_file" = "" ; then
