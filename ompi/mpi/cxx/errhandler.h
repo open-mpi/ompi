@@ -124,7 +124,7 @@ public:
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
     // $%%@#%# AIX/POE 2.3.0.0 makes us put in this cast here
     (void)MPI_Errhandler_create((MPI_Handler_function*) &ompi_mpi_cxx_throw_excptn_fctn,
-				(MPI_Errhandler *) &mpi_errhandler); 
+				const_cast<MPI_Errhandler *> &mpi_errhandler); 
 #else
     pmpi_errhandler.init();
 #endif
@@ -134,7 +134,7 @@ public:
   //this is called from MPI::Finalize
   inline void free() const {
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
-    (void)MPI_Errhandler_free((MPI_Errhandler *) &mpi_errhandler); 
+    (void)MPI_Errhandler_free(const_cast<MPI_Errhandler *> &mpi_errhandler); 
 #else
     pmpi_errhandler.free();
 #endif

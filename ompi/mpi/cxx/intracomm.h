@@ -228,6 +228,12 @@ protected:
   PMPI::Intracomm pmpi_comm;
 #endif
 
+  // Convert an array of p_nbr Info object into an array of MPI_Info.
+  // A pointer to the allocated array is returned and must be
+  // eventually deleted.
+  static inline MPI_Info *convert_info_to_mpi_info(int p_nbr, 
+                                                   const Info p_info_tbl[]);
+
 public: // JGS see above about friend decls
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
   static Op* current_op;
