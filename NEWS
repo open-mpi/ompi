@@ -23,14 +23,14 @@ version 1.0.
 1.1
 ---
 
-- Updated ROMIO with the version from MPICH 1.2.7p1, marked as version
-  2005-06-09.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
 
 
 1.0.2
 -----
 
+- Updated ROMIO with the version from MPICH 1.2.7p1, marked as version
+  2005-06-09.
 - Fixes for some cases where the use of MPI_BOTTOM could cause
   problems.
 - Properly handle the case where an mVAPI does not have shared receive
