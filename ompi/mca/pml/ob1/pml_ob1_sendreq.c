@@ -995,9 +995,6 @@ void mca_pml_ob1_send_request_put(
             orte_errmgr.abort();
         }
     }
-#ifdef HAVE_SCHED_YIELD
-    sched_yield();
-#endif
 }
 
 
