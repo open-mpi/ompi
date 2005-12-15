@@ -278,6 +278,12 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
             DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
             pConvertor->pending_length = iov_len_local;
         }
+        /* We compute the checksum if we have to. But we will store the temporary
+         * values in the a and b variables, and only at the end take in account the
+         * value of the convertor checksum.
+         */
+        COMPUTE_SPECIFIC_CHECKSUM( iov[iov_count].iov_base, iov[iov_count].iov_len,
+                                   pConvertor->checksum );
     }
     *max_data = total_unpacked;
     *out_size = iov_count;

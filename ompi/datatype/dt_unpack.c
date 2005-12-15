@@ -390,6 +390,12 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
             stack->disp = user_memory - pData->true_lb - pConv->pBaseBuf;  /* save the position */
         }
         pConv->bConverted += bConverted;
+        /* We compute the checksum if we have to. But we will store the temporary
+         * values in the a and b variables, and only at the end take in account the
+         * value of the convertor checksum.
+         */
+        COMPUTE_SPECIFIC_CHECKSUM( iov[iov_count].iov_base, iov[iov_count].iov_len,
+                                   pConv->checksum );
     }
     *out_size = iov_count;
     *max_data = (pConv->bConverted - initial_bytes_converted);

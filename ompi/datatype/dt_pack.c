@@ -619,6 +619,12 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
         length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
         pStack[0].disp += iov[iov_count].iov_len;
+        /* We compute the checksum if we have to. But we will store the temporary
+         * values in the a and b variables, and only at the end take in account the
+         * value of the convertor checksum.
+         */
+        COMPUTE_SPECIFIC_CHECKSUM( iov[iov_count].iov_base, iov[iov_count].iov_len,
+                                   pConv->checksum );
     }
 
     /* update the return value */
@@ -752,6 +758,12 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
          * it's supposed to be useless from now.
          */
         user_memory = pConv->pBaseBuf + pStack[0].disp;
+        /* We compute the checksum if we have to. But we will store the temporary
+         * values in the a and b variables, and only at the end take in account the
+         * value of the convertor checksum.
+         */
+        COMPUTE_SPECIFIC_CHECKSUM( iov[iov_count].iov_base, iov[iov_count].iov_len,
+                                   pConv->checksum );
     }
     *max_data = total_bytes_converted;
     pConv->bConverted += total_bytes_converted;

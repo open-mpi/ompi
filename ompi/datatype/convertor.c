@@ -92,7 +92,7 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                                     struct iovec* iov, uint32_t* out_size,
                                     size_t* max_data, int32_t* freeAfter )
 {
-    pConv->checksum = 0;
+    pConv->checksum = 1;
     /* protect against over packing data */
     if( pConv->bConverted == (pConv->pDesc->size * pConv->count) ) {
         iov[0].iov_len = 0;
@@ -101,6 +101,7 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         return 1;  /* nothing to do */
     }
     assert( pConv->bConverted < (pConv->pDesc->size * pConv->count) );
+
     /* We dont allocate any memory. The packing function should allocate it
      * if it need. If it's possible to find iovec in the derived datatype
      * description then we dont have to allocate any memory.
@@ -114,7 +115,7 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 {
     const ompi_datatype_t *pData = pConv->pDesc;
 
-    pConv->checksum = 0;
+    pConv->checksum = 1;
     /* protect against over unpacking data */
     if( pConv->bConverted == (pData->size * pConv->count) ) {
         iov[0].iov_len = 0;

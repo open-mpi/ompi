@@ -318,6 +318,50 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
     return index;
 }
 
+/* Please set it to one if you want data checksum. The current implementation
+ * use ADLER32 algorithm.
+ */
+#define OMPI_REQUIRE_DATA_VALIDATION 1
+
+/* ADLER_NMAX is the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1 */
+#define ADLER_NMAX 5551
+#define MOD_ADLER 65521
+
+#if OMPI_REQUIRE_DATA_VALIDATION
+
+#define DO1(buf,i)  {_a += buf[i]; _b += _a;}
+#define DO2(buf,i)  DO1(buf,i); DO1(buf,i+1);
+#define DO4(buf,i)  DO2(buf,i); DO2(buf,i+2);
+#define DO8(buf,i)  DO4(buf,i); DO4(buf,i+4);
+#define DO16(buf)   DO8(buf,0); DO8(buf,8);
+
+#define COMPUTE_SPECIFIC_CHECKSUM( DATA, LENGTH, ADLER32) \
+do { \
+    uint8_t *_data = (DATA);   /* Pointer to the data to be summed */ \
+    size_t _len = (LENGTH);    /* Length in bytes */ \
+    uint32_t _a = (ADLER32) & 0xffff, \
+             _b = ((ADLER32) >> 16) & 0xffff; \
+\
+    while( _len > 0 ) { \
+        unsigned _tlen = _len > ADLER_NMAX ? ADLER_NMAX : _len; \
+        _len -= _tlen; \
+        while( _tlen >= 16 ) { \
+            DO16(_data); \
+            _data += 16; \
+            _tlen -= 16; \
+        } \
+        if( 0 != _tlen ) do { \
+            _a += *_data++; _b += _a; \
+        } while( --_tlen > 0 ); \
+        _a = _a % MOD_ADLER; \
+        _b = _b % MOD_ADLER; \
+    } \
+    (ADLER32) = _b << 16 | _a; \
+} while(0)
+#else
+#define COMPUTE_SPECIFIC_CHECKSUM( DATA, LENGTH, ADLER32 )
+#endif  /* OMPI_REQUIRE_DATA_VALIDATION */
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
