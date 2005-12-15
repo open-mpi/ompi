@@ -23,10 +23,12 @@
  */
 
 #include "ompi_config.h"
+
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <ctype.h>
 
 #include "include/orte_constants.h"
 #include "opal/util/argv.h"
@@ -37,6 +39,12 @@
 #include "mca/pls/rsh/pls_rsh.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/rml/rml.h"
+
+
+/*
+ * Local function
+ */
+static char **search(const char* agent_list);
 
 
 /*
@@ -148,9 +156,9 @@ int orte_pls_rsh_component_open(void)
 
     mca_base_param_reg_string(c, "agent",
                               "The command used to launch executables on remote nodes (typically either \"rsh\" or \"ssh\")",
-                              false, false, "ssh",
+                              false, false, "rsh : ssh",
                               &param);
-    mca_pls_rsh_component.argv = opal_argv_split(param, ' ');
+    mca_pls_rsh_component.argv = search(param);
     mca_pls_rsh_component.argc = opal_argv_count(mca_pls_rsh_component.argv);
     if (NULL != param) free(param);
     mca_pls_rsh_component.path = NULL;
@@ -190,7 +198,7 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
     if (NULL == mca_pls_rsh_component.argv || NULL == mca_pls_rsh_component.argv[0]) {
         return NULL;
     }
-    mca_pls_rsh_component.path = opal_path_findv(mca_pls_rsh_component.argv[0], 0, environ, NULL);
+    mca_pls_rsh_component.path = opal_path_findv(mca_pls_rsh_component.argv[0], X_OK, environ, NULL);
     if (NULL == mca_pls_rsh_component.path) {
         return NULL;
     }
@@ -214,3 +222,50 @@ int orte_pls_rsh_component_close(void)
     return ORTE_SUCCESS;
 }
 
+
+/*
+ * Take a colon-delimited list of agents and locate the first one that
+ * we are able to find in the PATH.  Split that one into argv and
+ * return it.  If nothing found, then return NULL.
+ */
+static char **search(const char* agent_list)
+{
+    int i, j;
+    char *line, **lines = opal_argv_split(agent_list, ':');
+    char **tokens, *tmp;
+    char cwd[PATH_MAX];
+
+    getcwd(cwd, PATH_MAX);
+    for (i = 0; NULL != lines[i]; ++i) {
+        line = lines[i];
+
+        /* Trim whitespace at the beginning and end of the line */
+        for (j = 0; '\0' != line[j] && isspace(line[j]); ++line) {
+            continue;
+        }
+        for (j = strlen(line) - 2; j > 0 && isspace(line[j]); ++j) {
+            line[j] = '\0';
+        }
+        if (strlen(line) <= 0) {
+            continue;
+        }
+
+        /* Split it */
+        tokens = opal_argv_split(line, ' ');
+
+        /* Look for the first token in the PATH */
+        tmp = opal_path_findv(tokens[0], X_OK, environ, cwd);
+        if (NULL != tmp) {
+            free(tmp);
+            opal_argv_free(lines);
+            return tokens;
+        }
+
+        /* Didn't find it */
+        opal_argv_free(tokens);
+    }
+
+    /* Doh -- didn't find anything */
+    opal_argv_free(lines);
+    return NULL;
+}
