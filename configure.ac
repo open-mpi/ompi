@@ -421,14 +421,13 @@ OMPI_SETUP_CXX
 
 # check for type sizes
 
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
+AC_LANG_PUSH(C++)
 AC_CHECK_SIZEOF(bool)
 
 # check for type alignments
 
 OMPI_C_GET_ALIGNMENT(bool, OMPI_ALIGNMENT_CXX_BOOL)
-AC_LANG_RESTORE
+AC_LANG_POP(C++)
 
 # check if we want C++ support                                                  
 
