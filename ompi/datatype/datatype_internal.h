@@ -321,7 +321,7 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
 /* Please set it to one if you want data checksum. The current implementation
  * use ADLER32 algorithm.
  */
-#define OMPI_REQUIRE_DATA_VALIDATION 1
+#define OMPI_REQUIRE_DATA_VALIDATION 0
 
 /* ADLER_NMAX is the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1 */
 #define ADLER_NMAX 5551
