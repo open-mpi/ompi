@@ -1124,6 +1124,7 @@ AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
 #include <dirent.h>])
 
 AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
+AC_CHECK_MEMBERS([siginfo_t.si_band],,,[#include <signal.h>])
 
 
 # checkpoint results

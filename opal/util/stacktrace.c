@@ -199,12 +199,24 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
       case SIGPOLL:
         switch (info->si_code)
           {
+#ifdef POLL_IN
              case POLL_IN: str = "POLL_IN"; break;
+#endif
+#ifdef POLL_OUT
              case POLL_OUT: str = "POLL_OUT"; break;
+#endif
+#ifdef POLL_MSG
              case POLL_MSG: str = "POLL_MSG"; break;
+#endif
+#ifdef POLL_ERR
              case POLL_ERR: str = "POLL_ERR"; break;
+#endif
+#ifdef POLL_PRI
              case POLL_PRI: str = "POLL_PRI"; break;
+#endif
+#ifdef POLL_HUP
              case POLL_HUP: str = "POLL_HUP"; break;
+#endif
           }
         break;
 #endif /* SIGPOLL */
@@ -262,9 +274,11 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 #ifdef HAVE_SIGINFO_T_SI_FD
         ret = snprintf (tmp, size, "si_band:%ld si_fd:%d\n",
                         info->si_band, info->si_fd);
-#else
+#elif HAVE_SIGINFO_T_SI_BAND
         ret = snprintf (tmp, size, "si_band:%ld\n",
                         info->si_band);
+#else
+        size = 0;
 #endif
         size -= ret;
         tmp += ret;
