@@ -40,6 +40,8 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/rml/rml.h"
 
+extern char **environ;
+
 
 /*
  * Local function
