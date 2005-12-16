@@ -89,10 +89,17 @@ int opal_mem_hooks_finalize(void);
  *
  * @retval OPAL_MEMORY_FREE_SUPPORT   Memory hooks subsytem can trigger
  *                                    callback events when memory is going 
- *                                    to be released by the process.
+ *                                    to be released by the process, either
+ *                                    by the user calling an allocator
+ *                                    function or mmap.
  * @retval OPAL_MEMORY_MALLOC_SUPPORT Memory hooks subsystem can trigger
  *                                    callback events when memory is being
- *                                    allocated by the process.
+ *                                    allocated by the process through the
+ *                                    traditional allocator (malloc,
+ *                                    calloc, etc.)
+ * @retval OPAL_MEMORY_MMAP_SUPPORT   Memory hooks subsystem can trigger
+ *                                    callback events when memory is being
+ *                                    allocated by the process through mmap.
  * @retval OPAL_MEMORY_CHUNK_SUPPORT  Memory hooks subsystem will only 
  *                                    trigger callback events when the
  *                                    process is giving memory back to the
@@ -116,9 +123,12 @@ int opal_mem_hooks_support_level(void);
  * @param lentgh  Length of the allocation
  * @param cbdata  Data passed to memory hooks when callback
  *                was registered
+ * @param from_alloc True if the callback is caused by a call to the
+ *                general allocation routines (malloc, calloc, free,
+ *                etc.) or directly from the user (mmap, munmap, etc.)
  */
 typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length, 
-                                            void *cbdata);
+                                            void *cbdata, bool from_alloc);
 
 
 /**

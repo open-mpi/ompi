@@ -22,6 +22,7 @@
 #define OPAL_MEMORY_FREE_SUPPORT   0x0001
 #define OPAL_MEMORY_MALLOC_SUPPORT 0x0002
 #define OPAL_MEMORY_CHUNK_SUPPORT  0x0004
+#define OPAL_MEMORY_MMAP_SUPPORT   0x0008
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -29,8 +30,8 @@ extern "C" {
 
 void opal_mem_hooks_set_support(int support);
 
-void opal_mem_hooks_release_hook(void *buf, size_t length);
-void opal_mem_hooks_alloc_hook(void *buf, size_t length);
+void opal_mem_hooks_release_hook(void *buf, size_t length, int from_alloc);
+void opal_mem_hooks_alloc_hook(void *buf, size_t length, int from_alloc);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

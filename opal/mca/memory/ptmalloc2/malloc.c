@@ -24,22 +24,22 @@ opal_mem_free_ptmalloc2_sbrk(int inc)
 {
   if (inc < 0) {
     long oldp = (long) sbrk(0);
-    opal_mem_hooks_release_hook((void*) (oldp + inc), -inc);
+    opal_mem_hooks_release_hook((void*) (oldp + inc), -inc, 1);
 #if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
   } else if (inc > 0) {
     long oldp = (long) sbrk(0);
-    opal_mem_hooks_alloc_hook((void*) oldp, inc);
+    opal_mem_hooks_alloc_hook((void*) oldp, inc, 1);
   }
 #endif
 
   return sbrk(inc);
 }
 
-extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length);
+extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc);
 #if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
 extern void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length, 
                                            int prot, int flags, 
-                                           int fd, off_t offset);
+                                           int fd, off_t offset, int from_alloc);
 #endif
 
 /* if we are trying to catch only allocations from and releases to the
@@ -47,9 +47,9 @@ extern void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length,
    intercept every call to malloc/realloc/free/etc., don't do this, as
    we need to add something into each of those calls anyway. */
 #define MORECORE opal_mem_free_ptmalloc2_sbrk
-#define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b)
+#define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b,1)
 #if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
-#define mmap(a,b,c,d,e,f) opal_mem_free_ptmalloc2_mmap(a,b,c,d,e,f)
+#define mmap(a,b,c,d,e,f) opal_mem_free_ptmalloc2_mmap(a,b,c,d,e,f,1)
 #endif
 
 #endif /* OMPI_MEMORY_PTMALLOC2_OPT_SBRK */
