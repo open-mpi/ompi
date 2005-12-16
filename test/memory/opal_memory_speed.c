@@ -32,7 +32,7 @@
 static void* ptrs[iters];
 
 static void
-callback(void *buf, size_t length, void *cbdata)
+callback(void *buf, size_t length, void *cbdata, bool extra)
 {
 }
 
