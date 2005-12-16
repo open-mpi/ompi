@@ -31,13 +31,13 @@ int counter = 0;
 const int bigsize = 16 * 1024 * 1024;
 
 static void
-alloc_callback(void *buf, size_t length, void *cbdata)
+alloc_callback(void *buf, size_t length, void *cbdata, bool extra)
 {
     counter++;
 }
 
 static void
-release_callback(void *buf, size_t length, void *cbdata)
+release_callback(void *buf, size_t length, void *cbdata, bool extra)
 {
     printf("\trelease callback with %lx, %d\n", (unsigned long) buf, (int) length);
     counter--;

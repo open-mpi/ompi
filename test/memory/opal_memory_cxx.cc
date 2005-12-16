@@ -32,7 +32,7 @@ int size = 10 * 1024 * 1024;
 
 extern "C" {
 static void
-callback(void *buf, size_t length, void *cbdata)
+callback(void *buf, size_t length, void *cbdata, bool extra)
 {
     printf("\tcallback with %lx, %d\n", (unsigned long) buf, (int) length);
     ret--;
