@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_REDUCE = mpi_reduce_f
@@ -68,6 +69,10 @@ void mpi_reduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_type = MPI_Type_f2c(*datatype);
     c_op = MPI_Op_f2c(*op);
     c_comm = MPI_Comm_f2c(*comm);
+
+    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+        sendbuf = MPI_IN_PLACE;
+    }
 
     *ierr = OMPI_INT_2_FINT(MPI_Reduce(sendbuf, recvbuf,
 				       OMPI_FINT_2_INT(*count),
