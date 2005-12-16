@@ -38,7 +38,7 @@
 /*
  * munmap is always intercepted
  */
-int opal_mem_free_ptmalloc2_munmap(void *start, size_t length);
+int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc);
 #if defined(HAVE___MUNMAP)
 int  __munmap(void* addr, size_t len);
 #endif
@@ -48,7 +48,7 @@ int  __munmap(void* addr, size_t len);
 int 
 munmap(void* addr, size_t len)
 {
-    return opal_mem_free_ptmalloc2_munmap(addr, len);
+    return opal_mem_free_ptmalloc2_munmap(addr, len, 0);
 }
 
 
@@ -57,13 +57,13 @@ munmap(void* addr, size_t len)
    possible, try calling __munmap from munmap and let __munmap go.  If
    that doesn't work, try dlsym */
 int
-opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
+opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
 {
 #if !defined(HAVE___MUNMAP) && defined(HAVE_DLSYM)
     static int (*realmunmap)(void*, size_t);
 #endif
 
-    opal_mem_hooks_release_hook(start, length);
+    opal_mem_hooks_release_hook(start, length, from_alloc);
 
 #if defined(HAVE___MUNMAP)
     return __munmap(start, length);
@@ -93,7 +93,8 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length)
  */
 void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length, 
                                     int prot, int flags, 
-                                    int fd, off_t offset);
+                                    int fd, off_t offset,
+                                    int from_alloc);
 
 #if defined(HAVE___MMAP)
 void* __mmap(void *start, size_t length, int prot, int flags, 
@@ -105,7 +106,7 @@ mmap(void *start, size_t length, int prot, int flags,
      int fd, off_t offset)
 {
     return opal_mem_free_ptmalloc2_mmap(start, length, prot, flags,
-                                        fd, offset);
+                                        fd, offset, 0);
 }
 
 #endif /* defined(HAVE___MMAP) */
@@ -113,7 +114,8 @@ mmap(void *start, size_t length, int prot, int flags,
 
 void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length, 
                                     int prot, int flags, 
-                                    int fd, off_t offset)
+                                    int fd, off_t offset, 
+                                    int from_alloc)
 {
     void *tmp;
 
@@ -123,7 +125,7 @@ void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length,
     tmp = mmap(start, length, prot, flags, fd, offset);
 #endif
 
-    opal_mem_hooks_alloc_hook(tmp, length);
+    opal_mem_hooks_alloc_hook(tmp, length, from_alloc);
 
     return tmp;
 }

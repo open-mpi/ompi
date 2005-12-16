@@ -30,7 +30,8 @@ extern uint32_t mca_mpool_base_page_size_log;
 /*
  *  memory hook callback, called when memory is free'd out from under us
  */
-void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
+void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata, 
+                           bool from_alloc)
 {
     uint32_t i, cnt;
     ompi_pointer_array_t regs;

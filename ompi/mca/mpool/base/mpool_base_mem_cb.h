@@ -37,7 +37,8 @@ extern "C" {
 /*
  *  memory hook callback, called when memory is free'd out from under us
  */
-    void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata);
+    void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata,
+                               bool from_alloc);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

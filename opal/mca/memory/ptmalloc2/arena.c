@@ -472,6 +472,9 @@ ptmalloc_init __MALLOC_P((void))
 #if defined(HAVE___MMAP) || defined(HAVE_DLSYM)
                              OPAL_MEMORY_MALLOC_SUPPORT |
 #endif
+#if defined(HAVE___MMAP)
+                             OPAL_MEMORY_MMAP_SUPPORT |
+#endif
 #if OMPI_MEMORY_PTMALLOC2_OPT_SBRK
                              OPAL_MEMORY_CHUNK_SUPPORT
 #else

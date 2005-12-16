@@ -120,7 +120,7 @@ opal_mem_hooks_set_support(int support)
 
 /* called from the memory manager / memory-manager specific hooks */
 void
-opal_mem_hooks_alloc_hook(void *buf, size_t length)
+opal_mem_hooks_alloc_hook(void *buf, size_t length, int from_alloc)
 {
     opal_list_item_t *item;
 
@@ -144,7 +144,7 @@ opal_mem_hooks_alloc_hook(void *buf, size_t length)
         item = next;
 
         opal_atomic_unlock(&alloc_lock);
-        cbitem.cbfunc(buf, length, cbitem.cbdata);
+        cbitem.cbfunc(buf, length, cbitem.cbdata, (bool) from_alloc);
         opal_atomic_lock(&alloc_lock);
     }
     opal_atomic_unlock(&alloc_lock);
@@ -153,7 +153,7 @@ opal_mem_hooks_alloc_hook(void *buf, size_t length)
 
 /* called from the memory manager / memory-manager specific hooks */
 void
-opal_mem_hooks_release_hook(void *buf, size_t length)
+opal_mem_hooks_release_hook(void *buf, size_t length, int from_alloc)
 {
     opal_list_item_t *item;
 
@@ -177,7 +177,7 @@ opal_mem_hooks_release_hook(void *buf, size_t length)
         item = next;
 
         opal_atomic_unlock(&release_lock);
-        cbitem.cbfunc(buf, length, cbitem.cbdata);
+        cbitem.cbfunc(buf, length, cbitem.cbdata, (bool) from_alloc);
         opal_atomic_lock(&release_lock);
     }
     opal_atomic_unlock(&release_lock);
