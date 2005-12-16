@@ -101,7 +101,7 @@ static void *
 opal_memory_darwin_malloc(struct _malloc_zone_t *zone, size_t size)
 {
     void *tmp = next_malloc(zone, size);
-    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp));
+    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp), 1);
     return tmp;
 }
 
@@ -111,7 +111,7 @@ opal_memory_darwin_calloc(struct _malloc_zone_t *zone, size_t num_items,
                           size_t size)
 {
     void *tmp = next_calloc(zone, num_items, size);
-    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp));
+    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp), 1);
     return tmp;
 }
 
@@ -120,7 +120,7 @@ static void*
 opal_memory_darwin_valloc(struct _malloc_zone_t *zone, size_t size)
 {
     void *tmp = next_valloc(zone, size);
-    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp));
+    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp), 1);
     return tmp;
 }
 
@@ -128,7 +128,7 @@ opal_memory_darwin_valloc(struct _malloc_zone_t *zone, size_t size)
 static void
 opal_memory_darwin_free(struct _malloc_zone_t *zone, void *ptr)
 {
-    opal_mem_hooks_release_hook(ptr, malloc_size(ptr));
+    opal_mem_hooks_release_hook(ptr, malloc_size(ptr), 1);
     next_free(zone, ptr);
 }
 
@@ -139,9 +139,9 @@ opal_memory_darwin_realloc(struct _malloc_zone_t *zone,
 {
     char *tmp;
 
-    opal_mem_hooks_release_hook(ptr, malloc_size(ptr));
+    opal_mem_hooks_release_hook(ptr, malloc_size(ptr), 1);
     tmp = next_realloc(zone, ptr, size);
-    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp));
+    opal_mem_hooks_alloc_hook(tmp, malloc_size(tmp), 1);
 
     return tmp;
 }
@@ -170,7 +170,7 @@ mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
     }
 
     tmp = realmmap(addr, len, prot, flags, fd, offset);
-    opal_mem_hooks_alloc_hook(tmp, len);
+    opal_mem_hooks_alloc_hook(tmp, len, 0);
 
     return tmp;
 }
@@ -182,7 +182,7 @@ munmap(void* addr, size_t len)
     static int (*realmunmap)(void*, size_t);
 
     /* dispatch about the pending release */
-    opal_mem_hooks_release_hook(addr, len);
+    opal_mem_hooks_release_hook(addr, len, 0);
 
     if (NULL == realmunmap) {
         union { 
