@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_SCATTER = mpi_scatter_f
@@ -67,6 +68,10 @@ void mpi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
     
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);
+
+    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+        sendbuf = MPI_IN_PLACE;
+    }
 
     *ierr = OMPI_INT_2_FINT(MPI_Scatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
 					c_sendtype, recvbuf, 

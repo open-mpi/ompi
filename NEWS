@@ -29,6 +29,8 @@ version 1.0.
 1.0.2
 -----
 
+- Added missing MPI::Intercomm collectives.
+- Fixed MPI_IN_PLACE handling for Fortran collectives.
 - Fixed some more C++ const_cast<> issues.  Thanks for Martin Audet
   (again) for bringing this to our attention.
 - Updated ROMIO with the version from MPICH 1.2.7p1, marked as version
