@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ALLGATHERV = mpi_allgatherv_f
@@ -74,6 +75,10 @@ void mpi_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     MPI_Comm_size(c_comm, &size);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
+
+    if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
+        sendbuf = MPI_IN_PLACE;
+    }
 
     *ierr = OMPI_INT_2_FINT(MPI_Allgatherv(sendbuf,
 					   OMPI_FINT_2_INT(*sendcount),
