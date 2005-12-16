@@ -71,7 +71,6 @@ void mpi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     c_op = MPI_Op_f2c(*op);
 
     if (OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
-        printf("converted to inplace\n");
         sendbuf = MPI_IN_PLACE;
     }
 
