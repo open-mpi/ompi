@@ -35,21 +35,10 @@
 #define FD_SETSIZE 1024
 
 /* other utility header files */
-#include <cderr.h>
-#include <dde.h>
-#include <ddeml.h>
-#include <dlgs.h>
-#include <imm.h>
-#include <lzexpand.h>
-#include <mmsystem.h>
-#include <nb30.h>
-#include <rpc.h>
+#if !defined(__cplusplus)
 #include <shellapi.h>
-#include <winperf.h>
 #include <winsock2.h>
-/*#include <ws2tcpip.h>*/
 #include <process.h>
-/*#include <io.h>*/
 #include <signal.h>
 /*#if defined(OMPI_BUILDING) && OMPI_BUILDING */
 #include "win32/ompi_uio.h"
@@ -59,14 +48,29 @@
 #include "win32/ompi_misc.h"
 #include "opal/util/printf.h"
 /*#endif*/
+#endif  /* !defined(__cplusplus) */
 
-#define MAXPATHLEN MAX_PATH
-#define MAXHOSTNAMELEN MAX_PATH
+#define MAXPATHLEN _MAX_PATH
+#define MAXHOSTNAMELEN _MAX_PATH
+#define PATH_MAX _MAX_PATH
+#define STDIN_FILENO  0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
 typedef unsigned short mode_t;
 typedef long ssize_t;
 typedef DWORD in_port_t;
 typedef int caddr_t;
 typedef unsigned int uint;
+
+/* Defines for the access functions */
+#define F_OK  0x00
+#define R_OK  0x02
+#define W_OK  0x04
+#define X_OK  0x06
+#define WTERMSIG(EXIT_CODE)    (1)
+#define WIFEXITED(EXIT_CODE)   (1)
+#define WEXITSTATUS(EXIT_CODE) (1)
+#define WIFSIGNALED(EXIT_CODE) (0)
 
 /* Anju: some random #defines which I know offhand, but need to configure it */
 #define OMPI_ALIGNMENT_CXX_BOOL OMPI_ALIGNMENT_INT
@@ -87,7 +91,9 @@ typedef unsigned int uint;
 #define HAVE_DECL___FUNC__ 1
 
 /* Microsoft claim that strdup is deprecated and that we should use _strdup. */
-#define strdup _strdup
+/*#define strdup _strdup*/
+/*#define strncpy strncpy_s*/
+/*#define sprintf sprintf_s*/
 
 /* Ugly signal mapping since windows doesn't support the full spectrum
  * just a very small subset... :/
@@ -108,7 +114,7 @@ typedef unsigned int uint;
 #define sigset_t int
 
 /*
- * Mask these to Windows equlivants
+ * Mask these to Windows equivalents
  */
 #define bzero(p, l) memset(p, 0, l)
 #define bcopy(s, t, l) memmove(t, s, l)

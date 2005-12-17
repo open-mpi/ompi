@@ -17,13 +17,7 @@
  */
 
 #include "ompi_config.h"
-#include "ompi_utsname.h"
-
-#ifdef WIN32
-#   define WIN32_LEAN_AND_MEAN
-#   include <windows.h>
-#   undef WIN32_LEAN_AND_MEAN
-#endif
+#include "opal/win32/ompi_utsname.h"
 
 /*
     This has to fill in the following information
@@ -35,7 +29,9 @@
     5. machine: GetSystemInfo
 */
     
-int uname (struct utsname *un) {
+OMPI_DECLSPEC int
+uname( struct utsname *un )
+{
 
     /* 1. get the OS name */
     TCHAR env_variable[] = "OS=%OS%";

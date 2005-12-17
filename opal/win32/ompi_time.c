@@ -17,15 +17,15 @@
  */
 
 #include "ompi_config.h"
-#include "win32/ompi_time.h"
+#include "opal/win32/ompi_time.h"
 
-#ifdef WIN32
-#   include<time.h>
-#endif
+#include<time.h>
 
 #define EPOCHFILETIME (116444736000000000LL)
 
-int gettimeofday(struct timeval *tv, struct timezone *tz) {
+OMPI_DECLSPEC int
+gettimeofday(struct timeval *tv, struct timezone *tz)
+{
     
     FILETIME file_time;
     LARGE_INTEGER place_holder;
