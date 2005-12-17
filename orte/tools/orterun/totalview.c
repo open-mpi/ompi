@@ -38,11 +38,15 @@
  */
 
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif  /* HAVE_STDLIB_H */
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif  /* HAVE_STRINGS_H */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+#endif  /* HAVE_UNISTD_H */
 #include <ctype.h>
 
 /*
