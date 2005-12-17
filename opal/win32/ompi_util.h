@@ -21,15 +21,16 @@
 
 #include <string.h>
 
-static __inline int getpagesize(void) {
+static __inline int getpagesize(void)
+{
     SYSTEM_INFO sys_info;
 
     GetSystemInfo(&sys_info);
     return (int)sys_info.dwPageSize;
 }
 
-
-static __inline char *basename(char *path) {
+static __inline char *basename(char *path)
+{
     char *p = path;
     char *ret;
 
@@ -52,8 +53,8 @@ static __inline char *dirname(char *path) {
     char *dirname; 
     char *base;
 	
-	base = basename(path);
-	dirname = _strdup(path);
+    base = basename(path);
+    dirname = _strdup(path);
 
     strncpy(dirname, path, strlen(path)-strlen(base));
     dirname[strlen(path)-strlen(base)] = '\0';

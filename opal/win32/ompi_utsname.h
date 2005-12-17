@@ -39,7 +39,7 @@ struct utsname {
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-    int uname(struct utsname *un);
+    OMPI_DECLSPEC int uname(struct utsname *un);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

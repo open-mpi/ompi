@@ -17,7 +17,7 @@
  */
 
 #include "ompi_config.h"
-#include "win32/ompi_uio.h"
+#include "opal/win32/ompi_uio.h"
 #include <errno.h>
 
 /*
@@ -26,33 +26,33 @@
  of code to handle the windows error flags 
  */
 
-int
-writev(int fd,struct iovec * iov,int cnt)
+OMPI_DECLSPEC int
+writev( int fd, struct iovec * iov, int cnt )
 {
-    int err;
-    DWORD sendlen;
+   int err;
+   DWORD sendlen;
 
-	err = WSASend((SOCKET) fd, &(iov->data), cnt, &sendlen, 0, NULL, NULL);
+   err = WSASend((SOCKET) fd, &(iov->data), cnt, &sendlen, 0, NULL, NULL);
 
-	if (err < 0) {
-        return err;
-	} else {
-	    return (int) sendlen;
-	}
+   if (err < 0) {
+      return err;
+   }
+   return (int) sendlen;
 } 
 
 
-int
-readv(int fd,struct iovec * iov,int cnt)
+OMPI_DECLSPEC int
+readv( int fd, struct iovec * iov, int cnt )
 {
    int err;
    DWORD recvlen = 0;
    DWORD flags = 0;
+
    err = WSARecv((SOCKET) fd, &(iov->data), cnt, &recvlen, &flags, NULL, NULL);
 
-   if (err < 0) {
+   if( err < 0 ) {
 	   return err;
-   } else {
-	   return (int) recvlen;
    }
+   return (int) recvlen;
 } 
+
