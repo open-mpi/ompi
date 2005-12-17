@@ -29,8 +29,12 @@
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif  /* HAVE_SYS_WAIT_H */
 
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
