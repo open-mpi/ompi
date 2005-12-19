@@ -179,7 +179,7 @@ munmap(void* addr, size_t len)
 {
     static int (*realmunmap)(void*, size_t);
     /* dispatch about the pending release */
-    opal_mem_hooks_release_hook(addr, len, 1);
+    opal_mem_hooks_release_hook(addr, len, 0);
     assert(__malloc_hook == local_malloc_hook);
 
     if (NULL == realmunmap) {
