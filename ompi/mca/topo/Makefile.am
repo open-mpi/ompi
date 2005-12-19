@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS = $(OPAL_LTDL_CPPFLAGS)
+
 # main library setup
 noinst_LTLIBRARIES = libmca_topo.la
 libmca_topo_la_SOURCES =
