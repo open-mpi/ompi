@@ -43,11 +43,12 @@ atomic-asm.s: generated/@OMPI_ASM_FILE@
 
 if OMPI_HAVE_ASM_FILE
 nodist_libasm_la_SOURCES = atomic-asm.s
+libasm_la_DEPENDENCIES = generated/@OMPI_ASM_FILE@
 else
 nodist_libasm_la_SOURCES =
+libasm_la_DEPENDENCIES =
 endif
 
-libasm_la_DEPENDENCIES = generated/@OMPI_ASM_FILE@
 noinst_LTLIBRARIES = libasm.la
 dist_libasm_la_SOURCES = asm.c
 
