@@ -33,7 +33,6 @@
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
-#include <io.h>
 
 #include "tools/ompi_info/ompi_info.h"
 
