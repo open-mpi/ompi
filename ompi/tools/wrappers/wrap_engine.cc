@@ -16,10 +16,10 @@
 // $HEADER$
 //
 
-#include <iostream>
 #include "ompi_config.h"
 #include "tools/wrappers/ompi_wrap.h"
 
+#include <iostream>
 using namespace std;
 
 ///
