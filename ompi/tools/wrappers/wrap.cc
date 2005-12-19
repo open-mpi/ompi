@@ -23,11 +23,21 @@
 #include <vector>
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif  /* HAVE_STRING_H */
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif  /* HAVE_SYS_TYPES_H */
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif  /* HAVE_SYS_WAIT_H */
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif  /* HAVE_SYS_STAT_H */
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 #include <errno.h>
 
 #include "opal/util/path.h"
@@ -224,10 +234,6 @@ ompi_wrap_build_xppflags(const ompi_sv_t & env_list,
 
 #if OMPI_WANT_CXX_BINDINGS || OMPI_WANT_DEVEL_HEADERS
     xppflags.push_back("-I" + incdir + "/openmpi/ompi");
-#endif
-
-#if defined(WIN32) && WIN32
-#error "Anju needs to fix me.  FIX ME FIX ME FIX ME."
 #endif
 }
 
