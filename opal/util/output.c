@@ -70,7 +70,7 @@ struct output_desc_t
     bool ldi_syslog;
     int ldi_syslog_priority;
 
-#ifndef WIN32
+#ifndef __WINDOWS__
     char *ldi_syslog_ident;
 #else
     HANDLE ldi_syslog_ident;
@@ -269,7 +269,7 @@ void opal_output_close(int output_id)
             }
         }
 
-#ifndef WIN32
+#ifndef __WINDOWS__
         if (i >= OPAL_OUTPUT_MAX_STREAMS && syslog_opened) {
             closelog();
         }
@@ -450,7 +450,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
     info[i].ldi_syslog = lds->lds_want_syslog;
     if (lds->lds_want_syslog) {
 
-#ifndef WIN32
+#ifndef __WINDOWS__
 	if (NULL != lds->lds_syslog_ident) {
 	    info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
 	    openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
@@ -534,7 +534,7 @@ static int open_file(int i)
 	/* Make the file be close-on-exec to prevent child inheritance
 	 * problems */
 
-#ifndef WIN32
+#ifndef __WINDOWS__
 	/* TODO: Need to find out the equivalent in windows */
 	fcntl(info[i].ldi_fd, F_SETFD, 1);
 #endif
@@ -577,7 +577,7 @@ static void free_descriptor(int output_id)
 	}
 	ldi->ldi_file_suffix = NULL;
 
-#ifndef WIN32
+#ifndef __WINDOWS__
 	if (NULL != ldi->ldi_syslog_ident) {
 	    free(ldi->ldi_syslog_ident);
 	}
@@ -650,7 +650,7 @@ static void output(int output_id, const char *format, va_list arglist)
 
 	if (ldi->ldi_syslog) {
 
-#ifndef WIN32
+#ifndef __WINDOWS__
 	    syslog(ldi->ldi_syslog_priority, str);
 #endif
 	}
