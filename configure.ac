@@ -1181,11 +1181,8 @@ OMPI_CHECK_FUNC_LIB([backtrace], [execinfo])
 # IRIX has dirname in -lgen, usually in libc
 OMPI_CHECK_FUNC_LIB([dirname], [gen])
 
-#
-# See if we need the math library explicitly linked in
-#
-
-AC_CHECK_LIB([m], [ceil])
+# Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
+OMPI_CHECK_FUNC_LIB([ceil], [m])
 
 # checkpoint results
 AC_CACHE_SAVE
