@@ -23,8 +23,6 @@ ob1_sources  = \
 	pml_dr_comm.h \
 	pml_dr_component.c \
 	pml_dr_component.h \
-	pml_dr_endpoint.c \
-	pml_dr_endpoint.h \
 	pml_dr_hdr.h \
 	pml_dr_iprobe.c \
 	pml_dr_irecv.c \
@@ -38,7 +36,8 @@ ob1_sources  = \
 	pml_dr_recvreq.h \
 	pml_dr_sendreq.c \
 	pml_dr_sendreq.h \
-	pml_dr_start.c 
+	pml_dr_start.c \
+	pml_dr_vfrag.c 
 
 if OMPI_BUILD_pml_dr_DSO
 component_noinst =

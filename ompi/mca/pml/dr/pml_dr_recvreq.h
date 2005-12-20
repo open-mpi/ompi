@@ -21,10 +21,13 @@
 #ifndef OMPI_PML_DR_RECV_REQUEST_H
 #define OMPI_PML_DR_RECV_REQUEST_H
 
-#include "pml_dr.h"
-#include "pml_dr_proc.h"
+#include "ompi_config.h"
 #include "mca/mpool/base/base.h"
 #include "mca/pml/base/pml_base_recvreq.h"
+
+#include "pml_dr.h"
+#include "pml_dr_proc.h"
+#include "pml_dr_vfrag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -34,15 +37,19 @@ extern "C" {
 struct  mca_pml_dr_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     struct ompi_proc_t *req_proc;
-    ompi_ptr_t req_send;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t req_lock;
 #else
     int32_t req_lock;
 #endif
-    size_t  req_pipeline_depth;
-    size_t  req_bytes_received;
-    size_t  req_bytes_delivered;
+    size_t       req_pipeline_depth;
+    size_t       req_bytes_received;
+    size_t       req_bytes_delivered;
+
+    mca_pml_dr_vfrag_t *req_vfrag;
+    mca_pml_dr_vfrag_t req_vfrag0;
+    opal_list_t  req_vfrags;
+    opal_mutex_t req_mutex;
 };
 typedef struct mca_pml_dr_recv_request_t mca_pml_dr_recv_request_t;
 
@@ -56,12 +63,12 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_DR_RECV_REQUEST_ALLOC(recvreq, rc)                \
+#define MCA_PML_DR_RECV_REQUEST_ALLOC(recvreq, rc)                 \
 do {                                                               \
    opal_list_item_t* item;                                         \
    rc = OMPI_SUCCESS;                                              \
-   OMPI_FREE_LIST_GET(&mca_pml_dr.recv_requests, item, rc);       \
-   recvreq = (mca_pml_dr_recv_request_t*)item;                    \
+   OMPI_FREE_LIST_GET(&mca_pml_dr.recv_requests, item, rc);        \
+   recvreq = (mca_pml_dr_recv_request_t*)item;                     \
 } while(0)
 
 
@@ -77,7 +84,7 @@ do {                                                               \
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PML_DR_RECV_REQUEST_INIT(                             \
+#define MCA_PML_DR_RECV_REQUEST_INIT(                              \
     request,                                                       \
     addr,                                                          \
     count,                                                         \
@@ -105,6 +112,16 @@ do {                                                               \
  */
 #define MCA_PML_DR_RECV_REQUEST_RETURN(recvreq)                                     \
 do {                                                                                \
+    opal_list_item_t* item;                                                         \
+                                                                                    \
+    /* return vfrags */                                                             \
+    OPAL_THREAD_LOCK(&(recvreq)->req_mutex);                                        \
+    while(NULL != (item = opal_list_remove_first(&(recvreq)->req_vfrags))) {        \
+        OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, item);                            \
+    }                                                                               \
+    OPAL_THREAD_UNLOCK(&(recvreq)->req_mutex);                                      \
+                                                                                    \
+    /* decrement reference counts */                                                \
     MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                           \
     OMPI_FREE_LIST_RETURN(&mca_pml_dr.recv_requests, (opal_list_item_t*)(recvreq)); \
 } while(0)
@@ -131,7 +148,7 @@ void mca_pml_dr_recv_request_match_specific(mca_pml_dr_recv_request_t* request);
  * @param request  Receive request.
  * @return         OMPI_SUCESS or error status on failure.
  */
-#define MCA_PML_DR_RECV_REQUEST_START(request)                                   \
+#define MCA_PML_DR_RECV_REQUEST_START(request)                                    \
 do {                                                                              \
     /* init/re-init the request */                                                \
     (request)->req_bytes_received = 0;                                            \
@@ -141,6 +158,7 @@ do {                                                                            
     (request)->req_recv.req_base.req_pml_complete = false;                        \
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
     (request)->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;        \
+    (request)->req_vfrag = &(request)->req_vfrag0;                                \
                                                                                   \
     /* always set the req_status.MPI_TAG to ANY_TAG before starting the           \
      * request. This field is used if cancelled to find out if the request        \
@@ -152,9 +170,9 @@ do {                                                                            
                                                                                   \
     /* attempt to match posted recv */                                            \
     if((request)->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {                \
-        mca_pml_dr_recv_request_match_wild(request);                             \
+        mca_pml_dr_recv_request_match_wild(request);                              \
     } else {                                                                      \
-        mca_pml_dr_recv_request_match_specific(request);                         \
+        mca_pml_dr_recv_request_match_specific(request);                          \
     }                                                                             \
 } while (0)
 
@@ -163,7 +181,7 @@ do {                                                                            
  *
  */
 
-#define MCA_PML_DR_RECV_REQUEST_MATCHED(                                            \
+#define MCA_PML_DR_RECV_REQUEST_MATCHED(                                             \
     request,                                                                         \
     hdr)                                                                             \
 do {                                                                                 \
@@ -190,14 +208,15 @@ do {                                                                            
  *
  */
 
-#define MCA_PML_DR_RECV_REQUEST_UNPACK(                                          \
+#define MCA_PML_DR_RECV_REQUEST_UNPACK(                                           \
     request,                                                                      \
     segments,                                                                     \
     num_segments,                                                                 \
     seg_offset,                                                                   \
     data_offset,                                                                  \
     bytes_received,                                                               \
-    bytes_delivered)                                                              \
+    bytes_delivered,                                                              \
+    csum)                                                                         \
 do {                                                                              \
     if(request->req_recv.req_bytes_packed > 0) {                                  \
         struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
@@ -259,6 +278,49 @@ void mca_pml_dr_recv_request_matched_probe(
 void mca_pml_dr_recv_request_schedule(
     mca_pml_dr_recv_request_t* req);
 
+/*
+ *
+ */
+
+#define MCA_PML_DR_RECV_REQUEST_VFRAG_LOOKUP(recvreq,hdr,vfrag)               \
+do {                                                                          \
+   if((recvreq)->req_vfrag->vf_id == (hdr)->hdr_vid) {                        \
+       vfrag = (recvreq)->req_vfrag;                                          \
+   } else if ((hdr)->hdr_frag_offset == 0) {                                  \
+       vfrag = &(recvreq)->req_vfrag0;                                        \
+   } else {                                                                   \
+       opal_list_item_t* item;                                                \
+       int rc;                                                                \
+                                                                              \
+       vfrag = NULL;                                                          \
+       OPAL_THREAD_LOCK(&(recvreq)->req_mutex);                               \
+       for(item =  opal_list_get_first(&(recvreq)->req_vfrags);               \
+           item != opal_list_get_end(&(recvreq)->req_vfrags);                 \
+           item =  opal_list_get_next(item)) {                                \
+           mca_pml_dr_vfrag_t* vf = (mca_pml_dr_vfrag_t*)item;                \
+           if(vf->vf_id == (hdr)->hdr_vid) {                                  \
+               vfrag = vf;                                                    \
+               break;                                                         \
+           }                                                                  \
+       }                                                                      \
+       if(NULL == vfrag) {                                                    \
+           MCA_PML_DR_VFRAG_ALLOC(vfrag,rc);                                  \
+           if(NULL != vfrag) {                                                \
+               (vfrag)->vf_id = (hdr)->hdr_vid;                               \
+               (vfrag)->vf_len = (hdr)->hdr_vlen;                             \
+               (vfrag)->vf_ack = 0;                                           \
+               if((hdr)->hdr_vlen == 64) {                                    \
+                   (vfrag)->vf_mask = ~(uint64_t)0;                           \
+               } else {                                                       \
+                   (vfrag)->vf_mask = (((uint64_t)1 << (hdr)->hdr_vlen)-1);   \
+               }                                                              \
+               opal_list_append(&(recvreq)->req_vfrags, (opal_list_item_t*)vfrag); \
+               (recvreq)->req_vfrag = vfrag;                                  \
+           }                                                                  \
+       }                                                                      \
+       OPAL_THREAD_UNLOCK(&(recvreq)->req_mutex);                             \
+   }                                                                          \
+} while(0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

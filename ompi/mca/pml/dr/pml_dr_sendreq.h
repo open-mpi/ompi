@@ -21,14 +21,17 @@
 #ifndef OMPI_PML_DR_SEND_REQUEST_H
 #define OMPI_PML_DR_SEND_REQUEST_H
 
-#include "mca/btl/btl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/mpool/base/base.h"
+#include "ompi_config.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/bml/bml.h" 
+
 #include "pml_dr_proc.h"
 #include "pml_dr_comm.h"
 #include "pml_dr_hdr.h"
-#include "datatype/convertor.h"
-#include "mca/bml/bml.h" 
+#include "pml_dr_vfrag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -39,17 +42,24 @@ struct mca_pml_dr_send_request_t {
     mca_pml_base_send_request_t req_send;
     ompi_proc_t* req_proc; 
     mca_bml_base_endpoint_t* req_endpoint;
-    ompi_ptr_t req_recv;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t req_state;
     volatile int32_t req_lock;
 #else
-    volatile int32_t req_state;
-    volatile int32_t req_lock;
+    int32_t req_state;
+    int32_t req_lock;
 #endif
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
     size_t req_send_offset;
+
+    mca_pml_dr_vfrag_t* req_vfrag;
+    mca_pml_dr_vfrag_t  req_vfrag0;
+    opal_list_t         req_pending;
+    opal_list_t         req_retrans;
+    opal_mutex_t        req_mutex;
+    size_t              req_num_acks;
+    size_t              req_num_vfrags;
 };
 typedef struct mca_pml_dr_send_request_t mca_pml_dr_send_request_t;
 
@@ -57,7 +67,7 @@ typedef struct mca_pml_dr_send_request_t mca_pml_dr_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
 
 
-#define MCA_PML_DR_SEND_REQUEST_ALLOC(                                    \
+#define MCA_PML_DR_SEND_REQUEST_ALLOC(                                     \
     comm,                                                                  \
     dst,                                                                   \
     sendreq,                                                               \
@@ -71,14 +81,14 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
         rc = OMPI_ERR_OUT_OF_RESOURCE;                                     \
     } else {                                                               \
         rc = OMPI_SUCCESS;                                                 \
-        OMPI_FREE_LIST_WAIT(&mca_pml_dr.send_requests, item, rc);         \
-        sendreq = (mca_pml_dr_send_request_t*)item;                       \
+        OMPI_FREE_LIST_WAIT(&mca_pml_dr.send_requests, item, rc);          \
+        sendreq = (mca_pml_dr_send_request_t*)item;                        \
         sendreq->req_proc = proc;                                          \
     }                                                                      \
 }
 
 
-#define MCA_PML_DR_SEND_REQUEST_INIT(                                     \
+#define MCA_PML_DR_SEND_REQUEST_INIT(                                      \
     sendreq,                                                               \
     buf,                                                                   \
     count,                                                                 \
@@ -108,6 +118,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
 #define MCA_PML_DR_SEND_REQUEST_START(sendreq, rc)                                        \
 do {                                                                                      \
     mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;            \
+    mca_pml_dr_comm_proc_t* proc = comm->procs + sendreq->req_send.req_base.req_peer;     \
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)sendreq->req_proc->proc_pml; \
     mca_bml_base_btl_t* bml_btl;                                                          \
     size_t size = sendreq->req_send.req_bytes_packed;                                     \
@@ -126,9 +137,12 @@ do {                                                                            
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
     sendreq->req_send.req_base.req_ompi.req_status._cancelled = 0;                        \
-    sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(                          \
-        &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);               \
+    sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->send_sequence,1);  \
     sendreq->req_endpoint = endpoint;                                                     \
+    sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
+    sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
+    sendreq->req_num_acks = 0;                                                            \
+    sendreq->req_num_vfrags = 0;                                                          \
                                                                                           \
     /* select a btl */                                                                    \
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                      \
@@ -137,32 +151,32 @@ do {                                                                            
     if(size == 0 && sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {   \
         mca_btl_base_descriptor_t* descriptor;                                            \
         mca_btl_base_segment_t* segment;                                                  \
-        mca_pml_dr_hdr_t* hdr;                                                           \
+        mca_pml_dr_hdr_t* hdr;                                                            \
                                                                                           \
         /* allocate a descriptor */                                                       \
-        MCA_PML_DR_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_dr_match_hdr_t));      \
+        MCA_PML_DR_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_dr_match_hdr_t));        \
         if(NULL == descriptor) {                                                          \
             return OMPI_ERR_OUT_OF_RESOURCE;                                              \
         }                                                                                 \
         segment = descriptor->des_src;                                                    \
                                                                                           \
         /* build hdr */                                                                   \
-        hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;                                 \
+        hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;                                  \
         hdr->hdr_common.hdr_flags = 0;                                                    \
-        hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_MATCH;                            \
+        hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_MATCH;                             \
         hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;        \
         hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;          \
         hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
         hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;                 \
                                                                                           \
         /* short message */                                                               \
-        descriptor->des_cbfunc = mca_pml_dr_match_completion_cache;                      \
+        descriptor->des_cbfunc = mca_pml_dr_match_completion_cache;                       \
         descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                              \
         descriptor->des_cbdata = sendreq;                                                 \
                                                                                           \
         /* request is complete at mpi level */                                            \
         OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
-        MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                                   \
+        MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                                    \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
                                                                                           \
         /* send */                                                                        \
@@ -205,7 +219,7 @@ do {                                                                            
  * Mark a send request as completed at the MPI level.
  */
 
-#define MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq)                                    \
+#define MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq)                                     \
 do {                                                                                      \
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_SOURCE =                          \
        (sendreq)->req_send.req_base.req_comm->c_my_rank;                                  \
@@ -226,7 +240,7 @@ do {                                                                            
  * may have been orphaned by the user or have already completed
  * at the MPI level. 
  */
-#define MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq)                                    \
+#define MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq)                                     \
 do {                                                                                      \
     /* request completed at pml level */                                                  \
     (sendreq)->req_send.req_base.req_pml_complete = true;                                 \
@@ -238,10 +252,10 @@ do {                                                                            
             (sendreq)->req_send.req_addr != (sendreq)->req_send.req_base.req_addr) {      \
             mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                    \
         }                                                                                 \
-        MCA_PML_DR_SEND_REQUEST_RETURN(sendreq);                                         \
+        MCA_PML_DR_SEND_REQUEST_RETURN(sendreq);                                          \
     /* is request complete at mpi level */                                                \
     } else if ((sendreq)->req_send.req_base.req_ompi.req_complete == false) {             \
-        MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                                   \
+        MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                                    \
     /* buffered send - release any resources */                                           \
     } else if ((sendreq)->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&         \
                (sendreq)->req_send.req_addr != (sendreq)->req_send.req_base.req_addr) {   \
@@ -256,7 +270,7 @@ do {                                                                            
  * However, these events may occur in either order.
  */
 
-#define MCA_PML_DR_SEND_REQUEST_ADVANCE(sendreq)                                         \
+#define MCA_PML_DR_SEND_REQUEST_ADVANCE(sendreq)                                          \
 do {                                                                                      \
     bool schedule = false;                                                                \
                                                                                           \
@@ -264,7 +278,7 @@ do {                                                                            
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {                                  \
         OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
         if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {          \
-            MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);                               \
+            MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);                                \
         } else {                                                                          \
             schedule = true;                                                              \
         }                                                                                 \
@@ -273,7 +287,7 @@ do {                                                                            
                                                                                           \
     /* additional data to schedule */                                                     \
     if(schedule == true) {                                                                \
-        mca_pml_dr_send_request_schedule(sendreq);                                       \
+        mca_pml_dr_send_request_schedule(sendreq);                                        \
     }                                                                                     \
 } while (0)
 
@@ -281,20 +295,111 @@ do {                                                                            
  * Release resources associated with a request
  */
 
-#define MCA_PML_DR_SEND_REQUEST_RETURN(sendreq)                            \
-{                                                                           \
-    /*  Let the base handle the reference counts */                         \
-    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));                 \
-    OMPI_FREE_LIST_RETURN(                                                  \
-        &mca_pml_dr.send_requests, (opal_list_item_t*)sendreq);            \
-}
-                                                                                                                      
+#define MCA_PML_DR_SEND_REQUEST_RETURN(sendreq)                                         \
+do {                                                                                    \
+    /*  Let the base handle the reference counts */                                     \
+    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));                             \
+    OMPI_FREE_LIST_RETURN(                                                              \
+        &mca_pml_dr.send_requests, (opal_list_item_t*)sendreq);                         \
+} while(0)
+
+/*
+ * Lookup/allocate a vfrag for the pending send
+ */
+
+#define MCA_PML_DR_SEND_REQUEST_VFRAG_INIT(sendreq, endpoint, size, vfrag)              \
+do {                                                                                    \
+    mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;          \
+    mca_pml_dr_comm_proc_t* proc = comm->procs + sendreq->req_send.req_base.req_peer;   \
+    size_t max_send_size = endpoint->btl_max_send_size - sizeof(mca_pml_dr_frag_hdr_t); \
+    size_t div = size / max_send_size;                                                  \
+                                                                                        \
+    if(div == 0) {                                                                      \
+        vfrag->vf_len = 1;                                                              \
+        vfrag->vf_size = size;                                                          \
+        vfrag->vf_mask = 1;                                                             \
+    } else if(div > 64) {                                                               \
+        vfrag->vf_len = 64;                                                             \
+        vfrag->vf_size = (max_send_size << 6); /* size * 64 */                          \
+        vfrag->vf_mask = ~(uint64_t)0;                                                  \
+    } else if (div == 64) {                                                             \
+        size_t mod = size % max_send_size;                                              \
+        vfrag->vf_len = 64;                                                             \
+        vfrag->vf_size = (mod ? (size - mod) : size);                                   \
+        vfrag->vf_mask = ~(uint64_t)0;                                                  \
+    } else {                                                                            \
+        size_t mod = size % max_send_size;                                              \
+        vfrag->vf_len = div + (mod ? 1 : 0);                                            \
+        vfrag->vf_size = size;                                                          \
+        vfrag->vf_mask = (((uint64_t)1 << vfrag->vf_len) - (uint64_t)1);                \
+    }                                                                                   \
+                                                                                        \
+    vfrag->vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                                \
+    vfrag->vf_ack = 0;                                                                  \
+    vfrag->vf_offset = sendreq->req_send_offset;                                        \
+    vfrag->vf_idx = 0;                                                                  \
+    vfrag->vf_max_send_size = max_send_size;                                            \
+    opal_list_append(&sendreq->req_pending, (opal_list_item_t*)vfrag);                  \
+    sendreq->req_vfrag = vfrag;                                                         \
+} while(0)
+
+
+/*
+ *
+ */
+                                                                                                             
+#define MCA_PML_DR_SEND_REQUEST_VFRAG_PENDING(sendreq,hdr,vfrag)                \
+do {                                                                            \
+   if ((hdr)->hdr_vid == (sendreq)->req_vfrag0.vf_id) {                         \
+       vfrag = &(sendreq)->req_vfrag0;                                          \
+   } else if((sendreq)->req_vfrag->vf_id == (hdr)->hdr_vid) {                   \
+       vfrag = (sendreq)->req_vfrag;                                            \
+       opal_list_remove_item(&(sendreq)->req_pending,(opal_list_item_t*)vfrag); \
+   } else {                                                                     \
+       opal_list_item_t* item;                                                  \
+       vfrag = NULL;                                                            \
+       OPAL_THREAD_LOCK(&(sendreq)->req_mutex);                                 \
+       for(item =  opal_list_get_first(&(sendreq)->req_pending);                \
+           item != opal_list_get_end(&(sendreq)->req_pending);                  \
+           item =  opal_list_get_next(item)) {                                  \
+           mca_pml_dr_vfrag_t* vf = (mca_pml_dr_vfrag_t*)item;                  \
+           if(vf->vf_id == (hdr)->hdr_vid) {                                    \
+               opal_list_remove_item(&(sendreq)->req_pending,item);             \
+               vfrag = vf;                                                      \
+               break;                                                           \
+           }                                                                    \
+       }                                                                        \
+       OPAL_THREAD_UNLOCK(&(sendreq)->req_mutex);                               \
+   }                                                                            \
+} while(0)
+                                                                                                             
+/*
+ *
+ */
+
+#define MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq,hdr,vfrag)          \
+do {                                                                      \
+   opal_list_item_t* item;                                                \
+   vfrag = NULL;                                                          \
+   OPAL_THREAD_LOCK(&(sendreq)->req_mutex);                               \
+   for(item =  opal_list_get_first(&(sendreq)->req_retrans);              \
+       item != opal_list_get_end(&(sendreq)->req_retrans);                \
+       item =  opal_list_get_next(item)) {                                \
+       mca_pml_dr_vfrag_t* vf = (mca_pml_dr_vfrag_t*)item;                \
+       if(vf->vf_id == (hdr)->hdr_vid) {                                  \
+           vfrag = vf;                                                    \
+           break;                                                         \
+       }                                                                  \
+   }                                                                      \
+   OPAL_THREAD_UNLOCK(&(sendreq)->req_mutex);                             \
+} while(0)
+                                                                                                             
 
 /*
  * Update bytes delivered on request based on supplied descriptor
  */
 
-#define MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor, hdrlen)   \
+#define MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor, hdrlen)    \
 do {                                                                                \
    size_t i;                                                                        \
    mca_btl_base_segment_t* segments = descriptor->des_src;                          \
@@ -310,18 +415,18 @@ do {                                                                            
  * Attempt to process any pending requests
  */
 
-#define MCA_PML_DR_SEND_REQUEST_PROCESS_PENDING()                    \
+#define MCA_PML_DR_SEND_REQUEST_PROCESS_PENDING()                     \
 do {                                                                  \
     /* advance pending requests */                                    \
-    while(opal_list_get_size(&mca_pml_dr.send_pending)) {            \
-        mca_pml_dr_send_request_t* sendreq;                          \
-        OPAL_THREAD_LOCK(&mca_pml_dr.lock);                          \
-        sendreq = (mca_pml_dr_send_request_t*)                       \
-            opal_list_remove_first(&mca_pml_dr.send_pending);        \
-        OPAL_THREAD_UNLOCK(&mca_pml_dr.lock);                        \
+    while(opal_list_get_size(&mca_pml_dr.send_pending)) {             \
+        mca_pml_dr_send_request_t* sendreq;                           \
+        OPAL_THREAD_LOCK(&mca_pml_dr.lock);                           \
+        sendreq = (mca_pml_dr_send_request_t*)                        \
+            opal_list_remove_first(&mca_pml_dr.send_pending);         \
+        OPAL_THREAD_UNLOCK(&mca_pml_dr.lock);                         \
         if(NULL == sendreq)                                           \
             break;                                                    \
-        mca_pml_dr_send_request_schedule(sendreq);                   \
+        mca_pml_dr_send_request_schedule(sendreq);                    \
     }                                                                 \
 } while (0)
 
@@ -356,6 +461,21 @@ int mca_pml_dr_send_request_start_rndv(
  */
 int mca_pml_dr_send_request_schedule(
     mca_pml_dr_send_request_t* sendreq);
+
+int mca_pml_dr_send_request_reschedule(
+    mca_pml_dr_send_request_t* sendreq,
+    mca_pml_dr_vfrag_t* vfrag);
+
+/**
+ *  Acknowledgment of vfrag 
+ */
+void mca_pml_dr_send_request_acked(
+    mca_pml_dr_send_request_t* sendreq,
+    mca_pml_dr_ack_hdr_t*);
+
+void mca_pml_dr_send_request_nacked(
+    mca_pml_dr_send_request_t* sendreq,
+    mca_pml_dr_ack_hdr_t*);
 
 /**
  *  Completion callback on match header

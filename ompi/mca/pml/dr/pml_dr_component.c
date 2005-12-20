@@ -125,6 +125,16 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr.free_list_inc,
         NULL);
 
+    OBJ_CONSTRUCT(&mca_pml_dr.vfrags, ompi_free_list_t);
+    ompi_free_list_init(
+        &mca_pml_dr.vfrags,
+        sizeof(mca_pml_dr_vfrag_t),
+        OBJ_CLASS(mca_pml_dr_vfrag_t),
+        mca_pml_dr.free_list_num,
+        mca_pml_dr.free_list_max,
+        mca_pml_dr.free_list_inc,
+        NULL);
+
     OBJ_CONSTRUCT(&mca_pml_dr.send_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.acks_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.buffers, ompi_free_list_t);

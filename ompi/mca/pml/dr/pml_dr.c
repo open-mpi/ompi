@@ -74,7 +74,7 @@ int mca_pml_dr_add_comm(ompi_communicator_t* comm)
     if (NULL == pml_comm) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    mca_pml_dr_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
+    mca_pml_dr_comm_init(pml_comm, comm);
     comm->c_pml_comm = pml_comm;
     comm->c_pml_procs = (mca_pml_proc_t**)malloc(
                                                  comm->c_remote_group->grp_proc_count * sizeof(mca_pml_proc_t));
