@@ -122,12 +122,12 @@ AC_DEFUN([_OMPI_CHECK_GM_CONFIG],[
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_GM],[
     AC_ARG_WITH([gm],
-                [AC_HELP_STRING([--with-gm=GM_DIR],
-                                [Additional directory to search for GM installation])])
+        [AC_HELP_STRING([--with-gm(=DIR)],
+             [Build GM (Myrinet) support, searching for libraries in DIR])])
     AC_ARG_WITH([gm-libdir],
-       [AC_HELP_STRING([--with-gm-libdir=GMLIBDIR],
-                       [directory where the GM library can be found, if it is not in GM_DIR/lib or GM_DIR/lib64])])
-
+        [AC_HELP_STRING([--with-gm-libdir=DIR],
+             [Search for GM (Myrinet) libraries in DIR/lib and DIR/lib64 
+               in addition to other search paths])])
 
     AS_IF([test "$with_gm" != "no"],
           [AS_IF([test ! -z "$with_gm" -a "$with_gm" != "yes"],

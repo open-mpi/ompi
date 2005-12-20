@@ -54,11 +54,12 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_MX],[
     AC_ARG_WITH([mx],
-                [AC_HELP_STRING([--with-mx=MX_DIR],
-                                [Additional directory to search for MX installation])])
+        [AC_HELP_STRING([--with-mx(=DIR)],
+             [Build MX (Myrinet Express) support, searching for libraries in DIR])])
     AC_ARG_WITH([mx-libdir],
-                [AC_HELP_STRING([--with-mx-libdir=MXLIBDIR],
-                                [directory where the MX library can be found, if it is not in MX_DIR/lib or MX_DIR/lib64])])
+        [AC_HELP_STRING([--with-mx-libdir=DIR],
+             [Search for MX (Myrinet Express) libraries in DIR/lib and DIR/lib64 
+               in addition to other search paths])])
 
     ompi_check_mx_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_mx_$1_save_LDFLAGS="$LDFLAGS"

@@ -30,7 +30,7 @@ AC_DEFUN([MCA_timer_aix_COMPILE_MODE], [
 AC_DEFUN([MCA_timer_aix_CONFIG],[
     AC_ARG_WITH([timer],
         [AC_HELP_STRING([--with-timer=TYPE],
-                        [high resolution timer component])])
+                        [Build high resolution timer component TYPE])])
 
     AS_IF([test "$with_timer" = "aix"],
           [timer_aix_happy="yes"

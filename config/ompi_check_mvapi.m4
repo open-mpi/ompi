@@ -25,55 +25,57 @@
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_MVAPI],[
     AC_ARG_WITH([mvapi],
-                [AC_HELP_STRING([--with-mvapi=MVAPI_DIR],
-                                [Additional directory to search for MVAPI installation])])
+        [AC_HELP_STRING([--with-mvapi(=DIR)],
+             [Build MVAPI (InfiniBand) support, searching for libraries in DIR])])
     AC_ARG_WITH([mvapi-libdir],
-       [AC_HELP_STRING([--with-mvapi-libdir=IBLIBDIR],
-	       [directory where the IB library can be found, if it is not in MVAPI_DIR/lib or MVAPI_DIR/lib64])])
+       [AC_HELP_STRING([--with-mvapi-libdir=DIR],
+             [Search for MVAPI (InfiniBand) libraries in DIR/lib and DIR/lib64 
+               in addition to other search paths])])
 
     AS_IF([test ! -z "$with_mvapi" -a "$with_mvapi" != "yes"],
           [ompi_check_mvapi_dir="$with_mvapi"])
     AS_IF([test ! -z "$with_mvapi_libdir" -a "$with_mvapi_libdir" != "yes"],
           [ompi_check_mvapi_libdir="$with_mvapi_libdir"])
 
-    # check for pthreads and emit a warning that things might go south...
-    AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
-          [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with mvapi])])
+    AS_IF([test "$with_mvapi" != "no"],
+          [ # check for pthreads and emit a warning that
+            # things might go south...
+           AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
+                 [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with mvapi])])
+    
+           ompi_check_mvapi$1_save_CFLAGS="$CFLAGS"
+           ompi_check_mvapi$1_save_CPPFLAGS="$CPPFLAGS"
+    
+           # ugly hack for topspin which stores include files in include/vapi
+           AS_IF([test -d "$ompi_check_mvapi_dir/include/vapi"],  
+	         [CPPFLAGS="$CPPFLAGS -I $ompi_check_mvapi_dir/include/vapi"
+                  $1_CPPFLAGS="$$1_CPPFLAGS -I $ompi_check_mvapi_dir/include/vapi"]) 
+    
+           # some mellanox vapi implemenations only need lvapi and lmosal    
+           OMPI_CHECK_PACKAGE([$1],
+	          [vapi.h],
+                  [vapi],
+                  [VAPI_open_hca],
+                  [-lmosal],
+                  [$ompi_check_mvapi_dir],
+                  [$ompi_check_mvapi_libdir],
+                  [ompi_check_mvapi_happy="yes"],
+                  [ompi_check_mvapi_happy="no"])
 
-    
-    ompi_check_mvapi$1_save_CFLAGS="$CFLAGS"
-    ompi_check_mvapi$1_save_CPPFLAGS="$CPPFLAGS"
-    
-    #ugly hack for topspin which stores include files in include/vapi
-    AS_IF([test -d "$ompi_check_mvapi_dir/include/vapi"],  
-	[CPPFLAGS="$CPPFLAGS -I $ompi_check_mvapi_dir/include/vapi"
-	 $1_CPPFLAGS="$$1_CPPFLAGS -I $ompi_check_mvapi_dir/include/vapi"]) 
-    
-    #some mellanox vapi implemenations only need lvapi and lmosal    
-    OMPI_CHECK_PACKAGE([$1],
-	[vapi.h],
-	[vapi],
-	[VAPI_open_hca],
-	[-lmosal],
-	[$ompi_check_mvapi_dir],
-	[$ompi_check_mvapi_libdir],
-	[ompi_check_mvapi_happy="yes"],
-	[ompi_check_mvapi_happy="no"])
+           # if needed use both lmpga and lmtl_common
+           AS_IF([test "$ompi_check_mvapi_happy" = "no"], 
+	         [OMPI_CHECK_PACKAGE([$1],
+		        [vapi.h],
+                        [vapi],
+                        [VAPI_open_hca],
+                        [-lmosal -lmpga -lmtl_common],
+                        [$ompi_check_mvapi_dir],
+                        [$ompi_check_mvapi_libdir],
+                        [ompi_check_mvapi_happy="yes"],
+                        [ompi_check_mvapi_happy="no"])])
 
-    #if needed use both lmpga and lmtl_common
-    AS_IF([test "$ompi_check_mvapi_happy" = "no"], 
-	[OMPI_CHECK_PACKAGE([$1],
-		[vapi.h],
-		[vapi],
-		[VAPI_open_hca],
-		[-lmosal -lmpga -lmtl_common],
-		[$ompi_check_mvapi_dir],
-		[$ompi_check_mvapi_libdir],
-		[ompi_check_mvapi_happy="yes"],
-		[ompi_check_mvapi_happy="no"])])
-    
-      
-    CPPFLAGS="$ompi_check_mvapi$1_save_CPPFLAGS"
+           CPPFLAGS="$ompi_check_mvapi$1_save_CPPFLAGS"],
+          [ompi_check_mvapi_happy="no"])
 
     AS_IF([test "$ompi_check_mvapi_happy" = "yes"],
           [$2],
