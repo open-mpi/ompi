@@ -25,114 +25,111 @@
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_OPENIB],[
     AC_ARG_WITH([openib],
-                [AC_HELP_STRING([--with-openib=OPENIB_DIR],
-                                [Additional directory to search for OPENIB installation])])
+        [AC_HELP_STRING([--with-openib(=DIR)],
+             [Build OpenIB (InfiniBand) support, searching for libraries in DIR])])
     AC_ARG_WITH([openib-libdir],
-       [AC_HELP_STRING([--with-openib-libdir=IBLIBDIR],
-                       [directory where the IB library can be found, if it is not in OPENIB_DIR/lib or OPENIB_DIR/lib64])])
+       [AC_HELP_STRING([--with-openib-libdir=DIR],
+             [Search for OpenIB (InfiniBand) libraries in DIR/lib and DIR/lib64 
+               in addition to other search paths])])
 
     AS_IF([test ! -z "$with_openib" -a "$with_openib" != "yes"],
           [ompi_check_openib_dir="$with_openib"])
     AS_IF([test ! -z "$with_openib_libdir" -a "$with_openib_libdir" != "yes"],
           [ompi_check_openib_libdir="$with_openib_libdir"])
+    AS_IF([test "$with_openib" != "no"],
+        [ # check for pthreads and emit a warning that things might go south...
+         AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
+               [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with OpenIB])])
 
-    # check for pthreads and emit a warning that things might go south...
-    AS_IF([test "$HAVE_POSIX_THREADS" != "1"],
-          [AC_MSG_WARN([POSIX threads not enabled.  May not be able to link with openib])])
-
-    ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
-    ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
-    ompi_check_openib_$1_save_LIBS="$LIBS"
+         ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
+         ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
+         ompi_check_openib_$1_save_LIBS="$LIBS"
     
-    AC_CHECK_LIB(sysfs, 
-	         sysfs_open_class, 
-		 [ompi_check_openib_sysfs=yes
-                  LIBS="$LIBS -lsysfs"
-                  $1_LIBS="-lsysfs"], 
-		 [ompi_check_openib_sysfs=no])
+         AC_CHECK_LIB([sysfs], 
+	              [sysfs_open_class], 
+                      [ompi_check_openib_sysfs=yes
+                       LIBS="$LIBS -lsysfs"
+                       $1_LIBS="-lsysfs"], 
+		      [ompi_check_openib_sysfs=no])
 
-    AS_IF([test "$ompi_check_openib_sysfs" = "yes"],
-          [$2],
-          [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                 [AC_MSG_ERROR([OPENIB support requested but required sysfs not found.  Aborting])])
-           $3])
+         AS_IF([test "$ompi_check_openib_sysfs" != "yes"],
+               [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
+                      [AC_MSG_ERROR([OpenIB support requested but required sysfs not found.  Aborting])])])
     
-    AS_IF([test "$ompi_check_openib_libdir" = ""], 
-	  [ompi_check_openib_my_libdir=$ompi_check_openib_dir], 
-	  [ompi_check_openib_my_libdir=$ompi_check_openib_libdir]) 
+         AS_IF([test "$ompi_check_openib_libdir" = ""], 
+	       [ompi_check_openib_my_libdir=$ompi_check_openib_dir], 
+	       [ompi_check_openib_my_libdir=$ompi_check_openib_libdir]) 
 
-    AS_IF([test -d "$ompi_check_openib_my_libdir/lib64/infiniband"], 
-	[ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib64/infiniband" 
-	      LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64/infiniband"], 
-	[AS_IF([test -d "$ompi_check_openib_my_libdir/lib/infiniband"], 
-		[ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib/infiniband"
-		    LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib/infiniband"])])
-    
-    
-    AS_IF([test -d "$ompi_check_openib_my_libdir/lib64"], 
-	[ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib64" 
-	      LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64"], 
-	[AS_IF([test -d "$ompi_check_openib_my_libdir/lib"], 
-		[ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib"
-		    LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib"])])
-    
-    
-    AC_CHECK_LIB([cm], [cm_timeout],
-                 [ompi_check_openib_libdeps="-lcm"]
-                 [ompi_check_openib_libdeps=""])
+         AS_IF([test -d "$ompi_check_openib_my_libdir/lib64/infiniband"], 
+	       [ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib64/infiniband" 
+	        LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64/infiniband"], 
+               [AS_IF([test -d "$ompi_check_openib_my_libdir/lib/infiniband"], 
+                      [ompi_check_openib_libflag=" -L$ompi_check_openib_my_libdir/lib/infiniband"
+		       LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib/infiniband"])])
+ 
+         AS_IF([test -d "$ompi_check_openib_my_libdir/lib64"], 
+	       [ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib64" 
+	        LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib64"], 
+               [AS_IF([test -d "$ompi_check_openib_my_libdir/lib"], 
+		      [ompi_check_openib_libflag="$ompi_check_openib_libflag -L$ompi_check_openib_my_libdir/lib"
+		       LDFLAGS="$LDFLAGS -L$ompi_check_openib_my_libdir/lib"])])
 
-    OMPI_CHECK_PACKAGE([$1],
-                       [infiniband/verbs.h],
-                       [ibverbs],
-                       [ibv_open_device],
-                       [$ompi_check_openib_libdeps],
-                       [$ompi_check_openib_dir],
-                       [$ompi_check_openib_libdir],
-                       [ompi_check_openib_happy="yes"],
-                       [ompi_check_openib_happy="no"])
+         AC_CHECK_LIB([cm], [cm_timeout],
+                      [ompi_check_openib_libdeps="-lcm"]
+                      [ompi_check_openib_libdeps=""])
 
-    # ok, now see if ibv_create_cq takes 3 arguments or 6
-    CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
-    LDFLAGS="$LDFLAGS $$1_LDFLAGS"
-    LIBS="$LIBS $$1_LIBS"
+         OMPI_CHECK_PACKAGE([$1],
+                            [infiniband/verbs.h],
+                            [ibverbs],
+                            [ibv_open_device],
+                            [$ompi_check_openib_libdeps],
+                            [$ompi_check_openib_dir],
+                            [$ompi_check_openib_libdir],
+                            [ompi_check_openib_happy="yes"],
+                            [ompi_check_openib_happy="no"])
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
-      [AC_CACHE_CHECK(
-         [number of arguments to ibv_create_cq],
-         [ompi_cv_func_ibv_create_cq_args],
-         [AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM(
-               [[#include <infiniband/verbs.h> ]],
-               [[ibv_create_cq(NULL, 0, NULL, NULL, 0);]])],
-            [ompi_cv_func_ibv_create_cq_args=5],
-            [AC_LINK_IFELSE(
-               [AC_LANG_PROGRAM(
-                  [[#include <infiniband/verbs.h> ]],
-                  [[ibv_create_cq(NULL, 0, NULL);]])],
-               [ompi_cv_func_ibv_create_cq_args=3],
-               [ompi_cv_func_ibv_create_cq_args="unknown"])])])
-       AS_IF([test "$ompi_cv_func_ibv_create_cq_args" = "unknown"],
-             [AC_MSG_ERROR([Can not determine number of args to ibv_create_cq.  Aborting])],
-             [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_IBV_CREATE_CQ_ARGS],
-                                 [$ompi_cv_func_ibv_create_cq_args],
-                                 [Number of arguments to ibv_create_cq])])])
+         # ok, now see if ibv_create_cq takes 3 arguments or 6
+         CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
+         LDFLAGS="$LDFLAGS $$1_LDFLAGS"
+         LIBS="$LIBS $$1_LIBS"
 
-    AC_CHECK_FUNCS([ibv_create_srq], [ompi_check_openib_have_srq=1], [ompi_check_openib_have_srq=0])
-    AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],
-                       [$ompi_check_openib_have_srq],
-		       [Whether install of OpenIB includes shared receive queue support])
+         AS_IF([test "$ompi_check_openib_happy" = "yes"],
+            [AC_CACHE_CHECK(
+              [number of arguments to ibv_create_cq],
+              [ompi_cv_func_ibv_create_cq_args],
+              [AC_LINK_IFELSE(
+                  [AC_LANG_PROGRAM(
+                     [[#include <infiniband/verbs.h> ]],
+                     [[ibv_create_cq(NULL, 0, NULL, NULL, 0);]])],
+                  [ompi_cv_func_ibv_create_cq_args=5],
+                  [AC_LINK_IFELSE(
+                    [AC_LANG_PROGRAM(
+                       [[#include <infiniband/verbs.h> ]],
+                       [[ibv_create_cq(NULL, 0, NULL);]])],
+                     [ompi_cv_func_ibv_create_cq_args=3],
+                     [ompi_cv_func_ibv_create_cq_args="unknown"])])])
+            AS_IF([test "$ompi_cv_func_ibv_create_cq_args" = "unknown"],
+                  [AC_MSG_ERROR([Can not determine number of args to ibv_create_cq.  Aborting])],
+                  [AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_IBV_CREATE_CQ_ARGS],
+                                      [$ompi_cv_func_ibv_create_cq_args],
+                                      [Number of arguments to ibv_create_cq])])])
 
-    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
-    LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
-    LIBS="$ompi_check_openib_$1_save_LIBS"
+         AC_CHECK_FUNCS([ibv_create_srq], [ompi_check_openib_have_srq=1], [ompi_check_openib_have_srq=0])
+         AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_SRQ],
+                            [$ompi_check_openib_have_srq],
+		            [Whether install of OpenIB includes shared receive queue support])
+
+         CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
+         LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
+         LIBS="$ompi_check_openib_$1_save_LIBS"],
+        [ompi_check_openib_happy="no"])  
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                 [AC_MSG_ERROR([Open IB support requested but not found.  Aborting])])
+                 [AC_MSG_ERROR([OpenIB support requested but not found.  Aborting])])
            $3])
     
     $1_LDFLAGS="$$1_LDFLAGS $ompi_check_openib_libflag"
-    
 ])
 
