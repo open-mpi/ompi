@@ -459,7 +459,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     } else {
         orte_pls_rsh_shell shell;
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)opal_list_get_first(&mapping);
-        orte_ras_node_t* node = (orte_ras_node_t*)opal_list_get_first(&map->nodes);
+        orte_rmaps_base_node_t* rmaps_node = 
+            (orte_rmaps_base_node_t*)opal_list_get_first(&map->nodes);
+        orte_ras_node_t* node = rmaps_node->node;
 
         rc = orte_pls_rsh_probe(node, &shell);
 
