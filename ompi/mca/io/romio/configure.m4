@@ -41,11 +41,20 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                    AS_IF([test -n "$with_io_romio_flags" -a "$with_io_romio_flags" != "no"],
                          [io_romio_flags="$with_io_romio_flags $io_romio_flags"],
                          [io_romio_flags=])
+                   # If ROMIO is going to end up in a DSO, all we need is
+                   # shared library-ized objects, as we're only building a
+                   # DSO (which is always shared).  Otherwise, build with
+                   # same flags as OMPI, as we might need any combination of
+                   # shared and static-ized objects...
                    AS_IF([test "$compile_mode" = "dso"],
                          [io_romio_shared=enable
                           io_romio_static=disable],
-                         [io_romio_shared=disable
-                          io_romio_static=enable])
+                         [AS_IF([test "$enable_shared" = "yes"],
+                                [io_romio_shared=enable],
+                                [io_romio_shared=disable])
+                          AS_IF([test "$enable_static" = "yes"], 
+                                [io_romio_static=enable],
+                                [io_romio_static=disable])])
                    AS_IF([test -n "$prefix" -a "$prefix" != "NONE"], 
                          [io_romio_prefix_arg="--prefix=$prefix"], 
                          [io_romio_prefix_arg=])
