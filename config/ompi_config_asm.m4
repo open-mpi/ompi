@@ -132,7 +132,6 @@ ${sym}mytestlabel$ompi_cv_asm_label_suffix],
 # OMPI_CHECK_ASM_LSYM()
 # ---------------------
 AC_DEFUN([OMPI_CHECK_ASM_LSYM],[
-    AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
     AC_REQUIRE([AC_PROG_NM])
 
     AC_CACHE_CHECK([prefix for lsym labels],
@@ -170,10 +169,6 @@ AC_DEFUN([OMPI_CHECK_ASM_GSYM],[
 ])
 
 AC_DEFUN([_OMPI_CHECK_ASM_GSYM],[
-    AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
-    AC_REQUIRE([OMPI_CHECK_ASM_GLOBAL])
-    AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
-
     ompi_cv_asm_gsym="none"
 
     for sym in "_" "" "." ; do
@@ -267,9 +262,6 @@ dnl logarithmically, 0 otherwise
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_ALIGN_LOG],[
-    AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
-    AC_REQUIRE([OMPI_CHECK_ASM_GLOBAL])
-    AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
     AC_REQUIRE([AC_PROG_NM])
 
     AC_CACHE_CHECK([if .align directive takes logarithmic value],
@@ -397,7 +389,6 @@ dnl or rX (OS X)
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_POWERPC_REG],[
-    AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
     AC_MSG_CHECKING([if PowerPC registers have r prefix])
     OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
         addi 1,1,0],
@@ -429,8 +420,6 @@ dnl operations (on a long long).
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_POWERPC_64BIT],[
-    AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
-
     AC_MSG_CHECKING([for 64-bit PowerPC assembly support])
     ppc64_result=0
     if test "$ompi_cv_asm_powerpc_r_reg" = "1" ; then
@@ -460,8 +449,6 @@ dnl OMPI_CHECK_SPARCV8PLUS
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_SPARCV8PLUS],[
-    AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
-
     AC_MSG_CHECKING([if have Sparc v8+/v9 support])
     sparc_result=0
     OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
@@ -730,44 +717,40 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     AC_REQUIRE([OMPI_SETUP_CC])
     AC_REQUIRE([OMPI_SETUP_CXX])
     AC_REQUIRE([AM_PROG_AS])
-    AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
-    AC_REQUIRE([OMPI_CHECK_ASM_GLOBAL])
-    AC_REQUIRE([OMPI_CHECK_ASM_GSYM])
-    AC_REQUIRE([OMPI_CHECK_ASM_LSYM])
-    AC_REQUIRE([OMPI_CHECK_ASM_TYPE])
-    AC_REQUIRE([OMPI_CHECK_ASM_SIZE])
-    AC_REQUIRE([OMPI_CHECK_ASM_LABEL_SUFFIX])
-    AC_REQUIRE([OMPI_CHECK_ASM_ALIGN_LOG])
-
-AC_MSG_CHECKING([whether to enable smp locks])
-AC_ARG_ENABLE(smp-locks, 
-    AC_HELP_STRING([--enable-smp-locks],
-                   [disable smp locks in atomic ops (default: enabled)]))
-if test "$enable_smp_locks" != "no"; then
-    AC_MSG_RESULT([yes])
-    want_smp_locks=1
-else
-    AC_MSG_RESULT([no])
-    want_smp_locks=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_SMP_LOCKS], [$want_smp_locks],
-                   [whether we want to have smp locks in atomic ops or not])
 
 
-# find our architecture for purposes of assembly stuff
-ompi_cv_asm_arch="UNSUPPORTED"
-OMPI_GCC_INLINE_ASSIGN=""
-OMPI_ASM_SUPPORT_64BIT=0
-case "${host}" in
-    *-winnt*)
+    AC_MSG_CHECKING([whether to enable smp locks])
+    AC_ARG_ENABLE([smp-locks], 
+        [AC_HELP_STRING([--enable-smp-locks],
+            [disable smp locks in atomic ops (default: enabled)])])
+    if test "$enable_smp_locks" != "no"; then
+        AC_MSG_RESULT([yes])
+        want_smp_locks=1
+    else
+        AC_MSG_RESULT([no])
+        want_smp_locks=0
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_WANT_SMP_LOCKS], [$want_smp_locks],
+                       [whether we want to have smp locks in atomic ops or not])
+
+    if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
         ompi_cv_asm_arch="WINDOWS"
-    ;;
+    else
+        OMPI_CHECK_ASM_TEXT
+        OMPI_CHECK_ASM_GLOBAL
+        OMPI_CHECK_ASM_LABEL_SUFFIX
+        OMPI_CHECK_ASM_GSYM
+        OMPI_CHECK_ASM_LSYM
+        OMPI_CHECK_ASM_TYPE
+        OMPI_CHECK_ASM_SIZE
+        OMPI_CHECK_ASM_ALIGN_LOG
 
-    i?86-*|x86_64*)
-        if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
-            ompi_cv_asm_arch="WINDOWS"
-            OMPI_GCC_INLINE_ASSIGN='"MOVL [$]0, %0" : "=&r"(ret)'
-        else
+        # find our architecture for purposes of assembly stuff
+        ompi_cv_asm_arch="UNSUPPORTED"
+        OMPI_GCC_INLINE_ASSIGN=""
+        OMPI_ASM_SUPPORT_64BIT=0
+        case "${host}" in
+        i?86-*|x86_64*)
             if test "$ac_cv_sizeof_long" = "4" ; then
                 ompi_cv_asm_arch="IA32"
             else
@@ -775,58 +758,57 @@ case "${host}" in
             fi
             OMPI_ASM_SUPPORT_64BIT=1
             OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
-        fi
-    ;;
+            ;;
 
-    ia64-*)
-        ompi_cv_asm_arch="IA64"
-        OMPI_ASM_SUPPORT_64BIT=1
-        OMPI_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
-    ;;
-
-    alpha-*)
-        ompi_cv_asm_arch="ALPHA"
-        OMPI_ASM_SUPPORT_64BIT=1
-        OMPI_GCC_INLINE_ASSIGN='"bis zero,zero,%0" : "=&r"(ret)'
-    ;;
-
-    mips-*)
-        # Should really find some way to make sure that we are on
-        # a MIPS III machine (r4000 and later)
-        ompi_cv_asm_arch="MIPS"
-        OMPI_ASM_SUPPORT_64BIT=1
-        OMPI_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
-    ;;
-
-    powerpc-*|powerpc64-*)
-        OMPI_CHECK_POWERPC_REG
-        if test "$ac_cv_sizeof_long" = "4" ; then
-            ompi_cv_asm_arch="POWERPC32"
-
-            # Note that on some platforms (Apple G5), even if we are
-            # compiling in 32 bit mode (and therefore should assume
-            # sizeof(long) == 4), we can use the 64 bit test and set
-            # operations.
-            OMPI_CHECK_POWERPC_64BIT(OMPI_ASM_SUPPORT_64BIT=1)
-        elif test "$ac_cv_sizeof_long" = "8" ; then
+        ia64-*)
+            ompi_cv_asm_arch="IA64"
             OMPI_ASM_SUPPORT_64BIT=1
-            ompi_cv_asm_arch="POWERPC64"
-        else
-            AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
-        fi
-        OMPI_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
-    ;;
+            OMPI_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
+            ;;
 
-    sparc*-*)
-        # SPARC v9 (and above) are the only ones with 64bit support
-        # if compiling 32 bit, see if we are v9 (aka v8plus) or
-        # earlier (casa is v8+/v9). 
-        if test "$ac_cv_sizeof_long" = "4" ; then
-            have_v8plus=0
-            OMPI_CHECK_SPARCV8PLUS([have_v8plus=1])
-            if test "$have_v8plus" = "0" ; then
-                OMPI_ASM_SUPPORT_64BIT=0
-                ompi_cv_asm_arch="SPARC"
+        alpha-*)
+            ompi_cv_asm_arch="ALPHA"
+            OMPI_ASM_SUPPORT_64BIT=1
+            OMPI_GCC_INLINE_ASSIGN='"bis zero,zero,%0" : "=&r"(ret)'
+            ;;
+
+        mips-*)
+            # Should really find some way to make sure that we are on
+            # a MIPS III machine (r4000 and later)
+            ompi_cv_asm_arch="MIPS"
+            OMPI_ASM_SUPPORT_64BIT=1
+            OMPI_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
+            ;;
+
+        powerpc-*|powerpc64-*)
+            OMPI_CHECK_POWERPC_REG
+            if test "$ac_cv_sizeof_long" = "4" ; then
+                ompi_cv_asm_arch="POWERPC32"
+
+                # Note that on some platforms (Apple G5), even if we are
+                # compiling in 32 bit mode (and therefore should assume
+                # sizeof(long) == 4), we can use the 64 bit test and set
+                # operations.
+                OMPI_CHECK_POWERPC_64BIT(OMPI_ASM_SUPPORT_64BIT=1)
+            elif test "$ac_cv_sizeof_long" = "8" ; then
+                OMPI_ASM_SUPPORT_64BIT=1
+                ompi_cv_asm_arch="POWERPC64"
+            else
+                AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
+            fi
+            OMPI_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
+            ;;
+
+        sparc*-*)
+            # SPARC v9 (and above) are the only ones with 64bit support
+            # if compiling 32 bit, see if we are v9 (aka v8plus) or
+            # earlier (casa is v8+/v9). 
+            if test "$ac_cv_sizeof_long" = "4" ; then
+                have_v8plus=0
+                OMPI_CHECK_SPARCV8PLUS([have_v8plus=1])
+                if test "$have_v8plus" = "0" ; then
+                    OMPI_ASM_SUPPORT_64BIT=0
+                    ompi_cv_asm_arch="SPARC"
 AC_MSG_WARN([Using SPARC V8 assembly for atomic operations.  This])
 AC_MSG_WARN([may result in reduced performance on UltraSparc platforms.])
 AC_MSG_WARN([If you are compiling for the UltraSparc, consider ])
@@ -834,84 +816,84 @@ AC_MSG_WARN([specifying the architecture v8plus (cc: -xarch=v8plus, ])
 AC_MSG_WARN([gcc: -mv8plus) when compiling Open MPI, as you may see a])
 AC_MSG_WARN([significant performance increase.])
 
-            else
+                else
+                    OMPI_ASM_SUPPORT_64BIT=1
+                    ompi_cv_asm_arch="SPARCV9_32"
+                fi
+
+            elif test "$ac_cv_sizeof_long" = "8" ; then
                 OMPI_ASM_SUPPORT_64BIT=1
-                ompi_cv_asm_arch="SPARCV9_32"
+                ompi_cv_asm_arch="SPARCV9_64"
+            else
+                AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
             fi
+            OMPI_GCC_INLINE_ASSIGN='"mov 0,%0" : "=&r"(ret)'
+            ;;
 
-        elif test "$ac_cv_sizeof_long" = "8" ; then
-            OMPI_ASM_SUPPORT_64BIT=1
-            ompi_cv_asm_arch="SPARCV9_64"
-        else
-          AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
-        fi
-        OMPI_GCC_INLINE_ASSIGN='"mov 0,%0" : "=&r"(ret)'
-    ;;
+        *)
+            AC_MSG_ERROR([No atomic primitives available for $host])
+            ;;
+        esac
 
-    *)
-        AC_MSG_ERROR([No atomic primitives available for $host])
-    ;;
-esac
+        AC_DEFINE_UNQUOTED([OMPI_ASM_SUPPORT_64BIT],
+            [$OMPI_ASM_SUPPORT_64BIT],
+            [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
+        AC_SUBST([OMPI_ASM_SUPPORT_64BIT])
 
-AC_DEFINE_UNQUOTED([OMPI_ASM_SUPPORT_64BIT],
-                   [$OMPI_ASM_SUPPORT_64BIT],
-                   [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
-AC_SUBST([OMPI_ASM_SUPPORT_64BIT])
+        #
+        # figure out if we need any special function start / stop code
+        #
+        case $host_os in
+        aix*)
+            ompi_asm_arch_config="aix"
+            ;;
+        *)
+            ompi_asm_arch_config="default"
+            ;;
+         esac
 
-#
-# figure out if we need any special function start / stop code
-#
-case $host_os in
-    aix*)
-        ompi_asm_arch_config="aix"
-    ;;
-    *)
-        ompi_asm_arch_config="default"
-    ;;
-esac
+         # now that we know our architecture, try to inline assemble
+         OMPI_CHECK_INLINE_C_GCC([$OMPI_GCC_INLINE_ASSIGN])
+         OMPI_CHECK_INLINE_C_DEC
+         OMPI_CHECK_INLINE_C_XLC
+         OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
+         OMPI_CHECK_INLINE_CXX_DEC
+         OMPI_CHECK_INLINE_CXX_XLC
 
+         # format:
+         #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit
+         asm_format="${ompi_asm_arch_config}"
+         asm_format="${asm_format}-${ompi_cv_asm_text}-${ompi_cv_asm_global}"
+         asm_format="${asm_format}-${ompi_cv_asm_label_suffix}-${ompi_cv_asm_gsym}"
+         asm_format="${asm_format}-${ompi_cv_asm_lsym}"
+         asm_format="${asm_format}-${ompi_cv_asm_type}-${ompi_asm_size}"
+         asm_format="${asm_format}-${ompi_asm_align_log_result}"
+         if test "$ompi_cv_asm_arch" = "POWERPC32" -o "$ompi_cv_asm_arch" = "POWERPC64" ; then
+             asm_format="${asm_format}-${ompi_cv_asm_powerpc_r_reg}"
+         else
+             asm_format="${asm_format}-1"
+         fi
+         ompi_cv_asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
+         OMPI_ASSEMBLY_FORMAT="$ompi_cv_asm_format"
 
-# now that we know our architecture, try to inline assemble
-OMPI_CHECK_INLINE_C_GCC([$OMPI_GCC_INLINE_ASSIGN])
-OMPI_CHECK_INLINE_C_DEC
-OMPI_CHECK_INLINE_C_XLC
-OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
-OMPI_CHECK_INLINE_CXX_DEC
-OMPI_CHECK_INLINE_CXX_XLC
+        AC_MSG_CHECKING([for assembly format])
+        AC_MSG_RESULT([$OMPI_ASSEMBLY_FORMAT])
+        AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_FORMAT], ["$OMPI_ASSEMBLY_FORMAT"],
+                           [Format of assembly file])
+        AC_SUBST([OMPI_ASSEMBLY_FORMAT])
+    fi # if cv_c_compiler_vendor = microsoft
 
-# format:
-#   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit
-asm_format="${ompi_asm_arch_config}"
-asm_format="${asm_format}-${ompi_cv_asm_text}-${ompi_cv_asm_global}"
-asm_format="${asm_format}-${ompi_cv_asm_label_suffix}-${ompi_cv_asm_gsym}"
-asm_format="${asm_format}-${ompi_cv_asm_lsym}"
-asm_format="${asm_format}-${ompi_cv_asm_type}-${ompi_asm_size}"
-asm_format="${asm_format}-${ompi_asm_align_log_result}"
-if test "$ompi_cv_asm_arch" = "POWERPC32" -o "$ompi_cv_asm_arch" = "POWERPC64" ; then
-    asm_format="${asm_format}-${ompi_cv_asm_powerpc_r_reg}"
-else
-    asm_format="${asm_format}-1"
-fi
-ompi_cv_asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
-OMPI_ASSEMBLY_FORMAT="$ompi_cv_asm_format"
+    result="OMPI_$ompi_cv_asm_arch"
+    OMPI_ASSEMBLY_ARCH="$ompi_cv_asm_arch"
+    AC_MSG_CHECKING([for asssembly architecture])
+    AC_MSG_RESULT([$ompi_cv_asm_arch])
+    AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_ARCH], [$result],
+        [Architecture type of assembly to use for atomic operations])
+    AC_SUBST([OMPI_ASSEMBLY_ARCH])
 
-AC_MSG_CHECKING([for assembly format])
-AC_MSG_RESULT([$OMPI_ASSEMBLY_FORMAT])
-AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_FORMAT], ["$OMPI_ASSEMBLY_FORMAT"],
-                   [Format of assembly file])
-AC_SUBST([OMPI_ASSEMBLY_FORMAT])
+    OMPI_ASM_FIND_FILE
 
-result="OMPI_$ompi_cv_asm_arch"
-OMPI_ASSEMBLY_ARCH="$ompi_cv_asm_arch"
-AC_MSG_CHECKING([for asssembly architecture])
-AC_MSG_RESULT([$ompi_cv_asm_arch])
-AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_ARCH], [$result],
-                   [Architecture type of assembly to use for atomic operations])
-AC_SUBST([OMPI_ASSEMBLY_ARCH])
-
-OMPI_ASM_FIND_FILE
-
-unset result asm_format
+    unset result asm_format
 ])dnl
 
 
