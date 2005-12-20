@@ -53,6 +53,9 @@ struct mca_pml_dr_t {
     size_t send_pipeline_depth;
     bool enabled;
 
+    time_t tout_ack;
+    time_t tout_watch_dog;
+
     /* lock queue access */
     opal_mutex_t lock;
 
@@ -64,6 +67,7 @@ struct mca_pml_dr_t {
     ompi_free_list_t send_requests;
     ompi_free_list_t recv_requests;
     ompi_free_list_t recv_frags;
+    ompi_free_list_t vfrags;
     ompi_free_list_t buffers;
 };
 typedef struct mca_pml_dr_t mca_pml_dr_t; 

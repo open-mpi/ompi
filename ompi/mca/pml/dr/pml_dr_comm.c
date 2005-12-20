@@ -27,6 +27,7 @@
 static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
 {
     proc->expected_sequence = 1;
+    proc->vfrag_id = 1;
     proc->send_sequence = 0;
     OBJ_CONSTRUCT(&proc->frags_cant_match, opal_list_t);
     OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
@@ -78,19 +79,21 @@ OBJ_CLASS_INSTANCE(
     mca_pml_dr_comm_destruct);
 
 
-int mca_pml_dr_comm_init_size(mca_pml_dr_comm_t* comm, size_t size)
+int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm)
 {
     size_t i;
+    size_t size = ompi_comm->c_remote_group->grp_proc_count;
 
     /* send message sequence-number support - sender side */
-    comm->procs = malloc(sizeof(mca_pml_dr_comm_proc_t)*size);
-    if(NULL == comm->procs) {
+    dr_comm->procs = malloc(sizeof(mca_pml_dr_comm_proc_t)*size);
+    if(NULL == dr_comm->procs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for(i=0; i<size; i++) {
-        OBJ_CONSTRUCT(comm->procs+i, mca_pml_dr_comm_proc_t);
+        OBJ_CONSTRUCT(dr_comm->procs+i, mca_pml_dr_comm_proc_t);
+        dr_comm->procs[i].ompi_proc = ompi_comm->c_remote_group->grp_proc_pointers[i];
     }
-    comm->num_procs = size;
+    dr_comm->num_procs = size;
     return OMPI_SUCCESS;
 }
 

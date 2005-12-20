@@ -25,6 +25,8 @@
 #include "opal/threads/condition.h"
 #include "mca/ptl/ptl.h"
 #include "opal/class/opal_list.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/proc/proc.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -33,6 +35,7 @@ extern "C" {
 struct mca_pml_dr_comm_proc_t {
     opal_object_t super;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
+    uint32_t vfrag_id;             /**< virtual fragment identifier */
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t send_sequence; /**< send side sequence number */
 #else
@@ -41,6 +44,7 @@ struct mca_pml_dr_comm_proc_t {
     opal_list_t frags_cant_match;  /**< out-of-order fragment queues */
     opal_list_t specific_receives; /**< queues of unmatched specific receives */
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
+    ompi_proc_t* ompi_proc;        /**< back pointer to ompi_proc_t */
 };
 typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;
 
@@ -69,12 +73,12 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
 /**
  * Initialize an instance of mca_pml_dr_comm_t based on the communicator size.
  *
- * @param  comm   Instance of mca_pml_dr_comm_t
- * @param  size   Size of communicator 
- * @return        OMPI_SUCCESS or error status on failure.
+ * @param  dr_comm   Instance of mca_pml_dr_comm_t
+ * @param  pml_comm  Communicator 
+ * @return           OMPI_SUCCESS or error status on failure.
  */
 
-OMPI_DECLSPEC extern int mca_pml_dr_comm_init_size(mca_pml_dr_comm_t* comm, size_t size);
+OMPI_DECLSPEC extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
