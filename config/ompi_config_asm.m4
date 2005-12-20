@@ -342,13 +342,10 @@ AC_DEFUN([_OMPI_CHECK_ASM_TYPE],[
         for type  in @ \# % ; do
             asm_result=0
             echo "configure: trying $type" >&AC_FD_CC
-            OMPI_TRY_ASSEMBLE([     .type mysym, ${type}function],
-                [# ok, we succeeded at assembling.  see if there was
-                 # a warning in the output.
-                 if test "`cat conftest.out`" = "" ; then
-                    ompi_cv_asm_type="${type}"
-                    asm_result=1
-                 fi])
+            OMPI_TRY_ASSEMBLE([     .type mysym, ${type}function
+mysym:],
+                 [ompi_cv_asm_type="${type}"
+                    asm_result=1])
             if test "$asm_result" = "1" ; then
                 break
             fi
@@ -374,11 +371,7 @@ AC_DEFUN([OMPI_CHECK_ASM_SIZE],[
                    [ompi_cv_asm_need_size],
                    [ompi_cv_asm_need_size="no"
                     OMPI_TRY_ASSEMBLE([     .size mysym, 1],
-            [# ok, we succeeded at assembling.  see if there was
-             # a warning in the output.
-             if test "`cat conftest.out`" = "" ; then
-                 ompi_cv_asm_need_size="yes"
-             fi])
+                          [ompi_cv_asm_need_size="yes"])
                     rm -f conftest.out])
 
     if test "$ompi_cv_asm_need_size" = "yes" ; then

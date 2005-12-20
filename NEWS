@@ -29,6 +29,8 @@ version 1.0.
 1.0.2
 -----
 
+- Fix error in configure script when setting CCAS to ias (the Intel
+  assembler)
 - Added missing MPI::Intercomm collectives.
 - Fixed MPI_IN_PLACE handling for Fortran collectives.
 - Fixed some more C++ const_cast<> issues.  Thanks for Martin Audet

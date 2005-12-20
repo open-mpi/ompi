@@ -30,7 +30,11 @@ AC_DEFUN([OMPI_TRY_ASSEMBLE],
 [cat >conftest.s <<EOF
 [$1]
 EOF
-ompi_assemble="$CCAS $CFLAGS -c conftest.s >conftest.out 2>&1"
+if test "$CC" = "$CCAS" ; then
+    ompi_assemble="$CCAS $CCASFLAGS -c conftest.s >conftest.out 2>&1"
+else
+    ompi_assemble="$CCAS $CCASFLAGS conftest.s >conftest.out 2>&1"
+fi
 if AC_TRY_EVAL(ompi_assemble); then
   # save the warnings
   cat conftest.out >&AC_FD_CC
