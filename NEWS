@@ -29,6 +29,7 @@ version 1.0.
 1.0.2
 -----
 
+- Update to GNU Libtool 1.5.22.
 - Fix error in configure script when setting CCAS to ias (the Intel
   assembler)
 - Added missing MPI::Intercomm collectives.
