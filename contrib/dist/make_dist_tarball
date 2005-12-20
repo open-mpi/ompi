@@ -23,7 +23,7 @@
 
 AM_TARGET_VERSION=1.9.6
 AC_TARGET_VERSION=2.59
-LT_TARGET_VERSION=1.5.20
+LT_TARGET_VERSION=1.5.22
 
 #
 # First things first -- check that the auto versions that we have are
