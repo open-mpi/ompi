@@ -204,13 +204,14 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_find(
  */
 struct mca_bml_base_endpoint_t {
     mca_pml_proc_t           super;
-    struct ompi_proc_t       *btl_proc;        /**< back-pointer to ompi_proc_t */
-    opal_mutex_t             btl_lock;         /**< lock to protect against concurrent access */
-    int                      btl_flags;        /**< prefered method of accessing this peer */
-    size_t                   btl_rdma_offset;  /**< max of min rdma size for available rmda btls */
-    mca_bml_base_btl_array_t btl_eager;        /**< array of btls to use for first fragments */
-    mca_bml_base_btl_array_t btl_send;         /**< array of btls to use for remaining fragments */
-    mca_bml_base_btl_array_t btl_rdma;         /**< array of btls that support (prefer) rdma */
+    struct ompi_proc_t       *btl_proc;         /**< back-pointer to ompi_proc_t */
+    opal_mutex_t             btl_lock;          /**< lock to protect against concurrent access */
+    int                      btl_flags;         /**< prefered method of accessing this peer */
+    size_t                   btl_rdma_offset;   /**< max of min rdma size for available rmda btls */
+    size_t                   btl_max_send_size; /**< min of max send size for available send btls */
+    mca_bml_base_btl_array_t btl_eager;         /**< array of btls to use for first fragments */
+    mca_bml_base_btl_array_t btl_send;          /**< array of btls to use for remaining fragments */
+    mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */
 };
 typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
                               
