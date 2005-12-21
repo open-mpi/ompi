@@ -168,12 +168,17 @@ int orte_rmgr_base_get_app_context(
         &num_values,
         &values
         );
-    if(rc != ORTE_SUCCESS)
+    if (rc != ORTE_SUCCESS) {
         goto cleanup;
+    }
 
     *num_context = 0;
     for(i=0; i<num_values; i++) {
         *num_context += values[i]->cnt;
+    }
+    if (0 == *num_context) {
+        *app_context = NULL;
+        return ORTE_SUCCESS;
     }
 
     *app_context = (orte_app_context_t**)malloc(*num_context * sizeof(orte_app_context_t*));
