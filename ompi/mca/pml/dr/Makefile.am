@@ -37,6 +37,7 @@ ob1_sources  = \
 	pml_dr_sendreq.c \
 	pml_dr_sendreq.h \
 	pml_dr_start.c \
+    pml_dr_vfrag.h \
 	pml_dr_vfrag.c 
 
 if OMPI_BUILD_pml_dr_DSO
