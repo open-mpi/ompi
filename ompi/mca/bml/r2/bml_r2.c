@@ -248,6 +248,7 @@ int mca_bml_r2_add_procs(
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_eager, mca_bml_r2.num_btl_modules);
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_send,  mca_bml_r2.num_btl_modules);
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
+                    bml_endpoint->btl_max_send_size = -1;
                     bml_endpoint->btl_proc =   proc;
                     proc->proc_pml = (struct mca_pml_proc_t*) bml_endpoint; 
                     
@@ -367,6 +368,10 @@ int mca_bml_r2_add_procs(
                     mca_bml_base_btl_array_insert(&bml_endpoint->btl_eager);
                 *bml_btl_new = *bml_btl;
             }
+
+            /* set endpoint max send size as min of available btls */
+            if(bml_endpoint->btl_max_send_size > btl->btl_max_send_size)
+               bml_endpoint->btl_max_send_size = btl->btl_max_send_size;
 
             /* check flags - is rdma prefered */
             if(btl->btl_flags & (MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET) &&

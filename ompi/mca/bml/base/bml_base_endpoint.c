@@ -25,25 +25,26 @@
 
 
 
-static void mca_bml_base_endpoint_construct(mca_bml_base_endpoint_t* proc)
+static void mca_bml_base_endpoint_construct(mca_bml_base_endpoint_t* ep)
 {
-    proc->btl_proc = NULL;
-    proc->btl_rdma_offset = 0;
-    proc->btl_flags = 0;
+    ep->btl_proc = NULL;
+    ep->btl_rdma_offset = 0;
+    ep->btl_max_send_size = 0;
+    ep->btl_flags = 0;
     
-    OBJ_CONSTRUCT(&proc->btl_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&proc->btl_eager, mca_bml_base_btl_array_t);
-    OBJ_CONSTRUCT(&proc->btl_send,  mca_bml_base_btl_array_t);
-    OBJ_CONSTRUCT(&proc->btl_rdma,  mca_bml_base_btl_array_t);
+    OBJ_CONSTRUCT(&ep->btl_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ep->btl_eager, mca_bml_base_btl_array_t);
+    OBJ_CONSTRUCT(&ep->btl_send,  mca_bml_base_btl_array_t);
+    OBJ_CONSTRUCT(&ep->btl_rdma,  mca_bml_base_btl_array_t);
 }
 
 
-static void mca_bml_base_endpoint_destruct(mca_bml_base_endpoint_t* proc)
+static void mca_bml_base_endpoint_destruct(mca_bml_base_endpoint_t* ep)
 {
-    OBJ_DESTRUCT(&proc->btl_lock);
-    OBJ_DESTRUCT(&proc->btl_eager);
-    OBJ_DESTRUCT(&proc->btl_send);
-    OBJ_DESTRUCT(&proc->btl_rdma);
+    OBJ_DESTRUCT(&ep->btl_lock);
+    OBJ_DESTRUCT(&ep->btl_eager);
+    OBJ_DESTRUCT(&ep->btl_send);
+    OBJ_DESTRUCT(&ep->btl_rdma);
 }
 
 
