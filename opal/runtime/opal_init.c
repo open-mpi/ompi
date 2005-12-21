@@ -49,11 +49,62 @@ opal_err2str(int errnum)
     case OPAL_ERR_OUT_OF_RESOURCE:
         retval = "Out of resource";
         break;
-    case OPAL_ERR_NOT_FOUND:
-        retval = "Not found";
+    case OPAL_ERR_TEMP_OUT_OF_RESOURCE:
+        retval = "Temporarily out of resource";
+        break;
+    case OPAL_ERR_RESOURCE_BUSY:
+        retval = "Resource busy";
         break;
     case OPAL_ERR_BAD_PARAM:
         retval = "Bad parameter";
+        break;
+    case OPAL_ERR_FATAL:
+        retval = "Fatal";
+        break;
+    case OPAL_ERR_NOT_IMPLEMENTED:
+        retval = "Not implemented";
+        break;
+    case OPAL_ERR_NOT_SUPPORTED:
+        retval = "Not supported";
+        break;
+    case OPAL_ERR_INTERUPTED:
+        retval = "Interupted";
+        break;
+    case OPAL_ERR_WOULD_BLOCK:
+        retval = "Would block";
+        break;
+    case OPAL_ERR_IN_ERRNO:
+        retval = "In errno";
+        break;
+    case OPAL_ERR_UNREACH:
+        retval = "Unreachable";
+        break;
+    case OPAL_ERR_NOT_FOUND:
+        retval = "Not found";
+        break;
+    case OPAL_EXISTS:
+        retval = "Exists";
+        break;
+    case OPAL_ERR_TIMEOUT:
+        retval = "Timeout";
+        break;
+    case OPAL_ERR_NOT_AVAILABLE:
+        retval = "Not available";
+        break;
+    case OPAL_ERR_PERM:
+        retval = "No permission";
+        break;
+    case OPAL_ERR_VALUE_OUT_OF_BOUNDS:
+        retval = "Value out of bounds";
+        break;
+    case OPAL_ERR_FILE_READ_FAILURE:
+        retval = "File read failure";
+        break;
+    case OPAL_ERR_FILE_WRITE_FAILURE:
+        retval = "File write failure";
+        break;
+    case OPAL_ERR_FILE_OPEN_FAILURE:
+        retval = "File open failure";
         break;
     default:
         retval = NULL;
