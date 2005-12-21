@@ -262,6 +262,89 @@ public:
   virtual bool Is_inter() const;
 
 
+  //
+  // Collective Communication
+  //
+  // Up in Comm because as of MPI-2, they are common to intracomm and
+  // intercomm -- with the exception of Scan and Exscan, which are not
+  // defined on intercomms.
+  //
+
+  virtual void
+  Barrier() const;
+
+  virtual void
+  Bcast(void *buffer, int count, 
+	const Datatype& datatype, int root) const;
+  
+  virtual void
+  Gather(const void *sendbuf, int sendcount, 
+	 const Datatype & sendtype, 
+	 void *recvbuf, int recvcount, 
+	 const Datatype & recvtype, int root) const;
+  
+  virtual void
+  Gatherv(const void *sendbuf, int sendcount, 
+	  const Datatype & sendtype, void *recvbuf, 
+	  const int recvcounts[], const int displs[], 
+	  const Datatype & recvtype, int root) const;
+  
+  virtual void
+  Scatter(const void *sendbuf, int sendcount, 
+	  const Datatype & sendtype, 
+	  void *recvbuf, int recvcount, 
+	  const Datatype & recvtype, int root) const;
+  
+  virtual void
+  Scatterv(const void *sendbuf, const int sendcounts[], 
+	   const int displs[], const Datatype & sendtype,
+	   void *recvbuf, int recvcount, 
+	   const Datatype & recvtype, int root) const;
+  
+  virtual void
+  Allgather(const void *sendbuf, int sendcount, 
+	    const Datatype & sendtype, void *recvbuf, 
+	    int recvcount, const Datatype & recvtype) const;
+  
+  virtual void
+  Allgatherv(const void *sendbuf, int sendcount, 
+	     const Datatype & sendtype, void *recvbuf, 
+	     const int recvcounts[], const int displs[],
+	     const Datatype & recvtype) const;
+  
+  virtual void
+  Alltoall(const void *sendbuf, int sendcount, 
+	   const Datatype & sendtype, void *recvbuf, 
+	   int recvcount, const Datatype & recvtype) const;
+  
+  virtual void
+  Alltoallv(const void *sendbuf, const int sendcounts[], 
+	    const int sdispls[], const Datatype & sendtype, 
+	    void *recvbuf, const int recvcounts[], 
+	    const int rdispls[], const Datatype & recvtype) const;
+  
+  virtual void
+  Alltoallw(const void *sendbuf, const int sendcounts[],
+            const int sdispls[], const Datatype sendtypes[],
+            void *recvbuf, const int recvcounts[],
+            const int rdispls[], const Datatype recvtypes[]) const;
+  
+  virtual void
+  Reduce(const void *sendbuf, void *recvbuf, int count, 
+	 const Datatype & datatype, const Op & op, 
+	 int root) const;
+  
+  
+  virtual void
+  Allreduce(const void *sendbuf, void *recvbuf, int count,
+	    const Datatype & datatype, const Op & op) const;
+  
+  virtual void
+  Reduce_scatter(const void *sendbuf, void *recvbuf, 
+		 int recvcounts[], 
+		 const Datatype & datatype, 
+		 const Op & op) const;
+
   // 
   // Process Creation
   //
@@ -273,7 +356,7 @@ public:
   static Intercomm Join(const int fd);
 
   //
-  //External Interfaces
+  // External Interfaces
   //
   
   virtual void Get_name(char * comm_name, int& resultlen) const;
@@ -281,7 +364,7 @@ public:
   virtual void Set_name(const char* comm_name);
   
   //
-  //Process Topologies
+  // Process Topologies
   //
   
   virtual int Get_topology() const;
@@ -332,10 +415,6 @@ public:
   static int NULL_DELETE_FN(Comm& comm, int comm_keyval, void* attribute_val,
 			    void* extra_state);
 
-
-  //#if 0 /* OMPI_ENABLE_MPI_PROFILING */
-  //  virtual const PMPI::Comm& get_pmpi_comm() const { return pmpi_comm; }
-  //#endif
 
 private:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

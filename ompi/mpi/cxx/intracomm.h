@@ -76,86 +76,13 @@ public:
     mpi_comm = data; return *this; } 
 
 #endif
-
+  
   //
   // Collective Communication
   //
-
-  virtual void
-  Barrier() const;
-
-  virtual void
-  Bcast(void *buffer, int count, 
-	const Datatype& datatype, int root) const;
-  
-  virtual void
-  Gather(const void *sendbuf, int sendcount, 
-	 const Datatype & sendtype, 
-	 void *recvbuf, int recvcount, 
-	 const Datatype & recvtype, int root) const;
-  
-  virtual void
-  Gatherv(const void *sendbuf, int sendcount, 
-	  const Datatype & sendtype, void *recvbuf, 
-	  const int recvcounts[], const int displs[], 
-	  const Datatype & recvtype, int root) const;
-  
-  virtual void
-  Scatter(const void *sendbuf, int sendcount, 
-	  const Datatype & sendtype, 
-	  void *recvbuf, int recvcount, 
-	  const Datatype & recvtype, int root) const;
-  
-  virtual void
-  Scatterv(const void *sendbuf, const int sendcounts[], 
-	   const int displs[], const Datatype & sendtype,
-	   void *recvbuf, int recvcount, 
-	   const Datatype & recvtype, int root) const;
-  
-  virtual void
-  Allgather(const void *sendbuf, int sendcount, 
-	    const Datatype & sendtype, void *recvbuf, 
-	    int recvcount, const Datatype & recvtype) const;
-  
-  virtual void
-  Allgatherv(const void *sendbuf, int sendcount, 
-	     const Datatype & sendtype, void *recvbuf, 
-	     const int recvcounts[], const int displs[],
-	     const Datatype & recvtype) const;
-  
-  virtual void
-  Alltoall(const void *sendbuf, int sendcount, 
-	   const Datatype & sendtype, void *recvbuf, 
-	   int recvcount, const Datatype & recvtype) const;
-  
-  virtual void
-  Alltoallv(const void *sendbuf, const int sendcounts[], 
-	    const int sdispls[], const Datatype & sendtype, 
-	    void *recvbuf, const int recvcounts[], 
-	    const int rdispls[], const Datatype & recvtype) const;
-  
-  virtual void
-  Alltoallw(const void *sendbuf, const int sendcounts[],
-            const int sdispls[], const Datatype sendtypes[],
-            void *recvbuf, const int recvcounts[],
-            const int rdispls[], const Datatype recvtypes[]) const;
-  
-  virtual void
-  Reduce(const void *sendbuf, void *recvbuf, int count, 
-	 const Datatype & datatype, const Op & op, 
-	 int root) const;
-  
-  
-  virtual void
-  Allreduce(const void *sendbuf, void *recvbuf, int count,
-	    const Datatype & datatype, const Op & op) const;
-  
-  virtual void
-  Reduce_scatter(const void *sendbuf, void *recvbuf, 
-		 int recvcounts[], 
-		 const Datatype & datatype, 
-		 const Op & op) const;
-  
+  // All the rest are up in comm.h -- Scan and Exscan are not defined
+  // in intercomm's, so they're down here in Intracomm.
+  //
   virtual void
   Scan(const void *sendbuf, void *recvbuf, int count, 
        const Datatype & datatype, const Op & op) const;
@@ -163,11 +90,13 @@ public:
   virtual void
   Exscan(const void *sendbuf, void *recvbuf, int count,
 	 const Datatype & datatype, const Op & op) const;
-  
-  Intracomm
-  Dup() const;
-  
 
+  //
+  // Communicator maintenance
+  //
+
+  Intracomm Dup() const;
+  
   virtual Intracomm& Clone() const;
 
   virtual Intracomm
