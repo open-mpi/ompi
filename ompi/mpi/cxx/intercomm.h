@@ -78,22 +78,8 @@ public:
 
   virtual Intracomm Merge(bool high);
 
-  
-  //
-  // Extended Collective Operations
-  //
-
   virtual Intercomm Create(const Group& group) const;
 
   virtual Intercomm Split(int color, int key) const;
 
-
-  //#if 0 /* OMPI_ENABLE_MPI_PROFILING */
-  //  virtual const PMPI::Comm& get_pmpi_comm() const { return pmpi_comm; }
-  //#endif
-
-#if 0 /* OMPI_ENABLE_MPI_PROFILING */
-private:
-  PMPI::Intercomm pmpi_comm;
-#endif
 };

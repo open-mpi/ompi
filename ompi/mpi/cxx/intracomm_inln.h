@@ -22,173 +22,22 @@ MPI::Intracomm::Intracomm(const MPI_Comm& data) {
   int flag;
   if (MPI::Is_initialized() && (data != MPI_COMM_NULL)) {
     (void)MPI_Comm_test_inter(data, &flag);
-    if (flag)
+    if (flag) {
       mpi_comm = MPI_COMM_NULL;
-    else
+    } else {
       mpi_comm = data;
+    }
   }
   else {
     mpi_comm = data;
   }
 }
 
-//
-// Collective Communication
-//
-
-inline void
-MPI::Intracomm::Barrier() const
-{
-  (void)MPI_Barrier(mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Bcast(void *buffer, int count, 
-      const MPI::Datatype& datatype, int root) const
-{ 
-  (void)MPI_Bcast(buffer, count, datatype, root, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Gather(const void *sendbuf, int sendcount, 
-			      const MPI::Datatype & sendtype, 
-			      void *recvbuf, int recvcount, 
-			      const MPI::Datatype & recvtype, int root) const
-{
-  (void)MPI_Gather(const_cast<void *>(sendbuf), sendcount, sendtype,
-		   recvbuf, recvcount, recvtype, root, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Gatherv(const void *sendbuf, int sendcount, 
-	const MPI::Datatype & sendtype, void *recvbuf, 
-	const int recvcounts[], const int displs[], 
-	const MPI::Datatype & recvtype, int root) const
-{
-  (void)MPI_Gatherv(const_cast<void *>(sendbuf), sendcount,  sendtype,
-		    recvbuf, const_cast<int *>(recvcounts), const_cast<int *>(displs), 
-		    recvtype, root, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Scatter(const void *sendbuf, int sendcount, 
-	const MPI::Datatype & sendtype, 
-	void *recvbuf, int recvcount, 
-	const MPI::Datatype & recvtype, int root) const
-{ 
-  (void)MPI_Scatter(const_cast<void *>(sendbuf), sendcount, sendtype,
-		    recvbuf, recvcount, recvtype, root, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Scatterv(const void *sendbuf, const int sendcounts[], 
-	 const int displs[], const MPI::Datatype & sendtype,
-	 void *recvbuf, int recvcount, 
-	 const MPI::Datatype & recvtype, int root) const
-{
-  (void)MPI_Scatterv(const_cast<void *>(sendbuf), const_cast<int *>(sendcounts), 
-		     const_cast<int *>(displs), sendtype, 
-		     recvbuf, recvcount, recvtype, 
-		     root, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Allgather(const void *sendbuf, int sendcount, 
-	  const MPI::Datatype & sendtype, void *recvbuf, 
-	  int recvcount, const MPI::Datatype & recvtype) const 
-{
-  (void)MPI_Allgather(const_cast<void *>(sendbuf), sendcount, 
-		      sendtype, recvbuf, recvcount,
-		      recvtype, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Allgatherv(const void *sendbuf, int sendcount, 
-	   const MPI::Datatype & sendtype, void *recvbuf, 
-	   const int recvcounts[], const int displs[],
-	   const MPI::Datatype & recvtype) const
-{
-  (void)MPI_Allgatherv(const_cast<void *>(sendbuf), sendcount, 
-		       sendtype, recvbuf, 
-		       const_cast<int *>(recvcounts), const_cast<int *>(displs), 
-		       recvtype, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Alltoall(const void *sendbuf, int sendcount, 
-	 const MPI::Datatype & sendtype, void *recvbuf, 
-	 int recvcount, const MPI::Datatype & recvtype) const
-{
-  (void)MPI_Alltoall(const_cast<void *>(sendbuf), sendcount,
-		     sendtype, recvbuf, recvcount,
-		     recvtype, mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Alltoallv(const void *sendbuf, const int sendcounts[], 
-	  const int sdispls[], const MPI::Datatype & sendtype, 
-	  void *recvbuf, const int recvcounts[], 
-	  const int rdispls[], const MPI::Datatype & recvtype) const 
-{
-    (void)MPI_Alltoallv(const_cast<void *>(sendbuf), 
-                        const_cast<int *>(sendcounts), 
-			const_cast<int *>(sdispls), sendtype, recvbuf, 
-			const_cast<int *>(recvcounts), 
-                        const_cast<int *>(rdispls), 
-			recvtype,mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Alltoallw(const void *sendbuf, const int sendcounts[],
-	const int sdispls[], const Datatype sendtypes[],
-	void *recvbuf, const int recvcounts[],
-	const int rdispls[], const Datatype recvtypes[]) const
-{
-  (void)MPI_Alltoallw(const_cast<void *>(sendbuf), 
-                      const_cast<int *>(sendcounts),
-		      const_cast<int *>(sdispls),
-                      (MPI_Datatype *)(sendtypes), recvbuf,
-		      const_cast<int *>(recvcounts), 
-                      const_cast<int *>(rdispls),
-		      (MPI_Datatype *)(recvtypes), mpi_comm);
-}
-
-inline void
-MPI::Intracomm::Reduce(const void *sendbuf, void *recvbuf, int count, 
-       const MPI::Datatype & datatype, const MPI::Op& op, 
-       int root) const
-{
-  current_op = (MPI::Op*)&op;
-  (void)MPI_Reduce(const_cast<void *>(sendbuf), recvbuf, count, datatype, op, root, mpi_comm);
-  current_op = (Op*)0;
-}
-
-inline void
-MPI::Intracomm::Allreduce(const void *sendbuf, void *recvbuf, int count,
-	  const MPI::Datatype & datatype, const MPI::Op& op) const
-{
-  current_op = (MPI::Op*)&op;
-  (void)MPI_Allreduce (const_cast<void *>(sendbuf), recvbuf, count, datatype,  op, mpi_comm);
-  current_op = (Op*)0;
-}
-
-inline void
-MPI::Intracomm::Reduce_scatter(const void *sendbuf, void *recvbuf, 
-	       int recvcounts[], 
-	       const MPI::Datatype & datatype, 
-	       const MPI::Op& op) const
-{
-  current_op = (MPI::Op*)&op;
-  (void)MPI_Reduce_scatter(const_cast<void *>(sendbuf), recvbuf, recvcounts,
-			   datatype, op, mpi_comm);
-  current_op = (Op*)0;
-}
-
 inline void
 MPI::Intracomm::Scan(const void *sendbuf, void *recvbuf, int count, 
      const MPI::Datatype & datatype, const MPI::Op& op) const
 {
-  current_op = (MPI::Op*)&op;
+  current_op = const_cast<MPI::Op*>(&op);
   (void)MPI_Scan(const_cast<void *>(sendbuf), recvbuf, count, datatype, op, mpi_comm);
   current_op = (Op*)0;
 }
@@ -198,7 +47,7 @@ MPI::Intracomm::Exscan(const void *sendbuf, void *recvbuf, int count,
 			      const MPI::Datatype & datatype, 
 			      const MPI::Op& op) const
 {
-  current_op = (MPI::Op*)&op;
+  current_op = const_cast<MPI::Op*>(&op);
   (void)MPI_Exscan(const_cast<void *>(sendbuf), recvbuf, count, datatype, op, mpi_comm);
   current_op = (Op*)0;
 }
@@ -337,13 +186,29 @@ MPI::Intracomm::Spawn_multiple(int count,
 				      const Info array_of_info[], int root)
 {
   MPI_Comm newcomm;
+  MPI_Info *const array_of_mpi_info = 
+      convert_info_to_mpi_info(count, array_of_info);
+
   MPI_Comm_spawn_multiple(count, const_cast<char **>(array_of_commands), 
-			  const_cast<char ***>(array_of_argv), const_cast<int *>(array_of_maxprocs),
-			  (MPI_Info *) array_of_info, root,
+			  const_cast<char ***>(array_of_argv), 
+                          const_cast<int *>(array_of_maxprocs),
+			  array_of_mpi_info, root,
 			  mpi_comm, &newcomm, (int *)MPI_ERRCODES_IGNORE);
+  delete[] array_of_mpi_info;
   return newcomm;
 }
 
+inline MPI_Info *
+MPI::Intracomm::convert_info_to_mpi_info(int p_nbr, const Info p_info_tbl[])
+{
+   MPI_Info *const mpi_info_tbl = new MPI_Info [p_nbr];
+
+   for (int i_tbl=0; i_tbl < p_nbr; i_tbl++) {
+       mpi_info_tbl[i_tbl] = p_info_tbl[i_tbl];
+   }
+
+   return mpi_info_tbl;
+}
 
 inline MPI::Intercomm
 MPI::Intracomm::Spawn_multiple(int count,
@@ -354,10 +219,15 @@ MPI::Intracomm::Spawn_multiple(int count,
 				      int array_of_errcodes[])
 {
   MPI_Comm newcomm;
+  MPI_Info *const array_of_mpi_info = 
+      convert_info_to_mpi_info(count, array_of_info);
+
   MPI_Comm_spawn_multiple(count, const_cast<char **>(array_of_commands), 
-                          const_cast<char ***>(array_of_argv), const_cast<int *>(array_of_maxprocs),
-                          (MPI_Info *) array_of_info, root,
+                          const_cast<char ***>(array_of_argv), 
+                          const_cast<int *>(array_of_maxprocs),
+                          array_of_mpi_info, root,
                           mpi_comm, &newcomm, array_of_errcodes);
+  delete[] array_of_mpi_info;
   return newcomm;
 }
 

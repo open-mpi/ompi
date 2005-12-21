@@ -61,11 +61,13 @@ MPI::Request::Waitany(int count, MPI::Request array[],
 {
   int index, i;
   MPI_Request* array_of_requests = new MPI_Request[count];
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = array[i];
+  }
   (void)MPI_Waitany(count, array_of_requests, &index, &status.mpi_status);
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array[i] = array_of_requests[i];
+  }
   delete [] array_of_requests;
   return index;
 }
@@ -75,11 +77,13 @@ MPI::Request::Waitany(int count, MPI::Request array[])
 {
   int index, i;
   MPI_Request* array_of_requests = new MPI_Request[count];
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = array[i];
+  }
   (void)MPI_Waitany(count, array_of_requests, &index, MPI_STATUS_IGNORE);
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array[i] = array_of_requests[i];
+  }
   delete [] array_of_requests;
   return index; //JGS, Waitany return value
 }
@@ -90,11 +94,13 @@ MPI::Request::Testany(int count, MPI::Request array[],
 {
   int i, flag;
   MPI_Request* array_of_requests = new MPI_Request[count];
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = array[i];
+  }
   (void)MPI_Testany(count, array_of_requests, &index, &flag, &status.mpi_status);
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array[i] = array_of_requests[i];
+  }
   delete [] array_of_requests;
   return (bool)flag;
 }
@@ -104,12 +110,14 @@ MPI::Request::Testany(int count, MPI::Request array[], int& index)
 {
   int i, flag;
   MPI_Request* array_of_requests = new MPI_Request[count];
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = array[i];
+  }
   (void)MPI_Testany(count, array_of_requests, &index, &flag, 
 		    MPI_STATUS_IGNORE);
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array[i] = array_of_requests[i];
+  }
   delete [] array_of_requests;
   return (bool)flag;
 }
@@ -121,13 +129,14 @@ MPI::Request::Waitall(int count, MPI::Request req_array[],
   int i;
   MPI_Request* array_of_requests = new MPI_Request[count];
   MPI_Status* array_of_statuses = new MPI_Status[count];
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Waitall(count, array_of_requests, array_of_statuses);
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     req_array[i] = array_of_requests[i];
-  for (i=0; i < count; i++)
     stat_array[i] = array_of_statuses[i];
+  }
   delete [] array_of_requests;
   delete [] array_of_statuses;
 }
@@ -138,12 +147,14 @@ MPI::Request::Waitall(int count, MPI::Request req_array[])
   int i;
   MPI_Request* array_of_requests = new MPI_Request[count];
 
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Waitall(count, array_of_requests, MPI_STATUSES_IGNORE);
 
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     req_array[i] = array_of_requests[i];
+  }
 
   delete [] array_of_requests;
 } 
@@ -155,13 +166,14 @@ MPI::Request::Testall(int count, MPI::Request req_array[],
   int i, flag;
   MPI_Request* array_of_requests = new MPI_Request[count];
   MPI_Status* array_of_statuses = new MPI_Status[count];
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Testall(count, array_of_requests, &flag, array_of_statuses);
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     req_array[i] = array_of_requests[i];
-  for (i=0; i < count; i++)
     stat_array[i] = array_of_statuses[i];
+  }
   delete [] array_of_requests;
   delete [] array_of_statuses;
   return (bool) flag;
@@ -173,12 +185,14 @@ MPI::Request::Testall(int count, MPI::Request req_array[])
   int i, flag;
   MPI_Request* array_of_requests = new MPI_Request[count];
 
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Testall(count, array_of_requests, &flag, MPI_STATUSES_IGNORE);
 
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     req_array[i] = array_of_requests[i];
+  }
   delete [] array_of_requests;
 
   return (bool) flag;
@@ -191,14 +205,15 @@ MPI::Request::Waitsome(int incount, MPI::Request req_array[],
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
   MPI_Status* array_of_statuses = new MPI_Status[incount];
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Waitsome(incount, array_of_requests, &outcount,
 		     array_of_indices, array_of_statuses);
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     req_array[i] = array_of_requests[i];
-  for (i=0; i < incount; i++)
     stat_array[i] = array_of_statuses[i];
+  }
   delete [] array_of_requests;
   delete [] array_of_statuses;
   return outcount;
@@ -211,13 +226,15 @@ MPI::Request::Waitsome(int incount, MPI::Request req_array[],
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
 
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Waitsome(incount, array_of_requests, &outcount,
 		     array_of_indices, MPI_STATUSES_IGNORE);
 
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     req_array[i] = array_of_requests[i];
+  }
   delete [] array_of_requests;
 
   return outcount;
@@ -230,14 +247,15 @@ MPI::Request::Testsome(int incount, MPI::Request req_array[],
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
   MPI_Status* array_of_statuses = new MPI_Status[incount];
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Testsome(incount, array_of_requests, &outcount,
 		     array_of_indices, array_of_statuses);
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     req_array[i] = array_of_requests[i];
-  for (i=0; i < incount; i++)
     stat_array[i] = array_of_statuses[i];
+  }
   delete [] array_of_requests;
   delete [] array_of_statuses;
   return outcount;
@@ -250,13 +268,15 @@ MPI::Request::Testsome(int incount, MPI::Request req_array[],
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
 
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     array_of_requests[i] = req_array[i];
+  }
   (void)MPI_Testsome(incount, array_of_requests, &outcount,
 		     array_of_indices, MPI_STATUSES_IGNORE);
 
-  for (i=0; i < incount; i++)
+  for (i=0; i < incount; i++) {
     req_array[i] = array_of_requests[i];
+  }
   delete [] array_of_requests;
 
   return outcount;
@@ -284,8 +304,9 @@ MPI::Prequest::Startall(int count, MPI:: Prequest array_of_requests[])
     mpi_requests[i] = array_of_requests[i];
   }
   (void)MPI_Startall(count, mpi_requests); 
-  for (i=0; i < count; i++)
+  for (i=0; i < count; i++) {
     array_of_requests[i].mpi_request = mpi_requests[i] ;
+  }
   delete [] mpi_requests;
 } 
 
