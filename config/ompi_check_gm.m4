@@ -122,26 +122,29 @@ AC_DEFUN([_OMPI_CHECK_GM_CONFIG],[
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_GM],[
     AC_ARG_WITH([gm],
-                [AC_HELP_STRING([--with-gm=GM_DIR],
-                                [Additional directory to search for GM installation])])
+        [AC_HELP_STRING([--with-gm(=DIR)],
+             [Build GM (Myrinet) support, searching for libraries in DIR])])
     AC_ARG_WITH([gm-libdir],
-       [AC_HELP_STRING([--with-gm-libdir=GMLIBDIR],
-                       [directory where the GM library can be found, if it is not in GM_DIR/lib or GM_DIR/lib64])])
+        [AC_HELP_STRING([--with-gm-libdir=DIR],
+             [Search for GM (Myrinet) libraries in DIR/lib and DIR/lib64 
+               in addition to other search paths])])
 
-    AS_IF([test ! -z "$with_gm" -a "$with_gm" != "yes"],
-          [ompi_check_gm_dir="$with_gm"])
-    AS_IF([test ! -z "$with_gm_libdir" -a "$with_gm_libdir" != "yes"],
-          [ompi_check_gm_libdir="$with_gm_libdir"])
+    AS_IF([test "$with_gm" != "no"],
+          [AS_IF([test ! -z "$with_gm" -a "$with_gm" != "yes"],
+                 [ompi_check_gm_dir="$with_gm"])
+           AS_IF([test ! -z "$with_gm_libdir" -a "$with_gm_libdir" != "yes"],
+                 [ompi_check_gm_libdir="$with_gm_libdir"])
 
-    OMPI_CHECK_PACKAGE([$1],
-                       [gm.h],
-                       [gm],
-                       [gm_init],
-                       [],
-                       [$ompi_check_gm_dir],
-                       [$ompi_check_gm_libdir],
-                       [ompi_check_gm_happy="yes"],
-                       [ompi_check_gm_happy="no"])
+           OMPI_CHECK_PACKAGE([$1],
+                              [gm.h],
+                              [gm],
+                              [gm_init],
+                              [],
+                              [$ompi_check_gm_dir],
+                              [$ompi_check_gm_libdir],
+                              [ompi_check_gm_happy="yes"],
+                              [ompi_check_gm_happy="no"])],
+          [ompi_check_gm_happy="no"])
 
     AS_IF([test "$ompi_check_gm_happy" = "yes"],
           [_OMPI_CHECK_GM_CONFIG($1)

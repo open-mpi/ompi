@@ -54,30 +54,33 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_MX],[
     AC_ARG_WITH([mx],
-                [AC_HELP_STRING([--with-mx=MX_DIR],
-                                [Additional directory to search for MX installation])])
+        [AC_HELP_STRING([--with-mx(=DIR)],
+             [Build MX (Myrinet Express) support, searching for libraries in DIR])])
     AC_ARG_WITH([mx-libdir],
-                [AC_HELP_STRING([--with-mx-libdir=MXLIBDIR],
-                                [directory where the MX library can be found, if it is not in MX_DIR/lib or MX_DIR/lib64])])
+        [AC_HELP_STRING([--with-mx-libdir=DIR],
+             [Search for MX (Myrinet Express) libraries in DIR/lib and DIR/lib64 
+               in addition to other search paths])])
 
     ompi_check_mx_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_mx_$1_save_LDFLAGS="$LDFLAGS"
     ompi_check_mx_$1_save_LIBS="$LIBS"
 
-    AS_IF([test ! -z "$with_mx" -a "$with_mx" != "yes"],
-          [ompi_check_mx_dir="$with_mx"])
-    AS_IF([test ! -z "$with_mx_libdir" -a "$with_mx_libdir" != "yes"],
-          [ompi_check_mx_libdir="$with_mx_libdir"])
+    AS_IF([test "$with_mx" != "no"],
+          [AS_IF([test ! -z "$with_mx" -a "$with_mx" != "yes"],
+                 [ompi_check_mx_dir="$with_mx"])
+           AS_IF([test ! -z "$with_mx_libdir" -a "$with_mx_libdir" != "yes"],
+                 [ompi_check_mx_libdir="$with_mx_libdir"])
 
-    OMPI_CHECK_PACKAGE([$1],
-                       [myriexpress.h],
-                       [myriexpress],
-                       [mx_finalize],
-                       [],
-                       [$ompi_check_mx_dir],
-                       [$ompi_check_mx_libdir],
-                       [ompi_check_mx_happy="yes"],
-                       [ompi_check_mx_happy="no"])
+           OMPI_CHECK_PACKAGE([$1],
+                              [myriexpress.h],
+                              [myriexpress],
+                              [mx_finalize],
+                              [],
+                              [$ompi_check_mx_dir],
+                              [$ompi_check_mx_libdir],
+                              [ompi_check_mx_happy="yes"],
+                              [ompi_check_mx_happy="no"])],
+          [ompi_check_mx_happy="no"])
 
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
           [_OMPI_CHECK_MX_CONFIG($1, [ompi_check_mx_happy="yes"],
