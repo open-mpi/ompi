@@ -46,11 +46,11 @@ AC_DEFUN([OMPI_MCA],[
     #
     AC_ARG_ENABLE([mca-no-build],
         [AC_HELP_STRING([--enable-mca-no-build=LIST],
-                        [comma-separated list of type-component pairs 
-                         that will not be built.])])
+                        [Comma-separated list of <type>-<component> pairs 
+                         that will not be built.  Example: "--enable-mca-no-build=maffinity-libnuma,btl-portals" will disable building both the "libnuma" maffinity and "portals" btl components.])])
     AC_ARG_ENABLE(mca-dso,
         AC_HELP_STRING([--enable-mca-dso=LIST],
-                       [comma-separated list of types and/or
+                       [Comma-separated list of types and/or
                         type-component pairs that will be built as
                         run-time loadable components (as opposed to
                         statically linked in), if supported on this
@@ -58,7 +58,7 @@ AC_DEFUN([OMPI_MCA],[
                         as DSOs.]))
     AC_ARG_ENABLE(mca-static,
         AC_HELP_STRING([--enable-mca-static=LIST],
-                       [comma-separated list of types and/or
+                       [Comma-separated list of types and/or
                         type-component pairs that will be built statically
                         linked into the library.  The default (if DSOs are
                         supported) is to build all components as DSOs.
@@ -66,7 +66,7 @@ AC_DEFUN([OMPI_MCA],[
                         building as a DSO.]))
     AC_ARG_ENABLE(mca-direct,
         AC_HELP_STRING([--enable-mca-direct=LIST],
-                       [comma-separated list of type-component pairs that
+                       [Comma-separated list of type-component pairs that
                         will be hard coded as the one component to use for
                         a given component type, saving the (small)
                         overhead of the component architecture.  LIST must
