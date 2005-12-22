@@ -35,7 +35,6 @@
 #define FD_SETSIZE 1024
 
 /* other utility header files */
-#if !defined(__cplusplus)
 #include <shellapi.h>
 #include <winsock2.h>
 #include <process.h>
@@ -48,7 +47,6 @@
 #include "win32/ompi_misc.h"
 #include "opal/util/printf.h"
 /*#endif*/
-#endif  /* !defined(__cplusplus) */
 
 #define MAXPATHLEN _MAX_PATH
 #define MAXHOSTNAMELEN _MAX_PATH
@@ -71,6 +69,8 @@ typedef unsigned int uint;
 #define WIFEXITED(EXIT_CODE)   (1)
 #define WEXITSTATUS(EXIT_CODE) (1)
 #define WIFSIGNALED(EXIT_CODE) (0)
+#define WIFSTOPPED(EXIT_CODE)  (0)
+#define WSTOPSIG(EXIT_CODE)    (11)
 
 /* Anju: some random #defines which I know offhand, but need to configure it */
 #define OMPI_ALIGNMENT_CXX_BOOL OMPI_ALIGNMENT_INT
