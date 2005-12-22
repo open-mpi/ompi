@@ -62,10 +62,11 @@ struct orte_pls_rsh_component_t {
     bool assume_same_shell;
     int delay;
     int priority;
-    char** argv;
-    int argc;
+    char *agent_param;
+    char** agent_argv;
+    int agent_argc;
+    char* agent_path;
     char* orted;
-    char* path;
     size_t num_children;
     size_t num_concurrent;
     opal_mutex_t lock;
