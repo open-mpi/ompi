@@ -107,7 +107,7 @@ opal_uicsum(const void *  source, unsigned long csumlen)
 
 void opal_initialize_crc_table(void);
 
-static inline unsigned int 
+unsigned int 
 opal_bcopy_uicrc_partial(
     const void *  source,
     void *  destination,
