@@ -750,7 +750,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
 
                 /* move from retrans to pending list */
                 if(vfrag->vf_idx == vfrag->vf_len) {
-                    OPAL_THREAD_LOCK(&senddreq->req_mutex);
+                    OPAL_THREAD_LOCK(&sendreq->req_mutex);
                     opal_list_remove_item(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
                     opal_list_append(&sendreq->req_pending, (opal_list_item_t*)vfrag);
                     OPAL_THREAD_UNLOCK(&sendreq->req_mutex);
