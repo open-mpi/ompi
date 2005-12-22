@@ -18,12 +18,13 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/pls/base/base.h"
+#include "opal/util/show_help.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/pls/base/base.h"
 
 
 /*
@@ -52,6 +53,8 @@ OBJ_CLASS_INSTANCE(orte_pls_base_cmp_t, opal_list_item_t,
  */
 orte_pls_base_module_t* orte_pls_base_select(char *preferred)
 {
+    orte_pls_base_module_t *ret;
+
     /* Construct the empty list */
 
     OBJ_CONSTRUCT(&orte_pls_base.pls_available, opal_list_t);
@@ -60,10 +63,14 @@ orte_pls_base_module_t* orte_pls_base_select(char *preferred)
     /* Now - did we want a specific one? */
 
     if (NULL != preferred) {
-        return select_preferred(preferred);
+        ret = select_preferred(preferred);
     } else {
-        return select_any();
+        ret = select_any();
     }
+    if (NULL == ret) {
+        opal_show_help("help-pls-base.txt", "no-available-pls", true);
+    }
+    return ret;
 }
 
 

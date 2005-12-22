@@ -1,3 +1,4 @@
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -15,15 +16,9 @@
 # 
 # $HEADER$
 #
+[no-available-pls]
+No available launching agents were found.
 
-dist_pkgdata_DATA += base/help-pls-base.txt
-
-headers += \
-        base/base.h
-
-libmca_pls_la_SOURCES += \
-        base/pls_base_close.c \
-        base/pls_base_open.c \
-        base/pls_base_select.c \
-	base/pls_base_state.c \
-	base/pls_base_proxy.c
+This is an unusual error; it means that Open RTE was unable to find
+any mechanism to launch proceses, and therefore is unable start the
+process(es) in your application.
