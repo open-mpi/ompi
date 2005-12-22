@@ -104,7 +104,8 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
    
     
     if(NULL == vapi_reg->mr){ 
-        opal_output(0, "%s: error registering openib memory of size %lu errno says %s\n", __func__, size, strerror(errno)); 
+        opal_output(0, "%s: ibv_reg_mr(%p,%lu) failed with error: %s\n", 
+            __func__, vapi_reg->base_reg.base, size, strerror(errno)); 
         return OMPI_ERROR; 
     }
     
