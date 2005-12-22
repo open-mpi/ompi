@@ -39,7 +39,7 @@ my @lib_acceptable = ("ompi_" , "mpi_", "MPI_", "OMPI_", "MPI::", "PMPI_", "PMPI
 # Portland Group compiler adds a bunch of these
                       "pghpf_",
 );
-my @comp_acceptable = ("mca_", "orte_", "opal_",
+my @comp_acceptable = ("mca_", "ompi_", "orte_", "opal_",
 # The latest incarnation of ROMIO adds these
                       "MPIO_", "MPIOI_", "ADIO_", "ADIOI_", "MPIU_",
 );
