@@ -337,17 +337,21 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         
-        
         frag->segment.seg_len = max_data; 
         frag->segment.seg_addr.pval = iov.iov_base; 
         frag->base.des_flags = 0; 
 
         
-        btl->btl_mpool->mpool_register(btl->btl_mpool,
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
                                             iov.iov_base, 
                                             max_data, 
                                             0,
                                             (mca_mpool_base_registration_t**) &openib_reg); 
+        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
+            BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
+            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag); 
+            return NULL;
+        }
         
         
         frag->mr = openib_reg->mr; 
@@ -463,7 +467,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     openib_reg = (mca_mpool_openib_registration_t*) registration; 
     
     MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
-
     if(NULL == frag){
         return NULL; 
     }
@@ -476,7 +479,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     if(NULL!= openib_reg){ 
         /* the memory is already pinned try to use it if the pinned region is large enough*/ 
         reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
-        
         btl->btl_mpool->mpool_retain(btl->btl_mpool, 
                                      (mca_mpool_base_registration_t*) openib_reg); 
     }  else { 
@@ -484,11 +486,17 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
          * ourselves 
          */ 
         
-        btl->btl_mpool->mpool_register(btl->btl_mpool,
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
                                        frag->segment.seg_addr.pval,
                                        *size, 
                                        0,
                                        (mca_mpool_base_registration_t**) &openib_reg);
+        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
+            BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu", 
+                frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
+            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            return NULL;
+        }
     }
 
     
