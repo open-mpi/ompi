@@ -344,12 +344,16 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base; 
         frag->base.des_flags = 0; 
 
-        btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                       iov.iov_base, 
-                                       max_data, 
-                                       0,
-                                       (mca_mpool_base_registration_t**) &vapi_reg); 
-        
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
+            iov.iov_base, 
+            max_data, 
+            0,
+            (mca_mpool_base_registration_t**) &vapi_reg); 
+        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
+            BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
+            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            return NULL;
+        }
         
         frag->sg_entry.len = max_data; 
         frag->sg_entry.lkey = vapi_reg->l_key; 
@@ -484,11 +488,17 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         /* we didn't get a memory registration passed in, so we have to register the region
          * ourselves 
          */ 
-        btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                       frag->segment.seg_addr.pval,
-                                       *size, 
-                                       0,
-                                       (mca_mpool_base_registration_t**) &vapi_reg);
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
+            frag->segment.seg_addr.pval,
+            *size, 
+            0,
+            (mca_mpool_base_registration_t**) &vapi_reg);
+        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
+            BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu",
+                frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
+            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            return NULL;
+        }
     }
     
     frag->sg_entry.len = *size; 
