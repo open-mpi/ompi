@@ -103,9 +103,6 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
 
 int orte_pls_rsh_component_open(void)
 {
-    char* param;
-    char *bname;
-    size_t i;
     int tmp;
     mca_base_component_t *c = &mca_pls_rsh_component.super.pls_version;
 
@@ -113,6 +110,9 @@ int orte_pls_rsh_component_open(void)
     OBJ_CONSTRUCT(&mca_pls_rsh_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_rsh_component.cond, opal_condition_t);
     mca_pls_rsh_component.num_children = 0;
+    mca_pls_rsh_component.agent_argv = NULL;
+    mca_pls_rsh_component.agent_argc = 0;
+    mca_pls_rsh_component.agent_path = NULL;
 
     /* lookup parameters */
     mca_base_param_reg_int(c, "debug",
@@ -159,49 +159,58 @@ int orte_pls_rsh_component_open(void)
     mca_base_param_reg_string(c, "agent",
                               "The command used to launch executables on remote nodes (typically either \"rsh\" or \"ssh\")",
                               false, false, "rsh : ssh",
-                              &param);
-    mca_pls_rsh_component.argv = search(param);
-    mca_pls_rsh_component.argc = opal_argv_count(mca_pls_rsh_component.argv);
-    if (NULL != param) free(param);
-    mca_pls_rsh_component.path = NULL;
-    if (mca_pls_rsh_component.argc > 0) {
-        /* If the agent is ssh, and debug was not selected, then
-           automatically add "-x" */
+                              &mca_pls_rsh_component.agent_param);
 
-        bname = opal_basename(mca_pls_rsh_component.argv[0]);
-        if (NULL != bname && 0 == strcmp(bname, "ssh") &&
-            mca_pls_rsh_component.debug == 0) {
-            for (i = 1; NULL != mca_pls_rsh_component.argv[i]; ++i) {
-                if (0 == strcasecmp("-x", mca_pls_rsh_component.argv[i])) {
-                    break;
-                }
-            }
-            if (NULL == mca_pls_rsh_component.argv[i]) {
-                opal_argv_append(&mca_pls_rsh_component.argc, 
-                                 &mca_pls_rsh_component.argv, "-x");
-            }
-        }
-        if (NULL != bname) {
-            free(bname);
-        }
-
-        return ORTE_SUCCESS;
-    } else {
-        return ORTE_ERR_BAD_PARAM;
-    }
+    return ORTE_SUCCESS;
 }
 
 
 orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
 {
+    char *bname;
+    size_t i;
     extern char **environ;
 
-    /* If we didn't find the agent in the path, then don't use this component */
-    if (NULL == mca_pls_rsh_component.argv || NULL == mca_pls_rsh_component.argv[0]) {
+    /* Take the string that was given to us by the pla_rsh_agent MCA
+       param and search for it */
+    mca_pls_rsh_component.agent_argv = 
+        search(mca_pls_rsh_component.agent_param);
+    mca_pls_rsh_component.agent_argc = 
+        opal_argv_count(mca_pls_rsh_component.agent_argv);
+    mca_pls_rsh_component.agent_path = NULL;
+    if (mca_pls_rsh_component.agent_argc > 0) {
+        /* If the agent is ssh, and debug was not selected, then
+           automatically add "-x" */
+
+        bname = opal_basename(mca_pls_rsh_component.agent_argv[0]);
+        if (NULL != bname && 0 == strcmp(bname, "ssh") &&
+            mca_pls_rsh_component.debug == 0) {
+            for (i = 1; NULL != mca_pls_rsh_component.agent_argv[i]; ++i) {
+                if (0 == strcasecmp("-x", 
+                                    mca_pls_rsh_component.agent_argv[i])) {
+                    break;
+                }
+            }
+            if (NULL == mca_pls_rsh_component.agent_argv[i]) {
+                opal_argv_append(&mca_pls_rsh_component.agent_argc, 
+                                 &mca_pls_rsh_component.agent_argv, "-x");
+            }
+        }
+        if (NULL != bname) {
+            free(bname);
+        }
+    }
+
+    /* If we didn't find the agent in the path, then don't use this
+       component */
+    if (NULL == mca_pls_rsh_component.agent_argv || 
+        NULL == mca_pls_rsh_component.agent_argv[0]) {
         return NULL;
     }
-    mca_pls_rsh_component.path = opal_path_findv(mca_pls_rsh_component.argv[0], X_OK, environ, NULL);
-    if (NULL == mca_pls_rsh_component.path) {
+    mca_pls_rsh_component.agent_path = 
+        opal_path_findv(mca_pls_rsh_component.agent_argv[0], X_OK,
+                        environ, NULL);
+    if (NULL == mca_pls_rsh_component.agent_path) {
         return NULL;
     }
     *priority = mca_pls_rsh_component.priority;
@@ -217,10 +226,15 @@ int orte_pls_rsh_component_close(void)
     if (NULL != mca_pls_rsh_component.orted) {
         free(mca_pls_rsh_component.orted);
     }
-    if(NULL != mca_pls_rsh_component.argv)
-        opal_argv_free(mca_pls_rsh_component.argv);
-    if(NULL != mca_pls_rsh_component.path)
-        free(mca_pls_rsh_component.path);
+    if (NULL != mca_pls_rsh_component.agent_param) {
+        free(mca_pls_rsh_component.agent_param);
+    }
+    if (NULL != mca_pls_rsh_component.agent_argv) {
+        opal_argv_free(mca_pls_rsh_component.agent_argv);
+    }
+    if (NULL != mca_pls_rsh_component.agent_path) {
+        free(mca_pls_rsh_component.agent_path);
+    }
     return ORTE_SUCCESS;
 }
 
@@ -258,7 +272,8 @@ static char **search(const char* agent_list)
         /* Look for the first token in the PATH */
         tmp = opal_path_findv(tokens[0], X_OK, environ, cwd);
         if (NULL != tmp) {
-            free(tmp);
+            free(tokens[0]);
+            tokens[0] = tmp;
             opal_argv_free(lines);
             return tokens;
         }
