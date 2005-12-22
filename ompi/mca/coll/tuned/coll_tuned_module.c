@@ -47,42 +47,42 @@ static const mca_coll_base_module_1_0_0_t intra_fixed = {
 
   /* Initialization / finalization functions */
 
-  mca_coll_tuned_module_init,
-  mca_coll_tuned_module_finalize,
+  ompi_coll_tuned_module_init,
+  ompi_coll_tuned_module_finalize,
 
   /* Collective function pointers */
 
-/*   mca_coll_tuned_allgather_intra_dec_fixed, */
+/*   ompi_coll_tuned_allgather_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allgatherv_intra_dec_fixed, */
+/*   ompi_coll_tuned_allgatherv_intra_dec_fixed, */
     NULL,
-  mca_coll_tuned_allreduce_intra_dec_fixed,
+  ompi_coll_tuned_allreduce_intra_dec_fixed,
 /*     NULL, */
-  mca_coll_tuned_alltoall_intra_dec_fixed,
+  ompi_coll_tuned_alltoall_intra_dec_fixed,
 /*     NULL, */
-/*   mca_coll_tuned_alltoallv_intra_dec_fixed, */
+/*   ompi_coll_tuned_alltoallv_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoallw_intra_dec_fixed, */
+/*   ompi_coll_tuned_alltoallw_intra_dec_fixed, */
     NULL,
-  mca_coll_tuned_barrier_intra_dec_fixed,
+  ompi_coll_tuned_barrier_intra_dec_fixed,
 /*     NULL, */
-  mca_coll_tuned_bcast_intra_dec_fixed,
+  ompi_coll_tuned_bcast_intra_dec_fixed,
 /*     NULL, */
-/*   mca_coll_tuned_exscan_intra_dec_fixed, */
+/*   ompi_coll_tuned_exscan_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gather_intra_dec_fixed, */
+/*   ompi_coll_tuned_gather_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gatherv_intra_dec_fixed, */
+/*   ompi_coll_tuned_gatherv_intra_dec_fixed, */
     NULL,
-  mca_coll_tuned_reduce_intra_dec_fixed,
+  ompi_coll_tuned_reduce_intra_dec_fixed,
 /*     NULL, */
-/*   mca_coll_tuned_reduce_scatter_intra_dec_fixed, */
+/*   ompi_coll_tuned_reduce_scatter_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scan_intra_dec_fixed, */
+/*   ompi_coll_tuned_scan_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatter_intra_dec_fixed, */
+/*   ompi_coll_tuned_scatter_intra_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatterv_intra_dec_fixed */
+/*   ompi_coll_tuned_scatterv_intra_dec_fixed */
     NULL
 };
 
@@ -90,42 +90,42 @@ static const mca_coll_base_module_1_0_0_t intra_dynamic = {
 
   /* Initialization / finalization functions */
 
-  mca_coll_tuned_module_init,
-  mca_coll_tuned_module_finalize,
+  ompi_coll_tuned_module_init,
+  ompi_coll_tuned_module_finalize,
 
   /* Collective function pointers */
 
-/*   mca_coll_tuned_allgather_intra_dec_dynamic, */
+/*   ompi_coll_tuned_allgather_intra_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_allgatherv_intra_dec_dynamic, */
+/*   ompi_coll_tuned_allgatherv_intra_dec_dynamic, */
     NULL,
-  mca_coll_tuned_allreduce_intra_dec_dynamic,
+  ompi_coll_tuned_allreduce_intra_dec_dynamic,
 /*     NULL, */
-  mca_coll_tuned_alltoall_intra_dec_dynamic,
+  ompi_coll_tuned_alltoall_intra_dec_dynamic,
 /*     NULL, */
-/*   mca_coll_tuned_alltoallv_intra_dec_dynamic, */
+/*   ompi_coll_tuned_alltoallv_intra_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_alltoallw_intra_dec_dynamic, */
+/*   ompi_coll_tuned_alltoallw_intra_dec_dynamic, */
     NULL,
-  mca_coll_tuned_barrier_intra_dec_dynamic,
+  ompi_coll_tuned_barrier_intra_dec_dynamic,
 /*     NULL, */
-  mca_coll_tuned_bcast_intra_dec_dynamic,
+  ompi_coll_tuned_bcast_intra_dec_dynamic,
 /*     NULL, */
-/*   mca_coll_tuned_exscan_intra_dec_dynamic, */
+/*   ompi_coll_tuned_exscan_intra_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_gather_intra_dec_dynamic, */
+/*   ompi_coll_tuned_gather_intra_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_gatherv_intra_dec_dynamic, */
+/*   ompi_coll_tuned_gatherv_intra_dec_dynamic, */
     NULL,
-  mca_coll_tuned_reduce_intra_dec_dynamic,
+  ompi_coll_tuned_reduce_intra_dec_dynamic,
 /*     NULL, */
-/*   mca_coll_tuned_reduce_scatter_intra_dec_dynamic, */
+/*   ompi_coll_tuned_reduce_scatter_intra_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_scan_intra_dec_dynamic, */
+/*   ompi_coll_tuned_scan_intra_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_scatter_intra_dec_dynamic, */
+/*   ompi_coll_tuned_scatter_intra_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_scatterv_intra_dec_dynamic */
+/*   ompi_coll_tuned_scatterv_intra_dec_dynamic */
     NULL
 };
 
@@ -139,42 +139,42 @@ static const mca_coll_base_module_1_0_0_t inter_fixed = {
 
   /* Initialization / finalization functions */
 
-  mca_coll_tuned_module_init,
-  mca_coll_tuned_module_finalize,
+  ompi_coll_tuned_module_init,
+  ompi_coll_tuned_module_finalize,
 
   /* Collective function pointers */
 
-/*   mca_coll_tuned_allgather_inter_dec_fixed, */
+/*   ompi_coll_tuned_allgather_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allgatherv_inter_dec_fixed, */
+/*   ompi_coll_tuned_allgatherv_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_allreduce_inter_dec_fixed, */
+/*   ompi_coll_tuned_allreduce_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoall_inter_dec_fixed, */
+/*   ompi_coll_tuned_alltoall_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoallv_inter_dec_fixed, */
+/*   ompi_coll_tuned_alltoallv_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_alltoallw_inter_dec_fixed, */
+/*   ompi_coll_tuned_alltoallw_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_barrier_inter_dec_fixed, */
+/*   ompi_coll_tuned_barrier_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_bcast_inter_dec_fixed, */
+/*   ompi_coll_tuned_bcast_inter_dec_fixed, */
     NULL,
-/* mca_coll_tuned_exscan_inter_dec_fixed, */
+/* ompi_coll_tuned_exscan_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gather_inter_dec_fixed, */
+/*   ompi_coll_tuned_gather_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_gatherv_inter_dec_fixed, */
+/*   ompi_coll_tuned_gatherv_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_reduce_inter_dec_fixed, */
+/*   ompi_coll_tuned_reduce_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_reduce_scatter_inter_dec_fixed, */
+/*   ompi_coll_tuned_reduce_scatter_inter_dec_fixed, */
     NULL,
-/* mca_coll_tuned_scan_inter_dec_fixed, */
+/* ompi_coll_tuned_scan_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatter_inter_dec_fixed, */
+/*   ompi_coll_tuned_scatter_inter_dec_fixed, */
     NULL,
-/*   mca_coll_tuned_scatterv_inter_dec_fixed */
+/*   ompi_coll_tuned_scatterv_inter_dec_fixed */
     NULL
 };
 
@@ -182,42 +182,42 @@ static const mca_coll_base_module_1_0_0_t inter_dynamic = {
 
   /* Initialization / finalization functions */
 
-  mca_coll_tuned_module_init,
-  mca_coll_tuned_module_finalize,
+  ompi_coll_tuned_module_init,
+  ompi_coll_tuned_module_finalize,
 
   /* Collective function pointers */
 
-/*   mca_coll_tuned_allgather_inter_dec_dynamic, */
+/*   ompi_coll_tuned_allgather_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_allgatherv_inter_dec_dynamic, */
+/*   ompi_coll_tuned_allgatherv_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_allreduce_inter_dec_dynamic, */
+/*   ompi_coll_tuned_allreduce_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_alltoall_inter_dec_dynamic, */
+/*   ompi_coll_tuned_alltoall_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_alltoallv_inter_dec_dynamic, */
+/*   ompi_coll_tuned_alltoallv_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_alltoallw_inter_dec_dynamic, */
+/*   ompi_coll_tuned_alltoallw_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_barrier_inter_dec_dynamic, */
+/*   ompi_coll_tuned_barrier_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_bcast_inter_dec_dynamic, */
+/*   ompi_coll_tuned_bcast_inter_dec_dynamic, */
     NULL,
-/* mca_coll_tuned_exscan_inter_dec_dynamic, */
+/* ompi_coll_tuned_exscan_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_gather_inter_dec_dynamic, */
+/*   ompi_coll_tuned_gather_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_gatherv_inter_dec_dynamic, */
+/*   ompi_coll_tuned_gatherv_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_reduce_inter_dec_dynamic, */
+/*   ompi_coll_tuned_reduce_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_reduce_scatter_inter_dec_dynamic, */
+/*   ompi_coll_tuned_reduce_scatter_inter_dec_dynamic, */
     NULL,
-/* mca_coll_tuned_scan_inter_dec_dynamic, */
+/* ompi_coll_tuned_scan_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_scatter_inter_dec_dynamic, */
+/*   ompi_coll_tuned_scatter_inter_dec_dynamic, */
     NULL,
-/*   mca_coll_tuned_scatterv_inter_dec_dynamic */
+/*   ompi_coll_tuned_scatterv_inter_dec_dynamic */
     NULL
 };
 
@@ -232,7 +232,7 @@ static const mca_coll_base_module_1_0_0_t inter_dynamic = {
  * this component to disqualify itself if it doesn't support the
  * required level of thread support.
  */
-int mca_coll_tuned_init_query(bool enable_progress_threads,
+int ompi_coll_tuned_init_query(bool enable_progress_threads,
                               bool enable_mpi_threads)
 {
     /* Nothing to do */
@@ -247,12 +247,12 @@ int mca_coll_tuned_init_query(bool enable_progress_threads,
  * priority we want to return.
  */
 const mca_coll_base_module_1_0_0_t *
-mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
+ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
                           struct mca_coll_base_comm_t **data)
 {
-    OPAL_OUTPUT((mca_coll_tuned_stream, "coll:tuned:module_tuned query called"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:module_tuned query called"));
 
-    *priority = mca_coll_tuned_priority;
+    *priority = ompi_coll_tuned_priority;
 
   /* 
    * Choose whether to use [intra|inter] decision functions 
@@ -263,19 +263,19 @@ mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
    */
 
   if (OMPI_COMM_IS_INTER(comm)) {
-    if (mca_coll_tuned_use_dynamic_rules) {
-      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using inter_dynamic"));
+    if (ompi_coll_tuned_use_dynamic_rules) {
+      OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_dynamic"));
       to_use = &inter_dynamic;
     } else {
-      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using inter_fixed"));
+      OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_fixed"));
       to_use = &inter_fixed;
     }
   } else { /* is an intra comm */
-    if (mca_coll_tuned_use_dynamic_rules) {
-      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
+    if (ompi_coll_tuned_use_dynamic_rules) {
+      OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
       to_use = &intra_dynamic;
     } else {
-      OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
+      OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
       to_use = &intra_fixed;
     }
   }
@@ -287,7 +287,7 @@ mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
  * Init module on the communicator
  */
 const struct mca_coll_base_module_1_0_0_t *
-mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
+ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
 {
   int size, rank;
   struct mca_coll_base_comm_t *data;
@@ -296,7 +296,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   int i;
 
 
-  OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init called."));
+  OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init called."));
 
   /* This routine will become more complex and might have to be */
   /* broken into more sections/function calls */
@@ -332,7 +332,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    */
 
   /* if we within the memory/size limit, allow preallocated data */
-  if (size<=mca_coll_tuned_preallocate_memory_comm_size_limit) {
+  if (size<=ompi_coll_tuned_preallocate_memory_comm_size_limit) {
     data = malloc(sizeof(struct mca_coll_base_comm_t) +
                  (sizeof(ompi_request_t *) * size * 2));
   
@@ -371,7 +371,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
                                 /* but we have to make sure we have the same rules everywhere :( */
 
   /* if using dynamic rules make sure all overrides are NULL before we start override anything accidently */
-  if (mca_coll_tuned_use_dynamic_rules) {
+  if (ompi_coll_tuned_use_dynamic_rules) {
         /* base rules */
         data->all_base_rules = (ompi_coll_alg_rule_t*) NULL;
 
@@ -384,21 +384,21 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
   if (&ompi_mpi_comm_world==comm) {
 
-     if (mca_coll_tuned_use_dynamic_rules) {
+     if (ompi_coll_tuned_use_dynamic_rules) {
 
-         OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
+         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
 
-         if (mca_coll_tuned_dynamic_rules_filename) {
-             OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
-                           mca_coll_tuned_dynamic_rules_filename));
-             rc = coll_tuned_read_rules_config_file (mca_coll_tuned_dynamic_rules_filename,
+         if (ompi_coll_tuned_dynamic_rules_filename) {
+             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
+                           ompi_coll_tuned_dynamic_rules_filename));
+             rc = ompi_coll_tuned_read_rules_config_file (ompi_coll_tuned_dynamic_rules_filename,
                                      &(data->all_base_rules), COLLCOUNT);
              if (rc>=0) {
-                OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Read %d valid rules\n", rc));
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Read %d valid rules\n", rc));
                 /* at this point we all have a base set of rules */
                 /* now we can get our customized communicator sized rule set, for each collective */
                 for (i=0;i<COLLCOUNT;i++) {
-                    data->com_rules[i] = coll_tuned_get_com_rule_ptr (data->all_base_rules, i, size);
+                    data->com_rules[i] = ompi_coll_tuned_get_com_rule_ptr (data->all_base_rules, i, size);
                 }
              }
              else { /* failed to read config file, thus make sure its a NULL... */
@@ -414,10 +414,10 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
   
   /* ok, if using dynamic rules, not MCW and we are just any rank and a base set of rules exist.. ref them */
   /* order of eval is important here, if we are MCW ompi_mpi_comm_world.c_coll_selected_data is NULL still.. */
-  if ((mca_coll_tuned_use_dynamic_rules)&&(!(&ompi_mpi_comm_world==comm))&&
+  if ((ompi_coll_tuned_use_dynamic_rules)&&(!(&ompi_mpi_comm_world==comm))&&
         ((ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules)) {
 
-     OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
+     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
 
      /* this will, erm fail if MCW doesn't exist which it should! */
      data->all_base_rules = (ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules;
@@ -425,7 +425,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
      /* at this point we all have a base set of rules if they exist atall */
      /* now we can get our customized communicator sized rule set, for each collective */
      for (i=0;i<COLLCOUNT;i++) {
-        data->com_rules[i] = coll_tuned_get_com_rule_ptr (data->all_base_rules, i, size);
+        data->com_rules[i] = ompi_coll_tuned_get_com_rule_ptr (data->all_base_rules, i, size);
      }
   }
 
@@ -435,9 +435,9 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    */
 
   /* general n fan out tree */
-  data->cached_ntree = ompi_coll_tuned_topo_build_tree (mca_coll_tuned_init_tree_fanout, comm, 0); 
+  data->cached_ntree = ompi_coll_tuned_topo_build_tree (ompi_coll_tuned_init_tree_fanout, comm, 0); 
   data->cached_ntree_root = 0;
-  data->cached_ntree_fanout = mca_coll_tuned_init_tree_fanout;
+  data->cached_ntree_fanout = ompi_coll_tuned_init_tree_fanout;
 
   /* binary tree */
   data->cached_bintree = ompi_coll_tuned_topo_build_tree (2, comm, 0); 
@@ -455,9 +455,9 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
    * will probably change how we cache this later, for now a midsize
    * GEF
    */
-  data->cached_chain = ompi_coll_tuned_topo_build_chain (mca_coll_tuned_init_chain_fanout, comm, 0);
+  data->cached_chain = ompi_coll_tuned_topo_build_chain (ompi_coll_tuned_init_chain_fanout, comm, 0);
   data->cached_chain_root = 0;
-  data->cached_chain_fanout = mca_coll_tuned_init_chain_fanout;
+  data->cached_chain_fanout = ompi_coll_tuned_init_chain_fanout;
 
   /* standard pipeline */
   data->cached_pipeline = ompi_coll_tuned_topo_build_chain (1, comm, 0);
@@ -467,7 +467,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
   comm->c_coll_selected_data = data;
 
-  OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
+  OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
   return to_use;
 }
 
@@ -475,7 +475,7 @@ mca_coll_tuned_module_init(struct ompi_communicator_t *comm)
 /*
  * Finalize module on the communicator
  */
-int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
+int ompi_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
 {
   if (NULL == comm->c_coll_selected_module) {
     return OMPI_SUCCESS;
@@ -508,14 +508,11 @@ int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
 
   /* if any algorithm rules are cached on the communicator, only free them if its MCW */
   /* as this is the only place they are allocated by reading the decision configure file */
-  if ((mca_coll_tuned_use_dynamic_rules)&&(&ompi_mpi_comm_world==comm)) {
+  if ((ompi_coll_tuned_use_dynamic_rules)&&(&ompi_mpi_comm_world==comm)) {
      if (comm->c_coll_selected_data->all_base_rules) {
-        coll_tuned_free_all_rules (comm->c_coll_selected_data->all_base_rules, COLLCOUNT);
+        ompi_coll_tuned_free_all_rules (comm->c_coll_selected_data->all_base_rules, COLLCOUNT);
      }
   }
-
-
-
 
   /* if allocated memory free it */
   if (comm->c_coll_selected_data) {

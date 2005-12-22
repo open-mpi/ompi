@@ -26,12 +26,6 @@
 extern "C" {
 #endif
 
-/*
- * Globally exported variable
- */
-
-
-/* none */
 
 typedef struct msg_rule_s {
    /* paranoid / debug */
@@ -81,31 +75,28 @@ typedef struct alg_rule_s {
 /* function prototypes */
 
 /* these are used to build the rule tables (by the read file routines) */
-ompi_coll_alg_rule_t* coll_tuned_mk_alg_rules (int n_alg);
-ompi_coll_com_rule_t* coll_tuned_mk_com_rules (int n_com_rules, int alg_rule_id);
-ompi_coll_msg_rule_t* coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rule_id, int com_rule_id, int mpi_comsize);
+ompi_coll_alg_rule_t* ompi_coll_tuned_mk_alg_rules (int n_alg);
+ompi_coll_com_rule_t* ompi_coll_tuned_mk_com_rules (int n_com_rules, int alg_rule_id);
+ompi_coll_msg_rule_t* ompi_coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rule_id, int com_rule_id, int mpi_comsize);
 
 /* debugging support */
-int coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p);
-int coll_tuned_dump_com_rule (ompi_coll_com_rule_t* com_p);
-int coll_tuned_dump_alg_rule (ompi_coll_alg_rule_t* alg_p);
-int coll_tuned_dump_all_rules (ompi_coll_alg_rule_t* alg_p, int n_rules);
+int ompi_coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p);
+int ompi_coll_tuned_dump_com_rule (ompi_coll_com_rule_t* com_p);
+int ompi_coll_tuned_dump_alg_rule (ompi_coll_alg_rule_t* alg_p);
+int ompi_coll_tuned_dump_all_rules (ompi_coll_alg_rule_t* alg_p, int n_rules);
 
 /* free alloced memory routines, used by file and tuned component/module */
-int coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p);
-int coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p);
-int coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs);
+int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p);
+int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p);
+int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs);
 
 
 /* the IMPORTANT routines, i.e. the ones that do stuff for everyday communicators and collective calls */
 
-ompi_coll_com_rule_t* coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, int alg_id, int mpi_comsize);
+ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, int alg_id, int mpi_comsize);
 
-int coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, int mpi_msgsize, 
+int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, int mpi_msgsize, 
                                             int* result_topo_faninout, int* result_segsize);
-
-
-
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

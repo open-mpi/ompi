@@ -81,36 +81,36 @@ extern "C" {
 
 OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component;
 
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_stream;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_priority;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_preallocate_memory_comm_size_limit;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_use_dynamic_rules;
-OMPI_COMP_EXPORT extern char* mca_coll_tuned_dynamic_rules_filename;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_init_tree_fanout;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_init_chain_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_stream;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_priority;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_preallocate_memory_comm_size_limit;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_use_dynamic_rules;
+OMPI_COMP_EXPORT extern char* ompi_coll_tuned_dynamic_rules_filename;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_init_tree_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_init_chain_fanout;
 
 /* forced algorithm choices */
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_choice;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_segsize;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_allreduce_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_choice;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_segsize;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_chain_fanout;
 
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_choice;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_segsize;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_alltoall_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_choice;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_segsize;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_chain_fanout;
 
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_barrier_forced_choice;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_barrier_forced_choice;
 
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_choice;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_segsize;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_bcast_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_choice;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_segsize;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_chain_fanout;
 
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_choice;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_segsize;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_choice;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_segsize;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_tree_fanout;
+OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_chain_fanout;
 
 /*
  * coll API functions
@@ -119,17 +119,17 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
 
   /* API functions */
 
-  int mca_coll_tuned_init_query(bool enable_progress_threads,
+  int ompi_coll_tuned_init_query(bool enable_progress_threads,
                                 bool enable_mpi_threads);
 
   const struct mca_coll_base_module_1_0_0_t *
-    mca_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
+    ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
                               struct mca_coll_base_comm_t **data);
 
   const struct mca_coll_base_module_1_0_0_t *
-    mca_coll_tuned_module_init(struct ompi_communicator_t *comm);
+    ompi_coll_tuned_module_init(struct ompi_communicator_t *comm);
 
-  int mca_coll_tuned_module_finalize(struct ompi_communicator_t *comm);
+  int ompi_coll_tuned_module_finalize(struct ompi_communicator_t *comm);
 
   /* API functions of decision functions and any implementations */
 
@@ -141,149 +141,149 @@ OMPI_COMP_EXPORT extern int   mca_coll_tuned_reduce_forced_chain_fanout;
    */
 
   /* All Gather */
-  int mca_coll_tuned_allgather_intra_dec_fixed(ALLGATHER_ARGS);
-  int mca_coll_tuned_allgather_intra_dec_dynamic(ALLGATHER_ARGS);
-  int mca_coll_tuned_allgather_inter_dec_fixed(ALLGATHER_ARGS);
-  int mca_coll_tuned_allgather_inter_dec_dynamic(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_dec_fixed(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_dec_dynamic(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_inter_dec_fixed(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_inter_dec_dynamic(ALLGATHER_ARGS);
 
   /* All GatherV */
-  int mca_coll_tuned_allgatherv_intra_dec_fixed(ALLGATHERV_ARGS);
-  int mca_coll_tuned_allgatherv_intra_dec_dynamic(ALLGATHERV_ARGS);
-  int mca_coll_tuned_allgatherv_inter_dec_fixed(ALLGATHERV_ARGS);
-  int mca_coll_tuned_allgatherv_inter_dec_dynamic(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_dec_fixed(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_intra_dec_dynamic(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_inter_dec_fixed(ALLGATHERV_ARGS);
+  int ompi_coll_tuned_allgatherv_inter_dec_dynamic(ALLGATHERV_ARGS);
 
   /* All Reduce */
-  int mca_coll_tuned_allreduce_intra_dec_fixed(ALLREDUCE_ARGS);
-  int mca_coll_tuned_allreduce_intra_dec_dynamic(ALLREDUCE_ARGS);
-  int mca_coll_tuned_allreduce_intra_do_forced(ALLREDUCE_ARGS);
-  int mca_coll_tuned_allreduce_intra_do_this(ALLREDUCE_ARGS, int choice, int faninout, int segsize);
-  int mca_coll_tuned_allreduce_intra_check_forced(void);
-  int mca_coll_tuned_allreduce_intra_query(void);
-  int mca_coll_tuned_allreduce_intra_nonoverlapping(ALLREDUCE_ARGS);
-  int mca_coll_tuned_allreduce_intra_basic_linear(ALLREDUCE_ARGS);
-  int mca_coll_tuned_allreduce_inter_dec_fixed(ALLREDUCE_ARGS);
-  int mca_coll_tuned_allreduce_inter_dec_dynamic(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_intra_dec_fixed(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_intra_dec_dynamic(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_intra_do_forced(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_intra_do_this(ALLREDUCE_ARGS, int choice, int faninout, int segsize);
+  int ompi_coll_tuned_allreduce_intra_check_forced(void);
+  int ompi_coll_tuned_allreduce_intra_query(void);
+  int ompi_coll_tuned_allreduce_intra_nonoverlapping(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_intra_basic_linear(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_inter_dec_fixed(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_inter_dec_dynamic(ALLREDUCE_ARGS);
 
   /* AlltoAll */
-  int mca_coll_tuned_alltoall_intra_dec_fixed(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_intra_dec_dynamic(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_intra_do_forced(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_intra_do_this(ALLTOALL_ARGS, int choice, int faninout, int segsize);
-  int mca_coll_tuned_alltoall_intra_check_forced(void);
-  int mca_coll_tuned_alltoall_intra_query (void);
-  int mca_coll_tuned_alltoall_intra_pairwise(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_intra_bruck(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_intra_basic_linear(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_intra_two_procs(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_inter_dec_fixed(ALLTOALL_ARGS);
-  int mca_coll_tuned_alltoall_inter_dec_dynamic(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_dec_fixed(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_dec_dynamic(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_do_forced(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_do_this(ALLTOALL_ARGS, int choice, int faninout, int segsize);
+  int ompi_coll_tuned_alltoall_intra_check_forced(void);
+  int ompi_coll_tuned_alltoall_intra_query (void);
+  int ompi_coll_tuned_alltoall_intra_pairwise(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_bruck(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_basic_linear(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_intra_two_procs(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_inter_dec_fixed(ALLTOALL_ARGS);
+  int ompi_coll_tuned_alltoall_inter_dec_dynamic(ALLTOALL_ARGS);
 
   /* AlltoAllV */
-  int mca_coll_tuned_alltoallv_intra_dec_fixed(ALLTOALLV_ARGS);
-  int mca_coll_tuned_alltoallv_intra_dec_dynamic(ALLTOALLV_ARGS);
-  int mca_coll_tuned_alltoallv_inter_dec_fixed(ALLTOALLV_ARGS);
-  int mca_coll_tuned_alltoallv_inter_dec_dynamic(ALLTOALLV_ARGS);
+  int ompi_coll_tuned_alltoallv_intra_dec_fixed(ALLTOALLV_ARGS);
+  int ompi_coll_tuned_alltoallv_intra_dec_dynamic(ALLTOALLV_ARGS);
+  int ompi_coll_tuned_alltoallv_inter_dec_fixed(ALLTOALLV_ARGS);
+  int ompi_coll_tuned_alltoallv_inter_dec_dynamic(ALLTOALLV_ARGS);
 
   /* AlltoAllW */
-  int mca_coll_tuned_alltoallw_intra_dec_fixed(ALLTOALLW_ARGS);
-  int mca_coll_tuned_alltoallw_intra_dec_dynamic(ALLTOALLW_ARGS);
-  int mca_coll_tuned_alltoallw_inter_dec_fixed(ALLTOALLW_ARGS);
-  int mca_coll_tuned_alltoallw_inter_dec_dynamic(ALLTOALLW_ARGS);
+  int ompi_coll_tuned_alltoallw_intra_dec_fixed(ALLTOALLW_ARGS);
+  int ompi_coll_tuned_alltoallw_intra_dec_dynamic(ALLTOALLW_ARGS);
+  int ompi_coll_tuned_alltoallw_inter_dec_fixed(ALLTOALLW_ARGS);
+  int ompi_coll_tuned_alltoallw_inter_dec_dynamic(ALLTOALLW_ARGS);
 
   /* Barrier */
-  int mca_coll_tuned_barrier_intra_dec_fixed(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_intra_dec_dynamic(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_intra_do_forced(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_intra_do_this(BARRIER_ARGS, int choice, int faninout, int segsize);
+  int ompi_coll_tuned_barrier_intra_dec_fixed(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_dec_dynamic(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_do_forced(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_do_this(BARRIER_ARGS, int choice, int faninout, int segsize);
 
-  int mca_coll_tuned_barrier_intra_check_forced(void);
-  int mca_coll_tuned_barrier_intra_query (void);
+  int ompi_coll_tuned_barrier_intra_check_forced(void);
+  int ompi_coll_tuned_barrier_intra_query (void);
 
-  int mca_coll_tuned_barrier_inter_dec_fixed(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_inter_dec_dynamic(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_inter_dec_fixed(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_inter_dec_dynamic(BARRIER_ARGS);
 
-  int mca_coll_tuned_barrier_intra_doublering(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_intra_recursivedoubling(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_intra_bruck(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_intra_two_procs(BARRIER_ARGS);
-  int mca_coll_tuned_barrier_intra_linear(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_doublering(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_recursivedoubling(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_bruck(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_two_procs(BARRIER_ARGS);
+  int ompi_coll_tuned_barrier_intra_linear(BARRIER_ARGS);
 
   /* Bcast */
-  int mca_coll_tuned_bcast_intra_dec_fixed(BCAST_ARGS);
-  int mca_coll_tuned_bcast_intra_dec_dynamic(BCAST_ARGS);
-  int mca_coll_tuned_bcast_intra_do_forced(BCAST_ARGS);
-  int mca_coll_tuned_bcast_intra_do_this(BCAST_ARGS, int choice, int faninout, int segsize);
-  int mca_coll_tuned_bcast_intra_check_forced(void);
-  int mca_coll_tuned_bcast_intra_query (void);
-  int mca_coll_tuned_bcast_intra_basic_linear(BCAST_ARGS);
-  int mca_coll_tuned_bcast_intra_chain(BCAST_ARGS, uint32_t segsize, int32_t chains);
-  int mca_coll_tuned_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
-  int mca_coll_tuned_bcast_intra_bmtree(BCAST_ARGS, uint32_t segsize, int32_t chains);
-  int mca_coll_tuned_bcast_intra_bintree(BCAST_ARGS, uint32_t segsize);
-  int mca_coll_tuned_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
-  int mca_coll_tuned_bcast_inter_dec_fixed(BCAST_ARGS);
-  int mca_coll_tuned_bcast_inter_dec_dynamic(BCAST_ARGS);
+  int ompi_coll_tuned_bcast_intra_dec_fixed(BCAST_ARGS);
+  int ompi_coll_tuned_bcast_intra_dec_dynamic(BCAST_ARGS);
+  int ompi_coll_tuned_bcast_intra_do_forced(BCAST_ARGS);
+  int ompi_coll_tuned_bcast_intra_do_this(BCAST_ARGS, int choice, int faninout, int segsize);
+  int ompi_coll_tuned_bcast_intra_check_forced(void);
+  int ompi_coll_tuned_bcast_intra_query (void);
+  int ompi_coll_tuned_bcast_intra_basic_linear(BCAST_ARGS);
+  int ompi_coll_tuned_bcast_intra_chain(BCAST_ARGS, uint32_t segsize, int32_t chains);
+  int ompi_coll_tuned_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_bcast_intra_bmtree(BCAST_ARGS, uint32_t segsize, int32_t chains);
+  int ompi_coll_tuned_bcast_intra_bintree(BCAST_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_bcast_inter_dec_fixed(BCAST_ARGS);
+  int ompi_coll_tuned_bcast_inter_dec_dynamic(BCAST_ARGS);
 
   /* Exscan */
-  int mca_coll_tuned_exscan_intra_dec_fixed(EXSCAN_ARGS);
-  int mca_coll_tuned_exscan_intra_dec_dynamic(EXSCAN_ARGS);
-  int mca_coll_tuned_exscan_inter_dec_fixed(EXSCAN_ARGS);
-  int mca_coll_tuned_exscan_inter_dec_dynamic(EXSCAN_ARGS);
+  int ompi_coll_tuned_exscan_intra_dec_fixed(EXSCAN_ARGS);
+  int ompi_coll_tuned_exscan_intra_dec_dynamic(EXSCAN_ARGS);
+  int ompi_coll_tuned_exscan_inter_dec_fixed(EXSCAN_ARGS);
+  int ompi_coll_tuned_exscan_inter_dec_dynamic(EXSCAN_ARGS);
 
   /* Gather */
-  int mca_coll_tuned_gather_intra_dec_fixed(GATHER_ARGS);
-  int mca_coll_tuned_gather_intra_dec_dynamic(GATHER_ARGS);
-  int mca_coll_tuned_gather_inter_dec_fixed(GATHER_ARGS);
-  int mca_coll_tuned_gather_inter_dec_dynamic(GATHER_ARGS);
+  int ompi_coll_tuned_gather_intra_dec_fixed(GATHER_ARGS);
+  int ompi_coll_tuned_gather_intra_dec_dynamic(GATHER_ARGS);
+  int ompi_coll_tuned_gather_inter_dec_fixed(GATHER_ARGS);
+  int ompi_coll_tuned_gather_inter_dec_dynamic(GATHER_ARGS);
 
   /* GatherV */
-  int mca_coll_tuned_gatherv_intra_dec_fixed(GATHERV_ARGS);
-  int mca_coll_tuned_gatherv_intra_dec_dynamic(GATHER_ARGS);
-  int mca_coll_tuned_gatherv_inter_dec_fixed(GATHER_ARGS);
-  int mca_coll_tuned_gatherv_inter_dec_dynamic(GATHER_ARGS);
+  int ompi_coll_tuned_gatherv_intra_dec_fixed(GATHERV_ARGS);
+  int ompi_coll_tuned_gatherv_intra_dec_dynamic(GATHER_ARGS);
+  int ompi_coll_tuned_gatherv_inter_dec_fixed(GATHER_ARGS);
+  int ompi_coll_tuned_gatherv_inter_dec_dynamic(GATHER_ARGS);
 
   /* Reduce */
-  int mca_coll_tuned_reduce_intra_dec_fixed(REDUCE_ARGS);
-  int mca_coll_tuned_reduce_intra_dec_dynamic(REDUCE_ARGS);
-  int mca_coll_tuned_reduce_intra_do_forced(REDUCE_ARGS);
-  int mca_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int choice, int faninout, int segsize);
-  int mca_coll_tuned_reduce_intra_check_forced(void);
-  int mca_coll_tuned_reduce_intra_query (void);
-  int mca_coll_tuned_reduce_intra_basic_linear(REDUCE_ARGS);
-  int mca_coll_tuned_reduce_intra_chain(REDUCE_ARGS, uint32_t segsize, int fanout);
-  int mca_coll_tuned_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize);
-  int mca_coll_tuned_reduce_inter_dec_fixed(REDUCE_ARGS);
-  int mca_coll_tuned_reduce_inter_dec_dynamic(REDUCE_ARGS);
+  int ompi_coll_tuned_reduce_intra_dec_fixed(REDUCE_ARGS);
+  int ompi_coll_tuned_reduce_intra_dec_dynamic(REDUCE_ARGS);
+  int ompi_coll_tuned_reduce_intra_do_forced(REDUCE_ARGS);
+  int ompi_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int choice, int faninout, int segsize);
+  int ompi_coll_tuned_reduce_intra_check_forced(void);
+  int ompi_coll_tuned_reduce_intra_query (void);
+  int ompi_coll_tuned_reduce_intra_basic_linear(REDUCE_ARGS);
+  int ompi_coll_tuned_reduce_intra_chain(REDUCE_ARGS, uint32_t segsize, int fanout);
+  int ompi_coll_tuned_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_reduce_inter_dec_fixed(REDUCE_ARGS);
+  int ompi_coll_tuned_reduce_inter_dec_dynamic(REDUCE_ARGS);
 
   /* Reduce-Scatter */
-  int mca_coll_tuned_reduce_scatter_intra_dec_fixed(REDUCESCATTER_ARGS);
-  int mca_coll_tuned_reduce_scatter_intra_dec_dynamic(REDUCESCATTER_ARGS);
-  int mca_coll_tuned_reduce_scatter_inter_dec_fixed(REDUCESCATTER_ARGS);
-  int mca_coll_tuned_reduce_scatter_inter_dec_dynamic(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_intra_dec_fixed(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_inter_dec_fixed(REDUCESCATTER_ARGS);
+  int ompi_coll_tuned_reduce_scatter_inter_dec_dynamic(REDUCESCATTER_ARGS);
  
   /* Scan */
-  int mca_coll_tuned_scan_intra_dec_fixed(SCAN_ARGS);
-  int mca_coll_tuned_scan_intra_dec_dynamic(SCAN_ARGS);
-  int mca_coll_tuned_scan_inter_dec_fixed(SCAN_ARGS);
-  int mca_coll_tuned_scan_inter_dec_dynamic(SCAN_ARGS);
+  int ompi_coll_tuned_scan_intra_dec_fixed(SCAN_ARGS);
+  int ompi_coll_tuned_scan_intra_dec_dynamic(SCAN_ARGS);
+  int ompi_coll_tuned_scan_inter_dec_fixed(SCAN_ARGS);
+  int ompi_coll_tuned_scan_inter_dec_dynamic(SCAN_ARGS);
 
   /* Scatter */
-  int mca_coll_tuned_scatter_intra_dec_fixed(SCATTER_ARGS);
-  int mca_coll_tuned_scatter_intra_dec_dynamic(SCATTER_ARGS);
-  int mca_coll_tuned_scatter_inter_dec_fixed(SCATTER_ARGS);
-  int mca_coll_tuned_scatter_inter_dec_dynamic(SCATTER_ARGS);
+  int ompi_coll_tuned_scatter_intra_dec_fixed(SCATTER_ARGS);
+  int ompi_coll_tuned_scatter_intra_dec_dynamic(SCATTER_ARGS);
+  int ompi_coll_tuned_scatter_inter_dec_fixed(SCATTER_ARGS);
+  int ompi_coll_tuned_scatter_inter_dec_dynamic(SCATTER_ARGS);
 
   /* ScatterV */
-  int mca_coll_tuned_scatterv_intra_dec_fixed(SCATTERV_ARGS);
-  int mca_coll_tuned_scatterv_intra_dec_dynamic(SCATTERV_ARGS);
-  int mca_coll_tuned_scatterv_inter_dec_fixed(SCATTERV_ARGS);
-  int mca_coll_tuned_scatterv_inter_dec_dynamic(SCATTERV_ARGS);
+  int ompi_coll_tuned_scatterv_intra_dec_fixed(SCATTERV_ARGS);
+  int ompi_coll_tuned_scatterv_intra_dec_dynamic(SCATTERV_ARGS);
+  int ompi_coll_tuned_scatterv_inter_dec_fixed(SCATTERV_ARGS);
+  int ompi_coll_tuned_scatterv_inter_dec_dynamic(SCATTERV_ARGS);
 
 
 
 /* Utility functions */
 
-static inline void mca_coll_tuned_free_reqs(ompi_request_t **reqs, int count)
+static inline void ompi_coll_tuned_free_reqs(ompi_request_t **reqs, int count)
 {
   int i;
   for (i = 0; i < count; ++i)
