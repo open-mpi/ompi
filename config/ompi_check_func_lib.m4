@@ -25,22 +25,24 @@ dnl
 # in LIBS) then lib is added to LIBS.  If func is not in lib, then
 # LIBS is not modified.
 AC_DEFUN([OMPI_CHECK_FUNC_LIB],[
-    AC_MSG_CHECKING([if we need -l$2 for $1])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[extern char *]$1[;]],
-                                    [[char *bar = ]$1[;]])],
-        [MSG="no"],
-        [LIBS_save="$LIBS"
-         LIBS="$LIBS -l$2"
-         AC_LINK_IFELSE([AC_LANG_PROGRAM([[extern char *]$1[;]],
-                                         [[char *bar = ]$1[;]])],
-             [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -l$2"
-              MSG="yes"],
-             [LIBS="$LIBS_save"
-              MSG="not found"])])
-    AC_MSG_RESULT([$MSG])
+    AS_VAR_PUSHDEF([ompi_var], [ompi_cv_func_lib_$1_$2])dnl
+    AC_CACHE_CHECK([if we need -l$2 for $1],
+        ompi_var,
+        [AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([$1])],
+            [AS_VAR_SET(ompi_var, "no")],
+            [LIBS_save="$LIBS"
+             LIBS="$LIBS -l$2"
+             AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([$1])],
+                 [AS_VAR_SET(ompi_var, "yes")],
+                 [AS_VAR_SET(ompi_var, "not found")])
+             LIBS="$LIBS_save"])])
+    AS_IF([test "AS_VAR_GET(ompi_var)" = "yes"],
+          [LIBS="$LIBS -l$2"
+           WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -l$2"])
 
     # see if we actually have $1.  Use AC_CHECK_FUNCS so that it
-    # does the glibs "not implemented" check.  Will use the current LIBS,
+    # does the glibc "not implemented" check.  Will use the current LIBS,
     # so will check in -l$2 if we decided we needed it above
     AC_CHECK_FUNCS([$1])
+    AS_VAR_POPDEF([ompi_var])dnl
 ])
