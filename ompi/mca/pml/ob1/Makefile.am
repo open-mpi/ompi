@@ -1,20 +1,21 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University.
-#						 All rights reserved.
-# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
-#						 All rights reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-#						 University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
-#						 All rights reserved.
+#                         All rights reserved.
+#
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
-
 
 ob1_sources  = \
 	pml_ob1.c \
@@ -51,7 +52,6 @@ else
 component_noinst = libmca_pml_ob1.la
 component_install =
 endif
-
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)

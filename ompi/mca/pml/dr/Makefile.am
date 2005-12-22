@@ -1,12 +1,15 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University.
-#						 All rights reserved.
-# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
-#						 All rights reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
-#						 University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
-#						 All rights reserved.
+#                         All rights reserved.
+#
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -14,9 +17,7 @@
 # $HEADER$
 #
 
-
-
-ob1_sources  = \
+dr_sources  = \
 	pml_dr.c \
 	pml_dr.h \
 	pml_dr_comm.c \
@@ -37,7 +38,7 @@ ob1_sources  = \
 	pml_dr_sendreq.c \
 	pml_dr_sendreq.h \
 	pml_dr_start.c \
-    pml_dr_vfrag.h \
+        pml_dr_vfrag.h \
 	pml_dr_vfrag.c 
 
 if OMPI_BUILD_pml_dr_DSO
@@ -51,7 +52,7 @@ endif
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_pml_dr_la_SOURCES = $(ob1_sources)
+mca_pml_dr_la_SOURCES = $(dr_sources)
 mca_pml_dr_la_LIBADD = \
     $(top_ompi_builddir)/ompi/libmpi.la \
     $(top_ompi_builddir)/orte/liborte.la \
@@ -59,6 +60,6 @@ mca_pml_dr_la_LIBADD = \
 mca_pml_dr_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_pml_dr_la_SOURCES = $(ob1_sources)
+libmca_pml_dr_la_SOURCES = $(dr_sources)
 libmca_pml_dr_la_LIBADD =
 libmca_pml_dr_la_LDFLAGS = -module -avoid-version
