@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 /* prototypes */
-int coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                               int dest, int stag,
                               void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
                               int source, int rtag,
@@ -43,7 +43,7 @@ int coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdat
 
 /* inline functions */
 
-static inline int coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+static inline int ompi_coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                               int dest, int stag,
                               void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
                               int source, int rtag,
@@ -54,7 +54,7 @@ static inline int coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_
         return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, recvbuf, (int32_t) rcount, rdatatype);
     }
     else {
-        return coll_tuned_sendrecv_actual (sendbuf, scount, sdatatype, dest, stag, recvbuf, rcount, rdatatype,
+        return ompi_coll_tuned_sendrecv_actual (sendbuf, scount, sdatatype, dest, stag, recvbuf, rcount, rdatatype,
                                         source, rtag, comm, status);
     }
 }

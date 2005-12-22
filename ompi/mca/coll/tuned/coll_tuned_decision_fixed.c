@@ -38,7 +38,7 @@
  *  Returns:    - MPI_SUCCESS or error code
  */
 int
-mca_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
+ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
@@ -47,11 +47,11 @@ mca_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
 /*     int contig; */
 /*     int dsize; */
 
-    OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_allreduce_intra_dec_fixed"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
 
 /*     size = ompi_comm_size(comm); */
 
-    return (mca_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm));
+    return (ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm));
 
 
 }
@@ -64,7 +64,7 @@ mca_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
  *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
  */
 
-int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount, 
+int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount, 
                                     struct ompi_datatype_t *sdtype,
                                     void* rbuf, int rcount, 
                                     struct ompi_datatype_t *rdtype, 
@@ -77,33 +77,33 @@ int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     MPI_Aint sext;
     long lb;
 
-    OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_alltoall_intra_dec_fixed"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* special case */
     if (size==2) {
-        return mca_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
 
     /* else we need data size for decision function */
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
     if (err != MPI_SUCCESS) { 
-            OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
     dsize = sext * scount * size;   /* needed for decision */
 
     if (size >= 12 && dsize <= 768) {
-        return mca_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     else if (dsize <= 131072) {
-        return mca_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     else {
-        return mca_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
 }
 
@@ -115,21 +115,21 @@ int mca_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
  *	Accepts:	- same arguments as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS or error code (passed from the barrier implementation)
  */
-int mca_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
+int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
 {
     int size;
 
-    OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_barrier_intra_dec_fixed"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
 
     if (2==size)
-        return mca_coll_tuned_barrier_intra_two_procs(comm);
+        return ompi_coll_tuned_barrier_intra_two_procs(comm);
     else
-/*         return mca_coll_tuned_barrier_intra_doublering(comm); */
-    return mca_coll_tuned_barrier_intra_recursivedoubling(comm);
-/*     return mca_coll_tuned_barrier_intra_bruck(comm); */
-/*     return mca_coll_tuned_barrier_intra_linear(comm); */
+/*         return ompi_coll_tuned_barrier_intra_doublering(comm); */
+    return ompi_coll_tuned_barrier_intra_recursivedoubling(comm);
+/*     return ompi_coll_tuned_barrier_intra_bruck(comm); */
+/*     return ompi_coll_tuned_barrier_intra_linear(comm); */
 
 }
 
@@ -141,7 +141,7 @@ int mca_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
  */
-int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
+int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                    struct ompi_datatype_t *datatype, int root,
                                    struct ompi_communicator_t *comm)
 {
@@ -154,7 +154,7 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     int segsize = 0;
 
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"mca_coll_tuned_bcast_intra_dec_fixed"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_bcast_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -162,7 +162,7 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     /* else we need data size for decision function */
     err = ompi_ddt_get_extent (datatype, &lb, &ext);
     if (err != MPI_SUCCESS) {
-            OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
@@ -172,30 +172,30 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
 
     if ((size  < 4)) {
         segsize = 0;
-        return mca_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
+        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
     else if (size == 4) {
        if (msgsize < 524288) segsize = 0;
        else msgsize = 16384;
-       return mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+       return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
     else if (size > 4 && size <= 8 && msgsize < 4096) {
        segsize = 0;
-       return mca_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
+       return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
     else if (size > 8 && msgsize >= 32768 && msgsize < 524288) {
        segsize = 16384;
-       return  mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+       return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
     else if (size > 4 && msgsize >= 524288) {
        segsize = 16384;
-       return mca_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
+       return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
     }
     else {
        segsize = 0;
        /* once tested can swap this back in */
-/*        return mca_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, segsize); */
-       return mca_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+/*        return ompi_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, segsize); */
+       return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
 
 }
@@ -208,7 +208,7 @@ int mca_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
  *	Returns:	- MPI_SUCCESS or error code (passed from the reduce implementation)
  *                                        
  */
-int mca_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
+int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                           int count, struct ompi_datatype_t* datatype,
                                           struct ompi_op_t* op, int root,
                                           struct ompi_communicator_t* comm)
@@ -224,7 +224,7 @@ int mca_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     int fanout = 0;
 
 
-    OPAL_OUTPUT((mca_coll_tuned_stream, "mca_coll_tuned_reduce_intra_dec_fixed"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"));
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -232,7 +232,7 @@ int mca_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     /* need data size for decision function */
     err = ompi_ddt_get_extent (datatype, &lb, &ext);
     if (err != MPI_SUCCESS) {
-            OPAL_OUTPUT((mca_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
@@ -242,21 +242,21 @@ int mca_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         segsize = 0;
         fanout = size-1;
 /* when linear implemented or taken from basic put here, right now using chain as a linear system */
-/*         return mca_coll_tuned_reduce_intra_linear (sendbuf, recvbuf, count, datatype, op, root, comm); */
-        return mca_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
+/*         return ompi_coll_tuned_reduce_intra_linear (sendbuf, recvbuf, count, datatype, op, root, comm); */
+        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
      } else if (msgsize <= 65536 ) {
         segsize = 32768;
         fanout = 8;
-        return mca_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
+        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
      } else if (msgsize < 524288) {
         segsize = 1024;
         fanout = size/2;
 /* later swap this for a binary tree */
 /*         fanout = 2; */
-        return mca_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
+        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
      } else {
         segsize = 1024;
-        return mca_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
      }
 
 }

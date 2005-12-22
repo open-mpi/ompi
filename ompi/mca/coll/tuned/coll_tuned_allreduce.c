@@ -30,7 +30,7 @@
 #include "coll_tuned_topo.h"
 
 /*
- * mca_coll_tuned_allreduce_intra_nonoverlapping
+ * ompi_coll_tuned_allreduce_intra_nonoverlapping
  *
  * This function just calls a reduce followed by a broadcast
  * both called functions are tuned but they complete sequentially,
@@ -41,7 +41,7 @@
  *
  */
 int
-mca_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count,
+ompi_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
@@ -51,7 +51,7 @@ mca_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count,
 
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_nonoverlapping rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_nonoverlapping rank %d", rank));
 
     /* Reduce to 0 and broadcast. */
 
@@ -96,7 +96,7 @@ mca_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
+ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
@@ -107,24 +107,24 @@ mca_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     rank = ompi_comm_rank(comm);
 
 
-    OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_basic_linear rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_basic_linear rank %d", rank));
 
     /* Reduce to 0 and broadcast. */
 
     if (MPI_IN_PLACE == sbuf) {
         if (0 == ompi_comm_rank(comm)) {
-            err = mca_coll_tuned_reduce_intra_basic_linear (MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm);
+            err = ompi_coll_tuned_reduce_intra_basic_linear (MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm);
         } else {
-            err = mca_coll_tuned_reduce_intra_basic_linear(rbuf, NULL, count, dtype, op, 0, comm);
+            err = ompi_coll_tuned_reduce_intra_basic_linear(rbuf, NULL, count, dtype, op, 0, comm);
         }
     } else {
-        err = mca_coll_tuned_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, 0, comm);
+        err = ompi_coll_tuned_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, 0, comm);
     }
     if (MPI_SUCCESS != err) {
         return err;
     }
 
-    return mca_coll_tuned_bcast_intra_basic_linear(rbuf, count, dtype, 0, comm);
+    return ompi_coll_tuned_bcast_intra_basic_linear(rbuf, count, dtype, 0, comm);
 }
 
 
@@ -135,81 +135,81 @@ mca_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 /* publish details of each algorithm and if its forced/fixed/locked in */
 /* as you add methods/algorithms you must update this and the query/map routines */
 
-int mca_coll_tuned_allreduce_intra_check_forced ( )
+int ompi_coll_tuned_allreduce_intra_check_forced ( )
 {
 
 mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
                            "allreduce_algorithm",
                            "Which allreduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 nonoverlapping (tuned reduce + tuned bcast)",
-                           false, false, mca_coll_tuned_allreduce_forced_choice,
-                           &mca_coll_tuned_allreduce_forced_choice);
+                           false, false, ompi_coll_tuned_allreduce_forced_choice,
+                           &ompi_coll_tuned_allreduce_forced_choice);
 
 mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
                            "allreduce_algorithm_segmentsize",
                            "Segment size in bytes used by default for allreduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                           false, false, mca_coll_tuned_allreduce_forced_segsize,
-                           &mca_coll_tuned_allreduce_forced_segsize);
+                           false, false, ompi_coll_tuned_allreduce_forced_segsize,
+                           &ompi_coll_tuned_allreduce_forced_segsize);
 
 mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
                            "allreduce_algorithm_tree_fanout",
                            "Fanout for n-tree used for allreduce algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
                            false, false,
-                           mca_coll_tuned_init_tree_fanout, /* get system wide default */
-                           &mca_coll_tuned_allreduce_forced_tree_fanout);
+                           ompi_coll_tuned_init_tree_fanout, /* get system wide default */
+                           &ompi_coll_tuned_allreduce_forced_tree_fanout);
 
 mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
                            "allreduce_algorithm_chain_fanout",
                            "Fanout for chains used for allreduce algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
                            false, false,
-                           mca_coll_tuned_init_chain_fanout, /* get system wide default */
-                           &mca_coll_tuned_allreduce_forced_chain_fanout);
+                           ompi_coll_tuned_init_chain_fanout, /* get system wide default */
+                           &ompi_coll_tuned_allreduce_forced_chain_fanout);
 
 return (MPI_SUCCESS);
 }
 
-int mca_coll_tuned_allreduce_intra_query ( )
+int ompi_coll_tuned_allreduce_intra_query ( )
 {
     return (2); /* 2 algorithms available */
 }
 
 
-int mca_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
+int ompi_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
 {
-        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d", 
-                               mca_coll_tuned_allreduce_forced_choice));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d", 
+                               ompi_coll_tuned_allreduce_forced_choice));
 
-switch (mca_coll_tuned_allreduce_forced_choice) {
-    case (0):   return mca_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
-    case (1):   return mca_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);
-    case (2):   return mca_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm);
+switch (ompi_coll_tuned_allreduce_forced_choice) {
+    case (0):   return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
+    case (1):   return ompi_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);
+    case (2):   return ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm);
     default:
-        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                    mca_coll_tuned_allreduce_forced_choice, mca_coll_tuned_allreduce_intra_query()));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+                    ompi_coll_tuned_allreduce_forced_choice, ompi_coll_tuned_allreduce_intra_query()));
         return (MPI_ERR_ARG);
     } /* switch */
 
 }
 
 
-int mca_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
+int ompi_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm,
                                int choice, int faninout, int segsize)
 {
-        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d", 
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d", 
                             choice, faninout, segsize));
 
 switch (choice) {
-    case (0):   return mca_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
-    case (1):   return mca_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);
-    case (2):   return mca_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm);
+    case (0):   return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
+    case (1):   return ompi_coll_tuned_allreduce_intra_basic_linear (sbuf, rbuf, count, dtype, op, comm);
+    case (2):   return ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm);
     default:
-        OPAL_OUTPUT((mca_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
-                    choice, mca_coll_tuned_allreduce_intra_query()));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+                    choice, ompi_coll_tuned_allreduce_intra_query()));
         return (MPI_ERR_ARG);
     } /* switch */
 

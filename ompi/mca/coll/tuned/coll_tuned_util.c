@@ -28,7 +28,7 @@
 #include "mca/pml/pml.h"
 #include "coll_tuned_util.h"
 
-int coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                               int dest, int stag,
                               void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
                               int source, int rtag,
@@ -58,7 +58,7 @@ ompi_status_public_t statuses[2];
     return (MPI_SUCCESS);
 
  error_handler:
-    OPAL_OUTPUT ((mca_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
+    OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
     return (err);
 }
 
