@@ -22,6 +22,7 @@ libmca_pls_la_SOURCES =
 
 # header setup
 nobase_orte_HEADERS =
+dist_pkgdata_DATA =
 
 # local files
 headers = pls.h
