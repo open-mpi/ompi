@@ -349,7 +349,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             max_data, 
             0,
             (mca_mpool_base_registration_t**) &vapi_reg); 
-        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
+        if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
             BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
             MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
             return NULL;
@@ -493,7 +493,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
             *size, 
             0,
             (mca_mpool_base_registration_t**) &vapi_reg);
-        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
+        if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
             BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu",
                 frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
             MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
