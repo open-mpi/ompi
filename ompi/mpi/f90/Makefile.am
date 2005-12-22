@@ -136,7 +136,7 @@ mpi-f90-interfaces.h:
 $(libmpi_f90_a_SOURCES) $(nodist_libmpi_f90_a_SOURCES): mpi_kinds.ompi_module
 
 mpi_kinds.ompi_module: mpi_kinds.f90 
-	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
+	$(FCCOMPILE) -c $(FCFLAGS_f90) $<
 	@ touch mpi_kinds.ompi_module
 
 # Unbelievably, some versions of sh (cough cough Solaris 9 cough
