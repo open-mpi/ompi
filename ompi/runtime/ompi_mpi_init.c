@@ -232,12 +232,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-#if 0
     if (OMPI_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
         error = "util_register_stackhandlers() failed";
         goto error;
     }
-#endif
 
     /* initialize datatypes. This step should be done early as it will
      * create the local convertor and local arch used in the proc

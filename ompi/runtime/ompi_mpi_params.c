@@ -19,6 +19,9 @@
 #include "ompi_config.h"
 
 #include <time.h>
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #include "ompi/include/constants.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -71,9 +74,33 @@ int ompi_mpi_register_params(void)
     /*
      * This string is going to be used in opal/util/stacktrace.c
      */
-    mca_base_param_reg_string_name("mpi", "signal", 
-                                   "If a signal is received, display the stack trace frame",
-                                   false, false, NULL, NULL);
+    {
+        char *string = NULL;
+        int j;
+        int signals[] = {
+#ifdef SIGBUS
+            SIGBUS,
+#endif
+#ifdef SIGSEGV
+            SIGSEGV,
+#endif
+            -1
+        };
+        for (j = 0 ; signals[j] != -1 ; ++j) {
+            if (j == 0) {
+                asprintf(&string, "%d", signals[j]);
+            } else {
+                char *tmp;
+                asprintf(&tmp, "%s,%d", string, signals[j]);
+                free(string);
+                string = tmp;
+            }
+        }
+
+        mca_base_param_reg_string_name("mpi", "signal", 
+                                       "If a signal is received, display the stack trace frame",
+                                       false, false, string, NULL);
+    }
     
     /*
      * opal_progress: decide whether to yield and the event library
