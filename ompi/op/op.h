@@ -188,6 +188,17 @@ typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
                                             MPI_Fint *, MPI_Fint *);
 
 
+/**
+ * Typedef for C++ op functions intercept.
+ *
+ * See the lengthy explanation for why this is different than the C
+ * intercept in ompi/mpi/cxx/intercepts.cc in the
+ * ompi_mpi_cxx_op_intercept() function.
+ */
+typedef void (ompi_op_cxx_handler_fn_t)(void *, void *, int *, 
+                                        MPI_Datatype *, MPI_User_function *op);
+
+
 /*
  * Flags for MPI_Op
  */
@@ -195,18 +206,20 @@ typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
 #define OMPI_OP_FLAGS_INTRINSIC    0x0001
 /** Set if the callback function is in Fortran */
 #define OMPI_OP_FLAGS_FORTRAN_FUNC 0x0002
+/** Set if the callback function is in C++ */
+#define OMPI_OP_FLAGS_CXX_FUNC     0x0004
 /** Set if the callback function is associative (MAX and SUM will both
     have ASSOC set -- in fact, it will only *not* be set if we
     implement some extensions to MPI, because MPI says that all
     MPI_Op's should be associative, so this flag is really here for
     future expansion) */
-#define OMPI_OP_FLAGS_ASSOC        0x0004
+#define OMPI_OP_FLAGS_ASSOC        0x0008
 /** Set if the callback function is associative for floating point
     operands (e.g., MPI_SUM will have ASSOC set, but will *not* have
     FLOAT_ASSOC set)  */
-#define OMPI_OP_FLAGS_FLOAT_ASSOC  0x0008
+#define OMPI_OP_FLAGS_FLOAT_ASSOC  0x0010
 /** Set if the callback function is communative */
-#define OMPI_OP_FLAGS_COMMUTE      0x0010
+#define OMPI_OP_FLAGS_COMMUTE      0x0020
 
 
 /**
@@ -223,17 +236,21 @@ struct ompi_op_t {
   /**< Flags about the op */
 
   union {
-    ompi_op_c_handler_fn_t *c_fn;
-    /**< C handler function pointer */
-    ompi_op_fortran_handler_fn_t *fort_fn;
-    /**< Fortran handler function pointer */
+      /** C handler function pointer */
+      ompi_op_c_handler_fn_t *c_fn;
+      /** Fortran handler function pointer */
+      ompi_op_fortran_handler_fn_t *fort_fn;
+      /** C++ intercept function pointer -- see lengthy comment in
+          ompi/mpi/cxx/intercepts.cc::ompi_mpi_cxx_op_intercept() for
+          an explanation */
+      ompi_op_cxx_handler_fn_t *cxx_intercept_fn;
   } o_func[OMPI_OP_TYPE_MAX];
   /**< Array of function pointers, indexed on the operation type.  For
        non-intrinsice MPI_Op's, only the 0th element will be
        meaningful. */
 
+  /** Index in Fortran <-> C translation array */
   int o_f_to_c_index;
-  /**< Index in Fortran <-> C translation array */
 };
 /**
  * Convenience typedef 
@@ -402,6 +419,14 @@ extern "C" {
    * manually.
    */
   ompi_op_t *ompi_op_create(bool commute, ompi_op_fortran_handler_fn_t *func);
+
+  /**
+   * Mark an MPI_Op as holding a C++ callback function, and cache
+   * that function in the MPI_Op.  See a lenghty comment in
+   * ompi/mpi/cxx/op.c::ompi_mpi_cxx_op_intercept() for a full
+   * expalantion.
+   */
+  void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
@@ -578,6 +603,9 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
     f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
     f_count = OMPI_INT_2_FINT(count);
     op->o_func[0].fort_fn(source, target, &f_count, &f_dtype);
+  } else if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
+    op->o_func[0].cxx_intercept_fn(source, target, &count, &dtype,
+                                   op->o_func[1].c_fn);
   } else {
     op->o_func[0].c_fn(source, target, &count, &dtype);
   }

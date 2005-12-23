@@ -37,9 +37,7 @@ inline void
 MPI::Intracomm::Scan(const void *sendbuf, void *recvbuf, int count, 
      const MPI::Datatype & datatype, const MPI::Op& op) const
 {
-  current_op = const_cast<MPI::Op*>(&op);
   (void)MPI_Scan(const_cast<void *>(sendbuf), recvbuf, count, datatype, op, mpi_comm);
-  current_op = (Op*)0;
 }
 
 inline void
@@ -47,9 +45,7 @@ MPI::Intracomm::Exscan(const void *sendbuf, void *recvbuf, int count,
 			      const MPI::Datatype & datatype, 
 			      const MPI::Op& op) const
 {
-  current_op = const_cast<MPI::Op*>(&op);
   (void)MPI_Exscan(const_cast<void *>(sendbuf), recvbuf, count, datatype, op, mpi_comm);
-  current_op = (Op*)0;
 }
 
 inline MPI::Intracomm
