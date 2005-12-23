@@ -69,7 +69,7 @@ MPI::Op::Op(const MPI_Op &i) : mpi_op(i) { }
 
 inline
 MPI::Op::Op(const MPI::Op& op)
-  : op_user_function(op.op_user_function), mpi_op(op.mpi_op) { }
+  : mpi_op(op.mpi_op) { }
 
 inline 
 MPI::Op::~Op() 
@@ -83,7 +83,6 @@ MPI::Op::~Op()
 inline MPI::Op&
 MPI::Op::operator=(const MPI::Op& op) {
   mpi_op = op.mpi_op;
-  op_user_function = op.op_user_function;
   return *this;
 }
 
@@ -106,11 +105,21 @@ MPI::Op::operator MPI_Op () const { return mpi_op; }
 
 #endif
 
+// Extern this function here rather than include an internal Open MPI
+// header file (and therefore force installing the internal Open MPI
+// header file so that user apps can #include it)
+
+extern "C" void ompi_op_set_cxx_callback(MPI_Op op, MPI_User_function*);
+
+// There is a lengthy comment in ompi/mpi/cxx/intercepts.cc explaining
+// what this function is doing.  Please read it before modifying this
+// function.
 inline void
 MPI::Op::Init(MPI::User_function *func, bool commute)
 {
-  (void)MPI_Op_create(ompi_mpi_cxx_op_intercept , (int) commute, &mpi_op);
-  op_user_function = (User_function*)func;
+    (void)MPI_Op_create((MPI_User_function*) ompi_mpi_cxx_op_intercept, 
+                        (int) commute, &mpi_op);
+    ompi_op_set_cxx_callback(mpi_op, (MPI_User_function*) func);
 }
 
 

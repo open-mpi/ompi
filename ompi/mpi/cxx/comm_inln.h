@@ -436,18 +436,14 @@ MPI::Comm::Reduce(const void *sendbuf, void *recvbuf, int count,
                   const MPI::Datatype & datatype, const MPI::Op& op, 
                   int root) const
 {
-    current_op = const_cast<MPI::Op*>(&op);
     (void)MPI_Reduce(const_cast<void *>(sendbuf), recvbuf, count, datatype, op, root, mpi_comm);
-    current_op = (Op*)0;
 }
 
 inline void
 MPI::Comm::Allreduce(const void *sendbuf, void *recvbuf, int count,
                      const MPI::Datatype & datatype, const MPI::Op& op) const
 {
-    current_op = const_cast<MPI::Op*>(&op);
     (void)MPI_Allreduce (const_cast<void *>(sendbuf), recvbuf, count, datatype,  op, mpi_comm);
-    current_op = (Op*)0;
 }
 
 inline void
@@ -456,10 +452,8 @@ MPI::Comm::Reduce_scatter(const void *sendbuf, void *recvbuf,
                           const MPI::Datatype & datatype, 
                           const MPI::Op& op) const
 {
-    current_op = const_cast<MPI::Op*>(&op);
     (void)MPI_Reduce_scatter(const_cast<void *>(sendbuf), recvbuf, recvcounts,
                              datatype, op, mpi_comm);
-    current_op = (Op*)0;
 }
 
 //

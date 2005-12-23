@@ -721,6 +721,13 @@ ompi_op_t *ompi_op_create(bool commute,
 }
 
 
+void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn)
+{
+    op->o_flags |= OMPI_OP_FLAGS_CXX_FUNC;
+    op->o_func[1].c_fn = fn;
+}
+
+
 /**************************************************************************
  *
  * Static functions

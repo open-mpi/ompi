@@ -39,10 +39,10 @@
 // forward declare so that we can still do inlining
 struct opal_mutex_t;
 
-//JGS: this is used for implementing user functions for MPI::Op
+// See lengthy explanation in intercepts.cc about this function.
 extern "C" void
 ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len, 
-                          MPI_Datatype *datatype);
+                          MPI_Datatype *datatype, MPI_User_function *fn);
 
 //JGS: this is used as the MPI_Handler_function for
 // the mpi_errhandler in ERRORS_THROW_EXCEPTIONS

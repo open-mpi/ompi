@@ -47,7 +47,6 @@ public:
   virtual void Free();
  
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
-  User_function *op_user_function; //JGS move to private
 protected:
   MPI_Op mpi_op;
 #endif
