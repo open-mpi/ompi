@@ -163,7 +163,7 @@ size_t mca_pml_ob1_rdma_btls(
                 /* simplify cleanup - bump reference count as we decrement again below */
                 btl_mpool->mpool_retain(btl_mpool,largest);
                 btl_mpool->mpool_deregister(btl_mpool, largest);
-                btl_mpool->mpool_register(btl_mpool, 
+                rc = btl_mpool->mpool_register(btl_mpool, 
                     base, 
                     size, 
                     MCA_MPOOL_FLAGS_CACHE,
