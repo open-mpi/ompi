@@ -28,7 +28,7 @@
 #include "opal/memoryhooks/memory.h"
 
 int counter = 0;
-const int bigsize = 16 * 1024 * 1024;
+const int bigsize = 100 * 1024 * 1024;
 
 static void
 alloc_callback(void *buf, size_t length, void *cbdata, bool extra)
@@ -66,9 +66,9 @@ alloc_free_test(void)
         return retval;
     }
 
-    counter = 0;
     /* make some big malloc that should always trip a release on free */
     printf("  - malloc big buffer\n");
+    counter = 0;
     foo = malloc(bigsize);
     assert(counter >= 1);
     printf("  - free of big buffer\n");
@@ -80,7 +80,9 @@ alloc_free_test(void)
     printf("  - mmap of buffer\n");
     counter = 0;
     bar = mmap(NULL, 4096, PROT_READ, MAP_ANON, -1, 0);
-    assert(counter >= 1);
+    if (opal_mem_hooks_support_level() & OPAL_MEMORY_MMAP_SUPPORT) {
+        assert(counter >= 1);
+    }
 
     printf("  - munmap of buffer\n");
     /* mmap might call malloc internally, so do this or we might
