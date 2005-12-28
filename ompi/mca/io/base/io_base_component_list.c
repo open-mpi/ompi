@@ -20,9 +20,9 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "mca/base/base.h"
-#include "mca/io/io.h"
-#include "mca/io/base/base.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/io/base/base.h"
 #include "opal/runtime/opal_progress.h"
 
 /*
