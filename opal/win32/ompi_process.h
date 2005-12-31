@@ -18,12 +18,10 @@
 
 #ifndef OMPI_PROCESS_H
 #define OMPI_PROCESS_H
-#include "win32/ompi_declspec.h"
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include<windows.h>
-#undef WIN32_LEAN_AND_MEAN
-#endif
+
+#ifndef OMPI_WIN_COMPAT_H
+#error This file is supposed to be included only from win_compat.h
+#endif  /* OMPI_WIN_COMPAT_H */
 
 #if defined(c_plusplus) || defined (__cplusplus)
 extern "C"

@@ -19,13 +19,21 @@
 #ifndef OMPI_MISC_H
 #define OMPI_MISC_H
 
-#define _SC_PAGESIZE 0
+#include <stdlib.h>
 
-static __inline char* getenv (const char *name) {
-    /* currently, this is a memory leak */
+#define _SC_PAGESIZE 0
+#define _SC_OPEN_MAX 1
+
+/* currently, this is a memory leak */
+static __inline char* getenv (const char *name)
+{
     int ret;
-    char *buffer = (char *)malloc(sizeof(char) * 100);
-    ret = GetEnvironmentVariable(name, buffer, 100);
+    char *buffer;
+    DWORD length = GetEnvironmentVariable( name, NULL, 0 );
+
+    if( 0 == length ) return NULL;
+    buffer = (char *)malloc(sizeof(char) * length);
+    ret = GetEnvironmentVariable(name, buffer, length);
     return (ret > 0) ? buffer: NULL;
 }
 
@@ -50,6 +58,12 @@ static __inline unsigned int sleep(unsigned int seconds) {
 static __inline size_t sysconf(int option) {
     
     SYSTEM_INFO sys_info;
+
+    /* hardcoded on windows ... The maximum limit seems to be 2048 but
+     * it requires a call to _setmaxstdio.
+     */
+    if( _SC_OPEN_MAX == option )
+        return 512;
 
     GetSystemInfo(&sys_info);
     if (_SC_PAGESIZE == option){
