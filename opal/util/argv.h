@@ -27,6 +27,10 @@
 #define OPAL_ARGV_H
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
