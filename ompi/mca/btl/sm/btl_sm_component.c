@@ -180,8 +180,7 @@ int mca_btl_sm_component_close(void)
 
     /* unmap the shared memory control structure */
     if(mca_btl_sm_component.mmap_file != NULL) {
-        return_value=munmap(mca_btl_sm_component.mmap_file->map_addr,
-                mca_btl_sm_component.mmap_file->map_size);
+        return_value = mca_common_sm_mmap_fini( mca_btl_sm_component.mmap_file );
         if(-1 == return_value) {
             return_value=OMPI_ERROR;
             opal_output(0," munmap failed :: file - %s :: errno - %d \n",
@@ -192,7 +191,7 @@ int mca_btl_sm_component_close(void)
     
         /* unlink file, so that it will be deleted when all references
          * to it are gone - no error checking, since we want all procs
-         * to call this, so that in an abnormal termination scanario,
+         * to call this, so that in an abnormal termination scenario,
          * this file will still get cleaned up */
         unlink(mca_btl_sm_component.mmap_file->map_path);
     }
