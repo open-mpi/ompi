@@ -297,20 +297,6 @@ AC_CHECK_TYPE(u_int32_t, unsigned int)
 AC_CHECK_TYPE(u_int16_t, unsigned short)
 AC_CHECK_TYPE(u_int8_t, unsigned char)
 
-dnl
-dnl The check for socklen_t is already done in the configure.ac
-dnl
-dnl AC_MSG_CHECKING([for socklen_t])
-dnl AC_TRY_COMPILE([
-dnl  #include <sys/types.h>
-dnl  #include <sys/socket.h>
-dnl ],
-dnl   [socklen_t x;],
-dnl   AC_MSG_RESULT([yes]),
-dnl   [AC_MSG_RESULT([no])
-dnl   AC_DEFINE(socklen_t, unsigned int,
-dnl 	[Define to unsigned int if you dont have it])]
-dnl )
 
 # OMPI: Save the libobj sources
 OMPI_LIBEVENT_SOURCES="$sources"
