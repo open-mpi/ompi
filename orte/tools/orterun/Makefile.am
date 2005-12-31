@@ -43,9 +43,9 @@ orterun_LDADD = $(libs)
 orterun_DEPENDENCIES = $(libs)
 
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f mpirun; ln -s orterun mpirun)
-	(cd $(DESTDIR)$(bindir); rm -f mpiexec; ln -s orterun mpiexec)
+	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpirun$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpiexec$(EXEEXT))
 
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/mpirun \
-		$(DESTDIR)$(bindir)/mpiexec
+	rm -f $(DESTDIR)$(bindir)/mpirun$(EXEEXT) \
+		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT)

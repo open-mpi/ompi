@@ -72,17 +72,17 @@ clean-local:
 if WANT_DEPRECATED_EXECUTABLE_NAMES
 if CASE_SENSITIVE_FS
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f hcc; ln -s mpicc hcc)
-	(cd $(DESTDIR)$(bindir); rm -f hcp; ln -s mpiCC hcp)
-	(cd $(DESTDIR)$(bindir); rm -f hf77; ln -s mpif77 hf77)
-	(cd $(DESTDIR)$(bindir); rm -f mpiCC; ln -s mpic++ mpiCC)
-	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
+	(cd $(DESTDIR)$(bindir); rm -f hcc$(EXEEXT); $(LN_S) mpicc hcc)
+	(cd $(DESTDIR)$(bindir); rm -f hcp$(EXEEXT); $(LN_S) mpiCC hcp)
+	(cd $(DESTDIR)$(bindir); rm -f hf77$(EXEEXT); $(LN_S) mpif77 hf77)
+	(cd $(DESTDIR)$(bindir); rm -f mpiCC$(EXEEXT); $(LN_S) mpic++ mpiCC)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) mpic++ mpicxx)
 else
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f hcc; ln -s mpicc hcc)
-	(cd $(DESTDIR)$(bindir); rm -f hcp; ln -s mpic++ hcp)
-	(cd $(DESTDIR)$(bindir); rm -f hf77; ln -s mpif77 hf77)
-	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
+	(cd $(DESTDIR)$(bindir); rm -f hcc$(EXEEXT); $(LN_S) mpicc hcc)
+	(cd $(DESTDIR)$(bindir); rm -f hcp$(EXEEXT); $(LN_S) mpic++ hcp)
+	(cd $(DESTDIR)$(bindir); rm -f hf77$(EXEEXT); $(LN_S) mpif77 hf77)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) mpic++ mpicxx)
 endif
 
 #
@@ -90,17 +90,17 @@ endif
 #
 if CASE_SENSITIVE_FS
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/hcc \
-	$(DESTDIR)$(bindir)/hcp \
-	$(DESTDIR)$(bindir)/hf77 \
-	$(DESTDIR)$(bindir)/mpiCC \
-	$(DESTDIR)$(bindir)/mpicxx
+	rm -f $(DESTDIR)$(bindir)/hcc$(EXEEXT) \
+	$(DESTDIR)$(bindir)/hcp$(EXEEXT) \
+	$(DESTDIR)$(bindir)/hf77$(EXEEXT) \
+	$(DESTDIR)$(bindir)/mpiCC$(EXEEXT) \
+	$(DESTDIR)$(bindir)/mpicxx$(EXEEXT)
 else
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/hcc \
-	$(DESTDIR)$(bindir)/hcp \
-	$(DESTDIR)$(bindir)/hf77 \
-	$(DESTDIR)$(bindir)/mpicxx
+	rm -f $(DESTDIR)$(bindir)/hcc$(EXEEXT) \
+	$(DESTDIR)$(bindir)/hcp$(EXEEXT) \
+	$(DESTDIR)$(bindir)/hf77$(EXEEXT) \
+	$(DESTDIR)$(bindir)/mpicxx$(EXEEXT)
 endif
 
 else
@@ -112,19 +112,19 @@ else
 #
 if CASE_SENSITIVE_FS
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f mpiCC; ln -s mpic++ mpiCC)
-	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
+	(cd $(DESTDIR)$(bindir); rm -f mpiCC$(EXEEXT); $(LN_S) mpic++ mpiCC)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) mpic++ mpicxx)
 else
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) mpic++ mpicxx)
 endif
 
 if CASE_SENSITIVE_FS
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/mpiCC \
-	$(DESTDIR)$(bindir)/mpicxx
+	rm -f $(DESTDIR)$(bindir)/mpiCC$(EXEEXT) \
+	$(DESTDIR)$(bindir)/mpicxx$(EXEEXT)
 else
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/mpicxx
+	rm -f $(DESTDIR)$(bindir)/mpicxx$(EXEEXT)
 endif
 endif
