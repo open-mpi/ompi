@@ -29,21 +29,21 @@
 #include "opal/mca/base/base.h"
 #include "debuggers.h"
 
-int MPIR_being_debugged = 0;
-volatile int MPIR_debug_gate = 0;
-volatile int MPIR_debug_state = 0;
+OMPI_DECLSPEC int MPIR_being_debugged = 0;
+OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
+OMPI_DECLSPEC volatile int MPIR_debug_state = 0;
 struct MPIR_PROCDESC {
     char *host_name;        /* something that can be passed to inet_addr */
     char *executable_name;  /* name of binary */
     int pid;                /* process pid */
 };
-struct MPIR_PROCDESC *MPIR_proctable = NULL;
+OMPI_DECLSPEC struct MPIR_PROCDESC *MPIR_proctable = NULL;
 
 
 /**
  * Wait for a TotalView-like debugger if asked.
  */
-void ompi_wait_for_totalview(void)
+OMPI_DECLSPEC void ompi_wait_for_totalview(void)
 {
     int wait_for_totalview;
 

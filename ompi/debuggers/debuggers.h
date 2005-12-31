@@ -33,7 +33,7 @@ extern "C" {
     /**
      * Wait for a TotalView-like debugger if asked.
      */
-    void ompi_wait_for_totalview(void);
+    OMPI_DECLSPEC void ompi_wait_for_totalview(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
