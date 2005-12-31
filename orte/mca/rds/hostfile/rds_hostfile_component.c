@@ -69,10 +69,6 @@ orte_rds_hostfile_component_t mca_rds_hostfile_component = {
   */
 static int orte_rds_hostfile_open(void)
 {
-#ifdef __WINDOWS__
-   printf("Unimplemented feature for windows\n");
-   return ORTE_ERROR;
-#else
     char *path = opal_os_path(false, ORTE_SYSCONFDIR, "openmpi-default-hostfile", NULL);
     OBJ_CONSTRUCT(&mca_rds_hostfile_component.lock, opal_mutex_t);
 
@@ -89,7 +85,6 @@ static int orte_rds_hostfile_open(void)
     free(path);
 
     return ORTE_SUCCESS;
-#endif
 }
 
 
