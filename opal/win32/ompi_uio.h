@@ -19,9 +19,9 @@
 #ifndef OMPI_UIO_H
 #define OMPI_UIO_H
 
-#include "ompi_declspec.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#ifndef OMPI_WIN_COMPAT_H
+#error This file is supposed to be included only from win_compat.h
+#endif  /* OMPI_WIN_COMPAT_H */
 
 /* define the iovec structure */
 struct iovec {
@@ -50,7 +50,7 @@ OMPI_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
    buffer.
  */
 OMPI_DECLSPEC int readv (int fd, struct iovec *iov, int cnt);
-   
+
 #if defined(c_plusplus) || defined (__cplusplus)
 }
 #endif

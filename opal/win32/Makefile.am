@@ -26,7 +26,6 @@ OMPI_WIN32_SRC = \
 	win32/ompi_uio.c
 
 OMPI_WIN32_HDR = \
-	win32/ompi_declspec.h \
 	win32/ompi_misc.h \
 	win32/ompi_process.h \
 	win32/ompi_time.h \
