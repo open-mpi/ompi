@@ -96,16 +96,31 @@ OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
  *  @returnvalue pointer to control structure at head of file.
  */
 
-extern mca_common_sm_mmap_t* mca_common_sm_mmap_init(
+OMPI_DECLSPEC extern
+mca_common_sm_mmap_t* mca_common_sm_mmap_init(
     size_t size, 
     char *file_name,
     size_t size_ctl_structure, 
     size_t data_seg_alignment);
 
-extern void* mca_common_sm_mmap_seg_alloc(
+OMPI_DECLSPEC extern
+void* mca_common_sm_mmap_seg_alloc(
     struct mca_mpool_base_module_t* mpool, 
     size_t* size, 
     mca_mpool_base_registration_t** registration);
+
+/**
+ * This function will release all local ressources attached to the
+ * mmapped file. We assume that the operating system will destroy the
+ * file when the last process release it.
+ *
+ * @param sm_mmap - the control structure at head of file.
+ *
+ * @returnvalue 0 if everything was OK, otherwise a negative value.
+ */
+
+OMPI_DECLSPEC extern
+int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap );
 
 /*
  * Instance that is shared between components that use shared memory
