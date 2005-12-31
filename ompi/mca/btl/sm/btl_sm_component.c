@@ -277,9 +277,16 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
         mca_btl_sm[i].super.btl_max_send_size=mca_btl_sm_component.max_frag_size;
         mca_btl_sm[i].super.btl_min_rdma_size=mca_btl_sm_component.max_frag_size;
         mca_btl_sm[i].super.btl_max_rdma_size=mca_btl_sm_component.max_frag_size;
-        mca_btl_sm[i].super.btl_exclusivity=MCA_BTL_EXCLUSIVITY_HIGH-1;  /* always use this ptl */
+        /* Because of the strange behavior of the qsort function on some OSes
+         * when it has to order items with the same value,
+         * we have to make sure that the add_procs functions are called in the
+         * correct order (ie. mca_btl_sm_add_procs_same_base_addr before
+         * mca_btl_sm_add_procs) or we will face segfault as only the first
+         * allocate memory for the mca_btl_sm_component.sm_proc_connect array.
+         */
+        mca_btl_sm[i].super.btl_exclusivity=MCA_BTL_EXCLUSIVITY_HIGH-1-i;  /* always use this btl */
         mca_btl_sm[i].super.btl_latency=100;      /* lowest latency */
-        mca_btl_sm[i].super.btl_bandwidth=900; /* not really used now since exclusivity is set to 100 */
+        mca_btl_sm[i].super.btl_bandwidth=900; /* not really used now since exclusivity is set to the highest value */
     }
 
     /* initialize some PTL data */
