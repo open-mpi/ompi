@@ -787,8 +787,7 @@ int mca_coll_sm_bootstrap_finalize(void)
            anything in here -- all data structures are referencing
            within the bootstrap area, so the one top-level unmap does
            it all) */
-
-        munmap(meta->map_seg, meta->map_size);
+        mca_common_sm_mmap_fini( meta );
     }
 
     return OMPI_SUCCESS;

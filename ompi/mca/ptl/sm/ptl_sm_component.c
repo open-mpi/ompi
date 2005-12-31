@@ -199,8 +199,7 @@ int mca_ptl_sm_component_close(void)
 
     /* unmap the shared memory control structure */
     if(mca_ptl_sm_component.mmap_file != NULL) {
-        return_value=munmap(mca_ptl_sm_component.mmap_file->map_addr,
-                mca_ptl_sm_component.mmap_file->map_size);
+        return_value = mca_common_sm_mmap_fini( mca_ptl_sm_component.mmap_file );
         if(-1 == return_value) {
             return_value=OMPI_ERROR;
             opal_output(0," munmap failed :: file - %s :: errno - %d \n",
