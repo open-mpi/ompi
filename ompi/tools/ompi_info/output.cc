@@ -34,6 +34,10 @@
 #include <sys/ioctl.h>
 #endif
 
+#ifdef __WINDOWS__
+#include <io.h>
+#endif  /* __WINDOWS__ */
+
 #include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
