@@ -140,9 +140,6 @@ typedef struct {
 
 #if defined(__WINDOWS__)
 
-#  if OMPI_BUILDING
-#    include "win32/win_compat.h"
-#  endif
 #  if OMPI_BUILDING_WIN_DSO
      /* building a component - need to import libmpi and export our
         struct */
@@ -159,6 +156,9 @@ typedef struct {
 #      define OMPI_COMP_EXPORT
 #      define OMPI_DECLSPEC __declspec(dllimport)
 #    endif
+#  endif
+#  if OMPI_BUILDING
+#    include "win32/win_compat.h"
 #  endif
 #else
    /* On Unix - get rid of the defines */ 
