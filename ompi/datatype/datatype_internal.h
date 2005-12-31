@@ -82,51 +82,52 @@ static inline void DUMP( char* fmt, ... )
 #define DT_CHAR                    0x04
 #define DT_CHARACTER               0x05
 #define DT_UNSIGNED_CHAR           0x06
-#define DT_BYTE                    0x07
-#define DT_SHORT                   0x08
-#define DT_UNSIGNED_SHORT          0x09
-#define DT_INT                     0x0A
-#define DT_UNSIGNED_INT            0x0B
-#define DT_LONG                    0x0C
-#define DT_UNSIGNED_LONG           0x0D
-#define DT_LONG_LONG               0x0E
-#define DT_LONG_LONG_INT           0x0F
-#define DT_UNSIGNED_LONG_LONG      0x10
-#define DT_FLOAT                   0x11
-#define DT_DOUBLE                  0x12
-#define DT_LONG_DOUBLE             0x13
-#define DT_PACKED                  0x14
-#define DT_WCHAR                   0x15
-#define DT_CXX_BOOL                0x16
-#define DT_LOGIC                   0x17
-#define DT_INTEGER                 0x18
-#define DT_REAL                    0x19
-#define DT_DBLPREC                 0x1A
+#define DT_SIGNED_CHAR             0x07
+#define DT_BYTE                    0x08
+#define DT_SHORT                   0x09
+#define DT_UNSIGNED_SHORT          0x0A
+#define DT_INT                     0x0B
+#define DT_UNSIGNED_INT            0x0C
+#define DT_LONG                    0x0D
+#define DT_UNSIGNED_LONG           0x0E
+#define DT_LONG_LONG               0x0F
+#define DT_LONG_LONG_INT           0x10
+#define DT_UNSIGNED_LONG_LONG      0x11
+#define DT_FLOAT                   0x12
+#define DT_DOUBLE                  0x13
+#define DT_LONG_DOUBLE             0x14
+#define DT_PACKED                  0x15
+#define DT_WCHAR                   0x16
+#define DT_CXX_BOOL                0x17
+#define DT_LOGIC                   0x18
+#define DT_INTEGER                 0x19
+#define DT_REAL                    0x1A
+#define DT_DBLPREC                 0x1B
 /*
  * This is not a datatype. It contain the number of basic datatypes.
  */
-#define DT_MAX_BASIC               0x1B
+#define DT_MAX_BASIC               0x1C
 /*
  * Derived datatypes supposely contiguous
  */
-#define DT_COMPLEX_FLOAT           0x1B
-#define DT_COMPLEX_DOUBLE          0x1C
-#define DT_COMPLEX_LONG_DOUBLE     0x1D
-#define DT_2INT                    0x1E
-#define DT_2INTEGER                0x1F
-#define DT_2REAL                   0x20
-#define DT_2DBLPREC                0x21
-#define DT_2COMPLEX                0x22
-#define DT_2DOUBLE_COMPLEX         0x23
+#define DT_COMPLEX_FLOAT           0x1C
+#define DT_COMPLEX_DOUBLE          0x1D
+#define DT_COMPLEX_LONG_DOUBLE     0x1E
+#define DT_2INT                    0x1F
+#define DT_2INTEGER                0x20
+#define DT_2REAL                   0x21
+#define DT_2DBLPREC                0x22
+#define DT_2COMPLEX                0x23
+#define DT_2DOUBLE_COMPLEX         0x24
 /*
  * Derived datatypes which will definitively be non contiguous on some architectures.
  */
-#define DT_FLOAT_INT               0x24
-#define DT_DOUBLE_INT              0x25
-#define DT_LONG_DOUBLE_INT         0x26
-#define DT_LONG_INT                0x27
-#define DT_SHORT_INT               0x28
-#define DT_UNAVAILABLE             0x29
+#define DT_FLOAT_INT               0x25
+#define DT_DOUBLE_INT              0x26
+#define DT_LONG_DOUBLE_INT         0x27
+#define DT_LONG_INT                0x28
+#define DT_SHORT_INT               0x29
+#define DT_UNAVAILABLE             0x2A
 /* If the number of basic datatype should change update
  * DT_MAX_PREDEFINED in datatype.h
  */
@@ -273,37 +274,6 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
 #else
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )
 #endif  /* OMPI_ENABLE_DEBUG */
-
-#ifdef USELESS
-#define MEMCPY_LIMIT 1
-
-#define MEMCPY( DST, SRC, BLENGTH ) \
-do { \
-   if( (BLENGTH) < (MEMCPY_LIMIT) ) { \
-      long mask = sizeof(int) - 1; \
-      char *dst = (char*)(DST), *src = (char*)(SRC); \
-      int i; \
-      if( ((long)(DST) & mask) == ((long)(SRC) & mask) ) { \
-         int *idst = (int*)((long)(DST) & (~mask)); \
-         int *isrc = (int*)((long)(SRC) & (~mask)); \
-         for( i = 0; i < ((long)(DST) & mask); i++ ) { \
-            *dst = *src; dst++; src++; \
-         } \
-         if( ((char*)idst) != dst ) { \
-            idst++; isrc++; \
-         } \
-         for( i = 0; i < ((BLENGTH) >> 2); i++ ) { \
-            *idst = *isrc; idst++; isrc++; \
-         } \
-      } else { \
-         for( i = 0; i < (BLENGTH); i++ ) { \
-            *dst = *src; dst++; src++; \
-         } \
-      } \
-   } else \
-      memcpy( (DST), (SRC), (BLENGTH) ); \
-} while(0)
-#endif  /* USELESS */
 
 static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
 {

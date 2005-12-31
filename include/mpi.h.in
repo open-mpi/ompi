@@ -637,6 +637,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_DOUBLE (&ompi_mpi_double)
 #define MPI_LONG_DOUBLE (&ompi_mpi_long_double)
 #define MPI_UNSIGNED_CHAR (&ompi_mpi_unsigned_char)
+#define MPI_SIGNED_CHAR (&ompi_mpi_signed_char)
 #define MPI_UNSIGNED_SHORT (&ompi_mpi_unsigned_short)
 #define MPI_UNSIGNED_LONG (&ompi_mpi_unsigned_long)
 #define MPI_UNSIGNED (&ompi_mpi_unsigned)

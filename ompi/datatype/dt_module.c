@@ -86,6 +86,7 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_lb = INIT_BASIC_TYPE( DT_LB, LB );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_char = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHAR, DT_FLAG_DATA_C );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_character = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHARACTER, DT_FLAG_DATA_FORTRAN );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_char = INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, UNSIGNED_CHAR, DT_FLAG_DATA_C );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_signed_char = INIT_BASIC_DATA( signed char, OMPI_ALIGNMENT_CHAR, SIGNED_CHAR, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_byte = INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, BYTE, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_short = INIT_BASIC_DATA( short, OMPI_ALIGNMENT_SHORT, SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_short = INIT_BASIC_DATA( unsigned short, OMPI_ALIGNMENT_SHORT, UNSIGNED_SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
@@ -227,6 +228,7 @@ const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
     &ompi_mpi_char,
     &ompi_mpi_character,
     &ompi_mpi_unsigned_char,
+    &ompi_mpi_signed_char,
     &ompi_mpi_byte,
     &ompi_mpi_short,
     &ompi_mpi_unsigned_short,
