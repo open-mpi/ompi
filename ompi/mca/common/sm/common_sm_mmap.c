@@ -194,6 +194,9 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                         size,addr);
             goto return_error;
         }
+        map->data_addr = addr;
+    } else {
+        map->data_addr = NULL;
     }
     mem_offset = addr-(unsigned char *)seg;
     map->map_addr = (unsigned char *)seg;
