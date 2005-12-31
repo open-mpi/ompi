@@ -84,14 +84,13 @@ static int mca_common_sm_mmap_open(char* path)
 }
 #endif  /* !defined(__WINDOWS__) */
 
-
 mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name, 
         size_t size_ctl_structure, size_t data_seg_alignment)
 {
-    int fd, return_code = OMPI_SUCCESS;
+    int fd = -1, return_code = OMPI_SUCCESS;
     bool file_previously_opened;
     mca_common_sm_file_header_t* seg;
-    mca_common_sm_mmap_t* map;
+    mca_common_sm_mmap_t* map = NULL;
     struct stat s_stat;
     unsigned char *addr = NULL;
     size_t tmp,mem_offset;
@@ -121,12 +120,10 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     return_code=fstat(fd,&s_stat);
     if( 0 > return_code ) {
         opal_output(0, "mca_common_sm_mmap_init: fstat failed with errno=%d\n", errno);
-        close(fd);
-        return NULL;
+        goto return_error;
     }
-    if (s_stat.st_size > 0){
+    if( s_stat.st_size > 0 )
         file_previously_opened=true;
-    }
 
     /* first process to open the file, so needs to initialize it */
     if( !file_previously_opened ) {
@@ -135,8 +132,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
             opal_output(0, 
                     "mca_common_sm_mmap_init: ftruncate failed with errno=%d\n",
                     errno);
-            close(fd);
-            return NULL;
+            goto return_error;
         }
     }
 
@@ -145,11 +141,10 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     if( (void*)-1 == seg ) {
         opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
                 errno);
-        close(fd);
-        return NULL;
+        goto return_error;
     }
 #else
-    HANDLE hMapObject;
+    HANDLE hMapObject = INVALID_HANDLE_VALUE;
     LPVOID lpvMem = NULL;
 
     hMapObject = CreateFileMapping( INVALID_HANDLE_VALUE, /* use paging file */
@@ -158,6 +153,9 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                                     0,                    /* size: high 32-bits */
                                     size,                 /* size: low 32-bits */
                                     file_name);           /* name of map object */
+    if( ERROR_ALREADY_EXISTS == GetLastError() )
+        file_previously_opened=true;
+
     if( NULL != hMapObject ) {
         /* Get a pointer to the file-mapped shared memory. */
         lpvMem = MapViewOfFile( hMapObject,     /* object to map view of */
@@ -165,18 +163,16 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                                 0,              /* high offset:  map from */
                                 0,              /* low offset:   beginning */
                                 0);             /* default: map entire file */
-        if( NULL == lpvMem ) {
-            CloseHandle(hMapObject);
-        }
     }
+    seg = (mca_common_sm_file_header_t*)lpvMem;
     if( NULL == lpvMem )
-        return NULL;
-#endif  /* !defined(__WINDOWS) */
+        goto return_error;
+#endif  /* !defined(__WINDOWS__) */
 
     /* set up the map object */
     map = OBJ_NEW(mca_common_sm_mmap_t);
     strncpy(map->map_path, file_name, OMPI_PATH_MAX);
-    /* the first entry in the file is the control strcuture.  the first
+    /* the first entry in the file is the control structure. The first
        entry in the control structure is an mca_common_sm_file_header_t
        element */
     map->map_seg = seg;
@@ -189,24 +185,17 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         /* calculate how far off alignment we are */
         tmp = ((size_t) addr) % data_seg_alignment;
         /* if we're off alignment, then move up to the next alignment */
-        if (tmp > 0) {
+        if( tmp > 0 )
             addr += (data_seg_alignment - tmp);
-        }
 
         /* is addr past end of file ? */
-        if( (unsigned char*)seg+size < addr ){
+        if( (unsigned char*)seg+size < addr ) {
             opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
                         size,addr);
-            fchmod(fd, 0600);
-            close(fd);
-            munmap(seg,size);
-            return NULL;
+            goto return_error;
         }
-        map->data_addr = addr;
-    } else {
-        map->data_addr = NULL;
     }
-    mem_offset=addr-(unsigned char *)seg;
+    mem_offset = addr-(unsigned char *)seg;
     map->map_addr = (unsigned char *)seg;
     map->map_size = size;
 
@@ -218,19 +207,50 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         seg->seg_size = size;
     }
 
+#if !defined(__WINDOWS__)
     /* enable access by other processes on this host */
     if(fchmod(fd, 0600) != 0) {
         opal_output(0, "mca_common_sm_mmap_init: fchmod failed with errno=%d :: fd %d\n",
                 errno,fd);
         OBJ_RELEASE(map);
-        close(fd);
-        return NULL;
+        goto return_error;
     }
     close(fd);
+#else
+    CloseHandle(hMapObject);
+#endif  /* !defined(__WINDOWS__) */
 
     return map;
+
+  return_error:
+#if !defined(__WINDOWS__)
+    if( -1 != fd ) {
+        fchmod(fd, 0600);
+        close(fd);
+    }
+    if( NULL != seg ) munmap(seg,size);
+#else
+    if( NULL != lpvMem ) UnmapViewOfFile( lpvMem );
+    if( NULL != hMapObject ) CloseHandle(hMapObject);
+#endif  /* !defined(__WINDOWS__) */
+
+    return NULL;
 }
 
+int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap )
+{
+    if( NULL != sm_mmap->map_seg ) {
+#if !defined(__WINDOWS__)
+        return munmap( sm_mmap->map_seg, sm_mmap->map_size );
+#else
+        BOOL return_error = UnmapViewOfFile( sm_mmap->map_seg );
+        if( false == return_error ) {
+            return GetLastError();
+        }
+#endif  /* !defined(__WINDOWS__) */
+    }
+    return OMPI_SUCCESS;
+}
 
 /**
  *  allocate memory from a previously allocated shared memory
