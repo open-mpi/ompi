@@ -242,17 +242,21 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 
 int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap )
 {
+    int rc = OMPI_SUCCESS;
+
     if( NULL != sm_mmap->map_seg ) {
 #if !defined(__WINDOWS__)
-        return munmap( sm_mmap->map_seg, sm_mmap->map_size );
+        rc = munmap( sm_mmap->map_addr, sm_mmap->map_size );
+        sm_mmap->map_addr = NULL;
+        sm_mmap->map_size = 0;
 #else
-        BOOL return_error = UnmapViewOfFile( sm_mmap->map_seg );
+        BOOL return_error = UnmapViewOfFile( sm_mmap->map_addr );
         if( false == return_error ) {
-            return GetLastError();
+            rc = GetLastError();
         }
 #endif  /* !defined(__WINDOWS__) */
     }
-    return OMPI_SUCCESS;
+    return rc;
 }
 
 /**
