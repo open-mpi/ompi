@@ -19,12 +19,17 @@
  */
 
 #include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#include <sys/errno.h>
+#endif  /* HAVE_SYS_TYPES_H */
+#include <errno.h>
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif  /* HAVE_SYS_STAT_H */
 #include <sys/wait.h>
-#include <fcntl.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"

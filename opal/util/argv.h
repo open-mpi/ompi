@@ -26,7 +26,6 @@
 #ifndef OPAL_ARGV_H
 #define OPAL_ARGV_H
 #include "ompi_config.h"
-#include "include/types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
