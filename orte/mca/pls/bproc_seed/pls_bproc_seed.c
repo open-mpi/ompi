@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif  /* HAVE_FCNTL_H */
 #include <sys/wait.h>
 
 #include "opal/util/argv.h"
