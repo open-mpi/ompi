@@ -795,6 +795,9 @@ static int param_register(const char *type_name,
   size_t i, len;
   mca_base_param_t param, *array;
 
+  /* There are data holes in the param struct */
+  OMPI_DEBUG_ZERO(param);
+
   /* Initialize the array if it has never been initialized */
 
   if (!initialized) {
