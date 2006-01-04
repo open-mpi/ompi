@@ -205,6 +205,7 @@ static int opal_ifinit(void)
         opal_if_t *intf_ptr;
         int length;
 
+        OMPI_DEBUG_ZERO(intf);
         OBJ_CONSTRUCT(&intf, opal_list_item_t);
 
         /* compute offset for entries */
