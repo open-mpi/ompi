@@ -160,7 +160,7 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_param_register_int("ib_rnr_retry", "IB rnr retry", 
                                       7, (int*) &mca_btl_openib_component.ib_rnr_retry); 
     mca_btl_openib_param_register_int("ib_max_rdma_dst_ops", "IB max rdma destination operations", 
-                                      16, (int*) &mca_btl_openib_component.ib_max_rdma_dst_ops); 
+                                      4, (int*) &mca_btl_openib_component.ib_max_rdma_dst_ops); 
     mca_btl_openib_param_register_int("ib_service_level", "IB service level", 
                                       0, (int*) &mca_btl_openib_component.ib_service_level); 
     mca_btl_openib_param_register_int("ib_static_rate", "IB static rate", 
@@ -186,13 +186,10 @@ int mca_btl_openib_component_open(void)
 
     mca_btl_openib_param_register_int ("eager_limit", "eager send limit", 
                                        (64*1024),(int*) &mca_btl_openib_module.super.btl_eager_limit);  
-    mca_btl_openib_module.super.btl_eager_limit -= sizeof(mca_btl_openib_header_t);
     mca_btl_openib_param_register_int ("min_send_size", "minimum send size", 
                                        (64*1024),(int*)  &mca_btl_openib_module.super.btl_min_send_size);
-    mca_btl_openib_module.super.btl_min_send_size -= sizeof(mca_btl_openib_header_t);
     mca_btl_openib_param_register_int ("max_send_size", "maximum send size", 
                                        (128*1024), (int*) &mca_btl_openib_module.super.btl_max_send_size); 
-    mca_btl_openib_module.super.btl_max_send_size -= sizeof(mca_btl_openib_header_t);
     mca_btl_openib_param_register_int("min_rdma_size", "minimum rdma size", 
                                       1024*1024, (int*) &mca_btl_openib_module.super.btl_min_rdma_size);
     mca_btl_openib_param_register_int("max_rdma_size", "maximium rdma size", 
