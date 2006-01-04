@@ -84,6 +84,9 @@ int ompi_mpi_register_params(void)
 #ifdef SIGSEGV
             SIGSEGV,
 #endif
+#ifdef SIGFPE
+            SIGFPE,
+#endif
             -1
         };
         for (j = 0 ; signals[j] != -1 ; ++j) {
