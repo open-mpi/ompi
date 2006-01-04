@@ -89,7 +89,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 {
     int fd = -1, return_code = OMPI_SUCCESS;
     bool file_previously_opened;
-    mca_common_sm_file_header_t* seg;
+    mca_common_sm_file_header_t* seg = NULL;
     mca_common_sm_mmap_t* map = NULL;
     struct stat s_stat;
     unsigned char *addr = NULL;
