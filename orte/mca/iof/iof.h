@@ -135,7 +135,7 @@ typedef int (*orte_iof_base_buffer_fn_t)(
  * from a specified set of peers.
  */
 
-typedef int (*orte_iof_base_callback_fn_t)(
+typedef void (*orte_iof_base_callback_fn_t)(
     orte_process_name_t* src_name, 
     orte_iof_base_tag_t src_tag,
     void *cbdata,
