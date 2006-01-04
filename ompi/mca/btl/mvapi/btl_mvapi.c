@@ -18,6 +18,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
+#include <stdlib.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "mca/pml/pml.h"
@@ -282,7 +283,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
-    
+   
     if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
         size_t reg_len; 
         /* the memory is already pinned and we have contiguous user data */ 
@@ -344,12 +345,16 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base; 
         frag->base.des_flags = 0; 
 
-        btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                       iov.iov_base, 
-                                       max_data, 
-                                       0,
-                                       (mca_mpool_base_registration_t**) &vapi_reg); 
-        
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
+            iov.iov_base, 
+            max_data, 
+            0,
+            (mca_mpool_base_registration_t**) &vapi_reg); 
+        if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
+            BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
+            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            return NULL;
+        }
         
         frag->sg_entry.len = max_data; 
         frag->sg_entry.lkey = vapi_reg->l_key; 
@@ -376,7 +381,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         } 
         
         iov.iov_len = max_data; 
-        iov.iov_base = frag->segment.seg_addr.pval + reserve; 
+        iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve; 
         
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 
@@ -457,7 +462,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     mca_mpool_mvapi_registration_t * vapi_reg; 
     long lb;
     int rc; 
-    
+
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
     
@@ -484,11 +489,17 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         /* we didn't get a memory registration passed in, so we have to register the region
          * ourselves 
          */ 
-        btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                       frag->segment.seg_addr.pval,
-                                       *size, 
-                                       0,
-                                       (mca_mpool_base_registration_t**) &vapi_reg);
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
+            frag->segment.seg_addr.pval,
+            *size, 
+            0,
+            (mca_mpool_base_registration_t**) &vapi_reg);
+        if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
+            BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu",
+                frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
+            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            return NULL;
+        }
     }
     
     frag->sg_entry.len = *size; 
