@@ -468,7 +468,6 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     OMPI_DEBUG_ZERO(hdr);
 
     /* recv the process identifier */
-    hdr.msg_src.cellid = 78;
     while((rc = recv(sd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
         if(rc >= 0) {
             if(mca_oob_tcp_component.tcp_debug > 1) {
@@ -484,10 +483,6 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             close(sd);
             return;
         }
-    }
-    assert(rc == sizeof(hdr));
-    if (rc != sizeof(hdr)) {
-        abort();
     }
     MCA_OOB_TCP_HDR_NTOH(&hdr);
 
