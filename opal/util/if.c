@@ -637,7 +637,7 @@ int opal_ifindextoname(int if_index, char* if_name, int length)
 bool
 opal_ifislocal(char *hostname)
 {
-    char addrname[ADDRLEN - 1];
+    char addrname[ADDRLEN + 1];
     int ret;
     struct hostent *h;
 
