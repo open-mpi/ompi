@@ -153,8 +153,8 @@ static int orte_pls_rsh_probe(orte_ras_node_t * node, orte_pls_rsh_shell * shell
     /*
      * Build argv array
      */
-    argv = opal_argv_copy(mca_pls_rsh_component.argv);
-    argc = mca_pls_rsh_component.argc;
+    argv = opal_argv_copy(mca_pls_rsh_component.agent_argv);
+    argc = mca_pls_rsh_component.agent_argc;
     opal_argv_append(&argc, &argv, node->node_name);
     opal_argv_append(&argc, &argv, "echo $SHELL");
     if (pipe(fd)) {
@@ -489,8 +489,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /*
      * Build argv array
      */
-    argv = opal_argv_copy(mca_pls_rsh_component.argv);
-    argc = mca_pls_rsh_component.argc;
+    argv = opal_argv_copy(mca_pls_rsh_component.agent_argv);
+    argc = mca_pls_rsh_component.agent_argc;
     node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
 
@@ -789,7 +789,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                     ras_node->node_name);
                     }
                     exec_argv = argv;
-                    exec_path = strdup(mca_pls_rsh_component.path);
+                    exec_path = strdup(mca_pls_rsh_component.agent_path);
 
                     if (NULL != prefix_dir) {
                         if (remote_bash) {
