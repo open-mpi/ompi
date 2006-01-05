@@ -29,6 +29,16 @@ version 1.0.
 1.0.2
 -----
 
+- Improved error messages on memory registration errors (e.g., when
+  using high-speed networks).
+- Open IB support now checks firmware for how many outstanding RDMA
+  requests are supported.  Thanks to Mellanox for pointing this out to
+  us.
+- Enable printing of stack traces in MPI processes upon SIGBUS,
+  SIGSEGV, and SIGFPE if the platform supports it.
+- Fixed F90 compilation support for the Lahey compiler.
+- Fixed issues with ROMIO shared library support.
+- Fixed internal accounting problems with rsh support.
 - Update to GNU Libtool 1.5.22.
 - Fix error in configure script when setting CCAS to ias (the Intel
   assembler)
