@@ -274,11 +274,12 @@ ompi_coll_tuned_topo_build_chain( int fanout,
     rank = ompi_comm_rank(comm);
 
     if( fanout < 1 ) {
-        return NULL;
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain WARNING invalid fanout of ZERO, forcing to 1 (pipeline)!"));
+        fanout = 1;
     }
     if (fanout>MAXTREEFANOUT) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain invalid fanout %d bigger than max %d", fanout, MAXTREEFANOUT));
-        return NULL;
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain WARNING invalid fanout %d bigger than max %d, forcing to max!", fanout, MAXTREEFANOUT));
+        fanout = MAXTREEFANOUT;
     }
 
     /*
