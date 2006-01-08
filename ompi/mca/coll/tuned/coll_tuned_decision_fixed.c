@@ -242,8 +242,9 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         segsize = 0;
         fanout = size-1;
 /* when linear implemented or taken from basic put here, right now using chain as a linear system */
-/*         return ompi_coll_tuned_reduce_intra_linear (sendbuf, recvbuf, count, datatype, op, root, comm); */
-        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
+/* it is implemented and I shouldn't be calling a chain with a fanout bigger than MAXTREEFANOUT from topo.h! */
+        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+/*        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout); */
      } else if (msgsize <= 65536 ) {
         segsize = 32768;
         fanout = 8;
