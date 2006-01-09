@@ -310,3 +310,24 @@ MPI::Prequest::Startall(int count, MPI:: Prequest array_of_requests[])
   delete [] mpi_requests;
 } 
 
+inline bool MPI::Request::Get_status(MPI::Status& status) const
+{
+    int flag;
+    MPI_Status c_status;
+
+    (void)MPI_Request_get_status(mpi_request, &flag, &c_status);
+    if (flag) {
+        status = c_status;
+    }
+    return (bool) flag;
+}
+
+inline bool MPI::Request::Get_status() const
+{
+    int flag;
+
+    (void)MPI_Request_get_status(mpi_request, &flag, MPI_STATUS_IGNORE);
+    return (bool) flag;
+}
+
+

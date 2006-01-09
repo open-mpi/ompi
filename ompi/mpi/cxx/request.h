@@ -124,6 +124,9 @@ public:
 
   virtual void Cancel(void) const;
 
+  virtual bool Get_status(Status& status) const;
+
+  virtual bool Get_status() const;
 
 protected:
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */

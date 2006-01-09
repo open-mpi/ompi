@@ -29,6 +29,8 @@ version 1.0.
 1.0.2
 -----
 
+- Add missing MPI::Request::Get_status() methods.  Thanks to Bill
+  Saphir for pointing this out to us.
 - Improved error messages on memory registration errors (e.g., when
   using high-speed networks).
 - Open IB support now checks firmware for how many outstanding RDMA
