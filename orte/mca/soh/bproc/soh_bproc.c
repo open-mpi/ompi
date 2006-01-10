@@ -34,6 +34,7 @@
 #include "mca/gpr/base/base.h"
 #include "mca/soh/base/base.h"
 #include "mca/soh/bproc/soh_bproc.h"
+#include "opal/util/output.h"
 
 #define BIT_MASK(bit)		(bit_set)(1 << (bit))
 #define EMPTY_SET		(bit_set)0
