@@ -32,7 +32,7 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/include/constants.h"
 #include "opal/util/error.h"
-
+#include "opal/util/stacktrace.h"
 
 static const char *
 opal_err2str(int errnum)
@@ -149,6 +149,12 @@ int opal_init(void)
         goto return_error;
     }
 
+    /* register params for opal */
+    if (OPAL_SUCCESS !=  opal_register_params()) {
+        error = "opal_register_params";
+        goto return_error;
+    }
+
     /* open the processor affinity base */
     opal_paffinity_base_open();
     opal_paffinity_base_select();
@@ -172,6 +178,13 @@ int opal_init(void)
         error = "opal_timer_base_open";
         goto return_error;
     }
+
+    /* pretty-print stack handlers */
+    if (OMPI_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
+        error = "util_register_stackhandlers() failed";
+        goto return_error;
+    }
+
     return OPAL_SUCCESS;
 
  return_error:

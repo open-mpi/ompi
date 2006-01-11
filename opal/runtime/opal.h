@@ -45,6 +45,8 @@ int opal_init(void);
  */
 int opal_finalize(void);
 
+int opal_register_params(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

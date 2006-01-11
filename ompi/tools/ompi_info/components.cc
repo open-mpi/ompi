@@ -40,6 +40,7 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/runtime/opal.h"
 
 #include "ompi/mca/allocator/allocator.h"
 #include "ompi/mca/allocator/base/base.h"
@@ -142,6 +143,10 @@ void ompi_info::open_components()
   // Open up the MCA
 
   mca_base_open();
+
+  // Register the OPAL layer's MCA parameters
+
+  opal_register_params();
 
   // Register the ORTE layer's MCA parameters
 

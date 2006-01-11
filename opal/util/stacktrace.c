@@ -326,7 +326,7 @@ int opal_util_register_stackhandlers (void)
     char * next;
     int param;
 
-    param = mca_base_param_find ("mpi", NULL, "signal");
+    param = mca_base_param_find ("opal", NULL, "signal");
     mca_base_param_lookup_string (param, &string_value);
 
     memset(&act, 0, sizeof(act));
