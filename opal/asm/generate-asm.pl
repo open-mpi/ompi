@@ -27,8 +27,8 @@ $ALIGN_LOG = 0;
 $DEL_R_REG = 0;
 $IS64BIT = 0;
 
-($CONFIG, $TEXT, $GLOBAL, $SUFFIX, $GSYM, $LSYM, $TYPE, $SIZE, $ALIGN_LOG, $DEL_R_REG, $IS64BIT) = (
-    $asmformat =~ /(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)/);
+($CONFIG, $TEXT, $GLOBAL, $SUFFIX, $GSYM, $LSYM, $TYPE, $SIZE, $ALIGN_LOG, $DEL_R_REG, $IS64BIT, $GNU_STACK) = (
+    $asmformat =~ /(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)/);
 
 if (0) {
 print "CONFIG: $CONFIG\n";
@@ -37,6 +37,7 @@ print "GLOBAL: $GLOBAL\n";
 print "SUFFIX: $SUFFIX\n";
 print "GSYM: $GSYM\n";
 print "LSYM: $LSYM\n";
+print "GNU_STACK: $GNU_STACK\n";
 }
 
 my $current_func = "";
@@ -98,7 +99,10 @@ while (<INPUT>) {
     if ($delete == 0) {
         print OUTPUT $_;
     }
+}
 
+if ($GNU_STACK == 1) {
+    print OUTPUT "\n\t.section\t.note.GNU-stack,\"\",\@progbits\n";
 }
 
 close(INPUT);
