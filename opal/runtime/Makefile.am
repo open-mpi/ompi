@@ -29,4 +29,5 @@ headers += \
 libopal_la_SOURCES += \
         runtime/opal_progress.c \
         runtime/opal_finalize.c \
-        runtime/opal_init.c
+        runtime/opal_init.c \
+	runtime/opal_params.c
