@@ -22,7 +22,7 @@
 /**
  * @file:
  *
- * Mutual exclusion functions: Windows implementation.
+ * Mutual exclusion functions: Unix implementation.
  *
  * Functions for locking of critical sections.
  *
@@ -35,6 +35,8 @@
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
+#include <errno.h>
+#include <stdio.h>
 #endif
 
 #include "opal/class/opal_object.h"
@@ -48,95 +50,94 @@ struct opal_mutex_t {
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
 #endif
+#if OMPI_HAVE_SOLARIS_THREADS
+    mutex_t m_lock_solaris;
+#endif
     opal_atomic_lock_t m_lock_atomic;
 };
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 
-#if OPAL_HAVE_ATOMIC_SPINLOCKS && OMPI_HAVE_POSIX_THREADS 
 
-/*
- * opal_mutex_*        implemented using pthreads
- * opal_mutex_atomic_* implemented using atomic operations
- */
+/************************************************************************
+ *
+ * mutex operations (non-atomic versions)
+ *
+ ************************************************************************/
+
+#if OMPI_HAVE_POSIX_THREADS
+
+/************************************************************************
+ * POSIX threads
+ ************************************************************************/
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
+#if OMPI_ENABLE_DEBUG
+    int ret = pthread_mutex_trylock(&m->m_lock_pthread);
+    if (ret == EDEADLK) {
+        errno = ret;
+        perror("opal_mutex_trylock()");
+        abort();
+    }
+    return ret;
+#else
     return pthread_mutex_trylock(&m->m_lock_pthread);
+#endif
 }
 
 static inline void opal_mutex_lock(opal_mutex_t *m)
 {
-    pthread_mutex_lock(&m->m_lock_pthread);
+    int ret = pthread_mutex_lock(&m->m_lock_pthread);
+#if OMPI_ENABLE_DEBUG
+    if (ret == EDEADLK) {
+        errno = ret;
+        perror("opal_mutex_lock()");
+        abort();
+    }
+#endif
 }
 
 static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
-    pthread_mutex_unlock(&m->m_lock_pthread);
+    int ret = pthread_mutex_unlock(&m->m_lock_pthread);
+#if OMPI_ENABLE_DEBUG
+    if (ret == EPERM) {
+        errno = ret;
+        perror("opal_mutex_unlock");
+        abort();
+    }
+#endif
 }
 
+#elif OMPI_HAVE_SOLARIS_THREADS
 
-static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
-{
-    opal_atomic_lock(&m->m_lock_atomic);
-}
+/************************************************************************
+ * Solaris threads
+ ************************************************************************/
 
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
-{
-    return opal_atomic_trylock(&m->m_lock_atomic);
-}
-
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
-{
-    opal_atomic_unlock(&m->m_lock_atomic);
-}
-
-
-#elif OMPI_HAVE_POSIX_THREADS
-
-/*
- * opal_mutex_* and opal_mutex_atomic_* implemented using pthreads
- */
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
-    return pthread_mutex_trylock(&m->m_lock_pthread);
+    return mutex_trylock(&m->m_lock_solaris);
 }
 
 static inline void opal_mutex_lock(opal_mutex_t *m)
 {
-    pthread_mutex_lock(&m->m_lock_pthread);
+    mutex_lock(&m->m_lock_solaris);
 }
 
 static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
-    pthread_mutex_unlock(&m->m_lock_pthread);
+    mutex_unlock(&m->m_lock_solaris);
 }
-
-
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
-{
-    return opal_mutex_trylock(m);
-}
-
-static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
-{
-    opal_mutex_lock(m);
-}
-
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
-{
-    opal_mutex_unlock(m);
-}
-
 
 #elif OPAL_HAVE_ATOMIC_SPINLOCKS
 
-/*
- * opal_mutex_* and opal_mutex_atomic_* implemented using atomic
- * operations
- */
+/************************************************************************
+ * Spin Locks
+ ************************************************************************/
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
@@ -152,27 +153,61 @@ static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
     opal_atomic_unlock(&m->m_lock_atomic);
 }
-
-
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
-{
-    return opal_mutex_trylock(m);
-}
-
-static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
-{
-    opal_mutex_lock(m);
-}
-
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
-{
-    opal_mutex_unlock(m);
-}
-
 
 #else
 
 #error No mutex definition
+
+#endif
+
+
+/************************************************************************
+ *
+ * mutex operations (atomic versions)
+ *
+ ************************************************************************/
+
+#if OPAL_HAVE_ATOMIC_SPINLOCKS
+
+/************************************************************************
+ * Spin Locks
+ ************************************************************************/
+
+static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
+{
+    return opal_atomic_trylock(&m->m_lock_atomic);
+}
+
+static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
+{
+    opal_atomic_lock(&m->m_lock_atomic);
+}
+
+static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
+{
+    opal_atomic_unlock(&m->m_lock_atomic);
+}
+
+#else
+
+/************************************************************************
+ * Stanard locking
+ ************************************************************************/
+
+static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
+{
+    return opal_mutex_trylock(m);
+}
+
+static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
+{
+    opal_mutex_lock(m);
+}
+
+static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
+{
+    opal_mutex_unlock(m);
+}
 
 #endif
 
