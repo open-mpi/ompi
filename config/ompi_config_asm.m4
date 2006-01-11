@@ -380,6 +380,37 @@ AC_DEFUN([OMPI_CHECK_ASM_SIZE],[
 ])dnl
 
 
+# OMPI_CHECK_ASM_GNU_STACKEXEC(var)
+# ----------------------------------
+# sets shell variable var to the things necessary to
+# disable execable stacks with GAS
+AC_DEFUN([OMPI_CHECK_ASM_GNU_STACKEXEC], [
+    AC_CHECK_PROG([OBJDUMP], [objdump], [objdump])
+    AC_CACHE_CHECK([if .note.GNU-stack is needed],
+        [ompi_cv_asm_gnu_stack_result],
+        [AS_IF([test "$OBJDUMP" != ""],
+            [ # first, see if a simple C program has it set
+             cat >conftest.c <<EOF
+int testfunc() {return 0; }
+EOF
+             OMPI_LOG_COMMAND([$CC $CFLAGS -c conftest.c -o conftest.$OBJEXT],
+                 [$OBJDUMP -x conftest.$OBJEXT | grep '\.note\.GNU-stack' > /dev/null && ompi_cv_asm_gnu_stack_result=yes],
+                 [OMPI_LOG_MSG([the failed program was:], 1)
+                  OMPI_LOG_FILE([conftest.c])
+                  ompi_cv_asm_gnu_stack_result=no])
+             if test "$ompi_cv_asm_gnu_stack_result" != "yes" ; then
+                 ompi_cv_asm_gnu_stack_result="no"
+             fi
+             rm -f conftest.*],
+            [ompi_cv_asm_gnu_stack_result="no"])])
+    if test "$ompi_cv_asm_gnu_stack_result" = "yes" ; then
+        ompi_cv_asm_gnu_stack=1
+    else
+        ompi_cv_asm_gnu_stack=0
+    fi
+])dnl
+
+
 dnl #################################################################
 dnl
 dnl OMPI_CHECK_POWERPC_REG
@@ -738,6 +769,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     else
         OMPI_CHECK_ASM_TEXT
         OMPI_CHECK_ASM_GLOBAL
+        OMPI_CHECK_ASM_GNU_STACKEXEC
         OMPI_CHECK_ASM_LABEL_SUFFIX
         OMPI_CHECK_ASM_GSYM
         OMPI_CHECK_ASM_LSYM
@@ -861,7 +893,7 @@ AC_MSG_WARN([significant performance increase.])
          OMPI_CHECK_INLINE_CXX_XLC
 
          # format:
-         #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit
+         #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
          asm_format="${ompi_asm_arch_config}"
          asm_format="${asm_format}-${ompi_cv_asm_text}-${ompi_cv_asm_global}"
          asm_format="${asm_format}-${ompi_cv_asm_label_suffix}-${ompi_cv_asm_gsym}"
@@ -873,7 +905,8 @@ AC_MSG_WARN([significant performance increase.])
          else
              asm_format="${asm_format}-1"
          fi
-         ompi_cv_asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
+         asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
+         ompi_cv_asm_format="${asm_format}-${ompi_cv_asm_gnu_stack}"
          OMPI_ASSEMBLY_FORMAT="$ompi_cv_asm_format"
 
         AC_MSG_CHECKING([for assembly format])
