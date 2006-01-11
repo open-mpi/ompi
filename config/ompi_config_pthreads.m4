@@ -635,6 +635,33 @@ OMPI_INTL_POSIX_THREADS_SPECIAL_FLAGS
 # Try the normal linking methods (that's no fun)
 OMPI_INTL_POSIX_THREADS_LIBS
 
+
+#
+# check to see if we can set error checking mutexes
+#
+
+# LinuxThreads
+AC_MSG_CHECKING([for PTHREAD_MUTEX_ERRORCHECK_NP])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[#include <pthread.h>]],
+        [[pthread_mutexattr_settype(NULL, PTHREAD_MUTEX_ERRORCHECK_NP);]])],
+    [result="yes" defval=1], [result="no" defval=0])
+AC_MSG_RESULT([$result])
+AC_DEFINE_UNQUOTED([OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP], [$defval],
+            [If PTHREADS implementation supports PTHREAD_MUTEX_ERRORCHECK_NP])
+
+# Mac OS X
+AC_MSG_CHECKING([for PTHREAD_MUTEX_ERRORCHECK])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM(
+        [[#include <pthread.h>]],
+        [[pthread_mutexattr_settype(NULL, PTHREAD_MUTEX_ERRORCHECK);]])],
+    [result="yes" defval=1], [result="no" defval=0])
+AC_MSG_RESULT([$result])
+AC_DEFINE_UNQUOTED([OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK], [$defval],
+            [If PTHREADS implementation supports PTHREAD_MUTEX_ERRORCHECK])
+
 CFLAGS="$orig_CFLAGS"
 FFLAGS="$orig_FFLAGS"
 CXXFLAGS="$orig_CXXFLAGS"
