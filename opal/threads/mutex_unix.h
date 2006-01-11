@@ -89,25 +89,29 @@ static inline int opal_mutex_trylock(opal_mutex_t *m)
 
 static inline void opal_mutex_lock(opal_mutex_t *m)
 {
-    int ret = pthread_mutex_lock(&m->m_lock_pthread);
 #if OMPI_ENABLE_DEBUG
+    int ret = pthread_mutex_lock(&m->m_lock_pthread);
     if (ret == EDEADLK) {
         errno = ret;
         perror("opal_mutex_lock()");
         abort();
     }
+#else
+    pthread_mutex_lock(&m->m_lock_pthread);
 #endif
 }
 
 static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
-    int ret = pthread_mutex_unlock(&m->m_lock_pthread);
 #if OMPI_ENABLE_DEBUG
+    int ret = pthread_mutex_unlock(&m->m_lock_pthread);
     if (ret == EPERM) {
         errno = ret;
         perror("opal_mutex_unlock");
         abort();
     }
+#else
+    pthread_mutex_unlock(&m->m_lock_pthread);
 #endif
 }
 
