@@ -29,6 +29,10 @@ version 1.0.
 1.0.2
 -----
 
+- Fix Darwin net/if.h configure warning.
+- The GNU assembler unbelievably defaults to making stacks executable.
+  So when using gas, add flags to explicitly tell it to not make
+  stacks executable (lame but necessary).
 - Add missing MPI::Request::Get_status() methods.  Thanks to Bill
   Saphir for pointing this out to us.
 - Improved error messages on memory registration errors (e.g., when
