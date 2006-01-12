@@ -66,7 +66,10 @@ int ompi_request_wait_any(
     /* give up and sleep until completion */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request_waiting++;
-    do {
+    /*
+     * We will break out of while{} as soon as all requests have completed.
+     */
+    while (1) {
         rptr = requests;
         num_requests_null_inactive = 0;
         for (i = 0; i < count; i++, rptr++) {
@@ -87,10 +90,10 @@ int ompi_request_wait_any(
         }
         if(num_requests_null_inactive == count)
             break;
-        if (completed < 0) {
+        while (completed < 0) {
             opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
         }
-    } while (completed < 0);
+    }
     ompi_request_waiting--;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
