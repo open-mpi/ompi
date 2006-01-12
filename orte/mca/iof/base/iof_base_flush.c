@@ -105,7 +105,10 @@ int orte_iof_base_flush(void)
         }
         if(pending != 0) {
             if(opal_event_progress_thread() == false) {
-                opal_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
+                while (opal_event_progress_thread() == false) {
+                    opal_condition_wait(&orte_iof_base.iof_condition,
+                                        &orte_iof_base.iof_lock);
+                }
             } else {
                 OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
                 opal_event_loop(OPAL_EVLOOP_ONCE);
