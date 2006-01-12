@@ -1042,7 +1042,7 @@ ompi_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     dlfcn.h execinfo.h err.h fcntl.h inttypes.h libgen.h libutil.h \
-    net/if.h netdb.h netinet/in.h netinet/tcp.h \
+    netdb.h netinet/in.h netinet/tcp.h \
     poll.h pthread.h pty.h pwd.h sched.h stdint.h \
     string.h strings.h stropts.h sys/fcntl.h sys/ipc.h \
     sys/ioctl.h sys/mman.h  sys/param.h sys/queue.h \
@@ -1050,6 +1050,23 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h])
+
+# Needed to work around Darwin requiring sys/socket.h for
+# net/if.h
+AC_CHECK_HEADERS([net/if.h], [], [],
+    [#include <stdio.h>
+#if STDC_HEADERS
+# include <stdlib.h>
+# include <stddef.h>
+#else
+# if HAVE_STDLIB_H
+#  include <stdlib.h>
+# endif
+#endif
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+])
 
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
 # have both Portland and GNU installed; using pgcc will find GNU's
