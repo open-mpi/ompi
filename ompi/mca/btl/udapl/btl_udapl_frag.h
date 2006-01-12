@@ -30,19 +30,26 @@ extern "C" {
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_t);
 
 
+typedef enum {
+    MCA_BTL_UDAPL_SEND,
+    MCA_BTL_UDAPL_PUT,
+    MCA_BTL_UDAPL_GET
+} mca_btl_udapl_frag_type_t;
+
 
 /**
- * uDAPL send fragment derived type.
+ * UDAPL send fragment derived type.
  */
 struct mca_btl_udapl_frag_t {
     mca_btl_base_descriptor_t base; 
     mca_btl_base_segment_t segment; 
+    struct mca_btl_udapl_module_t* btl;
     struct mca_btl_base_endpoint_t *endpoint; 
+    struct mca_mpool_base_registration_t* registration;
     mca_btl_base_header_t *hdr;
     size_t size; 
-#if MCA_BTL_HAS_MPOOL
-    struct mca_mpool_base_registration_t* registration;
-#endif
+    /*enum gm_priority priority;*/
+    mca_btl_udapl_frag_type_t type;
 }; 
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_t); 
@@ -107,6 +114,22 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_user_t);
     OMPI_FREE_LIST_RETURN(&((mca_btl_udapl_module_t*)btl)->udapl_frag_user, \
         (opal_list_item_t*)(frag)); \
 }
+
+                                                                                                       
+#define MCA_BTL_UDAPL_FRAG_POST(btl,frag) \
+do { \
+    if(opal_list_get_size(&btl->udapl_repost) < (size_t)btl->udapl_num_repost) { \
+        OPAL_THREAD_LOCK(&btl->udapl_lock);  \
+        opal_list_append(&btl->udapl_repost, (opal_list_item_t*)frag); \
+        OPAL_THREAD_UNLOCK(&btl->udapl_lock);  \
+    } else { \
+        OPAL_THREAD_LOCK(&btl->udapl_lock);  \
+        do { \
+            udapl_provide_receive_buffer(btl->port, frag->hdr, frag->size, frag->priority); \
+        } while (NULL != (frag = (mca_btl_udapl_frag_t*)opal_list_remove_first(&btl->udapl_repost)));  \
+        OPAL_THREAD_UNLOCK(&btl->udapl_lock);  \
+    } \
+} while(0) 
 
 
 

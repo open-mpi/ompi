@@ -45,7 +45,7 @@ void mca_btl_udapl_proc_construct(mca_btl_udapl_proc_t* proc)
 }
 
 /*
- * Cleanup uDAPL proc instance
+ * Cleanup ib proc instance
  */
 
 void mca_btl_udapl_proc_destruct(mca_btl_udapl_proc_t* proc)
@@ -100,49 +100,55 @@ static mca_btl_udapl_proc_t* mca_btl_udapl_proc_lookup_ompi(ompi_proc_t* ompi_pr
 
 mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
 {
-    mca_btl_udapl_proc_t* module_proc = NULL;
+    mca_btl_udapl_proc_t* udapl_proc = NULL;
+    size_t size;
+    int rc;
 
     /* Check if we have already created a uDAPL proc
      * structure for this ompi process */
-    module_proc = mca_btl_udapl_proc_lookup_ompi(ompi_proc);
-
-    if(module_proc != NULL) {
-
-        /* Gotcha! */
-        return module_proc;
+    udapl_proc = mca_btl_udapl_proc_lookup_ompi(ompi_proc);
+    if(udapl_proc != NULL) {
+        return udapl_proc;
     }
 
-    /* Oops! First time, gotta create a new uDAPL proc
-     * out of the ompi_proc ... */
+    /* create a new udapl proc out of the ompi_proc ... */
+    udapl_proc = OBJ_NEW(mca_btl_udapl_proc_t);
+    udapl_proc->proc_endpoint_count = 0;
+    udapl_proc->proc_ompi = ompi_proc;
+    udapl_proc->proc_guid = ompi_proc->proc_name;
 
-    module_proc = OBJ_NEW(mca_btl_udapl_proc_t);
-
-    /* Initialize number of peer */
-    module_proc->proc_endpoint_count = 0;
-
-    module_proc->proc_ompi = ompi_proc;
-
-    /* build a unique identifier (of arbitrary
-     * size) to represent the proc */
-    module_proc->proc_guid = ompi_proc->proc_name;
-
-    /* uDAPL module doesn't have addresses exported at
-     * initialization, so the addr_count is set to one. */
-    module_proc->proc_addr_count = 1;
-
-    /* XXX: Right now, there can be only 1 peer associated
-     * with a proc. Needs a little bit change in 
-     * mca_btl_udapl_proc_t to allow on demand increasing of
-     * number of endpoints for this proc */
-
-    module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(module_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
-
-    if(NULL == module_proc->proc_endpoints) {
-        OBJ_RELEASE(module_proc);
+    /* query for the peer address info */
+    rc = mca_pml_base_modex_recv(
+                 &mca_btl_udapl_component.super.btl_version,
+                 ompi_proc,
+                 (void*)&udapl_proc->proc_addrs,
+                 &size); 
+    if(OMPI_SUCCESS != rc) {
+        opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
+            __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
+        OBJ_RELEASE(udapl_proc);
         return NULL;
     }
-    return module_proc;
+
+    if((size % sizeof(mca_btl_udapl_addr_t)) != 0) {
+        opal_output(0, "[%s:%d] invalid udapl address for peer [%d,%d,%d]",
+            __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
+        OBJ_RELEASE(udapl_proc);
+        return NULL;
+    }
+
+    udapl_proc->proc_addr_count = size/sizeof(mca_btl_udapl_addr_t);
+    if (0 == udapl_proc->proc_addr_count) {
+        udapl_proc->proc_endpoints = NULL;
+    } else {
+        udapl_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+            malloc(udapl_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
+    }
+    if(NULL == udapl_proc->proc_endpoints) {
+        OBJ_RELEASE(udapl_proc);
+        return NULL;
+    }
+    return udapl_proc;
 }
 
 
@@ -151,12 +157,45 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
  * already held.  Insert a btl instance into the proc array and assign 
  * it an address.
  */
-int mca_btl_udapl_proc_insert(mca_btl_udapl_proc_t* module_proc, 
-        mca_btl_base_endpoint_t* module_endpoint)
+int mca_btl_udapl_proc_insert(
+    mca_btl_udapl_proc_t* udapl_proc, 
+    mca_btl_base_endpoint_t* udapl_endpoint)
 {
-    /* insert into endpoint array */
-    module_endpoint->endpoint_proc = module_proc;
-    module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
+    /*mca_btl_udapl_module_t* udapl_btl = udapl_endpoint->endpoint_btl;*/
 
+    /* insert into endpoint array */
+    if(udapl_proc->proc_addr_count <= udapl_proc->proc_endpoint_count)
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    udapl_endpoint->endpoint_proc = udapl_proc;
+    udapl_endpoint->endpoint_addr = udapl_proc->proc_addrs[udapl_proc->proc_endpoint_count];
+#if 0
+#if GM_API_VERSION > 0x200
+    if (GM_SUCCESS != udapl_global_id_to_node_id(
+        udapl_btl->port,
+        udapl_endpoint->endpoint_addr.global_id,
+        &udapl_endpoint->endpoint_addr.node_id)) {
+        opal_output( 0, "[%s:%d] error in converting global to local id \n",
+            __FILE__, __LINE__ );
+        return OMPI_ERROR;
+    }
+    if(mca_btl_udapl_component.udapl_debug > 0) {
+        opal_output(0, "[%d,%d,%d] mapped global id %lu to node id %lu\n", 
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            udapl_endpoint->endpoint_addr.global_id,
+            udapl_endpoint->endpoint_addr.node_id);
+    }
+#else
+    udapl_endpoint->udapl_addr.node_id = udapl_host_name_to_node_id( udapl_btl->udapl_port,
+        udapl_endpoint->udapl_addr.global_id);
+    if( GM_NO_SUCH_NODE_ID == udapl_endpoint->udapl_addr.node_id ) {
+        ompi_output( 0, "[%s:%d] unable to convert the remote host name (%s) to a host id",
+            __FILE__, __LINE__, udapl_endpoint->udapl_addr.global_id);
+        return OMPI_ERROR;
+    }
+#endif  /* GM_API_VERSION > 0x200 */
+#endif
+    udapl_proc->proc_endpoints[udapl_proc->proc_endpoint_count] = udapl_endpoint;
+    udapl_proc->proc_endpoint_count++;
     return OMPI_SUCCESS;
 }
+

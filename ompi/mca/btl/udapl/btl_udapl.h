@@ -25,6 +25,7 @@
 /* Standard system includes */
 #include <sys/types.h>
 #include <string.h>
+#include <dat/udat.h>
 
 /* Open MPI includes */
 #include "class/ompi_free_list.h"
@@ -36,46 +37,42 @@
 #include "opal/util/output.h"
 #include "mca/mpool/mpool.h" 
 #include "mca/btl/btl.h"
+#include "btl_udapl_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-#define MCA_BTL_HAS_MPOOL 1
+/*
+#define GM_BUFFER_SIZE   7
+#define GM_BUFFER_LENGTH gm_max_length_for_size(GM_BUFFER_SIZE)
+*/
 
 /**
  * uDAPL BTL component.
  */
 
 struct mca_btl_udapl_component_t {
-    mca_btl_base_component_1_0_0_t          super;  /**< base BTL component */ 
+    mca_btl_base_component_1_0_0_t super;  /**< base BTL component */ 
     
-    uint32_t                                udapl_num_btls;
-    /**< number of hcas available to the uDAPL component */
+    size_t  udapl_num_btls; /**< number of hcas available to the uDAPL component */
+    size_t  udapl_max_btls; /**< maximum number of supported hcas */
+    struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
+    size_t  udapl_num_mru;
+    size_t  udapl_eager_frag_size;
+    size_t  udapl_max_frag_size;
+    char*   udapl_port_name; 
+    int32_t udapl_num_repost;
+    int32_t udapl_num_high_priority; /**< number of receive descriptors at high priority */
+    int     udapl_debug;        /**< turn on debug output */
 
-    struct mca_btl_udapl_module_t       *udapl_btls;
-    /**< array of available BTL modules */
-
-    int udapl_free_list_num;
-    /**< initial size of free lists */
-
-    int udapl_free_list_max;
-    /**< maximum size of free lists */
-
-    int udapl_free_list_inc;
-    /**< number of elements to alloc when growing free lists */
-
-    opal_list_t udapl_procs;
-    /**< list of udapl proc structures */
-
-    opal_mutex_t udapl_lock;
-    /**< lock for accessing module state */
-
-    char* udapl_mpool_name; 
-    /**< name of memory pool */ 
-
-    bool leave_pinned;
-    /**< pin memory on first use and leave pinned */
+    int udapl_free_list_num;   /**< initial size of free lists */
+    int udapl_free_list_max;   /**< maximum size of free lists */
+    int udapl_free_list_inc;   /**< number of elements to alloc when growing free lists */
+    opal_list_t udapl_procs;   /**< list of udapl proc structures */
+    opal_mutex_t udapl_lock;   /**< lock for accessing module state */
+    char* udapl_mpool_name;    /**< name of memory pool */ 
+    bool leave_pinned;      /**< pin memory on first use and leave pinned */
 }; 
 typedef struct mca_btl_udapl_component_t mca_btl_udapl_component_t;
 
@@ -88,19 +85,31 @@ extern mca_btl_udapl_component_t mca_btl_udapl_component;
  */
 struct mca_btl_udapl_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
-    mca_btl_base_recv_reg_t udapl_reg[MCA_BTL_TAG_MAX]; 
+    mca_btl_base_recv_reg_t udapl_reg[256]; 
+
+    /* local port handle/address */
+    /* struct gm_port *port; */
+    mca_btl_udapl_addr_t udapl_addr;
 
     /* free list of fragment descriptors */
     ompi_free_list_t udapl_frag_eager;
     ompi_free_list_t udapl_frag_max;
     ompi_free_list_t udapl_frag_user;
 
-    /* lock for accessing module state */
-    opal_mutex_t udapl_lock;
-
-#if MCA_BTL_HAS_MPOOL
-    struct mca_mpool_base_module_t* udapl_mpool;
+    /* number of send/recv tokens */
+#if 0
+    int32_t udapl_num_send_tokens;
+    int32_t udapl_max_send_tokens;
+    int32_t udapl_num_recv_tokens;
+    int32_t udapl_max_recv_tokens;
+    int32_t udapl_num_repost;
 #endif
+
+    /* lock for accessing module state */
+    opal_list_t udapl_pending; /**< list of pending send descriptors */
+    opal_list_t udapl_repost; /**< list of pending fragments */
+    opal_list_t udapl_mru_reg; /**< list of most recently used registrations */
+    opal_mutex_t udapl_lock;
 }; 
 typedef struct mca_btl_udapl_module_t mca_btl_udapl_module_t;
 extern mca_btl_udapl_module_t mca_btl_udapl_module;
@@ -305,6 +314,51 @@ extern mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size); 
+
+
+/** 
+ * Acquire a send token - queue the fragment if none available
+ */
+
+#define MCA_BTL_UDAPL_ACQUIRE_TOKEN(btl, frag)                                                  \
+do {                                                                                            \
+    /* queue the descriptor if there are no send tokens */                                      \
+    if(OPAL_THREAD_ADD32(&udapl_btl->udapl_num_send_tokens, -1) < 0) {                          \
+        OPAL_THREAD_LOCK(&udapl_btl->udapl_lock);                                               \
+        opal_list_append(&udapl_btl->udapl_pending, (opal_list_item_t*)frag);                   \
+        OPAL_THREAD_UNLOCK(&udapl_btl->udapl_lock);                                             \
+        OPAL_THREAD_ADD32(&udapl_btl->udapl_num_send_tokens, 1);                                \
+        return OMPI_SUCCESS;                                                                    \
+    }                                                                                           \
+} while (0)                                                                                     \
+
+/**
+ * Return send token and dequeue and pending fragments 
+ */
+
+#define MCA_BTL_UDAPL_RETURN_TOKEN(btl)                                                         \
+do {                                                                                            \
+   OPAL_THREAD_ADD32( &btl->udapl_num_send_tokens, 1 );                                         \
+   if(opal_list_get_size(&btl->udapl_pending)) {                                                \
+       mca_btl_udapl_frag_t* frag;                                                              \
+       OPAL_THREAD_LOCK(&btl->udapl_lock);                                                      \
+       frag = (mca_btl_udapl_frag_t*)opal_list_remove_first(&btl->udapl_pending);               \
+       OPAL_THREAD_UNLOCK(&btl->udapl_lock);                                                    \
+       if(NULL != frag) {                                                                       \
+           switch(frag->type) {                                                                 \
+           case MCA_BTL_UDAPL_SEND:                                                             \
+               mca_btl_udapl_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);    \
+               break;                                                                           \
+           case MCA_BTL_UDAPL_PUT:                                                              \
+               mca_btl_udapl_put(&btl->super, frag->endpoint, &frag->base);                     \
+               break;                                                                           \
+           case MCA_BTL_UDAPL_GET:                                                              \
+               mca_btl_udapl_get(&btl->super, frag->endpoint, &frag->base);                     \
+               break;                                                                           \
+           }                                                                                    \
+       }                                                                                        \
+    }                                                                                           \
+} while (0)
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
