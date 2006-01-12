@@ -39,14 +39,6 @@ struct mca_btl_openib_header_t {
 typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
 
 
-typedef enum { 
-    MCA_BTL_IB_FRAG_SEND, 
-    MCA_BTL_IB_FRAG_PUT, 
-    MCA_BTL_IB_FRAG_GET, 
-    MCA_BTL_IB_FRAG_ACK 
-} mca_btl_openib_frag_type_t; 
-
-
 /**
  * IB send fragment derived type.
  */
@@ -54,7 +46,6 @@ struct mca_btl_openib_frag_t {
     mca_btl_base_descriptor_t base; 
     mca_btl_base_segment_t segment; 
     struct mca_btl_base_endpoint_t *endpoint; 
-    mca_btl_openib_frag_type_t type; 
     size_t size; 
     int rc; 
     union{ 

@@ -74,7 +74,6 @@ static void mca_btl_openib_recv_frag_common_constructor(mca_btl_openib_frag_t* f
 
 static void mca_btl_openib_send_frag_eager_constructor(mca_btl_openib_frag_t* frag) 
 { 
-    
     frag->size = mca_btl_openib_component.eager_limit;  
     mca_btl_openib_send_frag_common_constructor(frag); 
 }
@@ -82,7 +81,6 @@ static void mca_btl_openib_send_frag_eager_constructor(mca_btl_openib_frag_t* fr
 
 static void mca_btl_openib_send_frag_max_constructor(mca_btl_openib_frag_t* frag) 
 { 
-    
     frag->size = mca_btl_openib_component.max_send_size; 
     mca_btl_openib_send_frag_common_constructor(frag); 
 }
@@ -91,7 +89,6 @@ static void mca_btl_openib_recv_frag_max_constructor(mca_btl_openib_frag_t* frag
 {
     frag->size = mca_btl_openib_component.max_send_size; 
     mca_btl_openib_recv_frag_common_constructor(frag); 
-    
 }
 
 
@@ -99,12 +96,10 @@ static void mca_btl_openib_recv_frag_eager_constructor(mca_btl_openib_frag_t* fr
 {
     frag->size = mca_btl_openib_component.eager_limit; 
     mca_btl_openib_recv_frag_common_constructor(frag); 
-    
 }
 
 static void mca_btl_openib_send_frag_frag_constructor(mca_btl_openib_frag_t* frag) 
 { 
-    
     frag->size = 0; 
     mca_btl_openib_send_frag_common_constructor(frag); 
 }
