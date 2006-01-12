@@ -20,7 +20,9 @@
 
 
 
-sources = \
+AM_CPPFLAGS = $(btl_udapl_CPPFLAGS)
+
+udapl_sources = \
     btl_udapl.c \
     btl_udapl.h \
     btl_udapl_component.c \
@@ -29,34 +31,32 @@ sources = \
     btl_udapl_frag.c \
     btl_udapl_frag.h \
     btl_udapl_proc.c \
-    btl_udapl_proc.h \
-    btl_udapl_error.h
-     
+    btl_udapl_proc.h
+
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
 if OMPI_BUILD_btl_udapl_DSO
-lib =
-lib_sources =
-component = mca_btl_udapl.la
-component_sources = $(sources)
+component_noinst =
+component_install = mca_btl_udapl.la
 else
-lib = libmca_btl_udapl.la
-lib_sources = $(sources)
-component =
-component_sources =
+component_noinst = libmca_btl_udapl.la
+component_install =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component)
-mca_btl_udapl_la_SOURCES = $(component_sources)
-mca_btl_udapl_la_LDFLAGS = -module -avoid-version
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_btl_udapl_la_SOURCES = $(udapl_sources)
 mca_btl_udapl_la_LIBADD = \
+    $(btl_udapl_LIBS) \
     $(top_ompi_builddir)/ompi/libmpi.la \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
+        
+mca_btl_udapl_la_LDFLAGS = -module -avoid-version $(btl_udapl_LDFLAGS)
 
-noinst_LTLIBRARIES = $(lib)
-libmca_btl_udapl_la_SOURCES = $(lib_sources)
-libmca_btl_udapl_la_LDFLAGS = -module -avoid-version
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_btl_udapl_la_SOURCES = $(udapl_sources)
+libmca_btl_udapl_la_LIBADD = $(btl_udapl_LIBS)
+libmca_btl_udapl_la_LDFLAGS = -module -avoid-version $(btl_udapl_LDFLAGS)

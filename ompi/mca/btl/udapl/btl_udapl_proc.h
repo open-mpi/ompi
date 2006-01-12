@@ -46,8 +46,11 @@ struct mca_btl_udapl_proc_t {
     orte_process_name_t proc_guid;           
     /**< globally unique identifier for the process */
 
+    struct mca_btl_udapl_addr_t* proc_addrs;
+    /**< array of addresses exported by peer */
+
     size_t proc_addr_count;                  
-    /**< number of addresses published by endpoint */
+    /**< number of addresses published by peer */
 
     struct mca_btl_base_endpoint_t **proc_endpoints; 
     /**< array of endpoints that have been created to access this proc */    
