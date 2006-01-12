@@ -45,9 +45,7 @@ int mca_btl_openib_endpoint_create_qp(
 #if OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                       struct ibv_srq* srq, 
 #endif
-                                      struct ibv_qp_attr* qp_attr,
-                                      struct ibv_qp** qp
-                                      ); 
+                                      struct ibv_qp_attr* qp_attr,                                      struct ibv_qp** qp); 
 
 
 
@@ -74,64 +72,99 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     struct ibv_qp* ib_qp; 
     struct ibv_send_wr* bad_wr; 
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
-    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND; 
-    
+    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
+
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= openib_btl->super.btl_eager_limit){ 
         
-        /* atomically test and acquire a token */
-        if(!mca_btl_openib_component.use_srq &&
-           OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,-1) < 0) { 
-            BTL_VERBOSE(("Queing because no send tokens \n"));
+        /* check for a send wqe */
+        if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1) < 0) {
+
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
             opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
-            OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,1);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             return OMPI_SUCCESS;
+ 
+        /* check for a token */
+        } else if(!mca_btl_openib_component.use_srq &&
+            OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,-1) < 0) {
+
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
+            OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,1);
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            return OMPI_SUCCESS;
+
         } else if( mca_btl_openib_component.use_srq &&
                    OPAL_THREAD_ADD32(&openib_btl->sd_tokens_hp,-1) < 0) { 
+
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
             OPAL_THREAD_ADD32(&openib_btl->sd_tokens_hp,1);
+            OPAL_THREAD_LOCK(&openib_btl->ib_lock);
             opal_list_append(&openib_btl->pending_frags_hp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
             return OMPI_SUCCESS;
-        } else { 
-            frag->hdr->credits = endpoint->rd_credits_hp;
+
+        /* queue the request */
+        } else {
+            frag->hdr->credits = (endpoint->rd_credits_hp > 0) ? endpoint->rd_credits_hp : 0;
             OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -frag->hdr->credits);
             ib_qp = endpoint->lcl_qp_hp; 
         }
+
     } else {
-        /* atomically test and acquire a token */
-        if(!mca_btl_openib_component.use_srq &&
-           OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0 ) {
-            BTL_VERBOSE(("Queing because no send tokens \n"));
-            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag); 
+
+        /* check for a send wqe */
+        if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
+
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            return OMPI_SUCCESS;
+
+        /* check for a token */
+        } else if(!mca_btl_openib_component.use_srq &&
+            OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0 ) {
+
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
-            
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag); 
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             return OMPI_SUCCESS;
+
         } else if(mca_btl_openib_component.use_srq &&
-                  OPAL_THREAD_ADD32(&openib_btl->sd_tokens_lp,-1) < 0) {
+            OPAL_THREAD_ADD32(&openib_btl->sd_tokens_lp,-1) < 0) {
+
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             OPAL_THREAD_ADD32(&openib_btl->sd_tokens_lp,1);
+            OPAL_THREAD_LOCK(&openib_btl->ib_lock);
             opal_list_append(&openib_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-            
+            OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
             return OMPI_SUCCESS;
+
+        /* queue the request */
         } else { 
-            frag->hdr->credits = endpoint->rd_credits_lp;
+            frag->hdr->credits = (endpoint->rd_credits_lp > 0) ? endpoint->rd_credits_lp : 0;
             OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -frag->hdr->credits);
             ib_qp = endpoint->lcl_qp_lp; 
         }
     } 
     
-    
-    
     frag->sg_entry.length = 
         frag->segment.seg_len + sizeof(mca_btl_openib_header_t);
-        
     if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
-        frag->wr_desc.sr_desc.send_flags |= IBV_SEND_INLINE;
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED|IBV_SEND_INLINE;
     } else { 
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
     }
-    
+   
     if(ibv_post_send(ib_qp, 
                      &frag->wr_desc.sr_desc, 
                      &bad_wr)) { 
-        BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
+        BTL_ERROR(("error posting send request errno (%d) says %s", errno, strerror(errno))); 
         return OMPI_ERROR; 
     }
             
@@ -180,12 +213,18 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 
     endpoint->rd_posted_hp = 0;
     endpoint->rd_posted_lp = 0;
-                                                                                                                             
+
+    /* number of available send wqes */
+    endpoint->sd_wqe_hp = mca_btl_openib_component.rd_num;
+    endpoint->sd_wqe_lp = mca_btl_openib_component.rd_num;
+
     /* zero these out w/ initial posting, so that we start out w/
      * zero credits to return to peer
      */
     endpoint->rd_credits_hp = -(mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv);
     endpoint->rd_credits_lp = -(mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv);
+    endpoint->sd_credits_hp = 0;
+    endpoint->sd_credits_lp = 0;
 
     /* initialize the high and low priority tokens */
     endpoint->sd_tokens_hp = mca_btl_openib_component.rd_num;
@@ -272,9 +311,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
-    
-    
+
     /* send to endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
          mca_btl_openib_endpoint_send_cb, NULL);
@@ -557,15 +594,10 @@ static void mca_btl_openib_endpoint_recv(
     }
 #endif
 
-    
     BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
                  rem_info.rem_qp_num_hp,
                  rem_info.rem_qp_num_lp, 
                  rem_info.rem_lid));
-
-
-   
-    
 
     for(ib_proc = (mca_btl_openib_proc_t*)
             opal_list_get_first(&mca_btl_openib_component.ib_procs);
@@ -842,8 +874,8 @@ int mca_btl_openib_endpoint_create_qp(
 
         qp_init_attr.send_cq = cq; 
         qp_init_attr.recv_cq = cq; 
-        qp_init_attr.cap.max_send_wr = mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_num;
-        qp_init_attr.cap.max_recv_wr = mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_num;
+        qp_init_attr.cap.max_send_wr = mca_btl_openib_component.rd_num + 1;
+        qp_init_attr.cap.max_recv_wr = mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv;
         qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.qp_type = IBV_QPT_RC; 
@@ -923,6 +955,7 @@ int mca_btl_openib_endpoint_qp_init_query(
         BTL_ERROR(("error modifing QP to RTR errno says %s",  strerror(errno))); 
         return OMPI_ERROR; 
     }
+
     attr->qp_state 	    = IBV_QPS_RTS;
     attr->timeout 	    = mca_btl_openib_component.ib_timeout;
     attr->retry_cnt 	    = mca_btl_openib_component.ib_retry_count;
@@ -946,13 +979,26 @@ int mca_btl_openib_endpoint_qp_init_query(
 /**
  * Return control fragment.
  */
-                                                                                                                             
-static void mca_btl_openib_endpoint_control_cb(
+
+static void mca_btl_openib_endpoint_credits_lp(
     mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
+    int32_t credits;
+
+    /* we don't acquire a wqe or token for credit message - so decrement */
+    OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1);
+
+    /* check to see if there are addditional credits to return */
+    if ((credits = OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,-1)) > 0) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,-credits);
+        if (endpoint->rd_credits_lp >= mca_btl_openib_component.rd_win &&
+            OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,1) == 1) {
+            mca_btl_openib_endpoint_send_credits_lp(endpoint);
+        }
+    }
     MCA_BTL_IB_FRAG_RETURN_EAGER((mca_btl_openib_module_t*)btl, (mca_btl_openib_frag_t*)descriptor);
 }
 
@@ -960,10 +1006,8 @@ static void mca_btl_openib_endpoint_control_cb(
  * Return credits to peer
  */
                                                                                                                              
-void mca_btl_openib_endpoint_send_credits(
-    mca_btl_openib_endpoint_t* endpoint,
-    struct ibv_qp* ib_qp,
-    int32_t* credits)
+void mca_btl_openib_endpoint_send_credits_lp(
+    mca_btl_openib_endpoint_t* endpoint)
 {
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
     mca_btl_openib_frag_t* frag;
@@ -976,25 +1020,95 @@ void mca_btl_openib_endpoint_send_credits(
         return;
     }
 
-    frag->base.des_cbfunc = mca_btl_openib_endpoint_control_cb;
+    frag->base.des_cbfunc = mca_btl_openib_endpoint_credits_lp;
     frag->base.des_cbdata = NULL;
+    frag->endpoint = endpoint;
 
     frag->hdr->tag = MCA_BTL_TAG_BTL;
-    frag->hdr->credits = *credits;
-    OPAL_THREAD_ADD32(credits, -frag->hdr->credits);
+    frag->hdr->credits = endpoint->rd_credits_lp;
+    OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -frag->hdr->credits);
 
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
+    frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED; 
     frag->sg_entry.length = sizeof(mca_btl_openib_header_t);
-                                                                                                                     
-    frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | 
-        IBV_SEND_SIGNALED; 
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
     
+    if(ibv_post_send(endpoint->lcl_qp_lp,
+                         &frag->wr_desc.sr_desc,
+                         &bad_wr)) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, -1);
+        OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, frag->hdr->credits);
+        MCA_BTL_IB_FRAG_RETURN_EAGER(openib_btl, frag);
+        BTL_ERROR(("error posting send request errno %d says %s", strerror(errno)));
+        return;
+    }
+}
 
-    if(ibv_post_send(ib_qp,
-                     &frag->wr_desc.sr_desc,
-                     &bad_wr)) {
-        BTL_ERROR(("error posting send request errno says %s", strerror(errno)));
+
+/**
+ * Return control fragment.
+ */
+
+static void mca_btl_openib_endpoint_credits_hp(
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status)
+{
+    int32_t credits;
+
+    /* we don't acquire a wqe or token for credit message - so decrement */
+    OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1);
+
+    /* check to see if there are addditional credits to return */
+    if ((credits = OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,-1)) > 0) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,-credits);
+        if (endpoint->rd_credits_hp >= mca_btl_openib_component.rd_win &&
+            OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,1) == 1) {
+            mca_btl_openib_endpoint_send_credits_hp(endpoint);
+        } 
+    }
+    MCA_BTL_IB_FRAG_RETURN_EAGER((mca_btl_openib_module_t*)btl, (mca_btl_openib_frag_t*)descriptor);
+}
+
+/**
+ * Return credits to peer
+ */
+                                                                                                                             
+void mca_btl_openib_endpoint_send_credits_hp(
+    mca_btl_openib_endpoint_t* endpoint)
+{
+    mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
+    mca_btl_openib_frag_t* frag;
+    struct ibv_send_wr* bad_wr; 
+    int rc;
+
+    MCA_BTL_IB_FRAG_ALLOC_EAGER(openib_btl, frag, rc);
+    if(NULL == frag) {
+        BTL_ERROR(("error allocating fragment"));
+        return;
+    }
+
+    frag->base.des_cbfunc = mca_btl_openib_endpoint_credits_hp;
+    frag->base.des_cbdata = NULL;
+    frag->endpoint = endpoint;
+
+    frag->hdr->tag = MCA_BTL_TAG_BTL;
+    frag->hdr->credits = endpoint->rd_credits_hp;
+    OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -frag->hdr->credits);
+
+    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
+    frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED; 
+    frag->sg_entry.length = sizeof(mca_btl_openib_header_t);
+    frag->sg_entry.addr = (unsigned long) frag->hdr; 
+    
+    if(ibv_post_send(endpoint->lcl_qp_hp,
+                         &frag->wr_desc.sr_desc,
+                         &bad_wr)) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_hp, -1);
+        OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, frag->hdr->credits);
+        MCA_BTL_IB_FRAG_RETURN_EAGER(openib_btl, frag);
+        BTL_ERROR(("error posting send request errno %d says %s", strerror(errno)));
         return;
     }
 }
