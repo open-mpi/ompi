@@ -17,24 +17,24 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_F77_CHECK_TYPE([type, action if found, action if not found])
+# -----------------------------------------------------------------
 AC_DEFUN([OMPI_F77_CHECK_TYPE],[
-# Determine FORTRAN datatype size.
-# First arg is type, 2nd arg is config var to define
+    AS_VAR_PUSHDEF([type_var], [ompi_cv_f77_have_$1])
 
-AC_MSG_CHECKING([if FORTRAN compiler supports $1])
-
-AC_LANG_PUSH(Fortran 77)
-AC_COMPILE_IFELSE(AC_LANG_SOURCE([[C
+    # Determine FORTRAN datatype size.
+    # First arg is type, 2nd arg is config var to define
+    AC_CACHE_CHECK([if Fortran compiler supports $1], type_var,
+        [AC_LANG_PUSH([Fortran 77])
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[C
         program main
         $1 bogus_variable
-        end]]), 
-    [HAPPY=1 
-     AC_MSG_RESULT([yes])],
-    [HAPPY=0 
-     AC_MSG_RESULT([no])])
-AC_LANG_POP
+        end]])],
+             [AS_VAR_SET(type_var, "yes")],
+             [AS_VAR_SET(type_var, "no")])
+         AC_LANG_POP([Fortran 77])])
 
-str="$2=$HAPPY"
-eval $str
+    AS_IF([test "AS_VAR_GET(type_var)" = "yes"], [$2], [$3])
+    AS_VAR_POPDEF([type_var])dnl
+])dnl
 
-unset HAPPY])dnl

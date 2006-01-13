@@ -17,65 +17,66 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_F77_GET_FORTRAN_HANDLE_MAX],[
+# OMPI_F77_GET_FORTRAN_HANDLE_MAX()
+# ---------------------------------------------------------------
 # Find the maximum value of fortran integers, then calculate
 # min(INT_MAX, max fortran INTEGER).  This represents the maximum
 # number of fortran MPI handle index.
+AC_DEFUN([OMPI_F77_GET_FORTRAN_HANDLE_MAX],[
+    AC_CACHE_CHECK([for max Fortran MPI handle index],
+        [ompi_cv_f77_fortran_handle_max],
+        [ # Find max fortran INTEGER value.  Set to sentinel value if we don't
+         # have a Fortran compiler (e.g., if --disable-f77 was given). 
+         if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
+             ompi_fint_max=0
+         else
+             # Calculate the number of f's that we need to append to the hex
+             # value.  Do one less than we really need becaue we assume the
+             # top nybble is 0x7 to avoid sign issues.
+             ompi_numf=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 2 - 1`
+             ompi_fint_max=0x7
+             while test "$ompi_numf" -gt "0"; do
+                 ompi_fint_max=${ompi_fint_max}f
+                 ompi_numf=`expr $ompi_numf - 1`
+             done
+         fi
 
-AC_MSG_CHECKING([for max fortran MPI handle index])
-# Find max fortran INTEGER value.  Set to sentinel value if we don't
-# have a Fortran compiler (e.g., if --disable-f77 was given). 
-if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
-    ompi_fint_max=0
-else
-    # Calculate the number of f's that we need to append to the hex
-    # value.  Do one less than we really need becaue we assume the
-    # top nybble is 0x7 to avoid sign issues.
-    ompi_numf=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 2 - 1`
-    ompi_fint_max=0x7
-    while test "$ompi_numf" -gt "0"; do
-        ompi_fint_max=${ompi_fint_max}f
-        ompi_numf=`expr $ompi_numf - 1`
-    done
-fi
-
-# Get INT_MAX.  Compute a SWAG if we are cross compiling or something
-# goes wrong.
-rm -f conftest.out > /dev/null 2>&1
-AC_RUN_IFELSE(AC_LANG_PROGRAM([[
+         # Get INT_MAX.  Compute a SWAG if we are cross compiling or something
+         # goes wrong.
+         rm -f conftest.out >/dev/null 2>&1
+         AC_RUN_IFELSE(AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <limits.h>
 ]],[[FILE *fp = fopen("conftest.out", "w");
 long cint = INT_MAX;
 fprintf(fp, "%ld", cint);
-fclose(fp);]]), [ompi_cint_max=`cat conftest.out`], 
-                [ompi_cint_max=0], [ #cross compiling is fun
-# try to compute INT_MAX the same way we computed Fortran INTEGER max.
-ompi_numf=`expr $ac_cv_sizeof_int \* 2 - 1`
-ompi_cint_max=0x7
-while test "$ompi_numf" -gt "0" ; do
-    ompi_cint_max=${ompi_cint_max}f
-    ompi_numf=`expr $ompi_numf - 1`
-done])
+fclose(fp);]]), 
+             [ompi_cint_max=`cat conftest.out`], 
+             [ompi_cint_max=0],
+             [ #cross compiling is fun.  compute INT_MAX same as INTEGER max
+              ompi_numf=`expr $ac_cv_sizeof_int \* 2 - 1`
+              ompi_cint_max=0x7
+              while test "$ompi_numf" -gt "0" ; do
+                  ompi_cint_max=${ompi_cint_max}f
+                  ompi_numf=`expr $ompi_numf - 1`
+              done])
 
-if test "$ompi_cint_max" = "0" ; then
-    # wow - something went really wrong.  Be conservative
-    OMPI_FORTRAN_HANDLE_MAX=32767
-elif test "$ompi_fint_max" = "0" ; then
-    # we aren't compiling Fortran - just set it to C INT_MAX
-    OMPI_FORTRAN_HANDLE_MAX=$ompi_cint_max
-else
-    # take the lesser of C INT_MAX and Fortran INTEGER max.  The
-    # resulting value will then be storable in either type.  There's
-    # no easy way to do this in the shell, so make the preprocessor do
-    # it.
-    OMPI_FORTRAN_HANDLE_MAX="( $ompi_fint_max < $ompi_cint_max ? $ompi_fint_max : $ompi_cint_max )"
-fi
-rm -f conftest.out > /dev/null 2>&1
+         if test "$ompi_cint_max" = "0" ; then
+             # wow - something went really wrong.  Be conservative
+             ompi_cv_f77_fortran_handle_max=32767
+         elif test "$ompi_fint_max" = "0" ; then
+             # we aren't compiling Fortran - just set it to C INT_MAX
+             ompi_cv_f77_fortran_handle_max=$ompi_cint_max
+         else
+             # take the lesser of C INT_MAX and Fortran INTEGER
+             # max.  The resulting value will then be storable in
+             # either type.  There's no easy way to do this in
+             # the shell, so make the preprocessor do it.
+             ompi_cv_f77_fortran_handle_max="( $ompi_fint_max < $ompi_cint_max ? $ompi_fint_max : $ompi_cint_max )"
+          fi
+          rm -f conftest.out > /dev/null 2>&1 ])
 
-AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HANDLE_MAX,
-    $OMPI_FORTRAN_HANDLE_MAX,
-    [Max handle value for fortran MPI handles, effectively min(INT_MAX, max fortran INTEGER value)])
-
-AC_MSG_RESULT([$OMPI_FORTRAN_HANDLE_MAX])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HANDLE_MAX],
+        [$ompi_cv_f77_fortran_handle_max],
+        [Max handle value for fortran MPI handles, effectively min(INT_MAX, max fortran INTEGER value)])
 ])dnl

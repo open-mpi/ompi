@@ -51,21 +51,7 @@ AC_DEFUN([OMPI_INTL_PTHREAD_TRY_LINK_F77], [
 #
 # Make sure that we can run a small application in Fortran, with
 # pthreads living in a C object file
-ompi_ac_thread_fn=
-if test "x$ompi_ac_doubleunder" = xy || test "x$ompi_ac_singleunder" = xy; then
-    ompi_ac_thread_fn=pthreadtest_
-else
-    if test "x$ompi_ac_nounder" = xy; then
-	ompi_ac_thread_fn=pthreadtest
-    else
-	if test "x$ompi_ac_caps" = xy; then
-	    ompi_ac_thread_fn=PTHREADTEST
-	else
-	    AC_MSG_WARN([*** FORTRAN external naming convention undefined])
-	    AC_MSG_ERROR([*** Cannot continue.])
-	fi
-    fi
-fi
+OMPI_F77_MAKE_C_FUNCTION([ompi_ac_thread_fn], [pthreadtest])
 
 # Fortran module
 cat > conftestf.f <<EOF
