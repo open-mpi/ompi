@@ -17,31 +17,15 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_F77_GET_ALIGNMENT(type, shell variable to set)
+# ----------------------------------------------------
 AC_DEFUN([OMPI_F77_GET_ALIGNMENT],[
-# Determine FORTRAN datatype size.
-# First arg is type, 2nd arg is config var to define.
-AC_MSG_CHECKING(alignment of FORTRAN $1)
-ompi_ac_align_fn=
-if test "x$ompi_ac_doubleunder" = xy || test "x$ompi_ac_singleunder" = xy; then
-    ompi_ac_align_fn=align_
-else
-    if test "x$ompi_ac_nounder" = xy; then
-	ompi_ac_align_fn=align
-    else
-	if test "x$ompi_ac_caps" = xy; then
-	    ompi_ac_align_fn=ALIGN
-	else
-	    AC_MSG_WARN([*** FORTRAN external naming convention undefined])
-	    AC_MSG_ERROR([*** Cannot continue.])
-	fi
-    fi
-fi
+    AS_VAR_PUSHDEF([type_var], [ompi_cv_f77_alignment_$1])
 
-#
-# Fortran module
-#
-
-cat > conftestf.f <<EOF
+    AC_CACHE_CHECK([alignment of FORTRAN $1], type_var,
+       [OMPI_F77_MAKE_C_FUNCTION([ompi_ac_align_fn], [align])
+        # Fortran module
+        cat > conftestf.f <<EOF
       program falign
       external ALIGN
       $1  w,x,y,z
@@ -51,16 +35,13 @@ cat > conftestf.f <<EOF
       end
 EOF
 
-#
-# C module
-#
-
-if test -f conftest.h; then
-    ompi_conftest_h="#include \"conftest.h\""
-else
-    ompi_conftest_h=""
-fi
-cat > conftest.c <<EOF
+        # C module
+        if test -f conftest.h; then
+            ompi_conftest_h="#include \"conftest.h\""
+        else
+            ompi_conftest_h=""
+        fi
+        cat > conftest.c <<EOF
 #include <stdio.h>
 #include <stdlib.h>
 $conftest
@@ -89,41 +70,23 @@ void $ompi_ac_align_fn(char *w, char *x, char *y, char *z)
 #endif
 EOF
 
-#
-# Try the compilation and run.  Can't use AC_TRY_RUN because it's two
-# module files.
-#
+        OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
+            [OMPI_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
+                [happy="yes"], [happy="no"])], [happy="no"])
 
-OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
-    OMPI_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
-	OMPI_LOG_COMMAND([./conftest],[HAPPY=1],[HAPPY=0]),
-	[HAPPY=0]),
-    [HAPPY=0])
+        if test "$happy" = "no" ; then
+            AC_MSG_ERROR([Could not determine alignment of $1])
+        fi
 
-if test "$HAPPY" = "1" -a -f conftestval; then
-    ompi_ac_align=`cat conftestval`
-    AC_MSG_RESULT([$ompi_ac_align])
-    if test -n "$2"; then
-	eval "$2=$ompi_ac_align"
-    fi
-else
-    AC_MSG_RESULT([unknown])
+        AS_IF([test "$cross_compiling" = "yes"],
+            [AC_MSG_ERROR([Can not determine alignment of $1 when cross-compiling])],
+            [OMPI_LOG_COMMAND([./conftest],
+                [AS_VAR_SET(type_var, [`cat conftestval`])],
+                [AC_MSG_ERROR([Could not determine alignment of $1])])])
 
-    OMPI_LOG_MSG([here is the C program:], 1)
-    OMPI_LOG_FILE([conftest.c])
-    if test -f conftest.h; then
-	OMPI_LOG_MSG([here is contest.h:], 1)
-	OMPI_LOG_FILE([conftest.h])
-    fi
-    OMPI_LOG_MSG([here is the fortran program:], 1)
-    OMPI_LOG_FILE([conftestf.f])
+        unset happy ompi_conf
+        rm -f conftest*])
 
-    AC_MSG_WARN([*** Problem running configure test!])
-    AC_MSG_WARN([*** See config.log for details.])
-    AC_MSG_ERROR([*** Cannot continue.])
-fi
-str="$2=$ompi_ac_align"
-eval $str
-
-unset ompi_ac_align HAPPY ompi_conftest_h
-/bin/rm -f conftest*])dnl
+    $2=AS_VAR_GET([type_var])
+    AS_VAR_POPDEF([type_var])dnl
+])

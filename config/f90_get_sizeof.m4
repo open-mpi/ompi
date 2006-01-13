@@ -21,21 +21,7 @@ AC_DEFUN([OMPI_F90_GET_SIZEOF],[
 # Determine FORTRAN datatype size.
 # First arg is type, 2nd arg is config var to define.
 AC_MSG_CHECKING([size of FORTRAN $1])
-ompi_ac_size_fn=
-if test "x$ompi_ac_doubleunder" = xy || test "x$ompi_ac_singleunder" = xy; then
-    ompi_ac_size_fn=size_
-else
-    if test "x$ompi_ac_nounder" = xy; then
-	    ompi_ac_size_fn=size
-    else 
-	if test "x$ompi_ac_caps" = xy; then
-	    ompi_ac_size_fn=SIZE
-	else
-	    AC_MSG_WARN([*** FORTRAN external naming convention undefined])
-	    AC_MSG_ERROR([*** Cannot continue.])
-	fi
-    fi
-fi
+OMPI_F77_MAKE_C_FUNCTION([ompi_ac_size_fn], [size])
 
 #
 # Cannot use standard AC_TRY macros because we need two different .o

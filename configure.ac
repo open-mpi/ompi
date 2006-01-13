@@ -457,7 +457,7 @@ OMPI_CONFIG_ASM
 ##################################
 
 OMPI_SETUP_F77
-OMPI_F77_FIND_EXT_SYMBOL_CONVENTION($OMPI_F77)
+OMPI_F77_FIND_EXT_SYMBOL_CONVENTION
 
 # This allows us to mark bogus types, but still have them be a valid
 # [sentinel] value
@@ -468,35 +468,32 @@ AC_DEFINE([ompi_fortran_bogus_type_t], [int],
 # We want to set the #define's for all of these, so invoke the macros
 # regardless of whether we have F77 support or not.
 
-OMPI_F77_CHECK(LOGICAL, LOGICAL, logical, yes, 
-               [char int int32_t], -1)
+OMPI_F77_CHECK([LOGICAL], [yes], [char, int, int32_t], [-1])
+OMPI_F77_CHECK([INTEGER], [yes], 
+               [int32_t, int, int64_r, long long, long], [-1])
+OMPI_F77_CHECK([INTEGER*1], [no], 
+               [char, int8_t, short, int, int64_t, long long, long], [1])
+OMPI_F77_CHECK([INTEGER*2], [no],
+               [short, int16_t, int32_t, int, int64_t, long long, long], [2])
+OMPI_F77_CHECK([INTEGER*4], [no],
+               [int32_t, int, int64_t, long long, long], [4])
+OMPI_F77_CHECK([INTEGER*8], [no],
+               [int, int64_t, long long, long], [8])
+OMPI_F77_CHECK([INTEGER*16], [no],
+               [int, int64_t, long long, long], [16])
 
-OMPI_F77_CHECK(INTEGER, INTEGER, integer, yes,
-               [int32_t int int64_r long:long long], -1)
-OMPI_F77_CHECK(INTEGER*1, INTEGER1, integer1, no, 
-               [char int8_t short int int64_t long:long long], 1)
-OMPI_F77_CHECK(INTEGER*2, INTEGER2, integer2, no,
-               [short int16_t int32_t int int64_t long:long long], 2)
-OMPI_F77_CHECK(INTEGER*4, INTEGER4, integer4, no,
-               [int32_t int int64_t long:long long], 4)
-OMPI_F77_CHECK(INTEGER*8, INTEGER8, integer8, no,
-               [int int64_t long:long long], 8)
-OMPI_F77_CHECK(INTEGER*16, INTEGER16, integer16, no,
-               [int int64_t long:long long], 16)
+OMPI_F77_CHECK([REAL], [yes],
+               [float, double, long double], [-1])
+OMPI_F77_CHECK([REAL*4], [no],
+               [float, double, long double], [4])
+OMPI_F77_CHECK([REAL*8], [no],
+               [float, double, long double], [8])
+OMPI_F77_CHECK([REAL*16], [no],
+               [float, double, long double], [16])
+OMPI_F77_CHECK([DOUBLE PRECISION], [yes],
+               [float, double, long double], [-1])
 
-OMPI_F77_CHECK(REAL, REAL, real, yes, 
-               [float double long:double], -1)
-OMPI_F77_CHECK(REAL*4, REAL4, real4, no,
-               [float double long:double], 4)
-OMPI_F77_CHECK(REAL*8, REAL8, real8, no,
-               [float double long:double], 8)
-OMPI_F77_CHECK(REAL*16, REAL16, real16, no,
-               [float double long:double], 16)
-
-OMPI_F77_CHECK(DOUBLE PRECISION, DOUBLE_PRECISION, double_precision, yes,
-               [float double long:double], -1)
-
-OMPI_F77_CHECK(COMPLEX, COMPLEX, [], yes, [], -1)
+OMPI_F77_CHECK([COMPLEX], [yes], [], [-1])
 
 # The complex*N tests are a bit different (note: the complex tests are
 # the same as all the rest, because complex is a composite of two
@@ -509,9 +506,9 @@ OMPI_F77_CHECK(COMPLEX, COMPLEX, [], yes, [], -1)
 #    have a back-end C type for it)
 # b) compiler supports complex*N
 
-OMPI_F77_CHECK(COMPLEX*8, COMPLEX8, [], no, [], 8)
-OMPI_F77_CHECK(COMPLEX*16, COMPLEX16, [], no, [], 16)
-OMPI_F77_CHECK(COMPLEX*32, COMPLEX32, [], no, [], 32)
+OMPI_F77_CHECK([COMPLEX*8], [no], [], [8])
+OMPI_F77_CHECK([COMPLEX*16], [no], [], [16])
+OMPI_F77_CHECK([COMPLEX*32], [no], [], [32])
 
 # Regardless of whether we have fortran bindings, or even a fortran
 # compiler, get the max value for a fortran MPI handle (this macro
