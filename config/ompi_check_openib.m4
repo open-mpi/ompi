@@ -119,6 +119,13 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                             [$ompi_check_openib_have_srq],
 		            [Whether install of OpenIB includes shared receive queue support])
 
+         AC_CHECK_FUNCS([ibv_get_device_list],
+                        [ompi_check_openib_have_device_list=1],
+                        [ompi_check_openib_have_device_list=0])
+         AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_DEVICE_LIST],
+                        [$ompi_check_openib_have_device_list],
+                        [Whether install of OpenIB includes ibv_get_device_list API])
+
          CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
          LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
          LIBS="$ompi_check_openib_$1_save_LIBS"],
