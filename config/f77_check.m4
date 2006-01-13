@@ -43,7 +43,7 @@ AC_DEFUN([OMPI_F77_CHECK], [
     if test "$OMPI_WANT_F77_BINDINGS" = "1"; then
         OMPI_F77_CHECK_TYPE([$1], [ofc_have_type=1], [ofc_have_type=0])
     else
-        AC_MSG_CHECKING([if FORTRAN compiler supports $1])
+        AC_MSG_CHECKING([if Fortran compiler supports $1])
         AC_MSG_RESULT([skipped])
     fi
 
@@ -70,12 +70,11 @@ AC_DEFUN([OMPI_F77_CHECK], [
         else
             # Look for a corresponding C type (will abort by itself if the
             # type isn't found and we need it)
-            if test "$3" != ""; then
-                OMPI_FIND_TYPE([$1], [$3], [$2], [$ofc_type_size], [ofc_c_type])
-                if test -z "$ofc_c_type"; then
-                    ofc_have_type=
-                fi
-            fi
+            ofc_c_type=
+            m4_ifval([$3], [OMPI_FIND_TYPE([$1], [$3], [$2], [$ofc_type_size], [ofc_c_type])
+            if test -z "$ofc_c_type" ; then
+                ofc_have_type=0
+            fi])
 
             # Get the alignment of the type
             if test "$ofc_have_type" = "1"; then

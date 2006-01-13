@@ -20,7 +20,7 @@ dnl
 AC_DEFUN([OMPI_F77_PURGE_UNSUPPORTED_KIND],[
 # Purge F77 types (such as INTEGER*16) that don't match exptected datatype size.
 # First arg is type, 2nd arg is config var to define.
-AC_MSG_CHECKING([whether FORTRAN $1 has expected size])
+AC_MSG_CHECKING([whether Fortran $1 has expected size])
 
   val=`echo $1 | cut -f2 -d'*'` 
   type=`echo $1 | cut -f1 -d'*'`
