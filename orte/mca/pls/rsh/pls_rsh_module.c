@@ -889,10 +889,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 rsh_daemon_info_t *daemon_info;
 
                 OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-                while (mca_pls_rsh_component.num_children++ >=
+                if (mca_pls_rsh_component.num_children++ >=
                     mca_pls_rsh_component.num_concurrent) {
-                    opal_condition_wait(&mca_pls_rsh_component.cond,
-                                        &mca_pls_rsh_component.lock);
+                    opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
                 }
                 OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
