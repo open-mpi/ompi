@@ -51,12 +51,9 @@ int orte_gpr_proxy_begin_compound_cmd(void)
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
 
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
-        orte_gpr_proxy_globals.compound_cmd_waiting++;
-        while (orte_gpr_proxy_globals.compound_cmd_mode) {
-            opal_condition_wait(&orte_gpr_proxy_globals.compound_cmd_condition,
-                                &orte_gpr_proxy_globals.wait_for_compound_mutex);
-        }
-        orte_gpr_proxy_globals.compound_cmd_waiting--;
+	   orte_gpr_proxy_globals.compound_cmd_waiting++;
+	   opal_condition_wait(&orte_gpr_proxy_globals.compound_cmd_condition, &orte_gpr_proxy_globals.wait_for_compound_mutex);
+	   orte_gpr_proxy_globals.compound_cmd_waiting--;
     }
 
     orte_gpr_proxy_globals.compound_cmd_mode = true;
