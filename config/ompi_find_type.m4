@@ -46,7 +46,11 @@ AC_DEFUN([OMPI_FIND_TYPE],[
            AS_IF([test "$oft_abort_on_fail" != "no"],
                  [AC_MSG_ERROR([Cannot continue])])])
 
-    $5=AS_VAR_GET(type_var)
+    if test "AS_VAR_GET(type_var)" = "not found" ; then
+        $5=
+    else
+        $5=AS_VAR_GET(type_var)
+    fi
 
     unset oft_real_type oft_target_size
 

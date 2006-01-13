@@ -22,7 +22,7 @@ dnl
 AC_DEFUN([OMPI_F77_GET_ALIGNMENT],[
     AS_VAR_PUSHDEF([type_var], [ompi_cv_f77_alignment_$1])
 
-    AC_CACHE_CHECK([alignment of FORTRAN $1], type_var,
+    AC_CACHE_CHECK([alignment of Fortran $1], type_var,
        [OMPI_F77_MAKE_C_FUNCTION([ompi_ac_align_fn], [align])
         # Fortran module
         cat > conftestf.f <<EOF
