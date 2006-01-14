@@ -650,7 +650,9 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 MCA_BTL_TCP_FRAG_RETURN_MAX(frag);
             }
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+#if MCA_BTL_TCP_ENDPOINT_CACHE
             assert( 0 == btl_endpoint->endpoint_cache_length );
+#endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
             break;
         }
     case MCA_BTL_TCP_SHUTDOWN:
