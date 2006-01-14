@@ -66,9 +66,9 @@ EOF
         ompi_fortran_caps=1
     elif test "$ompi_cv_f77_external_symbol" = "no underscore" ; then
         ompi_fortran_plain=1
-    elif test "$ompi_cv_f77_external_sumbol" = "upper case" ; then
+    elif test "$ompi_cv_f77_external_symbol" = "upper case" ; then
         ompi_fortran_caps=1
-    else
+    elif test "$ompi_cv_f77_external_symbol" != "skipped" ; then
         AC_MSG_ERROR([unknown naming convention: $ompi_cv_f77_external_symbol])
     fi
 
@@ -106,7 +106,7 @@ AC_DEFUN([OMPI_F77_MAKE_C_FUNCTION], [
         $1[=]$2
     elif test "$ompi_cv_f77_external_symbol" = "no underscore" ; then
         $1[=]m4_translit([$2], [A-Z], [a-z])
-    elif test "$ompi_cv_f77_external_sumbol" = "upper case" ; then
+    elif test "$ompi_cv_f77_external_symbol" = "upper case" ; then
         $1[=]m4_translit([$2], [a-z], [A-Z])
     else
         AC_MSG_ERROR([unknown naming convention: $ompi_cv_f77_external_symbol])
