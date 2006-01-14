@@ -119,29 +119,36 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 {
     int cnt;
-    size_t i, num_vecs = frag->iov_cnt;
+    size_t i, num_vecs;
     mca_btl_base_endpoint_t* btl_endpoint = frag->endpoint;
 
  repeat:
-
+    num_vecs = frag->iov_cnt;
 #if MCA_BTL_TCP_ENDPOINT_CACHE
     if( 0 != btl_endpoint->endpoint_cache_length ) {
         size_t length = btl_endpoint->endpoint_cache_length;
+        /* It's strange at the first look but cnt have to be set to the full amount of data available.
+         * After going to advance_iov_position we will use cnt to detect if there is still some
+         * data pending.
+         */
         cnt = btl_endpoint->endpoint_cache_length;
         for( i = 0; i < frag->iov_cnt; i++ ) {
             if( length > frag->iov_ptr[i].iov_len )
                 length = frag->iov_ptr[0].iov_len;
-            memcpy( frag->iov_ptr[i].iov_base,
-                    btl_endpoint->endpoint_cache + btl_endpoint->endpoint_cache_pos,
-                    length );
+            memcpy( frag->iov_ptr[i].iov_base, btl_endpoint->endpoint_cache_pos, length );
             btl_endpoint->endpoint_cache_pos += length;
             btl_endpoint->endpoint_cache_length -= length;
             length = btl_endpoint->endpoint_cache_length;
-            if( 0 == length ) break;
+            if( 0 == length ) {
+		btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
+	        break;
+	    }
         }
         goto advance_iov_position;
     }
-
+    /* What's happens if all iovecs are used by the fragment ? It still work, as we reserve one
+     * iovec for the caching in the fragment structure (the +1).
+     */
     frag->iov_ptr[num_vecs].iov_base = btl_endpoint->endpoint_cache;
     frag->iov_ptr[num_vecs].iov_len  = mca_btl_tcp_component.tcp_endpoint_cache;
     num_vecs++;
@@ -162,15 +169,13 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                              frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
                              strerror(ompi_socket_errno), frag->iov_cnt );
             default:
-                {
-                    opal_output(0, "mca_btl_tcp_frag_send: writev failed with errno=%d", 
-                                ompi_socket_errno);
-                    mca_btl_tcp_endpoint_close(btl_endpoint);
-                    return false;
-                }
+                opal_output(0, "mca_btl_tcp_frag_send: writev failed with errno=%d",
+                            ompi_socket_errno);
+                mca_btl_tcp_endpoint_close(btl_endpoint);
+                return false;
             }
         }
-        if(cnt == 0) {
+        if( cnt == 0 ) {
             mca_btl_tcp_endpoint_close(btl_endpoint);
             return false;
         }
@@ -180,8 +185,8 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
  advance_iov_position:
     /* if the write didn't complete - update the iovec state */
     num_vecs = frag->iov_cnt;
-    for(i=0; i<num_vecs; i++) {
-        if(cnt >= (int)frag->iov_ptr->iov_len) {
+    for( i = 0; i < num_vecs; i++ ) {
+        if( cnt >= (int)frag->iov_ptr->iov_len ) {
             cnt -= frag->iov_ptr->iov_len;
             frag->iov_idx++;
             frag->iov_ptr++;
@@ -190,7 +195,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             frag->iov_ptr->iov_base = (ompi_iov_base_ptr_t)
                 (((unsigned char*)frag->iov_ptr->iov_base) + cnt);
             frag->iov_ptr->iov_len -= cnt;
-	    cnt = 0;
+            cnt = 0;
             break;
         }
     }
