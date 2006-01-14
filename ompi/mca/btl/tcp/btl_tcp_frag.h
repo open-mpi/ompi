@@ -49,7 +49,7 @@ struct mca_btl_tcp_frag_t {
     struct mca_btl_base_endpoint_t *endpoint; 
     struct mca_btl_tcp_module_t* btl;
     mca_btl_tcp_hdr_t hdr;
-    struct iovec iov[MCA_BTL_TCP_FRAG_IOVEC_NUMBER];
+    struct iovec iov[MCA_BTL_TCP_FRAG_IOVEC_NUMBER + 1];
     struct iovec *iov_ptr;
     size_t iov_cnt;
     size_t iov_idx;
