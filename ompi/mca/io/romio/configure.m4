@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -58,7 +58,13 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                    AS_IF([test -n "$prefix" -a "$prefix" != "NONE"], 
                          [io_romio_prefix_arg="--prefix=$prefix"], 
                          [io_romio_prefix_arg=])
-                   io_romio_flags="CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi"
+
+                   io_romio_flags=
+                   AS_IF([test "$cross_compiling" = "yes"],
+                       [AS_IF([test ! -z $build], [io_romio_flags="$io_romio_flags --build=$build"])
+                        AS_IF([test ! -z $host], [io_romio_flags="$io_romio_flags --host=$host"])
+                        AS_IF([test ! -z $target], [io_romio_flags="$io_romio_flags --target=$target"])])
+                   io_romio_flags="$io_romio_flags CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi"
 
                    ompi_show_subtitle "Configuring ROMIO distribution"
                    OMPI_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 

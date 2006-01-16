@@ -1,5 +1,5 @@
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -62,7 +62,18 @@ void *checkpid(void *arg) {
      pthread_exit((void *) ret);
 }], 
 [MSG=no OMPI_THREADS_HAVE_DIFFERENT_PIDS=0], 
-[MSG=yes OMPI_THREADS_HAVE_DIFFERENT_PIDS=1])
+[MSG=yes OMPI_THREADS_HAVE_DIFFERENT_PIDS=1],
+[case $host in
+     *-linux*)
+         MSG="cross compiling - assuming yes"
+         OMPI_THREADS_HAVE_DIFFERENT_PIDS=1
+         ;;
+     *)
+         MSG="cross compiling - assuming no"
+         OMPI_THREADS_HAVE_DIFFERENT_PIDS=0
+         ;;
+ esac
+])
 
 CPPFLAGS="$CPPFLAGS_save"
 LDFLAGS="$LDFLAGS_save"
