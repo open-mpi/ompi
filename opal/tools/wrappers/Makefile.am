@@ -29,7 +29,6 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = opal_wrapper
 
 opal_wrapper_SOURCES = \
-	opal_wrapper.h \
 	opal_wrapper.c
 
 opal_wrapper_LDADD = $(top_builddir)/opal/libopal.la
