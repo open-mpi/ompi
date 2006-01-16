@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -105,6 +105,8 @@ int mca_btl_udapl_component_open(void)
 {  
     int param, value;
 
+    opal_output(0, "udapl_component_open\n");
+
     /* initialize state */
     mca_btl_udapl_component.udapl_num_btls=0;
     mca_btl_udapl_component.udapl_btls=NULL;
@@ -121,11 +123,13 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_component.udapl_free_list_inc =
         mca_btl_udapl_param_register_int ("free_list_inc", 8);
     mca_btl_udapl_component.udapl_debug = 
-        mca_btl_udapl_param_register_int("debug", 0); 
+        mca_btl_udapl_param_register_int("debug", 1); 
     mca_btl_udapl_component.udapl_mpool_name = 
         mca_btl_udapl_param_register_string("mpool", "udapl"); 
     mca_btl_udapl_component.udapl_max_btls = 
-        mca_btl_udapl_param_register_int("max_modules", 4); 
+        mca_btl_udapl_param_register_int("max_modules", 4);
+    mca_btl_udapl_component.udapl_evd_qlen =
+        mca_btl_udapl_param_register_int("evd_qlen", 8);
     mca_btl_udapl_component.udapl_num_high_priority = 
         mca_btl_udapl_param_register_int("num_high_priority", 8); 
     mca_btl_udapl_component.udapl_num_repost = 
@@ -184,7 +188,36 @@ int mca_btl_udapl_component_open(void)
 
 int mca_btl_udapl_component_close(void)
 {
+    opal_output(0, "udapl_component_close\n");
+
+    /* TODO - clean up each btl module */
     return OMPI_SUCCESS;
+}
+
+
+/**
+  * Report a uDAPL error - for debugging
+  */
+
+static void
+mca_btl_udapl_error(DAT_RETURN ret, char* str)
+{
+	char* major;
+	char* minor;
+
+    /* don't output anything if debug is not set */
+    if(0 == mca_btl_udapl_component.udapl_debug) {
+        return;
+    }
+
+	if(DAT_SUCCESS != dat_strerror(ret,
+			(const char**)&major, (const char**)&minor))
+	{
+		printf("dat_strerror failed! ret is %d\n", ret);
+		exit(-1);
+	}
+
+	opal_output(0, "ERROR: %s %s %s\n", str, major, minor);
 }
 
 
@@ -192,14 +225,36 @@ int mca_btl_udapl_component_close(void)
  * Initialize module instance
  */
 
-#if 0
 static int
-mca_btl_udapl_module_init (mca_btl_udapl_module_t * btl)
+mca_btl_udapl_module_init (DAT_NAME_PTR ia_name,
+                        mca_btl_udapl_module_t * btl)
 {
-    /*mca_mpool_base_resources_t resources;*/
-    /*int32_t num_high_priority;
-    int32_t i;
-    int rc;*/
+    DAT_RETURN rc;
+
+    /* open the uDAPL interface */
+    rc = dat_ia_open(ia_name, mca_btl_udapl_component.udapl_evd_qlen,
+            &btl->udapl_evd_dflt, &btl->udapl_ia);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_ia_open");
+        return OMPI_ERROR;
+    }
+
+    /* set up evd's */
+    rc = dat_evd_create(btl->udapl_ia,
+            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
+            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_evd_create (dto)");
+        return OMPI_ERROR;
+    }
+
+    rc = dat_evd_create(btl->udapl_ia,
+            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
+            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_conn);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_evd_create (conn)");
+        return OMPI_ERROR;
+    }
 
     /* initialize objects */
     OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
@@ -209,20 +264,9 @@ mca_btl_udapl_module_init (mca_btl_udapl_module_t * btl)
     OBJ_CONSTRUCT(&btl->udapl_repost, opal_list_t);
     OBJ_CONSTRUCT(&btl->udapl_mru_reg, opal_list_t);
     OBJ_CONSTRUCT(&btl->udapl_lock, opal_mutex_t);
-                                                                                                  
-    /* query nic tokens */
-
-    /* initialize memory pool */
-
-    /* initialize free lists */
-
-    /* post receive buffers */
-
-    /* enable rdma */
     
     return OMPI_SUCCESS;
 }
-#endif
 
 /*
  *  Register uDAPL component addressing information. The MCA framework
@@ -236,6 +280,8 @@ mca_btl_udapl_modex_send(void)
     size_t      i;
     size_t      size;
     mca_btl_udapl_addr_t *addrs = NULL;
+
+    opal_output(0, "udapl_modex_send\n");
 
     size = mca_btl_udapl_component.udapl_num_btls * sizeof (mca_btl_udapl_addr_t);
     if (0 != size) {
@@ -256,7 +302,6 @@ mca_btl_udapl_modex_send(void)
     return rc;
 }
                                                                                                                 
-
 /*
  * Initialize the uDAPL component,
  * check how many interfaces are available and create a btl module for each.
@@ -269,17 +314,61 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 {
     DAT_PROVIDER_INFO* datinfo;
     mca_btl_base_module_t **btls;
-    *num_btl_modules = 0;
+    mca_btl_udapl_module_t *btl;
+    size_t i;
+
+    opal_output(0, "udapl_component_init\n");
 
     /* enumerate uDAPL interfaces */
     datinfo = malloc(mca_btl_udapl_component.udapl_max_btls * sizeof(DAT_PROVIDER_INFO));
+    if(NULL == datinfo) {
+        return NULL;
+    }
     if(DAT_SUCCESS != dat_registry_list_providers(mca_btl_udapl_component.udapl_max_btls,
             (DAT_COUNT*)&mca_btl_udapl_component.udapl_num_btls, &datinfo)) {
         free(datinfo);
         return NULL;
     }
- 
+
+    /* Make sure we have some interfaces */
+    if(0 == mca_btl_udapl_component.udapl_num_btls) {
+        mca_btl_base_error_no_nics("uDAPL", "NIC");
+        free(datinfo);
+        return NULL;
+    }
+
     /* create a BTL module for each interface */
+    mca_btl_udapl_component.udapl_btls =
+            malloc(mca_btl_udapl_component.udapl_num_btls *
+            sizeof(mca_btl_udapl_module_t *));
+    if(NULL == mca_btl_udapl_component.udapl_btls) {
+        free(datinfo);
+        return NULL;
+    }
+
+    for(i = 0; i < mca_btl_udapl_component.udapl_num_btls; i++) {
+        opal_output(0, "udapl creating btl for %s\n", datinfo[i].ia_name);
+
+        btl = malloc(sizeof(mca_btl_udapl_module_t));
+        if(NULL == btl) {
+            free(datinfo);
+            free(mca_btl_udapl_component.udapl_btls);
+            return NULL;
+        }
+
+        /* copy default values into the new BTL */
+        memcpy(btl, &mca_btl_udapl_module, sizeof(mca_btl_udapl_module_t));
+
+        if(OMPI_SUCCESS != mca_btl_udapl_module_init(datinfo[i].ia_name, btl)) {
+            opal_output(0, "udapl module init for %s failed\n",
+                    datinfo[i].ia_name);
+            /*TODO - how do i correctly handle an error here? */
+            free(btl);
+        }
+
+        /* successful btl creation */
+        mca_btl_udapl_component.udapl_btls[i] = btl;
+    }
 
     /* finished with datinfo */
     free(datinfo);
@@ -304,7 +393,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
                                                                                                                 
 
 /*
- *  GM component progress.
+ *  uDAPL component progress.
  */
 
 
@@ -313,6 +402,8 @@ int mca_btl_udapl_component_progress()
     static int32_t inprogress = 0;
     int count = 0;
     size_t i;
+
+    opal_output(0, "udapl_component_progress\n");
     
     /* could get into deadlock in this case as we post recvs after callback completes */
     if(OPAL_THREAD_ADD32(&inprogress, 1) > 1) {

@@ -49,7 +49,7 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
            OMPI_CHECK_PACKAGE([$1],
 	          [dat/udat.h],
                   [dapl],
-                  [dat_ia_open],
+                  [dat_registry_list_providers],
                   [-ldat],
                   [$ompi_check_udapl_dir],
                   [$ompi_check_udapl_libdir],

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,9 +52,9 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         mca_btl_udapl_alloc, 
         mca_btl_udapl_free, 
         mca_btl_udapl_prepare_src,
-        mca_btl_udapl_prepare_dst,
+        NULL, /* prepare_dst */
         mca_btl_udapl_send,
-        mca_btl_udapl_put,
+        NULL, /* put */
         NULL /* get */ 
     }
 };
@@ -73,6 +73,8 @@ int mca_btl_udapl_add_procs(
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
     int i, rc;
+
+	opal_output(0, "udapl_add_procs\n");
 
     for(i = 0; i < (int) nprocs; i++) {
 
@@ -124,6 +126,7 @@ int mca_btl_udapl_del_procs(struct mca_btl_base_module_t* btl,
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
 {
+    opal_output(0, "udapl_del_procs\n");
     /* TODO */
     return OMPI_SUCCESS;
 }
@@ -142,6 +145,8 @@ int mca_btl_udapl_register(
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
     udapl_btl->udapl_reg[tag].cbfunc = cbfunc; 
     udapl_btl->udapl_reg[tag].cbdata = cbdata; 
+
+    opal_output(0, "udapl_register\n");
     return OMPI_SUCCESS;
 }
 
@@ -160,6 +165,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
     mca_btl_udapl_frag_t* frag;
     int rc;
+
+    opal_output(0, "udapl_alloc\n");
     
     if(size <= btl->btl_eager_limit) { 
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag, rc); 
@@ -190,7 +197,10 @@ int mca_btl_udapl_free(
     struct mca_btl_base_module_t* btl, 
     mca_btl_base_descriptor_t* des) 
 {
-    mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des; 
+    mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
+
+    opal_output(0, "udapl_free\n");
+
     if(frag->size == 0) {
         btl->btl_mpool->mpool_release(btl->btl_mpool, frag->registration);
         MCA_BTL_UDAPL_FRAG_RETURN_USER(btl, frag); 
@@ -227,6 +237,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     size_t max_data = *size;
     int32_t free_after;
     int rc;
+
+    opal_output(0, "udapl_prepare_src\n");
 
     /*
      * If the data has already been pinned and is contigous than we can
@@ -378,6 +390,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     long lb;
     int rc;
 
+    opal_output(0, "udapl_prepare_dst\n");
+
     MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc);
     if(NULL == frag) {
         return NULL;
@@ -437,6 +451,7 @@ int mca_btl_udapl_send(
     mca_btl_base_tag_t tag)
    
 {
+    opal_output(0, "udapl_send\n");
     return OMPI_ERR_NOT_IMPLEMENTED; 
 }
 
@@ -455,6 +470,7 @@ int mca_btl_udapl_put(
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* des)
 {
+    opal_output(0, "udapl_put\n");
     return OMPI_ERR_NOT_IMPLEMENTED; 
 }
 
@@ -474,6 +490,7 @@ int mca_btl_udapl_get(
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* des)
 {
+    opal_output(0, "udapl_get\n");
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
@@ -486,6 +503,7 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
 
+    opal_output(0, "udapl_finalize\n");
     OBJ_DESTRUCT(&udapl_btl->udapl_lock);
     OBJ_DESTRUCT(&udapl_btl->udapl_frag_eager);
     OBJ_DESTRUCT(&udapl_btl->udapl_frag_max);

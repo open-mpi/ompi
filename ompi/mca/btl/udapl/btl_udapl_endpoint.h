@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -34,15 +34,7 @@ extern "C" {
  * Structure used to publish uDAPL id information to peers.
  */
 struct mca_btl_udapl_addr_t {
-#if 0
-#if GM_API_VERSION > 0x200
-    unsigned int global_id;
-#else
-    char global_id[GM_MAX_HOST_NAME_LEN];
-#endif  /* GM_API_VERSION > 0x200 */
-#endif
-    unsigned int node_id;
-    unsigned int port_id;
+    int foo;    /* placeholder to prevent division by 0 */
 };
 typedef struct mca_btl_udapl_addr_t mca_btl_udapl_addr_t;
                                                                                                                 

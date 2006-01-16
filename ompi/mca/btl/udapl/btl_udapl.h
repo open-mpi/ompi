@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -43,10 +42,6 @@
 extern "C" {
 #endif
 
-/*
-#define GM_BUFFER_SIZE   7
-#define GM_BUFFER_LENGTH gm_max_length_for_size(GM_BUFFER_SIZE)
-*/
 
 /**
  * uDAPL BTL component.
@@ -59,6 +54,7 @@ struct mca_btl_udapl_component_t {
     size_t  udapl_max_btls; /**< maximum number of supported hcas */
     struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
     size_t  udapl_num_mru;
+    size_t  udapl_evd_qlen;
     size_t  udapl_eager_frag_size;
     size_t  udapl_max_frag_size;
     char*   udapl_port_name; 
@@ -86,10 +82,15 @@ extern mca_btl_udapl_component_t mca_btl_udapl_component;
 struct mca_btl_udapl_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
     mca_btl_base_recv_reg_t udapl_reg[256]; 
-
-    /* local port handle/address */
-    /* struct gm_port *port; */
     mca_btl_udapl_addr_t udapl_addr;
+
+    /* interface handle */
+    DAT_IA_HANDLE udapl_ia;
+
+    /* event dispatchers - default, data transfer, connection negotiation */
+    DAT_EVD_HANDLE udapl_evd_dflt;
+    DAT_EVD_HANDLE udapl_evd_dto;
+    DAT_EVD_HANDLE udapl_evd_conn;
 
     /* free list of fragment descriptors */
     ompi_free_list_t udapl_frag_eager;
