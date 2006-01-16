@@ -698,54 +698,17 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
             AC_MSG_ERROR([cannot continue])
         fi
 
-        # If we're not compiling statically, then only take the
-        # "ALWAYS" tags (a uniq will be performed at the end -- no
-        # need to worry about duplicate flags here)
-        for flags in LDFLAGS LIBS; do
-            var_in="LIBMPI_ALWAYS_EXTRA_${flags}"
-            var_out="LIBMPI_EXTRA_${flags}"
-            line="`grep $var_in= $infile | cut -d= -f2-`"
-            eval "line=$line"
-            if test -n "$line"; then
-                str="$var_out="'"$'"$var_out $var_in $line"'"'
-                eval $str
-            fi
-        done
-
-        for flags in CFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS LIBS; do
-            var_in="WRAPPER_ALWAYS_EXTRA_${flags}"
-            var_out="WRAPPER_EXTRA_${flags}"
-            line="`grep $var_in= $infile | cut -d= -f2-`"
-            eval "line=$line"
-            if test -n "$line"; then
-                str="$var_out="'"$'"$var_out $var_in $line"'"'
-                eval $str
-            fi
-        done
-
         # Check for flags passed up from the component.  If we're
         # compiling statically, then take all flags passed up from the
         # component.
         if test "$8" = "static"; then
-            for flags in LDFLAGS LIBS; do
-                var="LIBMPI_EXTRA_${flags}"
-                line="`grep $var= $infile | cut -d= -f2-`"
+            m4_foreach(flags, [LDFLAGS, LIBS],
+               [[line="`grep WRAPPER_EXTRA_]flags[= $infile | cut -d= -f2-`"]
                 eval "line=$line"
                 if test -n "$line"; then
-                    str="$var="'"$'"$var $line"'"'
-                    eval $str
+                    $1[_WRAPPER_EXTRA_]flags[="$]$1[_WRAPPER_EXTRA_]flags[ $line"]
                 fi
-            done
-
-            for flags in CFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS LIBS; do
-                var="WRAPPER_EXTRA_${flags}"
-                line="`grep $var= $infile | cut -d= -f2-`"
-                eval "line=$line"
-                if test -n "$line"; then
-                    str="$var="'"$'"$var $line"'"'
-                    eval $str
-                fi
-            done
+            ])dnl
         fi
 
         dnl check for direct call header to include.  This will be
@@ -771,58 +734,21 @@ AC_MSG_ERROR([*** ${framework} component ${component} was supposed to be direct-
         fi
     fi
 
-    #
     # now add the flags that were set in the environment variables
     # framework_component_FOO (for example, the flags set by
     # m4_configure components)
     #
-
-    # If we're not compiling statically, then only take the
-    # "ALWAYS" tags (a uniq will be performed at the end -- no
-    # need to worry about duplicate flags here)
-    for flags in LDFLAGS LIBS; do
-        str="line=\$${framework}_${component}_LIBMPI_ALWAYS_EXTRA_${flags}"
-        eval "$str"
-        var_out="LIBMPI_EXTRA_${flags}"
-        if test -n "$line"; then
-            str="$var_out="'"$'"$var_out $line"'"'
-            eval $str
-        fi
-    done
-
-    for flags in CFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS LIBS; do
-        str="line=\$${framework}_${component}_WRAPPER_ALWAYS_EXTRA_${flags}"
-        eval "$str"
-        var_out="WRAPPER_EXTRA_${flags}"
-        if test -n "$line"; then
-            str="$var_out="'"$'"$var_out $line"'"'
-            eval $str
-        fi
-    done
-
     # Check for flags passed up from the component.  If we're
     # compiling statically, then take all flags passed up from the
     # component.
     if test "$8" = "static"; then
-        for flags in LDFLAGS LIBS; do
-            str="line=\$${framework}_${component}_LIBMPI_EXTRA_${flags}"
-            eval "$str"
-            var_out="LIBMPI_EXTRA_${flags}"
-            if test -n "$line"; then
-                str="$var_out="'"$'"$var_out $line"'"'
-                eval $str
-            fi
-        done
-
-        for flags in CFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS LIBS; do
-            str="line=\$${framework}_${component}_WRAPPER_EXTRA_${flags}"
-            eval "$str"
-            var_out="WRAPPER_EXTRA_${flags}"
-            if test -n "$line"; then
-                str="$var_out="'"$'"$var_out $line"'"'
-                eval $str
-            fi
-        done
+        m4_foreach(flags, [LDFLAGS, LIBS],
+            [[str="line=\$${framework}_${component}_WRAPPER_EXTRA_]flags["]
+             eval "$str"
+             if test -n "$line" ; then
+                 $1[_WRAPPER_EXTRA_]flags[="$]$1[_WRAPPER_EXTRA_]flags[ $line"]
+             fi
+             ])dnl
     fi
 ])
 

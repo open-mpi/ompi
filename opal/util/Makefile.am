@@ -37,6 +37,7 @@ headers = \
         error.h \
         few.h \
         if.h \
+	keyval_parse.h \
         malloc.h \
         numtostr.h \
         opal_environ.h \
@@ -64,6 +65,7 @@ libopalutil_la_SOURCES = \
         error.c \
         few.c \
         if.c \
+	keyval_parse.c \
         malloc.c \
         numtostr.c \
         opal_environ.c \
@@ -79,6 +81,10 @@ libopalutil_la_SOURCES = \
         stacktrace.c \
         strncpy.c \
         trace.c
+libopalutil_la_LIBADD = \
+	keyval/libopalutilkeyval.la
+libopalutil_la_DEPENDENCIES = \
+	keyval/libopalutilkeyval.la
 
 # Conditionally install the header files
 

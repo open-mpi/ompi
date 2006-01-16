@@ -33,6 +33,7 @@
 #include "opal/include/constants.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
+#include "opal/util/keyval_parse.h"
 
 static const char *
 opal_err2str(int errnum)
@@ -114,15 +115,8 @@ opal_err2str(int errnum)
 }
 
 
-/**
- * Initialize the OPAL utilities
- *
- * @retval OPAL_SUCCESS Upon success.
- * @retval OPAL_ERROR Upon failure.
- *
- * This function performs
- */
-int opal_init(void)
+int
+opal_init_util(void)
 {
     int ret;
     char *error = NULL;
@@ -143,15 +137,54 @@ int opal_init(void)
         goto return_error;
     }
 
-    /* initialize the mca */
-    if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        error = "mca_base_open";
+    /* keyval lex-based parser */
+    if (OPAL_SUCCESS != (ret = opal_util_keyval_parse_init())) {
+        error = "opal_util_keyval_parse_init";
+        goto return_error;
+    }
+
+    /* Setup the parameter system */
+    if (OPAL_SUCCESS != (ret = mca_base_param_init())) {
+        error = "mca_base_param_init";
         goto return_error;
     }
 
     /* register params for opal */
     if (OPAL_SUCCESS !=  opal_register_params()) {
         error = "opal_register_params";
+        goto return_error;
+    }
+
+    /* pretty-print stack handlers */
+    if (OPAL_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
+        error = "util_register_stackhandlers() failed";
+        goto return_error;
+    }
+
+    return OPAL_SUCCESS;
+
+ return_error:
+    opal_show_help( "help-opal-runtime",
+                    "opal_init:startup:internal-failure", true,
+                    error, ret );
+    return ret;
+}
+
+
+int
+opal_init(void)
+{
+    int ret;
+    char *error = NULL;
+
+    /* initialize util code */
+    if (OPAL_SUCCESS != (ret = opal_init_util())) {
+        return ret;
+    }
+
+    /* initialize the mca */
+    if (OPAL_SUCCESS != (ret = mca_base_open())) {
+        error = "mca_base_open";
         goto return_error;
     }
 
@@ -176,12 +209,6 @@ int opal_init(void)
 
     if (OPAL_SUCCESS != (ret = opal_timer_base_open())) {
         error = "opal_timer_base_open";
-        goto return_error;
-    }
-
-    /* pretty-print stack handlers */
-    if (OMPI_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
-        error = "util_register_stackhandlers() failed";
         goto return_error;
     }
 

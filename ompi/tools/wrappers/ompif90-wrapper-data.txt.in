@@ -1,0 +1,13 @@
+project=Open MPI
+project_short=OMPI
+version=@OMPI_VERSION@
+language=Fortran 90
+compiler_env=FC
+compiler_flags_env=FCFLAGS
+compiler=@FC@
+extra_includes=
+preprocessor_flags=
+compiler_flags=@OMPI_WRAPPER_EXTRA_FFLAGS@
+linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
+libs=-lmpi_f90 -lmpi -lorte -lopal @OMPI_WRAPPER_EXTRA_LIBS@
+required_file=@OMPI_WRAPPER_F90_REQUIRED_FILE@

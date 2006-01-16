@@ -46,8 +46,8 @@ orteprobe_SOURCES = \
         orteprobe.h \
         orteprobe.c 
 
-orteprobe_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS)
-orteprobe_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
+orteprobe_LDADD = $(libs)
+orteprobe_LDFLAGS =
 orteprobe_DEPENDENCIES = $(libs)
 
 clean-local:

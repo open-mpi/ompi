@@ -17,20 +17,11 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from orte/Makefile.am
+# This makefile.am does not stand on its own - it is included from
+# opal/Makefile.am
 
 SUBDIRS += \
-	tools/console \
-	tools/openmpi \
-	tools/orted \
-	tools/orteprobe \
-	tools/orterun \
 	tools/wrappers
 
 DIST_SUBDIRS += \
-	tools/console \
-	tools/openmpi \
-	tools/orted \
-	tools/orteprobe \
-	tools/orterun \
 	tools/wrappers

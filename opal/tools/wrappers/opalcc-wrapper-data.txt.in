@@ -1,0 +1,13 @@
+project=Open Portable Access Layer (OPAL)
+project_short=OPAL
+version=@OPAL_VERSION@
+language=C
+compiler_env=CC
+compiler_flags_env=CFLAGS
+compiler=@CC@
+extra_includes=@OPAL_WRAPPER_EXTRA_INCLUDES@
+preprocessor_flags=@OPAL_WRAPPER_EXTRA_CPPFLAGS@
+compiler_flags=@OPAL_WRAPPER_EXTRA_CFLAGS@
+linker_flags=@OPAL_WRAPPER_EXTRA_LDFLAGS@
+libs=-lopal @OPAL_WRAPPER_EXTRA_LIBS@
+required_file=

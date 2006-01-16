@@ -48,8 +48,8 @@ orted_SOURCES = \
 	$(headers) \
         orted.c 
 
-orted_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS)
-orted_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
+orted_LDADD = $(libs)
+orted_LDFLAGS =
 orted_DEPENDENCIES = $(libs)
 
 

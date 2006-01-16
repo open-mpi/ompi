@@ -37,8 +37,7 @@ AC_DEFUN([OMPI_CHECK_FUNC_LIB],[
                  [AS_VAR_SET(ompi_var, "not found")])
              LIBS="$LIBS_save"])])
     AS_IF([test "AS_VAR_GET(ompi_var)" = "yes"],
-          [LIBS="$LIBS -l$2"
-           WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -l$2"])
+          [LIBS="$LIBS -l$2"])
 
     # see if we actually have $1.  Use AC_CHECK_FUNCS so that it
     # does the glibc "not implemented" check.  Will use the current LIBS,

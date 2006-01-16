@@ -31,9 +31,6 @@ int mca_base_close(void)
 {
   extern bool mca_base_opened;
   if (mca_base_opened) {
-    /* Clear out all the registered MCA params */
-
-    mca_base_param_finalize();
 
     /* Close down the component repository */
 
