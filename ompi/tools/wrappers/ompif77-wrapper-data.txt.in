@@ -1,0 +1,13 @@
+project=Open MPI
+project_short=OMPI
+version=@OMPI_VERSION@
+language=Fortran 77
+compiler_env=F77
+compiler_flags_env=FFLAGS
+compiler=@F77@
+extra_includes=
+preprocessor_flags=
+compiler_flags=@OMPI_WRAPPER_EXTRA_FFLAGS@
+linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
+libs=-lmpi -lorte -lopal @OMPI_WRAPPER_EXTRA_LIBS@
+required_file=@OMPI_WRAPPER_F77_REQUIRED_FILE@

@@ -1155,17 +1155,23 @@ AC_CACHE_SAVE
 
 ompi_show_title "Library and Function tests"
 
-AC_CHECK_LIB([util], [openpty], 
-             [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lutil" 
-              LIBS="$LIBS -lutil"])
+AC_CHECK_LIB([util], [openpty])
 
-AC_CHECK_LIB([nsl], [gethostbyname],
-             [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lnsl"
-              LIBS="$LIBS -lnsl"])
+AC_CHECK_LIB([nsl], [gethostbyname])
 
-AC_CHECK_LIB([socket], [socket], 
-             [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lsocket"
-              LIBS="$LIBS -lsocket"])
+AC_CHECK_LIB([socket], [socket])
+
+# Solaris has sched_yeild in -lrt, usually in libc
+OMPI_CHECK_FUNC_LIB([sched_yield], [rt])
+
+# FreeBSD has backtrace in -lexecinfo, usually in libc
+OMPI_CHECK_FUNC_LIB([backtrace], [execinfo])
+
+# IRIX has dirname in -lgen, usually in libc
+OMPI_CHECK_FUNC_LIB([dirname], [gen])
+
+# Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
+OMPI_CHECK_FUNC_LIB([ceil], [m])
 
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe setsid mmap])
 
@@ -1184,19 +1190,6 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
     [Whether we have __va_copy or not])
 
 AC_CHECK_DECLS(__func__)
-
-
-# Solaris has sched_yeild in -lrt, usually in libc
-OMPI_CHECK_FUNC_LIB([sched_yield], [rt])
-
-# FreeBSD has backtrace in -lexecinfo, usually in libc
-OMPI_CHECK_FUNC_LIB([backtrace], [execinfo])
-
-# IRIX has dirname in -lgen, usually in libc
-OMPI_CHECK_FUNC_LIB([dirname], [gen])
-
-# Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
-OMPI_CHECK_FUNC_LIB([ceil], [m])
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -1285,12 +1278,14 @@ CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"
 LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
 
+
+WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS $THREAD_CPPFLAGS"
 WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $THREAD_CFLAGS"
 WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $THREAD_CXXFLAGS"
 WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $THREAD_FFLAGS"
 WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $THREAD_FFLAGS"
 WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $THREAD_LDFLAGS"
-WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $THREAD_LIBS"
+# no need to update WRAPPER_EXTRA_LIBS - we'll get it from LT later
 
 #
 # What is the local equivalent of "ln -s"
@@ -1448,27 +1443,34 @@ opal/libltdl/config.log.  You can also disable GNU libltdl (which will disable
 dynamic shared object loading) by configuring with --disable-dlopen.])
     fi
     CFLAGS="$CFLAGS_save"
+    OPAL_LTDL_CPPFLAGS='-I$(top_srcdir)/opal/libltdl'
 else
     AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
 
     LIBLTDL_SUBDIR=
     LIBLTDL_LTLIB=
     WANT_LIBLTDL=0
+    OPAL_LTDL_CPPFLAGS=
+
+    # append instead of prepend, since LIBS are going to be system
+    # type things needed by everyone.  Normally, libltdl will push
+    # these into LIBS, but since we've disabled libltdl, we need
+    # to do it here.
+    WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $LIBS"
 fi
 
 AC_SUBST(LIBLTDL_SUBDIR)
 AC_SUBST(LIBLTDL_LTLIB)
-AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")
-AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $WANT_LIBLTDL,
-    [Whether to include support for libltdl or not])
-
 # Have a variable that can be used to indicate where ltdl.h lives.  Do
 # this specifically so that we get the included ltdl.h (which we know
 # will work properly with the compiled code, including libltdl), not
 # the system one (which is likely to be far too old and buggy).
-
-OPAL_LTDL_CPPFLAGS='-I$(top_srcdir)/opal/libltdl'
 AC_SUBST(OPAL_LTDL_CPPFLAGS)
+
+AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")
+AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $WANT_LIBLTDL,
+    [Whether to include support for libltdl or not])
+
 
 ############################################################################
 # final compiler config
@@ -1512,27 +1514,6 @@ AC_MSG_RESULT([$TOTALVIEW_DEBUG_FLAGS])
 AC_SUBST(CFLAGS_WITHOUT_OPTFLAGS)
 AC_SUBST(TOTALVIEW_DEBUG_FLAGS)
 
-#
-# Adding LIBMPI_* flags from the components that are necessary to
-# compile with libmpi
-#
-# LIBMPI_EXTRA_LDFLAGS
-#
-AC_MSG_CHECKING([for libmpi additional LDFLAGS])
-OMPI_UNIQ(LIBMPI_EXTRA_LDFLAGS)
-AC_SUBST(LIBMPI_EXTRA_LDFLAGS)
-AC_DEFINE_UNQUOTED(LIBMPI_EXTRA_LDFLAGS, "$LIBMPI_EXTRA_LDFLAGS",
-    [Additional LDFLAGS to compile against libmpi])
-AC_MSG_RESULT([$LIBMPI_EXTRA_LDFLAGS])
-
-#
-# LIBMPI_EXTRA_LIBS
-#
-AC_MSG_CHECKING([for libmpi additional LIBS])
-AC_SUBST(LIBMPI_EXTRA_LIBS)
-AC_DEFINE_UNQUOTED(LIBMPI_EXTRA_LIBS, "$LIBMPI_EXTRA_LIBS",
-    [Additional LIBS to compile against libmpi])
-AC_MSG_RESULT([$LIBMPI_EXTRA_LIBS])
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
@@ -1577,7 +1558,11 @@ AC_CONFIG_FILES([
     opal/event/compat/Makefile
     opal/event/compat/sys/Makefile
     opal/util/Makefile
+    opal/util/keyval/Makefile
     opal/mca/base/Makefile
+    opal/tools/wrappers/Makefile
+    opal/tools/wrappers/opalcc-wrapper-data.txt
+    opal/tools/wrappers/opalc++-wrapper-data.txt
 
     orte/Makefile
 
@@ -1586,6 +1571,9 @@ AC_CONFIG_FILES([
     orte/tools/orteprobe/Makefile
     orte/tools/orterun/Makefile
     orte/tools/openmpi/Makefile
+    orte/tools/wrappers/Makefile
+    orte/tools/wrappers/ortecc-wrapper-data.txt
+    orte/tools/wrappers/ortec++-wrapper-data.txt
 
     ompi/Makefile
 
@@ -1604,6 +1592,10 @@ AC_CONFIG_FILES([
 
     ompi/tools/ompi_info/Makefile
     ompi/tools/wrappers/Makefile
+    ompi/tools/wrappers/ompicc-wrapper-data.txt
+    ompi/tools/wrappers/ompic++-wrapper-data.txt
+    ompi/tools/wrappers/ompif77-wrapper-data.txt
+    ompi/tools/wrappers/ompif90-wrapper-data.txt
 
     test/Makefile
     test/asm/Makefile

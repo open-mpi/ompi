@@ -24,20 +24,20 @@
 #include <unistd.h>
 #endif
 
-#include "mca/base/mca_base_parse_paramfile_lex.h"
+#include "opal/util/keyval/keyval_lex.h"
 
 /*
  * local functions
  */
 static int finish_parsing(void) ;
-static int mca_base_yywrap(void);
+static int opal_util_keyval_yywrap(void);
 
 /*
  * global variables
  */
-int mca_base_yynewlines = 1;
-bool mca_base_parse_done = false;
-char *mca_base_string = NULL;
+int opal_util_keyval_yynewlines = 1;
+bool opal_util_keyval_parse_done = false;
+char *opal_util_keyval_string = NULL;
 
 #define yyterminate() \
   return finish_parsing()
@@ -52,27 +52,27 @@ CHAR        [A-Za-z0-9_\-\.]
 
 %%
 
-{WHITE}*\n          { mca_base_yynewlines++; return MCA_BASE_PARSE_NEWLINE; }
-#.*\n               { mca_base_yynewlines++; return MCA_BASE_PARSE_NEWLINE; }
-"//".*\n            { mca_base_yynewlines++; return MCA_BASE_PARSE_NEWLINE; }
+{WHITE}*\n          { opal_util_keyval_yynewlines++; return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
+#.*\n               { opal_util_keyval_yynewlines++; return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
+"//".*\n            { opal_util_keyval_yynewlines++; return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
 
 "/*"                { BEGIN(comment);
-                      return MCA_BASE_PARSE_NEWLINE; }
+                      return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
 <comment>[^*\n]*       ; /* Eat up non '*'s */
 <comment>"*"+[^*/\n]*  ; /* Eat '*'s not followed by a '/' */
-<comment>\n         { mca_base_yynewlines++;
-                      return MCA_BASE_PARSE_NEWLINE; } 
+<comment>\n         { opal_util_keyval_yynewlines++;
+                      return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; } 
 <comment>"*"+"/"    { BEGIN(INITIAL); /* Done with Block Comment */
-                      return MCA_BASE_PARSE_NEWLINE; }
+                      return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
 
-{WHITE}*"="{WHITE}* { BEGIN(VALUE); return MCA_BASE_PARSE_EQUAL; }
+{WHITE}*"="{WHITE}* { BEGIN(VALUE); return OPAL_UTIL_KEYVAL_PARSE_EQUAL; }
 {WHITE}+            ; /* whitespace */
-{CHAR}+             { return MCA_BASE_PARSE_SINGLE_WORD; }
+{CHAR}+             { return OPAL_UTIL_KEYVAL_PARSE_SINGLE_WORD; }
 
-<VALUE>{WHITE}*\n   { BEGIN(INITIAL); return MCA_BASE_PARSE_NEWLINE; }
-<VALUE>[^\n]*[^\t \n]/[\t ]*      { return MCA_BASE_PARSE_VALUE; }
+<VALUE>{WHITE}*\n   { BEGIN(INITIAL); return OPAL_UTIL_KEYVAL_PARSE_NEWLINE; }
+<VALUE>[^\n]*[^\t \n]/[\t ]*      { return OPAL_UTIL_KEYVAL_PARSE_VALUE; }
 
-.	            { return MCA_BASE_PARSE_ERROR; }
+.	            { return OPAL_UTIL_KEYVAL_PARSE_ERROR; }
 
 %%
 
@@ -95,9 +95,9 @@ static int finish_parsing(void)
 }
 
 
-static int mca_base_yywrap(void)
+static int opal_util_keyval_yywrap(void)
 {
-    mca_base_parse_done = true;
+    opal_util_keyval_parse_done = true;
     return 1;
 }
 
@@ -111,7 +111,7 @@ static int mca_base_yywrap(void)
  * have a valid buffer.  Hence, here we ensure to give it a valid
  * buffer.
  */
-int mca_base_param_init_buffer(FILE *file)
+int opal_util_keyval_init_buffer(FILE *file)
 {
     YY_BUFFER_STATE buf = yy_create_buffer(file, YY_BUF_SIZE);
     yy_switch_to_buffer(buf);

@@ -23,8 +23,6 @@ AM_CPPFLAGS = \
 	$(OPAL_LTDL_CPPFLAGS) \
         -DOMPI_PKGLIBDIR=\"$(pkglibdir)\" \
         -DOMPI_SYSCONFDIR=\"$(sysconfdir)\"
-AM_LFLAGS = -Pmca_base_yy
-LEX_OUTPUT_ROOT = lex.mca_base_yy
 
 noinst_LTLIBRARIES = libmca_base.la
 
@@ -38,8 +36,7 @@ headers = \
         mca_base_msgbuf.h \
         mca_base_msgbuf_internal.h \
         mca_base_param.h \
-        mca_base_param_internal.h \
-        mca_base_parse_paramfile_lex.h
+        mca_base_param_internal.h
 
 # Library
 
@@ -56,8 +53,7 @@ libmca_base_la_SOURCES = \
         mca_base_msgbuf.c \
         mca_base_open.c \
         mca_base_param.c \
-        mca_base_parse_paramfile.c \
-        mca_base_parse_paramfile_lex.l
+        mca_base_parse_paramfile.c
 
 # Conditionally install the header files
 

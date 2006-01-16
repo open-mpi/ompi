@@ -37,8 +37,8 @@ libs = \
 bin_PROGRAMS = openmpi
 
 openmpi_SOURCES = openmpi.h openmpi.c
-openmpi_LDADD = $(LIBMPI_EXTRA_LIBS) $(libs)
-openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
+openmpi_LDADD = $(libs)
+openmpi_DFLAGS =
 openmpi_DEPENDENCIES = $(libs)
 
 clean-local:

@@ -17,8 +17,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_BASE_PARSE_PARAMFILE_LEX_H_
-#define MCA_BASE_PARSE_PARAMFILE_LEX_H_
+#ifndef OPAL_UTIL_KEYVAL_LEX_H_
+#define OPAL_UTIL_KEYVAL_LEX_H_
 
 #include "ompi_config.h"
 
@@ -34,13 +34,13 @@
 
 #include <stdio.h>
 
-int mca_base_yylex(void);
-int mca_base_param_init_buffer(FILE *file);
+int opal_util_keyval_yylex(void);
+int opal_util_keyval_init_buffer(FILE *file);
 
-extern FILE *mca_base_yyin;
-extern bool mca_base_parse_done;
-extern char *mca_base_yytext;
-extern int mca_base_yynewlines;
+extern FILE *opal_util_keyval_yyin;
+extern bool opal_util_keyval_parse_done;
+extern char *opal_util_keyval_yytext;
+extern int opal_util_keyval_yynewlines;
 
 /*
  * Make lex-generated files not issue compiler warnings
@@ -52,15 +52,15 @@ extern int mca_base_yynewlines;
 #define YY_NO_UNPUT 1
 
 enum {
-    MCA_BASE_PARSE_DONE,
-    MCA_BASE_PARSE_ERROR,
+    OPAL_UTIL_KEYVAL_PARSE_DONE,
+    OPAL_UTIL_KEYVAL_PARSE_ERROR,
 
-    MCA_BASE_PARSE_NEWLINE,
-    MCA_BASE_PARSE_EQUAL,
-    MCA_BASE_PARSE_SINGLE_WORD,
-    MCA_BASE_PARSE_VALUE,
+    OPAL_UTIL_KEYVAL_PARSE_NEWLINE,
+    OPAL_UTIL_KEYVAL_PARSE_EQUAL,
+    OPAL_UTIL_KEYVAL_PARSE_SINGLE_WORD,
+    OPAL_UTIL_KEYVAL_PARSE_VALUE,
 
-    MCA_BASE_PARSE_MAX
+    OPAL_UTIL_KEYVAL_PARSE_MAX
 };
 
 #endif

@@ -25,6 +25,7 @@
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/if.h"
+#include "opal/util/keyval_parse.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -32,39 +33,20 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/include/constants.h"
 
-/**
- * Finalize the OPAL utilities
- *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
- *
- * This function performs
- */
-int opal_finalize(void)
+int
+opal_finalize_util(void)
 {
+    /* Clear out all the registered MCA params */
+    mca_base_param_finalize();
+
     /* close interfaces code.  This is lazy opened, but protected from
        close when not opened internally */
     opal_iffinalize();
 
-    /* close high resolution timers */
-    opal_timer_base_close();
-
-    /* close the processor affinity base */
-    opal_paffinity_base_close();
-
-    /* close the memory manager components.  Registered hooks can
-       still be fired any time between now and the call to
-       opal_mem_free_finalize(), and callbacks from the memory manager
-       hooks to the bowels of the mem_free code can still occur any
-       time between now and end of application (even post main()!) */
-    opal_memory_base_close();
-
-    /* finalize the mca */
-    mca_base_close();
-
-    /* finalize the memory manager / tracker */
-    opal_mem_hooks_finalize();
+    /* keyval lex-based parser */
+    opal_util_keyval_parse_finalize();
 
     /* finalize the memory allocator */
     opal_malloc_finalize();
@@ -80,6 +62,36 @@ int opal_finalize(void)
 
     /* finalize the class/object system */
     opal_class_finalize();
+
+    return OPAL_SUCCESS;
+}
+
+
+int
+opal_finalize(void)
+{
+
+    /* close high resolution timers */
+    opal_timer_base_close();
+
+    /* close the memory manager components.  Registered hooks can
+       still be fired any time between now and the call to
+       opal_mem_free_finalize(), and callbacks from the memory manager
+       hooks to the bowels of the mem_free code can still occur any
+       time between now and end of application (even post main()!) */
+    opal_memory_base_close();
+
+    /* finalize the memory manager / tracker */
+    opal_mem_hooks_finalize();
+
+    /* close the processor affinity base */
+    opal_paffinity_base_close();
+
+    /* finalize the mca */
+    mca_base_close();
+
+    /* finalize util code */
+    opal_finalize_util();
 
     return ORTE_SUCCESS;
 }

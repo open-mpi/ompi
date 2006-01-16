@@ -16,7 +16,11 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-wrapper.txt
+dist_pkgdata_DATA = help-wrapper.txt \
+	ompicc-wrapper-data.txt \
+	ompic++-wrapper-data.txt \
+	ompif77-wrapper-data.txt \
+	ompif90-wrapper-data.txt
 
 # This is ugly, but we need it so that people can change things at
 # "make" time (e.g., "make sysconfdir=/foo/bar all") as documented in
@@ -44,23 +48,23 @@ libs = \
 wrap_sources = wrap.cc wrap_engine.cc ompi_wrap.h
 
 mpicc_SOURCES       = mpicc.cc ompi_wrap.h $(wrap_sources)
-mpicc_LDADD         = $(libs)  $(LIBMPI_EXTRA_LIBS)
-mpicc_LDFLAGS       = $(LIBMPI_EXTRA_LDFLAGS)
+mpicc_LDADD         = $(libs)
+mpicc_LDFLAGS       =
 mpicc_DEPENDENCIES  = $(libs)
 
 mpic___SOURCES      = mpicxx.cc ompi_wrap.h $(wrap_sources)
-mpic___LDADD        = $(libs) $(LIBMPI_EXTRA_LIBS)
-mpic___LDFLAGS      = $(LIBMPI_EXTRA_LDFLAGS)
+mpic___LDADD        = $(libs)
+mpic___LDFLAGS      =
 mpic___DEPENDENCIES = $(libs)
 
 mpif77_SOURCES      = mpif77.cc ompi_wrap.h $(wrap_sources)
-mpif77_LDADD        = $(libs) $(LIBMPI_EXTRA_LIBS)
-mpif77_LDFLAGS      = $(LIBMPI_EXTRA_LDFLAGS)
+mpif77_LDADD        = $(libs)
+mpif77_LDFLAGS      = 
 mpif77_DEPENDENCIES = $(libs)
 
 mpif90_SOURCES      = mpif90.cc ompi_wrap.h $(wrap_sources)
-mpif90_LDADD        = $(libs) $(LIBMPI_EXTRA_LIBS)
-mpif90_LDFLAGS      = $(LIBMPI_EXTRA_LDFLAGS)
+mpif90_LDADD        = $(libs)
+mpif90_LDFLAGS      = 
 mpif90_DEPENDENCIES = $(libs)
 
 # Since this is C++ and we use templates (the STL), also ditch the
@@ -114,17 +118,50 @@ if CASE_SENSITIVE_FS
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC$(EXEEXT); $(LN_S) mpic++ mpiCC)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) mpic++ mpicxx)
+
+	(cd $(DESTDIR)$(bindir); rm -f ompicc$(EXEEXT); $(LN_S) opal_wrapper ompicc)
+	(cd $(DESTDIR)$(bindir); rm -f ompic++$(EXEEXT); $(LN_S) opal_wrapper ompic++)
+	(cd $(DESTDIR)$(bindir); rm -f ompiCC$(EXEEXT); $(LN_S) opal_wrapper ompiCC)
+	(cd $(DESTDIR)$(bindir); rm -f ompicxx$(EXEEXT); $(LN_S) opal_wrapper ompicxx)
+	(cd $(DESTDIR)$(bindir); rm -f ompif77$(EXEEXT); $(LN_S) opal_wrapper ompif77)
+	(cd $(DESTDIR)$(bindir); rm -f ompif90$(EXEEXT); $(LN_S) opal_wrapper ompif90)
+
+	(cd $(DESTDIR)$(pkgdatadir); rm -f ompiCC-wrapper-data.txt; $(LN_S) ompic++-wrapper-data.txt ompiCC-wrapper-data.txt)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f ompicxx-wrapper-data.txt; $(LN_S) ompic++-wrapper-data.txt ompicxx-wrapper-data.txt)
 else
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) mpic++ mpicxx)
+
+	(cd $(DESTDIR)$(bindir); rm -f ompicc$(EXEEXT); $(LN_S) opal_wrapper ompicc)
+	(cd $(DESTDIR)$(bindir); rm -f ompic++$(EXEEXT); $(LN_S) opal_wrapper ompic++)
+	(cd $(DESTDIR)$(bindir); rm -f ompicxx$(EXEEXT); $(LN_S) opal_wrapper ompicxx)
+	(cd $(DESTDIR)$(bindir); rm -f ompif77$(EXEEXT); $(LN_S) opal_wrapper ompif77)
+	(cd $(DESTDIR)$(bindir); rm -f ompif90$(EXEEXT); $(LN_S) opal_wrapper ompif90)
+
+	(cd $(DESTDIR)$(pkgdatadir); rm -f ompicxx-wrapper-data.txt; $(LN_S) ompic++-wrapper-data.txt ompicxx-wrapper-data.txt)
 endif
 
 if CASE_SENSITIVE_FS
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/mpiCC$(EXEEXT) \
-	$(DESTDIR)$(bindir)/mpicxx$(EXEEXT)
+	$(DESTDIR)$(bindir)/mpicxx$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompicc$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompic++$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompiCC$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompicxx$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompif77$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompif90$(EXEEXT) \
+	$(DESTDIR)$(pkgdatadir)/ompiCC-wrapper-data.txt \
+	$(DESTDIR)$(pkgdatadir)/ompicxx-wrapper-data.txt
+
 else
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/mpicxx$(EXEEXT)
+	rm -f $(DESTDIR)$(bindir)/mpicxx$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompicc$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompic++$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompicxx$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompif77$(EXEEXT) \
+	$(DESTDIR)$(bindir)/ompif90$(EXEEXT) \
+	$(DESTDIR)$(pkgdatadir)/ompicxx-wrapper-data.txt
 endif
 endif

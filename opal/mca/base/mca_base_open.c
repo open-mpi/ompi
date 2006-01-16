@@ -63,10 +63,6 @@ int mca_base_open(void)
     return OMPI_SUCCESS;
   }
 
-  /* Setup the parameter system */
-
-  mca_base_param_init();
-
   /* Register some params */
 
 #ifdef __WINDOWS__

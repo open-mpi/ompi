@@ -26,26 +26,53 @@ extern "C" {
 #endif
 
 /**
- * Initialize the OPAL utilities
+ * Initialize the OPAL layer, including the MCA system.
  *
  * @retval ORTE_SUCCESS Upon success.
  * @retval ORTE_ERROR Upon failure.
  *
- * This function performs 
+ * \note If this function is called, opal_init_util() should *not* be
+ * called.
  */
-int opal_init(void);
+OMPI_DECLSPEC int opal_init(void);
 
 /**
- * Finalize the OPAL utilities
+ * Finalize the OPAL layer, including the MCA system. 
  *
  * @retval ORTE_SUCCESS Upon success.
  * @retval ORTE_ERROR Upon failure.
  *
- * This function performs 
+ * \note If this function is called, opal_finalize_util() should *not*
+ * be called.
  */
-int opal_finalize(void);
+OMPI_DECLSPEC int opal_finalize(void);
 
-int opal_register_params(void);
+/**
+ * Initialize the OPAL layer, excluding the MCA system.
+ *
+ * @retval ORTE_SUCCESS Upon success.
+ * @retval ORTE_ERROR Upon failure.
+ *
+ * \note If this function is called, opal_init() should *not*
+ * be called.
+ */
+OMPI_DECLSPEC int opal_init_util(void);
+
+/**
+ * Finalize the OPAL layer, excluding the MCA system. 
+ *
+ * @retval ORTE_SUCCESS Upon success.
+ * @retval ORTE_ERROR Upon failure.
+ *
+ * \note If this function is called, opal_finalize() should *not*
+ * be called.
+ */
+OMPI_DECLSPEC int opal_finalize_util(void);
+
+/**
+ * Internal function.  Do not call.
+ */
+OMPI_DECLSPEC int opal_register_params(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
