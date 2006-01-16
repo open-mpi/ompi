@@ -146,6 +146,19 @@ extern mca_btl_base_module_t** mca_btl_udapl_component_init(
 extern int mca_btl_udapl_component_progress(void);
 
 
+/**
+ * Initialize resources for a new BTL/uDAPL IA
+ *
+ * @param ia_name   Name of uDAPL interface adapter
+ * @param btl       BTL instance.
+ * @return          OMPI_SUCCESS or error status on failure.
+ */
+
+extern int mca_btl_udapl_init(
+    DAT_NAME_PTR ia_name,
+    struct mca_btl_udapl_module_t* btl
+);
+
 
 /**
  * Cleanup any resources held by the BTL.
