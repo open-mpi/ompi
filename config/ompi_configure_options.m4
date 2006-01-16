@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -463,4 +463,27 @@ else
 fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_TRACE], [$opal_want_trace],
                    [Enable run-time tracing of internal functions])
+
+
+#
+# Cross-compile data
+#
+AC_ARG_WITH([cross],
+    [AC_HELP_STRING([--with-cross=FILE],
+        [Specify configure values that can not be determined in a cross-compilation environment.  See the Open MPI FAQ.])])
+if test "$with_cross" = "yes" ; then
+    AC_MSG_ERROR([--with-cross argument must include FILE option])
+elif test "$with_cross" = "no" ; then
+    AC_MSG_ERROR([--without-cross is not a valid argument])
+elif test "$with_cross" != "" ; then
+    if test ! -r $with_cross ; then
+        AC_MSG_ERROR([could not find cross-compile data file $with_cross])
+    fi
+
+    # eval into environment
+    OMPI_LOG_MSG([Loading cross-compile file $with_cross, with contents below])
+    OMPI_LOG_FILE([$with_cross])
+    . "$with_cross"
+fi
+
 ])
