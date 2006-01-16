@@ -61,6 +61,105 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
 
 
 /**
+  * Report a uDAPL error - for debugging
+  */
+
+static void
+mca_btl_udapl_error(DAT_RETURN ret, char* str)
+{
+    char* major;
+    char* minor;
+
+    /* don't output anything if debug is not set */
+    if(0 == mca_btl_udapl_component.udapl_debug) {
+        return;
+    }
+
+    if(DAT_SUCCESS != dat_strerror(ret,
+            (const char**)&major, (const char**)&minor))
+    {
+        printf("dat_strerror failed! ret is %d\n", ret);
+        exit(-1);
+    }
+
+    opal_output(0, "ERROR: %s %s %s\n", str, major, minor);
+}
+
+
+/**
+ * Initialize module module resources.
+ */
+
+int
+mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
+{
+    DAT_RETURN rc;
+
+    /* open the uDAPL interface */
+    rc = dat_ia_open(ia_name, mca_btl_udapl_component.udapl_evd_qlen,
+            &btl->udapl_evd_dflt, &btl->udapl_ia);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_ia_open");
+        return OMPI_ERROR;
+    }
+
+    /* set up evd's */
+    rc = dat_evd_create(btl->udapl_ia,
+            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
+            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_evd_create (dto)");
+        return OMPI_ERROR;
+    }
+
+    rc = dat_evd_create(btl->udapl_ia,
+            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
+            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_conn);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_evd_create (conn)");
+        return OMPI_ERROR;
+    }
+
+    /* initialize objects */
+    OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_frag_max, ompi_free_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_frag_user, ompi_free_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_pending, opal_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_repost, opal_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_mru_reg, opal_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_lock, opal_mutex_t);
+    
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ * Cleanup/release module resources.
+ */
+
+int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
+{
+    mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) base_btl; 
+
+    opal_output(0, "udapl_finalize\n");
+
+    /* release uDAPL resources */
+    dat_evd_free(udapl_btl->udapl_evd_dto);
+    dat_evd_free(udapl_btl->udapl_evd_conn);
+    dat_ia_close(udapl_btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
+
+    /* destroy objects */
+    OBJ_DESTRUCT(&udapl_btl->udapl_lock);
+    OBJ_DESTRUCT(&udapl_btl->udapl_frag_eager);
+    OBJ_DESTRUCT(&udapl_btl->udapl_frag_max);
+    OBJ_DESTRUCT(&udapl_btl->udapl_frag_user);
+
+    free(udapl_btl);
+    return OMPI_SUCCESS;
+}
+
+
+/**
  *
  */
 
@@ -74,7 +173,7 @@ int mca_btl_udapl_add_procs(
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
     int i, rc;
 
-	opal_output(0, "udapl_add_procs\n");
+    opal_output(0, "udapl_add_procs\n");
 
     for(i = 0; i < (int) nprocs; i++) {
 
@@ -253,18 +352,20 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-                                                                                                    
+        ompi_convertor_pack(convertor, &iov,
+                &iov_count, &max_data, &free_after);
+
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
 
-        reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1;
+        reg_len = (unsigned char*)registration->bound -
+                (unsigned char*)iov.iov_base + 1;
         
         /* bump reference count as so that the registration
          * doesn't go away when the operation completes
          */
         btl->btl_mpool->mpool_retain(btl->btl_mpool, 
-                                     (mca_mpool_base_registration_t*) registration);
+                (mca_mpool_base_registration_t*) registration);
         
         frag->registration = registration;
 
@@ -285,8 +386,9 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-                                                                                                
+        ompi_convertor_pack(convertor, &iov,
+                &iov_count, &max_data, &free_after);
+
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
 
@@ -492,23 +594,5 @@ int mca_btl_udapl_get(
 {
     opal_output(0, "udapl_get\n");
     return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-/*
- * Cleanup/release module resources.
- */
-
-int mca_btl_udapl_finalize(struct mca_btl_base_module_t* btl)
-{
-    mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) btl; 
-
-    opal_output(0, "udapl_finalize\n");
-    OBJ_DESTRUCT(&udapl_btl->udapl_lock);
-    OBJ_DESTRUCT(&udapl_btl->udapl_frag_eager);
-    OBJ_DESTRUCT(&udapl_btl->udapl_frag_max);
-    OBJ_DESTRUCT(&udapl_btl->udapl_frag_user);
-    free(udapl_btl);
-    return OMPI_SUCCESS;
 }
 

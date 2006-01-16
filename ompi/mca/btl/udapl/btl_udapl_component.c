@@ -190,83 +190,10 @@ int mca_btl_udapl_component_close(void)
 {
     opal_output(0, "udapl_component_close\n");
 
-    /* TODO - clean up each btl module */
+    /* TODO - what needs to be done here? */
     return OMPI_SUCCESS;
 }
 
-
-/**
-  * Report a uDAPL error - for debugging
-  */
-
-static void
-mca_btl_udapl_error(DAT_RETURN ret, char* str)
-{
-	char* major;
-	char* minor;
-
-    /* don't output anything if debug is not set */
-    if(0 == mca_btl_udapl_component.udapl_debug) {
-        return;
-    }
-
-	if(DAT_SUCCESS != dat_strerror(ret,
-			(const char**)&major, (const char**)&minor))
-	{
-		printf("dat_strerror failed! ret is %d\n", ret);
-		exit(-1);
-	}
-
-	opal_output(0, "ERROR: %s %s %s\n", str, major, minor);
-}
-
-
-/**
- * Initialize module instance
- */
-
-static int
-mca_btl_udapl_module_init (DAT_NAME_PTR ia_name,
-                        mca_btl_udapl_module_t * btl)
-{
-    DAT_RETURN rc;
-
-    /* open the uDAPL interface */
-    rc = dat_ia_open(ia_name, mca_btl_udapl_component.udapl_evd_qlen,
-            &btl->udapl_evd_dflt, &btl->udapl_ia);
-    if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_ia_open");
-        return OMPI_ERROR;
-    }
-
-    /* set up evd's */
-    rc = dat_evd_create(btl->udapl_ia,
-            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
-            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
-    if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_evd_create (dto)");
-        return OMPI_ERROR;
-    }
-
-    rc = dat_evd_create(btl->udapl_ia,
-            mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
-            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_conn);
-    if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_evd_create (conn)");
-        return OMPI_ERROR;
-    }
-
-    /* initialize objects */
-    OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_frag_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_frag_user, ompi_free_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_pending, opal_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_repost, opal_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_mru_reg, opal_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_lock, opal_mutex_t);
-    
-    return OMPI_SUCCESS;
-}
 
 /*
  *  Register uDAPL component addressing information. The MCA framework
@@ -301,7 +228,8 @@ mca_btl_udapl_modex_send(void)
     }
     return rc;
 }
-                                                                                                                
+
+
 /*
  * Initialize the uDAPL component,
  * check how many interfaces are available and create a btl module for each.
@@ -359,7 +287,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         /* copy default values into the new BTL */
         memcpy(btl, &mca_btl_udapl_module, sizeof(mca_btl_udapl_module_t));
 
-        if(OMPI_SUCCESS != mca_btl_udapl_module_init(datinfo[i].ia_name, btl)) {
+        if(OMPI_SUCCESS != mca_btl_udapl_init(datinfo[i].ia_name, btl)) {
             opal_output(0, "udapl module init for %s failed\n",
                     datinfo[i].ia_name);
             /*TODO - how do i correctly handle an error here? */
@@ -390,7 +318,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     *num_btl_modules = mca_btl_udapl_component.udapl_num_btls;
     return btls;
 }
-                                                                                                                
+
 
 /*
  *  uDAPL component progress.
