@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -25,12 +25,21 @@ AC_DEFUN([MCA_paffinity_windows_CONFIG],[
     # and then check for it's presence in the kernel32 library.
     AC_MSG_CHECKING(for working GetProcessAffinityMask)
     AC_TRY_RUN( [#include <windows.h>
-                 int main( int argc, char** argv ) {
-                    DWORD aff, mask;
-                    GetProcessAffinityMask( NULL, &aff, &mask );
-                    return 0; }],
-                    [AC_MSG_RESULT(yes)
-                     $1],
-                    [AC_MSG_RESULT(yes)
-                     $2])
+int main( int argc, char** argv ) {
+    DWORD aff, mask;
+    GetProcessAffinityMask( NULL, &aff, &mask );
+    return 0; }],
+        [AC_MSG_RESULT([yes])
+         $1],
+        [AC_MSG_RESULT([no])
+         $2],
+        [AC_COMPILE_IFELSE([#include <windows.h>
+int main( int argc, char** argv ) {
+    DWORD aff, mask;
+    GetProcessAffinityMask( NULL, &aff, &mask );
+    return 0; }],
+        [AC_MSG_RESULT([yes])
+         $1],
+        [AC_MSG_RESULT([no])
+         $2])])
 ])dnl
