@@ -59,7 +59,7 @@ static void opal_mutex_construct(opal_mutex_t *m)
     pthread_mutexattr_destroy(&attr);
 #endif /* OMPI_HAVE_POSIX_THREADS */
 
-#if OPAL_HAVE_SOLARIS_THREADS
+#if OMPI_HAVE_SOLARIS_THREADS
     mutex_init(&m->m_lock_solaris, USYNC_THREAD, NULL);
 #endif
 
