@@ -817,7 +817,7 @@ my $do_default = 0;
 if (! $config_arg || ! -f $config_arg) {
     my $dir = "$root/default";
     my $name = "[default]";
-    my $config = "CFLAGS=-g --disable-f77 --enable-debug";
+    my $config = "CFLAGS=-g --enable-debug";
     $ret = try_build($name, 0, $tarball_name,
                      $dir, "$dir/install", "", $config);
     $results->{$name} = $ret;
