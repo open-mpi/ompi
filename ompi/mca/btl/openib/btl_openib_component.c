@@ -306,7 +306,9 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     seedv[2] = opal_sys_timer_get_cycles();
     seed48(seedv);
 
-#ifndef OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
+#if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
+    ib_devs = ibv_get_device_list(&num_devs);
+#else 
     /* Determine the number of hca's available on the host */
     dev_list = ibv_get_devices(); 
     if (NULL == dev_list) {
@@ -319,8 +321,6 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
     dlist_for_each_data(dev_list, ib_dev, struct ibv_device)
         num_devs++; 
-#else 
-    ib_devs = ibv_get_device_list(&num_devs);
 #endif
 
     if(0 == num_devs) { 
@@ -329,7 +329,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         return NULL; 
     }
        
-#ifndef OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
+#if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST == 0
     /* Allocate space for the ib devices */ 
     ib_devs = (struct ibv_device**) malloc(num_devs * sizeof(struct ibv_dev*));
         if(NULL == ib_devs) {
@@ -453,7 +453,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&openib_btl->recv_free_max, ompi_free_list_t);
         
         if(mca_btl_openib_module_init(openib_btl) != OMPI_SUCCESS) {
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
+#if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
 	    ibv_free_device_list(ib_devs);
 #else
 	    free(ib_devs);
@@ -542,7 +542,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_modex_send();
 
     *num_btl_modules = mca_btl_openib_component.ib_num_btls;
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
+#if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
     ibv_free_device_list(ib_devs);
 #else
     free(ib_devs);
