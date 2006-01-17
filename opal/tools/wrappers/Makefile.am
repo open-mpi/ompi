@@ -17,9 +17,11 @@
 #
 
 nodist_pkgdata_DATA = \
-	help-opal-wrapper.txt \
 	opalcc-wrapper-data.txt \
 	opalc++-wrapper-data.txt
+
+dist_pkgdata_DATA = \
+	help-opal-wrapper.txt
 
 AM_CPPFLAGS = \
             -DOPAL_LIBDIR="\"$(libdir)\"" \
