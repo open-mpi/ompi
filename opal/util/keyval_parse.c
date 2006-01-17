@@ -6,7 +6,9 @@
 #include "opal/util/keyval/keyval_lex.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
-
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif  /* HAVE_STRING_H */
 
 static const char *keyval_filename;
 static opal_keyval_parse_fn_t keyval_callback;
@@ -106,7 +108,7 @@ static int parse_line(void)
         }
         key_buffer = tmp;
     }
-        
+
     strncpy(key_buffer, opal_util_keyval_yytext, key_buffer_len);
 
     /* The first thing we have to see is an "=" */
