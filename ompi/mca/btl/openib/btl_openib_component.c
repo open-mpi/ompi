@@ -143,7 +143,7 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_param_register_int("ib_cq_size", "size of the IB completion queue",
                                       1000, (int*) &mca_btl_openib_component.ib_cq_size); 
     mca_btl_openib_param_register_int("ib_sg_list_size", "size of IB segment list", 
-                                      3, (int*) &mca_btl_openib_component.ib_sg_list_size); 
+                                      1, (int*) &mca_btl_openib_component.ib_sg_list_size); 
     mca_btl_openib_param_register_int("ib_pkey_ix", "IB pkey index", 
                                       0, (int*) &mca_btl_openib_component.ib_pkey_ix); 
     mca_btl_openib_param_register_int("ib_psn", "IB Packet sequence starting number", 
@@ -580,10 +580,12 @@ int mca_btl_openib_component_progress()
         ne=ibv_poll_cq(openib_btl->ib_cq_hp, 1, &wc );
         if(ne < 0 ){ 
             BTL_ERROR(("error polling HP CQ with %d errno says %s\n", ne, strerror(errno))); 
+            return OMPI_ERROR;
         } 
         else if(wc.status != IBV_WC_SUCCESS) { 
             BTL_ERROR(("error polling HP CQ with status %d for wr_id %llu opcode %d\n", 
                        wc.status, wc.wr_id, wc.opcode)); 
+            return OMPI_ERROR;
         }
         else if(1 == ne) { 
             BTL_VERBOSE(("completion queue event says opcode is %d\n", wc.opcode)); 
@@ -663,14 +665,13 @@ int mca_btl_openib_component_progress()
                                                           openib_btl->ib_reg[frag->hdr->tag].cbdata);         
                 OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager), (opal_list_item_t*) frag); 
 
+                /* repost receive descriptors */
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 if(mca_btl_openib_component.use_srq) { 
-                    /* repost receive descriptors */
                     OPAL_THREAD_ADD32((int32_t*) &openib_btl->srd_posted_hp, -1); 
                     MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 0); 
                 } else { 
 #endif
-                    /* repost receive descriptors */
                     OPAL_THREAD_ADD32((int32_t*) &endpoint->rd_posted_hp, -1); 
                     MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 0); 
 
@@ -715,10 +716,12 @@ int mca_btl_openib_component_progress()
         ne=ibv_poll_cq(openib_btl->ib_cq_lp, 1, &wc );
         if(ne < 0){ 
             BTL_ERROR(("error polling LP CQ with %d errno says %s", ne, strerror(errno))); 
+            return OMPI_ERROR;
         } 
         else if(wc.status != IBV_WC_SUCCESS) { 
             BTL_ERROR(("error polling LP CQ with status %d for wr_id %llu opcode %d", 
                       wc.status, wc.wr_id, wc.opcode)); 
+            return OMPI_ERROR;
         }
         else if(1 == ne) {             
             /* Handle n/w completions */

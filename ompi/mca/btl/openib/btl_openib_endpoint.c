@@ -45,7 +45,9 @@ int mca_btl_openib_endpoint_create_qp(
 #if OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                       struct ibv_srq* srq, 
 #endif
-                                      struct ibv_qp_attr* qp_attr,                                      struct ibv_qp** qp); 
+                                      struct ibv_qp_attr* qp_attr,                                      
+                                      struct ibv_qp** qp
+                                      ); 
 
 
 
@@ -164,7 +166,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     if(ibv_post_send(ib_qp, 
                      &frag->wr_desc.sr_desc, 
                      &bad_wr)) { 
-        BTL_ERROR(("error posting send request errno (%d) says %s", errno, strerror(errno))); 
+        BTL_ERROR(("error posting send request errno says %s", strerror(errno))); 
         return OMPI_ERROR; 
     }
             
