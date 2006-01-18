@@ -614,10 +614,8 @@ grow_heap(h, diff) heap_info *h; long diff;
     new_size = (long)h->size + diff;
     if(new_size < (long)sizeof(*h))
       return -1;
-    /* Try to re-map the extra heap space freshly to save memory, and
-       make it inaccessible. */
-    if((char *)MMAP((char *)h + new_size, -diff, PROT_NONE,
-                    MAP_PRIVATE|MAP_FIXED) == (char *) MAP_FAILED)
+
+    if(mprotect((char *)h + new_size, -diff, PROT_NONE) != 0)
       return -2;
     /*fprintf(stderr, "shrink %p %08lx\n", h, new_size);*/
   }
