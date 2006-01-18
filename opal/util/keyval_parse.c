@@ -45,7 +45,7 @@ opal_util_keyval_parse(const char *filename,
     int val;
     int ret = OPAL_SUCCESS;;
 
-    OPAL_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&keyval_mutex);
 
     keyval_filename = filename;
     keyval_callback = callback;
@@ -85,7 +85,7 @@ opal_util_keyval_parse(const char *filename,
     fclose(opal_util_keyval_yyin);
 
 cleanup:
-    OPAL_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&keyval_mutex);
     return ret;
 }
 
