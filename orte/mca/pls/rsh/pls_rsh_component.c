@@ -157,8 +157,8 @@ int orte_pls_rsh_component_open(void)
     mca_pls_rsh_component.assume_same_shell = tmp;
 
     mca_base_param_reg_string(c, "agent",
-                              "The command used to launch executables on remote nodes (typically either \"rsh\" or \"ssh\")",
-                              false, false, "rsh : ssh",
+                              "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
+                              false, false, "ssh : rsh",
                               &mca_pls_rsh_component.agent_param);
 
     return ORTE_SUCCESS;
