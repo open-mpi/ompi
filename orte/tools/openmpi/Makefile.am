@@ -17,19 +17,6 @@
 # $HEADER$
 #
 
-
-
-AM_CPPFLAGS = \
-            -DOMPI_PREFIX="\"$(prefix)\"" \
-            -DOMPI_BINDIR="\"$(bindir)\"" \
-            -DOMPI_LIBDIR="\"$(libdir)\"" \
-            -DOMPI_INCDIR="\"$(includedir)\"" \
-            -DOMPI_PKGLIBDIR="\"$(pkglibdir)\"" \
-            -DOMPI_SYSCONFDIR="\"$(sysconfdir)\"" \
-            -DOMPI_CONFIGURE_USER="\"@OMPI_CONFIGURE_USER@\"" \
-            -DOMPI_CONFIGURE_HOST="\"@OMPI_CONFIGURE_HOST@\"" \
-            -DOMPI_CONFIGURE_DATE="\"@OMPI_CONFIGURE_DATE@\""
-
 libs = \
         $(top_builddir)/orte/liborte.la \
         $(top_builddir)/opal/libopal.la

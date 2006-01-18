@@ -18,25 +18,6 @@
 
 dist_pkgdata_DATA = help-orteprobe.txt
 
-AM_CPPFLAGS = \
-            -DOMPI_PREFIX="\"$(prefix)\"" \
-            -DOMPI_BINDIR="\"$(bindir)\"" \
-            -DOMPI_LIBDIR="\"$(libdir)\"" \
-            -DOMPI_INCDIR="\"$(includedir)\"" \
-            -DOMPI_PKGLIBDIR="\"$(pkglibdir)\"" \
-            -DOMPI_SYSCONFDIR="\"$(sysconfdir)\"" \
-            -DOMPI_CONFIGURE_USER="\"@OMPI_CONFIGURE_USER@\"" \
-            -DOMPI_CONFIGURE_HOST="\"@OMPI_CONFIGURE_HOST@\"" \
-            -DOMPI_CONFIGURE_DATE="\"@OMPI_CONFIGURE_DATE@\"" \
-            -DOMPI_BUILD_CFLAGS="\"@CFLAGS@\"" \
-            -DOMPI_BUILD_CPPFLAGS="\"@CPPFLAGS@\"" \
-            -DOMPI_BUILD_CXXFLAGS="\"@CXXFLAGS@\"" \
-            -DOMPI_BUILD_CXXCPPFLAGS="\"@CXXCPPFLAGS@\"" \
-            -DOMPI_BUILD_FFLAGS="\"@FFLAGS@\"" \
-            -DOMPI_BUILD_FCFLAGS="\"@FCFLAGS@\"" \
-            -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
-            -DOMPI_BUILD_LIBS="\"@LIBS@\""
-
 libs = \
         $(top_builddir)/orte/liborte.la \
         $(top_builddir)/opal/libopal.la
