@@ -22,15 +22,15 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #if defined(HAVE___MUNMAP)
-/* here so we only include dlfcn if we absolutely have to */
+/* here so we only include others if we absolutely have to */
+#elif defined(HAVE_SYSCALL)
+#include <syscall.h>
+#include <unistd.h>
 #elif defined(HAVE_DLSYM)
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
 #include <dlfcn.h>
-#elif defined(HAVE_SYSCALL)
-#include <syscall.h>
-#include <unistd.h>
 #endif
 
 #include "opal/memoryhooks/memory_internal.h"
@@ -59,7 +59,7 @@ munmap(void* addr, size_t len)
 int
 opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
 {
-#if !defined(HAVE___MUNMAP) && defined(HAVE_DLSYM)
+#if !defined(HAVE___MUNMAP) && !defined(HAVE_SYSCALL) && defined(HAVE_DLSYM)
     static int (*realmunmap)(void*, size_t);
 #endif
 
@@ -67,6 +67,8 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
 
 #if defined(HAVE___MUNMAP)
     return __munmap(start, length);
+#elif defined(HAVE_SYSCALL)
+    return syscall(__NR_munmap, start, length);
 #elif defined(HAVE_DLSYM)
     if (NULL == realmunmap) {
         union { 
@@ -79,8 +81,6 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
     }
 
     return realmunmap(start, length);
-#elif defined(HAVE_SYSCALL)
-    return syscall(__NR_munmap, start, length);
 #else
     #error "Can not determine how to call munmap"
 #endif
