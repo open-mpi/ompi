@@ -33,31 +33,29 @@ extern "C" {
 
 #if OMPI_HAVE_THREAD_SUPPORT
 #define MCA_BML_R2_BTL_DES_ALLOC(btl, descriptor, size)                       \
-do {                                                                                     \
-    if(NULL != (descriptor = btl->btl_cache)) {                                     \
-        /* atomically acquire the cached descriptor */                                   \
-        if(opal_atomic_cmpset_ptr(&btl->btl_cache, descriptor, NULL) == 0) {        \
-            btl->btl_cache = NULL;                                                  \
-        } else {                                                                         \
+do {                                                                          \
+    if(NULL != (descriptor = btl->btl_cache)) {                               \
+        /* atomically acquire the cached descriptor */                        \
+        if(opal_atomic_cmpset_ptr(&btl->btl_cache, descriptor, NULL) == 0) {  \
             descriptor = btl->btl_alloc(btl->btl, sizeof(mca_bml_r2_hdr_t) +  \
-               MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));               \
-        }                                                                                \
-    } else {                                                                             \
+               MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));    \
+        }                                                                     \
+    } else {                                                                  \
             descriptor = btl->btl_alloc(btl->btl, sizeof(mca_bml_r2_hdr_t) +  \
-                MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));              \
-    }                                                                                    \
-    descriptor->des_src->seg_len = size;                                                 \
+                MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));   \
+    }                                                                         \
+    descriptor->des_src->seg_len = size;                                      \
 } while(0)
 #else
 #define MCA_BML_R2_BTL_DES_ALLOC(btl, descriptor, size)                       \
-do {                                                                                     \
-    if(NULL != (descriptor = btl->btl_cache)) {                                     \
-        btl->btl_cache = NULL;                                                      \
-    } else {                                                                             \
+do {                                                                          \
+    if(NULL != (descriptor = btl->btl_cache)) {                               \
+        btl->btl_cache = NULL;                                                \
+    } else {                                                                  \
         descriptor = btl->btl_alloc(btl->btl, sizeof(mca_bml_r2_hdr_t) +      \
-            MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));                  \
-    }                                                                                    \
-    descriptor->des_src->seg_len = size;                                                 \
+            MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));       \
+    }                                                                         \
+    descriptor->des_src->seg_len = size;                                      \
 } while(0)
 #endif
 
@@ -67,23 +65,19 @@ do {                                                                            
 
 #if OMPI_HAVE_THREAD_SUPPORT
 #define MCA_BML_R2_BTL_DES_RETURN(btl, descriptor)                            \
-do {                                                                                     \
-    if(NULL == btl->btl_cache) {                                                    \
-        if(opal_atomic_cmpset_ptr(&btl->btl_cache,NULL,descriptor) == 0) {          \
-             btl->btl_free(btl->btl,descriptor);                               \
-        }                                                                                \
-    } else {                                                                             \
-        btl->btl_free(btl->btl,descriptor);                                    \
-    }                                                                          \
+do {                                                                          \
+    if(opal_atomic_cmpset_ptr(&btl->btl_cache,NULL,descriptor) == 0) {        \
+        btl->btl_free(btl->btl,descriptor);                                   \
+    }                                                                         \
 } while(0)
 #else
 #define MCA_BML_R2_BTL_DES_RETURN(btl, descriptor)                            \
-do {                                                                                     \
-    if(NULL == btl->btl_cache) {                                                    \
-        btl->btl_cache = descriptor;                                                \
-    } else {                                                                             \
-        btl->btl_free(endpoint->btl,descriptor);                                    \
-    }                                                                                    \
+do {                                                                          \
+    if(NULL == btl->btl_cache) {                                              \
+        btl->btl_cache = descriptor;                                          \
+    } else {                                                                  \
+        btl->btl_free(endpoint->btl,descriptor);                              \
+    }                                                                         \
 } while(0)
 #endif
 
