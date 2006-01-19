@@ -128,9 +128,9 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     mca_mpool_sm_module_init(mpool_module); 
     
     /* create initial shared memory mapping */
-    len=asprintf(&file_name,"%s/shared_mem_pool.%s",
-            orte_process_info.job_session_dir,
-            orte_system_info.nodename);
+    len = asprintf( &file_name, "%sshared_mem_pool.%s",
+                    orte_process_info.job_session_dir,
+                    orte_system_info.nodename );
     if ( 0 > len ) {
         return NULL;
     }
@@ -141,8 +141,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
                  file_name,sizeof(mca_common_sm_mmap_t), 8 )
              )) 
     {
+        opal_output(0, "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
         free(file_name);
-        opal_output(0, "mca_mpool_sm_init: unable to create shared memory mapping");
         return NULL;
     }
     free(file_name);
@@ -161,13 +161,4 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
    
     return &mpool_module->super;
 }
-
-
-
-
-
-
-
-
-
 
