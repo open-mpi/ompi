@@ -29,6 +29,13 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed openib BTL flow control logic to not overrun the number of
+  send wqes available.
+- Update to match newest OpenIB user-level library API.  Thanks to
+  Roland Dreier for submitting this patch.
+- Report errors properly when failing to register memory in the openib
+  BTL.
+- Reduce memory footprint of openib BTL.
 - Fix parsing problem with mpirun's "-tv" switch.  Thanks to Chris
   Gottbrath for supplying the fix.
 - Fix Darwin net/if.h configure warning.
