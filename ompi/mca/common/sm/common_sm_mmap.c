@@ -165,8 +165,15 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                                 0);             /* default: map entire file */
     }
     seg = (mca_common_sm_file_header_t*)lpvMem;
-    if( NULL == lpvMem )
+    if( NULL == lpvMem ) {
+        int rc = GetLastError();
+        char* localbuf = NULL;
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                       NULL, rc, 0, (LPTSTR)&localbuf, 1024, NULL );
+        opal_output( 0, "%s\n", localbuf );
+        LocalFree( localbuf );
         goto return_error;
+    }
 #endif  /* !defined(__WINDOWS__) */
 
     /* set up the map object */
