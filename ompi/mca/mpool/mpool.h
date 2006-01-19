@@ -39,7 +39,7 @@ struct mca_mpool_base_registration_t {
     unsigned char* bound; 
     unsigned char* alloc_base;
     void* user_data; 
-    uint32_t ref_count; 
+    int32_t ref_count; 
     uint32_t flags;
 };  
 
