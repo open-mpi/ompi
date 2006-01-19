@@ -64,7 +64,7 @@ char *opal_os_path(bool relative, ...)
 
     if (0 == num_elements) { /* must be looking for a simple answer */
     	path = (char *)malloc(3);
-            path[0] = '\0';
+        path[0] = '\0';
     	if (relative) {
     	    strcpy(path, ".");
             strcat(path, path_sep);
@@ -79,21 +79,30 @@ char *opal_os_path(bool relative, ...)
 
     /* setup path with enough room for the string terminator, the elements, and
        the separator between each of the elements */
-    total_length = total_length + num_elements + 1;
+    total_length = total_length + num_elements * strlen(path_sep) + 1;
     if (total_length > MAXPATHLEN) {  /* path length is too long - reject it */
     	return(NULL);
     }
 
-    path = (char *)malloc(2 + total_length + num_elements-1);
+    path = (char *)malloc(total_length);
     if (NULL == path) {
-	   return(NULL);
+        return(NULL);
     }
     path[0] = 0;
 
     if (relative) {
-	   strcpy(path, ".");
+        strcpy(path, ".");
     }
 
+    /* Windows does not require to have the initial separator. */
+    if( NULL != (element=va_arg(ap1, char*)) ) {
+#ifndef __WINDOWS__
+    	if (path_sep[0] != element[0]) {
+            strcat(path, path_sep);
+        }
+#endif  /* __WINDOWS__ */
+        strcat(path, element);
+    }
     while (NULL != (element=va_arg(ap1, char*))) {
     	if (path_sep[0] != element[0]) {
             strcat(path, path_sep);
