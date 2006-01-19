@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -141,7 +141,10 @@ void orte_totalview_cmd_line_process(opal_cmd_line_t *cmd, char *basename,
         opal_argv_append_nosize(&new_argv, argv[0]);
         opal_argv_append_nosize(&new_argv, "-a");
         for (i = 1; i < argc; ++i) {
-            opal_argv_append_nosize(&new_argv, argv[i]);
+            if (0 != strcmp(argv[i], "-tv") &&
+                0 != strcmp(argv[i], "--tv")) {
+                opal_argv_append_nosize(&new_argv, argv[i]);
+            }
         }
 
         execvp(new_argv[0], new_argv);
