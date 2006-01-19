@@ -761,7 +761,7 @@ int mca_base_param_finalize(void)
 
 static int read_files(char *file_list)
 {
-    int i, index, count;
+    int i, count;
     char **files;
 
     /* Iterate through all the files passed in -- read them in reverse
@@ -774,24 +774,29 @@ static int read_files(char *file_list)
 #ifdef __WINDOWS__
     /* Windows use : as a delimiter between the drive name and the path
      * Hopefuly, the drive name is limitted to one letter, so we can parse
-     * the files array as merge all of them.
+     * the files array and merge all one letter char* with the next. I hope
+     * nobody plan to have a one letter path on UNIX.
      */
-    for( index = i = 0; i < count; i++ ) {
-        if( (1 == strlen(files[i])) && (isalpha(files[i][0])) ) {
-            int length = 4 + strlen(files[i+1]);
-            char* temp = (char*)malloc( length );
-            snprintf( temp, length, "%s:%s", files[i], files[i+1] );
-            temp[3+strlen(files[i+1])] = '\0';
-            free(files[i]);
-            free(files[i+1]);
-            files[index++] = temp;
-            i++;
-        } else {
-            files[index++] = files[i];
+    {
+        int index;
+
+        for( index = i = 0; i < count; i++ ) {
+            if( (1 == strlen(files[i])) && (isalpha(files[i][0])) ) {
+                int length = 4 + strlen(files[i+1]);
+                char* temp = (char*)malloc( length );
+                snprintf( temp, length, "%s:%s", files[i], files[i+1] );
+                temp[3+strlen(files[i+1])] = '\0';
+                free(files[i]);
+                free(files[i+1]);
+                files[index++] = temp;
+                i++;
+            } else {
+                files[index++] = files[i];
+            }
         }
+        count = index;
+        files[index] = NULL;  /* force the final NULL */
     }
-    count = index;
-    files[index] = NULL;
 #endif
 
     for (i = count - 1; i >= 0; --i) {
