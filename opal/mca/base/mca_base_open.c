@@ -65,11 +65,7 @@ int mca_base_open(void)
 
   /* Register some params */
 
-#ifdef __WINDOWS__
-  asprintf(&value, "%s;~/.openmpi/components", OMPI_PKGLIBDIR);
-#else
   asprintf(&value, "%s:~/.openmpi/components", OMPI_PKGLIBDIR);
-#endif
   mca_base_param_component_path = 
     mca_base_param_reg_string_name("mca", "component_path",
                                    "Path where to look for Open MPI and ORTE components", 
