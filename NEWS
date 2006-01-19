@@ -1,4 +1,4 @@
-Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
 Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -29,6 +29,8 @@ version 1.0.
 1.0.2
 -----
 
+- Fix parsing problem with mpirun's "-tv" switch.  Thanks to Chris
+  Gottbrath for supplying the fix.
 - Fix Darwin net/if.h configure warning.
 - The GNU assembler unbelievably defaults to making stacks executable.
   So when using gas, add flags to explicitly tell it to not make

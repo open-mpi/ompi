@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -153,7 +153,7 @@ static int process(char *orig_line, char *basename, int argc, char **argv,
         return ORTE_ERROR;
     }
 
-    /* Remove --debug and --debugger from the user command line
+    /* Remove --debug, --debugger, and -tv from the user command line
        params */
 
     if (1 == argc) {
@@ -163,6 +163,10 @@ static int process(char *orig_line, char *basename, int argc, char **argv,
         for (i = 0; NULL != tmp_argv[i]; ++i) {
             if (0 == strcmp(tmp_argv[i], "-debug") ||
                 0 == strcmp(tmp_argv[i], "--debug")) {
+                free(tmp_argv[i]);
+                tmp_argv[i] = strdup("");
+            } else if (0 == strcmp(tmp_argv[i], "-tv") ||
+                0 == strcmp(tmp_argv[i], "--tv")) {
                 free(tmp_argv[i]);
                 tmp_argv[i] = strdup("");
             } else if (0 == strcmp(tmp_argv[i], "--debugger") ||
