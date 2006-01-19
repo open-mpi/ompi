@@ -101,16 +101,11 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     orte_iof.iof_flush();
 
     /* set the state of this process */
-#ifdef __WINDOWS__
-    printf("Unimplemented feature for windows\n");
-    rc = ORTE_ERROR;
-#else
     if(WIFEXITED(status)) {
         rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
     } else {
         rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, status);
     }
-#endif
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
@@ -165,9 +160,6 @@ static int orte_pls_fork_proc(
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-#ifdef __WINDOWS__
-    printf("Unimplemented feature for windows\n");
-    return ORTE_ERROR;
 #if 0
  {
     /* Do fork the windows way: see opal_few() for example */
@@ -199,9 +191,7 @@ static int orte_pls_fork_proc(
  }
 #endif
 
-#else
     pid = fork();
-#endif
     if(pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -348,20 +338,16 @@ static int orte_pls_fork_proc(
 
         set_handler_default(SIGTERM);
         set_handler_default(SIGINT);
-#ifndef __WINDOWS__
         set_handler_default(SIGHUP);
         set_handler_default(SIGPIPE);
-#endif
         set_handler_default(SIGCHLD);
         
         /* Unblock all signals, for many of the same reasons that we
            set the default handlers, above.  This is noticable on
            Linux where the event library blocks SIGTERM, but we don't
            want that blocked by the launched process. */
-#ifndef __WINDOWS__
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
-#endif
 
         /* Exec the new executable */
 
@@ -619,7 +605,6 @@ static int orte_pls_fork_launch_threaded(orte_jobid_t jobid)
 
 static void set_handler_default(int sig)
 {
-#ifndef __WINDOWS__
     struct sigaction act;
 
     act.sa_handler = SIG_DFL;
@@ -627,5 +612,4 @@ static void set_handler_default(int sig)
     sigemptyset(&act.sa_mask);
 
     sigaction(sig, &act, (struct sigaction *)0);
-#endif
 }
