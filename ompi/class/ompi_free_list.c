@@ -111,7 +111,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
             num_elements = flist->fl_max_to_alloc - flist->fl_num_allocated;
 
     if (num_elements == 0)
-   return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (NULL != flist->fl_mpool)
         alloc_ptr = flist->fl_mpool->mpool_alloc(flist->fl_mpool, 
@@ -138,17 +138,26 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         ptr += (CACHE_LINE_SIZE - mod);
     }
 
-    for(i=0; i<num_elements; i++) {
-        ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
-        item->user_data = user_out; 
-        if (NULL != flist->fl_elem_class) {
+    if (NULL != flist->fl_elem_class) {
+        for(i=0; i<num_elements; i++) {
+            ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
+            item->user_data = user_out; 
+
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
-        } else { 
-            OBJ_CONSTRUCT(&item->super, opal_list_item_t); 
+
+            opal_list_append(&(flist->super), &(item->super));
+            ptr += flist->fl_elem_size;
         }
+    } else {
+        for(i=0; i<num_elements; i++) {
+            ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
+            item->user_data = user_out; 
+
+            OBJ_CONSTRUCT(&item->super, opal_list_item_t); 
         
-        opal_list_append(&(flist->super), &(item->super));
-        ptr += flist->fl_elem_size;
+            opal_list_append(&(flist->super), &(item->super));
+            ptr += flist->fl_elem_size;
+        }
     }
     flist->fl_num_allocated += num_elements;
     return OMPI_SUCCESS;
