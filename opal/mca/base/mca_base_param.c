@@ -133,7 +133,6 @@ int mca_base_param_init(void)
         initialized = true;
 
         /* We may need this later */
-
         home = getenv("HOME");
 
         /* Initialize a parameter that says where MCA param files can
@@ -762,7 +761,7 @@ int mca_base_param_finalize(void)
 
 static int read_files(char *file_list)
 {
-    int i;
+    int i, index, count;
     char **files;
 
     /* Iterate through all the files passed in -- read them in reverse
@@ -770,7 +769,32 @@ static int read_files(char *file_list)
        the entries farthest to the left get precedence) */
 
     files = opal_argv_split(file_list, ':');
-    for (i = opal_argv_count(files) - 1; i >= 0; --i) {
+    count = opal_argv_count(files);
+
+#ifdef __WINDOWS__
+    /* Windows use : as a delimiter between the drive name and the path
+     * Hopefuly, the drive name is limitted to one letter, so we can parse
+     * the files array as merge all of them.
+     */
+    for( index = i = 0; i < count; i++ ) {
+        if( (1 == strlen(files[i])) && (isalpha(files[i][0])) ) {
+            int length = 4 + strlen(files[i+1]);
+            char* temp = (char*)malloc( length );
+            snprintf( temp, length, "%s:%s", files[i], files[i+1] );
+            temp[3+strlen(files[i+1])] = '\0';
+            free(files[i]);
+            free(files[i+1]);
+            files[index++] = temp;
+            i++;
+        } else {
+            files[index++] = files[i];
+        }
+    }
+    count = index;
+    files[index] = NULL;
+#endif
+
+    for (i = count - 1; i >= 0; --i) {
         mca_base_parse_paramfile(files[i]);
     }
     opal_argv_free(files);
@@ -1195,7 +1219,11 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
         if (MCA_BASE_PARAM_TYPE_STRING == array[index].mbp_type &&
             NULL != storage->stringval) {
             if (0 == strncmp(storage->stringval, "~/", 2)) {
-                asprintf(&p, "%s/%s", home, storage->stringval + 2);
+                if( NULL == home ) {
+                    asprintf(&p, "%s", storage->stringval + 2);
+                } else {
+                    asprintf(&p, "%s/%s", home, storage->stringval + 2);
+                }
                 free(storage->stringval);
                 storage->stringval = p;
             }
@@ -1203,7 +1231,11 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
             p = strstr(storage->stringval, ":~/");
             while (NULL != p) {
                 *p = '\0';
-                asprintf(&q, "%s:%s%s", storage->stringval, home, p + 2);
+                if( NULL == home ) {
+                    asprintf(&q, "%s:%s", storage->stringval, p + 2);
+                } else {
+                    asprintf(&q, "%s:%s%s", storage->stringval, home, p + 2);
+                }
                 free(storage->stringval);
                 storage->stringval = q;
                 p = strstr(storage->stringval, ":~/");
