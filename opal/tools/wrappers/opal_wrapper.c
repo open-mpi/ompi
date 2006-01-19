@@ -272,7 +272,7 @@ main(int argc, char *argv[])
     int exit_status = 0, ret, flags = 0, i;
     int exec_argc = 0, user_argc = 0;
     char **exec_argv = NULL, **user_argv = NULL;
-    char *exec_command, *base_argv0;
+    char *exec_command, *base_argv0 = NULL;
     bool disable_flags = true;
     bool real_flag = false;
 
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
      *
      ****************************************************/
 
-    base_argv0 = basename(argv[0]);
+    base_argv0 = strdup(basename(argv[0]));
     if (OPAL_SUCCESS != (ret = data_init(base_argv0))) {
         return ret;
     }
@@ -511,7 +511,7 @@ main(int argc, char *argv[])
     } else {
         char *tmp;
 
-#if 1
+#if 0
         exec_command = opal_argv_join(exec_argv, ' ');
         printf("command: %s\n", exec_command);
 #endif
