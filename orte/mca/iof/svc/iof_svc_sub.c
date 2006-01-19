@@ -99,7 +99,6 @@ int orte_iof_svc_sub_create(
     sub->dst_mask = dst_mask;
     sub->dst_tag = dst_tag;
     sub->sub_endpoint = orte_iof_base_endpoint_match(&sub->dst_name, sub->dst_mask, sub->dst_tag);
-    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
 
     /* search through published endpoints for a match */
     for(item  = opal_list_get_first(&mca_iof_svc_component.svc_published);
