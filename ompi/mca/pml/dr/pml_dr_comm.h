@@ -35,7 +35,7 @@ extern "C" {
 struct mca_pml_dr_comm_proc_t {
     opal_object_t super;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
-    uint32_t vfrag_id;             /**< virtual fragment identifier */
+    int32_t vfrag_id;              /**< virtual fragment identifier */
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t send_sequence; /**< send side sequence number */
 #else
