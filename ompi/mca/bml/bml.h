@@ -228,6 +228,9 @@ static inline  void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base
 
 static inline void mca_bml_base_free(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
     bml_btl->btl_free( bml_btl->btl, des );   
+    /* The previous function is supposed to release the des object
+     * so we should not touch it anymore.
+     */
 }
 
 static inline int mca_bml_base_send(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des, mca_btl_base_tag_t tag) { 
@@ -294,65 +297,59 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
     }
 }
 
-
-
-
 #if OMPI_HAVE_THREAD_SUPPORT
-#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, alloc_size, seg_size)                   \
-do  {                                                                                    \
-     if(NULL != (des = bml_btl->btl_cache)) {                                            \
-        /* atomically acquire the cached descriptor */                                   \
-        if(opal_atomic_cmpset_ptr(&bml_btl->btl_cache, des, NULL) == 0) {                \
-            bml_btl->btl_cache = NULL;                                                   \
-        } else {                                                                         \
-            des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);                          \
-        }                                                                                \
-    } else {                                                                             \
-            des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);                          \
-    }                                                                                    \
-    des->des_src->seg_len = seg_size;                                                    \
-    des->des_context = (void*) bml_btl;                                                  \
-} while(0)                                                                               
+#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, alloc_size, seg_size)  \
+    do {                                                                \
+        mca_btl_base_descriptor_t* des;                                 \
+                                                                        \
+        if( NULL != (des = bml_btl->btl_cache) ) {                      \
+            /* atomically acquire the cached descriptor */              \
+            if(opal_atomic_cmpset_ptr(&bml_btl->btl_cache,              \
+                                      des, NULL) == 0) {                \
+                des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);     \
+            }                                                           \
+        } else {                                                        \
+            des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);         \
+        }                                                               \
+        des->des_src->seg_len = seg_size;                               \
+        des->des_context = (void*) bml_btl;                             \
+    } while(0)
 #else
-#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, descriptor, alloc_size, seg_size)            \
-do {                                                                                     \
-    if(NULL != (descriptor = bml_btl->btl_cache)) {                                      \
-        bml_btl->btl_cache = NULL;                                                       \
-    } else {                                                                             \
-        descriptor = bml_btl->btl_alloc(bml_btl->btl, alloc_size);                       \
-    }                                                                                    \
-    descriptor->des_src->seg_len = seg_size;                                             \
-    descriptor->des_context = (void*) bml_btl;                                           \
-} while(0)
-#endif
-
+#define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, alloc_size, seg_size)  \
+    do {                                                                \
+        mca_btl_base_descriptor_t* des;                                 \
+                                                                        \
+        if( NULL != (des = bml_btl->btl_cache) ) {                      \
+            bml_btl->btl_cache = NULL;                                  \
+        } else {                                                        \
+            des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);         \
+        }                                                               \
+        des->des_src->seg_len = seg_size;                               \
+        des->des_context = (void*) bml_btl;                             \
+    } while(0)
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 /**
  * Return a descriptor
  */
-
 #if OMPI_HAVE_THREAD_SUPPORT
-#define MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor )                               \
-do {                                                                                     \
-    if(NULL == bml_btl->btl_cache) {                                                     \
-        if(opal_atomic_cmpset_ptr(&bml_btl->btl_cache,NULL,descriptor) == 0) {           \
-             bml_btl->btl_free(bml_btl->btl,descriptor);                                 \
-        }                                                                                \
-    } else {                                                                             \
-        bml_btl->btl_free(bml_btl->btl,descriptor);                                      \
-    }                                                                                    \
-} while(0)
+#define MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor )              \
+    do {                                                                \
+        if( opal_atomic_cmpset_ptr(&bml_btl->btl_cache,                 \
+                                   NULL,descriptor) == 0 ) {            \
+            bml_btl->btl_free( bml_btl->btl, descriptor );              \
+        }                                                               \
+    } while (0)
 #else
-#define MCA_BML_BASE_BTL_DES_RETURN(bml_btl, descriptor)                                 \
-do {                                                                                     \
-    if(NULL == bml_btl->btl_cache) {                                                     \
-        bml_btl->btl_cache = descriptor;                                                 \
-    } else {                                                                             \
-        bml_btl->btl_free(bml_btl->btl,descriptor);                                      \
-    }                                                                                    \
-} while(0)
-#endif
-
+#define MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor ) \
+    do {                                                   \
+        if( NULL == bml_btl->btl_cache ) {                 \
+            bml_btl->btl_cache = descriptor;               \
+        } else {                                           \
+            bml_btl->btl_free( bml_btl->btl, descriptor ); \
+        }                                                  \
+    } while(0)
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 /*
  *  BML component interface functions and datatype.
