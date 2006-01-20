@@ -23,6 +23,7 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed some errors caused by threading issues.
 - Fixed openib BTL flow control logic to not overrun the number of
   send wqes available.
 - Update to match newest OpenIB user-level library API.  Thanks to
