@@ -45,15 +45,11 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
  */
 inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 {
-    ompi_datatype_t* datatype = (ompi_datatype_t*)convertor->pDesc;
-
     if( convertor->stack_size > DT_STATIC_STACK_SIZE ) {
         free( convertor->pStack );
         convertor->pStack     = convertor->static_stack;
         convertor->stack_size = DT_STATIC_STACK_SIZE;
     }
-    if( !(CONVERTOR_CLONE & convertor->flags) )
-        if( NULL != datatype ) OBJ_RELEASE( datatype );
     convertor->pDesc     = NULL;
     convertor->flags     = CONVERTOR_HOMOGENEOUS;
     convertor->stack_pos = 0;
@@ -180,25 +176,27 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 }
 
 static inline
-int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor,
+int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
                                              const int* sizes )
 {
-    dt_stack_t* pStack = pConvertor->pStack;
+    dt_stack_t* pStack = convertor->pStack;
     dt_elem_desc_t* pElems;
 
-    pConvertor->stack_pos = 1;
+    convertor->stack_pos      = 1;
+    convertor->pending_length = 0;
+    convertor->bConverted     = 0;
     /* Fill the first position on the stack. This one correspond to the
      * last fake DT_END_LOOP that we add to the data representation and
      * allow us to move quickly inside the datatype when we have a count.
      */
     pStack[0].index = -1;
-    pStack[0].count = pConvertor->count;
+    pStack[0].count = convertor->count;
     pStack[0].disp  = 0;
-    pStack[0].end_loop = pConvertor->use_desc->used;
+    pStack[0].end_loop = convertor->use_desc->used;
     /* The prepare function already make the selection on which data representation
      * we have to use: normal one or the optimized version ?
      */
-    pElems = pConvertor->use_desc->desc;
+    pElems = convertor->use_desc->desc;
 
     pStack[1].index = 0;
     pStack[1].disp = 0;
@@ -208,12 +206,11 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor,
     } else {
         pStack[1].count = pElems[0].elem.count;
     }
-    pConvertor->bConverted = 0;
     return OMPI_SUCCESS;
 }
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
+extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
 
 inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t* position )
@@ -281,18 +278,14 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
 
     convertor->pBaseBuf        = (void*)pUserBuf;
     convertor->count           = count;
-    convertor->stack_pos       = 0;
 
     assert( datatype != NULL );
-    OBJ_RETAIN( datatype );
     /* As we change (or set) the datatype on this convertor we should reset the datatype
      * part of the convertor flags to the default value.
      */
     convertor->flags         &= CONVERTOR_TYPE_MASK;
     convertor->flags         |= (CONVERTOR_DATATYPE_MASK & datatype->flags);
     convertor->pDesc          = (ompi_datatype_t*)datatype;
-    convertor->bConverted     = 0;
-    convertor->pending_length = 0;
 
     /* Decide which data representation will be used for the conversion. */
     if( (NULL != datatype->opt_desc.desc) && (convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
