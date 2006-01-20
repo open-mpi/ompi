@@ -289,22 +289,16 @@ do {                                                                            
 
 #define MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq)                                         \
 do {                                                                                      \
-    bool schedule = false;                                                                \
-                                                                                          \
     /* has an acknowledgment been received */                                             \
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {                                  \
-        OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
         if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {          \
+            OPAL_THREAD_LOCK(&ompi_request_lock);                                         \
             MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);                               \
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);                                       \
         } else {                                                                          \
-            schedule = true;                                                              \
+            /* additional data to schedule */                                             \
+            mca_pml_ob1_send_request_schedule(sendreq);                                   \
         }                                                                                 \
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
-    }                                                                                     \
-                                                                                          \
-    /* additional data to schedule */                                                     \
-    if(schedule == true) {                                                                \
-        mca_pml_ob1_send_request_schedule(sendreq);                                       \
     }                                                                                     \
 } while (0)
 
