@@ -1592,10 +1592,10 @@ AC_CONFIG_FILES([
 
     ompi/tools/ompi_info/Makefile
     ompi/tools/wrappers/Makefile
-    ompi/tools/wrappers/ompicc-wrapper-data.txt
-    ompi/tools/wrappers/ompic++-wrapper-data.txt
-    ompi/tools/wrappers/ompif77-wrapper-data.txt
-    ompi/tools/wrappers/ompif90-wrapper-data.txt
+    ompi/tools/wrappers/mpicc-wrapper-data.txt
+    ompi/tools/wrappers/mpic++-wrapper-data.txt
+    ompi/tools/wrappers/mpif77-wrapper-data.txt
+    ompi/tools/wrappers/mpif90-wrapper-data.txt
 
     test/Makefile
     test/asm/Makefile
