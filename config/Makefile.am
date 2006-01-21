@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -49,6 +49,7 @@ EXTRA_DIST = \
         ompi_configure_options.m4 \
         ompi_functions.m4 \
         ompi_get_version.m4 \
+        ompi_get_version.m4sh \
         ompi_get_version.sh \
         ompi_make_stripped_flags.m4 \
         ompi_mca.m4 \

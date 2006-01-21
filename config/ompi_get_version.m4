@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,70 +18,68 @@ dnl $HEADER$
 dnl
 
 dnl
-dnl This file is almost identical in functionality to
-dnl ompi_get_version.sh.  It is unfortunate that we have to duplicate code,
-dnl but it is really the only what that I can think to do it.  :-( Hence,
-dnl if you change the logic here for determining version numbers, YOU MUST
-dnl ALSO CHANGE IT IN ompi_get_version.sh!!
-dnl 
+dnl This file is also used as input to ompi_get_version.sh.
+dnl
 
-AC_DEFUN([OMPI_GET_VERSION],[
-gv_ver_file="$1"
-gv_prefix="$2"
+# OMPI_GET_VERSION(version_file, variable_prefix)
+# -----------------------------------------------
+# parse version_file for version information, setting
+# the following shell variables:
+#  
+#  prefix_VERSION
+#  prefix_BASE_VERSION
+#  prefix_MAJOR_VERSION
+#  prefix_MINOR_VERSION
+#  prefix_RELEASE_VERSION
+#  prefix_GREEK_VERSION
+#  prefix_WANT_SVN
+#  prefix_SVN_R
+m4_define([OMPI_GET_VERSION],[
+    : ${ompi_ver_need_svn=1}
+    : ${srcdir=.}
 
-dnl quote eval to suppress macro expansion with non-GNU m4
+    dnl quote eval to suppress macro expansion with non-GNU m4
+    if test -f "$1"; then
+        [eval] "`sed -n \"\
+	t clear
+	: clear
+	s/^major/$2_MAJOR_VERSION/
+	s/^minor/$2_MINOR_VERSION/
+	s/^release/$2_RELEASE_VERSION/
+	s/^greek/$2_GREEK_VERSION/
+	s/^want_svn/$2_WANT_SVN/
+	s/^svn_r/$2_SVN_R/
+	t print
+	b
+	: print
+	p\" < \"\$1\"`"
 
-gv_run() {
-    str="${gv_prefix}_${2}=\$gv_${1}"
-   [eval] $str
-}
-
-if test -n "$gv_ver_file" -a -f "$gv_ver_file"; then
-    gv_major_version="`egrep '^major=' $gv_ver_file | cut -d= -f2`"
-    gv_minor_version="`egrep '^minor=' $gv_ver_file | cut -d= -f2`"
-    gv_release_version="`egrep '^release=' $gv_ver_file | cut -d= -f2`"
-    gv_greek_version="`egrep '^greek=' $gv_ver_file | cut -d= -f2`"
-    gv_want_svn="`egrep '^want_svn=' $gv_ver_file | cut -d= -f2`"
-    gv_svn_r="`egrep '^svn_r=' $gv_ver_file | cut -d= -f2`"
-
-    if test -n "$gv_release_version" -a "$gv_release_version" != "0"; then
-	gv_full_version="$gv_major_version.$gv_minor_version.$gv_release_version"
-    else
-	gv_full_version="$gv_major_version.$gv_minor_version"
-    fi
-
-    gv_full_version="${gv_full_version}${gv_greek_version}"
-
-    if test "$gv_want_svn" = "1"; then
-        if test "$gv_svn_r" = "-1"; then
-            if test -d "$srcdir/.svn"; then
-                ver=r`svnversion "$srcdir"`
-                # make sure svnversion worked
-                if test "$?" != "0" ; then
-                    ver=svn`date '+%m%d%Y'` 
-                fi
-            else
-                ver=svn`date '+%m%d%Y'`
-            fi
-            gv_svn_r="$ver"
+        # Only print release version if it isn't 0
+        if test $$2_RELEASE_VERSION -ne 0 ; then
+            $2_VERSION="$$2_MAJOR_VERSION.$$2_MINOR_VERSION.$$2_RELEASE_VERSION"
+        else
+            $2_VERSION="$$2_MAJOR_VERSION.$$2_MINOR_VERSION"
         fi
-	gv_full_version="${gv_full_version}$gv_svn_r"
+        $2_VERSION="${$2_VERSION}${$2_GREEK_VERSION}"
+        $2_BASE_VERSION=$$2_VERSION
+
+        if test $$2_WANT_SVN -eq 1 && test $ompi_ver_need_svn -eq 1 ; then
+            if test $$2_SVN_R -eq -1 ; then
+                m4_ifdef([AC_MSG_CHECKING],
+                         [AC_MSG_CHECKING([for SVN version])])
+                if test -d "$srcdir/.svn" ; then
+                    $2_SVN_R=r`svnversion "$srcdir"`
+                    # make sure svnversion worked
+                    if test $? -ne 0 ; then
+                        $2_SVN_R=svn`date '+%m%d%Y'` 
+                    fi
+                else
+                    $2_SVN_R=svn`date '+%m%d%Y'`
+                fi
+                m4_ifdef([AC_MSG_RESULT],
+                         [AC_MSG_RESULT([done])])
+            fi
+            $2_VERSION="${$2_VERSION}${$2_SVN_R}"
+        fi
     fi
-
-    # Set the values
-
-    gv_run full_version    VERSION
-    gv_run major_version   MAJOR_VERSION
-    gv_run minor_version   MINOR_VERSION
-    gv_run release_version RELEASE_VERSION
-    gv_run greek_version   GREEK_VERSION
-    gv_run want_svn        WANT_SVN
-    gv_run svn_r           SVN_R
-fi
-
-# Clean up
-
-unset gv_glv_dir gv_ver_file gv_prefix gv_prog gv_run \
-    gv_major_version gv_minor_version gv_release_version \
-    gv_greek_version gv_want_svn gv_svn_r
 ])
