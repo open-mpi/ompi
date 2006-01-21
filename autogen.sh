@@ -1,6 +1,6 @@
 #! /bin/bash 
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -40,6 +40,10 @@ ompi_autoconf_search="autoconf"
 if test ! -z "$AUTOCONF"; then
     ompi_autoconf_search="$AUTOCONF"
 fi
+ompi_autom4te_search="autom4te"
+if test ! -z "$AUTOM4TE"; then
+    ompi_autom4te_search="$AUTOM4TE"
+fi
 ompi_libtoolize_search="libtoolize;glibtoolize"
 if test ! -z "$LIBTOOLIZE"; then
     ompi_libtoolize_search="$LIBTOOLIZE"
@@ -63,6 +67,7 @@ ompi_libtool_version="1.5.16"
 ompi_aclocal_version="$ompi_automake_version"
 ompi_autoheader_version="$ompi_autoconf_version"
 ompi_libtoolize_version="$ompi_libtool_version"
+ompi_autom4te_version="$ompi_autoconf_version"
 
 # program names to execute
 ompi_aclocal=""
@@ -374,6 +379,12 @@ EOF
     # Run the GNU tools
 
     echo "*** Running GNU tools"
+
+    if test -f include/mpi.h.in; then
+	cd config
+	run_and_check $ompi_autom4te --language=m4sh ompi_get_version.m4sh -o ompi_get_version.sh
+	cd ..
+    fi
 
     run_and_check $ompi_aclocal
     if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
@@ -1088,6 +1099,7 @@ EOF
 fi
 
 # find all the apps we are going to run
+find_app "autom4te"
 find_app "aclocal"
 find_app "autoheader"
 find_app "autoconf"

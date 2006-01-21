@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -48,9 +48,18 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define])
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
+#
+# Start it up
+#
+
+OMPI_CONFIGURE_SETUP
+ompi_show_title "Configuring Open MPI"
+
+ompi_show_subtitle "Checking versions"
+
 # Get the version of OMPI that we are installing
 
-OMPI_GET_VERSION($srcdir/VERSION, OMPI)
+OMPI_GET_VERSION([$srcdir/VERSION], OMPI)
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -140,14 +149,6 @@ AC_DEFINE_UNQUOTED(OPAL_GREEK_VERSION, "$OPAL_GREEK_VERSION",
 AC_DEFINE_UNQUOTED(OPAL_VERSION, "$OPAL_RELEASE_VERSION",
     [Complete release number of OPAL])
 
-#
-# Start it up
-#
-
-OMPI_CONFIGURE_SETUP
-ompi_show_title "Configuring Open MPI"
-
-ompi_show_subtitle "Checking versions"
 AC_MSG_CHECKING([Open MPI version])
 AC_MSG_RESULT([$OMPI_VERSION])
 AC_MSG_CHECKING([Open MPI Subversion repository version])
