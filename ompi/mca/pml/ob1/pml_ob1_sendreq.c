@@ -205,7 +205,7 @@ static void mca_pml_ob1_rget_completion(
     if (sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
     }
-    OPAL_THREAD_LOCK(&ompi_request_lock);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* release resources */
     btl->btl_free(btl,des);
@@ -874,7 +874,7 @@ static void mca_pml_ob1_put_completion(
     if(NULL == fin) {
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
-        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
         goto cleanup;
     }
     fin->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -898,7 +898,7 @@ static void mca_pml_ob1_put_completion(
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
             opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
-            OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+            OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
         } else {
             /* TSW - FIX */
             ORTE_ERROR_LOG(rc);
