@@ -149,27 +149,23 @@ static void mca_pml_ob1_put_completion(
     mca_bml_base_free(bml_btl, des);
 
     /* check completion status */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_bytes_received += bytes_received;
     recvreq->req_bytes_delivered += bytes_received;
     if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
-
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         /* initialize request status */
-        recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
-        recvreq->req_recv.req_base.req_pml_complete = true; 
+        recvreq->req_recv.req_base.req_ompi.req_status._count =
+            recvreq->req_bytes_delivered;
+        recvreq->req_recv.req_base.req_pml_complete = true;
         recvreq->req_recv.req_base.req_ompi.req_complete = true;
 
         ompi_request_completed++;
         if(ompi_request_waiting) {
             opal_condition_broadcast(&ompi_request_cond);
         }
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
-        schedule = true;
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
-    /* schedule additional rdma operations */
-    if(schedule) {
+        /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
     }
 }
@@ -459,7 +455,6 @@ void mca_pml_ob1_recv_request_progress(
     size_t bytes_delivered = 0;
     size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-    bool schedule = false;
     size_t i;
 
     for(i=0; i<num_segments; i++)
@@ -524,27 +519,23 @@ void mca_pml_ob1_recv_request_progress(
     }
 
     /* check completion status */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_bytes_received += bytes_received;
     recvreq->req_bytes_delivered += bytes_delivered;
     if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
-
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         /* initialize request status */
-        recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
-        recvreq->req_recv.req_base.req_pml_complete = true; 
+        recvreq->req_recv.req_base.req_ompi.req_status._count =
+            recvreq->req_bytes_delivered;
+        recvreq->req_recv.req_base.req_pml_complete = true;
         recvreq->req_recv.req_base.req_ompi.req_complete = true;
 
         ompi_request_completed++;
         if(ompi_request_waiting) {
             opal_condition_broadcast(&ompi_request_cond);
         }
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
-        schedule = true;
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
-    /* schedule additional rdma operations */
-    if(schedule) {
+        /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
     }
 }
