@@ -140,7 +140,6 @@ static void mca_pml_ob1_put_completion(
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_cbdata;
     mca_btl_base_segment_t* segments = des->des_dst;
     size_t i, bytes_received = 0;
-    bool schedule = false;
 
     for(i=0; i<des->des_dst_cnt; i++)
         bytes_received += segments[i].seg_len;
