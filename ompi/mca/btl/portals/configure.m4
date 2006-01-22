@@ -114,7 +114,7 @@ AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
         "utcp")
             BTL_PORTALS_UTCP=1
             BTL_PORTALS_HAVE_EVENT_UNLINK=1
-            btl_portals_LIBS="-lutcpapi -lutcplib -lp3api -lp3lib -lp3rt"
+            btl_portals_LIBS="-lp3utcp -lp3api -lp3lib -lp3rt -lp3utcp"
             btl_portals_compat="utcp"
             btl_portals_header_prefix=
             btl_portals_starting_table_id=0
