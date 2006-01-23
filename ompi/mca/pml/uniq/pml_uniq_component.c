@@ -114,15 +114,6 @@ int mca_pml_uniq_component_close(void)
     if( OMPI_SUCCESS != (rc = mca_ptl_base_close()) )
         return rc;
 
-#if OMPI_ENABLE_DEBUG
-    if (mca_pml_uniq.uniq_recv_requests.fl_num_allocated !=
-        mca_pml_uniq.uniq_recv_requests.super.opal_list_length) {
-        opal_output(0, "uniq recv requests: %d allocated %d returned\n",
-            mca_pml_uniq.uniq_recv_requests.fl_num_allocated,
-            mca_pml_uniq.uniq_recv_requests.super.opal_list_length);
-    }
-#endif
-
     if(NULL != mca_pml_uniq.uniq_ptl_components) {
         free(mca_pml_uniq.uniq_ptl_components);
         mca_pml_uniq.uniq_ptl_components = NULL;
