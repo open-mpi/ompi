@@ -125,8 +125,7 @@ OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
 #define OPAL_FREE_LIST_WAIT(fl, item, rc)                                  \
 {                                                                          \
     OPAL_THREAD_LOCK(&((fl)->fl_lock));                                    \
-    item = opal_list_remove_first(&((fl)->super));                         \
-    while(NULL == item) {                                                  \
+    while( NULL == (item = opal_list_remove_first(&((fl)->super))) ) {     \
         if((fl)->fl_max_to_alloc <= (fl)->fl_num_allocated) {              \
             (fl)->fl_num_waiting++;                                        \
             opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));  \
@@ -134,7 +133,6 @@ OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
         } else {                                                           \
             opal_free_list_grow((fl), (fl)->fl_num_per_alloc);             \
         }                                                                  \
-        item = opal_list_remove_first(&((fl)->super));                     \
     }                                                                      \
     OPAL_THREAD_UNLOCK(&((fl)->fl_lock));                                  \
     rc = (NULL == item) ?  OMPI_ERR_OUT_OF_RESOURCE : OMPI_SUCCESS;        \
