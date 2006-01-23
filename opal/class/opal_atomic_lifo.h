@@ -92,6 +92,7 @@ static inline opal_list_item_t* opal_atomic_lifo_pop( opal_atomic_lifo_t* lifo )
     } while( 1 );
 #else
     item = lifo->opal_lifo_head;
+    lifo->opal_lifo_head = (opal_list_item_t*)item->opal_list_next;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
     if( item == &(lifo->opal_lifo_ghost) ) return NULL;
     item->opal_list_next = NULL;
