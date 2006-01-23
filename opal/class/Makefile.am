@@ -25,6 +25,7 @@ headers += \
         class/opal_hash_table.h \
         class/opal_list.h \
         class/opal_object.h \
+        class/opal_atomic_lifo.h \
         class/opal_value_array.h
 
 libopal_la_SOURCES += \
@@ -32,4 +33,5 @@ libopal_la_SOURCES += \
         class/opal_hash_table.c \
         class/opal_list.c \
         class/opal_object.c \
+        class/opal_atomic_lifo.c \
         class/opal_value_array.c
