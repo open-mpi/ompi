@@ -27,6 +27,12 @@
 #include "mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+extern int mca_mpool_base_disable_sbrk;
+#endif
+
+
 extern int mca_mpool_base_use_mem_hooks;
 
 mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
@@ -82,10 +88,18 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     sm->mpool_resources = resources;
     opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
     /* on the very first creation of a module we init the memory callback*/ 
-    if(mca_mpool_base_use_mem_hooks &&
-       opal_list_get_size(&mca_mpool_base_modules) == 1 &&
-       0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+    if(opal_list_get_size(&mca_mpool_base_modules) == 1) { 
+      if(mca_mpool_base_use_mem_hooks &&
+	 0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
         opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
+      }
+
+#ifdef HAVE_MALLOC_H
+      else if(mca_mpool_base_disable_sbrk) { 
+	mallopt(M_TRIM_THRESHOLD, -1); 
+	mallopt(M_MMAP_MAX, 0);
+      }
+#endif
     }
     return module; 
 }
@@ -94,7 +108,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
 mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
 {
     opal_list_item_t* item;
-
+    
     for (item = opal_list_get_first(&mca_mpool_base_modules);
          item != opal_list_get_end(&mca_mpool_base_modules);
          item = opal_list_get_next(item)) {

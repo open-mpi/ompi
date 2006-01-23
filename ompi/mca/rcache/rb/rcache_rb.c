@@ -48,7 +48,7 @@ int mca_rcache_rb_find (
                         uint32_t *cnt
                         ){ 
     
-    int pos, rc = OMPI_SUCCESS; 
+    int rc = OMPI_SUCCESS; 
     mca_rcache_rb_tree_item_t* tree_item = NULL; 
     void* base_addr; 
     void* bound_addr; 
@@ -60,44 +60,34 @@ int mca_rcache_rb_find (
     
     base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
     bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
+        
     
-    for( ; base_addr <= bound_addr;  
-         base_addr =(void*) ((unsigned long) base_addr + mca_mpool_base_page_size)) { 
+    while(base_addr <= bound_addr) { 
         tree_item = mca_rcache_rb_tree_find( (mca_rcache_rb_module_t*) rcache, base_addr ); 
         if(NULL != tree_item) { 
-            break; 
+            ompi_pointer_array_add(regs, (void*) tree_item->reg); 
+            if( tree_item->reg->flags & MCA_MPOOL_FLAGS_CACHE ) { 
+                rc = mca_rcache_rb_mru_touch((mca_rcache_rb_module_t*)rcache, 
+                                             tree_item->reg); 
+                if(OMPI_SUCCESS != rc) { 
+                    OPAL_THREAD_UNLOCK(&rcache->lock);
+                    return OMPI_ERROR;
+                }
+            }
+            OPAL_THREAD_ADD32((int32_t*) &tree_item->reg->ref_count, 1); 
+            (*cnt)++; 
+            assert(tree_item->reg->bound - tree_item->reg->base >= 0); 
+            assert(((void*) tree_item->reg->bound) >= addr);
+            base_addr = tree_item->reg->bound + 1;
+        }
+        else { 
+            base_addr =(void*) ((unsigned long) base_addr + mca_mpool_base_page_size);
         }
     }
-        
-    if(NULL == tree_item) { 
-        OPAL_THREAD_UNLOCK(&rcache->lock);
-        return OMPI_ERROR; 
-    }
     
     
-    pos =  ompi_pointer_array_add(regs, (void*) tree_item->reg); 
-    if(0 != pos) {
-        opal_output(0, "error inserting registration in 1st position"); 
-        return OMPI_ERROR; 
-    }
-    
-    if(OMPI_SUCCESS != rc) { 
-        OPAL_THREAD_UNLOCK(&rcache->lock);
-        return rc; 
-    }
-    
-    if( tree_item->reg->flags & MCA_MPOOL_FLAGS_CACHE ) { 
-        rc = mca_rcache_rb_mru_touch((mca_rcache_rb_module_t*)rcache, 
-                                     tree_item->reg); 
-    }
-    OPAL_THREAD_ADD32((int32_t*) &tree_item->reg->ref_count, 1); 
     OPAL_THREAD_UNLOCK(&rcache->lock);
-    if(rc == OMPI_SUCCESS) { 
-        *cnt = 1; 
-    }
-    assert(tree_item->reg->bound - tree_item->reg->base >= 0); 
-    assert(((void*) tree_item->reg->bound) >= addr);
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 int mca_rcache_rb_insert ( 
@@ -106,8 +96,10 @@ int mca_rcache_rb_insert (
                           uint32_t flags
                           ) { 
     int rc = OMPI_SUCCESS;
+
     OPAL_THREAD_LOCK(&rcache->lock); 
     reg->flags = flags;
+
     if(flags & MCA_MPOOL_FLAGS_CACHE) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
         if(OMPI_SUCCESS != rc) { 

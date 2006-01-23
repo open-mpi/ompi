@@ -41,6 +41,11 @@
  */
 int mca_mpool_base_output = -1;
 int mca_mpool_base_use_mem_hooks = 0; 
+
+#ifdef HAVE_MALLOC_H
+int mca_mpool_base_disable_sbrk = 0;
+#endif
+
 uint32_t mca_mpool_base_page_size; 
 uint32_t mca_mpool_base_page_size_log;
 
@@ -72,7 +77,7 @@ int mca_mpool_base_open(void)
      * check for use_mem_hooks (for diagnostics/testing) 
      * however if leave_pinned is set we force this to be enabled
      */
-    mca_base_param_reg_int_name("mpool_base", 
+    mca_base_param_reg_int_name("mpool", 
                               "use_mem_hooks", 
                               "use memory hooks for deregistering freed memory",
                               false, 
@@ -80,6 +85,16 @@ int mca_mpool_base_open(void)
                               0,
                               &mca_mpool_base_use_mem_hooks); 
         
+#ifdef HAVE_MALLOC_H
+    mca_base_param_reg_int_name("mpool", 
+                                "disable_sbrk", 
+                                "use mallopt to override calling sbrk (doesn't return memory to OS!)",
+                                false, 
+                                false, 
+                                0,
+                                &mca_mpool_base_disable_sbrk); 
+#endif
+    
     /* if(0 == mca_mpool_base_use_mem_hooks) { */
 /*         int param; */
 /*         mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); */
