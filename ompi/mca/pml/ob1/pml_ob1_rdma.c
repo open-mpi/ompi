@@ -58,7 +58,6 @@ size_t mca_pml_ob1_rdma_btls(
 
         mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma, n); 
         mca_mpool_base_registration_t* fit = NULL;
-        mca_mpool_base_registration_t* largest = NULL;
         mca_mpool_base_module_t* btl_mpool = bml_btl->btl_mpool;
         uint32_t reg_cnt;
         size_t r;
@@ -78,49 +77,10 @@ size_t mca_pml_ob1_rdma_btls(
                               size,
                               &regs, 
                               &reg_cnt); 
-        assert(reg_cnt <= 1);
-        /* shortcut for one entry - the typical case */
-        if(reg_cnt == 1) {
-            mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, 0); 
-            size_t reg_len = reg->bound - base + 1;
-            if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
-                assert(reg->ref_count >= 3); 
-            }
-
-            /* is the existing registration the required size */
-            if(reg->base <= base && reg_len >= size) {
-
-                rdma_btls[num_btls_used].bml_btl = bml_btl;
-                rdma_btls[num_btls_used].btl_reg = reg;
-                num_btls_used++;
-
-            /* otherwise if leave_pinned re-register */
-            } else if( mca_pml_ob1.leave_pinned ) {
-
-                btl_mpool->mpool_deregister(btl_mpool, reg); 
-                rc = btl_mpool->mpool_register(btl_mpool, 
-                    base, 
-                    size, 
-                    MCA_MPOOL_FLAGS_CACHE,
-                    &reg); 
-                if(OMPI_SUCCESS != rc || NULL == reg) {
-                    opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
-                    continue;
-                }
-                
-                rdma_btls[num_btls_used].bml_btl = bml_btl;
-                rdma_btls[num_btls_used].btl_reg = reg;
-                num_btls_used++;
-
-            /* existing registration cannot be used */
-            } else {
-                btl_mpool->mpool_release(btl_mpool, reg);
-            }
-            continue;
-        }
+       
         /*
          * find the best fit when there are multiple registrations
-        */
+         */
         for(r = 0; r < reg_cnt; r++) { 
             mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
             size_t reg_len = reg->bound - base + 1;
@@ -130,60 +90,34 @@ size_t mca_pml_ob1_rdma_btls(
             }
             if(reg->base <= base && reg_len >= size) {
                 fit = reg;
-                break;
+            } else if(mca_pml_ob1.leave_pinned){ 
+                btl_mpool->mpool_deregister(btl_mpool, reg);
             } else { 
-                if(NULL == largest)
-                    largest = reg;
-                else if(reg->base <= base && (reg->bound - base) > (largest->bound - base)) { 
-                    largest = reg;                         
-                }
+                btl_mpool->mpool_release(btl_mpool, reg); 
             }
+            
         }
-
+        
+        
         /* if the leave pinned option is set - and there is not an existing
          * registration that satisfies this request, create one.
          */
         if(NULL == fit && mca_pml_ob1.leave_pinned) {
-            if (NULL == largest) {
-                /* register the memory */ 
-                rc = btl_mpool->mpool_register(
-                       btl_mpool, 
-                       base,
-                       size, 
-                       MCA_MPOOL_FLAGS_CACHE,
-                       &fit); 
-                if(ORTE_SUCCESS != rc || NULL == fit) {
-                    opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
-                    continue;
-                }
-
-            /* a registration exists but is not large enough */
-            } else {
-
-                /* simplify cleanup - bump reference count as we decrement again below */
-                btl_mpool->mpool_retain(btl_mpool,largest);
-                btl_mpool->mpool_deregister(btl_mpool, largest);
-                rc = btl_mpool->mpool_register(btl_mpool, 
-                    base, 
-                    size, 
-                    MCA_MPOOL_FLAGS_CACHE,
-                    &fit); 
-                if(ORTE_SUCCESS != rc || NULL == fit) {
-                    opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
-                    continue;
-                }
+            /* register the memory */ 
+            rc = btl_mpool->mpool_register(
+                                           btl_mpool, 
+                                           base,
+                                           size, 
+                                           MCA_MPOOL_FLAGS_CACHE,
+                                           &fit); 
+            if(ORTE_SUCCESS != rc || NULL == fit) {
+                opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
+                continue;
             }
             assert(fit->ref_count == 3); 
         }
 
-        /* decrement reference count on all unused entries */
-        for(r = 0; r < reg_cnt; r++) { 
-            mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
-            if(reg != fit) {
-                btl_mpool->mpool_release(btl_mpool, reg);
-            }
-        }
-
+        
         if(NULL != fit) {
             rdma_btls[num_btls_used].bml_btl = bml_btl;
             rdma_btls[num_btls_used].btl_reg = fit;
@@ -206,7 +140,6 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
 {
     ompi_pointer_array_t regs;
     mca_mpool_base_registration_t* fit = NULL;
-    mca_mpool_base_registration_t* largest = NULL;
     mca_mpool_base_module_t* btl_mpool = bml_btl->btl_mpool;
     uint32_t reg_cnt;
     size_t r;
@@ -219,7 +152,8 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
 
     /* check to see if memory is registered */        
     OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
- 
+    ompi_pointer_array_remove_all(&regs);
+
     /* look through existing registrations */
     btl_mpool->mpool_find(btl_mpool, 
         base,
@@ -227,95 +161,45 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
         &regs, 
         &reg_cnt); 
 
-    assert(reg_cnt <= 1);
-    /* shortcut for one entry - the typical case */
-    if(reg_cnt == 1) {
-        mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, 0); 
-        size_t reg_len = reg->bound - base + 1;
-
-        /* is the existing registration the required size */
-        if(reg->base <= base && reg_len >= size) {
-            return reg;
-
-        /* otherwise if leave_pinned re-register */
-        } else if ( mca_pml_ob1.leave_pinned ) {
-          
-            btl_mpool->mpool_deregister(btl_mpool, reg); 
-            rc = btl_mpool->mpool_register(btl_mpool, 
-                base, 
-                size, 
-                MCA_MPOOL_FLAGS_CACHE,
-                &reg); 
-            if(OMPI_SUCCESS != rc || NULL == reg) {
-                opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
-            }
-            return reg;
-
-        /* existing registration cannot be used */
-        } else {
-            btl_mpool->mpool_release(btl_mpool, reg);
-            return NULL;
-        }
-    }
-
+ 
+    /*
+     * find the best fit when there are multiple registrations
+     */
     for(r = 0; r < reg_cnt; r++) { 
         mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
         size_t reg_len = reg->bound - base + 1;
+        
         if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
             assert(reg->ref_count >= 3); 
         }
-                
         if(reg->base <= base && reg_len >= size) {
             fit = reg;
-            break;
+        } else if(mca_pml_ob1.leave_pinned){ 
+            btl_mpool->mpool_deregister(btl_mpool, reg);
         } else { 
-            if(NULL == largest)
-                largest = reg;
-            else if(reg->base <= base && (reg->bound - base) > (largest->bound - base)) { 
-                largest = reg;                         
-            }
+            btl_mpool->mpool_release(btl_mpool, reg);
         }
     }
-
+    
+        
     /* if the leave pinned option is set - and there is not an existing
      * registration that satisfies this request, create one.
      */
     if(NULL == fit && mca_pml_ob1.leave_pinned) {
-       if (NULL == largest) {
-           /* register the memory */ 
-           rc = btl_mpool->mpool_register(
-              btl_mpool, 
-              base,
-              size, 
-              MCA_MPOOL_FLAGS_CACHE,
-              &fit); 
-           if(OMPI_SUCCESS != rc || NULL == fit) {
-               opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
-           }
-       /* a registration exists but is not large enough */
-       } else {
-           
-           btl_mpool->mpool_retain(btl_mpool, largest);
-           btl_mpool->mpool_deregister(btl_mpool, largest);
-           rc = btl_mpool->mpool_register(btl_mpool,
-               base,
-               size,
-               MCA_MPOOL_FLAGS_CACHE,
-               &fit);
-           if(OMPI_SUCCESS != rc || NULL == fit) {
-               opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
-           }
+        /* register the memory */ 
+        rc = btl_mpool->mpool_register(
+                                       btl_mpool, 
+                                       base,
+                                       size, 
+                                       MCA_MPOOL_FLAGS_CACHE,
+                                       &fit); 
+        if(ORTE_SUCCESS != rc || NULL == fit) {
+            opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
+            return NULL;
         }
-        assert(fit->ref_count >= 3);
+        assert(fit->ref_count == 3); 
     }
-
-    /* release reference count */
-    for(r = 0; r < reg_cnt; r++) { 
-        mca_mpool_base_registration_t *reg  = ompi_pointer_array_get_item(&regs, r); 
-        if(reg != fit) {
-            btl_mpool->mpool_release(btl_mpool, reg);
-        }
-    }
+      
     OBJ_DESTRUCT(&regs);
     return fit;
 }

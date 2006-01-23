@@ -26,6 +26,7 @@
 
 OBJ_CLASS_INSTANCE(mca_rcache_rb_tree_item_t, opal_list_item_t, NULL, NULL); 
 
+
 int mca_rcache_rb_tree_node_compare(void * key1, void * key2); 
 
 int mca_rcache_rb_tree_init(mca_rcache_rb_module_t* rcache) { 
@@ -60,9 +61,9 @@ struct mca_rcache_rb_tree_item_t * mca_rcache_rb_tree_find(
     key.bound = base;
     found =  (mca_rcache_rb_tree_item_t *)
         ompi_rb_tree_find(&rcache->rb_tree, &key);
-    if(found)
+    if(found) { 
         assert((void*)found->reg->bound >= base);
-    
+    }
     return found;
 }
 
@@ -108,7 +109,7 @@ int mca_rcache_rb_tree_insert(
     opal_list_item_t *item; 
     int rc; 
     mca_rcache_rb_tree_item_t* rb_tree_item; 
-
+    
     OMPI_FREE_LIST_GET(&rb_module->rb_tree_item_list, item, rc);
     if(rc != OMPI_SUCCESS) 
         return rc; 
@@ -140,14 +141,17 @@ int mca_rcache_rb_tree_delete(mca_rcache_rb_module_t* rb_module,
                           mca_mpool_base_registration_t* reg)
 {
     int rc; 
-    mca_rcache_rb_tree_item_t* tree_item; 
+    mca_rcache_rb_tree_item_t *tree_item; 
     tree_item = mca_rcache_rb_tree_find(rb_module, 
                                         reg->base); 
     if(NULL == tree_item) {
         return OMPI_ERROR; 
     }
+    assert(reg == tree_item->reg);
     rc =  ompi_rb_tree_delete(&rb_module->rb_tree, &tree_item->key); 
-    
+   
+    OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, (opal_list_item_t*) tree_item);
+
     return rc;
 }
 

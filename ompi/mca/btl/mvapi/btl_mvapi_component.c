@@ -312,12 +312,6 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     mca_btl_base_selected_module_t* ib_selected; 
     opal_list_item_t* item; 
 
-#if 0
-    /* ugly HACK!! */ 
-    mallopt(M_TRIM_THRESHOLD, -1); 
-    mallopt(M_MMAP_MAX, 0);
-#endif
-
     /* initialization */
     *num_btl_modules = 0;
 

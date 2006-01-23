@@ -157,8 +157,8 @@ int mca_mpool_mvapi_deregister(mca_mpool_base_module_t* mpool,
 {
     if(registration->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_delete(mpool->rcache, 
-                                        registration, 
-                                        registration->flags); 
+                                     registration, 
+                                     registration->flags); 
         registration->flags = 0;
     }
     return mca_mpool_mvapi_release(mpool, registration); 
