@@ -124,13 +124,6 @@ int mca_ptl_self_component_close(void)
     if( NULL == mca_ptl_self_component.self_local )
         return OMPI_SUCCESS;
 
-    if (mca_ptl_self_component.self_send_requests.fl_num_allocated != 
-        mca_ptl_self_component.self_send_requests.super.opal_list_length) {
-        opal_output(0, "self send requests: %d allocated %d returned\n",
-            mca_ptl_self_component.self_send_requests.fl_num_allocated, 
-            mca_ptl_self_component.self_send_requests.super.opal_list_length);
-    }
-
     OBJ_DESTRUCT( &(mca_ptl_self_component.self_send_requests) );
 
     return OMPI_SUCCESS;

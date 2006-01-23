@@ -229,20 +229,6 @@ int mca_ptl_tcp_component_close(void)
 #ifdef __WINDOWS__
     WSACleanup();
 #endif
-#if OMPI_ENABLE_DEBUG
-    if (mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated != 
-        mca_ptl_tcp_component.tcp_send_frags.super.opal_list_length) {
-        opal_output(0, "tcp send frags: %d allocated %d returned\n",
-            mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated, 
-            mca_ptl_tcp_component.tcp_send_frags.super.opal_list_length);
-    }
-    if (mca_ptl_tcp_component.tcp_recv_frags.fl_num_allocated != 
-        mca_ptl_tcp_component.tcp_recv_frags.super.opal_list_length) {
-        opal_output(0, "tcp recv frags: %d allocated %d returned\n",
-            mca_ptl_tcp_component.tcp_recv_frags.fl_num_allocated, 
-            mca_ptl_tcp_component.tcp_recv_frags.super.opal_list_length);
-    }
-#endif
 
     if(NULL != mca_ptl_tcp_component.tcp_if_include)
         free(mca_ptl_tcp_component.tcp_if_include);
