@@ -186,6 +186,12 @@ static inline bool opal_set_using_threads(bool have)
 #define OPAL_THREAD_LOCK(mutex)
 #endif
 
+#if OMPI_HAVE_THREAD_SUPPORT
+#define OPAL_THREAD_TRYLOCK(mutex)   (opal_using_threads() ? opal_mutex_trylock(mutex) : 1)
+#else
+#define OPAL_THREAD_TRYLOCK(mutex)   1
+#endif
+
 
 /**
  * Unlock a mutex if opal_using_threads() says that multiple threads
