@@ -142,6 +142,10 @@ struct mca_btl_base_endpoint_t {
     int32_t rd_posted_lp;   /**< number of low priority descriptors posted to the nic*/ 
     int32_t rd_credits_hp;  /**< number of high priority credits to return to peer */
     int32_t rd_credits_lp;  /**< number of low priority credits to return to peer */
+    int32_t sd_credits_hp;  /**< number of send wqe entries being used to return credits */
+    int32_t sd_credits_lp;  /**< number of send wqe entries being used to return credits */
+    int32_t sd_wqe_hp;      /**< number of available send wqe entries */
+    int32_t sd_wqe_lp;      /**< number of available send wqe entries */
     
     uint32_t subnet; 
 #if 0
@@ -153,11 +157,8 @@ typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_mvapi_endpoint_t;
 int  mca_btl_mvapi_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_btl_mvapi_frag_t* frag);
 int  mca_btl_mvapi_endpoint_connect(mca_btl_base_endpoint_t*);
-void mca_btl_mvapi_endpoint_send_credits(
-   mca_btl_base_endpoint_t*, 
-   VAPI_qp_hndl_t local, 
-   VAPI_qp_num_t rem, 
-   int32_t* credits);
+void mca_btl_mvapi_endpoint_send_credits_hp(mca_btl_base_endpoint_t*);
+void mca_btl_mvapi_endpoint_send_credits_lp(mca_btl_base_endpoint_t*);
 void mca_btl_mvapi_post_recv(void);
 
 
