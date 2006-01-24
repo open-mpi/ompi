@@ -68,69 +68,102 @@ static inline int mca_btl_mvapi_endpoint_post_send(
     mca_btl_mvapi_frag_t * frag)
 { 
     VAPI_qp_hndl_t qp_hndl; 
-    frag->sr_desc.remote_qkey = 0; 
-    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
-    frag->sr_desc.opcode = VAPI_SEND; 
-    
+    int ret;
+
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
         
-        /* atomically test and acquire a token */
-        if(!mca_btl_mvapi_component.use_srq &&
-           OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,-1) < 0) { 
-            BTL_VERBOSE(("Queing because no send tokens \n"));
+                                                                                                                      
+        /* check for a send wqe */
+        if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1) < 0) {
+                                                                                                                      
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
             opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            return OMPI_SUCCESS;
+                                                                                                                      
+        /* check for a token */
+        } else if(!mca_btl_mvapi_component.use_srq &&
+            OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,-1) < 0) {
+                                                                                                                      
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,1);
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             return OMPI_SUCCESS;
+                                                                                                                      
         } else if( mca_btl_mvapi_component.use_srq &&
-                   OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_hp,-1) < 0) { 
+                   OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_hp,-1) < 0) {
+                                                                                                                      
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
             OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_hp,1);
+            OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
             opal_list_append(&mvapi_btl->pending_frags_hp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
             return OMPI_SUCCESS;
-        } else { 
-            frag->hdr->credits = endpoint->rd_credits_hp;
-            OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, - frag->hdr->credits);
-            frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_hp; 
-            qp_hndl = endpoint->lcl_qp_hndl_hp; 
+                                                                                                                      
+        /* queue the request */
+        } else {
+            frag->hdr->credits = (endpoint->rd_credits_hp > 0) ? endpoint->rd_credits_hp : 0;
+            OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -frag->hdr->credits);
+            qp_hndl = endpoint->lcl_qp_hndl_hp;
         }
+                                                                                                                      
 
     } else {
 
-        /* atomically test and acquire a token */
-        if(!mca_btl_mvapi_component.use_srq &&
-           OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0 ) {
-            BTL_VERBOSE(("Queing because no send tokens \n"));
-            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag); 
+        /* check for a send wqe */
+        if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
+                                                                                                                      
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            return OMPI_SUCCESS;
+                                                                                                                      
+        /* check for a token */
+        } else if(!mca_btl_mvapi_component.use_srq &&
+            OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0 ) {
+                                                                                                                      
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
-            
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             return OMPI_SUCCESS;
+                                                                                                                      
         } else if(mca_btl_mvapi_component.use_srq &&
-                  OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
+            OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
+                                                                                                                      
+            OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
-            opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-            
+            OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
+            opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag);
+            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
             return OMPI_SUCCESS;
-        } else { 
-            frag->hdr->credits = endpoint->rd_credits_lp;
-            OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, - frag->hdr->credits);
-            frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
-            qp_hndl = endpoint->lcl_qp_hndl_lp; 
+                                                                                                                      
+        /* queue the request */
+        } else {
+            frag->hdr->credits = (endpoint->rd_credits_lp > 0) ? endpoint->rd_credits_lp : 0;
+            OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -frag->hdr->credits);
+            qp_hndl = endpoint->lcl_qp_hndl_lp;
         }
     } 
     
+    frag->sr_desc.opcode = VAPI_SEND; 
+    frag->sr_desc.remote_qkey = 0; 
+    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->sg_entry.len = frag->segment.seg_len + sizeof(mca_btl_mvapi_header_t);
+
     if(frag->sg_entry.len <= mvapi_btl->ib_inline_max) { 
-            frag->ret = EVAPI_post_inline_sr(mvapi_btl->nic, 
-                                 qp_hndl, 
-                                 &frag->sr_desc); 
-        
-    }else { 
-        frag->ret = VAPI_post_sr(mvapi_btl->nic, 
-                                 qp_hndl,
-                                 &frag->sr_desc); 
+        ret = EVAPI_post_inline_sr(mvapi_btl->nic, qp_hndl, &frag->sr_desc); 
+    } else { 
+        ret = VAPI_post_sr(mvapi_btl->nic, qp_hndl, &frag->sr_desc); 
     }
 
-    if(VAPI_OK != frag->ret) {
-        BTL_ERROR(("VAPI_post_sr: %s\n", VAPI_strerror(frag->ret)));
+    if(VAPI_OK != ret) {
+        BTL_ERROR(("VAPI_post_sr: %s\n", VAPI_strerror(ret)));
         return OMPI_ERROR; 
     }
 #ifdef VAPI_FEATURE_SRQ
@@ -143,7 +176,6 @@ static inline int mca_btl_mvapi_endpoint_post_send(
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
         MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
     }
-
     return OMPI_SUCCESS; 
 }
 
@@ -173,11 +205,17 @@ static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->rd_posted_hp = 0;
     endpoint->rd_posted_lp = 0;
 
+    /* number of available send wqes */
+    endpoint->sd_wqe_hp = mca_btl_mvapi_component.rd_num;
+    endpoint->sd_wqe_lp = mca_btl_mvapi_component.rd_num;
+
     /* zero these out w/ initial posting, so that we start out w/
      * zero credits to return to peer
      */
     endpoint->rd_credits_hp = -(mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_rsv);
     endpoint->rd_credits_lp = -(mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_rsv);
+    endpoint->sd_credits_hp = 0;
+    endpoint->sd_credits_lp = 0;
 
     /* initialize the high and low priority tokens */ 
     endpoint->sd_tokens_hp = mca_btl_mvapi_component.rd_num; 
@@ -252,32 +290,6 @@ static int mca_btl_mvapi_endpoint_send_connect_data(mca_btl_base_endpoint_t* end
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-#if 0
-    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->reg->r_key, 1, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->base, 1, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->entry_size, 1, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-
-    rc = orte_dps.pack(buffer, &((mva_btl_mvapi_endpoint_t*)endpoint)->rdma_buf->entry_cnt, 1, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-#endif
-   
 
     /* send to endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
@@ -365,16 +377,6 @@ static int mca_btl_mvapi_endpoint_start_connect(mca_btl_base_endpoint_t* endpoin
         return rc;
     }
 
-#if 0
-    /* Create the RDMA buffer's for small messages */
-    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_rdma_buf(endpoint->endpoint_btl,
-                                                                    (mca_btl_mvapi_endpoint_t*) endpoint))) { 
-        BTL_ERROR(("error creating rdma_buf for small messages error code %d", rc)); 
-        return rc; 
-    }
-                                                                    
-#endif
-
     BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_hp.qp_num,
               endpoint->lcl_qp_prop_lp.qp_num,
@@ -429,15 +431,6 @@ static int mca_btl_mvapi_endpoint_reply_start_connect(mca_btl_mvapi_endpoint_t *
         BTL_ERROR(("error creating queue pair, error code %d", rc)); 
         return rc;
     }
-
-#if 0 
-    /* Create the RDMA buffer's for small messages */
-    if(OMPI_SUCCESS != (rc = mca_btl_mvapi_endpoint_create_rdma_buf(endpoint->endpoint_btl,
-                                                                    (mca_btl_mvapi_endpoint_t*) endpoint))) { 
-        BTL_ERROR(("error creating rdma_buf for small messages error code %d", rc)); 
-        return rc; 
-    }
-#endif                                                              
 
     BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_hp.qp_num,
@@ -541,41 +534,12 @@ static void mca_btl_mvapi_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
-#if 0
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->r_key, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_base, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_size, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
 
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_cnt, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-#endif
-
-    
     BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
                  rem_info.rem_qp_num_hp,
                  rem_info.rem_qp_num_lp, 
                  rem_info.rem_lid));
 
-
-   
-    
     for(ib_proc = (mca_btl_mvapi_proc_t*)
             opal_list_get_first(&mca_btl_mvapi_component.ib_procs);
             ib_proc != (mca_btl_mvapi_proc_t*)
@@ -812,40 +776,6 @@ int mca_btl_mvapi_endpoint_connect(
     return OMPI_SUCCESS;
 }
 
-#if 0
-/* 
- * Create the small message RDMA buffer
- */ 
-int mca_btl_mvapi_endpoint_create_rdma_buf(
-                                           mca_btl_mvapi_module_t* mvapi_btl, 
-                                           mca_btl_mvapi_endpoint_t* endpoint
-                                           )
-
-
-{
-    endpoint->rdma_buf = (mca_btl_mvapi_rdma_buf_t*) 
-        malloc(sizeof(mca_btl_mvapi_rdma_buf_t));
-    
-    if(NULL == endpoint->rdma_buf) { 
-        return OMPI_ERROR; 
-    }
-    
-    endpoint->entry_size = 8196; 
-    endpoint->entry_cnt = 64;
-    endpoint->rdma_buf->base = mvapi_btl->btl_mpool->mpool_alloc(mvapi_btl->btl_mpool, 
-                                                                 endpoint->rdma_buf->entry_size *
-                                                                 endpoint->rdma_buf->entry_cnt, 
-                                                                 0, 
-                                                                 0, 
-                                                                 endpoint->rdma_buf->reg); 
-    if(NULL == endpoint->rdma_buf->base) { 
-        return OMPI_ERROR; 
-    } else { 
-        return OMPI_SUCCESS; 
-    }
-}
-
-#endif
 /* 
  * Create the queue pair note that this is just the initial 
  *  queue pair creation and we need to get the remote queue pair 
@@ -875,10 +805,10 @@ int mca_btl_mvapi_endpoint_create_qp(
     switch(transport_type) {
 
     case VAPI_TS_RC: /* Set up RC qp parameters */
-        qp_init_attr.cap.max_oust_wr_rq = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_num;
-        qp_init_attr.cap.max_oust_wr_sq = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_num;
-        qp_init_attr.cap.max_sg_size_rq = mca_btl_mvapi_component.ib_sg_list_size;
+        qp_init_attr.cap.max_oust_wr_sq = mca_btl_mvapi_component.rd_num + 1;
+        qp_init_attr.cap.max_oust_wr_rq = mca_btl_mvapi_component.rd_num + mca_btl_mvapi_component.rd_rsv;
         qp_init_attr.cap.max_sg_size_sq = mca_btl_mvapi_component.ib_sg_list_size;
+        qp_init_attr.cap.max_sg_size_rq = mca_btl_mvapi_component.ib_sg_list_size;
         qp_init_attr.pd_hndl            = ptag;
         /* We don't have Reliable Datagram Handle right now */
         qp_init_attr.rdd_hndl           = 0;
@@ -1041,17 +971,30 @@ int mca_btl_mvapi_endpoint_qp_init_query(
     return OMPI_SUCCESS;
 }
 
-
+                                                                                                                       
 /**
  * Return control fragment.
  */
-                                                         
-static void mca_btl_mvapi_endpoint_control_cb(
+
+static void mca_btl_mvapi_endpoint_credits_lp(
     mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
+    int32_t credits;
+
+    /* we don't acquire a wqe or token for credit message - so decrement */
+    OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1);
+
+    /* check to see if there are addditional credits to return */
+    if ((credits = OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,-1)) > 0) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,-credits);
+        if (endpoint->rd_credits_lp >= mca_btl_mvapi_component.rd_win &&
+            OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,1) == 1) {
+            mca_btl_mvapi_endpoint_send_credits_lp(endpoint);
+        }
+    }
     MCA_BTL_IB_FRAG_RETURN_EAGER((mca_btl_mvapi_module_t*)btl, (mca_btl_mvapi_frag_t*)descriptor);
 }
 
@@ -1059,40 +1002,111 @@ static void mca_btl_mvapi_endpoint_control_cb(
  * Return credits to peer
  */
 
-void mca_btl_mvapi_endpoint_send_credits(
-    mca_btl_mvapi_endpoint_t* endpoint, 
-    VAPI_qp_hndl_t local_qp, 
-    VAPI_qp_num_t remote_qp, 
-    int32_t* credits)
+void mca_btl_mvapi_endpoint_send_credits_lp(
+    mca_btl_mvapi_endpoint_t* endpoint)
 {
-    mca_btl_mvapi_module_t* btl = endpoint->endpoint_btl;
+    mca_btl_mvapi_module_t* mvapi_btl = endpoint->endpoint_btl;
     mca_btl_mvapi_frag_t* frag;
-    int rc;
+    int ret;
 
-    MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
+    MCA_BTL_IB_FRAG_ALLOC_EAGER(mvapi_btl, frag, ret);
     if(NULL == frag) {
         BTL_ERROR(("error allocating fragment"));
         return;
     }
 
-    frag->base.des_cbfunc = mca_btl_mvapi_endpoint_control_cb;
+    frag->base.des_cbfunc = mca_btl_mvapi_endpoint_credits_lp;
     frag->base.des_cbdata = NULL;
+    frag->endpoint = endpoint;
 
     frag->hdr->tag = MCA_BTL_TAG_BTL;
-    frag->hdr->credits = *credits;
-    OPAL_THREAD_ADD32(credits, -frag->hdr->credits);
+    frag->hdr->credits = endpoint->rd_credits_lp;
+    OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -frag->hdr->credits);
 
-    frag->sr_desc.remote_qkey = 0; 
     frag->sr_desc.opcode = VAPI_SEND; 
-    frag->sr_desc.remote_qp = remote_qp;
-    
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->sg_entry.len = sizeof(mca_btl_mvapi_header_t);
 
-    rc = EVAPI_post_inline_sr(btl->nic, local_qp, &frag->sr_desc); 
-    if(VAPI_SUCCESS != rc) {
-        BTL_ERROR(("error calling EVAPI_post_inline_sr: %s\n", VAPI_strerror(rc)));
-        MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag);
+    if(sizeof(mca_btl_mvapi_header_t) <= mvapi_btl->ib_inline_max) {
+        ret = EVAPI_post_inline_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc);
+    } else {
+        ret = VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc);
+    }
+    if(ret != VAPI_SUCCESS) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, -1);
+        OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, frag->hdr->credits);
+        MCA_BTL_IB_FRAG_RETURN_EAGER(mvapi_btl, frag);
+        BTL_ERROR(("error posting send request errno %d says %s", strerror(errno)));
+        return;
+    }
+}
+
+/**
+ * Return control fragment.
+ */
+
+static void mca_btl_mvapi_endpoint_credits_hp(
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status)
+{
+    int32_t credits;
+
+    /* we don't acquire a wqe or token for credit message - so decrement */
+    OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1);
+
+    /* check to see if there are addditional credits to return */
+    if ((credits = OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,-1)) > 0) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,-credits);
+        if (endpoint->rd_credits_hp >= mca_btl_mvapi_component.rd_win &&
+            OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,1) == 1) {
+            mca_btl_mvapi_endpoint_send_credits_hp(endpoint);
+        }
+    }
+    MCA_BTL_IB_FRAG_RETURN_EAGER((mca_btl_mvapi_module_t*)btl, (mca_btl_mvapi_frag_t*)descriptor);
+}
+
+/**
+ * Return credits to peer
+ */
+
+void mca_btl_mvapi_endpoint_send_credits_hp(
+    mca_btl_mvapi_endpoint_t* endpoint)
+{
+    mca_btl_mvapi_module_t* mvapi_btl = endpoint->endpoint_btl;
+    mca_btl_mvapi_frag_t* frag;
+    int ret;
+
+    MCA_BTL_IB_FRAG_ALLOC_EAGER(mvapi_btl, frag, ret);
+    if(NULL == frag) {
+        BTL_ERROR(("error allocating fragment"));
+        return;
+    }
+
+    frag->base.des_cbfunc = mca_btl_mvapi_endpoint_credits_hp;
+    frag->base.des_cbdata = NULL;
+    frag->endpoint = endpoint;
+
+    frag->hdr->tag = MCA_BTL_TAG_BTL;
+    frag->hdr->credits = endpoint->rd_credits_hp;
+    OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -frag->hdr->credits);
+
+    frag->sr_desc.opcode = VAPI_SEND; 
+    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
+    frag->sg_entry.len = sizeof(mca_btl_mvapi_header_t);
+
+    if(sizeof(mca_btl_mvapi_header_t) <= mvapi_btl->ib_inline_max) {
+        ret = EVAPI_post_inline_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_hp, &frag->sr_desc);
+    } else {
+        ret = VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_hp, &frag->sr_desc);
+    }
+    if(ret != VAPI_SUCCESS) {
+        OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, -1);
+        OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, frag->hdr->credits);
+        MCA_BTL_IB_FRAG_RETURN_EAGER(mvapi_btl, frag);
+        BTL_ERROR(("error posting send request errno %d says %s", strerror(errno)));
+        return;
     }
 }
 
