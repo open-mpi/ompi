@@ -554,10 +554,6 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
  *  IB component progress.
  */
 
-int mca_btl_openib_wc_rdma_read = 0;
-int mca_btl_openib_wc_rdma_write = 0;
-
-
 int mca_btl_openib_component_progress()
 {
     uint32_t i;
@@ -571,7 +567,6 @@ int mca_btl_openib_component_progress()
         
         struct ibv_wc wc; 
         mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
-        memset(&wc, 0, sizeof(struct ibv_wc)); 
         
         /* we have two completion queues, one for "high" priority and one for "low". 
          *   we will check the high priority and process them until there are none left. 
@@ -582,13 +577,12 @@ int mca_btl_openib_component_progress()
             BTL_ERROR(("error polling HP CQ with %d errno says %s\n", ne, strerror(errno))); 
             return OMPI_ERROR;
         } 
-        else if(wc.status != IBV_WC_SUCCESS) { 
-            BTL_ERROR(("error polling HP CQ with status %d for wr_id %llu opcode %d\n", 
-                       wc.status, wc.wr_id, wc.opcode)); 
-            return OMPI_ERROR;
-        }
         else if(1 == ne) { 
-            BTL_VERBOSE(("completion queue event says opcode is %d\n", wc.opcode)); 
+            if(wc.status != IBV_WC_SUCCESS) { 
+                BTL_ERROR(("error polling HP CQ with status %d for wr_id %llu opcode %d\n", 
+                           wc.status, wc.wr_id, wc.opcode)); 
+                return OMPI_ERROR;
+            }
 
             /* Handle work completions */
             switch(wc.opcode) {
@@ -718,12 +712,13 @@ int mca_btl_openib_component_progress()
             BTL_ERROR(("error polling LP CQ with %d errno says %s", ne, strerror(errno))); 
             return OMPI_ERROR;
         } 
-        else if(wc.status != IBV_WC_SUCCESS) { 
-            BTL_ERROR(("error polling LP CQ with status %d for wr_id %llu opcode %d", 
-                      wc.status, wc.wr_id, wc.opcode)); 
-            return OMPI_ERROR;
-        }
         else if(1 == ne) {             
+            if(wc.status != IBV_WC_SUCCESS) { 
+                BTL_ERROR(("error polling LP CQ with status %d for wr_id %llu opcode %d", 
+                          wc.status, wc.wr_id, wc.opcode)); 
+                return OMPI_ERROR;
+            }
+
             /* Handle n/w completions */
             switch(wc.opcode) {
             case IBV_WC_RECV_RDMA_WITH_IMM: 
@@ -777,14 +772,12 @@ int mca_btl_openib_component_progress()
 
             case IBV_WC_RDMA_READ: 
                                     
-                mca_btl_openib_wc_rdma_read++;
                 frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 OPAL_THREAD_ADD32(&frag->endpoint->get_tokens, 1);
                 /* fall through */
 
             case IBV_WC_RDMA_WRITE: 
 
-                mca_btl_openib_wc_rdma_write++;
                 frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 endpoint = frag->endpoint;
 
