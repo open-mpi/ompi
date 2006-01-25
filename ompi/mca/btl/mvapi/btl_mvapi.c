@@ -560,7 +560,6 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
 
     /* check for a send wqe */
     if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
-                                                                                                                        
         OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);

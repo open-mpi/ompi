@@ -144,8 +144,8 @@ struct mca_btl_base_endpoint_t {
     int32_t rd_credits_lp;  /**< number of low priority credits to return to peer */
     int32_t sd_credits_hp;  /**< number of send wqe entries being used to return credits */
     int32_t sd_credits_lp;  /**< number of send wqe entries being used to return credits */
-    int32_t sd_wqe_hp;      /**< number of available send wqe entries */
-    int32_t sd_wqe_lp;      /**< number of available send wqe entries */
+    int32_t sd_wqe_hp;      /**< number of available high priority send wqe entries */
+    int32_t sd_wqe_lp;      /**< number of available low priority send wqe entries */
     
     uint32_t subnet; 
 #if 0
