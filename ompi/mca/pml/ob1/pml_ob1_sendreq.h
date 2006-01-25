@@ -235,11 +235,7 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;             \
    (sendreq)->req_send.req_base.req_ompi.req_status._count =                              \
         (sendreq)->req_send.req_bytes_packed;                                             \
-   (sendreq)->req_send.req_base.req_ompi.req_complete = true;                             \
-   ompi_request_completed++;                                                              \
-   if(ompi_request_waiting) {                                                             \
-       opal_condition_broadcast(&ompi_request_cond);                                      \
-   }                                                                                      \
+   MCA_PML_BASE_REQUEST_MPI_COMPLETE( &((sendreq)->req_send.req_base.req_ompi) );         \
 } while(0)
 
 /*
@@ -251,6 +247,7 @@ do {                                                                            
 do {                                                                                      \
     size_t r;                                                                             \
     /* request completed at pml level */                                                  \
+    assert( false == (sendreq)->req_send.req_base.req_pml_complete );                     \
     (sendreq)->req_send.req_base.req_pml_complete = true;                                 \
                                                                                           \
     /* return mpool resources */                                                          \
@@ -321,14 +318,13 @@ do {                                                                            
 
 #define MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor, hdrlen)   \
 do {                                                                                \
-   size_t i;                                                                        \
+   size_t i, req_bytes_delivered = 0;                                               \
    mca_btl_base_segment_t* segments = descriptor->des_src;                          \
                                                                                     \
    for(i=0; i<descriptor->des_src_cnt; i++) {                                       \
-       sendreq->req_bytes_delivered += segments[i].seg_len;                         \
+       req_bytes_delivered += segments[i].seg_len;                                  \
    }                                                                                \
-   sendreq->req_bytes_delivered -= hdrlen;                                          \
-                                                                                    \
+   sendreq->req_bytes_delivered += (req_bytes_delivered - hdrlen);                  \
 } while(0)
                                                                                                                           
 /*
