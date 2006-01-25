@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -48,16 +48,26 @@ OMPI_COMP_EXPORT extern mca_mpool_udapl_component_t mca_mpool_udapl_component;
 
 
 struct mca_mpool_base_resources_t {
-    DAT_IA_HANDLE udapl_ia;
+    DAT_IA_HANDLE udapl_ia; /* interface adapter */
+    DAT_PZ_HANDLE udapl_pz; /* protection zone */
 }; 
 typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;  
 
 struct mca_mpool_udapl_module_t {
     mca_mpool_base_module_t super;
-    DAT_IA_HANDLE udapl_ia;
+    struct mca_mpool_base_resources_t udapl_res;
 }; 
 typedef struct mca_mpool_udapl_module_t mca_mpool_udapl_module_t; 
 
+
+struct mca_mpool_udapl_registration_t {
+    mca_mpool_base_registration_t base_reg;
+    DAT_LMR_HANDLE lmr;          /* local memory region (LMR) */
+    DAT_LMR_TRIPLET lmr_triplet; /* LMR triplet - context, address, length */
+    DAT_RMR_CONTEXT rmr_context; /* remote memory region context handle */
+};
+typedef struct mca_mpool_udapl_registration_t mca_mpool_udapl_registration_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_udapl_registration_t);
 
 
 /* 

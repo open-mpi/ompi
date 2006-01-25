@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -67,9 +67,11 @@ void* mca_mpool_udapl_alloc(
 
     opal_output(0, "mpool_udapl_alloc\n");
 
+    /* TODO - align addr to dat_optimal_alignment */
     if(NULL == addr)
         return NULL;
-    if(OMPI_SUCCESS != mca_mpool_udapl_register(mpool,addr,size+align, flags, registration)) {
+    if(OMPI_SUCCESS != mca_mpool_udapl_register(mpool,
+            addr, size + align, flags, registration)) {
         free(addr);
         return NULL;
     }
@@ -87,41 +89,56 @@ int mca_mpool_udapl_register(
     uint32_t flags, 
     mca_mpool_base_registration_t** registration)
 {
-    mca_mpool_udapl_module_t * udapl_mpool = (mca_mpool_udapl_module_t*) mpool; 
-    mca_mpool_base_registration_t* reg = OBJ_NEW(mca_mpool_base_registration_t);
+    mca_mpool_udapl_module_t* udapl_mpool; 
+    mca_mpool_udapl_registration_t* reg;
+    DAT_REGION_DESCRIPTION region;
+    DAT_VLEN dat_size;
+    DAT_VADDR dat_addr;
     int rc;
 
     opal_output(0, "mpool_udapl_register\n");
 
+    udapl_mpool = (mca_mpool_udapl_module_t*)mpool;
+    reg = OBJ_NEW(mca_mpool_udapl_registration_t);
     if(NULL == reg) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    reg->mpool = mpool;
-    reg->base = down_align_addr(addr, mca_mpool_base_page_size_log); 
-    reg->flags = flags; 
-    reg->bound = up_align_addr((void*) ((unsigned long) addr + size -1)
-                               , mca_mpool_base_page_size_log);
-    
-#if 0
-    if((rc = gm_register_memory(udapl_mpool->port, reg->base, reg->bound - reg->base + 1)) != GM_SUCCESS) {
-        opal_output(0, "[%s:%d] error(%d) registering udapl memory\n", __FILE__, __LINE__, rc);
-        assert(0);
+
+    reg->base_reg.mpool = mpool;
+    reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
+    reg->base_reg.flags = flags; 
+    reg->base_reg.bound = up_align_addr((void*)((unsigned long) addr + size -1),
+                    mca_mpool_base_page_size_log);
+
+
+    region.for_va = addr;
+    reg->lmr_triplet.virtual_address = (DAT_VADDR)addr;
+    reg->lmr_triplet.segment_length = size;
+
+    rc = dat_lmr_create(udapl_mpool->udapl_res.udapl_ia,
+            DAT_MEM_TYPE_VIRTUAL, region, reg->lmr_triplet.segment_length,
+            udapl_mpool->udapl_res.udapl_pz, DAT_MEM_PRIV_ALL_FLAG,
+            &reg->lmr, &reg->lmr_triplet.lmr_context,
+            &reg->rmr_context, &dat_size, &dat_addr);
+    if(DAT_SUCCESS != rc) {
+        /* TODO - bring in error reporting function from the BTL */
+        opal_output(0, "mpool_udapl_register failed: %d\n", rc);
         OBJ_RELEASE(reg);
-        
+
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    mca_mpool_udapl_mem_registered += reg->bound - reg->base + 1;
-#endif
     
-    OPAL_THREAD_ADD32(&reg->ref_count,1);
+    OPAL_THREAD_ADD32(&reg->base_reg.ref_count,1);
 
     if(flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_insert(mpool->rcache, 
                                      (mca_mpool_base_registration_t*) reg, 
                                      flags); 
     }
-    *registration = reg;
-    /* opal_output(0,"registered memory from %p to %p\n", reg->base, reg->bound); */
+    
+    *registration = &reg->base_reg;
+    opal_output(0,"registered memory from %p to %p\n",
+            reg->base_reg.base, reg->base_reg.bound);
     return OMPI_SUCCESS; 
 }
 
@@ -141,14 +158,12 @@ int mca_mpool_udapl_deregister(mca_mpool_base_module_t* mpool,
                                      reg, 
                                      reg->flags); 
     }
-#if 0
-    if((rc = mca_mpool_udapl_release(mpool, reg)) != GM_SUCCESS) { 
+    if((rc = mca_mpool_udapl_release(mpool, reg)) != OMPI_SUCCESS) { 
         opal_output(0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc);
         assert(0);
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     }
-#endif
     return OMPI_SUCCESS;
 }
 
@@ -210,18 +225,17 @@ int mca_mpool_udapl_release(
     opal_output(0, "mpool_udapl_release\n");
 
     if(0 == OPAL_THREAD_ADD32(&reg->ref_count, -1)) {
-#if 0
-        int rc = gm_deregister_memory(
-                                  mpool_udapl->port,
-                                  reg->base,
-                                  reg->bound - reg->base + 1);
-        if(GM_SUCCESS != rc) { 
+        mca_mpool_udapl_registration_t *udapl_reg =
+                (mca_mpool_udapl_registration_t*)reg;
+        int rc = dat_lmr_free(udapl_reg->lmr);
+        
+        if(DAT_SUCCESS != rc) {
+            /* TODO - use error reporting function from the BTL */
             opal_output(0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc); 
-            return OMPI_ERROR; 
+            return OMPI_ERROR;
         }
-#endif
+
         /* opal_output(0,"deregistering udapl memory\n"); */
-        mca_mpool_udapl_mem_registered -= reg->bound - reg->base + 1;
         OBJ_RELEASE(reg);
     }
     else { 
