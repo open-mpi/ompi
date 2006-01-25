@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -64,6 +64,26 @@ mca_mpool_udapl_component_t mca_mpool_udapl_component = {
 };
 
 
+static void mca_mpool_udapl_registration_constructor(mca_mpool_udapl_registration_t *registration)
+{
+    registration->base_reg.base = NULL; 
+    registration->base_reg.bound = NULL; 
+    registration->base_reg.flags = 0;
+}
+
+static void mca_mpool_udapl_registration_destructor(mca_mpool_udapl_registration_t *registration)
+{
+    registration->base_reg.base = NULL; 
+    registration->base_reg.bound = NULL; 
+    registration->base_reg.flags = 0;
+}
+
+OBJ_CLASS_INSTANCE(mca_mpool_udapl_registration_t,
+                   mca_mpool_base_registration_t,
+                   mca_mpool_udapl_registration_constructor,
+                   mca_mpool_udapl_registration_destructor);
+
+
 
 
 /**
@@ -94,7 +114,7 @@ static mca_mpool_base_module_t* mca_mpool_udapl_init(
 
     udapl_mpool = (mca_mpool_udapl_module_t*)malloc(sizeof(mca_mpool_udapl_module_t)); 
     mca_mpool_udapl_module_init(udapl_mpool); 
-    udapl_mpool->udapl_ia = resources->udapl_ia;
+    udapl_mpool->udapl_res = *resources;
     return &udapl_mpool->super;
 }
 
