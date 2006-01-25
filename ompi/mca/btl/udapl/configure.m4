@@ -37,7 +37,7 @@ AC_DEFUN([MCA_btl_udapl_CONFIG],[
     btl_udapl_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
     AS_IF([test "$btl_udapl_CFLAGS" != "$CFLAGS" -a "$btl_udapl_happy" = "yes"],
           [AC_MSG_WARN([Removed -pedantic from CFLAGS for
-uDAPL component because the uDAPL headers are not fully ISO C: $btl_udapl_CFLAGS])])
+uDAPL component because the uDAPL headers are not fully ISO C])])
 
     # substitute in the things needed to build udapl
     AC_SUBST([btl_udapl_CFLAGS])

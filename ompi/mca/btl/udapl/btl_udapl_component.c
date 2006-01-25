@@ -155,7 +155,18 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_module.super.btl_bandwidth  = 
         mca_btl_udapl_param_register_int("bandwidth", 225); 
 
-    /* compute the eager frag size */
+    /* compute the eager and max frag sizes */
+    mca_btl_udapl_component.udapl_eager_frag_size =
+            mca_btl_udapl_module.super.btl_eager_limit;
+    /*mca_btl_udapl_component.udapl_eager_limit =
+            mca_btl_udapl_module.super.btl_eager_limit -
+            sizeof(mca_btl_base_header_t);*/
+
+    mca_btl_udapl_component.udapl_max_frag_size =
+        mca_btl_udapl_module.super.btl_max_send_size;
+    mca_btl_udapl_module.super.btl_max_send_size =
+        mca_btl_udapl_module.super.btl_max_send_size -
+        sizeof(mca_btl_base_header_t);
 #if 0
     mca_btl_udapl_component.udapl_eager_frag_size =
         udapl_min_size_for_length(mca_btl_udapl_module.super.btl_eager_limit) - 1;
@@ -208,9 +219,14 @@ mca_btl_udapl_modex_send(void)
     size_t      size;
     mca_btl_udapl_addr_t *addrs = NULL;
 
-    opal_output(0, "udapl_modex_send\n");
+    size = sizeof(mca_btl_udapl_addr_t) *
+            mca_btl_udapl_component.udapl_num_btls;
 
-    size = mca_btl_udapl_component.udapl_num_btls * sizeof (mca_btl_udapl_addr_t);
+    if(mca_btl_udapl_component.udapl_debug) {
+        opal_output(0, "udapl_modex_send %d addrs %d bytes\n",
+                mca_btl_udapl_component.udapl_num_btls, size);
+    }
+
     if (0 != size) {
         addrs = (mca_btl_udapl_addr_t *)malloc (size);
         if (NULL == addrs) {
@@ -243,38 +259,34 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     DAT_PROVIDER_INFO* datinfo;
     mca_btl_base_module_t **btls;
     mca_btl_udapl_module_t *btl;
-    size_t i;
+    DAT_COUNT num_ias;
+    int32_t i;
 
     opal_output(0, "udapl_component_init\n");
 
     /* enumerate uDAPL interfaces */
-    datinfo = malloc(mca_btl_udapl_component.udapl_max_btls * sizeof(DAT_PROVIDER_INFO));
+    datinfo = malloc(sizeof(DAT_PROVIDER_INFO) *
+            mca_btl_udapl_component.udapl_max_btls);
     if(NULL == datinfo) {
         return NULL;
     }
-    if(DAT_SUCCESS != dat_registry_list_providers(mca_btl_udapl_component.udapl_max_btls,
-            (DAT_COUNT*)&mca_btl_udapl_component.udapl_num_btls, &datinfo)) {
+    if(DAT_SUCCESS != dat_registry_list_providers(
+            mca_btl_udapl_component.udapl_max_btls,
+            (DAT_COUNT*)&num_ias, &datinfo)) {
         free(datinfo);
         return NULL;
     }
 
-    /* Make sure we have some interfaces */
-    if(0 == mca_btl_udapl_component.udapl_num_btls) {
-        mca_btl_base_error_no_nics("uDAPL", "NIC");
-        free(datinfo);
-        return NULL;
-    }
-
-    /* create a BTL module for each interface */
-    mca_btl_udapl_component.udapl_btls =
-            malloc(mca_btl_udapl_component.udapl_num_btls *
-            sizeof(mca_btl_udapl_module_t *));
+    /* allocate space for the each possible BTL */
+    mca_btl_udapl_component.udapl_btls = (mca_btl_udapl_module_t *)
+            malloc(num_ias * sizeof(mca_btl_udapl_module_t *));
     if(NULL == mca_btl_udapl_component.udapl_btls) {
         free(datinfo);
         return NULL;
     }
 
-    for(i = 0; i < mca_btl_udapl_component.udapl_num_btls; i++) {
+    /* create a BTL module for each interface */
+    for(mca_btl_udapl_component.udapl_num_btls = i = 0; i < num_ias; i++) {
         opal_output(0, "udapl creating btl for %s\n", datinfo[i].ia_name);
 
         btl = malloc(sizeof(mca_btl_udapl_module_t));
@@ -287,34 +299,50 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         /* copy default values into the new BTL */
         memcpy(btl, &mca_btl_udapl_module, sizeof(mca_btl_udapl_module_t));
 
+        /* initialize this BTL */
+        /* TODO - make use of the thread-safety info in datinfo also */
         if(OMPI_SUCCESS != mca_btl_udapl_init(datinfo[i].ia_name, btl)) {
             opal_output(0, "udapl module init for %s failed\n",
                     datinfo[i].ia_name);
-            /*TODO - how do i correctly handle an error here? */
             free(btl);
+            continue;
         }
 
         /* successful btl creation */
         mca_btl_udapl_component.udapl_btls[i] = btl;
+        if(++mca_btl_udapl_component.udapl_num_btls >=
+                mca_btl_udapl_component.udapl_max_btls) {
+            break;
+        }
     }
 
     /* finished with datinfo */
     free(datinfo);
 
+    /* Make sure we have some interfaces */
+    if(0 == mca_btl_udapl_component.udapl_num_btls) {
+        mca_btl_base_error_no_nics("uDAPL", "NIC");
+        free(mca_btl_udapl_component.udapl_btls);
+        return NULL;
+    }
+
     /* publish uDAPL parameters with the MCA framework */
     if (OMPI_SUCCESS != mca_btl_udapl_modex_send()) {
+        free(mca_btl_udapl_component.udapl_btls);
         return NULL;
     }
 
     /* return array of BTLs */
-    btls = (mca_btl_base_module_t**) malloc (
-                mca_btl_udapl_component.udapl_num_btls * sizeof(mca_btl_base_module_t *));
+    btls = (mca_btl_base_module_t**) malloc(sizeof(mca_btl_base_module_t *) *
+            mca_btl_udapl_component.udapl_num_btls);
     if (NULL == btls) {
+        free(mca_btl_udapl_component.udapl_btls);
         return NULL;
     }
 
     memcpy(btls, mca_btl_udapl_component.udapl_btls,
-           mca_btl_udapl_component.udapl_num_btls * sizeof(mca_btl_udapl_module_t *));
+           mca_btl_udapl_component.udapl_num_btls *
+           sizeof(mca_btl_udapl_module_t *));
     *num_btl_modules = mca_btl_udapl_component.udapl_num_btls;
     return btls;
 }
@@ -331,17 +359,23 @@ int mca_btl_udapl_component_progress()
     int count = 0;
     size_t i;
 
-    opal_output(0, "udapl_component_progress\n");
-    
-    /* could get into deadlock in this case as we post recvs after callback completes */
+    /* prevent deadlock - only one thread should be 'progressing' at a time */
     if(OPAL_THREAD_ADD32(&inprogress, 1) > 1) {
         OPAL_THREAD_ADD32(&inprogress, -1);
         return OMPI_SUCCESS;
     }
 
+    opal_output(0, "udapl_component_progress\n");
+    
+    /* check for work to do on each uDAPL btl */
     for( i = 0; i < mca_btl_udapl_component.udapl_num_btls; ) {
+        mca_btl_udapl_module_t *btl = mca_btl_udapl_component.udapl_btls[i];
 
+        /* TODO - check the DTO EVD for events */
+        i++;
     }
+
+    /* unlock and return */
     OPAL_THREAD_ADD32(&inprogress, -1);
     return count;
 }

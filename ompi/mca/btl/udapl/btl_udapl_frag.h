@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -38,17 +38,18 @@ typedef enum {
 
 
 /**
- * UDAPL send fragment derived type.
+ * uDAPL send fragment derived type.
  */
 struct mca_btl_udapl_frag_t {
     mca_btl_base_descriptor_t base; 
-    mca_btl_base_segment_t segment; 
+    mca_btl_base_segment_t segment;
+
     struct mca_btl_udapl_module_t* btl;
     struct mca_btl_base_endpoint_t *endpoint; 
     struct mca_mpool_base_registration_t* registration;
+    
     mca_btl_base_header_t *hdr;
     size_t size; 
-    /*enum gm_priority priority;*/
     mca_btl_udapl_frag_type_t type;
 }; 
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_t; 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -45,7 +45,7 @@ void mca_btl_udapl_proc_construct(mca_btl_udapl_proc_t* proc)
 }
 
 /*
- * Cleanup ib proc instance
+ * Cleanup uDAPL proc instance
  */
 
 void mca_btl_udapl_proc_destruct(mca_btl_udapl_proc_t* proc)
@@ -130,6 +130,11 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
+    if(mca_btl_udapl_component.udapl_debug) {
+        opal_output(0, "udapl_proc_create got %d addrs\n",
+               size / sizeof(mca_btl_udapl_addr_t));
+    }
+
     if((size % sizeof(mca_btl_udapl_addr_t)) != 0) {
         opal_output(0, "[%s:%d] invalid udapl address for peer [%d,%d,%d]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
@@ -161,39 +166,16 @@ int mca_btl_udapl_proc_insert(
     mca_btl_udapl_proc_t* udapl_proc, 
     mca_btl_base_endpoint_t* udapl_endpoint)
 {
-    /*mca_btl_udapl_module_t* udapl_btl = udapl_endpoint->endpoint_btl;*/
-
     /* insert into endpoint array */
-    if(udapl_proc->proc_addr_count <= udapl_proc->proc_endpoint_count)
+    if(udapl_proc->proc_endpoint_count > udapl_proc->proc_addr_count)
         return OMPI_ERR_OUT_OF_RESOURCE;
+
+    opal_output(0, "udapl_proc_insert\n");
+
     udapl_endpoint->endpoint_proc = udapl_proc;
-    udapl_endpoint->endpoint_addr = udapl_proc->proc_addrs[udapl_proc->proc_endpoint_count];
-#if 0
-#if GM_API_VERSION > 0x200
-    if (GM_SUCCESS != udapl_global_id_to_node_id(
-        udapl_btl->port,
-        udapl_endpoint->endpoint_addr.global_id,
-        &udapl_endpoint->endpoint_addr.node_id)) {
-        opal_output( 0, "[%s:%d] error in converting global to local id \n",
-            __FILE__, __LINE__ );
-        return OMPI_ERROR;
-    }
-    if(mca_btl_udapl_component.udapl_debug > 0) {
-        opal_output(0, "[%d,%d,%d] mapped global id %lu to node id %lu\n", 
-            ORTE_NAME_ARGS(orte_process_info.my_name),
-            udapl_endpoint->endpoint_addr.global_id,
-            udapl_endpoint->endpoint_addr.node_id);
-    }
-#else
-    udapl_endpoint->udapl_addr.node_id = udapl_host_name_to_node_id( udapl_btl->udapl_port,
-        udapl_endpoint->udapl_addr.global_id);
-    if( GM_NO_SUCH_NODE_ID == udapl_endpoint->udapl_addr.node_id ) {
-        ompi_output( 0, "[%s:%d] unable to convert the remote host name (%s) to a host id",
-            __FILE__, __LINE__, udapl_endpoint->udapl_addr.global_id);
-        return OMPI_ERROR;
-    }
-#endif  /* GM_API_VERSION > 0x200 */
-#endif
+    udapl_endpoint->endpoint_addr =
+            udapl_proc->proc_addrs[udapl_proc->proc_endpoint_count];
+   
     udapl_proc->proc_endpoints[udapl_proc->proc_endpoint_count] = udapl_endpoint;
     udapl_proc->proc_endpoint_count++;
     return OMPI_SUCCESS;

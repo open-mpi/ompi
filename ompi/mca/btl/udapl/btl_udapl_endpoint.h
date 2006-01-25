@@ -34,7 +34,7 @@ extern "C" {
  * Structure used to publish uDAPL id information to peers.
  */
 struct mca_btl_udapl_addr_t {
-    int foo;    /* placeholder to prevent division by 0 */
+    DAT_SOCK_ADDR addr;
 };
 typedef struct mca_btl_udapl_addr_t mca_btl_udapl_addr_t;
                                                                                                                 
