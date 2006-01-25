@@ -44,7 +44,7 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */
-        0, /* flags */
+        MCA_BTL_FLAGS_SEND,
         mca_btl_udapl_add_procs,
         mca_btl_udapl_del_procs,
         mca_btl_udapl_register, 
@@ -93,9 +93,11 @@ mca_btl_udapl_error(DAT_RETURN ret, char* str)
 int
 mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
 {
+    DAT_IA_ATTR attr;
     DAT_RETURN rc;
 
     /* open the uDAPL interface */
+    btl->udapl_evd_dflt = DAT_HANDLE_NULL;
     rc = dat_ia_open(ia_name, mca_btl_udapl_component.udapl_evd_qlen,
             &btl->udapl_evd_dflt, &btl->udapl_ia);
     if(DAT_SUCCESS != rc) {
@@ -103,12 +105,25 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
         return OMPI_ERROR;
     }
 
+    /* query to get address information */
+    /* TODO - we only get the address, but there's other useful stuff here */
+    rc = dat_ia_query(btl->udapl_ia, &btl->udapl_evd_dflt,
+            DAT_IA_FIELD_IA_ADDRESS_PTR, &attr, DAT_IA_FIELD_NONE, NULL);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_ia_query");
+        dat_ia_close(btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
+        return OMPI_ERROR;
+    }
+
+    memcpy(&btl->udapl_addr.addr, attr.ia_address_ptr, sizeof(DAT_SOCK_ADDR));
+
     /* set up evd's */
     rc = dat_evd_create(btl->udapl_ia,
             mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
             DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_evd_create (dto)");
+        dat_ia_close(btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
         return OMPI_ERROR;
     }
 
@@ -117,8 +132,12 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
             DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_conn);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_evd_create (conn)");
+        dat_evd_free(btl->udapl_evd_dto);
+        dat_ia_close(btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
         return OMPI_ERROR;
     }
+
+    /* TODO - post some receives - involves setting up ep's, psp's, and LMR's */
 
     /* initialize objects */
     OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
