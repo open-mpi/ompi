@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 
-struct  mca_pml_ob1_recv_request_t {
+struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     struct ompi_proc_t *req_proc;
     ompi_ptr_t req_send;

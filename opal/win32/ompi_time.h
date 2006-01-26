@@ -130,7 +130,7 @@
 #define ITIMER_VIRTUAL  1
 #define ITIMER_PROF 2
 
-struct  itimerval {
+struct itimerval {
   struct  timeval it_interval;    /* timer interval */
   struct  timeval it_value;   /* current value */
 };

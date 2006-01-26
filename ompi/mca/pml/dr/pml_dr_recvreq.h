@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 
-struct  mca_pml_dr_recv_request_t {
+struct mca_pml_dr_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     struct ompi_proc_t *req_proc;
 #if OMPI_HAVE_THREAD_SUPPORT
