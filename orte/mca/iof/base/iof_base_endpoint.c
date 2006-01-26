@@ -540,7 +540,7 @@ int orte_iof_base_callback_delete(
     orte_iof_base_endpoint_t* endpoint;
     opal_list_item_t* item;
     
-    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock); 
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock); 
     if(NULL == (endpoint = orte_iof_base_endpoint_lookup(proc,ORTE_IOF_SINK, tag))) {
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         return ORTE_ERR_NOT_FOUND;
