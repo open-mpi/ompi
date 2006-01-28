@@ -17,6 +17,10 @@
 #ifndef OMPI_MCA_OSC_PT2PT_HDR_H
 #define OMPI_MCA_OSC_PT2PT_HDR_H
 
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
 struct ompi_osc_pt2pt_type_header_t {
     uint8_t hdr_type;
 };
