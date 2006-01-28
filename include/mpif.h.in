@@ -103,7 +103,7 @@
        integer MPI_MODE_DELETE_ON_CLOSE, MPI_MODE_UNIQUE_OPEN
        integer MPI_MODE_EXCL, MPI_MODE_APPEND, MPI_MODE_SEQUENTIAL
        integer MPI_DISPLACEMENT_CURRENT
-       @OMPI_F77_WIN_ATTR_KEYS@
+       integer MPI_WIN_BASE, MPI_WIN_SIZE, MPI_WIN_DISP_UNIT
 
        parameter (MPI_ANY_SOURCE=-1)
        parameter (MPI_ANY_TAG=-1)
@@ -127,9 +127,9 @@
        parameter (MPI_APPNUM=4)
        parameter (MPI_LASTUSEDCODE=5)
        parameter (MPI_UNIVERSE_SIZE=6)
-       @OMPI_F77_WIN_ATTR_BASE_VALUE@
-       @OMPI_F77_WIN_ATTR_SIZE_VALUE@
-       @OMPI_F77_WIN_ATTR_DISP_VALUE@
+       parameter (MPI_WIN_BASE=6)
+       parameter (MPI_WIN_SIZE=7)
+       parameter (MPI_WIN_DISP_UNIT=8)
        parameter (IMPI_CLIENT_SIZE=10)
        parameter (IMPI_CLIENT_COLOR=11)
        parameter (IMPI_HOST_SIZE=12)
@@ -442,9 +442,9 @@
        external MPI_COMM_NULL_COPY_FN, MPI_COMM_NULL_DELETE_FN
        external MPI_TYPE_NULL_COPY_FN, MPI_TYPE_NULL_DELETE_FN
        external MPI_DUP_FN, MPI_COMM_DUP_FN, MPI_TYPE_DUP_FN
-       @OMPI_F77_WIN_NULL_COPY_FN@
-       @OMPI_F77_WIN_NULL_DELETE_FN@
-       @OMPI_F77_WIN_DUP_FN@
+       external MPI_WIN_NULL_COPY_FN
+       external MPI_WIN_NULL_DELETE_FN
+       external MPI_WIN_DUP_FN
 !
 ! double precision functions
 !

@@ -38,10 +38,6 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
   }
 
-  /* This function is not yet implemented */
-
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
-
   if (MPI_PARAM_CHECK) {
     if (NULL == win || 
         MPI_WIN_NULL == win) {

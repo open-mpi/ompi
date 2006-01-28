@@ -19,6 +19,8 @@
 #include <stdio.h>
 
 #include "mpi/c/bindings.h"
+#include "win/win.h"
+#include "mca/osc/osc.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_post = PMPI_Win_post
@@ -33,11 +35,19 @@ static const char FUNC_NAME[] = "MPI_Win_post";
 
 int MPI_Win_post(MPI_Group group, int assert, MPI_Win win) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int rc;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+        if (ompi_win_invalid(win)) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+        } else if (0 != (assert & ~(MPI_MODE_NOCHECK | MPI_MODE_NOSTORE | 
+                                    MPI_MODE_NOPUT))) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
+        }
+    }
+
+    rc = win->w_osc_module->osc_post(group, assert, win);
+    OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

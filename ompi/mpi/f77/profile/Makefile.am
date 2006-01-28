@@ -301,10 +301,7 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pwait_f.c \
         pwaitsome_f.c \
 	pwtick_f.c \
-	pwtime_f.c
-
-if WANT_MPI2_ONE_SIDED
-nodist_libmpi_f77_pmpi_la_SOURCES += \
+	pwtime_f.c \
         paccumulate_f.c \
         pget_f.c \
         pput_f.c \
@@ -330,7 +327,6 @@ nodist_libmpi_f77_pmpi_la_SOURCES += \
         pwin_test_f.c \
         pwin_unlock_f.c \
         pwin_wait_f.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory

@@ -53,9 +53,7 @@ enum ompi_attribute_type_t {
 		      with 1 so that we can have it initialized to 0
 		      using memset in the constructor */
     TYPE_ATTR /**< The attribute belongs to datatype object */
-#if OMPI_WANT_MPI2_ONE_SIDED
     , WIN_ATTR /**< The attribute belongs to a win object */
-#endif
 };
 typedef enum ompi_attribute_type_t ompi_attribute_type_t;
 
@@ -101,15 +99,11 @@ typedef void (ompi_mpi2_fortran_delete_attr_function)(MPI_Fint *obj,
 union ompi_attribute_fn_ptr_union_t {
     MPI_Comm_delete_attr_function *attr_communicator_delete_fn;
     MPI_Type_delete_attr_function *attr_datatype_delete_fn;
-#if OMPI_WANT_MPI2_ONE_SIDED
     MPI_Win_delete_attr_function *attr_win_delete_fn;
-#endif
 
     MPI_Comm_copy_attr_function *attr_communicator_copy_fn;
     MPI_Type_copy_attr_function *attr_datatype_copy_fn;
-#if OMPI_WANT_MPI2_ONE_SIDED
     MPI_Win_copy_attr_function *attr_win_copy_fn;
-#endif
 
     /* For Fortran old MPI-1 callback functions */
     

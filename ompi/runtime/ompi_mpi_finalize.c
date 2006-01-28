@@ -50,6 +50,7 @@
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/topo/topo.h"
@@ -111,6 +112,14 @@ int ompi_mpi_finalize(void)
 
     /* free file resources */
     if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
+	return ret;
+    }
+
+    /* free window resources */
+    if (OMPI_SUCCESS != (ret = ompi_win_finalize())) {
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = ompi_osc_base_finalize())) {
 	return ret;
     }
 
@@ -202,6 +211,9 @@ int ompi_mpi_finalize(void)
         }
     }
     if (OMPI_SUCCESS != (ret = mca_topo_base_close())) {
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = ompi_osc_base_close())) {
 	return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {

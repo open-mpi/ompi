@@ -208,6 +208,40 @@ extern "C" {
    *   @retval MPI_ERR_ARG
    */
   int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key);
+
+  int ompi_info_value_to_int(char *value, int *interp);
+
+  /**
+   * Convert value string to boolean
+   *
+   * Convert value string \c value into a boolean, using the
+   * interpretation rules specified in MPI-2 Section 4.10.  The
+   * strings "true", "false", and integer numbers can be converted
+   * into booleans.  All others will return \c OMPI_ERR_BAD_PARAM
+   *
+   * @param value Value string for info key to interpret
+   * @param interp returned interpretation of the value key
+   *
+   * @retval OMPI_SUCCESS string was successfully interpreted
+   * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
+   */
+  int ompi_info_value_to_bool(char *value, bool *interp);
+
+  /**
+   * Convert value string to integer
+   *
+   * Convert value string \c value into a integer, using the
+   * interpretation rules specified in MPI-2 Section 4.10.  
+   * All others will return \c OMPI_ERR_BAD_PARAM
+   *
+   * @param value Value string for info key to interpret
+   * @param interp returned interpretation of the value key
+   *
+   * @retval OMPI_SUCCESS string was successfully interpreted
+   * @retval OMPI_ERR_BAD_PARAM string was not able to be interpreted
+   */
+  int ompi_info_value_to_bool(char *value, bool *interp);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

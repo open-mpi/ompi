@@ -244,15 +244,12 @@ nodist_libmpi_f90_a_SOURCES = \
      mpi_send_init_f90.f90 \
      mpi_sendrecv_replace_f90.f90 \
      mpi_ssend_f90.f90 \
-     mpi_ssend_init_f90.f90
-
-if WANT_MPI2_ONE_SIDED
-nodist_libmpi_f90_a_SOURCES += \
+     mpi_ssend_init_f90.f90 \
      mpi_accumulate_f90.f90 \
      mpi_get_f90.f90 \
      mpi_put_f90.f90 \
      mpi_win_create_f90.f90
-endif
+
 
 #
 # Clean up all F90 module files and all generated files
