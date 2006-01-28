@@ -250,8 +250,6 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
 #endif
 
     /* send fragment */
-    opal_output(0, "sending sendreq of type %d to %d",
-                header->hdr_type, sendreq->req_target_rank);
     ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_PT2PT);
     goto done;
 
@@ -414,8 +412,6 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
 #endif
 
     /* send fragment */
-    opal_output(0, "sending replyreq to %d",
-                replyreq->rep_origin_rank);
     ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_PT2PT);
     goto done;
 
