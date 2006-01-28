@@ -108,9 +108,6 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 
         P2P_MODULE(win)->p2p_num_pending_in += incoming_reqs;
 
-        opal_output(0, "fence: waiting on %d operations", 
-                    P2P_MODULE(win)->p2p_num_pending_in);
-
         for (i = 0 ; i < ompi_comm_size(P2P_MODULE(win)->p2p_comm) ; ++i) {
             opal_list_item_t *item;
             opal_list_t *req_list =
