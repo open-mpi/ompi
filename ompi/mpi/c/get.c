@@ -19,6 +19,9 @@
 #include <stdio.h>
 
 #include "mpi/c/bindings.h"
+#include "win/win.h"
+#include "mca/osc/osc.h"
+#include "ompi/datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Get = PMPI_Get
@@ -36,11 +39,28 @@ int MPI_Get(void *origin_addr, int origin_count,
             MPI_Aint target_disp, int target_count,
             MPI_Datatype target_datatype, MPI_Win win) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int rc;
+    if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        rc = OMPI_SUCCESS;
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+        if (ompi_win_invalid(win)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
+        } else if (origin_count < 0 || target_count < 0) {
+            rc = MPI_ERR_COUNT;
+        } else if (ompi_win_peer_invalid(win, target_rank)) {
+            rc = MPI_ERR_RANK;
+        } else {
+            OMPI_CHECK_DATATYPE_FOR_SEND(rc, origin_datatype, origin_count);
+        }
+        OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
+    }
+
+    rc = win->w_osc_module->osc_get(origin_addr, origin_count, origin_datatype,
+                                    target_rank, target_disp, target_count,
+                                    target_datatype, win);
+    OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

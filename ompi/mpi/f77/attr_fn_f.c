@@ -49,7 +49,6 @@
 #pragma weak mpi_comm_null_copy_fn   = mpi_comm_null_copy_fn_f
 #pragma weak mpi_comm_null_copy_fn_  = mpi_comm_null_copy_fn_f
 #pragma weak mpi_comm_null_copy_fn__ = mpi_comm_null_copy_fn_f
-#if OMPI_WANT_MPI2_ONE_SIDED
 #pragma weak MPI_WIN_NULL_DELETE_FN   = mpi_win_null_delete_fn_f
 #pragma weak mpi_win_null_delete_fn   = mpi_win_null_delete_fn_f
 #pragma weak mpi_win_null_delete_fn_  = mpi_win_null_delete_fn_f
@@ -62,7 +61,6 @@
 #pragma weak mpi_win_dup_fn   = mpi_win_dup_fn_f
 #pragma weak mpi_win_dup_fn_  = mpi_win_dup_fn_f
 #pragma weak mpi_win_dup_fn__ = mpi_win_dup_fn_f
-#endif
 #pragma weak MPI_NULL_COPY_FN   = mpi_null_copy_fn_f
 #pragma weak mpi_null_copy_fn   = mpi_null_copy_fn_f
 #pragma weak mpi_null_copy_fn_  = mpi_null_copy_fn_f
@@ -141,7 +139,6 @@ OMPI_GENERATE_F77_BINDINGS( MPI_DUP_FN,
                             (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Fint* extra_state, MPI_Fint* attribute_val_in, MPI_Fint* attribute_val_out, ompi_fortran_logical_t* flag, MPI_Fint* ierr),
                             (comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag, ierr) )
 
-#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_GENERATE_F77_BINDINGS( MPI_WIN_NULL_DELETE_FN,
                             mpi_win_null_delete_fn,
                             mpi_win_null_delete_fn_,
@@ -163,7 +160,6 @@ OMPI_GENERATE_F77_BINDINGS( MPI_WIN_DUP_FN,
                             mpi_win_dup_fn_f,
                             (MPI_Fint* window, MPI_Fint* win_keyval, MPI_Fint* extra_state, MPI_Fint* attribute_val_in, MPI_Fint* attribute_val_out, ompi_fortran_logical_t* flag, MPI_Fint* ierr),
                             (window, win_keyval, extra_state, attribute_val_in, attribute_val_out, flag, ierr) )
-#endif
 #endif
 
 /*
@@ -273,7 +269,6 @@ void mpi_dup_fn_f( MPI_Fint* comm, MPI_Fint* comm_keyval,
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-#if OMPI_WANT_MPI2_ONE_SIDED
 void mpi_win_null_delete_fn_f( MPI_Fint* window, MPI_Fint* win_keyval,
                                MPI_Fint* attribute_val_out, 
                                MPI_Fint* extra_state, MPI_Fint* ierr )
@@ -301,4 +296,3 @@ void mpi_win_dup_fn_f( MPI_Fint* window, MPI_Fint* win_keyval,
     *attribute_val_out = *attribute_val_in;
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
-#endif

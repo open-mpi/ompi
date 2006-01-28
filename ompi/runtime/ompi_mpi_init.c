@@ -66,6 +66,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/io/io.h"
@@ -287,6 +288,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    if (OMPI_SUCCESS != (ret = ompi_osc_base_open())) {
+        error = "ompi_osc_base_open() failed";
+        goto error;
+    }
+
     /* In order to reduce the common case for MPI apps (where they
        don't use MPI-2 IO or MPI-1 topology functions), the io and
        topo frameworks are initialized lazily, at the first use of
@@ -320,6 +326,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                             OMPI_ENABLE_MPI_THREADS))) {
         error = "mca_coll_base_find_available() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != 
+        (ret = ompi_osc_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                           OMPI_ENABLE_MPI_THREADS))) {
+        error = "ompi_osc_base_find_available() failed";
         goto error;
     }
 
@@ -378,6 +391,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* initialize file handles */
     if (OMPI_SUCCESS != (ret = ompi_file_init())) {
         error = "ompi_file_init() failed";
+        goto error;
+    }
+
+    /* initialize windows */
+    if (OMPI_SUCCESS != (ret = ompi_win_init())) {
+        error = "ompi_win_init() failed";
         goto error;
     }
 

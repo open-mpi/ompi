@@ -45,6 +45,7 @@ typedef enum {
     OMPI_REQUEST_PML,      /**< MPI point-to-point request */
     OMPI_REQUEST_IO,       /**< MPI-2 IO request */
     OMPI_REQUEST_GEN,      /**< MPI-2 generalized request */
+    OMPI_REQUEST_WIN,      /**< MPI-2 one-sided request */
     OMPI_REQUEST_NULL,     /**< NULL request */
     OMPI_REQUEST_MAX       /**< Maximum request type */
 } ompi_request_type_t;

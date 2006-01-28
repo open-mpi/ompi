@@ -332,10 +332,7 @@ libmpi_f77_mpi_la_SOURCES = \
         wait_f.c \
         waitsome_f.c \
         wtick_f.c \
-        wtime_f.c
-
-if WANT_MPI2_ONE_SIDED
-libmpi_f77_mpi_la_SOURCES += \
+        wtime_f.c \
         accumulate_f.c \
         get_f.c \
         put_f.c \
@@ -361,7 +358,6 @@ libmpi_f77_mpi_la_SOURCES += \
         win_test_f.c \
         win_unlock_f.c \
         win_wait_f.c
-endif
 
 #
 # Conditionally install the header files

@@ -80,7 +80,6 @@ int OMPI_C_MPI_TYPE_DUP_FN( MPI_Datatype datatype, int type_keyval,
    return MPI_SUCCESS;
 }
 
-#if OMPI_WANT_MPI2_ONE_SIDED
 int OMPI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
                                    void* attribute_val_out,
                                    void* extra_state )
@@ -105,7 +104,6 @@ int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
    *(void**)attribute_val_out = attribute_val_in;
    return MPI_SUCCESS;
 }
-#endif
 
 int OMPI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
                                     void* attribute_val_out,

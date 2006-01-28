@@ -58,6 +58,8 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -232,6 +234,9 @@ void ompi_info::open_components()
   mca_pml_base_open();
   component_map["pml"] = &mca_pml_base_components_available;
 
+  ompi_osc_base_open();
+  component_map["osc"] = &ompi_osc_base_open_components;
+
   /* mca_ptl_base_open() should not be called directly. This call is performed
    * in the PML base open.
    */
@@ -266,6 +271,7 @@ void ompi_info::close_components()
         mca_io_base_close();
         mca_coll_base_close();
         mca_allocator_base_close();
+        ompi_osc_base_close();
 
         orte_iof_base_close();
         orte_sds_base_close();

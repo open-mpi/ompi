@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #include "mpi/c/bindings.h"
+#include "win/win.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_free = PMPI_Win_free
@@ -33,11 +34,19 @@ static const char FUNC_NAME[] = "MPI_Win_free";
 
 int MPI_Win_free(MPI_Win *win) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int ret;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+        if (NULL == win) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
+        }
+    }
+
+    /* BWB - fix me - need to add module cleanup code */
+    ret = ompi_win_free((ompi_win_t*) *win);
+    if (OMPI_SUCCESS == ret) *win = MPI_WIN_NULL;
+
+    OMPI_ERRHANDLER_RETURN(ret, *win, ret, FUNC_NAME);
 }

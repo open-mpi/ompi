@@ -18,6 +18,15 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#include <errno.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#include <limits.h>
+
 #include "ompi/include/constants.h"
 #include "info/info.h"
 #include "ompi/runtime/params.h"
@@ -453,3 +462,55 @@ static ompi_info_entry_t *info_find_key (ompi_info_t *info, char *key)
     }
     return NULL;
 }
+
+
+int
+ompi_info_value_to_int(char *value, int *interp)
+{
+    long tmp;
+    char *endp;
+
+    if (NULL == value || '\0' == value[0]) return OMPI_ERR_BAD_PARAM;
+
+    errno = 0;
+    tmp = strtol(value, &endp, 10);
+    /* we found something not a number */
+    if (*endp != '\0') return OMPI_ERR_BAD_PARAM;
+    /* underflow */
+    if (tmp == 0 && errno == EINVAL) return OMPI_ERR_BAD_PARAM;
+
+    *interp = (int) tmp;
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_info_value_to_bool(char *value, bool *interp)
+{
+    int tmp;
+
+    /* idiot case */
+    if (NULL == value || NULL == interp) return OMPI_ERR_BAD_PARAM;
+
+    /* is it true / false? */
+    if (0 == strcmp(value, "true")) {
+        *interp = true;
+        return OMPI_SUCCESS;
+    } else if (0 == strcmp(value, "false")) {
+        *interp = false;
+        return OMPI_SUCCESS;
+
+    /* is it a number? */
+    } else if (OMPI_SUCCESS == ompi_info_value_to_int(value, &tmp)) {
+        if (tmp == 0) {
+            *interp = false;
+        } else {
+            *interp = true;
+        } 
+        return OMPI_SUCCESS;
+    }
+
+    return OMPI_ERR_BAD_PARAM;
+}
+

@@ -645,11 +645,9 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
             DELETE_ATTR_CALLBACKS(communicator, attr, key_item);
             break;
 		
-#if OMPI_WANT_MPI2_ONE_SIDED
         case WIN_ATTR:
             DELETE_ATTR_CALLBACKS(win, attr, key_item);
             break;
-#endif
 		
         case TYPE_ATTR:
             DELETE_ATTR_CALLBACKS(datatype, attr, key_item);
@@ -865,13 +863,11 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
                                 old_attr, new_attr);
             break;
 
-#if OMPI_WANT_MPI2_ONE_SIDED
         case WIN_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(win, old_object, hash_value, 
                                 old_attr, new_attr);
             break;
-#endif
         }
 
         /* Hang this off the object's key hash */
@@ -1028,11 +1024,9 @@ static int set_value(ompi_attribute_type_t type, void *object,
 	    DELETE_ATTR_CALLBACKS(communicator, old_attr, key_item);
 	    break;
 
-#if OMPI_WANT_MPI2_ONE_SIDED
 	case WIN_ATTR:
 	    DELETE_ATTR_CALLBACKS(win, old_attr, key_item);
 	    break;
-#endif
 
 	case TYPE_ATTR:	    
 	    DELETE_ATTR_CALLBACKS(datatype, old_attr, key_item);

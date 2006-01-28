@@ -32,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_KEYVAL,
                            pmpi_win_create_keyval_,
                            pmpi_win_create_keyval__,
                            pmpi_win_create_keyval_f,
-                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_F_int *win_keyval, MPI_F_int *extra_state, MPI_F_int *ierr),
+                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
                            (win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr) )
 #endif
 
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_KEYVAL,
                            mpi_win_create_keyval_,
                            mpi_win_create_keyval__,
                            mpi_win_create_keyval_f,
-                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_F_int *win_keyval, MPI_F_int *extra_state, MPI_F_int *ierr),
+                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
                            (win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr) )
 #endif
 

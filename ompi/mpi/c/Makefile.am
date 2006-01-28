@@ -338,10 +338,7 @@ libmpi_c_mpi_la_SOURCES = \
         waitany.c \
         waitsome.c \
 	wtime.c \
-	wtick.c
-
-if WANT_MPI2_ONE_SIDED
-libmpi_c_mpi_la_SOURCES += \
+	wtick.c \
         accumulate.c \
         get.c \
         put.c \
@@ -369,7 +366,6 @@ libmpi_c_mpi_la_SOURCES += \
         win_test.c \
         win_unlock.c \
         win_wait.c
-endif
 
 # Conditionally install the header files
 

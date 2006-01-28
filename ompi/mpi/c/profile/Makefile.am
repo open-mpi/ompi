@@ -320,10 +320,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwaitany.c \
         pwaitsome.c \
 	pwtime.c \
-	pwtick.c
-
-if WANT_MPI2_ONE_SIDED
-nodist_libmpi_c_pmpi_la_SOURCES += \
+	pwtick.c \
         paccumulate.c \
         pget.c \
         pput.c \
@@ -351,7 +348,6 @@ nodist_libmpi_c_pmpi_la_SOURCES += \
         pwin_test.c \
         pwin_unlock.c \
         pwin_wait.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory

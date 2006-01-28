@@ -23,7 +23,6 @@
 // Miscellany
 //
 
-#if OMPI_WANT_MPI2_ONE_SIDED
 
 inline MPI::Errhandler 
 MPI::Win::Create_errhandler(MPI::Win::Errhandler_fn* function)
@@ -274,4 +273,3 @@ typedef void MPI::Win::Errhandler_fn(Win &, int *, ... );
 
 #endif
 
-#endif // OMPI_WANT_MPI2_ONE_SIDED

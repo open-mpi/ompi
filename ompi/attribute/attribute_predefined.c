@@ -96,10 +96,8 @@
  * Private functions
  */
 static int create_comm(int target_keyval, bool want_inherit);
-#if OMPI_WANT_MPI2_ONE_SIDED
 /* JMS for when we implement windows */
 static int create_win(int target_keyval);
-#endif
 static int set_f(int keyval, MPI_Fint value);
 
 
@@ -123,12 +121,9 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = create_comm(MPI_APPNUM, true)) ||
         OMPI_SUCCESS != (ret = create_comm(MPI_LASTUSEDCODE, false)) ||
         OMPI_SUCCESS != (ret = create_comm(MPI_UNIVERSE_SIZE, true)) ||
-#if OMPI_WANT_MPI2_ONE_SIDED
-        /* JMS for when we implement windows */
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_BASE)) ||
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_SIZE)) ||
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_DISP_UNIT)) ||
-#endif
 #if 0
         /* JMS For when we implement IMPI */
         OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_CLIENT_SIZE, true)) ||
@@ -314,8 +309,6 @@ static int create_comm(int target_keyval, bool want_inherit)
 }
 
 
-#if OMPI_WANT_MPI2_ONE_SIDED
-/* JMS for when we implement windows */
 static int create_win(int target_keyval)
 {
     int err;
@@ -336,7 +329,6 @@ static int create_win(int target_keyval)
     }
     return OMPI_SUCCESS;
 }
-#endif
 
 
 static int set_f(int keyval, MPI_Fint value)

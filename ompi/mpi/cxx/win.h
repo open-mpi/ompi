@@ -18,7 +18,6 @@
 //
 
 
-#if OMPI_WANT_MPI2_ONE_SIDED
 class Win {
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
   //  friend class P;
@@ -166,4 +165,3 @@ protected:
   MPI_Win mpi_win;
 #endif
 };
-#endif // OMPI_WANT_MPI2_ONE_SIDED

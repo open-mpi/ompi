@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #include "mpi/c/bindings.h"
+#include "win/win.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_get_name = PMPI_Win_get_name
@@ -33,11 +34,20 @@ static const char FUNC_NAME[] = "MPI_Win_get_name";
 
 int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    ompi_win_t *ompi_win = (ompi_win_t*) win;
+    int ret;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+        if (MPI_WIN_NULL == win || ompi_win_invalid(ompi_win))
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+
+        if (NULL == win_name || NULL == resultlen)
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
+    }
+
+    ret = ompi_win_get_name(ompi_win, win_name, resultlen);
+
+    OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

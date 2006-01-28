@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("ptl");
   ompi_info::mca_types.push_back("btl");
   ompi_info::mca_types.push_back("topo");
+  ompi_info::mca_types.push_back("osc");
 
   ompi_info::mca_types.push_back("errmgr");
   ompi_info::mca_types.push_back("gpr");

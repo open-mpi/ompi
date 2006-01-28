@@ -19,40 +19,92 @@
 #ifndef OMPI_WIN_H
 #define OMPI_WIN_H
 
-
+#include "ompi_config.h"
 #include "mpi.h"
-#include "errhandler/errhandler.h"
+
 #include "opal/class/opal_object.h"
-#include "class/opal_hash_table.h"
+#include "opal/class/opal_hash_table.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/info/info.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
+#include "ompi/mca/osc/osc.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
+#define OMPI_WIN_FREED        0x00000001
+#define OMPI_WIN_INVALID      0x00000002
+#define OMPI_WIN_NO_LOCKS     0x00000004
+#define OMPI_WIN_ACCESS_EPOCH 0x00000008
+#define OMPI_WIN_EXPOSE_EPOCH 0x00000010
+#define OMPI_WIN_POSTED       0x00000020
+#define OMPI_WIN_STARTED      0x00000040
 
-#if OMPI_WANT_MPI2_ONE_SIDED
 struct ompi_win_t {
-  char w_name[MPI_MAX_OBJECT_NAME];
+    opal_object_t w_base;
 
-  opal_object_t w_base;
+    opal_mutex_t  w_lock;
 
-  /* Attributes */
+    char w_name[MPI_MAX_OBJECT_NAME];
 
-  opal_hash_table_t *w_keyhash;
+    ompi_group_t *w_group;
 
-  /* index in Fortran <-> C translation array */
+    /* Attributes */
+    opal_hash_table_t *w_keyhash;
 
-  int w_f_to_c_index;
+    /* index in Fortran <-> C translation array */
+    int w_f_to_c_index;
 
-  /* Error handling.  This field does not have the "w_" prefix so that
-     the OMPI_ERRHDL_* macros can find it, regardless of whether it's a
-     comm, window, or file. */
+    /* Error handling.  This field does not have the "w_" prefix so that
+       the OMPI_ERRHDL_* macros can find it, regardless of whether it's a
+       comm, window, or file. */
     ompi_errhandler_t                    *error_handler;
     ompi_errhandler_type_t               errhandler_type;
+
+    /* displacement factor */
+    int w_disp_unit;
+
+    uint32_t w_flags;
+
+    void *w_baseptr;
+    long w_size;
+
+    /* one sided interface */
+    ompi_osc_base_module_t *w_osc_module;
 };
 typedef struct ompi_win_t ompi_win_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_win_t);
-#endif
+
+    int ompi_win_init(void);
+    int ompi_win_finalize(void);
+
+    int ompi_win_create(void *base, long size, int disp_unit, 
+                        ompi_communicator_t *comm, ompi_info_t *info,
+                        ompi_win_t **newwin);
+
+    int ompi_win_free(ompi_win_t *win);
+
+    int ompi_win_set_name(ompi_win_t *win, char *win_name);
+    int ompi_win_get_name(ompi_win_t *win, char *win_name, int *length);
+
+    int ompi_win_group(ompi_win_t *win, ompi_group_t **group);
+
+    static inline int ompi_win_invalid(ompi_win_t *win) {
+        if (NULL == win || (OMPI_WIN_INVALID & win->w_flags)) return true;
+        return false;
+    }
+
+    static inline int ompi_win_peer_invalid(ompi_win_t *win, int peer) {
+        if (win->w_group->grp_proc_count <= peer) return true;
+        return false;
+    }
+
+    static inline int ompi_win_rank(ompi_win_t *win) {
+        return win->w_group->grp_my_rank;
+    }
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
