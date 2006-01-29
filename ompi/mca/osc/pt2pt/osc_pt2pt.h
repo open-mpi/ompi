@@ -115,7 +115,7 @@ static inline ompi_osc_pt2pt_module_t* P2P_MODULE(struct ompi_win_t* win)
 
 
 #else
-#define P2P_MODULE(win) ((ompi_osc_p2p_module_t*) win->w_osc_module)
+#define P2P_MODULE(win) ((ompi_osc_pt2pt_module_t*) win->w_osc_module)
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
