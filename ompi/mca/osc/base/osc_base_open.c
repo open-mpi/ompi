@@ -30,7 +30,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/osc/base/static-components.h"
+#include "ompi/mca/osc/base/static-components.h"
 
 
 opal_list_t ompi_osc_base_open_components;
