@@ -46,7 +46,7 @@ int MPI_Win_free(MPI_Win *win)
         /* we allow users to be in an epoch, because that tends to
            happen with people using MPI_FENCE.  However, do not allow
            users to be in a Lock / Unlock or a PWSC synchronization */
-        mode = ompi_win_get_mode(win);
+        mode = ompi_win_get_mode(*win);
         if (0 != (mode & (OMPI_WIN_POSTED | OMPI_WIN_STARTED | 
                           OMPI_WIN_LOCK_ACCESS))) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
