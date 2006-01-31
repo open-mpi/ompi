@@ -38,8 +38,6 @@ static const char FUNC_NAME[] = "MPI_Win_create";
 int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
                    MPI_Info info, MPI_Comm comm, MPI_Win *win) 
 {
-    ompi_communicator_t *ompi_comm;
-    ompi_win_t *ompi_win;
     int ret = OMPI_SUCCESS;
 
     /* argument checking */
@@ -59,20 +57,18 @@ int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
         }
     }
 
-    ompi_comm = (ompi_communicator_t*) comm;
-    if (OMPI_COMM_IS_INTER(ompi_comm)) {
-        /* must be an intracommunicator */
+    /* communicator must be an intracommunicator */
+    if (OMPI_COMM_IS_INTER(comm)) {
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
     }
 
-    /*
-     * Create a shell of a window 
-     */
-    ret = ompi_win_create(base, size, disp_unit, ompi_comm,
-                          info, &ompi_win);
-    if (OMPI_SUCCESS != ret) return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);
-
-    *win = (MPI_Win) ompi_win;
+    /* create window and return */
+    ret = ompi_win_create(base, size, disp_unit, comm,
+                          info, win);
+    if (OMPI_SUCCESS != ret) {
+        *win = MPI_WIN_NULL;
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);
+    }
 
     return OMPI_SUCCESS;
 }

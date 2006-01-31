@@ -94,10 +94,8 @@ ompi_osc_pt2pt_sendreq_alloc(ompi_osc_pt2pt_module_t *module,
     /* BWB - FIX ME - is this really the right return code? */
     if (NULL == proc) return OMPI_ERR_OUT_OF_RESOURCE;
 
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     OPAL_FREE_LIST_GET(&mca_osc_pt2pt_component.p2p_c_sendreqs,
                        item, ret);
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     if (OMPI_SUCCESS != ret) return ret;
     *sendreq = (ompi_osc_pt2pt_sendreq_t*) item;
 
@@ -166,10 +164,8 @@ ompi_osc_pt2pt_sendreq_free(ompi_osc_pt2pt_sendreq_t *sendreq)
     OBJ_RELEASE(sendreq->req_target_datatype);
     OBJ_RELEASE(sendreq->req_origin_datatype);
 
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     OPAL_FREE_LIST_RETURN(&mca_osc_pt2pt_component.p2p_c_sendreqs,
                           (opal_list_item_t*) sendreq);
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
  
     return OMPI_SUCCESS;
 }

@@ -33,7 +33,6 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     int i, tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
 
-    /* are we in an epoch? */
     if ((OMPI_WIN_ACCESS_EPOCH & win->w_flags) || 
         (OMPI_WIN_EXPOSE_EPOCH & win->w_flags)) {
         /* finish off the epoch.  More for sanity checks than anything

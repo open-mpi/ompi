@@ -39,9 +39,9 @@ int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if (MPI_WIN_NULL == win) {
-	    return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, 
-					 FUNC_NAME);
+
+        if (ompi_win_invalid(win)) {
+	    return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
 	}
     }
 

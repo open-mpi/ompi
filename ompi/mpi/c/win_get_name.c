@@ -34,20 +34,19 @@ static const char FUNC_NAME[] = "MPI_Win_get_name";
 
 int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen) 
 {
-    ompi_win_t *ompi_win = (ompi_win_t*) win;
     int ret;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (MPI_WIN_NULL == win || ompi_win_invalid(ompi_win))
+        if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
-
-        if (NULL == win_name || NULL == resultlen)
+        } else if (NULL == win_name || NULL == resultlen) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
+        }
     }
 
-    ret = ompi_win_get_name(ompi_win, win_name, resultlen);
+    ret = ompi_win_get_name(win, win_name, resultlen);
 
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

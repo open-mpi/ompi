@@ -28,13 +28,13 @@
 #include "ompi/communicator/communicator.h"
 
 
+/* should have p2p_lock before calling */
 static inline void
 ompi_osc_pt2pt_progress(ompi_osc_pt2pt_module_t *module)
 {
     if (0 != module->p2p_num_long_msgs) {
         opal_list_item_t *item, *next;
 
-        OPAL_THREAD_LOCK(&(module->p2p_lock));
         /* Have to go the convoluted while() route instead of a for()
            loop because the callback will likely remove the request
            from the list and free it, and that would lead to much
@@ -52,7 +52,6 @@ ompi_osc_pt2pt_progress(ompi_osc_pt2pt_module_t *module)
                 longreq->req_comp_cb(longreq);
             }
         }
-        OPAL_THREAD_UNLOCK(&(module->p2p_lock));
     }
     opal_progress();
 }
@@ -155,9 +154,9 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 
     /* all transfers are done - back to the real world we go */
     if (0 == (assert & MPI_MODE_NOSUCCEED)) {
-        win->w_mode = OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_EXPOSE_EPOCH;
+        ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_EXPOSE_EPOCH);
     } else {
-        win->w_mode = 0;
+        ompi_win_set_mode(win, 0);
     }
 
  cleanup:
@@ -183,11 +182,10 @@ ompi_osc_pt2pt_module_start(ompi_group_t *group,
     P2P_MODULE(win)->sc_group = group;    
 
     /* Set our mode to access w/ start */
-    win->w_mode = OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_STARTED;
+    ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_STARTED);
 
     /* possible we've already received a couple in messages, so
        atomicall add however many we're going to wait for */
-    assert(P2P_MODULE(win)->p2p_num_pending_in == 0);
     OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_in),
                       ompi_group_size(P2P_MODULE(win)->sc_group));
 
@@ -265,7 +263,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
 
  cleanup:
     /* set our mode back to nothing */
-    win->w_mode = 0;
+    ompi_win_set_mode(win, 0);
 
     /* BWB - do I need this? */
     ompi_group_decrement_proc_count(P2P_MODULE(win)->sc_group);
@@ -292,7 +290,7 @@ ompi_osc_pt2pt_module_post(ompi_group_t *group,
     P2P_MODULE(win)->pw_group = group;    
 
     /* Set our mode to expose w/ post */
-    win->w_mode = OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED;
+    ompi_win_set_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     /* list how many complete counters we're still waiting on */
     OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out),
@@ -320,7 +318,7 @@ ompi_osc_pt2pt_module_wait(ompi_win_t *win)
     }
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
-    win->w_mode = 0;
+    ompi_win_set_mode(win, 0);
 
     /* BWB - do I need this? */
     ompi_group_decrement_proc_count(P2P_MODULE(win)->pw_group);
@@ -350,7 +348,7 @@ ompi_osc_pt2pt_module_test(ompi_win_t *win,
     *flag = 1;
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
-    win->w_mode = 0;
+    ompi_win_set_mode(win, 0);
 
     /* BWB - do I need this? */
     ompi_group_decrement_proc_count(P2P_MODULE(win)->pw_group);
@@ -365,21 +363,17 @@ ompi_osc_pt2pt_module_test(ompi_win_t *win,
 
 int
 ompi_osc_pt2pt_module_lock(int lock_type,
-                               int target,
-                               int assert,
-                               ompi_win_t *win)
+                           int target,
+                           int assert,
+                           ompi_win_t *win)
 {
-    if (!P2P_MODULE(win)->p2p_want_locks) {
-        return MPI_ERR_OTHER;
-    }
-
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 
 int
 ompi_osc_pt2pt_module_unlock(int target,
-                                 ompi_win_t *win)
+                             ompi_win_t *win)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

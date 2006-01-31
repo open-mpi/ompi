@@ -34,21 +34,18 @@ static const char FUNC_NAME[] = "MPI_Win_call_errhandler";
 
 int MPI_Win_call_errhandler(MPI_Win win, int errorcode) 
 {
-  /* Error checking */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == win ||
-        MPI_WIN_NULL == win) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                    FUNC_NAME);
+        if (ompi_win_invalid(win)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN,
+                                          FUNC_NAME);
+        }
     }
-  }
 
   /* Invoke the errhandler */
-
   OMPI_ERRHANDLER_INVOKE(win, errorcode, FUNC_NAME);
+
   /* See MPI-2 8.5 why this function has to return MPI_SUCCESS */
   return MPI_SUCCESS;
-
 }

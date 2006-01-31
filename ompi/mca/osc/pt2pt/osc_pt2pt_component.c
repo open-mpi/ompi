@@ -180,21 +180,7 @@ ompi_osc_pt2pt_component_query(ompi_win_t *win,
                               ompi_info_t *info,
                               ompi_communicator_t *comm)
 {
-    if (!mca_osc_pt2pt_component.p2p_c_have_progress_threads) {
-        /* if we don't have threads, we can only run if the user
-           promises not to use locking by setting the no_locks key */
-#if 0
-        if (want_locks(info)) { 
-            /* once the default build of Open MPI is to use progress
-               threads, should enable this check again.  For now,
-               though, we just abort when we get to the call to
-               MPI_Lock() */
-            return -1
-        }
-#endif
-    }
-
-    /* woo!  we can run! Return priority of 10 (low) */
+    /* we can always run - return a low priority */
     return 10;
 }
 
@@ -229,10 +215,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
         return ret;
     }
 
-    module->p2p_want_locks = want_locks(info);
-    if (!mca_osc_pt2pt_component.p2p_c_have_progress_threads) {
-        module->p2p_want_locks = false;
-    }
+    if (!want_locks(info)) win->w_flags |= OMPI_WIN_NO_LOCKS;
 
     module->p2p_pending_out_sendreqs = malloc(sizeof(opal_list_t) *
                                               ompi_comm_size(module->p2p_comm));
@@ -269,6 +252,9 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
                                ompi_osc_pt2pt_component_fragment_cb,
                                NULL);
 
+    /* sync memory - make sure all initialization completed */
+    opal_atomic_mb();
+
     return ret;
 }
 
@@ -285,7 +271,8 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
     ompi_osc_pt2pt_module_t *module;
     void *payload;
 
-    assert(descriptor->des_dst[0].seg_len >= sizeof(ompi_osc_pt2pt_type_header_t));
+    assert(descriptor->des_dst[0].seg_len >= 
+           sizeof(ompi_osc_pt2pt_type_header_t));
 
     /* handle message */
     switch (((ompi_osc_pt2pt_type_header_t*) descriptor->des_dst[0].seg_addr.pval)->hdr_type) {

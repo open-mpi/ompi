@@ -16,8 +16,10 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+
 #include <stdio.h>
 
+#include "win/win.h"
 #include "mpi/c/bindings.h"
 #include "mpi/f77/fint_2_int.h"
 
@@ -34,11 +36,13 @@ static const char FUNC_NAME[] = "MPI_Win_c2f";
 
 MPI_Fint MPI_Win_c2f(MPI_Win win) 
 {
-    if (MPI_PARAM_CHECK) {
+    if ( MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+        if (ompi_win_invalid(win)) {
+            win = MPI_WIN_NULL;
+        }
     }
 
-    /* This function is not yet implemented */
-
-    return (MPI_Fint) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    return OMPI_INT_2_FINT(win->w_f_to_c_index);
 }

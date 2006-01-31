@@ -35,27 +35,24 @@ static const char FUNC_NAME[] = "MPI_Win_create_errhandler";
 int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *function,
                               MPI_Errhandler *errhandler) 
 {
-  int err = MPI_SUCCESS;
+    int err = MPI_SUCCESS;
 
-  /* Error checking */
-
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == function || 
-        NULL == errhandler) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                    FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == function || 
+            NULL == errhandler) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          FUNC_NAME);
+        }
     }
-  }
 
-  /* Create and cache the errhandler.  Sets a refcount of 1. */
+    /* Create and cache the errhandler.  Sets a refcount of 1. */
+    *errhandler = 
+        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
+                               (ompi_errhandler_generic_handler_fn_t*) function);
+    if (NULL == *errhandler) {
+        err = MPI_ERR_INTERN;
+    }
 
-  *errhandler = 
-    ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
-                          (ompi_errhandler_generic_handler_fn_t*) function);
-  if (NULL == *errhandler) {
-    err = MPI_ERR_INTERN;
-  }
-
-  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

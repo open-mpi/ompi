@@ -53,10 +53,8 @@ ompi_osc_pt2pt_longreq_alloc(ompi_osc_pt2pt_longreq_t **longreq)
     opal_list_item_t *item;
     int ret;
 
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     OPAL_FREE_LIST_GET(&mca_osc_pt2pt_component.p2p_c_longreqs,
                        item, ret);
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
     *longreq = (ompi_osc_pt2pt_longreq_t*) item;
     return ret;
@@ -65,10 +63,8 @@ ompi_osc_pt2pt_longreq_alloc(ompi_osc_pt2pt_longreq_t **longreq)
 static inline int
 ompi_osc_pt2pt_longreq_free(ompi_osc_pt2pt_longreq_t *longreq)
 {
-    OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     OPAL_FREE_LIST_RETURN(&mca_osc_pt2pt_component.p2p_c_longreqs,
                           (opal_list_item_t*) longreq);
-    OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     return OMPI_SUCCESS;
 }
 
