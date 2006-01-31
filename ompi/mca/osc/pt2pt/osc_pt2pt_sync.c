@@ -67,7 +67,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
     int ret = OMPI_SUCCESS;
     int i;
 
-    OPAL_THREAD_LOCK(&(OSC_PT2PT_DATA(win)->p2p_lock));
+    OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
 
     if (0 == (assert & MPI_MODE_NOPRECEDE)) {
         /* user has not promised nothing has happened - need to make
