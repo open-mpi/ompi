@@ -140,25 +140,35 @@ int ompi_request_wait_all(
          */
         OPAL_THREAD_LOCK(&ompi_request_lock);
         ompi_request_waiting++;
-
+#if OMPI_HAVE_THREAD_SUPPORT
+        /*
+         * confirm the status of the pending requests. We have to do it before
+         * taking the condition or otherwise we can miss some requests completion (the
+         * one that happpens between our initial test and the aquisition of the lock).
+         */
+        rptr = requests;
+        for( completed = i = 0; i < count; i++ ) {
+            request = *rptr++;
+            if (request->req_complete == true) {
+                completed++;
+            }
+        }
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
         do {
             /* check number of pending requests */
             size_t start = ompi_request_completed;
             size_t pending = count - completed;
-
             /*
              * wait until at least pending requests complete 
             */
             while (pending > ompi_request_completed - start) {
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             }
-
             /*
-             * confirm that all pending operations have completed
-            */
-            completed = 0;
+             * confirm that all pending operations have completed.
+             */
             rptr = requests;
-            for (i = 0; i < count; i++) {
+            for( completed = i = 0; i < count; i++ ) {
                 request = *rptr++;
                 if (request->req_complete == true) {
                     completed++;
