@@ -42,6 +42,8 @@ int MPI_Win_wait(MPI_Win win)
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+        } else if (0 == (win->w_mode & OMPI_WIN_POSTED)) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
         }
     }
 

@@ -119,7 +119,7 @@ typedef int (*ompi_osc_base_module_post_fn_t)(struct ompi_group_t *group,
 typedef int (*ompi_osc_base_module_wait_fn_t)(struct ompi_win_t *win);
 
 typedef int (*ompi_osc_base_module_test_fn_t)(struct ompi_win_t *win,
-                                             int flag);
+                                             int *flag);
 
 typedef int (*ompi_osc_base_module_lock_fn_t)(int lock_type,
                                              int target,

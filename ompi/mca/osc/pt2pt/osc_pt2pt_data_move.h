@@ -48,4 +48,8 @@ int ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
                                  ompi_osc_pt2pt_reply_header_t *header,
                                  void *payload);
 
+int ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
+                                ompi_proc_t *proc,
+                                uint8_t type, int32_t value);
+
 #endif

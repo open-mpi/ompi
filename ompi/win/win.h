@@ -34,13 +34,17 @@
 extern "C" {
 #endif
 
+/* flags */
 #define OMPI_WIN_FREED        0x00000001
 #define OMPI_WIN_INVALID      0x00000002
 #define OMPI_WIN_NO_LOCKS     0x00000004
-#define OMPI_WIN_ACCESS_EPOCH 0x00000008
-#define OMPI_WIN_EXPOSE_EPOCH 0x00000010
-#define OMPI_WIN_POSTED       0x00000020
-#define OMPI_WIN_STARTED      0x00000040
+
+/* mode */
+#define OMPI_WIN_ACCESS_EPOCH 0x00000001
+#define OMPI_WIN_EXPOSE_EPOCH 0x00000002
+#define OMPI_WIN_POSTED       0x00000010
+#define OMPI_WIN_STARTED      0x00000020
+#define OMPI_WIN_LOCK_ACCESS  0x00000040
 
 struct ompi_win_t {
     opal_object_t w_base;
@@ -66,7 +70,8 @@ struct ompi_win_t {
     /* displacement factor */
     int w_disp_unit;
 
-    uint32_t w_flags;
+    uint16_t w_flags;
+    uint16_t w_mode;
 
     void *w_baseptr;
     long w_size;
@@ -104,6 +109,10 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_win_t);
 
     static inline int ompi_win_rank(ompi_win_t *win) {
         return win->w_group->grp_my_rank;
+    }
+
+    static inline bool ompi_win_allow_locks(ompi_win_t *win) {
+        return (0 != (win->w_flags & OMPI_WIN_NO_LOCKS));
     }
 
 #if defined(c_plusplus) || defined(__cplusplus)

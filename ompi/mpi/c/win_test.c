@@ -42,9 +42,11 @@ int MPI_Win_test(MPI_Win win, int *flag)
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+        } else if (0 == (win->w_mode & OMPI_WIN_POSTED)) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
         }
     }
 
-    rc = win->w_osc_module->osc_wait(win);
+    rc = win->w_osc_module->osc_test(win, flag);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }
