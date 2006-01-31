@@ -44,9 +44,9 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     int ret, line, rank, size, i = 0;
     int recvcount, sendcount, prevcount, inbi, previnbi;
     int segcount, segindex, num_segments, realsegsize;
-    char *inbuf[2] = {NULL, NULL};
-    char *accumbuf = NULL;
-    char *sendtmpbuf = NULL;
+    char *inbuf[2] = {(char*)NULL, (char*)NULL};
+    char *accumbuf = (char*)NULL;
+    char *sendtmpbuf = (char*)NULL;
     long ext, lb;
     int  typelng;
     int  allocedaccumbuf = 0;
@@ -256,11 +256,11 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         } /* end of for each segment */
 
         /* clean up */
-        if (inbuf!=NULL) {
+/*        if (inbuf!=NULL) { */
             if (inbuf[0] != NULL) free(inbuf[0]);
             if (inbuf[1] != NULL) free(inbuf[1]);
             if (allocedaccumbuf) free(accumbuf);
-        }
+/*        } */
     }
 
     /* leaf nodes */
@@ -281,11 +281,11 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     /* error handler */
  error_hndl:
     OPAL_OUTPUT (( ompi_coll_tuned_stream, "ERROR_HNDL: node %d file %s line %d error %d\n", rank, __FILE__, line, ret ));
-    if( inbuf != NULL ) {
+/*      if( inbuf != NULL ) { */
         if( inbuf[0] != NULL ) free(inbuf[0]);
         if( inbuf[1] != NULL ) free(inbuf[1]);
         if (allocedaccumbuf) free(accumbuf);
-    }
+/*    } */
     return ret;
 }
 
