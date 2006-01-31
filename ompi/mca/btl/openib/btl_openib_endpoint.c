@@ -885,8 +885,9 @@ int mca_btl_openib_endpoint_create_qp(
             return OMPI_ERROR; 
         }
         (*qp) = my_qp; 
-        openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data;  
-    
+        if(0 == (openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data)) {
+            BTL_ERROR(("ibv_create_qp: returned 0 byte(s) for max inline data"));
+        }
     }
     
     {
@@ -949,12 +950,11 @@ int mca_btl_openib_endpoint_qp_init_query(
         BTL_ERROR(("error modifing QP to RTR errno says %s",  strerror(errno))); 
         return OMPI_ERROR; 
     }
-
-    attr->qp_state 	    = IBV_QPS_RTS;
-    attr->timeout 	    = mca_btl_openib_component.ib_timeout;
-    attr->retry_cnt 	    = mca_btl_openib_component.ib_retry_count;
-    attr->rnr_retry 	    = mca_btl_openib_component.ib_rnr_retry;
-    attr->sq_psn 	    = lcl_psn;
+    attr->qp_state 	     = IBV_QPS_RTS;
+    attr->timeout 	     = mca_btl_openib_component.ib_timeout;
+    attr->retry_cnt 	 = mca_btl_openib_component.ib_retry_count;
+    attr->rnr_retry 	 = mca_btl_openib_component.ib_rnr_retry;
+    attr->sq_psn 	     = lcl_psn;
     attr->max_rd_atomic  = mca_btl_openib_component.ib_max_rdma_dst_ops;
     if (ibv_modify_qp(qp, attr,
                       IBV_QP_STATE              |
@@ -1023,10 +1023,15 @@ void mca_btl_openib_endpoint_send_credits_lp(
     OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -frag->hdr->credits);
 
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
-    frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED; 
     frag->sg_entry.length = sizeof(mca_btl_openib_header_t);
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
     
+    if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED; 
+    } else {
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    }
+
     if(ibv_post_send(endpoint->lcl_qp_lp,
                          &frag->wr_desc.sr_desc,
                          &bad_wr)) {
@@ -1092,10 +1097,15 @@ void mca_btl_openib_endpoint_send_credits_hp(
     OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -frag->hdr->credits);
 
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
-    frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED; 
     frag->sg_entry.length = sizeof(mca_btl_openib_header_t);
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
     
+    if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED; 
+    } else {
+        frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
+    }
+
     if(ibv_post_send(endpoint->lcl_qp_hp,
                          &frag->wr_desc.sr_desc,
                          &bad_wr)) {
