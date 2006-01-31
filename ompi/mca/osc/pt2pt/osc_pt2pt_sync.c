@@ -213,7 +213,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
     /* for each process in group, send a control message with number
        of updates coming, then start all the requests */
     for (i = 0 ; i < ompi_group_size(P2P_MODULE(win)->sc_group) ; ++i) {
-        int comm_rank, j;
+        int comm_rank = -1, j;
         opal_list_item_t *item;
         opal_list_t *req_list;
         /* no need to increment ref count - the communicator isn't
@@ -230,6 +230,10 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
                 comm_rank = j;
                 break;
             }
+        }
+        if (comm_rank == -1) {
+            ret = MPI_ERR_RMA_SYNC;
+            goto cleanup;
         }
 
         req_list = &(P2P_MODULE(win)->p2p_pending_out_sendreqs[comm_rank]);
