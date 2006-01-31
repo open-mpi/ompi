@@ -143,7 +143,7 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_param_register_int("ib_cq_size", "size of the IB completion queue",
                                       1000, (int*) &mca_btl_openib_component.ib_cq_size); 
     mca_btl_openib_param_register_int("ib_sg_list_size", "size of IB segment list", 
-                                      1, (int*) &mca_btl_openib_component.ib_sg_list_size); 
+                                      4, (int*) &mca_btl_openib_component.ib_sg_list_size); 
     mca_btl_openib_param_register_int("ib_pkey_ix", "IB pkey index", 
                                       0, (int*) &mca_btl_openib_component.ib_pkey_ix); 
     mca_btl_openib_param_register_int("ib_psn", "IB Packet sequence starting number", 
