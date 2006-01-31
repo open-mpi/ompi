@@ -44,8 +44,8 @@ int MPI_Win_start(MPI_Group group, int assert, MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
         } else if (0 != (assert & ~(MPI_MODE_NOCHECK))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
-        } else if (0 != (win->w_mode & (OMPI_WIN_ACCESS_EPOCH |
-                                        OMPI_WIN_EXPOSE_EPOCH))) {
+        } else if (0 != (ompi_win_get_mode(win) & 
+                         (OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_EXPOSE_EPOCH))) {
             /* we can't already be in an an exposure or accesss epoch
                when we start a start */
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);

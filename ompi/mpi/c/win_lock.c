@@ -49,8 +49,14 @@ int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RANK, FUNC_NAME);
         } else if (0 != (assert & ~(MPI_MODE_NOCHECK))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
-        } else if (0 != win->w_mode) {
-            /* window can not be in use at all at this point */
+        } else if (0 != (ompi_win_get_mode(win) &
+                         (OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED |
+                          OMPI_WIN_STARTED))) {
+            /* can't be in exposure epoch, or posted, or started */
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
+        } else if ((0 != (ompi_win_get_mode(win) & OMPI_WIN_ACCESS_EPOCH)) &&
+                   (0 == (ompi_win_get_mode(win) & OMPI_WIN_LOCK_ACCESS))) {
+            /* can't be in an access epoch unless we're locked */
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
         } else if (! ompi_win_allow_locks(win)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);

@@ -46,6 +46,8 @@ extern "C" {
 #define OMPI_WIN_STARTED      0x00000020
 #define OMPI_WIN_LOCK_ACCESS  0x00000040
 
+OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_windows;
+
 struct ompi_win_t {
     opal_object_t w_base;
 
@@ -53,7 +55,11 @@ struct ompi_win_t {
 
     char w_name[MPI_MAX_OBJECT_NAME];
 
+    /* Group associated with this window. */
     ompi_group_t *w_group;
+
+    /* Information about the state of the window.  */
+    uint16_t w_flags;
 
     /* Attributes */
     opal_hash_table_t *w_keyhash;
@@ -61,59 +67,79 @@ struct ompi_win_t {
     /* index in Fortran <-> C translation array */
     int w_f_to_c_index;
 
-    /* Error handling.  This field does not have the "w_" prefix so that
-       the OMPI_ERRHDL_* macros can find it, regardless of whether it's a
-       comm, window, or file. */
+    /* Error handling.  This field does not have the "w_" prefix so
+       that the OMPI_ERRHDL_* macros can find it, regardless of
+       whether it's a comm, window, or file. */
     ompi_errhandler_t                    *error_handler;
     ompi_errhandler_type_t               errhandler_type;
 
     /* displacement factor */
     int w_disp_unit;
 
-    uint16_t w_flags;
-    uint16_t w_mode;
-
     void *w_baseptr;
     long w_size;
+
+    /** Current epoch / mode (access, expose, lock, etc.).  Checked by
+        the argument checking code in the MPI layer, set by the OSC
+        component.  Modified without locking w_lock. */
+    volatile uint16_t w_mode;
 
     /* one sided interface */
     ompi_osc_base_module_t *w_osc_module;
 };
 typedef struct ompi_win_t ompi_win_t;
-
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_win_t);
 
-    int ompi_win_init(void);
-    int ompi_win_finalize(void);
+OMPI_DECLSPEC extern ompi_win_t ompi_mpi_win_null;
 
-    int ompi_win_create(void *base, long size, int disp_unit, 
-                        ompi_communicator_t *comm, ompi_info_t *info,
-                        ompi_win_t **newwin);
+int ompi_win_init(void);
+int ompi_win_finalize(void);
 
-    int ompi_win_free(ompi_win_t *win);
+int ompi_win_create(void *base, long size, int disp_unit, 
+                    ompi_communicator_t *comm, ompi_info_t *info,
+                    ompi_win_t **newwin);
 
-    int ompi_win_set_name(ompi_win_t *win, char *win_name);
-    int ompi_win_get_name(ompi_win_t *win, char *win_name, int *length);
+int ompi_win_free(ompi_win_t *win);
 
-    int ompi_win_group(ompi_win_t *win, ompi_group_t **group);
+int ompi_win_set_name(ompi_win_t *win, char *win_name);
+int ompi_win_get_name(ompi_win_t *win, char *win_name, int *length);
 
-    static inline int ompi_win_invalid(ompi_win_t *win) {
-        if (NULL == win || (OMPI_WIN_INVALID & win->w_flags)) return true;
+int ompi_win_group(ompi_win_t *win, ompi_group_t **group);
+
+static inline int ompi_win_invalid(ompi_win_t *win) {
+    if (NULL == win || 
+        MPI_WIN_NULL == win ||
+        (OMPI_WIN_INVALID & win->w_flags) ||
+        (OMPI_WIN_FREED & win->w_flags)) {
+        return true;
+    } else {
         return false;
     }
+}
 
-    static inline int ompi_win_peer_invalid(ompi_win_t *win, int peer) {
-        if (win->w_group->grp_proc_count <= peer) return true;
-        return false;
-    }
+static inline int ompi_win_peer_invalid(ompi_win_t *win, int peer) {
+    if (win->w_group->grp_proc_count <= peer) return true;
+    return false;
+}
 
-    static inline int ompi_win_rank(ompi_win_t *win) {
-        return win->w_group->grp_my_rank;
-    }
+static inline int ompi_win_rank(ompi_win_t *win) {
+    return win->w_group->grp_my_rank;
+}
 
-    static inline bool ompi_win_allow_locks(ompi_win_t *win) {
-        return (0 != (win->w_flags & OMPI_WIN_NO_LOCKS));
-    }
+static inline bool ompi_win_allow_locks(ompi_win_t *win) {
+    return (0 != (win->w_flags & OMPI_WIN_NO_LOCKS));
+}
+
+static inline int16_t ompi_win_get_mode(ompi_win_t *win) {
+    int16_t mode = win->w_mode;
+    opal_atomic_rmb();
+    return mode;
+}
+
+static inline void ompi_win_set_mode(ompi_win_t *win, int16_t mode) {
+    win->w_mode = mode;
+    opal_atomic_wmb();
+}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

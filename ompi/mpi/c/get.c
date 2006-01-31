@@ -53,8 +53,7 @@ int MPI_Get(void *origin_addr, int origin_count,
             rc = MPI_ERR_COUNT;
         } else if (ompi_win_peer_invalid(win, target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if (0 == (win->w_mode & OMPI_WIN_ACCESS_EPOCH)) {
-            /* BWB - FIX ME - what error? */
+        } else if (0 == (ompi_win_get_mode(win) & OMPI_WIN_ACCESS_EPOCH)) {
             rc = MPI_ERR_RMA_CONFLICT;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(rc, origin_datatype, origin_count);

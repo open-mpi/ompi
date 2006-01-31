@@ -35,19 +35,17 @@ static const char FUNC_NAME[] = "MPI_Win_get_group";
 int MPI_Win_get_group(MPI_Win win, MPI_Group *group) 
 {
     int ret;
-    ompi_win_t *ompi_win = (ompi_win_t*) win;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (MPI_WIN_NULL == ompi_win) {
-            return OMPI_ERRHANDLER_INVOKE(ompi_win, MPI_ERR_WIN, FUNC_NAME);
-        }
-        if (NULL == group) {
-            return OMPI_ERRHANDLER_INVOKE(ompi_win, MPI_ERR_ARG, FUNC_NAME);
+        if (ompi_win_invalid(win)) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+        } else if (NULL == group) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
-    ret = ompi_win_group(ompi_win, (ompi_group_t**) group);
-    OMPI_ERRHANDLER_RETURN(ret, ompi_win, ret, FUNC_NAME);
+    ret = ompi_win_group(win, (ompi_group_t**) group);
+    OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

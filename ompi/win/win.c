@@ -21,12 +21,19 @@
 #include "mpi.h"
 #include "win/win.h"
 #include "errhandler/errhandler.h"
-#include "include/constants.h"
+#include "ompi/include/constants.h"
 #include "attribute/attribute.h"
 #include "group/group.h"
 #include "info/info.h"
 #include "mca/osc/base/base.h"
 #include "mca/osc/osc.h"
+
+
+/*
+ * Table for Fortran <-> C communicator handle conversion.  Note that
+ * these are not necessarily global.
+ */
+ompi_pointer_array_t ompi_mpi_windows; 
 
 ompi_win_t ompi_mpi_win_null;
 
@@ -39,10 +46,15 @@ OBJ_CLASS_INSTANCE(ompi_win_t, opal_object_t,
 int
 ompi_win_init(void)
 {
+    /* setup window Fortran array */
+    OBJ_CONSTRUCT(&ompi_mpi_windows, ompi_pointer_array_t);
+
+    /* Setup MPI_WIN_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_win_null, ompi_win_t);
     ompi_mpi_win_null.w_flags = OMPI_WIN_INVALID;
     ompi_mpi_win_null.w_group = &ompi_mpi_group_null;
     ompi_win_set_name(&ompi_mpi_win_null, "MPI_WIN_NULL");
+    ompi_pointer_array_set_item(&ompi_mpi_windows, 0, &ompi_mpi_win_null);
 
     return OMPI_SUCCESS;
 }
@@ -52,6 +64,7 @@ int
 ompi_win_finalize(void)
 {
     OBJ_DESTRUCT(&ompi_mpi_win_null);
+    OBJ_DESTRUCT(&ompi_mpi_windows);
 
     return OMPI_SUCCESS;
 }
@@ -111,6 +124,13 @@ ompi_win_create(void *base, long size,
         return ret;
     }
 
+    /* fill in Fortran index */
+    win->w_f_to_c_index = ompi_pointer_array_add(&ompi_mpi_windows, win);
+    if (-1 == win->w_f_to_c_index) {
+        ompi_win_free(win);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     *newwin = win;
 
     return OMPI_SUCCESS;
@@ -121,6 +141,12 @@ int
 ompi_win_free(ompi_win_t *win)
 {
     int ret = win->w_osc_module->osc_free(win);
+
+    if (-1 != win->w_f_to_c_index) {
+        ompi_pointer_array_set_item(&ompi_mpi_windows,
+                                    win->w_f_to_c_index,
+                                    NULL);
+    }
 
     if (OMPI_SUCCESS == ret) {
         OBJ_RELEASE(win);

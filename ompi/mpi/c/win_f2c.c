@@ -17,6 +17,7 @@
  */
 #include "ompi_config.h"
 
+#include "win/win.h"
 #include "mpi/c/bindings.h"
 #include "mpi/f77/fint_2_int.h"
 
@@ -33,15 +34,19 @@ static const char FUNC_NAME[] = "MPI_Win_f2c";
 
 MPI_Win MPI_Win_f2c(MPI_Fint win) 
 {
+    int o_index= OMPI_FINT_2_INT(win);
+
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    /* NOTE: Be sure to see the other *f2c functions before implementing
-       this one -- they should all be the same! */
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
 
-    /* This function is not yet implemented */
-
-    (void)OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
-    return MPI_WIN_NULL;
+    if ( 0 > o_index ||
+         o_index >= ompi_pointer_array_get_size(&ompi_mpi_windows)) {
+        return MPI_WIN_NULL;
+    }
+        
+    return ompi_pointer_array_get_item(&ompi_mpi_windows, o_index);
 }

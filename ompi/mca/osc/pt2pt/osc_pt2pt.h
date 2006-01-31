@@ -67,9 +67,6 @@ struct ompi_osc_pt2pt_module_t {
     /** communicator created with this window */
     ompi_communicator_t *p2p_comm;
 
-    /** store weather user disabled locks for this window */
-    bool p2p_want_locks;
-
     /** array of opal_list_ts, not a pointer to one of them.  Array is
         of size <num ranks in communicator>, although only the first
         <num ranks in group> are used for PWSC synchronization */
