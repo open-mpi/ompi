@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include <stdlib.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "mca/pml/pml.h"
@@ -275,7 +274,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     mca_btl_mvapi_frag_t* frag; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
     struct iovec iov; 
-    int32_t iov_count = 1; 
+    uint32_t iov_count = 1; 
     size_t max_data = *size; 
     int32_t free_after; 
     int rc; 
@@ -283,7 +282,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
-   
+    
     if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
         size_t reg_len; 
         /* the memory is already pinned and we have contiguous user data */ 
@@ -296,10 +295,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         iov.iov_base = NULL; 
         
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
+        *size = max_data;
         
         frag->segment.seg_len = max_data; 
         frag->segment.seg_addr.pval = iov.iov_base; 
-        
         reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
 
         frag->sg_entry.len = max_data; 
@@ -339,7 +338,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         iov.iov_base = NULL; 
         
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
-        
+        *size = max_data;
         
         frag->segment.seg_len = max_data; 
         frag->segment.seg_addr.pval = iov.iov_base; 
@@ -410,7 +409,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             max_data = btl->btl_max_send_size - reserve; 
         }
         iov.iov_len = max_data; 
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve; 
+        iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve; 
         
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 
@@ -462,7 +461,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     mca_mpool_mvapi_registration_t * vapi_reg; 
     long lb;
     int rc; 
-
+    
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
     
@@ -522,42 +521,6 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_mvapi_module_t* mvapi_btl; 
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
-
-#if 0
-    if(mvapi_btl->send_free_eager.fl_num_allocated != 
-       mvapi_btl->send_free_eager.super.opal_list_length){ 
-        opal_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
-                    mvapi_btl->send_free_eager.fl_num_allocated, 
-                    mvapi_btl->send_free_eager.super.opal_list_length); 
-    }
-    if(mvapi_btl->send_free_max.fl_num_allocated != 
-      mvapi_btl->send_free_max.super.opal_list_length){ 
-        opal_output(0, "btl ib send_free_max frags: %d allocated %d returned \n", 
-                    mvapi_btl->send_free_max.fl_num_allocated, 
-                    mvapi_btl->send_free_max.super.opal_list_length); 
-    }
-    if(mvapi_btl->send_free_frag.fl_num_allocated != 
-       mvapi_btl->send_free_frag.super.opal_list_length){ 
-        opal_output(0, "btl ib send_free_frag frags: %d allocated %d returned \n", 
-                    mvapi_btl->send_free_frag.fl_num_allocated, 
-                    mvapi_btl->send_free_frag.super.opal_list_length); 
-    }
-    
-    if(mvapi_btl->recv_free_eager.fl_num_allocated != 
-       mvapi_btl->recv_free_eager.super.opal_list_length){ 
-        opal_output(0, "btl ib recv_free_eager frags: %d allocated %d returned \n", 
-                    mvapi_btl->recv_free_eager.fl_num_allocated, 
-                    mvapi_btl->recv_free_eager.super.opal_list_length); 
-    }
-
-    if(mvapi_btl->recv_free_max.fl_num_allocated != 
-       mvapi_btl->recv_free_max.super.opal_list_length){ 
-        opal_output(0, "btl ib recv_free_max frags: %d allocated %d returned \n", 
-                    mvapi_btl->recv_free_max.fl_num_allocated, 
-                    mvapi_btl->recv_free_max.super.opal_list_length); 
-    }
-#endif 
-
     return OMPI_SUCCESS;
 }
 
@@ -575,6 +538,7 @@ int mca_btl_mvapi_send(
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
     frag->hdr->tag = tag; 
+    frag->sr_desc.opcode = VAPI_SEND;
     return mca_btl_mvapi_endpoint_send(endpoint, frag);
 }
 
@@ -589,41 +553,28 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     int rc; 
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
+
+    /* setup for queued requests */
     frag->endpoint = endpoint;
-    assert(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED || 
-            endpoint->endpoint_state == MCA_BTL_IB_WAITING_ACK);
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
-    /* atomically test and acquire a token */
-    if(!mca_btl_mvapi_component.use_srq && 
-       OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0) { 
 
+    /* check for a send wqe */
+    if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
+        OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
-        rc = OMPI_SUCCESS;
-
-    } else if(mca_btl_mvapi_component.use_srq && 
-              OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
-
-        OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
-        opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
-        OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
-        OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
-        rc = OMPI_SUCCESS;
-        
-    } else { 
+        return OMPI_SUCCESS;
+                                                                                                                        
+    /* post descriptor */
+    } else {
         
         frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
         frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
         frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_src->seg_len; 
-        
-        frag->ret = VAPI_post_sr(mvapi_btl->nic, 
-                                 endpoint->lcl_qp_hndl_lp, 
-                                 &frag->sr_desc); 
-        if(VAPI_OK != frag->ret){ 
+        if(VAPI_OK != VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc)) {
             rc =  OMPI_ERROR; 
         } else { 
             rc = OMPI_SUCCESS; 
@@ -639,9 +590,7 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
             MCA_BTL_MVAPI_ENDPOINT_POST_RR_LOW(endpoint, 1); 
         }
     }
-    
     return rc; 
-        
 }
 
 /* 
@@ -656,36 +605,28 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
     
-    assert(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED ||
-           endpoint->endpoint_state == MCA_BTL_IB_WAITING_ACK);
-    frag->sr_desc.opcode = VAPI_RDMA_READ; 
     frag->endpoint = endpoint;
-    /* atomically test and acquire a token */
-    if(!mca_btl_mvapi_component.use_srq &&
-       OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0) { 
+    frag->sr_desc.opcode = VAPI_RDMA_READ; 
 
-        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
-        rc = OMPI_SUCCESS;
-
-    } else if(mca_btl_mvapi_component.use_srq && 
-              OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
-
+   /* check for a send wqe */
+    if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
+                                                                                                                        
+        OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
         OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
-        opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag); 
+        opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag);
         OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
-        OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
-        rc = OMPI_SUCCESS;
-        
+        return OMPI_SUCCESS;
+                                                                                                                        
+    /* check for a get token */
     } else if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
-
+                                                                                                                        
+        OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
+        OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
-        rc = OMPI_SUCCESS;
+        return OMPI_SUCCESS;
+                                                                                                                        
 
     } else {
         
@@ -695,10 +636,7 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_dst->seg_len; 
 
-        frag->ret = VAPI_post_sr(mvapi_btl->nic, 
-                                 endpoint->lcl_qp_hndl_lp, 
-                                 &frag->sr_desc); 
-        if(VAPI_OK != frag->ret){ 
+        if(VAPI_OK != VAPI_post_sr(mvapi_btl->nic, endpoint->lcl_qp_hndl_lp, &frag->sr_desc)) {
             rc =  OMPI_ERROR; 
         } else { 
             rc = OMPI_SUCCESS; 
