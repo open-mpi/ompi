@@ -377,6 +377,36 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             ompi_osc_pt2pt_replyreq_recv(module, sendreq, header, payload);
         }
         break;
+    case OMPI_OSC_PT2PT_HDR_POST:
+        {
+            ompi_osc_pt2pt_control_header_t *header = 
+                (ompi_osc_pt2pt_control_header_t*) 
+                descriptor->des_dst[0].seg_addr.pval;
+
+            /* get our module pointer */
+            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
+            if (NULL == module) return;
+
+            OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
+        }
+        break;
+    case OMPI_OSC_PT2PT_HDR_COMPLETE:
+        {
+            ompi_osc_pt2pt_control_header_t *header = 
+                (ompi_osc_pt2pt_control_header_t*) 
+                descriptor->des_dst[0].seg_addr.pval;
+
+            /* get our module pointer */
+            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
+            if (NULL == module) return;
+
+            /* we've heard from one more place, and have value reqs to
+               process */
+            OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
+            OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), header->hdr_value);
+        }
+        break;
+
     default:
         /* BWB - FIX ME - this sucks */
         opal_output(0, "received packet for Window with unknown type");

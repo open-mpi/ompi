@@ -45,7 +45,10 @@ int MPI_Win_fence(int assert, MPI_Win win)
         } else if (0 != (assert & ~(MPI_MODE_NOSTORE | MPI_MODE_NOPUT | 
                                     MPI_MODE_NOPRECEDE | MPI_MODE_NOSUCCEED))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
-        }
+        } else if (0 != (win->w_mode & (OMPI_WIN_POSTED | OMPI_WIN_STARTED))) {
+            /* If we're in a post or start, we can't be in a fence */
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
+        } 
     }
 
     rc = win->w_osc_module->osc_fence(assert, win);

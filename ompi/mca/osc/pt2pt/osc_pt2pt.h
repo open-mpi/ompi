@@ -70,12 +70,25 @@ struct ompi_osc_pt2pt_module_t {
     /** store weather user disabled locks for this window */
     bool p2p_want_locks;
 
-    /** array of opal_list_ts, not a pointer to one of them */
+    /** array of opal_list_ts, not a pointer to one of them.  Array is
+        of size <num ranks in communicator>, although only the first
+        <num ranks in group> are used for PWSC synchronization */
     opal_list_t *p2p_pending_out_sendreqs;
 
+    /* For MPI_Fence synchronization, the number of messages to send
+       in epoch.  For Start/Complete, the number of updates for this
+       Complete.  For Post/Wait (poorly named), the number of Complete
+       counters we're waiting for.*/
     volatile int32_t p2p_num_pending_out;
+    /* For MPI_Fence synchronization, the number of expected incoming
+       messages.  For Start/Complete, the number of expected Post
+       messages.  For Post/Wait, the number of expected updates from
+       complete. */
     volatile int32_t p2p_num_pending_in;
 
+    /* cyclic counter for a unique tage for long messages.  Not
+       protected by the p2p_lock - must use create_send_tag() to
+       create a send tag */
     volatile int32_t p2p_tag_counter;
 
     /** list of outstanding long messages that must be processes
@@ -83,6 +96,9 @@ struct ompi_osc_pt2pt_module_t {
     opal_list_t p2p_long_msgs;
     /** number of outstanding long messages */
     volatile int32_t p2p_num_long_msgs;
+
+    struct ompi_group_t *pw_group;
+    struct ompi_group_t *sc_group;
 };
 typedef struct ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_t;
 
@@ -191,7 +207,7 @@ int ompi_osc_pt2pt_module_post(struct ompi_group_t *group,
 int ompi_osc_pt2pt_module_wait(struct ompi_win_t *win);
 
 int ompi_osc_pt2pt_module_test(struct ompi_win_t *win,
-                              int flag);
+                              int *flag);
 
 int ompi_osc_pt2pt_module_lock(int lock_type,
                               int target,

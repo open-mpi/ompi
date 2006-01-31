@@ -182,6 +182,7 @@ ompi_win_construct(ompi_win_t *win)
 
     win->w_disp_unit = 0;
     win->w_flags = 0;
+    win->w_mode = 0;
     win->w_baseptr = NULL;
     win->w_size = 0;
     win->w_osc_module = NULL;

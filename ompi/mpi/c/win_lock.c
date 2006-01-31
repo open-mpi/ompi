@@ -49,6 +49,11 @@ int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RANK, FUNC_NAME);
         } else if (0 != (assert & ~(MPI_MODE_NOCHECK))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
+        } else if (0 != win->w_mode) {
+            /* window can not be in use at all at this point */
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
+        } else if (! ompi_win_allow_locks(win)) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         }
     }
 

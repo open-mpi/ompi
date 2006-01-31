@@ -484,7 +484,7 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
         OBJ_DESTRUCT(&convertor);
         OBJ_RELEASE(datatype);
         OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
-
+    
     } else {
             ompi_osc_pt2pt_longreq_t *longreq;
             ompi_osc_pt2pt_longreq_alloc(&longreq);
@@ -700,5 +700,79 @@ ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
         OPAL_THREAD_UNLOCK(&(module->p2p_lock));
     }
 
+    return ret;
+}
+
+
+/**********************************************************************
+ *
+ * Recveive a get on the origin side
+ *
+ **********************************************************************/
+static void
+ompi_osc_pt2pt_control_send_cb(struct mca_btl_base_module_t* btl, 
+                               struct mca_btl_base_endpoint_t *endpoint,
+                               struct mca_btl_base_descriptor_t* descriptor,
+                               int status)
+{
+    /* release the descriptor and sendreq */
+    btl->btl_free(btl, descriptor);
+}
+
+
+int
+ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
+                            ompi_proc_t *proc,
+                            uint8_t type, int32_t value)
+{
+    int ret = OMPI_SUCCESS;
+    mca_bml_base_endpoint_t *endpoint = NULL;
+    mca_bml_base_btl_t *bml_btl = NULL;
+    mca_btl_base_descriptor_t *descriptor = NULL;
+    ompi_osc_pt2pt_control_header_t *header = NULL;
+        
+    /* Get a BTL and a fragment to go with it */
+    endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml;
+    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+    descriptor = bml_btl->btl_alloc(bml_btl->btl,
+                                    sizeof(ompi_osc_pt2pt_control_header_t));
+    if (NULL == descriptor) {
+        ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+
+    /* verify at least enough space for header */
+    if (descriptor->des_src[0].seg_len < sizeof(ompi_osc_pt2pt_control_header_t)) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+
+    /* setup descriptor */
+    descriptor->des_cbfunc = ompi_osc_pt2pt_control_send_cb;
+    descriptor->des_cbdata = NULL;
+    descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
+    descriptor->des_src[0].seg_len = sizeof(ompi_osc_pt2pt_control_header_t);
+
+    /* pack header */
+    header = (ompi_osc_pt2pt_control_header_t*) descriptor->des_src[0].seg_addr.pval;
+    header->hdr_type = type;
+    header->hdr_value = value;
+    header->hdr_windx = module->p2p_comm->c_contextid;
+
+#if 0 /* BWB - FIX ME */
+    /* put in network byte order */
+    OMPI_OSC_PT2PT_CONTROL_HDR_HTON(header);
+#endif
+
+    /* send fragment */
+    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_PT2PT);
+    goto done;
+
+ cleanup:
+    if (descriptor != NULL) {
+        mca_bml_base_free(bml_btl, descriptor);
+    }
+
+ done:
     return ret;
 }
