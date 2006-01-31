@@ -77,9 +77,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
         if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1) < 0) {
                                                                                                                       
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
-            /*OPAL_THREAD_LOCK(&endpoint->endpoint_lock);*/
             opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
-            /*OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);*/
             return OMPI_SUCCESS;
                                                                                                                       
         /* check for a token */
@@ -88,9 +86,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
                                                                                                                       
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,1);
-            /*OPAL_THREAD_LOCK(&endpoint->endpoint_lock);*/
             opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
-            /*OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);*/
             return OMPI_SUCCESS;
                                                                                                                       
         } else if( mca_btl_mvapi_component.use_srq &&
@@ -117,9 +113,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
         if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
                                                                                                                       
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
-            /*OPAL_THREAD_LOCK(&endpoint->endpoint_lock);*/
             opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
-            /*OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);*/
             return OMPI_SUCCESS;
                                                                                                                       
         /* check for a token */
@@ -128,9 +122,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
                                                                                                                       
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
-            /*OPAL_THREAD_LOCK(&endpoint->endpoint_lock);*/
             opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
-            /*OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);*/
             return OMPI_SUCCESS;
                                                                                                                       
         } else if(mca_btl_mvapi_component.use_srq &&
