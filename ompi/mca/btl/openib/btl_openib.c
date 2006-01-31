@@ -584,10 +584,6 @@ int mca_btl_openib_send(
  * RDMA WRITE local buffer to remote buffer address.
  */
 
-int mca_btl_openib_puts = 0;
-int mca_btl_openib_queue_write = 0;
-int mca_btl_openib_post_write = 0;
-
 int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* endpoint,
                     mca_btl_base_descriptor_t* descriptor)
@@ -597,8 +593,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
 
-    mca_btl_openib_puts++;
-
     /* setup for queued requests */
     frag->endpoint = endpoint;
     frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_WRITE; 
@@ -606,7 +600,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     /* check for a send wqe */
     if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
 
-        mca_btl_openib_queue_write++;
         OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
         OPAL_THREAD_LOCK(&endpoint->ib_lock);
         opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
@@ -627,7 +620,6 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
                          &bad_wr)){ 
             rc = OMPI_ERROR;
         } else {
-            mca_btl_openib_post_write++;
             rc = OMPI_SUCCESS;
         }
     
