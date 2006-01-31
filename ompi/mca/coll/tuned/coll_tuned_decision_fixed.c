@@ -237,6 +237,8 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     }
 
     msgsize = ext * count;   /* needed for decision */
+        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm);
+#ifdef coconuts
      /* for small messages use linear algorithm */
      if (msgsize <= 4096) {
         segsize = 0;
@@ -255,7 +257,9 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
 /* later swap this for a binary tree */
 /*         fanout = 2; */
         return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
-     } else {
+     } else 
+#endif
+     {
         segsize = 1024;
         return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
      }

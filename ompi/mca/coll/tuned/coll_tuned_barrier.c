@@ -30,6 +30,24 @@
 #include "coll_tuned_topo.h"
 #include "coll_tuned_util.h"
 
+/*
+ * Barrier is ment to be a synchronous operation, as some BTLs can mark a request done
+ * before its passed to the NIC and progress might not be made elsewhere we cannot
+ * allow a process to exit the barrier until its last [round of] sends are completed.
+ *
+ * It is last round of sends rather than 'last' individual send as each pair of peers can use different
+ * channels/devices/btls and the receiver of one of these sends might be forced to wait as the sender
+ * leaves the collective and does not make progress until the next mpi call 
+ *
+ */
+
+
+/*
+ * Simple double ring version of barrier
+ *
+ * synchronous gurantee made by last ring of sends are synchronous
+ *
+ */
 int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
 {
     int rank, size;
@@ -72,7 +90,7 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
 
     /* send message to the right one */
     err = MCA_PML_CALL(send((void*)NULL, 0, MPI_BYTE, right, MCA_COLL_BASE_TAG_BARRIER, 
-                            MCA_PML_BASE_SEND_STANDARD, comm));
+                            MCA_PML_BASE_SEND_SYNCHRONOUS, comm));
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
  
     /* rank 0 post receive from the last node */
@@ -89,6 +107,10 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
    return err;
 }
 
+
+/*
+ * To make synchronous, uses sync sends and sync sendrecvs
+ */
 
 int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *comm)
 {
@@ -137,7 +159,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
             mask <<= 1;
             if (remote >= adjsize) continue;
 
-            err = ompi_coll_tuned_sendrecv (NULL, 0, MPI_BYTE, remote, MCA_COLL_BASE_TAG_BARRIER, 
+            err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, remote, MCA_COLL_BASE_TAG_BARRIER, 
                                    NULL, 0, MPI_BYTE, remote, MCA_COLL_BASE_TAG_BARRIER,
                                    comm, MPI_STATUS_IGNORE, rank);
 
@@ -151,7 +173,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
 
             /* send enter message to higher ranked node */
             err = MCA_PML_CALL(send((void*)NULL, 0, MPI_BYTE, rank+adjsize, 
-                            MCA_COLL_BASE_TAG_BARRIER, MCA_PML_BASE_SEND_STANDARD, comm));
+                            MCA_COLL_BASE_TAG_BARRIER, MCA_PML_BASE_SEND_SYNCHRONOUS, comm));
 
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
         }
@@ -164,6 +186,10 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
         return err;
 }
 
+
+/*
+ * To make synchronous, uses sync sends and sync sendrecvs
+ */
 
 int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm)
 {
@@ -179,7 +205,7 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm)
     for (distance = 1; distance < size; distance <<= 1) { 
         from = (rank + size - distance)%size;
         to   = (rank + distance)%size;
-        err = ompi_coll_tuned_sendrecv (NULL, 0, MPI_BYTE, to, MCA_COLL_BASE_TAG_BARRIER,
+        err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, to, MCA_COLL_BASE_TAG_BARRIER,
                                     NULL, 0, MPI_BYTE, from, MCA_COLL_BASE_TAG_BARRIER,
                                     comm, MPI_STATUS_IGNORE, rank);
        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
@@ -193,6 +219,9 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm)
 }
 
 
+/*
+ * To make synchronous, uses sync sends and sync sendrecvs
+ */
 /* special case for two processes */
 int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm)
 {
@@ -203,12 +232,12 @@ int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm)
     OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_barrier_intra_two_procs rank %d", rank));
 
     if (0==rank) {
-        err = ompi_coll_tuned_sendrecv (NULL, 0, MPI_BYTE, 1, MCA_COLL_BASE_TAG_BARRIER, 
+        err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, 1, MCA_COLL_BASE_TAG_BARRIER, 
                                    NULL, 0, MPI_BYTE, 1, MCA_COLL_BASE_TAG_BARRIER,
                                    comm, MPI_STATUS_IGNORE, rank);
     }
     else {
-        err = ompi_coll_tuned_sendrecv (NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
+        err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
                                    NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
                                    comm, MPI_STATUS_IGNORE, rank);
     }
