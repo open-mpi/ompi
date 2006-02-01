@@ -780,26 +780,26 @@ ompi_coll_tuned_bcast_intra_basic_linear (void *buff, int count,
 int ompi_coll_tuned_bcast_intra_check_forced ( )
 {
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "bcast_algorithm",
                            "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: BM tree.",
                            false, false, ompi_coll_tuned_bcast_forced_choice,
                            &ompi_coll_tuned_bcast_forced_choice);
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "bcast_algorithm_segmentsize",
                            "Segment size in bytes used by default for bcast algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
                            false, false, ompi_coll_tuned_bcast_forced_segsize,
                            &ompi_coll_tuned_bcast_forced_segsize);
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "bcast_algorithm_tree_fanout",
                            "Fanout for n-tree used for bcast algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
                            false, false,
                            ompi_coll_tuned_init_tree_fanout, /* get system wide default */
                            &ompi_coll_tuned_bcast_forced_tree_fanout);
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "bcast_algorithm_chain_fanout",
                            "Fanout for chains used for bcast algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
                            false, false,

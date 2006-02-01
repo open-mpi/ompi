@@ -79,7 +79,7 @@ extern "C" {
  * Globally exported variable
  */
 
-OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component;
+/* OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component; */
 
 OMPI_COMP_EXPORT extern int   ompi_coll_tuned_stream;
 OMPI_COMP_EXPORT extern int   ompi_coll_tuned_priority;
@@ -290,9 +290,40 @@ static inline void ompi_coll_tuned_free_reqs(ompi_request_t **reqs, int count)
      ompi_request_free(&reqs[i]);
 }
 
+struct mca_coll_tuned_component_t {
+    /** Base coll component */ 
+    mca_coll_base_component_1_0_0_t super;
+
+    /** MCA parameter: Priority of this component */
+    int tuned_priority;
+
+    /** global stuff that I need the component to store */
+
+    /* MCA parameters first */
+
+    /* cached decision table stuff (moved from MCW module) */
+    ompi_coll_alg_rule_t *all_base_rules;       
+
+};
+    /**
+     * Convenience typedef
+     */
+    typedef struct mca_coll_tuned_component_t mca_coll_tuned_component_t;
+
+    /**
+     * Global component instance
+     */
+    extern mca_coll_tuned_component_t mca_coll_tuned_component;
+
+
+
+
+
+
 
 /*
  * Data structure for hanging data off the communicator 
+ * i.e. per module instance
  */
 struct mca_coll_base_comm_t {
   /* standard data for requests and PML usage */
@@ -339,8 +370,15 @@ struct mca_coll_base_comm_t {
 
    /* extra data required by the decision functions */
    ompi_coll_alg_rule_t *all_base_rules;       /* stored only on MCW, all other coms ref it */
+                                                /* moving to the component */
    ompi_coll_com_rule_t *com_rules[COLLCOUNT]; /* the communicator rules for each MPI collective for ONLY my comsize */
 };
+
+   /**
+    * Convenience typedef
+    */
+   typedef struct mca_coll_base_comm_t mca_coll_base_comm_t;
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

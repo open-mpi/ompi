@@ -328,7 +328,7 @@ static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t
 int ompi_coll_tuned_barrier_intra_check_forced ( )
 {
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "barrier_algorithm",
                            "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only, 6: step based bmtree",
                            false, false, ompi_coll_tuned_barrier_forced_choice,
