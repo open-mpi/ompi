@@ -29,6 +29,7 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed missing constants in MPI C++ bindings.
 - Fixed some errors caused by threading issues.
 - Fixed openib BTL flow control logic to not overrun the number of
   send wqes available.
