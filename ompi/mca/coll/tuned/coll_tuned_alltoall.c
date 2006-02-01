@@ -443,26 +443,26 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 int ompi_coll_tuned_alltoall_intra_check_forced ( )
 {
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "alltoall_algorithm",
                            "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
                            false, false, ompi_coll_tuned_alltoall_forced_choice,
                            &ompi_coll_tuned_alltoall_forced_choice);
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "alltoall_algorithm_segmentsize",
                            "Segment size in bytes used by default for alltoall algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
                            false, false, ompi_coll_tuned_alltoall_forced_segsize,
                            &ompi_coll_tuned_alltoall_forced_segsize);
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "alltoall_algorithm_tree_fanout",
                            "Fanout for n-tree used for alltoall algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
                            false, false, 
                            ompi_coll_tuned_init_tree_fanout, /* get system wide default */
                            &ompi_coll_tuned_alltoall_forced_tree_fanout);
 
-mca_base_param_reg_int(&mca_coll_tuned_component.collm_version,
+mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "alltoall_algorithm_chain_fanout",
                            "Fanout for chains used for alltoall algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
                            false, false, 

@@ -19,8 +19,6 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "include/constants.h"
-#include "include/types.h"
 #include "datatype/datatype.h"
 #include "communicator/communicator.h"
 #include "mca/coll/coll.h"
@@ -221,7 +219,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     MPI_Aint ext;
     long lb;
     int segsize = 0;
-    int fanout = 0;
+/*     int fanout = 0; */
 
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"));
