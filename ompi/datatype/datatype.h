@@ -216,6 +216,25 @@ OMPI_DECLSPEC int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
                                          int32_t cd, ompi_datatype_t** d,int32_t type);
 OMPI_DECLSPEC int32_t ompi_ddt_release_args( ompi_datatype_t* pData );
 
+/*
+ *
+ */
+OMPI_DECLSPEC size_t ompi_ddt_pack_description_length( ompi_datatype_t* datatype );
+
+/*
+ *
+ */
+OMPI_DECLSPEC int ompi_ddt_get_pack_description( ompi_datatype_t* datatype,
+                                                 const void** packed_buffer );
+
+/*
+ *
+ */
+struct ompi_proc_t;
+OMPI_DECLSPEC ompi_datatype_t*
+ompi_ddt_create_from_packed_description( void** packed_buffer,
+                                         struct ompi_proc_t* remote_processor );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

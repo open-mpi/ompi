@@ -21,15 +21,25 @@
 #include "mpi.h"
 #include "datatype/datatype.h"
 #include "datatype/datatype_internal.h"
+#include "proc/proc.h"
+
+static inline int
+__ompi_ddt_pack_description( ompi_datatype_t* datatype,
+                             void** packed_buffer, int* next_index );
+static ompi_datatype_t*
+__ompi_ddt_create_from_args( int32_t* i, MPI_Aint* a,
+                             MPI_Datatype* d, int32_t type );
 
 typedef struct __dt_args {
-   int create_type;
-   int ci;
-   int ca;
-   int cd;
-   int* i;
-   MPI_Aint* a;
-   MPI_Datatype* d;
+    int           create_type;
+    size_t        total_pack_size;
+    int           ci;
+    int           ca;
+    int           cd;
+    int*          i;
+    MPI_Aint*     a;
+    MPI_Datatype* d;
+    void*         packed_description;
 } ompi_ddt_args_t;
 
 #define ALLOC_ARGS(PDATA, IC, AC, DC)					\
@@ -55,6 +65,9 @@ typedef struct __dt_args {
         if( pArgs->cd == 0 ) pArgs->d = NULL;				\
         else pArgs->d = (MPI_Datatype*)buf;                             \
         (PDATA)->args = (void*)pArgs;					\
+        pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
+            (AC) * sizeof(MPI_Aint) + (DC) * sizeof(int);               \
+        pArgs->packed_description = NULL;                               \
     } while(0)
 
 int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
@@ -179,6 +192,7 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
              * However, there is no easy way to free them in this case ...
              */
             OBJ_RETAIN( d[pos] );
+            pArgs->total_pack_size += ((ompi_ddt_args_t*)d[pos]->args)->total_pack_size;
         }
     }
     return MPI_SUCCESS;
@@ -245,8 +259,228 @@ int32_t ompi_ddt_release_args( ompi_datatype_t* pData )
             OBJ_RELEASE( pArgs->d[i] );
         }
     }
+    if( NULL != pArgs->packed_description )
+        free( pArgs->packed_description );
+    pArgs->packed_description = NULL;
     free( pData->args );
     pData->args = NULL;
 
     return OMPI_SUCCESS;
+}
+
+size_t ompi_ddt_pack_description_length( ompi_datatype_t* datatype )
+{
+    if( datatype->flags & DT_FLAG_PREDEFINED ) {
+        return sizeof(int) * 2;
+    }
+    return ((ompi_ddt_args_t*)datatype->args)->total_pack_size;
+}
+
+static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
+                                               void** packed_buffer, int* next_index )
+{
+    int* position = (int*)*packed_buffer;
+    int local_index = 0, i;
+    ompi_ddt_args_t* args = (ompi_ddt_args_t*)datatype->args;
+    char* next_packed = (char*)*packed_buffer;
+
+    if( datatype->flags & DT_FLAG_PREDEFINED ) {
+        position[0] = MPI_COMBINER_DUP;
+        position[1] = datatype->id;
+        return OMPI_SUCCESS;
+    }
+    position[local_index++] = args->create_type;
+    position[local_index++] = args->ci;
+    position[local_index++] = args->ca;
+    position[local_index++] = args->cd;
+    memcpy( &(position[local_index]), args->i, sizeof(int) * args->ci );
+    next_packed += ( 4 + args->ci) * sizeof(int);
+    local_index += args->ci;
+    if( 0 < args->ca ) {
+        memcpy( &(position[local_index]), args->a, sizeof(MPI_Aint) * args->ca );
+        next_packed += sizeof(MPI_Aint) * args->ca;
+    }
+    position = (int*)next_packed;
+    next_packed += sizeof(int) * args->cd;
+    for( i = 0; i < args->cd; i++ ) {
+        ompi_datatype_t* temp_data = args->d[i];
+        if( temp_data->flags & DT_FLAG_PREDEFINED ) {
+            position[i] = temp_data->id;
+        } else {
+            position[i] = *next_index;
+            (*next_index)++;
+            __ompi_ddt_pack_description( temp_data,
+                                         (void**)&next_packed,
+                                         next_index );
+        }
+    }
+    *packed_buffer = next_packed;
+    return OMPI_SUCCESS;
+}
+                               
+int ompi_ddt_get_pack_description( ompi_datatype_t* datatype,
+                                   const void** packed_buffer )
+{
+    ompi_ddt_args_t* args = datatype->args;
+    int next_index = DT_MAX_PREDEFINED;
+    void* recursive_buffer;
+
+    if( NULL != args->packed_description ) {
+        *packed_buffer = (const void*)args->packed_description;
+    }
+    args->packed_description = malloc( args->total_pack_size );
+    recursive_buffer = args->packed_description;
+    __ompi_ddt_pack_description( datatype, &recursive_buffer, &next_index );
+    *packed_buffer = (const void*)args->packed_description;
+    return OMPI_SUCCESS;
+}
+
+ompi_datatype_t*
+ompi_ddt_create_from_packed_description( void** packed_buffer,
+                                         struct ompi_proc_t* remote_processor )
+{
+    int* position = (int*)*packed_buffer;
+    ompi_datatype_t* datatype = NULL;
+    ompi_datatype_t** array_of_datatype;
+    MPI_Aint* array_of_disp;
+    int* array_of_length;
+    int number_of_length, number_of_disp, number_of_datatype;
+    int create_type, i;
+    char* next_buffer = (char*)*packed_buffer;
+
+    create_type = position[0];
+    if( MPI_COMBINER_DUP == create_type ) {
+        /* there we have a simple predefined datatype */
+        assert( position[1] < DT_MAX_PREDEFINED );
+        return (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[1]];
+    }
+    number_of_length   = position[1];
+    number_of_disp     = position[2];
+    number_of_datatype = position[3];
+    array_of_datatype = (ompi_datatype_t**)malloc( sizeof(ompi_datatype_t*) *
+                                                   number_of_datatype );
+    array_of_length    = &(position[4]);
+    next_buffer += (4 + number_of_length) * sizeof(int);
+    array_of_disp      = (MPI_Aint*)next_buffer;
+    next_buffer += number_of_disp * sizeof(MPI_Aint);
+    position = (int*)next_buffer;
+    next_buffer += number_of_datatype * sizeof(int);
+    for( i = 0; i < number_of_datatype; i++ ) {
+        if( position[i] < DT_MAX_PREDEFINED ) {
+            assert( position[1] < DT_MAX_PREDEFINED );
+            array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[i]];
+        } else {
+            array_of_datatype[i] =
+                ompi_ddt_create_from_packed_description( (void**)&next_buffer,
+                                                         remote_processor );
+            if( NULL == array_of_datatype[i] )
+                goto cleanup_and_exit;
+        }
+    }
+    datatype = __ompi_ddt_create_from_args( array_of_length, array_of_disp,
+                                            array_of_datatype, create_type );
+    *packed_buffer = next_buffer;
+ cleanup_and_exit:
+    for( i = 0; i < number_of_datatype; i++ ) {
+        if( !(array_of_datatype[i]->flags & DT_FLAG_PREDEFINED) ) {
+            OBJ_RELEASE(array_of_datatype[i]);
+        }
+    }
+    free( array_of_datatype );
+    return datatype;
+}
+
+static ompi_datatype_t*
+__ompi_ddt_create_from_args( int32_t* i, MPI_Aint* a,
+                             MPI_Datatype* d, int32_t type )
+{
+    ompi_datatype_t* datatype = NULL;
+
+    switch(type){
+        /******************************************************************/
+    case MPI_COMBINER_DUP:
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_CONTIGUOUS:
+        ompi_ddt_create_contiguous( i[0], d[0], &datatype );
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_VECTOR:
+        ompi_ddt_create_vector( i[0], i[1], i[2], d[0], &datatype );
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_HVECTOR_INTEGER:
+    case MPI_COMBINER_HVECTOR:
+        ompi_ddt_create_hvector( i[0], i[1], a[0], d[0], &datatype );
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_INDEXED:  /* TO CHECK */
+        ompi_ddt_create_indexed( i[0], &(i[1]), &(i[1+i[0]]), d[0], &datatype );
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_HINDEXED_INTEGER:
+    case MPI_COMBINER_HINDEXED:
+        ompi_ddt_create_hindexed( i[0], &(i[1]), a, d[0], &datatype );
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_INDEXED_BLOCK:
+        ompi_ddt_create_indexed_block( i[0], i[1], &(i[1+i[0]]), d[0], &datatype );
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_STRUCT_INTEGER:
+    case MPI_COMBINER_STRUCT:
+        ompi_ddt_create_struct( i[0], &(i[1]), a, d, &datatype );
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_SUBARRAY:
+        /*pos = 1;
+          pArgs->i[0] = i[0][0];
+          memcpy( pArgs->i + pos, i[1], pArgs->i[0] * sizeof(int) );
+          pos += pArgs->i[0];
+          memcpy( pArgs->i + pos, i[2], pArgs->i[0] * sizeof(int) );
+          pos += pArgs->i[0];
+          memcpy( pArgs->i + pos, i[3], pArgs->i[0] * sizeof(int) );
+          pos += pArgs->i[0];
+          pArgs->i[pos] = i[4][0];
+        */
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_DARRAY:
+        /*pos = 3;
+          pArgs->i[0] = i[0][0];
+          pArgs->i[1] = i[1][0];
+          pArgs->i[2] = i[2][0];
+          
+          memcpy( pArgs->i + pos, i[3], i[2][0] * sizeof(int) );
+          pos += i[2][0];
+          memcpy( pArgs->i + pos, i[4], i[2][0] * sizeof(int) );
+          pos += i[2][0];
+          memcpy( pArgs->i + pos, i[5], i[2][0] * sizeof(int) );
+          pos += i[2][0];
+          memcpy( pArgs->i + pos, i[6], i[2][0] * sizeof(int) );
+          pos += i[2][0];
+          pArgs->i[pos] = i[7][0];
+        */
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_F90_REAL:
+    case MPI_COMBINER_F90_COMPLEX:
+        /*pArgs->i[0] = i[0][0];
+          pArgs->i[1] = i[1][0];
+        */
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_F90_INTEGER:
+        /*pArgs->i[0] = i[0][0];
+         */
+        break;
+        /******************************************************************/
+    case MPI_COMBINER_RESIZED:
+        break;
+        /******************************************************************/
+    default:
+        break;
+    }
+
+    return datatype;
 }
