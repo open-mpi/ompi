@@ -29,6 +29,8 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed tcsh-based LD_LIBRARY_PATH issues with --prefix.  Thanks to
+  Glen Morris for identifying the problem and suggesting the fix.
 - Removed extraneous \n's when setting PATH and LD_LIBRARY_PATH in the
   rsh startup.  Thanks to Glen Morris for finding these typos.
 - Fixed missing constants in MPI C++ bindings.
