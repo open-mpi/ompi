@@ -62,6 +62,7 @@ typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;
 struct mca_mpool_openib_module_t {
     mca_mpool_base_module_t super;
     struct mca_mpool_base_resources_t  resources;
+    ompi_free_list_t reg_list;
 }; typedef struct mca_mpool_openib_module_t mca_mpool_openib_module_t; 
     
 

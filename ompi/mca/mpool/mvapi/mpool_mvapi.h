@@ -55,6 +55,7 @@ typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;
 struct mca_mpool_mvapi_module_t {
     mca_mpool_base_module_t super;
     struct mca_mpool_base_resources_t  hca_pd;
+    ompi_free_list_t reg_list;
 }; typedef struct mca_mpool_mvapi_module_t mca_mpool_mvapi_module_t; 
 
 
@@ -74,6 +75,7 @@ struct mca_mpool_mvapi_registration_t {
 };
 typedef struct mca_mpool_mvapi_registration_t mca_mpool_mvapi_registration_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_mvapi_registration_t); 
+
 
 
 

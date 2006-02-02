@@ -51,6 +51,11 @@ void mca_mpool_mvapi_module_init(mca_mpool_mvapi_module_t* mpool)
     mpool->super.rcache = 
         mca_rcache_base_module_create(mca_mpool_mvapi_component.rcache_name);
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM; 
+        
+    OBJ_CONSTRUCT(&mpool->reg_list, ompi_free_list_t); 
+    ompi_free_list_init(&mpool->reg_list, sizeof(mca_mpool_mvapi_registration_t),
+                        OBJ_CLASS(mca_mpool_mvapi_registration_t), 0, -1, 32, NULL); 
+    
 }
 
 
@@ -91,14 +96,20 @@ int mca_mpool_mvapi_register(
     mca_mpool_mvapi_registration_t * vapi_reg; 
     VAPI_mrw_t mr_in, mr_out;
     VAPI_ret_t ret; 
-    
+    opal_list_item_t *item;
+    int rc;
     
         
     assert(size > 0); 
     memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
     memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
     
-    vapi_reg = OBJ_NEW(mca_mpool_mvapi_registration_t);    
+    OMPI_FREE_LIST_GET(&mpool_module->reg_list, item, rc); 
+    if(OMPI_SUCCESS != rc) { 
+        return rc; 
+    }
+    vapi_reg = (mca_mpool_mvapi_registration_t*) item;
+    
     vapi_reg->base_reg.mpool = mpool;
     vapi_reg->base_reg.flags = flags; 
     vapi_reg->hndl = VAPI_INVAL_HNDL; 
@@ -129,7 +140,7 @@ int mca_mpool_mvapi_register(
     
     if(VAPI_OK != ret){ 
         opal_output(0, "error registering memory of size %d: %s ", size, VAPI_strerror(ret)); 
-        OBJ_RELEASE(vapi_reg);
+        OMPI_FREE_LIST_RETURN(&mpool_module->reg_list, item);
         return OMPI_ERROR; 
     }
     
@@ -226,7 +237,7 @@ int mca_mpool_mvapi_release(
             opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
             return OMPI_ERROR; 
         }
-        OBJ_RELEASE(vapi_reg);
+        OMPI_FREE_LIST_RETURN(&mpool_mvapi->reg_list, (opal_list_item_t*) vapi_reg);
     }
     return OMPI_SUCCESS; 
 }
