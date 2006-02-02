@@ -49,6 +49,11 @@ void mca_mpool_openib_module_init(mca_mpool_openib_module_t* mpool)
     mpool->super.rcache = 
         mca_rcache_base_module_create(mca_mpool_openib_component.rcache_name);
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM; 
+
+    OBJ_CONSTRUCT(&mpool->reg_list, ompi_free_list_t); 
+    ompi_free_list_init(&mpool->reg_list, sizeof(mca_mpool_openib_registration_t),
+                        OBJ_CLASS(mca_mpool_openib_registration_t), 0, -1, 32, NULL); 
+    
 }
 
 
@@ -85,9 +90,17 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
     
     mca_mpool_openib_module_t * mpool_module = (mca_mpool_openib_module_t*) mpool; 
     mca_mpool_openib_registration_t * vapi_reg; 
-        
-    *registration = (mca_mpool_base_registration_t*) OBJ_NEW(mca_mpool_openib_registration_t);    /* (void*) malloc(sizeof(mca_mpool_base_registration_t));  */
-    vapi_reg = (mca_mpool_openib_registration_t*) *registration; 
+    opal_list_item_t *item;
+    int rc;
+    
+    OMPI_FREE_LIST_GET(&mpool_module->reg_list, item, rc); 
+    if(OMPI_SUCCESS != rc) { 
+        return rc; 
+    }
+    vapi_reg = (mca_mpool_openib_registration_t*) item;
+    
+    *registration = &vapi_reg->base_reg;
+    
     vapi_reg->base_reg.mpool = mpool;
     vapi_reg->base_reg.base = down_align_addr(addr, mca_mpool_base_page_size_log); 
     vapi_reg->base_reg.bound = up_align_addr( (void*) ((char*) addr + size - 1)
@@ -197,12 +210,16 @@ int mca_mpool_openib_release(
                             ){
     if(0 >= OPAL_THREAD_ADD32(&registration->ref_count, -1)) {
         mca_mpool_openib_registration_t * openib_reg; 
+        
+        mca_mpool_openib_module_t* mpool_openib = 
+            (mca_mpool_openib_module_t*) mpool;
+        
         openib_reg = (mca_mpool_openib_registration_t*) registration; 
         if(ibv_dereg_mr(openib_reg->mr)){   
             opal_output(0, "%s: error unpinning openib memory errno says %s\n", __func__, strerror(errno)); 
             return OMPI_ERROR; 
         }
-        OBJ_RELEASE(openib_reg);
+        OMPI_FREE_LIST_RETURN(&mpool_openib->reg_list, (opal_list_item_t*) openib_reg);
     }
     return OMPI_SUCCESS; 
 }
