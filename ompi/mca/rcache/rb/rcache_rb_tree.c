@@ -111,8 +111,9 @@ int mca_rcache_rb_tree_insert(
     mca_rcache_rb_tree_item_t* rb_tree_item; 
     
     OMPI_FREE_LIST_GET(&rb_module->rb_tree_item_list, item, rc);
-    if(rc != OMPI_SUCCESS) 
+    if(OMPI_SUCCESS != rc) { 
         return rc; 
+    }
     rb_tree_item = (mca_rcache_rb_tree_item_t*) item; 
     
     rb_tree_item->key.base = reg->base;
