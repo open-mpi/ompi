@@ -366,18 +366,15 @@ int mca_btl_sm_component_progress(void)
          * translation is necessary when accessing the fifo.  Hence,
          * we use the _same_base_addr varient. */
         frag = (mca_btl_sm_frag_t *)
-	    ompi_fifo_read_from_tail_same_base_addr( fifo );
-        if( OMPI_CB_FREE == frag ) {
-            /* release thread lock */
-            if( opal_using_threads() ) {
-                opal_atomic_unlock(&(fifo->tail_lock));
-            }
-            continue;
-        }
+          ompi_fifo_read_from_tail_same_base_addr( fifo );
 
         /* release thread lock */
         if( opal_using_threads() ) {
             opal_atomic_unlock(&(fifo->tail_lock));
+        }
+
+        if( OMPI_CB_FREE == frag ) {
+            continue;
         }
 
         /* dispatch fragment by type */
