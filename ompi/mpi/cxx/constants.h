@@ -80,7 +80,6 @@ OMPI_DECLSPEC extern const Datatype CHAR;
 OMPI_DECLSPEC extern const Datatype SHORT;          
 OMPI_DECLSPEC extern const Datatype INT;            
 OMPI_DECLSPEC extern const Datatype LONG;
-OMPI_DECLSPEC extern const Datatype SIGNED_CHAR;
 OMPI_DECLSPEC extern const Datatype UNSIGNED_CHAR;
 OMPI_DECLSPEC extern const Datatype UNSIGNED_SHORT; 
 OMPI_DECLSPEC extern const Datatype UNSIGNED;       
@@ -200,7 +199,9 @@ OMPI_DECLSPEC extern const Op REPLACE;
 
 // null handles
 OMPI_DECLSPEC extern const Group        GROUP_NULL;
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC extern const Win          WIN_NULL;
+#endif
 OMPI_DECLSPEC extern const Info         INFO_NULL;
 //OMPI_DECLSPEC extern const Comm         COMM_NULL;
 //OMPI_DECLSPEC extern const MPI_Comm     COMM_NULL;

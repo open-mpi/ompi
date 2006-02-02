@@ -31,7 +31,8 @@ const void* BOTTOM = (void*) MPI_BOTTOM;
 
 // return  codes
 const int SUCCESS = MPI_SUCCESS;
-const int ERR_BUFFER = MPI_ERR_COUNT;
+const int ERR_BUFFER = MPI_ERR_BUFFER;
+const int ERR_COUNT = MPI_ERR_COUNT;
 const int ERR_TYPE = MPI_ERR_TYPE;
 const int ERR_TAG = MPI_ERR_TAG;
 const int ERR_COMM = MPI_ERR_COMM;
