@@ -748,7 +748,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         /* Reset PATH */
                         oldenv = getenv("PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/bin:%s\n", prefix_dir, oldenv);
+                            asprintf(&newenv, "%s/bin:%s", prefix_dir, oldenv);
                         } else {
                             asprintf(&newenv, "%s/bin", prefix_dir);
                         }
@@ -761,7 +761,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         /* Reset LD_LIBRARY_PATH */
                         oldenv = getenv("LD_LIBRARY_PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/lib:%s\n", prefix_dir, oldenv);
+                            asprintf(&newenv, "%s/lib:%s", prefix_dir, oldenv);
                         } else {
                             asprintf(&newenv, "%s/lib", prefix_dir);
                         }
