@@ -806,12 +806,48 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                          * Only if the LD_LIBRARY_PATH is set, prepend our prefix/lib to it....
                          */
                         if (remote_csh) {
+                            /* This requires some explanation.  :-)
+                               Optimally, we would like to be able to
+                               execute the following [pseudocode] in a
+                               single csh-based line:
+
+                               if (not_set(LD_LIBRARY_PATH)) setenv LD_LIBRARY_PATH <path> else setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:<path> endif
+
+                               But we can't because tcsh will try to
+                               evaluate the entire string at once --
+                               so if LD_LIBRARY_PATH is not yet
+                               defined, the ${LD_LIBRARY_PATH} in the
+                               else clause will cause an error.
+                               Specifically, tcsh is not smart enough
+                               to *not* interpret the "else" clause if
+                               the conditional is true (hence, the
+                               error).  
+
+                               The only way to make tcsh not error (in
+                               a portable way) is to force
+                               LD_LIBRARY_PATH to have a value.  :-(
+
+                               Specifically: if LD_LIBRARY_PATH is
+                               *not* set, then set it to the correct
+                               value.  At this point in execution,
+                               we'll know that LD_LIBRARY_PATH is
+                               guaranteed to have a value (because
+                               either we just set it, or it already
+                               had a value).  So we can safely prefix
+                               LD_LIBRARY_PATH with the correct value.
+
+                               In the case where LD_LIBRARY_PATH was
+                               not already set, the end result is that
+                               it will contain Open MPI's libdir
+                               twice.  This is hardly elegant, but is
+                               avoids this messy tcsh evaluation
+                               issue.  :-(
+                             */
                             asprintf (&argv[local_exec_index],
                                     "set path = ( %s/bin $path ) ; "
-                                    "if ( \"$?LD_LIBRARY_PATH\" == 1 ) "
-                                    "setenv LD_LIBRARY_PATH %s/lib:$LD_LIBRARY_PATH ; "
                                     "if ( \"$?LD_LIBRARY_PATH\" == 0 ) "
                                     "setenv LD_LIBRARY_PATH %s/lib ; "
+                                    "setenv LD_LIBRARY_PATH %s/lib:$LD_LIBRARY_PATH ; "
                                     "%s/bin/%s",
                                     prefix_dir,
                                     prefix_dir,
