@@ -29,6 +29,8 @@ version 1.0.
 1.0.2
 -----
 
+- Removed extraneous \n's when setting PATH and LD_LIBRARY_PATH in the
+  rsh startup.  Thanks to Glen Morris for finding these typos.
 - Fixed missing constants in MPI C++ bindings.
 - Fixed some errors caused by threading issues.
 - Fixed openib BTL flow control logic to not overrun the number of
