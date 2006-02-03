@@ -801,22 +801,28 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                     prefix_dir,
                                     prefix_dir, mca_pls_rsh_component.orted);
                         }
-                        /*
-                         * This needs cleanup:
-                         * Only if the LD_LIBRARY_PATH is set, prepend our prefix/lib to it....
-                         */
                         if (remote_csh) {
+                            /* [t]csh is a bit more challenging -- we
+                               have to check whether LD_LIBRARY_PATH
+                               is already set before we try to set it.
+                               Must be very careful about obeying
+                               [t]csh's order of evaluation and not
+                               using a variable before it is defined.
+                               See this thread for more details:
+                               http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
                             asprintf (&argv[local_exec_index],
-                                    "set path = ( %s/bin $path ) ; "
-                                    "if ( \"$?LD_LIBRARY_PATH\" == 1 ) "
-                                    "setenv LD_LIBRARY_PATH %s/lib:$LD_LIBRARY_PATH ; "
-                                    "if ( \"$?LD_LIBRARY_PATH\" == 0 ) "
-                                    "setenv LD_LIBRARY_PATH %s/lib ; "
-                                    "%s/bin/%s",
-                                    prefix_dir,
-                                    prefix_dir,
-                                    prefix_dir,
-                                    prefix_dir, mca_pls_rsh_component.orted);
+                                      "set path = ( %s/bin $path ) ; "
+                                      "if ( $?LD_LIBRARY_PATH == 1 ) "
+                                      "set OMPI_have_llp ; "
+                                      "if ( $?LD_LIBRARY_PATH == 0 ) "
+                                      "setenv LD_LIBRARY_PATH %s/lib ; "
+                                      "if ( $?OMPI_have_llp == 1 ) "
+                                      "setenv LD_LIBRARY_PATH %s/lib:$LD_LIBRARY_PATH ; "
+                                      "%s/bin/%s",
+                                      prefix_dir,
+                                      prefix_dir,
+                                      prefix_dir,
+                                      prefix_dir, mca_pls_rsh_component.orted);
                         }
                     }
                 }
