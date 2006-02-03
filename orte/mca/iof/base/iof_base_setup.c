@@ -77,8 +77,6 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
     if (opts->usepty) {
         ret = openpty(&(opts->p_stdout[0]), &(opts->p_stdout[1]),
                       NULL, NULL, NULL);
-        ret = openpty(&(opts->p_stdin[0]), &(opts->p_stdin[1]),
-                      NULL, NULL, NULL);
     } else {
         ret = -1;
     }
@@ -98,11 +96,11 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+    }
         if (pipe(opts->p_stdin) < 0) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-    }
     if (pipe(opts->p_stderr) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -120,45 +118,12 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
 
     if (!opts->usepty) {
         close(opts->p_stdout[0]);
-        close(opts->p_stdin[1]);
     }
+    close(opts->p_stdin[1]);
     close(opts->p_stderr[0]);
 
     if (opts->usepty) {
-
-        if (opts->connect_stdin) {
 #ifndef __WINDOWS__
-            /* disable new-line translation */
-            struct termios term_attrs;
-            if (tcgetattr(opts->p_stdin[0], &term_attrs) < 0) {
-                return ORTE_ERROR;
-            }
-            term_attrs.c_iflag &= ~ (ICRNL | INLCR | ISTRIP | INPCK | IXON);
-            term_attrs.c_oflag &= ~ (
-#ifdef OCRNL
-                                     /* OS X 10.3 does not have this
-                                        value defined */
-                                     OCRNL | 
-#endif
-                                     ONLCR);
-            if (tcsetattr(opts->p_stdin[0], TCSANOW, &term_attrs) == -1) {
-                return ORTE_ERROR;
-            }
-#endif
-            /* and connect the pty to stdin */
-            ret = dup2(opts->p_stdin[0], fileno(stdin)); 
-            if (ret < 0) return ORTE_ERROR;
-        } else {
-            int fd;
-            /* connect input to /dev/null */
-            fd = open("/dev/null", O_RDONLY);
-            if(fd > fileno(stdin)) {
-                dup2(fd, fileno(stdin));
-                close(fd);
-            }
-        }
-#ifndef __WINDOWS__
-        {
             /* disable echo */
             struct termios term_attrs;
             if (tcgetattr(opts->p_stdout[1], &term_attrs) < 0) {
@@ -177,7 +142,6 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
             if (tcsetattr(opts->p_stdout[1], TCSANOW, &term_attrs) == -1) {
                 return ORTE_ERROR;
             }
-        }
 #endif
         ret = dup2(opts->p_stdout[1], fileno(stdout));
         if (ret < 0) return ORTE_ERROR;
@@ -188,22 +152,22 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
             if (ret < 0) return ORTE_ERROR;
             close(opts->p_stdout[1]); 
         }
-        if (opts->connect_stdin) {
-            if(opts->p_stdin[0] != fileno(stdin)) {
-                ret = dup2(opts->p_stdin[1], fileno(stdin));
-                if (ret < 0) return ORTE_ERROR;
-                close(opts->p_stdin[1]); 
-            }
-        } else {
-            int fd;
+    }
+    if (opts->connect_stdin) {
+        if(opts->p_stdin[0] != fileno(stdin)) {
+            ret = dup2(opts->p_stdin[0], fileno(stdin));
+            if (ret < 0) return ORTE_ERROR;
+            close(opts->p_stdin[0]); 
+        }
+    } else {
+        int fd;
 
-            close(opts->p_stdin[0]);
-            /* connect input to /dev/null */
-            fd = open("/dev/null", O_RDONLY);
-            if(fd > fileno(stdin)) {
-                dup2(fd, fileno(stdin));
-                close(fd);
-            }
+        close(opts->p_stdin[0]);
+        /* connect input to /dev/null */
+        fd = open("/dev/null", O_RDONLY);
+        if(fd > fileno(stdin)) {
+            dup2(fd, fileno(stdin));
+            close(fd);
         }
     }
     if(opts->p_stderr[1] != fileno(stderr)) {
@@ -224,8 +188,8 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
 
     if (! opts->usepty) {
         close(opts->p_stdout[1]);
-        close(opts->p_stdin[0]);
     }
+        close(opts->p_stdin[0]);
     close(opts->p_stderr[1]);
 
     /* connect stdin endpoint */
@@ -238,9 +202,7 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
             return ret;
         }
     } else {
-        if (! opts->usepty) {
-            close(opts->p_stdin[0]);
-        }
+        close(opts->p_stdin[0]);
     }
 
     /* connect read end to IOF */
