@@ -41,6 +41,11 @@ int orte_iof_base_close(void)
         orte_iof_base.iof_flush = false;
     }
 
+    /* finalize component */
+    if (NULL != orte_iof.iof_finalize) {
+        orte_iof.iof_finalize();
+    }
+
     /* shutdown any remaining opened components */
     if (0 != opal_list_get_size(&orte_iof_base.iof_components_opened)) {
         mca_base_components_close(orte_iof_base.iof_output, 

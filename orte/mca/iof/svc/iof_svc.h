@@ -133,6 +133,8 @@ int orte_iof_svc_unsubscribe(
     orte_iof_base_tag_t src_tag
 );
 
+int orte_iof_svc_finalize(void);
+
 /**
  * IOF svc Component 
  */

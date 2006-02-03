@@ -182,3 +182,11 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
     return &orte_iof_svc_module;
 }
 
+
+int
+orte_iof_svc_finalize(void)
+{
+    orte_rml.del_exception_handler(orte_iof_svc_exception_handler);
+
+    return OMPI_SUCCESS;
+}
