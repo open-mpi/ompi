@@ -41,7 +41,8 @@ orte_iof_base_module_t orte_iof_svc_module = {
     orte_iof_svc_pull,
     orte_iof_svc_subscribe,
     orte_iof_svc_unsubscribe,
-    orte_iof_base_flush
+    orte_iof_base_flush,
+    orte_iof_svc_finalize
 };
 
 
@@ -265,4 +266,3 @@ int orte_iof_svc_unsubscribe(
     /* cleanup any locally registered callback */
     return orte_iof_base_callback_delete(ORTE_RML_NAME_SELF,src_tag);
 }
-

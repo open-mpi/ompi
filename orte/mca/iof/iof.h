@@ -164,6 +164,8 @@ typedef int (*orte_iof_base_unsubscribe_fn_t)(
 
 typedef int (*orte_iof_base_flush_fn_t)(void);
 
+typedef int (*orte_iof_base_finalize_fn_t)(void);
+
 /**
  *  IOF module.
  */
@@ -176,6 +178,7 @@ struct orte_iof_base_module_1_0_0_t {
     orte_iof_base_subscribe_fn_t iof_subscribe;
     orte_iof_base_unsubscribe_fn_t iof_unsubscribe;
     orte_iof_base_flush_fn_t iof_flush;
+    orte_iof_base_finalize_fn_t iof_finalize;
 };
 
 typedef struct orte_iof_base_module_1_0_0_t orte_iof_base_module_1_0_0_t;
