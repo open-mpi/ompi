@@ -258,7 +258,7 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_SUBST([OMPI_WRAPPER_F77_REQUIRED_FILE])
 
     if test "$OMPI_WANT_F90_BINDINGS" = "1" ; then
-        OMPI_WRAPPER_F90_REQUIRED_FILE="libmpi_f90.la"
+        OMPI_WRAPPER_F90_REQUIRED_FILE="libmpi_f90.a"
     else
         OMPI_WRAPPER_F90_REQUIRED_FILE="not supported"
     fi
