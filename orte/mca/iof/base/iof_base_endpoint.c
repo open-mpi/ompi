@@ -223,6 +223,31 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 }
 
+
+/* return true if we should read stdin from fd, false otherwise */
+static bool orte_iof_base_endpoint_stdin_check(int fd)
+{
+    if (isatty(fd) && (getpgrp() != tcgetpgrp(fd))) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
+static void orte_iof_base_endpoint_stdin_cb(int sd, short flags, void *user)
+{
+    orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)user; 
+    bool should_process = orte_iof_base_endpoint_stdin_check(endpoint->ep_fd);
+
+    if (should_process) {
+        opal_event_add(&endpoint->ep_event, 0);
+    } else {
+        opal_event_del(&endpoint->ep_event);
+    }
+}
+
+
 /*
  * Lookup existing endpoint matching parameters
  * supplied to create.
@@ -289,13 +314,32 @@ int orte_iof_base_endpoint_create(
     /* setup event handler */
     switch(mode) {
         case ORTE_IOF_SOURCE:
+            if (tag == ORTE_IOF_STDIN && isatty(endpoint->ep_fd)) {
+                /* We should avoid trying to read from stdin if we
+                   have a terminal, but are backgrounded.  Catch the
+                   signals that are commonly used when we switch
+                   between being backgrounded and not.  If the
+                   filedescriptor is not a tty, don't worry about it
+                   and always stay connected. */
+                opal_signal_set(&(endpoint->ep_stdin_event),
+                                SIGCONT,
+                                orte_iof_base_endpoint_stdin_cb,
+                                endpoint);
+                opal_signal_add(&(endpoint->ep_stdin_event), NULL);
+            }
+
+            /* always setup the event, but only add it if we should be
+               reading from stdin right now (per rules above) */
             opal_event_set(
-                &endpoint->ep_event,
-                endpoint->ep_fd,
-                OPAL_EV_READ|OPAL_EV_PERSIST,
-                orte_iof_base_endpoint_read_handler,
-                endpoint);
-            opal_event_add(&endpoint->ep_event, 0);
+                           &endpoint->ep_event,
+                           endpoint->ep_fd,
+                           OPAL_EV_READ|OPAL_EV_PERSIST,
+                           orte_iof_base_endpoint_read_handler,
+                           endpoint);
+            if (tag != ORTE_IOF_STDIN || 
+                orte_iof_base_endpoint_stdin_check(endpoint->ep_fd)) {
+                opal_event_add(&endpoint->ep_event, 0);
+            }
             break;
         case ORTE_IOF_SINK:
             opal_event_set(
