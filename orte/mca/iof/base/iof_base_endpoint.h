@@ -34,6 +34,7 @@ struct orte_iof_base_endpoint_t {
     uint32_t ep_seq;
     uint32_t ep_ack;
     opal_event_t ep_event;
+    opal_event_t ep_stdin_event;
     opal_list_t ep_frags;
     opal_list_t ep_callbacks;
 };
