@@ -268,12 +268,15 @@ install-exec-hook:
 	@ for file in `ls *.mod`; do \
 	  echo $(INSTALL) $$file $(DESTDIR)$(libdir); \
 	  $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	  echo $(LN_S) $(DESTDIR)$(libdir)/$$file $(DESTDIR)$(includedir)/$$file ; \
+	  $(LN_S) $(DESTDIR)$(libdir)/$$file $(DESTDIR)$(includedir)/$$file ; \
 	done
 
 uninstall-local:
 	@ for file in `ls *.mod`; do \
 	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
 	  rm -f $(DESTDIR)$(libdir)/$$file; \
+	  rm -f $(DESTDIR)$(includedir)/$$file; \
 	done
 else
 
