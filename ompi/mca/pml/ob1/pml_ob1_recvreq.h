@@ -34,7 +34,6 @@ extern "C" {
 
 struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
-    struct ompi_proc_t *req_proc;
     ompi_ptr_t req_send;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t req_lock;
@@ -193,14 +192,14 @@ do {                                                                            
             ompi_comm_peer_lookup(                                                   \
                 (request)->req_recv.req_base.req_comm, (hdr)->hdr_src);              \
                                                                                      \
-        (request)->req_proc = proc;                                                  \
+        (request)->req_recv.req_base.req_proc = proc;                                \
         ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
                                          &(request)->req_recv.req_convertor );       \
     } else {                                                                         \
-        (request)->req_proc = NULL;                                                  \
+        (request)->req_recv.req_base.req_proc = NULL;                                \
     }                                                                                \
 } while (0)
 

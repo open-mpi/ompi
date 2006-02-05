@@ -173,7 +173,7 @@ static void mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_rendezvous_hdr_t* hdr, 
     size_t bytes_received)
 {
-    ompi_proc_t* proc = (ompi_proc_t*) recvreq->req_proc;
+    ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
     mca_bml_base_endpoint_t* bml_endpoint = NULL; 
     mca_btl_base_descriptor_t* des;
     mca_bml_base_btl_t* bml_btl;
@@ -185,7 +185,7 @@ static void mca_pml_ob1_recv_request_ack(
     if(NULL == proc) {
         ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(
                 recvreq->req_recv.req_base.req_comm, hdr->hdr_match.hdr_src);
-        proc = recvreq->req_proc = ompi_proc;
+        proc = recvreq->req_recv.req_base.req_proc = ompi_proc;
     }
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
@@ -363,7 +363,7 @@ static void mca_pml_ob1_recv_request_rget(
     int rc;
 
     /* lookup bml datastructures */
-    bml_endpoint = (mca_bml_base_endpoint_t*) recvreq->req_proc->proc_pml; 
+    bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_eager, btl);
     if(NULL == bml_btl) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
@@ -569,7 +569,7 @@ void mca_pml_ob1_recv_request_matched_probe(
 void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
 {
     if(OPAL_THREAD_ADD32(&recvreq->req_lock,1) == 1) {
-        ompi_proc_t* proc = (ompi_proc_t*) recvreq->req_proc;
+        ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
         mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
         mca_bml_base_btl_t* bml_btl; 
         do {

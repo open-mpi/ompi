@@ -95,6 +95,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
     }                                                                      \
     /* update request to point to current peer */                          \
     sendreq->req_peer = proc->proc_ptl_first.ptl_peer;                     \
+    sendreq->req_send.req_base.req_proc = proc->base.proc_ompi;            \
 }
 
 #define MCA_PML_UNIQ_SEND_REQUEST_INIT( request,                           \
