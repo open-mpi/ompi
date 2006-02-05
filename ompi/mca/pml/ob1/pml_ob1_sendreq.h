@@ -38,7 +38,6 @@ extern "C" {
 
 struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
-    ompi_proc_t* req_proc; 
     mca_bml_base_endpoint_t* req_endpoint;
     ompi_ptr_t req_recv;
 #if OMPI_HAVE_THREAD_SUPPORT
@@ -77,7 +76,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         rc = OMPI_SUCCESS;                                                 \
         OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_requests, item, rc);         \
         sendreq = (mca_pml_ob1_send_request_t*)item;                       \
-        sendreq->req_proc = proc;                                          \
+        sendreq->req_send.req_base.req_proc = proc;                        \
     }                                                                      \
 }
 
@@ -117,7 +116,8 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 #define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)                                       \
 do {                                                                                      \
     mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;           \
-    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)sendreq->req_proc->proc_pml; \
+    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)                        \
+                                        sendreq->req_send.req_base.req_proc->proc_pml;    \
     mca_bml_base_btl_t* bml_btl;                                                          \
     size_t size = sendreq->req_send.req_bytes_packed;                                     \
                                                                                           \
