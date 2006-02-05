@@ -20,6 +20,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif  /* HAVE_SIGNAL_H */
 #include "opal/util/output.h"
 #include "mca/rml/rml.h"
 #include "mca/iof/base/base.h"
