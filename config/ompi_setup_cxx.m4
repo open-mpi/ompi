@@ -175,4 +175,10 @@ AC_DEFUN([_OMPI_PROG_CXX],[
     AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
     OMPI_CXX_ABSOLUTE="`which $CXX`"
     AC_SUBST(OMPI_CXX_ABSOLUTE)
+
+    # make sure the compiler actually works, if not cross-compiling.
+    # Don't just use the AC macro so that we can have a pretty
+    # message.
+    OMPI_CHECK_COMPILER_WORKS([C++], [exit(0)], [], 
+           [AC_MSG_ERROR([Could not run a simple C++ program.  Aborting.])])
 ])

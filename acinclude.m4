@@ -55,6 +55,7 @@ m4_include(config/ompi_config_asm.m4)
 
 m4_include(config/ompi_case_sensitive_fs_setup.m4)
 m4_include(config/ompi_check_broken_qsort.m4)
+m4_include(config/ompi_check_compiler_works.m4)
 m4_include(config/ompi_check_func_lib.m4)
 m4_include(config/ompi_check_optflags.m4)
 m4_include(config/ompi_check_icc.m4)
