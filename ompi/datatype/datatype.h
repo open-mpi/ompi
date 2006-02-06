@@ -134,6 +134,8 @@ static inline int32_t ompi_ddt_is_acceptable_for_one_sided( const ompi_datatype_
 { return ((type->flags & DT_FLAG_ONE_SIDED) == DT_FLAG_ONE_SIDED); }
 static inline int32_t ompi_ddt_is_valid( const ompi_datatype_t* type )
 { return !((type->flags & DT_FLAG_UNAVAILABLE) == DT_FLAG_UNAVAILABLE); }
+static inline int32_t ompi_ddt_is_predefined( const ompi_datatype_t* type )
+{ return (type->flags & DT_FLAG_PREDEFINED); }
 
 void ompi_ddt_dump( const ompi_datatype_t* pData );
 /* data creation functions */
