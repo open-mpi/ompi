@@ -94,9 +94,13 @@ int mca_mpool_base_open(void)
                                 0,
                                 &mca_mpool_base_disable_sbrk); 
 #endif
-    
+
     /* force mem hooks if leave_pinned is enabled */
-    if(0 == mca_mpool_base_use_mem_hooks) {
+#ifdef HAVE_MALLOC_H
+    if(0 == mca_mpool_base_use_mem_hooks && 0 == mca_mpool_base_disable_sbrk) {
+#else 
+    if(0 == mca_mpool_base_use_mem_hooks && 0) {
+#endif
          int param;
          mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0);
          param = mca_base_param_find("mpi", NULL, "leave_pinned");
