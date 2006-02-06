@@ -95,12 +95,13 @@ int mca_mpool_base_open(void)
                                 &mca_mpool_base_disable_sbrk); 
 #endif
     
-    /* if(0 == mca_mpool_base_use_mem_hooks) { */
-/*         int param; */
-/*         mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); */
-/*         param = mca_base_param_find("mpi", NULL, "leave_pinned"); */
-/*         mca_base_param_lookup_int(param, &mca_mpool_base_use_mem_hooks); */
-/*     } */
+    /* force mem hooks if leave_pinned is enabled */
+    if(0 == mca_mpool_base_use_mem_hooks) {
+         int param;
+         mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0);
+         param = mca_base_param_find("mpi", NULL, "leave_pinned");
+         mca_base_param_lookup_int(param, &mca_mpool_base_use_mem_hooks);
+    } 
     
     /* get the page size for this architecture*/ 
     mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
