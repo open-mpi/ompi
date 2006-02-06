@@ -509,7 +509,7 @@ static inline bool ompi_op_is_valid(ompi_op_t *op, ompi_datatype_t *ddt,
     */
 
     if (ompi_op_is_intrinsic(op)) {
-        if (0 != (ddt->flags & DT_FLAG_PREDEFINED)) {
+        if (ompi_ddt_is_predefined(ddt)) {
             /* Intrinsic ddt on intrinsic op */
             if ((-1 == ompi_op_ddt_map[ddt->id] ||
                  (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC) &&
@@ -585,7 +585,7 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
    */
 
   if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
-      0 != (dtype->flags & DT_FLAG_PREDEFINED)) {
+     ompi_ddt_is_predefined(dtype)) {
     if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
       f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
       f_count = OMPI_INT_2_FINT(count);
