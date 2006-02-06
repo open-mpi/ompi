@@ -97,10 +97,7 @@ bool opal_thread_self_compare(opal_thread_t *t)
 {
     DWORD thread_id;
     thread_id = GetCurrentThreadId();
-    if (thread_id == t->t_handle) {
-        return true;
-    }
-    return false;
+    return (thread_id == t->t_handle ? true : false);
 }
 
 
