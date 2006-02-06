@@ -200,7 +200,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     }
 
     /* Set datatype id and / or pack datatype */
-    if (DT_FLAG_PREDEFINED & sendreq->req_target_datatype->flags) {
+    if (ompi_ddt_is_predefined(sendreq->req_target_datatype)) {
         header->hdr_target_dt_id = sendreq->req_target_datatype->d_f_to_c_index;
         /* does not extend written_data, as nothing extra added */
     } else {
