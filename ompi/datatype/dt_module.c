@@ -37,7 +37,7 @@ int ompi_ddt_dfd = -1;
 #define ZERO_DDT_ARRAY { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,             \
             0, 0, 0, 0, 0, 0, 0, 0, 0 }
-#define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, ZERO_DDT_ARRAY
+#define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, NULL, ZERO_DDT_ARRAY
 #define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
 
 /* Using this macro implies that at this point not all informations needed
@@ -376,7 +376,7 @@ int32_t ompi_ddt_init( void )
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
         ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_ddt_basicDatatypes[i];
 
-        datatype->desc.desc         = (dt_elem_desc_t*)malloc(2*sizeof(dt_elem_desc_t));
+        datatype->desc.desc = (dt_elem_desc_t*)malloc(2*sizeof(dt_elem_desc_t));
         datatype->desc.desc[0].elem.common.flags = DT_FLAG_PREDEFINED | DT_FLAG_DATA | DT_FLAG_CONTIGUOUS;
         datatype->desc.desc[0].elem.common.type  = i;
         datatype->desc.desc[0].elem.count        = 1;
@@ -392,6 +392,9 @@ int32_t ompi_ddt_init( void )
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
         datatype->btypes[i]         = 1;
+        datatype->packed_description = malloc(2 * sizeof(int) );
+        ((int*)(datatype->packed_description))[0] = MPI_COMBINER_DUP;
+        ((int*)(datatype->packed_description))[1] = i;
     }
 
     /* Create the f2c translation table */
