@@ -52,16 +52,26 @@ static void __get_free_dt_struct( ompi_datatype_t* pData )
 
 static void __destroy_ddt_struct( ompi_datatype_t* datatype )
 {
-    if( datatype->desc.desc != NULL ) free( datatype->desc.desc );
-    datatype->desc.desc   = NULL;
-    datatype->desc.length = 0;
-    datatype->desc.used   = 0;
-    if( datatype->opt_desc.desc != NULL ) free( datatype->opt_desc.desc );
-    datatype->opt_desc.desc   = NULL;
-    datatype->opt_desc.length = 0;
-    datatype->opt_desc.used   = 0;
-    if( datatype->args != NULL ) ompi_ddt_release_args( datatype );
-    datatype->args = NULL;
+    if( datatype->desc.desc != NULL ) {
+        free( datatype->desc.desc );
+        datatype->desc.desc   = NULL;
+        datatype->desc.length = 0;
+        datatype->desc.used   = 0;
+    }
+    if( datatype->opt_desc.desc != NULL ) {
+        free( datatype->opt_desc.desc );
+        datatype->opt_desc.desc   = NULL;
+        datatype->opt_desc.length = 0;
+        datatype->opt_desc.used   = 0;
+    }
+    if( NULL != datatype->args ) {
+        ompi_ddt_release_args( datatype );
+        datatype->args = NULL;
+    }
+    if( NULL != datatype->packed_description ) {
+        free( datatype->packed_description );
+        datatype->packed_description = NULL;
+    }
     if( NULL != ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, datatype->d_f_to_c_index) ){
         ompi_pointer_array_set_item( ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
     }

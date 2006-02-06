@@ -39,7 +39,6 @@ typedef struct __dt_args {
     int*          i;
     MPI_Aint*     a;
     MPI_Datatype* d;
-    void*         packed_description;
 } ompi_ddt_args_t;
 
 #define ALLOC_ARGS(PDATA, IC, AC, DC)					\
@@ -67,7 +66,7 @@ typedef struct __dt_args {
         (PDATA)->args = (void*)pArgs;					\
         pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
             (AC) * sizeof(MPI_Aint) + (DC) * sizeof(int);               \
-        pArgs->packed_description = NULL;                               \
+        (PDATA)->packed_description = NULL;                             \
     } while(0)
 
 int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
@@ -259,9 +258,6 @@ int32_t ompi_ddt_release_args( ompi_datatype_t* pData )
             OBJ_RELEASE( pArgs->d[i] );
         }
     }
-    if( NULL != pArgs->packed_description )
-        free( pArgs->packed_description );
-    pArgs->packed_description = NULL;
     free( pData->args );
     pData->args = NULL;
 
@@ -325,13 +321,12 @@ int ompi_ddt_get_pack_description( ompi_datatype_t* datatype,
     int next_index = DT_MAX_PREDEFINED;
     void* recursive_buffer;
 
-    if( NULL != args->packed_description ) {
-        *packed_buffer = (const void*)args->packed_description;
+    if( NULL == datatype->packed_description ) {
+        datatype->packed_description = malloc( args->total_pack_size );
+        recursive_buffer = datatype->packed_description;
+        __ompi_ddt_pack_description( datatype, &recursive_buffer, &next_index );
     }
-    args->packed_description = malloc( args->total_pack_size );
-    recursive_buffer = args->packed_description;
-    __ompi_ddt_pack_description( datatype, &recursive_buffer, &next_index );
-    *packed_buffer = (const void*)args->packed_description;
+    *packed_buffer = (const void*)datatype->packed_description;
     return OMPI_SUCCESS;
 }
 

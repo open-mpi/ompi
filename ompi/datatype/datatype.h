@@ -91,31 +91,32 @@ typedef struct dt_type_desc {
 /* the data description.
  */
 typedef struct ompi_datatype_t {
-   opal_object_t      super;    /**< basic superclass */
-   unsigned long      size;     /**< total size in bytes of the memory used by the data if
-                                 * the data is put on a contiguous buffer */
-   uint32_t           align;    /**< data should be aligned to */
-   long               true_lb;
-   long               true_ub;  /**< the true ub of the data without user defined lb and ub */
-   long               lb;       /**< lower bound in memory */
-   long               ub;       /**< upper bound in memory */
-   uint16_t           flags;    /**< the flags */
-   uint16_t           id;       /**< data id, normally the index in the data array. */
-   uint32_t           nbElems;  /**< total number of elements inside the datatype */
-   uint64_t           bdt_used; /**< which basic datatypes are used in the data description */
+    opal_object_t      super;    /**< basic superclass */
+    unsigned long      size;     /**< total size in bytes of the memory used by the data if
+                                  * the data is put on a contiguous buffer */
+    uint32_t           align;    /**< data should be aligned to */
+    long               true_lb;
+    long               true_ub;  /**< the true ub of the data without user defined lb and ub */
+    long               lb;       /**< lower bound in memory */
+    long               ub;       /**< upper bound in memory */
+    uint16_t           flags;    /**< the flags */
+    uint16_t           id;       /**< data id, normally the index in the data array. */
+    uint32_t           nbElems;  /**< total number of elements inside the datatype */
+    uint64_t           bdt_used; /**< which basic datatypes are used in the data description */
 
-   /* Attribute fields */
-   opal_hash_table_t *d_keyhash;
-   int32_t            d_f_to_c_index;
-   char               name[MPI_MAX_OBJECT_NAME];
-   dt_type_desc_t     desc;     /**< the data description */
-   dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
-                                 * or in the send case (without conversion) */
-   void*              args;     /**< data description for the user */
+    /* Attribute fields */
+    opal_hash_table_t *d_keyhash;
+    int32_t            d_f_to_c_index;
+    char               name[MPI_MAX_OBJECT_NAME];
+    dt_type_desc_t     desc;     /**< the data description */
+    dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
+                                  * or in the send case (without conversion) */
+    void*              args;     /**< data description for the user */
+    void*              packed_description;  /**< the packed description of the datatype */
 
-   /* basic elements count used to compute the size of the datatype for
-    * remote nodes */
-   uint32_t           btypes[DT_MAX_PREDEFINED];
+    /* basic elements count used to compute the size of the datatype for
+     * remote nodes */
+    uint32_t           btypes[DT_MAX_PREDEFINED];
 } ompi_datatype_t;
 
 OBJ_CLASS_DECLARATION( ompi_datatype_t );
