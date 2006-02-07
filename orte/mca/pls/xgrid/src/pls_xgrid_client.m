@@ -101,7 +101,11 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     kv->value->type = ORTE_NAME;
-    if (ORTE_SUCCESS != (rc = orte_dss.copy(&(kv->value->data), name, ORTE_NAME);
+    if (ORTE_SUCCESS != (rc = orte_dss.copy(&(kv->value->data), name, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+	OBJ_RELEASE(value);
+	return rc;
+    }
 
     rc = orte_gpr.put(1, values);
     if(ORTE_SUCCESS != rc) {
