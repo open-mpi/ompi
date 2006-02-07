@@ -51,7 +51,6 @@
 #include "mca/rml/rml.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/btl/base/btl_base_error.h"
-#include "dps/dps.h"
 #include "btl_tcp.h"
 #include "btl_tcp_endpoint.h" 
 #include "btl_tcp_proc.h"

@@ -27,14 +27,14 @@
 
 #include "orte_config.h"
 
-#include "dps/dps.h"
 #include "opal/util/output.h"
-#include "util/proc_info.h"
 
-#include "mca/ns/ns_types.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/dss/dss_types.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
 
 int orte_gpr_replica_dump_all(int output_id)
 {
@@ -391,5 +391,32 @@ int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id)
     }
     
     OBJ_RELEASE(answer);
+    return rc;
+}
+
+int orte_gpr_replica_dump_segment_size(char *segment, int output_id)
+{
+    orte_buffer_t *buffer;
+    int rc;
+
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
+    buffer = OBJ_NEW(orte_buffer_t);
+    if (NULL == buffer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_segment_size_fn(buffer, segment))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    if (ORTE_SUCCESS == rc) {
+        orte_gpr_base_print_dump(buffer, output_id);
+    }
+    OBJ_RELEASE(buffer);
+
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
     return rc;
 }

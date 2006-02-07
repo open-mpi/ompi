@@ -26,6 +26,7 @@ headers += \
         util/univ_info.h
 
 liborte_la_SOURCES += \
+        util/error_strings.c \
         util/proc_info.c \
         util/session_dir.c \
         util/sys_info.c \

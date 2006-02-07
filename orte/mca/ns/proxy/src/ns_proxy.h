@@ -25,7 +25,7 @@
 #include "include/types.h"
 #include "include/orte_constants.h"
 #include "opal/class/opal_list.h"
-#include "dps/dps.h"
+#include "dss/dss.h"
 
 #include "mca/ns/base/base.h"
 

@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -32,7 +32,7 @@
 #include "include/orte_constants.h"
 
 #include "mca/mca.h"
-#include "dps/dps_types.h"
+#include "dss/dss_types.h"
 #include "mca/ns/ns_types.h"
 #include "mca/gpr/gpr_types.h"
 #include "mca/rml/rml_types.h"
@@ -59,9 +59,9 @@ OMPI_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
 *  Note that orte_rml_base_init() must be called to load and select
 *  an RML module prior to calling this routine.
 */
-                                                                                                                         
+
 typedef char* (*orte_rml_module_get_uri_fn_t)(void);
-                                                                                                                         
+
 /**
 *  ompi_rml.rml_set_uri()
 *
@@ -73,19 +73,19 @@ typedef char* (*orte_rml_module_get_uri_fn_t)(void);
 *  via a call to orte_ml.rml_get_uri().
 *
 */
-                                                                                                                         
+
 typedef int (*orte_rml_module_set_uri_fn_t)(const char*);
-                                                                                                                         
+
 /**
 *  orte_rml.rml_parse_uris()
-* 
+*
 *  Extract from the contact info the peer process name and uri.
 *
 *  @param  uri (IN)   The contact information of the peer process.
 *  @param  name (OUT)   The peer process identifier - MUST BE PREVIOUSLY ALLOCATED.
 *  @param  uris (OUT)   Will return an array of uri strings corresponding
 *                       to the peers exported protocols.
-*              
+*
 *  Note the caller may pass NULL for the uris if they only wish to extact
 *  the process name.
 */
@@ -95,7 +95,7 @@ typedef int (*orte_rml_module_parse_uris_fn_t)(const char* uri,
 
 /**
 *  Implementation of orte_rml_ping().
-*   
+*
 *  @param peer (IN)   Opaque name of peer process.
 *  @param tv (IN)     Timeout to wait in connection response.
 *  @return            OMPI error code (<0) or OMPI_SUCCESS
@@ -105,7 +105,7 @@ typedef int (*orte_rml_module_ping_fn_t)(const char* uri, const struct timeval* 
 
 /**
 *  orte_rml.rml_send()
-*   
+*
 *  @param peer (IN)   Opaque name of peer process.
 *  @param msg (IN)    Array of iovecs describing user buffers and lengths.
 *  @param count (IN)  Number of elements in iovec array.
@@ -170,7 +170,7 @@ typedef int (*orte_rml_module_recv_fn_t)(
 * when finished.
 *
 */
-                                                                                                                         
+
 typedef int (*orte_rml_module_recv_buffer_fn_t) (
     orte_process_name_t* peer,
     orte_buffer_t *buf,
@@ -187,7 +187,7 @@ typedef int (*orte_rml_module_recv_buffer_fn_t) (
 *  @param tag (IN)     User defined tag for matching send/recv.
 *  @param cbdata (IN)  User data.
 */
-                                                                                                                         
+
 typedef void (*orte_rml_callback_fn_t)(
     int status,
     orte_process_name_t* peer,
@@ -195,7 +195,7 @@ typedef void (*orte_rml_callback_fn_t)(
     int count,
     orte_rml_tag_t tag,
     void* cbdata);
-                                                                                                                         
+
 /**
 *  Callback function on send/recv completion for buffer PACKED message only,
 *  orte_rml.rml_send_buffer_nb() and orte_rml.rml_recv_buffer_nb() use this.
@@ -207,14 +207,14 @@ typedef void (*orte_rml_callback_fn_t)(
 *  @param tag (IN)     User defined tag for matching send/recv.
 *  @param cbdata (IN)  User data.
 */
-                                                                                                                         
+
 typedef void (*orte_rml_buffer_callback_fn_t)(
     int status,
     orte_process_name_t* peer,
     orte_buffer_t* buffer,
     orte_rml_tag_t tag,
     void* cbdata);
-                                                                                                                         
+
 /**
 *  orte_rml.rml_send_nb()
 *
@@ -258,7 +258,7 @@ typedef int (*orte_rml_module_send_nb_fn_t)(
 *  if the send completes during the call.
 *
 */
-                                                                                                                         
+
 typedef int (*orte_rml_module_send_buffer_nb_fn_t)(
     orte_process_name_t* peer,
     orte_buffer_t* buffer,
@@ -266,7 +266,7 @@ typedef int (*orte_rml_module_send_buffer_nb_fn_t)(
     int flags,
     orte_rml_buffer_callback_fn_t cbfunc,
     void* cbdata);
-                                                                                                                         
+
 
 /**
 * orte_rml.rml_recv_nb()
@@ -314,7 +314,7 @@ typedef int (*orte_rml_module_recv_buffer_nb_fn_t)(
     int flags,
     orte_rml_buffer_callback_fn_t cbfunc,
     void* cbdata);
-                                                                                                                         
+
 
 /**
 * orte_rml.rml_recv_cancel()
@@ -341,7 +341,7 @@ typedef int (*orte_rml_module_barrier_fn_t)(void);
  */
 
 typedef int (*orte_rml_module_xcast_fn_t)(
-    orte_process_name_t* root, 
+    orte_process_name_t* root,
     orte_process_name_t* peers,
     size_t num_peers,
     orte_buffer_t* buffer,
@@ -351,23 +351,23 @@ typedef int (*orte_rml_module_xcast_fn_t)(
 /*
  * Callback on exception condition.
  */
-                                                                                                                 
+
 typedef enum {
     ORTE_RML_PEER_UNREACH,
     ORTE_RML_PEER_DISCONNECTED
 } orte_rml_exception_t;
-                                                                                                                 
+
 typedef void (*orte_rml_exception_callback_t)(
-    const orte_process_name_t* peer, 
+    const orte_process_name_t* peer,
     orte_rml_exception_t exception);
-                                                                                                                 
+
 /**
  *  Register a callback function on loss of a connection.
  */
-                                                                                                                 
+
 typedef int (*orte_rml_module_exception_fn_t)(
     orte_rml_exception_callback_t cbfunc);
-                                                                                                                 
+
 /*
  * Initialization/Cleanup
  */

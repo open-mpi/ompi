@@ -124,6 +124,7 @@ orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
     char *keys[2];
     char *jobid_string;
     orte_gpr_value_t** values = NULL;
+    orte_process_name *name;
     size_t i, j, num_values = 0;
     int rc;
 
@@ -178,8 +179,13 @@ orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
 
             /* send a terminate message to the bootproxy on each node
 	       */
+	       if (ORTE_SUCCESS != (rc = orte_dss.get(&name, keyval->value, ORTE_NAME))) {
+	           ORTE_ERROR_LOG(rc);
+	           OBJ_RELEASE(cmd);
+	           continue;
+	        }
             if(0 > (ret = orte_rml.send_buffer_nb(
-                &keyval->value.proc, 
+                name, 
                 cmd, 
                 ORTE_RML_TAG_RMGR_SVC, 
                 0, 

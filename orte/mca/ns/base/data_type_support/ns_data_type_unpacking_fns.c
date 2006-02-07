@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
- 
+
 #include "orte_config.h"
 
 #include <sys/types.h>
@@ -24,7 +24,7 @@
 #endif
 
 #include "mca/errmgr/errmgr.h"
-#include "dps/dps_internal.h"
+#include "dss/dss_internal.h"
 
 #include "mca/ns/base/base.h"
 
@@ -105,12 +105,12 @@ int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
         proc->vpid = vpid[i];
         proc++;
     }
-    
+
     /* cleanup */
     free(vpid);
     free(jobid);
     free(cellid);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -124,7 +124,7 @@ int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
 
     /* Turn around and unpack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dps_unpack_buffer(buffer, dest, num_vals, DPS_TYPE_SIZE_T))) {
+        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_SIZE_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -141,7 +141,7 @@ int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest,
 
     /* Turn around and unpack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dps_unpack_buffer(buffer, dest, num_vals, DPS_TYPE_SIZE_T))) {
+        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_SIZE_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -158,7 +158,7 @@ int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
 
     /* Turn around and unpack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dps_unpack_buffer(buffer, dest, num_vals, DPS_TYPE_SIZE_T))) {
+        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_SIZE_T))) {
         ORTE_ERROR_LOG(ret);
     }
 

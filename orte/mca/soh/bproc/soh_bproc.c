@@ -134,6 +134,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     int idx;
     int ret;
     int cnt;
+    orte_node_state_t state;
     char *node_name;
     char *user;
     char *group;
@@ -149,93 +150,109 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     if (cnt == 0)
 	return;
 
-    value = OBJ_NEW(orte_gpr_value_t);
-    value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
-    value->segment = strdup(ORTE_NODE_SEGMENT);
-    
-    value->cnt = cnt;
-
-    value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
-
+	if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+	                                                ORTE_NODE_SEGMENT, cnt, 0))) {
+    	ORTE_ERROR_LOG(rc);
+    	return;
+	}
+	
     idx = 0;
 
     if (is_set(changes, BIT_NODE_STATE)) {
-	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
-	value->keyvals[idx]->key = strdup(ORTE_NODE_STATE_KEY);
-	value->keyvals[idx]->type = ORTE_NODE_STATE;
-	value->keyvals[idx++]->value.node_state = orte_soh_bproc_node_state(ni->status);
+        state = orte_soh_bproc_node_state(ni->status);
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_NODE_STATE_KEY, ORTE_NODE_STATE, &state))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return;
+        }
+        idx++;
     }
 
     if (is_set(changes, BIT_NODE_BPROC_STATUS)) {
-	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
-	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_STATUS);
-	value->keyvals[idx]->type = ORTE_STRING;
-	value->keyvals[idx++]->value.strptr = strdup(ni->status);
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_STATUS, ORTE_STRING, ni->status))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return;
+        }
+        idx++;
     }
 
     if (is_set(changes, BIT_NODE_BPROC_MODE)) {
-	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
-	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_MODE);
-	value->keyvals[idx]->type = ORTE_UINT32;
-	value->keyvals[idx++]->value.ui32 = ni->mode;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_MODE, ORTE_UINT32, &(ni->mode)))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return;
+        }
+        idx++;
     }
 
     if (is_set(changes, BIT_NODE_BPROC_USER)) {
-	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
-	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_USER);
-	value->keyvals[idx]->type = ORTE_STRING;
-	if ((pwd = getpwuid(ni->user)))
-	    user = strdup(pwd->pw_name);
-	else
-	    asprintf(&user, "%d\n", ni->user);
-	value->keyvals[idx++]->value.strptr = user;
+    	if ((pwd = getpwuid(ni->user)))
+    	    user = strdup(pwd->pw_name);
+    	else
+    	    asprintf(&user, "%d\n", ni->user);
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_USER, ORTE_STRING, user))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            free(user);
+            return;
+        }
+        free(user);
+        idx++;
     }
 
     if (is_set(changes, BIT_NODE_BPROC_GROUP)) {
-	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
-	value->keyvals[idx]->key = strdup(ORTE_SOH_BPROC_NODE_GROUP);
-	value->keyvals[idx]->type = ORTE_STRING;
-	if ((grp = getgrgid(ni->group)))
-	    group = strdup(grp->gr_name);
-	else
-	    asprintf(&group, "%d\n", ni->group);
-	value->keyvals[idx++]->value.strptr = group;
+    	if ((grp = getgrgid(ni->group)))
+    	    group = strdup(grp->gr_name);
+    	else
+    	    asprintf(&group, "%d\n", ni->group);
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_GROUP, ORTE_STRING, group))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            free(group);
+            return;
+        }
+        free(group);
+        idx++;
     }
 
     asprintf(&node_name, "%d", ni->node);
 
     if (is_set(changes, BIT_NODE_NAME)) {
-	value->keyvals[idx] = OBJ_NEW(orte_gpr_keyval_t);
-	value->keyvals[idx]->key = strdup(ORTE_NODE_NAME_KEY);
-	value->keyvals[idx]->type = ORTE_STRING;
-	value->keyvals[idx++]->value.strptr = strdup(node_name);
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_NODE_NAME_KEY, ORTE_STRING, node_name))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            free(node_name);
+            return;
+        }
+        idx++;
     }
 
     if (idx != cnt) {
     	opal_output(0, "soh_bproc: internal error %d != %d\n", idx, cnt);
 	free(node_name);
-	OBJ_RELEASE(value);
-	opal_event_del(&mca_soh_bproc_component.notify_event);
-	return;
+    	OBJ_RELEASE(value);
+    	opal_event_del(&mca_soh_bproc_component.notify_event);
+    	return;
     }
 
-    ret = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, 
+    ret = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), 
 	    mca_soh_bproc_component.cellid, node_name);
 
     if (ret != ORTE_SUCCESS) {
-	ORTE_ERROR_LOG(ret);
-	OBJ_RELEASE(value);
-	free(node_name);
-	opal_event_del(&mca_soh_bproc_component.notify_event);
-	return;
+    	ORTE_ERROR_LOG(ret);
+    	OBJ_RELEASE(value);
+    	free(node_name);
+    	opal_event_del(&mca_soh_bproc_component.notify_event);
+    	return;
     }
 
     if (mca_soh_bproc_component.debug)
     	opal_output(0, "updating node %d\n", ni->node);
 
     if ((ret = orte_gpr.put(1, &value)) != ORTE_SUCCESS) {
-	ORTE_ERROR_LOG(ret);
-	opal_event_del(&mca_soh_bproc_component.notify_event);
+    	ORTE_ERROR_LOG(ret);
+    	opal_event_del(&mca_soh_bproc_component.notify_event);
     }
 
     free(node_name);
@@ -251,24 +268,24 @@ static int do_update(struct bproc_node_set_t *ns)
 
     /* we assume the number of nodes does not change */
     for (i = 0; i < ns->size; i++) {
-	ni = &ns->node[i];
-
-	if (mca_soh_bproc_component.node_set.size > 0
-		&& mca_soh_bproc_component.node_set.size == ns->size)
-	    changes = find_changes(&mca_soh_bproc_component.node_set.node[i], ni);
-	else
-	    changes = BIT_SET_ALL;
-
-	if (!empty_set(changes)) {
-		update_registry(changes, ni);
-		changed = 1;
-	}
+    	ni = &ns->node[i];
+    
+    	if (mca_soh_bproc_component.node_set.size > 0
+    		&& mca_soh_bproc_component.node_set.size == ns->size)
+    	    changes = find_changes(&mca_soh_bproc_component.node_set.node[i], ni);
+    	else
+    	    changes = BIT_SET_ALL;
+    
+    	if (!empty_set(changes)) {
+    		update_registry(changes, ni);
+    		changed = 1;
+    	}
     }
 
     if (changed) {
-	if (mca_soh_bproc_component.node_set.size != 0)
-	    bproc_nodeset_free(&mca_soh_bproc_component.node_set);
-	mca_soh_bproc_component.node_set = *ns;
+    	if (mca_soh_bproc_component.node_set.size != 0)
+    	    bproc_nodeset_free(&mca_soh_bproc_component.node_set);
+    	mca_soh_bproc_component.node_set = *ns;
     }
 
     return changed;
@@ -279,13 +296,13 @@ static void orte_soh_bproc_notify_handler(int fd, short flags, void *user)
     struct bproc_node_set_t ns = BPROC_EMPTY_NODESET;
 
     if (bproc_nodelist_(&ns, fd) < 0) {
-	/* bproc_nodelist_ error */
-	opal_event_del(&mca_soh_bproc_component.notify_event);
-	return;
+    	/* bproc_nodelist_ error */
+    	opal_event_del(&mca_soh_bproc_component.notify_event);
+    	return;
     }
 
     if (!do_update(&ns))
-	bproc_nodeset_free(&ns);
+	    bproc_nodeset_free(&ns);
 }
 
 /**
@@ -300,8 +317,8 @@ int orte_soh_bproc_module_init(void)
 	    opal_output(0, "init soh_bproc_module\n");
 
     if (ORTE_SUCCESS != (rc = orte_ns.get_cellid(&mca_soh_bproc_component.cellid, orte_process_info.my_name))) {
-	ORTE_ERROR_LOG(rc);
-	return rc;
+    	ORTE_ERROR_LOG(rc);
+    	return rc;
     }
 
     mca_soh_bproc_component.node_set.size = 0;
@@ -314,7 +331,7 @@ int orte_soh_bproc_module_init(void)
     	return ORTE_ERROR;
 
     if (!do_update(&ns))
-	bproc_nodeset_free(&ns);
+	    bproc_nodeset_free(&ns);
 
     /*
      * Now regiser notify event
@@ -322,16 +339,16 @@ int orte_soh_bproc_module_init(void)
 
     mca_soh_bproc_component.notify_fd = bproc_notifier();
     if (mca_soh_bproc_component.notify_fd < 0)
-	return ORTE_ERROR;
+	    return ORTE_ERROR;
 
     memset(&mca_soh_bproc_component.notify_event, 0, sizeof(opal_event_t));
 
     opal_event_set(
-	&mca_soh_bproc_component.notify_event,
-	mca_soh_bproc_component.notify_fd,
-	OPAL_EV_READ|OPAL_EV_PERSIST,
-	orte_soh_bproc_notify_handler,
-	0);
+    	&mca_soh_bproc_component.notify_event,
+    	mca_soh_bproc_component.notify_fd,
+    	OPAL_EV_READ|OPAL_EV_PERSIST,
+    	orte_soh_bproc_notify_handler,
+    	0);
 
     opal_event_add(&mca_soh_bproc_component.notify_event, 0);
 

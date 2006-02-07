@@ -31,19 +31,19 @@
 #define ORTE_GPR_TYPES_H_
 
 #include "orte_config.h"
-#include "include/orte_types.h"
+#include "orte/include/orte_types.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
-#include "mca/schema/schema.h"
+#include "orte/mca/schema/schema.h"
 #include "opal/class/opal_object.h"
-#include "class/orte_pointer_array.h"
-#include "dps/dps_types.h"
-#include "mca/ns/ns_types.h"
-#include "mca/rmgr/rmgr_types.h"
-#include "mca/soh/soh_types.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/dss/dss_types.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/rmgr/rmgr_types.h"
+#include "orte/mca/soh/soh_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -68,7 +68,7 @@ typedef uint8_t orte_gpr_notify_action_t;
 #define ORTE_GPR_NOTIFY_ACTION_T ORTE_UINT8
 
 typedef size_t orte_gpr_subscription_id_t;
-#define ORTE_GPR_SUBSCRIPTION_ID_T DPS_TYPE_SIZE_T
+#define ORTE_GPR_SUBSCRIPTION_ID_T DSS_TYPE_SIZE_T
 #define ORTE_GPR_SUBSCRIPTION_ID_MAX SIZE_MAX
 
 
@@ -85,7 +85,7 @@ typedef uint8_t orte_gpr_trigger_action_t;
 #define ORTE_GPR_TRIGGER_ACTION_T ORTE_UINT8
 
 typedef size_t orte_gpr_trigger_id_t;
-#define ORTE_GPR_TRIGGER_ID_T DPS_TYPE_SIZE_T
+#define ORTE_GPR_TRIGGER_ID_T DSS_TYPE_SIZE_T
 #define ORTE_GPR_TRIGGER_ID_MAX SIZE_MAX
 
 
@@ -117,48 +117,17 @@ typedef uint16_t orte_gpr_addr_mode_t;
 /*
  * typedefs
  */
-typedef union {                             /* shared storage for the value */
-    char *strptr;
-    size_t size;
-    bool tf_flag;
-    pid_t pid;
-    int intval;
-    uint8_t ui8;
-    uint16_t ui16;
-    uint32_t ui32;
-#ifdef HAVE_INT64_T
-    uint64_t ui64;
-#endif
-    int8_t i8;
-    int16_t i16;
-    int32_t i32;
-#ifdef HAVE_INT64_T
-    int64_t i64;
-#endif
-    orte_byte_object_t byteobject;
-    orte_process_name_t proc;
-    orte_vpid_t vpid;
-    orte_jobid_t jobid;
-/*    orte_jobgrp_t jobgrp; */
-    orte_cellid_t cellid;
-    orte_node_state_t node_state;
-    orte_proc_state_t proc_state;
-    orte_job_state_t job_state;
-    orte_exit_code_t exit_code;
-    orte_app_context_t *app_context;
-} orte_gpr_value_union_t;
-
  /*
   * Key-value pairs for registry operations
   */
 typedef struct {
     opal_object_t super;                /* required for this to be an object */
     char *key;                          /* string key for this value */
-    orte_data_type_t type;              /* the type of value stored */
-    orte_gpr_value_union_t value;
+    orte_data_value_t *value;           /* value */
 } orte_gpr_keyval_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
+#define ORTE_GPR_KEYVAL_EMPTY {{OBJ_CLASS(orte_gpr_keyval_t),0}, NULL, NULL}
 
 
 /** Return value structure for registry requests.
@@ -183,6 +152,7 @@ typedef struct {
 } orte_gpr_value_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
+#define ORTE_GPR_VALUE_EMPTY {{OBJ_CLASS(orte_gpr_value_t),0}, 0, NULL, 0, NULL, 0, NULL}
 
 /** Return structure for notification messages
  * A notification message contains data from each registered subscription structure.
@@ -258,6 +228,7 @@ typedef struct {
 } orte_gpr_subscription_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
+#define ORTE_GPR_SUBSCRIPTION_EMPTY {{OBJ_CLASS(orte_gpr_subscription_t),0}, NULL, ORTE_GPR_SUBSCRIPTION_ID_MAX, 0, 0, NULL, 0, NULL}
 
 /** Structure for registering triggers
  * A trigger causes the associated subscriptions to be executed at a specified event,
@@ -278,6 +249,7 @@ typedef struct {
 } orte_gpr_trigger_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);
+#define ORTE_GPR_TRIGGER_EMPTY {{OBJ_CLASS(orte_gpr_trigger_t),0}, NULL, ORTE_GPR_TRIGGER_ID_MAX, 0, 0, NULL, 0, NULL}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

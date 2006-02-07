@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,7 +22,7 @@
 
 #include "mca/ns/ns_types.h"
 
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #ifdef HAVE_NETINET_IN_H
@@ -62,15 +62,15 @@ int mca_oob_recv_packed(orte_process_name_t* peer, orte_buffer_t *buf, int tag)
     int rc;
     struct iovec msg[1];
 
-	/* setup iov */
-	msg[0].iov_base = NULL;
-	msg[0].iov_len  = 0;
+    /* setup iov */
+    msg[0].iov_base = NULL;
+    msg[0].iov_len  = 0;
 
     rc = mca_oob.oob_recv(peer, msg, 1, tag, MCA_OOB_ALLOC);
     if(rc < 0)
         return rc;
 
     /* initialize buffer */
-	return orte_dps.load(buf, msg[0].iov_base, msg[0].iov_len);
+    return orte_dss.load(buf, msg[0].iov_base, msg[0].iov_len);
 }
 

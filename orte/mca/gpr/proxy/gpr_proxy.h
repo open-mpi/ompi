@@ -26,7 +26,7 @@
 #include "include/orte_types.h"
 #include "opal/class/opal_object.h"
 #include "class/orte_pointer_array.h"
-#include "dps/dps_types.h"
+#include "dss/dss_types.h"
 #include "util/proc_info.h"
 
 #include "mca/gpr/base/base.h"
@@ -209,6 +209,8 @@ int orte_gpr_proxy_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id
 int orte_gpr_proxy_dump_notify_data(orte_gpr_notify_data_t *data, int output_id);
 
 int orte_gpr_proxy_dump_value(orte_gpr_value_t *value, int output_id);
+
+int orte_gpr_proxy_dump_segment_size(char *segment, int output_id);
 
 /*
  * General operations

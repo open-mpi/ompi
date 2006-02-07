@@ -37,41 +37,40 @@
 #include "opal/runtime/opal.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-
-#include "dps/dps.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "util/sys_info.h"
 #include "opal/util/os_path.h"
 #include "opal/util/cmd_line.h"
-#include "util/proc_info.h"
-#include "util/univ_info.h"
-#include "util/session_dir.h"
 #include "opal/util/printf.h"
 #include "opal/util/daemon_init.h"
-#include "util/universe_setup_file_io.h"
 #include "opal/util/malloc.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
 
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/rml/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
-#include "mca/schema/base/base.h"
-#include "mca/soh/base/base.h"
+#include "orte/dss/dss.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/universe_setup_file_io.h"
+#include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/schema/base/base.h"
+#include "orte/mca/soh/base/base.h"
 
-#include "runtime/runtime.h"
-#include "runtime/orte_wait.h"
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
 
-#include "tools/orteprobe/orteprobe.h"
+#include "orte/tools/orteprobe/orteprobe.h"
 
 orteprobe_globals_t orteprobe_globals;
 
@@ -203,9 +202,9 @@ int main(int argc, char *argv[])
     }
  
     /*
-     * Initialize the data packing service.
+     * Initialize the data storage service.
      */
-    if (ORTE_SUCCESS != (ret = orte_dps_open())) {
+    if (ORTE_SUCCESS != (ret = orte_dss_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -311,7 +310,7 @@ int main(int argc, char *argv[])
         OBJ_CONSTRUCT(&buffer, orte_buffer_t);
         orted_uri_ptr = &(univ.seed_uri);
 
-        if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
+        if (ORTE_SUCCESS != (ret = orte_dss.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
             fprintf(stderr, "orteprobe: failed to pack contact info for existing universe\n");
             orte_abort(1, NULL);
         }
@@ -426,7 +425,7 @@ int main(int argc, char *argv[])
             param = orted_uri;
             orted_uri_ptr = &param;
 
-            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr[0], 1, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(&buffer, &orted_uri_ptr[0], 1, ORTE_STRING))) {
                 fprintf(stderr, "orteprobe: failed to pack daemon uri\n");
                 orte_abort(1, NULL);
             }

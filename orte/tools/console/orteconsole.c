@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file **/
@@ -21,40 +21,40 @@
 
 #include <stdio.h>
 
-#include "include/orte_constants.h"
 #include <stdlib.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include "dps/dps.h"
+#include "orte/include/orte_constants.h"
 
-#include "util/sys_info.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_list.h"
-#include "util/proc_info.h"
-#include "util/session_dir.h"
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/show_help.h"
-#include "util/universe_setup_file_io.h"
-#include "runtime/runtime.h"
+#include "opal/mca/base/base.h"
 
-#include "mca/base/base.h"
-#include "mca/rmgr/rmgr.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/rml/rml.h"
-#include "mca/ras/ras.h"
-#include "mca/rds/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/pls/base/base.h"
-#include "runtime/orte_setup_hnp.h"
-#include "tools/orted/orted.h"
+#include "orte/dss/dss.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/universe_setup_file_io.h"
+#include "orte/runtime/runtime.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/runtime/orte_setup_hnp.h"
+#include "orte/tools/orted/orted.h"
 
-#include "tools/console/orteconsole.h"
+#include "orte/tools/console/orteconsole.h"
 
 /*
  * Global Variables
@@ -68,10 +68,10 @@ static bool daemon_is_active;
 orte_console_globals_t orte_console_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL, NULL, NULL, 'h', NULL, "help", 0, 
+    { NULL, NULL, NULL, 'h', NULL, "help", 0,
       &orte_console_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
-    
+
     /* A Hostfile */
     { "rds", "hostfile", "path", '\0', "hostfile", "hostfile", 1,
       &orte_console_globals.hostfile, OPAL_CMD_LINE_TYPE_STRING,
@@ -83,7 +83,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
-      NULL, OPAL_CMD_LINE_TYPE_NULL, 
+      NULL, OPAL_CMD_LINE_TYPE_NULL,
       NULL }
 };
 
@@ -131,7 +131,7 @@ orte_console_command_t console_commands[] = {
       "delete <hostid> [<hostid> <hostid> ...]",
       "Delete a host from the current universe" },
 
-    { "exit", "e", 0, ORTE_CONSOLE_TYPE_STD, 
+    { "exit", "e", 0, ORTE_CONSOLE_TYPE_STD,
       orte_console_exit,
       "exit",
       "Exit the console" },
@@ -183,7 +183,7 @@ orte_console_command_t console_commands[] = {
       "ps",
       "Display process(es) status" },
 
-    { "quit", "q", 0, ORTE_CONSOLE_TYPE_STD, 
+    { "quit", "q", 0, ORTE_CONSOLE_TYPE_STD,
       orte_console_exit,
       "quit",
       "Quit from console" },
@@ -237,11 +237,11 @@ orte_console_command_t console_commands[] = {
 /* This should be added to opal_list.c ??? JJH */
 static int opal_list_clear(opal_list_t *list) {
     opal_list_item_t *item;
-    
+
     while ( NULL != (item = opal_list_remove_first(list) ) ) {
         OBJ_RELEASE(item);
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
     char *usercmd;
     orte_console_input_command_t input_command;
 
-    /* 
+    /*
      * Setup to check common command line options
      */
     memset(&orte_console_globals, 0, sizeof(orte_console_globals_t));
@@ -299,8 +299,8 @@ int main(int argc, char *argv[])
      * Work Loop
      */
     OBJ_CONSTRUCT(&orte_console_hosts, opal_list_t);
-    orte_ras.node_query(&orte_console_hosts);
-    
+    if (NULL != orte_ras.node_query) orte_ras.node_query(&orte_console_hosts);
+
     exit_cmd = false;
     memset(&input_command, 0, sizeof(orte_console_input_command_t));
     while ( !exit_cmd ) {
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
         if (NULL == usercmd || 0 >= strlen(usercmd) ) {
             continue;
         }
-        
+
         orte_console_parse_command(usercmd, &input_command);
 
         orte_console_execute_command(input_command);
@@ -324,29 +324,29 @@ int main(int argc, char *argv[])
                        "orte_finalize()", ret);
         return ret;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
 static int command_cmp(char* user_command, orte_console_command_t system_command) {
-    
+
     /*
      * Check for Full Name Match
      */
-    if ( 0 == strncmp(user_command, system_command.cmd_full_name, 
+    if ( 0 == strncmp(user_command, system_command.cmd_full_name,
                      strlen(system_command.cmd_full_name)) ) {
         return 0;
     }
     /*
      * Check for Short Name Match
      */
-    else if ( ( NULL != system_command.cmd_short_name )                         && 
+    else if ( ( NULL != system_command.cmd_short_name )                         &&
               ( strlen(user_command) == strlen(system_command.cmd_short_name) ) &&
               ( 0 == strncmp(user_command, system_command.cmd_short_name,
                              strlen(system_command.cmd_short_name))           ) ) {
         return 0;
     }
-    
+
     return -1;
 }
 
@@ -362,11 +362,11 @@ static int orte_console_execute_command(orte_console_input_command_t input_comma
             /* Check number of arguments */
             if (input_command.argc < (cur_cmd->cmd_args+1)) {
                 opal_show_help("help-orteconsole.txt", "orteconsole:invalid-num-arguments", false,
-                               input_command.cmd_name, cur_cmd->cmd_args, 
+                               input_command.cmd_name, cur_cmd->cmd_args,
                                input_command.argc,     cur_cmd->cmd_full_name);
                 return ORTE_ERROR;
             }
-            
+
             ret = cur_cmd->cmd_function(input_command);
 
             /* Check Return Codes */
@@ -398,7 +398,7 @@ static int orte_console_execute_command(orte_console_input_command_t input_comma
 }
 
 static int   orte_console_parse_command(char * usercmd, orte_console_input_command_t *input_command){
-    
+
     input_command->argv     = opal_argv_split(usercmd, ' ');
     input_command->argc     = opal_argv_count(input_command->argv);
     input_command->cmd_name = strdup(input_command->argv[0]);
@@ -407,7 +407,7 @@ static int   orte_console_parse_command(char * usercmd, orte_console_input_comma
 }
 
 /* ===========================
- * Actual Functionality below 
+ * Actual Functionality below
  * =========================== */
 
 static int orte_console_not_imp(orte_console_input_command_t input_command) {
@@ -421,7 +421,7 @@ static int orte_console_devel(orte_console_input_command_t input_command) {
 
     return ORTE_SUCCESS;
 }
- 
+
 static int add_hosts_to_registry(opal_list_t *updates) {
     orte_rds_cell_desc_t *rds_item;
     orte_rds_cell_attr_t *new_attr;
@@ -433,13 +433,13 @@ static int add_hosts_to_registry(opal_list_t *updates) {
     bool need_cellid = true;
 
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
-    
+
     /* Convert RAS list to RDS list */
     for ( item  = opal_list_get_first(updates);
           item != opal_list_get_end(  updates);
           item  = opal_list_get_next( item)) {
         ras_item = (orte_ras_node_t *) item;
-        
+
         rds_item = OBJ_NEW(orte_rds_cell_desc_t);
         if (NULL == rds_item) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -469,21 +469,34 @@ static int add_hosts_to_registry(opal_list_t *updates) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+        if (NULL == new_attr->keyval.value) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
         new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
-        new_attr->keyval.type         = ORTE_STRING;
-        new_attr->keyval.value.strptr = strdup(ras_item->node_name);
+        new_attr->keyval.value->type         = ORTE_STRING;
+        new_attr->keyval.value->data = strdup(ras_item->node_name);
         opal_list_append(&(rds_item->attributes), &new_attr->super);
-        
+
         new_attr = OBJ_NEW(orte_rds_cell_attr_t);
         if (NULL == new_attr) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+        if (NULL == new_attr->keyval.value) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
         new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
-        new_attr->keyval.type         = ORTE_CELLID;
-        new_attr->keyval.value.cellid = rds_item->cellid;
+        new_attr->keyval.value->type         = ORTE_CELLID;
+        if (ORTE_SUCCESS != (ret = orte_dss.copy((void**)&(new_attr->keyval.value->data), &(rds_item->cellid), ORTE_CELLID))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
         opal_list_append(&(rds_item->attributes), &new_attr->super);
-        
+
         opal_list_append(&rds_updates,  &rds_item->super);
     }
 
@@ -492,15 +505,15 @@ static int add_hosts_to_registry(opal_list_t *updates) {
     if (ORTE_SUCCESS != ret) {
         return ret;
     }
-    
+
     ret = orte_ras.node_insert(updates);
     if (ORTE_SUCCESS != ret ) {
         return ret;
     }
-    
+
     opal_list_clear(&rds_updates);
     OBJ_DESTRUCT(&rds_updates);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -509,7 +522,7 @@ static int remove_hosts_from_registry(opal_list_t *updates) {
     /* int ret; */
 
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
-    
+
     /* Add the hosts to the registry */
 #if 0 /* This functionality needs to be written */
     orte_rds_base_convert_ras_to_rds(updates, &rds_updates);
@@ -527,7 +540,7 @@ static int remove_hosts_from_registry(opal_list_t *updates) {
 
     opal_list_clear(&rds_updates);
     OBJ_DESTRUCT(&rds_updates);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -558,7 +571,7 @@ static int orte_console_add_host(orte_console_input_command_t input_command) {
         else {
             opal_list_append(&orte_console_hosts, &tmp_host->super);
         }
-        
+
         printf("Added Host: <%s>\n", input_command.argv[i]);
     }
 
@@ -570,7 +583,7 @@ static int orte_console_add_host(orte_console_input_command_t input_command) {
         if (ORTE_SUCCESS != ret) {
             return ret;
         }
-        
+
         /* Get a new list of registered hosts */
         opal_list_clear(&orte_console_hosts);
         ret = orte_ras.node_query(&orte_console_hosts);
@@ -619,7 +632,7 @@ static int orte_console_remove_host(orte_console_input_command_t input_command) 
         if (ORTE_SUCCESS != ret) {
             return ret;
         }
-        
+
         /* Get a new list of registered hosts */
         opal_list_clear(&orte_console_hosts);
         ret = orte_ras.node_query(&orte_console_hosts);
@@ -644,15 +657,15 @@ static int orte_console_display_configuration(orte_console_input_command_t input
         return ORTE_SUCCESS;
     }
 
-    printf("%6s %15s %10s %13s %15s\n", "Index", 
-           "Hostname", "CPU(s)", 
+    printf("%6s %15s %10s %13s %15s\n", "Index",
+           "Hostname", "CPU(s)",
            "CPU(s) Used", "Arch");
     for (item  = opal_list_get_first(&orte_console_hosts), i = 0;
          item != opal_list_get_end(  &orte_console_hosts);
          item  = opal_list_get_next( item), ++i) {
         tmp_host = (orte_ras_node_t *)item;
         printf("%6d %15s %10lu %13lu %15s\n", i,
-               tmp_host->node_name, (unsigned long)tmp_host->node_slots, 
+               tmp_host->node_name, (unsigned long)tmp_host->node_slots,
                (unsigned long)tmp_host->node_slots_inuse,
                tmp_host->node_arch);
     }
@@ -670,7 +683,7 @@ static int orte_console_boot_daemons(orte_console_input_command_t input_command)
         opal_show_help("help-orteconsole.txt", "orteconsole:no-hosts", false);
         return ORTE_ERROR;
     }
-    
+
     /* If hostname supplied on command line use it */
     if ( 1 < input_command.argc) {
         remote_daemon = strdup(input_command.argv[1]);
@@ -683,7 +696,7 @@ static int orte_console_boot_daemons(orte_console_input_command_t input_command)
 
     printf("Launching Remote Daemon on \"%s\"", remote_daemon);
 
-    /* If they supplied a username then use that, 
+    /* If they supplied a username then use that,
        otherwise assume same username as on the console system */
     if ( 2 < input_command.argc) {
         username = strdup(input_command.argv[2]);
@@ -697,13 +710,13 @@ static int orte_console_boot_daemons(orte_console_input_command_t input_command)
     /* Create the persistent daemon */
     id = mca_base_param_register_int("persistent",NULL,NULL,NULL,(int)false);
     mca_base_param_set_int(id, (int)true);
-    
+
     rc = orte_setup_hnp(NULL, remote_daemon, username);
     if ( ORTE_SUCCESS != rc) {
         printf("Open RTE Boot: Failed!\n");
         return rc;
     }
-    
+
     printf("Open RTE Boot: Successful!\n");
     daemon_is_active = true;
 
@@ -712,17 +725,17 @@ static int orte_console_boot_daemons(orte_console_input_command_t input_command)
 
 static int orte_console_halt(orte_console_input_command_t input_command) {
     int ret;
-    
+
     if(!daemon_is_active) {
         opal_show_help("help-orteconsole.txt", "orteconsole:no-daemon-started", false);
         return ORTE_SUCCESS;
     }
-    
+
     ret = orte_console_send_command(ORTE_DAEMON_EXIT_CMD);
     if (ORTE_SUCCESS != ret) {
         return ret;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -741,7 +754,7 @@ static int orte_console_help(orte_console_input_command_t input_command) {
      */
     if ( input_command.argc <= 1 ) {
         printf("Open RTE Console Commands:\n\n");
-        
+
         for (i = 0; console_commands[i].cmd_type != ORTE_CONSOLE_TYPE_NULL; ++i) {
             cur_cmd = &console_commands[i];
             if ( ORTE_CONSOLE_TYPE_HIDDEN != cur_cmd->cmd_type ) {
@@ -755,7 +768,7 @@ static int orte_console_help(orte_console_input_command_t input_command) {
                 printf("\t%s\n", cur_cmd->cmd_description);
             }
         }
-        
+
         printf("\n");
     }
     /*
@@ -777,14 +790,14 @@ static int orte_console_help(orte_console_input_command_t input_command) {
                     printf("Usage:\n");
                     printf("\t%s\n", cur_cmd->cmd_usage);
                 }
-                
+
                 printf("Description:\n");
                 printf("\t%s\n", cur_cmd->cmd_description);
-                
+
                 break;
             }
         }
-        
+
         /*
          * Command Not Found
          */
@@ -829,7 +842,7 @@ static int orte_console_contactinfo(orte_console_input_command_t input_command) 
     }
 
     n = 1;
-    ret = orte_dps.unpack(buffer, &str_response, &n, ORTE_STRING);
+    ret = orte_dss.unpack(buffer, &str_response, &n, ORTE_STRING);
     if ( ORTE_SUCCESS != ret ) {
         ORTE_ERROR_LOG(ret);
         return ret;
@@ -837,7 +850,7 @@ static int orte_console_contactinfo(orte_console_input_command_t input_command) 
 
     printf(str_response);
     printf("\n");
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -850,7 +863,7 @@ static int orte_console_send_command(orte_daemon_cmd_flag_t usercmd)
     orte_daemon_cmd_flag_t command;
     orte_process_name_t    seed = {0,0,0};
     int rc;
- 
+
     if(!daemon_is_active) {
         opal_show_help("help-orteconsole.txt", "orteconsole:no-daemon-started", false);
         return ORTE_SUCCESS;
@@ -864,7 +877,7 @@ static int orte_console_send_command(orte_daemon_cmd_flag_t usercmd)
 
     command = usercmd;
 
-    rc = orte_dps.pack(cmd, &command, 1, ORTE_DAEMON_CMD);
+    rc = orte_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD);
     if ( ORTE_SUCCESS != rc ) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
@@ -879,7 +892,7 @@ static int orte_console_send_command(orte_daemon_cmd_flag_t usercmd)
     }
 
     OBJ_RELEASE(cmd);
-    
+
     return ORTE_SUCCESS;
 }
 

@@ -23,7 +23,7 @@
 #include "opal/util/trace.h"
 
 #include "orte/include/orte_constants.h"
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -38,13 +38,13 @@ int orte_rmgr_base_pack_cmd(orte_buffer_t* buffer, orte_rmgr_cmd_t cmd, orte_job
      
      OPAL_TRACE(4);
     
-     rc = orte_dps.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
+     rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
      }
 
-     rc = orte_dps.pack(buffer, &jobid, 1, ORTE_JOBID);
+     rc = orte_dss.pack(buffer, &jobid, 1, ORTE_JOBID);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
@@ -67,18 +67,18 @@ int orte_rmgr_base_pack_create_cmd(
 
      OPAL_TRACE(4);
     
-     rc = orte_dps.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
+     rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
      }
 
-     rc = orte_dps.pack(buffer, &num_context, 1, ORTE_SIZE);
+     rc = orte_dss.pack(buffer, &num_context, 1, ORTE_SIZE);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
      }
-     rc = orte_dps.pack(buffer, context, num_context, ORTE_APP_CONTEXT);
+     rc = orte_dss.pack(buffer, context, num_context, ORTE_APP_CONTEXT);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
@@ -97,13 +97,13 @@ int orte_rmgr_base_pack_terminate_proc_cmd(
 
      OPAL_TRACE(4);
     
-     rc = orte_dps.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
+     rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
      }
 
-     rc = orte_dps.pack(buffer, (void*)name, 1, ORTE_NAME);
+     rc = orte_dss.pack(buffer, (void*)name, 1, ORTE_NAME);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
@@ -120,7 +120,7 @@ int orte_rmgr_base_unpack_rsp(
 
     OPAL_TRACE(4);
     
-    if(ORTE_SUCCESS != (rc = orte_dps.unpack(buffer,&rc,&cnt,ORTE_INT32))) {
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer,&rc,&cnt,ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -137,12 +137,12 @@ int orte_rmgr_base_unpack_create_rsp(
     OPAL_TRACE(4);
     
     cnt = 1;
-    if(ORTE_SUCCESS != (rc = orte_dps.unpack(buffer,jobid,&cnt,ORTE_JOBID))) {
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer,jobid,&cnt,ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     cnt = 1;
-    if(ORTE_SUCCESS != (rc = orte_dps.unpack(buffer,&rc,&cnt,ORTE_INT32))) {
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer,&rc,&cnt,ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

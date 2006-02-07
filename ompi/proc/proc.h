@@ -21,7 +21,7 @@
 
 #include "include/types.h"
 #include "opal/class/opal_list.h"
-#include "dps/dps_types.h"
+#include "dss/dss_types.h"
 #include "opal/threads/mutex.h"
 
 #include "mca/ns/ns_types.h"

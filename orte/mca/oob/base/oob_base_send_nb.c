@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -21,7 +21,7 @@
 #include "include/constants.h"
 
 #include "mca/ns/ns_types.h"
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include <string.h>
@@ -29,7 +29,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-    
+
 
 /*
  * internal struct for non-blocking packed sends
@@ -102,11 +102,11 @@ int mca_oob_send_packed_nb(
     int rc;
 
     /* first build iovec from buffer information */
-    rc = orte_dps.unload(buffer, &dataptr, &datalen);
+    rc = orte_dss.unload(buffer, &dataptr, &datalen);
     if (rc != ORTE_SUCCESS) {
         return rc;
     }
-    orte_dps.load(buffer, dataptr, datalen);
+    orte_dss.load(buffer, dataptr, datalen);
 
     /* allocate a struct to pass into callback */
     if(NULL == (oob_cbdata = malloc(sizeof(mca_oob_send_cbdata_t)))) {
@@ -137,7 +137,7 @@ int mca_oob_send_packed_nb(
 *  @param tag (IN)     User defined tag for matching send/recv.
 *  @param cbdata (IN)  User data.
 */
-                                                                                                                              
+
 static void mca_oob_send_callback(
     int status,
     orte_process_name_t* peer,

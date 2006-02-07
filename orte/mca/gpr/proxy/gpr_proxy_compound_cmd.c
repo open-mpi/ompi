@@ -29,7 +29,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "opal/util/output.h"
 #include "util/proc_info.h"
 
@@ -68,7 +68,7 @@ int orte_gpr_proxy_begin_compound_cmd(void)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(orte_gpr_proxy_globals.compound_cmd, &command,
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(orte_gpr_proxy_globals.compound_cmd, &command,
                                             1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         orte_gpr_proxy_globals.compound_cmd_mode = false;
@@ -135,7 +135,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
 	}
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         goto CLEANUP;
@@ -149,7 +149,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     }
     
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &response, &n, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &response, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
     }
     

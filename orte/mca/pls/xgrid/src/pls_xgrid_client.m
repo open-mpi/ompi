@@ -48,47 +48,67 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 			    orte_jobid_t jobid, 
 			    orte_process_name_t* name)
 {
-    orte_gpr_value_t* values[1];
-    orte_gpr_value_t value;
-    orte_gpr_keyval_t kv_name = { { OBJ_CLASS(orte_gpr_keyval_t),0 },
-				  ORTE_NODE_BOOTPROXY_KEY,ORTE_NAME };
-    orte_gpr_keyval_t* keyvals[1];
+    orte_gpr_value_t *values[1], *value;
+    orte_gpr_keyval_t *kv;
     char* jobid_string;
     size_t i;
     int rc;
 
+    values[0] = OBJ_NEW(orte_gpr_value_t);
+    if (NULL == values[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value->cnt = 1;
+    value->addr_mode = ORTE_GPR_OVERWRITE;
+    value->segment = strdup(ORTE_NODE_SEGMENT);
+    value = values[0];
+    value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
+    if (NULL == value->keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == value->keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    kv = value->keyvals[0];
+    
     if (ORTE_SUCCESS != 
 	(rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
         return rc;
     }
 
     if (ORTE_SUCCESS != 
-	(rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens, 
+	(rc = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), 
         node->node_cellid, node->node_name))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
         free(jobid_string);
         return rc;
     }
 
-    asprintf(&kv_name.key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
-    kv_name.value.proc = *name;
-    keyvals[0] = &kv_name;
-    value.keyvals = keyvals;
-    value.cnt = 1;
-    value.addr_mode = ORTE_GPR_OVERWRITE;
-    value.segment = ORTE_NODE_SEGMENT;
-    values[0] = &value;
+    asprintf(&(kv->key), "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
+    kv->value = OBJ_NEW(orte_data_value_t);
+    if (NULL == kv->value) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    kv->value->type = ORTE_NAME;
+    if (ORTE_SUCCESS != (rc = orte_dss.copy(&(kv->value->data), name, ORTE_NAME);
 
     rc = orte_gpr.put(1, values);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
 
-    free(kv_name.key);
-    free(jobid_string);
-    for (i=0; i<value.num_tokens; i++) free(value.tokens[i]);
-    free(value.tokens);
+    OBJ_RELEASE(value);
 
     return rc;
 }

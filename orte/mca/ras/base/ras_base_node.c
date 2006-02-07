@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -71,7 +71,9 @@ OBJ_CLASS_INSTANCE(
 
 int orte_ras_base_node_query(opal_list_t* nodes)
 {
-    size_t i, cnt;
+    size_t i, cnt, *sptr;
+    orte_node_state_t *nsptr;
+    orte_cellid_t *cptr;
     orte_gpr_value_t** values;
     int rc;
 
@@ -97,35 +99,73 @@ int orte_ras_base_node_query(opal_list_t* nodes)
         for(k=0; k<value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
-                node->node_name = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_name), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
-                node->node_arch = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_arch), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_STATE_KEY) == 0) {
-                node->node_state = keyval->value.node_state;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&nsptr, keyval->value, ORTE_NODE_STATE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_state = *nsptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
-                node->node_slots = keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots = *sptr;
                 continue;
             }
             if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
-                node->node_slots_inuse += keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots_inuse += *sptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_MAX_KEY) == 0) {
-                node->node_slots_max = keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots_max = *sptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_USERNAME_KEY) == 0) {
-                node->node_username = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_username), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                node->node_cellid = keyval->value.cellid;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval->value, ORTE_CELLID))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_cellid = *cptr;
                 continue;
             }
         }
@@ -157,6 +197,9 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
     size_t i, cnt, keys_len;
     orte_gpr_value_t** values;
     char* jobid_str;
+    size_t *sptr;
+    orte_node_state_t *nsptr;
+    orte_cellid_t *cptr;
     int rc;
 
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
@@ -205,36 +248,74 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
         for(k=0; k < value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
-                node->node_name = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_name), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
-                node->node_arch = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_arch), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_STATE_KEY) == 0) {
-                node->node_state = keyval->value.node_state;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&nsptr, keyval->value, ORTE_NODE_STATE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_state = *nsptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
-                node->node_slots = keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots = *sptr;
                 continue;
             }
             if(strncmp(keyval->key, keys[4], keys_len) == 0) {
-                node->node_slots_inuse += keyval->value.size;
-                node->node_slots_alloc += keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots_inuse += *sptr;
+                node->node_slots_alloc += *sptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_MAX_KEY) == 0) {
-                node->node_slots_max = keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots_max = *sptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_USERNAME_KEY) == 0) {
-                node->node_username = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_username), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                node->node_cellid = keyval->value.cellid;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval->value, ORTE_CELLID))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_cellid = *cptr;
                 continue;
             }
         }
@@ -261,6 +342,9 @@ orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* nod
 {
     orte_ras_node_t* node = NULL;
     size_t i, cnt, num_tokens;
+    size_t *sptr;
+    orte_cellid_t *cptr;
+    orte_node_state_t *nsptr;
     orte_gpr_value_t** values;
     char** tokens = NULL;
     int rc;
@@ -293,35 +377,73 @@ orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t cellid, const char* nod
         for(k=0; k<value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
-                node->node_name = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_name), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_ARCH_KEY) == 0) {
-                node->node_arch = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_arch), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_STATE_KEY) == 0) {
-                node->node_state = keyval->value.node_state;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&nsptr, keyval->value, ORTE_NODE_STATE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_state = *nsptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
-                node->node_slots = keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots = *sptr;
                 continue;
             }
             if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
-                node->node_slots_inuse += keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots_inuse += *sptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_MAX_KEY) == 0) {
-                node->node_slots_max = keyval->value.size;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_slots_max = *sptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_USERNAME_KEY) == 0) {
-                node->node_username = strdup(keyval->value.strptr);
+                /* we use the dss.copy function here instead of strdup because that function
+                 * automatically protects us against a NULL (or zero-length) string
+                 */
+                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(node->node_username), keyval->value->data, ORTE_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 continue;
             }
             if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
-                node->node_cellid = keyval->value.cellid;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval->value, ORTE_CELLID))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                node->node_cellid = *cptr;
                 continue;
             }
         }
@@ -345,6 +467,24 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     orte_gpr_value_t **values;
     int rc;
     size_t num_values, i, j;
+    char *keys[] = {
+        ORTE_NODE_NAME_KEY,
+        ORTE_NODE_ARCH_KEY,
+        ORTE_NODE_STATE_KEY,
+        ORTE_CELLID_KEY,
+        ORTE_NODE_SLOTS_KEY,
+        ORTE_NODE_SLOTS_MAX_KEY,
+        ORTE_NODE_USERNAME_KEY
+        };
+    orte_data_type_t types[] = {
+        ORTE_STRING,
+        ORTE_STRING,
+        ORTE_NODE_STATE,
+        ORTE_CELLID,
+        ORTE_SIZE,
+        ORTE_SIZE,
+        ORTE_STRING
+    };
     orte_ras_node_t* node;
 
     num_values = opal_list_get_size(nodes);
@@ -360,100 +500,70 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     }
 
     for (i=0; i < num_values; i++) {
-        orte_gpr_value_t* value = values[i] = OBJ_NEW(orte_gpr_value_t);
-        if (NULL == value) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
+                                    ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+                                    ORTE_NODE_SEGMENT, 7, 0))) {
+            ORTE_ERROR_LOG(rc);
             for (j=0; j < i; j++) {
                 OBJ_RELEASE(values[j]);
             }
             free(values);
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-
-        value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
-        value->segment = strdup(ORTE_NODE_SEGMENT);
-        value->cnt = 7;             /* Seven, at max (including node_username) */
-        value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt*sizeof(orte_gpr_keyval_t*));
-        if (NULL == value->keyvals) {
-            for (j=0; j < i; j++) {
-                OBJ_RELEASE(values[j]);
-            }
-            free(values);
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-
-        for (j=0; j < value->cnt; j++) {
-            value->keyvals[j] = OBJ_NEW(orte_gpr_keyval_t);
-            if (NULL == value->keyvals[j]) {
-                for (j=0; j <= i; j++) {
-                    OBJ_RELEASE(values[j]);
-                }
-                free(values);
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
+            return rc;
         }
     }
 
     for(i=0, item =  opal_list_get_first(nodes);
         i < num_values && item != opal_list_get_end(nodes);
         i++, item =  opal_list_get_next(item)) {
-        orte_gpr_value_t* value = values[i];
         node = (orte_ras_node_t*)item;
 
         j = 0;
-        (value->keyvals[j])->key = strdup(ORTE_NODE_NAME_KEY);
-        (value->keyvals[j])->type = ORTE_STRING;
-        (value->keyvals[j])->value.strptr = strdup(node->node_name);
-
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], node->node_name))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
         ++j;
-        (value->keyvals[j])->key = strdup(ORTE_NODE_ARCH_KEY);
-        (value->keyvals[j])->type = ORTE_STRING;
-        if (NULL != node->node_arch) {
-            (value->keyvals[j])->value.strptr = strdup(node->node_arch);
-        } else {
-            (value->keyvals[j])->value.strptr = strdup("");
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], node->node_arch))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
 
         ++j;
-        (value->keyvals[j])->key = strdup(ORTE_NODE_STATE_KEY);
-        (value->keyvals[j])->type = ORTE_NODE_STATE;
-        (value->keyvals[j])->value.node_state = node->node_state;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(node->node_state)))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         ++j;
-        (value->keyvals[j])->key = strdup(ORTE_CELLID_KEY);
-        (value->keyvals[j])->type = ORTE_CELLID;
-        (value->keyvals[j])->value.cellid = node->node_cellid;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(node->node_cellid)))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         ++j;
-        (value->keyvals[j])->key = strdup(ORTE_NODE_SLOTS_KEY);
-        (value->keyvals[j])->type = ORTE_SIZE;
-        (value->keyvals[j])->value.size = node->node_slots;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(node->node_slots)))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         ++j;
-        (value->keyvals[j])->key = strdup(ORTE_NODE_SLOTS_MAX_KEY);
-        (value->keyvals[j])->type = ORTE_SIZE;
-        (value->keyvals[j])->value.size = node->node_slots_max;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], &(node->node_slots_max)))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         ++j;
-        (value->keyvals[j])->key = strdup(ORTE_NODE_USERNAME_KEY);
-        (value->keyvals[j])->type = ORTE_STRING;
-        if (NULL != node->node_username) {
-            (value->keyvals[j])->value.strptr = strdup(node->node_username);
-        } else {
-            (value->keyvals[j])->value.strptr = strdup("");
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[j]), keys[j], types[j], node->node_username))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
 
         /* setup index/keys for this node */
-        rc = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, node->node_cellid, node->node_name);
+        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_cellid, node->node_name);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
-            for (j=0; j <= i; j++) {
-                OBJ_RELEASE(values[j]);
-            }
-            free(values);
-            return rc;
+            goto cleanup;
         }
     }
 
@@ -462,6 +572,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
         ORTE_ERROR_LOG(rc);
     }
 
+cleanup:
     for (j=0; j < num_values; j++) {
           OBJ_RELEASE(values[j]);
     }
@@ -527,7 +638,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     int rc;
     size_t num_values, i, j;
     orte_ras_node_t* node;
-    char* jobid_str;
+    char* jobid_str, *key;
 
     num_values = opal_list_get_size(nodes);
     if (0 >= num_values) {
@@ -542,70 +653,47 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     }
 
     for (i=0; i < num_values; i++) {
-        values[i] = OBJ_NEW(orte_gpr_value_t);
-        if (NULL == values[i]) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]), ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+                                    ORTE_NODE_SEGMENT, 1, 0))) {
+            ORTE_ERROR_LOG(rc);
             for (j=0; j < i; j++) {
                 OBJ_RELEASE(values[j]);
             }
-            free(values);
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-
-        values[i]->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
-        values[i]->segment = strdup(ORTE_NODE_SEGMENT);
-        values[i]->cnt = 1;
-        values[i]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-        if (NULL == values[i]->keyvals) {
-            for (j=0; j < i; j++) {
-                OBJ_RELEASE(values[j]);
-            }
-            free(values);
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-
-        values[i]->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-        if (NULL == values[i]->keyvals[0]) {
-           for (j=0; j < i; j++) {
-                OBJ_RELEASE(values[j]);
-            }
-            free(values);
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+            if (NULL != values) free(values);
+            return rc;
         }
     }
 
     for(i=0, item =  opal_list_get_first(nodes);
         i < num_values && item != opal_list_get_end(nodes);
         i++, item = opal_list_get_next(item)) {
-        int rc;
         node = (orte_ras_node_t*)item;
 
         if(node->node_slots_alloc == 0)
             continue;
-        if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
+
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto cleanup;
         }
 
         /* setup index/keys for this node */
-        rc = orte_schema.get_node_tokens(&values[i]->tokens, &values[i]->num_tokens, node->node_cellid, node->node_name);
+        rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_cellid, node->node_name);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
-           for (j=0; j < num_values; j++) {
-                OBJ_RELEASE(values[j]);
-            }
-            free(values);
-            return rc;
+            free(jobid_str);
+            goto cleanup;
         }
 
         /* setup node key/value pairs */
-        asprintf(&((values[i]->keyvals[0])->key), "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
+        asprintf(&key, "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
         free(jobid_str);
-
-        (values[i]->keyvals[0])->type = ORTE_SIZE;
-        (values[i]->keyvals[0])->value.size = node->node_slots_alloc;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[0]), key, ORTE_SIZE, &(node->node_slots_alloc)))) {
+            ORTE_ERROR_LOG(rc);
+            free(key);
+            goto cleanup;
+        }
+        free(key);
     }
 
     /* try the insert */
@@ -613,6 +701,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
     }
 
+cleanup:
     for (j=0; j < num_values; j++) {
         OBJ_RELEASE(values[j]);
     }

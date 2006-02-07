@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "opal/threads/mutex.h"
 
 #include "opal/util/output.h"
@@ -281,7 +281,7 @@ int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer)
 
     tmp = tmp_out;
     snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Dump of Name Service Cell Tracker\n");
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return rc;
@@ -293,14 +293,14 @@ int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer)
             j++;
             snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Num: %lu\tCell: %lu\n",
                 (unsigned long)j, (unsigned long)cell[i]->cell);
-            if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
                 return rc;
             }
             snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "\tSite: %s\n\tResource: %s\n",
                 cell[i]->site, cell[i]->resource);
-            if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
                 return rc;
@@ -347,7 +347,7 @@ int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer)
 
     tmp = tmp_out;
     snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Dump of Name Service Jobid Tracker\n");
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return rc;
@@ -360,7 +360,7 @@ int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer)
             snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Num: %lu\tJobid: %lu\tNext vpid: %lu\n",
                 (unsigned long)j, (unsigned long)ptr[i]->jobid,
                 (unsigned long)ptr[i]->next_vpid);
-            if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
                 return rc;
@@ -407,7 +407,7 @@ int orte_ns_replica_dump_tags_fn(orte_buffer_t *buffer)
 
     tmp = tmp_out;
     snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Dump of Name Service RML Tag Tracker\n");
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return rc;
@@ -419,7 +419,7 @@ int orte_ns_replica_dump_tags_fn(orte_buffer_t *buffer)
             j++;
             snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Num: %lu\tTag id: %lu\tName: %s\n",
                 (unsigned long)j, (unsigned long)ptr[i]->tag, ptr[i]->name);
-            if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
                 return rc;
@@ -465,7 +465,7 @@ int orte_ns_replica_dump_datatypes_fn(orte_buffer_t *buffer)
 
     tmp = tmp_out;
     snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Dump of Name Service Datatype Tracker\n");
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return rc;
@@ -477,7 +477,7 @@ int orte_ns_replica_dump_datatypes_fn(orte_buffer_t *buffer)
             j++;
             snprintf(tmp, NS_REPLICA_MAX_STRING_SIZE, "Num: %lu\tDatatype id: %lu\tName: %s\n",
                 (unsigned long)j, (unsigned long)ptr[i]->id, ptr[i]->name);
-            if (ORTE_SUCCESS != (rc = orte_dps.pack(buffer, &tmp, 1, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(buffer, &tmp, 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
                 return rc;
@@ -593,13 +593,13 @@ int orte_ns_replica_define_data_type(const char *name,
     }
 
     /* not in list or not provided, so allocate next id */
-    *type = ORTE_DPS_ID_MAX;
+    *type = ORTE_DSS_ID_MAX;
 
     /* check if id is available - need to do this since the data type
      * is probably not going to be a size_t, so we cannot just rely
      * on the pointer_array's size limits to protect us.
       */
-    if (ORTE_DPS_ID_MAX-2 < orte_ns_replica.num_dts) {
+    if (ORTE_DSS_ID_MAX-2 < orte_ns_replica.num_dts) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;

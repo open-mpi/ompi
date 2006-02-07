@@ -87,46 +87,10 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
                                    k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
                         if (NULL != ival[k]) {
                             n++;
-                            switch (ival[k]->type) {
-                                case ORTE_SIZE:
-                                    ival[k]->value.size++;
-                                    break;
-                                    
-                                case ORTE_UINT8:
-                                    ival[k]->value.ui8++;
-                                    break;
-                                
-                                case ORTE_UINT16:
-                                    ival[k]->value.ui16++;
-                                    break;
-                                
-                                case ORTE_UINT32:
-                                    ival[k]->value.ui32++;
-                                    break;
-                                
-                            #ifdef HAVE_INT64_T
-                                case ORTE_UINT64:
-                                    ival[k]->value.ui64++;
-                                    break;
-                                    
-                                case ORTE_INT64:
-                                    ival[k]->value.i64++;
-                                    break;
-                            #endif
-                            
-                                case ORTE_INT8:
-                                    ival[k]->value.ui32++;
-                                    break;
-                                
-                                case ORTE_INT16:
-                                    ival[k]->value.i16++;
-                                    break;
-                                
-                                case ORTE_INT32:
-                                    ival[k]->value.i32++;
-                                    break;
-                                
-                           }
+                            if (ORTE_SUCCESS != (rc = orte_dss.increment(ival[k]->value))) {
+                                ORTE_ERROR_LOG(rc);
+                                return rc;
+                            }
                         }
                     }
                 }
@@ -171,7 +135,7 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
     }
     
     /* otherwise, go through list of containers. For each one,
-       find the entry and then add one to its value */
+       find the entry and then subtract one from its value */
     cptr = (orte_gpr_replica_container_t**)(orte_gpr_replica_globals.srch_cptr)->addr;
     for (j=0, m=0; m < orte_gpr_replica_globals.num_srch_cptr &&
                    j < (orte_gpr_replica_globals.srch_cptr)->size; j++) { /* for each container */
@@ -187,46 +151,10 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
                                    k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
                         if (NULL != ival[k]) {
                             n++;
-                            switch (ival[k]->type) {
-                                case ORTE_SIZE:
-                                    ival[k]->value.size--;
-                                    break;
-                                    
-                                case ORTE_UINT8:
-                                    ival[k]->value.ui8--;
-                                    break;
-                                
-                                case ORTE_UINT16:
-                                    ival[k]->value.ui16--;
-                                    break;
-                                
-                                case ORTE_UINT32:
-                                    ival[k]->value.ui32--;
-                                    break;
-                                
-                            #ifdef HAVE_INT64_T
-                                case ORTE_UINT64:
-                                    ival[k]->value.ui64--;
-                                    break;
-                                    
-                                case ORTE_INT64:
-                                    ival[k]->value.i64--;
-                                    break;
-                            #endif
-                            
-                                case ORTE_INT8:
-                                    ival[k]->value.ui32--;
-                                    break;
-                                
-                                case ORTE_INT16:
-                                    ival[k]->value.i16--;
-                                    break;
-                                
-                                case ORTE_INT32:
-                                    ival[k]->value.i32--;
-                                    break;
-                                
-                           }
+                            if (ORTE_SUCCESS != (rc = orte_dss.decrement(ival[k]->value))) {
+                                ORTE_ERROR_LOG(rc);
+                                return rc;
+                            }
                         }
                     }
                 } else {

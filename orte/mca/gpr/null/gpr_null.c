@@ -61,6 +61,23 @@ orte_gpr_null_cleanup_proc(orte_process_name_t * proc)
   return ORTE_SUCCESS;
 }
 
+static int orte_gpr_null_create_value(orte_gpr_value_t **value,
+                               orte_gpr_addr_mode_t addr_mode,
+                               char *segment,
+                               size_t cnt,  /**< Number of keyval objects */
+                               size_t num_tokens)
+{
+    return ORTE_SUCCESS;
+}
+
+static int orte_gpr_null_create_keyval(orte_gpr_keyval_t **keyval,
+                                char *key,
+                                orte_data_type_t type,
+                                void *data)
+{
+    return ORTE_SUCCESS;
+}
+
 static int
 orte_gpr_null_preallocate_segment(char *name, size_t num_slots)
 {
@@ -235,6 +252,12 @@ orte_gpr_null_dump_value(orte_gpr_value_t * value, int output_id)
 }
 
 static int
+orte_gpr_null_dump_segment_size(char *segment, int output_id)
+{
+    return ORTE_SUCCESS;
+}
+
+static int
 orte_gpr_null_increment_value(orte_gpr_value_t * value)
 {
   return ORTE_SUCCESS;
@@ -246,18 +269,9 @@ orte_gpr_null_decrement_value(orte_gpr_value_t * value)
   return ORTE_SUCCESS;
 }
 
-static int
-orte_gpr_null_xfer_payload(orte_gpr_value_union_t * dest,
-                  orte_gpr_value_union_t * src,
-                  orte_data_type_t type)
-{
-  return ORTE_SUCCESS;
-}
-
 static int orte_gpr_null_put_1(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
-                               char *key, orte_data_type_t type,
-                               orte_gpr_value_union_t value)
+                               char *key, orte_data_value_t value)
 {
     return ORTE_SUCCESS;
 }
@@ -266,8 +280,7 @@ static int orte_gpr_null_put_1(orte_gpr_addr_mode_t addr_mode,
 static int orte_gpr_null_put_N(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
                                size_t n, char **keys,
-                               orte_data_type_t *types,
-                               orte_gpr_value_union_t *data_values)
+                               orte_data_value_t *data_values)
 {
     return ORTE_SUCCESS;
 }
@@ -374,8 +387,9 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     orte_gpr_null_delete_segment_nb,
     orte_gpr_null_index_nb,
     /* GENERAL OPERATIONS */
+    orte_gpr_null_create_value,
+    orte_gpr_null_create_keyval,
     orte_gpr_null_preallocate_segment,
-    orte_gpr_null_xfer_payload,
     orte_gpr_null_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_null_increment_value,
@@ -405,6 +419,7 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     orte_gpr_null_dump_notify_msg,
     orte_gpr_null_dump_notify_data,
     orte_gpr_null_dump_value,
+    orte_gpr_null_dump_segment_size,
     /* CLEANUP OPERATIONS */
     orte_gpr_null_cleanup_job,
     orte_gpr_null_cleanup_proc

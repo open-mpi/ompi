@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -96,7 +96,7 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     /* Clean up the session directory as if we were the process
        itself.  This covers the case where the process died abnormally
        and didn't cleanup its own session directory. */
- 
+
     orte_session_dir_finalize(&proc->proc_name);
     orte_iof.iof_flush();
 
@@ -123,7 +123,7 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
  */
 
 static int orte_pls_fork_proc(
-    orte_app_context_t* context, 
+    orte_app_context_t* context,
     orte_rmaps_base_proc_t* proc,
     orte_vpid_t vpid_start,
     orte_vpid_t vpid_range,
@@ -244,19 +244,19 @@ static int orte_pls_fork_proc(
 
             /* Reset PATH */
             if (0 == strncmp("PATH=", context->env[i], 5)) {
-                asprintf(&newenv, "%s/bin:%s\n", 
+                asprintf(&newenv, "%s/bin:%s\n",
                          context->prefix_dir, context->env[i] + 5);
                 opal_setenv("PATH", newenv, true, &environ_copy);
                 free(newenv);
-            } 
+            }
 
             /* Reset LD_LIBRARY_PATH */
             else if (0 == strncmp("LD_LIBRARY_PATH=", context->env[i], 16)) {
-                asprintf(&newenv, "%s/lib:%s\n", 
+                asprintf(&newenv, "%s/lib:%s\n",
                          context->prefix_dir, context->env[i] + 16);
                 opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ_copy);
                 free(newenv);
-            } 
+            }
         }
 
         param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
@@ -284,7 +284,7 @@ static int orte_pls_fork_proc(
             free(param);
             free(uri);
         }
-        
+
         /* setup ns contact info */
         if(NULL != orte_process_info.ns_replica_uri) {
             uri = strdup(orte_process_info.ns_replica_uri);
@@ -313,7 +313,7 @@ static int orte_pls_fork_proc(
         free(param);
 
         /* push name into environment */
-        orte_ns_nds_env_put(&proc->proc_name, vpid_start, vpid_range, 
+        orte_ns_nds_env_put(&proc->proc_name, vpid_start, vpid_range,
                             &environ_copy);
 
         /* setup stdout/stderr */
@@ -341,7 +341,7 @@ static int orte_pls_fork_proc(
         set_handler_default(SIGHUP);
         set_handler_default(SIGPIPE);
         set_handler_default(SIGCHLD);
-        
+
         /* Unblock all signals, for many of the same reasons that we
            set the default handlers, above.  This is noticable on
            Linux where the event library blocks SIGTERM, but we don't
@@ -430,8 +430,8 @@ int orte_pls_fork_launch(orte_jobid_t jobid)
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         size_t i;
         for (i=0; i<map->num_procs; i++) {
-            rc = orte_pls_fork_proc(map->app, map->procs[i], vpid_start, 
-                                    vpid_range, 
+            rc = orte_pls_fork_proc(map->app, map->procs[i], vpid_start,
+                                    vpid_range,
                                     (num_processes > num_processors) ?
                                     false : true, i);
             if (ORTE_SUCCESS != rc) {
@@ -468,11 +468,11 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-                                                                                                    
+
     keys[0] = ORTE_NODE_NAME_KEY;
     keys[1] = ORTE_PROC_PID_KEY;
     keys[2] = NULL;
-                                                                                                    
+
     rc = orte_gpr.get(
         ORTE_GPR_KEYS_AND|ORTE_GPR_TOKENS_OR,
         segment,
@@ -488,16 +488,21 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
 
     for(i=0; i<num_values; i++) {
         orte_gpr_value_t* value = values[i];
-        pid_t pid = 0;
+        pid_t pid = 0, *pidptr;
         for(k=0; k<value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
-                if(strcmp(keyval->value.strptr, orte_system_info.nodename) != 0) {
+                if(orte_dss.compare(keyval->value->data, orte_system_info.nodename, ORTE_STRING) != ORTE_EQUAL) {
                     break;
                 }
             } else if (strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
-                pid = keyval->value.ui32;
-            } 
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pidptr, keyval->value, ORTE_PID))) {
+                    ORTE_ERROR_LOG(rc);
+                    free(segment);
+                    return rc;
+                }
+                pid = *pidptr;
+            }
         }
         if (0 != pid) {
             kill(pid, SIGKILL);

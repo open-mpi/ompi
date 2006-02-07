@@ -211,8 +211,7 @@ typedef struct {
     opal_object_t super;                /**< required for this to be an object */
     size_t index;                          /**< index of this itagval on the container array */
     orte_gpr_replica_itag_t itag;       /**< itag for this value's key */
-    orte_data_type_t type;              /**< the type of value stored */
-    orte_gpr_value_union_t value;       /**< Actual stored value */
+    orte_data_value_t *value;            /**< Actual stored value */
 } orte_gpr_replica_itagval_t;
 
 OBJ_CLASS_DECLARATION(orte_gpr_replica_itagval_t);

@@ -19,5 +19,5 @@
 
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class dps mca memory threads util
+SUBDIRS = support asm class dss mca memory threads util
 DIST_SUBDIRS = runtime $(SUBDIRS)

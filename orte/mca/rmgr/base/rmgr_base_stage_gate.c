@@ -31,7 +31,7 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -44,8 +44,9 @@
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 {
     size_t i, num_counters=6, num_named_trigs=5;
+    size_t zero=0;
     int rc;
-    orte_gpr_value_t *values, value;
+    orte_gpr_value_t *value;
     char* keys[] = {
         /* changes to this ordering need to be reflected in code below */
         ORTE_PROC_NUM_AT_STG1,
@@ -69,59 +70,43 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 
     OPAL_TRACE(1);
 
-    /* setup the counters */
-    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
-    value.addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value.segment), job))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&value);
         return rc;
     }
-    value.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == value.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+    
+    /* setup the counters */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
+                             ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,
+                             segment, num_counters, 1))) {
+                                 
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    value.tokens[0] = strdup(ORTE_JOB_GLOBALS); /* put counters in the job's globals container */
-    value.num_tokens = 1;
-    value.cnt = num_counters;
-    value.keyvals = (orte_gpr_keyval_t**)malloc(num_counters * sizeof(orte_gpr_keyval_t*));
-    if (NULL == value.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
+    
+    value->tokens[0] = strdup(ORTE_JOB_GLOBALS); /* put counters in the job's globals container */
+    
     for (i=0; i < num_counters; i++) {
-        value.keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
-        if (NULL == value.keyvals[i]) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            OBJ_DESTRUCT(&value);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[i]), keys[i], ORTE_SIZE, &zero))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return rc;
         }
-        value.keyvals[i]->key = strdup(keys[i]);
-        value.keyvals[i]->type = ORTE_SIZE;
-        value.keyvals[i]->value.size = 0;
     }
-    values = &value;
 
     /* put the counters on the registry */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&value);
+        OBJ_RELEASE(value);
         return rc;
     }
-    OBJ_DESTRUCT(&value);
+    OBJ_RELEASE(value);
 
     /*** DEFINE STAGE GATE STANDARD TRIGGERS ***/
     /* The standard triggers will return the trigger counters so that we
      * can get required information for notifying processes. Other
      * subscriptions will then attach to them.
      */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
     tokens[0] = strdup(ORTE_JOB_GLOBALS);
     tokens[1] = NULL;
 
@@ -262,7 +247,7 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 
     /* need to pack the msg for sending */
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &msg, 1, ORTE_GPR_NOTIFY_MSG))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &msg, 1, ORTE_GPR_NOTIFY_MSG))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         goto CLEANUP;
@@ -360,7 +345,7 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
         }
         else if (ORTE_STAGE_GATE_STAGES == type) {
             if (ORTE_PROC_NUM_AT_STG1   != keys[i] &&
-                ORTE_PROC_NUM_AT_STG2   != keys[i] && 
+                ORTE_PROC_NUM_AT_STG2   != keys[i] &&
                 ORTE_PROC_NUM_AT_STG3   != keys[i] &&
                 ORTE_PROC_NUM_FINALIZED != keys[i] )
                 continue;
@@ -370,7 +355,7 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
             printf("Invalid argument (%d)\n", type);
             return ORTE_ERROR;
         }
-        
+
         /* attach ourselves to the appropriate standard trigger */
         if (ORTE_SUCCESS !=
             (rc = orte_schema.get_std_trigger_name(&trig_name, trig_names[i], job))) {

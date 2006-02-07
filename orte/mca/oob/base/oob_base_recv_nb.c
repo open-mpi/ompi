@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "mca/ns/ns_types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
@@ -153,7 +153,7 @@ static void mca_oob_recv_callback(
 
     /* init a buffer with the received message */
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-    orte_dps.load(&buffer,msg[0].iov_base,msg[0].iov_len);
+    orte_dss.load(&buffer,msg[0].iov_base,msg[0].iov_len);
 
     /* call users callback function */
     oob_cbdata->cbfunc(status, peer, &buffer, tag, oob_cbdata->cbdata);

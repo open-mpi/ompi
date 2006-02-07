@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -33,13 +33,13 @@
  */
 
 #include "orte_config.h"
-#include "include/constants.h"
-#include "include/orte_types.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
 
-#include "dps/dps.h"
+#include "orte/dss/dss.h"
 
-#include "mca/mca.h"
-#include "mca/oob/oob_types.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/oob/oob_types.h"
 
 #include "ns_types.h"
 
@@ -73,7 +73,7 @@ typedef int (*orte_ns_base_module_init_fn_t)(void);
  * that an error occurred - this represents a very unlikely
  * event meaning that the system ran out of cell id's. This probably indicates
  * an error in the calling program as the number of available cell id's is extremely large.
- * 
+ *
  * @retval ORTE_SUCCESS A cellid was created and returned.
  * @retval ORTE_ERROR_VALUE An error code indicative of the problem.
  *
@@ -87,7 +87,7 @@ typedef int (*orte_ns_base_module_create_cellid_fn_t)(orte_cellid_t *cellid,
 /**
  * Get cell info
  * Retrieve the site and resource info on a cell.
- * 
+ *
  * @param cellid The id of the cell who's info is being requested.
  * @param site Returns a pointer to a strdup'd string containing the site name.
  * @param resource Returns a pointer to a strdup'd string containg the resource name.
@@ -96,7 +96,7 @@ typedef int (*orte_ns_base_module_create_cellid_fn_t)(orte_cellid_t *cellid,
  */
 typedef int (*orte_ns_base_module_get_cell_info_fn_t)(orte_cellid_t cellid,
                                 char **site, char **resource);
-                                
+
 /**
  * Get the cell id for a process.
  * The cellid designator represents the physical location of the process - it is associated with
@@ -152,28 +152,28 @@ typedef int (*orte_ns_base_module_get_cellid_string_fn_t)(char **cellid_string, 
  * by expressing the provided cellid in hexadecimal. Memory for the string is
  * allocated by the function - releasing that allocation is the responsibility of
  * the calling program.
- * 
+ *
  * @param cellid The cellid to be converted.
- * 
+ *
  * @retval *cellid_string A pointer to a character string representation of the cellid.
  * @retval NULL Indicates an error occurred - probably no memory could be allocated.
- * 
+ *
  * @code
  * cellid-string = ompi_name_server.convert_cellid_to_string(cellid);
  * @endcode
  */
  typedef int (*orte_ns_base_module_convert_cellid_to_string_fn_t)(char **cellid_string, const orte_cellid_t cellid);
- 
+
  /**
   * Convert a string to a cellid.
   * Converts a characters string into a cellid. The character string must be a
   * hexadecimal representation of a valid cellid.
-  * 
+  *
   * @param cellidstring The string to be converted.
-  * 
+  *
   * @retval cellid The resulting cellid
   * @retval MCA_NS_BASE_CELLID_MAX String could not be converted.
-  * 
+  *
   * @code
   * cellid = ompi_name_server.convert_string_to_cellid(cellidstring);
   * @endcode
@@ -337,7 +337,7 @@ typedef int (*orte_ns_base_module_get_jobid_fn_t)(orte_jobid_t *jobid, const ort
  * can have the same process id if and only if they have different jobid's. However,
  * two processes in the same jobid cannot have the same process id, regardless
  * of whether or not they are in the same cell.
- * @param vpid The virtual process id for the name. Note that no check is made for uniqueness - 
+ * @param vpid The virtual process id for the name. Note that no check is made for uniqueness -
  * the caller is responsible for ensuring that the requested name is, in fact, unique
  * by first requesting reservation of an appropriate range of virtual process id's.
  *
@@ -511,28 +511,28 @@ typedef int (*orte_ns_base_module_get_vpid_string_fn_t)(char **vpid_string, cons
  * by expressing the provided vpid in hexadecimal. Memory for the string is
  * allocated by the function - releasing that allocation is the responsibility of
  * the calling program.
- * 
+ *
  * @param vpid The vpid to be converted.
- * 
+ *
  * @retval *vpid_string A pointer to a character string representation of the vpid.
  * @retval NULL Indicates an error occurred - probably no memory could be allocated.
- * 
+ *
  * @code
  * vpid-string = ompi_name_server.convert_vpid_to_string(vpid);
  * @endcode
  */
  typedef int (*orte_ns_base_module_convert_vpid_to_string_fn_t)(char **vpid_string, const orte_vpid_t vpid);
- 
+
  /**
   * Convert a string to a vpid.
   * Converts a characters string into a vpid. The character string must be a
   * hexadecimal representation of a valid vpid.
-  * 
+  *
   * @param vpidstring The string to be converted.
-  * 
+  *
   * @retval vpid The resulting vpid
   * @retval MCA_NS_BASE_VPID_MAX String could not be converted.
-  * 
+  *
   * @code
   * vpid = ompi_name_server.convert_string_to_vpid(vpidstring);
   * @endcode
@@ -578,20 +578,20 @@ typedef int (*orte_ns_base_module_define_data_type_fn_t)(
 /****    PEER RETRIEVAL    ****/
 /*
  * Get my peers
- * 
+ *
  * THIS FUNCTION MAY BE ELIMINATED IN FUTURE VERSIONS TO REMOVE MULTIPLE STORAGE
  * OF O(N) ARRAYS IN THE SYSTEM
  */
-typedef int (*orte_ns_base_module_get_peers_fn_t)(orte_process_name_t **procs, 
+typedef int (*orte_ns_base_module_get_peers_fn_t)(orte_process_name_t **procs,
                                   size_t *num_procs, size_t *self);
 
 /*
  * Get the list of peers from a specified job
- * 
+ *
  * THIS FUNCTION MAY BE ELIMINATED IN FUTURE VERSIONS TO REMOVE MULTIPLE STORAGE
  * OF O(N) ARRAYS IN THE SYSTEM
  */
-typedef int (*orte_ns_base_module_get_job_peers_fn_t)(orte_process_name_t **procs, 
+typedef int (*orte_ns_base_module_get_job_peers_fn_t)(orte_process_name_t **procs,
                                   size_t *num_procs, orte_jobid_t job);
 
 
@@ -607,7 +607,7 @@ typedef int (*orte_ns_base_module_dump_tags_fn_t)(int output_id);
 
 typedef int (*orte_ns_base_module_dump_datatypes_fn_t)(int output_id);
 
-                                 
+
 /*
  * Ver 1.0.0
  */
@@ -671,7 +671,7 @@ typedef mca_ns_base_module_t* (*mca_ns_base_component_init_fn_t)(int *priority);
  * Finalize the selected module
  */
 typedef int (*mca_ns_base_component_finalize_fn_t)(void);
- 
+
 
 /*
  * the standard component data structure

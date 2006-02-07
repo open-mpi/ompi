@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,7 +29,7 @@
 
 #include "include/constants.h"
 
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "mca/ns/ns_types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
@@ -43,7 +43,7 @@
 * @param flags (IN)  Currently unused.
 * @return            OMPI error code (<0) on error or number of bytes actually sent.
 */
-                                                                                                         
+
 int mca_oob_send(orte_process_name_t* peer, struct iovec *msg, int count, int tag, int flags)
 {
     return(mca_oob.oob_send(peer, msg, count, tag, flags));
@@ -57,7 +57,7 @@ int mca_oob_send(orte_process_name_t* peer, struct iovec *msg, int count, int ta
 * @param flags (IN)  Currently unused.
 * @return            OMPI error code (<0) on error or number of bytes actually sent.
 */
-                                                                                                         
+
 int mca_oob_send_packed (orte_process_name_t* peer, orte_buffer_t* buffer, int tag, int flags)
 {
     void *dataptr;
@@ -66,15 +66,15 @@ int mca_oob_send_packed (orte_process_name_t* peer, orte_buffer_t* buffer, int t
     int rc;
 
     /* first build iovec from buffer information */
-    rc = orte_dps.unload(buffer, &dataptr, &datalen);
+    rc = orte_dss.unload(buffer, &dataptr, &datalen);
     if(rc != ORTE_SUCCESS) {
         return rc;
     }
-    orte_dps.load(buffer, dataptr, datalen);
+    orte_dss.load(buffer, dataptr, datalen);
 
     msg[0].iov_base = dataptr;
     msg[0].iov_len  = datalen;
 
     return(mca_oob.oob_send(peer, msg, 1, tag, flags));
 }
- 
+

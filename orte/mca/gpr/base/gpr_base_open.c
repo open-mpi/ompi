@@ -23,7 +23,7 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/base/base.h"
@@ -55,30 +55,15 @@
 static void orte_gpr_keyval_construct(orte_gpr_keyval_t* keyval)
 {
     keyval->key = NULL;
-    keyval->type = ORTE_NULL;
-    keyval->value.i32 = 0;
+    keyval->value = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_keyval_destructor(orte_gpr_keyval_t* keyval)
 {
-    orte_byte_object_t *byteptr;
 
-    if (NULL != keyval->key) {
-        free(keyval->key);
-    }
-    if (ORTE_BYTE_OBJECT == keyval->type) {
-        byteptr = &(keyval->value.byteobject);
-        if (NULL != byteptr->bytes) {
-            free(byteptr->bytes);
-        }
-    } else if (ORTE_STRING == keyval->type) {
-        if (NULL != keyval->value.strptr)
-            free(keyval->value.strptr);
-    } else if (ORTE_APP_CONTEXT == keyval->type) {
-        if (NULL != keyval->value.app_context)
-            OBJ_RELEASE(keyval->value.app_context);
-    }
+    if (NULL != keyval->key) free(keyval->key);
+    if (NULL != keyval->value) OBJ_RELEASE(keyval->value);
 }
 
 /* define instance of opal_class_t */
@@ -316,7 +301,7 @@ int orte_gpr_base_open(void)
     orte_data_type_t tmp;
 
     OPAL_TRACE(5);
-    
+
     /* Debugging / verbose output */
 
     param = mca_base_param_reg_int_name("gpr_base", "verbose",
@@ -340,104 +325,182 @@ int orte_gpr_base_open(void)
 
     /* register the base data types with the DPS */
     tmp = ORTE_GPR_CMD;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_cmd,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_cmd,
                                           orte_gpr_base_unpack_cmd,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_cmd,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_cmd,
+                                          (orte_dss_size_fn_t)orte_gpr_base_std_size,
+                                          (orte_dss_print_fn_t)orte_gpr_base_std_print,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
                                           "ORTE_GPR_CMD", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_SUBSCRIPTION_ID;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_subscription_id,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_subscription_id,
                                           orte_gpr_base_unpack_subscription_id,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_subscription_id,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_subscription_id,
+                                          (orte_dss_size_fn_t)orte_gpr_base_std_size,
+                                          (orte_dss_print_fn_t)orte_gpr_base_std_print,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
                                           "ORTE_GPR_SUBSCRIPTION_ID", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_TRIGGER_ID;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_trigger_id,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_trigger_id,
                                           orte_gpr_base_unpack_trigger_id,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_trigger_id,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_trigger_id,
+                                          (orte_dss_size_fn_t)orte_gpr_base_std_size,
+                                          (orte_dss_print_fn_t)orte_gpr_base_std_print,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
                                           "ORTE_GPR_TRIGGER_ID", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_NOTIFY_ACTION;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_action,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_notify_action,
                                           orte_gpr_base_unpack_notify_action,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_notify_action,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_notify_action,
+                                          (orte_dss_size_fn_t)orte_gpr_base_std_size,
+                                          (orte_dss_print_fn_t)orte_gpr_base_std_print,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
                                           "ORTE_GPR_NOTIFY_ACTION", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_TRIGGER_ACTION;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_trigger_action,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_trigger_action,
                                           orte_gpr_base_unpack_trigger_action,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_trigger_action,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_trigger_action,
+                                          (orte_dss_size_fn_t)orte_gpr_base_std_size,
+                                          (orte_dss_print_fn_t)orte_gpr_base_std_print,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
                                           "ORTE_GPR_TRIGGER_ACTION", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_NOTIFY_MSG_TYPE;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_msg_type,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_notify_msg_type,
                                           orte_gpr_base_unpack_notify_msg_type,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_notify_msg_type,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_notify_msg_type,
+                                          (orte_dss_size_fn_t)orte_gpr_base_std_size,
+                                          (orte_dss_print_fn_t)orte_gpr_base_std_print,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
                                           "ORTE_GPR_NOTIFY_MSG_TYPE", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_ADDR_MODE;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_addr_mode,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_addr_mode,
                                           orte_gpr_base_unpack_addr_mode,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_addr_mode,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_addr_mode,
+                                          (orte_dss_size_fn_t)orte_gpr_base_std_size,
+                                          (orte_dss_print_fn_t)orte_gpr_base_std_print,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
                                           "ORTE_GPR_ADDR_MODE", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    tmp = ORTE_KEYVAL;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_keyval,
+    tmp = ORTE_GPR_KEYVAL;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_keyval,
                                           orte_gpr_base_unpack_keyval,
-                                          "ORTE_KEYVAL", &tmp))) {
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_keyval,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_keyval,
+                                          (orte_dss_size_fn_t)orte_gpr_base_size_keyval,
+                                          (orte_dss_print_fn_t)orte_gpr_base_print_keyval,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_obj_release,
+                                          ORTE_DSS_STRUCTURED,
+                                          "ORTE_GPR_KEYVAL", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_VALUE;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_value,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_value,
                                           orte_gpr_base_unpack_value,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_gpr_value,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_gpr_value,
+                                          (orte_dss_size_fn_t)orte_gpr_base_size_gpr_value,
+                                          (orte_dss_print_fn_t)orte_gpr_base_print_gpr_value,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_obj_release,
+                                          ORTE_DSS_STRUCTURED,
                                           "ORTE_GPR_VALUE", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_SUBSCRIPTION;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_subscription,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_subscription,
                                           orte_gpr_base_unpack_subscription,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_subscription,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_subscription,
+                                          (orte_dss_size_fn_t)orte_gpr_base_size_subscription,
+                                          (orte_dss_print_fn_t)orte_gpr_base_print_subscription,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_obj_release,
+                                          ORTE_DSS_STRUCTURED,
                                           "ORTE_GPR_SUBSCRIPTION", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_TRIGGER;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_trigger,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_trigger,
                                           orte_gpr_base_unpack_trigger,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_trigger,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_trigger,
+                                          (orte_dss_size_fn_t)orte_gpr_base_size_trigger,
+                                          (orte_dss_print_fn_t)orte_gpr_base_print_trigger,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_obj_release,
+                                          ORTE_DSS_STRUCTURED,
                                           "ORTE_GPR_TRIGGER", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_NOTIFY_DATA;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_data,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_notify_data,
                                           orte_gpr_base_unpack_notify_data,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_notify_data,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_notify_data,
+                                          (orte_dss_size_fn_t)orte_gpr_base_size_notify_data,
+                                          (orte_dss_print_fn_t)orte_gpr_base_print_notify_data,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_obj_release,
+                                          ORTE_DSS_STRUCTURED,
                                           "ORTE_GPR_NOTIFY_DATA", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     tmp = ORTE_GPR_NOTIFY_MSG;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_msg,
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_gpr_base_pack_notify_msg,
                                           orte_gpr_base_unpack_notify_msg,
+                                          (orte_dss_copy_fn_t)orte_gpr_base_copy_notify_msg,
+                                          (orte_dss_compare_fn_t)orte_gpr_base_compare_notify_msg,
+                                          (orte_dss_size_fn_t)orte_gpr_base_size_notify_msg,
+                                          (orte_dss_print_fn_t)orte_gpr_base_print_notify_msg,
+                                          (orte_dss_release_fn_t)orte_gpr_base_std_obj_release,
+                                          ORTE_DSS_STRUCTURED,
                                           "ORTE_GPR_NOTIFY_MSG", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;

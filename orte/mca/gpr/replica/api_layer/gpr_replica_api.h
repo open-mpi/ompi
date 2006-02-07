@@ -162,6 +162,8 @@ int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_i
 
 int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id);
 
+int orte_gpr_replica_dump_segment_size(char *segment, int output_id);
+
 /*
  * General functions
  */

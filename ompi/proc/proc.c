@@ -23,7 +23,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/output.h"
 #include "orte/util/sys_info.h"
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
@@ -97,7 +97,8 @@ int ompi_proc_init(void)
     size_t i, npeers, self, num_tokens;
     orte_jobid_t jobid;
     char *segment, **tokens;
-    orte_gpr_value_union_t value;
+    orte_data_value_t value = { {OBJ_CLASS(orte_data_value_t),0}, ORTE_NULL, NULL};
+    uint32_t ui32;
     int rc;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
@@ -131,7 +132,11 @@ int ompi_proc_init(void)
 
     /* Here we have to add to the GPR the information about the current architecture.
      */
-    if (OMPI_SUCCESS != (rc = ompi_arch_compute_local_id(&value.ui32))) {
+    if (OMPI_SUCCESS != (rc = ompi_arch_compute_local_id(&ui32))) {
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_dss.set(&value, &ui32, ORTE_UINT32))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
@@ -156,7 +161,7 @@ int ompi_proc_init(void)
     /* put the arch info on the registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put_1(ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
                                              segment, tokens,
-                                             OMPI_PROC_ARCH, ORTE_UINT32, value))) {
+                                             OMPI_PROC_ARCH, &value))) {
         ORTE_ERROR_LOG(rc);
     }
     free(segment);
@@ -326,7 +331,7 @@ int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize, orte_buffe
     int i;
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     for (i=0; i<proclistsize; i++) {
-        int rc = orte_dps.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
+        int rc = orte_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
         if(rc != OMPI_SUCCESS) {
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
@@ -353,7 +358,7 @@ int ompi_proc_get_proclist (orte_buffer_t* buf, int proclistsize, ompi_proc_t **
 
     for ( i=0; i<proclistsize; i++ ){
         size_t count=1;
-        int rc = orte_dps.unpack(buf, &name, &count, ORTE_NAME);
+        int rc = orte_dss.unpack(buf, &name, &count, ORTE_NAME);
         if(rc != ORTE_SUCCESS) {
             return rc;
         }
@@ -453,13 +458,14 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     size_t i, j, k;
     char *str;
-    uint32_t arch = 0;
+    uint32_t arch = 0, *ui32;
     bool found_name, found_arch;
     orte_ns_cmp_bitmask_t mask;
-    orte_process_name_t name;
+    orte_process_name_t name, *nptr;
     orte_gpr_value_t **value;
     orte_gpr_keyval_t **keyval;
     ompi_proc_t *proc;
+    int rc;
 
     /* check bozo case */
     if (0 == data->cnt) {
@@ -484,16 +490,24 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
             /* find the 2 keys that we're looking for */
             for (j = 0; j < value[i]->cnt; ++j) {
                 if (strcmp(keyval[j]->key, ORTE_PROC_NAME_KEY) == 0) {
-                    orte_ns.get_proc_name_string(&str, &keyval[j]->value.proc);
-                    name = keyval[j]->value.proc;
+                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&nptr, keyval[j]->value, ORTE_NAME))) {
+                        ORTE_ERROR_LOG(rc);
+                        return;
+                    }
+                    orte_ns.get_proc_name_string(&str, nptr);
+                    name = *nptr;
                     found_name = true;
                 } else if (strcmp(keyval[j]->key, ORTE_NODE_NAME_KEY) == 0) {
                     if (NULL != str) {
                         free(str);
                     }
-                    str = strdup(keyval[j]->value.strptr);
+                    str = strdup(keyval[j]->value->data);
                 } else if (strcmp(keyval[j]->key, OMPI_PROC_ARCH) == 0) {
-                    arch = keyval[j]->value.ui32;
+                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&ui32, keyval[j]->value, ORTE_UINT32))) {
+                        ORTE_ERROR_LOG(rc);
+                        return;
+                    }
+                    arch = *ui32;
                     found_arch = true;
                 }
             }

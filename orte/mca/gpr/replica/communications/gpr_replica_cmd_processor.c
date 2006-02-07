@@ -29,7 +29,7 @@
 
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/output.h"
 #include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
@@ -62,9 +62,9 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
     rc = ORTE_SUCCESS;
     ret = ORTE_SUCCESS;
 
-    while (ORTE_SUCCESS == orte_dps.peek(input_buffer, &type, &num_vals)) {
+    while (ORTE_SUCCESS == orte_dss.peek(input_buffer, &type, &num_vals)) {
                 if (ORTE_SUCCESS != 
-                    orte_dps.unpack(input_buffer, &command, &n, ORTE_GPR_CMD)) {
+                    orte_dss.unpack(input_buffer, &command, &n, ORTE_GPR_CMD)) {
                     break;
                 }
         	switch(command) {
@@ -299,6 +299,15 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             
             
                    
+                case ORTE_GPR_DUMP_SEGMENT_SIZE_CMD:  /*****     DUMP     *****/
+
+                     if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_segment_size_cmd(input_buffer, answer))) {
+                         ORTE_ERROR_LOG(ret);
+                         goto RETURN_ERROR;
+                     }
+                     break;
+
+
             	case ORTE_GPR_INCREMENT_VALUE_CMD:  /*****     INCREMENT_VALUE     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
@@ -361,7 +370,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	    
             	default:  /****    UNRECOGNIZED COMMAND   ****/
                 command = ORTE_GPR_ERROR;
-                if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, (void*)&command, 1, ORTE_GPR_CMD))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, (void*)&command, 1, ORTE_GPR_CMD))) {
                      ORTE_ERROR_LOG(rc);
                      goto RETURN_ERROR;
                  }
@@ -380,13 +389,13 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
         }
         
         command = ORTE_GPR_COMPOUND_CMD;
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(*output_buffer, (void*)&command, 1, ORTE_GPR_CMD))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(*output_buffer, (void*)&command, 1, ORTE_GPR_CMD))) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
         
         ret = ORTE_SUCCESS;
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(*output_buffer, &ret, 1, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(*output_buffer, &ret, 1, ORTE_INT))) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
@@ -404,14 +413,14 @@ RETURN_ERROR:
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (ORTE_SUCCESS != (rc2 = orte_dps.pack(answer, (void*)&command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc2 = orte_dss.pack(answer, (void*)&command, 1, ORTE_GPR_CMD))) {
          ORTE_ERROR_LOG(rc2);
     }
     if (ORTE_SUCCESS != ret) {
-        orte_dps.pack(answer, &ret, 1, ORTE_INT);
+        orte_dss.pack(answer, &ret, 1, ORTE_INT);
         return rc;
     }
-    orte_dps.pack(answer, &rc, 1, ORTE_INT);
+    orte_dss.pack(answer, &rc, 1, ORTE_INT);
     return rc;
 }
 

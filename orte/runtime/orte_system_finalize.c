@@ -20,24 +20,26 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "runtime/runtime.h"
-#include "runtime/orte_wait.h"
+#include "orte/include/orte_constants.h"
+
 #include "opal/event/event.h"
-#include "mca/rml/base/base.h"
-#include "dps/dps.h"
-#include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
-#include "mca/errmgr/base/base.h"
-#include "mca/schema/base/base.h"
-#include "mca/iof/base/base.h"
-#include "mca/rmgr/base/base.h"
 #include "opal/util/if.h"
-#include "util/session_dir.h"
-#include "util/sys_info.h"
-#include "util/proc_info.h"
-#include "util/univ_info.h"
 #include "opal/util/os_path.h"
+
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
+#include "orte/mca/rml/base/base.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/schema/base/base.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/univ_info.h"
 
 /**
  * Leave ORTE.
@@ -68,7 +70,7 @@ int orte_system_finalize(void)
     orte_gpr_base_close();
     orte_schema_base_close();
     orte_rml_base_close();
-    orte_dps_close();
+    orte_dss_close();
     orte_errmgr_base_close();
     
     opal_progress_finalize();

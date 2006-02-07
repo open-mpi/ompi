@@ -32,34 +32,31 @@
 #include <unistd.h>
 #endif
 
-#include "include/orte_constants.h"
-#include "mca/schema/schema.h"
-#include "mca/schema/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/soh/base/base.h"
-#include "mca/rmgr/base/base.h"
-
-#include "support.h"
-
-#include "class/orte_pointer_array.h"
-#include "dps/dps.h"
-#include "runtime/runtime.h"
-#include "util/proc_info.h"
-#include "util/sys_info.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 
-#include "mca/gpr/base/base.h"
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
-#include "mca/gpr/replica/functional_layer/gpr_replica_fn.h"
-#include "mca/gpr/replica/communications/gpr_replica_comm.h"
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/include/orte_constants.h"
+#include "orte/mca/schema/schema.h"
+#include "orte/mca/schema/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
 
-/* output files needed by the test */
-static FILE *test_out=NULL;
+#include "orte/class/orte_pointer_array.h"
+#include "orte/dss/dss.h"
+#include "orte/runtime/runtime.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/sys_info.h"
+
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 
 static void test_cbfunc1(orte_gpr_notify_data_t *data, void *user_tag);
-static void test_cbfunc2(orte_gpr_notify_message_t *msg, void *user_tag);
+static int test_cbfunc2(orte_gpr_notify_message_t *msg);
 
 int main(int argc, char **argv)
 {
@@ -68,27 +65,62 @@ int main(int argc, char **argv)
     orte_gpr_trigger_id_t id2;
     size_t i;
     char *tokens[5], *keys[5];
-    orte_data_type_t types[5];
-    orte_gpr_value_union_t value, values[5];
-    
-    if (getenv("TEST_WRITE_TO_FILE") != NULL) {
-        test_out = fopen( "test_gpr_quick_triggers", "w+" );
-    } else {
-        test_out = stderr;
+
+    opal_init();
+
+    /* register handler for errnum -> string converstion */
+    opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
+
+
+    /* Ensure the process info structure is instantiated and initialized */
+    if (ORTE_SUCCESS != (rc = orte_proc_info())) {
+        return rc;
     }
-    if( test_out == NULL ) {
-      test_failure("gpr_test couldn't open test file failed");
-      test_finalize();
-      exit(1);
-    } 
 
-    /* start things up */
-    orte_init();
+    orte_process_info.seed = true;
+    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_process_info.my_name->cellid = 0;
+    orte_process_info.my_name->jobid = 0;
+    orte_process_info.my_name->vpid = 0;
 
+    /* startup the MCA */
+    if (OMPI_SUCCESS == mca_base_open()) {
+        fprintf(stderr, "MCA started\n");
+    } else {
+        fprintf(stderr, "MCA could not start\n");
+        exit (1);
+    }
+
+    /* open the dss */
+    if (ORTE_SUCCESS == orte_dss_open()) {
+        fprintf(stderr, "DSS started\n");
+    } else {
+        fprintf(stderr, "DSS could not start\n");
+        exit (1);
+    }
+
+    /* ENSURE THE REPLICA IS ISOLATED */
+    setenv("OMPI_MCA_gpr_replica_isolate", "1", 1);
+
+    /* startup the gpr to register data types */
+    if (ORTE_SUCCESS == orte_gpr_base_open()) {
+        fprintf(stderr, "GPR opened\n");
+    } else {
+        fprintf(stderr, "GPR could not open\n");
+        exit (1);
+    }
+
+    /* do a select on the registry components */
+    if (OMPI_SUCCESS == orte_gpr_base_select()) {
+        fprintf(stderr, "GPR selected\n");
+    } else {
+        fprintf(stderr, "GPR could not select\n");
+        exit (1);
+    }
+   
     tokens[0] = strdup("test-token-1");
     tokens[1] = strdup("test-token-2");
     tokens[2] = NULL;
-    value.i32 = 123456;
     fprintf(stderr, "quick-subscribe one value with single key\n");
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&id,
                             NULL,
@@ -97,11 +129,10 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             "test-key", test_cbfunc1, NULL))) {
-        fprintf(test_out, "gpr_test: subscribe of 1 key no names failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: subscribe of 1 key no names failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: subscribe of 1 key no names passed\n");
+        fprintf(stderr, "gpr_test: subscribe of 1 key no names passed\n");
     }
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&id,
                             NULL,
@@ -110,11 +141,10 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             "test-key", test_cbfunc1, NULL))) {
-        fprintf(test_out, "gpr_test: subscribe of 1 key sub name failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: subscribe of 1 key sub name failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: subscribe of 1 key sub name passed\n");
+        fprintf(stderr, "gpr_test: subscribe of 1 key sub name passed\n");
     }
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&id,
                             "orte-std-trigger-single",
@@ -123,11 +153,10 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             "test-key", test_cbfunc1, NULL))) {
-        fprintf(test_out, "gpr_test: subscribe of 1 key trig and sub names failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: subscribe of 1 key trig and sub names failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: subscribe of 1 key trig and sub names passed\n");
+        fprintf(stderr, "gpr_test: subscribe of 1 key trig and sub names passed\n");
     }
     free(tokens[0]);
     free(tokens[1]);
@@ -135,8 +164,6 @@ int main(int argc, char **argv)
     for (i=0; i < 4; i++) {
         asprintf(&tokens[i], "test-token-%lu", (unsigned long)i);
         asprintf(&keys[i], "test-keys-%lu", (unsigned long)i);
-        types[i] = ORTE_INT16;
-        values[i].i16 = i * 1000;
     }
     tokens[4] = NULL;
     keys[4] = NULL;
@@ -148,11 +175,10 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             4, keys, test_cbfunc1, NULL))) {
-        fprintf(test_out, "gpr_test: subscribe of multi key no names failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: subscribe of multi key no names failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: subscribe of multi key no names passed\n");
+        fprintf(stderr, "gpr_test: subscribe of multi key no names passed\n");
     }
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&id,
                             NULL,
@@ -161,11 +187,10 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             4, keys, test_cbfunc1, NULL))) {
-        fprintf(test_out, "gpr_test: subscribe of multi key sub name failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: subscribe of multi key sub name failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: subscribe of multi key sub name passed\n");
+        fprintf(stderr, "gpr_test: subscribe of multi key sub name passed\n");
     }
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&id,
                             "orte-std-trigger-multi",
@@ -174,11 +199,10 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             4, keys, test_cbfunc1, NULL))) {
-        fprintf(test_out, "gpr_test: subscribe of multi key trig and sub names failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: subscribe of multi key trig and sub names failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: subscribe of multi key trig and sub names passed\n");
+        fprintf(stderr, "gpr_test: subscribe of multi key trig and sub names passed\n");
     }
     
     fprintf(stderr, "quick-define-trigger\n");
@@ -188,11 +212,10 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             4, keys, test_cbfunc2, NULL))) {
-        fprintf(test_out, "gpr_test: define_trigger of multi key no names failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: define_trigger of multi key no names failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: subscribe of multi key no names passed\n");
+        fprintf(stderr, "gpr_test: subscribe of multi key no names passed\n");
     }
     if (ORTE_SUCCESS != (rc = orte_gpr.define_trigger(&id,
                             "orte-std-trigger",
@@ -200,45 +223,41 @@ int main(int argc, char **argv)
                             ORTE_GPR_TOKENS_AND,
                             "test-put-segment", tokens,
                             4, keys, test_cbfunc2, NULL))) {
-        fprintf(test_out, "gpr_test: define_trigger of multi key sub name failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
+        fprintf(stderr, "gpr_test: define_trigger of multi key sub name failed with error code %d\n", rc);
         return rc;
     } else {
-        fprintf(test_out, "gpr_test: define_trigger of multi key sub name passed\n");
+        fprintf(stderr, "gpr_test: define_trigger of multi key sub name passed\n");
     }
-    orte_gpr.dump_subscriptions(0);
-    orte_gpr.dump_triggers(0);
+    orte_gpr.dump_subscriptions(0, 0);
+    orte_gpr.dump_triggers(0, 0);
     orte_gpr.dump_local_subscriptions(0);
     orte_gpr.dump_local_triggers(0);
     
     fprintf(stderr, "now finalize and see if all memory cleared\n");
-    orte_finalize();
+    orte_gpr_base_close();
 
-    fclose( test_out );
-/*    result = system( cmd_str );
-    if( result == 0 ) {
-        test_success();
-    }
-    else {
-      test_failure( "test_gpr_replica failed");
-    }
-*/
-    unlink("test_gpr_quick_triggers");
+    orte_dss_close();
+    mca_base_close();
+    opal_malloc_finalize();
+    opal_output_finalize();
+    opal_class_finalize();
 
     return(0);
 }
 
 void test_cbfunc1(orte_gpr_notify_data_t *data, void *tag)
 {
-    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 1\n");
+    fprintf(stderr, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 1\n");
     
     orte_gpr.dump_notify_data(data, 0);
 }
 
-void test_cbfunc2(orte_gpr_notify_message_t *msg, void *tag)
+int test_cbfunc2(orte_gpr_notify_message_t *msg)
 {
-    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 2\n");
+    fprintf(stderr, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 2\n");
     
     orte_gpr.dump_notify_msg(msg, 0);
+
+    return ORTE_SUCCESS;
 }
 

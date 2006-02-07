@@ -29,7 +29,7 @@
 
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
@@ -44,13 +44,13 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
 
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &segment, &n, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &segment, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -67,7 +67,7 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
  RETURN_ERROR:
     if (NULL != segment) free(segment);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -87,25 +87,25 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
 
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &addr_mode, &n, ORTE_GPR_ADDR_MODE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &addr_mode, &n, ORTE_GPR_ADDR_MODE))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &segment, &n, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &segment, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_tokens, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_tokens, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -119,14 +119,14 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
             ret = ORTE_ERR_OUT_OF_RESOURCE;
             goto RETURN_ERROR;
         }
-        if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, tokens, &num_tokens, ORTE_STRING))) {
+        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, tokens, &num_tokens, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }
      }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_keys, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_keys, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -140,7 +140,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
             ret = ORTE_ERR_OUT_OF_RESOURCE;
             goto RETURN_ERROR;
         }
-        if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, keys, &num_keys, ORTE_STRING))) {
+        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, keys, &num_keys, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }
@@ -200,7 +200,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
         free(key_itags);
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -220,12 +220,12 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
 
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    if (ORTE_SUCCESS != (ret = orte_dps.peek(buffer, &type, &n))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.peek(buffer, &type, &n))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -233,7 +233,7 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
     if (ORTE_STRING != type) {  /* get index of segment names */
         seg = NULL;
     } else {
-        if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &segment, &n, ORTE_STRING))) {
+        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &segment, &n, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }
@@ -249,14 +249,14 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
         goto RETURN_ERROR;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &cnt, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &cnt, 1, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
         goto RETURN_PACK_ERROR;
     }
 
     if (0 < cnt) {  /* got a non-zero answer back */
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, index, cnt, ORTE_STRING))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, index, cnt, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             ret = rc;
             goto RETURN_PACK_ERROR;
@@ -266,7 +266,7 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
  RETURN_ERROR:
     /* ensure that the minimum response is generated */
     cnt = 0;
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &cnt, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &cnt, 1, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
     }
@@ -283,7 +283,7 @@ RETURN_PACK_ERROR:
        free(index);
     }
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

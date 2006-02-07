@@ -65,7 +65,7 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
     int i;
     int rc;
   
-    rc = orte_dps.pack(buffer, orte_process_info.my_name, 1, ORTE_NAME);
+    rc = orte_dss.pack(buffer, orte_process_info.my_name, 1, ORTE_NAME);
     if(rc != ORTE_SUCCESS)
         return rc;
 
@@ -76,7 +76,7 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
             continue;
         count++;
     } 
-    rc = orte_dps.pack(buffer, &count, 1, ORTE_INT32);
+    rc = orte_dss.pack(buffer, &count, 1, ORTE_INT32);
     if(rc != ORTE_SUCCESS)
         return rc;
 
@@ -86,7 +86,7 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
         if(opal_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
         inaddr.sin_port = mca_oob_tcp_component.tcp_listen_port;
-        orte_dps.pack(buffer,&inaddr,sizeof(inaddr),ORTE_BYTE);
+        orte_dss.pack(buffer,&inaddr,sizeof(inaddr),ORTE_BYTE);
     }
     return ORTE_SUCCESS;
 }
@@ -101,14 +101,14 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
          return NULL;
 
     count = 1;
-    rc = orte_dps.unpack(buffer, &addr->addr_name, &count, ORTE_NAME);
+    rc = orte_dss.unpack(buffer, &addr->addr_name, &count, ORTE_NAME);
     if(rc != OMPI_SUCCESS) {
         OBJ_RELEASE(addr);
         return NULL;
     }
 
     count = 1;
-    rc = orte_dps.unpack(buffer, &addr->addr_count, &count, ORTE_INT32);
+    rc = orte_dss.unpack(buffer, &addr->addr_count, &count, ORTE_INT32);
     if(rc != OMPI_SUCCESS) {
         OBJ_RELEASE(addr);
         return NULL;
@@ -124,7 +124,7 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
         addr->addr_alloc = addr->addr_count;
         for(i=0; i<addr->addr_count; i++) {
             size_t inaddr_size = sizeof(struct sockaddr_in);
-            rc = orte_dps.unpack(buffer, addr->addr_inet+i, &inaddr_size, ORTE_BYTE);
+            rc = orte_dss.unpack(buffer, addr->addr_inet+i, &inaddr_size, ORTE_BYTE);
             if(rc != OMPI_SUCCESS) {
                 OBJ_RELEASE(addr);
                 return NULL;

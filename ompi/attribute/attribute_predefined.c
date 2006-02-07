@@ -86,6 +86,7 @@
 #include "ompi/communicator/communicator.h"
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -214,11 +215,12 @@ void ompi_attr_create_predefined_callback(
     orte_gpr_notify_data_t *data,
     void *cbdata)
 {
-    size_t i, j, k;
+    size_t i, j, k, *sptr;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
     orte_jobid_t job;
     unsigned int universe_size = 0;
+    int rc;
 
     /* Set some default values */
 
@@ -268,9 +270,13 @@ void ompi_attr_create_predefined_callback(
                         /* make sure we don't get confused - all slot counts
                          * are in size_t fields
                          */
-                        if (ORTE_SIZE == keyval[j]->type) {
+                        if (ORTE_SIZE == keyval[j]->value->type) {
                             /* Process slot count */
-                            universe_size += keyval[j]->value.size;
+                            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval[j]->value, ORTE_SIZE))) {
+                                ORTE_ERROR_LOG(rc);
+                                return;
+                            }
+                            universe_size += *sptr;
                         }
                     }
                 }

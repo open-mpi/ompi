@@ -137,8 +137,8 @@ void ompi_info::open_components()
 
   // Open the DPS
 
-  if (ORTE_SUCCESS != orte_dps_open()) {
-     printf( "Unable to initialize the DPS\n" );
+  if (ORTE_SUCCESS != orte_dss_open()) {
+     printf( "Unable to initialize the DSS\n" );
      return;
   }
     

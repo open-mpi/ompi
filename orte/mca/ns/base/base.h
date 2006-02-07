@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -25,13 +25,14 @@
  * includes
  */
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "dps/dps_types.h"
+#include "opal/mca/mca.h"
 
-#include "mca/ns/ns.h"
+#include "orte/dss/dss_types.h"
+
+#include "orte/mca/ns/ns.h"
 
 
 /*
@@ -61,7 +62,8 @@ typedef uint8_t orte_ns_cmd_bitmask_t;
  * define flag values for remote commands - only used internally
  */
 #define ORTE_NS_CREATE_CELLID_CMD       (int8_t)0x01
-#define ORTE_NS_CREATE_JOBID_CMD        (int8_t)0x02
+#define ORTE_NS_GET_CELL_INFO_CMD       (int8_t)0x02
+#define ORTE_NS_CREATE_JOBID_CMD        (int8_t)0x03
 #define ORTE_NS_RESERVE_RANGE_CMD       (int8_t)0x04
 #define ORTE_NS_ASSIGN_OOB_TAG_CMD      (int8_t)0x08
 #define ORTE_NS_GET_JOB_PEERS_CMD       (int8_t)0x0A
@@ -125,8 +127,8 @@ OMPI_DECLSPEC    int orte_ns_base_get_jobid(orte_jobid_t *jobid, const orte_proc
 OMPI_DECLSPEC    int orte_ns_base_get_cellid(orte_cellid_t *cellid, const orte_process_name_t* name);
 
 OMPI_DECLSPEC    int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
-			const orte_process_name_t* name1,
-			const orte_process_name_t* name2);
+            const orte_process_name_t* name1,
+            const orte_process_name_t* name2);
 
 OMPI_DECLSPEC    int orte_ns_base_free_name(orte_process_name_t **name);
 
@@ -141,7 +143,7 @@ OMPI_DECLSPEC    int orte_ns_base_create_cellid_not_available(orte_cellid_t *cel
 
 OMPI_DECLSPEC    int orte_ns_base_get_cell_info_not_available(orte_cellid_t cellid,
                                 char **site, char **resource);
-                                
+
 OMPI_DECLSPEC    int orte_ns_base_create_jobid_not_available(orte_jobid_t *jobid);
 
 OMPI_DECLSPEC    int orte_ns_base_get_vpid_range_not_available(orte_jobid_t job,
@@ -160,7 +162,7 @@ OMPI_DECLSPEC    int orte_ns_base_define_data_type_not_available(
 
 OMPI_DECLSPEC    int orte_ns_base_create_my_name_not_available(void);
 
-OMPI_DECLSPEC    int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs, 
+OMPI_DECLSPEC    int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
                                   size_t *num_procs, orte_jobid_t job);
 
 OMPI_DECLSPEC    int orte_ns_base_dump_cells_not_available(int output_id);
@@ -169,7 +171,7 @@ OMPI_DECLSPEC    int orte_ns_base_dump_tags_not_available(int output_id);
 OMPI_DECLSPEC    int orte_ns_base_dump_datatypes_not_available(int output_id);
 
 /* Base functions used everywhere */
-OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs, 
+OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs,
                                   size_t *num_procs, size_t *self);
 
 OMPI_DECLSPEC    int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
@@ -195,6 +197,61 @@ OMPI_DECLSPEC    int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest
 
 OMPI_DECLSPEC    int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type);
+
+/*
+ * copy functions
+ */
+
+int orte_ns_base_copy_name(orte_process_name_t **dest, orte_process_name_t *src, orte_data_type_t type);
+
+int orte_ns_base_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, orte_data_type_t type);
+
+int orte_ns_base_copy_cellid(orte_cellid_t **dest, orte_cellid_t *src, orte_data_type_t type);
+
+int orte_ns_base_copy_jobid(orte_jobid_t **dest, orte_jobid_t *src, orte_data_type_t type);
+
+/*
+ * compare functions
+ */
+
+int orte_ns_base_compare_name(orte_process_name_t *value1,
+                              orte_process_name_t *value2,
+                              orte_data_type_t type);
+
+
+int orte_ns_base_compare_vpid(orte_vpid_t *value1,
+                              orte_vpid_t *value2,
+                              orte_data_type_t type);
+
+int orte_ns_base_compare_jobid(orte_jobid_t *value1,
+                               orte_jobid_t *value2,
+                               orte_data_type_t type);
+
+int orte_ns_base_compare_cellid(orte_cellid_t *value1,
+                                orte_cellid_t *value2,
+                                orte_data_type_t type);
+
+/*
+ * size functions
+ */
+
+int orte_ns_base_std_size(size_t *size, void *src, orte_data_type_t type);
+
+/*
+ * release functions
+ */
+
+void orte_ns_base_std_release(orte_data_value_t *value);
+
+/*
+ * print functions
+ */
+
+int orte_ns_base_std_print(char **output, char *prefix, void *src, orte_data_type_t type);
+
+int orte_ns_base_print_name(char **output, char *prefix, orte_process_name_t *name, orte_data_type_t type);
+
+
 /*
  * globals that might be needed
  */

@@ -37,16 +37,16 @@
 
 #include <sys/types.h>
 
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 #include "opal/class/opal_list.h"
 
-#include "mca/mca.h"
-#include "mca/ns/ns_types.h"
-#include "mca/rml/rml_types.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/rml/rml_types.h"
 
-#include "dps/dps_types.h"
-#include "mca/gpr/gpr_types.h"
-#include "mca/rml/rml_types.h"
+#include "orte/dss/dss_types.h"
+#include "orte/mca/gpr/gpr_types.h"
+#include "orte/mca/rml/rml_types.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -251,14 +251,12 @@ typedef int (*orte_gpr_base_module_put_fn_t)(size_t cnt, orte_gpr_value_t **valu
 /* simplified version of the put command */
 typedef int (*orte_gpr_base_module_put_1_fn_t)(orte_gpr_addr_mode_t addr_mode,
                                                char *segment, char **tokens,
-                                               char *key, orte_data_type_t type,
-                                               orte_gpr_value_union_t value);
+                                               char *key, orte_data_value_t *value);
 
 typedef int (*orte_gpr_base_module_put_N_fn_t)(orte_gpr_addr_mode_t addr_mode,
                                                char *segment, char **tokens,
                                                size_t n, char **keys,
-                                               orte_data_type_t *types,
-                                               orte_gpr_value_union_t *data_values);
+                                               orte_data_value_t **data_values);
 
 
 /*
@@ -605,6 +603,8 @@ typedef int (*orte_gpr_base_module_dump_notify_data_fn_t)(orte_gpr_notify_data_t
 
 typedef int (*orte_gpr_base_module_dump_value_fn_t)(orte_gpr_value_t *value, int output_id);
 
+typedef int (*orte_gpr_base_module_dump_segment_size_fn_t)(char *segment, int output_id);
+
 /*
  * Increment value
  * This function increments the stored value of an existing registry entry by one. Failure
@@ -620,21 +620,6 @@ typedef int (*orte_gpr_base_module_increment_value_fn_t)(orte_gpr_value_t *value
 typedef int (*orte_gpr_base_module_decrement_value_fn_t)(orte_gpr_value_t *value);
 
 
-/* Transfer a payload between keyval values
- * Because the data type of the value dictates how it must be transferred, it can be
- * a burden to transfer the payload. This function centralizes that action so it only
- * need be defined once.
- *
- * @param dest The address of the value union where the data is to be placed.
- * @param src The address of the value union currently holding the data.
- * @param type The type of the data
- *
- * @retval ORTE_SUCCESS Operation successfully completed.
- * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
- */
-typedef int (*orte_gpr_base_module_xfer_payload_fn_t)(orte_gpr_value_union_t *dest,
-                                    orte_gpr_value_union_t *src, orte_data_type_t type);
-
 /* Deliver a notify message
  * To support the broadcast of stage gate messages that supply all subscribed
  * data in a single message, we have to provide an API that allows the xcast
@@ -648,6 +633,41 @@ typedef int (*orte_gpr_base_module_xfer_payload_fn_t)(orte_gpr_value_union_t *de
 typedef int (*orte_gpr_base_module_deliver_notify_msg_t)(orte_gpr_notify_message_t *msg);
 
 
+/* Create a gpr value structure
+ * To make it easier for users, this function will create an orte_gpr_value_t structure,
+ * including performing all the error checks to ensure adequate memory is available.
+ *
+ * Any data that the caller wishes to provide will be pre-loaded into the returned value.
+ * The function will allocate space for the value object and for the number of keyvals
+ * and tokens to be stored in the object. If the caller wishes to allocate that space
+ * themselves, or does not want space allocated for those purposes, then just pass a
+ * value of "0" (zero) and the function will not allocate memory to those areas. Likewise,
+ * a value of NULL for segment will cause the function to ignore that field in the
+ * value object.
+ *
+ * @retval ORTE_SUCCESS Value structure successfully created
+ * @retval ORTE_XXXX Appropriate error code indicating problem encountered.
+ */
+typedef int (*orte_gpr_base_module_create_value_fn_t)(orte_gpr_value_t **value,
+                                                orte_gpr_addr_mode_t addr_mode,
+                                                char *segment,
+                                                size_t cnt,  /**< Number of keyval objects */
+                                                size_t num_tokens);
+/* Create a keyval object
+ * To make it easier for users, this function will create an orte_gpr_keyval_t object,
+ * including performing all the error checks to ensure adequate memory is available.
+ *
+ * Any data that the caller provides will be copied into the returned keyval object.
+ * If key or data are set to NULL, then those fields will be left to their default NULL
+ * values.
+ *
+ * @retval ORTE_SUCCESS Value structure successfully created
+ * @retval ORTE_XXXX Appropriate error code indicating problem encountered.
+ */
+typedef int (*orte_gpr_base_module_create_keyval_fn_t)(orte_gpr_keyval_t **keyval,
+                                                 char *key,
+                                                 orte_data_type_t type,
+                                                 void *data);
 /*
  * Ver 1.0.0
  */
@@ -670,8 +690,9 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_delete_segment_nb_fn_t delete_segment_nb;
     orte_gpr_base_module_index_nb_fn_t index_nb;
     /* GENERAL OPERATIONS */
+    orte_gpr_base_module_create_value_fn_t create_value;
+    orte_gpr_base_module_create_keyval_fn_t create_keyval;
     orte_gpr_base_module_preallocate_segment_fn_t preallocate_segment;
-    orte_gpr_base_module_xfer_payload_fn_t xfer_payload;
     orte_gpr_base_module_deliver_notify_msg_t deliver_notify_msg;
     /* ARITHMETIC OPERATIONS */
     orte_gpr_base_module_increment_value_fn_t increment_value;
@@ -701,6 +722,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_dump_notify_msg_fn_t dump_notify_msg;
     orte_gpr_base_module_dump_notify_data_fn_t dump_notify_data;
     orte_gpr_base_module_dump_value_fn_t dump_value;
+    orte_gpr_base_module_dump_segment_size_fn_t dump_segment_size;
     /* CLEANUP OPERATIONS */
     orte_gpr_base_module_cleanup_job_fn_t cleanup_job;
     orte_gpr_base_module_cleanup_proc_fn_t cleanup_process;

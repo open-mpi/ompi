@@ -23,7 +23,7 @@
 #include "opal/util/output.h"
 #include "util/proc_info.h"
 
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/errmgr/errmgr.h"
@@ -274,18 +274,21 @@ static void mca_pml_base_modex_registry_callback(
                         void* bytes = NULL;
                         size_t cnt;
                         size_t num_bytes;
+                        orte_byte_object_t *bo;
                         if(strcmp(keyval[j]->key,OMPI_MODEX_KEY) != 0)
                             continue;
 
                         OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-                        if (ORTE_SUCCESS != (rc = orte_dps.load(&buffer,
-                            keyval[j]->value.byteobject.bytes,
-                            keyval[j]->value.byteobject.size))) {
+                        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&bo, keyval[j]->value, ORTE_BYTE_OBJECT))) {
+                            ORTE_ERROR_LOG(rc);
+                            continue;
+                        }
+                        if (ORTE_SUCCESS != (rc = orte_dss.load(&buffer, bo->bytes, bo->size))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
+                        if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
@@ -293,7 +296,7 @@ static void mca_pml_base_modex_registry_callback(
                         free(ptr);
 
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
+                        if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, &ptr, &cnt, ORTE_STRING))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
@@ -301,19 +304,19 @@ static void mca_pml_base_modex_registry_callback(
                         free(ptr);
 
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer,
+                        if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
                             &component.mca_component_major_version, &cnt, ORTE_INT32))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer,
+                        if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
                             &component.mca_component_minor_version, &cnt, ORTE_INT32))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
                         cnt = 1;
-                        if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer,
+                        if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
                             &num_bytes, &cnt, ORTE_SIZE))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
@@ -323,7 +326,7 @@ static void mca_pml_base_modex_registry_callback(
                                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                                 continue;
                             }
-                            if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
+                            if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
                                 ORTE_ERROR_LOG(rc);
                                 continue;
                             }
@@ -487,11 +490,12 @@ int mca_pml_base_modex_send(
     size_t size)
 {
     orte_jobid_t jobid;
-    orte_gpr_value_union_t value;
     int rc;
     orte_buffer_t buffer;
     size_t i, num_tokens;
     char *ptr, *segment, **tokens;
+    orte_byte_object_t bo;
+    orte_data_value_t value = ORTE_DATA_VALUE_EMPTY;
 
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
@@ -528,36 +532,49 @@ int mca_pml_base_modex_send(
 #else
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
     ptr = source_component->mca_type_name;
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &ptr, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &ptr, 1, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     ptr = source_component->mca_component_name;
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &ptr, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &ptr, 1, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &source_component->mca_component_major_version, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &source_component->mca_component_major_version, 1, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &source_component->mca_component_minor_version, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &source_component->mca_component_minor_version, 1, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &size, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &size, 1, ORTE_SIZE))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     if (0 != size) {
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, (void*)data, size, ORTE_BYTE))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, (void*)data, size, ORTE_BYTE))) {
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.unload(&buffer, (void**)&value.byteobject.bytes,
-        (size_t*)&value.byteobject.size))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss.unload(&buffer, (void**)&(bo.bytes), (size_t*)&(bo.size)))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     OBJ_DESTRUCT(&buffer);
+
+    /* setup the data_value structure to hold the byte object */
+    if (ORTE_SUCCESS != (rc = orte_dss.set(&value, (void*)&bo, ORTE_BYTE_OBJECT))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
 #endif
 
     rc = orte_gpr.put_1(ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
-                        segment, tokens, OMPI_MODEX_KEY, ORTE_BYTE_OBJECT, value);
+                        segment, tokens, OMPI_MODEX_KEY, &value);
 
 cleanup:
     free(segment);

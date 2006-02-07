@@ -37,13 +37,13 @@
 #include <libgen.h>
 #endif
 
-#include "include/orte_constants.h"
+#include "orte/include/orte_constants.h"
 
-#include "dps/dps.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/oob/oob_types.h"
-#include "mca/rml/rml.h"
+#include "orte/mca/oob/oob_types.h"
+#include "orte/mca/rml/rml.h"
 
 #include "gpr_proxy.h"
 
@@ -88,7 +88,7 @@ int orte_gpr_proxy_dump_all(int output_id)
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -149,7 +149,7 @@ int orte_gpr_proxy_dump_segments(char *segment, int output_id)
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -210,7 +210,7 @@ int orte_gpr_proxy_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -271,7 +271,7 @@ int orte_gpr_proxy_dump_subscriptions(orte_gpr_subscription_id_t start, int outp
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -334,7 +334,7 @@ int orte_gpr_proxy_dump_a_trigger(char *name,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -398,7 +398,7 @@ int orte_gpr_proxy_dump_a_subscription(char *name,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -460,7 +460,7 @@ int orte_gpr_proxy_dump_callbacks(int output_id)
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -552,6 +552,67 @@ int orte_gpr_proxy_dump_value(orte_gpr_value_t *value, int output_id)
         ORTE_ERROR_LOG(rc);
     }
     
+    OBJ_RELEASE(answer);
+    return rc;
+}
+
+int orte_gpr_proxy_dump_segment_size(char *segment, int output_id)
+{
+    orte_gpr_cmd_flag_t command;
+    orte_buffer_t *cmd;
+    orte_buffer_t *answer;
+    int rc;
+    size_t n;
+
+    if (orte_gpr_proxy_globals.compound_cmd_mode) {
+        return orte_gpr_base_pack_dump_segment_size(orte_gpr_proxy_globals.compound_cmd, segment);
+    }
+
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == cmd) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_dump_segment_size(cmd, segment))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+
+    n = 1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
+    }
+
+    if (ORTE_GPR_DUMP_SEGMENT_SIZE_CMD != command) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(answer);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
     OBJ_RELEASE(answer);
     return rc;
 }

@@ -20,7 +20,7 @@
 #include "include/orte_constants.h"
 #include "util/proc_info.h"
 #include "opal/util/output.h"
-#include "dps/dps.h"
+#include "dss/dss_types.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/rds/base/base.h"

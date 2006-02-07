@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -29,13 +29,15 @@
 #include <netinet/in.h>
 #endif
 
-#include "include/constants.h"
+#include "orte/include/orte_constants.h"
+
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "mca/mca.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/mca/mca.h"
 
-#include "mca/ns/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/ns/base/base.h"
 
 /**
  * globals
@@ -45,7 +47,7 @@
 /*
  * "not available" functions
  */
-int 
+int
 orte_ns_base_module_init_not_available(void)
 {
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
@@ -101,7 +103,7 @@ orte_ns_base_define_data_type_not_available(
                                   const char *name,
                                   orte_data_type_t *type)
 {
-    *type = ORTE_DPS_ID_MAX;
+    *type = ORTE_DSS_ID_MAX;
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
@@ -113,7 +115,7 @@ orte_ns_base_create_my_name_not_available(void)
     return ORTE_ERR_UNREACH;
 }
 
-int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs, 
+int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
                                   size_t *num_procs, orte_jobid_t job)
 {
     *procs = NULL;
@@ -121,7 +123,7 @@ int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
- 
+
 int
 orte_ns_base_dump_cells_not_available(int output_id)
 {
@@ -162,7 +164,7 @@ int orte_ns_base_assign_cellid_to_process(orte_process_name_t *name)
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     name->cellid = 0;
     return ORTE_SUCCESS;
 }
@@ -174,18 +176,18 @@ int orte_ns_base_create_process_name(orte_process_name_t **name,
                                   orte_vpid_t vpid)
 {
     *name = NULL;
-    
+
     if (ORTE_CELLID_MAX < cell ||
         ORTE_JOBID_MAX < job ||
-	    ORTE_VPID_MAX < vpid) {
+        ORTE_VPID_MAX < vpid) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	    return ORTE_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 
     *name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
     if (NULL == *name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	    return ORTE_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     (*name)->cellid = cell;
@@ -197,7 +199,7 @@ int orte_ns_base_create_process_name(orte_process_name_t **name,
 int orte_ns_base_derive_vpid(orte_vpid_t *vpid, orte_vpid_t base_vpid, int offset)
 {
     *vpid = base_vpid + (orte_vpid_t)offset;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -209,9 +211,9 @@ int orte_ns_base_copy_process_name(orte_process_name_t **dest,
     orte_jobid_t job;
     orte_vpid_t vpid;
     int rc;
-    
+
     *dest = NULL;
-    
+
     if (NULL == src) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -233,7 +235,7 @@ int orte_ns_base_copy_process_name(orte_process_name_t **dest,
     if (ORTE_SUCCESS != (rc = orte_ns_base_create_process_name(dest, cell, job, vpid))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return rc;
 }
 
@@ -241,10 +243,10 @@ int orte_ns_base_get_proc_name_string(char **name_string,
                                    const orte_process_name_t* name)
 {
     *name_string = NULL;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	    return ORTE_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 
     if (0 > asprintf(name_string, "%lu.%lu.%lu", ORTE_NAME_ARGS(name))) {
@@ -272,7 +274,7 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
     /* check for NULL string - error */
     if (NULL == name_string) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	    return ORTE_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 
     temp = strdup(name_string);
@@ -284,11 +286,11 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
 
     tmpint = strtoul(token, NULL, 10);
     if (ORTE_CELLID_MAX >= tmpint) {
-	   cell = (orte_cellid_t)tmpint;
+       cell = (orte_cellid_t)tmpint;
     } else {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return_code = ORTE_ERR_BAD_PARAM;
-	    goto CLEANUP;
+        goto CLEANUP;
     }
 
     token = strtok(NULL, delimiters);  /* get second field -> jobid */
@@ -298,11 +300,11 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
 
     tmpint = strtoul(token, NULL, 10);
     if (ORTE_JOBID_MAX >= tmpint) {
-	   job = (orte_jobid_t)tmpint;
+       job = (orte_jobid_t)tmpint;
     } else {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
        return_code = ORTE_ERR_BAD_PARAM;
-	   goto CLEANUP;
+       goto CLEANUP;
     }
 
     token = strtok(NULL, delimiters);  /* get third field -> vpid */
@@ -312,11 +314,11 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
 
     tmpint = strtoul(token, NULL, 10);
     if (ORTE_VPID_MAX >= tmpint) {
-	   vpid = (orte_vpid_t)tmpint;
+       vpid = (orte_vpid_t)tmpint;
     } else {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
        return_code = ORTE_ERR_BAD_PARAM;
-	   goto CLEANUP;
+       goto CLEANUP;
     }
 
     if (ORTE_SUCCESS != (return_code = orte_ns_base_create_process_name(name, cell, job, vpid))) {
@@ -325,7 +327,7 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
 
  CLEANUP:
     if (temp) {
-	   free(temp);
+       free(temp);
     }
 
     return return_code;
@@ -335,15 +337,15 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
 int orte_ns_base_get_vpid_string(char **vpid_string, const orte_process_name_t* name)
 {
     *vpid_string = NULL;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	   return ORTE_ERR_BAD_PARAM;
+       return ORTE_ERR_BAD_PARAM;
     }
 
     if (0 > asprintf(vpid_string, "%lu", (unsigned long) name->vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     return ORTE_SUCCESS;
@@ -353,7 +355,7 @@ int orte_ns_base_get_vpid_string(char **vpid_string, const orte_process_name_t* 
 int orte_ns_base_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid)
 {
     *vpid_string = NULL;
-    
+
     if (0 > asprintf(vpid_string, "%lu", (unsigned long) vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -368,12 +370,12 @@ int orte_ns_base_convert_string_to_vpid(orte_vpid_t *vpid, const char* vpidstrin
     unsigned long int tmpint;
 
     *vpid = ORTE_VPID_MAX;
-    
+
     if (NULL == vpidstring) {  /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     tmpint = strtoul(vpidstring, NULL, 10);
     if (ORTE_VPID_MAX >= tmpint) {
         *vpid = (orte_vpid_t)tmpint;
@@ -390,15 +392,15 @@ int orte_ns_base_convert_string_to_vpid(orte_vpid_t *vpid, const char* vpidstrin
 int orte_ns_base_get_jobid_string(char **jobid_string, const orte_process_name_t* name)
 {
     *jobid_string = NULL;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	   return ORTE_ERR_BAD_PARAM;
+       return ORTE_ERR_BAD_PARAM;
     }
 
     if (0 > asprintf(jobid_string, "%lu", (unsigned long) name->jobid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     return ORTE_SUCCESS;
@@ -408,10 +410,10 @@ int orte_ns_base_get_jobid_string(char **jobid_string, const orte_process_name_t
 int orte_ns_base_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jobid)
 {
     *jobid_string = NULL;
-    
+
     if (0 > asprintf(jobid_string, "%lu", (unsigned long) jobid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     return ORTE_SUCCESS;
@@ -423,18 +425,18 @@ int orte_ns_base_convert_string_to_jobid(orte_jobid_t *jobid, const char* jobids
     unsigned long int tmpint;
 
     *jobid = ORTE_JOBID_MAX;
-    
+
     if (NULL == jobidstring) {  /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     tmpint = strtoul(jobidstring, NULL, 10);
     if (ORTE_JOBID_MAX >= tmpint) {
-	   *jobid = (orte_jobid_t)tmpint;
+       *jobid = (orte_jobid_t)tmpint;
     } else {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	   *jobid = ORTE_JOBID_MAX;
+       *jobid = ORTE_JOBID_MAX;
        return ORTE_ERR_BAD_PARAM;
     }
 
@@ -445,15 +447,15 @@ int orte_ns_base_convert_string_to_jobid(orte_jobid_t *jobid, const char* jobids
 int orte_ns_base_get_cellid_string(char **cellid_string, const orte_process_name_t* name)
 {
     *cellid_string = NULL;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	   return ORTE_ERR_BAD_PARAM;
+       return ORTE_ERR_BAD_PARAM;
     }
 
     if (0 > asprintf(cellid_string, "%lu", (unsigned long) name->cellid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     return ORTE_SUCCESS;
@@ -463,12 +465,12 @@ int orte_ns_base_get_cellid_string(char **cellid_string, const orte_process_name
 int orte_ns_base_convert_cellid_to_string(char **cellid_string, const orte_cellid_t cellid)
 {
     *cellid_string = NULL;
-    
+
     if (0 > asprintf(cellid_string, "%lu", (unsigned long) cellid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -476,14 +478,14 @@ int orte_ns_base_convert_cellid_to_string(char **cellid_string, const orte_celli
 int orte_ns_base_convert_string_to_cellid(orte_cellid_t *cellid, const char *cellidstring)
 {
     unsigned long int tmpint;
-    
+
     *cellid = ORTE_CELLID_MAX;
-    
+
     if (NULL == cellidstring) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     tmpint = strtoul(cellidstring, NULL, 10);
     if (ORTE_CELLID_MAX >= tmpint) {
         *cellid = (orte_cellid_t)tmpint;
@@ -492,7 +494,7 @@ int orte_ns_base_convert_string_to_cellid(orte_cellid_t *cellid, const char *cel
         *cellid = ORTE_CELLID_MAX;
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -500,14 +502,14 @@ int orte_ns_base_convert_string_to_cellid(orte_cellid_t *cellid, const char *cel
 int orte_ns_base_get_vpid(orte_vpid_t *vpid, const orte_process_name_t* name)
 {
     *vpid = ORTE_VPID_MAX;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	   return ORTE_ERR_BAD_PARAM;
+       return ORTE_ERR_BAD_PARAM;
     }
 
     *vpid = name->vpid;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -515,38 +517,38 @@ int orte_ns_base_get_vpid(orte_vpid_t *vpid, const orte_process_name_t* name)
 int orte_ns_base_get_jobid(orte_jobid_t *jobid, const orte_process_name_t* name)
 {
     *jobid = ORTE_JOBID_MAX;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	   return ORTE_ERR_BAD_PARAM;
+       return ORTE_ERR_BAD_PARAM;
     }
 
     *jobid = name->jobid;
-    
+
     return ORTE_SUCCESS;
 }
 
 int orte_ns_base_get_cellid(orte_cellid_t *cellid, const orte_process_name_t* name)
 {
     *cellid = ORTE_CELLID_MAX;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-	   return ORTE_ERR_BAD_PARAM;
+       return ORTE_ERR_BAD_PARAM;
     }
 
     *cellid = name->cellid;
-    
+
     return ORTE_SUCCESS;
 }
 
 
 int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
-		    const orte_process_name_t* name1,
-		    const orte_process_name_t* name2)
+            const orte_process_name_t* name1,
+            const orte_process_name_t* name2)
 {
     if (NULL == name1 && NULL == name2) {
-	   return 0;
+       return 0;
     } else if (NULL == name1) {
        return -1;
     } else if (NULL == name2) {
@@ -554,22 +556,22 @@ int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
     }
 
     if (ORTE_NS_CMP_CELLID & fields) { /* check cellid field */
-	if (name1->cellid < name2->cellid) {
+    if (name1->cellid < name2->cellid) {
         return -1;
-	} else if (name1->cellid > name2->cellid) {
+    } else if (name1->cellid > name2->cellid) {
         return 1;
-	}
+    }
     }
 
     /* get here if cellid's are equal, or cellid not being checked */
     /* now check job id */
 
     if (ORTE_NS_CMP_JOBID & fields) {
-	if (name1->jobid < name2->jobid) {
+    if (name1->jobid < name2->jobid) {
         return -1;
-	} else if (name1->jobid > name2->jobid) {
+    } else if (name1->jobid > name2->jobid) {
         return 1;
-	}
+    }
     }
 
     /* get here if cellid's and jobid's are equal, or neither being checked,
@@ -578,11 +580,11 @@ int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
      */
 
     if (ORTE_NS_CMP_VPID & fields) {
-	if (name1->vpid < name2->vpid) {
+    if (name1->vpid < name2->vpid) {
         return -1;
-	} else if (name1->vpid > name2->vpid) {
+    } else if (name1->vpid > name2->vpid) {
         return 1;
-	}
+    }
     }
 
     /* only way to get here is if all fields are being checked and are equal,
@@ -598,15 +600,15 @@ int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
 int orte_ns_base_free_name(orte_process_name_t **name)
 {
     if (NULL != name && NULL != *name) {
-	   free(*name);
+       free(*name);
     }
 
     *name = NULL;
-    
+
     return ORTE_SUCCESS;
 }
 
-int orte_ns_base_get_peers(orte_process_name_t **procs, 
+int orte_ns_base_get_peers(orte_process_name_t **procs,
                            size_t *num_procs, size_t *self)
 {
     size_t i;
@@ -614,28 +616,28 @@ int orte_ns_base_get_peers(orte_process_name_t **procs,
     orte_cellid_t mycellid;
     orte_jobid_t myjobid;
     orte_vpid_t myvpid;
-    
+
     *procs = (orte_process_name_t*)malloc(orte_process_info.num_procs *
                                             sizeof(orte_process_name_t));
     if (NULL == *procs) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns.get_cellid(&mycellid, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     if (ORTE_SUCCESS != orte_ns.get_jobid(&myjobid, orte_process_info.my_name)) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     if (ORTE_SUCCESS != orte_ns.get_vpid(&myvpid, orte_process_info.my_name)) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     for (i=0; i < orte_process_info.num_procs; i++) {
         (*procs)[i].cellid = mycellid;
         (*procs)[i].jobid = myjobid;
@@ -644,7 +646,7 @@ int orte_ns_base_get_peers(orte_process_name_t **procs,
 
     *num_procs = orte_process_info.num_procs;
     *self = (size_t)(myvpid - orte_process_info.vpid_start);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -660,14 +662,14 @@ int orte_ns_base_print_dump(orte_buffer_t *buffer, int output_id)
     int rc;
 
     n = 1;
-    while (ORTE_SUCCESS == orte_dps.peek(buffer, &type, &n)) {
-       if (ORTE_SUCCESS != 
-           (rc = orte_dps.unpack(buffer, &line, &n, ORTE_STRING))) {
+    while (ORTE_SUCCESS == orte_dss.peek(buffer, &type, &n)) {
+       if (ORTE_SUCCESS !=
+           (rc = orte_dss.unpack(buffer, &line, &n, ORTE_STRING))) {
            ORTE_ERROR_LOG(rc);
            return rc;
        }
-	   opal_output(output_id, "%s", line);
-	   free(line);
+       opal_output(output_id, "%s", line);
+       free(line);
        n=1;
     }
 
