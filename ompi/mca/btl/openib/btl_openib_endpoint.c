@@ -21,17 +21,17 @@
 #include <sys/time.h>
 #include <time.h>
 #include "include/types.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/errmgr.h"
-#include "dps/dps.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/dss/dss.h"
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h" 
 #include "btl_openib_proc.h"
 #include "btl_openib_frag.h"
-#include "class/ompi_free_list.h" 
+#include "ompi/class/ompi_free_list.h" 
 #include <errno.h> 
 #include <string.h> 
 
@@ -269,38 +269,38 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
 
     /* pack the info in the send buffer */
 
-    rc = orte_dps.pack(buffer, &endpoint->lcl_qp_hp->qp_num, 1, ORTE_UINT32);
+    rc = orte_dss.pack(buffer, &endpoint->lcl_qp_hp->qp_num, 1, ORTE_UINT32);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    rc = orte_dps.pack(buffer, &endpoint->lcl_qp_lp->qp_num, 1, ORTE_UINT32);
+    rc = orte_dss.pack(buffer, &endpoint->lcl_qp_lp->qp_num, 1, ORTE_UINT32);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    rc = orte_dps.pack(buffer, &endpoint->lcl_psn_hp, 1, ORTE_UINT32); 
+    rc = orte_dss.pack(buffer, &endpoint->lcl_psn_hp, 1, ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
      
-    rc = orte_dps.pack(buffer, &endpoint->lcl_psn_lp, 1, ORTE_UINT32); 
+    rc = orte_dss.pack(buffer, &endpoint->lcl_psn_lp, 1, ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    rc = orte_dps.pack(buffer, &endpoint->endpoint_btl->ib_port_attr->lid, 1, ORTE_UINT16);
+    rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->ib_port_attr->lid, 1, ORTE_UINT16);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     
-    rc = orte_dps.pack(buffer, &((mca_btl_openib_endpoint_t*) endpoint)->subnet, 1, ORTE_UINT16);
+    rc = orte_dss.pack(buffer, &((mca_btl_openib_endpoint_t*) endpoint)->subnet, 1, ORTE_UINT16);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -533,55 +533,55 @@ static void mca_btl_openib_endpoint_recv(
     /* start by unpacking data first so we know who is knocking at 
        our door */ 
     
-    rc = orte_dps.unpack(buffer, &rem_info.rem_qp_num_hp, &cnt, ORTE_UINT32);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num_hp, &cnt, ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dps.unpack(buffer, &rem_info.rem_qp_num_lp, &cnt, ORTE_UINT32);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num_lp, &cnt, ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dps.unpack(buffer, &rem_info.rem_psn_hp, &cnt, ORTE_UINT32);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_psn_hp, &cnt, ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
-    }rc = orte_dps.unpack(buffer, &rem_info.rem_psn_lp, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    rc = orte_dps.unpack(buffer, &rem_info.rem_lid, &cnt, ORTE_UINT16);
+    }rc = orte_dss.unpack(buffer, &rem_info.rem_psn_lp, &cnt, ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dps.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT16);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_lid, &cnt, ORTE_UINT16);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT16);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
 #if 0
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->r_key, &cnt, ORTE_UINT32); 
+    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->r_key, &cnt, ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) { 
         ORTE_ERROR_LOG(rc); 
         return rc; 
     }
     
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_base, &cnt, ORTE_UINT32); 
+    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_base, &cnt, ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) { 
         ORTE_ERROR_LOG(rc); 
         return rc; 
     }
     
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_size, &cnt, ORTE_UINT32); 
+    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_size, &cnt, ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) { 
         ORTE_ERROR_LOG(rc); 
         return rc; 
     }
 
-    rc = orte_dps.unpack(buffer, &ib_endpoint->rdma_buf->rem_cnt, &cnt, ORTE_UINT32); 
+    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_cnt, &cnt, ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) { 
         ORTE_ERROR_LOG(rc); 
         return rc; 

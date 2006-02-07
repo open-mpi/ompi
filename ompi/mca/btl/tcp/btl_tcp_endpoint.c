@@ -46,11 +46,11 @@
 #include <time.h>
 #endif  /* HAVE_TIME_H */
 #include "include/types.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/btl/base/btl_base_error.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp.h"
 #include "btl_tcp_endpoint.h" 
 #include "btl_tcp_proc.h"
