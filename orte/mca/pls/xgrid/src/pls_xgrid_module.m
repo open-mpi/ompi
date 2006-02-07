@@ -124,7 +124,7 @@ orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
     char *keys[2];
     char *jobid_string;
     orte_gpr_value_t** values = NULL;
-    orte_process_name *name;
+    orte_process_name_t *name;
     size_t i, j, num_values = 0;
     int rc;
 
