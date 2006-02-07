@@ -38,7 +38,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
 {
     int rc, count;
     orte_app_context_t **app_context;
-    size_t i, max_n=1, temp;
+    size_t i, max_n=1;
     int8_t have_prefix;
 
     /* unpack into array of app_context objects */

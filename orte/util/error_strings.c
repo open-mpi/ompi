@@ -21,6 +21,7 @@
 #include "orte_config.h"
 
 #include "orte/include/orte_constants.h"
+#include <stdio.h>
 
 const char *
 orte_err2str(int errnum)

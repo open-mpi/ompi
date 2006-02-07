@@ -271,7 +271,7 @@ orte_gpr_null_decrement_value(orte_gpr_value_t * value)
 
 static int orte_gpr_null_put_1(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
-                               char *key, orte_data_value_t value)
+                               char *key, orte_data_value_t* value)
 {
     return ORTE_SUCCESS;
 }
@@ -280,7 +280,7 @@ static int orte_gpr_null_put_1(orte_gpr_addr_mode_t addr_mode,
 static int orte_gpr_null_put_N(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
                                size_t n, char **keys,
-                               orte_data_value_t *data_values)
+                               orte_data_value_t **data_values)
 {
     return ORTE_SUCCESS;
 }
