@@ -992,7 +992,7 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_trigger_t *trig)
     orte_gpr_replica_subscription_t **subs;
     orte_gpr_replica_counter_t **cntr;
     orte_gpr_replica_itagval_t *base_value=NULL;
-    orte_data_type_t base_type;
+    orte_data_type_t base_type = ORTE_UNDEF;
     bool first, fire;
     size_t i, j;
     int rc;

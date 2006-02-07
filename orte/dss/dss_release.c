@@ -28,7 +28,7 @@
 
 void orte_dss_release(orte_data_value_t *value)
 {
-    orte_dss_type_info_t *info;
+    orte_dss_type_info_t *info = NULL;
 
     /* check for error */
     if (NULL == value) {
@@ -41,6 +41,7 @@ void orte_dss_release(orte_data_value_t *value)
     if (!(value->type < orte_dss_types->size) ||
         (NULL == (info = orte_pointer_array_get_item(orte_dss_types, value->type)))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
+        return;
     }
 
     info->odti_release_fn(value);
