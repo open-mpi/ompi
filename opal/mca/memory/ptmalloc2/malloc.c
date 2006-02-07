@@ -3448,7 +3448,7 @@ public_mALLOc(size_t bytes)
 
   /* OMPI Change */
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(victim, mUSABLe(victim));
+  opal_mem_hooks_alloc_hook(victim, mUSABLe(victim), 1);
 #endif
 
   return victim;
@@ -3471,7 +3471,7 @@ public_fREe(Void_t* mem)
   }
   /* OMPI change */
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_release_hook(mem, mUSABLe(mem));
+  opal_mem_hooks_release_hook(mem, mUSABLe(mem), 1);
 #endif
 
   if (mem == 0)                              /* free(0) has no effect */
@@ -3523,7 +3523,7 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
     return (*hook)(oldmem, bytes, RETURN_ADDRESS (0));
   /* OMPI change */
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_release_hook(oldmem, mUSABLe(oldmem));
+  opal_mem_hooks_release_hook(oldmem, mUSABLe(oldmem), 1);
 #endif
 
 #if REALLOC_ZERO_BYTES_FREES
@@ -3556,7 +3556,7 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
     /* Note the extra SIZE_SZ overhead. */
     if(oldsize - SIZE_SZ >= nb) {
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-      opal_mem_hooks_alloc_hook(oldmem, mUSABLe(oldmem));
+      opal_mem_hooks_alloc_hook(oldmem, mUSABLe(oldmem), 1);
 #endif
       return oldmem; /* do nothing */
     }
@@ -3566,7 +3566,7 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
     MALLOC_COPY(newmem, oldmem, oldsize - 2*SIZE_SZ);
     munmap_chunk(oldp);
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-    opal_mem_hooks_alloc_hook(newmem, mUSABLe(newmem));
+    opal_mem_hooks_alloc_hook(newmem, mUSABLe(newmem), 1);
 #endif
     return newmem;
   }
@@ -3595,7 +3595,7 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
   assert(!newp || chunk_is_mmapped(mem2chunk(newp)) ||
 	 ar_ptr == arena_for_chunk(mem2chunk(newp)));
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(newp, mUSABLe(newp));
+  opal_mem_hooks_alloc_hook(newp, mUSABLe(newp), 1);
 #endif
   return newp;
 }
@@ -3646,7 +3646,7 @@ public_mEMALIGn(size_t alignment, size_t bytes)
   assert(!p || chunk_is_mmapped(mem2chunk(p)) ||
 	 ar_ptr == arena_for_chunk(mem2chunk(p)));
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(p, mUSABLe(p));
+  opal_mem_hooks_alloc_hook(p, mUSABLe(p), 1);
 #endif
   return p;
 }
@@ -3668,7 +3668,7 @@ public_vALLOc(size_t bytes)
   p = _int_valloc(ar_ptr, bytes);
   (void)mutex_unlock(&ar_ptr->mutex);
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(p, mUSABLe(p));
+  opal_mem_hooks_alloc_hook(p, mUSABLe(p), 1);
 #endif
   return p;
 }
@@ -3685,7 +3685,7 @@ public_pVALLOc(size_t bytes)
   p = _int_pvalloc(ar_ptr, bytes);
   (void)mutex_unlock(&ar_ptr->mutex);
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(p, mUSABLe(p));
+  opal_mem_hooks_alloc_hook(p, mUSABLe(p), 1);
 #endif
   return p;
 }
@@ -3782,7 +3782,7 @@ public_cALLOc(size_t n, size_t elem_size)
 #if HAVE_MMAP
   if (chunk_is_mmapped(p)) {
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(mem, mUSABLe(mem));
+  opal_mem_hooks_alloc_hook(mem, mUSABLe(mem), 1);
 #endif
     return mem;
   }
@@ -3827,7 +3827,7 @@ public_cALLOc(size_t n, size_t elem_size)
   }
 
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(mem, mUSABLe(mem));
+  opal_mem_hooks_alloc_hook(mem, mUSABLe(mem), 1);
 #endif
   return mem;
 }
@@ -3845,7 +3845,7 @@ public_iCALLOc(size_t n, size_t elem_size, Void_t** chunks)
   m = _int_icalloc(ar_ptr, n, elem_size, chunks);
   (void)mutex_unlock(&ar_ptr->mutex);
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(m, mUSABLe(m));
+  opal_mem_hooks_alloc_hook(m, mUSABLe(m), 1);
 #endif
   return m;
 }
@@ -3863,7 +3863,7 @@ public_iCOMALLOc(size_t n, size_t sizes[], Void_t** chunks)
   m = _int_icomalloc(ar_ptr, n, sizes, chunks);
   (void)mutex_unlock(&ar_ptr->mutex);
 #if !OMPI_MEMORY_PTMALLOC2_OPT_SBRK
-  opal_mem_hooks_alloc_hook(m, mUSABLe(m));
+  opal_mem_hooks_alloc_hook(m, mUSABLe(m), 1);
 #endif
   return m;
 }
