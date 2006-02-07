@@ -645,6 +645,13 @@ int orte_dss_unpack_byte_object(orte_buffer_t *buffer, void *dest, size_t *num,
     dbyteptr = (orte_byte_object_t**)dest;
     n = *num;
     for(i=0; i<n; i++) {
+        /* allocate memory for the byte object itself */
+        dbyteptr[i] = (orte_byte_object_t*)malloc(sizeof(orte_byte_object_t));
+        if (NULL == dbyteptr[i]) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+
         /* unpack object size in bytes */
         if (ORTE_SUCCESS != (ret = orte_dss_unpack_sizet(buffer, &(dbyteptr[i]->size), &m, ORTE_SIZE))) {
             ORTE_ERROR_LOG(ret);
