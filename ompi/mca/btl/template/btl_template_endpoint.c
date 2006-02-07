@@ -21,11 +21,11 @@
 #include <sys/time.h>
 #include <time.h>
 #include "include/types.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/errmgr.h"
-#include "dps/dps.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/dss/dss.h"
 #include "btl_template.h"
 #include "btl_template_endpoint.h" 
 #include "btl_template_proc.h"

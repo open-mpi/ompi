@@ -21,17 +21,17 @@
 #include <sys/time.h>
 #include <time.h>
 #include "include/types.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/errmgr.h"
-#include "dss/dss.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/dss/dss.h"
 #include "btl_mvapi.h"
 #include "btl_mvapi_endpoint.h" 
 #include "btl_mvapi_proc.h"
 #include "btl_mvapi_frag.h"
-#include "class/ompi_free_list.h" 
+#include "ompi/class/ompi_free_list.h" 
 
 static void mca_btl_mvapi_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_mvapi_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);

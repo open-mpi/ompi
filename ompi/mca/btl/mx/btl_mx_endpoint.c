@@ -21,10 +21,10 @@
 #include <sys/time.h>
 #include <time.h>
 #include "include/types.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "btl_mx.h"
 #include "btl_mx_endpoint.h" 
 #include "btl_mx_proc.h"
