@@ -38,12 +38,10 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
                                int exit_status)
 {
     orte_gpr_value_t *value;
-    orte_data_value_t *dv;
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
     orte_exit_code_t exit_code;
-    size_t i;
     char *segment;
 
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, proc))) {

@@ -60,7 +60,7 @@ int orte_rmgr_base_size_app_context(size_t *size, orte_app_context_t *src, orte_
     if (0 < count) {
         /* account for array of char* */
         *size += count * sizeof(char*);
-        for (i=0; i < count; i++) {
+        for (i=0; i < (size_t)count; i++) {
             *size += strlen(src->env[i]);
         }
     }

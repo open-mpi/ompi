@@ -80,7 +80,6 @@ int orte_dss_peek_type(orte_buffer_t *buffer, orte_data_type_t *type)
 {
     int ret;
     orte_buffer_t tmp;
-    size_t n=1;
 
     /* check for errors */
     if (buffer == NULL) {

@@ -28,7 +28,6 @@
 
 void orte_dss_release(orte_data_value_t *value)
 {
-    int rc;
     orte_dss_type_info_t *info;
 
     /* check for error */
@@ -45,8 +44,6 @@ void orte_dss_release(orte_data_value_t *value)
     }
 
     info->odti_release_fn(value);
-
-    return;
 }
 
 /*
