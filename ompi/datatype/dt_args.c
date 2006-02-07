@@ -347,6 +347,7 @@ ompi_ddt_create_from_packed_description( void** packed_buffer,
     if( MPI_COMBINER_DUP == create_type ) {
         /* there we have a simple predefined datatype */
         assert( position[1] < DT_MAX_PREDEFINED );
+        *packed_buffer = position + 2;
         return (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[1]];
     }
     number_of_length   = position[1];
