@@ -25,7 +25,6 @@
 #include "mca/oob/base/base.h"
 #include "mca/rml/rml.h"
 #include "mca/errmgr/errmgr.h"
-#include "dps/dps.h"
 #include "btl_mx.h"
 #include "btl_mx_endpoint.h" 
 #include "btl_mx_proc.h"
