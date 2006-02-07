@@ -127,7 +127,7 @@ static inline int ompi_win_rank(ompi_win_t *win) {
 }
 
 static inline bool ompi_win_allow_locks(ompi_win_t *win) {
-    return (0 != (win->w_flags & OMPI_WIN_NO_LOCKS));
+    return (0 == (win->w_flags & OMPI_WIN_NO_LOCKS));
 }
 
 static inline int16_t ompi_win_get_mode(ompi_win_t *win) {

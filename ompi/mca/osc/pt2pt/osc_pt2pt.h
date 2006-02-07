@@ -80,15 +80,17 @@ struct ompi_osc_pt2pt_module_t {
     /** For MPI_Fence synchronization, the number of messages to send
         in epoch.  For Start/Complete, the number of updates for this
         Complete.  For Post/Wait (poorly named), the number of
-        Complete counters we're waiting for.  Not protected by
-        p2p_lock - must use atomic counter operations. */
+        Complete counters we're waiting for.  For lock, the number of
+        messages waiting for completion on on the origin side.  Not
+        protected by p2p_lock - must use atomic counter operations. */
     volatile int32_t p2p_num_pending_out;
 
     /** For MPI_Fence synchronization, the number of expected incoming
         messages.  For Start/Complete, the number of expected Post
         messages.  For Post/Wait, the number of expected updates from
-        complete. Not protected by p2p_lock - must use atomic counter
-        operations. */
+        complete. For lock, the number of messages on the passive side
+        we are waiting for.  Not protected by p2p_lock - must use
+        atomic counter operations. */
     volatile int32_t p2p_num_pending_in;
 
     /** cyclic counter for a unique tage for long messages.  Not
@@ -114,6 +116,10 @@ struct ompi_osc_pt2pt_module_t {
     struct ompi_group_t *p2p_sc_group;
 
     /* ********************* LOCK data ************************ */
+    int32_t p2p_lock_status; /* one of 0, MPI_LOCK_EXCLUSIVE, MPI_LOCK_SHARED */
+    int32_t p2p_shared_count;
+    opal_list_t p2p_locks_pending;
+    int32_t p2p_lock_received_ack;
 };
 typedef struct ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_t;
 
@@ -232,6 +238,16 @@ int ompi_osc_pt2pt_module_lock(int lock_type,
 int ompi_osc_pt2pt_module_unlock(int target,
                                 struct ompi_win_t *win);
 
+/*
+ * passive side sync interface functions
+ */
+int ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
+                                int32_t origin,
+                                int32_t lock_type);
+
+int ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
+                                  int32_t origin,
+                                  int32_t count);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

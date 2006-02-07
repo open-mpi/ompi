@@ -252,7 +252,8 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
         ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
                                     P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i],
                                     OMPI_OSC_PT2PT_HDR_COMPLETE,
-                                    P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank]);
+                                    P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank],
+                                    0);
     }
 
     /* try to start all the requests.  We've copied everything we
@@ -268,7 +269,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
         if (OMPI_SUCCESS != ret) {
             opal_output(0, "complete: failure in starting sendreq (%d).  Will try later.",
                         ret);
-            opal_list_prepend(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs), item);
+            opal_list_append(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs), item);
         }
     }
 
@@ -323,7 +324,7 @@ ompi_osc_pt2pt_module_post(ompi_group_t *group,
     for (i = 0 ; i < ompi_group_size(P2P_MODULE(win)->p2p_pw_group) ; ++i) {
         ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
                                     group->grp_proc_pointers[i],
-                                    OMPI_OSC_PT2PT_HDR_POST, 1);
+                                    OMPI_OSC_PT2PT_HDR_POST, 1, 0);
     }    
 
     return OMPI_SUCCESS;
@@ -388,13 +389,39 @@ ompi_osc_pt2pt_module_test(ompi_win_t *win,
 }
 
 
+struct ompi_osc_pt2pt_pending_lock_t {
+    opal_list_item_t super;
+    ompi_proc_t *proc;
+    int32_t lock_type;
+};
+typedef struct ompi_osc_pt2pt_pending_lock_t ompi_osc_pt2pt_pending_lock_t;
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_lock_t, opal_list_item_t,
+                   NULL, NULL);
+
+
 int
 ompi_osc_pt2pt_module_lock(int lock_type,
                            int target,
                            int assert,
                            ompi_win_t *win)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    ompi_proc_t *proc = P2P_MODULE(win)->p2p_comm->c_pml_procs[target]->proc_ompi;
+
+    assert(lock_type != 0);
+
+    /* set our mode on the window */
+    ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
+
+    opal_output(0, "sending lock request to %d", target);
+    /* generate a lock request */
+    ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
+                                proc,
+                                OMPI_OSC_PT2PT_HDR_LOCK_REQ,
+                                P2P_MODULE(win)->p2p_comm->c_my_rank,
+                                lock_type);
+
+    /* return */
+    return OMPI_SUCCESS;
 }
 
 
@@ -402,5 +429,149 @@ int
 ompi_osc_pt2pt_module_unlock(int target,
                              ompi_win_t *win)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    int32_t out_count;
+    opal_list_item_t *item;
+    int ret;
+    ompi_proc_t *proc = P2P_MODULE(win)->p2p_comm->c_pml_procs[target]->proc_ompi;
+
+    while (0 == P2P_MODULE(win)->p2p_lock_received_ack) {
+        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+    }
+    P2P_MODULE(win)->p2p_lock_received_ack = 0;
+
+    /* start all the requests */
+    ompi_osc_pt2pt_flip_sendreqs(P2P_MODULE(win));
+
+    /* try to start all the requests.  We've copied everything we need
+       out of pending_sendreqs, so don't need the lock here */
+    out_count = opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs));
+
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), out_count);
+
+    while (NULL != 
+           (item = opal_list_remove_first(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs)))) {
+        ompi_osc_pt2pt_sendreq_t *req = 
+            (ompi_osc_pt2pt_sendreq_t*) item;
+
+        ret = ompi_osc_pt2pt_sendreq_send(P2P_MODULE(win), req);
+
+        if (OMPI_SUCCESS != ret) {
+            opal_output(0, "unlock: failure in starting sendreq (%d).  Will try later.",
+                        ret);
+            opal_list_append(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs), item);
+        }
+    }
+
+    /* wait for all the requests */
+    while (0 != P2P_MODULE(win)->p2p_num_pending_out) {
+        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+    }
+
+    /* send the unlock request */
+    opal_output(0, "sending unlock request to %d", target);
+    ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
+                                proc,
+                                OMPI_OSC_PT2PT_HDR_UNLOCK_REQ,
+                                P2P_MODULE(win)->p2p_comm->c_my_rank,
+                                out_count);
+
+    /* set our mode on the window */
+    ompi_win_set_mode(win, 0);
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
+                            int32_t origin,
+                            int32_t lock_type)
+{
+    bool send_ack = false;
+    int ret = OMPI_SUCCESS;
+    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[origin]->proc_ompi;
+    ompi_osc_pt2pt_pending_lock_t *new_pending;
+
+    OPAL_THREAD_LOCK(&(module->p2p_lock));
+    if (lock_type == MPI_LOCK_EXCLUSIVE) {
+        if (module->p2p_lock_status == 0) {
+            module->p2p_lock_status = MPI_LOCK_EXCLUSIVE;
+            send_ack = true;
+        } else {
+            opal_output(0, "queuing lock request from %d (%d)", origin, lock_type);
+            new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
+            new_pending->proc = proc;
+            new_pending->lock_type = lock_type;
+            opal_list_append(&(module->p2p_locks_pending), &(new_pending->super));
+        }
+    } else if (lock_type == MPI_LOCK_SHARED) {
+        if (module->p2p_lock_status != MPI_LOCK_EXCLUSIVE) {
+            module->p2p_lock_status = MPI_LOCK_SHARED;
+            module->p2p_shared_count++;
+            send_ack = true;
+        } else {
+            opal_output(0, "queuing lock request from %d (%d)", origin, lock_type);
+            new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
+            new_pending->proc = proc;
+            new_pending->lock_type = lock_type;
+            opal_list_append(&(module->p2p_locks_pending), &(new_pending->super));
+        }
+    } else {
+        ret = OMPI_ERROR;
+    }
+    OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+
+    if (send_ack) {
+        opal_output(0, "sending lock ack to %d", origin);
+        ompi_osc_pt2pt_control_send(module, proc,
+                                    OMPI_OSC_PT2PT_HDR_LOCK_REQ,
+                                    module->p2p_comm->c_my_rank,
+                                    OMPI_SUCCESS);
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
+                              int32_t origin,
+                              int32_t count)
+{
+    ompi_osc_pt2pt_pending_lock_t *new_pending = NULL;
+
+    assert(module->p2p_lock_status != 0);
+
+    OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), count);
+
+    while (0 != module->p2p_num_pending_in) {
+        ompi_osc_pt2pt_progress(module);
+    }
+
+    OPAL_THREAD_LOCK(&(module->p2p_lock));
+    if (module->p2p_lock_status == MPI_LOCK_EXCLUSIVE) {
+        module->p2p_lock_status = 0;
+    } else {
+        module->p2p_shared_count--;
+        if (module->p2p_shared_count == 0) {
+            module->p2p_lock_status = 0;
+        }
+    }
+
+    /* if we were really unlocked, see if we have more to process */
+    new_pending = (ompi_osc_pt2pt_pending_lock_t*) 
+        opal_list_remove_first(&(module->p2p_locks_pending));
+    OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+
+    if (NULL != new_pending) {
+        opal_output(0, "sending lock request to proc");
+        /* generate a lock request */
+        ompi_osc_pt2pt_control_send(module,
+                                    new_pending->proc,
+                                    OMPI_OSC_PT2PT_HDR_LOCK_REQ,
+                                    module->p2p_comm->c_my_rank,
+                                    new_pending->lock_type);
+    }
+
+    return OMPI_SUCCESS;
 }
