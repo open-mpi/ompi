@@ -24,8 +24,9 @@ enqueue_sendreq(ompi_osc_pt2pt_module_t *module,
                 ompi_osc_pt2pt_sendreq_t *sendreq)
 {
     OPAL_THREAD_LOCK(&(module->p2p_lock));
-    opal_list_append(&(module->p2p_pending_out_sendreqs[sendreq->req_target_rank]),
+    opal_list_append(&(module->p2p_pending_sendreqs),
                      (opal_list_item_t*) sendreq);
+    module->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
     OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 
     return OMPI_SUCCESS;

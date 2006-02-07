@@ -67,35 +67,53 @@ struct ompi_osc_pt2pt_module_t {
     /** communicator created with this window */
     ompi_communicator_t *p2p_comm;
 
-    /** array of opal_list_ts, not a pointer to one of them.  Array is
-        of size <num ranks in communicator>, although only the first
-        <num ranks in group> are used for PWSC synchronization */
-    opal_list_t *p2p_pending_out_sendreqs;
+    /** list of ompi_osc_pt2pt_sendreq_t structures, and includes all
+        requests for this access epoch that have not already been
+        started.  p2p_lock must be held when modifying this field. */
+    opal_list_t p2p_pending_sendreqs;
 
-    /* For MPI_Fence synchronization, the number of messages to send
-       in epoch.  For Start/Complete, the number of updates for this
-       Complete.  For Post/Wait (poorly named), the number of Complete
-       counters we're waiting for.*/
+    /** list of int16_t counters for the number of requests to a
+        particular rank in p2p_comm for this access epoc.  p2p_lock
+        must be held when modifying this field */
+    short *p2p_num_pending_sendreqs;
+
+    /** For MPI_Fence synchronization, the number of messages to send
+        in epoch.  For Start/Complete, the number of updates for this
+        Complete.  For Post/Wait (poorly named), the number of
+        Complete counters we're waiting for.  Not protected by
+        p2p_lock - must use atomic counter operations. */
     volatile int32_t p2p_num_pending_out;
-    /* For MPI_Fence synchronization, the number of expected incoming
-       messages.  For Start/Complete, the number of expected Post
-       messages.  For Post/Wait, the number of expected updates from
-       complete. */
+
+    /** For MPI_Fence synchronization, the number of expected incoming
+        messages.  For Start/Complete, the number of expected Post
+        messages.  For Post/Wait, the number of expected updates from
+        complete. Not protected by p2p_lock - must use atomic counter
+        operations. */
     volatile int32_t p2p_num_pending_in;
 
-    /* cyclic counter for a unique tage for long messages.  Not
-       protected by the p2p_lock - must use create_send_tag() to
-       create a send tag */
+    /** cyclic counter for a unique tage for long messages.  Not
+        protected by the p2p_lock - must use create_send_tag() to
+        create a send tag */
     volatile int32_t p2p_tag_counter;
 
     /** list of outstanding long messages that must be processes
-        (ompi_osc_pt2pt_request_long) */
+        (ompi_osc_pt2pt_request_long).  Protected by p2p_lock. */
     opal_list_t p2p_long_msgs;
-    /** number of outstanding long messages */
-    volatile int32_t p2p_num_long_msgs;
 
-    struct ompi_group_t *pw_group;
-    struct ompi_group_t *sc_group;
+    opal_list_t p2p_copy_pending_sendreqs;
+    short *p2p_copy_num_pending_sendreqs;
+
+    /* ********************* FENCE data ************************ */
+    /* an array of <sizeof(p2p_comm)> ints, each containing the value
+       1. */
+    int *p2p_fence_coll_counts;
+
+    /* ********************* PWSC data ************************ */
+
+    struct ompi_group_t *p2p_pw_group;
+    struct ompi_group_t *p2p_sc_group;
+
+    /* ********************* LOCK data ************************ */
 };
 typedef struct ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_t;
 
