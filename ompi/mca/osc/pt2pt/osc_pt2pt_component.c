@@ -277,6 +277,10 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     module->p2p_sc_group = NULL;
 
     /* lock data */
+    module->p2p_lock_status = 0;
+    module->p2p_shared_count = 0;
+    OBJ_CONSTRUCT(&(module->p2p_locks_pending), opal_list_t);
+    module->p2p_lock_received_ack = 0;
 
     /* update component data */
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
@@ -434,7 +438,41 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             /* we've heard from one more place, and have value reqs to
                process */
             OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
-            OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), header->hdr_value);
+            OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), header->hdr_value[0]);
+        }
+        break;
+
+    case OMPI_OSC_PT2PT_HDR_LOCK_REQ:
+        {
+            ompi_osc_pt2pt_control_header_t *header = 
+                (ompi_osc_pt2pt_control_header_t*) 
+                descriptor->des_dst[0].seg_addr.pval;
+
+            /* get our module pointer */
+            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
+            if (NULL == module) return;
+
+            if (header->hdr_value[1] > 0) {
+                ompi_osc_pt2pt_passive_lock(module, header->hdr_value[0], 
+                                            header->hdr_value[1]);
+            } else {
+                OPAL_THREAD_ADD32(&(module->p2p_lock_received_ack), 1);
+            }
+        }
+        break;
+
+    case OMPI_OSC_PT2PT_HDR_UNLOCK_REQ:
+        {
+            ompi_osc_pt2pt_control_header_t *header = 
+                (ompi_osc_pt2pt_control_header_t*) 
+                descriptor->des_dst[0].seg_addr.pval;
+
+            /* get our module pointer */
+            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
+            if (NULL == module) return;
+
+            ompi_osc_pt2pt_passive_unlock(module, header->hdr_value[0],
+                                          header->hdr_value[1]);
         }
         break;
 

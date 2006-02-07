@@ -22,13 +22,14 @@
 #endif
 
 
-#define OMPI_OSC_PT2PT_HDR_PUT      0x0001
-#define OMPI_OSC_PT2PT_HDR_ACC      0x0002
-#define OMPI_OSC_PT2PT_HDR_GET      0x0004
-#define OMPI_OSC_PT2PT_HDR_REPLY    0x0008
-#define OMPI_OSC_PT2PT_HDR_POST     0x0010
-#define OMPI_OSC_PT2PT_HDR_COMPLETE 0x0020
-#define OMPI_OSC_PT2PT_HDR_LOCK     0x0040
+#define OMPI_OSC_PT2PT_HDR_PUT        0x0001
+#define OMPI_OSC_PT2PT_HDR_ACC        0x0002
+#define OMPI_OSC_PT2PT_HDR_GET        0x0004
+#define OMPI_OSC_PT2PT_HDR_REPLY      0x0008
+#define OMPI_OSC_PT2PT_HDR_POST       0x0010
+#define OMPI_OSC_PT2PT_HDR_COMPLETE   0x0020
+#define OMPI_OSC_PT2PT_HDR_LOCK_REQ   0x0040
+#define OMPI_OSC_PT2PT_HDR_UNLOCK_REQ 0x0080
 
 struct ompi_osc_pt2pt_base_header_t {
     uint8_t hdr_type;
@@ -113,7 +114,7 @@ typedef struct ompi_osc_pt2pt_reply_header_t ompi_osc_pt2pt_reply_header_t;
 struct ompi_osc_pt2pt_control_header_t {
     ompi_osc_pt2pt_base_header_t hdr_base;
     int16_t hdr_windx;
-    int32_t hdr_value;
+    int32_t hdr_value[2];
 };
 typedef struct ompi_osc_pt2pt_control_header_t ompi_osc_pt2pt_control_header_t;
 
@@ -121,14 +122,16 @@ typedef struct ompi_osc_pt2pt_control_header_t ompi_osc_pt2pt_control_header_t;
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_HTON((hdr).hdr_base) \
         (hdr).hdr_windx = htons((hdr).hdr_windx); \
-        (hdr).hdr_value = htonl((hdr).hdr_value); \
+        (hdr).hdr_value[0] = htonl((hdr).hdr_value[0]); \
+        (hdr).hdr_value[1] = htonl((hdr).hdr_value[1]); \
     } while (0)
 
 #define OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_NTOH((hdr).hdr_base) \
         (hdr).hdr_windx = ntohs((hdr).hdr_windx); \
-        (hdr).hdr_value = ntohl((hdr).hdr_value); \
+        (hdr).hdr_value[0] = ntohl((hdr).hdr_value[0]); \
+        (hdr).hdr_value[1] = ntohl((hdr).hdr_value[1]); \
     } while (0)
 
 

@@ -713,7 +713,7 @@ ompi_osc_pt2pt_control_send_cb(struct mca_btl_base_module_t* btl,
 int
 ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
                             ompi_proc_t *proc,
-                            uint8_t type, int32_t value)
+                            uint8_t type, int32_t value0, int32_t value1)
 {
     int ret = OMPI_SUCCESS;
     mca_bml_base_endpoint_t *endpoint = NULL;
@@ -746,7 +746,8 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
     /* pack header */
     header = (ompi_osc_pt2pt_control_header_t*) descriptor->des_src[0].seg_addr.pval;
     header->hdr_base.hdr_type = type;
-    header->hdr_value = value;
+    header->hdr_value[0] = value0;
+    header->hdr_value[1] = value1;
     header->hdr_windx = module->p2p_comm->c_contextid;
 
 #if 0 /* BWB - FIX ME */

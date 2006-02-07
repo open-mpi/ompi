@@ -56,6 +56,8 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     ret = (ret != OMPI_SUCCESS) ? ret : tmp;
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
+    OBJ_DESTRUCT(&(module->p2p_locks_pending));
+
     assert(module->p2p_sc_group == NULL);
     assert(module->p2p_pw_group == NULL);
     free(module->p2p_fence_coll_counts);
