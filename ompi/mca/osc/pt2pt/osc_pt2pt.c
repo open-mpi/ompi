@@ -30,7 +30,7 @@ int
 ompi_osc_pt2pt_module_free(ompi_win_t *win)
 {
     int ret = OMPI_SUCCESS;
-    int i, tmp;
+    int tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
 
     if ((OMPI_WIN_ACCESS_EPOCH & win->w_flags) || 
@@ -56,19 +56,24 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     ret = (ret != OMPI_SUCCESS) ? ret : tmp;
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
-    /* clean up p2p module part */
-    for (i = 0 ; i < ompi_comm_size(module->p2p_comm) ; ++i) {
-        OBJ_DESTRUCT(&(module->p2p_pending_out_sendreqs[i]));
-    }
-    free(module->p2p_pending_out_sendreqs);
-    module->p2p_pending_out_sendreqs = NULL;
+    assert(module->p2p_sc_group == NULL);
+    assert(module->p2p_pw_group == NULL);
+    free(module->p2p_fence_coll_counts);
+
+    free(module->p2p_copy_num_pending_sendreqs);
+    OBJ_DESTRUCT(&(module->p2p_copy_pending_sendreqs));
+
+    OBJ_DESTRUCT(&(module->p2p_long_msgs));
+
+    free(module->p2p_num_pending_sendreqs);
+
+    OBJ_DESTRUCT(&(module->p2p_pending_sendreqs));
 
     ompi_comm_free(&(module->p2p_comm));
     module->p2p_comm = NULL;
 
     module->p2p_win = NULL;
 
-    OBJ_DESTRUCT(&(module->p2p_long_msgs));
     OBJ_DESTRUCT(&(module->p2p_acc_lock));
     OBJ_DESTRUCT(&(module->p2p_lock));
 

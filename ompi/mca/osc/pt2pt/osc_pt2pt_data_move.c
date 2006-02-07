@@ -28,7 +28,7 @@
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
-
+#include "ompi/datatype/datatype.h"
 
 static inline int32_t
 create_send_tag(ompi_osc_pt2pt_module_t *module)
@@ -66,10 +66,7 @@ ompi_osc_pt2pt_sendreq_send_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     ompi_osc_pt2pt_sendreq_t *sendreq = 
         (ompi_osc_pt2pt_sendreq_t*) longreq->req_comp_cbdata;
 
-    OPAL_THREAD_LOCK(&(sendreq->req_module->p2p_lock));
     opal_list_remove_item(&(sendreq->req_module->p2p_long_msgs), &(longreq->super));
-    sendreq->req_module->p2p_num_long_msgs--;
-    OPAL_THREAD_UNLOCK(&(sendreq->req_module->p2p_lock));
 
     ompi_osc_pt2pt_longreq_free(longreq);
 
@@ -121,7 +118,6 @@ ompi_osc_pt2pt_sendreq_send_cb(struct mca_btl_base_module_t* btl,
             /* put the send request in the waiting list */
             OPAL_THREAD_LOCK(&(sendreq->req_module->p2p_lock));
             opal_list_append(&(sendreq->req_module->p2p_long_msgs), &(longreq->super));
-            sendreq->req_module->p2p_num_long_msgs++;
             OPAL_THREAD_UNLOCK(&(sendreq->req_module->p2p_lock));
         }
     }
@@ -146,11 +142,21 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     mca_btl_base_descriptor_t *descriptor = NULL;
     ompi_osc_pt2pt_send_header_t *header = NULL;
     size_t written_data = 0;
-        
-    /* Get a BTL and a fragment to go with it */
+    size_t needed_len = sizeof(ompi_osc_pt2pt_send_header_t);
+    const void *packed_ddt;
+    size_t packed_ddt_len = ompi_ddt_pack_description_length(sendreq->req_target_datatype);
+
+    /* we always need to send the ddt */
+    needed_len += packed_ddt_len;
+    if (OMPI_OSC_PT2PT_GET != sendreq->req_type) {
+        needed_len += sendreq->req_origin_bytes_packed;
+    }
+
+    /* Get a BTL so we have the eager limit */
     endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_pml;
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     descriptor = bml_btl->btl_alloc(bml_btl->btl,
+                                    needed_len < bml_btl->btl_eager_limit ? needed_len :
                                     bml_btl->btl_eager_limit);
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -180,19 +186,19 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
 
     switch (sendreq->req_type) {
     case OMPI_OSC_PT2PT_PUT:
-        header->hdr_type = OMPI_OSC_PT2PT_HDR_PUT;
+        header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_PUT;
 #if OMPI_ENABLE_MEM_DEBUG
         header->hdr_target_op = 0;
 #endif
         break;
 
     case OMPI_OSC_PT2PT_ACC:
-        header->hdr_type = OMPI_OSC_PT2PT_HDR_ACC;
+        header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_ACC;
         header->hdr_target_op = sendreq->req_op_id;
         break;
 
     case OMPI_OSC_PT2PT_GET:
-        header->hdr_type = OMPI_OSC_PT2PT_HDR_GET;
+        header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_GET;
 #if OMPI_ENABLE_MEM_DEBUG
         header->hdr_target_op = 0;
 #endif
@@ -200,16 +206,11 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     }
 
     /* Set datatype id and / or pack datatype */
-    if (ompi_ddt_is_predefined(sendreq->req_target_datatype)) {
-        header->hdr_target_dt_id = sendreq->req_target_datatype->d_f_to_c_index;
-        /* does not extend written_data, as nothing extra added */
-    } else {
-        header->hdr_target_dt_id = -1;
-
-        /* BWB - FIX ME - implement this datatype thing */
-        opal_output(0, "Datatype is not predefined.  aborting.");
-        abort();
-    }
+    ret = ompi_ddt_get_pack_description(sendreq->req_target_datatype, &packed_ddt);
+    if (OMPI_SUCCESS != ret) goto cleanup;
+    memcpy((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data,
+           packed_ddt, packed_ddt_len);
+    written_data += packed_ddt_len;
 
     if (OMPI_OSC_PT2PT_GET != sendreq->req_type) {
         /* if sending data and it fits, pack payload */
@@ -274,10 +275,7 @@ ompi_osc_pt2pt_replyreq_send_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     ompi_osc_pt2pt_replyreq_t *replyreq = 
         (ompi_osc_pt2pt_replyreq_t*) longreq->req_comp_cbdata;
 
-    OPAL_THREAD_LOCK(&(replyreq->rep_module->p2p_lock));
     opal_list_remove_item(&(replyreq->rep_module->p2p_long_msgs), &(longreq->super));
-    replyreq->rep_module->p2p_num_long_msgs--;
-    OPAL_THREAD_UNLOCK(&(replyreq->rep_module->p2p_lock));
 
     ompi_osc_pt2pt_longreq_free(longreq);
 
@@ -328,7 +326,6 @@ ompi_osc_pt2pt_replyreq_send_cb(struct mca_btl_base_module_t* btl,
             /* put the send request in the waiting list */
             OPAL_THREAD_LOCK(&(replyreq->rep_module->p2p_lock));
             opal_list_append(&(replyreq->rep_module->p2p_long_msgs), &(longreq->super));
-            replyreq->rep_module->p2p_num_long_msgs++;
             OPAL_THREAD_UNLOCK(&(replyreq->rep_module->p2p_lock));
     }
     
@@ -374,7 +371,7 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
     /* pack header */
     header = (ompi_osc_pt2pt_reply_header_t*) descriptor->des_src[0].seg_addr.pval;
     written_data += sizeof(ompi_osc_pt2pt_reply_header_t);
-    header->hdr_type = OMPI_OSC_PT2PT_HDR_REPLY;
+    header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_REPLY;
     header->hdr_origin_sendreq = replyreq->rep_origin_sendreq;
     header->hdr_target_tag = 0;
 
@@ -433,10 +430,7 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
 static void
 ompi_osc_pt2pt_sendreq_recv_put_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
 {
-    OPAL_THREAD_LOCK(&(longreq->req_module->p2p_lock));
     opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
-    longreq->req_module->p2p_num_long_msgs--;
-    OPAL_THREAD_UNLOCK(&(longreq->req_module->p2p_lock));
 
     OBJ_RELEASE(longreq->req_datatype);
     ompi_osc_pt2pt_longreq_free(longreq);
@@ -453,7 +447,9 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
     int ret = OMPI_SUCCESS;
     void *target = (unsigned char*) module->p2p_win->w_baseptr + 
         (header->hdr_target_disp * module->p2p_win->w_disp_unit);    
-    struct ompi_datatype_t *datatype = ompi_osc_pt2pt_datatype_create(header->hdr_target_dt_id, &inbuf);
+    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+    struct ompi_datatype_t *datatype = 
+        ompi_osc_pt2pt_datatype_create(proc, &inbuf);
 
     if (header->hdr_msg_length > 0) {
         ompi_convertor_t convertor;
@@ -505,7 +501,6 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
             /* put the send request in the waiting list */
             OPAL_THREAD_LOCK(&(module->p2p_lock));
             opal_list_append(&(module->p2p_long_msgs), &(longreq->super));
-            module->p2p_num_long_msgs++;
             OPAL_THREAD_UNLOCK(&(module->p2p_lock));
     }
 
@@ -551,10 +546,7 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
 
     OPAL_THREAD_ADD32(&(longreq->req_module->p2p_num_pending_in), -1);
 
-    OPAL_THREAD_LOCK(&(longreq->req_module->p2p_lock));
     opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
-    longreq->req_module->p2p_num_long_msgs--;
-    OPAL_THREAD_UNLOCK(&(longreq->req_module->p2p_lock));
 
     OBJ_RELEASE(longreq->req_datatype);
     OBJ_RELEASE(longreq->req_op);
@@ -570,8 +562,10 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
                                   void *payload)
 {
     int ret = OMPI_SUCCESS;
-    struct ompi_datatype_t *datatype = ompi_osc_pt2pt_datatype_create(header->hdr_target_dt_id, &payload);
     struct ompi_op_t *op = ompi_osc_pt2pt_op_create(header->hdr_target_op);
+    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+    struct ompi_datatype_t *datatype = 
+        ompi_osc_pt2pt_datatype_create(proc, &payload);
 
     if (header->hdr_msg_length > 0) {
         /* lock the window for accumulates */
@@ -637,10 +631,7 @@ ompi_osc_pt2pt_replyreq_recv_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     ompi_osc_pt2pt_sendreq_t *sendreq =
         (ompi_osc_pt2pt_sendreq_t*) longreq->req_comp_cbdata;
 
-    OPAL_THREAD_LOCK(&(longreq->req_module->p2p_lock));
     opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
-    longreq->req_module->p2p_num_long_msgs--;
-    OPAL_THREAD_UNLOCK(&(longreq->req_module->p2p_lock));
 
     ompi_osc_pt2pt_longreq_free(longreq);
 
@@ -696,7 +687,6 @@ ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
         /* put the send request in the waiting list */
         OPAL_THREAD_LOCK(&(module->p2p_lock));
         opal_list_append(&(module->p2p_long_msgs), &(longreq->super));
-        module->p2p_num_long_msgs++;
         OPAL_THREAD_UNLOCK(&(module->p2p_lock));
     }
 
@@ -755,7 +745,7 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
 
     /* pack header */
     header = (ompi_osc_pt2pt_control_header_t*) descriptor->des_src[0].seg_addr.pval;
-    header->hdr_type = type;
+    header->hdr_base.hdr_type = type;
     header->hdr_value = value;
     header->hdr_windx = module->p2p_comm->c_contextid;
 

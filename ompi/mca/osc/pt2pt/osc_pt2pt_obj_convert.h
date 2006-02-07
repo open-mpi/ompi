@@ -20,25 +20,15 @@
 
 #include "mpi.h"
 
+#include "ompi/datatype/datatype.h"
+
 static inline
 struct ompi_datatype_t*
-ompi_osc_pt2pt_datatype_create(int datatype_id, void **payload)
+ompi_osc_pt2pt_datatype_create(ompi_proc_t *remote_proc,  void **payload)
 {
-    struct ompi_datatype_t *datatype;
-
-    if (datatype_id == -1) {
-        /* not predefined datatype - need to construct out of payload */
-        /* BWB - FIX ME - implement dt sending */
-        opal_output(0, "remote datatypes not supported.  aborting.");
-        abort();
-
-        /* don't forget to move the payload pointer */
-    } else {
-        /* retain datatype so that can be released at end */
-        datatype = MPI_Type_f2c(datatype_id);
-        OBJ_RETAIN(datatype);
-    }
-    
+    struct ompi_datatype_t *datatype =
+        ompi_ddt_create_from_packed_description(payload, remote_proc);
+    if (ompi_ddt_is_predefined(datatype)) OBJ_RETAIN(datatype);
     return datatype;
 }
 

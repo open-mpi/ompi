@@ -16,6 +16,8 @@
 
 #include "ompi_config.h"
 
+#include <string.h>
+
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_sendreq.h"
 #include "osc_pt2pt_replyreq.h"
@@ -192,7 +194,6 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 {
     ompi_osc_pt2pt_module_t *module;
     int ret, i;
-
     /* create module structure */
     module = malloc(sizeof(ompi_osc_pt2pt_module_t));
     if (NULL == module) return OMPI_ERROR;
@@ -215,11 +216,52 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
         return ret;
     }
 
-    if (!want_locks(info)) win->w_flags |= OMPI_WIN_NO_LOCKS;
-
-    module->p2p_pending_out_sendreqs = malloc(sizeof(opal_list_t) *
+    OBJ_CONSTRUCT(&module->p2p_pending_sendreqs, opal_list_t);
+    module->p2p_num_pending_sendreqs = malloc(sizeof(short) * 
                                               ompi_comm_size(module->p2p_comm));
-    if (NULL == module) {
+    if (NULL == module->p2p_num_pending_sendreqs) {
+        OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
+        ompi_comm_free(&comm);
+        OBJ_DESTRUCT(&(module->p2p_acc_lock));
+        OBJ_DESTRUCT(&(module->p2p_lock));
+        free(module);
+        return ret;
+    }
+    memset(module->p2p_num_pending_sendreqs, 0, 
+           sizeof(short) * ompi_comm_size(module->p2p_comm));
+
+    module->p2p_num_pending_out = 0;
+    module->p2p_num_pending_in = 0;
+    module->p2p_tag_counter = 0;
+
+    OBJ_CONSTRUCT(&(module->p2p_long_msgs), opal_list_t);
+
+    OBJ_CONSTRUCT(&(module->p2p_copy_pending_sendreqs), opal_list_t);
+    module->p2p_copy_num_pending_sendreqs = malloc(sizeof(short) * 
+                                                   ompi_comm_size(module->p2p_comm));
+    if (NULL == module->p2p_copy_num_pending_sendreqs) {
+        OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_long_msgs);
+        free(module->p2p_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
+        ompi_comm_free(&comm);
+        OBJ_DESTRUCT(&(module->p2p_acc_lock));
+        OBJ_DESTRUCT(&(module->p2p_lock));
+        free(module);
+        return ret;
+    }
+    memset(module->p2p_num_pending_sendreqs, 0, 
+           sizeof(short) * ompi_comm_size(module->p2p_comm));
+
+    /* fence data */
+    module->p2p_fence_coll_counts = malloc(sizeof(int) * 
+                                           ompi_comm_size(module->p2p_comm));
+    if (NULL == module->p2p_fence_coll_counts) {
+        free(module->p2p_copy_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_long_msgs);
+        free(module->p2p_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
         ompi_comm_free(&comm);
         OBJ_DESTRUCT(&(module->p2p_acc_lock));
         OBJ_DESTRUCT(&(module->p2p_lock));
@@ -227,15 +269,14 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
         return ret;
     }
     for (i = 0 ; i < ompi_comm_size(module->p2p_comm) ; ++i) {
-        OBJ_CONSTRUCT(&(module->p2p_pending_out_sendreqs[i]), opal_list_t);
+        module->p2p_fence_coll_counts[i] = 1;
     }
 
-    module->p2p_num_pending_out = 0;
-    module->p2p_num_pending_in = 0;
-    module->p2p_tag_counter = 0;
+    /* pwsc data */
+    module->p2p_pw_group = NULL;
+    module->p2p_sc_group = NULL;
 
-    OBJ_CONSTRUCT(&(module->p2p_long_msgs), opal_list_t);
-    module->p2p_num_long_msgs = 0;
+    /* lock data */
 
     /* update component data */
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
@@ -246,6 +287,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
                                      
     /* fill in window information */
     win->w_osc_module = (ompi_osc_base_module_t*) module;
+    if (!want_locks(info)) win->w_flags |= OMPI_WIN_NO_LOCKS;
 
     /* register to receive fragment callbacks */
     ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT,
@@ -272,10 +314,10 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
     void *payload;
 
     assert(descriptor->des_dst[0].seg_len >= 
-           sizeof(ompi_osc_pt2pt_type_header_t));
+           sizeof(ompi_osc_pt2pt_base_header_t));
 
     /* handle message */
-    switch (((ompi_osc_pt2pt_type_header_t*) descriptor->des_dst[0].seg_addr.pval)->hdr_type) {
+    switch (((ompi_osc_pt2pt_base_header_t*) descriptor->des_dst[0].seg_addr.pval)->hdr_type) {
     case OMPI_OSC_PT2PT_HDR_PUT:
         {
             ompi_osc_pt2pt_send_header_t *header;
@@ -316,6 +358,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             ompi_datatype_t *datatype;
             ompi_osc_pt2pt_send_header_t *header;
             ompi_osc_pt2pt_replyreq_t *replyreq;
+            ompi_proc_t *proc;
 
             /* get our header and payload */
             header = (ompi_osc_pt2pt_send_header_t*) 
@@ -327,7 +370,8 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             if (NULL == module) return;
 
             /* create or get a pointer to our datatype */
-            datatype = ompi_osc_pt2pt_datatype_create(header->hdr_target_dt_id, &payload);
+            proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+            datatype = ompi_osc_pt2pt_datatype_create(proc, &payload);
 
             /* create replyreq sendreq */
             ret = ompi_osc_pt2pt_replyreq_alloc_init(module,
