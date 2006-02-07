@@ -27,23 +27,25 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/include/orte_constants.h"
+#include "orte/include/orte_types.h"
 
-#include "dps/dps.h"
+#include "orte/dss/dss.h"
 #include "opal/util/output.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns_types.h"
-#include "mca/soh/soh_types.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/soh/soh_types.h"
 
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 #include "gpr_replica_fn.h"
 
 static void orte_gpr_replica_dump_load_string(orte_buffer_t *buffer, char **tmp);
 
 void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
                                          orte_gpr_replica_itagval_t *iptr);
+
+static int orte_gpr_replica_get_segment_size_fn(size_t *segsize, orte_gpr_replica_segment_t *seg);
 
 
 int orte_gpr_replica_dump_all_fn(orte_buffer_t *buffer)
@@ -757,135 +759,129 @@ int orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
 void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
                                          orte_gpr_replica_itagval_t *iptr)
 {
-    char tmp[132], *tmp2;
+    char *tmp;
+    int rc;
 
-    tmp2 = tmp;
-    switch(iptr->type) {
-
-        case ORTE_BYTE:
-            sprintf(tmp, "\t\tData type: ORTE_BYTE");
-            break;
-
-        case ORTE_BOOL:
-            sprintf(tmp, "\t\tData type: ORTE_BOOL\tValue: %s", iptr->value.tf_flag ? "TRUE" : "FALSE");
-            break;
-
-        case ORTE_STRING:
-            sprintf(tmp, "\t\tData type: ORTE_STRING\tValue: %s", iptr->value.strptr);
-            break;
-
-        case ORTE_SIZE:
-            sprintf(tmp, "\t\tData type: ORTE_SIZE\tValue: %lu",
-                    (unsigned long) iptr->value.size);
-            break;
-
-        case ORTE_PID:
-            sprintf(tmp, "\t\tData type: ORTE_PID\tValue: %lu", (unsigned long)iptr->value.pid);
-            break;
-
-        case ORTE_INT:
-            sprintf(tmp, "\t\tData type: ORTE_INT\tValue: %d", (int)iptr->value.i32);
-            break;
-
-        case ORTE_UINT8:
-            sprintf(tmp, "\t\tData type: ORTE_UINT8\tValue: %d", (int)iptr->value.ui8);
-            break;
-
-        case ORTE_UINT16:
-            sprintf(tmp, "\t\tData type: ORTE_UINT16\tValue: %d", (int)iptr->value.ui16);
-            break;
-
-        case ORTE_UINT32:
-            sprintf(tmp, "\t\tData type: ORTE_UINT32\tValue: %d", (int)iptr->value.ui32);
-            break;
-
-#ifdef HAVE_INT64_T
-        case ORTE_UINT64:
-            sprintf(tmp, "\t\tData type: ORTE_UINT64\tValue: %d", (int)iptr->value.ui64);
-            break;
-#endif
-
-        case ORTE_INT8:
-            sprintf(tmp, "\t\tData type: ORTE_INT8\tValue: %d", (int)iptr->value.i8);
-            break;
-
-        case ORTE_INT16:
-            sprintf(tmp, "\t\tData type: ORTE_INT16\tValue: %d", (int)iptr->value.i16);
-            break;
-
-        case ORTE_INT32:
-            sprintf(tmp, "\t\tData type: ORTE_INT32\tValue: %d", (int)iptr->value.i32);
-            break;
-
-#ifdef HAVE_INT64_T
-        case ORTE_INT64:
-            sprintf(tmp, "\t\tData type: ORTE_INT64\tValue: %d", (int)iptr->value.i64);
-            break;
-#endif
-
-        case ORTE_BYTE_OBJECT:
-            sprintf(tmp, "\t\tData type: ORTE_BYTE_OBJECT\tSize: %lu",
-                    (unsigned long) (iptr->value.byteobject).size);
-            break;
-
-        case ORTE_NAME:
-            sprintf(tmp, "\t\tData type: ORTE_NAME\tValue: [%lu,%lu,%lu]",
-                    ORTE_NAME_ARGS(&(iptr->value.proc)));
-            break;
-
-        case ORTE_VPID:
-            sprintf(tmp, "\t\tData type: ORTE_VPID\tValue: %lu",
-                    (unsigned long) iptr->value.vpid);
-            break;
-
-        case ORTE_JOBID:
-            sprintf(tmp, "\t\tData type: ORTE_JOBID\tValue: %lu",
-                    (unsigned long) iptr->value.jobid);
-            break;
-
-        case ORTE_CELLID:
-            sprintf(tmp, "\t\tData type: ORTE_CELLID\tValue: %lu",
-                    (unsigned long) iptr->value.cellid);
-            break;
-
-        case ORTE_NODE_STATE:
-            sprintf(tmp, "\t\tData type: ORTE_NODE_STATE\tValue: %d", (int)iptr->value.node_state);
-            break;
-
-        case ORTE_PROC_STATE:
-            sprintf(tmp, "\t\tData type: ORTE_PROC_STATE\tValue: %d", (int)iptr->value.proc_state);
-            break;
-
-        case ORTE_JOB_STATE:
-            sprintf(tmp, "\t\tData type: ORTE_JOB_STATE\tValue: %d", (int)iptr->value.job_state);
-            break;
-
-        case ORTE_EXIT_CODE:
-            sprintf(tmp, "\t\tData type: ORTE_EXIT_CODE\tValue: %d", (int)iptr->value.exit_code);
-            break;
-
-        case ORTE_NULL:
-            sprintf(tmp, "\t\tData type: ORTE_NULL");
-            break;
-
-        case ORTE_APP_CONTEXT:
-            sprintf(tmp, "\t\tData type: ORTE_APP_CONTEXT");
-            break;
-
-        default:
-            sprintf(tmp, "\t\tData type: UNKNOWN");
-            break;
+    if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp, "\t\t\t", iptr->value, ORTE_DATA_VALUE))) {
+        ORTE_ERROR_LOG(rc);
+        return;
     }
 
     if (NULL == buffer) {
         opal_output(0, "%s", tmp);
     } else {
-        orte_gpr_replica_dump_load_string(buffer, &tmp2);
+        orte_gpr_replica_dump_load_string(buffer, &tmp);
     }
+
+    free(tmp);
+}
+
+
+int orte_gpr_replica_dump_segment_size_fn(orte_buffer_t *buffer, char *segment)
+{
+    orte_gpr_replica_segment_t **seg, *segptr;
+    size_t i, m, segsize, total;
+    char tmp[100], *tptr;
+    int rc;
+
+    tptr = tmp;
+
+    /* if segment = NULL, loop through all segments */
+    if (NULL == segment) {
+        seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
+        total = 0;
+        for (i=0, m=0; m < orte_gpr_replica.num_segs &&
+             i < (orte_gpr_replica.segments)->size; i++) {
+             if (NULL != seg[i]) {
+                 m++;
+                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_segment_size_fn(&segsize, seg[i]))) {
+                     ORTE_ERROR_LOG(rc);
+                     return rc;
+                 }
+                 total += segsize;
+             }
+         }
+         sprintf(tmp, "Total registry size: %lu bytes", (unsigned long)total);
+         orte_gpr_replica_dump_load_string(buffer, &tptr);
+
+         return ORTE_SUCCESS;
+    }
+
+    /* otherwise, get the size of just the one specified */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&segptr, false, segment))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_segment_size_fn(&segsize, segptr))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    sprintf(tmp, "Size of segment %s: %lu bytes", segment, (unsigned long)segsize);
+    orte_gpr_replica_dump_load_string(buffer, &tptr);
+
+    return ORTE_SUCCESS;
 }
 
 
 static void orte_gpr_replica_dump_load_string(orte_buffer_t *buffer, char **tmp)
 {
-    orte_dps.pack(buffer, tmp, 1, ORTE_STRING);
+    orte_dss.pack(buffer, tmp, 1, ORTE_STRING);
 }
+
+static int orte_gpr_replica_get_segment_size_fn(size_t *segsize, orte_gpr_replica_segment_t *seg)
+{
+    size_t data_size, isize, i, j, k, m;
+    char **dict;
+    orte_gpr_replica_container_t **cptr;
+    orte_gpr_replica_itagval_t **iptr;
+    int rc;
+
+    data_size = strlen(seg->name);
+    data_size += 2*sizeof(orte_gpr_replica_itag_t); /* itag, num_dict_entries */
+
+    data_size += (seg->dict)->size * sizeof(void*);  /* account for size of pointer array */
+    dict = (char**)(seg->dict)->addr;
+    for (i=0, j=0; j < seg->num_dict_entries &&
+         i < (seg->dict)->size; i++) {
+             if (NULL != dict[i]) {
+                 j++;
+                 data_size += strlen(dict[i]) + 1;
+             }
+         }
+
+         data_size += sizeof(size_t);  /* num_containers */
+         cptr = (orte_gpr_replica_container_t**)(seg->containers)->addr;
+         for (i=0, j=0; j < (seg->num_containers) &&
+              i < (seg->containers)->size; i++) {
+                  if (NULL != cptr[i]) {
+                      j++;
+                      data_size += sizeof(size_t);  /* index */
+                      data_size += cptr[i]->num_itags * sizeof(orte_gpr_replica_itag_t);  /* itags array */
+                      data_size += sizeof(size_t);  /* num_itags */
+                      data_size += (cptr[i]->itagvals)->size * sizeof(void*);  /* account for size of pointer array */
+                      data_size += sizeof(size_t);  /* num_itagvals */
+                      iptr = (orte_gpr_replica_itagval_t**)(cptr[i]->itagvals)->addr;
+                      for (k=0, m=0; m < cptr[i]->num_itagvals &&
+                           k < (cptr[i]->itagvals)->size; k++) {
+                               if (NULL != iptr[k]) {
+                                   m++;
+                                   data_size += sizeof(size_t);  /* index */
+                                   data_size += sizeof(orte_gpr_replica_itag_t);
+                                   data_size += sizeof(orte_data_type_t);
+                                   if (ORTE_SUCCESS != (rc = orte_dss.size(&isize, iptr[k]->value->data, iptr[k]->value->type))) {
+                                       ORTE_ERROR_LOG(rc);
+                                       *segsize = 0;
+                                       return rc;
+                                   }
+                                   data_size += isize;
+                               }
+                           }
+                           data_size += 3*sizeof(size_t);
+                           data_size += (cptr[i]->itaglist).array_size * sizeof(unsigned char*);
+                  }
+              }
+
+              *segsize = data_size;
+              return ORTE_SUCCESS;
+}
+

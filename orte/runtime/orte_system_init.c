@@ -20,11 +20,12 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/include/orte_constants.h"
 
-#include "runtime/opal.h"
-#include "runtime/runtime.h"
+#include "opal/runtime/opal.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/runtime.h"
 
 /**
  * Initialze and setup a process in the ORTE.

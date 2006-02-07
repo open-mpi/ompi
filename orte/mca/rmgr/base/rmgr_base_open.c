@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -20,7 +20,7 @@
 #include "orte_config.h"
 #include "orte/include/orte_constants.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -76,9 +76,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->idx=0;
     app_context->app=NULL;
     app_context->num_procs=0;
-    app_context->argc=0;
     app_context->argv=NULL;
-    app_context->num_env=0;
     app_context->env=NULL;
     app_context->cwd=NULL;
     app_context->num_map = 0;
@@ -129,13 +127,13 @@ OBJ_CLASS_INSTANCE(
            orte_app_context_destructor); /* destructor */
 
 
-static void orte_app_context_map_construct(orte_app_context_map_t *a) 
+static void orte_app_context_map_construct(orte_app_context_map_t *a)
 {
     a->map_type = ORTE_APP_CONTEXT_MAP_INVALID;
     a->map_data = NULL;
 }
 
-static void orte_app_context_map_destruct(orte_app_context_map_t *a) 
+static void orte_app_context_map_destruct(orte_app_context_map_t *a)
 {
     if (NULL != a->map_data) {
         free(a->map_data);
@@ -143,7 +141,7 @@ static void orte_app_context_map_destruct(orte_app_context_map_t *a)
 }
 
 
-OBJ_CLASS_INSTANCE(orte_app_context_map_t, 
+OBJ_CLASS_INSTANCE(orte_app_context_map_t,
                    opal_object_t,
                    orte_app_context_map_construct,
                    orte_app_context_map_destruct);
@@ -159,11 +157,11 @@ int orte_rmgr_base_open(void)
     orte_data_type_t tmp;
 
     OPAL_TRACE(5);
-    
+
     /* Debugging / verbose output */
 
     orte_rmgr_base.rmgr_output = opal_output_open(NULL);
-    param = mca_base_param_reg_int_name("rmgr_base", "verbose", 
+    param = mca_base_param_reg_int_name("rmgr_base", "verbose",
                                         "Verbosity level for the rmgr framework",
                                         false, false, 0, &value);
     if (value != 0) {
@@ -174,26 +172,38 @@ int orte_rmgr_base_open(void)
 
     /* register the base system types with the DPS */
     tmp = ORTE_APP_CONTEXT;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_rmgr_base_pack_app_context,
-                                          orte_rmgr_base_unpack_app_context,
-                                          "ORTE_APP_CONTEXT", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_APP_CONTEXT_MAP;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_rmgr_base_pack_app_context_map,
-                                          orte_rmgr_base_unpack_app_context_map,
-                                          "ORTE_APP_CONTEXT_MAP", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* Open up all available components */
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmgr_base_pack_app_context,
+                                        orte_rmgr_base_unpack_app_context,
+                                        (orte_dss_copy_fn_t)orte_rmgr_base_copy_app_context,
+                                        (orte_dss_compare_fn_t)orte_rmgr_base_compare_app_context,
+                                        (orte_dss_size_fn_t)orte_rmgr_base_size_app_context,
+                                        (orte_dss_print_fn_t)orte_rmgr_base_print_app_context,
+                                        (orte_dss_release_fn_t)orte_rmgr_base_std_obj_release,
+                                        ORTE_DSS_STRUCTURED,
+                                        "ORTE_APP_CONTEXT", &tmp))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
-    if (ORTE_SUCCESS != 
+    tmp = ORTE_APP_CONTEXT_MAP;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmgr_base_pack_app_context_map,
+                                        orte_rmgr_base_unpack_app_context_map,
+                                        (orte_dss_copy_fn_t)orte_rmgr_base_copy_app_context_map,
+                                        (orte_dss_compare_fn_t)orte_rmgr_base_compare_app_context_map,
+                                        (orte_dss_size_fn_t)orte_rmgr_base_size_app_context_map,
+                                        (orte_dss_print_fn_t)orte_rmgr_base_print_app_context_map,
+                                        (orte_dss_release_fn_t)orte_rmgr_base_std_obj_release,
+                                        ORTE_DSS_STRUCTURED,
+                                        "ORTE_APP_CONTEXT_MAP", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+/* Open up all available components */
+
+    if (ORTE_SUCCESS !=
         mca_base_components_open("rmgr", orte_rmgr_base.rmgr_output,
-                                 mca_rmgr_base_static_components, 
+                                 mca_rmgr_base_static_components,
                                  &orte_rmgr_base.rmgr_components, true)) {
         return ORTE_ERROR;
     }

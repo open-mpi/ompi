@@ -556,8 +556,10 @@ void mca_oob_tcp_registry_callback(
     void* cbdata)
 {
     size_t i, j, k;
+    int rc;
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t *keyval;
+    orte_byte_object_t *bo;
     orte_buffer_t buffer;
     mca_oob_tcp_addr_t* addr, *existing;
     mca_oob_tcp_peer_t* peer;
@@ -584,15 +586,18 @@ void mca_oob_tcp_registry_callback(
 
                 /* transfer ownership of registry object to buffer and unpack */
                 OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-                if(orte_dps.load(&buffer,
-                                 keyval->value.byteobject.bytes,
-                                 keyval->value.byteobject.size) != ORTE_SUCCESS) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&bo, keyval->value, ORTE_BYTE_OBJECT))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                if(orte_dss.load(&buffer, bo->bytes, bo->size) != ORTE_SUCCESS) {
                     /* TSW - throw ERROR */
                     continue;
                 }
-                keyval->type = ORTE_NULL;
-                keyval->value.byteobject.bytes = NULL;
-                keyval->value.byteobject.size = 0;
+                /* protect the values from the release */
+                keyval->value->type = ORTE_NULL;
+                keyval->value->data = NULL;
+                /* unpack the buffer */
                 addr = mca_oob_tcp_addr_unpack(&buffer);
                 OBJ_DESTRUCT(&buffer);
                 if(NULL == addr) {
@@ -742,8 +747,8 @@ int mca_oob_tcp_init(void)
     orte_gpr_subscription_id_t sub_id;
     char *sub_name, *segment, *trig_name, **tokens;
     char *keys[] = {"oob-tcp", ORTE_PROC_RML_IP_ADDRESS_KEY};
-    orte_data_type_t types[2];
-    orte_gpr_value_union_t values[2];
+    orte_data_value_t *values[2];
+    orte_byte_object_t bo;
     mca_oob_tcp_subscription_t *subscription;
     int rc;
     opal_list_item_t* item;
@@ -847,15 +852,24 @@ int mca_oob_tcp_init(void)
     }
 
     /* extract payload for storage */
-    types[0] = ORTE_BYTE_OBJECT;
-    if (ORTE_SUCCESS != (rc = orte_dps.unload(buffer, (void**)&(values[0].byteobject.bytes),
-                                 &(values[0].byteobject.size)))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unload(buffer, (void**)&(bo.bytes), &(bo.size)))) {
         ORTE_ERROR_LOG(rc);
         free(segment);
         OBJ_RELEASE(buffer);
         return rc;
     }
     OBJ_RELEASE(buffer);
+    values[0] = OBJ_NEW(orte_data_value_t);
+    if (NULL == values[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    values[0]->type = ORTE_BYTE_OBJECT;
+    if (ORTE_SUCCESS != (rc = orte_dss.copy(&(values[0]->data), &bo, ORTE_BYTE_OBJECT))) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
+        return rc;
+    }
 
     /* setup the IP address for storage */
     tmp = mca_oob.oob_get_addr();
@@ -868,12 +882,17 @@ int mca_oob_tcp_init(void)
         ORTE_ERROR_LOG(ORTE_ERROR);
         free(segment);
         free(tmp);
-        free(values[0].byteobject.bytes);
+        free(bo.bytes);
         return ORTE_ERROR;
     }
     *tmp3 = '\0';
-    types[1] = ORTE_STRING;
-    values[1].strptr = strdup(tmp2);
+    values[1] = OBJ_NEW(orte_data_value_t);
+    if (NULL == values[1]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    values[1]->type = ORTE_STRING;
+    values[1]->data = strdup(tmp2);
     free(tmp);
 
     /* get the process tokens */
@@ -881,14 +900,14 @@ int mca_oob_tcp_init(void)
                                     orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         free(segment);
-        free(values[0].byteobject.bytes);
-        free(values[1].strptr);
+        OBJ_RELEASE(values[0]);
+        OBJ_RELEASE(values[1]);
         return rc;
     }
 
     /* put our contact info in registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put_N(ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND,
-                                        segment, tokens, 2, keys, types, values))) {
+                                        segment, tokens, 2, keys, values))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -898,8 +917,8 @@ int mca_oob_tcp_init(void)
         tokens[i] = NULL;
     }
     if (NULL != tokens) free(tokens);
-    free(values[0].byteobject.bytes);
-    free(values[1].strptr);
+    OBJ_RELEASE(values[0]);
+    OBJ_RELEASE(values[1]);
 
     return rc;
 }

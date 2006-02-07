@@ -29,7 +29,7 @@
 
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
@@ -42,7 +42,7 @@ int orte_gpr_replica_recv_dump_all_cmd(orte_buffer_t *answer)
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -64,13 +64,13 @@ int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *input_buffer, orte_bu
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &segment, &n, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &segment, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -92,13 +92,13 @@ int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *input_buffer,
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &start, &n, ORTE_GPR_TRIGGER_ID))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &start, &n, ORTE_GPR_TRIGGER_ID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -121,13 +121,13 @@ int orte_gpr_replica_recv_dump_subscriptions_cmd(orte_buffer_t *input_buffer,
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &start, &n, ORTE_GPR_SUBSCRIPTION_ID))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &start, &n, ORTE_GPR_SUBSCRIPTION_ID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -152,19 +152,19 @@ int orte_gpr_replica_recv_dump_a_trigger_cmd(orte_buffer_t *input_buffer,
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &name, &n, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &name, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &id, &n, ORTE_GPR_TRIGGER_ID))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &id, &n, ORTE_GPR_TRIGGER_ID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -218,19 +218,19 @@ int orte_gpr_replica_recv_dump_a_subscription_cmd(orte_buffer_t *input_buffer,
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &name, &n, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &name, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(input_buffer, &id, &n, ORTE_GPR_SUBSCRIPTION_ID))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &id, &n, ORTE_GPR_SUBSCRIPTION_ID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -280,12 +280,39 @@ int orte_gpr_replica_recv_dump_callbacks_cmd(orte_buffer_t *answer)
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     rc = orte_gpr_replica_dump_callbacks_fn(answer);
+
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return rc;
+}
+
+int orte_gpr_replica_recv_dump_segment_size_cmd(orte_buffer_t *input_buffer, orte_buffer_t *answer)
+{
+    orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_SEGMENT_SIZE_CMD;
+    char *segment;
+    size_t n;
+    int rc;
+
+    OPAL_TRACE(3);
+
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    n=1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &segment, &n, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    rc = orte_gpr_replica_dump_segment_size_fn(answer, segment);
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);

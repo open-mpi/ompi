@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -38,71 +38,57 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
                                int exit_status)
 {
     orte_gpr_value_t *value;
+    orte_data_value_t *dv;
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
+    orte_exit_code_t exit_code;
     size_t i;
+    char *segment;
 
-    value = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == value) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    
-    value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
-    
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, proc))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value->segment), jobid))) {
+
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+                                                    segment, 2, 0))) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
         return rc;
     }
     
     if (ORTE_SUCCESS != (rc = orte_ns.get_vpid(&vpid, proc))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
         return rc;
     }
 
-    if (ORTE_VPID_MAX == vpid) {  /* wildcard case - set everyone on job segment to this status */
-        value->tokens = NULL;
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens),
-                                                        &(value->num_tokens), proc))) {
+    if (ORTE_VPID_MAX != vpid) {  /* check for wildcard case - leave tokens alone if so */
+        if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens), &(value->num_tokens), proc))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
             return rc;
         }
     }
 
-    value->cnt = 2;
-    value->keyvals = (orte_gpr_keyval_t**)malloc(2 * sizeof(orte_gpr_keyval_t*));
-    if (NULL == value->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &state))) {
+        ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
     }
 
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    exit_code = (orte_exit_code_t)exit_status;
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_PROC_EXIT_CODE_KEY, ORTE_EXIT_CODE, &exit_code))) {
+        ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
     }
-    (value->keyvals[0])->key = strdup(ORTE_PROC_STATE_KEY);
-    (value->keyvals[0])->type = ORTE_PROC_STATE;
-    (value->keyvals[0])->value.proc_state = state;
-    
-    value->keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[1]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    (value->keyvals[1])->key = strdup(ORTE_PROC_EXIT_CODE_KEY);
-    (value->keyvals[1])->type = ORTE_EXIT_CODE;
-    (value->keyvals[1])->value.exit_code = exit_status;
 
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
         ORTE_ERROR_LOG(rc);
@@ -110,88 +96,93 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
     OBJ_RELEASE(value);
 
     /* check to see if we need to increment orte-standard counters */
-    /* first, cleanup value so it can be used for that purpose */
-
-    value = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == value) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->addr_mode = ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_AND;
+    if (ORTE_PROC_STATE_AT_STG1 == state ||
+        ORTE_PROC_STATE_AT_STG2 == state ||
+        ORTE_PROC_STATE_AT_STG3 == state ||
+        ORTE_PROC_STATE_FINALIZED == state ||
+        ORTE_PROC_STATE_TERMINATED == state ||
+        ORTE_PROC_STATE_ABORTED == state) {
+            
+        /* If we're setting ABORTED, we're also setting TERMINATED, so we
+           need 2 keyvals.  Everything else only needs 1 keyval. */
     
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value->segment), jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(NULL == (value->tokens = (char**)malloc(sizeof(char*)))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-    value->tokens[0] = strdup(ORTE_JOB_GLOBALS);
-    value->num_tokens = 1;
-
-    /* If we're setting ABORTED, we're also setting TERMINATED, so we
-       need 2 keyvals.  Everything else only needs 1 keyval. */
-
-    value->cnt = 1;
-    if (ORTE_PROC_STATE_ABORTED == state) {
-        ++value->cnt;
-    }
-    value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*) *
-                                                 value->cnt);
-    if (NULL == value->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    for (i = 0; i < value->cnt; ++i) {
-        value->keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
-        if (NULL == value->keyvals[i]) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            OBJ_RELEASE(value);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+        if (ORTE_PROC_STATE_ABORTED == state) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_AND,
+                                                            segment, 2, 1))) {
+                ORTE_ERROR_LOG(rc);
+                free(segment);
+                return rc;
+            }
+        } else {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_AND,
+                                                            segment, 1, 1))) {
+                ORTE_ERROR_LOG(rc);
+                free(segment);
+                return rc;
+            }
         }
-        (value->keyvals[i])->type = ORTE_NULL;
-    }
+        
+        value->tokens[0] = strdup(ORTE_JOB_GLOBALS);
     
-    /* see which state we are in - let that determine the counter, if any */
-    switch (state) {
-        case ORTE_PROC_STATE_AT_STG1:
-            (value->keyvals[0])->key = strdup(ORTE_PROC_NUM_AT_STG1);
-            break;
-            
-        case ORTE_PROC_STATE_AT_STG2:
-            (value->keyvals[0])->key = strdup(ORTE_PROC_NUM_AT_STG2);
-            break;
-            
-        case ORTE_PROC_STATE_AT_STG3:
-            (value->keyvals[0])->key = strdup(ORTE_PROC_NUM_AT_STG3);
-            break;
-            
-        case ORTE_PROC_STATE_FINALIZED:
-            (value->keyvals[0])->key = strdup(ORTE_PROC_NUM_FINALIZED);
-            break;
-            
-        case ORTE_PROC_STATE_TERMINATED:
-            (value->keyvals[0])->key = strdup(ORTE_PROC_NUM_TERMINATED);
-            break;
-            
-        case ORTE_PROC_STATE_ABORTED:
-            (value->keyvals[0])->key = strdup(ORTE_PROC_NUM_ABORTED);
-            (value->keyvals[1])->key = strdup(ORTE_PROC_NUM_TERMINATED);
-            break;
-    }
-    if (NULL != (value->keyvals[0])->key) { /* need to increment a counter */
+        /* see which state we are in - let that determine the counter */
+        switch (state) {
+            case ORTE_PROC_STATE_AT_STG1:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG1, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+    
+            case ORTE_PROC_STATE_AT_STG2:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG2, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+    
+            case ORTE_PROC_STATE_AT_STG3:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG3, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+    
+            case ORTE_PROC_STATE_FINALIZED:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_FINALIZED, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+    
+            case ORTE_PROC_STATE_TERMINATED:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_TERMINATED, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+    
+            case ORTE_PROC_STATE_ABORTED:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_ABORTED, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_PROC_NUM_TERMINATED, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+        }
+        
         if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(value))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
             return rc;
         }
     }
-    
+
+cleanup:
     /* all done */
-    OBJ_RELEASE(value);
-    
+    if (NULL != value) OBJ_RELEASE(value);
+
     return rc;
 }

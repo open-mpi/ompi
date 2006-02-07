@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
- 
+
 #include "orte_config.h"
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
@@ -26,7 +26,7 @@
 #endif
 
 #include "mca/errmgr/errmgr.h"
-#include "dps/dps_internal.h"
+#include "dss/dss_internal.h"
 
 #include "mca/rmgr/base/base.h"
 
@@ -36,11 +36,11 @@
 int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
                                  size_t *num_vals, orte_data_type_t type)
 {
-    int rc;
+    int rc, count;
     orte_app_context_t **app_context;
     size_t i, max_n=1, temp;
     int8_t have_prefix;
-    
+
     /* unpack into array of app_context objects */
     app_context = (orte_app_context_t**) dest;
     for (i=0; i < *num_vals; i++) {
@@ -53,90 +53,90 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         }
 
         /* get the app index number */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context[i]->idx),
-                    &max_n, DPS_TYPE_SIZE_T))) {
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->idx),
+                    &max_n, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* unpack the application name */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context[i]->app),
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->app),
                     &max_n, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* get the number of processes */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context[i]->num_procs),
-                    &max_n, DPS_TYPE_SIZE_T))) {
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_procs),
+                    &max_n, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* get the number of argv strings */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context[i]->argc),
-                    &max_n, ORTE_INT))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+        /* get the number of argv strings that were packed */
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_INT))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
 
         /* if there are argv strings, allocate the required space for the char * pointers */
-        if (0 < app_context[i]->argc) {
-            app_context[i]->argv = (char **)malloc((app_context[i]->argc+1) * sizeof(char*));
+        if (0 < count) {
+            app_context[i]->argv = (char **)malloc((count+1) * sizeof(char*));
             if (NULL == app_context[i]->argv) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            app_context[i]->argv[app_context[i]->argc] = NULL;
+            app_context[i]->argv[count] = NULL;
 
             /* and unpack them */
-            temp = (size_t)app_context[i]->argc;
-            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, app_context[i]->argv,
-                        (size_t*)(&temp), ORTE_STRING))) {
+            max_n = (size_t)count;
+            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, app_context[i]->argv, &max_n, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (INT_MAX < temp) {
-                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-            }
-            app_context[i]->argc = (int)temp;
         }
-        
+
         /* get the number of env strings */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context[i]->num_env),
-                    &max_n, DPS_TYPE_SIZE_T))) {
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_INT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* if there are env strings, allocate the required space for the char * pointers */
-        if (0 < app_context[i]->num_env) {
-            app_context[i]->env = (char **)malloc((app_context[i]->num_env+1) * sizeof(char*));
+        if (0 < count) {
+            app_context[i]->env = (char **)malloc((count+1) * sizeof(char*));
             if (NULL == app_context[i]->env) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            app_context[i]->env[app_context[i]->num_env] = NULL;
-    
+            app_context[i]->env[count] = NULL;
+
             /* and unpack them */
-            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, app_context[i]->env,
-                        &(app_context[i]->num_env), ORTE_STRING))) {
+            max_n = count;
+            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, app_context[i]->env, &max_n, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
         }
-        
+
         /* unpack the cwd */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &app_context[i]->cwd,
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &app_context[i]->cwd,
                     &max_n, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* unpack the map data */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context[i]->num_map),
-                   &max_n, DPS_TYPE_SIZE_T))) {
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_map),
+                   &max_n, DSS_TYPE_SIZE_T))) {
+            ORTE_ERROR_LOG(rc);
             return rc;
         }
 
@@ -146,7 +146,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, app_context[i]->map_data,
+            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, app_context[i]->map_data,
                         &(app_context[i]->num_map), ORTE_APP_CONTEXT_MAP))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -154,13 +154,14 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         }
 
         /* unpack the prefix dir if there is one */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &have_prefix,
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &have_prefix,
                    &max_n, ORTE_INT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         if (have_prefix) {
-            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &app_context[i]->prefix_dir,
+            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &app_context[i]->prefix_dir,
                                                              &max_n, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -195,14 +196,14 @@ int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
         }
 
         /* map type */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context_map[i]->map_type),
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context_map[i]->map_type),
                    &max_n, ORTE_UINT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* map data */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(app_context_map[i]->map_data),
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context_map[i]->map_data),
                    &max_n, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;

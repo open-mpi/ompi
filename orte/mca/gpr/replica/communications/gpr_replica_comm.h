@@ -130,6 +130,8 @@ int orte_gpr_replica_recv_dump_a_subscription_cmd(orte_buffer_t *input_buffer,
 
 int orte_gpr_replica_recv_dump_callbacks_cmd(orte_buffer_t *answer);
 
+int orte_gpr_replica_recv_dump_segment_size_cmd(orte_buffer_t *input_buffer, orte_buffer_t *answer);
+
 int orte_gpr_replica_recv_get_startup_msg_cmd(orte_buffer_t *input_buffer,
                                               orte_buffer_t *answer);
 

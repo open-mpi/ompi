@@ -147,7 +147,9 @@ int orte_gpr_replica_dump_trigger(orte_buffer_t *buffer,
 int orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
                                        orte_gpr_replica_subscription_t *sub);
 
-        int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer);
+int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer);
+
+int orte_gpr_replica_dump_segment_size_fn(orte_buffer_t *buffer, char *segment);
 
 /*
  * *********    INTERNAL UTILITY FUNCTIONS     **********
@@ -180,9 +182,6 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_itagval_t **iptr,
                                    orte_gpr_keyval_t *kptr);
 
 
-int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
-                                    orte_gpr_replica_itagval_t *ival2);
-
 int orte_gpr_replica_purge_itag(orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t itag);
 
@@ -192,8 +191,6 @@ int orte_gpr_replica_search_container(orte_gpr_replica_addr_mode_t addr_mode,
 
 bool orte_gpr_replica_value_in_container(orte_gpr_replica_container_t *cptr,
                                       orte_gpr_replica_itagval_t *iptr);
-
-int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival);
 
 int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,

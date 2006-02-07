@@ -25,43 +25,43 @@
 #include <unistd.h>
 #endif
 
-#include "include/constants.h"
+#include "orte/include/orte_constants.h"
+
 #include "opal/event/event.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal.h"
-#include "dps/dps.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/rml/base/base.h"
-#include "mca/errmgr/base/base.h"
-#include "mca/iof/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/sds/base/base.h"
-#include "mca/gpr/base/base.h"
-#include "mca/ras/base/base.h"
-#include "mca/ras/base/ras_base_node.h"
-#include "mca/rds/base/base.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/schema/base/base.h"
-#include "mca/soh/base/base.h"
-#include "opal/util/malloc.h"
-#include "util/univ_info.h"
-#include "util/proc_info.h"
-#include "util/session_dir.h"
-#include "util/sys_info.h"
-#include "opal/util/cmd_line.h"
-#include "util/universe_setup_file_io.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_path.h"
+#include "opal/util/cmd_line.h"
+#include "opal/util/malloc.h"
 
-#include "runtime/runtime.h"
-#include "runtime/runtime_internal.h"
-#include "runtime/orte_wait.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/rml/base/base.h"
+#include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/schema/base/base.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/universe_setup_file_io.h"
 
-static const char * orte_err2str(int errnum);
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/runtime_internal.h"
+#include "orte/runtime/orte_wait.h"
 
 int orte_init_stage1(bool infrastructure)
 {
@@ -103,11 +103,11 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * Initialize the data packing service.
+     * Initialize the data storage service.
      */
-    if (ORTE_SUCCESS != (ret = orte_dps_open())) {
+    if (ORTE_SUCCESS != (ret = orte_dss_open())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_dps_open";
+        error = "orte_dss_open";
         goto error;
     }
 
@@ -313,7 +313,7 @@ int orte_init_stage1(bool infrastructure)
     /* Once the session directory location has been established, set
        the opal_output default file location to be in the
        proc-specific session directory. */
-    opal_output_set_output_file_info(orte_process_info.proc_session_dir, 
+    opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                      "output-", NULL, NULL);
 
     /* if i'm the seed, get my contact info and write my setup file for others to find */
@@ -392,7 +392,7 @@ int orte_init_stage1(bool infrastructure)
         ret = orte_ns.get_cell_info(my_cellid, &site, &resource);
         if (ORTE_ERR_NOT_FOUND == ret) {
             /* Create a new Cell ID */
-            ret = orte_ns.create_cellid(&my_cellid, "unkonwn", orte_system_info.nodename);
+            ret = orte_ns.create_cellid(&my_cellid, "unknown", orte_system_info.nodename);
             if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
                 error = "orte_ns.create_cellid";
@@ -465,8 +465,15 @@ int orte_init_stage1(bool infrastructure)
                 goto error;
             }
             new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
-            new_attr->keyval.type         = ORTE_STRING;
-            new_attr->keyval.value.strptr = strdup(ras_item->node_name);
+            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+            if (NULL == new_attr->keyval.value) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                error = "OBJ_NEW(orte_data_value_t) for ORTE_RDS_NAME";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
+            new_attr->keyval.value->type   = ORTE_STRING;
+            new_attr->keyval.value->data   = strdup(ras_item->node_name);
             opal_list_append(&(rds_item->attributes), &new_attr->super);
 
             new_attr = OBJ_NEW(orte_rds_cell_attr_t);
@@ -477,14 +484,25 @@ int orte_init_stage1(bool infrastructure)
                 goto error;
             }
             new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
-            new_attr->keyval.type         = ORTE_CELLID;
-            new_attr->keyval.value.cellid = rds_item->cellid;
+            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+            if (NULL == new_attr->keyval.value) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                error = "OBJ_NEW(orte_data_value_t) for ORTE_CELLID";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
+            new_attr->keyval.value->type   = ORTE_CELLID;
+            if (ORTE_SUCCESS != (ret = orte_dss.copy(&(new_attr->keyval.value->data), &(rds_item->cellid), ORTE_CELLID))) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_dss.copy for ORTE_CELLID";
+                goto error;
+            }
             opal_list_append(&(rds_item->attributes), &new_attr->super);
 
             opal_list_append(&rds_single_host, &rds_item->super);
 
             /* Store into registry */
-            ret = orte_rds.store_resource(&rds_single_host);
+            ret = orte_rds_base_store_resource(&rds_single_host);
             if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
                 error = "orte_rds.store_resource";
@@ -511,6 +529,10 @@ int orte_init_stage1(bool infrastructure)
                nodes in your allocation on the node segment -- which
                is probably fine) */
             orte_ras_base_allocate(my_jobid, &module);
+            if (NULL == module) {
+                error = "orte_ras NULL module";
+                goto error;
+            }
             orte_ras = *module;
 
             OBJ_DESTRUCT(&single_host);
@@ -543,104 +565,4 @@ error:
     }
 
     return ret;
-}
-
-
-static const char *
-orte_err2str(int errnum)
-{
-    const char *retval;
-    switch (errnum) {
-    case ORTE_ERR_RECV_LESS_THAN_POSTED:
-        retval = "Receive was less than posted size";
-        break;
-    case ORTE_ERR_RECV_MORE_THAN_POSTED:
-        retval = "Receive was greater than posted size";
-        break;
-    case ORTE_ERR_NO_MATCH_YET:
-        retval = "No match for receive posted";
-        break;
-    case ORTE_ERR_BUFFER:
-        retval = "Buffer error";
-        break;
-    case ORTE_ERR_REQUEST:
-        retval = "Request error";
-        break;
-    case ORTE_ERR_NO_CONNECTION_ALLOWED:
-        retval = "No connection allowed";
-        break;
-    case ORTE_ERR_CONNECTION_REFUSED:
-        retval = "Connection refused";
-        break;
-    case ORTE_ERR_CONNECTION_FAILED:
-        retval = "Connection failed";
-        break;
-    case ORTE_STARTUP_DETECTED:
-        retval = "Startup detected";
-        break;
-    case ORTE_SHUTDOWN_DETECTED:
-        retval = "Shutdown detected";
-        break;
-    case ORTE_PROC_STARTING:
-        retval = "Proccess starting";
-        break;
-    case ORTE_PROC_STOPPED:
-        retval = "Proccess stopped";
-        break;
-    case ORTE_PROC_TERMINATING:
-        retval = "Proccess terminating";
-        break;
-    case ORTE_PROC_ALIVE:
-        retval = "Proccess alive";
-        break;
-    case ORTE_PROC_RUNNING:
-        retval = "Process running";
-        break;
-    case ORTE_PROC_KILLED:
-        retval = "Process killed";
-        break;
-    case ORTE_PROC_EXITED:
-        retval = "Process exited";
-        break;
-    case ORTE_NODE_UP:
-        retval = "Node is up";
-        break;
-    case ORTE_NODE_DOWN:
-        retval = "Node is down";
-        break;
-    case ORTE_NODE_BOOTING:
-        retval = "Node is booting";
-        break;
-    case ORTE_NODE_ERROR:
-        retval = "Node is in error condition";
-        break;
-    case ORTE_PACK_MISMATCH:
-        retval = "Pack data mismatch";
-        break;
-    case ORTE_ERR_PACK_FAILURE:
-        retval = "Data pack failed";
-        break;
-    case ORTE_ERR_UNPACK_FAILURE:
-        retval = "Data unpack failed";
-        break;
-    case ORTE_ERR_COMM_FAILURE:
-        retval = "Communication failure";
-        break;
-    case ORTE_UNPACK_INADEQUATE_SPACE:
-        retval = "Data unpack had inadequate space";
-        break;
-    case ORTE_UNPACK_READ_PAST_END_OF_BUFFER:
-        retval = "Data unpack would read past end of buffer";
-        break;
-    case ORTE_ERR_GPR_DATA_CORRUPT:
-        retval = "GPR data corruption";
-        break;
-    case ORTE_ERR_TYPE_MISMATCH:
-        retval = "Type mismatch";
-        break;
-    default:
-        retval = NULL;
-    }
-
-    return retval;
 }

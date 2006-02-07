@@ -30,35 +30,25 @@
 #include <netinet/in.h>
 #endif
 
-#include "support.h"
 #include "orte/runtime/runtime.h"
-
-#define NUM_ITERS 3
-
-FILE *test_out;
 
 int main (int argc, char* argv[])
 {
-    int rc, i;
+    int rc;
 
-    test_init("orte_start_shut");
-    test_out = stderr;
-    
-    fprintf(test_out, "initialize the system\n");
+    fprintf(stderr, "initialize the system\n");
     if (ORTE_SUCCESS != (rc = orte_init(true))) {
-        fprintf(test_out, "couldn't complete init - error code %d\n", rc);
+        fprintf(stderr, "couldn't complete init - error code %d\n", rc);
         exit(1);
     }
 
-    fprintf(test_out, "shut system down\n");
+    fprintf(stderr, "shut system down\n");
     if (ORTE_SUCCESS != (rc = orte_finalize())) {
-        fprintf(test_out, "couldn't complete finalize - error code %d\n", rc);
+        fprintf(stderr, "couldn't complete finalize - error code %d\n", rc);
         exit(1);
     }
 
-    fprintf(test_out, "orte_init_finalize: successful\n");
+    fprintf(stderr, "orte_init_finalize: successful\n");
     
-    rc = test_finalize();
-
     return rc;
 }

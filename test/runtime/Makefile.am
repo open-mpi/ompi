@@ -48,8 +48,7 @@ orte_init_finalize_SOURCES = \
     orte_init_finalize.c
 orte_init_finalize_LDADD = \
 	$(top_builddir)/orte/liborte.la \
-	$(top_builddir)/opal/libopal.la \
-	$(top_builddir)/test/support/libsupport.a
+	$(top_builddir)/opal/libopal.la
 orte_init_finalize_DEPENDENCIES = $(orte_init_finalize_LDADD)
 
 opal_init_finalize_SOURCES = \

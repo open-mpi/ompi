@@ -31,7 +31,7 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/rml/rml.h"
@@ -62,12 +62,12 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
 
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &message, 1, ORTE_GPR_NOTIFY_MSG))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&buffer, &message, 1, ORTE_GPR_NOTIFY_MSG))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

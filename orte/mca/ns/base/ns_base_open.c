@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "opal/util/output.h"
 
-#include "dps/dps.h"
+#include "dss/dss.h"
 
 #include "mca/ns/base/base.h"
 
@@ -109,16 +109,16 @@ static void orte_name_services_namelist_construct(orte_name_services_namelist_t*
 static void orte_name_services_namelist_destructor(orte_name_services_namelist_t* list)
 {
     if (NULL != list->name) {
-	free(list->name);
+    free(list->name);
     }
 }
 
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
-		   orte_name_services_namelist_t,              /* type name */
-		   opal_list_item_t,                        /* parent "class" name */
-		   orte_name_services_namelist_construct,    /* constructor */
-		   orte_name_services_namelist_destructor);  /* destructor */
+           orte_name_services_namelist_t,              /* type name */
+           opal_list_item_t,                        /* parent "class" name */
+           orte_name_services_namelist_construct,    /* constructor */
+           orte_name_services_namelist_destructor);  /* destructor */
 
 
 
@@ -132,7 +132,7 @@ int orte_ns_base_open(void)
     orte_data_type_t tmp;
 
     /* Debugging / verbose output */
-    
+
     param = mca_base_param_reg_int_name("ns_base", "verbose",
                                         "Verbosity level for the ns framework",
                                         false, false, 0, &value);
@@ -144,42 +144,66 @@ int orte_ns_base_open(void)
 
     /* register the base system types with the DPS */
     tmp = ORTE_NAME;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_name,
-                                          orte_ns_base_unpack_name,
-                                          "ORTE_NAME", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_VPID;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_vpid, 
-                                          orte_ns_base_unpack_vpid,
-                                          "ORTE_VPID", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_JOBID;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_jobid, 
-                                          orte_ns_base_unpack_jobid,
-                                          "ORTE_JOBID", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    tmp = ORTE_CELLID;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_cellid, 
-                                          orte_ns_base_unpack_cellid,
-                                          "ORTE_CELLID", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* Open up all available components */
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ns_base_pack_name,
+                                        orte_ns_base_unpack_name,
+                                        (orte_dss_copy_fn_t)orte_ns_base_copy_name,
+                                        (orte_dss_compare_fn_t)orte_ns_base_compare_name,
+                                        (orte_dss_size_fn_t)orte_ns_base_std_size,
+                                        (orte_dss_print_fn_t)orte_ns_base_print_name,
+                                        (orte_dss_release_fn_t)orte_ns_base_std_release,
+                                        ORTE_DSS_UNSTRUCTURED,
+                                        "ORTE_NAME", &tmp))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
-    if (ORTE_SUCCESS != 
+    tmp = ORTE_VPID;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ns_base_pack_vpid,
+                                        orte_ns_base_unpack_vpid,
+                                        (orte_dss_copy_fn_t)orte_ns_base_copy_vpid,
+                                        (orte_dss_compare_fn_t)orte_ns_base_compare_vpid,
+                                        (orte_dss_size_fn_t)orte_ns_base_std_size,
+                                        (orte_dss_print_fn_t)orte_ns_base_std_print,
+                                        (orte_dss_release_fn_t)orte_ns_base_std_release,
+                                        ORTE_DSS_UNSTRUCTURED,
+                                        "ORTE_VPID", &tmp))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+    tmp = ORTE_JOBID;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ns_base_pack_jobid,
+                                        orte_ns_base_unpack_jobid,
+                                        (orte_dss_copy_fn_t)orte_ns_base_copy_jobid,
+                                        (orte_dss_compare_fn_t)orte_ns_base_compare_jobid,
+                                        (orte_dss_size_fn_t)orte_ns_base_std_size,
+                                        (orte_dss_print_fn_t)orte_ns_base_std_print,
+                                        (orte_dss_release_fn_t)orte_ns_base_std_release,
+                                        ORTE_DSS_UNSTRUCTURED,
+                                        "ORTE_JOBID", &tmp))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+    tmp = ORTE_CELLID;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ns_base_pack_cellid,
+                                        orte_ns_base_unpack_cellid,
+                                        (orte_dss_copy_fn_t)orte_ns_base_copy_cellid,
+                                        (orte_dss_compare_fn_t)orte_ns_base_compare_cellid,
+                                        (orte_dss_size_fn_t)orte_ns_base_std_size,
+                                        (orte_dss_print_fn_t)orte_ns_base_std_print,
+                                        (orte_dss_release_fn_t)orte_ns_base_std_release,
+                                        ORTE_DSS_UNSTRUCTURED,
+                                        "ORTE_CELLID", &tmp))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+                    /* Open up all available components */
+
+    if (ORTE_SUCCESS !=
         mca_base_components_open("ns", mca_ns_base_output,
-                                 mca_ns_base_static_components, 
+                                 mca_ns_base_static_components,
                                  &mca_ns_base_components_available, true)) {
         return ORTE_ERROR;
     }

@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 #include "ompi/include/constants.h"
-#include "dps/dps.h"
+#include "orte/dss/dss.h"
 #include "proc/proc.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/bit_ops.h"
@@ -852,7 +852,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        if (ORTE_SUCCESS != (rc = orte_dps.unload(sbuf, &sendbuf, &size_len))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.unload(sbuf, &sendbuf, &size_len))) {
             goto err_exit;
         }
 	
@@ -897,7 +897,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         goto err_exit;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_dps.load(rbuf, recvbuf, rlen))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.load(rbuf, recvbuf, rlen))) {
         goto err_exit;
     }
 

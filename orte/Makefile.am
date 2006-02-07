@@ -33,6 +33,7 @@ DIST_SUBDIRS = \
 lib_LTLIBRARIES = liborte.la
 liborte_la_SOURCES =
 liborte_la_LIBADD = \
+	dss/libdss.la \
 	$(MCA_orte_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/opal/libopal.la
 liborte_la_DEPENDENCIES = $(liborte_la_LIBADD)
@@ -56,7 +57,7 @@ endif
 
 include include/Makefile.am
 include class/Makefile.am
-include dps/Makefile.am
+include dss/Makefile.am
 include runtime/Makefile.am
 include util/Makefile.am
 include tools/Makefile.am

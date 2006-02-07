@@ -31,7 +31,7 @@
 
 #include "orte/include/orte_constants.h"
 #include "orte/include/orte_types.h"
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/base/base.h"
@@ -47,7 +47,7 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
     size_t zero=0;
 
     OPAL_TRACE(3);
-    
+
     command = ORTE_GPR_SUBSCRIBE_CMD;
 
     /* can't be both NULL */
@@ -56,19 +56,19 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
         return ORTE_ERR_BAD_PARAM;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /* see if there are subscriptions - if so, pack them */
     if (NULL != subscriptions) {
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, subscriptions, num_subs, ORTE_GPR_SUBSCRIPTION))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, subscriptions, num_subs, ORTE_GPR_SUBSCRIPTION))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     } else {
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &zero, 1, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -79,12 +79,12 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
      * so check for it here and record a "zero" if nothing is there
      */
     if (NULL != trigs && 0 < num_trigs) {
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, trigs, num_trigs, ORTE_GPR_TRIGGER))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, trigs, num_trigs, ORTE_GPR_TRIGGER))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     } else {
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &zero, 1, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -101,14 +101,14 @@ int orte_gpr_base_pack_unsubscribe(orte_buffer_t *cmd,
     int rc;
 
     OPAL_TRACE(3);
-    
+
     command = ORTE_GPR_UNSUBSCRIBE_CMD;
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
        return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &id, 1, ORTE_GPR_SUBSCRIPTION_ID))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &id, 1, ORTE_GPR_SUBSCRIPTION_ID))) {
        return rc;
     }
 
@@ -121,14 +121,14 @@ int orte_gpr_base_pack_cancel_trigger(orte_buffer_t *cmd, orte_gpr_trigger_id_t 
     int rc;
 
     OPAL_TRACE(3);
-    
+
     command = ORTE_GPR_CANCEL_TRIGGER_CMD;
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
      return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &id, 1, ORTE_GPR_TRIGGER_ID))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &id, 1, ORTE_GPR_TRIGGER_ID))) {
        return rc;
     }
 

@@ -29,7 +29,7 @@
 #include "include/orte_types.h"
 
 #include "opal/class/opal_list.h"
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "mca/mca.h"
 #include "mca/gpr/gpr_types.h"
 #include "mca/rmgr/rmgr.h"
@@ -146,6 +146,39 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
 int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
                                           size_t *num_vals, orte_data_type_t type);
 
+
+/*
+ * COMPARE FUNCTIONS
+ */
+int orte_rmgr_base_compare_app_context(orte_app_context_t *value1, orte_app_context_t *value2, orte_data_type_t type);
+
+int orte_rmgr_base_compare_app_context_map(orte_app_context_map_t *value1, orte_app_context_map_t *value2, orte_data_type_t type);
+
+/*
+ * COPY FUNCTIONS
+ */
+int orte_rmgr_base_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_copy_app_context_map(orte_app_context_map_t **dest, orte_app_context_map_t *src, orte_data_type_t type);
+
+/*
+ * PRINT FUNCTIONS
+ */
+int orte_rmgr_base_print_app_context(char **output, char *prefix, orte_app_context_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_print_app_context_map(char **output, char *prefix, orte_app_context_map_t *src, orte_data_type_t type);
+
+/*
+ * SIZE FUNCTIONS
+ */
+int orte_rmgr_base_size_app_context(size_t *size, orte_app_context_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_size_app_context_map(size_t *size, orte_app_context_map_t *src, orte_data_type_t type);
+
+/*
+ * RELEASE FUNCTIONS
+ */
+void orte_rmgr_base_std_obj_release(orte_data_value_t *value);
 
 /*
  * globals that might be needed

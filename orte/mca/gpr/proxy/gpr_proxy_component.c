@@ -29,7 +29,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "opal/util/output.h"
 #include "util/proc_info.h"
 
@@ -85,8 +85,9 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_delete_segment_nb,
     orte_gpr_proxy_index_nb,
     /* GENERAL OPERATIONS */
+    orte_gpr_base_create_value,
+    orte_gpr_base_create_keyval,
     orte_gpr_proxy_preallocate_segment,
-    orte_gpr_base_xfer_payload,
     orte_gpr_proxy_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_proxy_increment_value,
@@ -116,6 +117,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_dump_notify_msg,
     orte_gpr_proxy_dump_notify_data,
     orte_gpr_proxy_dump_value,
+    orte_gpr_proxy_dump_segment_size,
     /* CLEANUP OPERATIONS */
     orte_gpr_proxy_cleanup_job,
     orte_gpr_proxy_cleanup_proc
@@ -367,7 +369,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     int rc;
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         goto RETURN_ERROR;
     }
@@ -384,7 +386,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &msg, &n, ORTE_GPR_NOTIFY_MSG))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &msg, &n, ORTE_GPR_NOTIFY_MSG))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(msg);
         goto RETURN_ERROR;

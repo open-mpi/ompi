@@ -423,12 +423,30 @@ orte_gpr_replica_register_trigger(orte_gpr_replica_trigger_t **trigptr,
                 cntr->seg = seg;
                 cntr->cptr = cptr2;
                 cntr->iptr = iptr;
-                cntr->trigger_level.type = ((trigger->values[i])->keyvals[j])->type;
-                if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(&(cntr->trigger_level.value),
-                        &(((trigger->values[i])->keyvals[j])->value),
-                        ((trigger->values[i])->keyvals[j])->type))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
+                /* if the trigger is at a level, then the requestor MUST specify the
+                 * level in the provided keyval. Otherwise, we only need to store
+                 * the iptr since we will be comparing levels between multiple
+                 * counters
+                 */
+                if (trigger->action & ORTE_GPR_TRIG_AT_LEVEL) {
+                    if (NULL == trigger->values[i]->keyvals) {
+                        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                        rc = ORTE_ERR_BAD_PARAM;
+                        goto CLEANUP;
+                    }
+                    cntr->trigger_level.value = OBJ_NEW(orte_data_value_t);
+                    if (NULL == cntr->trigger_level.value) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        rc = ORTE_ERR_OUT_OF_RESOURCE;
+                        goto CLEANUP;
+                    }
+                    cntr->trigger_level.value->type = ((trigger->values[i])->keyvals[j])->value->type;
+                    if (ORTE_SUCCESS != (rc = orte_dss.copy(&((cntr->trigger_level.value)->data),
+                                                            ((trigger->values[i])->keyvals[j])->value->data,
+                                                            ((trigger->values[i])->keyvals[j])->value->type))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto CLEANUP;
+                    }
                 }
                 if (0 > orte_pointer_array_add(&index, trig->counters, cntr)) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -476,12 +494,30 @@ orte_gpr_replica_register_trigger(orte_gpr_replica_trigger_t **trigptr,
                             cntr->seg = seg;
                             cntr->cptr = cptr[k];
                             cntr->iptr = iptr;
-                            cntr->trigger_level.type = ((trigger->values[i])->keyvals[j])->type;
-                            if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(&(cntr->trigger_level.value),
-                                    &(((trigger->values[i])->keyvals[j])->value),
-                                    ((trigger->values[i])->keyvals[j])->type))) {
-                                ORTE_ERROR_LOG(rc);
-                                goto CLEANUP;
+                            /* if the trigger is at a level, then the requestor MUST specify the
+                             * level in the provided keyval. Otherwise, we only need to store
+                             * the iptr since we will be comparing levels between multiple
+                             * counters
+                             */
+                            if (trigger->action & ORTE_GPR_TRIG_AT_LEVEL) {
+                                if (NULL == trigger->values[i]->keyvals) {
+                                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                                    rc = ORTE_ERR_BAD_PARAM;
+                                    goto CLEANUP;
+                                }
+                                cntr->trigger_level.value = OBJ_NEW(orte_data_value_t);
+                                if (NULL == cntr->trigger_level.value) {
+                                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                                    rc = ORTE_ERR_OUT_OF_RESOURCE;
+                                    goto CLEANUP;
+                                }
+                                cntr->trigger_level.value->type = ((trigger->values[i])->keyvals[j])->value->type;
+                                if (ORTE_SUCCESS != (rc = orte_dss.copy(&((cntr->trigger_level.value)->data),
+                                                                        ((trigger->values[i])->keyvals[j])->value->data,
+                                                                        ((trigger->values[i])->keyvals[j])->value->type))) {
+                                    ORTE_ERROR_LOG(rc);
+                                    goto CLEANUP;
+                                }
                             }
                             if (0 > orte_pointer_array_add(&index, trig->counters, cntr)) {
                                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -956,9 +992,9 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_trigger_t *trig)
     orte_gpr_replica_subscription_t **subs;
     orte_gpr_replica_counter_t **cntr;
     orte_gpr_replica_itagval_t *base_value=NULL;
+    orte_data_type_t base_type;
     bool first, fire;
     size_t i, j;
-    int cmp;
     int rc;
 
     OPAL_TRACE(3);
@@ -973,15 +1009,14 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_trigger_t *trig)
                 j++;
                 if (first) {
                     base_value = cntr[i]->iptr;
+                    base_type = cntr[i]->iptr->value->type;
                     first = false;
                 } else {
-                   if (ORTE_SUCCESS != (rc =
-                            orte_gpr_replica_compare_values(&cmp, base_value,
-                                                            cntr[i]->iptr))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
+                   if (base_type != cntr[i]->iptr->value->type) {
+                       ORTE_ERROR_LOG(ORTE_ERR_COMPARE_FAILURE);
+                       return ORTE_ERR_COMPARE_FAILURE;
                    }
-                   if (0 != cmp) {
+                   if (ORTE_EQUAL != orte_dss.compare(base_value->value->data, cntr[i]->iptr->value->data, base_type)) {
                         fire = false;
                    }
                 }
@@ -999,13 +1034,13 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_trigger_t *trig)
                        i < (trig->counters)->size && fire; i++) {
             if (NULL != cntr[i]) {
                 j++;
-                if (ORTE_SUCCESS != (rc =
-                            orte_gpr_replica_compare_values(&cmp, cntr[i]->iptr,
-                                                            &(cntr[i]->trigger_level)))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-               }
-               if (0 != cmp) {
+                if (cntr[i]->iptr->value->type != cntr[i]->trigger_level.value->type) {
+                       ORTE_ERROR_LOG(ORTE_ERR_COMPARE_FAILURE);
+                       return ORTE_ERR_COMPARE_FAILURE;
+                }
+                if (ORTE_EQUAL != orte_dss.compare(cntr[i]->iptr->value->data,
+                                                   cntr[i]->trigger_level.value->data,
+                                                   cntr[i]->iptr->value->type)) {
                     fire = false;
                }
             }
@@ -1192,15 +1227,18 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
-                (value->keyvals[0])->type = ptr[i]->iptr->type;
-                if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
-                            &((value->keyvals[0])->value), &(ptr[i]->iptr->value),
-                            ptr[i]->iptr->type))) {
+                (value->keyvals[0])->value = OBJ_NEW(orte_data_value_t);
+                if (NULL == value->keyvals[0]->value) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    OBJ_RELEASE(value);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                value->keyvals[0]->value->type = ptr[i]->iptr->value->type;
+                if (ORTE_SUCCESS != (rc = orte_dss.copy(&((value->keyvals[0]->value)->data), ptr[i]->iptr->value->data, ptr[i]->iptr->value->type))) {
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
-                if (ORTE_SUCCESS != (rc =
-                            orte_gpr_replica_register_callback(sub, value))) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(sub, value))) {
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }

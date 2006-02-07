@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
- 
+
 #include "orte_config.h"
 
 #include <sys/types.h>
@@ -23,10 +23,12 @@
 #include <netinet/in.h>
 #endif
 
-#include "mca/errmgr/errmgr.h"
-#include "dps/dps_internal.h"
+#include "opal/util/argv.h"
 
-#include "mca/rmgr/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/dss/dss_internal.h"
+
+#include "orte/mca/rmgr/base/base.h"
 
 /*
  * APP CONTEXT
@@ -34,7 +36,7 @@
 int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
                                  size_t num_vals, orte_data_type_t type)
 {
-    int rc;
+    int rc, count;
     int8_t have_prefix;
     size_t i;
     orte_app_context_t **app_context;
@@ -44,74 +46,74 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
 
     for (i=0; i < num_vals; i++) {
         /* pack the application index (for multiapp jobs) */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->idx)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(app_context[i]->idx)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the application name */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(app_context[i]->app)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of processes */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->num_procs)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(app_context[i]->num_procs)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of entries in the argv array */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->argc)), 1, ORTE_INT))) {
+        count = opal_argv_count(app_context[i]->argv);
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_INT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* if there are entries, pack the argv entries */
-        if (0 < app_context[i]->argc) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                            (void*)(app_context[i]->argv), (size_t)app_context[i]->argc, ORTE_STRING))) {
+        if (0 < count) {
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                            (void*)(app_context[i]->argv), (size_t)count, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
         }
-        
+
         /* pack the number of entries in the enviro array */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->num_env)), 1, DPS_TYPE_SIZE_T))) {
+        count = opal_argv_count(app_context[i]->env);
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_INT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* if there are entries, pack the enviro entries */
-        if (0 < app_context[i]->num_env) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                            (void*)(app_context[i]->env), app_context[i]->num_env, ORTE_STRING))) {
+        if (0 < count) {
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                (void*)(app_context[i]->env), (size_t)count, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
         }
-        
+
         /* pack the cwd */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(app_context[i]->cwd)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-                        
+
         /* Pack the map data */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                (void*)(&(app_context[i]->num_map)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                (void*)(&(app_context[i]->num_map)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         if (app_context[i]->num_map > 0) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                      (void*)(app_context[i]->map_data), app_context[i]->num_map, ORTE_APP_CONTEXT_MAP))) {
                  ORTE_ERROR_LOG(rc);
                  return rc;
@@ -125,21 +127,21 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
             have_prefix = 0;
         }
 
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                                                        (void*)(&have_prefix), 1, ORTE_INT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         if (have_prefix) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                                                            (void*)(&(app_context[i]->prefix_dir)), 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
         }
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -155,18 +157,18 @@ int orte_rmgr_base_pack_app_context_map(orte_buffer_t *buffer, void *src,
 
     app_context_map = (orte_app_context_map_t**) src;
     for (i=0; i < num_vals; i++) {
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                       (void*)(&(app_context_map[i]->map_type)), 1, ORTE_UINT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
          }
 
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                       (void*)(&(app_context_map[i]->map_data)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
          }
     }
-    
+
     return ORTE_SUCCESS;
 }

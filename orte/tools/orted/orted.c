@@ -48,7 +48,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/univ_info.h"
@@ -468,7 +468,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
 	    goto CLEANUP;
     }
@@ -490,7 +490,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
            goto CLEANUP;
        }
        
-	   if (ORTE_SUCCESS != (ret = orte_dps.pack(answer, &contact_info, 1, ORTE_STRING))) {
+	   if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &contact_info, 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
        }

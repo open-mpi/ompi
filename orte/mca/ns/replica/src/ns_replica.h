@@ -26,7 +26,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 #include "orte/class/orte_pointer_array.h"
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/oob/oob_types.h"
 #include "orte/mca/ns/base/base.h"
 

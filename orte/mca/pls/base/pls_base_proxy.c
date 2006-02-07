@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -39,44 +39,49 @@ orte_pls_base_proxy_set_node_name(orte_ras_node_t* node,
                                   orte_process_name_t* name)
 {
     orte_gpr_value_t* values[1];
-    orte_gpr_value_t value;
-    orte_gpr_keyval_t kv_name = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_NODE_BOOTPROXY_KEY,ORTE_NAME};
-    orte_gpr_keyval_t* keyvals[1];
-    char* jobid_string;
-    size_t i;
+    char* jobid_string, *key;
     int rc;
 
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&values[0],
+                                                    ORTE_GPR_OVERWRITE,
+                                                    ORTE_NODE_SEGMENT,
+                                                    1, 0))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(values[0]);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens,
-        node->node_cellid, node->node_name))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&(values[0]->tokens), &(values[0]->num_tokens),
+                                                          node->node_cellid, node->node_name))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(values[0]);
         free(jobid_string);
         return rc;
     }
 
-    asprintf(&kv_name.key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
-    kv_name.value.proc = *name;
-    keyvals[0] = &kv_name;
-    value.keyvals = keyvals;
-    value.cnt = 1;
-    value.addr_mode = ORTE_GPR_OVERWRITE;
-    value.segment = ORTE_NODE_SEGMENT;
-    values[0] = &value;
+    asprintf(&key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), key, ORTE_NAME, name))) {
+        ORTE_ERROR_LOG(rc);
+        free(jobid_string);
+        free(key);
+        OBJ_RELEASE(values[0]);
+        return rc;
+    }
 
     rc = orte_gpr.put(1, values);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
 
-    free(kv_name.key);
+    OBJ_RELEASE(values[0]);
     free(jobid_string);
-    for(i=0; i<value.num_tokens; i++)
-        free(value.tokens[i]);
-    free(value.tokens);
+    free(key);
+    
     return rc;
 }
 
@@ -156,6 +161,7 @@ orte_pls_base_proxy_terminate_job(orte_jobid_t jobid)
     char *jobid_string;
     orte_gpr_value_t** values = NULL;
     size_t i, j, num_values = 0;
+    orte_process_name_t proc, *pnptr;
     int rc;
 
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
@@ -207,9 +213,18 @@ orte_pls_base_proxy_terminate_job(orte_jobid_t jobid)
                 continue;
             }
 
+            /* get the process name from the returned keyval */
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pnptr, values[i]->keyvals[0]->value, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(cmd);
+                rc = ret;
+                continue;
+            }
+            proc = *pnptr;
+
             /* send a terminate message to the bootproxy on each node */
             if (0 > (ret = orte_rml.send_buffer_nb(
-                &keyval->value.proc,
+                &proc,
                 cmd,
                 ORTE_RML_TAG_RMGR_SVC,
                 0,
@@ -235,7 +250,7 @@ cleanup:
                 OBJ_RELEASE(values[i]);
             }
         }
-        free(values);
+        if (NULL != values ) free(values);
     }
     return rc;
 }

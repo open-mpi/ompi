@@ -28,7 +28,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "dps/dps_types.h"
+#include "dss/dss_types.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 #include "util/proc_info.h"

@@ -487,36 +487,53 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 
     for (i = 0; i < num_values; i++) {
         orte_gpr_value_t* value = values[i];
-        orte_process_name_t name;
-        pid_t pid = 0;
-        size_t rank = 0;
+        orte_process_name_t name, *nptr;
+        pid_t pid = 0, *pidptr;
+        size_t rank = 0, *sptr;
         bool rank_found=false;
         char* node_name = NULL;
+        orte_exit_code_t *ecptr;
 
         exit_status = 0;
         exit_status_set = false;
         for(k=0; k < value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
-                name = keyval->value.proc;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&nptr, keyval->value, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                name = *nptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
-                pid = keyval->value.pid;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pidptr, keyval->value, ORTE_PID))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                pid = *pidptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
                 rank_found = true;
-                rank = keyval->value.size;
+                rank = *sptr;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_EXIT_CODE_KEY) == 0) {
-                exit_status = keyval->value.exit_code;
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&ecptr, keyval->value, ORTE_EXIT_CODE))) {
+                    ORTE_ERROR_LOG(rc);
+                    continue;
+                }
+                exit_status = *ecptr;
                 exit_status_set = true;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
-                node_name = keyval->value.strptr;
+                node_name = (char*)(keyval->value->data);
                 continue;
             }
         }
@@ -864,7 +881,6 @@ static int parse_locals(int argc, char* argv[])
                 env = opal_environ_merge(global_mca_env, app->env);
                 opal_argv_free(app->env);
                 app->env = env;
-                app->num_env = opal_argv_count(app->env);
             }
         }
     }
@@ -941,7 +957,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 {
     opal_cmd_line_t cmd_line;
     char cwd[OMPI_PATH_MAX];
-    int i, j, rc;
+    int i, j, count, rc;
     char *param, *value, *value2;
     orte_app_context_t *app = NULL;
     extern char **environ;
@@ -972,7 +988,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     /* JJH To fix in the future
      * Currently C/N notation is not supported so don't execute this check
-     * Bug: Make this context sensitive since it will not behave properly 
+     * Bug: Make this context sensitive since it will not behave properly
      *      with the following argument set:
      *      $ orterun -np 2 -host c2,c3,c12 hostname
      *      Since it will see the hosts c2, c3, and c12 as C options instead
@@ -1022,8 +1038,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 #endif
 
         /* Save -host args */
-        else if (0 == strcmp("--host",argv[i]) || 
-                 0 == strcmp("-host", argv[i]) || 
+        else if (0 == strcmp("--host",argv[i]) ||
+                 0 == strcmp("-host", argv[i]) ||
                  0 == strcmp("-H", argv[i])) {
             char str[2] = { '0' + ORTE_APP_CONTEXT_MAP_HOSTNAME, '\0' };
             opal_argv_append(&new_argc, &new_argv, "-rawmap");
@@ -1075,11 +1091,11 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* Setup application context */
 
     app = OBJ_NEW(orte_app_context_t);
-    opal_cmd_line_get_tail(&cmd_line, &app->argc, &app->argv);
+    opal_cmd_line_get_tail(&cmd_line, &count, &app->argv);
 
     /* See if we have anything left */
 
-    if (0 == app->argc) {
+    if (0 == count) {
         opal_show_help("help-orterun.txt", "orterun:executable-not-specified",
                        true, orterun_basename, orterun_basename);
         rc = ORTE_ERR_NOT_FOUND;
@@ -1120,7 +1136,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             }
         }
     }
-    app->num_env = opal_argv_count(app->env);
 
     /* Did the user request a specific path? */
 
@@ -1185,7 +1200,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             }
             app->map_data[i]->map_type = value[0] - '0';
             app->map_data[i]->map_data = strdup(value2);
-            /* map_data = true; 
+            /* map_data = true;
              * JJH - This activates the C/N mapping stuff,
              * or at least allows us to pass the 'num_procs' check below.
              * since it is not implemented yet, leave commented. */

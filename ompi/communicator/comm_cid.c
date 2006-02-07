@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "dps/dps.h"
+#include "orte/dss/dss.h"
 #include "opal/util/convert.h"
 #include "mca/ns/ns_types.h"
 #include "communicator/communicator.h"
@@ -665,7 +665,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         sbuf = OBJ_NEW(orte_buffer_t);
         rbuf = OBJ_NEW(orte_buffer_t);
         
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(sbuf, tmpbuf, count, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(sbuf, tmpbuf, count, ORTE_INT))) {
             goto exit;
         }
 
@@ -678,7 +678,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
             rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
         }
 
-        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, outbuf, &size_count, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, outbuf, &size_count, ORTE_INT))) {
             goto exit;
         }
         OBJ_RELEASE(sbuf);

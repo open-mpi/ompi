@@ -4,17 +4,17 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
-/** @file 
+/** @file
  *
  */
 
@@ -24,7 +24,7 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/base/base.h"
@@ -32,48 +32,47 @@
 
 int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
-                               char *key, orte_data_type_t type,
-                               orte_gpr_value_union_t data_value)
+                               char *key, orte_data_value_t *data_value)
 {
     orte_gpr_value_t *values;
-    orte_gpr_value_t value = { {OBJ_CLASS(opal_object_t),0},
-                                ORTE_GPR_TOKENS_AND,
-                                NULL, 0, NULL, 0, NULL };
+    orte_gpr_value_t value = ORTE_GPR_VALUE_EMPTY;
     orte_gpr_keyval_t *keyvals;
-    orte_gpr_keyval_t keyval = { {OBJ_CLASS(opal_object_t),0},
-                                  NULL,
-                                  0 };
+    orte_gpr_keyval_t keyval = ORTE_GPR_KEYVAL_EMPTY;
+    orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
     size_t i;
     int rc;
-    
+
     OPAL_TRACE(1);
-    
+
     value.addr_mode = addr_mode;
     value.segment = segment;
     value.cnt = 1;
     keyvals = &keyval;
     value.keyvals = &keyvals;
     keyval.key = key;
-    keyval.type = type;
-    keyval.value = data_value;
-    
+    keyval.value = &dval;
+    dval.type = data_value->type;
+    if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, data_value->data, data_value->type))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     value.tokens = tokens;
     /* must count the number of tokens */
-    if (NULL == tokens) {
-        value.num_tokens = 0;
-    } else {
+    value.num_tokens = 0;
+    if (NULL != tokens) {
         for (i=0; NULL != tokens[i]; i++) {
             (value.num_tokens)++;
         }
     }
     values = &value;
-    
+
     /* put the value on the registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* no memory to clean up since we didn't allocate any */
     return ORTE_SUCCESS;
 }
@@ -82,63 +81,47 @@ int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
 int orte_gpr_base_put_N(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
                                size_t n, char **keys,
-                               orte_data_type_t *types,
-                               orte_gpr_value_union_t *data_values)
+                               orte_data_value_t **data_values)
 {
-    orte_gpr_value_t *values;
-    orte_gpr_value_t value = { {OBJ_CLASS(opal_object_t),0},
-                                ORTE_GPR_TOKENS_AND,
-                                NULL, 0, NULL, 0, NULL };
-    size_t i, j;
+    orte_gpr_value_t *value;
+    size_t i, num_tokens;
     int rc;
-    
+
     OPAL_TRACE(1);
-    
-    value.addr_mode = addr_mode;
-    value.segment = segment;
-    value.cnt = n;
-    value.keyvals = (orte_gpr_keyval_t**)malloc(n * sizeof(orte_gpr_keyval_t*));
-    if (NULL == value.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    for (i=0; i < n; i++) {
-        value.keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
-        if (NULL == value.keyvals[i]) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            for (j=0; j < i; j++) OBJ_RELEASE(value.keyvals[j]);
-            free(value.keyvals);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        value.keyvals[i]->key = keys[i];
-        value.keyvals[i]->type = types[i];
-        value.keyvals[i]->value = data_values[i];
-    }
-    
-    value.tokens = tokens;
+
     /* must count the number of tokens */
-    if (NULL == tokens) {
-        value.num_tokens = 0;
-    } else {
+    num_tokens = 0;
+    if (NULL != tokens) {
         for (i=0; NULL != tokens[i]; i++) {
-            (value.num_tokens)++;
+            num_tokens++;
         }
     }
-    values = &value;
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_create_value(&value, addr_mode, segment, n, num_tokens))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
+    for (i=0; i < n; i++) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_create_keyval(&(value->keyvals[i]), keys[i], data_values[i]->type, data_values[i]->data))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return rc;
+        }
+    }
+
+    for (i=0; i < value->num_tokens; i++) {
+        value->tokens[i] = strdup(tokens[i]);
+    }
+
     /* put the value on the registry */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
         ORTE_ERROR_LOG(rc);
     }
-    
-    /* clean up memory - very carefully!
-     * We can't use the object destructors because we didn't
-     * copy input data fields into the objects. Thus, only
-     * release the data that we explicitly allocated
-     */
-    for (i=0; i < n; i++) free(value.keyvals[i]);
-    free(value.keyvals);
-    
+
+    /* clean up memory */
+    OBJ_RELEASE(value);
+
     return rc;
 }
 

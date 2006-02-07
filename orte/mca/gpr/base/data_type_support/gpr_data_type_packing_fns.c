@@ -26,7 +26,7 @@
 #include "opal/util/trace.h"
 
 #include "mca/errmgr/errmgr.h"
-#include "dps/dps_internal.h"
+#include "dss/dss_internal.h"
 
 #include "mca/gpr/base/base.h"
 
@@ -39,8 +39,8 @@ int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, void *src,
     int rc;
 
     OPAL_TRACE(4);
-    
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_CMD_T))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_GPR_CMD_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -56,8 +56,8 @@ int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, void *src,
     int rc;
 
     OPAL_TRACE(4);
-    
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_SUBSCRIPTION_ID_T))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_GPR_SUBSCRIPTION_ID_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -73,8 +73,8 @@ int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, void *src,
     int rc;
 
     OPAL_TRACE(4);
-    
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_TRIGGER_ID_T))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_GPR_TRIGGER_ID_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -90,8 +90,8 @@ int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
     int rc;
 
     OPAL_TRACE(4);
-    
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_NOTIFY_ACTION_T))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_GPR_NOTIFY_ACTION_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -107,8 +107,8 @@ int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, void *src,
     int rc;
 
     OPAL_TRACE(4);
-    
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_TRIGGER_ACTION_T))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_GPR_TRIGGER_ACTION_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -124,8 +124,8 @@ int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
     int rc;
 
     OPAL_TRACE(4);
-    
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_ADDR_MODE_T))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_GPR_ADDR_MODE_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -141,8 +141,8 @@ int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, void *src,
     int rc;
 
     OPAL_TRACE(4);
-    
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, src, num_vals, ORTE_GPR_NOTIFY_MSG_TYPE_T))) {
+
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_GPR_NOTIFY_MSG_TYPE_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -159,33 +159,33 @@ int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
     int rc;
     orte_gpr_keyval_t **keyval;
     size_t i;
+    char null=0x00;
 
     OPAL_TRACE(4);
-    
+
     /* array of pointers to keyval objects - need to pack the
        objects */
     keyval = (orte_gpr_keyval_t**) src;
 
     for (i=0; i < num_vals; i++) {
         /* pack the key */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(keyval[i]->key)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* pack the data type so we can read it for unpacking */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, &(keyval[i]->type), 1,
-                         ORTE_DATA_TYPE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* pack the value */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, &(keyval[i]->value), 1,
-                         keyval[i]->type))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+        /* if there is a data value, then pack it */
+        if (NULL != keyval[i]->value) {
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(keyval[i]->value), 1, ORTE_DATA_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {  /* otherwise, pack a NULL so we know not to unpack one */
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &null, 1, ORTE_NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
     }
 
@@ -203,34 +203,34 @@ int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
     size_t i;
 
     OPAL_TRACE(4);
-    
+
     /* array of pointers to value objects - need to pack the objects */
     values = (orte_gpr_value_t**) src;
     for (i=0; i<num_vals; i++) {
         /* pack the address mode */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(values[i]->addr_mode)), 1, ORTE_GPR_ADDR_MODE))) {
             ORTE_ERROR_LOG(rc);
             return ORTE_ERROR;
         }
 
         /* pack the segment name */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(values[i]->segment)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return ORTE_ERROR;
         }
 
         /* pack the number of tokens so we can read it for unpacking */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(values[i]->num_tokens)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(values[i]->num_tokens)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return ORTE_ERROR;
         }
 
         /* if there are tokens, pack them */
         if (0 < values[i]->num_tokens) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                             (void*)((values[i]->tokens)), values[i]->num_tokens, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return ORTE_ERROR;
@@ -238,16 +238,16 @@ int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
         }
 
         /* pack the number of keyval pairs so we can read it for unpacking */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(values[i]->cnt)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(values[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return ORTE_ERROR;
         }
 
         /* if there are keyval pairs, pack them */
         if (0 < values[i]->cnt) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                            (void*)((values[i]->keyvals)), values[i]->cnt, ORTE_KEYVAL))) {
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                            (void*)((values[i]->keyvals)), values[i]->cnt, ORTE_GPR_KEYVAL))) {
                 ORTE_ERROR_LOG(rc);
                 return ORTE_ERROR;
             }
@@ -268,41 +268,41 @@ int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
     size_t i;
 
     OPAL_TRACE(4);
-    
+
     /* array of pointers to subscription objects - need to pack the objects */
     subs = (orte_gpr_subscription_t**) src;
     for (i=0; i<num_vals; i++) {
         /* pack the subscription name */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(subs[i]->name)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the subscription id */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(subs[i]->id)), 1, ORTE_GPR_SUBSCRIPTION_ID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the notify action */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(subs[i]->action)), 1, ORTE_GPR_NOTIFY_ACTION))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of values so we can read it for unpacking */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(subs[i]->cnt)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(subs[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* if there are values, pack them */
         if (0 < subs[i]->cnt) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                             (void*)((subs[i]->values)), subs[i]->cnt, ORTE_GPR_VALUE))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -326,41 +326,41 @@ int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
     size_t i;
 
     OPAL_TRACE(4);
-    
+
     /* array of pointers to trigger objects - need to pack the objects */
     trigs = (orte_gpr_trigger_t**) src;
     for (i=0; i<num_vals; i++) {
         /* pack the trigger name */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(trigs[i]->name)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the trigger id */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(trigs[i]->id)), 1, ORTE_GPR_TRIGGER_ID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the trigger action */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(trigs[i]->action)), 1, ORTE_GPR_TRIGGER_ACTION))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of values so we can read it for unpacking */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(trigs[i]->cnt)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(trigs[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* if there are values, pack the values */
         if (0 < trigs[i]->cnt) {
-            if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                             (void*)((trigs[i]->values)), trigs[i]->cnt, ORTE_GPR_VALUE))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -383,36 +383,36 @@ int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
     size_t i, j, k;
 
     OPAL_TRACE(4);
-    
+
     /* array of pointers to notify data objects - need to pack the objects */
     data = (orte_gpr_notify_data_t**) src;
 
     for (i=0; i<num_vals; i++) {
 
         /* pack the subscription name */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(data[i]->target)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the subscription number */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(data[i]->id)), 1, ORTE_GPR_SUBSCRIPTION_ID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the remove flag */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(data[i]->remove)), 1, ORTE_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of values so we can read it for unpacking */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(data[i]->cnt)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(data[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -424,7 +424,7 @@ int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
                            j < (data[i]->values)->size; j++) {
                 if (NULL != values[j]) {
                     k++;
-                    if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, &values[j],
+                    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &values[j],
                                 1, ORTE_GPR_VALUE))) {
                         ORTE_ERROR_LOG(rc);
                         return rc;
@@ -450,43 +450,43 @@ int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
     size_t i, j, k;
 
     OPAL_TRACE(4);
-    
+
     /* array of messages */
     msg = (orte_gpr_notify_message_t**) src;
 
     for (i=0; i<num_vals; i++) {
 
         /* pack the message type */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(msg[i]->msg_type)), 1, ORTE_GPR_NOTIFY_MSG_TYPE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the trigger name */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(msg[i]->target)), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the trigger number */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(msg[i]->id)), 1, ORTE_GPR_TRIGGER_ID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the remove flag */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
                         (void*)(&(msg[i]->remove)), 1, ORTE_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of datagrams so we can read it for unpacking */
-        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
-                        (void*)(&(msg[i]->cnt)), 1, DPS_TYPE_SIZE_T))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
+                        (void*)(&(msg[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -504,7 +504,7 @@ int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
                            j < (msg[i]->data)->size; j++) {
             if (NULL != data[j]) {
                 k++;
-                if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer, &(data[j]),
+                if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(data[j]),
                         1, ORTE_GPR_NOTIFY_DATA))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;

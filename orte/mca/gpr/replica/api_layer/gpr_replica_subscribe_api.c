@@ -29,7 +29,7 @@
 
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss_types.h"
 
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"

@@ -30,9 +30,10 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
-#include "util/proc_info.h"
-#include "mca/ns/ns_types.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/dss/dss.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "gpr_replica_api.h"
 
@@ -227,7 +228,7 @@ int orte_gpr_replica_get_conditional(orte_gpr_addr_mode_t addr_mode,
     /* convert conditions to itagvals */
     conds = (orte_gpr_replica_itagval_t**)malloc(num_conditions*sizeof(orte_gpr_replica_itagval_t*));
     memset(conds, 0, num_conditions*sizeof(orte_gpr_replica_itagval_t*)); /* init the space */
-    
+
     if (NULL == conds) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -236,24 +237,31 @@ int orte_gpr_replica_get_conditional(orte_gpr_addr_mode_t addr_mode,
         conds[i] = OBJ_NEW(orte_gpr_replica_itagval_t);
         if (NULL == conds[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_itag(&(conds[i]->itag), seg, conditions[i]->key))) {
             goto CLEANUP;
         }
-        conds[i]->type = conditions[i]->type;
-        if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
-                                    &(conds[i]->value), &(conditions[i]->value), conds[i]->type))) {
+        conds[i]->value = OBJ_NEW(orte_data_value_t);
+        if (NULL == conds[i]->value) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            goto CLEANUP;
+        }
+        conds[i]->value->type = conditions[i]->value->type;
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&((conds[i]->value)->data), conditions[i]->value->data, conds[i]->value->type))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
     }
-        
+
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_conditional_fn(addr_mode, seg,
                                             tokentags, num_tokens, keytags, num_keys,
                                             num_conditions, conds,
                                             cnt, values))) {
-        goto CLEANUP;
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
     }
 
 CLEANUP:
@@ -269,7 +277,7 @@ CLEANUP:
         if (NULL != conds[i]) OBJ_RELEASE(conds[i]);
     }
     if (NULL != conds) free(conds);
-    
+
     OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return rc;
 

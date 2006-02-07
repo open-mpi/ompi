@@ -24,10 +24,15 @@ headers += \
 libmca_gpr_la_SOURCES += \
         base/gpr_base_open.c \
         base/gpr_base_close.c \
+        base/gpr_base_create_value_keyval.c \
         base/gpr_base_select.c \
         base/gpr_base_simplified_put.c \
         base/gpr_base_simplified_subscribe.c \
-        base/gpr_base_xfer_payload.c \
+        base/data_type_support/gpr_data_type_compare_fns.c \
+        base/data_type_support/gpr_data_type_copy_fns.c \
+        base/data_type_support/gpr_data_type_print_fns.c \
+        base/data_type_support/gpr_data_type_release_fns.c \
+        base/data_type_support/gpr_data_type_size_fns.c \
         base/data_type_support/gpr_data_type_packing_fns.c \
         base/data_type_support/gpr_data_type_unpacking_fns.c \
         base/unpack_api_response/gpr_base_unpack_cleanup.c \

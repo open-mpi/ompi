@@ -29,7 +29,7 @@
 
 #include "opal/util/trace.h"
 
-#include "orte/dps/dps.h"
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
@@ -44,13 +44,13 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &jobid, &n, ORTE_JOBID))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &jobid, &n, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -62,7 +62,7 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
     }
     
 RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -81,13 +81,13 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
     
     OPAL_TRACE(3);
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &proc, &n, ORTE_NAME))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &proc, &n, ORTE_NAME))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -99,7 +99,7 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
     }
     
 RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

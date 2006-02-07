@@ -93,7 +93,7 @@ orte_gpr_replica_enter_local_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
                            j < (orte_gpr_replica_globals.local_triggers)->size; j++) {
                 if (NULL != tptr[j]) {
                     k++;
-                    if (0 == strcmp(tptr[j]->name, trigs[i]->name)) {
+                    if (NULL != tptr[j]->name && 0 == strcmp(tptr[j]->name, trigs[i]->name)) {
                         /* same name - trigger is already on list */
                         if (NULL != tptr[j]->callback || NULL == trigs[i]->cbfunc) {
                             /* ignore these cases */

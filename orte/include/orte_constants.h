@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,6 +22,11 @@
 #include "opal/include/constants.h"
 
 #define ORTE_ERR_BASE            OPAL_ERR_MAX
+
+/* define the results values for comparisons so we can change them in only one place */
+#define ORTE_VALUE1_GREATER  -1
+#define ORTE_VALUE2_GREATER  +1
+#define ORTE_EQUAL            0
 
 enum {
     /* Error codes inherited from OPAL.  Still enum values so that we
@@ -52,40 +57,38 @@ enum {
     ORTE_ERR_FILE_OPEN_FAILURE    = OPAL_ERR_FILE_OPEN_FAILURE,
 
 /* error codes specific to ORTE - don't forget to update
-   orte/rutime/orte_init.c when adding new error codes */
-    ORTE_ERR_RECV_LESS_THAN_POSTED      = (ORTE_ERR_BASE -  1),
-    ORTE_ERR_RECV_MORE_THAN_POSTED      = (ORTE_ERR_BASE -  2),
-    ORTE_ERR_NO_MATCH_YET               = (ORTE_ERR_BASE -  3),
-    ORTE_ERR_BUFFER                     = (ORTE_ERR_BASE -  4),
-    ORTE_ERR_REQUEST                    = (ORTE_ERR_BASE -  5),
-    ORTE_ERR_NO_CONNECTION_ALLOWED      = (ORTE_ERR_BASE -  6),
-    ORTE_ERR_CONNECTION_REFUSED         = (ORTE_ERR_BASE -  7),
-    ORTE_ERR_CONNECTION_FAILED          = (ORTE_ERR_BASE -  8),
-    ORTE_STARTUP_DETECTED               = (ORTE_ERR_BASE -  9),
-    ORTE_SHUTDOWN_DETECTED              = (ORTE_ERR_BASE - 10),
-    ORTE_PROC_STARTING                  = (ORTE_ERR_BASE - 11),
-    ORTE_PROC_STOPPED                   = (ORTE_ERR_BASE - 12),
-    ORTE_PROC_TERMINATING               = (ORTE_ERR_BASE - 13),
-    ORTE_PROC_ALIVE                     = (ORTE_ERR_BASE - 14),
-    ORTE_PROC_RUNNING                   = (ORTE_ERR_BASE - 15),
-    ORTE_PROC_KILLED                    = (ORTE_ERR_BASE - 16),
-    ORTE_PROC_EXITED                    = (ORTE_ERR_BASE - 17),
-    ORTE_NODE_UP                        = (ORTE_ERR_BASE - 18),
-    ORTE_NODE_DOWN                      = (ORTE_ERR_BASE - 19),
-    ORTE_NODE_BOOTING                   = (ORTE_ERR_BASE - 21),
-    ORTE_NODE_ERROR                     = (ORTE_ERR_BASE - 22),
-    ORTE_PACK_MISMATCH                  = (ORTE_ERR_BASE - 23),
-    ORTE_ERR_PACK_FAILURE               = (ORTE_ERR_BASE - 24),
-    ORTE_ERR_UNPACK_FAILURE             = (ORTE_ERR_BASE - 25),
-    ORTE_ERR_COMM_FAILURE               = (ORTE_ERR_BASE - 26),
-    ORTE_UNPACK_INADEQUATE_SPACE        = (ORTE_ERR_BASE - 27),
-    ORTE_UNPACK_READ_PAST_END_OF_BUFFER = (ORTE_ERR_BASE - 28),
-    ORTE_ERR_GPR_DATA_CORRUPT           = (ORTE_ERR_BASE - 29),
-    ORTE_ERR_TYPE_MISMATCH              = (ORTE_ERR_BASE - 30)
+    orte/util/error_strings.c when adding new error codes!!
+    Otherwise, the error reporting system will potentially crash,
+    or at the least not be able to report the new error correctly.
+ */
+    ORTE_ERR_RECV_LESS_THAN_POSTED          = (ORTE_ERR_BASE -  1),
+    ORTE_ERR_RECV_MORE_THAN_POSTED          = (ORTE_ERR_BASE -  2),
+    ORTE_ERR_NO_MATCH_YET                   = (ORTE_ERR_BASE -  3),
+    ORTE_ERR_BUFFER                         = (ORTE_ERR_BASE -  4),
+    ORTE_ERR_REQUEST                        = (ORTE_ERR_BASE -  5),
+    ORTE_ERR_NO_CONNECTION_ALLOWED          = (ORTE_ERR_BASE -  6),
+    ORTE_ERR_CONNECTION_REFUSED             = (ORTE_ERR_BASE -  7),
+    ORTE_ERR_CONNECTION_FAILED              = (ORTE_ERR_BASE -  8),
+    ORTE_ERR_PACK_MISMATCH                  = (ORTE_ERR_BASE -  9),
+    ORTE_ERR_PACK_FAILURE                   = (ORTE_ERR_BASE - 10),
+    ORTE_ERR_UNPACK_FAILURE                 = (ORTE_ERR_BASE - 11),
+    ORTE_ERR_COMM_FAILURE                   = (ORTE_ERR_BASE - 12),
+    ORTE_ERR_UNPACK_INADEQUATE_SPACE        = (ORTE_ERR_BASE - 13),
+    ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER = (ORTE_ERR_BASE - 14),
+    ORTE_ERR_GPR_DATA_CORRUPT               = (ORTE_ERR_BASE - 15),
+    ORTE_ERR_TYPE_MISMATCH                  = (ORTE_ERR_BASE - 16),
+    ORTE_ERR_COMPARE_FAILURE                = (ORTE_ERR_BASE - 17),
+    ORTE_ERR_COPY_FAILURE                   = (ORTE_ERR_BASE - 18),
+    ORTE_ERR_UNKNOWN_DATA_TYPE              = (ORTE_ERR_BASE - 19),
+    ORTE_ERR_DATA_TYPE_REDEF                = (ORTE_ERR_BASE - 20),
+    ORTE_ERR_DATA_OVERWRITE_ATTEMPT         = (ORTE_ERR_BASE - 21),
+    ORTE_ERR_OPERATION_UNSUPPORTED          = (ORTE_ERR_BASE - 22)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
 
+/* include the prototype for the error-to-string converter */
+const char * orte_err2str(int errnum);
 
 #endif /* ORTE_CONSTANTS_H */
 

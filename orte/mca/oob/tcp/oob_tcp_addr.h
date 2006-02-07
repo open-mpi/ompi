@@ -30,7 +30,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "dps/dps.h"
+#include "dss/dss.h"
 #include "opal/class/opal_object.h"
 #include "mca/ns/ns_types.h"
 #if defined(c_plusplus) || defined(__cplusplus)

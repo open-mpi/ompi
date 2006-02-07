@@ -6,14 +6,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -156,7 +156,7 @@ static void orte_ns_replica_jobid_tracker_destructor(orte_ns_replica_jobid_track
 
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
-		   orte_ns_replica_jobid_tracker_t,  /* type name */
+           orte_ns_replica_jobid_tracker_t,  /* type name */
            opal_object_t, /* parent "class" name */
            orte_ns_replica_jobid_tracker_construct, /* constructor */
            orte_ns_replica_jobid_tracker_destructor); /* destructor */
@@ -188,7 +188,7 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of dtilist instance */
 static void orte_ns_replica_dti_construct(orte_ns_replica_dti_t* dti)
 {
-    dti->id = ORTE_DPS_ID_MAX;
+    dti->id = ORTE_DSS_ID_MAX;
     dti->name = NULL;
 }
 
@@ -230,12 +230,12 @@ int orte_ns_replica_open(void)
     } else {
         orte_ns_replica.isolate = false;
     }
-    
+
     id = mca_base_param_register_int("ns", "replica", "maxsize", NULL,
                                      ORTE_NS_ARRAY_MAX_SIZE);
     mca_base_param_lookup_int(id, &param);
     orte_ns_replica.max_size = (size_t)param;
-    
+
     id = mca_base_param_register_int("ns", "replica", "blocksize", NULL,
                                      ORTE_NS_ARRAY_BLOCK_SIZE);
     mca_base_param_lookup_int(id, &param);
@@ -277,7 +277,7 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
             return NULL;
         }
         orte_ns_replica.num_cells = 0;
-        
+
       /* initialize the job id tracker */
       if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.jobids),
                                 orte_ns_replica.block_size,
@@ -312,7 +312,7 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 
       /* setup the thread lock */
       OBJ_CONSTRUCT(&orte_ns_replica.mutex, opal_mutex_t);
-      
+
      /* Return the module */
 
       initialized = true;
@@ -328,7 +328,7 @@ int orte_ns_replica_module_init(void)
     if (orte_ns_replica.isolate) {
         return ORTE_SUCCESS;
     }
-    
+
     /* issue non-blocking receive for call_back function */
     rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS, ORTE_RML_PERSISTENT, orte_ns_replica_recv, NULL);
     if(rc < 0) {
@@ -349,7 +349,7 @@ int orte_ns_replica_finalize(void)
     orte_ns_replica_tagitem_t **tag;
     orte_ns_replica_dti_t **dti;
     size_t i;
-    
+
   /* free all tracking storage, but only if this component was initialized */
 
     if (initialized) {
@@ -368,13 +368,13 @@ int orte_ns_replica_finalize(void)
             }
         }
         OBJ_RELEASE(orte_ns_replica.jobids);
-        
+
         tag = (orte_ns_replica_tagitem_t**)(orte_ns_replica.tags)->addr;
         for (i=0; i < (orte_ns_replica.tags)->size; i++) {
             if (NULL != tag[i]) OBJ_RELEASE(tag[i]);
         }
         OBJ_RELEASE(orte_ns_replica.tags);
- 
+
         dti = (orte_ns_replica_dti_t**)(orte_ns_replica.dts)->addr;
         for (i=0; i < (orte_ns_replica.dts)->size; i++) {
             if (NULL != dti[i]) OBJ_RELEASE(dti[i]);
@@ -388,21 +388,21 @@ int orte_ns_replica_finalize(void)
     if (orte_ns_replica.isolate) {
         return ORTE_SUCCESS;
     }
-    
+
     orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS);
     return ORTE_SUCCESS;
 }
 
 
-/* 
+/*
  * handle message from proxies
  * NOTE: The incoming buffer "buffer" is OBJ_RELEASED by the calling program.
  * DO NOT RELEASE THIS BUFFER IN THIS CODE
  */
 
 void orte_ns_replica_recv(int status, orte_process_name_t* sender,
-			             orte_buffer_t* buffer, orte_rml_tag_t tag,
-			             void* cbdata)
+                         orte_buffer_t* buffer, orte_rml_tag_t tag,
+                         void* cbdata)
 {
     orte_buffer_t answer, error_answer;
     orte_ns_cmd_flag_t command;
@@ -416,110 +416,148 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     int rc=ORTE_SUCCESS, ret;
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &count, ORTE_NS_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &command, &count, ORTE_NS_CMD))) {
         ORTE_ERROR_LOG(rc);
         rc = ORTE_ERR_BAD_PARAM;
-	    goto RETURN_ERROR;
+        goto RETURN_ERROR;
     }
 
     OBJ_CONSTRUCT(&answer, orte_buffer_t);
-    
+
     switch (command) {
         case ORTE_NS_CREATE_CELLID_CMD:
-            if (ORTE_SUCCESS != (rc = orte_dps.pack(&answer, &command, 1, ORTE_NS_CMD))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &command, 1, ORTE_NS_CMD))) {
                 ORTE_ERROR_LOG(rc);
                 goto RETURN_ERROR;
             }
-            
+
             count = 1;
-            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &site, &count, ORTE_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                rc = ORTE_ERR_BAD_PARAM;
-                goto RETURN_ERROR;
-            }
-        
-            count = 1;
-            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &resource, &count, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &site, &count, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 rc = ORTE_ERR_BAD_PARAM;
                 goto RETURN_ERROR;
             }
 
-        	   rc = orte_ns_replica_create_cellid(&cell, site, resource);
-               
-        	   if (ORTE_SUCCESS != (ret = orte_dps.pack(&answer, &cell, 1, ORTE_CELLID))) {
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &resource, &count, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+
+               rc = orte_ns_replica_create_cellid(&cell, site, resource);
+
+               if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &cell, 1, ORTE_CELLID))) {
                 ORTE_ERROR_LOG(ret);
                 goto RETURN_ERROR;
-        	   }
-        	   if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+               }
+               if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 goto RETURN_ERROR;
             }
             break;
-     
+
+        case ORTE_NS_GET_CELL_INFO_CMD:
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &command, 1, ORTE_NS_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &cell, &count, ORTE_CELLID))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+            
+            site = NULL;
+            resource = NULL;
+            rc = orte_ns_replica_get_cell_info(cell, &site, &resource);
+
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &site, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                goto RETURN_ERROR;
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &resource, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                goto RETURN_ERROR;
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(&answer, &rc, 1, ORTE_INT))) {
+                ORTE_ERROR_LOG(ret);
+                goto RETURN_ERROR;
+            }
+            
+            if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                goto RETURN_ERROR;
+            }
+            break;
+
         case ORTE_NS_CREATE_JOBID_CMD:
-    	   if (ORTE_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
+           if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                ORTE_ERROR_LOG(rc);
-    	       goto RETURN_ERROR;
-    	   }
-         
-    	   if (ORTE_SUCCESS != (rc = orte_ns_replica_create_jobid(&job))) {
+               goto RETURN_ERROR;
+           }
+
+           if (ORTE_SUCCESS != (rc = orte_ns_replica_create_jobid(&job))) {
                 ORTE_ERROR_LOG(rc);
                 goto RETURN_ERROR;
            }
-           
-    	   if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&job, 1, ORTE_JOBID))) {
+
+           if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&job, 1, ORTE_JOBID))) {
                ORTE_ERROR_LOG(rc);
-    	       goto RETURN_ERROR;
-    	   }
-         
-    	   if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+               goto RETURN_ERROR;
+           }
+
+           if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                goto RETURN_ERROR;
-    	   }
+           }
            break;
-     
+
          case ORTE_NS_RESERVE_RANGE_CMD:
                count = 1;
-        	   if (OMPI_SUCCESS != (rc = orte_dps.unpack(buffer, (void*)&job, &count, ORTE_JOBID))) {
+               if (OMPI_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&job, &count, ORTE_JOBID))) {
                        ORTE_ERROR_LOG(rc);
-        	       goto RETURN_ERROR;
-        	   }
-         
+                   goto RETURN_ERROR;
+               }
+
                count = 1;
-        	   if (OMPI_SUCCESS != (rc = orte_dps.unpack(buffer, (void*)&range, &count, ORTE_VPID))) {
+               if (OMPI_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&range, &count, ORTE_VPID))) {
                        ORTE_ERROR_LOG(rc);
-        	       goto RETURN_ERROR;
-        	   }
-        
-        	   if (ORTE_SUCCESS != (rc = orte_ns_replica_reserve_range(job, range, &startvpid))) {
+                   goto RETURN_ERROR;
+               }
+
+               if (ORTE_SUCCESS != (rc = orte_ns_replica_reserve_range(job, range, &startvpid))) {
                        ORTE_ERROR_LOG(rc);
                        goto RETURN_ERROR;
                    }
-               
-        	   if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
+
+               if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                        ORTE_ERROR_LOG(rc);
-        	       goto RETURN_ERROR;
-        	   }
-        
-        	   if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&startvpid, 1, ORTE_VPID))) {
+                   goto RETURN_ERROR;
+               }
+
+               if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&startvpid, 1, ORTE_VPID))) {
                        ORTE_ERROR_LOG(rc);
-        	       goto RETURN_ERROR;
-        	   }
-             
-        	   if (0 > (rc = orte_rml.send_buffer(sender, &answer, tag, 0))) {
+                   goto RETURN_ERROR;
+               }
+
+               if (0 > (rc = orte_rml.send_buffer(sender, &answer, tag, 0))) {
                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                    goto RETURN_ERROR;
-        	   }
+               }
                break;
-    
+
         case ORTE_NS_ASSIGN_OOB_TAG_CMD:
                count = 1;
-               if (0 > orte_dps.unpack(buffer, &tagname, &count, ORTE_STRING)) {
+               if (0 > orte_dss.unpack(buffer, &tagname, &count, ORTE_STRING)) {
                  rc = ORTE_ERR_UNPACK_FAILURE;
                  goto RETURN_ERROR;
                }
-        
+
                if (0 == strncmp(tagname, "NULL", 4)) {
                     if (ORTE_SUCCESS != (rc = orte_ns_replica_assign_rml_tag(&oob_tag, NULL))) {
                         goto RETURN_ERROR;
@@ -529,15 +567,15 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                         goto RETURN_ERROR;
                     }
                }
-               
-              if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
+
+              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                  goto RETURN_ERROR;
               }
-        
-              if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&oob_tag, 1, ORTE_UINT32))) {
+
+              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&oob_tag, 1, ORTE_UINT32))) {
                   goto RETURN_ERROR;
               }
-             
+
               if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                    goto RETURN_ERROR;
@@ -546,33 +584,33 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
 
         case ORTE_NS_DEFINE_DATA_TYPE_CMD:
                count = 1;
-               if (0 > orte_dps.unpack(buffer, &tagname, &count, ORTE_STRING)) {
+               if (0 > orte_dss.unpack(buffer, &tagname, &count, ORTE_STRING)) {
                  rc = ORTE_ERR_UNPACK_FAILURE;
                  goto RETURN_ERROR;
                }
-        
+
                 if (ORTE_SUCCESS != (rc = orte_ns_replica_define_data_type(tagname, &type))) {
                     goto RETURN_ERROR;
                 }
-               
-              if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
+
+              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                  goto RETURN_ERROR;
               }
-        
-              if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&type, 1, ORTE_DATA_TYPE))) {
+
+              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&type, 1, ORTE_DATA_TYPE))) {
                   goto RETURN_ERROR;
               }
-             
+
               if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                    goto RETURN_ERROR;
               }
               break;
-            
+
         case ORTE_NS_CREATE_MY_NAME_CMD:
             /* ignore this command */
             break;
-            
+
         case ORTE_NS_DUMP_CELLS_CMD:
             if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_cells_fn(&answer))) {
                 ORTE_ERROR_LOG(rc);
@@ -583,7 +621,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                  goto RETURN_ERROR;
             }
             break;
-            
+
         case ORTE_NS_DUMP_JOBIDS_CMD:
             if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_jobs_fn(&answer))) {
                 ORTE_ERROR_LOG(rc);
@@ -594,7 +632,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                  goto RETURN_ERROR;
             }
             break;
-            
+
         case ORTE_NS_DUMP_TAGS_CMD:
             if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_tags_fn(&answer))) {
                 ORTE_ERROR_LOG(rc);
@@ -605,7 +643,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                  goto RETURN_ERROR;
             }
             break;
-            
+
         case ORTE_NS_DUMP_DATATYPES_CMD:
             if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_datatypes_fn(&answer))) {
                 ORTE_ERROR_LOG(rc);
@@ -616,16 +654,16 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                  goto RETURN_ERROR;
             }
             break;
-            
+
         default:
             goto RETURN_ERROR;
     }
     goto CLEANUP;
-    
+
 RETURN_ERROR:
     OBJ_CONSTRUCT(&error_answer, orte_buffer_t);
-    orte_dps.pack(&error_answer, (void*)&command, 1, ORTE_NS_CMD);
-    orte_dps.pack(&error_answer, (void*)&rc, 1, ORTE_INT32);
+    orte_dss.pack(&error_answer, (void*)&command, 1, ORTE_NS_CMD);
+    orte_dss.pack(&error_answer, (void*)&rc, 1, ORTE_INT32);
     orte_rml.send_buffer(sender, &error_answer, tag, 0);
     OBJ_DESTRUCT(&error_answer);
 

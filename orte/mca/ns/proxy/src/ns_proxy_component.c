@@ -6,14 +6,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -166,7 +166,7 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of dtilist instance */
 static void orte_ns_proxy_dti_construct(orte_ns_proxy_dti_t* dti)
 {
-    dti->id = ORTE_DPS_ID_MAX;
+    dti->id = ORTE_DSS_ID_MAX;
     dti->name = NULL;
 }
 
@@ -206,7 +206,7 @@ int orte_ns_proxy_open(void)
                                      ORTE_NS_ARRAY_MAX_SIZE);
     mca_base_param_lookup_int(id, &param);
     orte_ns_proxy.max_size = (size_t)param;
-    
+
     id = mca_base_param_register_int("ns", "proxy", "blocksize", NULL,
                                      ORTE_NS_ARRAY_BLOCK_SIZE);
     mca_base_param_lookup_int(id, &param);
@@ -227,20 +227,20 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
 {
     orte_process_name_t name;
     int ret, rc;
-    
+
     /* If we are NOT to host a proxy, then we want to be selected, so do all
        the setup and return the module */
     /*    opal_output(mca_ns_base_output, "ns_proxy: entered init\n"); */
     if (NULL != orte_process_info.ns_replica_uri) {
 
-        	/* Return a module (choose an arbitrary, positive priority --
-        	   it's only relevant compared to other ns components).  If
-        	   we're not the seed, then we don't want to be selected, so
-        	   return NULL. */
-        
-        	*priority = 10;
-        
-        	/* define the proxy for us to use */
+            /* Return a module (choose an arbitrary, positive priority --
+               it's only relevant compared to other ns components).  If
+               we're not the seed, then we don't want to be selected, so
+               return NULL. */
+
+            *priority = 10;
+
+            /* define the proxy for us to use */
            if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.ns_replica_uri, &name, NULL))) {
                ORTE_ERROR_LOG(ret);
                return NULL;
@@ -249,11 +249,11 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
                ORTE_ERROR_LOG(ret);
                return NULL;
            }
-        	if (ORTE_SUCCESS != orte_ns_base_copy_process_name(&orte_ns_proxy.my_replica,
+            if (ORTE_SUCCESS != orte_ns_base_copy_process_name(&orte_ns_proxy.my_replica,
                                 orte_process_info.ns_replica)) {  /* can't operate */
-        	    return NULL;
-        	}
-        
+                return NULL;
+            }
+
           /* initialize the cell info tracker */
           if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.cells),
                                     orte_ns_proxy.block_size,
@@ -263,10 +263,10 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
                 return NULL;
             }
             orte_ns_proxy.num_cells = 0;
-        
-    
+
+
           /* initialize the taglist */
-    
+
           if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.tags),
                                     orte_ns_proxy.block_size,
                                     orte_ns_proxy.max_size,
@@ -275,9 +275,9 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
                 return NULL;
             }
             orte_ns_proxy.num_tags = 0;
-    
+
           /* initialize the dtlist */
-    
+
           if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.dts),
                                     orte_ns_proxy.block_size,
                                     orte_ns_proxy.max_size,
@@ -289,14 +289,14 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
 
           /* setup the thread lock */
           OBJ_CONSTRUCT(&orte_ns_proxy.mutex, opal_mutex_t);
-      
-    	    /* Return the module */
-    
-    	   initialized = true;
-    	   return &orte_ns_proxy_module;
-        
+
+            /* Return the module */
+
+           initialized = true;
+           return &orte_ns_proxy_module;
+
     } else {
-	   return NULL;
+       return NULL;
     }
 }
 
@@ -319,7 +319,7 @@ int orte_ns_proxy_finalize(void)
     orte_ns_proxy_tagitem_t **tag;
     orte_ns_proxy_dti_t **dti;
     size_t i;
-    
+
   /* free all tracking storage, but only if this component was initialized */
 
     if (initialized) {
@@ -336,7 +336,7 @@ int orte_ns_proxy_finalize(void)
             if (NULL != tag[i]) OBJ_RELEASE(tag[i]);
         }
         OBJ_RELEASE(orte_ns_proxy.tags);
- 
+
         dti = (orte_ns_proxy_dti_t**)(orte_ns_proxy.dts)->addr;
         for (i=0; i < (orte_ns_proxy.dts)->size; i++) {
             if (NULL != dti[i]) OBJ_RELEASE(dti[i]);

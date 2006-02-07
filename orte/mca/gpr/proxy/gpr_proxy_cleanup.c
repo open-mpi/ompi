@@ -30,7 +30,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 #include "opal/util/trace.h"
-#include "dps/dps_types.h"
+#include "dss/dss_types.h"
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns_types.h"
