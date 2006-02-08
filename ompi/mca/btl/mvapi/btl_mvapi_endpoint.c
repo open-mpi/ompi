@@ -22,11 +22,8 @@
 #include <time.h>
 #include "include/types.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "orte/mca/ns/base/base.h"
-#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/dss/dss.h"
 #include "btl_mvapi.h"
 #include "btl_mvapi_endpoint.h" 
 #include "btl_mvapi_proc.h"
