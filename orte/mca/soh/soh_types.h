@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,33 +31,41 @@ typedef int orte_exit_code_t;
  * Process state codes
  */
 
-typedef int8_t orte_proc_state_t;
+typedef uint16_t orte_proc_state_t;
+#define ORTE_PROC_STATE_T   ORTE_UINT16
 
-#define ORTE_PROC_STATE_INIT           0x01  /* process entry has been created by rmaps */
-#define ORTE_PROC_STATE_LAUNCHED       0x02  /* process has been launched by pls */
-#define ORTE_PROC_STATE_AT_STG1        0x03  /* process is at Stage Gate 1 barrier in orte_init */
-#define ORTE_PROC_STATE_AT_STG2        0x04  /* process is at Stage Gate 2 barrier in orte_init */
-#define ORTE_PROC_STATE_RUNNING        0x06  /* process has exited orte_init and is running */
-#define ORTE_PROC_STATE_AT_STG3        0x07  /* process is at Stage Gate 3 barrier in orte_finalize */
-#define ORTE_PROC_STATE_FINALIZED      0x08  /* process has completed orte_finalize and is running */
-#define ORTE_PROC_STATE_TERMINATED     0x09  /* process has terminated and is no longer running */
-#define ORTE_PROC_STATE_ABORTED        0x0A  /* process aborted */
+#define ORTE_PROC_STATE_INIT           0x0001  /* process entry has been created by rmaps */
+#define ORTE_PROC_STATE_LAUNCHED       0x0002  /* process has been launched by pls */
+#define ORTE_PROC_STATE_AT_STG1        0x0004  /* process is at Stage Gate 1 barrier in orte_init */
+#define ORTE_PROC_STATE_AT_STG2        0x0008  /* process is at Stage Gate 2 barrier in orte_init */
+#define ORTE_PROC_STATE_RUNNING        0x0010  /* process has exited orte_init and is running */
+#define ORTE_PROC_STATE_AT_STG3        0x0020  /* process is at Stage Gate 3 barrier in orte_finalize */
+#define ORTE_PROC_STATE_FINALIZED      0x0040  /* process has completed orte_finalize and is running */
+#define ORTE_PROC_STATE_TERMINATED     0x0080  /* process has terminated and is no longer running */
+#define ORTE_PROC_STATE_ABORTED        0x0100  /* process aborted */
+
+/** define some common shorthands for when we want to be alerted */
+#define ORTE_PROC_STATE_ALL            0xffff   /* alert on ALL triggers */
+#define ORTE_PROC_STAGE_GATES_ONLY     ORTE_PROC_STATE_AT_STG1 | ORTE_PROC_STATE_AT_STG2 | ORTE_PROC_STATE_AT_STG3 | ORTE_PROC_STATE_FINALIZED
+#define ORTE_PROC_STATE_TERMINATION    ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_ABORTED
+#define ORTE_PROC_STATE_NONE           0x0000   /* don't alert on any triggers */
 
 /*
  * Job state codes
  */
 
-typedef int8_t orte_job_state_t;
+typedef uint16_t orte_job_state_t;
+#define ORTE_JOB_STATE_T    ORTE_UINT16
 
-#define ORTE_JOB_STATE_INIT           0x01  /* job entry has been created by rmaps */
-#define ORTE_JOB_STATE_LAUNCHED       0x02  /* job has been launched by pls */
-#define ORTE_JOB_STATE_AT_STG1        0x03  /* all processes are at Stage Gate 1 barrier in orte_init */
-#define ORTE_JOB_STATE_AT_STG2        0x04  /* all processes are at Stage Gate 2 barrier in orte_init */
-#define ORTE_JOB_STATE_RUNNING        0x06  /* all processes have exited orte_init and is running */
-#define ORTE_JOB_STATE_AT_STG3        0x07  /* all processes are at Stage Gate 3 barrier in orte_finalize */
-#define ORTE_JOB_STATE_FINALIZED      0x08  /* all processes have completed orte_finalize and is running */
-#define ORTE_JOB_STATE_TERMINATED     0x09  /* all processes have terminated and is no longer running */
-#define ORTE_JOB_STATE_ABORTED        0x0A  /* at least one process aborted, causing job to abort */
+#define ORTE_JOB_STATE_INIT           0x0001  /* job entry has been created by rmaps */
+#define ORTE_JOB_STATE_LAUNCHED       0x0002  /* job has been launched by pls */
+#define ORTE_JOB_STATE_AT_STG1        0x0004  /* all processes are at Stage Gate 1 barrier in orte_init */
+#define ORTE_JOB_STATE_AT_STG2        0x0008  /* all processes are at Stage Gate 2 barrier in orte_init */
+#define ORTE_JOB_STATE_RUNNING        0x0010  /* all processes have exited orte_init and is running */
+#define ORTE_JOB_STATE_AT_STG3        0x0020  /* all processes are at Stage Gate 3 barrier in orte_finalize */
+#define ORTE_JOB_STATE_FINALIZED      0x0040  /* all processes have completed orte_finalize and is running */
+#define ORTE_JOB_STATE_TERMINATED     0x0080  /* all processes have terminated and is no longer running */
+#define ORTE_JOB_STATE_ABORTED        0x0100  /* at least one process aborted, causing job to abort */
 
 /**
  * Node State, corresponding to the ORTE_NODE_STATE_* #defines,

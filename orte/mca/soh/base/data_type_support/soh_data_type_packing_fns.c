@@ -66,7 +66,7 @@ int orte_soh_base_pack_proc_state(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_INT8))) {
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_PROC_STATE_T))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -81,7 +81,7 @@ int orte_soh_base_pack_job_state(orte_buffer_t *buffer, void *src,
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_INT8))) {
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_JOB_STATE_T))) {
         ORTE_ERROR_LOG(rc);
     }
 

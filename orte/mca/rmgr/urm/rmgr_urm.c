@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -74,7 +74,8 @@ static int orte_rmgr_urm_spawn(
     orte_app_context_t** app_context,
     size_t num_context,
     orte_jobid_t* jobid,
-    orte_rmgr_cb_fn_t cbfn);
+    orte_rmgr_cb_fn_t cbfn,
+    orte_proc_state_t cb_conditions);
 
 static int orte_rmgr_urm_finalize(void);
 
@@ -104,7 +105,7 @@ static int orte_rmgr_urm_query(void)
     int rc;
 
     OPAL_TRACE(1);
-    
+
     if(ORTE_SUCCESS != (rc = orte_rds_base_query())) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -125,7 +126,7 @@ static int orte_rmgr_urm_create(
     int rc;
 
     OPAL_TRACE(1);
-    
+
     /* allocate a jobid  */
     if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -133,8 +134,8 @@ static int orte_rmgr_urm_create(
     }
 
     /* create and initialize job segment */ /* JJH C/N mapping before this */
-    if (ORTE_SUCCESS != 
-        (rc = orte_rmgr_base_put_app_context(*jobid, app_context, 
+    if (ORTE_SUCCESS !=
+        (rc = orte_rmgr_base_put_app_context(*jobid, app_context,
                                              num_context))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -146,7 +147,7 @@ static int orte_rmgr_urm_create(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-   
+
     return ORTE_SUCCESS;
 }
 
@@ -154,21 +155,21 @@ static int orte_rmgr_urm_create(
 static int orte_rmgr_urm_allocate(orte_jobid_t jobid)
 {
     OPAL_TRACE(1);
-    
+
     return orte_ras_base_allocate(jobid, &mca_rmgr_urm_component.urm_ras);
 }
 
 static int orte_rmgr_urm_deallocate(orte_jobid_t jobid)
 {
     OPAL_TRACE(1);
-    
+
     return mca_rmgr_urm_component.urm_ras->deallocate(jobid);
 }
 
 static int orte_rmgr_urm_map(orte_jobid_t jobid)
 {
     OPAL_TRACE(1);
-    
+
     return mca_rmgr_urm_component.urm_rmaps->map(jobid);
 }
 
@@ -177,8 +178,8 @@ static int orte_rmgr_urm_launch(orte_jobid_t jobid)
     int ret, ret2;
 
     OPAL_TRACE(1);
-    
-    if (ORTE_SUCCESS != 
+
+    if (ORTE_SUCCESS !=
         (ret = mca_rmgr_urm_component.urm_pls->launch(jobid))) {
         ORTE_ERROR_LOG(ret);
         ret2 = orte_soh.set_job_soh(jobid, ORTE_JOB_STATE_ABORTED);
@@ -194,14 +195,14 @@ static int orte_rmgr_urm_launch(orte_jobid_t jobid)
 static int orte_rmgr_urm_terminate_job(orte_jobid_t jobid)
 {
     OPAL_TRACE(1);
-    
+
     return mca_rmgr_urm_component.urm_pls->terminate_job(jobid);
 }
 
 static int orte_rmgr_urm_terminate_proc(const orte_process_name_t* proc_name)
 {
     OPAL_TRACE(1);
-    
+
     return mca_rmgr_urm_component.urm_pls->terminate_proc(proc_name);
 }
 
@@ -212,7 +213,7 @@ static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
     orte_process_name_t* name;
 
     OPAL_TRACE(1);
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, jobid, 0))) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -233,7 +234,7 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
     int rc;
 
     OPAL_TRACE(1);
-    
+
     /* we made sure in the subscriptions that at least one
      * value is always returned
      * get the jobid from the segment name in the first value
@@ -255,11 +256,20 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
             keyvals = value->keyvals;
             for(j=0; j<value->cnt; j++) {
                 orte_gpr_keyval_t* keyval = keyvals[j];
+                if(strcmp(keyval->key, ORTE_PROC_NUM_AT_INIT) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_INIT);
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_NUM_LAUNCHED) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_LAUNCHED);
+                    continue;
+                }
+                if(strcmp(keyval->key, ORTE_PROC_NUM_RUNNING) == 0) {
+                    (*cbfunc)(jobid,ORTE_PROC_STATE_RUNNING);
+                    continue;
+                }
                 if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG1) == 0) {
                     (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
-                    /* BWB - XXX - FIX ME: this needs to happen when all
-                       are LAUNCHED, before STG1 */
-                    orte_rmgr_urm_wireup_stdin(jobid);
                     continue;
                 }
                 if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG2) == 0) {
@@ -288,6 +298,29 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
 }
 
 
+/**
+ * define a callback point for completing the wireup of the stdin for io forwarding
+ */
+static void orte_rmgr_urm_wireup_callback(orte_gpr_notify_data_t *data, void *cbdata)
+{
+    orte_gpr_value_t **values;
+    orte_jobid_t jobid;
+    int rc;
+
+    OPAL_TRACE(1);
+
+    /* we made sure in the subscriptions that at least one
+    * value is always returned
+    * get the jobid from the segment name in the first value
+    */
+    values = (orte_gpr_value_t**)(data->values)->addr;
+    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&jobid, values[0]->segment))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    orte_rmgr_urm_wireup_stdin(jobid);
+}
+
 /*
  *  Shortcut for the multiple steps involved in spawning a new job.
  */
@@ -297,14 +330,15 @@ static int orte_rmgr_urm_spawn(
     orte_app_context_t** app_context,
     size_t num_context,
     orte_jobid_t* jobid,
-    orte_rmgr_cb_fn_t cbfunc)
+    orte_rmgr_cb_fn_t cbfunc,
+    orte_proc_state_t cb_conditions)
 {
     int rc;
     orte_process_name_t* name;
- 
+
     OPAL_TRACE(1);
-    
-    /* 
+
+    /*
      * Perform resource discovery.
      */
     if (mca_rmgr_urm_component.urm_rds == false &&
@@ -318,7 +352,7 @@ static int orte_rmgr_urm_spawn(
     /*
      * Initialize job segment and allocate resources
      */ /* JJH Insert C/N mapping stuff here */
-    if (ORTE_SUCCESS != 
+    if (ORTE_SUCCESS !=
         (rc = orte_rmgr_urm_create(app_context,num_context,jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -335,7 +369,7 @@ static int orte_rmgr_urm_spawn(
     }
 
     /*
-     * setup I/O forwarding 
+     * setup I/O forwarding
      */
 
     if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, *jobid, 0))) {
@@ -350,18 +384,24 @@ static int orte_rmgr_urm_spawn(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
+    rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_urm_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     /*
      * setup callback
      */
 
     if(NULL != cbfunc) {
-        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_urm_callback, (void*)cbfunc, ORTE_STAGE_GATE_ALL);
+        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_urm_callback, (void*)cbfunc, cb_conditions);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        cbfunc(*jobid, ORTE_PROC_STATE_INIT);
+        /*        cbfunc(*jobid, ORTE_PROC_STATE_INIT); RHC - not sure why this was here, but it doesn't seem required */
     }
 
     /*
@@ -382,7 +422,7 @@ static int orte_rmgr_urm_finalize(void)
     int rc;
 
     OPAL_TRACE(1);
-    
+
     /**
      * Finalize Process Launch Subsystem (PLS)
      */

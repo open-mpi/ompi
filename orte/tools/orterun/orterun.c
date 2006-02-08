@@ -253,6 +253,7 @@ int orterun(int argc, char *argv[])
     orte_app_context_t **apps;
     int rc, i, num_apps, array_size, j;
     int id, iparam;
+    orte_proc_state_t cb_states;
 
     /* Setup MCA params */
 
@@ -392,7 +393,8 @@ int orterun(int argc, char *argv[])
 
     /* Spawn the job */
 
-    rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback);
+    cb_states = ORTE_PROC_STATE_ABORTED | ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_AT_STG1;
+    rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback, cb_states);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
         opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
@@ -619,6 +621,10 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 
         case ORTE_PROC_STATE_AT_STG1:
             orte_totalview_init_after_spawn(jobid);
+            break;
+
+        default:
+            opal_output(0, "orterun: job state callback in unexpected state - jobid %lu, state 0x%04x\n", jobid, state);
             break;
     }
     OPAL_THREAD_UNLOCK(&orterun_globals.lock);

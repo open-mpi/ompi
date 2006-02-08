@@ -26,28 +26,30 @@
 #include <unistd.h>
 #endif
 
-#include "orte/dss/dss.h"
+#include "opal/util/printf.h"
+#include "opal/util/convert.h"
+#include "opal/threads/mutex.h"
+#include "opal/util/bit_ops.h"
+#include "opal/util/argv.h"
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "errhandler/errhandler.h"
 #include "proc/proc.h"
 #include "info/info.h"
-#include "opal/util/convert.h"
-#include "opal/threads/mutex.h"
-#include "util/proc_info.h"
-#include "opal/util/bit_ops.h"
-#include "opal/util/argv.h"
 #include "ompi/include/constants.h"
-#include "mca/pml/pml.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/rmgr/rmgr.h"
+#include "ompi/mca/pml/pml.h"
 
-#include "mca/rml/rml.h"
+#include "orte/util/proc_info.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/rml/rml.h"
 
 #include "runtime/runtime.h"
-#include "opal/util/printf.h"
 
 extern char **environ;
 
@@ -446,8 +448,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 
 
     /* spawn procs */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, &new_jobid,
-                                    NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, &new_jobid, NULL, ORTE_PROC_STATE_NONE))) {
         ORTE_ERROR_LOG(rc);
         opal_progress_event_decrement();
         return MPI_ERR_SPAWN;
