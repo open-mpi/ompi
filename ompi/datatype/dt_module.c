@@ -288,6 +288,8 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         if( (PDST)->opt_desc.desc != NULL )                             \
             free( (PDST)->opt_desc.desc );                              \
         (PDST)->opt_desc = (PSRC)->opt_desc;                            \
+        (PDST)->packed_description = (PSRC)->packed_description;        \
+        (PSRC)->packed_description = NULL;                              \
         memcpy( (PDST)->btypes, (PSRC)->btypes,                         \
                 DT_MAX_PREDEFINED * sizeof(uint32_t) );                 \
     } while(0)

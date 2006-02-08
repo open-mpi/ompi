@@ -27,27 +27,28 @@ static void __get_free_dt_struct( ompi_datatype_t* pData )
 {
     int i;
 
-    pData->size            = 0;
-    pData->id              = 0;
-    pData->nbElems         = 0;
-    pData->bdt_used        = 0;
+    pData->size               = 0;
+    pData->id                 = 0;
+    pData->nbElems            = 0;
+    pData->bdt_used           = 0;
     for( i = 0; i < DT_MAX_PREDEFINED; i++ )
-        pData->btypes[i]    = 0;
-    pData->btypes[DT_LOOP] = 0;
+        pData->btypes[i]      = 0;
+    pData->btypes[DT_LOOP]    = 0;
 
-    pData->opt_desc.desc   = NULL;
-    pData->opt_desc.length = 0;
-    pData->opt_desc.used   = 0;
-    pData->args            = NULL;
-    pData->align           = 1;
-    pData->flags           = DT_FLAG_CONTIGUOUS;
-    pData->true_lb         = LONG_MAX;
-    pData->true_ub         = LONG_MIN;
-    pData->lb              = LONG_MAX;
-    pData->ub              = LONG_MIN;
-    pData->d_f_to_c_index  = ompi_pointer_array_add(ompi_datatype_f_to_c_table, pData);
-    pData->d_keyhash       = NULL;
-    pData->name[0]         = '\0';
+    pData->opt_desc.desc      = NULL;
+    pData->opt_desc.length    = 0;
+    pData->opt_desc.used      = 0;
+    pData->args               = NULL;
+    pData->align              = 1;
+    pData->flags              = DT_FLAG_CONTIGUOUS;
+    pData->true_lb            = LONG_MAX;
+    pData->true_ub            = LONG_MIN;
+    pData->lb                 = LONG_MAX;
+    pData->ub                 = LONG_MIN;
+    pData->d_f_to_c_index     = ompi_pointer_array_add(ompi_datatype_f_to_c_table, pData);
+    pData->d_keyhash          = NULL;
+    pData->name[0]            = '\0';
+    pData->packed_description = NULL;
 }
 
 static void __destroy_ddt_struct( ompi_datatype_t* datatype )
