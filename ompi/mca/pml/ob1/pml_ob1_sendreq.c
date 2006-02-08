@@ -264,6 +264,7 @@ static void mca_pml_ob1_frag_completion(
     if (OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1) == 0 &&
         req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
         OPAL_THREAD_LOCK(&ompi_request_lock);
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq); 
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } else {
