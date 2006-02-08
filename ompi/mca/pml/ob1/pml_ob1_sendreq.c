@@ -161,6 +161,7 @@ static void mca_pml_ob1_rndv_completion(
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)  descriptor->des_context; 
+
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
@@ -168,10 +169,14 @@ static void mca_pml_ob1_rndv_completion(
         orte_errmgr.abort();
     }
 
-    /* count bytes of user data actually delivered */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,descriptor,sizeof(mca_pml_ob1_rendezvous_hdr_t));
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    /* count bytes of user data actually delivered. As the rndv completion only
+     * happens in one thread, the increase of the req_bytes_delivered does not
+     * have to be atomic.
+     */
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( descriptor->des_src,
+                                        descriptor->des_src_cnt,
+                                        sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                                        sendreq->req_bytes_delivered );
 
     /* return the descriptor */
     mca_bml_base_free(bml_btl, descriptor); 
@@ -195,14 +200,17 @@ static void mca_pml_ob1_rget_completion(
     int status)
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)des->des_cbdata;
+    size_t req_bytes_delivered = 0;
 
     /* count bytes of user data actually delivered and check for request completion */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,des,0);
-    if (sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( des->des_src, des->des_src_cnt,
+                                        0, req_bytes_delivered );
+    if( OPAL_THREAD_ADD_SIZE_T( &sendreq->req_bytes_delivered, req_bytes_delivered )
+        == sendreq->req_send.req_bytes_packed ) {
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* release resources */
     btl->btl_free(btl,des);
@@ -237,7 +245,7 @@ static void mca_pml_ob1_frag_completion(
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
-    bool schedule;
+    size_t req_bytes_delivered = 0;
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -246,20 +254,19 @@ static void mca_pml_ob1_frag_completion(
         orte_errmgr.abort();
     }
 
-    /* check for request completion */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-
     /* count bytes of user data actually delivered */
-    MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,descriptor,sizeof(mca_pml_ob1_frag_hdr_t));
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( descriptor->des_src,
+                                        descriptor->des_src_cnt,
+                                        sizeof(mca_pml_ob1_frag_hdr_t),
+                                        req_bytes_delivered );
+    req_bytes_delivered = OPAL_THREAD_ADD_SIZE_T( &sendreq->req_bytes_delivered,
+                                                  req_bytes_delivered );
     if (OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1) == 0 &&
-        sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+        req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq); 
-        schedule = false;
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } else {
-        schedule = true;
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    if(schedule) {
         mca_pml_ob1_send_request_schedule(sendreq);
     }
 

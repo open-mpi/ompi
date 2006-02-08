@@ -135,30 +135,24 @@ static void mca_pml_ob1_put_completion(
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_cbdata;
     mca_btl_base_segment_t* segments = des->des_dst;
     size_t i, bytes_received = 0;
-    bool schedule = false;
 
-    for(i=0; i<des->des_dst_cnt; i++)
-        bytes_received += segments[i].seg_len;
-
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( des->des_dst, des->des_dst_cnt,
+                                        0, bytes_received );
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
     mca_bml_base_free(bml_btl, des);
 
     /* check completion status */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    recvreq->req_bytes_received += bytes_received;
-    recvreq->req_bytes_delivered += bytes_received;
-    if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
+    if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received)
+        >= recvreq->req_recv.req_bytes_packed ) {
         /* initialize request status */
-        recvreq->req_recv.req_base.req_ompi.req_status._count =
-            recvreq->req_bytes_delivered;
         recvreq->req_recv.req_base.req_pml_complete = true;
+        recvreq->req_recv.req_base.req_ompi.req_status._count = 
+            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?
+             recvreq->req_bytes_received : recvreq->req_bytes_delivered);
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
-        schedule = true;
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
-    if( true == schedule ) {
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
     }
@@ -301,17 +295,18 @@ static void mca_pml_ob1_rget_completion(
     mca_pml_ob1_fin_hdr_t* hdr;
     mca_btl_base_descriptor_t *fin;
     int rc;
-    
+   
     /* is receive request complete */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    recvreq->req_bytes_received += frag->rdma_length;
-    recvreq->req_bytes_delivered += frag->rdma_length;
-    if(recvreq->req_bytes_received == recvreq->req_recv.req_bytes_packed) {
-        recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
+    if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length)
+        == recvreq->req_recv.req_bytes_packed ) {
+        recvreq->req_recv.req_base.req_ompi.req_status._count = 
+            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?
+             recvreq->req_bytes_received : recvreq->req_bytes_delivered);
         recvreq->req_recv.req_base.req_pml_complete = true;
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* return descriptor */
     mca_bml_base_free(bml_btl, des); 
@@ -436,16 +431,15 @@ void mca_pml_ob1_recv_request_progress(
     size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     size_t i;
-    bool schedule = false;
 
-    for(i=0; i<num_segments; i++)
-        bytes_received += segments[i].seg_len;
-
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
+                                        0, bytes_received );
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PML_OB1_HDR_TYPE_MATCH:
 
             bytes_received -= sizeof(mca_pml_ob1_match_hdr_t);
             recvreq->req_recv.req_bytes_packed = bytes_received;
+            recvreq->req_bytes_delivered = bytes_received;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             MCA_PML_OB1_RECV_REQUEST_UNPACK(
                 recvreq,
@@ -461,6 +455,7 @@ void mca_pml_ob1_recv_request_progress(
 
             bytes_received -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
+            recvreq->req_bytes_delivered = hdr->hdr_rndv.hdr_msg_length;
             recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
@@ -477,6 +472,7 @@ void mca_pml_ob1_recv_request_progress(
         case MCA_PML_OB1_HDR_TYPE_RGET:
 
             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
+            recvreq->req_bytes_delivered = hdr->hdr_rndv.hdr_msg_length;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             mca_pml_ob1_recv_request_rget(recvreq, btl, &hdr->hdr_rget);
             return;
@@ -500,21 +496,17 @@ void mca_pml_ob1_recv_request_progress(
     }
 
     /* check completion status */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    recvreq->req_bytes_received += bytes_received;
-    recvreq->req_bytes_delivered += bytes_delivered;
-    if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
+    if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received)
+        >= recvreq->req_recv.req_bytes_packed ) {
         /* initialize request status */
         recvreq->req_recv.req_base.req_ompi.req_status._count =
-            recvreq->req_bytes_delivered;
+            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?
+             recvreq->req_bytes_received : recvreq->req_bytes_delivered);
         recvreq->req_recv.req_base.req_pml_complete = true;
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
-        schedule = true;
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-
-    if( true == schedule ) {
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
     }
@@ -538,9 +530,9 @@ void mca_pml_ob1_recv_request_matched_probe(
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PML_OB1_HDR_TYPE_MATCH:
 
-            for(i=0; i<num_segments; i++)
-                bytes_packed += segments[i].seg_len;
-            bytes_packed -= sizeof(mca_pml_ob1_match_hdr_t);
+            MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
+                                                sizeof(mca_pml_ob1_match_hdr_t),
+                                                bytes_packed );
             break;
 
         case MCA_PML_OB1_HDR_TYPE_RNDV:
