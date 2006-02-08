@@ -121,5 +121,6 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
     AC_SUBST([memory_ptmalloc2_LIBS])
 
     AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
-          [$1], [$2])
+          [memory_base_found=1
+           $1], [$2])
 ])
