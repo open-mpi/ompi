@@ -76,6 +76,9 @@
 #define ORTE_PROC_EXIT_CODE_KEY         "orte-proc-exit-code"
 #define ORTE_PROC_NUM_ALIVE             "orte-proc-num-alive"
 #define ORTE_PROC_NUM_ABORTED           "orte-proc-num-aborted"
+#define ORTE_PROC_NUM_AT_INIT            "orte-proc-num-init"
+#define ORTE_PROC_NUM_LAUNCHED          "orte-proc-num-launched"
+#define ORTE_PROC_NUM_RUNNING           "orte-proc-num-running"
 #define ORTE_PROC_NUM_AT_STG1           "orte-proc-num-stg1"
 #define ORTE_PROC_NUM_AT_STG2           "orte-proc-num-stg2"
 #define ORTE_PROC_NUM_AT_STG3           "orte-proc-num-stg3"
@@ -85,11 +88,14 @@
 /*
  * ORTE-wide names for specific system triggers and subscriptions
  */
-#define ORTE_STG1_TRIGGER           "orte-stage1"
-#define ORTE_STG2_TRIGGER           "orte-stage2"
-#define ORTE_STG3_TRIGGER           "orte-stage3"
-#define ORTE_NUM_FINALIZED_TRIGGER  "orte-num-finalized"
-#define ORTE_NUM_ABORTED_TRIGGER    "orte-num-aborted"
-#define ORTE_NUM_TERMINATED_TRIGGER "orte-num-terminated"
+#define ORTE_ALL_INIT_TRIGGER           "orte-init-trig"
+#define ORTE_ALL_LAUNCHED_TRIGGER       "orte-launch-trig"
+#define ORTE_ALL_RUNNING_TRIGGER        "orte-running-trig"
+#define ORTE_STG1_TRIGGER               "orte-stage1"
+#define ORTE_STG2_TRIGGER               "orte-stage2"
+#define ORTE_STG3_TRIGGER               "orte-stage3"
+#define ORTE_NUM_FINALIZED_TRIGGER      "orte-num-finalized"
+#define ORTE_NUM_ABORTED_TRIGGER        "orte-num-aborted"
+#define ORTE_NUM_TERMINATED_TRIGGER     "orte-num-terminated"
 
 #endif

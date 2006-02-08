@@ -139,19 +139,21 @@ typedef void (*orte_rmgr_cb_fn_t)(orte_jobid_t jobid, orte_proc_state_t state);
  * (2) Allocated resources to the job.
  * (3) Map processes to allocated resources
  * (4) Launch the job.
- * (5) Callback function - gets called when job completes (if NULL, then no callback done)
+ * (5) Callback function - gets called all procs reach specified conditions (if NULL, then no callback done)
+ * (6) callback conditions - flag indicating which triggers are to generate callbacks to the specified function
  *
  * @code
  * orte_jobid_t jobid;
  *
- * return_value = orte_rmgr.spawn(app_context, num_context, &jobid, NULL);
+ * return_value = orte_rmgr.spawn(app_context, num_context, &jobid, NULL, 0);
  * @endcode
  */
 typedef int (*orte_rmgr_base_module_spawn_fn_t)(
     orte_app_context_t** app_context,
     size_t num_context,
     orte_jobid_t *jobid,
-    orte_rmgr_cb_fn_t cbfn);
+    orte_rmgr_cb_fn_t cbfn,
+    orte_proc_state_t cb_conditions);
 
 /*
  * Init the proc stage gate process

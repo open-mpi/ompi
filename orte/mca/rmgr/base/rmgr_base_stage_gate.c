@@ -43,12 +43,19 @@
 
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 {
-    size_t i, num_counters=6, num_named_trigs=5;
+    size_t i, num_counters, num_named_trigs;
     size_t zero=0;
     int rc;
     orte_gpr_value_t *value;
     char* keys[] = {
         /* changes to this ordering need to be reflected in code below */
+        /* We need to set up counters for all the defined ORTE process states, even though
+         * the launch system doesn't actually use them all. This must be done so that
+         * user-defined callbacks can be generated - otherwise, they won't happen!
+         */
+        ORTE_PROC_NUM_AT_INIT,
+        ORTE_PROC_NUM_LAUNCHED,
+        ORTE_PROC_NUM_RUNNING,
         ORTE_PROC_NUM_AT_STG1,
         ORTE_PROC_NUM_AT_STG2,
         ORTE_PROC_NUM_AT_STG3,
@@ -58,6 +65,9 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     };
     char* trig_names[] = {
         /* changes to this ordering need to be reflected in code below */
+        ORTE_ALL_INIT_TRIGGER,
+        ORTE_ALL_LAUNCHED_TRIGGER,
+        ORTE_ALL_RUNNING_TRIGGER,
         ORTE_STG1_TRIGGER,
         ORTE_STG2_TRIGGER,
         ORTE_STG3_TRIGGER,
@@ -70,22 +80,25 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 
     OPAL_TRACE(1);
 
+    num_counters = sizeof(keys)/sizeof(keys[0]);
+    num_named_trigs= sizeof(trig_names)/sizeof(trig_names[0]);
+
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* setup the counters */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
                              ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,
                              segment, num_counters, 1))) {
-                                 
+
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     value->tokens[0] = strdup(ORTE_JOB_GLOBALS); /* put counters in the job's globals container */
-    
+
     for (i=0; i < num_counters; i++) {
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[i]), keys[i], ORTE_SIZE, &zero))) {
             ORTE_ERROR_LOG(rc);
@@ -192,11 +205,15 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 
     OPAL_TRACE(1);
 
-    /* check to see if this came from terminate. If so, we ignore it because
+    /* check to see if this came from a trigger that we ignore because
      * that stage gate does NOT set an xcast barrier - processes simply
-     * record their state and continue processing
+     * record their state and continue processing. The only triggers that
+     * involve a xcast barrier are the STGx and FINALIZED ones - ignore the rest.
       */
-    if (orte_schema.check_std_trigger_name(msg->target, ORTE_NUM_TERMINATED_TRIGGER)) {
+    if (!orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER) &&
+        !orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER) &&
+        !orte_schema.check_std_trigger_name(msg->target, ORTE_STG3_TRIGGER) &&
+        !orte_schema.check_std_trigger_name(msg->target, ORTE_NUM_FINALIZED_TRIGGER)) {
         return ORTE_SUCCESS;
      }
 
@@ -297,14 +314,28 @@ int orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_message_t *msg)
  * to events on all counters.
  */
 
-int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc, void* cbdata, int type)
+int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc, void* cbdata, orte_proc_state_t cb_conditions)
 {
     size_t i;
     int rc;
     char *segment, *trig_name, *tokens[2];
     orte_gpr_subscription_id_t id;
+    /** the order of the next three definitions MUST match */
+    orte_proc_state_t state[] = {
+        ORTE_PROC_STATE_INIT,
+        ORTE_PROC_STATE_LAUNCHED,
+        ORTE_PROC_STATE_RUNNING,
+        ORTE_PROC_STATE_AT_STG1,
+        ORTE_PROC_STATE_AT_STG2,
+        ORTE_PROC_STATE_AT_STG3,
+        ORTE_PROC_STATE_FINALIZED,
+        ORTE_PROC_STATE_TERMINATED,
+        ORTE_PROC_STATE_ABORTED
+    };
     char* keys[] = {
-        /* changes to this ordering need to be reflected in code below */
+        ORTE_PROC_NUM_AT_INIT,
+        ORTE_PROC_NUM_LAUNCHED,
+        ORTE_PROC_NUM_RUNNING,
         ORTE_PROC_NUM_AT_STG1,
         ORTE_PROC_NUM_AT_STG2,
         ORTE_PROC_NUM_AT_STG3,
@@ -313,9 +344,9 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
         ORTE_PROC_NUM_ABORTED
     };
     char* trig_names[] = {
-        /* changes to this ordering need to be reflected in code below
-         * number of entries MUST match those above
-         */
+        ORTE_ALL_INIT_TRIGGER,
+        ORTE_ALL_LAUNCHED_TRIGGER,
+        ORTE_ALL_RUNNING_TRIGGER,
         ORTE_STG1_TRIGGER,
         ORTE_STG2_TRIGGER,
         ORTE_STG3_TRIGGER,
@@ -338,43 +369,27 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
     tokens[1]=NULL;
 
     for (i=0; i < num_counters; i++) {
-        if (ORTE_STAGE_GATE_TERMINATION == type) {
-            if ( ORTE_PROC_NUM_TERMINATED != keys[i] &&
-                 ORTE_PROC_NUM_ABORTED    != keys[i])
-                continue;
-        }
-        else if (ORTE_STAGE_GATE_STAGES == type) {
-            if (ORTE_PROC_NUM_AT_STG1   != keys[i] &&
-                ORTE_PROC_NUM_AT_STG2   != keys[i] &&
-                ORTE_PROC_NUM_AT_STG3   != keys[i] &&
-                ORTE_PROC_NUM_FINALIZED != keys[i] )
-                continue;
-        }
-        else if (ORTE_STAGE_GATE_ALL != type) {
-            ORTE_ERROR_LOG(ORTE_ERROR);
-            printf("Invalid argument (%d)\n", type);
-            return ORTE_ERROR;
-        }
+        if (state[i] & cb_conditions) {
+            /** want this one - attach ourselves to the appropriate standard trigger */
+            if (ORTE_SUCCESS !=
+                (rc = orte_schema.get_std_trigger_name(&trig_name, trig_names[i], job))) {
+                ORTE_ERROR_LOG(rc);
+                free(segment);
+                return rc;
+            }
 
-        /* attach ourselves to the appropriate standard trigger */
-        if (ORTE_SUCCESS !=
-            (rc = orte_schema.get_std_trigger_name(&trig_name, trig_names[i], job))) {
-            ORTE_ERROR_LOG(rc);
-            free(segment);
-            return rc;
-        }
-
-        if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&id, trig_name, NULL,
-                                    ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
-                                    ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
-                                    segment, tokens, keys[i],
-                                    cbfunc, cbdata))) {
-            ORTE_ERROR_LOG(rc);
-            free(segment);
+            if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_1(&id, trig_name, NULL,
+                                        ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
+                                        ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                                        segment, tokens, keys[i],
+                                        cbfunc, cbdata))) {
+                ORTE_ERROR_LOG(rc);
+                free(segment);
+                free(trig_name);
+                return rc;
+            }
             free(trig_name);
-            return rc;
         }
-        free(trig_name);
     }
     free(segment);
 

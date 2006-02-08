@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -79,15 +79,15 @@ static struct opal_event int_handler;
 static void signal_callback(int fd, short flags, void *arg);
 static void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata);
 static void orte_daemon_recv(int status, orte_process_name_t* sender,
-			     orte_buffer_t *buffer, orte_rml_tag_t tag,
-			     void* cbdata);
+                 orte_buffer_t *buffer, orte_rml_tag_t tag,
+                 void* cbdata);
 
 /*
  * define the orted context table for obtaining parameters
  */
 opal_cmd_line_init_t orte_cmd_line_opts[] = {
     /* Various "obvious" options */
-    { NULL, NULL, NULL, 'h', NULL, "help", 0, 
+    { NULL, NULL, NULL, 'h', NULL, "help", 0,
       &orted_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
     memset(&orted_globals, 0, sizeof(orted_globals_t));
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
-    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false, 
+    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
         free(args);
         return ret;
     }
-    
+
     /* check for help request */
     if (orted_globals.help) {
         char *args = NULL;
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
      * proper indicators in the environment so the name discovery service
      * can find it
      */
-    if (orted_globals.name) {    
+    if (orted_globals.name) {
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
                                               "env", true, &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
     }
     if (orted_globals.ns_nds) {
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
-                                               orted_globals.ns_nds, true, 
+                                               orted_globals.ns_nds, true,
                                                &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
                            "OMPI_MCA_ns_nds", "env", ret);
@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
      * otherwise, remain attached so output can get to us
      */
     if(orted_globals.debug == false &&
-       orted_globals.debug_daemons == false && 
+       orted_globals.debug_daemons == false &&
        orted_globals.no_daemonize == false) {
         opal_daemon_init(NULL);
     }
@@ -284,9 +284,9 @@ int main(int argc, char *argv[])
                        "orte_init()", ret);
         return ret;
     }
-   
+
     /* Set signal handlers to catch kill signals so we can properly clean up
-     * after ourselves 
+     * after ourselves
      */
     opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    signal_callback, NULL);
@@ -301,27 +301,27 @@ int main(int argc, char *argv[])
                     strlen(orte_universe_info.seed_uri)+1); /* need to add 1 to get the NULL */
         close(orted_globals.uri_pipe);
     }
-    
+
     /* setup stdout/stderr */
     if (orted_globals.debug_daemons_file) {
         /* if we are debugging to a file, then send stdout/stderr to
          * the orted log file
          */
-        
+
         /* get my jobid */
         if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobidstring,
                                         orte_process_info.my_name))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
-        
+
         /* define a log file name in the session directory */
-        sprintf(log_file, "output-orted-%s-%s.log", 
+        sprintf(log_file, "output-orted-%s-%s.log",
                 jobidstring, orte_system_info.nodename);
-        log_path = opal_os_path(false, 
-                                orte_process_info.tmpdir_base, 
-                                orte_process_info.top_session_dir, 
-                                log_file, 
+        log_path = opal_os_path(false,
+                                orte_process_info.tmpdir_base,
+                                orte_process_info.top_session_dir,
+                                log_file,
                                 NULL);
 
         fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
@@ -339,9 +339,9 @@ int main(int argc, char *argv[])
         }
     }
 
-	/* setup the thread lock and condition variable */
-	OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
-	OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
+    /* setup the thread lock and condition variable */
+    OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
     /* check to see if I'm a bootproxy */
     if (orted_globals.bootproxy) { /* perform bootproxy-specific things */
@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
         }
 
         /* Setup callback on jobid */
-        ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL, ORTE_STAGE_GATE_TERMINATION);
+        ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL, ORTE_PROC_STATE_TERMINATION);
         if(ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             return ret;
@@ -362,19 +362,19 @@ int main(int argc, char *argv[])
             ORTE_ERROR_LOG(ret);
             return ret;
         }
-        
+
         /* setup and enter the event monitor */
         OPAL_THREAD_LOCK(&orted_globals.mutex);
         while (false == orted_globals.exit_condition) {
             opal_condition_wait(&orted_globals.condition, &orted_globals.mutex);
         }
         OPAL_THREAD_UNLOCK(&orted_globals.mutex);
-        
+
         /* Finalize and clean up */
         if (ORTE_SUCCESS != (ret = orte_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-        
+
         exit(ret);
     }
 
@@ -389,14 +389,14 @@ int main(int argc, char *argv[])
     }
 
     if (orted_globals.debug_daemons) {
-	    opal_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* register the daemon main callback function */
     ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, 0, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-	    ORTE_ERROR_LOG(ret);
-	    return ret;
+        ORTE_ERROR_LOG(ret);
+        return ret;
     }
 
    /* go through the universe fields and see what else I need to do
@@ -404,20 +404,20 @@ int main(int argc, char *argv[])
      */
 
     if (orted_globals.debug_daemons) {
-	    opal_output(0, "[%lu,%lu,%lu] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "[%lu,%lu,%lu] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
      /* setup and enter the event monitor */
     OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     while (false == orted_globals.exit_condition) {
-	    opal_condition_wait(&orted_globals.condition, &orted_globals.mutex);
+        opal_condition_wait(&orted_globals.condition, &orted_globals.mutex);
     }
 
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-	   opal_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* cleanup */
@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
     orte_finalize();
 
     if (orted_globals.debug_daemons) {
-	   opal_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     exit(0);
@@ -438,14 +438,14 @@ int main(int argc, char *argv[])
 static void signal_callback(int fd, short flags, void *arg)
 {
     OPAL_TRACE(1);
-    
+
     orted_globals.exit_condition = true;
     opal_condition_signal(&orted_globals.condition);
 }
 
 static void orte_daemon_recv(int status, orte_process_name_t* sender,
-			     orte_buffer_t *buffer, orte_rml_tag_t tag,
-			     void* cbdata)
+                 orte_buffer_t *buffer, orte_rml_tag_t tag,
+                 void* cbdata)
 {
     orte_buffer_t *answer;
     orte_daemon_cmd_flag_t command;
@@ -454,11 +454,11 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     char *contact_info;
 
     OPAL_TRACE(1);
-    
+
     OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-	   opal_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     answer = OBJ_NEW(orte_buffer_t);
@@ -470,48 +470,48 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
-	    goto CLEANUP;
+        goto CLEANUP;
     }
 
     /****    EXIT COMMAND    ****/
     if (ORTE_DAEMON_EXIT_CMD == command) {
-	    orted_globals.exit_condition = true;
-	    opal_condition_signal(&orted_globals.condition);
-        
+        orted_globals.exit_condition = true;
+        opal_condition_signal(&orted_globals.condition);
+
         goto CLEANUP;
 
-	/****     CONTACT QUERY COMMAND    ****/
+    /****     CONTACT QUERY COMMAND    ****/
     } else if (ORTE_DAEMON_CONTACT_QUERY_CMD == command) {
-	   /* send back contact info */
-	   contact_info = orte_rml.get_uri();
+       /* send back contact info */
+       contact_info = orte_rml.get_uri();
 
-	   if (NULL == contact_info) {
+       if (NULL == contact_info) {
            ORTE_ERROR_LOG(ORTE_ERROR);
            goto CLEANUP;
        }
-       
-	   if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &contact_info, 1, ORTE_STRING))) {
+
+       if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &contact_info, 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
        }
 
-	    if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
+        if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
               ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-	    }
+        }
 
         goto CLEANUP;
 
-	/****     HOSTFILE COMMAND    ****/
+    /****     HOSTFILE COMMAND    ****/
     } else if (ORTE_DAEMON_HOSTFILE_CMD == command) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
         goto CLEANUP;
 
-	/****     SCRIPTFILE COMMAND    ****/
+    /****     SCRIPTFILE COMMAND    ****/
     } else if (ORTE_DAEMON_SCRIPTFILE_CMD == command) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
         goto CLEANUP;
 
-	/****     HEARTBEAT COMMAND    ****/
+    /****     HEARTBEAT COMMAND    ****/
     } else if (ORTE_DAEMON_HEARTBEAT_CMD == command) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
         goto CLEANUP;
@@ -533,7 +533,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
 }
 
 /* Function callback on jobid state changes.
- * This is closely modeled after orte_rmgr_proxy_callback in rmgr_proxy.c 
+ * This is closely modeled after orte_rmgr_proxy_callback in rmgr_proxy.c
  */
 void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
@@ -544,7 +544,7 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
     int rc;
 
     OPAL_TRACE(1);
-    
+
     /* we made sure in the subscriptions that at least one
      * value is always returned
      * get the jobid from the segment name in the first value
@@ -558,11 +558,11 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
     }
 
     for (i = 0, k = 0; k < (data->cnt) && i < (data->values)->size; ++i) {
-        
+
         if (NULL != values[i]) {
             k++;
             value = values[i];
-            
+
             /* determine the state change */
             keyvals = value->keyvals;
             for (j = 0; j < value->cnt; ++j) {
@@ -570,22 +570,22 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
 
                 if(strcmp(keyval->key, ORTE_PROC_NUM_TERMINATED) == 0) {
                     OPAL_THREAD_LOCK(&orted_globals.mutex);
-                    
+
                     if (orted_globals.debug) {
                         opal_output(0, "orted: job_state_callback(jobid = %d, state = ORTE_PROC_STATE_TERMINATED)\n",
                                     jobid);
                     }
-                    
+
                     orted_globals.exit_condition = true;
                     opal_condition_signal(&orted_globals.condition);
-                    
+
                     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
                     continue;
                 }
 
                 else if(strcmp(keyval->key, ORTE_PROC_NUM_ABORTED) == 0) {
                     OPAL_THREAD_LOCK(&orted_globals.mutex);
-                    
+
                     if (orted_globals.debug) {
                         opal_output(0, "orted: job_state_callback(jobid = %d, state = ORTE_PROC_STATE_ABORTED)\n",
                                     jobid);
@@ -606,6 +606,6 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
             }
         }
     }
-    
+
     return;
 }

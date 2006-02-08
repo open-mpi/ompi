@@ -116,7 +116,7 @@ int orte_rmgr_base_launch_not_available(orte_jobid_t);
 int orte_rmgr_base_terminate_job_not_available(orte_jobid_t);
 int orte_rmgr_base_terminate_proc_not_available(const orte_process_name_t*);
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
-int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t, void*, int);
+int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t, void*, orte_proc_state_t);
 int orte_rmgr_base_proc_stage_gate_mgr(
         orte_gpr_notify_message_t *msg);
 int orte_rmgr_base_proc_stage_gate_mgr_abort(
