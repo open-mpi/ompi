@@ -125,7 +125,8 @@ int orte_rmgr_base_spawn_not_available(
     orte_app_context_t** app_context,
     size_t num_context,
     orte_jobid_t* jobid,
-    orte_rmgr_cb_fn_t cbfn);
+    orte_rmgr_cb_fn_t cbfn,
+    orte_proc_state_t cb_conditions);
 int orte_rmgr_base_finalize_not_available(void);
 
 /*
