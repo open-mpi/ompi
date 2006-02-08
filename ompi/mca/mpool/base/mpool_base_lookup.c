@@ -34,6 +34,7 @@ extern int mca_mpool_base_disable_sbrk;
 
 
 extern int mca_mpool_base_use_mem_hooks;
+extern ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 {
@@ -91,7 +92,8 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     if(opal_list_get_size(&mca_mpool_base_modules) == 1) { 
       if(mca_mpool_base_use_mem_hooks &&
 	 0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
-        opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
+          opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
+          OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
       }
 
 #ifdef HAVE_MALLOC_H
