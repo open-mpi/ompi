@@ -121,6 +121,19 @@ do {                                                                            
     OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (opal_list_item_t*)(recvreq)); \
 } while(0)
 
+/*
+ *  Free the PML receive request
+ */
+#define MCA_PML_OB1_RECV_REQUEST_FREE(recvreq) \
+{ \
+    mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)(recvreq); \
+    pml_request->req_free_called = true; \
+    if( pml_request->req_pml_complete == true) { \
+        MCA_PML_OB1_RECV_REQUEST_RETURN((recvreq)); \
+    } \
+    (recvreq) = (mca_pml_ob1_recv_request_t*)MPI_REQUEST_NULL; \
+}
+
 /**
  * Attempt to match the request against the unexpected fragment list
  * for all source ranks w/in the communicator.
