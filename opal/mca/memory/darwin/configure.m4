@@ -68,5 +68,6 @@ AC_DEFUN([MCA_memory_darwin_CONFIG],[
           [# Yes, we really do want to screw with LDFLAGS here...
            LDFLAGS="$LDFLAGS -Wl,-u,_munmap -Wl,-multiply_defined,suppress"
            memory_darwin_WRAPPER_EXTRA_LDFLAGS="-Wl,-u,_munmap -Wl,-multiply_defined,suppress"
+           memory_base_found=1
            $1], [$2])
 ])

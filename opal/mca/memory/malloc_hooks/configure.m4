@@ -85,5 +85,6 @@ AC_DEFUN([MCA_memory_malloc_hooks_CONFIG],[
     AC_SUBST(memory_malloc_hooks_LIBS)
 
     AS_IF([test "$memory_malloc_hooks_happy" = "yes"],
-          [$1], [$2])
+          [memory_base_found=1
+           $1], [$2])
 ])

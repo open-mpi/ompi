@@ -19,3 +19,13 @@ dnl
 
 dnl we only want one :)
 m4_define(MCA_memory_CONFIGURE_MODE, STOP_AT_FIRST)
+
+AC_DEFUN([MCA_memory_CONFIG],[
+        memory_base_found=0
+
+        # first, compile all the components
+        MCA_CONFIGURE_FRAMEWORK($1, $2)
+
+        AC_DEFINE_UNQUOTED([OMPI_MEMORY_HAVE_COMPONENT], [$memory_base_found],
+            [Whether any opal memory mca components were found])
+])
