@@ -133,8 +133,7 @@ static void mca_pml_ob1_put_completion(
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_cbdata;
-    mca_btl_base_segment_t* segments = des->des_dst;
-    size_t i, bytes_received = 0;
+    size_t bytes_received = 0;
 
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( des->des_dst, des->des_dst_cnt,
                                         0, bytes_received );
@@ -430,7 +429,6 @@ void mca_pml_ob1_recv_request_progress(
     size_t bytes_delivered = 0;
     size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-    size_t i;
 
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
@@ -525,7 +523,6 @@ void mca_pml_ob1_recv_request_matched_probe(
 {
     size_t bytes_packed = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-    size_t i;
 
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PML_OB1_HDR_TYPE_MATCH:
