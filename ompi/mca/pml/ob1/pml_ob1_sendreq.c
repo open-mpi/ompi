@@ -406,21 +406,23 @@ int mca_pml_ob1_send_request_start_copy(
     } 
     segment = descriptor->des_src;
 
-    /* pack the data into the supplied buffer */
-    iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
-    iov.iov_len = size;
-    iov_count = 1;
     max_data = size;
-    if((rc = ompi_convertor_pack(
-            &sendreq->req_send.req_convertor,
-            &iov,
-            &iov_count,
-            &max_data,
-            &free_after)) < 0) {
+    if(size > 0) { 
+        /* pack the data into the supplied buffer */
+        iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
+        iov.iov_len = size;
+        iov_count = 1;
+        if((rc = ompi_convertor_pack(
+                                     &sendreq->req_send.req_convertor,
+                                     &iov,
+                                     &iov_count,
+                                     &max_data,
+                                     &free_after)) < 0) {
             mca_bml_base_free(bml_btl, descriptor);
             return rc;
+        }
     }
-
+    
     /* build match header */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
