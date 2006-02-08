@@ -210,37 +210,6 @@ extern int mca_pml_ob1_start(
 }
 #endif
 
-
-#define MCA_PML_OB1_FREE(request) \
-{ \
-    mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
-    pml_request->req_free_called = true; \
-    if( pml_request->req_pml_complete == true) \
-    { \
-        switch(pml_request->req_type) { \
-        case MCA_PML_REQUEST_SEND: \
-            { \
-                mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request; \
-                if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED && \
-                   sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) { \
-                    mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
-                } \
-                MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq); \
-                break; \
-            } \
-        case MCA_PML_REQUEST_RECV: \
-            { \
-                mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)pml_request; \
-                MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq); \
-                break; \
-            } \
-        default: \
-            break; \
-        } \
-    } \
-    *(request) = MPI_REQUEST_NULL; \
-}
-
 #define MCA_PML_OB1_DES_ALLOC(bml_btl, des, size) \
 MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des,  \
    sizeof(mca_pml_ob1_hdr_t) + (sizeof(mca_btl_base_segment_t) << 4), size)

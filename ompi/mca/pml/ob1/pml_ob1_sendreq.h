@@ -309,6 +309,23 @@ do {                                                                            
 }
 
 /*
+ * Free a send request
+ */
+#define MCA_PML_OB1_SEND_REQUEST_FREE(sendreq) \
+{ \
+    mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)(sendreq); \
+    pml_request->req_free_called = true; \
+    if( pml_request->req_pml_complete == true) { \
+       if((sendreq)->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED && \
+           (sendreq)->req_send.req_addr != (sendreq)->req_send.req_base.req_addr) { \
+           mca_pml_base_bsend_request_fini((ompi_request_t*)(sendreq)); \
+       } \
+       MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq); \
+    } \
+    (sendreq) = (mca_pml_ob1_send_request_t*)MPI_REQUEST_NULL; \
+}
+
+/*
  * Attempt to process any pending requests
  */
 

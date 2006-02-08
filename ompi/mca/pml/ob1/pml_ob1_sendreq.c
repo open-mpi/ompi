@@ -40,7 +40,7 @@ static int mca_pml_ob1_send_request_fini(struct ompi_request_t** request)
     mca_pml_ob1_send_request_t* sendreq = *(mca_pml_ob1_send_request_t**)(request); 
     if(sendreq->req_send.req_base.req_persistent) {
        if(sendreq->req_send.req_base.req_free_called) {
-           MCA_PML_OB1_FREE(request);
+           MCA_PML_OB1_SEND_REQUEST_FREE(sendreq);
        } else {
            sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; 
            /* rewind convertor */
@@ -55,14 +55,14 @@ static int mca_pml_ob1_send_request_fini(struct ompi_request_t** request)
            }
        }
     } else {
-        MCA_PML_OB1_FREE(request);
+        MCA_PML_OB1_SEND_REQUEST_FREE(sendreq);
     }
     return OMPI_SUCCESS;
 }
 
 static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 {
-    MCA_PML_OB1_FREE(request);
+    MCA_PML_OB1_SEND_REQUEST_FREE( *(mca_pml_ob1_send_request_t**)request );
     return OMPI_SUCCESS;
 }
 
@@ -263,6 +263,8 @@ static void mca_pml_ob1_frag_completion(
                                                   req_bytes_delivered );
     if (OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1) == 0 &&
         req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+    /*if( OPAL_THREAD_ADD_SIZE_T( &sendreq->req_bytes_delivered, req_bytes_delivered )
+        == sendreq->req_send.req_bytes_packed) {*/
         OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq); 
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
@@ -863,12 +865,12 @@ static void mca_pml_ob1_put_completion(
     }
 
     /* check for request completion */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    sendreq->req_bytes_delivered += frag->rdma_length;
-    if(sendreq->req_bytes_delivered >= sendreq->req_send.req_bytes_packed) {
+    if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
+        >= sendreq->req_send.req_bytes_packed) {
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* allocate descriptor for fin control message - note that
      * the rdma descriptor cannot be reused as it points directly

@@ -39,19 +39,19 @@ static int mca_pml_ob1_recv_request_fini(struct ompi_request_t** request)
     mca_pml_ob1_recv_request_t* recvreq = *(mca_pml_ob1_recv_request_t**)request; 
     if(recvreq->req_recv.req_base.req_persistent) {
        if(recvreq->req_recv.req_base.req_free_called) { 
-           MCA_PML_OB1_FREE(request);
+           MCA_PML_OB1_RECV_REQUEST_FREE(recvreq);
        } else {
            recvreq->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; 
        }
     } else {
-        MCA_PML_OB1_FREE(request);
+        MCA_PML_OB1_RECV_REQUEST_FREE(recvreq);
     }
     return OMPI_SUCCESS;
 }
 
 static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 {
-    MCA_PML_OB1_FREE(request);
+    MCA_PML_OB1_RECV_REQUEST_FREE( *(mca_pml_ob1_recv_request_t**)request );
     return OMPI_SUCCESS;
 } 
 

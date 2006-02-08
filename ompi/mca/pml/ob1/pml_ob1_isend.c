@@ -103,7 +103,7 @@ int mca_pml_ob1_send(void *buf,
     
     MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
     if (rc != OMPI_SUCCESS) {
-        MCA_PML_OB1_FREE((ompi_request_t **) & sendreq);
+        MCA_PML_OB1_SEND_REQUEST_FREE( sendreq );
         return rc;
     }
 
@@ -125,7 +125,7 @@ int mca_pml_ob1_send(void *buf,
     }
 
     /* return request to pool */
-    MCA_PML_OB1_FREE((ompi_request_t **) & sendreq);
+    MCA_PML_OB1_SEND_REQUEST_FREE( sendreq );
     return OMPI_SUCCESS;
 }
 
