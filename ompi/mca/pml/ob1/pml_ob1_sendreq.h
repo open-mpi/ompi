@@ -307,23 +307,7 @@ do {                                                                            
     OMPI_FREE_LIST_RETURN(                                                  \
         &mca_pml_ob1.send_requests, (opal_list_item_t*)sendreq);            \
 }
-                                                                                                                      
 
-/*
- * Update bytes delivered on request based on supplied descriptor
- */
-
-#define MCA_PML_OB1_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor, hdrlen)   \
-do {                                                                                \
-   size_t i, req_bytes_delivered = 0;                                               \
-   mca_btl_base_segment_t* segments = descriptor->des_src;                          \
-                                                                                    \
-   for(i=0; i<descriptor->des_src_cnt; i++) {                                       \
-       req_bytes_delivered += segments[i].seg_len;                                  \
-   }                                                                                \
-   sendreq->req_bytes_delivered += (req_bytes_delivered - hdrlen);                  \
-} while(0)
-                                                                                                                          
 /*
  * Attempt to process any pending requests
  */

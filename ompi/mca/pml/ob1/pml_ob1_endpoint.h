@@ -27,6 +27,18 @@
 extern "C" {
 #endif
 
+/*
+ * Compute the total number of bytes on supplied descriptor
+ */
+#define MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH(segments, count, hdrlen, length) \
+do {                                                                        \
+   size_t i;                                                                \
+                                                                            \
+   for( i = 0; i < count; i++ ) {                                           \
+       length += segments[i].seg_len;                                       \
+   }                                                                        \
+   length -= hdrlen;                                                        \
+} while(0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
