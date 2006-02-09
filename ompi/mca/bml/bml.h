@@ -209,6 +209,8 @@ struct mca_bml_base_endpoint_t {
     int                      btl_flags;         /**< prefered method of accessing this peer */
     size_t                   btl_rdma_offset;   /**< max of min rdma size for available rmda btls */
     size_t                   btl_max_send_size; /**< min of max send size for available send btls */
+    size_t                   btl_rdma_size;     /**< max of min rdma size for available rmda btls */
+    size_t                   btl_rdma_align;    /**< max of min rdma size for available rmda btls */
     mca_bml_base_btl_array_t btl_eager;         /**< array of btls to use for first fragments */
     mca_bml_base_btl_array_t btl_send;          /**< array of btls to use for remaining fragments */
     mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */

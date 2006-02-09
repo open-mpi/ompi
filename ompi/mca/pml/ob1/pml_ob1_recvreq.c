@@ -208,20 +208,48 @@ static void mca_pml_ob1_recv_request_ack(
                 /* start rdma at current fragment offset - no need to ack */
                 recvreq->req_rdma_offset = recvreq->req_bytes_received;
                 return;
-
-            /* are rdma devices available for long rdma protocol */
-            } else if (bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
+                
+                /* are rdma devices available for long rdma protocol */
+            } else if (mca_pml_ob1.leave_pinned_pipeline && 
+                       hdr->hdr_msg_length > bml_endpoint->btl_rdma_size &&
                        mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
-
+                char* base;
+                char* align;
+                long lb;
+                
+                /* round this up/down to the next aligned address */
+                ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
+                base = recvreq->req_recv.req_convertor.pBaseBuf + lb;
+                align = (char*)up_align_addr(base, bml_endpoint->btl_rdma_align)+1;
+                recvreq->req_rdma_offset = align - base;
+                
+                /* still w/in range */
+                if(recvreq->req_rdma_offset < bytes_received) {
+                    recvreq->req_rdma_offset = bytes_received;
+                }
+                if(recvreq->req_rdma_offset > hdr->hdr_msg_length) {
+                    recvreq->req_rdma_offset = hdr->hdr_msg_length;
+                } else {
+                    ompi_convertor_set_position(
+                                                &recvreq->req_recv.req_convertor,
+                                                &recvreq->req_rdma_offset);
+                }
+                
+                
+                /* are rdma devices available for long rdma protocol */
+            } else if (!mca_pml_ob1.leave_pinned_pipeline && 
+                       bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
+                       mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
+                
                 /* use convertor to figure out the rdma offset for this request */
                 recvreq->req_rdma_offset = bml_endpoint->btl_rdma_offset;
                 if(recvreq->req_rdma_offset < recvreq->req_bytes_received) {
                     recvreq->req_rdma_offset = recvreq->req_bytes_received;
                 }
                 ompi_convertor_set_position(
-                    &recvreq->req_recv.req_convertor,
-                    &recvreq->req_rdma_offset);
-           }
+                                            &recvreq->req_recv.req_convertor,
+                                            &recvreq->req_rdma_offset);
+            }
         }
     }
 
@@ -572,9 +600,11 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 mca_mpool_base_registration_t * reg = NULL;
                 size_t num_btl_avail;
                 int rc;
-
+                bool release = false;
+                
+                ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
                 if(recvreq->req_rdma_cnt) {
- 
+                    
                     /*
                      * Select the next btl out of the list w/ preregistered
                      * memory.
@@ -602,6 +632,8 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     }
                      
                 } else {
+                    char* base; 
+                    long lb;
 
                     /*
                      * Otherwise, schedule round-robin across the
@@ -631,10 +663,16 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     if (bml_btl->btl_max_rdma_size != 0 && size > bml_btl->btl_max_rdma_size) {
                         size = bml_btl->btl_max_rdma_size;
                     }
+                    if(mca_pml_ob1.leave_pinned_pipeline) { 
+                        /* lookup and/or create a cached registration */ 
+                        ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
+                        base = recvreq->req_recv.req_convertor.pBaseBuf + lb + recvreq->req_rdma_offset;
+                        reg = mca_pml_ob1_rdma_register(bml_btl, base, size);
+                        release = true;
+                    }
                 }
 
                 /* prepare a descriptor for RDMA */
-                ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
                 mca_bml_base_prepare_dst(
                                          bml_btl, 
                                          reg,
@@ -647,6 +685,9 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     opal_list_append(&mca_pml_ob1.recv_pending, (opal_list_item_t*)recvreq);
                     OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
+                }
+                if(release == true && NULL != bml_btl->btl_mpool) {
+                    bml_btl->btl_mpool->mpool_release(bml_btl->btl_mpool, reg);
                 }
                 dst->des_cbfunc = mca_pml_ob1_put_completion;
                 dst->des_cbdata = recvreq;

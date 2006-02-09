@@ -53,7 +53,8 @@ struct mca_pml_ob1_t {
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
     bool leave_pinned; 
-
+    int leave_pinned_pipeline;
+    
     /* lock queue access */
     opal_mutex_t lock;
 

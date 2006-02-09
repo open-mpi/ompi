@@ -60,5 +60,14 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
     unsigned char* base,
     size_t size);
 
+/*
+ * Create a registration 
+ */
+
+mca_mpool_base_registration_t* mca_pml_ob1_rdma_register(
+    struct mca_bml_base_btl_t* bml_btl,
+    unsigned char* base,
+    size_t size);
+
 #endif
 

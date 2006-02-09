@@ -945,6 +945,7 @@ void mca_pml_ob1_send_request_put(
     size_t offset = hdr->hdr_rdma_offset;
     size_t i, size = 0;
     int rc;
+    bool release = false; 
     
     bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);  
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 
@@ -971,9 +972,21 @@ void mca_pml_ob1_send_request_put(
            break;
        }
     } 
+
+    /* set convertor at current offset */
+    ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
+
+    /* if registration doesnt exist - create one */
+    if (mca_pml_ob1.leave_pinned_pipeline && reg == NULL) {
+        unsigned char* base;
+        long lb;
+        ompi_ddt_type_lb(sendreq->req_send.req_convertor.pDesc, &lb);
+        base = (unsigned char*)sendreq->req_send.req_convertor.pBaseBuf + lb + offset;
+        reg = mca_pml_ob1_rdma_register(bml_btl, base, size);
+        release = true;
+    }
     
     /* setup descriptor */
-    ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
     mca_bml_base_prepare_src(
         bml_btl, 
         reg,
@@ -988,6 +1001,11 @@ void mca_pml_ob1_send_request_put(
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
     }
+    
+    if(release == true && NULL != bml_btl->btl_mpool) {
+        bml_btl->btl_mpool->mpool_release(bml_btl->btl_mpool, reg);
+    }
+    
     frag->rdma_state = MCA_PML_OB1_RDMA_PUT;
     frag->rdma_length = size;
 

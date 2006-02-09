@@ -203,3 +203,73 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
     OBJ_DESTRUCT(&regs);
     return fit;
 }
+
+
+
+/*
+ * For a given btl - find the best fit registration or
+ * optionally create one for leave pinned.
+ */
+
+mca_mpool_base_registration_t* mca_pml_ob1_rdma_register(
+    mca_bml_base_btl_t* bml_btl,
+    unsigned char* base,
+    size_t size)
+{
+    ompi_pointer_array_t regs;
+    mca_mpool_base_registration_t* fit = NULL;
+    mca_mpool_base_module_t* btl_mpool = bml_btl->btl_mpool;
+    uint32_t reg_cnt;
+    size_t r;
+    int rc;
+
+    /* btl is rdma capable and registration is not required */
+    if(NULL == btl_mpool) {
+        return NULL;
+    }
+
+    /* check to see if memory is registered */        
+    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
+    ompi_pointer_array_remove_all(&regs);
+
+    /* look through existing registrations */
+    btl_mpool->mpool_find(btl_mpool, 
+        base,
+        size,
+        &regs, 
+        &reg_cnt); 
+
+ 
+    /*
+     * find the best fit when there are multiple registrations
+     */
+    for(r = 0; r < reg_cnt; r++) { 
+        mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
+        size_t reg_len = reg->bound - base + 1;
+        if(reg->base <= base && reg_len >= size) {
+            fit = reg;
+        } else {
+            btl_mpool->mpool_deregister(btl_mpool, reg);
+        }
+    }
+    
+        
+    /* if the leave pinned option is set - and there is not an existing
+     * registration that satisfies this request, create one.
+     */
+    if(NULL == fit) {
+        /* register the memory */ 
+        rc = btl_mpool->mpool_register(
+                                       btl_mpool, 
+                                       base,
+                                       size, 
+                                       MCA_MPOOL_FLAGS_CACHE,
+                                       &fit); 
+        if(ORTE_SUCCESS != rc || NULL == fit) {
+            opal_output(0, "[%s:%d] mpool_register(%p,%lu) failed, \n", __FILE__, __LINE__, base, size);
+            return NULL;
+        }
+    }
+    OBJ_DESTRUCT(&regs);
+    return fit;
+}
