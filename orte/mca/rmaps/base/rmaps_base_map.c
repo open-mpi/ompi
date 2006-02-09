@@ -757,8 +757,12 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         return ORTE_ERR_BAD_PARAM;
     }
 
-    /* allocate value array */
-    values = (orte_gpr_value_t**)malloc(num_procs * sizeof(orte_gpr_value_t*));
+    /**
+     * allocate value array. We need to reserve one extra spot so we can set the counter
+     * for the process INIT state to indicate that all procs are at that state. This will
+     * allow the INIT trigger to fire.
+     */
+    values = (orte_gpr_value_t**)malloc((1+num_procs) * sizeof(orte_gpr_value_t*));
     if(NULL == values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -768,6 +772,22 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         free(values);
         return rc;
     }
+
+    /** setup the last value in the array to update the INIT counter */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[num_procs]),
+                                            ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
+                                            segment, 1, 1))) {
+        ORTE_ERROR_LOG(rc);
+        free(values);
+        free(segment);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[0]), ORTE_PROC_NUM_AT_INIT, ORTE_SIZE, &num_procs))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    values[num_procs]->tokens[0] = strdup(ORTE_JOB_GLOBALS); /* counter is in the job's globals container */
+
 
     for(i=0; i<num_procs; i++) {
         if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[i]),
@@ -782,7 +802,6 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
              return rc;
          }
     }
-
 
     /* iterate through all processes and initialize value array */
     for(item =  opal_list_get_first(mapping_list);
@@ -840,7 +859,7 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
     }
 
     /* insert all values in one call */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(num_procs, values))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.put((1+num_procs), values))) {
         ORTE_ERROR_LOG(rc);
     }
 

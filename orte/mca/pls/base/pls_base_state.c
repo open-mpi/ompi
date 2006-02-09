@@ -58,31 +58,56 @@ int orte_pls_base_set_proc_pid(const orte_process_name_t *name, pid_t pid)
         free(segment);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    free(segment);
-    
+
     if(ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(values[0]->tokens), &(values[0]->num_tokens), (orte_process_name_t*)name))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
+        free(segment);
         return rc;
     }
 
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), ORTE_PROC_PID_KEY, ORTE_PID, &pid))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
+        free(segment);
         return rc;
     }
 
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[1]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &proc_state))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
+        free(segment);
         return rc;
     }
 
     rc = orte_gpr.put(1, values);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(values[0]);
+        free(segment);
+        return rc;
     }
 
+    OBJ_RELEASE(values[0]);
+
+    /** now increment the LAUNCHED counter so that the LAUNCHED trigger can fire! */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&values[0],
+                                                    ORTE_GPR_OVERWRITE, segment, 1, 1))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        free(segment);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    free(segment);  /** done with this now */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), ORTE_PROC_NUM_LAUNCHED, ORTE_UNDEF, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(values[0]);
+        return rc;
+    }
+    values[0]->tokens[0] = strdup(ORTE_JOB_GLOBALS); /* counter is in the job's globals container */
+
+    if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(values[0]))) {
+        ORTE_ERROR_LOG(rc);
+    }
     OBJ_RELEASE(values[0]);
 
     return rc;
@@ -255,7 +280,7 @@ int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid
 
     asprintf(&key, "%s-%s", ORTE_PROC_PID_KEY, jobid_string);
     free(jobid_string);
-    
+
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), key, ORTE_PID, &pid))) {
         ORTE_ERROR_LOG(rc);
         free(key);
