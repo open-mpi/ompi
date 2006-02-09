@@ -54,7 +54,7 @@ if test ! -z "$AUTOMAKE"; then
 fi
 
 ompi_automake_version="1.9"
-ompi_autoconf_version="2.58"
+ompi_autoconf_version="2.59"
 ompi_libtool_version="1.5.16"
 
 
@@ -658,6 +658,10 @@ EOF
 
 EOF
 	    ./autogen.sh
+            if test ! $? -eq 0 ; then
+                echo "Error running autogen.sh -l in `pwd`.  Aborting."
+                exit 1
+            fi
         elif test -f configure.params -a -f configure.m4 ; then
             cat <<EOF
 
@@ -741,6 +745,10 @@ EOF
                     echo "***   (started in $pd_subdir_start_dir)"
                     cd "$dir"
                     $pd_ompi_topdir/autogen.sh -l
+                    if test ! $? -eq 0 ; then
+                        echo "Error running autogen.sh -l in $dir.  Aborting."
+                        exit 1
+                    fi
                     cd "$pd_subdir_start_dir"
                     echo ""
                 fi
@@ -1066,20 +1074,19 @@ EOF
     sleep 5
 fi
 
-
-# locations to look for mca modules
-config_project_list="opal orte ompi"
-if test "$no_ompi" = "1" ; then
-    config_project_list="opal orte"
-fi
-if test "$no_orte" = "1" ; then
-    config_project_list="opal"
-fi
-echo "Configuring projects: $config_project_list"
-
 # figure out if we're at the top level of the OMPI tree, a component's
 # top-level directory, or somewhere else.
 if test -f VERSION -a -f configure.ac -a -f include/mpi.h.in ; then
+    # locations to look for mca modules
+    config_project_list="opal orte ompi"
+    if test "$no_ompi" = "1" ; then
+        config_project_list="opal orte"
+    fi
+    if test "$no_orte" = "1" ; then
+        config_project_list="opal"
+    fi
+    echo "Configuring projects: $config_project_list"
+
     # Top level of OMPI tree
     ompidir="`pwd`"
 elif test -f configure.in -o -f configure.ac -o -f configure.params ; then
