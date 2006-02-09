@@ -51,6 +51,15 @@ mca_bml_r2_module_t mca_bml_r2 = {
 };
 
 
+static inline unsigned int bml_base_log2(unsigned long val) {
+    unsigned int count = 0;
+    while(val > 0) {
+        val = val >> 1;
+        count++;
+    }
+    return count > 0 ? count-1: 0;
+}
+
 static int btl_exclusivity_compare(const void* arg1, const void* arg2)
 {
     mca_btl_base_module_t* btl1 = *(struct mca_btl_base_module_t**)arg1;
@@ -249,6 +258,7 @@ int mca_bml_r2_add_procs(
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_send,  mca_bml_r2.num_btl_modules);
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
                     bml_endpoint->btl_max_send_size = -1;
+                    bml_endpoint->btl_rdma_size = -1;
                     bml_endpoint->btl_proc =   proc;
                     proc->proc_pml = (struct mca_pml_proc_t*) bml_endpoint; 
                     
@@ -380,6 +390,10 @@ int mca_bml_r2_add_procs(
                 *bml_btl_rdma = *bml_btl;
                 if(bml_endpoint->btl_rdma_offset < bml_btl_rdma->btl_min_rdma_size) {
                     bml_endpoint->btl_rdma_offset = bml_btl_rdma->btl_min_rdma_size;
+                }
+                if(bml_endpoint->btl_rdma_size > btl->btl_max_rdma_size) {
+                   bml_endpoint->btl_rdma_size = btl->btl_max_rdma_size;
+                   bml_endpoint->btl_rdma_align = bml_base_log2(bml_endpoint->btl_rdma_size);
                 }
             }
         }
