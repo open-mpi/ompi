@@ -63,7 +63,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
 
     /*opal_output( 0, "Data extent %d size %d count %d total_size %d starting_point %d\n",
                  pData->ub - pData->lb, pData->size, pConvertor->count,
-                 pData->size * pConvertor->count, starting_point );*/
+                 pConvertor->local_size, starting_point );*/
     pConvertor->stack_pos = 0;
     pStack = pConvertor->pStack;
     /* Fill the first position on the stack. This one correspond to the
@@ -192,6 +192,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     }
 
     /* Correctly update the bConverted field */
-    pConvertor->bConverted = pData->size * pConvertor->count;
+    pConvertor->flags |= CONVERTOR_COMPLETED;
+    pConvertor->bConverted = pConvertor->local_size;
     return OMPI_SUCCESS;
 }

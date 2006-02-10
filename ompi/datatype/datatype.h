@@ -186,7 +186,7 @@ static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, long* siz
  * This function return true (1) if the datatype representation depending on the count
  * is contiguous in the memory. And false (0) otherwise.
  */
-static inline int32_t ompi_ddt_is_contiguous_memory_layout( ompi_datatype_t* datatype, int32_t count )
+static inline int32_t ompi_ddt_is_contiguous_memory_layout( const ompi_datatype_t* datatype, int32_t count )
 {
     if( !(datatype->flags & DT_FLAG_CONTIGUOUS) ) return 0;
     if( count == 1 ) return 1;  /* only one data ignore the gaps around */

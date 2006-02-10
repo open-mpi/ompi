@@ -22,6 +22,7 @@
 
 #include "ompi_config.h"
 #include "ompi/include/constants.h"
+#include "ompi/datatype/datatype.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -32,9 +33,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-union dt_elem_desc;
-struct ompi_datatype_t;
 
 /*
  * CONVERTOR SECTION
@@ -80,6 +78,8 @@ struct ompi_convertor_t {
     opal_object_t                 super;        /**< basic superclass */
     uint32_t                      remoteArch;   /**< the remote architecture */
     uint32_t                      flags;        /**< the properties of this convertor */
+    size_t                        local_size;
+    size_t                        remote_size;
     const struct ompi_datatype_t* pDesc;        /**< the datatype description associated with the convertor */
     const struct dt_type_desc*    use_desc;     /**< the version used by the convertor (normal or optimized) */
     uint32_t                      count;        /**< the total number of full datatype elements */
@@ -150,13 +150,6 @@ OMPI_DECLSPEC int ompi_convertor_cleanup( ompi_convertor_t* convertor );
  *
  */
 OMPI_DECLSPEC int32_t
-ompi_convertor_set_position( ompi_convertor_t* convertor,
-                             size_t* position );
-
-/*
- *
- */
-OMPI_DECLSPEC int32_t
 ompi_convertor_personalize( ompi_convertor_t* pConv, uint32_t flags,
                             size_t* starting_point,
                             memalloc_fct_t allocfn,
@@ -165,22 +158,31 @@ ompi_convertor_personalize( ompi_convertor_t* pConv, uint32_t flags,
 /*
  *
  */
-OMPI_DECLSPEC int32_t
-ompi_convertor_need_buffers( ompi_convertor_t* pConvertor );
+static inline int32_t
+ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
+{
+    return ompi_ddt_is_contiguous_memory_layout( pConvertor->pDesc, pConvertor->count );
+}
 
 /*
  *
  */
-OMPI_DECLSPEC int32_t
+static inline void
 ompi_convertor_get_packed_size( const ompi_convertor_t* pConv,
-                                size_t* pSize );
+                                size_t* pSize )
+{
+    *pSize = pConv->local_size;
+}
 
 /*
  *
  */
-OMPI_DECLSPEC int32_t
+static inline void
 ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
-                                  size_t* pSize );
+                                  size_t* pSize )
+{
+    *pSize = pConv->remote_size;
+}
 
 /*
  * This function is internal to the data type engine. It should not be called from
@@ -196,31 +198,62 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
  *
  */
 OMPI_DECLSPEC int32_t
-ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv, 
-                                          const struct ompi_datatype_t* datatype,
-                                          int32_t count,
-                                          const void* pUserBuf,
-                                          ompi_convertor_t* convertor );
-OMPI_DECLSPEC int32_t
 ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
                                  const struct ompi_datatype_t* datatype,
                                  int32_t count,
                                  const void* pUserBuf);
+static inline int32_t
+ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv, 
+                                          const struct ompi_datatype_t* datatype,
+                                          int32_t count,
+                                          const void* pUserBuf,
+                                          ompi_convertor_t* convertor )
+{
+    convertor->remoteArch = pSrcConv->remoteArch;
+    convertor->pFunctions = pSrcConv->pFunctions;
+    convertor->flags      = pSrcConv->flags & ~CONVERTOR_STATE_MASK;
+    
+    return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
+}
 
 /*
  *
  */
 OMPI_DECLSPEC int32_t
-ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv, 
-                                          const struct ompi_datatype_t* datatype,
-                                          int32_t count,
-                                          const void* pUserBuf,
-                                          ompi_convertor_t* convertor );
-OMPI_DECLSPEC int32_t
 ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
                                  const struct ompi_datatype_t* datatype,
                                  int32_t count,
                                  const void* pUserBuf );
+static inline int32_t
+ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv, 
+                                          const struct ompi_datatype_t* datatype,
+                                          int32_t count,
+                                          const void* pUserBuf,
+                                          ompi_convertor_t* convertor )
+{
+    convertor->remoteArch = pSrcConv->remoteArch;
+    convertor->pFunctions = pSrcConv->pFunctions;
+    convertor->flags      = pSrcConv->flags & ~CONVERTOR_STATE_MASK;
+        
+    return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
+}
+
+/*
+ * Upper level does not need to call the _nocheck function directly.
+ */
+OMPI_DECLSPEC inline int32_t
+ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
+                                     size_t* position );
+static inline int32_t
+ompi_convertor_set_position( ompi_convertor_t* convertor,
+                             size_t* position )
+{
+    /*
+     * If the convertor is already at the correct position we are happy.
+     */
+    if( (*position) == convertor->bConverted ) return OMPI_SUCCESS;
+    return ompi_convertor_set_position_nocheck( convertor, position );
+}
 
 /*
  *
@@ -229,11 +262,15 @@ OMPI_DECLSPEC int
 ompi_convertor_clone( const ompi_convertor_t* source,
                       ompi_convertor_t* destination,
                       int32_t copy_stack );
-OMPI_DECLSPEC int
+static inline int
 ompi_convertor_clone_with_position( const ompi_convertor_t* source,
                                     ompi_convertor_t* destination,
                                     int32_t copy_stack,
-                                    size_t* position );
+                                    size_t* position )
+{
+    (void)ompi_convertor_clone( source, destination, copy_stack );
+    return ompi_convertor_set_position( destination, position );
+}
 
 /*
  *

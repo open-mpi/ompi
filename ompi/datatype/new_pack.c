@@ -186,7 +186,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
              */
             size_t length = iov[iov_count].iov_len;
             if( length <= 0 )
-                length = pConvertor->count * pData->size - pConvertor->bConverted;
+                length = pConvertor->local_size - pConvertor->bConverted;
             if( ((*max_data) - total_packed) < length )
                 length = (*max_data) - total_packed;
             assert( 0 < length );

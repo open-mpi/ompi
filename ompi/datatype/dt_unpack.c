@@ -334,7 +334,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         packed_buffer = (char*)iov[iov_count].iov_base;
-        remaining = pConv->count * pData->size - pConv->bConverted;
+        remaining = pConv->local_size - pConv->bConverted;
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
@@ -399,7 +399,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     }
     *out_size = iov_count;
     *max_data = (pConv->bConverted - initial_bytes_converted);
-    if( pConv->bConverted == (pData->size * pConv->count) ) {
+    if( pConv->bConverted == pConv->local_size ) {
         pConv->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
@@ -670,18 +670,6 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */
 };
 
-/* Should we supply buffers to the convertor or can we use directly
- * the user buffer ?
- */
-int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
-{
-    const ompi_datatype_t* pData = pConvertor->pDesc;
-    if( !(pData->flags & DT_FLAG_CONTIGUOUS) ) return 1;
-    if( pConvertor->count == 1 ) return 0;  /* only one data ignore the gaps around */
-    if( (long)pData->size != (pData->ub - pData->lb) ) return 1;
-    return 0;
-}
-
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 
 int32_t
@@ -709,20 +697,6 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
         convertor->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
     return OMPI_SUCCESS;
-}
-
-int32_t
-ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
-                                          const struct ompi_datatype_t* datatype,
-                                          int32_t count,
-                                          const void* pUserBuf,
-                                          ompi_convertor_t* convertor )
-{
-    convertor->remoteArch      = pSrcConv->remoteArch;
-    convertor->pFunctions      = pSrcConv->pFunctions;
-    convertor->flags           = pSrcConv->flags & ~CONVERTOR_STATE_MASK;
-
-    return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
 }
 
 /* Get the number of elements from the data associated with this convertor that can be
