@@ -36,7 +36,6 @@ static const char FUNC_NAME[] = "MPI_Pack_external_size";
 int MPI_Pack_external_size(char *datarep, int incount,
                            MPI_Datatype datatype, MPI_Aint *size) 
 {
-    int ret;
     ompi_convertor_t local_convertor;
     size_t length;
 
@@ -52,8 +51,8 @@ int MPI_Pack_external_size(char *datarep, int incount,
     ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
                                               datatype, incount, NULL, &local_convertor );
 
-    ret = ompi_convertor_get_packed_size( &local_convertor, &length );
-    *size = (int)length;
+    ompi_convertor_get_packed_size( &local_convertor, &length );
+    *size = (MPI_Aint)length;
     OBJ_DESTRUCT( &local_convertor );
     
     return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
