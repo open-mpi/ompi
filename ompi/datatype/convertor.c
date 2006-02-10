@@ -90,13 +90,13 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     pConv->checksum = 1;
     /* protect against over packing data */
-    if( pConv->bConverted == (pConv->pDesc->size * pConv->count) ) {
+    if( pConv->flags & CONVERTOR_COMPLETED ) {
         iov[0].iov_len = 0;
         *out_size = 0;
         *max_data = 0;
         return 1;  /* nothing to do */
     }
-    assert( pConv->bConverted < (pConv->pDesc->size * pConv->count) );
+    assert( pConv->bConverted < pConv->local_size );
 
     /* We dont allocate any memory. The packing function should allocate it
      * if it need. If it's possible to find iovec in the derived datatype
@@ -113,14 +113,14 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 
     pConv->checksum = 1;
     /* protect against over unpacking data */
-    if( pConv->bConverted == (pData->size * pConv->count) ) {
+    if( pConv->flags & CONVERTOR_COMPLETED ) {
         iov[0].iov_len = 0;
         out_size = 0;
         *max_data = 0;
         return 1;  /* nothing to do */
     }
 
-    assert( pConv->bConverted < (pConv->pDesc->size * pConv->count) );
+    assert( pConv->bConverted < pConv->local_size );
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
 
@@ -140,11 +140,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
      */
     pElems = pConvertor->use_desc->desc;
 
-    if( pData->size == 0 ) {  /* special case for empty datatypes */
-        count = pConvertor->count;
-    } else {
-        count = starting_point / pData->size;
-    }
+    count = starting_point / pData->size;
     extent = pData->ub - pData->lb;
 
     pStack[0].type     = DT_LOOP;  /* the first one is always the loop */
@@ -213,21 +209,17 @@ extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
 
-inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t* position )
+inline int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor, size_t* position )
 {
     int32_t rc;
 
     /*
-     * If the convertor is already at the correct position we are happy
+     * Do not allow the convertor to go outside the data boundaries. This test include
+     * the check for datatype with size zero as well as for convertors with a count of zero.
      */
-    if( (*position) == convertor->bConverted ) return OMPI_SUCCESS;
-
-    /*
-     * Do not allow the convertor to go outside the data boundaries.
-     */
-    if( (convertor->pDesc->size * convertor->count) <= *position ) {
+    if( convertor->local_size <= *position) {
         convertor->flags |= CONVERTOR_COMPLETED;
-        convertor->bConverted = convertor->pDesc->size * convertor->count;
+        convertor->bConverted = convertor->local_size;
         *position = convertor->bConverted;
         return OMPI_SUCCESS;
     }
@@ -302,6 +294,23 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
         convertor->stack_size = DT_STATIC_STACK_SIZE;
     }
 
+    /* Compute the local and remote sizes */
+    convertor->local_size = convertor->count * datatype->size;
+    if( convertor->remoteArch == ompi_mpi_local_arch ) {
+        convertor->remote_size = convertor->local_size;
+    } else {
+        int i;
+        uint64_t bdt_mask = datatype->bdt_used >> DT_CHAR;
+        convertor->remote_size = 0;
+        for( i = DT_CHAR; bdt_mask != 0; i++, bdt_mask >>= 1 ) { 
+            if( bdt_mask & ((unsigned long long)1) ) {
+                /* TODO replace with the remote size */
+                convertor->remote_size += (datatype->btypes[i] * ompi_ddt_basicDatatypes[i]->size);
+            }
+        }   
+
+    }
+
     return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
 }
 
@@ -315,10 +324,9 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
  * ready to use starting from the old position. If copy_stack is false then the convertor
  * is created with a empty stack (you have to use ompi_convertor_set_position before using it).
  */
-inline int
-ompi_convertor_clone( const ompi_convertor_t* source,
-                      ompi_convertor_t* destination,
-                      int32_t copy_stack )
+int ompi_convertor_clone( const ompi_convertor_t* source,
+                          ompi_convertor_t* destination,
+                          int32_t copy_stack )
 {
     destination->remoteArch        = source->remoteArch;
     destination->flags             = source->flags | CONVERTOR_CLONE;
@@ -330,6 +338,8 @@ ompi_convertor_clone( const ompi_convertor_t* source,
     destination->memAlloc_fn       = source->memAlloc_fn;
     destination->memAlloc_userdata = source->memAlloc_userdata;
     destination->pFunctions        = source->pFunctions;
+    destination->local_size        = source->local_size;
+    destination->remote_size       = source->remote_size;
     /* create the stack */
     if( source->stack_size > DT_STATIC_STACK_SIZE ) {
         destination->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * source->stack_size );
@@ -347,52 +357,6 @@ ompi_convertor_clone( const ompi_convertor_t* source,
         destination->bConverted = source->bConverted;
         destination->stack_pos  = source->stack_pos;
     }
-    return OMPI_SUCCESS;
-}
-
-inline int
-ompi_convertor_clone_with_position( const ompi_convertor_t* source,
-                                    ompi_convertor_t* destination,
-                                    int32_t copy_stack,
-                                    size_t* position )
-{
-    (void)ompi_convertor_clone( source, destination, copy_stack );
-    return ompi_convertor_set_position( destination, position );
-}
-
-/* Actually we suppose that we can only do receiver side conversion */
-int32_t ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, size_t* pSize )
-{
-    int32_t ddt_size = 0;
-
-    if( ompi_ddt_type_size( pConv->pDesc, &ddt_size ) != 0 )
-        return OMPI_ERROR;
-    /* actually *pSize contain the size of one instance of the data */
-    *pSize = ddt_size * pConv->count;
-    return OMPI_SUCCESS;
-}
-
-int32_t ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, size_t* pSize )
-{
-    int i;
-    const ompi_datatype_t* pData = pConv->pDesc;
-
-    if( pConv->count == 0 ) {
-        *pSize = 0;
-        return OMPI_SUCCESS;
-    }
-    if( pConv->remoteArch == 0 ) {  /* same architecture */
-        *pSize = pData->size * pConv->count;
-        return OMPI_SUCCESS;
-    }
-    *pSize = 0;
-    for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
-        if( pData->bdt_used & (((unsigned long long)1)<<i) ) {
-            /* TODO replace with the remote size */
-            *pSize += (pData->btypes[i] * ompi_ddt_basicDatatypes[i]->size);
-        }
-    }
-    *pSize *= pConv->count;
     return OMPI_SUCCESS;
 }
 

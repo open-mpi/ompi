@@ -82,7 +82,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
         if( iov[iov_count].iov_base == NULL ) {
             size_t length = iov[iov_count].iov_len;
             if( length <= 0 )
-                length = pConvertor->count * pData->size - pConvertor->bConverted - bConverted;
+                length = pConvertor->local_size - pConvertor->bConverted - bConverted;
             if( (*max_data) < length )
                 length = *max_data;
             iov[iov_count].iov_base = pConvertor->memAlloc_fn( &length, pConvertor->memAlloc_userdata );
@@ -164,7 +164,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, type, count_desc,
 		disp_desc, pos_desc );
 
-    return (pConvertor->bConverted == (pData->size * pConvertor->count));
+    return (pConvertor->bConverted == pConvertor->local_size);
 }
 
 /* We suppose here that we work with an already optimized version of the data
@@ -292,7 +292,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
     iov[0].iov_len = bConverted;      /* update the length in the iovec */
     *max_data = bConverted;
-    return (pConv->bConverted == (pData->size * pConv->count));
+    return (pConv->bConverted == pConv->local_size);
 }
 
 #define IOVEC_MEM_LIMIT 8192
@@ -576,9 +576,9 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     *max_data = bConverted;      /* update the length in the iovec */
     if( ((*out_size) == iov_pos) || (iov[iov_pos].iov_base == NULL) ) *out_size = iov_pos;
     else *out_size = iov_pos + 1;
-    assert( pConv->bConverted <= (pData->size * pConv->count) );
+    assert( pConv->bConverted <= pConv->local_size );
     DO_DEBUG( opal_output( 0, "--------------------------------------------------------------------\n" ); );
-    return (pConv->bConverted == (pData->size * pConv->count));
+    return (pConv->bConverted == pConv->local_size);
 }
 
 /* the contig versions does not use the stack. They can easily retrieve
@@ -594,7 +594,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *source_base = NULL;
-    size_t length = pData->size * pConv->count - pConv->bConverted;
+    size_t length = pConv->local_size - pConv->bConverted;
     uint32_t iov_count, initial_amount = pConv->bConverted;
     ddt_endloop_desc_t* _end_loop = &(pConv->use_desc->desc[pConv->use_desc->used].end_loop);
 
@@ -643,7 +643,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *user_memory, *packed_buffer;
-    size_t length = pData->size * pConv->count;
+    size_t length = pConv->local_size;
     long extent;
     uint32_t max_allowed, i, index;
     uint32_t iov_count, total_bytes_converted = 0;
@@ -652,7 +652,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
     assert( (pData->flags & DT_FLAG_CONTIGUOUS) && ((long)pData->size != extent) );
 
     /* Limit the amount of packed data to the data left over on this convertor */
-    max_allowed = (pConv->count * pData->size) - pConv->bConverted;
+    max_allowed = pConv->local_size - pConv->bConverted;
     if( max_allowed > (*max_data) )
         max_allowed = (*max_data);
 
@@ -803,16 +803,3 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
     return OMPI_SUCCESS;
 }
 
-int32_t
-ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
-                                          const struct ompi_datatype_t* datatype,
-                                          int32_t count,
-                                          const void* pUserBuf,
-                                          ompi_convertor_t* convertor )
-{
-    convertor->remoteArch      = pSrcConv->remoteArch;
-    convertor->pFunctions      = pSrcConv->pFunctions;
-    convertor->flags           = pSrcConv->flags & ~CONVERTOR_STATE_MASK;
-
-    return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
-}
