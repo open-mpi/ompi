@@ -30,7 +30,8 @@
 #include "datatype/convertor.h" 
 #include "datatype/datatype.h" 
 #include "mca/mpool/base/base.h" 
-#include "mca/mpool/mpool.h" 
+/*#include "mca/mpool/mpool.h"*/
+#include "mca/mpool/udapl/mpool_udapl.h"
 #include "ompi/proc/proc.h"
 
 mca_btl_udapl_module_t mca_btl_udapl_module = {
@@ -61,53 +62,35 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
 
 
 /**
-  * Report a uDAPL error - for debugging
-  */
-
-static void
-mca_btl_udapl_error(DAT_RETURN ret, char* str)
-{
-    char* major;
-    char* minor;
-
-    /* don't output anything if debug is not set */
-    if(0 == mca_btl_udapl_component.udapl_debug) {
-        return;
-    }
-
-    if(DAT_SUCCESS != dat_strerror(ret,
-            (const char**)&major, (const char**)&minor))
-    {
-        printf("dat_strerror failed! ret is %d\n", ret);
-        exit(-1);
-    }
-
-    opal_output(0, "ERROR: %s %s %s\n", str, major, minor);
-}
-
-
-/**
  * Initialize module module resources.
  */
 
 int
 mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
 {
+    mca_mpool_base_resources_t res;
     DAT_IA_ATTR attr;
     DAT_RETURN rc;
 
     /* open the uDAPL interface */
-    btl->udapl_evd_dflt = DAT_HANDLE_NULL;
+    btl->udapl_evd_async = DAT_HANDLE_NULL;
     rc = dat_ia_open(ia_name, mca_btl_udapl_component.udapl_evd_qlen,
-            &btl->udapl_evd_dflt, &btl->udapl_ia);
+            &btl->udapl_evd_async, &btl->udapl_ia);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_ia_open");
         return OMPI_ERROR;
     }
 
+    /* create a protection zone */
+    rc = dat_pz_create(btl->udapl_ia, &btl->udapl_pz);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_pz_create");
+        return OMPI_ERROR;
+    }
+
     /* query to get address information */
     /* TODO - we only get the address, but there's other useful stuff here */
-    rc = dat_ia_query(btl->udapl_ia, &btl->udapl_evd_dflt,
+    rc = dat_ia_query(btl->udapl_ia, &btl->udapl_evd_async,
             DAT_IA_FIELD_IA_ADDRESS_PTR, &attr, DAT_IA_FIELD_NONE, NULL);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_ia_query");
@@ -129,7 +112,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
 
     rc = dat_evd_create(btl->udapl_ia,
             mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
-            DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_conn);
+            DAT_EVD_CR_FLAG | DAT_EVD_CONNECTION_FLAG, &btl->udapl_evd_conn);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_evd_create (conn)");
         dat_evd_free(btl->udapl_evd_dto);
@@ -137,17 +120,65 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
         return OMPI_ERROR;
     }
 
-    /* TODO - post some receives - involves setting up ep's, psp's, and LMR's */
+    /* initialize the memory pool */
+    res.udapl_ia = btl->udapl_ia;
+    res.udapl_pz = btl->udapl_pz;
+
+    btl->super.btl_mpool = mca_mpool_base_module_create(
+            mca_btl_udapl_component.udapl_mpool_name, &btl->super, &res);
 
     /* initialize objects */
     OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_user, ompi_free_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_frag_recv, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_pending, opal_list_t);
     OBJ_CONSTRUCT(&btl->udapl_repost, opal_list_t);
     OBJ_CONSTRUCT(&btl->udapl_mru_reg, opal_list_t);
     OBJ_CONSTRUCT(&btl->udapl_lock, opal_mutex_t);
     
+    /* initialize free lists */
+    ompi_free_list_init(&btl->udapl_frag_eager,
+          sizeof(mca_btl_udapl_frag_eager_t) +
+                 mca_btl_udapl_module.super.btl_eager_limit,
+          OBJ_CLASS(mca_btl_udapl_frag_eager_t),
+          mca_btl_udapl_component.udapl_free_list_num,
+          mca_btl_udapl_component.udapl_free_list_max,
+          mca_btl_udapl_component.udapl_free_list_inc,
+          btl->super.btl_mpool);
+
+    ompi_free_list_init(&btl->udapl_frag_max,
+          sizeof(mca_btl_udapl_frag_max_t) +
+                 mca_btl_udapl_module.super.btl_max_send_size,
+          OBJ_CLASS(mca_btl_udapl_frag_max_t),
+          mca_btl_udapl_component.udapl_free_list_num,
+          mca_btl_udapl_component.udapl_free_list_max,
+          mca_btl_udapl_component.udapl_free_list_inc,
+          btl->super.btl_mpool);
+
+    ompi_free_list_init(&btl->udapl_frag_user,
+          sizeof(mca_btl_udapl_frag_user_t),
+          OBJ_CLASS(mca_btl_udapl_frag_user_t),
+          mca_btl_udapl_component.udapl_free_list_num,
+          mca_btl_udapl_component.udapl_free_list_max,
+          mca_btl_udapl_component.udapl_free_list_inc,
+          NULL);
+
+    ompi_free_list_init(&btl->udapl_frag_recv,
+          sizeof(mca_btl_udapl_frag_recv_t),
+          OBJ_CLASS(mca_btl_udapl_frag_recv_t),
+          mca_btl_udapl_component.udapl_free_list_num,
+          mca_btl_udapl_component.udapl_free_list_max,
+          mca_btl_udapl_component.udapl_free_list_inc,
+          btl->super.btl_mpool);
+
+    /* Connections are done lazily - the process doing the send acts as a client
+       when initiating the connect.  progress should always be checking for
+       incoming connections, and establishing them when they arrive.  When
+       connection is established, recv's are posted. */
+
+    /* TODO - post receives */
+    /* TODO - can I always use SRQ, or just on new enough uDAPLs? */
     return OMPI_SUCCESS;
 }
 
@@ -160,11 +191,12 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) base_btl; 
 
-    opal_output(0, "udapl_finalize\n");
+    OPAL_OUTPUT((0, "udapl_finalize\n"));
 
     /* release uDAPL resources */
     dat_evd_free(udapl_btl->udapl_evd_dto);
     dat_evd_free(udapl_btl->udapl_evd_conn);
+    dat_pz_free(udapl_btl->udapl_pz);
     dat_ia_close(udapl_btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
 
     /* destroy objects */
@@ -192,7 +224,7 @@ int mca_btl_udapl_add_procs(
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
     int i, rc;
 
-    opal_output(0, "udapl_add_procs\n");
+    OPAL_OUTPUT((0, "udapl_add_procs\n"));
 
     for(i = 0; i < (int) nprocs; i++) {
 
@@ -244,7 +276,7 @@ int mca_btl_udapl_del_procs(struct mca_btl_base_module_t* btl,
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
 {
-    opal_output(0, "udapl_del_procs\n");
+    OPAL_OUTPUT((0, "udapl_del_procs\n"));
     /* TODO */
     return OMPI_SUCCESS;
 }
@@ -264,7 +296,7 @@ int mca_btl_udapl_register(
     udapl_btl->udapl_reg[tag].cbfunc = cbfunc; 
     udapl_btl->udapl_reg[tag].cbdata = cbdata; 
 
-    opal_output(0, "udapl_register\n");
+    OPAL_OUTPUT((0, "udapl_register\n"));
     return OMPI_SUCCESS;
 }
 
@@ -284,7 +316,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     mca_btl_udapl_frag_t* frag;
     int rc;
 
-    opal_output(0, "udapl_alloc\n");
+    OPAL_OUTPUT((0, "udapl_alloc\n"));
     
     if(size <= btl->btl_eager_limit) { 
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag, rc); 
@@ -317,7 +349,7 @@ int mca_btl_udapl_free(
 {
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
 
-    opal_output(0, "udapl_free\n");
+    OPAL_OUTPUT((0, "udapl_free\n"));
 
     if(frag->size == 0) {
         btl->btl_mpool->mpool_release(btl->btl_mpool, frag->registration);
@@ -327,7 +359,7 @@ int mca_btl_udapl_free(
     } else if(frag->size == mca_btl_udapl_component.udapl_max_frag_size) {
         MCA_BTL_UDAPL_FRAG_RETURN_MAX(btl, frag); 
     }  else {
-        opal_output(0, "[%s:%d] mca_btl_udapl_free: invalid descriptor\n", __FILE__,__LINE__);
+        OPAL_OUTPUT((0, "[%s:%d] mca_btl_udapl_free: invalid descriptor\n", __FILE__,__LINE__));
         return OMPI_ERR_BAD_PARAM;
     }
     return OMPI_SUCCESS; 
@@ -356,7 +388,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     int32_t free_after;
     int rc;
 
-    opal_output(0, "udapl_prepare_src\n");
+    OPAL_OUTPUT((0, "udapl_prepare_src\n"));
 
     /*
      * If the data has already been pinned and is contigous than we can
@@ -511,7 +543,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     long lb;
     int rc;
 
-    opal_output(0, "udapl_prepare_dst\n");
+    OPAL_OUTPUT((0, "udapl_prepare_dst\n"));
 
     MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc);
     if(NULL == frag) {
@@ -572,8 +604,26 @@ int mca_btl_udapl_send(
     mca_btl_base_tag_t tag)
    
 {
-    opal_output(0, "udapl_send\n");
-    return OMPI_ERR_NOT_IMPLEMENTED; 
+    mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
+    mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
+
+    OPAL_OUTPUT((0, "udapl_send\n"));
+    
+    frag->btl = udapl_btl;
+    frag->endpoint = endpoint;
+    frag->hdr->tag = tag;
+    frag->type = MCA_BTL_UDAPL_SEND;
+
+    /* Check if we are connected to this peer.
+       Should be three states we care about -
+        connected, connecting, disconnected.
+       If no connection exists, request the connection and queue the send.
+       If a connection is pending, queue the send
+       If the connection is established, fire off the send.
+       need to consider locking around the connection state and queue.
+     */
+
+    return OMPI_SUCCESS; 
 }
 
 
@@ -591,7 +641,7 @@ int mca_btl_udapl_put(
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* des)
 {
-    opal_output(0, "udapl_put\n");
+    OPAL_OUTPUT((0, "udapl_put\n"));
     return OMPI_ERR_NOT_IMPLEMENTED; 
 }
 
@@ -611,7 +661,7 @@ int mca_btl_udapl_get(
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* des)
 {
-    opal_output(0, "udapl_get\n");
+    OPAL_OUTPUT((0, "udapl_get\n"));
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 

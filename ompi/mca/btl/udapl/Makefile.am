@@ -20,6 +20,7 @@
 
 
 
+CFLAGS = $(btl_udapl_CFLAGS)
 AM_CPPFLAGS = $(btl_udapl_CPPFLAGS)
 
 udapl_sources = \

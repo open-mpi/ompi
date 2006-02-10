@@ -55,16 +55,16 @@ struct mca_btl_udapl_component_t {
     struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
     size_t  udapl_num_mru;
     size_t  udapl_evd_qlen;
-    size_t  udapl_eager_frag_size;
-    size_t  udapl_max_frag_size;
-    char*   udapl_port_name; 
     int32_t udapl_num_repost;
-    int32_t udapl_num_high_priority; /**< number of receive descriptors at high priority */
     int     udapl_debug;        /**< turn on debug output */
+
+    size_t udapl_eager_frag_size;
+    size_t udapl_max_frag_size;
 
     int udapl_free_list_num;   /**< initial size of free lists */
     int udapl_free_list_max;   /**< maximum size of free lists */
-    int udapl_free_list_inc;   /**< number of elements to alloc when growing free lists */
+    int udapl_free_list_inc;   /**< number of elements to alloc when growing */
+
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
@@ -84,11 +84,12 @@ struct mca_btl_udapl_module_t {
     mca_btl_base_recv_reg_t udapl_reg[256]; 
     mca_btl_udapl_addr_t udapl_addr;
 
-    /* interface handle */
+    /* interface handle and protection zone */
     DAT_IA_HANDLE udapl_ia;
+    DAT_PZ_HANDLE udapl_pz;
 
     /* event dispatchers - default, data transfer, connection negotiation */
-    DAT_EVD_HANDLE udapl_evd_dflt;
+    DAT_EVD_HANDLE udapl_evd_async;
     DAT_EVD_HANDLE udapl_evd_dto;
     DAT_EVD_HANDLE udapl_evd_conn;
 
@@ -96,25 +97,22 @@ struct mca_btl_udapl_module_t {
     ompi_free_list_t udapl_frag_eager;
     ompi_free_list_t udapl_frag_max;
     ompi_free_list_t udapl_frag_user;
+    ompi_free_list_t udapl_frag_recv;
 
-    /* number of send/recv tokens */
-#if 0
-    int32_t udapl_num_send_tokens;
-    int32_t udapl_max_send_tokens;
-    int32_t udapl_num_recv_tokens;
-    int32_t udapl_max_recv_tokens;
-    int32_t udapl_num_repost;
-#endif
-
-    /* lock for accessing module state */
-    opal_list_t udapl_pending; /**< list of pending send descriptors */
-    opal_list_t udapl_repost; /**< list of pending fragments */
-    opal_list_t udapl_mru_reg; /**< list of most recently used registrations */
-    opal_mutex_t udapl_lock;
+    opal_list_t udapl_pending;  /**< list of pending send descriptors */
+    opal_list_t udapl_repost;   /**< list of pending fragments */
+    opal_list_t udapl_mru_reg;  /**< list of most recently used registrations */
+    opal_mutex_t udapl_lock;    /* lock for accessing module state */
 }; 
 typedef struct mca_btl_udapl_module_t mca_btl_udapl_module_t;
 extern mca_btl_udapl_module_t mca_btl_udapl_module;
 
+
+/**
+  * Report a uDAPL error - for debugging
+  */
+
+extern void mca_btl_udapl_error(DAT_RETURN ret, char* str);
 
 /**
  * Register uDAPL component parameters with the MCA framework
