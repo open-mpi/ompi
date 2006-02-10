@@ -69,6 +69,8 @@ static void expand_array(void);
 void opal_class_initialize(opal_class_t *cls)
 {
     opal_class_t *c;
+    opal_construct_t* cls_construct_array;
+    opal_destruct_t* cls_destruct_array; 
     int i;
 
     assert(cls);
@@ -98,25 +100,43 @@ void opal_class_initialize(opal_class_t *cls)
     for (c = cls; c; c = c->cls_parent) {
         cls->cls_depth += 1;
     }
-    
+
     /*
      * Allocate arrays for hierarchy of constructors and destructors
      */
 
     cls->cls_construct_array = 
-        (void (**)(opal_object_t*))malloc(cls->cls_depth *
-                                          sizeof(opal_construct_t) * 2);
+        (void (**)(opal_object_t*))malloc((cls->cls_depth + 1)*
+                                          sizeof(opal_construct_t) * 2 );
     if (NULL == cls->cls_construct_array) {
         perror("Out of memory");
         exit(-1);
     }
     cls->cls_destruct_array = cls->cls_construct_array + cls->cls_depth;
+    cls_construct_array = cls->cls_construct_array;
+    cls_destruct_array  = cls->cls_destruct_array; 
     
     c = cls;
     for (i = 0; i < cls->cls_depth; i++) {
-        cls->cls_construct_array[i] = c->cls_construct;
-        cls->cls_destruct_array[i] = c->cls_destruct;
+        if( NULL != c->cls_construct ) {
+            *cls_construct_array = c->cls_construct;
+            cls_construct_array++;
+        }
+        if( NULL != c->cls_destruct ) {
+            *cls_destruct_array = c->cls_destruct;
+            cls_destruct_array++;
+        }
         c = c->cls_parent;
+    }
+    *cls_construct_array = NULL;  /* end marker for the constructors */
+    *cls_destruct_array = NULL;  /* end marker for the destructors */
+    /* Now we have to invert the constructors */
+    for( i = 0, --cls_construct_array;
+         cls_construct_array > (cls->cls_construct_array + i);
+         i++, cls_construct_array-- ) {
+        opal_construct_t temp_construct = *cls_construct_array;
+        *cls_construct_array = cls->cls_construct_array[i];
+        cls->cls_construct_array[i] = temp_construct;
     }
 
     cls->cls_initialized = 1;
