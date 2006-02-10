@@ -661,7 +661,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                         /* lookup and/or create a cached registration */ 
                         ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
                         base = recvreq->req_recv.req_convertor.pBaseBuf + lb + recvreq->req_rdma_offset;
-                        reg = mca_pml_ob1_rdma_register(bml_btl, base, size);
+                        reg = mca_pml_ob1_rdma_register(bml_btl, (unsigned char*)base, size);
                         release = true;
                     }
                 }
