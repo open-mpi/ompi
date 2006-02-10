@@ -59,8 +59,6 @@ int opal_daemon_init(char *working_dir)
         chdir(working_dir);  /* change working directory */
     }
 
-    umask(0);  /* clear file mode creation mask */
-
     /* connect input to /dev/null */
     fd = open("/dev/null", O_RDONLY);
     if(fd > STDIN_FILENO) {

@@ -23,6 +23,8 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed umask issues in the session directory.  Thanks to Glenn Morris
+  for reporting this to us.
 - Fixed tcsh-based LD_LIBRARY_PATH issues with --prefix.  Thanks to
   Glen Morris for identifying the problem and suggesting the fix.
 - Removed extraneous \n's when setting PATH and LD_LIBRARY_PATH in the
