@@ -87,6 +87,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         pml_proc = OBJ_NEW(mca_pml_ob1_proc_t);
         pml_proc->base.proc_ompi = comm->c_remote_group->grp_proc_pointers[i];
         comm->c_pml_procs[i] = (mca_pml_proc_t*) pml_proc; /* comm->c_remote_group->grp_proc_pointers[i]->proc_pml; */
+        pml_comm->procs[i].proc_ompi = comm->c_remote_group->grp_proc_pointers[i];
     }
     return OMPI_SUCCESS;
 }

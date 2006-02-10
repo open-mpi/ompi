@@ -174,12 +174,6 @@ static void mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_ack_hdr_t* ack;
     int rc;
 
-    /* if this hasn't been initialized yet - this is a synchronous send */
-    if(NULL == proc) {
-        ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(
-                recvreq->req_recv.req_base.req_comm, hdr->hdr_match.hdr_src);
-        proc = recvreq->req_recv.req_base.req_proc = ompi_proc;
-    }
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     
@@ -586,7 +580,7 @@ void mca_pml_ob1_recv_request_matched_probe(
 void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
 {
     if(OPAL_THREAD_ADD32(&recvreq->req_lock,1) == 1) {
-        ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
+        ompi_proc_t* proc = recvreq->req_recv.req_base.req_proc;
         mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
         mca_bml_base_btl_t* bml_btl; 
         do {
@@ -885,6 +879,7 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     }
     return NULL;
  find_fragment:
+    request->req_recv.req_base.req_proc = proc->proc_ompi;
     if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
           (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
         opal_list_remove_item(unexpected_frags, (opal_list_item_t*)frag);

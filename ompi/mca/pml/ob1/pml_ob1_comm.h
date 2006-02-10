@@ -25,6 +25,7 @@
 #include "opal/threads/condition.h"
 #include "mca/ptl/ptl.h"
 #include "opal/class/opal_list.h"
+#include "proc/proc.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -33,6 +34,7 @@ extern "C" {
 struct mca_pml_ob1_comm_proc_t {
     opal_object_t super;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
+    struct ompi_proc_t* proc_ompi;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t send_sequence; /**< send side sequence number */
 #else

@@ -125,7 +125,7 @@ void mca_pml_ob1_recv_frag_callback(
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-#define MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,generic_receives,return_match) \
+#define MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,generic_receives,proc,return_match) \
 do { \
     /* local variables */ \
     mca_pml_ob1_recv_request_t *generic_recv; \
@@ -143,6 +143,7 @@ do { \
         if ( (frag_tag == recv_tag) || \
              ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) { \
  \
+            generic_recv->req_recv.req_base.req_proc = proc->proc_ompi; \
             /* Match made */ \
             return_match = generic_recv; \
  \
@@ -174,7 +175,7 @@ do { \
 do { \
     /* local parameters */ \
     opal_list_t* wild_receives = &comm->wild_receives; \
-    MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,wild_receives,return_match); \
+    MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,wild_receives,proc,return_match); \
 } while(0)
 
 
@@ -196,7 +197,7 @@ do { \
 do { \
     /* local variables */ \
     opal_list_t* specific_receives = &proc->specific_receives; \
-    MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,specific_receives,return_match); \
+    MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,specific_receives,proc,return_match); \
 } while(0)
 
 /**

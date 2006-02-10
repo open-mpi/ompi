@@ -194,26 +194,18 @@ do {                                                                            
  *
  */
 
-#define MCA_PML_OB1_RECV_REQUEST_MATCHED(                                            \
-    request,                                                                         \
-    hdr)                                                                             \
-do {                                                                                 \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;    \
-    if((request)->req_recv.req_bytes_packed != 0) {                                  \
-        ompi_proc_t *proc =                                                          \
-            ompi_comm_peer_lookup(                                                   \
-                (request)->req_recv.req_base.req_comm, (hdr)->hdr_src);              \
-                                                                                     \
-        (request)->req_recv.req_base.req_proc = proc;                                \
-        ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
-                                         (request)->req_recv.req_base.req_datatype,  \
-                                         (request)->req_recv.req_base.req_count,     \
-                                         (request)->req_recv.req_base.req_addr,      \
-                                         &(request)->req_recv.req_convertor );       \
-    } else {                                                                         \
-        (request)->req_recv.req_base.req_proc = NULL;                                \
-    }                                                                                \
+#define MCA_PML_OB1_RECV_REQUEST_MATCHED( request, hdr )                          \
+do {                                                                              \
+    (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;    \
+    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src; \
+    if((request)->req_recv.req_bytes_packed != 0) {                               \
+        ompi_convertor_copy_and_prepare_for_recv(                                 \
+                         (request)->req_recv.req_base.req_proc->proc_convertor,   \
+                         (request)->req_recv.req_base.req_datatype,               \
+                         (request)->req_recv.req_base.req_count,                  \
+                         (request)->req_recv.req_base.req_addr,                   \
+                         &(request)->req_recv.req_convertor );                    \
+    }                                                                             \
 } while (0)
 
 
