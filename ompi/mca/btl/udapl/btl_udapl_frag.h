@@ -68,6 +68,10 @@ typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_user_t;
     
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_user_t); 
 
+typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_recv_t; 
+    
+OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_recv_t); 
+
 
 /*
  * Macros to allocate/return descriptors from module specific

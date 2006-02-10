@@ -37,7 +37,19 @@ struct mca_btl_udapl_addr_t {
     DAT_SOCK_ADDR addr;
 };
 typedef struct mca_btl_udapl_addr_t mca_btl_udapl_addr_t;
-                                                                                                                
+
+
+/**
+ * State of uDAPL endpoint connection.
+ */
+
+typedef enum {
+    MCA_BTL_UDAPL_CONNECTING,
+    MCA_BTL_UDAPL_CONNECTED,
+    MCA_BTL_UDAPL_CLOSED,
+    MCA_BTL_UDAPL_FAILED
+} mca_btl_udapl_endpoint_state_t;
+
 
 /**
  * An abstraction that represents a connection to a endpoint process.
@@ -54,6 +66,12 @@ struct mca_btl_base_endpoint_t {
 
     struct mca_btl_udapl_proc_t*   endpoint_proc;
     /**< proc structure corresponding to endpoint */
+
+    mca_btl_udapl_endpoint_state_t endpoint_state;
+    /**< current state of the endpoint connection */
+
+    opal_list_t pending_frags;
+    /**< pending send frags on this endpoint */
 
     mca_btl_udapl_addr_t endpoint_addr;
 };

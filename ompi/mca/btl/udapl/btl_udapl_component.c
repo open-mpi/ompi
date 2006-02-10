@@ -72,8 +72,34 @@ mca_btl_udapl_component_t mca_btl_udapl_component = {
 };
 
 
+/**
+  * Report a uDAPL error - for debugging
+  */
+
+void
+mca_btl_udapl_error(DAT_RETURN ret, char* str)
+{
+    char* major;
+    char* minor;
+
+    /* don't output anything if debug is not set */
+    if(0 == mca_btl_udapl_component.udapl_debug) {
+        return;
+    }
+
+    if(DAT_SUCCESS != dat_strerror(ret,
+            (const char**)&major, (const char**)&minor))
+    {
+        printf("dat_strerror failed! ret is %d\n", ret);
+        exit(-1);
+    }
+
+    OPAL_OUTPUT((0, "ERROR: %s %s %s\n", str, major, minor));
+}
+
+
 /*
- * utility routines for parameter registration
+ * Utility routines for parameter registration
  */
 
 static inline char* mca_btl_udapl_param_register_string(
@@ -105,7 +131,7 @@ int mca_btl_udapl_component_open(void)
 {  
     int param, value;
 
-    opal_output(0, "udapl_component_open\n");
+    OPAL_OUTPUT((0, "udapl_component_open\n"));
 
     /* initialize state */
     mca_btl_udapl_component.udapl_num_btls=0;
@@ -117,27 +143,23 @@ int mca_btl_udapl_component_open(void)
 
     /* register uDAPL component parameters */
     mca_btl_udapl_component.udapl_free_list_num =
-        mca_btl_udapl_param_register_int ("free_list_num", 8);
+        mca_btl_udapl_param_register_int("free_list_num", 8);
     mca_btl_udapl_component.udapl_free_list_max =
-        mca_btl_udapl_param_register_int ("free_list_max", -1);
+        mca_btl_udapl_param_register_int("free_list_max", -1);
     mca_btl_udapl_component.udapl_free_list_inc =
-        mca_btl_udapl_param_register_int ("free_list_inc", 8);
+        mca_btl_udapl_param_register_int("free_list_inc", 8);
     mca_btl_udapl_component.udapl_debug = 
         mca_btl_udapl_param_register_int("debug", 1); 
-    mca_btl_udapl_component.udapl_mpool_name = 
-        mca_btl_udapl_param_register_string("mpool", "udapl"); 
+    mca_btl_udapl_component.udapl_mpool_name =
+        mca_btl_udapl_param_register_string("mpool", "udapl");
     mca_btl_udapl_component.udapl_max_btls = 
         mca_btl_udapl_param_register_int("max_modules", 4);
     mca_btl_udapl_component.udapl_evd_qlen =
         mca_btl_udapl_param_register_int("evd_qlen", 8);
-    mca_btl_udapl_component.udapl_num_high_priority = 
-        mca_btl_udapl_param_register_int("num_high_priority", 8); 
     mca_btl_udapl_component.udapl_num_repost = 
-        mca_btl_udapl_param_register_int("num_repost", 4); 
+        mca_btl_udapl_param_register_int("num_repost", 4);
     mca_btl_udapl_component.udapl_num_mru = 
-        mca_btl_udapl_param_register_int("num_mru", 64); 
-    mca_btl_udapl_component.udapl_port_name=
-        mca_btl_udapl_param_register_string("port_name", "OMPI"); 
+        mca_btl_udapl_param_register_int("num_mru", 64);
 
     /* register uDAPL module parameters */
     mca_btl_udapl_module.super.btl_exclusivity =
@@ -151,38 +173,15 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_module.super.btl_min_rdma_size = 
         mca_btl_udapl_param_register_int("min_rdma_size", 512*1024); 
     mca_btl_udapl_module.super.btl_max_rdma_size = 
-        mca_btl_udapl_param_register_int("max_rdma_size", 128*1024); 
+        mca_btl_udapl_param_register_int("max_rdma_size", 128*1024);
     mca_btl_udapl_module.super.btl_bandwidth  = 
         mca_btl_udapl_param_register_int("bandwidth", 225); 
 
-    /* compute the eager and max frag sizes */
+    /* TODO - computer udapl_eager_frag_size and udapl_max_frag_size */
     mca_btl_udapl_component.udapl_eager_frag_size =
             mca_btl_udapl_module.super.btl_eager_limit;
-    /*mca_btl_udapl_component.udapl_eager_limit =
-            mca_btl_udapl_module.super.btl_eager_limit -
-            sizeof(mca_btl_base_header_t);*/
-
     mca_btl_udapl_component.udapl_max_frag_size =
-        mca_btl_udapl_module.super.btl_max_send_size;
-    mca_btl_udapl_module.super.btl_max_send_size =
-        mca_btl_udapl_module.super.btl_max_send_size -
-        sizeof(mca_btl_base_header_t);
-#if 0
-    mca_btl_udapl_component.udapl_eager_frag_size =
-        udapl_min_size_for_length(mca_btl_udapl_module.super.btl_eager_limit) - 1;
-    mca_btl_udapl_module.super.btl_eager_limit = 
-        udapl_max_length_for_size(mca_btl_udapl_component.udapl_eager_frag_size) -
-        sizeof(mca_btl_base_header_t);
-#endif
-
-    /* compute the max frag size */
-#if 0
-    mca_btl_udapl_component.udapl_max_frag_size = 
-        udapl_min_size_for_length(mca_btl_udapl_module.super.btl_max_send_size) - 1;
-    mca_btl_udapl_module.super.btl_max_send_size = 
-        udapl_max_length_for_size(mca_btl_udapl_component.udapl_max_frag_size) -
-        sizeof(mca_btl_base_header_t);
-#endif
+            mca_btl_udapl_module.super.btl_max_send_size;
 
     /* leave pinned option */
     value = 0;
@@ -199,7 +198,7 @@ int mca_btl_udapl_component_open(void)
 
 int mca_btl_udapl_component_close(void)
 {
-    opal_output(0, "udapl_component_close\n");
+    OPAL_OUTPUT((0, "udapl_component_close\n"));
 
     /* TODO - what needs to be done here? */
     return OMPI_SUCCESS;
@@ -222,13 +221,11 @@ mca_btl_udapl_modex_send(void)
     size = sizeof(mca_btl_udapl_addr_t) *
             mca_btl_udapl_component.udapl_num_btls;
 
-    if(mca_btl_udapl_component.udapl_debug) {
-        opal_output(0, "udapl_modex_send %d addrs %d bytes\n",
-                mca_btl_udapl_component.udapl_num_btls, size);
-    }
+    OPAL_OUTPUT((0, "udapl_modex_send %d addrs %d bytes\n",
+            mca_btl_udapl_component.udapl_num_btls, size));
 
     if (0 != size) {
-        addrs = (mca_btl_udapl_addr_t *)malloc (size);
+        addrs = (mca_btl_udapl_addr_t *)malloc(size);
         if (NULL == addrs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -262,7 +259,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     DAT_COUNT num_ias;
     int32_t i;
 
-    opal_output(0, "udapl_component_init\n");
+    OPAL_OUTPUT((0, "udapl_component_init\n"));
 
     /* enumerate uDAPL interfaces */
     datinfo = malloc(sizeof(DAT_PROVIDER_INFO) *
@@ -278,7 +275,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     }
 
     /* allocate space for the each possible BTL */
-    mca_btl_udapl_component.udapl_btls = (mca_btl_udapl_module_t *)
+    mca_btl_udapl_component.udapl_btls = (mca_btl_udapl_module_t **)
             malloc(num_ias * sizeof(mca_btl_udapl_module_t *));
     if(NULL == mca_btl_udapl_component.udapl_btls) {
         free(datinfo);
@@ -287,7 +284,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 
     /* create a BTL module for each interface */
     for(mca_btl_udapl_component.udapl_num_btls = i = 0; i < num_ias; i++) {
-        opal_output(0, "udapl creating btl for %s\n", datinfo[i].ia_name);
+        OPAL_OUTPUT((0, "udapl creating btl for %s\n", datinfo[i].ia_name));
 
         btl = malloc(sizeof(mca_btl_udapl_module_t));
         if(NULL == btl) {
@@ -355,9 +352,12 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 
 int mca_btl_udapl_component_progress()
 {
+    mca_btl_udapl_module_t* btl;
     static int32_t inprogress = 0;
+    DAT_EVENT event;
     int count = 0;
     size_t i;
+    int rc;
 
     /* prevent deadlock - only one thread should be 'progressing' at a time */
     if(OPAL_THREAD_ADD32(&inprogress, 1) > 1) {
@@ -365,14 +365,76 @@ int mca_btl_udapl_component_progress()
         return OMPI_SUCCESS;
     }
 
-    opal_output(0, "udapl_component_progress\n");
+    OPAL_OUTPUT((0, "udapl_component_progress\n"));
     
     /* check for work to do on each uDAPL btl */
-    for( i = 0; i < mca_btl_udapl_component.udapl_num_btls; ) {
-        mca_btl_udapl_module_t *btl = mca_btl_udapl_component.udapl_btls[i];
+    for(i = 0; i < mca_btl_udapl_component.udapl_num_btls; i++) {
+        btl = mca_btl_udapl_component.udapl_btls[i];
+        /* TODO - lock this properly */
 
-        /* TODO - check the DTO EVD for events */
-        i++;
+        /* Check DTO EVD */
+        while(DAT_SUCCESS ==
+                dat_evd_dequeue(btl->udapl_evd_dto, &event)) {
+            switch(event.event_number) {
+                case DAT_DTO_COMPLETION_EVENT:
+                    count++;
+                    break;
+                default:
+                    OPAL_OUTPUT((0, "WARNING unknown dto event: %d\n",
+                            event.event_number));
+            }
+        }
+
+        /* Check connection EVD */
+        while(DAT_SUCCESS ==
+                dat_evd_dequeue(btl->udapl_evd_conn, &event)) {
+            switch(event.event_number) {
+                case DAT_CONNECTION_REQUEST_EVENT:
+                    /* Accept a new connection */
+                    rc = dat_cr_accept(
+                            event.event_data.cr_arrival_event_data.cr_handle,
+                            DAT_HANDLE_NULL, 0, NULL);
+                    if(DAT_SUCCESS != rc) {
+                        mca_btl_udapl_error(rc, "dat_cr_accept");
+                    }
+
+                    count++;
+                    break;
+                case DAT_CONNECTION_EVENT_ESTABLISHED:
+                    /* TODO - at this point we have a uDPAL enpoint in
+                       event.event_data.connect_event_data.ep_handle,
+                       need to figure out how to tie back into the BTL */
+                    count++;
+                    break;
+                case DAT_CONNECTION_EVENT_PEER_REJECTED:
+                case DAT_CONNECTION_EVENT_NON_PEER_REJECTED:
+                case DAT_CONNECTION_EVENT_ACCEPT_COMPLETION_ERROR:
+                case DAT_CONNECTION_EVENT_DISCONNECTED:
+                case DAT_CONNECTION_EVENT_BROKEN:
+                case DAT_CONNECTION_EVENT_TIMED_OUT:
+                case DAT_CONNECTION_EVENT_UNREACHABLE:
+                    break;
+                default:
+                    OPAL_OUTPUT((0, "WARNING unknown conn event: %d\n",
+                            event.event_number));
+            }
+        }
+
+        /* Check async EVD */
+        while(DAT_SUCCESS ==
+                dat_evd_dequeue(btl->udapl_evd_async, &event)) {
+            switch(event.event_number) {
+                case DAT_ASYNC_ERROR_EVD_OVERFLOW:
+                case DAT_ASYNC_ERROR_IA_CATASTROPHIC:
+                case DAT_ASYNC_ERROR_EP_BROKEN:
+                case DAT_ASYNC_ERROR_TIMED_OUT:
+                case DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR:
+                    break;
+                default:
+                    OPAL_OUTPUT((0, "WARNING unknown async event: %d\n",
+                            event.event_number));
+            }
+        }
     }
 
     /* unlock and return */
