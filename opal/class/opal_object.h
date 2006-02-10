@@ -254,9 +254,7 @@ static inline opal_object_t *opal_obj_new_debug(size_t obj_size, opal_class_t* t
     do {                                                                \
         assert(NULL != object);                                         \
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
-        if (NULL != object) {                                           \
-            opal_obj_update((opal_object_t *) (object), 1);             \
-        }                                                               \
+        opal_obj_update((opal_object_t *) (object), 1);                 \
         assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
     } while (0)
 
@@ -310,17 +308,15 @@ do {                                                            \
     OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
 } while (0)
 
-#define OBJ_CONSTRUCT_INTERNAL(object, type)                            \
-    do {                                                                \
-        if (0 == (type)->cls_initialized) {                             \
-            opal_class_initialize((type));                              \
-        }                                                               \
-        if (NULL != object) {                                           \
-            ((opal_object_t *) (object))->obj_class = (type);           \
-            ((opal_object_t *) (object))->obj_reference_count = 1;      \
-            opal_obj_run_constructors((opal_object_t *) (object));      \
-        }                                                               \
-    } while (0)
+#define OBJ_CONSTRUCT_INTERNAL(object, type)                        \
+do {                                                                \
+    if (0 == (type)->cls_initialized) {                             \
+        opal_class_initialize((type));                              \
+    }                                                               \
+    ((opal_object_t *) (object))->obj_class = (type);               \
+    ((opal_object_t *) (object))->obj_reference_count = 1;          \
+    opal_obj_run_constructors((opal_object_t *) (object));          \
+} while (0)
 
 
 /**
@@ -328,13 +324,11 @@ do {                                                            \
  *
  * @param object        Pointer to the object
  */
-#define OBJ_DESTRUCT(object)                                            \
-    do {                                                                \
-        if (NULL != object) {                                           \
-            opal_obj_run_destructors((opal_object_t *) (object));       \
-            OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
-        }                                                               \
-    } while (0)
+#define OBJ_DESTRUCT(object)                                    \
+do {                                                            \
+    opal_obj_run_destructors((opal_object_t *) (object));       \
+    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
+} while (0)
 
 BEGIN_C_DECLS
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
@@ -378,17 +372,14 @@ END_C_DECLS
  */
 static inline void opal_obj_run_constructors(opal_object_t * object)
 {
-    opal_class_t *cls;
-    int i;
+    opal_construct_t* cls_construct;
 
-    assert(NULL != object);
     assert(NULL != object->obj_class);
 
-    cls = object->obj_class;
-    for (i = cls->cls_depth - 1; i >= 0; i--) {
-        if (cls->cls_construct_array[i]) {
-            (cls->cls_construct_array[i]) (object);
-        }
+    cls_construct = object->obj_class->cls_construct_array;
+    while( NULL != *cls_construct ) {
+        (*cls_construct)(object);
+        cls_construct++;
     }
 }
 
@@ -403,17 +394,14 @@ static inline void opal_obj_run_constructors(opal_object_t * object)
  */
 static inline void opal_obj_run_destructors(opal_object_t * object)
 {
-    opal_class_t *cls;
-    int i;
+    opal_destruct_t* cls_destruct;
 
-    assert(NULL != object);
     assert(NULL != object->obj_class);
 
-    cls = object->obj_class;
-    for (i = 0; i < cls->cls_depth; i++) {
-        if (cls->cls_destruct_array[i]) {
-            (cls->cls_destruct_array[i]) (object);
-        }
+    cls_destruct = object->obj_class->cls_destruct_array;
+    while( NULL != *cls_destruct ) {
+        (*cls_destruct)(object);
+        cls_destruct++;
     }
 }
 
@@ -460,11 +448,11 @@ static inline opal_object_t *opal_obj_new(size_t size, opal_class_t * cls)
 static inline int opal_obj_update(opal_object_t *object, int inc)
 {
 #if OMPI_HAVE_THREAD_SUPPORT
-    opal_atomic_add(&(object->obj_reference_count), inc );
+    return opal_atomic_add(&(object->obj_reference_count), inc );
 #else
     object->obj_reference_count += inc;
-#endif
     return object->obj_reference_count;
+#endif
 }
 
 
