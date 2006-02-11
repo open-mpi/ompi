@@ -32,6 +32,10 @@ version 1.0.
 - Fix a number of standard I/O forwarding issues, including the
   ability to background mpirun and a loss of data issue when
   redirecting mpirun's standard input from a file.
+- Fixed bug in ompi_info where rcache and bml MCA parameters would not
+  be displayed.
+- Fixed umask issues in the session directory.  Thanks to Glenn Morris
+  for reporting this to us.
 - Fixed tcsh-based LD_LIBRARY_PATH issues with --prefix.  Thanks to
   Glen Morris for identifying the problem and suggesting the fix.
 - Removed extraneous \n's when setting PATH and LD_LIBRARY_PATH in the
