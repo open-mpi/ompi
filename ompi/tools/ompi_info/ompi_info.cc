@@ -178,6 +178,8 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("io");
   ompi_info::mca_types.push_back("mpool");
   ompi_info::mca_types.push_back("pml");
+  ompi_info::mca_types.push_back("bml");
+  ompi_info::mca_types.push_back("rcache");
   ompi_info::mca_types.push_back("ptl");
   ompi_info::mca_types.push_back("btl");
   ompi_info::mca_types.push_back("topo");
