@@ -109,8 +109,6 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       struct iovec* iov, uint32_t* out_size,
                                       size_t* max_data, int32_t* freeAfter )
 {
-    const ompi_datatype_t *pData = pConv->pDesc;
-
     pConv->checksum = 1;
     /* protect against over unpacking data */
     if( pConv->flags & CONVERTOR_COMPLETED ) {
