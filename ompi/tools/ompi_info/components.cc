@@ -52,6 +52,10 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/bml/bml.h"
+#include "ompi/mca/bml/base/base.h"
+#include "ompi/mca/rcache/rcache.h"
+#include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/ptl/ptl.h"
 #include "ompi/mca/ptl/base/base.h"
 #include "ompi/mca/btl/btl.h"
@@ -228,11 +232,18 @@ void ompi_info::open_components()
   mca_io_base_open();
   component_map["io"] = &mca_io_base_components_opened;
 
+  mca_rcache_base_open();
+  component_map["rcache"] = &mca_bml_base_components_available;
+
   mca_mpool_base_open();
   component_map["mpool"] = &mca_mpool_base_components;
 
   mca_pml_base_open();
   component_map["pml"] = &mca_pml_base_components_available;
+
+  // No need to call the bml_base_open() because the ob1 pml calls it.
+  //mca_bml_base_open();
+  component_map["bml"] = &mca_bml_base_components_available;
 
   ompi_osc_base_open();
   component_map["osc"] = &ompi_osc_base_open_components;
@@ -268,6 +279,7 @@ void ompi_info::close_components()
         mca_btl_base_close();
         mca_pml_base_close();
         mca_mpool_base_close();
+        mca_rcache_base_close();
         mca_io_base_close();
         mca_coll_base_close();
         mca_allocator_base_close();
