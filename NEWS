@@ -23,6 +23,8 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed bug in ompi_info where rcache and bml MCA parameters would not
+  be displayed.
 - Fixed umask issues in the session directory.  Thanks to Glenn Morris
   for reporting this to us.
 - Fixed tcsh-based LD_LIBRARY_PATH issues with --prefix.  Thanks to
