@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"

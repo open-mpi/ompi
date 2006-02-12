@@ -18,7 +18,7 @@
 
 #include "orte_config.h"
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
@@ -508,7 +508,7 @@ int orte_gpr_base_open(void)
 
     /* Open up all available components */
 
-    if (OMPI_SUCCESS !=
+    if (ORTE_SUCCESS !=
         mca_base_components_open("gpr",
                                  orte_gpr_base_output,
                                  mca_gpr_base_static_components,

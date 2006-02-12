@@ -22,9 +22,9 @@
 #ifndef MCA_PML_TEG_RECVFRAG_H
 #define MCA_PML_TEG_RECVFRAG_H
 
-#include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_recvreq.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/pml/base/pml_base_recvreq.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
 
 /**
  * Called by the PTL to match attempt a match for new fragments.

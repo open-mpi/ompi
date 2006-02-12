@@ -20,10 +20,10 @@
 #ifndef ORTE_RAS_BASE_NODE_H
 #define ORTE_RAS_BASE_NODE_H
 
-#include "include/orte_types.h"
-#include "mca/soh/soh_types.h"
-#include "mca/rmgr/rmgr_types.h"
-#include "mca/ras/ras.h"
+#include "orte/orte_types.h"
+#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/rmgr/rmgr_types.h"
+#include "orte/mca/ras/ras.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

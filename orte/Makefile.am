@@ -19,8 +19,10 @@
 AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
 
 SUBDIRS = \
+	include \
 	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
 	$(MCA_orte_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
+	etc \
         . \
 	$(MCA_orte_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
@@ -55,7 +57,6 @@ else
 ortedir = $(includedir)
 endif
 
-include include/Makefile.am
 include class/Makefile.am
 include dss/Makefile.am
 include runtime/Makefile.am

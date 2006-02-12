@@ -61,9 +61,9 @@ MPITEST README for further details.
 
 #include "ompi_config.h"
 #include <stdbool.h>
-#include "datatype/datatype.h"
-#include "datatype/datatype_internal.h"
-#include "datatype/convertor.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/convertor.h"
 #include "mpitest_cfg.h"
 #include "mpitest.h"
 

@@ -22,7 +22,7 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 
 #include "orte/dss/dss.h"

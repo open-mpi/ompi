@@ -23,8 +23,8 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "mca/btl/btl.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/btl/btl.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

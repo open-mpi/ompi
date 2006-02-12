@@ -39,7 +39,7 @@
 #endif
 #include <limits.h>
 
-#include "include/types.h"
+#include "opal/types.h"
 #include "opal/class/opal_list.h"
 
 #define ORTE_NAME_ARGS(n) \

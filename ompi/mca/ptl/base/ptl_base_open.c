@@ -20,12 +20,13 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/constants.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/base.h"
 
 
 /*

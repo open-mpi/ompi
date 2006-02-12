@@ -18,11 +18,11 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "mpi/f77/fint_2_int.h"
-#include "datatype/datatype.h"
-#include "win/win.h"
-#include "communicator/communicator.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/fint_2_int.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/win/win.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_NULL_COPY_FN   = mpi_type_null_copy_fn_f

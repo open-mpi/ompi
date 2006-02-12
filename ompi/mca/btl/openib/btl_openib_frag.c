@@ -17,7 +17,7 @@
  */
 
 #include "btl_openib_frag.h" 
-#include "mca/mpool/openib/mpool_openib.h" 
+#include "ompi/mca/mpool/openib/mpool_openib.h" 
 
 
 

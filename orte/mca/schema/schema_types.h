@@ -20,7 +20,7 @@
 #define ORTE_SCHEMA_TYPES_H
 
 #include "orte_config.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 #include "opal/util/error.h"
 
 /*

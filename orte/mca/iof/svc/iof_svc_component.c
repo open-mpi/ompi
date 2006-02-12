@@ -16,13 +16,13 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-#include "util/proc_info.h"
+#include "orte_config.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/rml_types.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"
@@ -172,7 +172,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
         orte_iof_svc_proxy_recv,
         NULL
     );
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         opal_output(0, "orte_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }
@@ -188,5 +188,5 @@ orte_iof_svc_finalize(void)
 {
     orte_rml.del_exception_handler(orte_iof_svc_exception_handler);
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }

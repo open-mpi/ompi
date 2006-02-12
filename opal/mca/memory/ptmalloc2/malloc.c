@@ -1,11 +1,11 @@
 /********************** BEGIN OMPI CHANGES *****************************/
 #define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "opal/include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "opal/memoryhooks/memory_internal.h"
 
 /*

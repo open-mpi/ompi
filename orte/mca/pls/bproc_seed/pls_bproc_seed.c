@@ -18,7 +18,7 @@
  *
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
@@ -37,23 +37,23 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
-#include "util/proc_info.h"
+#include "orte/util/proc_info.h"
 #include "opal/event/event.h"
-#include "runtime/orte_wait.h"
-#include "runtime/runtime.h"
-#include "mca/ns/base/base.h"
-#include "mca/sds/base/base.h"
-#include "mca/pls/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/iof/iof.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/rml/rml.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/soh/soh.h"
-#include "mca/soh/base/base.h"
-#include "mca/ras/base/base.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
+#include "orte/runtime/orte_wait.h"
+#include "orte/runtime/runtime.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/pls/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
 
 #include "pls_bproc_seed.h"
 
@@ -84,7 +84,7 @@ static int orte_pls_bproc_nodelist(orte_rmaps_base_map_t* map, int** nodelist, s
     /* build the node list */
     *nodelist = (int*)malloc(sizeof(int) * count);
     if(NULL == *nodelist)
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
 
     for(item =  opal_list_get_first(&map->nodes);
         item != opal_list_get_end(&map->nodes);
@@ -93,7 +93,7 @@ static int orte_pls_bproc_nodelist(orte_rmaps_base_map_t* map, int** nodelist, s
         (*nodelist)[index++] = atol(node->node->node_name);
     }
     *num_nodes = count;
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 /*

@@ -19,9 +19,9 @@
 
 #include "ompi_config.h"
 
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype_internal.h"
 
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>

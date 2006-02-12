@@ -19,12 +19,12 @@
 
 #include <stdio.h>
 
-#include "include/orte_constants.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
 
-#include "mca/rds/resfile/rds_resfile.h"
+#include "orte/mca/rds/resfile/rds_resfile.h"
 
 #define ORTE_RDS_RESFILE_MAX_LINE_LENGTH 512
 

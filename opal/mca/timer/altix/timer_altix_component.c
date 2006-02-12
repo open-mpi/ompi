@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,7 +29,7 @@
 
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/altix/timer_altix.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 
 opal_timer_t opal_timer_altix_freq;
 opal_timer_t opal_timer_altix_usec_conv;

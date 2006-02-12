@@ -28,12 +28,12 @@
 #include "orte_config.h"
 
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "orte/util/proc_info.h"
 
-#include "mca/ns/ns_types.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
 
 int orte_gpr_replica_dump_local_triggers(int output_id)
 {

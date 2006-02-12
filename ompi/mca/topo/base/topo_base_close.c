@@ -20,11 +20,11 @@
 #include <stdio.h>
 
 #include "opal/util/output.h"
-#include "ompi/include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
+#include "ompi/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
 
 
 int mca_topo_base_close(void) 

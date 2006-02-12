@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -30,7 +30,7 @@
 #include <arpa/inet.h>
 #endif
 #include <string.h>
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/if.h"
 #include "oob_tcp.h"
 #include "oob_tcp_addr.h"
@@ -102,14 +102,14 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
 
     count = 1;
     rc = orte_dss.unpack(buffer, &addr->addr_name, &count, ORTE_NAME);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         OBJ_RELEASE(addr);
         return NULL;
     }
 
     count = 1;
     rc = orte_dss.unpack(buffer, &addr->addr_count, &count, ORTE_INT32);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         OBJ_RELEASE(addr);
         return NULL;
     }
@@ -125,7 +125,7 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
         for(i=0; i<addr->addr_count; i++) {
             size_t inaddr_size = sizeof(struct sockaddr_in);
             rc = orte_dss.unpack(buffer, addr->addr_inet+i, &inaddr_size, ORTE_BYTE);
-            if(rc != OMPI_SUCCESS) {
+            if(rc != ORTE_SUCCESS) {
                 OBJ_RELEASE(addr);
                 return NULL;
             }

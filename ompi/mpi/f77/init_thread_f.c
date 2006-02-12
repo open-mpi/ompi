@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
+#include "ompi/mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_INIT_THREAD = mpi_init_thread_f
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT_THREAD,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr )

@@ -22,10 +22,10 @@
   */
 #ifndef MCA_RCACHE_RB_TREE_H
 #define MCA_RCACHE_RB_TREE_H
-#include "mca/mca.h"
-#include "info/info.h"
+#include "opal/mca/mca.h"
+#include "ompi/info/info.h"
 #include "opal/class/opal_list.h" 
-#include "mca/mpool/mpool.h"
+#include "ompi/mca/mpool/mpool.h"
 #include "rcache_rb.h"
 /*
  * Data structures for the tree of allocated memory

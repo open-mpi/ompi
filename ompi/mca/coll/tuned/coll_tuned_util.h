@@ -22,11 +22,11 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "mca/mca.h"
-#include "datatype/datatype.h"
-#include "mca/coll/coll.h"
-#include "request/request.h"
-#include "mca/pml/pml.h"
+#include "opal/mca/mca.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/request/request.h"
+#include "ompi/mca/pml/pml.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -11,7 +11,7 @@
 
 #include "ompi_config.h"
 #include "pml_portals.h"
-#include "request/request.h"
+#include "ompi/request/request.h"
 
 int mca_pml_portals_irecv_init( void *addr,
                             size_t count,

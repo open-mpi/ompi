@@ -21,13 +21,13 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 #include "btl_openib_frag.h"
 #include "btl_openib.h"
 #include <errno.h> 
 #include <string.h> 
-#include "mca/btl/base/btl_base_error.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -31,10 +31,10 @@
 #ifndef OPAL_MCA_MEMORY_MEMORY_H
 #define OPAL_MCA_MEMORY_MEMORY_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 
 /**
  * Structure for memory v1.0.0 components.

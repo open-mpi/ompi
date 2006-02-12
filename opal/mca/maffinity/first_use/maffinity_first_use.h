@@ -26,7 +26,7 @@
 #ifndef MCA_MAFFINITY_FIRST_USE_EXPORT_H
 #define MCA_MAFFINITY_FIRST_USE_EXPORT_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/maffinity/maffinity.h"

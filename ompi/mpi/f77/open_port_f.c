@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
+#include "ompi/mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_OPEN_PORT = mpi_open_port_f
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OPEN_PORT,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr)

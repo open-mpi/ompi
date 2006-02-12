@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include "opal/util/numtostr.h"
 #include "opal/util/printf.h"
 #include <stdio.h>

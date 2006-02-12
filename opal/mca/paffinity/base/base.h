@@ -20,9 +20,9 @@
 #ifndef OPAL_PAFFINITY_BASE_H
 #define OPAL_PAFFINITY_BASE_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "mca/paffinity/paffinity.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 
 /*

@@ -22,13 +22,13 @@
  * Implementation of opal_object_t, the base opal foundation class
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 
-#include "opal/include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "opal/class/opal_object.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 /*
  * Instantiation of class descriptor for the base class.  This is
@@ -167,7 +167,7 @@ int opal_class_finalize(void)
         max_classes = 0;
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 

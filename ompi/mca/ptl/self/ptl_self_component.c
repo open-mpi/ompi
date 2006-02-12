@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #endif
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"

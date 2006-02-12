@@ -18,14 +18,14 @@
 
 #include "ompi_config.h"
 
-#include "mpi/c/bindings.h"
+#include "ompi/mpi/c/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Dims_create = PMPI_Dims_create
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Dims_create";

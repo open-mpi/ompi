@@ -30,12 +30,12 @@
 #include <sys/types.h>
 #endif
 
-#include "mca/gpr/gpr_types.h"
+#include "orte/mca/gpr/gpr_types.h"
 #include "opal/util/cmd_line.h"
 
-#include "runtime/runtime_types.h"
-#include "util/univ_info.h"
-#include "mca/ns/ns.h"
+#include "orte/runtime/runtime_types.h"
+#include "orte/util/univ_info.h"
+#include "orte/mca/ns/ns.h"
 
 /* constants for spawn constraints */
 
@@ -146,7 +146,7 @@ OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @param univ Pointer to universe info struct where any found info
      * is to be stored
      *
-     * @retval OMPI_SUCCESS Universe found and connection accepted
+     * @retval ORTE_SUCCESS Universe found and connection accepted
      * @retval OMPI_NO_CONNECTION_ALLOWED Universe found, but not persistent or
      * restricted to local scope
      * @retval OMPI_CONNECTION_FAILED Universe found, but connection attempt

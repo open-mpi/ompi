@@ -21,9 +21,9 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/mca.h"
-#include "mca/rmgr/base/base.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/rmgr/base/base.h"
 
 
 /*

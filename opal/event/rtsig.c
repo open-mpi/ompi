@@ -1,4 +1,4 @@
-#include "ompi_config.h"
+#include "opal_config.h"
 
 /* Enable F_SETSIG and F_SETOWN */
 #define _GNU_SOURCE

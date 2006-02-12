@@ -16,15 +16,15 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-#include "util/proc_info.h"
+#include "orte_config.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
-#include "mca/rml/rml.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/rml/rml.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "iof_null.h"
 
 /*
@@ -89,7 +89,7 @@ static int orte_iof_null_open(void)
         orte_iof_null_param_register_int("debug", 1);
     mca_iof_null_component.null_debug = 
         orte_iof_null_param_register_int("override", 0);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

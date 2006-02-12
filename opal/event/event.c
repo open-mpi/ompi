@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -63,7 +63,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"
 #include "opal/util/output.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #if defined(HAVE_SELECT) && HAVE_SELECT
 extern const struct opal_eventop opal_selectops;
@@ -249,7 +249,7 @@ opal_event_init(void)
 {
     int i;
     if(opal_event_inited++ != 0)
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
 
 #if OPAL_HAVE_WORKING_EVENTOPS
 
@@ -282,14 +282,14 @@ opal_event_init(void)
 #endif
 #endif /* HAVE_WORKING_EVENTOPS */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_event_fini(void)
 {
     opal_event_disable();
     opal_event_inited--;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_event_disable(void)
@@ -299,7 +299,7 @@ int opal_event_disable(void)
         opal_mutex_lock(&opal_event_lock);
         if(opal_event_inited > 0 && opal_event_enabled == false) {
             opal_mutex_unlock(&opal_event_lock);
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
 
         opal_event_enabled = false;
@@ -317,7 +317,7 @@ int opal_event_disable(void)
 #else
     opal_event_enabled = false;
 #endif
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_event_enable(void)
@@ -329,14 +329,14 @@ int opal_event_enable(void)
         opal_mutex_lock(&opal_event_lock);
         if(opal_event_inited > 0 && opal_event_enabled == true) {
             opal_mutex_unlock(&opal_event_lock);
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
 
         /* create a pipe to signal the event thread */
         if(pipe(opal_event_pipe) != 0) {
             opal_output(0, "opal_event_init: pipe() failed with errno=%d\n", errno);
             opal_mutex_unlock(&opal_event_lock);
-            return OMPI_ERROR;
+            return OPAL_ERROR;
         }
 
         opal_event_pipe_signalled = 1;
@@ -353,7 +353,7 @@ int opal_event_enable(void)
         OBJ_CONSTRUCT(&opal_event_thread, opal_thread_t);
         opal_event_enabled = true;
         opal_event_thread.t_run = opal_event_run;
-        if((rc = opal_thread_start(&opal_event_thread)) != OMPI_SUCCESS) {
+        if((rc = opal_thread_start(&opal_event_thread)) != OPAL_SUCCESS) {
             opal_mutex_unlock(&opal_event_lock);
             return rc;
         }
@@ -366,7 +366,7 @@ int opal_event_enable(void)
 #else
     opal_event_enabled = true;
 #endif
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_event_restart(void)
@@ -389,10 +389,10 @@ int opal_event_restart(void)
 
     opal_event_enable();
     if((rc = opal_evsignal_restart()) != 0)
-        return OMPI_ERROR;
-    return (OMPI_SUCCESS);
+        return OPAL_ERROR;
+    return (OPAL_SUCCESS);
 #else /* OPAL_HAVE_WORKING_EVENTOPS */
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -595,7 +595,7 @@ opal_event_add_i(struct opal_event *ev, struct timeval *tv)
     }
 #endif
 #else /* OPAL_HAVE_WORKING_EVENTOPS */
-    rc = OMPI_ERR_NOT_SUPPORTED;
+    rc = OPAL_ERR_NOT_SUPPORTED;
 #endif /* OPAL_HAVE_WORKING_EVENTOPS */
 
     return rc;
@@ -638,7 +638,7 @@ int opal_event_del_i(struct opal_event *ev)
     }
 #endif
 #else /* OPAL_HAVE_WORKING_EVENTOPS */
-    rc = OMPI_ERR_NOT_SUPPORTED;
+    rc = OPAL_ERR_NOT_SUPPORTED;
 #endif /* OPAL_HAVE_WORKING_EVENTOPS */
 
     return (rc);

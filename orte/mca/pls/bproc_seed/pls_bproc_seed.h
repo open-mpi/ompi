@@ -22,8 +22,8 @@
 #ifndef ORTE_PLS_BPROC_SEED_H_
 #define ORTE_PLS_BPROC_SEED_H_
 
-#include "ompi_config.h"
-#include "mca/pls/base/base.h"
+#include "orte_config.h"
+#include "orte/mca/pls/base/base.h"
 #include "opal/threads/condition.h"
 #include <sys/bproc.h>
 

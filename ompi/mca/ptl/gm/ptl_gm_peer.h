@@ -26,7 +26,7 @@
 #define MCA_PTL_GM_PEER_H
 
 #include "opal/class/opal_list.h"
-#include "include/types.h"
+#include "ompi/types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -141,10 +141,10 @@ typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
  * @param cbdata  A pointer-length field to be passed to func when it is
  *                invoked.
  *
- * @retval OMPI_SUCCESS The registration completed successfully.
+ * @retval OPAL_SUCCESS The registration completed successfully.
  * @retval OMPI_EXISTS  The function is already registered and will not
  *                      be registered again.
- * @retval OMPI_ERR_NOT_SUPPORTED There are no hooks available for 
+ * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be allocated
  */
 int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, 
@@ -161,10 +161,10 @@ int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func,
  * @param cbdata  A pointer-length field to be passed to func when it is
  *                invoked.
  *
- * @retval OMPI_SUCCESS The registration completed successfully.
+ * @retval OPAL_SUCCESS The registration completed successfully.
  * @retval OMPI_EXISTS  The function is already registered and will not
  *                      be registered again.
- * @retval OMPI_ERR_NOT_SUPPORTED There are no hooks available for 
+ * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be released
  */
 int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, 
@@ -178,8 +178,8 @@ int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func,
  *
  * @param func   Function pointer to registered callback to remove
  *
- * @retval OMPI_SUCCESS The function was successfully deregistered
- * @retval OMPI_ERR_NOT_FOUND The function was not previously registered
+ * @retval OPAL_SUCCESS The function was successfully deregistered
+ * @retval OPAL_ERR_NOT_FOUND The function was not previously registered
  */
 int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
 
@@ -191,8 +191,8 @@ int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
  *
  * @param func   Function pointer to registered callback to remove
  *
- * @retval OMPI_SUCCESS The function was successfully deregistered
- * @retval OMPI_ERR_NOT_FOUND The function was not previously registered
+ * @retval OPAL_SUCCESS The function was successfully deregistered
+ * @retval OPAL_ERR_NOT_FOUND The function was not previously registered
  */
 int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func);
 

@@ -23,8 +23,8 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "include/sys/atomic.h"
-#include "mca/mpool/mpool.h" 
+#include "opal/sys/atomic.h"
+#include "ompi/mca/mpool/mpool.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

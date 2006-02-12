@@ -19,7 +19,7 @@
 
 // do not include ompi_config.h because it kills the free/malloc defines
 #include "mpi.h"
-#include "mpi/cxx/mpicxx.h"
+#include "ompi/mpi/cxx/mpicxx.h"
 #include "opal/threads/mutex.h"
 
 //

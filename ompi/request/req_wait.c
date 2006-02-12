@@ -17,8 +17,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
-#include "request/request.h"
+#include "ompi/constants.h"
+#include "ompi/request/request.h"
 
 int ompi_request_poll_iterations = 20000;
 

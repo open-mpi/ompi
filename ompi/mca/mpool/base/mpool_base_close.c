@@ -20,11 +20,11 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/mpool/mpool.h"
-#include "mca/mpool/base/base.h"
+#include "ompi/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
 extern int mca_mpool_base_use_mem_hooks; 

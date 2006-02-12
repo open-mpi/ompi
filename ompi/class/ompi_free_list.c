@@ -18,8 +18,8 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_free_list.h"
-#include "include/sys/cache.h"
+#include "ompi/class/ompi_free_list.h"
+#include "opal/sys/cache.h"
 
 
 static void ompi_free_list_construct(ompi_free_list_t* fl);

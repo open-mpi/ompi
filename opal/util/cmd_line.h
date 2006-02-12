@@ -110,7 +110,7 @@
 #ifndef OPAL_CMD_LINE_H
 #define OPAL_CMD_LINE_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
@@ -248,7 +248,7 @@ extern "C" {
      * the options to be included in the resulting command line
      * handler.
      *
-     * @retval OMPI_SUCCESS Upon success.
+     * @retval OPAL_SUCCESS Upon success.
      *
      * This function takes a table of opal_cmd_line_init_t instances
      * to pre-seed an OPAL command line handle.  The last instance in
@@ -303,9 +303,9 @@ extern "C" {
      * @param num_params How many parameters this option takes.
      * @param dest Short string description of this option.
      *
-     * @retval OMPI_ERR_OUT_OF_RESOURCE If out of memory.
-     * @retval OMPI_ERR_BAD_PARAM If bad parameters passed.
-     * @retval OMPI_SUCCESS Upon success.
+     * @retval OPAL_ERR_OUT_OF_RESOURCE If out of memory.
+     * @retval OPAL_ERR_BAD_PARAM If bad parameters passed.
+     * @retval OPAL_SUCCESS Upon success.
      *
      * Adds a command line option to the list of options that a a OPAL
      * command line handle will accept.  The short_name may take the
@@ -433,7 +433,7 @@ extern "C" {
      *
      * @param cmd A pointer to the OPAL command line handle.
      *
-     * @retval OMPI_ERROR If cmd is NULL.
+     * @retval OPAL_ERROR If cmd is NULL.
      * @retval argc Number of arguments previously added to the handle.
      *
      * Arguments are added to the handle via the opal_cmd_line_parse()
@@ -526,8 +526,8 @@ extern "C" {
      * @param tailv Pointer to the output null-terminated argv of all
      * unprocessed arguments from the command line.
      *
-     * @retval OMPI_ERROR If cmd is NULL or otherwise invalid.
-     * @retval OMPI_SUCCESS Upon success.
+     * @retval OPAL_ERROR If cmd is NULL or otherwise invalid.
+     * @retval OPAL_SUCCESS Upon success.
      *
      * The "tail" is all the arguments on the command line that were
      * not processed for some reason.  Reasons for not processing

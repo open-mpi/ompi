@@ -16,9 +16,25 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
-headers += \
-        include/constants.h
+dist_noinst_HEADERS = \
+	opal_config_bottom.h \
+	opal_stdint.h
 
-include include/sys/Makefile.am
+nodist_noinst_HEADERS = \
+	opal_config.h
+
+headers = 
+
+if WANT_INSTALL_HEADERS 
+opaldir = $(includedir)/openmpi
+
+nobase_dist_opal_HEADERS = \
+	$(headers) \
+	$(dist_noinst_HEADERS)
+nobase_nodist_opal_HEADERS = $(nodist_noinst_HEADERS)
+else
+opaldir = $(includedir)
+endif
+
+include opal/Makefile.am

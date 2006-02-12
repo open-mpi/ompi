@@ -68,7 +68,7 @@
 
 #if OMPI_ENABLE_DEBUG
 /* Need atomics for debugging (reference counting) */
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "opal/threads/mutex.h"
 #endif
 

@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <pwd.h>
 #include <grp.h>
@@ -25,15 +25,15 @@
 #include <unistd.h>
 #endif
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
-#include "util/proc_info.h"
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/gpr/base/base.h"
-#include "mca/soh/base/base.h"
-#include "mca/soh/bproc/soh_bproc.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/soh/bproc/soh_bproc.h"
 #include "opal/util/output.h"
 
 #define BIT_MASK(bit)		(bit_set)(1 << (bit))

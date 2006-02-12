@@ -19,9 +19,9 @@
 #ifndef MCA_BTL_IB_PROC_H
 #define MCA_BTL_IB_PROC_H
 
-#include "mca/ns/ns.h"
+#include "orte/mca/ns/ns.h"
 #include "opal/class/opal_object.h"
-#include "proc/proc.h"
+#include "ompi/proc/proc.h"
 #include "btl_mvapi.h"
 #include "btl_mvapi_endpoint.h"
 

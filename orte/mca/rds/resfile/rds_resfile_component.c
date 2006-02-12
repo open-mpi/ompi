@@ -17,12 +17,12 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "util/proc_info.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
-#include "mca/rds/resfile/rds_resfile.h"
+#include "orte/mca/rds/resfile/rds_resfile.h"
 
 /*
  * Local functions

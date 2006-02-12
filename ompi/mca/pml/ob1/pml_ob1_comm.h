@@ -23,9 +23,9 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/mca/ptl/ptl.h"
 #include "opal/class/opal_list.h"
-#include "proc/proc.h"
+#include "ompi/proc/proc.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

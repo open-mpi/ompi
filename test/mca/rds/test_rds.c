@@ -32,9 +32,9 @@
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 
-#include "mca/gpr/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/rds/base/base.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/rds/base/base.h"
 
 /* output files needed by the test */
 static FILE *test_out=NULL;

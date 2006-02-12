@@ -20,9 +20,9 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "runtime/opal.h"
-#include "runtime/runtime.h"
+#include "orte/orte_constants.h"
+#include "opal/runtime/opal.h"
+#include "orte/runtime/runtime.h"
 
 /**
  * Leave ORTE.

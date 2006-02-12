@@ -30,20 +30,20 @@
 #include <sys/time.h>
 #endif
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "util/univ_info.h"
-#include "util/sys_info.h"
-#include "util/proc_info.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
-#include "util/session_dir.h"
-#include "util/universe_setup_file_io.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/universe_setup_file_io.h"
 
-#include "mca/rml/rml.h"
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 
 
 static struct timeval ompi_rte_ping_wait = {2, 0};

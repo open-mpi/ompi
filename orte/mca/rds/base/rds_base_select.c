@@ -19,12 +19,12 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "mca/rds/base/base.h"
+#include "orte/mca/rds/base/base.h"
 
 
 OBJ_CLASS_INSTANCE(orte_rds_base_selected_t,

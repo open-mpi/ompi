@@ -23,7 +23,7 @@
 
 #include <sys/types.h>
 #include "ompi_config.h"
-#include "class/ompi_free_list.h"
+#include "ompi/class/ompi_free_list.h"
 #include "btl_self.h"
 
 

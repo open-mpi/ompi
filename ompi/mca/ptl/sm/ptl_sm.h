@@ -30,15 +30,15 @@
 #include <netinet/in.h>
 #endif
 
-#include "class/ompi_free_list.h"
-#include "class/ompi_bitmap.h"
-#include "class/ompi_fifo.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/class/ompi_bitmap.h"
+#include "ompi/class/ompi_fifo.h"
 #include "opal/event/event.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/mpool/mpool.h"
-#include "mca/common/sm/common_sm_mmap.h"
-#include "mca/ptl/sm/ptl_sm_peer.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/ptl/sm/ptl_sm_peer.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

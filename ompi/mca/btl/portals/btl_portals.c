@@ -23,10 +23,10 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/convertor.h"
 
 #include "btl_portals.h"

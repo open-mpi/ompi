@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -33,10 +33,10 @@
 #include <netinet/in.h>
 #endif
 #include "opal/util/output.h"
-#include "mca/oob/base/base.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
-#include "mca/iof/base/iof_base_fragment.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/iof/base/iof_base_fragment.h"
 
 /**
  * timer callback out of the event loop
@@ -116,6 +116,6 @@ int orte_iof_base_flush(void)
     orte_iof_base.iof_waiting--;
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     OPAL_THREAD_ADD32(&lock,-1);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

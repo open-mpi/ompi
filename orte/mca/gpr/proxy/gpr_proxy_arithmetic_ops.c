@@ -27,16 +27,16 @@
  */
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "dss/dss_types.h"
+#include "orte/orte_constants.h"
+#include "orte/dss/dss_types.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
-#include "util/proc_info.h"
+#include "orte/util/proc_info.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns_types.h"
-#include "mca/oob/oob_types.h"
-#include "mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/oob/oob_types.h"
+#include "orte/mca/rml/rml.h"
 
 #include "gpr_proxy.h"
 

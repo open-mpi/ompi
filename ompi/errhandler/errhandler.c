@@ -18,12 +18,12 @@
 
 #include "ompi_config.h"
 
-#include "communicator/communicator.h"
-#include "win/win.h"
-#include "file/file.h"
-#include "errhandler/errhandler.h"
-#include "errhandler/errhandler_predefined.h"
-#include "class/ompi_pointer_array.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/win/win.h"
+#include "ompi/file/file.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/errhandler/errhandler_predefined.h"
+#include "ompi/class/ompi_pointer_array.h"
 
 
 /*

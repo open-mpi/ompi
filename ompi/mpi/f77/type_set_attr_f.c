@@ -18,9 +18,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "attribute/attribute.h"
-#include "datatype/datatype.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_SET_ATTR = mpi_type_set_attr_f
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_ATTR,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr)

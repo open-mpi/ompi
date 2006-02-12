@@ -21,10 +21,10 @@
 #ifndef OMPI_PML_UNIQ_SEND_REQUEST_H
 #define OMPI_PML_UNIQ_SEND_REQUEST_H
 
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/ptl/base/ptl_base_comm.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_comm.h"
 #include "pml_uniq_proc.h"
 #include "pml_uniq_ptl.h"
 

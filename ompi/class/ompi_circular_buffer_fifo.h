@@ -19,9 +19,9 @@
 #ifndef _OMPI_CIRCULAR_BUFFER_FIFO
 #define _OMPI_CIRCULAR_BUFFER_FIFO
 
-#include "ompi/include/constants.h"
-#include "opal/include/sys/cache.h"
-#include "opal/include/sys/atomic.h"
+#include "ompi/constants.h"
+#include "opal/sys/cache.h"
+#include "opal/sys/atomic.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "opal/util/pow2.h"
 

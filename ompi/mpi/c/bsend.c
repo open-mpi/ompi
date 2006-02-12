@@ -18,16 +18,16 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi/c/bindings.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_bsend.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Bsend = PMPI_Bsend
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Bsend";

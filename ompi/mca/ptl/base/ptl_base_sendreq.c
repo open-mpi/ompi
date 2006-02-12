@@ -1,4 +1,4 @@
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 
 
 OBJ_CLASS_INSTANCE(

@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include "opal/util/output.h"
 #include "allocator_basic.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 
 
 

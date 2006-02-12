@@ -17,11 +17,11 @@
  */
                                                                                                                  
                                                                                                                  
-#include "ompi_config.h"
-#include "include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/oob/oob.h"
+#include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/oob/oob.h"
 
 
 OBJ_CLASS_INSTANCE(

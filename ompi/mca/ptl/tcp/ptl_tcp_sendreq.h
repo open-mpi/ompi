@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #endif
 #include "ompi_config.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_tcp_sendfrag.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

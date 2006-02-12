@@ -22,7 +22,7 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -30,15 +30,15 @@
 #endif
 #include <ctype.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
 #include "opal/util/show_help.h"
-#include "mca/pls/pls.h"
-#include "mca/pls/rsh/pls_rsh.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/rml/rml.h"
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/rsh/pls_rsh.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/rml/rml.h"
 
 extern char **environ;
 

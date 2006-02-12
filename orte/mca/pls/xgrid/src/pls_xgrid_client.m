@@ -14,25 +14,18 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
- *
- * These symbols are in a file by themselves to provide nice linker
- * semantics.  Since linkers generally pull in symbols by object
- * files, keeping these symbols as the only symbols in this file
- * prevents utility programs such as "ompi_info" from having to import
- * entire components just to query their version and parameters.
  */
 
-#import "ompi_config.h"
+#import "orte_config.h"
 
 #import <stdio.h>
 
-#import "mca/pls/base/base.h"
-#import "include/orte_constants.h"
-#import "include/constants.h"
-#import "mca/ns/ns.h"
-#import "mca/ras/base/ras_base_node.h"
-#import "mca/gpr/gpr.h"
-#import "mca/rml/rml.h"
+#import "orte/mca/pls/base/base.h"
+#import "orte/orte_constants.h"
+#import "orte/mca/ns/ns.h"
+#import "orte/mca/ras/base/ras_base_node.h"
+#import "orte/mca/gpr/gpr.h"
+#import "orte/mca/rml/rml.h"
 #import "opal/util/path.h"
 
 #import "pls_xgrid_client.h"

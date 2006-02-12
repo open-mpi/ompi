@@ -19,12 +19,12 @@
 #include "ompi_config.h"
 #include <string.h>
 #include "opal/util/output.h"
-#include "mca/mpool/openib/mpool_openib.h"
+#include "ompi/mca/mpool/openib/mpool_openib.h"
 #include <infiniband/verbs.h> 
 #include <errno.h> 
 #include <string.h> 
-#include "mca/rcache/rcache.h"
-#include "mca/rcache/base/base.h"
+#include "ompi/mca/rcache/rcache.h"
+#include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
 
 extern uint32_t mca_mpool_base_page_size;

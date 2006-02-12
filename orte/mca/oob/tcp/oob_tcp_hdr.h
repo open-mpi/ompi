@@ -23,7 +23,7 @@
 #ifndef _MCA_OOB_TCP_HDR_H_
 #define _MCA_OOB_TCP_HDR_H_
 
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 #define MCA_OOB_TCP_PROBE    1
 #define MCA_OOB_TCP_CONNECT  2

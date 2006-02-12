@@ -15,7 +15,7 @@
  */
 
 #include "orte_config.h"
-#include "orte/include/orte_types.h"
+#include "orte/orte_types.h"
 
 #include "opal/util/output.h"
 

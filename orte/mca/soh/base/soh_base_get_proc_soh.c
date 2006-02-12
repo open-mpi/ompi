@@ -25,13 +25,13 @@
 
 #include <string.h>
 
-#include "mca/schema/schema.h"
+#include "orte/mca/schema/schema.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/gpr/gpr.h"
-#include "mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/ns/ns.h"
 
-#include "mca/soh/base/base.h"
+#include "orte/mca/soh/base/base.h"
 
 int orte_soh_base_get_proc_soh(orte_proc_state_t *state,
                                int *exit_status,

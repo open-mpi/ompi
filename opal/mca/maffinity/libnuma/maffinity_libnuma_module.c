@@ -16,12 +16,12 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <string.h>
 #include <numa.h>
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "maffinity_libnuma.h"

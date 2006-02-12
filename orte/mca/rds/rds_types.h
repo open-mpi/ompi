@@ -19,8 +19,8 @@
 #include "orte_config.h"
 
 #include "opal/class/opal_list.h"
-#include "mca/gpr/gpr_types.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/gpr/gpr_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 #ifndef ORTE_MCA_RDS_TYPES_H
 #define ORTE_MCA_RDS_TYPES_H

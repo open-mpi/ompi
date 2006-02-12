@@ -27,10 +27,10 @@
  */
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/trace.h"
 
-#include "class/orte_pointer_array.h"
+#include "orte/class/orte_pointer_array.h"
 
 #include "gpr_replica_api.h"
 

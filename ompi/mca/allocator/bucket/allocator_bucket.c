@@ -17,11 +17,11 @@
  */
 
 #include "ompi_config.h"
-#include "mca/allocator/allocator.h"
-#include "ompi/include/constants.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/allocator/bucket/allocator_bucket_alloc.h"
-#include "mca/mpool/mpool.h" 
+#include "ompi/mca/allocator/allocator.h"
+#include "ompi/constants.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/allocator/bucket/allocator_bucket_alloc.h"
+#include "ompi/mca/mpool/mpool.h" 
 
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool enable_mpi_threads,

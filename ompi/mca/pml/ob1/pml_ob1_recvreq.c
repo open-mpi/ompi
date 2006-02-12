@@ -18,17 +18,17 @@
 
 #include "ompi_config.h"
 
-#include "mca/pml/pml.h"
-#include "mca/bml/bml.h" 
-#include "mca/btl/btl.h"
-#include "mca/mpool/mpool.h" 
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/bml/bml.h" 
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/mpool/mpool.h" 
 #include "pml_ob1_comm.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_recvfrag.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_rdmafrag.h"
-#include "mca/bml/base/base.h" 
-#include "mca/errmgr/errmgr.h"
+#include "ompi/mca/bml/base/base.h" 
+#include "orte/mca/errmgr/errmgr.h"
                                                                                                                
 static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     mca_pml_ob1_recv_request_t* request, mca_pml_ob1_comm_proc_t* proc);

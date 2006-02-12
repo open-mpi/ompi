@@ -23,8 +23,8 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "mca/topo/topo.h"
-#include "proc/proc.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/proc/proc.h"
 
 /*
  * All stuff goes in here

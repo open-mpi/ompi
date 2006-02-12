@@ -16,10 +16,10 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "include/sys/atomic.h"
-#include "include/sys/architecture.h"
+#include "opal/sys/atomic.h"
+#include "opal/sys/architecture.h"
 
 #if OMPI_ASSEMBLY_ARCH == OMPI_SPARC
 

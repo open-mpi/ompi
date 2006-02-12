@@ -18,10 +18,10 @@
  */
 
 #include "ompi_config.h"
-#include "datatype/datatype.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 #include "limits.h"
-#include "attribute/attribute.h"
+#include "ompi/attribute/attribute.h"
 
 static void __get_free_dt_struct( ompi_datatype_t* pData )
 {

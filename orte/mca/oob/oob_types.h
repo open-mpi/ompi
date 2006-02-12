@@ -24,10 +24,10 @@
 #define _MCA_OOB_TYPES_H_
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include <limits.h>
 
-#include "mca/rml/rml_types.h"
+#include "orte/mca/rml/rml_types.h"
 /*
  * Other constants
  */

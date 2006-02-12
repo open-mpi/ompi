@@ -20,12 +20,12 @@
 
 #include <stdio.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 
-#include "mca/rmaps/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
 
 
 int orte_rmaps_base_finalize(void)

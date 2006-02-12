@@ -23,7 +23,7 @@
 #ifndef ORTE_RAS_DASH_HOST_H
 #define ORTE_RAS_DASH_HOST_H
 
-#include "mca/ras/ras.h"
+#include "orte/mca/ras/ras.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

@@ -34,10 +34,10 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
-#include "errhandler/errhandler.h"
-#include "proc/proc.h"
-#include "info/info.h"
-#include "ompi/include/constants.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/proc/proc.h"
+#include "ompi/info/info.h"
+#include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 
 #include "orte/util/proc_info.h"
@@ -49,7 +49,7 @@
 #include "orte/mca/soh/soh_types.h"
 #include "orte/mca/rml/rml.h"
 
-#include "runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 
 extern char **environ;
 

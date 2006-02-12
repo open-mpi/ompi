@@ -21,11 +21,11 @@
   */
 #ifndef MCA_RCACHE_RB_H
 #define MCA_RCACHE_RB_H
-#include "mca/mca.h"
-#include "info/info.h"
+#include "opal/mca/mca.h"
+#include "ompi/info/info.h"
 #include "opal/class/opal_list.h" 
-#include "class/ompi_rb_tree.h"
-#include "mca/rcache/rcache.h"
+#include "ompi/class/ompi_rb_tree.h"
+#include "ompi/mca/rcache/rcache.h"
 
 
 struct mca_rcache_rb_module_t { 

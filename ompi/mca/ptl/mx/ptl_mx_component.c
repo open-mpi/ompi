@@ -16,7 +16,7 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/base/mca_base_param.h"

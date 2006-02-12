@@ -35,26 +35,26 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
-#include "ompi/include/constants.h"
-#include "include/sys/cache.h"
+#include "ompi/constants.h"
+#include "opal/sys/cache.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "util/sys_info.h"
-#include "util/proc_info.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/ptl/sm/ptl_sm.h"
-#include "mca/mpool/base/base.h"
-#include "mca/oob/base/base.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/ptl/sm/ptl_sm.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "orte/mca/oob/base/base.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendreq.h"
 #include "ptl_sm_sendfrag.h"
 #include "ptl_sm_recvfrag.h"
-#include "mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm_mmap.h"
 
 
 /*

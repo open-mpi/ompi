@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -26,7 +26,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param_internal.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 #include "opal/util/keyval_parse.h"
 
 static void save_value(const char *name, const char *value);

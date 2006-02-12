@@ -18,10 +18,10 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 
 int orte_register_params(bool infrastructure)
 {

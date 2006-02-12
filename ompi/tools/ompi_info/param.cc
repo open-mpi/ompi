@@ -36,8 +36,8 @@
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "opal/memoryhooks/memory.h"
-#include "mca/base/mca_base_param.h"
-#include "tools/ompi_info/ompi_info.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 
 using namespace std;
 using namespace ompi_info;

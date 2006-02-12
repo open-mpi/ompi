@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mpi/c/bindings.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/errhandler/errcode.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -27,7 +27,7 @@
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Add_error_code";

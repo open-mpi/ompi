@@ -80,7 +80,7 @@
 
 #include "mpi.h"
 
-#include "attribute/attribute.h"
+#include "ompi/attribute/attribute.h"
 
 #include "ompi/errhandler/errclass.h"
 #include "ompi/communicator/communicator.h"

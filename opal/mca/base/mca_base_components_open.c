@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 struct component_name_t {
   opal_list_item_t super;
@@ -109,16 +109,16 @@ int mca_base_components_open(const char *type_name, int output_id,
 
   /* Find and load all available components */
 
-  if (OMPI_SUCCESS != 
+  if (OPAL_SUCCESS != 
       mca_base_component_find(NULL, type_name, static_components,
                               &components_found, open_dso_components)) {
-    return OMPI_ERROR;
+    return OPAL_ERROR;
   }
 
   /* See if one or more specific components were requested */
 
   ret = parse_requested(param_type, &include_mode, &requested_component_names);
-  if (OMPI_SUCCESS == ret) {
+  if (OPAL_SUCCESS == ret) {
       ret = distill(include_mode, type_name, output_id, &components_found,
                     &components_distilled, requested_component_names);
       distilled = true;
@@ -126,7 +126,7 @@ int mca_base_components_open(const char *type_name, int output_id,
 
   /* Now open whatever we have left */
 
-  if (OMPI_SUCCESS == ret) {
+  if (OPAL_SUCCESS == ret) {
       ret = open_components(type_name, output_id,
                             &components_distilled, components_available);
   }
@@ -167,11 +167,11 @@ static int parse_requested(int mca_param, bool *include_mode,
 
   /* See if the user requested anything */
 
-  if (OMPI_ERROR == mca_base_param_lookup_string(mca_param, &requested)) {
-    return OMPI_ERROR;
+  if (OPAL_ERROR == mca_base_param_lookup_string(mca_param, &requested)) {
+    return OPAL_ERROR;
   }
   if (NULL == requested || 0 == strlen(requested)) {
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
   }
   *requested_component_names = opal_argv_split(requested, ',');
 
@@ -189,7 +189,7 @@ static int parse_requested(int mca_param, bool *include_mode,
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 
@@ -220,7 +220,7 @@ static int distill(bool include_mode, const char *type_name,
                             "mca: base: components_open: "
                             "accepting all %s components", type_name);
         opal_list_join(dest, opal_list_get_end(dest), src);
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Are we including components? */
@@ -305,7 +305,7 @@ static int distill(bool include_mode, const char *type_name,
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -401,7 +401,7 @@ static int open_components(const char *type_name, int output_id,
            opened_components list */
         
         else {
-            if (OMPI_ERROR == mca_base_param_find(type_name, 
+            if (OPAL_ERROR == mca_base_param_find(type_name, 
                                                   component->mca_component_name,
                                                   "priority")) {
                 mca_base_param_register_int(type_name,
@@ -411,7 +411,7 @@ static int open_components(const char *type_name, int output_id,
             
             cli = OBJ_NEW(mca_base_component_list_item_t);
             if (NULL == cli) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                return OPAL_ERR_OUT_OF_RESOURCE;
             }
             cli->cli_component = component;
             opal_list_append(dest, (opal_list_item_t *) cli);
@@ -420,5 +420,5 @@ static int open_components(const char *type_name, int output_id,
     
     /* All done */
     
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }

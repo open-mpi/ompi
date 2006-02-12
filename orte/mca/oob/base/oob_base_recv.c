@@ -17,14 +17,14 @@
  */
 
 
-#include "ompi_config.h"
-#include "include/constants.h"
+#include "orte_config.h"
+#include "orte/orte_constants.h"
 
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
-#include "dss/dss.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif

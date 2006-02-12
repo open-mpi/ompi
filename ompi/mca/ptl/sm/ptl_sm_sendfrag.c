@@ -19,8 +19,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
-#include "include/types.h"
-#include "datatype/datatype.h"
+#include "ompi/types.h"
+#include "ompi/datatype/datatype.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendfrag.h"
 

@@ -16,13 +16,13 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <mach/mach_time.h>
 
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/darwin/timer_darwin.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 
 opal_timer_t opal_timer_darwin_freq;
 

@@ -50,7 +50,7 @@
 #ifndef OPAL_CONVERT_H
 #define OPAL_CONVERT_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 /**
  * Convert a size_t to an int.
@@ -68,7 +68,7 @@
  * returned.
  *
  * On platforms where sizeof(size_t) <= sizeof(int), this function
- * will aways return OMPI_SUCCESS.
+ * will aways return OPAL_SUCCESS.
  */
 int opal_size2int(size_t in, int *out, bool want_check);
 

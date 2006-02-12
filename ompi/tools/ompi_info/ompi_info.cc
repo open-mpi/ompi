@@ -37,14 +37,14 @@
 #include <errno.h>
 
 #include "opal/class/opal_object.h"
-#include "runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 #include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
-#include "communicator/communicator.h"
-#include "mca/base/base.h"
-#include "tools/ompi_info/ompi_info.h"
+#include "ompi/communicator/communicator.h"
+#include "opal/mca/base/base.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 #include "opal/threads/mutex.h"
 
 using namespace std;

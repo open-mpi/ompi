@@ -38,7 +38,7 @@
  *
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <stdarg.h>

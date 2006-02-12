@@ -23,12 +23,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "dss/dss.h"
+#include "orte/dss/dss.h"
 #include "opal/threads/mutex.h"
 
 #include "opal/util/output.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/base/base.h"
 #include "ns_replica.h"
 
 /**

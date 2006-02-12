@@ -16,15 +16,15 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 
-#include "include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 
 
 int mca_oob_base_close(void)
@@ -55,6 +55,6 @@ int mca_oob_base_close(void)
     free(mca_oob_base_exclude);
 
   /* All done */
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }
 

@@ -21,8 +21,8 @@
 #ifndef MCA_PTL_BASE_SEND_REQUEST_H
 #define MCA_PTL_BASE_SEND_REQUEST_H
 
-#include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

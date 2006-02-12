@@ -16,7 +16,7 @@
  $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include "win32/ompi_process.h"
 
 pid_t waitpid(pid_t pid, int *status, int options) {

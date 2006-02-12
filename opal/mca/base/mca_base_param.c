@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,14 +28,14 @@
 #if 0
 /* JMS commented out for now -- see lookup_keyvals() below for an
    explanation */
-#include "attribute/attribute.h"
+#include "ompi/attribute/attribute.h"
 #endif
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/mca_base_param_internal.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 
 /*
@@ -149,7 +149,7 @@ int mca_base_param_init(void)
         free(new_files);
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -328,12 +328,12 @@ int mca_base_param_kv_associate(int index, int keyval)
   mca_base_param_t *array;
 
   if (!initialized) {
-    return OMPI_ERROR;
+    return OPAL_ERROR;
   }
 
   len = opal_value_array_get_size(&mca_base_params);
   if (((size_t) index) > len) {
-    return OMPI_ERROR;
+    return OPAL_ERROR;
   }
 
   /* We have a valid entry (remember that we never delete MCA
@@ -345,7 +345,7 @@ int mca_base_param_kv_associate(int index, int keyval)
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 
@@ -358,9 +358,9 @@ int mca_base_param_lookup_int(int index, int *value)
   
   if (param_lookup(index, &storage, NULL)) {
     *value = storage.intval;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
   }
-  return OMPI_ERROR;
+  return OPAL_ERROR;
 }
 
 
@@ -374,9 +374,9 @@ int mca_base_param_kv_lookup_int(int index, opal_hash_table_t *attrs,
   
   if (param_lookup(index, &storage, attrs)) {
     *value = storage.intval;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
   }
-  return OMPI_ERROR;
+  return OPAL_ERROR;
 }
 
 
@@ -390,7 +390,7 @@ int mca_base_param_set_int(int index, int value)
     mca_base_param_unset(index);
     storage.intval = value;
     param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_INT);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -403,9 +403,9 @@ int mca_base_param_lookup_string(int index, char **value)
   
   if (param_lookup(index, &storage, NULL)) {
     *value = storage.stringval;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
   }
-  return OMPI_ERROR;
+  return OPAL_ERROR;
 }
 
 
@@ -419,9 +419,9 @@ int mca_base_param_kv_lookup_string(int index, opal_hash_table_t *attrs,
   
   if (param_lookup(index, &storage, attrs)) {
     *value = storage.stringval;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
   }
-  return OMPI_ERROR;
+  return OPAL_ERROR;
 }
 
 
@@ -435,7 +435,7 @@ int mca_base_param_set_string(int index, char *value)
     mca_base_param_unset(index);
     storage.stringval = strdup(value);
     param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_STRING);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -448,12 +448,12 @@ int mca_base_param_unset(int index)
     mca_base_param_t *array;
 
     if (!initialized) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     len = opal_value_array_get_size(&mca_base_params);
     if (((size_t) index) > len) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     /* We have a valid entry (remember that we never delete MCA
@@ -472,7 +472,7 @@ int mca_base_param_unset(int index)
   
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -493,7 +493,7 @@ char *mca_base_param_environ_variable(const char *type,
     }
 
     id = mca_base_param_find(type, component, param);
-    if (OMPI_ERROR != id) {
+    if (OPAL_ERROR != id) {
         array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
         ret = strdup(array[id].mbp_env_var_name);
     } else {
@@ -540,7 +540,7 @@ int mca_base_param_find(const char *type_name, const char *component_name,
   /* Check for bozo cases */
 
   if (!initialized) {
-    return OMPI_ERROR;
+    return OPAL_ERROR;
   }
 
   /* Loop through looking for a parameter of a given
@@ -564,7 +564,7 @@ int mca_base_param_find(const char *type_name, const char *component_name,
 
   /* Didn't find it */
 
-  return OMPI_ERROR;
+  return OPAL_ERROR;
 }
 
 
@@ -576,12 +576,12 @@ int mca_base_param_set_internal(int index, bool internal)
     /* Check for bozo cases */
     
     if (!initialized) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     len = opal_value_array_get_size(&mca_base_params);
     if (((size_t) index) > len) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     /* We have a valid entry (remember that we never delete MCA
@@ -593,7 +593,7 @@ int mca_base_param_set_internal(int index, bool internal)
   
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -609,11 +609,11 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
     /* Check for bozo cases */
     
     if (!initialized) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     if (NULL == info) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
     *info = OBJ_NEW(opal_list_t);
 
@@ -639,7 +639,7 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -656,7 +656,7 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
     /* Check for bozo cases */
     
     if (!initialized) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     /* Iterate through all the registered parameters */
@@ -690,7 +690,7 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 
     /* Error condition */
 
@@ -700,7 +700,7 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
         *num_env = 0;
         *env = NULL;
     }
-    return OMPI_ERR_NOT_FOUND;
+    return OPAL_ERR_NOT_FOUND;
 }
 
 
@@ -718,7 +718,7 @@ int mca_base_param_dump_release(opal_list_t *info)
     }
     OBJ_RELEASE(info);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -753,7 +753,7 @@ int mca_base_param_finalize(void)
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -804,7 +804,7 @@ static int read_files(char *file_list)
     }
     opal_argv_free(files);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -849,14 +849,14 @@ static int param_register(const char *type_name,
       param.mbp_type_name = strdup(type_name);
       if (NULL == param.mbp_type_name) {
           OBJ_DESTRUCT(&param);
-          return OMPI_ERR_OUT_OF_RESOURCE;
+          return OPAL_ERR_OUT_OF_RESOURCE;
       }
   }
   if (NULL != component_name) {
       param.mbp_component_name = strdup(component_name);
       if (NULL == param.mbp_component_name) {
           OBJ_DESTRUCT(&param);
-          return OMPI_ERR_OUT_OF_RESOURCE;
+          return OPAL_ERR_OUT_OF_RESOURCE;
       }
   }
   param.mbp_param_name = NULL;
@@ -864,7 +864,7 @@ static int param_register(const char *type_name,
       param.mbp_param_name = strdup(param_name);
       if (NULL == param.mbp_param_name) {
           OBJ_DESTRUCT(&param);
-          return OMPI_ERR_OUT_OF_RESOURCE;
+          return OPAL_ERR_OUT_OF_RESOURCE;
       }
   }
 
@@ -883,7 +883,7 @@ static int param_register(const char *type_name,
   param.mbp_full_name = malloc(len);
   if (NULL == param.mbp_full_name) {
       OBJ_DESTRUCT(&param);
-      return OMPI_ERROR;
+      return OPAL_ERROR;
   }
   
   /* Copy the name over in parts */
@@ -911,7 +911,7 @@ static int param_register(const char *type_name,
   param.mbp_env_var_name = malloc(len);
   if (NULL == param.mbp_env_var_name) {
     OBJ_DESTRUCT(&param);
-    return OMPI_ERROR;
+    return OPAL_ERROR;
   }
   snprintf(param.mbp_env_var_name, len, "%s%s", mca_prefix, 
            param.mbp_full_name);
@@ -1098,7 +1098,7 @@ static int param_register(const char *type_name,
       
       if (NULL != current_value) {
           if (!param_lookup(i, current_value, NULL)) {
-              return OMPI_ERR_NOT_FOUND;
+              return OPAL_ERR_NOT_FOUND;
           }
       }
 
@@ -1110,7 +1110,7 @@ static int param_register(const char *type_name,
 
   /* Add it to the array */
 
-  if (OMPI_SUCCESS != 
+  if (OPAL_SUCCESS != 
       (ret = opal_value_array_append_item(&mca_base_params, &param))) {
     return ret;
   }
@@ -1120,7 +1120,7 @@ static int param_register(const char *type_name,
 
   if (NULL != current_value) {
       if (!param_lookup(ret, current_value, NULL)) {
-          return OMPI_ERR_NOT_FOUND;
+          return OPAL_ERR_NOT_FOUND;
       }
   }
 
@@ -1304,7 +1304,7 @@ static bool lookup_keyvals(mca_base_param_t *param,
 
     err = ompi_attr_get(attrs, param->mbp_keyval, 
                         &storage->stringval, &flag);
-    if (OMPI_SUCCESS == err && 1 == flag) {
+    if (OPAL_SUCCESS == err && 1 == flag) {
 
       /* Because of alignment weirdness between (void*) and int, we
          must grab the lower sizeof(int) bytes from the (char*) in

@@ -16,8 +16,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-#include "include/constants.h"
+#include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #include "svc_bproc_soh.h"
 
@@ -74,7 +74,7 @@ int mca_svc_bproc_soh_component_open(void)
 {
     mca_svc_bproc_soh_component.debug =
         mca_svc_bproc_soh_param_register_int("debug", 0);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 /**
@@ -93,7 +93,7 @@ mca_svc_base_module_t* mca_svc_bproc_soh_component_init(void)
 
 int mca_svc_bproc_soh_component_close(void)
 {
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

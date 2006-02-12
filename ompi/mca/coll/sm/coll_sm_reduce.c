@@ -18,11 +18,11 @@
 
 #include "ompi_config.h"
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/coll/coll.h"
-#include "opal/include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "ompi/op/op.h"
 #include "coll_sm.h"
 

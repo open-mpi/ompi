@@ -29,12 +29,12 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
-#include "mca/mca.h"
-#include "mca/ns/ns_types.h"
-#include "mca/soh/soh_types.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/soh/soh_types.h"
 
 /*
  * Component functions - all MUST be provided!

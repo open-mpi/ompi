@@ -31,9 +31,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "include/sys/atomic.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
+#include "opal/sys/atomic.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_recvfrag.h"
 #if defined(c_plusplus) || defined(__cplusplus)

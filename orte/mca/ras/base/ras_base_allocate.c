@@ -21,7 +21,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/errmgr/errmgr.h"

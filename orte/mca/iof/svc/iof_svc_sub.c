@@ -16,15 +16,15 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <string.h>
 
 #include "opal/util/output.h"
-#include "mca/oob/oob.h"
-#include "mca/iof/base/iof_base_header.h"
-#include "mca/iof/base/iof_base_fragment.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/iof/base/iof_base_header.h"
+#include "orte/mca/iof/base/iof_base_fragment.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"

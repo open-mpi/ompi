@@ -19,10 +19,10 @@
 
 #include "ompi_config.h"
 
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
-#include "datatype/datatype_internal.h"
-#include "datatype/dt_arch.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/dt_arch.h"
 
 /* From the MPI standard. external32 use the following types:
  *   Type Length

@@ -33,14 +33,14 @@
  * will consider the directory acceptable. If the minimal permissions are
  * not currently provided, the function will attempt to change the
  * access permissions of the directory to add the specified
- * permissions. The function will return OMPI_ERROR if this cannot
+ * permissions. The function will return OPAL_ERROR if this cannot
  * be done.
  **/
 
 #ifndef OPAL_OS_CREATE_DIRPATH_H
 #define OPAL_OS_CREATE_DIRPATH_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -53,9 +53,9 @@
  * @param path A pointer to a string that contains the path name to be built.
  * @param mode A mode_t bit mask that specifies the access permissions for the
  * directories being constructed. 
- * @retval OMPI_SUCCESS If the directory tree has been successfully created with
+ * @retval OPAL_SUCCESS If the directory tree has been successfully created with
  * the specified access permissions.
- * @retval OMPI_ERROR If the directory tree could not be created with the
+ * @retval OPAL_ERROR If the directory tree could not be created with the
  * specified access permissions.
  */
 

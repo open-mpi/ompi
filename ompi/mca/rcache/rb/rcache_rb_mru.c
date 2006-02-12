@@ -20,9 +20,9 @@
   * Description of the Registration Cache framework
   */
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 #include "rcache_rb_mru.h"
-#include "mca/mpool/mpool.h"
+#include "ompi/mca/mpool/mpool.h"
 
 /*
  * initialize the rb mru

@@ -28,8 +28,8 @@ extern "C" {
 /**
  * Initialize the OPAL layer, including the MCA system.
  *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
+ * @retval OPAL_SUCCESS Upon success.
+ * @retval OPAL_ERROR Upon failure.
  *
  * \note If this function is called, opal_init_util() should *not* be
  * called.
@@ -39,8 +39,8 @@ OMPI_DECLSPEC int opal_init(void);
 /**
  * Finalize the OPAL layer, including the MCA system. 
  *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
+ * @retval OPAL_SUCCESS Upon success.
+ * @retval OPAL_ERROR Upon failure.
  *
  * \note If this function is called, opal_finalize_util() should *not*
  * be called.
@@ -50,8 +50,8 @@ OMPI_DECLSPEC int opal_finalize(void);
 /**
  * Initialize the OPAL layer, excluding the MCA system.
  *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
+ * @retval OPAL_SUCCESS Upon success.
+ * @retval OPAL_ERROR Upon failure.
  *
  * \note If this function is called, opal_init() should *not*
  * be called.
@@ -61,8 +61,8 @@ OMPI_DECLSPEC int opal_init_util(void);
 /**
  * Finalize the OPAL layer, excluding the MCA system. 
  *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
+ * @retval OPAL_SUCCESS Upon success.
+ * @retval OPAL_ERROR Upon failure.
  *
  * \note If this function is called, opal_finalize() should *not*
  * be called.

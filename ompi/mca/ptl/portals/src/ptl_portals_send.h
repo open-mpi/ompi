@@ -20,9 +20,9 @@
 #ifndef MCA_PTL_PORTALS_SENDFRAG_H_
 #define MCA_PTL_PORTALS_SENDFRAG_H_
 
-#include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_portals_recv.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)

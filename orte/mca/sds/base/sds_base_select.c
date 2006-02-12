@@ -23,7 +23,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/sds/base/base.h"
 
 extern opal_list_t orte_sds_base_components_available;
@@ -101,5 +101,5 @@ orte_sds_base_select(void)
     if(NULL != selected_module) {
         orte_sds_base_module = selected_module;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }

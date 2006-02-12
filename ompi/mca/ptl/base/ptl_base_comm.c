@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include <string.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/ptl/base/ptl_base_comm.h"
 

@@ -32,8 +32,8 @@
 #endif
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

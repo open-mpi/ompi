@@ -19,10 +19,10 @@
 #ifndef OMPI_MCA_OSC_BASE_H
 #define OMPI_MCA_OSC_BASE_H
 
-#include "datatype/datatype.h"
-#include "info/info.h"
-#include "communicator/communicator.h"
-#include "win/win.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/info/info.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/win/win.h"
 #include "opal/class/opal_list.h"
 
 /*

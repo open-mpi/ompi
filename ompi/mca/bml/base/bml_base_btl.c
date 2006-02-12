@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#include "mca/bml/bml.h"
+#include "ompi/mca/bml/bml.h"
 #include "bml_base_btl.h"
 
 

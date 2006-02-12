@@ -17,8 +17,13 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from orte/Makefile.am
+headers = orte_config.h
 
-headers += \
-        include/orte_constants.h \
-        include/orte_types.h
+if WANT_INSTALL_HEADERS 
+ortedir = $(includedir)/openmpi
+nobase_orte_HEADERS = $(headers)
+else
+ortedir = $(includedir)
+endif
+
+include orte/Makefile.am

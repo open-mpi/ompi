@@ -25,7 +25,7 @@
 #ifndef ORTE_PROC_TABLE_H
 #define ORTE_PROC_TABLE_H
 
-#include "class/opal_hash_table.h"
+#include "opal/class/opal_hash_table.h"
 #include "orte/mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

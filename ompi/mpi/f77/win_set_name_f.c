@@ -18,10 +18,10 @@
 
 #include "ompi_config.h"
 
-#include "ompi/include/constants.h"
-#include "mpi/f77/bindings.h"
-#include "mpi/f77/strings.h"
-#include "communicator/communicator.h"
+#include "ompi/constants.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/strings.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_SET_NAME = mpi_win_set_name_f
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_NAME,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr,

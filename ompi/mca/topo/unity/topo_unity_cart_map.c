@@ -17,9 +17,9 @@
  */ 
 
 #include "ompi_config.h"
-#include "mca/topo/unity/topo_unity.h"
+#include "ompi/mca/topo/unity/topo_unity.h"
 
-#include "communicator/communicator.h"
+#include "ompi/communicator/communicator.h"
 
 /*
  * function - mca_topo_unity_cart_map

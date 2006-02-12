@@ -21,13 +21,13 @@
 #include <stdarg.h>
 
 #include "opal/util/output.h"
-#include "errhandler/errhandler.h"
-#include "errhandler/errhandler_predefined.h"
-#include "errhandler/errcode.h"
-#include "communicator/communicator.h"
-#include "file/file.h"
-#include "win/win.h"
-#include "runtime/runtime.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/errhandler/errhandler_predefined.h"
+#include "ompi/errhandler/errcode.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/file/file.h"
+#include "ompi/win/win.h"
+#include "orte/runtime/runtime.h"
 #include "opal/util/printf.h"
 
 /*

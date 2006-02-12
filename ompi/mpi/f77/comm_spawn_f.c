@@ -18,9 +18,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "mpi/f77/constants.h"
-#include "mpi/f77/strings.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/constants.h"
+#include "ompi/mpi/f77/strings.h"
 #include "opal/util/argv.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs, 

@@ -24,7 +24,7 @@
 
 #include "ompi_config.h"
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "opal/util/show_help.h"

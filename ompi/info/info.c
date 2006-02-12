@@ -27,8 +27,8 @@
 #endif
 #include <limits.h>
 
-#include "ompi/include/constants.h"
-#include "info/info.h"
+#include "ompi/constants.h"
+#include "ompi/info/info.h"
 #include "ompi/runtime/params.h"
 #include "opal/util/output.h"
 

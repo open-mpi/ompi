@@ -18,10 +18,10 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi/c/bindings.h"
-#include "win/win.h"
-#include "mca/osc/osc.h"
-#include "op/op.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/win/win.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/op/op.h"
 #include "ompi/datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -29,7 +29,7 @@
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Accumlate";

@@ -20,7 +20,7 @@
 #ifndef ORTE_RDS_HOSTFILE_LEX_H_
 #define ORTE_RDS_HOSTFILE_LEX_H_
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #ifdef malloc
 #undef malloc

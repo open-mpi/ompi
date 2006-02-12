@@ -18,10 +18,10 @@
 
 #include <stdio.h>
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/osc/osc.h"
-#include "mca/osc/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/base/base.h"
 #include "opal/class/opal_list.h"
 
 

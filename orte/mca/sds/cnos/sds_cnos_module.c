@@ -21,13 +21,13 @@
 
 #include <catamount/cnos_mpi_os.h>
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
-#include "mca/sds/cnos/sds_cnos.h"
-#include "util/proc_info.h"
-#include "mca/ns/base/base.h"
-#include "mca/errmgr/base/base.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/sds/cnos/sds_cnos.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/errmgr/base/base.h"
 
 orte_sds_base_module_t orte_sds_cnos_module = {
     orte_sds_cnos_contact_universe,

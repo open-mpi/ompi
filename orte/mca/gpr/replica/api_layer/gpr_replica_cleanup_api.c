@@ -29,11 +29,11 @@
 
 #include "opal/util/trace.h"
 
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "gpr_replica_api.h"
-#include "mca/gpr/replica/functional_layer/gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 
 int orte_gpr_replica_cleanup_job(orte_jobid_t jobid)

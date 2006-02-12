@@ -23,20 +23,20 @@
 #ifndef MCA_OOB_H_
 #define MCA_OOB_H_
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include "include/types.h"
-#include "mca/mca.h"
+#include "opal/types.h"
+#include "opal/mca/mca.h"
 
-#include "mca/ns/ns_types.h"
-#include "mca/gpr/gpr_types.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/gpr/gpr_types.h"
 
-#include "mca/oob/oob_types.h"
-#include "mca/oob/base/base.h"
+#include "orte/mca/oob/oob_types.h"
+#include "orte/mca/oob/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -84,7 +84,7 @@ typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t*, con
 *   
 *  @param peer (IN)   Opaque name of peer process.
 *  @param tv (IN)     Timeout to wait in connection response.
-*  @return            OMPI error code (<0) or OMPI_SUCCESS
+*  @return            OMPI error code (<0) or ORTE_SUCCESS
 */
 
 typedef int (*mca_oob_base_module_ping_fn_t)(const orte_process_name_t*, const char* uri, const struct timeval* tv);

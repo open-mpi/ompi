@@ -23,11 +23,11 @@
 
 #include <portals3.h>
 
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "class/ompi_bitmap.h"
-#include "class/ompi_free_list.h"
-#include "class/orte_proc_table.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/class/ompi_bitmap.h"
+#include "ompi/class/ompi_free_list.h"
+#include "orte/class/orte_proc_table.h"
 
 
 /*

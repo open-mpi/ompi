@@ -25,9 +25,9 @@
  * includes
  */
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/class/opal_list.h"
-#include "mca/ras/ras.h"
+#include "orte/mca/ras/ras.h"
 
 
 /*

@@ -10,7 +10,7 @@
 #include <string.h>
 #include "mpi.h"
 #include "support.h"
-#include "mca/oob/oob.h"
+#include "orte/mca/oob/oob.h"
 
 int main(int argc, char **argv)
 {

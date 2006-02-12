@@ -27,7 +27,7 @@
 #include <string.h>
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
-#include "mca/allocator/allocator.h"
+#include "ompi/mca/allocator/allocator.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

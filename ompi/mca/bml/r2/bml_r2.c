@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "class/ompi_bitmap.h"
+#include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"

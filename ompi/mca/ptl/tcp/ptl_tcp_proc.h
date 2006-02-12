@@ -30,9 +30,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 #include "opal/class/opal_object.h"
-#include "proc/proc.h"
+#include "ompi/proc/proc.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 #include "support.h"
-#include "mca/mpool/mpool.h"
+#include "ompi/mca/mpool/mpool.h"
 
 static void *malloc_noalign(mca_mpool_base_module_t* mpool, size_t size, size_t dummy, void* user_out) {
     return malloc(size);
@@ -39,7 +39,7 @@ static void* my_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size,
    return  realloc(addr, size);
 }
 
-#include "class/ompi_circular_buffer_fifo.h"
+#include "ompi/class/ompi_circular_buffer_fifo.h"
 
 /* simple allocator for some simple tests */
 mca_mpool_base_module_t pool = {

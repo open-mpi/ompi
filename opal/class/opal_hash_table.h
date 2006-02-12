@@ -28,8 +28,7 @@
 #ifndef OPAL_HASH_TABLE_H
 #define OPAL_HASH_TABLE_H
 
-#include "ompi_config.h"
-#include "include/types.h"
+#include "opal_config.h"
 #include "opal/class/opal_list.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -96,9 +95,9 @@ OMPI_DECLSPEC int opal_hash_table_remove_all(opal_hash_table_t *ht);
  *  @param   key     The input key (IN).
  *  @param   ptr     The value associated with the key
  *  @return  integer return code:
- *           - OMPI_SUCCESS       if key was found
- *           - OMPI_ERR_NOT_FOUND if key was not found
- *           - OMPI_ERROR         other error
+ *           - OPAL_SUCCESS       if key was found
+ *           - OPAL_ERR_NOT_FOUND if key was not found
+ *           - OPAL_ERROR         other error
  *
  */
 
@@ -135,9 +134,9 @@ OMPI_DECLSPEC int opal_hash_table_remove_value_uint32(opal_hash_table_t* table, 
  *  @param   key     The input key (IN).
  *  @param   ptr     The value associated with the key
  *  @return  integer return code:
- *           - OMPI_SUCCESS       if key was found
- *           - OMPI_ERR_NOT_FOUND if key was not found
- *           - OMPI_ERROR         other error
+ *           - OPAL_SUCCESS       if key was found
+ *           - OPAL_ERR_NOT_FOUND if key was not found
+ *           - OPAL_ERROR         other error
  *
  */
 
@@ -174,9 +173,9 @@ OMPI_DECLSPEC int opal_hash_table_remove_value_uint64(opal_hash_table_t *table, 
  *  @param   key     The input key (IN).
  *  @param   ptr     The value associated with the key
  *  @return  integer return code:
- *           - OMPI_SUCCESS       if key was found
- *           - OMPI_ERR_NOT_FOUND if key was not found
- *           - OMPI_ERROR         other error
+ *           - OPAL_SUCCESS       if key was found
+ *           - OPAL_ERR_NOT_FOUND if key was not found
+ *           - OPAL_ERROR         other error
  *
  */
 

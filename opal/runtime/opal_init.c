@@ -18,7 +18,7 @@
 
 /** @file **/
 
-#include "orte_config.h"
+#include "opal_config.h"
 
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
@@ -30,7 +30,7 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
 #include "opal/util/keyval_parse.h"

@@ -21,12 +21,12 @@
 
 #include "ompi_config.h"
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
-#include "mca/bml/bml.h"
+#include "ompi/mca/bml/bml.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
-#include "mca/pml/pml.h" 
+#include "ompi/mca/pml/pml.h" 
 #include "bml_base_btl.h" 
 /*
  * Global functions for the BML

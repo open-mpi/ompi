@@ -22,10 +22,10 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "class/orte_pointer_array.h"
+#include "orte/orte_constants.h"
+#include "orte/class/orte_pointer_array.h"
 
-#include "dss/dss.h"
+#include "orte/dss/dss.h"
 
 #if HAVE_STRING_H
 #    if !defined(STDC_HEADERS) && HAVE_MEMORY_H

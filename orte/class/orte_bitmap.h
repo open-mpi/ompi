@@ -40,7 +40,7 @@
 
 #include <string.h>
 
-#include "include/types.h"
+#include "opal/types.h"
 #include "opal/class/opal_object.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -21,7 +21,7 @@
 #ifndef ORTE_RMGR_URM_H
 #define ORTE_RMGR_URM_H
 
-#include "mca/rmgr/rmgr.h"
+#include "orte/mca/rmgr/rmgr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

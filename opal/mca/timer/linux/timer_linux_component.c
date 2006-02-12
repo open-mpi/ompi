@@ -16,11 +16,11 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/linux/timer_linux.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 
 opal_timer_t opal_timer_linux_freq;
 

@@ -53,7 +53,7 @@
 
 SUBDIRS = scripts
 
-AM_FCFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG).
+AM_FCFLAGS = -I$(top_builddir)/ompi/include $(OMPI_FC_MODULE_FLAG).
 
 # We have to EXTRA_DIST mpi_kinds.f90 because there is no explicit
 # Automake rule to compile this file.

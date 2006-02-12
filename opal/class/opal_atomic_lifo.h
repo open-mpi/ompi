@@ -19,9 +19,9 @@
 #ifndef OPAL_ATOMIC_LIFO_H_HAS_BEEN_INCLUDED
 #define OPAL_ATOMIC_LIFO_H_HAS_BEEN_INCLUDED
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 
 /* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
  * atomicity is insured via the compare-and-swap operation, if not we simply do a read

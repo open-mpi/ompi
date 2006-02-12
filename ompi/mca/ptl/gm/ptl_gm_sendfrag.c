@@ -20,8 +20,8 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include "include/types.h"
-#include "datatype/datatype.h"
+#include "ompi/types.h"
+#include "ompi/datatype/datatype.h"
 #include "ptl_gm.h"
 #include "ptl_gm_sendfrag.h"
 #include "ptl_gm_priv.h"

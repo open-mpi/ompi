@@ -22,11 +22,11 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
-#include "communicator/communicator.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
+#include "ompi/communicator/communicator.h"
 
 /*
  * This function is used to shut down a topology module 

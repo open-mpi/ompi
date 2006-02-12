@@ -63,7 +63,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"

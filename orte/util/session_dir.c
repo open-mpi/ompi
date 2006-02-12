@@ -44,19 +44,19 @@
 #include <dirent.h>
 #endif
 
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 
-#include "util/univ_info.h"
-#include "util/sys_info.h"
-#include "util/proc_info.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_create_dirpath.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "runtime/runtime.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/runtime.h"
 
-#include "util/session_dir.h"
+#include "orte/util/session_dir.h"
 
 static int orte_check_dir(bool create, char *directory);
 

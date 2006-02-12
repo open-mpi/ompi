@@ -17,9 +17,9 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/paffinity/base/internal.h"

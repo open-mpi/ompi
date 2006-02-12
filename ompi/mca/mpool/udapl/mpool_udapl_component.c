@@ -18,12 +18,12 @@
 
 #include "ompi_config.h"
 #include "opal/util/output.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/allocator/base/base.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/allocator/base/base.h"
 #include "mpool_udapl.h"
-#include "util/proc_info.h"
-#include "util/sys_info.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/sys_info.h"
 #include <unistd.h> 
 
 /*

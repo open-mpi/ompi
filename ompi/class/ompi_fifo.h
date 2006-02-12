@@ -19,11 +19,11 @@
 #ifndef _OMPI_FIFO
 #define _OMPI_FIFO
 
-#include "ompi/include/constants.h"
-#include "include/sys/cache.h"
-#include "include/sys/atomic.h"
-#include "mca/mpool/mpool.h"
-#include "class/ompi_circular_buffer_fifo.h"
+#include "ompi/constants.h"
+#include "opal/sys/cache.h"
+#include "opal/sys/atomic.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/class/ompi_circular_buffer_fifo.h"
 
 
 /** @file

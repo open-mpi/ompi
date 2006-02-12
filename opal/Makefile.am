@@ -19,8 +19,10 @@
 EXTRA_DIST =
 
 SUBDIRS = \
+	include \
         $(LIBLTDL_SUBDIR) \
 	asm \
+	etc \
         event \
         util \
 	mca/base \
@@ -73,7 +75,6 @@ else
 opaldir = $(includedir)
 endif
 
-include include/Makefile.am
 include class/Makefile.am
 include memoryhooks/Makefile.am
 include runtime/Makefile.am

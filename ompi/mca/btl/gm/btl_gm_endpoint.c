@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 #include <sys/time.h>
 #include <time.h>
-#include "include/types.h"
+#include "ompi/types.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"

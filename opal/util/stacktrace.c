@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -37,7 +37,7 @@
 
 #include "opal/util/stacktrace.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #ifndef _NSIG
 #define _NSIG 32
@@ -312,8 +312,8 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun
  * by the user.
  *
- *  @returnvalue OMPI_SUCCESS
- *  @returnvalue OMPI_ERR_BAD_PARAM if the value in the signal-list
+ *  @returnvalue OPAL_SUCCESS
+ *  @returnvalue OPAL_ERR_BAD_PARAM if the value in the signal-list
  *    is not a valid signal-number
  *               
  */
@@ -352,20 +352,20 @@ int opal_util_register_stackhandlers (void)
        *  Similarly for any number which is not in the signal-number range
        */
       if (((0 == sig) && (tmp == next)) || (0 > sig) || (_NSIG <= sig)) {
-	 return OMPI_ERR_BAD_PARAM;
+	 return OPAL_ERR_BAD_PARAM;
       }
 
       if ((next == NULL) || ((*next != ',') && (*next != '\0'))) {
-	 return OMPI_ERR_BAD_PARAM;
+	 return OPAL_ERR_BAD_PARAM;
       }
 
       ret = sigaction (sig, &act, NULL);
       if (ret != 0) {
-        return OMPI_ERR_IN_ERRNO;
+        return OPAL_ERR_IN_ERRNO;
       }
     }
 #endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 

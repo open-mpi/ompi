@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -36,7 +36,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 /*
  * Private data
@@ -407,7 +407,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
     }
 
     /* If output_id == -1, find an available stream, or return
-     * OMPI_ERROR */
+     * OPAL_ERROR */
 
     if (-1 == output_id) {
 	OPAL_THREAD_LOCK(&mutex);
@@ -418,7 +418,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
 	}
 	if (i >= OPAL_OUTPUT_MAX_STREAMS) {
 	    OPAL_THREAD_UNLOCK(&mutex);
-	    return OMPI_ERR_OUT_OF_RESOURCE;
+	    return OPAL_ERR_OUT_OF_RESOURCE;
 	}
     }
 
@@ -462,7 +462,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
 	if (NULL == (info[i].ldi_syslog_ident =
 		     RegisterEventSource(NULL, TEXT("opal: ")))) {
 	    /* handle the error */
-	    return OMPI_ERROR;
+	    return OPAL_ERROR;
 	}
 #endif
 
@@ -505,7 +505,7 @@ static int open_file(int i)
     if (NULL != output_dir) {
 	filename = (char *) malloc(MAXPATHLEN);
 	if (NULL == filename) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
+	    return OPAL_ERR_OUT_OF_RESOURCE;
 	}
 	strcpy(filename, output_dir);
 	strcat(filename, "/");
@@ -528,7 +528,7 @@ static int open_file(int i)
 	info[i].ldi_fd = open(filename, flags, 0644);
 	if (-1 == info[i].ldi_fd) {
 	    info[i].ldi_used = false;
-	    return OMPI_ERR_IN_ERRNO;
+	    return OPAL_ERR_IN_ERRNO;
 	}
 
 	/* Make the file be close-on-exec to prevent child inheritance
@@ -545,7 +545,7 @@ static int open_file(int i)
     /* Return successfully even if the session dir did not exist yet;
      * we'll try opening it later */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -676,7 +676,7 @@ static void output(int output_id, const char *format, va_list arglist)
 
 	if (ldi->ldi_file) {
 	    if (ldi->ldi_fd == -1) {
-		if (OMPI_SUCCESS != open_file(output_id)) {
+		if (OPAL_SUCCESS != open_file(output_id)) {
 		    ++ldi->ldi_file_num_lines_lost;
 		} else if (ldi->ldi_file_num_lines_lost > 0) {
 		    char buffer[BUFSIZ];

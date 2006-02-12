@@ -38,7 +38,7 @@
 #endif
 #include <fcntl.h>
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"

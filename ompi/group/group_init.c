@@ -17,8 +17,8 @@
  */
 
 #include "ompi_config.h"
-#include "group/group.h"
-#include "ompi/include/constants.h"
+#include "ompi/group/group.h"
+#include "ompi/constants.h"
 #include "mpi.h"
 
 /* define class information */

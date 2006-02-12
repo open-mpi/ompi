@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -40,7 +40,7 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/runtime/opal.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/show_help.h"

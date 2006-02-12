@@ -115,7 +115,7 @@
 
 #include <string.h>
 
-#include "include/types.h"
+#include "ompi/types.h"
 #include "opal/class/opal_object.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

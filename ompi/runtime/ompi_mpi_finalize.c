@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "orte_config.h"
+#include "ompi_config.h"
 
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
@@ -24,7 +24,6 @@
 #include "opal/mca/base/base.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/include/orte_constants.h"
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/ns/ns.h"
@@ -36,7 +35,7 @@
 #include "orte/runtime/runtime.h"
 
 #include "mpi.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/group/group.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/errhandler/errclass.h"

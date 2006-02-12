@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
+#include "ompi/mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_CREATE_ERRHANDLER = mpi_comm_create_errhandler_f
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_ERRHANDLER,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_comm_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t *function,

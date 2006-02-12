@@ -25,7 +25,7 @@
 #ifndef OPAL_ENVIRON_H
 #define OPAL_ENVIRON_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -65,7 +65,7 @@ extern "C" {
      * the same name
      * @param env The environment to use
      *
-     * @retval OMPI_ERR_OUT_OF_RESOURCE If internal malloc() fails.
+     * @retval OPAL_ERR_OUT_OF_RESOURCE If internal malloc() fails.
      * @retval OMPI_EXISTS If the name already exists in \em env and
      * \em overwrite is false (and therefore the \em value was not
      * saved in \em env)
@@ -111,9 +111,9 @@ extern "C" {
      * @param name String name of the environment variable to look for
      * @param env The environment to use
      *
-     * @retval OMPI_ERR_OUT_OF_RESOURCE If an internal malloc fails.
-     * @retval OMPI_ERR_NOT_FOUND If \em name is not found in \em env.
-     * @retval OMPI_SUCCESS If \em name is found and successfully deleted.
+     * @retval OPAL_ERR_OUT_OF_RESOURCE If an internal malloc fails.
+     * @retval OPAL_ERR_NOT_FOUND If \em name is not found in \em env.
+     * @retval OPAL_SUCCESS If \em name is found and successfully deleted.
      *
      * If \em name is found in \em env, the string corresponding to
      * that entry is freed and its entry is eliminated from the array.

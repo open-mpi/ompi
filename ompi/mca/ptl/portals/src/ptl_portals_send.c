@@ -22,8 +22,8 @@
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
 #include "ptl_portals_send.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 
 static void mca_ptl_portals_send_frag_construct(mca_ptl_portals_send_frag_t* frag);
 static void mca_ptl_portals_send_frag_destruct(mca_ptl_portals_send_frag_t* frag);

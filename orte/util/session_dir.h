@@ -86,7 +86,7 @@
  */
 #include "orte_config.h"
 
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 /** @param create A boolean variable that indicates whether or not to
  *                create the specified directory. If set to "false",
@@ -121,7 +121,7 @@
  *                directory is to be created/found. NULL indicates
  *                that only the job directory is to be created/found.
  *
- * @retval OMPI_SUCCESS The directory was found and/or created with
+ * @retval ORTE_SUCCESS The directory was found and/or created with
  *                the proper permissions.
  * @retval OMPI_ERROR The directory cannot be found (if create is
  *                "false") or created (if create is "true").
@@ -141,7 +141,7 @@ OMPI_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *
  * universe have completed.
  *
  * @param None
- * @retval OMPI_SUCCESS If the directory tree is properly cleaned up.
+ * @retval ORTE_SUCCESS If the directory tree is properly cleaned up.
  * @retval OMPI_ERROR If something prevents the tree from being
  *                properly cleaned up.
  */

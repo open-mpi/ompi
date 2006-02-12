@@ -19,14 +19,14 @@
 #include "ompi_config.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-#include "mca/allocator/base/base.h"
-#include "mca/allocator/allocator.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_request.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/pml/base/pml_base_bsend.h"
-#include "mca/mpool/mpool.h" 
+#include "ompi/mca/allocator/base/base.h"
+#include "ompi/mca/allocator/allocator.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "ompi/mca/mpool/mpool.h" 
 
 
 static opal_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */

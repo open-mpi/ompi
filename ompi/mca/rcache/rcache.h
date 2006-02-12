@@ -21,10 +21,10 @@
   */
 #ifndef MCA_RCACHE_H
 #define MCA_RCACHE_H
-#include "mca/mca.h"
-#include "info/info.h"
+#include "opal/mca/mca.h"
+#include "ompi/info/info.h"
 #include "opal/class/opal_list.h" 
-#include "mca/mpool/mpool.h"
+#include "ompi/mca/mpool/mpool.h"
 #include "opal/threads/mutex.h"
 
 

@@ -21,15 +21,15 @@
 #include <stdio.h>
 
 #include "opal/util/bit_ops.h"
-#include "ompi/include/constants.h"
-#include "mca/pml/pml.h"
-#include "mca/coll/base/base.h"
-#include "mca/topo/base/base.h"
-#include "mca/ns/base/base.h"
+#include "ompi/constants.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/topo/base/base.h"
+#include "orte/mca/ns/base/base.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "attribute/attribute.h"
-#include "mca/topo/topo.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/mca/topo/topo.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion

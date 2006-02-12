@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
 
 #include "ptl_portals.h"

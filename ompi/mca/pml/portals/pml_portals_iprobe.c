@@ -10,7 +10,7 @@
  */
 
 #include "ompi_config.h"
-#include "request/request.h"
+#include "ompi/request/request.h"
 #include "pml_portals.h"
 
 int mca_pml_portals_iprobe( int src, int tag,

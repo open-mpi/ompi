@@ -20,13 +20,13 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/base.h"
 
 extern int mca_ptl_base_open_called;
 

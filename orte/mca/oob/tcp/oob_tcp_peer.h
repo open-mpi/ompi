@@ -23,7 +23,7 @@
 #ifndef _MCA_OOB_TCP_PEER_H_
 #define _MCA_OOB_TCP_PEER_H_
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -31,7 +31,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 #include "oob_tcp_msg.h"
 #include "oob_tcp_addr.h"
 
@@ -117,7 +117,7 @@ mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const orte_process_name_t* peer_name
  *
  * @param peer  The peer process.
  * @param msg   The message to send.
- * @retval      OMPI_SUCCESS or error code on failure.
+ * @retval      ORTE_SUCCESS or error code on failure.
  */
 int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg);
 

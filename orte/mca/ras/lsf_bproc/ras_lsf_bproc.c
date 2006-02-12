@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "ras_lsf_bproc.h"
 
 

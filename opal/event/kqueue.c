@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

@@ -16,10 +16,10 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_list.h"
-#include "mca/base/base.h"
+#include "opal/mca/base/base.h"
 
 
 /* 

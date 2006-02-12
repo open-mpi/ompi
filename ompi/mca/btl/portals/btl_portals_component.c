@@ -24,7 +24,7 @@
 #include <catamount/cnos_mpi_os.h>
 #endif
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 
 #include "opal/util/output.h"
 #include "opal/threads/threads.h"

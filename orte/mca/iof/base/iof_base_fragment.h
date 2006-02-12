@@ -1,13 +1,13 @@
 #ifndef _IOF_BASE_FRAGMENT_
 #define _IOF_BASE_FRAGMENT_
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/event/event.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_header.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_header.h"
 
 
 /**

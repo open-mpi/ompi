@@ -24,8 +24,8 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "mca/allocator/allocator.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/allocator/allocator.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

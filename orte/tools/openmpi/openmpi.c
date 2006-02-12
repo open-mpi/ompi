@@ -45,24 +45,24 @@
   */
 #include "opal/event/event.h"
 #endif
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
-#include "util/sys_info.h"
-#include "util/univ_info.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/univ_info.h"
 #include "opal/util/cmd_line.h"
-#include "util/proc_info.h"
-#include "util/session_dir.h"
-#include "util/universe_setup_file_io.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/session_dir.h"
+#include "orte/util/universe_setup_file_io.h"
 
-#include "mca/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
 
-#include "runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 
 
 int main(int argc, char **argv)
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
    /*
      * Intialize the Open MPI environment
      */
-    if (OMPI_SUCCESS != ompi_init(argc, argv)) {
+    if (ORTE_SUCCESS != ompi_init(argc, argv)) {
         /* BWB show_help */
         printf("show_help: ompi_init failed\n");
         return ret;
@@ -100,20 +100,20 @@ int main(int argc, char **argv)
     /*
      * setup  mca command line arguments
      */
-    if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(cmd_line))) {
+    if (ORTE_SUCCESS != (ret = mca_base_cmd_line_setup(cmd_line))) {
 	/* BWB show_help */
 	printf("show_help: mca_base_cmd_line_setup failed\n");
 	return ret;
     }
 
-    if (OMPI_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
+    if (ORTE_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
 	/* BWB show_help */
 	printf("show_help: mca_base_cmd_line_process_args\n");
 	return ret;
     }
 
     /* parse the local commands */
-    if (OMPI_SUCCESS != opal_cmd_line_parse(cmd_line, true, argc, argv)) {
+    if (ORTE_SUCCESS != opal_cmd_line_parse(cmd_line, true, argc, argv)) {
 	exit(ret);
     }
 
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     }
 
     /* start the initial barebones RTE (just OOB) so we can check universe existence */
-    if (OMPI_SUCCESS != (ret = mca_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_open())) {
         /* JMS show_help */
         printf("show_help: mca_base_open failed\n");
         exit(ret);
@@ -138,7 +138,7 @@ int main(int argc, char **argv)
 
     multi_thread = true;
     hidden_thread = false;
-/*     if (OMPI_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread)) { */
+/*     if (ORTE_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread)) { */
 /* 	printf("show_help: openmpi failed in ompi_rte_init\n"); */
 /* 	exit(1); */
 /*     } */
@@ -166,10 +166,10 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists()) &&
-	(OMPI_ERR_NOT_IMPLEMENTED != ret)) {
+    if (ORTE_SUCCESS != (ret = ompi_rte_universe_exists()) &&
+	(ORTE_ERR_NOT_IMPLEMENTED != ret)) {
 
-	if (OMPI_ERR_NOT_FOUND != ret) {
+	if (ORTE_ERR_NOT_FOUND != ret) {
 	    /* if not found, then keep current name. otherwise,
 	     * define unique name based on current one.
 	     * either way, start new universe

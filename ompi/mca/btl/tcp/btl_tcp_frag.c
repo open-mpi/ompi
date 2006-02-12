@@ -10,7 +10,7 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 
-#include "include/ompi_socket_errno.h"
+#include "orte/orte_socket_errno.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp_frag.h" 
 #include "btl_tcp_endpoint.h"

@@ -30,7 +30,7 @@
  */
 
 #include "opal/class/opal_object.h"
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -23,8 +23,8 @@
 #include "opal/class/opal_list.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
-#include "ompi/include/constants.h"
-#include "mca/mpool/mpool.h"
+#include "ompi/constants.h"
+#include "ompi/mca/mpool/mpool.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

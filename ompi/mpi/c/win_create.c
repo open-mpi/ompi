@@ -19,17 +19,17 @@
 
 #include <stdio.h>
 
-#include "mpi/c/bindings.h"
-#include "info/info.h"
-#include "win/win.h"
-#include "attribute/attribute.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/info/info.h"
+#include "ompi/win/win.h"
+#include "ompi/attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_create = PMPI_Win_create
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_create";

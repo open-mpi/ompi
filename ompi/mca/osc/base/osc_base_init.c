@@ -16,16 +16,16 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/osc/osc.h"
-#include "mca/osc/base/base.h"
-#include "datatype/datatype.h"
-#include "info/info.h"
-#include "communicator/communicator.h"
-#include "win/win.h"
+#include "ompi/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/base/base.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/info/info.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/win/win.h"
 
 int
 ompi_osc_base_select(ompi_win_t *win,

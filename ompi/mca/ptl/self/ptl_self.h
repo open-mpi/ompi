@@ -22,13 +22,13 @@
 #ifndef PTL_SELF_H_HAS_BEEN_INCLUDED
 #define PTL_SELF_H_HAS_BEEN_INCLUDED
 
-#include "class/ompi_free_list.h"
+#include "ompi/class/ompi_free_list.h"
 #include "opal/event/event.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_recvreq.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

@@ -1,7 +1,7 @@
-#include "ompi_config.h"
+#include "orte_config.h"
 #include "opal/util/output.h"
-#include "mca/oob/oob.h"
-#include "mca/iof/base/iof_base_header.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/iof/base/iof_base_header.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"
@@ -52,7 +52,7 @@ int orte_iof_svc_pub_create(
            orte_ns.compare(ORTE_NS_CMP_ALL,pub_proxy,&pub->pub_proxy) == 0 &&
            pub_tag == pub->pub_tag) {
            OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
-           return OMPI_SUCCESS;
+           return ORTE_SUCCESS;
         }
     }
 

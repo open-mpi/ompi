@@ -19,9 +19,9 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "datatype/datatype.h"
-#include "datatype/datatype_internal.h"
-#include "proc/proc.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
+#include "ompi/proc/proc.h"
 
 static inline int
 __ompi_ddt_pack_description( ompi_datatype_t* datatype,

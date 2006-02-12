@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi/c/bindings.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
@@ -31,7 +31,7 @@
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Cancel";

@@ -24,8 +24,8 @@
 #include "pml_ob1.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_rdma.h"
-#include "mca/mpool/base/base.h"
-#include "mca/pml/base/pml_base_recvreq.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/pml/base/pml_base_recvreq.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

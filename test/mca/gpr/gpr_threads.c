@@ -19,7 +19,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "mca/schema/schema.h"
+#include "orte/mca/schema/schema.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,16 +32,16 @@
 #include "util/sys_info.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns_types.h"
-#include "mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/gpr/gpr.h"
 #include "dps/dps.h"
 
-#include "mca/gpr/base/base.h"
-#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
-#include "mca/gpr/replica/functional_layer/gpr_replica_fn.h"
-#include "mca/gpr/replica/communications/gpr_replica_comm.h"
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 
 /* output files needed by the test */
 static FILE *test_out=NULL;

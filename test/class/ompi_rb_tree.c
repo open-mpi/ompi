@@ -27,7 +27,7 @@
 #endif
 #include <string.h>
 #include "support.h"
-#include "class/ompi_rb_tree.h"
+#include "ompi/class/ompi_rb_tree.h"
 
 #define NUM_KEYS 10000
 #define SEED  1

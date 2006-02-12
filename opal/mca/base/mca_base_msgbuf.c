@@ -16,13 +16,13 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_msgbuf_internal.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 /* 
  * local prototypes 
@@ -48,7 +48,7 @@ static bool initialized = false;
 mca_base_msgbuf_t mca_base_msgbuf_new (size_t reqsize)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return ((mca_base_msgbuf_t)OMPI_ERR_NOT_SUPPORTED);
+  return ((mca_base_msgbuf_t)OPAL_ERR_NOT_SUPPORTED);
 }
 
 /* make a copy of an existing buffer */
@@ -58,7 +58,7 @@ int  mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid,
                                          mca_base_msgbuf_t orgbufid)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return (OMPI_ERR_NOT_SUPPORTED);
+  return (OPAL_ERR_NOT_SUPPORTED);
 }
 
 /* set a buffer. As base_pack send/recv handles buffer you might not want */
@@ -67,14 +67,14 @@ int  mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid,
 mca_base_msgbuf_t mca_base_msgbuf_construct (void* ptr, size_t datasize)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return ((mca_base_msgbuf_t)OMPI_ERR_NOT_SUPPORTED);
+  return ((mca_base_msgbuf_t)OPAL_ERR_NOT_SUPPORTED);
 }
 
 /* explicit free of a buffer when not auto freeing them */
 int mca_base_msgbuf_free (mca_base_msgbuf_t* bufid)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return OMPI_ERR_NOT_SUPPORTED;
+  return OPAL_ERR_NOT_SUPPORTED;
 }
 
 /* pack and unpack non-string typed data */
@@ -82,14 +82,14 @@ int  mca_base_msgbuf_pack (mca_base_msgbuf_t bufid, void* ptr, size_t num_items,
                             mca_base_msgbuf_data_t datatype)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return OMPI_ERR_NOT_SUPPORTED;
+  return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int  mca_base_msgbuf_unpack (mca_base_msgbuf_t bufid, void* ptr, 
                              size_t num_items, mca_base_msgbuf_data_t datatype)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return OMPI_ERR_NOT_SUPPORTED;
+  return OPAL_ERR_NOT_SUPPORTED;
 }
 
 /* handles strings */
@@ -97,14 +97,14 @@ int  mca_base_msgbuf_unpack (mca_base_msgbuf_t bufid, void* ptr,
 int  mca_base_msgbuf_pack_string (mca_base_msgbuf_t bufid, char* strptr)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return OMPI_ERR_NOT_SUPPORTED;
+  return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char* strptr, 
                                     size_t maxlen)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return OMPI_ERR_NOT_SUPPORTED;
+  return OPAL_ERR_NOT_SUPPORTED;
 }
 
 
@@ -113,5 +113,5 @@ int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char* strptr,
 int  mca_base_msgbuf_init ()
 {
   if (initialized) return (0);
-  return OMPI_ERR_NOT_SUPPORTED;
+  return OPAL_ERR_NOT_SUPPORTED;
 }

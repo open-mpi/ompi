@@ -24,11 +24,11 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/seed/sds_seed.h"
-#include "mca/base/mca_base_param.h"
-#include "util/proc_info.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/seed/sds_seed.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/util/proc_info.h"
 
 extern orte_sds_base_module_t orte_sds_seed_module;
 

@@ -26,11 +26,11 @@
 #endif
 
 #include "opal/class/opal_object.h"
-#include "file/file.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/io/base/base.h"
-#include "mca/io/base/io_base_request.h"
+#include "ompi/file/file.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/io/base/io_base_request.h"
 
 
 /*

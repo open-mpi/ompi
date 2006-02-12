@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"

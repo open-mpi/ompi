@@ -18,11 +18,11 @@
 
 #include "ompi_config.h"
 
-#include "file/file.h"
+#include "ompi/file/file.h"
 #include "opal/class/opal_list.h"
 #include "ompi/runtime/params.h"
-#include "mca/io/base/base.h"
-#include "info/info.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/info/info.h"
 #include "opal/util/output.h"
 
 /*

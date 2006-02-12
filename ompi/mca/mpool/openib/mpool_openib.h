@@ -22,9 +22,9 @@
 #define MCA_MPOOL_VAPI_H
 
 #include "opal/class/opal_list.h"
-#include "class/ompi_free_list.h"
+#include "ompi/class/ompi_free_list.h"
 #include "opal/event/event.h"
-#include "mca/mpool/mpool.h"
+#include "ompi/mca/mpool/mpool.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

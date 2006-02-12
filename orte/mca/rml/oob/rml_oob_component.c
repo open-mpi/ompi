@@ -17,15 +17,15 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/rml/base/base.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/rml/base/base.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 #include "rml_oob.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 static orte_rml_module_t* orte_rml_oob_init(int* priority);
 static int orte_rml_oob_open(void);

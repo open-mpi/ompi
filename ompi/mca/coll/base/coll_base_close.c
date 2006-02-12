@@ -20,11 +20,11 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "ompi/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 
 
 int mca_coll_base_close(void)

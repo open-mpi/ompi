@@ -20,10 +20,10 @@
 
 #include <stdio.h>
 
-#include "include/orte_constants.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "class/orte_bitmap.h"
+#include "orte/class/orte_bitmap.h"
 
 
 #define SIZE_OF_CHAR (sizeof(char) * 8)

@@ -16,17 +16,16 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 
-#include "include/constants.h"
 #include "opal/event/event.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
 
 
 int orte_iof_base_close(void)
@@ -63,6 +62,6 @@ int orte_iof_base_close(void)
         orte_ns.free_name(&(orte_iof_base.iof_service));
     }
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

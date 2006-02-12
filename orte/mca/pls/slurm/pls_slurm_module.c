@@ -22,7 +22,7 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -35,9 +35,9 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/runtime/runtime.h"
-#include "orte/include/orte_constants.h"
-#include "orte/include/orte_types.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/ns/base/base.h"

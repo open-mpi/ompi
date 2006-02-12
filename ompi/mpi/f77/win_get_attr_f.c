@@ -18,9 +18,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "attribute/attribute.h"
-#include "win/win.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/win/win.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_GET_ATTR = mpi_win_get_attr_f
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_ATTR,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_win_get_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,

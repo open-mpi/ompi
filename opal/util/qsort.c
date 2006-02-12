@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #if OMPI_HAVE_BROKEN_QSORT
 

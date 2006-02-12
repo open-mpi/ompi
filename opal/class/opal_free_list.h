@@ -19,12 +19,12 @@
 #ifndef OPAL_FREE_LIST_H
 #define OPAL_FREE_LIST_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -80,7 +80,7 @@ OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
  *
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
- * @param rc (OUT)       OMPI_SUCCESS or error status on failure.
+ * @param rc (OUT)       OPAL_SUCCESS or error status on failure.
  *
  * If the requested item is not available the free list is grown to 
  * accomodate the request - unless the max number of allocations has 
@@ -105,7 +105,7 @@ OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
             item = opal_list_remove_first(&((fl)->super)); \
         } \
     }  \
-    rc = (NULL == item) ?  OMPI_ERR_TEMP_OUT_OF_RESOURCE : OMPI_SUCCESS; \
+    rc = (NULL == item) ?  OPAL_ERR_TEMP_OUT_OF_RESOURCE : OPAL_SUCCESS; \
 } 
 
 /**
@@ -113,7 +113,7 @@ OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
  *
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
- * @param rc (OUT)       OMPI_SUCCESS or error status on failure.
+ * @param rc (OUT)       OPAL_SUCCESS or error status on failure.
  *
  * If the requested item is not available the free list is grown to 
  * accomodate the request - unless the max number of allocations has 
@@ -135,7 +135,7 @@ OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
         }                                                                  \
     }                                                                      \
     OPAL_THREAD_UNLOCK(&((fl)->fl_lock));                                  \
-    rc = (NULL == item) ?  OMPI_ERR_OUT_OF_RESOURCE : OMPI_SUCCESS;        \
+    rc = (NULL == item) ?  OPAL_ERR_OUT_OF_RESOURCE : OPAL_SUCCESS;        \
 } 
 
 

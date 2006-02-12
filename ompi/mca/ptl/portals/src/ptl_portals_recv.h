@@ -22,7 +22,7 @@
 #ifndef MCA_PTL_PORTALS_RECV_FRAG_H
 #define MCA_PTL_PORTALS_RECV_FRAG_H
 
-#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
 
 /**
  *  PORTALS received fragment derived type.

@@ -37,7 +37,7 @@ extern "C" {
   /* OMPI: Conform to OMPI's header file scheme -- specify the full
      include path from "src/".  Also, config.h is a terrible
      unqualified name for a header file.  :-) */
-#include "ompi_config.h"
+#include "opal_config.h"
 #endif
 #include "opal/threads/mutex.h"
 

@@ -22,14 +22,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "class/ompi_bitmap.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
-#include "mca/ptl/base/ptl_base_comm.h"
-#include "mca/ptl/base/ptl_base_header.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
+#include "ompi/class/ompi_bitmap.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/base.h"
+#include "ompi/mca/ptl/base/ptl_base_comm.h"
+#include "ompi/mca/ptl/base/ptl_base_header.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
 #include "pml_uniq.h"
 #include "pml_uniq_component.h"
 #include "pml_uniq_proc.h"

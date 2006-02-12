@@ -17,10 +17,9 @@
  */
 
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -74,7 +73,7 @@ int orte_rml_base_open(void)
     /* Open up all available components */
     if ((rc = mca_base_components_open("rml", orte_rml_base.rml_output,
                                        mca_rml_base_static_components, 
-            &orte_rml_base.rml_components, true)) != OMPI_SUCCESS) {
+            &orte_rml_base.rml_components, true)) != ORTE_SUCCESS) {
         return rc;
     }
     return ORTE_SUCCESS;

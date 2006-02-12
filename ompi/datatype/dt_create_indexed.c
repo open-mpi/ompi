@@ -18,7 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "datatype/datatype.h"
+#include "ompi/datatype/datatype.h"
 
 /* We try to merge together data that are contiguous */
 int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* pDisp,

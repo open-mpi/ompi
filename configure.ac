@@ -185,7 +185,7 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     AC_MSG_NOTICE([Detected VPATH build])
 fi
 
-# Setup the top of the include/ompi_config.h file
+# Setup the top of the opal/include/opal_config.h file
 
 AH_TOP([/* -*- c -*-
  *
@@ -206,12 +206,12 @@ AH_TOP([/* -*- c -*-
  * Function: - OS, CPU and compiler dependent configuration 
  */
 
-#ifndef OMPI_CONFIG_H
-#define OMPI_CONFIG_H
+#ifndef OPAL_CONFIG_H
+#define OPAL_CONFIG_H
 ])
 AH_BOTTOM([
-#include "ompi_config_bottom.h"
-#endif /* OMPI_CONFIG_H */
+#include "opal_config_bottom.h"
+#endif /* OPAL_CONFIG_H */
 ])
 
 # Other basic setup stuff (shared with components)
@@ -1485,14 +1485,18 @@ ompi_show_subtitle "Compiler flags"
 # '-I$(top_srcdir)' doesn't show up in any of the configure output --
 # purely aesthetic.
 #
-# JMS: Someday to remove the -I's for the individual ompi, orte, opal
-# directories -- the top-level ones will suffice after all #include's
-# throughout the tree are converted to use the full path of our header
-# files.
+# Because opal_config.h, orte_config.h, and ompi_config.h are all
+# created by AC_CONFIG_HEADERS, we don't need to -I the builddir for
+# <project>/include.  If we VPATH building, we do need to include the
+# source directories, however.
 #
-
-CPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir) -I$(top_builddir) -I$(top_builddir)/include -I$(top_srcdir)/opal -I$(top_srcdir)/orte -I$(top_srcdir)/ompi'" $CPPFLAGS"
-CXXCPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir) -I$(top_builddir) -I$(top_builddir)/include -I$(top_srcdir)/opal -I$(top_srcdir)/orte -I$(top_srcdir)/ompi'" $CXXCPPFLAGS"
+if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
+    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'"$CPPFLAGS"
+    CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'"$CXXCPPFLAGS"
+else
+    CPPFLAGS='-I$(top_srcdir)'"$CPPFLAGS"
+    CXXCPPFLAGS='-I$(top_srcdir)'"$CXXCPPFLAGS"
+fi
 
 #
 # Do a final process of the CFLAGS to make a WITHOUT_OPTFLAGS version.
@@ -1541,19 +1545,17 @@ OMPI_SETUP_WRAPPER_FINAL
 
 ompi_show_subtitle "Final output" 
 
-AM_CONFIG_HEADER([include/ompi_config.h include/mpi.h])
+AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h])
 AC_CONFIG_FILES([
     Makefile
 
     config/Makefile
 
-    include/Makefile
-    include/mpif.h
-
-    etc/Makefile
     contrib/Makefile
 
     opal/Makefile
+    opal/etc/Makefile
+    opal/include/Makefile
     opal/asm/Makefile
     opal/event/Makefile
     opal/event/compat/Makefile
@@ -1566,6 +1568,8 @@ AC_CONFIG_FILES([
     opal/tools/wrappers/opalc++-wrapper-data.txt
 
     orte/Makefile
+    orte/include/Makefile
+    orte/etc/Makefile
 
     orte/tools/console/Makefile
     orte/tools/orted/Makefile
@@ -1577,6 +1581,9 @@ AC_CONFIG_FILES([
     orte/tools/wrappers/ortec++-wrapper-data.txt
 
     ompi/Makefile
+    ompi/etc/Makefile
+    ompi/include/Makefile
+    ompi/include/mpif.h
 
     ompi/debuggers/Makefile
 

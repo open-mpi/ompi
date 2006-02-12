@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 
 
 /* default options */

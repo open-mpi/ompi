@@ -19,7 +19,7 @@
 #ifndef OPAL_STRNCPY_H
 #define OPAL_STRNCPY_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

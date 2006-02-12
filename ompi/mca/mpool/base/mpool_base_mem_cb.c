@@ -21,7 +21,7 @@
 #include "mpool_base_mem_cb.h"
 #include "base.h"
 #include "orte/util/proc_info.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 
 extern uint32_t mca_mpool_base_page_size; 

@@ -23,8 +23,8 @@
 #if HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
-#include "mca/mpool/mpool.h"
-#include "mca/mpool/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
 #include "opal/threads/mutex.h" 
 
 /**

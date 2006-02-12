@@ -1,8 +1,8 @@
 #ifndef MCA_IOF_SVC_SUBSCRIPT_H
 #define MCA_IOF_SVC_SUBSCRIPT_H
 
-#include "class/orte_pointer_array.h"
-#include "class/orte_proc_table.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/class/orte_proc_table.h"
 
 /**
  * A subscription routes data from a specified set

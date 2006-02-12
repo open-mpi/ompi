@@ -17,7 +17,7 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -33,7 +33,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #if OMPI_WANT_LIBLTDL
 
@@ -100,7 +100,7 @@ int mca_base_component_repository_init(void)
     /* Initialize libltdl */
 
     if (lt_dlinit() != 0) {
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     OBJ_CONSTRUCT(&repository, opal_list_t);
@@ -110,7 +110,7 @@ int mca_base_component_repository_init(void)
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 
@@ -130,7 +130,7 @@ int mca_base_component_repository_retain(char *type,
 
   ri = OBJ_NEW(repository_item_t);
   if (NULL == ri) {
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
 
   /* Initialize the repository item */
@@ -145,9 +145,9 @@ int mca_base_component_repository_retain(char *type,
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 #else
-  return OMPI_ERR_NOT_SUPPORTED;
+  return OPAL_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -162,11 +162,11 @@ int mca_base_component_repository_retain_component(const char *type,
     repository_item_t *ri = find_component(type, name);
     if (NULL != ri) {
         OBJ_RETAIN(ri);
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
-    return OMPI_ERR_NOT_FOUND;
+    return OPAL_ERR_NOT_FOUND;
 #else
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -186,18 +186,18 @@ int mca_base_component_repository_link(const char *src_type,
 
   src = find_component(src_type, src_name);
   if (NULL == src) {
-    return OMPI_ERR_BAD_PARAM;
+    return OPAL_ERR_BAD_PARAM;
   }
   depend = find_component(depend_type, depend_name);
   if (NULL == depend) {
-    return OMPI_ERR_BAD_PARAM;
+    return OPAL_ERR_BAD_PARAM;
   }
 
   /* Link them */
 
   return link_items(src, depend);
 #else
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -292,14 +292,14 @@ static int link_items(repository_item_t *src, repository_item_t *depend)
   /* Bozo check */
 
   if (NULL == src || NULL == depend) {
-    return OMPI_ERR_BAD_PARAM;
+    return OPAL_ERR_BAD_PARAM;
   }
 
   /* Make a new depedency item */
 
   di = OBJ_NEW(dependency_item_t);
   if (NULL == di) {
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
 
   /* Initialize the new dependency item */
@@ -316,7 +316,7 @@ static int link_items(repository_item_t *src, repository_item_t *depend)
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 

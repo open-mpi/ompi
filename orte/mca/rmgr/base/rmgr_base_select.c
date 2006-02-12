@@ -19,7 +19,7 @@
 
 #include "orte_config.h"
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 

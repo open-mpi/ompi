@@ -19,10 +19,10 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
-#include "mca/sds/seed/sds_seed.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/sds/seed/sds_seed.h"
 
 orte_sds_base_module_t orte_sds_seed_module = {
     orte_sds_base_basic_contact_universe,

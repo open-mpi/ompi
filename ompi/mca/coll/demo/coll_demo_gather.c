@@ -19,10 +19,10 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
 
 /*

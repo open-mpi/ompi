@@ -20,7 +20,7 @@
  * Buffer safe printf functions for portability to archaic platforms.
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/util/printf.h"
 

@@ -28,17 +28,17 @@
 
 #include <time.h>
 
-#include "class/orte_pointer_array.h"
+#include "orte/class/orte_pointer_array.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
-#include "mca/gpr/replica/functional_layer/gpr_replica_fn.h"
-#include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
+#include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 
-#include "mca/gpr/replica/gpr_replica.h"
+#include "orte/mca/gpr/replica/gpr_replica.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

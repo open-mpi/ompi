@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 /* This component will only be compiled on Solaris, where we are
    guaranteed to have these headers */
@@ -25,7 +25,7 @@
 #include <sys/procset.h>
 #include <unistd.h>
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"

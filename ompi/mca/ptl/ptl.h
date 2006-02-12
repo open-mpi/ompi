@@ -245,13 +245,13 @@
    has a dependencies on ptl.h and must have ptl.h fully included
    before pml.h is parsed.  It's weird, but there isn't a better way
    without doing some strange type forward declarations. */
-#include "mca/mca.h"
-#include "mca/pml/pml.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/pml/pml.h"
 
 #ifndef MCA_PTL_H
 #define MCA_PTL_H
 
-#include "include/types.h"
+#include "ompi/types.h"
 
 /*
  * PTL types

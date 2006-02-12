@@ -16,7 +16,7 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include "include/ompi_socket_errno.h"
+#include "orte/orte_socket_errno.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -35,7 +35,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"

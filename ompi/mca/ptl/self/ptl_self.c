@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #endif
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"

@@ -17,8 +17,8 @@
  */
 
 #include "ompi_config.h"
-#include "mca/oob/oob.h"
-#include "mca/iof/iof.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/iof/iof.h"
 
 
 int ompi_mpi_init_io(void)

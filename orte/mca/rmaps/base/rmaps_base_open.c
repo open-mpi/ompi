@@ -17,14 +17,14 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 
-#include "mca/rmaps/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
 
 
 /*

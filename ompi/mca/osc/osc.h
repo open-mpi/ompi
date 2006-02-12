@@ -23,7 +23,7 @@
 #ifndef OMPI_OSC_H
 #define OMPI_OSC_H
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
 struct ompi_win_t;
 struct ompi_info_t;

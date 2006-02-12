@@ -21,15 +21,15 @@
  */
 #include "ompi_config.h"
 
-#include "include/types.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_header.h"
+#include "ompi/types.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_header.h"
 #include "ptl_gm.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_proc.h"
 #include "ptl_gm_sendfrag.h"
 #include "ptl_gm_priv.h"
-#include "mca/pml/teg/pml_teg_proc.h"
+#include "ompi/mca/pml/teg/pml_teg_proc.h"
 
 static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer,
 					      struct mca_ptl_base_frag_t* frag );

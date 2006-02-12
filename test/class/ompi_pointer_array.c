@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "support.h"
-#include "class/ompi_pointer_array.h"
+#include "ompi/class/ompi_pointer_array.h"
 
 typedef union {
     int ivalue;

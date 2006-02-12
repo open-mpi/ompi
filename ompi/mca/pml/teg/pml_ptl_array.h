@@ -22,7 +22,7 @@
 #define OMPI_PTL_ARRAY_H
 
 #include "opal/util/output.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/mca/ptl/ptl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

@@ -30,8 +30,8 @@
  * @param working_dir Pointer to a character string containing the desired working directory. Providing
  * a value of NULL will cause the function to leave the program in the current working directory.
  *
- * @retval OMPI_SUCCESS Indicates that the conversion was successful
- * @retval OMPI_ERROR Indicates that the conversion was not successful - a fork could not be completed.
+ * @retval OPAL_SUCCESS Indicates that the conversion was successful
+ * @retval OPAL_ERROR Indicates that the conversion was not successful - a fork could not be completed.
  */
 OMPI_DECLSPEC int opal_daemon_init(char *working_dir);
 

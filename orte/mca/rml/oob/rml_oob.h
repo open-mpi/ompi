@@ -21,7 +21,7 @@
 #ifndef MCA_RML_OOB_H
 #define MCA_RML_OOB_H
 
-#include "mca/rml/rml.h"
+#include "orte/mca/rml/rml.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

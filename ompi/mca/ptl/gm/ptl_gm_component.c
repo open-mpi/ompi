@@ -20,10 +20,10 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ptl_gm.h"
 #include "ptl_gm_priv.h"
 #include "ptl_gm_peer.h"

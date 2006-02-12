@@ -20,7 +20,7 @@
   * Description of the Registration Cache framework
   */
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 #include "rcache_rb_tree.h"
 
 

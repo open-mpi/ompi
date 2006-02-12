@@ -25,7 +25,7 @@
 #include "btl_openib.h" 
 
 #include <infiniband/verbs.h> 
-#include "mca/mpool/openib/mpool_openib.h" 
+#include "ompi/mca/mpool/openib/mpool_openib.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

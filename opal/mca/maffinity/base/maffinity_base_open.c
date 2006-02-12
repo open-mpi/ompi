@@ -17,9 +17,9 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -68,7 +68,7 @@ int opal_maffinity_base_open(void)
 
     /* Open up all available components */
 
-    if (OMPI_SUCCESS !=
+    if (OPAL_SUCCESS !=
         mca_base_components_open("maffinity", opal_maffinity_base_output,
                                  mca_maffinity_base_static_components,
                                  &opal_maffinity_base_components_opened, 

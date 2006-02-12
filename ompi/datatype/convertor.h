@@ -21,7 +21,7 @@
 #define CONVERTOR_H_HAS_BEEN_INCLUDED
 
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/datatype/datatype.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

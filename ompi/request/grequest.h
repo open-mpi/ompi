@@ -20,7 +20,7 @@
 #define OMPI_GEN_REQUEST_H
 
 #include "ompi_config.h"
-#include "request/request.h"
+#include "ompi/request/request.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

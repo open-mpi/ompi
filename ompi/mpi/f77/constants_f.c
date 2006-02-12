@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
+#include "ompi/mpi/f77/bindings.h"
 #include "constants.h"
 
 #define INST(upper_case, lower_case, single_u, double_u) \

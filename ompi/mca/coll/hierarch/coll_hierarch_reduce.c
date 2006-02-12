@@ -22,11 +22,11 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "communicator/communicator.h"
-#include "datatype/datatype.h"
-#include "mca/coll/coll.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/mca/coll/coll.h"
 
 
 /*

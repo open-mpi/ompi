@@ -19,12 +19,12 @@
 #ifndef OMPI_PROC
 #define OMPI_PROC
 
-#include "include/types.h"
+#include "ompi/types.h"
 #include "opal/class/opal_list.h"
-#include "dss/dss_types.h"
+#include "orte/dss/dss_types.h"
 #include "opal/threads/mutex.h"
 
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -26,10 +26,10 @@
 #include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "runtime/runtime.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
 
 /* output files needed by the test */
 static FILE *test_out=NULL;

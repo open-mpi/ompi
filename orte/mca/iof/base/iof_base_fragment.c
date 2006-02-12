@@ -1,4 +1,4 @@
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -15,11 +15,11 @@
 #include <netinet/in.h>
 #endif
 #include "opal/util/output.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/rml_types.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
-#include "mca/iof/base/iof_base_fragment.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/iof/base/iof_base_fragment.h"
 
 
 /**
@@ -74,7 +74,7 @@ static void orte_iof_base_frag_send_cb(
 
 int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, const char* file, int line)
 {
-    int rc = OMPI_SUCCESS;
+    int rc = ORTE_SUCCESS;
   
     if(frag->frag_hdr.hdr_msg.msg_len > 0) {
         frag->frag_hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_ACK;
@@ -89,7 +89,7 @@ int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, const char* file, int li
             0,
             orte_iof_base_frag_send_cb,
             frag);
-        if(rc != OMPI_SUCCESS) {
+        if(rc != ORTE_SUCCESS) {
             opal_output(0, "orte_iof_base_frag_ack: orte_oob_send failed with status=%d\n", rc);
         }
     }

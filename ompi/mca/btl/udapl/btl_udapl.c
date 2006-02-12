@@ -20,18 +20,18 @@
 #include <string.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h" 
 #include "btl_udapl_proc.h"
 #include "btl_udapl_endpoint.h"
-#include "datatype/convertor.h" 
-#include "datatype/datatype.h" 
-#include "mca/mpool/base/base.h" 
-/*#include "mca/mpool/mpool.h"*/
-#include "mca/mpool/udapl/mpool_udapl.h"
+#include "ompi/datatype/convertor.h" 
+#include "ompi/datatype/datatype.h" 
+#include "ompi/mca/mpool/base/base.h" 
+/*#include "ompi/mca/mpool/mpool.h"*/
+#include "ompi/mca/mpool/udapl/mpool_udapl.h"
 #include "ompi/proc/proc.h"
 
 mca_btl_udapl_module_t mca_btl_udapl_module = {

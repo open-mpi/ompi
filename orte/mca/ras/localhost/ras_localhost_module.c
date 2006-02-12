@@ -20,8 +20,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "orte/include/orte_constants.h"
-#include "orte/include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/rmgr/base/base.h"

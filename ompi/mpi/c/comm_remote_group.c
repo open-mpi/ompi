@@ -19,14 +19,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mpi/c/bindings.h"
+#include "ompi/mpi/c/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_remote_group = PMPI_Comm_remote_group
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 

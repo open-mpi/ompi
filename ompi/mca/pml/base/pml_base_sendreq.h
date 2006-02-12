@@ -22,10 +22,10 @@
 #define MCA_PML_BASE_SEND_REQUEST_H
 
 #include "ompi_config.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_request.h"
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

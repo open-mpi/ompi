@@ -57,7 +57,7 @@ pid_t orte_waitpid(pid_t wpid, int *status, int options);
  * time.  
  *
  * If a thread is already blocked in \c ompi_rte_waitpid for \c wpid,
- * this function will return \c OMPI_ERR_EXISTS.  It is illegal for
+ * this function will return \c ORTE_ERR_EXISTS.  It is illegal for
  * multiple callbacks to be registered for a single \c wpid
  * (OMPI_EXISTS will be returned in this case).
  *

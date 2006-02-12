@@ -67,7 +67,7 @@ ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval,
 
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
-#include "mpi/cxx/pmpicxx.h"
+#include "ompi/mpi/cxx/pmpicxx.h"
 #endif
 
 namespace MPI {
@@ -95,34 +95,34 @@ namespace MPI {
   typedef MPI_Aint Aint;
   typedef MPI_Offset Offset;
 
-#include "mpi/cxx/constants.h"
-#include "mpi/cxx/functions.h"
-#include "mpi/cxx/datatype.h"
+#include "ompi/mpi/cxx/constants.h"
+#include "ompi/mpi/cxx/functions.h"
+#include "ompi/mpi/cxx/datatype.h"
 
   typedef void User_function(const void* invec, void* inoutvec, int len,
 			     const Datatype& datatype);
 
-#include "mpi/cxx/exception.h"
-#include "mpi/cxx/op.h"
-#include "mpi/cxx/status.h"
-#include "mpi/cxx/request.h"   //includes class Prequest
-#include "mpi/cxx/group.h" 
-#include "mpi/cxx/comm.h"
-#include "mpi/cxx/errhandler.h"
-#include "mpi/cxx/intracomm.h"
-#include "mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
-#include "mpi/cxx/intercomm.h"
-#include "mpi/cxx/info.h"
-#include "mpi/cxx/win.h"
-#include "mpi/cxx/file.h"
+#include "ompi/mpi/cxx/exception.h"
+#include "ompi/mpi/cxx/op.h"
+#include "ompi/mpi/cxx/status.h"
+#include "ompi/mpi/cxx/request.h"   //includes class Prequest
+#include "ompi/mpi/cxx/group.h" 
+#include "ompi/mpi/cxx/comm.h"
+#include "ompi/mpi/cxx/errhandler.h"
+#include "ompi/mpi/cxx/intracomm.h"
+#include "ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
+#include "ompi/mpi/cxx/intercomm.h"
+#include "ompi/mpi/cxx/info.h"
+#include "ompi/mpi/cxx/win.h"
+#include "ompi/mpi/cxx/file.h"
 
 }
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
-#include "mpi/cxx/pop_inln.h"
-#include "mpi/cxx/pgroup_inln.h"
-#include "mpi/cxx/pstatus_inln.h"
-#include "mpi/cxx/prequest_inln.h"
+#include "ompi/mpi/cxx/pop_inln.h"
+#include "ompi/mpi/cxx/pgroup_inln.h"
+#include "ompi/mpi/cxx/pstatus_inln.h"
+#include "ompi/mpi/cxx/prequest_inln.h"
 #endif
 
 //
@@ -134,20 +134,20 @@ namespace MPI {
 // PMPI functions, and this top layer is in the XXX.cc files.
 //
 
-#include "mpi/cxx/datatype_inln.h"
-#include "mpi/cxx/functions_inln.h"
-#include "mpi/cxx/request_inln.h"
-#include "mpi/cxx/comm_inln.h"
-#include "mpi/cxx/intracomm_inln.h"
-#include "mpi/cxx/topology_inln.h"
-#include "mpi/cxx/intercomm_inln.h"
-#include "mpi/cxx/group_inln.h"
-#include "mpi/cxx/op_inln.h"
-#include "mpi/cxx/errhandler_inln.h"
-#include "mpi/cxx/status_inln.h"
-#include "mpi/cxx/info_inln.h"
-#include "mpi/cxx/win_inln.h"
-#include "mpi/cxx/file_inln.h"
+#include "ompi/mpi/cxx/datatype_inln.h"
+#include "ompi/mpi/cxx/functions_inln.h"
+#include "ompi/mpi/cxx/request_inln.h"
+#include "ompi/mpi/cxx/comm_inln.h"
+#include "ompi/mpi/cxx/intracomm_inln.h"
+#include "ompi/mpi/cxx/topology_inln.h"
+#include "ompi/mpi/cxx/intercomm_inln.h"
+#include "ompi/mpi/cxx/group_inln.h"
+#include "ompi/mpi/cxx/op_inln.h"
+#include "ompi/mpi/cxx/errhandler_inln.h"
+#include "ompi/mpi/cxx/status_inln.h"
+#include "ompi/mpi/cxx/info_inln.h"
+#include "ompi/mpi/cxx/win_inln.h"
+#include "ompi/mpi/cxx/file_inln.h"
 
 #endif // #if defined(__cplusplus) || defined(c_plusplus) 
 #endif // #ifndef MPIPP_H_

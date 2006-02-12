@@ -58,7 +58,7 @@
 #ifndef OMPI_MCA_BASE_PARAM_H
 #define OMPI_MCA_BASE_PARAM_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_list.h"
@@ -127,7 +127,7 @@ extern "C" {
     /**
      * Initialize the MCA parameter system.
      *
-     * @retval OMPI_SUCCESS
+     * @retval OPAL_SUCCESS
      *
      * This function initalizes the MCA parameter system.  It is
      * invoked internally (by mca_base_open()) and is only documented
@@ -154,7 +154,7 @@ extern "C" {
      * up its current value and return it unless current_value is
      * NULL.
      *
-     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval OPAL_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
      * mca_base_param_lookup_int() to retrieve the value of the parameter.
      *
@@ -216,7 +216,7 @@ extern "C" {
      * up its current value and return it unless current_value is
      * NULL.
      *
-     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval OPAL_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
      * mca_base_param_lookup_string() to retrieve the value of the
      * parameter.
@@ -260,7 +260,7 @@ extern "C" {
      * up its current value and return it unless current_value is
      * NULL.
      *
-     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval OPAL_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
      * mca_base_param_lookup_string() to retrieve the value of the
      * parameter.
@@ -304,7 +304,7 @@ extern "C" {
      * up its current value and return it unless current_value is
      * NULL.
      *
-     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval OPAL_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
      * mca_base_param_lookup_string() to retrieve the value of the
      * parameter.
@@ -340,8 +340,8 @@ extern "C" {
      * @param index The index of the parameter to use.
      * @param keyval The keyval to associate it with.
      *
-     * @returns OMPI_SUCCESS Upon success.
-     * @returns OMPI_ERROR If the index value is invalid.
+     * @returns OPAL_SUCCESS Upon success.
+     * @returns OPAL_ERROR If the index value is invalid.
      *
      * For an index value that was previously returned by
      * mca_base_param_register_int() or
@@ -366,9 +366,9 @@ extern "C" {
      * @param value Pointer to int where the parameter value will be
      * stored.
      *
-     * @return OMPI_ERROR Upon failure.  The contents of value are
+     * @return OPAL_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @return OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OPAL_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * The value of a specific MCA parameter can be looked up using the
@@ -386,9 +386,9 @@ extern "C" {
      * @param value Pointer to int where the parameter value will
      * be stored.
      *
-     * @return OMPI_ERROR Upon failure.  The contents of value are
+     * @return OPAL_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @return OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OPAL_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * This function is identical to mca_base_param_lookup_int() except
@@ -408,9 +408,9 @@ extern "C" {
      * @param value Pointer to (char *) where the parameter value will be
      * stored.
      *
-     * @return OMPI_ERROR Upon failure.  The contents of value are
+     * @return OPAL_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @return OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OPAL_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * Note that if a string value is read in from a file then it will
@@ -434,9 +434,9 @@ extern "C" {
      * @param value [out] Pointer to (char *) where the parameter value
      * will be stored.
      *
-     * @return OMPI_ERROR Upon failure.  The contents of value are
+     * @return OPAL_ERROR Upon failure.  The contents of value are
      * undefined.
-     * @return OMPI_SUCCESS Upon success.  value will be filled with the
+     * @return OPAL_SUCCESS Upon success.  value will be filled with the
      * parameter's current value.
      *
      * This function is identical to mca_base_param_lookup_string()
@@ -454,8 +454,8 @@ extern "C" {
      * @param index [in] Index of MCA parameter to set
      * @param value [in] The integer value to set
      *
-     * @retval OMPI_ERROR If the parameter was not found.
-     * @retval OMPI_SUCCESS Upon success.
+     * @retval OPAL_ERROR If the parameter was not found.
+     * @retval OPAL_SUCCESS Upon success.
      *
      * This function sets an integer value on the MCA parmeter
      * indicated by the index value index.  This value will be used in
@@ -474,8 +474,8 @@ extern "C" {
      * @param index [in] Index of MCA parameter to set
      * @param value [in] The string value to set
      *
-     * @retval OMPI_ERROR If the parameter was not found.
-     * @retval OMPI_SUCCESS Upon success.
+     * @retval OPAL_ERROR If the parameter was not found.
+     * @retval OPAL_SUCCESS Upon success.
      *
      * This function sets a string value on the MCA parmeter
      * indicated by the index value index.  This value will be used in
@@ -498,8 +498,8 @@ extern "C" {
      *
      * @param index [in] Index of MCA parameter to set
      *
-     * @retval OMPI_ERROR If the parameter was not found.
-     * @retval OMPI_SUCCESS Upon success.
+     * @retval OPAL_ERROR If the parameter was not found.
+     * @retval OPAL_SUCCESS Upon success.
      *
      * Resets previous value that was set (if any) on the given MCA
      * parameter.
@@ -528,7 +528,7 @@ extern "C" {
      * @param component Name of the component containing the parameter.
      * @param param Name of the parameter.
      *
-     * @retval OMPI_ERROR If the parameter was not found.
+     * @retval OPAL_ERROR If the parameter was not found.
      * @retval index If the parameter was found.
      *
      * It is not always convenient to widely propagate a parameter's index
@@ -552,8 +552,8 @@ extern "C" {
      * @param internal [in] Boolean indicating whether the MCA
      * parameter is internal (private) or public.
      *
-     * @returns OMPI_SUCCESS If it can find the parameter to reset
-     * @returns OMPI_ERROR Otherwise
+     * @returns OPAL_SUCCESS If it can find the parameter to reset
+     * @returns OPAL_ERROR Otherwise
      *
      * "Internal" MCA parameters are ones that are not intentended to
      * be seen or modified by users or user applications.  These
@@ -574,8 +574,8 @@ extern "C" {
      * @param internal [in] Whether to include the internal parameters
      * or not.
      *
-     * @retval OMPI_SUCCESS Upon success.
-     * @retval OMPI_ERROR Upon failure.
+     * @retval OPAL_SUCCESS Upon success.
+     * @retval OPAL_ERROR Upon failure.
      *
      * This function is used to obtain a list of all the currently
      * registered MCA parameters along with their associated types
@@ -602,8 +602,8 @@ extern "C" {
      * @param internal [in] Whether to include the internal parameters
      * or not.
      *
-     * @retval OMPI_SUCCESS Upon success.
-     * @retval OMPI_ERROR Upon failure.
+     * @retval OPAL_SUCCESS Upon success.
+     * @retval OPAL_ERROR Upon failure.
      *
      * This function is similar to mca_base_param_dump() except that
      * its output is in terms of an argv-style array of key=value
@@ -619,8 +619,8 @@ extern "C" {
      * @param info [in/out] An opal_list_t previously returned from
      * mca_base_param_dump().
      *
-     * @retval OMPI_SUCCESS Upon success.
-     * @retval OMPI_ERROR Upon failure.
+     * @retval OPAL_SUCCESS Upon success.
+     * @retval OPAL_ERROR Upon failure.
      * 
      * This function is intended to be used to free the info list
      * returned from mca_base_param_dump().  There are a bunch of
@@ -635,7 +635,7 @@ extern "C" {
      * Shut down the MCA parameter system (normally only invoked by the
      * MCA framework itself).
      *
-     * @returns OMPI_SUCCESS This function never fails.
+     * @returns OPAL_SUCCESS This function never fails.
      *
      * This function shuts down the MCA parameter repository and frees all
      * associated memory.  No other mca_base_param*() functions can be
@@ -665,7 +665,7 @@ extern "C" {
      * @param default_value [in] The value that is used for this
      * parameter if the user does not supply one.
      *
-     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval OPAL_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
      * mca_base_param_lookup_int() to retrieve the value of the parameter.
      *
@@ -717,7 +717,7 @@ extern "C" {
      * @param default_value [in] The value that is used for this
      * parameter if the user does not supply one.
      *
-     * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval OPAL_ERROR Upon failure to register the parameter.
      * @retval index Index value that can be used with
      * mca_base_param_lookup_string() to retrieve the value of the
      * parameter.

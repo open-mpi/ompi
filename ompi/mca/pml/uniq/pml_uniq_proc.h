@@ -22,9 +22,9 @@
 #define MCA_PML_PROC_H
 
 #include "opal/threads/mutex.h"
-#include "communicator/communicator.h"
-#include "group/group.h"
-#include "proc/proc.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
+#include "ompi/proc/proc.h"
 
 /* This define has to move outside of this file. Maybe on some configuration file.
  * Anyway by for, for the debugging purpose, here it's quite a safe place.

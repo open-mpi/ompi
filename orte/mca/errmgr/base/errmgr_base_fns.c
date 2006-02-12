@@ -22,19 +22,19 @@
 #include <unistd.h>
 #endif
 #include <stdlib.h>
-#include "include/orte_constants.h"
-#include "mca/schema/schema.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/schema/schema.h"
 
-#include "runtime/runtime.h"
-#include "runtime/orte_wait.h"
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_wait.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
-#include "util/proc_info.h"
-#include "mca/ns/ns.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns.h"
 
-#include "mca/rmgr/rmgr.h"
+#include "orte/mca/rmgr/rmgr.h"
 
-#include "mca/errmgr/base/base.h"
+#include "orte/mca/errmgr/base/base.h"
 
 
 void orte_errmgr_base_log(int error_code, char *filename, int line)

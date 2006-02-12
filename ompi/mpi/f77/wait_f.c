@@ -18,9 +18,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "request/request.h"
-#include "mpi/f77/constants.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/request/request.h"
+#include "ompi/mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WAIT = mpi_wait_f
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAIT,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)

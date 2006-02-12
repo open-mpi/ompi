@@ -20,10 +20,10 @@
 #include "coll_hierarch.h"
 
 #include "mpi.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "communicator/communicator.h"
-#include "mca/coll/coll.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/coll.h"
 
 /*
  *	bcast_intra

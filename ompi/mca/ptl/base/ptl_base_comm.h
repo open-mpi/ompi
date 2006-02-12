@@ -23,7 +23,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/mca/ptl/ptl.h"
 #include "opal/class/opal_list.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

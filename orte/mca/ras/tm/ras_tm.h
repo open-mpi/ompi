@@ -23,8 +23,8 @@
 #ifndef ORTE_RAS_TM_H
 #define ORTE_RAS_TM_H
 
-#include "mca/ras/ras.h"
-#include "mca/ras/base/base.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/ras/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

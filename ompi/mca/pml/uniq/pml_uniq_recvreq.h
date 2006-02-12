@@ -23,8 +23,8 @@
 
 #include "pml_uniq.h"
 #include "pml_uniq_proc.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_recvreq.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

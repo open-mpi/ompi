@@ -16,14 +16,14 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include "mca/rds/hostfile/rds_hostfile_lex.h"
+#include "orte/mca/rds/hostfile/rds_hostfile_lex.h"
 
 /*
  * local functions

@@ -18,14 +18,13 @@
 
 #include "ompi_config.h"
 
-#include "runtime/runtime.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/mpool/mpool.h"
-#include "mca/mpool/base/base.h"
-#include "class/ompi_rb_tree.h"
-#include "class/ompi_free_list.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/class/ompi_rb_tree.h"
+#include "ompi/class/ompi_free_list.h"
 #include "opal/threads/mutex.h" 
 
 OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NULL);

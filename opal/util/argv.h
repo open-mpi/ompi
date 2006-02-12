@@ -25,7 +25,7 @@
 
 #ifndef OPAL_ARGV_H
 #define OPAL_ARGV_H
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -43,8 +43,8 @@ extern "C" {
    * @param argv Pointer to an argv array.
    * @param str Pointer to the string to append.
    *
-   * @retval OMPI_SUCCESS On success
-   * @retval OMPI_ERROR On failure
+   * @retval OPAL_SUCCESS On success
+   * @retval OPAL_ERROR On failure
    *
    * This function adds a string to an argv array of strings by value;
    * it is permissable to pass a string on the stack as the str
@@ -71,8 +71,8 @@ OMPI_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg);
    * @param argv Pointer to an argv array.
    * @param str Pointer to the string to append.
    *
-   * @retval OMPI_SUCCESS On success
-   * @retval OMPI_ERROR On failure
+   * @retval OPAL_SUCCESS On success
+   * @retval OPAL_ERROR On failure
    *
    * This function is identical to the opal_argv_append() function
    * except that it does not take a pointer to an argc (integer
@@ -175,7 +175,7 @@ OMPI_DECLSPEC  char **opal_argv_copy(char **argv);
      * @param start The index of the first token to delete
      * @param num_to_delete How many tokens to delete
      *
-     * @retval OMPI_SUCCESS Always
+     * @retval OPAL_SUCCESS Always
      *
      * Delete some tokens from within an existing argv.  The start
      * parameter specifies the first token to delete, and will delete
@@ -203,7 +203,7 @@ OMPI_DECLSPEC  int opal_argv_delete(int *argc, char ***argv,
      * @param start Index where the first token will be placed in target
      * @param source The argv to copy tokens from
      *
-     * @retval OMPI_SUCCESS upon success
+     * @retval OPAL_SUCCESS upon success
      * @retval OMPI_BAD_PARAM if any parameters are non-sensical
      *
      * This function takes one arg and inserts it in the middle of

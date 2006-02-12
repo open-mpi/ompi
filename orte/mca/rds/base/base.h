@@ -25,11 +25,11 @@
  * includes
  */
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "mca/rds/rds.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/rds/rds.h"
 
 
 /*

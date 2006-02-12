@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/mpool/mpool.h"
-#include "mca/mpool/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
 #ifdef HAVE_MALLOC_H

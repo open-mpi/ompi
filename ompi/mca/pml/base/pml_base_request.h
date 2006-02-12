@@ -21,9 +21,9 @@
 #ifndef MCA_PML_BASE_REQUEST_H
 #define MCA_PML_BASE_REQUEST_H
 
-#include "class/ompi_free_list.h"
-#include "request/request.h"
-/*#include "communicator/communicator.h"*/
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/request/request.h"
+/*#include "ompi/communicator/communicator.h"*/
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

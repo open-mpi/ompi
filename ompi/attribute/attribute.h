@@ -29,10 +29,10 @@
 #include "mpi.h"
 
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/class/opal_object.h"
-#include "class/opal_hash_table.h"
-#include "mca/gpr/gpr_types.h"
+#include "opal/class/opal_hash_table.h"
+#include "orte/mca/gpr/gpr_types.h"
 
 #define ATTR_HASH_SIZE 10
 

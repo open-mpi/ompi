@@ -20,10 +20,10 @@
 #ifndef OPAL_MAFFINITY_BASE_INTERNAL_H
 #define OPAL_MAFFINITY_BASE_INTERNAL_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_list.h"
-#include "mca/maffinity/maffinity.h"
+#include "opal/mca/maffinity/maffinity.h"
 
 
 /** 

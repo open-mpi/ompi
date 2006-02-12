@@ -19,7 +19,7 @@
 #ifndef OPAL_SHOW_HELP_LEX_H
 #define OPAL_SHOW_HELP_LEX_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef malloc
 #undef malloc

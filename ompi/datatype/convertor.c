@@ -23,9 +23,9 @@
 #include <strings.h>
 #endif
 
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype_internal.h"
 
 ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 {

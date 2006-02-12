@@ -18,9 +18,9 @@
 
 #include "ompi_config.h"
 
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_comm.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_comm.h"
 #include "pml_uniq_recvreq.h"
 #include "pml_uniq_sendreq.h"
 #include "pml_uniq_recvfrag.h"

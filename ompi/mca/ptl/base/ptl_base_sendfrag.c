@@ -18,8 +18,8 @@
 
 #include "ompi_config.h"
 
-#include "mca/pml/pml.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
 
 static void mca_ptl_base_send_frag_construct(mca_ptl_base_send_frag_t* frag);
 static void mca_ptl_base_send_frag_destruct(mca_ptl_base_send_frag_t* frag);

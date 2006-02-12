@@ -20,9 +20,9 @@
 #ifndef OPAL_MEMORY_BASE_H
 #define OPAL_MEMORY_BASE_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "mca/memory/memory.h"
+#include "opal/mca/memory/memory.h"
 
 
 /*

@@ -106,13 +106,13 @@
  *
  */
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
 #ifndef MCA_BTL_H
 #define MCA_BTL_H
 
-#include "include/types.h"
-#include "class/ompi_free_list.h"
+#include "ompi/types.h"
+#include "ompi/class/ompi_free_list.h"
 
 /*
  * BTL types

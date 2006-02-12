@@ -21,8 +21,8 @@
 
 #include "ompi_config.h"
 
-#include "mca/mca.h"
-#include "mca/pml/pml.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/pml/pml.h"
 
 
 /*

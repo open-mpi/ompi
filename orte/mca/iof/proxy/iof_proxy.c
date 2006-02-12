@@ -15,7 +15,7 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -24,15 +24,15 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/iof/iof.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/rml_types.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "iof_proxy.h"
 #include "iof_proxy_svc.h"
 
@@ -248,7 +248,7 @@ int orte_iof_proxy_subscribe(
 
     /* create a local registration to reflect the callback */
     rc = orte_iof_base_callback_create(ORTE_RML_NAME_SELF,src_tag,cbfunc,cbdata);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
 
     /* send a subscription message to the service */
@@ -277,7 +277,7 @@ int orte_iof_proxy_unsubscribe(
         ORTE_RML_NAME_SELF,
         ORTE_NS_CMP_ALL,
         src_tag);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
   
     /* remove local callback */

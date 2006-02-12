@@ -19,13 +19,13 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
-#include "mca/sds/portals_utcp/sds_portals_utcp.h"
-#include "util/proc_info.h"
-#include "mca/ns/base/base.h"
-#include "mca/errmgr/base/base.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/sds/portals_utcp/sds_portals_utcp.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/errmgr/base/base.h"
 
 orte_sds_base_module_t orte_sds_portals_utcp_module = {
     orte_sds_portals_utcp_contact_universe,

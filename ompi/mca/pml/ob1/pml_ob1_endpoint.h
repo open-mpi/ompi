@@ -22,7 +22,7 @@
 #define MCA_PML_OB1_ENDPOINT_H
 
 #include "opal/util/output.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/btl/btl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

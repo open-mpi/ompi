@@ -16,9 +16,9 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "maffinity_libnuma.h"
 

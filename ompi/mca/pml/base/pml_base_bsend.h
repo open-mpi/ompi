@@ -19,8 +19,8 @@
 #ifndef _MCA_PML_BASE_BSEND_H_
 #define _MCA_PML_BASE_BSEND_H_
 
-#include "mca/pml/pml.h"
-#include "request/request.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/request/request.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

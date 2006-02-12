@@ -24,13 +24,13 @@
 #include "components.h"
 
 #include "include/orte_constants.h"
-#include "mca/schema/schema.h"
+#include "orte/mca/schema/schema.h"
 #include "util/proc_info.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/ns/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/ns/base/base.h"
 
 /* output files needed by the test */
 static FILE *test_out=NULL;

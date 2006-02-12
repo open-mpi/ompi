@@ -119,7 +119,7 @@
 #include <stdlib.h>
 #endif  /* HAVE_STDLIB_H */
 
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,

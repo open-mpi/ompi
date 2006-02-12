@@ -16,7 +16,7 @@
  $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include "opal/win32/ompi_uio.h"
 #include <errno.h>
 

@@ -22,9 +22,9 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "mca/mca.h"
-#include "mca/coll/coll.h"
-#include "request/request.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/request/request.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

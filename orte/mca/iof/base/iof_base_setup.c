@@ -22,7 +22,7 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -53,13 +53,13 @@
 #include <libutil.h>
 #endif
 
-#include "mca/iof/base/iof_base_setup.h"
+#include "orte/mca/iof/base/iof_base_setup.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/iof/iof.h"
-#include "mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/ns/ns.h"
 
 int
 orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)

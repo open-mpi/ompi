@@ -23,7 +23,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "include/ompi_socket_errno.h"
+#include "orte/orte_socket_errno.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -45,7 +45,7 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif  /* HAVE_TIME_H */
-#include "include/types.h"
+#include "ompi/types.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp.h"
 #include "btl_tcp_endpoint.h" 

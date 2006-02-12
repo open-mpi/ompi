@@ -28,8 +28,8 @@
 #include "opal/threads/condition.h"
 
 #include "opal/util/cmd_line.h"
-#include "mca/mca.h"
-#include "tools/orted/orted.h"
+#include "opal/mca/mca.h"
+#include "orte/tools/orted/orted.h"
 
 /*
  * Globals

@@ -21,10 +21,10 @@
 #include <netinet/in.h>
 #endif
 
-#include "mca/errmgr/errmgr.h"
-#include "dss/dss_internal.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/dss/dss_internal.h"
 
-#include "mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
 
 /*
  * APP CONTEXT

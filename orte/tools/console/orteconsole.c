@@ -27,7 +27,7 @@
 #include <unistd.h>
 #endif
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
     memset(&orte_console_globals, 0, sizeof(orte_console_globals_t));
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, cmd_line_opts);
-    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
+    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
      * require
      */
     daemon_is_active = false;
-    if (OMPI_SUCCESS != (ret = orte_init(true)) ) {
+    if (ORTE_SUCCESS != (ret = orte_init(true)) ) {
         opal_show_help("help-orteconsole.txt", "orteconsole:init-failure", false,
                        "orte_init()", ret);
         return ret;

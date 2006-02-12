@@ -20,13 +20,13 @@
 #define OMPI_COMMUNICATOR_H
 
 #include "opal/class/opal_object.h"
-#include "errhandler/errhandler.h"
+#include "ompi/errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
 
 #include "mpi.h"
-#include "group/group.h"
-#include "mca/coll/coll.h"
-#include "mca/oob/oob_types.h"
+#include "ompi/group/group.h"
+#include "ompi/mca/coll/coll.h"
+#include "orte/mca/oob/oob_types.h"
 #include "ompi/proc/proc.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

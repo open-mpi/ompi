@@ -16,13 +16,13 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-#include "include/constants.h"
-#include "util/proc_info.h"
+#include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "orte/util/proc_info.h"
 
-#include "mca/ns/ns.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 
 
 int mca_oob_barrier(void)

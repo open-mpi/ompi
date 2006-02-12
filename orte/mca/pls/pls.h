@@ -185,8 +185,8 @@
 
 #include "orte_config.h"
 
-#include "mca/mca.h"
-#include "mca/ns/ns_types.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/ns/ns_types.h"
 #include "opal/class/opal_list.h"
 
 /*

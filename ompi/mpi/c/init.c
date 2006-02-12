@@ -20,15 +20,15 @@
 
 #include <stdlib.h>
 
-#include "mpi/c/bindings.h"
-#include "ompi/include/constants.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init = PMPI_Init
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Init";

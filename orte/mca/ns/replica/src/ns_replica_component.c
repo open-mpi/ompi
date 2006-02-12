@@ -31,17 +31,17 @@
  */
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include "opal/threads/mutex.h"
-#include "util/proc_info.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
 
-#include "mca/mca.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/rml/rml.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
 #include "ns_replica.h"
 
 
@@ -506,7 +506,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                 goto RETURN_ERROR;
            }
 
-           if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&job, 1, ORTE_JOBID))) {
+           if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&job, 1, ORTE_JOBID))) {
                ORTE_ERROR_LOG(rc);
                goto RETURN_ERROR;
            }
@@ -519,13 +519,13 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
 
          case ORTE_NS_RESERVE_RANGE_CMD:
                count = 1;
-               if (OMPI_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&job, &count, ORTE_JOBID))) {
+               if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&job, &count, ORTE_JOBID))) {
                        ORTE_ERROR_LOG(rc);
                    goto RETURN_ERROR;
                }
 
                count = 1;
-               if (OMPI_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&range, &count, ORTE_VPID))) {
+               if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, (void*)&range, &count, ORTE_VPID))) {
                        ORTE_ERROR_LOG(rc);
                    goto RETURN_ERROR;
                }
@@ -535,12 +535,12 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                        goto RETURN_ERROR;
                    }
 
-               if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
+               if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                        ORTE_ERROR_LOG(rc);
                    goto RETURN_ERROR;
                }
 
-               if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&startvpid, 1, ORTE_VPID))) {
+               if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&startvpid, 1, ORTE_VPID))) {
                        ORTE_ERROR_LOG(rc);
                    goto RETURN_ERROR;
                }
@@ -568,11 +568,11 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                     }
                }
 
-              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
+              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                  goto RETURN_ERROR;
               }
 
-              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&oob_tag, 1, ORTE_UINT32))) {
+              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&oob_tag, 1, ORTE_UINT32))) {
                   goto RETURN_ERROR;
               }
 
@@ -593,11 +593,11 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                     goto RETURN_ERROR;
                 }
 
-              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
+              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                  goto RETURN_ERROR;
               }
 
-              if (OMPI_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&type, 1, ORTE_DATA_TYPE))) {
+              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&type, 1, ORTE_DATA_TYPE))) {
                   goto RETURN_ERROR;
               }
 

@@ -26,18 +26,18 @@
  * includes
  */
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "mca/ns/ns_types.h"
-#include "mca/ras/ras_types.h"
-#include "mca/ras/base/ras_base_node.h"
-#include "mca/rmaps/rmaps.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/ras/ras_types.h"
+#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/rmaps/rmaps.h"
 
 
 /*

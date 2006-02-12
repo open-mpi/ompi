@@ -26,8 +26,8 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "class/ompi_pointer_array.h"
-#include "errhandler/errhandler.h"
+#include "ompi/class/ompi_pointer_array.h"
+#include "ompi/errhandler/errhandler.h"
 #include "opal/threads/condition.h"
                                                                                                                             
 #if defined(c_plusplus) || defined(__cplusplus)

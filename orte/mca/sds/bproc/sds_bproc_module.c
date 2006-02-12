@@ -20,16 +20,16 @@
 #include "orte_config.h"
 #include <sys/bproc.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/util/sys_info.h"
 #include "opal/util/output.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
-#include "mca/sds/bproc/sds_bproc.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
-#include "mca/errmgr/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/sds/bproc/sds_bproc.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/errmgr/base/base.h"
 
 orte_sds_base_module_t orte_sds_bproc_module = {
     orte_sds_base_basic_contact_universe,

@@ -27,7 +27,7 @@
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/util/sys_info.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -38,7 +38,7 @@
 #include "orte/mca/rds/hostfile/rds_hostfile.h"
 #include "orte/mca/rds/hostfile/rds_hostfile_lex.h"
 
-#include "runtime/runtime_types.h"
+#include "orte/runtime/runtime_types.h"
 
 static orte_cellid_t local_cellid;
 static bool need_cellid = true;
@@ -197,7 +197,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
         }
     } else {
         orte_rds_hostfile_parse_error(token);
-        return OMPI_ERROR;
+        return ORTE_ERROR;
     }
 
     got_count = false;
@@ -221,7 +221,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             rc = orte_rds_hostfile_parse_int();
             if (rc < 0) {
                 OBJ_RELEASE(node);
-                return OMPI_ERROR;
+                return ORTE_ERROR;
             }
             node->node_slots += rc;
             update = true;
@@ -237,7 +237,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             rc = orte_rds_hostfile_parse_int();
             if (rc < 0) {
                 OBJ_RELEASE(node);
-                return OMPI_ERROR;
+                return ORTE_ERROR;
             }
             /* Only take this update if it puts us >= node_slots */
             if (((size_t) rc) >= node->node_slots) {
@@ -248,14 +248,14 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
             } else {
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                 OBJ_RELEASE(node);
-                return OMPI_ERROR;
+                return ORTE_ERROR;
             }
             break;
 
         default:
             orte_rds_hostfile_parse_error(token);
             OBJ_RELEASE(node);
-            return OMPI_ERROR;
+            return ORTE_ERROR;
         }
     }
 
@@ -268,7 +268,7 @@ done:
     } else {
         OBJ_RELEASE(node);
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

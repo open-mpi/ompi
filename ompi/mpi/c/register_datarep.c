@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mpi/c/bindings.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/file/file.h"
 
@@ -28,7 +28,7 @@
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "ompi/mpi/c/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Register_datarep";

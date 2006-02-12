@@ -22,8 +22,8 @@
 #define OMPI_PML_DR_RECV_REQUEST_H
 
 #include "ompi_config.h"
-#include "mca/mpool/base/base.h"
-#include "mca/pml/base/pml_base_recvreq.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/pml/base/pml_base_recvreq.h"
 
 #include "pml_dr.h"
 #include "pml_dr_proc.h"

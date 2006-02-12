@@ -21,13 +21,13 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "mca/ras/base/base.h"
-#include "mca/ras/base/ras_base_node.h"
-#include "mca/rmgr/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/rmgr/base/base.h"
 #include "ras_xgrid.h"
 
 
@@ -60,7 +60,7 @@ orte_ras_base_module_t orte_ras_xgrid_module = {
  * requested number of nodes/process slots to the job.
  *  
  */
-#include "mca/gpr/gpr.h"
+#include "orte/mca/gpr/gpr.h"
 static int allocate(orte_jobid_t jobid)
 {
     int ret;

@@ -1,11 +1,11 @@
-#include "ompi_config.h"
+#include "orte_config.h"
 #include "opal/util/output.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/rml_types.h"
-#include "mca/iof/base/iof_base_header.h"
-#include "mca/iof/base/iof_base_endpoint.h"
-#include "mca/iof/base/iof_base_fragment.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/iof/base/iof_base_header.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/iof/base/iof_base_fragment.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"
@@ -305,7 +305,7 @@ static void orte_iof_svc_proxy_pub(
         &hdr->pub_proxy,
         hdr->pub_mask,
         hdr->pub_tag);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
     }
 }
@@ -328,7 +328,7 @@ static void orte_iof_svc_proxy_unpub(
         &hdr->pub_proxy,
         hdr->pub_mask,
         hdr->pub_tag);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
     }
 }
@@ -355,7 +355,7 @@ static void orte_iof_svc_proxy_sub(
         &hdr->dst_name,
         hdr->dst_mask,
         hdr->dst_tag);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
     }
 }
@@ -380,7 +380,7 @@ static void orte_iof_svc_proxy_unsub(
         &hdr->dst_name,
         hdr->dst_mask,
         hdr->dst_tag);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
     }
 }

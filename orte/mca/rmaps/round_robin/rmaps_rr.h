@@ -23,7 +23,7 @@
 #ifndef ORTE_RMAPS_RR_H
 #define ORTE_RMAPS_RR_H
 
-#include "mca/rmaps/rmaps.h"
+#include "orte/mca/rmaps/rmaps.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

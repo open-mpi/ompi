@@ -28,7 +28,7 @@
 #include "opal/threads/condition.h"
 
 #include "opal/util/cmd_line.h"
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
 /*
  * Definitions needed for communication

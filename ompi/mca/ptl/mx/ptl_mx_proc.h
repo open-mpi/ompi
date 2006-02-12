@@ -23,9 +23,9 @@
 
 #include "ompi_config.h"
 #include <myriexpress.h>
-#include "mca/ns/ns.h"
+#include "orte/mca/ns/ns.h"
 #include "opal/class/opal_object.h"
-#include "proc/proc.h"
+#include "ompi/proc/proc.h"
 #include "ptl_mx.h"
 #include "ptl_mx_peer.h"
 #if defined(c_plusplus) || defined(__cplusplus)

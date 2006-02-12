@@ -25,15 +25,15 @@
 #ifndef MCA_BML_H
 #define MCA_BML_H
 
-#include "mca/mca.h"
-#include "mca/btl/btl.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/btl/btl.h"
 
-#include "mca/bml/base/bml_base_btl.h"
-#include "mca/bml/base/bml_base_endpoint.h" 
+#include "ompi/mca/bml/base/bml_base_btl.h"
+#include "ompi/mca/bml/base/bml_base_endpoint.h" 
 
-#include "include/types.h"
-#include "class/ompi_free_list.h"
-#include "mca/pml/pml.h"
+#include "ompi/types.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/mca/pml/pml.h"
 
 /*
  * BML types

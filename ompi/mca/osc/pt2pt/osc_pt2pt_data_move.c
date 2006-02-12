@@ -24,7 +24,7 @@
 #include "osc_pt2pt_obj_convert.h"
 
 #include "opal/util/output.h"
-#include "opal/include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
