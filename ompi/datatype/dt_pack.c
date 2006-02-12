@@ -784,7 +784,6 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
 
     convertor->flags            |= CONVERTOR_SEND;
     convertor->memAlloc_fn       = NULL;
-    convertor->memAlloc_userdata = NULL;
     /* Just to avoid complaint from the compiler */
     convertor->fAdvance = ompi_convertor_pack_general;
     convertor->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
@@ -793,8 +792,9 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
 
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-        if( ((datatype->ub - datatype->lb) == (long)datatype->size)
-            || (1 >= convertor->count) )  /* gaps or no gaps */
+        if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
+            convertor->fAdvance = ompi_convertor_pack_no_conv_contig;
+	else if( 1 >= convertor->count )  /* gaps or no gaps */
             convertor->fAdvance = ompi_convertor_pack_no_conv_contig;
         else
             convertor->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;

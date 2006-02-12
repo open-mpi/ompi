@@ -138,7 +138,11 @@ static inline int opal_condition_broadcast(opal_condition_t *c)
     c->c_signaled += c->c_waiting;
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
     if(opal_using_threads()) {
-        pthread_cond_broadcast(&c->c_cond);
+        if( 1 == c->c_waiting ) {
+            pthread_cond_signal(&c->c_cond);
+        } else {
+            pthread_cond_broadcast(&c->c_cond);
+        }
     }
 #endif
     return 0;
