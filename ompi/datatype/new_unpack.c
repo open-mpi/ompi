@@ -1,14 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2006 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -265,19 +263,20 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
             }
         }
     complete_loop:
-        iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
-        total_unpacked += iov[iov_count].iov_len;
-        pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
-        assert( iov_len_local >= 0 );
         if( !(pConvertor->flags & CONVERTOR_COMPLETED) && (0 != iov_len_local) ) {
             /* We have some partial data here. Let's copy it into the convertor
              * and keep it hot until the next round.
              */
-            assert( iov_len_local < 16 );
+            assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
             memcpy( pConvertor->pending, packed_buffer, iov_len_local );
             DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
             pConvertor->pending_length = iov_len_local;
+            iov_len_local = 0;
         }
+        iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
+        total_unpacked += iov[iov_count].iov_len;
+        pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
+        assert( iov_len_local >= 0 );
         /* We compute the checksum if we have to. But we will store the temporary
          * values in the a and b variables, and only at the end take in account the
          * value of the convertor checksum.
