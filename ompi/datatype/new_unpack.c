@@ -1,9 +1,11 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
