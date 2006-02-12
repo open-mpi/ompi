@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -16,7 +17,12 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/Makefile.options
+AUTOMAKE_OPTIONS	= foreign dist-bzip2
 
-noinst_HEADERS = io_romio_conv.h
-nodist_noinst_HEADERS = mpio.h
+# All we need from Open MPI is mpi.h, which is created by configure, so
+# is in the build tree.
+AM_CPPFLAGS = \
+        -DOMPI_BUILDING=1 \
+        -I$(top_ompi_builddir)/ompi/include \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/adio/include

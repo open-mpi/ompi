@@ -16,22 +16,11 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+include $(top_srcdir)/Makefile.options
 
-AM_CPPFLAGS = \
-        -DOMPI_BUILDING=1 \
-        -I$(top_ompi_srcdir) \
-        -I$(top_ompi_srcdir)/include \
-        -I$(top_ompi_builddir)/include \
-        -I$(top_ompi_srcdir)/opal \
-        -I$(top_ompi_srcdir)/opal/include \
-        -I$(top_ompi_srcdir)/orte \
-        -I$(top_ompi_srcdir)/orte/include \
-        -I$(top_ompi_srcdir)/ompi \
-        -I$(top_ompi_srcdir)/ompi/include \
-        -I$(top_srcdir)/include \
-        -I$(top_srcdir)/adio/include \
+AM_CPPFLAGS += \
 	-I$(top_srcdir)/mpi-io
+
 
 # It is unfortunately necessary to make all the filenames in the ROMIO
 # distribtion confrom to the MCA prefix name rule -- there is at least

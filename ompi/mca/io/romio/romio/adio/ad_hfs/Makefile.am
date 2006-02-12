@@ -16,20 +16,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
-
-AM_CPPFLAGS = \
-        -DOMPI_BUILDING=1 \
-        -I$(top_ompi_srcdir) \
-        -I$(top_ompi_srcdir)/include \
-        -I$(top_ompi_builddir)/include \
-        -I$(top_ompi_srcdir)/opal \
-        -I$(top_ompi_srcdir)/opal/include \
-        -I$(top_ompi_srcdir)/orte \
-        -I$(top_ompi_srcdir)/orte/include \
-        -I$(top_ompi_srcdir)/ompi \
-        -I$(top_ompi_srcdir)/ompi/include \
-        -I$(top_srcdir)/adio/include
+include $(top_srcdir)/Makefile.options
 
 EXTRA_DIST = README
 

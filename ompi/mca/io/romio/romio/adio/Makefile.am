@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+include $(top_srcdir)/Makefile.options
 
 # Conditionals whether to build each subdir or not
 
