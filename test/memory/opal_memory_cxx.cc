@@ -21,7 +21,7 @@
 #include <vector>
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
 

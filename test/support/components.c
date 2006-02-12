@@ -20,8 +20,8 @@
 
 #include <string.h>
 
-#include "ompi/include/constants.h"
-#include "opal/include/constants.h"
+#include "ompi/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/libltdl/ltdl.h"
 

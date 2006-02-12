@@ -3,9 +3,9 @@
 #include <stdio.h>
 
 #include "support.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/threads/threads.h"
-#include "opal/include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 
 
 #if !OMPI_HAVE_THREAD_SUPPORT

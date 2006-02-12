@@ -23,7 +23,7 @@
 #include "support.h"
 #include "components.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/schema/schema.h"
 #include "util/proc_info.h"
 #include "opal/util/malloc.h"

@@ -37,7 +37,7 @@
 #include "support.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/if.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 
 
 static bool

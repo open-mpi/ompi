@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"

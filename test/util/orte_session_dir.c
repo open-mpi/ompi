@@ -33,7 +33,7 @@
 #include <sys/stat.h>
 
 #include "support.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"

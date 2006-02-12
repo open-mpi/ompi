@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include "support.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/util/argv.h"
 
 static bool test1(void);

@@ -8,7 +8,7 @@
 #include "support.h"
 
 #include "ompi/class/ompi_bitmap.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 
 #define BSIZE 26
 #define SIZE_OF_CHAR (sizeof(char) * 8)

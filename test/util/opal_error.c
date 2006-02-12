@@ -36,10 +36,10 @@
 #include <errno.h>
 
 #include "opal/util/error.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 int
 main(int argc, char *argv[])

@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
 
