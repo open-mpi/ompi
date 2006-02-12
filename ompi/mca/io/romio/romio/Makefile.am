@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+include $(top_srcdir)/Makefile.options
 
 SUBDIRS = include adio mpi-io 
 DIST_SUBDIRS = $(SUBDIRS) doc util

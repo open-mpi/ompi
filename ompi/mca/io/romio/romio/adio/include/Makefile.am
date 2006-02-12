@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+include $(top_srcdir)/Makefile.options
 
 noinst_HEADERS = \
         adio_cb_config_list.h \
