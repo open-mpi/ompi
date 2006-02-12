@@ -68,70 +68,68 @@ static inline int mca_btl_mvapi_endpoint_post_send(
     int ret;
 
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY  && frag->size <= mvapi_btl->super.btl_eager_limit){ 
-        
-                                                                                                                      
+
         /* check for a send wqe */
         if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1) < 0) {
-                                                                                                                      
+
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
             opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
             return OMPI_SUCCESS;
-                                                                                                                      
+
         /* check for a token */
         } else if(!mca_btl_mvapi_component.use_srq &&
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,-1) < 0) {
-                                                                                                                      
+
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_hp,1);
             opal_list_append(&endpoint->pending_frags_hp, (opal_list_item_t *)frag);
             return OMPI_SUCCESS;
-                                                                                                                      
+
         } else if( mca_btl_mvapi_component.use_srq &&
                    OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_hp,-1) < 0) {
-                                                                                                                      
+
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,1);
             OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_hp,1);
             OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
             opal_list_append(&mvapi_btl->pending_frags_hp, (opal_list_item_t *)frag);
             OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
             return OMPI_SUCCESS;
-                                                                                                                      
+
         /* queue the request */
         } else {
             frag->hdr->credits = (endpoint->rd_credits_hp > 0) ? endpoint->rd_credits_hp : 0;
             OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -frag->hdr->credits);
             qp_hndl = endpoint->lcl_qp_hndl_hp;
         }
-                                                                                                                      
 
     } else {
 
         /* check for a send wqe */
         if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
-                                                                                                                      
+
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
             return OMPI_SUCCESS;
-                                                                                                                      
+
         /* check for a token */
         } else if(!mca_btl_mvapi_component.use_srq &&
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,-1) < 0 ) {
-                                                                                                                      
+
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             OPAL_THREAD_ADD32(&endpoint->sd_tokens_lp,1);
             opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
             return OMPI_SUCCESS;
-                                                                                                                      
+
         } else if(mca_btl_mvapi_component.use_srq &&
             OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,-1) < 0) {
-                                                                                                                      
+
             OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
             OPAL_THREAD_ADD32(&mvapi_btl->sd_tokens_lp,1);
             OPAL_THREAD_LOCK(&mvapi_btl->ib_lock);
             opal_list_append(&mvapi_btl->pending_frags_lp, (opal_list_item_t *)frag);
             OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock);
             return OMPI_SUCCESS;
-                                                                                                                      
+
         /* queue the request */
         } else {
             frag->hdr->credits = (endpoint->rd_credits_lp > 0) ? endpoint->rd_credits_lp : 0;
