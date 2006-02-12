@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -17,29 +17,23 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_F90_CHECK_TYPE([type, action if found, action if not found])
+# -----------------------------------------------------------------
 AC_DEFUN([OMPI_F90_CHECK_TYPE],[
-# Determine FORTRAN datatype size.
-# First arg is type, 2nd arg is config var to define
+    AS_VAR_PUSHDEF([type_var], [ompi_cv_f90_have_$1])
 
-AC_MSG_CHECKING([if FORTRAN compiler supports $1])
+    # Determine FORTRAN datatype size.
+    # First arg is type, 2nd arg is config var to define
 
-cat > conftestf.f90 <<EOF
-program main
-   $1 :: x
-end program
-EOF
+    AC_CACHE_CHECK([if Fortran 90 compiler supports $1], type_var,
+        [AC_LANG_PUSH([Fortran])
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[program main
+    $1 :: x
+end]])],
+             [AS_VAR_SET(type_var, "yes")],
+             [AS_VAR_SET(type_var, "no")])
+         AC_LANG_POP([Fortran])])
 
-#
-# Try the compilation and run.
-#
-
-OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
-	                 [HAPPY=1
-                          AC_MSG_RESULT([yes])],
-                         [HAPPY=0
-                          AC_MSG_RESULT([no])])
-
-str="$2=$HAPPY"
-eval $str
-
-unset HAPPY])dnl
+    AS_IF([test "AS_VAR_GET(type_var)" = "yes"], [$2], [$3])
+    AS_VAR_POPDEF([type_var])dnl
+])dnl

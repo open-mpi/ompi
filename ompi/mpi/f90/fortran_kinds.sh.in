@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -19,10 +19,10 @@
 
 max_array_rank="@OMPI_FORTRAN_MAX_ARRAY_RANK@"
 
-lkinds="@OMPI_FORTRAN_LKINDS@"
-ikinds="@OMPI_FORTRAN_IKINDS@"
-rkinds="@OMPI_FORTRAN_RKINDS@"
-ckinds="@OMPI_FORTRAN_CKINDS@"
+lkinds="@OMPI_F90_LKINDS@"
+ikinds="@OMPI_F90_IKINDS@"
+rkinds="@OMPI_F90_RKINDS@"
+ckinds="@OMPI_F90_CKINDS@"
 
 # fix up for broken generation scripts that don't properly compute the
 # ranks variable before using it

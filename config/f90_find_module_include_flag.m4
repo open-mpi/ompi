@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,20 +18,21 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OMPI_F90_FIND_MODULE_INCLUDE_FLAG],[
+    AS_VAR_PUSHDEF([f90_inc_var], [ompi_cv_f90_module_include_flag])
+    
+    AC_CACHE_CHECK([for Fortran 90 compiler module include flag], f90_inc_var,
+         [ofi_possible_flags="-I -p -M"
 
-AC_MSG_CHECKING([for FORTRAN compiler module include flag])
-possible_flags="-I -p -M"
+         mkdir conftest.$$
+         cd conftest.$$
 
-mkdir conftest.$$
-cd conftest.$$
+         #
+         # Try to compile an F90 module
+         #
 
-#
-# Try to compile an F90 module
-#
-
-mkdir subdir
-cd subdir
-cat > conftest-module.f90 <<EOF
+         mkdir subdir
+         cd subdir
+         cat > conftest-module.f90 <<EOF
 module OMPI_MOD_FLAG
 
   type OMPI_MOD_FLAG_TYPE
@@ -41,42 +42,40 @@ module OMPI_MOD_FLAG
 end module OMPI_MOD_FLAG
 EOF
 
-OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90 $LDFLAGS $LIBS], ,
+         OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90 $LDFLAGS $LIBS], ,
                  AC_MSG_RESULT([Whoops!])
                  AC_MSG_WARN([*** Cannot seem to compile an f90 module])
                  AC_MSG_ERROR([Cannot continue]))
-cd ..
+         cd ..
 
-#
-# Now try to compile a simple program usinng that module, iterating
-# through the possible flags that the compiler might use
-#
+         #
+         # Now try to compile a simple program usinng that module, iterating
+         # through the possible flags that the compiler might use
+         #
 
-cat > conftest.f90 <<EOF
-program main
+         cat > conftest.f90 <<EOF
+program f90usemodule
   use OMPI_MOD_FLAG
-end program main
+end program f90usemodule
 EOF
 
-OMPI_FC_MODULE_FLAG=
-for flag in $possible_flags; do
+         ofi_module_flag=
+         for flag in $ofi_possible_flags; do
+            if test "$ofi_module_flag" = ""; then
+                OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir $LDFLAGS $LIBS],
+                        [AS_VAR_SET(f90_inc_var, [$flag])
+                         ofi_module_flag="$flag"])
+            fi
+         done
+         cd ..
+         rm -rf conftest.$$
+    ])
+
+    OMPI_FC_MODULE_FLAG=AS_VAR_GET(f90_inc_var)
     if test "$OMPI_FC_MODULE_FLAG" = ""; then
-        OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir $LDFLAGS $LIBS],
-                        [OMPI_FC_MODULE_FLAG="$flag"])
+       AC_MSG_WARN([*** Could not determine the f90 compiler flag to indicate where modules reside])
+       AC_MSG_ERROR([*** Cannot continue])
     fi
-done
-cd ..
-rm -rf conftest.$$
-
-#
-# Did we find it?
-#
-
-if test "$OMPI_FC_MODULE_FLAG" = ""; then
-    AC_MSG_RESULT([])
-    AC_MSG_WARN([*** Could not determine the f90 compiler flag to indicate where modules reside])
-    AC_MSG_ERROR([Cannot continue])
-fi
-AC_MSG_RESULT([$OMPI_FC_MODULE_FLAG])
-
-AC_SUBST(OMPI_FC_MODULE_FLAG)])dnl
+    AC_SUBST(OMPI_FC_MODULE_FLAG)
+    AS_VAR_POPDEF([f90_inc_var])
+])dnl

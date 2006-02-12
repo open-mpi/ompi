@@ -43,7 +43,7 @@ AC_DEFUN([OMPI_F77_CHECK], [
     if test "$OMPI_WANT_F77_BINDINGS" = "1"; then
         OMPI_F77_CHECK_TYPE([$1], [ofc_have_type=1], [ofc_have_type=0])
     else
-        AC_MSG_CHECKING([if Fortran compiler supports $1])
+        AC_MSG_CHECKING([if Fortran 77 compiler supports $1])
         AC_MSG_RESULT([skipped])
     fi
 
@@ -63,9 +63,9 @@ AC_DEFUN([OMPI_F77_CHECK], [
         # really support it.
         OMPI_F77_GET_SIZEOF([$1], [ofc_type_size])
         if test "$ofc_expected_size" != "-1" -a "$ofc_type_size" != "$ofc_expected_size"; then
-            AC_MSG_WARN([*** Fortran $1 does not have expected size!])
+            AC_MSG_WARN([*** Fortran 77 $1 does not have expected size!])
             AC_MSG_WARN([*** Expected $ofc_expected_size, got $ofc_type_size])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran $1])
+            AC_MSG_WARN([*** Disabling MPI support for Fortran 77 $1])
             ofc_have_type=0
         else
             # Look for a corresponding C type (will abort by itself if the
@@ -87,23 +87,25 @@ AC_DEFUN([OMPI_F77_CHECK], [
     # there are some places in the code where we have to have *something*.
     AC_DEFINE_UNQUOTED([OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
                        [$ofc_have_type], 
-                       [Whether we have FORTRAN $1 or not])
+                       [Whether we have Fortran 77 $1 or not])
     AC_DEFINE_UNQUOTED([OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
                        [$ofc_type_size], 
-                       [Size of FORTRAN $1])
+                       [Size of Fortran 77 $1])
     AC_DEFINE_UNQUOTED([OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
                        [$ofc_type_alignment], 
-                       [Alignment of FORTRAN $1])
+                       [Alignment of Fortran 77 $1])
     if test "$3" != ""; then
         AC_DEFINE_UNQUOTED([ompi_fortran_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [A-Z], [a-z])[_t],
                            [$ofc_c_type], 
-                           [C type corresponding to FORTRAN $1])
+                           [C type corresponding to Fortran 77 $1])
     fi
 
     # Save some in shell variables for later use (e.g., need
     # OMPI_SIZEOF_FORTRAN_INTEGER in OMPI_F77_GET_FORTRAN_HANDLE_MAX)
     [OMPI_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[_C_TYPE=$ofc_c_type]
+    [OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_have_type]
     [OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_size]
+    [OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_alignment]
 
     # Clean up
     unset ofc_have_type ofc_type_size ofc_type_alignment ofc_c_type

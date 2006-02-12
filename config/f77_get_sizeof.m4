@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -22,7 +22,7 @@ dnl
 AC_DEFUN([OMPI_F77_GET_SIZEOF],[
     AS_VAR_PUSHDEF([type_var], [ompi_cv_f77_sizeof_$1])
     
-    AC_CACHE_CHECK([size of Fortran $1], type_var,
+    AC_CACHE_CHECK([size of Fortran 77 $1], type_var,
         [OMPI_F77_MAKE_C_FUNCTION([ompi_ac_size_fn], [size])
          # Fortran module
          cat > conftestf.f <<EOF

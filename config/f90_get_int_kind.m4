@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -17,47 +17,42 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_F90_GET_INT_KIND(MPI name, decimal range, variable to set)
+# ---------------------------------------------------------------
 AC_DEFUN([OMPI_F90_GET_INT_KIND],[
-# Determine kind of a FORTRAN integer.
-# First arg is decimal range, 2nd arg is config var to define.
+    AS_VAR_PUSHDEF([type_var], [ompi_cv_f90_int_kind_$2])
 
-AC_MSG_CHECKING(kind for FORTRAN selected_int_kind($1))
-
-cat > conftestf.f90 <<EOF
-program main
+    AC_CACHE_CHECK([Fortran 90 kind of $1 (selected_int_kind($2))], 
+        type_var,
+        [cat > conftestf.f90 <<EOF
+program f90findintkind
     open(8, file="conftestval")
-    write(8, fmt="(I5)") selected_int_kind($1)
+    write(8, fmt="(I5)") selected_int_kind($2)
     close(8)
 end program
 EOF
 
-#
-# Try the compilation and run.
-#
+        # Try to compile
+        OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
+            [happy="yes"], [happy="no"])
 
-OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
-	OMPI_LOG_COMMAND([./conftest], [HAPPY=1], [HAPPY=0]), [HAPPY=0])
+        if test "$happy" = "no"; then
+             OMPI_LOG_MSG([here is the fortran 90 program:], 1)
+             OMPI_LOG_FILE([conftestf.f90])
+             AC_MSG_WARN([Could not kind of selected_int_kind($1)])
+             AC_MSG_WARN([See config.log for details])
+             AC_MSG_ERROR([Cannot continue])
+        fi
 
-ompi_ac_int_kind=-1
-if test "$HAPPY" = "1" -a -f conftestval; then
-    # get rid of leading spaces for eval assignment
-    ompi_ac_int_kind=`sed 's/  *//' conftestval`
-    AC_MSG_RESULT([$ompi_ac_int_kind])
-    if test -n "$2"; then
-	eval "$2=$ompi_ac_int_kind"
-    fi
-else
-    AC_MSG_RESULT([unknown])
+        AS_IF([test "$cross_compiling" = "yes"],
+            [AC_MSG_ERROR([Can not determine kind of selected_int_kind($1) when cross-compiling])],
+            [OMPI_LOG_COMMAND([./conftest],
+                 [AS_VAR_SET(type_var, [`sed 's/  *//' conftestval`])],
+                 [AC_MSG_ERROR([Could not determine kind of selected_int_kind($1)])])])
 
-    OMPI_LOG_MSG([here is the fortran program:], 1)
-    OMPI_LOG_FILE([conftestf.f90])
+        unset happy ompi_conftest_h
+        rm -f conftest*])
 
-    AC_MSG_WARN([*** Problem running configure test!])
-    AC_MSG_WARN([*** See config.log for details.])
-    AC_MSG_ERROR([*** Cannot continue.])
-fi
-str="$2=$ompi_ac_int_kind"
-eval $str
-
-unset ompi_ac_int_kind HAPPY
-/bin/rm -f conftest*])dnl
+    $3=AS_VAR_GET(type_var)
+    AS_VAR_POPDEF([type_var])dnl
+])

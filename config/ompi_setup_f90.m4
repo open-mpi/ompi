@@ -85,27 +85,10 @@ else
         BASEF90="none"
         OMPI_F90_ABSOLUTE="none"
     else
+        OMPI_WANT_F90_BINDINGS=1
         OMPI_F90="$FC"
         BASEF90="`basename $FC`"
         OMPI_F90_ABSOLUTE="`which $FC`"
-
-        AC_LANG_PUSH(Fortran)
-        AC_FC_SRCEXT(f)
-        AC_FC_SRCEXT(f90)
-        AC_FC_SRCEXT(f95)
-        AC_LANG_POP(Fortran)
-
-        AC_MSG_CHECKING([whether $OMPI_F77 and $OMPI_F90 compilers are compatible])
-        OMPI_INTL_F90_F77_INTERACTION(fortran_goodness=1, fortran_goodness=0)
-        if test "$fortran_goodness" = "0" ; then
-            AC_MSG_RESULT([no])
-            AC_MSG_WARN([*** Fortran 77 and Fortran 90 compilers are not link compatible])
-            AC_MSG_WARN([*** Disabling Fortran 90/95 bindings])
-            OMPI_WANT_F90_BINDINGS=0
-        else
-            AC_MSG_RESULT([yes])
-            OMPI_WANT_F90_BINDINGS=1
-        fi
     fi
 fi
 # make sure the compiler actually works, if not cross-compiling
@@ -115,6 +98,31 @@ AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
        [OMPI_CHECK_COMPILER_WORKS([Fortran], [], [], 
            [AC_MSG_ERROR([Could not run a simple Fortran program.  Aborting.])])])
 
+# check to see if the F77 and F90 compilers are compatible
+AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
+    [AC_MSG_CHECKING([whether $OMPI_F77 and $OMPI_F90 compilers are compatible])
+     OMPI_INTL_F90_F77_INTERACTION([fortran_goodness=1], [fortran_goodness=0])
+     if test "$fortran_goodness" = "0" ; then
+         AC_MSG_RESULT([no])
+         AC_MSG_WARN([*** Fortran 77 and Fortran 90 compilers are not link compatible])
+         AC_MSG_WARN([*** Disabling MPI Fortran 90/95 bindings])
+         OMPI_WANT_F90_BINDINGS=0
+     else
+         AC_MSG_RESULT([yes])
+     fi
+])
+
+# if we're still good, then save the extra file types.  Do this last
+# because it implies tests that should be invoked by the above tests
+# (e.g., running the fortran compiler).
+AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
+       [AC_LANG_PUSH(Fortran)
+        AC_FC_SRCEXT(f)
+        AC_FC_SRCEXT(f90)
+        AC_FC_SRCEXT(f95)
+        AC_LANG_POP(Fortran)])
+
+# All done -- save values
 AC_DEFINE_UNQUOTED(OMPI_WANT_F90_BINDINGS, $OMPI_WANT_F90_BINDINGS,
     [Whether we want the MPI f90 bindings or not])
 AC_DEFINE_UNQUOTED(OMPI_F90, "$OMPI_F90", [OMPI underlying F90 compiler])
@@ -123,6 +131,7 @@ AC_SUBST(OMPI_F90_ABSOLUTE)
 unset fortran_goodness
 ])
 
+#############################################################################
 
 AC_DEFUN([OMPI_INTL_F90_F77_INTERACTION], [
 # make sure that we can combine F90 and F77 code

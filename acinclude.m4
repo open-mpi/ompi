@@ -40,6 +40,7 @@ m4_include(config/f77_get_value_true.m4)
 m4_include(config/f77_check_logical_array.m4)
 m4_include(config/f77_purge_unsupported_kind.m4)
 
+m4_include(config/f90_check.m4)
 m4_include(config/f90_check_type.m4)
 m4_include(config/f90_find_module_include_flag.m4)
 m4_include(config/f90_get_alignment.m4)

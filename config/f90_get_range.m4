@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -17,14 +17,14 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_F90_GET_RANGE(type, shell variable to set)
+# -----------------------------------------------
 AC_DEFUN([OMPI_F90_GET_RANGE],[
-# Determine range of FORTRAN datatype.
-# First arg is type, 2nd arg is config var to define.
+    AS_VAR_PUSHDEF([type_var], [ompi_cv_f90_range_$1])
 
-AC_MSG_CHECKING(range of FORTRAN $1)
-
-cat > conftestf.f90 <<EOF
-program main
+    AC_CACHE_CHECK([range of Fortran 90 $1], type_var,
+       [cat > conftestf.f90 <<EOF
+program f90range
     $1 :: x
     open(8, file="conftestval")
     write(8, fmt="(I5)") range(x)
@@ -32,33 +32,29 @@ program main
 end program
 EOF
 
-#
-# Try the compilation and run.
-#
+        # Compile
+        OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS], [happy="yes"], [happy="no"])
 
-OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
-	OMPI_LOG_COMMAND([./conftest], [HAPPY=1], [HAPPY=0]), [HAPPY=0])
+        if test "$happy" = "no"; then
+             OMPI_LOG_MSG([here is the fortran 90 program:], 1)
+             OMPI_LOG_FILE([conftestf.f90])
+             AC_MSG_WARN([Could not determine range of $1])
+             AC_MSG_WARN([See config.log for details])
+             AC_MSG_ERROR([Cannot continue])
+        fi
 
-ompi_ac_range=-1
-if test "$HAPPY" = "1" -a -f conftestval; then
-    # get rid of leading spaces for eval assignment
-    ompi_ac_range=`sed 's/  *//' conftestval`
-    AC_MSG_RESULT([$ompi_ac_range])
-    if test -n "$2"; then
-	eval "$2=$ompi_ac_range"
-    fi
-else
-    AC_MSG_RESULT([unknown])
+        # If not cross compiling, try to run (if we're cross
+        # compiling, then the value should have been loaded by the
+        # cache already)
+        AS_IF([test "$cross_compiling" = "yes"],
+            [AC_MSG_ERROR([Can not determine range of $1 when cross-compiling])],
+            [OMPI_LOG_COMMAND([./conftest],
+                [AS_VAR_SET(type_var, [`sed 's/  *//' conftestval`])],
+                [AC_MSG_ERROR([Could not determine range of $1])])])
 
-    OMPI_LOG_MSG([here is the fortran program:], 1)
-    OMPI_LOG_FILE([conftestf.f90])
+        unset happy
+        /bin/rm -f conftest*])
 
-    AC_MSG_WARN([*** Problem running configure test!])
-    AC_MSG_WARN([*** See config.log for details.])
-    AC_MSG_ERROR([*** Cannot continue.])
-fi
-str="$2=$ompi_ac_range"
-eval $str
-
-unset ompi_ac_range HAPPY
-/bin/rm -f conftest*])dnl
+    $2=AS_VAR_GET([type_var])
+    AS_VAR_POPDEF([type_var])dnl
+])
