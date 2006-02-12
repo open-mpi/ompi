@@ -306,7 +306,7 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
                 convertor->remote_size += (datatype->btypes[i] * ompi_ddt_basicDatatypes[i]->size);
             }
         }   
-
+        convertor->remote_size *= convertor->count;
     }
 
     return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
