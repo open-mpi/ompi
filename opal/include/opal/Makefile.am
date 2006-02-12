@@ -19,6 +19,7 @@
 # This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 headers += \
-	opal/constants.h
+	opal/constants.h \
+	opal/types.h
 
 include opal/sys/Makefile.am
