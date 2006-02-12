@@ -22,10 +22,7 @@ version 1.0.
 
 1.1
 ---
-- Correct a datatype problem with the convertor when partially
-  unpacking data. Now we can position the convertor to any position
-  not only on the predefined types boundaries. Thanks to Yvan Fournier
-  for reporting this to us.
+
 - Open MPI is now configurable in cross-compilation environments.
   Several Fortran 77 and Fortran 90 tests need to be pre-seeded with
   results from a config.cache-like file.
@@ -35,6 +32,10 @@ version 1.0.
 1.0.2
 -----
 
+- Correct a datatype problem with the convertor when partially
+  unpacking data. Now we can position the convertor to any position
+  not only on the predefined types boundaries. Thanks to Yvan Fournier
+  for reporting this to us.
 - Fix a number of standard I/O forwarding issues, including the
   ability to background mpirun and a loss of data issue when
   redirecting mpirun's standard input from a file.
