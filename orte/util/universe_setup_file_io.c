@@ -31,13 +31,13 @@
 #include <unistd.h>
 #endif
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/util/output.h"
-#include "util/univ_info.h"
-#include "mca/errmgr/errmgr.h"
-#include "runtime/runtime.h"
-#include "util/universe_setup_file_io.h"
+#include "orte/util/univ_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/runtime.h"
+#include "orte/util/universe_setup_file_io.h"
 
 #define ORTE_UNIV_SETUP_FILE_MAX_LINE_LENGTH 1024
 

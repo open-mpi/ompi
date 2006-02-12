@@ -17,16 +17,16 @@
  */
 
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdio.h>
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_header.h"
-#include "mca/iof/base/iof_base_fragment.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_header.h"
+#include "orte/mca/iof/base/iof_base_fragment.h"
 #include "opal/util/output.h"
 
 /*
@@ -95,7 +95,7 @@ int orte_iof_base_open(void)
         32);  /* number per allocation */
 
     /* Open up all available components */
-    if (OMPI_SUCCESS != 
+    if (ORTE_SUCCESS != 
         mca_base_components_open("iof", orte_iof_base.iof_output,
                                  mca_iof_base_static_components, 
                                  &orte_iof_base.iof_components_opened,

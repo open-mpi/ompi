@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +25,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 
 /*
@@ -103,17 +103,17 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
         asprintf(&newvalue, "%s=%s", name, value);
     }
     if (NULL == newvalue) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* Check the bozo case */
 
     if (NULL == env) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     } else if (NULL == *env) {
         i = 0;
         opal_argv_append(&i, env, newvalue);
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* If this is the "environ" array, use putenv */
@@ -125,7 +125,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
            check the return code of opal_setenv() and notice that we
            returned an error if you passed in the real environ) */
         putenv(newvalue);
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Make something easy to compare to */
@@ -133,7 +133,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     asprintf(&compare, "%s=", name);
     if (NULL == compare) {
         free(newvalue);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
     len = strlen(compare);
 
@@ -145,11 +145,11 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
                 free((*env)[i]);
                 (*env)[i] = newvalue;
                 free(compare);
-                return OMPI_SUCCESS;
+                return OPAL_SUCCESS;
             } else {
                 free(compare);
                 free(newvalue);
-                return OMPI_EXISTS;
+                return OPAL_EXISTS;
             }
         }
     }
@@ -163,7 +163,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
 
     free(compare);
     free(newvalue);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -181,14 +181,14 @@ int opal_unsetenv(const char *name, char ***env)
     /* Check for bozo case */
 
     if (NULL == *env) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Make something easy to compare to */
 
     asprintf(&compare, "%s=", name);
     if (NULL == compare) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
     len = strlen(compare);
 
@@ -209,5 +209,5 @@ int opal_unsetenv(const char *name, char ***env)
 
     /* All done */
 
-    return (found) ? OMPI_SUCCESS : OMPI_ERR_NOT_FOUND;
+    return (found) ? OPAL_SUCCESS : OPAL_ERR_NOT_FOUND;
 }

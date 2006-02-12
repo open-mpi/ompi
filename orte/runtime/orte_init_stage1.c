@@ -25,7 +25,7 @@
 #include <unistd.h>
 #endif
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/event/event.h"
 #include "opal/util/output.h"
@@ -114,7 +114,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Open the name services to ensure access to local functions
      */
-    if (OMPI_SUCCESS != (ret = orte_ns_base_open())) {
+    if (ORTE_SUCCESS != (ret = orte_ns_base_open())) {
         error = "orte_ns_base_open";
         goto error;
     }
@@ -142,7 +142,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Initialize the event library
     */
-    if (OMPI_SUCCESS != (ret = opal_event_init())) {
+    if (ORTE_SUCCESS != (ret = opal_event_init())) {
         ORTE_ERROR_LOG(ret);
         error = "opal_event_init";
         goto error;
@@ -151,7 +151,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Intialize the general progress engine
      */
-    if (OMPI_SUCCESS != (ret = opal_progress_init())) {
+    if (ORTE_SUCCESS != (ret = opal_progress_init())) {
         ORTE_ERROR_LOG(ret);
         error = "opal_progress_init";
         goto error;
@@ -160,7 +160,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Internal startup
      */
-    if (OMPI_SUCCESS != (ret = orte_wait_init())) {
+    if (ORTE_SUCCESS != (ret = orte_wait_init())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_wait_init";
         goto error;
@@ -169,7 +169,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Runtime Messaging Layer
      */
-    if (OMPI_SUCCESS != (ret = orte_rml_base_open())) {
+    if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
         goto error;
@@ -178,7 +178,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Runtime Messaging Layer
      */
-    if (OMPI_SUCCESS != (ret = orte_rml_base_select())) {
+    if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_select";
         goto error;
@@ -226,7 +226,7 @@ int orte_init_stage1(bool infrastructure)
     /*
      * Name Server
      */
-    if (OMPI_SUCCESS != (ret = orte_ns_base_select())) {
+    if (ORTE_SUCCESS != (ret = orte_ns_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ns_base_select";
         goto error;
@@ -335,7 +335,7 @@ int orte_init_stage1(bool infrastructure)
                         ORTE_NAME_ARGS(orte_process_info.my_name), contact_path);
         }
 
-        if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
+        if (ORTE_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
             if (orte_debug_flag) {
                 opal_output(0, "[%lu,%lu,%lu] couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
             }

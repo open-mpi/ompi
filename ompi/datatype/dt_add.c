@@ -18,8 +18,8 @@
  */
 
 #include "ompi_config.h"
-#include "datatype/datatype.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 
 /* macros to play with the flags */
 #define SET_CONTIGUOUS_FLAG( INT_VALUE )     (INT_VALUE) = (INT_VALUE) | (DT_FLAG_CONTIGUOUS)

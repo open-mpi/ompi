@@ -27,9 +27,9 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "datatype/datatype.h"
+#include "ompi/datatype/datatype.h"
 #include "opal/class/opal_object.h"
-#include "mpi/f77/fint_2_int.h"
+#include "ompi/mpi/f77/fint_2_int.h"
 
 
 /**

@@ -25,7 +25,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/cmd_line.h"
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
 
 namespace ompi_info {

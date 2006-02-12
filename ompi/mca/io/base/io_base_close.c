@@ -20,12 +20,12 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/io/io.h"
-#include "mca/io/base/base.h"
-#include "mca/io/base/io_base_request.h"
+#include "ompi/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/io/base/io_base_request.h"
 
 
 int mca_io_base_close(void)

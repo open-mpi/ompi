@@ -17,7 +17,7 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #ifdef HAVE_STDIO_H
 #include <stdio.h>
 #endif /* HAVE_STDIO_H */

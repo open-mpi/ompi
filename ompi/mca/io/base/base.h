@@ -29,8 +29,8 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "class/ompi_free_list.h"
-#include "mca/io/io.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/mca/io/io.h"
 
 
 /*

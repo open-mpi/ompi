@@ -25,10 +25,10 @@
 
 #include "opal/util/trace.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "dss/dss_internal.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/dss/dss_internal.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/mca/gpr/base/base.h"
 
 /*
  * GPR CMD

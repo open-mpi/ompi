@@ -23,17 +23,17 @@
 #ifndef _MCA_OOB_TCP_H_
 #define _MCA_OOB_TCP_H_
 
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
-#include "mca/base/base.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/ns/ns_types.h"
 #include "opal/class/opal_free_list.h"
-#include "class/opal_hash_table.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-#include "mca/oob/tcp/oob_tcp_peer.h"
-#include "mca/oob/tcp/oob_tcp_msg.h"
+#include "orte/mca/oob/tcp/oob_tcp_peer.h"
+#include "orte/mca/oob/tcp/oob_tcp_msg.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

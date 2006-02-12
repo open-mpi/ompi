@@ -23,12 +23,12 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "communicator/communicator.h"
+#include "ompi/communicator/communicator.h"
 #include "opal/util/show_help.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 
 extern opal_list_t mca_coll_base_available;
 

@@ -26,7 +26,7 @@
 #include "coll_self.h"
 
 #include "mpi.h"
-#include "mca/coll/coll.h"
+#include "ompi/mca/coll/coll.h"
 #include "coll_self.h"
 
 /*

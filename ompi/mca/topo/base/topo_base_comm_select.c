@@ -22,13 +22,12 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
-#include "runtime/runtime.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
 #include "opal/util/output.h"
-#include "communicator/communicator.h"
+#include "ompi/communicator/communicator.h"
 
 
 /*

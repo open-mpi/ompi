@@ -24,7 +24,7 @@
 #ifndef OMPI_MCA_H
 #define OMPI_MCA_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/util/cmd_line.h"

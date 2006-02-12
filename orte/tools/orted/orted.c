@@ -33,7 +33,7 @@
 #include <errno.h>
 #include <signal.h>
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
     memset(&orted_globals, 0, sizeof(orted_globals_t));
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
-    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
+    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);

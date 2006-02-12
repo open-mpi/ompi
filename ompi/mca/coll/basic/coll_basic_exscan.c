@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/op/op.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/mca/pml/pml.h"

@@ -22,9 +22,9 @@
 #define MCA_PTL_MX_SEND_FRAG_H
 
 #include "ompi_config.h"
-#include "include/sys/atomic.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
+#include "opal/sys/atomic.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_mx.h"
 #include "ptl_mx_peer.h"
 

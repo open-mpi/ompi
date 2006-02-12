@@ -29,7 +29,7 @@
  */
 
 #include "orte_config.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/schema/schema.h"
 
 #include "opal/mca/mca.h"

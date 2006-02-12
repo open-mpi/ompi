@@ -20,16 +20,16 @@
 #include <string.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 
 #include "btl_template.h"
 #include "btl_template_frag.h" 
 #include "btl_template_proc.h"
 #include "btl_template_endpoint.h"
-#include "datatype/convertor.h" 
-#include "mca/mpool/base/base.h" 
-#include "mca/mpool/mpool.h" 
+#include "ompi/datatype/convertor.h" 
+#include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/mpool.h" 
 
 
 mca_btl_template_module_t mca_btl_template_module = {

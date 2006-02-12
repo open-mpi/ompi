@@ -18,8 +18,8 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "util/output.h"
-#include "util/if.h"
+#include "opal/util/output.h"
+#include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 
@@ -27,10 +27,10 @@
 #include "btl_tcp_frag.h" 
 #include "btl_tcp_proc.h"
 #include "btl_tcp_endpoint.h"
-#include "datatype/convertor.h" 
-#include "datatype/datatype.h" 
-#include "mca/mpool/base/base.h" 
-#include "mca/mpool/mpool.h" 
+#include "ompi/datatype/convertor.h" 
+#include "ompi/datatype/datatype.h" 
+#include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
 
 mca_btl_tcp_module_t mca_btl_tcp_module = {

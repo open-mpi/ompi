@@ -79,9 +79,10 @@ ompi_automake=""
 mca_no_configure_components_file="config/mca_no_configure_components.m4"
 mca_no_config_list_file="mca_no_config_list"
 mca_no_config_env_file="mca_no_config_env"
-mca_m4_include_file="mca_m4_config_include.m4"
+mca_m4_include_file="config/mca_m4_config_include.m4"
 mca_m4_config_env_file="mca_m4_config_env"
 autogen_subdir_file="autogen.subdirs"
+topdir_file="opal/include/opal_config_bottom.h"
 
 ############################################################################
 #
@@ -380,7 +381,7 @@ EOF
 
     echo "*** Running GNU tools"
 
-    if test -f include/mpi.h.in; then
+    if test -f $topdir_file ; then
 	cd config
 	run_and_check $ompi_autom4te --language=m4sh ompi_get_version.m4sh -o ompi_get_version.sh
 	cd ..
@@ -396,7 +397,7 @@ EOF
     # We only need the libltdl stuff for the top-level
     # configure, not any of the MCA components.
 
-    if test -f include/mpi.h.in; then
+    if test -f $topdir_file ; then
 	rm -rf libltdl opal/libltdl opal/ltdl.h
 	run_and_check $ompi_libtoolize --automake --copy --ltdl
         if test -d libltdl; then
@@ -1076,7 +1077,7 @@ fi
 
 # figure out if we're at the top level of the OMPI tree, a component's
 # top-level directory, or somewhere else.
-if test -f VERSION -a -f configure.ac -a -f include/mpi.h.in ; then
+if test -f VERSION -a -f configure.ac -a -f $topdir_file ; then
     # locations to look for mca modules
     config_project_list="opal orte ompi"
     if test "$no_ompi" = "1" ; then

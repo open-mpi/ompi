@@ -18,8 +18,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "request/request.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/request/request.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_REQUEST_FREE = mpi_request_free_f
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_FREE,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_request_free_f(MPI_Fint *request, MPI_Fint *ierr)

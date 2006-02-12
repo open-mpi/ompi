@@ -21,8 +21,8 @@
 
 #include <string.h>
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 #include "opal/class/opal_object.h"
 #if OMPI_ENABLE_DEBUG
 #include "opal/util/output.h"

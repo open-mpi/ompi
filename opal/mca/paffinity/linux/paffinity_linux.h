@@ -68,7 +68,7 @@
 #ifndef MCA_PAFFINITY_LINUX_EXPORT_H
 #define MCA_PAFFINITY_LINUX_EXPORT_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/paffinity/paffinity.h"

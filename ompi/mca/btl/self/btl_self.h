@@ -27,13 +27,13 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
-#include "class/ompi_free_list.h"
-#include "class/ompi_bitmap.h"
-#include "class/ompi_fifo.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/class/ompi_bitmap.h"
+#include "ompi/class/ompi_fifo.h"
 #include "opal/event/event.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h" 
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

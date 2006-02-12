@@ -15,11 +15,11 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
-#include "mca/oob/tcp/oob_tcp.h"
+#include "orte/mca/oob/tcp/oob_tcp.h"
 
 static int mca_oob_tcp_send_self(
     mca_oob_tcp_peer_t* peer,
@@ -36,7 +36,7 @@ static int mca_oob_tcp_send_self(
     }
     msg->msg_rwbuf = malloc(size);
     if(NULL == msg->msg_rwbuf) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     ptr = (unsigned char *)msg->msg_rwbuf;
@@ -95,7 +95,7 @@ int mca_oob_tcp_send(
     int rc;
 
     if(NULL == peer)
-        return OMPI_ERR_UNREACH;
+        return ORTE_ERR_UNREACH;
 
     if(mca_oob_tcp_component.tcp_debug > 3) {
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_send: tag %d\n",
@@ -150,14 +150,14 @@ int mca_oob_tcp_send(
 
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         MCA_OOB_TCP_MSG_RETURN(msg);
         return rc;
     }
 
     rc = mca_oob_tcp_msg_wait(msg, &size);
     MCA_OOB_TCP_MSG_RETURN(msg);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
     size -= sizeof(mca_oob_tcp_hdr_t);
     return size;
@@ -191,7 +191,7 @@ int mca_oob_tcp_send_nb(
     int rc;
 
     if(NULL == peer)
-        return OMPI_ERR_UNREACH;
+        return ORTE_ERR_UNREACH;
 
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
     if(NULL == msg) 
@@ -233,10 +233,10 @@ int mca_oob_tcp_send_nb(
 
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         MCA_OOB_TCP_MSG_RETURN(msg);
         return rc;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

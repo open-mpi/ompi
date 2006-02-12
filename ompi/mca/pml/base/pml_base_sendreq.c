@@ -17,8 +17,8 @@
  */
 #include "ompi_config.h"
 #include <string.h>
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
 
 static void mca_pml_base_send_request_construct(mca_pml_base_send_request_t* req);
 static void mca_pml_base_send_request_destruct(mca_pml_base_send_request_t* req);

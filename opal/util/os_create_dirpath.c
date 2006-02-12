@@ -17,7 +17,7 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -30,7 +30,7 @@
 
 #include "opal/util/os_create_dirpath.h"
 #include "opal/util/argv.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #ifdef __WINDOWS__
 #define PATH_SEP "\\"
@@ -48,22 +48,22 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
     int i, len;
 
     if (NULL == path) { /* protect ourselves from errors */
-	return(OMPI_ERROR);
+	return(OPAL_ERROR);
     }
 
     if (0 == stat(path, &buf)) { /* already exists */
 	if (mode == (mode & buf.st_mode)) { /* has correct mode */
-	    return(OMPI_SUCCESS);
+	    return(OPAL_SUCCESS);
 	}
 	if (0 == chmod(path, (buf.st_mode | mode))) { /* successfully change mode */
-	    return(OMPI_SUCCESS);
+	    return(OPAL_SUCCESS);
 	}
-	return(OMPI_ERROR); /* can't set correct mode */
+	return(OPAL_ERROR); /* can't set correct mode */
     }
 
     /* quick -- try to make directory */
     if (0 == mkdir(path, mode)) {
-	return(OMPI_SUCCESS);
+	return(OPAL_SUCCESS);
     }
 
     /* didnt work, so now have to build our way down the tree */
@@ -146,7 +146,7 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
             if (0 != mkdir(tmp, mode) && 0 != stat(tmp, &buf)) { 
                 opal_argv_free(parts);
                 free(tmp);
-                return OMPI_ERROR;
+                return OPAL_ERROR;
             }
         }
     }
@@ -155,5 +155,5 @@ int opal_os_create_dirpath(const char *path, const mode_t mode)
 
     opal_argv_free(parts);
     free(tmp);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }

@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_list.h"
-#include "mca/ptl/base/ptl_base_fragment.h"
+#include "ompi/mca/ptl/base/ptl_base_fragment.h"
 
 static void mca_ptl_base_frag_construct(mca_ptl_base_frag_t* frag);
 static void mca_ptl_base_frag_destruct(mca_ptl_base_frag_t* frag);

@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
+#include "ompi/mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_COMPARE = mpi_comm_compare_f
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr)

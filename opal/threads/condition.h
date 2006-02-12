@@ -18,7 +18,7 @@
 #ifndef OPAL_CONDITION_SPINLOCK_H
 #define OPAL_CONDITION_SPINLOCK_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif

@@ -17,7 +17,7 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -30,7 +30,7 @@
 #endif
 
 #include "opal/util/few.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 int opal_few(char *argv[], int *status)
 {
@@ -39,7 +39,7 @@ int opal_few(char *argv[], int *status)
     pid_t pid, ret;
 
     if ((pid = fork()) < 0) {
-      return OMPI_ERR_IN_ERRNO;
+      return OPAL_ERR_IN_ERRNO;
     }
 
     /* Child execs.  If it fails to exec, exit. */
@@ -68,16 +68,16 @@ int opal_few(char *argv[], int *status)
 
           /* Otherwise, some bad juju happened -- need to quit */
 
-          return OMPI_ERR_IN_ERRNO;
+          return OPAL_ERR_IN_ERRNO;
         }
       } while (true);
     }
 
     /* Return the status to the caller */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 #else
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 #endif
 
 #else
@@ -109,7 +109,7 @@ int opal_few(char *argv[], int *status)
                            &si,
                            &pi)){
          /* actual error can be got by simply calling GetLastError() */
-         return OMPI_ERROR; 
+         return OPAL_ERROR; 
        }
 
        /* wait for child to die */
@@ -117,6 +117,6 @@ int opal_few(char *argv[], int *status)
        GetExitCodeProcess(pi.hProcess, &process_stat);
 
        SetLastError(process_stat);
-       return OMPI_SUCCESS;
+       return OPAL_SUCCESS;
 #endif
 }

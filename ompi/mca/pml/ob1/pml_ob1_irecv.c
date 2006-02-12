@@ -17,7 +17,7 @@
  */
 
 #include "ompi_config.h"
-#include "request/request.h"
+#include "ompi/request/request.h"
 #include "pml_ob1_recvreq.h"
 
 

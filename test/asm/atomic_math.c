@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 
 #define TEST_REPS 500
 

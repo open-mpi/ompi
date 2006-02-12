@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef HAVE_SCHED_H
 #include <sched.h>
@@ -25,7 +25,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
 
 #define OPAL_PROGRESS_USE_TIMERS (OPAL_TIMER_CYCLE_SUPPORTED || OPAL_TIMER_USEC_SUPPORTED)
@@ -92,7 +92,7 @@ opal_progress_init(void)
     event_progress_counter = event_progress_delta = 0;
 #endif
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -101,7 +101,7 @@ opal_progress_mpi_init(void)
 {
     event_num_mpi_users = 0;
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /* turn on MPI optimizations */
@@ -164,7 +164,7 @@ opal_progress_mpi_enable(void)
         0 : event_progress_delta;
 #endif
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -180,7 +180,7 @@ opal_progress_mpi_disable(void)
     event_progress_counter = 0;
 #endif
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -205,7 +205,7 @@ opal_progress_finalize(void)
     opal_atomic_unlock(&progress_lock);
 #endif
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -312,7 +312,7 @@ opal_progress(void)
 int
 opal_progress_register(opal_progress_callback_t cb)
 {
-    int ret = OMPI_SUCCESS;
+    int ret = OPAL_SUCCESS;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     opal_atomic_lock(&progress_lock);
@@ -323,7 +323,7 @@ opal_progress_register(opal_progress_callback_t cb)
         opal_progress_callback_t *tmp;
         tmp = realloc(callbacks, sizeof(opal_progress_callback_t) * (callbacks_size + 4));
         if (tmp == NULL) {
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            ret = OPAL_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;
         }
 
@@ -346,7 +346,7 @@ int
 opal_progress_unregister(opal_progress_callback_t cb)
 {
     size_t i;
-    int ret = OMPI_ERR_NOT_FOUND;
+    int ret = OPAL_ERR_NOT_FOUND;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     opal_atomic_lock(&progress_lock);
@@ -355,7 +355,7 @@ opal_progress_unregister(opal_progress_callback_t cb)
     for (i = 0 ; i < callbacks_len ; ++i) {
         if (cb == callbacks[i]) {
             callbacks[i] = NULL;
-            ret = OMPI_SUCCESS;
+            ret = OPAL_SUCCESS;
             break;
         }
     }
@@ -365,7 +365,7 @@ opal_progress_unregister(opal_progress_callback_t cb)
        skip.  If callbacks_len is 1, it will soon be 0, so no need to
        do any repacking.  size_t can be unsigned, so 0 - 1 is bad for
        a loop condition :). */
-    if (OMPI_SUCCESS == ret) {
+    if (OPAL_SUCCESS == ret) {
         if (callbacks_len > 1 ) {
             /* now tightly pack the array */
             for ( ; i < callbacks_len - 1 ; ++i) {
@@ -398,7 +398,7 @@ opal_progress_event_increment()
     event_progress_counter = 0;
 #endif
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -415,5 +415,5 @@ opal_progress_event_decrement()
    }
 #endif
 
-   return OMPI_SUCCESS;
+   return OPAL_SUCCESS;
 }

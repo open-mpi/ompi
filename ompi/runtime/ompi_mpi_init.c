@@ -44,7 +44,7 @@
 #include "orte/mca/soh/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/mpi/f77/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"

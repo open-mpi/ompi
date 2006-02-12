@@ -21,14 +21,14 @@
 #ifndef ORTE_IOF_SVC_PROXY_H
 #define ORTE_IOF_SVC_PROXY_H
 
-#include "mca/iof/iof.h"
+#include "orte/mca/iof/iof.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-#include "ompi_config.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/iof_base_header.h"
+#include "orte_config.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/iof_base_header.h"
 
 
 /**

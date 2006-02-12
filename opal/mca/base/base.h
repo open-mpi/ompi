@@ -19,16 +19,16 @@
 #ifndef MCA_BASE_H
 #define MCA_BASE_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_object.h"
 
 /*
  * These units are large enough to warrant their own .h files
  */
-#include "mca/mca.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/base/mca_base_msgbuf.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_msgbuf.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -71,8 +71,8 @@ OMPI_DECLSPEC extern int mca_base_param_component_path;
   /**
    * First function called in the MCA.
    *
-   * @return OMPI_SUCCESS Upon success
-   * @return OMPI_ERROR Upon failure
+   * @return OPAL_SUCCESS Upon success
+   * @return OPAL_ERROR Upon failure
    * 
    * This function starts up the entire MCA.  It initializes a bunch
    * of built-in MCA parameters, and initialized the MCA component
@@ -87,8 +87,8 @@ OMPI_DECLSPEC   int mca_base_open(void);
   /**
    * Last function called in the MCA
    *
-   * @return OMPI_SUCCESS Upon success
-   * @return OMPI_ERROR Upon failure
+   * @return OPAL_SUCCESS Upon success
+   * @return OPAL_ERROR Upon failure
    *
    * This function closes down the entire MCA.  It clears all MCA
    * parameters and closes down the MCA component respository.  

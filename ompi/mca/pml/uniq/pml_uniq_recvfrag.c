@@ -22,7 +22,7 @@
 
 #include "ompi_config.h"
 
-#include "mca/pml/pml.h"
+#include "ompi/mca/pml/pml.h"
 #include "pml_uniq_recvfrag.h"
 #include "pml_uniq_proc.h"
 

@@ -32,8 +32,8 @@
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 
-#include "mca/gpr/base/base.h"
-#include "mca/ras/base/base.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/ras/base/base.h"
 
 /* output files needed by the test */
 static FILE *test_out=NULL;

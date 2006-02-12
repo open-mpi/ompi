@@ -21,17 +21,17 @@
 
 #include "ompi_config.h"
 #include "opal/util/crc.h"
-#include "ompi/include/constants.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/mpool/mpool.h" 
+#include "ompi/constants.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "ompi/mca/mpool/mpool.h" 
 #include "pml_dr.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_proc.h"
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
-#include "mca/bml/base/base.h"
+#include "ompi/mca/bml/base/base.h"
 
 
 static int mca_pml_dr_send_request_fini(struct ompi_request_t** request)

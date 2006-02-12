@@ -20,7 +20,7 @@
 #include "coll_basic.h"
 
 #include "mpi.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/bit_ops.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/coll.h"

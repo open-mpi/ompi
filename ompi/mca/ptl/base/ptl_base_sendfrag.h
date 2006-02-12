@@ -21,8 +21,8 @@
 #ifndef MCA_PTL_BASE_SEND_FRAG_H
 #define MCA_PTL_BASE_SEND_FRAG_H
 
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_fragment.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_fragment.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -22,7 +22,7 @@
 #define MCA_BML_R2_BTL_H
 
 #include "opal/util/output.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/btl/btl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

@@ -30,15 +30,15 @@
 #include <string.h>
 
 #include "include/orte_constants.h"
-#include "mca/schema/schema.h"
-#include "mca/schema/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/soh/base/base.h"
-#include "mca/rmgr/base/base.h"
+#include "orte/mca/schema/schema.h"
+#include "orte/mca/schema/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
 
 #include "support.h"
 
-#include "class/orte_pointer_array.h"
+#include "orte/class/orte_pointer_array.h"
 #include "dps/dps.h"
 #include "runtime/runtime.h"
 #include "util/proc_info.h"
@@ -46,8 +46,8 @@
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 
-#include "mca/gpr/base/base.h"
-#include "mca/gpr/gpr.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/gpr/gpr.h"
 
 /* output files needed by the test */
 static FILE *test_out=NULL;

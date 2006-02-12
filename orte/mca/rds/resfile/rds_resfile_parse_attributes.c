@@ -23,10 +23,10 @@
 #include "opal/util/output.h"
 
 #include "orte/dss/dss.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/rds/resfile/rds_resfile.h"
+#include "orte/mca/rds/resfile/rds_resfile.h"
 
 int orte_rds_resfile_parse_fe(orte_rds_cell_desc_t *cell, FILE *fp)
 {

@@ -20,7 +20,7 @@
 
 #include <time.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/datatype/datatype.h"

@@ -19,7 +19,7 @@
 #ifndef OPAL_VALUE_ARRAY_H
 #define OPAL_VALUE_ARRAY_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <string.h>
 
@@ -27,7 +27,7 @@
 #if OMPI_ENABLE_DEBUG
 #include "opal/util/output.h"
 #endif
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 /*
  *  @file  Array of elements maintained by value.
@@ -73,7 +73,7 @@ static inline int opal_value_array_init(opal_value_array_t *array, size_t item_s
     array->array_alloc_size = 1; 
     array->array_size = 0;
     array->array_items = (unsigned char*)realloc(array->array_items, item_sizeof * array->array_alloc_size);
-    return (NULL != array->array_items) ? OMPI_SUCCESS : OMPI_ERR_OUT_OF_RESOURCE;
+    return (NULL != array->array_items) ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
 }
 
 
@@ -92,11 +92,11 @@ static inline int opal_value_array_reserve(opal_value_array_t* array, size_t siz
          if(NULL == array->array_items) {
              array->array_size = 0;
              array->array_alloc_size = 0;
-             return OMPI_ERR_OUT_OF_RESOURCE;
+             return OPAL_ERR_OUT_OF_RESOURCE;
          }
          array->array_alloc_size = 1;
      }
-     return OMPI_SUCCESS;
+     return OPAL_SUCCESS;
 }
 
 
@@ -163,7 +163,7 @@ int opal_value_array_set_size(opal_value_array_t* array, size_t size);
 
 static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t index)
 {
-    if(index >= array->array_size && opal_value_array_set_size(array, index+1) != OMPI_SUCCESS)
+    if(index >= array->array_size && opal_value_array_set_size(array, index+1) != OPAL_SUCCESS)
         return NULL;
     return array->array_items + (index * array->array_item_sizeof);
 }
@@ -205,10 +205,10 @@ static inline int opal_value_array_set_item(opal_value_array_t *array, size_t in
 {
     int rc;
     if(index >= array->array_size && 
-       (rc = opal_value_array_set_size(array, index+1)) != OMPI_SUCCESS)
+       (rc = opal_value_array_set_size(array, index+1)) != OPAL_SUCCESS)
         return rc;
     memcpy(array->array_items + (index * array->array_item_sizeof), item, array->array_item_sizeof);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -249,14 +249,14 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
 #if OMPI_ENABLE_DEBUG
     if (index >= array->array_size) {
         opal_output(0, "opal_value_array_remove_item: invalid index %d\n", index);
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 #endif   
     memmove(array->array_items+(array->array_item_sizeof * index), 
             array->array_items+(array->array_item_sizeof * (index+1)),
             array->array_item_sizeof * (array->array_size - index - 1));
     array->array_size--;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /**

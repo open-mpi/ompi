@@ -22,19 +22,19 @@
  * entire components just to query their version and parameters.
  */
 
-#import "ompi_config.h"
+#import "orte_config.h"
 
 #import <stdlib.h>
 #import <unistd.h>
 
-#import "include/orte_constants.h"
+#import "orte/orte_constants.h"
 #import "opal/util/argv.h"
 #import "opal/util/path.h"
 #import "opal/util/basename.h"
-#import "mca/pls/pls.h"
-#import "mca/pls/base/base.h"
-#import "mca/base/mca_base_param.h"
-#import "mca/rml/rml.h"
+#import "orte/mca/pls/pls.h"
+#import "orte/mca/pls/base/base.h"
+#import "opal/mca/base/mca_base_param.h"
+#import "orte/mca/rml/rml.h"
 
 #import "pls_xgrid.h"
 #import "pls_xgrid_client.h"

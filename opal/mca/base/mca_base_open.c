@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,7 +32,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 /*
  * Public variables
@@ -60,7 +60,7 @@ int mca_base_open(void)
   if (!mca_base_opened) {
     mca_base_opened = true;
   } else {
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
   }
 
   /* Register some params */

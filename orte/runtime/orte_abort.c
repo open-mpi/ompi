@@ -16,14 +16,14 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "include/constants.h"
-#include "runtime/runtime.h"
+#include "orte/orte_constants.h"
+#include "orte/runtime/runtime.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/event/event.h"

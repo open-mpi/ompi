@@ -19,10 +19,10 @@
 #ifndef ORTE_PLS_SLURM_EXPORT_H
 #define ORTE_PLS_SLURM_EXPORT_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "mca/mca.h"
-#include "mca/pls/pls.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/pls/pls.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

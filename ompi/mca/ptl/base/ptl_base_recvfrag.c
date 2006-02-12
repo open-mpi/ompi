@@ -19,10 +19,10 @@
 
 #include "ompi_config.h"
 
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/ptl/base/ptl_base_match.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_match.h"
 
 static void mca_ptl_base_recv_frag_construct(mca_ptl_base_recv_frag_t* frag);
 static void mca_ptl_base_recv_frag_destruct(mca_ptl_base_recv_frag_t* frag);

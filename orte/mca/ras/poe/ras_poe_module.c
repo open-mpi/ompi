@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "opal/util/argv.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/ras/poe/ras_poe.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/ras/base/ras_base_node.h"

@@ -27,17 +27,17 @@
 #include <string.h>
 
 /* Open MPI includes */
-#include "class/ompi_free_list.h"
-#include "class/ompi_bitmap.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/class/ompi_bitmap.h"
 #include "opal/event/event.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 #include "opal/util/output.h"
-#include "mca/mpool/mpool.h" 
-#include "mca/btl/base/btl_base_error.h" 
+#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/mca/btl/base/btl_base_error.h" 
 
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h" 
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h" 
 #include "btl_openib_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

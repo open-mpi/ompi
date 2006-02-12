@@ -25,7 +25,7 @@
 
 #include "orte_config.h"
 #include "opal/threads/mutex.h"
-#include "mca/rds/rds.h"
+#include "orte/mca/rds/rds.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

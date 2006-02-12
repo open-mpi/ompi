@@ -15,14 +15,10 @@
  * 
  * $HEADER$
  *
- * These symbols are in a file by themselves to provide nice linker
- * semantics.  Since linkers generally pull in symbols by object
- * files, keeping these symbols as the only symbols in this file
- * prevents utility programs such as "ompi_info" from having to import
- * entire components just to query their version and parameters.
  */
 
-#import "ompi_config.h"
+#import "orte_config.h"
+
 #import <stdlib.h>
 #import <unistd.h>
 #import <errno.h>
@@ -32,22 +28,22 @@
 #import <sys/wait.h>
 #import <fcntl.h>
 
-#import "include/orte_constants.h"
+#import "orte/orte_constants.h"
 #import "opal/util/argv.h"
 #import "opal/util/output.h"
-#import "util/session_dir.h"
+#import "orte/util/session_dir.h"
 #import "opal/event/event.h"
-#import "runtime/orte_wait.h"
-#import "mca/ns/ns.h"
-#import "mca/pls/pls.h"
-#import "mca/rml/rml.h"
-#import "mca/gpr/gpr.h"
-#import "mca/errmgr/errmgr.h"
-#import "mca/ras/base/ras_base_node.h"
-#import "mca/rmaps/base/rmaps_base_map.h"
-#import "mca/rmgr/base/base.h"
-#import "mca/soh/soh.h"
-#import "mca/soh/base/base.h"
+#import "orte/runtime/orte_wait.h"
+#import "orte/mca/ns/ns.h"
+#import "orte/mca/pls/pls.h"
+#import "orte/mca/rml/rml.h"
+#import "orte/mca/gpr/gpr.h"
+#import "orte/mca/errmgr/errmgr.h"
+#import "orte/mca/ras/base/ras_base_node.h"
+#import "orte/mca/rmaps/base/rmaps_base_map.h"
+#import "orte/mca/rmgr/base/base.h"
+#import "orte/mca/soh/soh.h"
+#import "orte/mca/soh/base/base.h"
 #import "pls_xgrid.h"
 
 int orte_pls_xgrid_launch(orte_jobid_t jobid);

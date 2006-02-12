@@ -1,4 +1,4 @@
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -24,10 +24,10 @@
 #include <signal.h>
 #endif  /* HAVE_SIGNAL_H */
 #include "opal/util/output.h"
-#include "mca/rml/rml.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
-#include "mca/iof/base/iof_base_fragment.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/iof/base/iof_base_fragment.h"
 
 /**
  *  Construct/Destructor

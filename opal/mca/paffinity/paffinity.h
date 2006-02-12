@@ -59,10 +59,10 @@
 #ifndef OPAL_PAFFINITY_H
 #define OPAL_PAFFINITY_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 
 
 /**

@@ -21,9 +21,9 @@
 #include <netinet/in.h>
 #endif
 
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/soh/base/base.h"
+#include "orte/mca/soh/base/base.h"
 
 static void orte_soh_base_quick_print(char **output, char *type_name, char *prefix, void *src, size_t src_size);
 

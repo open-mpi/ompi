@@ -20,13 +20,13 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
 
 
 int mca_btl_base_close(void)

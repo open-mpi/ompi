@@ -61,7 +61,7 @@
 #ifndef OPAL_OUTPUT_H_
 #define OPAL_OUTPUT_H_
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdarg.h>
 

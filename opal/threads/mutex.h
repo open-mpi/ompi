@@ -19,8 +19,8 @@
 #ifndef  OPAL_MUTEX_H
 #define  OPAL_MUTEX_H 1
 
-#include "ompi_config.h"
-#include "include/sys/atomic.h"
+#include "opal_config.h"
+#include "opal/sys/atomic.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

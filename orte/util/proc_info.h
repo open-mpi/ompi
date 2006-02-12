@@ -31,7 +31,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -103,7 +103,7 @@ OMPI_DECLSPEC extern orte_proc_info_t orte_process_info;
  *
  * @param None.
  *
- * @retval OMPI_SUCCESS Successfully initialized the various fields.
+ * @retval ORTE_SUCCESS Successfully initialized the various fields.
  * @retval OMPI_ERROR Failed to initialize one or more fields.
  */
 

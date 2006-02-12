@@ -20,17 +20,17 @@
 #include <string.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 
 #include "btl_gm.h"
 #include "btl_gm_frag.h" 
 #include "btl_gm_proc.h"
 #include "btl_gm_endpoint.h"
-#include "datatype/convertor.h" 
-#include "datatype/datatype.h" 
-#include "mca/mpool/base/base.h" 
-#include "mca/mpool/mpool.h" 
+#include "ompi/datatype/convertor.h" 
+#include "ompi/datatype/datatype.h" 
+#include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
 
 mca_btl_gm_module_t mca_btl_gm_module = {

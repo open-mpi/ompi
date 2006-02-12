@@ -21,7 +21,7 @@
 #ifndef OPAL_PATH_H
 #define OPAL_PATH_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -24,10 +24,10 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/slurm/sds_slurm.h"
-#include "mca/base/mca_base_param.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/slurm/sds_slurm.h"
+#include "opal/mca/base/mca_base_param.h"
 
 extern orte_sds_base_module_t orte_sds_slurm_module;
 

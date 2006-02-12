@@ -22,7 +22,7 @@
 #include <string.h>
 #include "mpi.h"
 
-#include "errhandler/errcode-internal.h"
+#include "ompi/errhandler/errcode-internal.h"
 
 /* Table holding all error codes */
 ompi_pointer_array_t ompi_errcodes_intern;

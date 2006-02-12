@@ -24,12 +24,12 @@
 #define _MCA_OOB_TCP_MESSAGE_H_
 
 #include "opal/class/opal_list.h"
-#include "mca/oob/oob.h"
+#include "orte/mca/oob/oob.h"
 #include "oob_tcp_peer.h"
 #include "oob_tcp_hdr.h"
 #include <errno.h>
 #include "opal/util/output.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -100,7 +100,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
  *  Wait for a msg to complete.
  *  @param  msg (IN)     Message to wait on.
  *  @param  size (OUT)   Number of bytes delivered.
- *  @retval OMPI_SUCCESS or error code on failure.
+ *  @retval ORTE_SUCCESS or error code on failure.
  */
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* size);
 
@@ -108,7 +108,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* size);
  *  Wait - up to a timeout - for a msg to complete.
  *  @param  msg (IN)     Message to wait on.
  *  @param  size (OUT)   Number of bytes delivered.
- *  @retval OMPI_SUCCESS or error code on failure.
+ *  @retval ORTE_SUCCESS or error code on failure.
  */
 int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* size, struct timespec* ts);
 
@@ -117,7 +117,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* size, struct timespec
  *  or invokes callbacks for non-blocking case.
  *  @param  msg (IN)   Message send/recv that has completed.
  *  @param  peer (IN)  The peer the send/receive was from
- *  @retval OMPI_SUCCESS or error code on failure.
+ *  @retval ORTE_SUCCESS or error code on failure.
  */
 int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer);
 

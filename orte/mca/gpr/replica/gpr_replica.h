@@ -28,16 +28,16 @@
 
 #include <time.h>
 
-#include "class/orte_bitmap.h"
-#include "class/orte_pointer_array.h"
-#include "class/orte_value_array.h"
+#include "orte/class/orte_bitmap.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/class/orte_value_array.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/mca/gpr/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

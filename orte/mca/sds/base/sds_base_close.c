@@ -16,14 +16,14 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 
-#include "include/orte_constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/sds/base/base.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/sds/base/base.h"
 #include "opal/util/output.h"
 
 extern opal_list_t orte_sds_base_components_available;
@@ -43,6 +43,6 @@ orte_sds_base_close(void)
                                   &orte_sds_base_components_available, NULL);
     }
     OBJ_DESTRUCT(&orte_sds_base_components_available);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

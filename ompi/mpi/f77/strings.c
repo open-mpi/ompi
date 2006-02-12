@@ -22,9 +22,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/argv.h"
-#include "mpi/f77/strings.h"
+#include "ompi/mpi/f77/strings.h"
 
 
 /*

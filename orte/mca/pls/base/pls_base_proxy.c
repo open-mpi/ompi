@@ -23,7 +23,7 @@
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/pls/base/base.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/rml/rml.h"

@@ -45,7 +45,7 @@
  * SUCH DAMAGE.
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef HAVE_SYS_CDEFS_H
 # include <sys/cdefs.h>

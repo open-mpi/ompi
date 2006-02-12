@@ -21,10 +21,10 @@
 #ifndef MCA_PTL_BASE_RECVFRAG_H
 #define MCA_PTL_BASE_RECVFRAG_H
 
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
-#include "mca/ptl/base/ptl_base_fragment.h"
-#include "mca/ptl/base/ptl_base_match.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_recvreq.h"
+#include "ompi/mca/ptl/base/ptl_base_fragment.h"
+#include "ompi/mca/ptl/base/ptl_base_match.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -22,7 +22,7 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -32,7 +32,7 @@
 #include "opal/util/path.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/fork/pls_fork.h"
 

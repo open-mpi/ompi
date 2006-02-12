@@ -25,6 +25,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "orte/runtime/runtime.h"
+#include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 

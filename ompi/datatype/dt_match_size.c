@@ -18,8 +18,8 @@
  */
 
 #include "ompi_config.h"
-#include "datatype/datatype.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 
 static inline
 const ompi_datatype_t* ompi_ddt_match_size_internal( int size, uint16_t datakind, uint16_t datalang )

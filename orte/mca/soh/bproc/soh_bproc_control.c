@@ -18,7 +18,7 @@
  *
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -28,8 +28,8 @@
 #include "mca/pcm/base/base.h"
 #include "opal/class/opal_list.h"
 #include "mca/pcm/base/base_job_track.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
 
 
 int
@@ -39,8 +39,8 @@ mca_pcm_bproc_kill_proc(struct mca_pcm_base_module_1_0_0_t* me_super,
   mca_pcm_bproc_module_t *me = (mca_pcm_bproc_module_t*) me_super;
   pid_t doomed;
 
-  if (NULL == me) return OMPI_ERR_BAD_PARAM;
-  if (NULL == name) return OMPI_ERR_BAD_PARAM;
+  if (NULL == me) return ORTE_ERR_BAD_PARAM;
+  if (NULL == name) return ORTE_ERR_BAD_PARAM;
 
     doomed = mca_pcm_base_job_list_get_starter(me->jobs, 
                                                mca_ns_base_get_jobid(name), 
@@ -49,10 +49,10 @@ mca_pcm_bproc_kill_proc(struct mca_pcm_base_module_1_0_0_t* me_super,
     if (doomed > 0) {
         kill(doomed, SIGTERM);
     } else {
-        return OMPI_ERR_NOT_FOUND;
+        return ORTE_ERR_NOT_FOUND;
     }
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -65,13 +65,13 @@ mca_pcm_bproc_kill_job(struct mca_pcm_base_module_1_0_0_t* me_super,
     size_t doomed_len, i;
     int ret;
 
-    if (NULL == me) return OMPI_ERR_BAD_PARAM;
+    if (NULL == me) return ORTE_ERR_BAD_PARAM;
     /* check for invalid jobid */
     
     ret = mca_pcm_base_job_list_get_starters(me->jobs,
                                              jobid, &doomed, &doomed_len, 
                                              true);
-    if (OMPI_SUCCESS != ret) return ret;
+    if (ORTE_SUCCESS != ret) return ret;
 
     for (i = 0 ; i < doomed_len ; ++i) {
         kill(doomed[i], SIGTERM);
@@ -81,5 +81,5 @@ mca_pcm_bproc_kill_job(struct mca_pcm_base_module_1_0_0_t* me_super,
         free(doomed);
     }
 
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }

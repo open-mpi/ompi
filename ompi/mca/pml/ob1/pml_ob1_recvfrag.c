@@ -24,9 +24,9 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "ompi/include/constants.h"
-#include "communicator/communicator.h"
-#include "mca/pml/pml.h"
+#include "ompi/constants.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/pml/pml.h"
 #include "pml_ob1.h"
 #include "pml_ob1_comm.h"
 #include "pml_ob1_recvfrag.h"

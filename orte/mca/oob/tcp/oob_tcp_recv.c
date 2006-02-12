@@ -15,11 +15,11 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "mca/ns/ns.h"
+#include "orte/mca/ns/ns.h"
 
-#include "mca/oob/tcp/oob_tcp.h"
+#include "orte/mca/oob/tcp/oob_tcp.h"
 
 /*
  * Similiar to unix readv(2)
@@ -66,7 +66,7 @@ int mca_oob_tcp_recv(
         if(flags & MCA_OOB_ALLOC) {
 
             if(NULL == iov || 0 == count) {
-                return OMPI_ERR_BAD_PARAM;
+                return ORTE_ERR_BAD_PARAM;
             }
             iov[0].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
             iov[0].iov_len = msg->msg_hdr.msg_size;
@@ -226,7 +226,7 @@ int mca_oob_tcp_recv_nb(
 
     /* validate params */
     if(NULL == iov || 0 == count) {
-        return OMPI_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
 
     /* allocate/initialize the posted receive */
@@ -328,6 +328,6 @@ int mca_oob_tcp_recv_cancel(
         }
     }
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-    return (matched > 0) ? OMPI_SUCCESS : OMPI_ERR_NOT_FOUND;
+    return (matched > 0) ? ORTE_SUCCESS : ORTE_ERR_NOT_FOUND;
 }
 

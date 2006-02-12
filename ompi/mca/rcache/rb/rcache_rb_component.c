@@ -16,8 +16,8 @@
  * $HEADER$
  */
 
-#include "mca/base/mca_base_param.h"
-#include "mca/rcache/rcache.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/rcache/rcache.h"
 #include "rcache_rb.h"
 
 static int mca_rcache_rb_component_open(void); 

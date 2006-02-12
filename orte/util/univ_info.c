@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/ns/ns_types.h"

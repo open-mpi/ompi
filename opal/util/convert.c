@@ -16,13 +16,13 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "opal/util/convert.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #if SIZEOF_SIZE_T <= SIZEOF_INT
 /*
@@ -31,7 +31,7 @@
 int opal_size2int(size_t in, int *out, bool want_check)
 {
     *out = in;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 #else
@@ -66,13 +66,13 @@ int opal_size2int(size_t in, int *out, bool want_check)
             if (i != int_pos) {
                 if (pos[i] != 0) {
                     warn();
-                    return OMPI_ERR_NOT_IMPLEMENTED;
+                    return OPAL_ERR_NOT_IMPLEMENTED;
                 }
             }
         }
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 

@@ -29,7 +29,7 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 
 opal_list_t mca_topo_base_modules_available;
 bool mca_topo_base_modules_available_valid = false;

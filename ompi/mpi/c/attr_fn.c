@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/c/bindings.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/win/win.h"
 

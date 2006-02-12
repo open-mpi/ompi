@@ -25,14 +25,14 @@
  * includes
  */
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include "opal/class/opal_list.h"
-#include "dss/dss.h"
-#include "mca/mca.h"
-#include "mca/gpr/gpr_types.h"
-#include "mca/rmgr/rmgr.h"
+#include "orte/dss/dss.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/gpr/gpr_types.h"
+#include "orte/mca/rmgr/rmgr.h"
 
 
 /*

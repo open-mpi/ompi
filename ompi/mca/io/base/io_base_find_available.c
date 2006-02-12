@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"

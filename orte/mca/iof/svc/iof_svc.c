@@ -15,7 +15,7 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -24,11 +24,11 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/oob/base/base.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "iof_svc.h"
 #include "iof_svc_pub.h"
 #include "iof_svc_sub.h"
@@ -72,7 +72,7 @@ int orte_iof_svc_publish(
         mode,
         tag,
         fd);
-    if(rc != OMPI_SUCCESS) {
+    if(rc != ORTE_SUCCESS) {
         return rc;
     }
 
@@ -109,7 +109,7 @@ int orte_iof_svc_unpublish(
         ORTE_RML_NAME_SELF,
         mask,
         tag);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
 
     /* setup a local endpoint to reflect registration */
@@ -148,7 +148,7 @@ int orte_iof_svc_push(
         dst_name,
         dst_mask,
         dst_tag);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
 
     /* setup a local endpoint to reflect registration */
@@ -185,7 +185,7 @@ int orte_iof_svc_pull(
         ORTE_IOF_SINK, 
         src_tag,
         fd);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
 
     /* create a subscription */
@@ -211,7 +211,7 @@ int orte_iof_svc_buffer(
     size_t buffer_size)
 {
     /* send a message to the server indicating this set of connections should be buffered */
-    return OMPI_ERROR;
+    return ORTE_ERROR;
 }
 
 
@@ -231,7 +231,7 @@ int orte_iof_svc_subscribe(
 
     /* create a local registration to reflect the callback */
     rc = orte_iof_base_callback_create(ORTE_RML_NAME_SELF,src_tag,cbfunc,cbdata);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
 
     /* setup local subscription */

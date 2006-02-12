@@ -24,7 +24,7 @@
 #include "mpi.h"
 #include "opal/util/strncpy.h"
 #include "opal/class/opal_list.h"
-#include "class/ompi_pointer_array.h"
+#include "ompi/class/ompi_pointer_array.h"
 #include "opal/threads/mutex.h"
 
 

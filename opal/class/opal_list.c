@@ -16,10 +16,10 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_list.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 /*
  *  List classes
@@ -240,13 +240,13 @@ int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare)
     size_t i, index=0;
 
     if (0 == list->opal_list_length) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
     items = (opal_list_item_t**)malloc(sizeof(opal_list_item_t*) * 
                                        list->opal_list_length);
 
     if (NULL == items) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     while(NULL != (item = opal_list_remove_first(list))) {
@@ -259,5 +259,5 @@ int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare)
         opal_list_append(list,items[i]);
     }
     free(items);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }

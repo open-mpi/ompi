@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /* HAVE_STDLIB_H */
@@ -26,7 +26,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/strncpy.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #define ARGSIZE 128
 
@@ -39,13 +39,13 @@ int opal_argv_append(int *argc, char ***argv, const char *arg)
     int rc;
     
     /* add the new element */
-    if (OMPI_SUCCESS != (rc = opal_argv_append_nosize(argv, arg))) {
+    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(argv, arg))) {
         return rc;
     }
     
     *argc = opal_argv_count(*argv);
     
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_argv_append_nosize(char ***argv, const char *arg)
@@ -57,7 +57,7 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
   if (NULL == *argv) {
     *argv = (char**) malloc(2 * sizeof(char *));
     if (NULL == *argv) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
     argc = 0;
     (*argv)[0] = NULL;
@@ -71,7 +71,7 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
         
         *argv = (char**) realloc(*argv, (argc + 2) * sizeof(char *));
         if (NULL == *argv) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
 
@@ -79,13 +79,13 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
 
     (*argv)[argc] = strdup(arg);
     if (NULL == (*argv)[argc]) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     argc = argc + 1;
     (*argv)[argc] = NULL;
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -136,7 +136,7 @@ char **opal_argv_split(const char *src_string, int delimiter)
     /* tail argument, add straight from the original string */
 
     else if ('\0' == *p) {
-      if (OMPI_ERROR == opal_argv_append(&argc, &argv, src_string))
+      if (OPAL_ERROR == opal_argv_append(&argc, &argv, src_string))
 	return NULL;
     }
 
@@ -150,7 +150,7 @@ char **opal_argv_split(const char *src_string, int delimiter)
       strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
-      if (OMPI_ERROR == opal_argv_append(&argc, &argv, argtemp)) {
+      if (OPAL_ERROR == opal_argv_append(&argc, &argv, argtemp)) {
 	free(argtemp);
 	return NULL;
       }
@@ -164,7 +164,7 @@ char **opal_argv_split(const char *src_string, int delimiter)
       strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
-      if (OMPI_ERROR == opal_argv_append(&argc, &argv, arg))
+      if (OPAL_ERROR == opal_argv_append(&argc, &argv, arg))
 	return NULL;
     }
 
@@ -289,7 +289,7 @@ char **opal_argv_copy(char **argv)
   dupv[0] = NULL;
 
   while (NULL != *argv) {
-    if (OMPI_ERROR == opal_argv_append(&dupc, &dupv, *argv)) {
+    if (OPAL_ERROR == opal_argv_append(&dupc, &dupv, *argv)) {
       opal_argv_free(dupv);
       return NULL;
     }
@@ -312,13 +312,13 @@ int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
 
     /* Check for the bozo cases */
     if (NULL == argv || NULL == *argv || 0 == num_to_delete) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
     count = opal_argv_count(*argv);
     if (start > count) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     } else if (start < 0 || num_to_delete < 0) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
     /* Ok, we have some tokens to delete.  Calculate the new length of
@@ -352,7 +352,7 @@ int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
     /* adjust the argc */
     (*argc) -= num_to_delete;
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -364,9 +364,9 @@ int opal_argv_insert(char ***target, int start, char **source)
     /* Check for the bozo cases */
     
     if (NULL == target || NULL == *target || start < 0) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     } else if (NULL == source) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Easy case: appending to the end */
@@ -406,5 +406,5 @@ int opal_argv_insert(char ***target, int start, char **source)
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }

@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,7 +32,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 
 /*
@@ -126,7 +126,7 @@ int mca_base_component_find(const char *directory, const char *type,
   for (i = 0; NULL != static_components[i]; ++i) {
     cli = OBJ_NEW(mca_base_component_list_item_t);
     if (NULL == cli) {
-      return OMPI_ERR_OUT_OF_RESOURCE;
+      return OPAL_ERR_OUT_OF_RESOURCE;
     }
     cli->cli_component = static_components[i];
     opal_list_append(found_components, (opal_list_item_t *) cli);
@@ -151,7 +151,7 @@ int mca_base_component_find(const char *directory, const char *type,
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 #if OMPI_WANT_LIBLTDL
@@ -310,7 +310,7 @@ static int save_filename(const char *filename, lt_ptr data)
 
   component_file = OBJ_NEW(component_file_item_t);
   if (NULL == component_file) {
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
   strcpy(component_file->type, params->type);
   strcpy(component_file->name, basename + prefix_len);
@@ -351,13 +351,13 @@ static int open_component(component_file_item_t *target_file,
 
   if (LOADED == target_file->status) {
     opal_output_verbose(40, 0, "mca: base: component_find: already loaded (ignored)", NULL);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
   }
 
   /* Ensure that this component is not already loaded (should only happen
      if it was statically loaded).  It's an error if it's already
      loaded because we're evaluating this file -- not this component.
-     Hence, returning OMPI_ERR_PARAM indicates that the *file* failed
+     Hence, returning OPAL_ERR_PARAM indicates that the *file* failed
      to load, not the component. */
 
   for (cur = opal_list_get_first(found_components); 
@@ -368,7 +368,7 @@ static int open_component(component_file_item_t *target_file,
         0 == strcmp(mitem->cli_component->mca_component_name, target_file->name)) {
       opal_output_verbose(40, 0, "mca: base: component_find: already loaded (ignored)", NULL);
       target_file->status = FAILED_TO_LOAD;
-      return OMPI_ERR_BAD_PARAM;
+      return OPAL_ERR_BAD_PARAM;
     }
   }
 
@@ -380,7 +380,7 @@ static int open_component(component_file_item_t *target_file,
   if (0 != check_ompi_info(target_file, &dependencies, found_components)) {
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
 
   /* Now try to load the component */
@@ -396,7 +396,7 @@ static int open_component(component_file_item_t *target_file,
     free(err);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
-    return OMPI_ERR_BAD_PARAM;
+    return OPAL_ERR_BAD_PARAM;
   }
 
   /* Successfully opened the component; now find the public struct.
@@ -408,7 +408,7 @@ static int open_component(component_file_item_t *target_file,
     lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
   snprintf(struct_name, len, "mca_%s_%s_component", target_file->type,
            target_file->name);
@@ -419,7 +419,7 @@ static int open_component(component_file_item_t *target_file,
     lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
 
   component_struct = lt_dlsym(component_handle, struct_name);
@@ -437,7 +437,7 @@ static int open_component(component_file_item_t *target_file,
     lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
-    return OMPI_ERR_BAD_PARAM;
+    return OPAL_ERR_BAD_PARAM;
   }
 
   /* We found the public struct.  Save it, and register this component to
@@ -470,7 +470,7 @@ static int open_component(component_file_item_t *target_file,
   /* All done */
     
   free(struct_name);
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 
@@ -495,7 +495,7 @@ static int check_ompi_info(component_file_item_t *target_file,
   len = strlen(target_file->filename) + strlen(ompi_info_suffix) + 16;
   depname = malloc(len);
   if (NULL == depname)
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   snprintf(depname, len, "%s%s", target_file->filename, ompi_info_suffix);
 
   /* Try to open the file.  If there's no file, return success (i.e.,
@@ -534,7 +534,7 @@ static int check_ompi_info(component_file_item_t *target_file,
     /* Is it a dependency? */
 
     else if (0 == strncasecmp(p, key_dependency, strlen(key_dependency))) {
-      if (OMPI_SUCCESS != check_dependency(p + strlen(key_dependency), 
+      if (OPAL_SUCCESS != check_dependency(p + strlen(key_dependency), 
                                           target_file, dependencies, 
                                           found_components)) {
         fclose(fp);
@@ -548,7 +548,7 @@ static int check_ompi_info(component_file_item_t *target_file,
            list. */
 
         free_dependency_list(dependencies);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
       }
     }
   }
@@ -584,7 +584,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
   type = line;
   name = strchr(line, ':');
   if (NULL == name) {
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
   *name = '\0';
   ++name;
@@ -593,7 +593,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
 
   if (strlen(type) + strlen(name) + 32 >= BUFSIZ) {
     target_file->status = FAILED_TO_LOAD;
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OPAL_ERR_OUT_OF_RESOURCE;
   }
   snprintf(buffer, BUFSIZ, component_template, type);
   strcat(buffer, name);
@@ -657,7 +657,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
     else if (UNVISITED == mitem->status) {
       opal_output_verbose(40, 0, "mca: base: component_find: loading dependency (%s)",
                          mitem->basename, NULL);
-      if (OMPI_SUCCESS == open_component(target_file, found_components)) {
+      if (OPAL_SUCCESS == open_component(target_file, found_components)) {
         happiness = true;
       } else {
         opal_output_verbose(40, 0, "mca: base: component_find: dependency failed to load (%s)",
@@ -671,7 +671,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
 
   if (!happiness) {
     target_file->status = FAILED_TO_LOAD;
-    return OMPI_ERR_BAD_PARAM;
+    return OPAL_ERR_BAD_PARAM;
   }
 
   /* The dependency loaded properly.  Increment its refcount so that
@@ -683,7 +683,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
   if (NULL != mitem) {
       ditem = OBJ_NEW(dependency_item_t);
       if (NULL == ditem) {
-          return OMPI_ERR_OUT_OF_RESOURCE;
+          return OPAL_ERR_OUT_OF_RESOURCE;
       }
       ditem->di_component_file_item = mitem;
       opal_list_append(dependencies, (opal_list_item_t*) ditem);
@@ -691,7 +691,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
   
   /* All done -- all depenencies satisfied */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 

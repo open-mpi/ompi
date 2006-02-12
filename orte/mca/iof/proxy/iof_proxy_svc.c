@@ -1,11 +1,11 @@
-#include "ompi_config.h"
+#include "orte_config.h"
 #include "opal/util/output.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/rml_types.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_header.h"
-#include "mca/iof/base/iof_base_endpoint.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_header.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "iof_proxy.h"
 #include "iof_proxy_svc.h"
 
@@ -58,7 +58,7 @@ int orte_iof_proxy_svc_publish(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -96,7 +96,7 @@ int orte_iof_proxy_svc_unpublish(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -141,7 +141,7 @@ int orte_iof_proxy_svc_subscribe(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -184,7 +184,7 @@ int orte_iof_proxy_svc_unsubscribe(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

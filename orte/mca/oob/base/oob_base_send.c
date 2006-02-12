@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <string.h>
 
 #ifdef HAVE_SYS_TYPES_H
@@ -27,12 +27,12 @@
 #include <netinet/in.h>
 #endif
 
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 
-#include "dss/dss.h"
-#include "mca/ns/ns_types.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 #include "opal/util/output.h"
 /*
 *  Similiar to unix send(2).

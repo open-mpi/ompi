@@ -18,7 +18,7 @@
  *
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -27,9 +27,9 @@
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "opal/class/opal_list.h"
-#include "runtime/runtime.h"
-#include "runtime/runtime_types.h"
-#include "runtime/ompi_rte_wait.h"
+#include "orte/runtime/runtime.h"
+#include "orte/runtime/runtime_types.h"
+#include "ompi/runtime/ompi_rte_wait.h"
 #include "opal/util/show_help.h"
 #include "mca/pcm/base/base_kill_track.h"
 #include "mca/pcm/base/base_job_track.h"
@@ -50,7 +50,7 @@ mca_pcm_bproc_monitor_cb(pid_t pid, int status, void *data)
 
     ret = mca_pcm_base_job_list_get_job_info(me->jobs, pid, &jobid,
                                              &lower, &upper, true);
-    if (ret != OMPI_SUCCESS) {
+    if (ret != ORTE_SUCCESS) {
         opal_show_help("help-mca-pcm-bproc.txt",
                        "spawn:no-process-record", true, pid, status);
         return;

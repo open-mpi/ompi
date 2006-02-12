@@ -19,10 +19,10 @@
 #ifndef MCA_RML_BASE_H
 #define MCA_RML_BASE_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "mca/mca.h"
-#include "mca/rml/rml.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/rml/rml.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/aix/timer_aix.h"

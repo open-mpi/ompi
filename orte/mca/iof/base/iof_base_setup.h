@@ -20,7 +20,7 @@
 #ifndef IOF_BASE_SETUP_H_
 #define IOF_BASE_SETUP_H_
 
-#include "mca/ns/ns.h"
+#include "orte/mca/ns/ns.h"
 
 struct orte_iof_base_io_conf_t {
     int usepty;

@@ -18,8 +18,8 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "class/orte_value_array.h"
+#include "orte/orte_constants.h"
+#include "orte/class/orte_value_array.h"
 
 
 static void orte_value_array_construct(orte_value_array_t* array)

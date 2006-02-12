@@ -18,11 +18,11 @@
 
 #include "ompi_config.h"
 
-#include "communicator/communicator.h"
-#include "win/win.h"
-#include "file/file.h"
-#include "errhandler/errhandler.h"
-#include "mpi/f77/fint_2_int.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/win/win.h"
+#include "ompi/file/file.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/f77/fint_2_int.h"
 
 
 int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 

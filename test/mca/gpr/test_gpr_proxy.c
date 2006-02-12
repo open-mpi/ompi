@@ -30,14 +30,14 @@
 #include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "runtime/runtime.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/oob/base/base.h"
-#include "mca/gpr/gpr.h"
-#include "mca/gpr/base/base.h"
-#include "mca/gpr/replica/gpr_replica.h"
-#include "mca/gpr/replica/gpr_replica_internals.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/gpr/base/base.h"
+#include "orte/mca/gpr/replica/gpr_replica.h"
+#include "orte/mca/gpr/replica/gpr_replica_internals.h"
 
 
 /* output files needed by the test */

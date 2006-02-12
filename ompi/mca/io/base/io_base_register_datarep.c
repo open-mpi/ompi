@@ -20,7 +20,7 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
 

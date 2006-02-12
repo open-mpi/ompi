@@ -17,7 +17,7 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_types.h"
+#include "orte/orte_types.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 

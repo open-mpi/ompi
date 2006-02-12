@@ -18,8 +18,8 @@
  */
 
 #include "ompi_config.h"
-#include "datatype/datatype.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 
 int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {

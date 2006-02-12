@@ -18,10 +18,10 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/sds/base/base.h"
-#include "util/proc_info.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/util/proc_info.h"
 
 extern orte_sds_base_module_t *orte_sds_base_module;
 

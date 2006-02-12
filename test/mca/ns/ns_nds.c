@@ -39,9 +39,9 @@
 #include "util/proc_info.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
-#include "mca/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
 
 static bool test1(void);        /* verify different buffer inits */
 static bool test2(void);        /* verify int16 */

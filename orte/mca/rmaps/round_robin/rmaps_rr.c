@@ -24,17 +24,17 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/rmaps/base/rmaps_base_map.h"
-#include "mca/ras/base/ras_base_node.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/ras/base/ras_base_node.h"
 #include "rmaps_rr.h"
 
 

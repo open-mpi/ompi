@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "ompi/include/constants.h"
-#include "class/ompi_pointer_array.h"
+#include "ompi/constants.h"
+#include "ompi/class/ompi_pointer_array.h"
 #include "opal/util/output.h"
 
 enum { TABLE_INIT = 1, TABLE_GROW = 2 };

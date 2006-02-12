@@ -18,8 +18,8 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_request.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
 
 static void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {

@@ -19,8 +19,8 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_object.h"
-#include "request/request.h"
-#include "ompi/include/constants.h"
+#include "ompi/request/request.h"
+#include "ompi/constants.h"
 
 ompi_pointer_array_t             ompi_request_f_to_c_table;
 OMPI_DECLSPEC size_t             ompi_request_waiting = 0;

@@ -22,8 +22,8 @@
 #include <sys/types.h>
 #endif
 
-#include "op/op.h"
-#include "op/op_predefined.h"
+#include "ompi/op/op.h"
+#include "ompi/op/op_predefined.h"
 
 
 /*

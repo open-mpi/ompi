@@ -22,7 +22,7 @@
 #define MCA_PTL_BASE_HEADER_H
 
 #include "ompi_config.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/mca/ptl/ptl.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

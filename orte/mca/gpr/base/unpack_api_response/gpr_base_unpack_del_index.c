@@ -23,8 +23,8 @@
 
 #include "opal/util/trace.h"
 
-#include "orte/include/orte_constants.h"
-#include "orte/include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 

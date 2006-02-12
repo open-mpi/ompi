@@ -18,7 +18,7 @@
 
 /** @file **/
 
-#include "orte_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_object.h"
 #include "opal/util/trace.h"
@@ -29,11 +29,10 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
-#include "orte/include/orte_constants.h"
+#include "opal/constants.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/include/constants.h"
 
 int
 opal_finalize_util(void)
@@ -93,5 +92,5 @@ opal_finalize(void)
     /* finalize util code */
     opal_finalize_util();
 
-    return ORTE_SUCCESS;
+    return OPAL_SUCCESS;
 }

@@ -18,8 +18,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "group/group.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/group/group.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GROUP_RANK = mpi_group_rank_f
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANK,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_group_rank_f(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr)

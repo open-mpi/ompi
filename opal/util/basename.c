@@ -16,13 +16,13 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "opal/util/basename.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 
 char *opal_basename(const char *filename)

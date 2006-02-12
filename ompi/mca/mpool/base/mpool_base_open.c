@@ -20,11 +20,11 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/mpool/mpool.h"
-#include "mca/mpool/base/base.h"
-#include "ompi/include/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/constants.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h> 
 #endif  /* HAVE_UNISTD_H */

@@ -20,21 +20,21 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/util/show_help.h"
 
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/rml/rml.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
 
-#include "mca/rmgr/base/base.h"
-#include "mca/soh/base/base.h"
-#include "mca/iof/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/soh/base/base.h"
+#include "orte/mca/iof/base/base.h"
 
-#include "runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 
 int orte_init_stage2(void)
 {

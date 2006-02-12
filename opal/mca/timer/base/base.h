@@ -20,9 +20,9 @@
 #ifndef OPAL_TIMER_BASE_H
 #define OPAL_TIMER_BASE_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "mca/timer/timer.h"
+#include "opal/mca/timer/timer.h"
 
 
 /*

@@ -35,10 +35,10 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 
-#include "util/sys_info.h"
+#include "orte/util/sys_info.h"
 
 orte_sys_info_t orte_system_info = {
                  /* .init =        */            false,

@@ -21,9 +21,9 @@
 
 #include "ompi_config.h"
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
-#include "mca/bml/bml.h"
+#include "ompi/mca/bml/bml.h"
 #include "opal/util/output.h" 
 
 /*

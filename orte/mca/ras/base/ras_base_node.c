@@ -20,15 +20,15 @@
 
 #include <string.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 
-#include "mca/errmgr/errmgr.h"
-#include "mca/soh/soh_types.h"
-#include "mca/gpr/gpr.h"
-#include "mca/ns/ns.h"
-#include "mca/ras/base/ras_base_node.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ras/base/ras_base_node.h"
 
 static void orte_ras_base_node_construct(orte_ras_node_t* node)
 {

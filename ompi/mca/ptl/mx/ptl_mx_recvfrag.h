@@ -23,7 +23,7 @@
 #define MCA_PTL_MX_RECV_FRAG_H
 
 #include "ptl_mx.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_mx_sendfrag.h"
 
 /**

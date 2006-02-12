@@ -22,15 +22,15 @@
  *
  */
 
-#include "mca/mca.h"
-#include "mca/btl/btl.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/btl/btl.h"
 
 #ifndef MCA_BML_R2_H
 #define MCA_BML_R2_H
 
-#include "include/types.h"
-#include "class/ompi_free_list.h"
-#include "mca/bml/bml.h"
+#include "ompi/types.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/mca/bml/bml.h"
 
 
 

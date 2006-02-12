@@ -17,9 +17,9 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -49,7 +49,7 @@ opal_list_t opal_memory_base_components_opened;
 int opal_memory_base_open(void)
 {
     /* Open up all available components */
-    if (OMPI_SUCCESS !=
+    if (OPAL_SUCCESS !=
         mca_base_components_open("memory", 0,
                                  mca_memory_base_static_components,
                                  &opal_memory_base_components_opened, 

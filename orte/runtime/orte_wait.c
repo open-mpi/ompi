@@ -17,7 +17,7 @@
  */
 
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <assert.h>
 #include <errno.h>
 #ifdef HAVE_SYS_TIME_H
@@ -37,7 +37,7 @@
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/runtime/orte_wait.h"
 
 #ifdef HAVE_WAITPID

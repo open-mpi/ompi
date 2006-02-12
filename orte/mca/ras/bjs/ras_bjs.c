@@ -21,14 +21,14 @@
 #include <string.h>
 #include <sys/bproc.h>
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/ras/base/base.h"
-#include "mca/ras/base/ras_base_node.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "ras_bjs.h"
 
 

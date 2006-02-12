@@ -24,9 +24,9 @@
 
 #include <string.h>
 #include <sys/types.h>
-#include "include/sys/atomic.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "opal/sys/atomic.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_sm.h"
 
 

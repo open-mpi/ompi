@@ -17,7 +17,7 @@
  */
 
 #include "ompi_config.h"
-#include "request/grequest.h"
+#include "ompi/request/grequest.h"
 
 
 static int ompi_grequest_free(ompi_request_t** req)

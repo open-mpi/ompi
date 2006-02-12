@@ -1,10 +1,10 @@
 #ifndef ORTE_IOF_SVC_PUBLISH_H
 #define ORTE_IOF_SVC_PUBLISH_H
 
-#include "ompi_config.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
+#include "orte_config.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "iof_svc.h"
 
 

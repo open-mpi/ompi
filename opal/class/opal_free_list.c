@@ -16,10 +16,10 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_free_list.h"
-#include "opal/include/sys/cache.h"
+#include "opal/sys/cache.h"
 
 
 static void opal_free_list_construct(opal_free_list_t* fl);
@@ -77,7 +77,7 @@ int opal_free_list_init(
     flist->fl_num_per_alloc = num_elements_per_alloc;
     if(num_elements_to_alloc)
         return opal_free_list_grow(flist, num_elements_to_alloc);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -89,13 +89,13 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
     size_t mod;
 
     if (flist->fl_max_to_alloc > 0 && flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
     alloc_ptr = (unsigned char *)malloc((num_elements * flist->fl_elem_size) + 
                                         sizeof(opal_list_item_t) +
                                         CACHE_LINE_SIZE);
     if(NULL == alloc_ptr)
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
     /* make the alloc_ptr a list item, save the chunk in the allocations list, and
        have ptr point to memory right after the list item structure */
@@ -118,7 +118,7 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
         ptr += flist->fl_elem_size;
     }
     flist->fl_num_allocated += num_elements;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 

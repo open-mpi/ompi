@@ -18,11 +18,11 @@
  */
 
 #include "ompi_config.h"
-#include "datatype/datatype.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 
 #if OMPI_ENABLE_DEBUG
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
 extern int ompi_unpack_debug;
 extern int ompi_pack_debug;
 extern int ompi_copy_debug;

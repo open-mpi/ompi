@@ -38,7 +38,7 @@
 #include <io.h>
 #endif  /* __WINDOWS__ */
 
-#include "tools/ompi_info/ompi_info.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 
 using namespace std;
 using namespace ompi_info;

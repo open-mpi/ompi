@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
+#include "ompi/mpi/f77/bindings.h"
 
 /* The OMPI_GENERATE_F77_BINDINGS work only for the most common F77 bindings, the
  * one that does not return any value. There are 2 exceptions MPI_Wtick and MPI_Wtime.
@@ -52,7 +52,7 @@ double mpi_wtick__(void) { return mpi_wtick_f(); }
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 double mpi_wtick_f(void)

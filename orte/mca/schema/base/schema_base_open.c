@@ -17,12 +17,12 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "include/constants.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/util/output.h"
 
-#include "mca/schema/base/base.h"
+#include "orte/mca/schema/base/base.h"
 
 
 
@@ -86,7 +86,7 @@ int orte_schema_base_open(void)
     
         /* Open up all available components */
     
-        if (OMPI_SUCCESS != 
+        if (ORTE_SUCCESS != 
             mca_base_components_open("schema", orte_schema_base_output,
                                      mca_schema_base_static_components, 
                                      &orte_schema_base_components_available, true)) {

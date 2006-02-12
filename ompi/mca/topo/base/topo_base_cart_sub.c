@@ -17,9 +17,9 @@
  */
 
 #include "ompi_config.h"
-#include "mca/topo/base/base.h"
-#include "communicator/communicator.h"
-#include "mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/topo.h"
 
 /*
  * function - partitions a communicator into subgroups which

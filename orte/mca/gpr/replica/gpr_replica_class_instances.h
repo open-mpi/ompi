@@ -25,7 +25,7 @@
 
 #include "orte_config.h"
 
-#include "class/orte_bitmap.h"
+#include "orte/class/orte_bitmap.h"
 #include "opal/class/opal_object.h"
 
 #include "gpr_replica.h"

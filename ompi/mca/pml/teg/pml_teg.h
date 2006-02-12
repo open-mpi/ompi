@@ -24,14 +24,14 @@
 
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
-#include "class/ompi_free_list.h"
+#include "ompi/class/ompi_free_list.h"
 #include "opal/util/cmd_line.h"
-#include "request/request.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_request.h"
-#include "mca/pml/base/pml_base_bsend.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/request/request.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/ptl.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

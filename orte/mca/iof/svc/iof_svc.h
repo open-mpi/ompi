@@ -21,7 +21,7 @@
 #ifndef ORTE_IOF_SVC_H
 #define ORTE_IOF_SVC_H
 
-#include "mca/iof/iof.h"
+#include "orte/mca/iof/iof.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */

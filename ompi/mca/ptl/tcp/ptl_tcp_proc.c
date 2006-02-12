@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "orte/class/orte_proc_table.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "opal/util/output.h"

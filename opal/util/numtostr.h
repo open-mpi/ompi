@@ -22,7 +22,7 @@
 #ifndef OMPI_NUMTOSTR_UTIL
 #define OMPI_NUMTOSTR_UTIL
 
-#include "ompi_config.h"
+#include "opal_config.h"
 /**
  * Convert a long integer to a char* string.  The returned buffer is
  * allocated by calling malloc() and must be freed by the caller.

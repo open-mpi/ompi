@@ -16,21 +16,21 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <string.h>
 
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 #include "opal/threads/condition.h"
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "orte/util/proc_info.h"
 #include "orte/dss/dss.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/soh/soh.h"
-#include "runtime/runtime.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/soh/soh.h"
+#include "orte/runtime/runtime.h"
 
 
 /**

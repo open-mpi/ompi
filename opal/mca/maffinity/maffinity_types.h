@@ -24,7 +24,7 @@
 #ifndef OPAL_MAFFINITY_TYPES_H
 #define OPAL_MAFFINITY_TYPES_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <sys/types.h>
 

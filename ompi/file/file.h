@@ -21,9 +21,9 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "errhandler/errhandler.h"
+#include "ompi/errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
-#include "mca/io/io.h"
+#include "ompi/mca/io/io.h"
 
 /*
  * Flags

@@ -21,7 +21,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_rb_tree.h"
+#include "ompi/class/ompi_rb_tree.h"
 
 /* declare the instance of the classes  */
 OBJ_CLASS_INSTANCE(ompi_rb_tree_node_t, opal_list_item_t, NULL, NULL);

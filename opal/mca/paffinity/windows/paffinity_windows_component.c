@@ -22,9 +22,9 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "paffinity_windows.h"
 

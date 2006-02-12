@@ -18,8 +18,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "mpi/f77/constants.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/constants.h"
 
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PUT,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_put_f(char *origin_addr, MPI_Fint *origin_count,

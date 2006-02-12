@@ -16,14 +16,14 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 int mca_base_components_close(int output_id, 
                               opal_list_t *components_available, 
@@ -77,5 +77,5 @@ int mca_base_components_close(int output_id,
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }

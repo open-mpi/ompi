@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -32,7 +32,7 @@
 #include <stdarg.h>
 
 #include "opal/util/os_path.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #ifdef __WINDOWS__
 #define PATH_SEP "\\"

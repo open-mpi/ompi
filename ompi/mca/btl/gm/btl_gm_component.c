@@ -18,7 +18,7 @@
 
 
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
@@ -27,8 +27,8 @@
 #include "ompi/mca/btl/btl.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/mpool/base/base.h" 
+#include "orte/mca/errmgr/errmgr.h"
+#include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/gm/mpool_gm.h"
 #include "btl_gm.h"
 #include "btl_gm_frag.h"

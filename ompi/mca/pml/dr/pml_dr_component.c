@@ -17,21 +17,21 @@
  */
 
 #include "ompi_config.h"
-#include "include/sys/cache.h"
+#include "opal/sys/cache.h"
 #include "opal/event/event.h"
 #include "mpi.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/pml/base/pml_base_bsend.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_dr.h"
 #include "pml_dr_proc.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
 #include "pml_dr_recvfrag.h"
-#include "mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h" 
 
 
 mca_pml_base_component_1_0_0_t mca_pml_dr_component = {

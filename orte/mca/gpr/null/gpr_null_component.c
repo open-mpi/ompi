@@ -20,7 +20,7 @@
 #include "orte_config.h"
 
 #include "orte/mca/gpr/gpr.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 
 extern orte_gpr_base_module_t orte_gpr_null_module;

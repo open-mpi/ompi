@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#include "mca/pml/pml.h"
+#include "ompi/mca/pml/pml.h"
 #include "pml_ob1_endpoint.h"
 
 

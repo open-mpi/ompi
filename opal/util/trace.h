@@ -20,7 +20,7 @@
 #ifndef OPAL_TRACE_H_
 #define OPAL_TRACE_H_
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifndef OPAL_ENABLE_TRACE
 #define OPAL_ENABLE_TRACE 0

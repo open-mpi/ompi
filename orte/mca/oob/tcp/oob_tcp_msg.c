@@ -15,14 +15,14 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
-#include "include/ompi_socket_errno.h"
+#include "orte_config.h"
+#include "orte/orte_socket_errno.h"
 
-#include "class/orte_proc_table.h"
-#include "include/constants.h"
-#include "mca/ns/ns.h"
-#include "mca/oob/tcp/oob_tcp.h"
-#include "mca/oob/tcp/oob_tcp_msg.h"
+#include "orte/class/orte_proc_table.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/oob/tcp/oob_tcp.h"
+#include "orte/mca/oob/tcp/oob_tcp_msg.h"
 
 
 static void mca_oob_tcp_msg_construct(mca_oob_tcp_msg_t*);
@@ -58,7 +58,7 @@ static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t* msg)
  *  Wait for a msg to complete.
  *  @param  msg (IN)   Message to wait on.
  *  @param  rc (OUT)   Return code (number of bytes read on success or error code on failure).
- *  @retval OMPI_SUCCESS or error code on failure.
+ *  @retval ORTE_SUCCESS or error code on failure.
  */
 
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
@@ -88,14 +88,14 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
     if(NULL != rc) {
         *rc = msg->msg_rc;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 /*
  *  Wait up to a timeout for the message to complete.
  *  @param  msg (IN)   Message to wait on.
  *  @param  rc (OUT)   Return code (number of bytes read on success or error code on failure).
- *  @retval OMPI_SUCCESS or error code on failure.
+ *  @retval ORTE_SUCCESS or error code on failure.
  */
 
 int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* abstime)
@@ -138,14 +138,14 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     }
     if(msg->msg_rc < 0)
         return msg->msg_rc;
-    return (msg->msg_complete ? OMPI_SUCCESS : OMPI_ERR_TIMEOUT);
+    return (msg->msg_complete ? ORTE_SUCCESS : ORTE_ERR_TIMEOUT);
 }
 
 /*
  *  Signal that a message has completed.
  *  @param  msg (IN)   Message to wait on.
  *  @param peer (IN) the peer of the message
- *  @retval OMPI_SUCCESS or error code on failure.
+ *  @retval ORTE_SUCCESS or error code on failure.
  */
 int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
 {
@@ -160,7 +160,7 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
         opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
         if(opal_list_get_size(&mca_oob_tcp_component.tcp_msg_completed) > 1) {
             OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-            return OMPI_SUCCESS;
+            return ORTE_SUCCESS;
         }
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
@@ -191,7 +191,7 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
         opal_condition_broadcast(&msg->msg_condition);
         OPAL_THREAD_UNLOCK(&msg->msg_lock);
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 /*
@@ -221,7 +221,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
                     ORTE_NAME_ARGS(&(peer->peer_name)), 
                     ompi_socket_errno);
                 mca_oob_tcp_peer_close(peer);
-                msg->msg_rc = OMPI_ERR_CONNECTION_FAILED;
+                msg->msg_rc = ORTE_ERR_CONNECTION_FAILED;
                 return true;
             }
         }
@@ -425,7 +425,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 
             /* set the users iovec struct to point to pre-allocated buffer */
             if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
-                post->msg_rc = OMPI_ERR_BAD_PARAM;
+                post->msg_rc = ORTE_ERR_BAD_PARAM;
             } else {
                 /* first iovec of recv message contains the header -
                  * subsequent contain user data

@@ -20,8 +20,8 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
-#include "class/ompi_bitmap.h"
+#include "ompi/constants.h"
+#include "ompi/class/ompi_bitmap.h"
 
 
 #define SIZE_OF_CHAR (sizeof(char) * 8)

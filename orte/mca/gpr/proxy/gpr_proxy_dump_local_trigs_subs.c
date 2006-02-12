@@ -37,7 +37,7 @@
 #include <libgen.h>
 #endif
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 

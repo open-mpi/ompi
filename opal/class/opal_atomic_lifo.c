@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include "opal/class/opal_atomic_lifo.h"
 
 static void opal_atomic_lifo_construct( opal_atomic_lifo_t* lifo )

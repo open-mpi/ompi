@@ -22,9 +22,9 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "communicator/communicator.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
 
 

@@ -24,9 +24,9 @@
 /*
  * includes
  */
-#include "ompi_config.h"
-#include "mca/mca.h"
-#include "mca/pls/pls.h"
+#include "orte_config.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/pls/pls.h"
 #include "orte/mca/ras/base/ras_base_node.h"
 
 

@@ -21,7 +21,7 @@
 #ifndef OMPI_STACKTRACE_H
 #define OMPI_STACKTRACE_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -32,8 +32,8 @@
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun
  * by the user.
  *
- *  @returnvalue OMPI_SUCCESS
- *  @returnvalue OMPI_ERR_BAD_PARAM if the value in the signal-list
+ *  @returnvalue OPAL_SUCCESS
+ *  @returnvalue OPAL_ERR_BAD_PARAM if the value in the signal-list
  *    is not a valid signal-number
  *               
  */

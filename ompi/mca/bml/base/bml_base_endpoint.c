@@ -18,10 +18,10 @@
 
 #include "ompi_config.h"
 
-#include "include/sys/atomic.h"
-#include "mca/bml/bml.h"
+#include "opal/sys/atomic.h"
+#include "ompi/mca/bml/bml.h"
 #include "bml_base_endpoint.h"
-#include "mca/pml/pml.h" 
+#include "ompi/mca/pml/pml.h" 
 
 
 

@@ -17,21 +17,21 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include "runtime/runtime.h"
+#include "orte/runtime/runtime.h"
 #include "opal/util/output.h"
-#include "util/proc_info.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/argv.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 
 
 OBJ_CLASS_INSTANCE(

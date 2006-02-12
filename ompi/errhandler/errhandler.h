@@ -24,10 +24,10 @@
 
 #include "mpi.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_pointer_array.h"
+#include "ompi/class/ompi_pointer_array.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "errhandler/errhandler_predefined.h"
-#include "errhandler/errcode-internal.h"
+#include "ompi/errhandler/errhandler_predefined.h"
+#include "ompi/errhandler/errcode-internal.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

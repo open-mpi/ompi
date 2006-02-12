@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -28,7 +28,7 @@
 #endif
 
 #include "opal/util/error.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 
 #define MAX_CONVERTERS 5
 #define MAX_CONVERTER_PROJECT_LEN 10

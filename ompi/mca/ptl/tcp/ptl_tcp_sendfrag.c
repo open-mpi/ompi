@@ -22,8 +22,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "ompi/include/ompi_socket_errno.h"
-#include "include/types.h"
+#include "orte/orte_socket_errno.h"
+#include "ompi/types.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/communicator/communicator.h"

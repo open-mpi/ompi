@@ -26,16 +26,16 @@
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
 
-#include "ompi/include/constants.h"
-#include "include/sys/cache.h"
+#include "ompi/constants.h"
+#include "opal/sys/cache.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "util/sys_info.h"
-#include "util/proc_info.h"
-#include "mca/pml/pml.h"
-#include "mca/base/mca_base_param.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
+#include "ompi/mca/pml/pml.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"
 

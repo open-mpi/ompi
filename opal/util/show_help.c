@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -26,7 +26,7 @@
 #include "opal/util/show_help_lex.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 static int open_file(const char *base, const char *topic);
 static int find_topic(const char *base, const char *topic);
@@ -55,10 +55,10 @@ int opal_show_help(const char *filename, const char *topic,
     va_list arglist;
     char **array = NULL;
 
-    if (OMPI_SUCCESS != (ret = open_file(filename, topic))) {
+    if (OPAL_SUCCESS != (ret = open_file(filename, topic))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = find_topic(filename, topic))) {
+    if (OPAL_SUCCESS != (ret = find_topic(filename, topic))) {
         fclose(opal_show_help_yyin);
         return ret;
     }
@@ -66,7 +66,7 @@ int opal_show_help(const char *filename, const char *topic,
     ret = read_message(&array);
     opal_show_help_finish_parsing();
     fclose(opal_show_help_yyin);
-    if (OMPI_SUCCESS != ret) {
+    if (OPAL_SUCCESS != ret) {
         destroy_message(array);
         return ret;
     }
@@ -147,7 +147,7 @@ static int open_file(const char *base, const char *topic)
         fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
         fprintf(stderr, "But I couldn't find any file matching that name.  Sorry!\n");
         fprintf(stderr, dash_line);
-        return OMPI_ERR_NOT_FOUND;
+        return OPAL_ERR_NOT_FOUND;
     }
 
     /* Set the buffer */
@@ -156,7 +156,7 @@ static int open_file(const char *base, const char *topic)
 
     /* Happiness */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -177,13 +177,13 @@ static int find_topic(const char *base, const char *topic)
         case OPAL_SHOW_HELP_PARSE_TOPIC:
             tmp = strdup(opal_show_help_yytext);
             if (NULL == tmp) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                return OPAL_ERR_OUT_OF_RESOURCE;
             }
             tmp[strlen(tmp) - 1] = '\0';
             ret = strcmp(tmp + 1, topic);
             free(tmp);
             if (0 == ret) {
-                return OMPI_SUCCESS;
+                return OPAL_SUCCESS;
             }
             break;
 
@@ -195,7 +195,7 @@ static int find_topic(const char *base, const char *topic)
             fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
             fprintf(stderr, "But I couldn't find that topic in the file.  Sorry!\n");
             fprintf(stderr, dash_line);
-            return OMPI_ERR_NOT_FOUND;
+            return OPAL_ERR_NOT_FOUND;
             break;
 
         default:
@@ -222,13 +222,13 @@ static int read_message(char ***array)
         case OPAL_SHOW_HELP_PARSE_MESSAGE:
             tmp = strdup(opal_show_help_yytext);
             if (NULL == tmp) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                return OPAL_ERR_OUT_OF_RESOURCE;
             }
             opal_argv_append_nosize(array, tmp);
             break;
 
         default:
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
             break;
         }
     }
@@ -269,7 +269,7 @@ static int output(bool want_error_header, char **lines,
         fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
         fprintf(stderr, "But memory seems to be exhausted.  Sorry!\n");
         fprintf(stderr, dash_line);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* Fill the big string */
@@ -295,7 +295,7 @@ static int output(bool want_error_header, char **lines,
     /* All done */
 
     free(concat);
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -314,5 +314,5 @@ static int destroy_message(char **lines)
         free(lines[i]);
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }

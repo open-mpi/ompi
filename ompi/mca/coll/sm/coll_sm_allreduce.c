@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "coll_sm.h"
 
 

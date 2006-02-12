@@ -27,7 +27,7 @@
 #include <vapi.h> 
 #include <mtl_common.h> 
 #include <vapi_common.h> 
-#include "mca/mpool/mvapi/mpool_mvapi.h" 
+#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

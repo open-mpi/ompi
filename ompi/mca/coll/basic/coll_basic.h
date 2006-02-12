@@ -22,7 +22,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"

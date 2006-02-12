@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_basic.h"

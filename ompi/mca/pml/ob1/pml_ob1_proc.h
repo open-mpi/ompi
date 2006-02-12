@@ -22,9 +22,9 @@
 #define MCA_PML_PROC_H
 
 #include "opal/threads/mutex.h"
-#include "communicator/communicator.h"
-#include "group/group.h"
-#include "proc/proc.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
+#include "ompi/proc/proc.h"
 #include "pml_ob1_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

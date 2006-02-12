@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "class/ompi_bitmap.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
-#include "mca/btl/base/base.h"
+#include "ompi/class/ompi_bitmap.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/btl/base/base.h"
 #include "pml_ob1.h"
 #include "pml_ob1_component.h"
 #include "pml_ob1_comm.h"
@@ -34,7 +34,7 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
-#include "mca/bml/base/base.h"
+#include "ompi/mca/bml/base/base.h"
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {

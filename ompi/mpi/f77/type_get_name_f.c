@@ -18,10 +18,10 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "ompi/include/constants.h"
-#include "errhandler/errhandler.h"
-#include "mpi/f77/strings.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/constants.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_GET_NAME = mpi_type_get_name_f
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_NAME,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_type_get_name_f(MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr)

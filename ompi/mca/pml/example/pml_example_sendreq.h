@@ -12,7 +12,7 @@
 #ifndef PML_EXAMPLE_SENDREQ_H_HAS_BEEN_INCLUDED
 #define PML_EXAMPLE_SENDREQ_H_HAS_BEEN_INCLUDED
 
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
 
 void mca_pml_example_send_request_progress( struct mca_ptl_base_module_t* ptl,
                                         mca_pml_base_send_request_t* req,

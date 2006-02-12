@@ -16,10 +16,10 @@
  * $HEADER$
  */
 
-#include "mca/bml/base/base.h" 
-#include "mca/base/base.h"
+#include "ompi/mca/bml/base/base.h" 
+#include "opal/mca/base/base.h"
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 int mca_bml_base_output = -1;
 
 OMPI_DECLSPEC mca_bml_base_module_t mca_bml = {

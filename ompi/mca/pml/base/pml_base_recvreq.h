@@ -21,8 +21,8 @@
 #ifndef MCA_PML_BASE_RECV_REQUEST_H
 #define MCA_PML_BASE_RECV_REQUEST_H
 
-#include "mca/pml/base/pml_base_request.h"
-#include "datatype/convertor.h"
+#include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/datatype/convertor.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

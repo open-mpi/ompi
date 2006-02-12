@@ -17,7 +17,7 @@
  */
 
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -29,7 +29,7 @@
 #include <stdlib.h>
 
 #include "opal/util/daemon_init.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 
 int opal_daemon_init(char *working_dir)
@@ -45,7 +45,7 @@ int opal_daemon_init(char *working_dir)
     int fd;
 
     if ((pid = fork()) < 0) {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     } else if (pid != 0) {
         exit(0);   /* parent goes bye-bye */
     }
@@ -81,16 +81,16 @@ int opal_daemon_init(char *working_dir)
            close(fd);
         }
     } else {
-        return OMPI_ERR_FATAL;
+        return OPAL_ERR_FATAL;
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 #else
     printf ("This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 
 #else /* HAVE_FORK */
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 #endif
 }

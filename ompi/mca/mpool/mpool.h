@@ -21,8 +21,8 @@
   */
 #ifndef MCA_MPOOL_H
 #define MCA_MPOOL_H
-#include "mca/mca.h"
-#include "info/info.h"
+#include "opal/mca/mca.h"
+#include "ompi/info/info.h"
 #include "opal/class/opal_list.h" 
 #include "ompi/class/ompi_pointer_array.h" 
 

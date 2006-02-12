@@ -22,7 +22,7 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -35,7 +35,7 @@
 #endif
 #include <signal.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -155,7 +155,7 @@ static int orte_pls_fork_proc(
     }
 
     rc = orte_iof_base_setup_prefork(&opts);
-    if (OMPI_SUCCESS != rc) {
+    if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }

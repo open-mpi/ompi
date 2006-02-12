@@ -19,10 +19,10 @@
 
 #include "orte_config.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
 
-#include "mca/ns/base/base.h"
+#include "orte/mca/ns/base/base.h"
 
 
 /**

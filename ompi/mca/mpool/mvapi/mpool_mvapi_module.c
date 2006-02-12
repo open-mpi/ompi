@@ -20,12 +20,12 @@
 #include <string.h>
 #include "opal/util/output.h"
 #include "opal/memoryhooks/memory.h"
-#include "mca/mpool/mvapi/mpool_mvapi.h"
+#include "ompi/mca/mpool/mvapi/mpool_mvapi.h"
 #include <vapi.h>
 #include <vapi_types.h> 
 #include <vapi_common.h> 
-#include "mca/rcache/rcache.h" 
-#include "mca/rcache/base/base.h"
+#include "ompi/mca/rcache/rcache.h" 
+#include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
 
 extern uint32_t mca_mpool_base_page_size;

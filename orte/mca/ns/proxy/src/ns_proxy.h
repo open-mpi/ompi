@@ -22,12 +22,12 @@
 
 
 #include "orte_config.h"
-#include "include/types.h"
-#include "include/orte_constants.h"
+#include "opal/types.h"
+#include "orte/orte_constants.h"
 #include "opal/class/opal_list.h"
-#include "dss/dss.h"
+#include "orte/dss/dss.h"
 
-#include "mca/ns/base/base.h"
+#include "orte/mca/ns/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

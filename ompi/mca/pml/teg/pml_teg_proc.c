@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 #include "pml_ptl_array.h"

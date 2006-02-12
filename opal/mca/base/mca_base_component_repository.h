@@ -19,7 +19,7 @@
 #ifndef MCA_BASE_COMPONENT_REPOSITORY_H
 #define MCA_BASE_COMPONENT_REPOSITORY_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -55,7 +55,7 @@ extern "C" {
  * used anywhere."  Incorrect, Grasshopper.  A small number of places
  * (like the retain() function) are still prototyped, but have 99% of
  * their innards #if'ed out -- i.e., they just return
- * OMPI_ERR_NOT_SUPPORTED.  Why was it coded up this way?  I'm not
+ * OPAL_ERR_NOT_SUPPORTED.  Why was it coded up this way?  I'm not
  * entirely sure -- there may be a reason (and that reason may just be
  * conservative coding), but I'm not really too inspired to look into
  * it any further at this point.  :-)

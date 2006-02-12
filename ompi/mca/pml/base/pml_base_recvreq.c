@@ -18,9 +18,9 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
-#include "include/types.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_recvreq.h"
+#include "ompi/types.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/pml_base_recvreq.h"
 
 
 static void mca_pml_base_recv_request_construct(mca_pml_base_recv_request_t*);

@@ -40,7 +40,7 @@
 
 #include "orte_config.h"
 #include "orte/class/orte_pointer_array.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/pls/base/base.h"
 #include "orte/util/proc_info.h"
 #include "opal/threads/condition.h"

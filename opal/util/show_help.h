@@ -88,7 +88,7 @@
 #ifndef OPAL_SHOW_HELP_H
 #define OPAL_SHOW_HELP_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdarg.h>
 

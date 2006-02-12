@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/rcache/rcache.h"
-#include "mca/rcache/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/rcache/rcache.h"
+#include "ompi/mca/rcache/base/base.h"
 
 
 

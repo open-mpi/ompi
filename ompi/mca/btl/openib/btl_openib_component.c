@@ -18,33 +18,33 @@
 
 
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
-#include "opal/include/sys/timer.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
+#include "opal/sys/timer.h"
 
-#include "mca/base/mca_base_param.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/mpool/base/base.h" 
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "ompi/mca/mpool/base/base.h" 
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_endpoint.h" 
-#include "mca/btl/base/base.h"
-#include "mca/btl/base/btl_base_error.h" 
+#include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/btl/base/btl_base_error.h" 
 
 
-#include "datatype/convertor.h" 
-#include "mca/mpool/mpool.h" 
+#include "ompi/datatype/convertor.h" 
+#include "ompi/mca/mpool/mpool.h" 
 #include <sysfs/libsysfs.h>  
 #include <infiniband/verbs.h> 
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
 
-#include "mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
 mca_btl_openib_component_t mca_btl_openib_component = {
     {

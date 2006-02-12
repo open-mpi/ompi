@@ -160,10 +160,10 @@
 #define ORTE_MCA_RAS_H
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
-#include "mca/mca.h"
-#include "mca/ns/ns_types.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/ns/ns_types.h"
 #include "ras_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

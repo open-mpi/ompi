@@ -22,20 +22,20 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "communicator/communicator.h"
-#include "group/group.h"
-#include "proc/proc.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
+#include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 
-#include "class/ompi_bitmap.h"
-#include "mca/bml/bml.h"
-#include "mca/bml/base/base.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/class/ompi_bitmap.h"
+#include "ompi/mca/bml/bml.h"
+#include "ompi/mca/bml/base/base.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 
 
 int mca_coll_hierarch_allreduce_tmp(void *sbuf, void *rbuf, int count,

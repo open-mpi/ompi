@@ -17,18 +17,18 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include <sys/types.h>
 #if HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 
-#include "mca/errmgr/errmgr.h"
-#include "dss/dss_internal.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/dss/dss_internal.h"
 
-#include "mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
 
 /*
  * APP_CONTEXT

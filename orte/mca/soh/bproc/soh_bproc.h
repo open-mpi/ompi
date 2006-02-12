@@ -23,7 +23,7 @@
 
 #include <sys/bproc.h>
 
-#include "mca/soh/soh.h"
+#include "orte/mca/soh/soh.h"
 #include "opal/event/event.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -15,15 +15,15 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "util/proc_info.h"
+#include "orte/orte_constants.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/rds/base/base.h"
-#include "mca/ras/base/base.h"
-#include "mca/rmaps/base/base.h"
-#include "mca/pls/base/base.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/pls/base/base.h"
 #include "rmgr_proxy.h"
 
 /*

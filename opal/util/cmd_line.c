@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -32,7 +32,7 @@
 #include "opal/util/strncpy.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 
 /*
@@ -147,14 +147,14 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
     /* Check bozo case */
 
     if (NULL == cmd) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     OBJ_CONSTRUCT(cmd, opal_cmd_line_t);
 
     /* Ensure we got a table */
 
     if (NULL == table) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Loop through the table */
@@ -174,7 +174,7 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
         ret = make_opt(cmd, &table[i]);
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -254,7 +254,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     /* Bozo check */
 
     if (0 == argc || NULL == argv) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
 
     /* Thread serialization */
@@ -329,7 +329,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                                    &(cmd->lcl_argv[i + 1]),
                                    &shortsc, &shortsv, 
                                    &num_args_used, ignore_unknown);
-                if (OMPI_SUCCESS == ret) {
+                if (OPAL_SUCCESS == ret) {
                     option = find_option(cmd, shortsv[0] + 1);
 
                     if (NULL != option) {
@@ -371,7 +371,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                 param = OBJ_NEW(cmd_line_param_t);
                 if (NULL == param) {
                     opal_mutex_unlock(&cmd->lcl_mutex);
-                    return OMPI_ERR_OUT_OF_RESOURCE;
+                    return OPAL_ERR_OUT_OF_RESOURCE;
                 }
                 param->clp_arg = cmd->lcl_argv[i];
                 param->clp_option = option;
@@ -469,10 +469,10 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
 
     /* All done */
     if(has_unknowns && !ignore_unknown) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -791,7 +791,7 @@ char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst,
  */
 int opal_cmd_line_get_argc(opal_cmd_line_t *cmd)
 {
-    return (NULL != cmd) ? cmd->lcl_argc : OMPI_ERROR;
+    return (NULL != cmd) ? cmd->lcl_argc : OPAL_ERROR;
 }
 
 
@@ -816,9 +816,9 @@ int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc, char ***tailv)
         *tailc = cmd->lcl_tail_argc;
         *tailv = opal_argv_copy(cmd->lcl_tail_argv);
         opal_mutex_unlock(&cmd->lcl_mutex);
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     } else {
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 }
 
@@ -933,20 +933,20 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
     /* Bozo checks */
 
     if (NULL == cmd) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     } else if ('\0' == e->ocl_cmd_short_name && 
                NULL == e->ocl_cmd_single_dash_name && 
                NULL == e->ocl_cmd_long_name) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     } else if (e->ocl_num_params < 0) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
     /* Allocate and fill an option item */
 
     option = OBJ_NEW(cmd_line_option_t);
     if (NULL == option) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     option->clo_short_name = e->ocl_cmd_short_name;
@@ -978,7 +978,7 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -1038,7 +1038,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
 
     len = strlen(token);
     if (0 == len) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     fake_token[0] = '-';
     fake_token[2] = '\0';
@@ -1051,7 +1051,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
 
         if (NULL == option) {
             if (!ignore_unknown) {
-                return OMPI_ERR_BAD_PARAM;
+                return OPAL_ERR_BAD_PARAM;
             } else {
                 opal_argv_append(output_argc, output_argv, fake_token);
             }
@@ -1079,7 +1079,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
 
     /* All done */
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 

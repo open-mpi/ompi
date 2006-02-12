@@ -20,19 +20,19 @@
 #include <string.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
-#include "mca/pml/pml.h"
-#include "mca/btl/btl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/btl/btl.h"
 
 #include "btl_mvapi.h"
 #include "btl_mvapi_frag.h" 
 #include "btl_mvapi_proc.h"
 #include "btl_mvapi_endpoint.h"
-#include "datatype/convertor.h" 
-#include "datatype/datatype.h" 
-#include "mca/mpool/base/base.h" 
-#include "mca/mpool/mpool.h" 
-#include "mca/mpool/mvapi/mpool_mvapi.h" 
-#include "mca/btl/base/btl_base_error.h" 
+#include "ompi/datatype/convertor.h" 
+#include "ompi/datatype/datatype.h" 
+#include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
+#include "ompi/mca/btl/base/btl_base_error.h" 
 #include <vapi_types.h> 
 #include <math.h> /* for log2 */ 
 

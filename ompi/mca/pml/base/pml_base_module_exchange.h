@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #endif
 
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 
 struct ompi_proc_t;
 

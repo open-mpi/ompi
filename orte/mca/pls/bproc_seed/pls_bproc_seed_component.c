@@ -18,15 +18,15 @@
  *
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/types.h"
+#include "orte/orte_constants.h"
+#include "opal/types.h"
 #include "opal/class/opal_list.h"
-#include "util/proc_info.h"
-#include "mca/mca.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/pls/base/base.h"
+#include "orte/util/proc_info.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/pls/base/base.h"
 
 #include <sys/bproc.h>
 #include "pls_bproc_seed.h"

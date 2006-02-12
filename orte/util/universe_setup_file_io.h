@@ -24,7 +24,7 @@
 #define ORTE_UNIV_SETUP_FILE_IO_H
 
 #include "orte_config.h"
-#include "util/univ_info.h"
+#include "orte/util/univ_info.h"
 
 OMPI_DECLSPEC int orte_write_universe_setup_file(char *filename, orte_universe_t *info);
 

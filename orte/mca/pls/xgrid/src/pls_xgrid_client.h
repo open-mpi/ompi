@@ -28,7 +28,7 @@
 #import <Foundation/NSString.h>
 
 #import "opal/threads/condition.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 
 @interface PlsXGridClient : NSObject
 {

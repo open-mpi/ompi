@@ -19,14 +19,14 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
-#include "mca/sds/singleton/sds_singleton.h"
-#include "util/proc_info.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/base/base.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/sds/singleton/sds_singleton.h"
+#include "orte/util/proc_info.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/base/base.h"
 #include "opal/util/output.h"
 
 
@@ -70,5 +70,5 @@ orte_sds_singleton_set_name(void)
 int 
 orte_sds_singleton_finalize(void)
 {
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }

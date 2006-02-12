@@ -22,8 +22,8 @@
 #include <string.h>
 #include "mpi.h"
 
-#include "errhandler/errcode.h"
-#include "ompi/include/constants.h"
+#include "ompi/errhandler/errcode.h"
+#include "ompi/constants.h"
 
 /* Table holding all error codes */
 ompi_pointer_array_t ompi_mpi_errcodes;

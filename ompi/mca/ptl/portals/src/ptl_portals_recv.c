@@ -23,7 +23,7 @@
 #include "ptl_portals_compat.h"
 #include "ptl_portals_recv.h"
 #include "ptl_portals_send.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 
 
 OBJ_CLASS_INSTANCE(mca_ptl_portals_recv_frag_t,

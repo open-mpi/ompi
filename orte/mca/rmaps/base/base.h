@@ -26,13 +26,13 @@
  * includes
  */
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "mca/ns/ns_types.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/ns/ns_types.h"
 
-#include "mca/rmaps/rmaps.h"
+#include "orte/mca/rmaps/rmaps.h"
 
 
 /*

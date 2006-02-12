@@ -20,11 +20,11 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/pml/pml.h"
-#include "mca/pml/base/base.h"
+#include "ompi/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/base.h"
 #include "opal/runtime/opal_progress.h"
 
 int mca_pml_base_close(void)

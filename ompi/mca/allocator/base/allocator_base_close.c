@@ -20,11 +20,11 @@
 
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/allocator/allocator.h"
-#include "mca/allocator/base/base.h"
+#include "ompi/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "ompi/mca/allocator/allocator.h"
+#include "ompi/mca/allocator/base/base.h"
 
 /**
  * Closes all the remaining modules.

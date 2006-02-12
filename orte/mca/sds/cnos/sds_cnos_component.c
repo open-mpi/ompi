@@ -24,10 +24,10 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/cnos/sds_cnos.h"
-#include "mca/base/mca_base_param.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/cnos/sds_cnos.h"
+#include "opal/mca/base/mca_base_param.h"
 
 extern orte_sds_base_module_t orte_sds_cnos_module;
 

@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "runtime/orte_wait.h"
+#include "orte/runtime/orte_wait.h"
 #include "opal/runtime/opal_progress.h"
 #include "runtime/runtime.h"
 

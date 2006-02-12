@@ -19,9 +19,9 @@
 
 #include "ompi_config.h"
 #include <stdio.h>
-#include "mca/bml/bml.h" 
-#include "mca/bml/base/base.h"
-#include "mca/btl/base/base.h"
+#include "ompi/mca/bml/bml.h" 
+#include "ompi/mca/bml/base/base.h"
+#include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/static-components.h"
 #include "opal/mca/base/base.h"
 

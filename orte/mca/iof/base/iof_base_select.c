@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"

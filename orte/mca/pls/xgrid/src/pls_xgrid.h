@@ -21,7 +21,7 @@
  * you intend with a C/C++ compiler
  */
 
-#import "mca/pls/pls.h"
+#import "orte/mca/pls/pls.h"
 #import "pls_xgrid_client.h"
 
 /**

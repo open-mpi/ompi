@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -60,7 +60,7 @@
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 #ifdef HAVE_STRUCT_SOCKADDR_IN
 
@@ -119,14 +119,14 @@ static int opal_ifinit(void)
     int ifc_len;
 
     if (already_done) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
     already_done = true;
 
     /* create the internet socket to test off */
     if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         opal_output(0, "opal_ifinit: socket() failed with errno=%d\n", errno);
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     /*
@@ -153,7 +153,7 @@ static int opal_ifinit(void)
         ifconf.ifc_req = malloc(ifc_len);
         if (NULL == ifconf.ifc_req) {
             close(sd);
-            return OMPI_ERROR;
+            return OPAL_ERROR;
         }
 
         /* initialize the memory so valgrind and purify won't complain
@@ -171,7 +171,7 @@ static int opal_ifinit(void)
                 opal_output(0, "opal_ifinit: ioctl(SIOCGIFCONF) failed with errno=%d", 
                             errno);
                 close(sd);
-                return OMPI_ERROR;
+                return OPAL_ERROR;
             }
         } else {
             /* if ifc_len is 0 or different than what we set it to at
@@ -277,7 +277,7 @@ static int opal_ifinit(void)
         OMPI_DEBUG_ZERO(*intf_ptr);
         if(intf_ptr == 0) {
             opal_output(0, "opal_ifinit: unable to allocated %d bytes\n", sizeof(opal_if_t));
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
         memcpy(intf_ptr, &intf, sizeof(intf));
         opal_list_append(&opal_if_list, (opal_list_item_t*)intf_ptr);
@@ -310,7 +310,7 @@ static int opal_ifinit(void)
 
     /* return if this has been done before */
     if (already_done) {
-        return OMPI_SUCCESS;
+        return OPAL_SUCCESS;
     }
     already_done = true;
   
@@ -318,7 +318,7 @@ static int opal_ifinit(void)
     sd = WSASocket (AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
     if (sd == SOCKET_ERROR) {
         opal_output(0, "opal_ifinit: WSASocket failed with errno=%d\n",WSAGetLastError());
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     /* get the information about the interfaces */
@@ -332,7 +332,7 @@ static int opal_ifinit(void)
                                   0,
 		                          0)) {
         opal_output(0, "opal_ifinit: WSAIoctl failed with errno=%d\n",WSAGetLastError());
-        return OMPI_ERROR;
+        return OPAL_ERROR;
     }
 
     /* create and populate opal_if_list */
@@ -376,7 +376,7 @@ static int opal_ifinit(void)
             intf_ptr = malloc(sizeof(opal_if_t));
             if (NULL == intf_ptr) {
                 opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
             memcpy (intf_ptr, &intf, sizeof(intf));
@@ -385,7 +385,7 @@ static int opal_ifinit(void)
     }
     
 #endif
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -407,7 +407,7 @@ int opal_iffinalize(void)
 #endif
         already_done = false;
     }
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -420,7 +420,7 @@ int opal_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
 {
     opal_if_t* intf;
     int rc = opal_ifinit();
-    if(rc != OMPI_SUCCESS)
+    if(rc != OPAL_SUCCESS)
         return rc;
 
     for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
@@ -428,10 +428,10 @@ int opal_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if(strcmp(intf->if_name, if_name) == 0) {
             memcpy(addr, &intf->if_addr, length);
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
-    return OMPI_ERROR;
+    return OPAL_ERROR;
 }
 
 
@@ -444,7 +444,7 @@ int opal_ifnametoindex(const char* if_name)
 {
     opal_if_t* intf;
     int rc = opal_ifinit();
-    if(rc != OMPI_SUCCESS)
+    if(rc != OPAL_SUCCESS)
         return rc;
 
     for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
@@ -477,7 +477,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
     inaddr = inet_addr(if_addr);
 
     rc = opal_ifinit();
-    if (OMPI_SUCCESS != rc) {
+    if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
@@ -485,7 +485,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
         h = gethostbyname(if_addr);
         if(0 == h) {
             opal_output(0,"opal_ifaddrtoname: unable to resolve %s\n", if_addr);
-            return OMPI_ERR_NOT_FOUND;
+            return OPAL_ERR_NOT_FOUND;
         }
         memcpy(&inaddr, h->h_addr, sizeof(inaddr));
     }
@@ -495,10 +495,10 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if(intf->if_addr.sin_addr.s_addr == inaddr) {
             strncpy(if_name, intf->if_name, length);
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
-    return OMPI_ERR_NOT_FOUND;
+    return OPAL_ERR_NOT_FOUND;
 }
 
 /*
@@ -507,7 +507,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 
 int opal_ifcount(void)
 {
-    if(opal_ifinit() != OMPI_SUCCESS)
+    if(opal_ifinit() != OPAL_SUCCESS)
         return (-1);
     return opal_list_get_size(&opal_if_list);
 }
@@ -521,7 +521,7 @@ int opal_ifcount(void)
 int opal_ifbegin(void)
 {
     opal_if_t *intf;
-    if(opal_ifinit() != OMPI_SUCCESS)
+    if(opal_ifinit() != OPAL_SUCCESS)
         return (-1);
     intf = (opal_if_t*)opal_list_get_first(&opal_if_list);
     if(NULL != intf)
@@ -539,7 +539,7 @@ int opal_ifbegin(void)
 int opal_ifnext(int if_index)
 {
     opal_if_t *intf;
-    if(opal_ifinit() != OMPI_SUCCESS)
+    if(opal_ifinit() != OPAL_SUCCESS)
         return (-1);
 
     for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
@@ -570,7 +570,7 @@ int opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, int length)
 {
     opal_if_t* intf;
     int rc = opal_ifinit();
-    if(rc != OMPI_SUCCESS)
+    if(rc != OPAL_SUCCESS)
         return rc;
 
     for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
@@ -578,10 +578,10 @@ int opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, int length)
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             memcpy(if_addr, &intf->if_addr, length);
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
-    return OMPI_ERROR;
+    return OPAL_ERROR;
 }
 
 
@@ -594,7 +594,7 @@ int opal_ifindextomask(int if_index, struct sockaddr* if_mask, int length)
 {
     opal_if_t* intf;
     int rc = opal_ifinit();
-    if(rc != OMPI_SUCCESS)
+    if(rc != OPAL_SUCCESS)
         return rc;
 
     for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
@@ -602,10 +602,10 @@ int opal_ifindextomask(int if_index, struct sockaddr* if_mask, int length)
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             memcpy(if_mask, &intf->if_mask, length);
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
-    return OMPI_ERROR;
+    return OPAL_ERROR;
 }
 
 
@@ -619,7 +619,7 @@ int opal_ifindextoname(int if_index, char* if_name, int length)
 {
     opal_if_t *intf;
     int rc = opal_ifinit();
-    if(rc != OMPI_SUCCESS)
+    if(rc != OPAL_SUCCESS)
         return rc;
 
     for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
@@ -627,10 +627,10 @@ int opal_ifindextoname(int if_index, char* if_name, int length)
         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             strncpy(if_name, intf->if_name, length);
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
-    return OMPI_ERROR;
+    return OPAL_ERROR;
 }
 
 #define ADDRLEN 100
@@ -648,7 +648,7 @@ opal_ifislocal(char *hostname)
     if (NULL == h) return false;
 
     ret = opal_ifaddrtoname(hostname, addrname, ADDRLEN);
-    if (OMPI_SUCCESS == ret) return true;
+    if (OPAL_SUCCESS == ret) return true;
 
     return false;
 }
@@ -663,56 +663,56 @@ int
 opal_ifnametoaddr(const char* if_name, 
                   struct sockaddr* if_addr, int size)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifaddrtoname(const char* if_addr, 
                   char* if_name, int size)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifnametoindex(const char* if_name)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifcount(void)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifbegin(void)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifnext(int if_index)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifindextoname(int if_index, char* if_name, int length)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, int length)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
 opal_ifindextomask(int if_index, struct sockaddr* if_addr, int length)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 bool
@@ -724,7 +724,7 @@ opal_ifislocal(char *hostname)
 int
 opal_iffinalize(void)
 {
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 #endif /* HAVE_STRUCT_SOCKADDR_IN */

@@ -18,7 +18,7 @@
 
 
 #include "btl_mvapi_frag.h" 
-#include "mca/mpool/mvapi/mpool_mvapi.h" 
+#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
 
 
 

@@ -20,15 +20,15 @@
 
 #include "orte/dss/dss.h"
 #include "opal/util/convert.h"
-#include "mca/ns/ns_types.h"
-#include "communicator/communicator.h"
-#include "proc/proc.h"
-#include "ompi/include/constants.h"
-#include "class/ompi_pointer_array.h"
+#include "orte/mca/ns/ns_types.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/proc/proc.h"
+#include "ompi/constants.h"
+#include "ompi/class/ompi_pointer_array.h"
 #include "opal/class/opal_list.h"
-#include "mca/pml/pml.h"
-#include "mca/coll/base/base.h"
-#include "mca/rml/rml.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/coll/base/base.h"
+#include "orte/mca/rml/rml.h"
 #include "ompi/request/request.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

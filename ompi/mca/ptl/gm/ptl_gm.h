@@ -26,8 +26,8 @@
 #define MCA_PTL_GM_H
 
 #include "ompi_config.h"
-#include "class/ompi_free_list.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/mca/ptl/ptl.h"
 #include "ptl_gm_priv.h"
 #include "ptl_gm_peer.h"
 

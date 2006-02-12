@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"

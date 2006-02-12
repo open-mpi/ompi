@@ -15,7 +15,7 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -26,7 +26,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "include/ompi_socket_errno.h"
+#include "orte/orte_socket_errno.h"
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -36,8 +36,8 @@
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
-#include "mca/ns/ns_types.h"
-#include "mca/oob/tcp/oob_tcp.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/oob/tcp/oob_tcp.h"
 
 
 /*
@@ -60,7 +60,7 @@ int mca_oob_tcp_ping(
     struct timeval tv;
 
     /* parse uri string */
-    if(OMPI_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, &inaddr))) {
+    if(ORTE_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, &inaddr))) {
        opal_output(0,
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: invalid uri: %s\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -77,7 +77,7 @@ int mca_oob_tcp_ping(
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(name),
             ompi_socket_errno);
-        return OMPI_ERR_UNREACH;
+        return ORTE_ERR_UNREACH;
     }
 
     /* setup the socket as non-blocking */
@@ -102,7 +102,7 @@ int mca_oob_tcp_ping(
         /* connect failed? */
         if(ompi_socket_errno != EINPROGRESS && ompi_socket_errno != EWOULDBLOCK) {
             close(sd);
-            return OMPI_ERR_UNREACH;
+            return ORTE_ERR_UNREACH;
         }
 
         /* select with timeout to wait for connect to complete */
@@ -111,7 +111,7 @@ int mca_oob_tcp_ping(
         rc = select(sd+1, NULL, &fdset, NULL, &tv);
         if(rc <= 0) {
              close(sd);
-             return OMPI_ERR_UNREACH;
+             return ORTE_ERR_UNREACH;
         }
     }
 
@@ -137,7 +137,7 @@ int mca_oob_tcp_ping(
     MCA_OOB_TCP_HDR_HTON(&hdr);
     if((rc = write(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
         close(sd);
-        return OMPI_ERR_UNREACH;
+        return ORTE_ERR_UNREACH;
     }
 
     /* select with timeout to wait for response */
@@ -146,19 +146,19 @@ int mca_oob_tcp_ping(
     rc = select(sd+1, &fdset, NULL, NULL, &tv);
     if(rc <= 0) {
         close(sd);
-        return OMPI_ERR_UNREACH;
+        return ORTE_ERR_UNREACH;
     }
     if((rc = read(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
         close(sd);
-        return OMPI_ERR_UNREACH;
+        return ORTE_ERR_UNREACH;
     }
     MCA_OOB_TCP_HDR_NTOH(&hdr);
     if(hdr.msg_type != MCA_OOB_TCP_PROBE) {
         close(sd);
-        return OMPI_ERR_UNREACH;
+        return ORTE_ERR_UNREACH;
     }
     close(sd);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

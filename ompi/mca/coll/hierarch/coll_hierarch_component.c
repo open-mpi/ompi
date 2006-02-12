@@ -26,7 +26,7 @@
 #include "coll_hierarch.h"
 
 #include "mpi.h"
-#include "mca/coll/coll.h"
+#include "ompi/mca/coll/coll.h"
 
 /*
  * Public string showing the coll ompi_hierarch component version number

@@ -19,7 +19,7 @@
 #ifndef OMPI_OP_PREDEFINED_H
 #define OMPI_OP_PREDEFINED_H
 
-#include "op/op.h"
+#include "ompi/op/op.h"
 
 /*
  * Since we have so many of these, and they're all identical except

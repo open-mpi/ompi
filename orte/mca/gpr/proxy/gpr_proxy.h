@@ -23,13 +23,13 @@
 
 #include "orte_config.h"
 
-#include "include/orte_types.h"
+#include "orte/orte_types.h"
 #include "opal/class/opal_object.h"
-#include "class/orte_pointer_array.h"
-#include "dss/dss_types.h"
-#include "util/proc_info.h"
+#include "orte/class/orte_pointer_array.h"
+#include "orte/dss/dss_types.h"
+#include "orte/util/proc_info.h"
 
-#include "mca/gpr/base/base.h"
+#include "orte/mca/gpr/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

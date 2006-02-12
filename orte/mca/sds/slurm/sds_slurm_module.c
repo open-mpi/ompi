@@ -27,7 +27,7 @@
 #endif  /* HAVE_STRING_H */
 #include <ctype.h>
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/sds/sds.h"
 #include "orte/mca/sds/base/base.h"
 #include "orte/mca/sds/slurm/sds_slurm.h"

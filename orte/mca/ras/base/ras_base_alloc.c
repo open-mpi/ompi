@@ -18,14 +18,14 @@
 
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/ras/base/base.h"
-#include "mca/ras/base/ras_base_node.h"
-#include "mca/rmgr/base/base.h"
-#include "mca/errmgr/errmgr.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 /*
  * Mark nodes as allocated on the registry

@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
+#include "ompi/mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_PCONTROL = mpi_pcontrol_f
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PCONTROL,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_pcontrol_f(MPI_Fint *level)

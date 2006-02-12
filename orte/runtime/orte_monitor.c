@@ -18,7 +18,7 @@
 
 /** @file **/
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <string.h>
 
@@ -28,7 +28,7 @@
 #include "opal/threads/condition.h"
 #include "orte/util/sys_info.h"
 #include "orte/runtime/runtime.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr_types.h"

@@ -33,8 +33,8 @@
  */
 
 #include "orte_config.h"
-#include "orte/include/orte_constants.h"
-#include "orte/include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include "orte/dss/dss.h"
 
@@ -115,7 +115,7 @@ typedef int (*orte_ns_base_module_get_cell_info_fn_t)(orte_cellid_t cellid,
  * @param name Pointer to an ompi_process_name structure. The function will update the cellid
  * entry in the structure.
  *
- * @retval OMPI_SUCCESS Update was successful.
+ * @retval ORTE_SUCCESS Update was successful.
  * @retval OMPI_ERROR Update failed, most likely due to either a NULL process name pointer or the
  * inability to locate the process name in the lookup table.
  *
@@ -411,7 +411,7 @@ typedef int (*orte_ns_base_module_convert_string_to_process_name_fn_t)(orte_proc
  *
  * @param *name A pointer to the name structure containing the name being released.
  *
- * @retval OMPI_SUCCESS Indicates the release was succesfully accomplished.
+ * @retval ORTE_SUCCESS Indicates the release was succesfully accomplished.
  * @retval OMPI_ERROR Indicates the release failed - most likely due to an
  * error when free-ing the memory allocation.
  *

@@ -23,8 +23,8 @@
 
 #include <sys/types.h>
 #include "ompi_config.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_sendfrag.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_sm.h"
 
 

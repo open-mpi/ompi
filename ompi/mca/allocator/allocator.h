@@ -21,8 +21,8 @@
   */
 #ifndef MCA_ALLOCATOR_H
 #define MCA_ALLOCATOR_H
-#include "mca/mca.h"
-#include "mca/mpool/mpool.h" 
+#include "opal/mca/mca.h"
+#include "ompi/mca/mpool/mpool.h" 
 
 struct mca_mpool_base_resources_t;
 

@@ -20,13 +20,13 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/output.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 
 
 /*

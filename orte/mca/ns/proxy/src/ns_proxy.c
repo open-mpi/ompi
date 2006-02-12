@@ -23,8 +23,8 @@
 
 #include <string.h>
 
-#include "orte/include/orte_constants.h"
-#include "orte/include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "orte/dss/dss.h"

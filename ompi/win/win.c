@@ -19,14 +19,14 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "win/win.h"
-#include "errhandler/errhandler.h"
-#include "ompi/include/constants.h"
-#include "attribute/attribute.h"
-#include "group/group.h"
-#include "info/info.h"
-#include "mca/osc/base/base.h"
-#include "mca/osc/osc.h"
+#include "ompi/win/win.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/constants.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/group/group.h"
+#include "ompi/info/info.h"
+#include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/osc/osc.h"
 
 
 /*

@@ -25,9 +25,9 @@
 #define IO_BASE_REQUEST_H
 
 #include "opal/class/opal_object.h"
-#include "request/request.h"
-#include "file/file.h"
-#include "mca/io/base/base.h"
+#include "ompi/request/request.h"
+#include "ompi/file/file.h"
+#include "ompi/mca/io/base/base.h"
 
 /**
  * Base request type.

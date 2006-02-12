@@ -19,7 +19,7 @@
 #define OMPI_BUILDING 0
 #include "ompi_config.h"
 
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 
 int
 main(int argc, char *argv[])

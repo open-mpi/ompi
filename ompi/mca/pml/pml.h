@@ -61,7 +61,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
+#include "opal/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -492,7 +492,7 @@ typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
      */
 #if MCA_pml_DIRECT_CALL
 
-#include "mca/pml/pml_direct_call.h"
+#include "ompi/mca/pml/pml_direct_call.h"
 
 #define MCA_PML_CALL_STAMP(a, b) mca_pml_ ## a ## _ ## b
 #define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a,b)

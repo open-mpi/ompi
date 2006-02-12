@@ -20,9 +20,9 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
-#include "ompi/include/constants.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/constants.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 #include "pml_teg_sendreq.h"

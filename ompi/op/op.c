@@ -18,11 +18,11 @@
 
 #include "ompi_config.h"
 
-#include "ompi/include/constants.h"
-#include "op/op.h"
-#include "op/op_predefined.h"
-#include "class/ompi_pointer_array.h"
-#include "datatype/datatype_internal.h"
+#include "ompi/constants.h"
+#include "ompi/op/op.h"
+#include "ompi/op/op_predefined.h"
+#include "ompi/class/ompi_pointer_array.h"
+#include "ompi/datatype/datatype_internal.h"
 
 
 /*

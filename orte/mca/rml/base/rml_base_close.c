@@ -16,14 +16,14 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 
-#include "include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/rml/base/base.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "orte/mca/rml/base/base.h"
 
 
 int orte_rml_base_close(void)
@@ -34,6 +34,6 @@ int orte_rml_base_close(void)
                               &orte_rml_base.rml_components, NULL);
     }
     OBJ_DESTRUCT(&orte_rml_base.rml_components);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

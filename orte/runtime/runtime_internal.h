@@ -24,7 +24,7 @@
 #ifndef OMPI_RUNTIME_INTERNAL_H
 #define OMPI_RUNTIME_INTERNAL_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include "opal/class/opal_object.h"
 

@@ -16,12 +16,12 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdlib.h>
 
 #include "opal/mca/memory/memory.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 
 extern int opal_memory_malloc_hooks_initialized;
 

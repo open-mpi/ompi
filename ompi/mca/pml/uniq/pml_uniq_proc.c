@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "include/sys/atomic.h"
+#include "opal/sys/atomic.h"
 #include "pml_uniq.h"
 #include "pml_uniq_proc.h"
 

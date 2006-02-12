@@ -22,7 +22,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "ompi/include/ompi_socket_errno.h"
+#include "orte/orte_socket_errno.h"
 #include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 #include "opal/util/output.h"
 #include "ptl_tcp.h"

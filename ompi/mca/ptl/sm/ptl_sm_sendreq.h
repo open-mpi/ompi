@@ -24,7 +24,7 @@
 
 #include <sys/types.h>
 #include "ompi_config.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "ompi/mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_sm_frag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

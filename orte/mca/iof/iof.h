@@ -26,8 +26,8 @@
 
 #include "orte_config.h"
 #include "opal/class/opal_list.h"
-#include "mca/mca.h"
-#include "mca/ns/ns.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/ns/ns.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

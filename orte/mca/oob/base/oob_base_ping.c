@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -28,11 +28,11 @@
 #include <unistd.h>
 #endif
     
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/argv.h"
-#include "mca/ns/ns_types.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 
 
 int mca_oob_ping(const char* contact_info, struct timeval* tv)

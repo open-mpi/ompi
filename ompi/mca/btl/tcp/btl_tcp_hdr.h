@@ -21,7 +21,7 @@
 
 
 #include "ompi_config.h"
-#include "mca/btl/base/base.h"
+#include "ompi/mca/btl/base/base.h"
 #include "btl_tcp.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)

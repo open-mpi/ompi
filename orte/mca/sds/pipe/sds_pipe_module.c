@@ -25,16 +25,16 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "include/orte_constants.h"
-#include "util/proc_info.h"
+#include "orte/orte_constants.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
-#include "mca/sds/pipe/sds_pipe.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/sds/pipe/sds_pipe.h"
 
 orte_sds_base_module_t orte_sds_pipe_module =  {
     orte_sds_base_basic_contact_universe,

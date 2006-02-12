@@ -21,15 +21,15 @@
 #ifndef OMPI_PML_OB1_SEND_REQUEST_H
 #define OMPI_PML_OB1_SEND_REQUEST_H
 
-#include "mca/btl/btl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/mpool/base/base.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/mpool/base/base.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_comm.h"
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_rdma.h"
-#include "datatype/convertor.h"
-#include "mca/bml/bml.h" 
+#include "ompi/datatype/convertor.h"
+#include "ompi/mca/bml/bml.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

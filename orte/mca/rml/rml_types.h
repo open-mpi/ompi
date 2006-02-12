@@ -24,8 +24,8 @@
 #define MCA_RML_TYPES_H_
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "util/proc_info.h"
+#include "orte/orte_constants.h"
+#include "orte/util/proc_info.h"
 #include <limits.h>
 
 /**

@@ -21,7 +21,7 @@
 #ifndef ORTE_IOF_PROXY_H
 #define ORTE_IOF_PROXY_H
 
-#include "mca/iof/iof.h"
+#include "orte/mca/iof/iof.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

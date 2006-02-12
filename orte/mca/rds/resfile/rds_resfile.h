@@ -27,7 +27,7 @@
 
 #include "opal/threads/mutex.h"
 
-#include "mca/rds/base/base.h"
+#include "orte/mca/rds/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

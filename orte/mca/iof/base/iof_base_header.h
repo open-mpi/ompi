@@ -1,8 +1,8 @@
 #ifndef _IOF_BASE_HEADER_
 #define _IOF_BASE_HEADER_
 
-#include "ompi_config.h"
-#include "mca/iof/iof.h"
+#include "orte_config.h"
+#include "orte/mca/iof/iof.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

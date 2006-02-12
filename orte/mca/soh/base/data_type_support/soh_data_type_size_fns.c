@@ -21,9 +21,9 @@
 #include <netinet/in.h>
 #endif
 
-#include "mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
-#include "mca/soh/base/base.h"
+#include "orte/mca/soh/base/base.h"
 
 /*
  * STANDARD SIZE FUNCTION - WORKS FOR EVERYTHING NON-STRUCTURED

@@ -35,7 +35,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
 #include "orte/util/sys_info.h"
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/iof/iof.h"

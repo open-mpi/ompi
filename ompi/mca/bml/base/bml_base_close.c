@@ -16,8 +16,8 @@
  * $HEADER$
  */
 
-#include "mca/btl/base/base.h" 
-#include "mca/bml/base/base.h" 
+#include "ompi/mca/btl/base/base.h" 
+#include "ompi/mca/bml/base/base.h" 
 
 int mca_bml_base_close( void ) {
     int rc; 

@@ -191,14 +191,14 @@
 
 #include "ompi_config.h"
 
-#include "attribute/attribute.h"
+#include "ompi/attribute/attribute.h"
 #include "opal/threads/mutex.h"
-#include "ompi/include/constants.h"
-#include "datatype/datatype.h"
-#include "communicator/communicator.h"
-#include "win/win.h"
-#include "mpi/f77/fint_2_int.h"
-#include "class/ompi_bitmap.h"
+#include "ompi/constants.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/win/win.h"
+#include "ompi/mpi/f77/fint_2_int.h"
+#include "ompi/class/ompi_bitmap.h"
 
 /*
  * Macros

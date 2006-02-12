@@ -19,8 +19,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
-#include "include/types.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "ompi/types.h"
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendreq.h"
 #include "ptl_sm_address.h"

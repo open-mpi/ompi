@@ -61,8 +61,8 @@
  */
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"

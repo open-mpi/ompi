@@ -16,9 +16,9 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -99,6 +99,6 @@ int orte_rml_base_select(void)
     if(NULL != selected_module) {
         orte_rml = *selected_module;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

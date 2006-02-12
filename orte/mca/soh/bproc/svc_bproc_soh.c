@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <sys/poll.h>
 #include <sys/bproc.h>
@@ -25,11 +25,11 @@
 #include <unistd.h>
 #endif
 
-#include "include/constants.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
-#include "mca/ns/base/base.h"
-#include "runtime/runtime.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/ns/base/base.h"
+#include "orte/runtime/runtime.h"
 
 #include "svc_bproc_soh.h"
 
@@ -229,6 +229,6 @@ int mca_svc_bproc_soh_module_fini(mca_svc_base_module_t* base)
         opal_thread_join(&(module->thread), &thread_return);
     }
 #endif  /* OMPI_HAVE_POSIX_THREADS */
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

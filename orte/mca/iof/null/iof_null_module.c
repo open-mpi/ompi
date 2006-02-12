@@ -15,19 +15,19 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "include/constants.h"
+#include "orte/orte_constants.h"
 #include "opal/util/output.h"
-#include "mca/iof/iof.h"
-#include "mca/rml/rml.h"
-#include "mca/rml/rml_types.h"
-#include "mca/iof/iof.h"
-#include "mca/iof/base/base.h"
-#include "mca/iof/base/iof_base_endpoint.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/iof/base/base.h"
+#include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "iof_null.h"
 
 

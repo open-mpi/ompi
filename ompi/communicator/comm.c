@@ -20,22 +20,22 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "orte/dss/dss.h"
-#include "proc/proc.h"
+#include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 #include "opal/util/convert.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
-#include "mca/ns/ns.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/mca/topo/base/base.h"
+#include "orte/mca/ns/ns.h"
 
-#include "attribute/attribute.h"
-#include "communicator/communicator.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/base/ptl_base_comm.h"
-#include "request/request.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/base/ptl_base_comm.h"
+#include "ompi/request/request.h"
 
 /*
 ** sort-function for MPI_Comm_split 

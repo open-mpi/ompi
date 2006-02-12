@@ -26,8 +26,8 @@
 #include "include/orte_constants.h"
 
 #include "runtime/runtime.h"
-#include "mca/gpr/gpr.h"
-#include "mca/rds/base/base.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/rds/base/base.h"
 
 /* output files needed by the test */
 static FILE *test_out=NULL;

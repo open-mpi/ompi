@@ -24,7 +24,7 @@
 #ifndef MCA_IOF_BASE_H
 #define MCA_IOF_BASE_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -37,8 +37,8 @@
 
 #include "opal/class/opal_free_list.h"
 #include "opal/threads/condition.h"
-#include "mca/mca.h"
-#include "mca/iof/iof.h"
+#include "opal/mca/mca.h"
+#include "orte/mca/iof/iof.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

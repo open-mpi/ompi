@@ -1,7 +1,7 @@
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/keyval/keyval_lex.h"
 #include "opal/util/output.h"

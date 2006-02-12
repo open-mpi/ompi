@@ -32,7 +32,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "opal/runtime/opal.h"
 #include "opal/threads/mutex.h"
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
 
     ret = opal_cmd_line_parse(cmd_line, true, argc, argv);
-    if (OMPI_SUCCESS != ret) {
+    if (ORTE_SUCCESS != ret) {
         return ret;
     }
     
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
     /*
      * Open the name services to ensure access to local functions 
      */
-    if (OMPI_SUCCESS != (ret = orte_ns_base_open())) {
+    if (ORTE_SUCCESS != (ret = orte_ns_base_open())) {
         return ret;
     }
 
@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
     /*
      * Initialize the event library 
     */
-    if (OMPI_SUCCESS != (ret = opal_event_init())) {
+    if (ORTE_SUCCESS != (ret = opal_event_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
     /*
      * Intialize the general progress engine
      */
-    if (OMPI_SUCCESS != (ret = opal_progress_init())) {
+    if (ORTE_SUCCESS != (ret = opal_progress_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
     /*
      * Internal startup
      */
-    if (OMPI_SUCCESS != (ret = orte_wait_init())) {
+    if (ORTE_SUCCESS != (ret = orte_wait_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
     /*
      * Runtime Messaging Layer
      */
-    if (OMPI_SUCCESS != (ret = orte_rml_base_open())) {
+    if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
     /*
      * Runtime Messaging Layer
      */
-    if (OMPI_SUCCESS != (ret = orte_rml_base_select())) {
+    if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "ompi/mca/pml/pml.h"

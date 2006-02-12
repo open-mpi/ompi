@@ -29,9 +29,9 @@
 
 #include "opal/util/trace.h"
 
-#include "util/proc_info.h"
-#include "mca/ns/ns_types.h"
-#include "mca/errmgr/errmgr.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "gpr_replica_api.h"
 

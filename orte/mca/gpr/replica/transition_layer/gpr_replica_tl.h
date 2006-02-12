@@ -26,7 +26,7 @@
 
 #include "orte_config.h"
 
-#include "mca/gpr/replica/gpr_replica.h"
+#include "orte/mca/gpr/replica/gpr_replica.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

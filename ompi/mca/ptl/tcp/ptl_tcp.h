@@ -31,10 +31,10 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "class/ompi_free_list.h"
+#include "ompi/class/ompi_free_list.h"
 #include "opal/event/event.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
 
 #define MCA_PTL_TCP_STATISTICS 0
 #if defined(c_plusplus) || defined(__cplusplus)

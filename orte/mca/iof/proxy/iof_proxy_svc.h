@@ -21,9 +21,9 @@
 #ifndef MCA_IOF_PROXY_SVC_H
 #define MCA_IOF_PROXY_SVC_H
 
-#include "ompi_config.h"
-#include "mca/iof/iof.h"
-#include "mca/ns/ns.h"
+#include "orte_config.h"
+#include "orte/mca/iof/iof.h"
+#include "orte/mca/ns/ns.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "ompi_config.h"
+#include "opal_config.h"
 #include "opal/util/output.h"
 
 #ifdef HAVE_SYS_TYPES_H
@@ -47,7 +47,6 @@
 #endif
 #include <errno.h>
 #include <err.h>
-#include "mca/oob/base/base.h"
 
 #ifdef USE_LOG
 #include "log.h"

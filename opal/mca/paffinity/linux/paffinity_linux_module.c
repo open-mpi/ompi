@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 /* This component will only be compiled on Linux, where we are
    guaranteed to have <unistd.h> and friends */
@@ -26,7 +26,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"

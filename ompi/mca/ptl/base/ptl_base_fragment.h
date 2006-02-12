@@ -22,11 +22,11 @@
 #define MCA_PTL_BASE_FRAGMENT_H
 
 #include "opal/class/opal_list.h"
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
-#include "mca/ptl/base/ptl_base_header.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/ptl/ptl.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/mca/ptl/base/ptl_base_header.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

@@ -23,8 +23,8 @@
 
 #include <stdio.h>
 
-#include "mca/base/base.h"
-#include "tools/ompi_info/ompi_info.h"
+#include "opal/mca/base/base.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 #include "opal/util/printf.h"
 
 using namespace std;

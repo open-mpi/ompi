@@ -27,7 +27,7 @@
 
 #include "opal/util/output.h"
 #include "mpi.h"
-#include "class/ompi_pointer_array.h"
+#include "ompi/class/ompi_pointer_array.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

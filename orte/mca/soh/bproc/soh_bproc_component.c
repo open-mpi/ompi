@@ -17,12 +17,12 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "util/proc_info.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
-#include "mca/soh/bproc/soh_bproc.h"
+#include "orte/mca/soh/bproc/soh_bproc.h"
 
 /*
  * Local functions
@@ -85,7 +85,7 @@ static int orte_soh_bproc_open(void)
         orte_soh_bproc_param_register_int("debug", 0);
     mca_soh_bproc_component.priority =
         orte_soh_bproc_param_register_int("priority", 1);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 /**
@@ -109,7 +109,7 @@ static orte_soh_base_module_t* orte_soh_bproc_init(int *priority)
 
 static int orte_soh_bproc_close(void)
 {
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 

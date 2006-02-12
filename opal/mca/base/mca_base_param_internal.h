@@ -32,12 +32,12 @@
 #ifndef OMPI_MCA_BASE_PARAM_INTERNAL_H
 #define OMPI_MCA_BASE_PARAM_INTERNAL_H
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "class/opal_hash_table.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/class/opal_hash_table.h"
+#include "opal/mca/base/mca_base_param.h"
 
 /**
  * \internal

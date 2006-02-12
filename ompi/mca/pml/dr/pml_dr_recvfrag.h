@@ -22,8 +22,8 @@
 #ifndef MCA_PML_DR_RECVFRAG_H
 #define MCA_PML_DR_RECVFRAG_H
 
-#include "mca/btl/btl.h"
-#include "mca/bml/bml.h" 
+#include "ompi/mca/btl/btl.h"
+#include "ompi/mca/bml/bml.h" 
 #include "pml_dr_hdr.h"
 
 struct mca_pml_dr_buffer_t {

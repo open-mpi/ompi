@@ -17,7 +17,7 @@
  */
 
 #include "ompi_config.h"
-#include "include/ompi_socket_errno.h"
+#include "orte/orte_socket_errno.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -36,7 +36,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
@@ -46,18 +46,18 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 
-#include "mca/base/mca_base_param.h"
-#include "mca/pml/base/pml_base_module_exchange.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/mpool/base/base.h" 
-#include "mca/btl/base/btl_base_error.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp.h"
 #include "btl_tcp_addr.h"
 #include "btl_tcp_proc.h"
 #include "btl_tcp_frag.h"
 #include "btl_tcp_endpoint.h" 
-#include "mca/btl/base/base.h" 
-#include "datatype/convertor.h" 
+#include "ompi/mca/btl/base/base.h" 
+#include "ompi/datatype/convertor.h" 
 
 
 #define IMPORTANT_WINDOWS_COMMENT() \

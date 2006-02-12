@@ -20,7 +20,7 @@
 #ifndef OPAL_UTIL_KEYVAL_LEX_H_
 #define OPAL_UTIL_KEYVAL_LEX_H_
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #ifdef malloc
 #undef malloc

@@ -16,14 +16,14 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <malloc/malloc.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <dlfcn.h>
 
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/memoryhooks/memory_internal.h"
 

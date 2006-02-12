@@ -36,10 +36,10 @@
 #include <unistd.h>
 #endif
 #include <string.h>
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/class/opal_object.h"
-#include "class/opal_hash_table.h"
-#include "class/ompi_pointer_array.h"
+#include "opal/class/opal_hash_table.h"
+#include "ompi/class/ompi_pointer_array.h"
 #include "mpi.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

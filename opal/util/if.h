@@ -20,7 +20,7 @@
 #ifndef OPAL_IF_UTIL_
 #define OPAL_IF_UTIL_
 
-#include "ompi_config.h"
+#include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -117,8 +117,8 @@ OMPI_DECLSPEC bool opal_ifislocal(char *hostname);
  * Finalize the functions to release malloc'd data
  * 
  * @param none
- * @return OMPI_SUCCESS if no problems encountered
- * @return OMPI_ERROR if data could not be released
+ * @return OPAL_SUCCESS if no problems encountered
+ * @return OPAL_ERROR if data could not be released
  */
 OMPI_DECLSPEC int opal_iffinalize(void);
 

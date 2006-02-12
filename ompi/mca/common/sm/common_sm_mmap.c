@@ -40,11 +40,11 @@
 #include <sys/mman.h>
 #endif
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "common_sm_mmap.h"
 #include "opal/util/output.h"
-#include "util/sys_info.h"
-#include "util/proc_info.h"
+#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 
 
 OBJ_CLASS_INSTANCE(

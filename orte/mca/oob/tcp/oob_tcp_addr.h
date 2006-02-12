@@ -23,16 +23,16 @@
 #ifndef _MCA_OOB_TCP_ADDR_H_
 #define _MCA_OOB_TCP_ADDR_H_
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "dss/dss.h"
+#include "orte/dss/dss.h"
 #include "opal/class/opal_object.h"
-#include "mca/ns/ns_types.h"
+#include "orte/mca/ns/ns_types.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

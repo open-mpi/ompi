@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -25,7 +25,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/base.h"
-#include "ompi/include/constants.h"
+#include "opal/constants.h"
 
 
 /* 
@@ -48,7 +48,7 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
     int ret;
     ret = opal_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
                                   "Pass context-specific MCA parameters; they are considered global if --gmca is not used and only one context is specified (arg0 is the parameter name; arg1 is the parameter value)");
-    if (OMPI_SUCCESS != ret) {
+    if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
@@ -72,7 +72,7 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 
   if (!opal_cmd_line_is_taken(cmd, "mca") &&
       !opal_cmd_line_is_taken(cmd, "gmca")) {
-      return OMPI_SUCCESS;
+      return OPAL_SUCCESS;
   }
 
   /* Handle app context-specific parameters */
@@ -107,7 +107,7 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return OPAL_SUCCESS;
 }
 
 
@@ -130,7 +130,7 @@ int static process_arg(const char *param, const char *value,
             free((*values)[i]);
             (*values)[i] = new_str;
             
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
 
@@ -140,7 +140,7 @@ int static process_arg(const char *param, const char *value,
     opal_argv_append_nosize(params, param);
     opal_argv_append_nosize(values, value);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 

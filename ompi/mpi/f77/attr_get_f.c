@@ -18,9 +18,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/bindings.h"
-#include "attribute/attribute.h"
-#include "communicator/communicator.h"
+#include "ompi/mpi/f77/bindings.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ATTR_GET = mpi_attr_get_f
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
+#include "ompi/mpi/f77/profile/defines.h"
 #endif
 
 void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,

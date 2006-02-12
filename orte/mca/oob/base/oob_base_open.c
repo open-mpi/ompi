@@ -17,12 +17,12 @@
  */
 
 
-#include "ompi_config.h"
-#include "include/constants.h"
-#include "mca/mca.h"
-#include "mca/base/base.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/oob/oob.h"
+#include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/oob/oob.h"
 
 
 /*
@@ -57,7 +57,7 @@ int mca_oob_base_open(void)
   OBJ_CONSTRUCT(&mca_oob_base_modules, opal_list_t);
   OBJ_CONSTRUCT(&mca_oob_base_exception_handlers, opal_list_t);
 
-  if (OMPI_SUCCESS != 
+  if (ORTE_SUCCESS != 
       mca_base_components_open("oob", mca_oob_base_output,
                                mca_oob_base_static_components, 
                                &mca_oob_base_components, true)) {

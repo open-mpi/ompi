@@ -22,14 +22,14 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/pls/pls.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/pls/pls.h"
 #include "pls_poe.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
 
 
 /*

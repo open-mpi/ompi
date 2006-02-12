@@ -1,4 +1,4 @@
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "ompi/mca/ptl/base/ptl_base_recvreq.h"
 
 
 OBJ_CLASS_INSTANCE(

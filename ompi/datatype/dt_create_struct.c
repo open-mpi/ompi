@@ -18,7 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "datatype/datatype.h"
+#include "ompi/datatype/datatype.h"
 
 int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* pDisp,
                                 ompi_datatype_t* const * pTypes, ompi_datatype_t** newType )

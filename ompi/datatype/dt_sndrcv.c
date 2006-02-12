@@ -18,8 +18,8 @@
 
 #include "ompi_config.h"
 
-#include "datatype/datatype.h"
-#include "datatype/convertor.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
 
 /*
  *	ompi_dtsndrcv

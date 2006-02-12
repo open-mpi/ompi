@@ -19,12 +19,12 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "mca/mca.h"
-#include "mca/coll/coll.h"
-#include "request/request.h"
-#include "ompi/include/constants.h"
-#include "datatype/datatype.h"
-#include "communicator/communicator.h"
+#include "opal/mca/mca.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/request/request.h"
+#include "ompi/constants.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/communicator/communicator.h"
 #include "coll_tuned.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */

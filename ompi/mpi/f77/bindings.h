@@ -22,10 +22,10 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "errhandler/errhandler.h"
-#include "attribute/attribute.h"
-#include "op/op.h"
-#include "request/grequest.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/op/op.h"
+#include "ompi/request/grequest.h"
 
 /*
  * We now build all four fortran bindings and dont care too much about 
@@ -55,8 +55,8 @@
  * Both prototypes for all MPI- PMPI functions is moved into prototypes_mpi.h
  */
 
-#include "mpi/f77/prototypes_mpi.h"
+#include "ompi/mpi/f77/prototypes_mpi.h"
 
-#include "mpi/f77/fint_2_int.h"
+#include "ompi/mpi/f77/fint_2_int.h"
 
 #endif /* OMPI_F77_BINDINGS_H */

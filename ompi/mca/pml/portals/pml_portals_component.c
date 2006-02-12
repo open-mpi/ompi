@@ -13,7 +13,7 @@
 
 #include "opal/event/event.h"
 #include "pml_portals.h"
-#include "mca/base/mca_base_param.h"
+#include "opal/mca/base/mca_base_param.h"
 
 static int mca_pml_portals_component_open(void);
 static int mca_pml_portals_component_close(void);

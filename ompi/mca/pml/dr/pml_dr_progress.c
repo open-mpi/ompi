@@ -20,7 +20,7 @@
 
 #include "pml_dr.h"
 #include "pml_dr_sendreq.h"
-#include "mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h" 
 
 int mca_pml_dr_progress(void)
 {

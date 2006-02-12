@@ -29,13 +29,13 @@
 #include <unistd.h>
 #endif
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
-#include "mca/mca.h"
-#include "dss/dss_types.h"
-#include "mca/ns/ns_types.h"
-#include "mca/gpr/gpr_types.h"
-#include "mca/rml/rml_types.h"
+#include "opal/mca/mca.h"
+#include "orte/dss/dss_types.h"
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/gpr/gpr_types.h"
+#include "orte/mca/rml/rml_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -98,7 +98,7 @@ typedef int (*orte_rml_module_parse_uris_fn_t)(const char* uri,
 *
 *  @param peer (IN)   Opaque name of peer process.
 *  @param tv (IN)     Timeout to wait in connection response.
-*  @return            OMPI error code (<0) or OMPI_SUCCESS
+*  @return            OMPI error code (<0) or ORTE_SUCCESS
 */
 
 typedef int (*orte_rml_module_ping_fn_t)(const char* uri, const struct timeval* tv);

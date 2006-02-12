@@ -52,7 +52,9 @@ f77_pmpi_lib =
 endif
 
 SUBDIRS = \
+	include \
         debuggers \
+	etc \
         mpi \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
@@ -97,7 +99,6 @@ else
 ompidir = $(includedir)
 endif
 
-include include/Makefile.am
 include class/Makefile.am
 
 include attribute/Makefile.am

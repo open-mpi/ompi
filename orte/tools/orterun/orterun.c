@@ -48,7 +48,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "orte/class/orte_pointer_array.h"
 #include "orte/util/proc_info.h"
@@ -735,7 +735,7 @@ static int parse_globals(int argc, char* argv[])
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
-    if (OMPI_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true,
+    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true,
                                                    argc, argv)) ) {
         return ret;
     }
@@ -1082,7 +1082,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     rc = opal_cmd_line_parse(&cmd_line, true, new_argc, new_argv);
     opal_argv_free(new_argv);
     new_argv = NULL;
-    if (OMPI_SUCCESS != rc) {
+    if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
     mca_base_cmd_line_process_args(&cmd_line, app_env, &global_mca_env);

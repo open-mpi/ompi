@@ -19,16 +19,16 @@
 
 #include "orte_config.h"
 
-#include "include/orte_constants.h"
-#include "mca/sds/sds.h"
-#include "mca/sds/base/base.h"
-#include "mca/sds/env/sds_env.h"
-#include "util/proc_info.h"
+#include "orte/orte_constants.h"
+#include "orte/mca/sds/sds.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/sds/env/sds_env.h"
+#include "orte/util/proc_info.h"
 #include "opal/util/opal_environ.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/ns/ns.h"
-#include "mca/errmgr/errmgr.h"
-#include "mca/ns/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/base/base.h"
 
 
 orte_sds_base_module_t orte_sds_env_module = {
