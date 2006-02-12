@@ -200,7 +200,7 @@ typedef long long bool;
 #endif
 #include <stdint.h>
 #else
-#include "ompi_stdint.h"
+#include "opal_stdint.h"
 #endif
 
 /*
