@@ -21,6 +21,11 @@ dnl
 AC_DEFUN([OMPI_F77_FIND_EXT_SYMBOL_CONVENTION], [
     AC_REQUIRE([AC_PROG_NM])
 
+    # invalidate cache if result came from a run where F77 was disabled
+    if test "$ompi_cv_f77_external_symbol" = "skipped" ; then
+        unset ompi_cv_f77_external_symbol
+    fi
+
     AC_CACHE_CHECK([$F77 external symbol convention],
         [ompi_cv_f77_external_symbol],
         [if test "$F77" = "none" -o "$OMPI_WANT_F77_BINDINGS" = "0"; then

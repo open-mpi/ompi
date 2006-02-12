@@ -20,6 +20,11 @@ dnl
 # -------------------------------------------------------
 # Determine the value of .TRUE. of this FORTRAN compiler.
 AC_DEFUN([OMPI_F77_GET_VALUE_TRUE],[
+    # invalidate cache if result came from a run where F77 was disabled
+    if test "$ompi_cv_f77_true_value" = "0" ; then
+        unset ompi_cv_f77_true_value
+    fi
+
     AC_CACHE_CHECK([FORTRAN value for .TRUE. logical type],
         [ompi_cv_f77_true_value],
         [if test "$1" = "none" -o "$OMPI_WANT_F77_BINDINGS" = "0" ; then
