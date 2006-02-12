@@ -23,7 +23,7 @@
 #include "support.h"
 #include "components.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "runtime/runtime.h"
 #include "orte/mca/gpr/gpr.h"

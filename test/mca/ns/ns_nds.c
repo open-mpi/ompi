@@ -32,8 +32,8 @@
 #include "components.h"
 
 #include "include/constants.h"
-#include "include/orte_constants.h"
-#include "include/orte_types.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include "runtime/runtime.h"
 #include "util/proc_info.h"

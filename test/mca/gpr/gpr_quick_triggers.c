@@ -36,7 +36,7 @@
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
 
-#include "orte/include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/schema/base/base.h"
 #include "orte/mca/ns/base/base.h"

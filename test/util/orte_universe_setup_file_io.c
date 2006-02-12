@@ -17,7 +17,7 @@
  */
 
 #include "orte_config.h"
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -26,8 +26,8 @@
 #include <sys/param.h>
 #endif
 
-#include "util/univ_info.h"
-#include "util/universe_setup_file_io.h"
+#include "orte/util/univ_info.h"
+#include "orte/util/universe_setup_file_io.h"
 #include "support.h"
 
 static bool test1(void);   /* verify it returns info */

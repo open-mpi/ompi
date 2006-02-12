@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "opal/runtime/opal.h"
-#include "opal/include/constants.h"
+#include "opal/constants.h"
 
 int
 main(int argc, char *argv[])

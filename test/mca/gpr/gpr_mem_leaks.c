@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/schema/base/base.h"
 #include "orte/mca/ns/base/base.h"

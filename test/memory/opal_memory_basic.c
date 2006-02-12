@@ -23,7 +23,7 @@
 #include <sys/mman.h>
 #include <assert.h>
 
-#include "ompi/include/constants.h"
+#include "ompi/constants.h"
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
 

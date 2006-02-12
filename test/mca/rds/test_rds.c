@@ -23,7 +23,7 @@
 #include "support.h"
 #include "components.h"
 
-#include "include/orte_constants.h"
+#include "orte/orte_constants.h"
 
 #include "dps/dps.h"
 #include "runtime/runtime.h"

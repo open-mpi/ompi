@@ -24,7 +24,7 @@
 #include <sys/param.h>
 #endif
 
-#include "util/sys_info.h"
+#include "orte/util/sys_info.h"
 #include "support.h"
 
 static bool test1(void);   /* verify it returns info */
