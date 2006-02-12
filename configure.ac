@@ -457,6 +457,10 @@ OMPI_CONFIG_ASM
 # Fortran
 ##################################
 
+#-----------
+# Fortran 77
+#-----------
+
 OMPI_SETUP_F77
 OMPI_F77_FIND_EXT_SYMBOL_CONVENTION
 
@@ -524,7 +528,6 @@ OMPI_F77_GET_FORTRAN_HANDLE_MAX
 OMPI_F77_GET_VALUE_TRUE
 OMPI_F77_CHECK_LOGICAL_ARRAY
 
-
 #
 # There are 2 layers to the MPI f77 layer. The only extra thing that
 # determine f77 bindings is that fortran can be disabled by user. In
@@ -550,484 +553,87 @@ AM_CONDITIONAL(WANT_MPI_F77_BINDINGS_LAYER,
 AM_CONDITIONAL(WANT_PMPI_F77_BINDINGS_LAYER,
                test "$OMPI_WANT_F77_BINDINGS" = 1 -a "$WANT_MPI_PROFILING" = 1)
 
-#
-# Fortran 90 setup
-#
-
-OMPI_HAVE_F90_INTEGER1=0
-OMPI_HAVE_F90_INTEGER2=0
-OMPI_HAVE_F90_INTEGER4=0
-OMPI_HAVE_F90_INTEGER8=0
-OMPI_HAVE_F90_INTEGER16=0
-OMPI_HAVE_F90_REAL4=0
-OMPI_HAVE_F90_REAL8=0
-OMPI_HAVE_F90_REAL16=0
-OMPI_HAVE_F90_COMPLEX8=0
-OMPI_HAVE_F90_COMPLEX16=0
-OMPI_HAVE_F90_COMPLEX32=0
-
-OMPI_SIZEOF_F90_LOGICAL=0
-OMPI_SIZEOF_F90_INT=0
-OMPI_SIZEOF_F90_REAL=0
-OMPI_SIZEOF_F90_DBLPREC=0
-OMPI_SIZEOF_F90_COMPLEX=0
-OMPI_SIZEOF_F90_DBLCOMPLEX=0
-
-OMPI_SIZEOF_F90_INT1=0
-OMPI_SIZEOF_F90_INT2=0
-OMPI_SIZEOF_F90_INT4=0
-OMPI_SIZEOF_F90_INT8=0
-OMPI_SIZEOF_F90_INT16=0
-
-OMPI_SIZEOF_F90_REAL4=0
-OMPI_SIZEOF_F90_REAL8=0
-OMPI_SIZEOF_F90_REAL16=0
-
-OMPI_SIZEOF_F90_COMPLEX8=0
-OMPI_SIZEOF_F90_COMPLEX16=0
-OMPI_SIZEOF_F90_COMPLEX32=0
-
-OMPI_ALIGNMENT_F90_LOGICAL=0
-OMPI_ALIGNMENT_F90_INT=0
-OMPI_ALIGNMENT_F90_REAL=0
-OMPI_ALIGNMENT_F90_DBLPREC=0
-OMPI_ALIGNMENT_F90_COMPLEX=0
-OMPI_ALIGNMENT_F90_DBLCOMPLEX=0
-
-OMPI_ALIGNMENT_F90_INT1=0
-OMPI_ALIGNMENT_F90_INT2=0
-OMPI_ALIGNMENT_F90_INT4=0
-OMPI_ALIGNMENT_F90_INT8=0
-OMPI_ALIGNMENT_F90_INT16=0
-
-OMPI_ALIGNMENT_F90_REAL4=0
-OMPI_ALIGNMENT_F90_REAL8=0
-OMPI_ALIGNMENT_F90_REAL16=0
-
-OMPI_ALIGNMENT_F90_COMPLEX8=0
-OMPI_ALIGNMENT_F90_COMPLEX16=0
-OMPI_ALIGNMENT_F90_COMPLEX32=0
-
-OMPI_PRECISION_F90_REAL4=0
-OMPI_PRECISION_F90_REAL8=0
-OMPI_PRECISION_F90_REAL16=0
-
-OMPI_PRECISION_F90_COMPLEX8=0
-OMPI_PRECISION_F90_COMPLEX16=0
-OMPI_PRECISION_F90_COMPLEX32=0
-
-OMPI_RANGE_F90_REAL4=0
-OMPI_RANGE_F90_REAL8=0
-OMPI_RANGE_F90_REAL16=0
-
-OMPI_RANGE_F90_COMPLEX8=0
-OMPI_RANGE_F90_COMPLEX16=0
-OMPI_RANGE_F90_COMPLEX32=0
-
-OMPI_MPI_OFFSET_KIND=0
-OMPI_MPI_ADDRESS_KIND=0
-
-#
-# lists of supported Fortran types
-#
-OMPI_FORTRAN_LKINDS=""
-OMPI_FORTRAN_IKINDS=""
-OMPI_FORTRAN_RKINDS=""
-OMPI_FORTRAN_CKINDS=""
-
+#-----------
+# Fortran 90
+#-----------
 
 OMPI_SETUP_F90
 
-if test "$OMPI_WANT_F90_BINDINGS" = "0" ; then
-    OMPI_SIZEOF_F90_LOGICAL=$ac_cv_sizeof_int
-    OMPI_SIZEOF_F90_INT=$ac_cv_sizeof_int
-    OMPI_SIZEOF_F90_REAL=$ac_cv_sizeof_float
-    OMPI_SIZEOF_F90_DBLPREC=$ac_cv_sizeof_double
-else
-    # Look for the fortran module compiler flag
+# Look for the fortran module compiler flag
+OMPI_F90_FIND_MODULE_INCLUDE_FLAG
 
-    OMPI_F90_FIND_MODULE_INCLUDE_FLAG
+# Look for all the types
+OMPI_F90_LKINDS=""
+OMPI_F90_IKINDS=""
+OMPI_F90_RKINDS=""
+OMPI_F90_CKINDS=""
 
-    # If we want modern Fortran support, then get supported types and sizes
+# LOGICAL and friends
+OMPI_F90_CHECK([logical], [LOGICAL])
+OMPI_F90_CHECK([logical(selected_int_kind(2))], [LOGICAL*1], [1])
+OMPI_F90_CHECK([logical(selected_int_kind(4))], [LOGICAL*2], [2])
+OMPI_F90_CHECK([logical(selected_int_kind(9))], [LOGICAL*4], [4])
+OMPI_F90_CHECK([logical(selected_int_kind(18))], [LOGICAL*8], [8])
+OMPI_F90_CHECK([logical(selected_int_kind(19))], [LOGICAL*16], [16])
 
-    # NOTE: Some Fortran compilers actually will return that a type
-    # exists even if it doesn't support it -- the compiler will
-    # automatically convert the unsupported type to a type that it
-    # *does* support.  For example, if you try to use INTEGER*16 and
-    # the compiler doesn't support it, it may well automatically
-    # convert it to INTEGER*8 for you (!).  So we have to check the
-    # actual size of the type once we determine that the compiler
-    # doesn't error if we try to use it (i.e,. the compiler *might*
-    # support that type).  If the size doesn't match the expected
-    # size, then the compiler doesn't really support it.
+# INTEGER and friends
+OMPI_F90_CHECK([integer], [INTEGER])
+OMPI_F90_CHECK([integer(selected_int_kind(2))], [INTEGER*1], [1])
+OMPI_F90_CHECK([integer(selected_int_kind(4))], [INTEGER*2], [2])
+OMPI_F90_CHECK([integer(selected_int_kind(9))], [INTEGER*4], [4])
+OMPI_F90_CHECK([integer(selected_int_kind(18))], [INTEGER*8], [8])
+OMPI_F90_CHECK([integer(selected_int_kind(19))], [INTEGER*16], [16])
 
-    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(2)), OMPI_HAVE_F90_INTEGER1)
-    if test "$OMPI_HAVE_F90_INTEGER1" = "1"; then
-        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(2)), 
-                            OMPI_SIZEOF_F90_INT1)
-        if test "$OMPI_SIZEOF_F90_INT1" != 1; then
-            AC_MSG_WARN([*** Fortran 90 selected_int_kind(2) does not have expected size!])
-            AC_MSG_WARN([*** Expected 1, got $OMPI_SIZEOF_F90_INT1])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_int_kind(2)])
-        else                            
-            OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}1 "
-            OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}1 "
+# REAL, DOUBLE PRECISION, REAL*4, *8, *16
+OMPI_F90_CHECK([real], [REAL])
+OMPI_F90_CHECK([real(kind(1.D0))], [DOUBLE PRECISION], [], [])
+OMPI_F90_CHECK([real(selected_real_kind(6))], [REAL*4], [4], [1])
+OMPI_F90_CHECK([real(selected_real_kind(15))], [REAL*8], [8], [1])
+OMPI_F90_CHECK([real(selected_real_kind(31))], [REAL*16], [16], [1])
 
-            OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(2)),
-                                   OMPI_ALIGNMENT_F90_INT1)
-            OMPI_F90_GET_SIZEOF(logical(selected_int_kind(2)), 
-                                OMPI_SIZEOF_F90_LOGICAL)
-            OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(2)),
-                                   OMPI_ALIGNMENT_F90_LOGICAL1)
-        fi
-    fi
+# COMPLEX, DOUBLE COMPLEX, COMPLEX*8, *16, *32
+OMPI_F90_CHECK([complex], [COMPLEX])
+OMPI_F90_CHECK([complex(kind(1.D0))], [DOUBLE COMPLEX], [], [])
+OMPI_F90_CHECK([complex(selected_real_kind(6))], [COMPLEX*8], [8], [1])
+OMPI_F90_CHECK([complex(selected_real_kind(15))], [COMPLEX*16], [16], [1])
+OMPI_F90_CHECK([complex(selected_real_kind(31))], [COMPLEX*32], [32], [1])
 
-    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(4)), OMPI_HAVE_F90_INTEGER2)
-    if test "$OMPI_HAVE_F90_INTEGER2" = "1"; then
-        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(4)), 
-                            OMPI_SIZEOF_F90_INT2)
-        if test "$OMPI_SIZEOF_F90_INT2" != 2; then
-            AC_MSG_WARN([*** Fortran 90 selected_int_kind(4) does not have expected size!])
-            AC_MSG_WARN([*** Expected 2, got $OMPI_SIZEOF_F90_INT2])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_int_kind(4)])
-        else                            
-            OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}2 "
-            OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}2 "
-            OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(4)),
-                                   OMPI_ALIGNMENT_F90_INT2)
-            OMPI_F90_GET_SIZEOF(logical(selected_int_kind(4)), 
-                                OMPI_SIZEOF_F90_LOGICAL2)
-            OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(4)),
-                                   OMPI_ALIGNMENT_F90_LOGICAL2)
-        fi
-    fi
+# The OMPI_F90_CKINDS list represents the overall size of the complex
+# types -- not the size of the REAL's that make them up.  For the
+# scripts in ompi/mpi/f90/scripts/*, variables are expressed in terms
+# of the REAL's that make up the COMPLEX variables, so we need to cut
+# all the sizes here in half.
+new_sizes=
+for size in $OMPI_F90_CKINDS; do
+    new_size=`expr $size / 2`
+    new_sizes="$new_sizes $new_size"
+done
+OMPI_F90_CKINDS=$new_sizes
+unset new_size new_sizes
 
-    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(9)), OMPI_HAVE_F90_INTEGER4)
-    if test "$OMPI_HAVE_F90_INTEGER4" = "1"; then
-        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(9)),
-                            OMPI_SIZEOF_F90_INT4)
-        if test "$OMPI_SIZEOF_F90_INT4" != 4; then
-            AC_MSG_WARN([*** Fortran 90 selected_int_kind(9) does not have expected size!])
-            AC_MSG_WARN([*** Expected 4, got $OMPI_SIZEOF_F90_INT4])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_int_kind(9)])
-        else                            
-            OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}4 "
-            OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}4 "
-            OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(9)),
-                                   OMPI_ALIGNMENT_F90_INT4)
-            OMPI_F90_GET_SIZEOF(logical(selected_int_kind(9)),
-                                OMPI_SIZEOF_F90_LOGICAL4)
-            OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(9)),
-                                   OMPI_ALIGNMENT_F90_LOGICAL4)
-        fi
-    fi
+AC_SUBST(OMPI_F90_LKINDS)
+AC_SUBST(OMPI_F90_IKINDS)
+AC_SUBST(OMPI_F90_RKINDS)
+AC_SUBST(OMPI_F90_CKINDS)
 
-    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(18)), OMPI_HAVE_F90_INTEGER8)
-    if test "$OMPI_HAVE_F90_INTEGER8" = "1"; then
-        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(18)), 
-                            OMPI_SIZEOF_F90_INT8)
-        if test "$OMPI_SIZEOF_F90_INT8" != 8; then
-            AC_MSG_WARN([*** Fortran 90 selected_int_kind(18) does not have expected size!])
-            AC_MSG_WARN([*** Expected 8, got $OMPI_SIZEOF_F90_INT8])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_int_kind(18)])
-        else                            
-            OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}8 "
-            OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}8 "
-            OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(18)),
-                                   OMPI_ALIGNMENT_F90_INT8)
-            OMPI_F90_GET_SIZEOF(logical(selected_int_kind(18)), 
-                                OMPI_SIZEOF_F90_LOGICAL8)
-            OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(18)),
-                                   OMPI_ALIGNMENT_F90_LOGICAL8)
-        fi
-    fi
-
-    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(19)),
-                        OMPI_HAVE_F90_INTEGER16)
-    if test "$OMPI_HAVE_F90_INTEGER16" = "1"; then
-        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(19)), 
-                            OMPI_SIZEOF_F90_INT16)
-        if test "$OMPI_SIZEOF_F90_INT16" != 16; then
-            AC_MSG_WARN([*** Fortran 90 selected_int_kind(19) does not have expected size!])
-            AC_MSG_WARN([*** Expected 16, got $OMPI_SIZEOF_F90_INT16])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_int_kind(19)])
-        else                            
-            OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}16 "
-            OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}16 "
-            OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(19)),
-                                   OMPI_ALIGNMENT_F90_INT16)
-            OMPI_F90_GET_SIZEOF(logical(selected_int_kind(19)), 
-                                OMPI_SIZEOF_F90_LOGICAL16)
-            OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(19)),
-                                   OMPI_ALIGNMENT_F90_LOGICAL16)
-        fi
-    fi
-
-    OMPI_F90_CHECK_TYPE(real(selected_real_kind(6)), OMPI_HAVE_F90_REAL4)
-    if test "$OMPI_HAVE_F90_REAL4" = "1"; then
-        OMPI_F90_GET_SIZEOF(real(selected_real_kind(6)), OMPI_SIZEOF_F90_REAL4)
-        if test "$OMPI_SIZEOF_F90_REAL4" != 4; then
-            AC_MSG_WARN([*** Fortran 90 selected_real_kind(6) does not have expected size!])
-            AC_MSG_WARN([*** Expected 4, got $OMPI_SIZEOF_F90_REAL4])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_real_kind(6)])
-        else                            
-            OMPI_HAVE_F90_COMPLEX8=1
-            OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}4 "
-            OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}4 "
-            OMPI_F90_GET_SIZEOF(complex(selected_real_kind(6)),
-                                OMPI_SIZEOF_F90_COMPLEX8)
-            OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(6)),
-                                   OMPI_ALIGNMENT_F90_REAL4)
-            OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(6)),
-                                   OMPI_ALIGNMENT_F90_COMPLEX8)
-            OMPI_F90_GET_PRECISION(real(selected_real_kind(6)),
-                                   OMPI_PRECISION_F90_REAL4)
-            OMPI_F90_GET_PRECISION(complex(selected_real_kind(6)),
-                                   OMPI_PRECISION_F90_COMPLEX8)
-            OMPI_F90_GET_RANGE(real(selected_real_kind(6)),
-                               OMPI_RANGE_F90_REAL4)
-            OMPI_F90_GET_RANGE(complex(selected_real_kind(6)),
-                               OMPI_RANGE_F90_COMPLEX8)
-        fi
-    fi
-
-    OMPI_F90_CHECK_TYPE(real(selected_real_kind(15)), OMPI_HAVE_F90_REAL8)
-    if test "$OMPI_HAVE_F90_REAL8" = "1"; then
-        OMPI_F90_GET_SIZEOF(real(selected_real_kind(15)), 
-                            OMPI_SIZEOF_F90_REAL8)
-        if test "$OMPI_SIZEOF_F90_REAL8" != 8; then
-            AC_MSG_WARN([*** Fortran 90 selected_real_kind(15) does not have expected size!])
-            AC_MSG_WARN([*** Expected 8, got $OMPI_SIZEOF_F90_REAL8])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_real_kind(15)])
-        else                            
-            OMPI_HAVE_F90_COMPLEX16=1
-            OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}8 "
-            OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}8 "
-            OMPI_F90_GET_SIZEOF(complex(selected_real_kind(15)),
-                                OMPI_SIZEOF_F90_COMPLEX16)
-            OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(15)),
-                                OMPI_ALIGNMENT_F90_REAL8)
-            OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(15)),
-                                OMPI_ALIGNMENT_F90_COMPLEX16)
-            OMPI_F90_GET_PRECISION(real(selected_real_kind(15)),
-                                OMPI_PRECISION_F90_REAL8)
-            OMPI_F90_GET_PRECISION(complex(selected_real_kind(15)),
-                                OMPI_PRECISION_F90_COMPLEX16)
-            OMPI_F90_GET_RANGE(real(selected_real_kind(15)),
-                            OMPI_RANGE_F90_REAL8)
-            OMPI_F90_GET_RANGE(complex(selected_real_kind(15)),
-                            OMPI_RANGE_F90_COMPLEX16)
-        fi
-    fi
-
-    OMPI_F90_CHECK_TYPE(real(selected_real_kind(31)), OMPI_HAVE_F90_REAL16)
-    if test "$OMPI_HAVE_F90_REAL16" = "1"; then
-        OMPI_F90_GET_SIZEOF(real(selected_real_kind(31)), 
-                            OMPI_SIZEOF_F90_REAL16)
-        if test "$OMPI_SIZEOF_F90_REAL16" != 16; then
-            AC_MSG_WARN([*** Fortran 90 selected_real_kind(31) does not have expected size!])
-            AC_MSG_WARN([*** Expected 16, got $OMPI_SIZEOF_F90_REAL16])
-            AC_MSG_WARN([*** Disabling MPI support for Fortran selected_real_kind(31)])
-        else                            
-            OMPI_HAVE_F90_COMPLEX32=1
-            OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}16 "
-            OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}16 "
-            OMPI_F90_GET_SIZEOF(complex(selected_real_kind(31)),
-                                OMPI_SIZEOF_F90_COMPLEX32)
-            OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(31)),
-                                OMPI_ALIGNMENT_F90_REAL16)
-            OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(31)),
-                                OMPI_ALIGNMENT_F90_COMPLEX32)
-            OMPI_F90_GET_PRECISION(real(selected_real_kind(31)),
-                                OMPI_PRECISION_F90_REAL16)
-            OMPI_F90_GET_PRECISION(complex(selected_real_kind(31)),
-                                OMPI_PRECISION_F90_COMPLEX32)
-            OMPI_F90_GET_RANGE(real(selected_real_kind(31)),
-                                    OMPI_RANGE_F90_REAL16)
-            OMPI_F90_GET_RANGE(complex(selected_real_kind(31)),
-                            OMPI_RANGE_F90_COMPLEX32)
-        fi
-    fi
-
-    OMPI_F90_GET_SIZEOF(logical, OMPI_SIZEOF_F90_LOGICAL)
-    OMPI_F90_GET_ALIGNMENT(logical, OMPI_ALIGNMENT_F90_LOGICAL)
-
-    OMPI_F90_GET_SIZEOF(integer, OMPI_SIZEOF_F90_INT)
-    OMPI_F90_GET_ALIGNMENT(integer, OMPI_ALIGNMENT_F90_INT)
-
-    OMPI_F90_GET_SIZEOF(real, OMPI_SIZEOF_F90_REAL)
-    OMPI_F90_GET_ALIGNMENT(real, OMPI_ALIGNMENT_F90_REAL)
-
-    OMPI_F90_GET_SIZEOF(real(kind(1.D0)), OMPI_SIZEOF_F90_DBLPREC)
-    OMPI_F90_GET_ALIGNMENT(real(kind(1.D0)), OMPI_ALIGNMENT_F90_DBLPREC)
-
-    OMPI_F90_GET_SIZEOF(complex, OMPI_SIZEOF_F90_COMPLEX)
-    OMPI_F90_GET_ALIGNMENT(complex, OMPI_ALIGNMENT_F90_COMPLEX)
-
-    OMPI_F90_GET_SIZEOF(complex(kind(1.D0)), OMPI_SIZEOF_F90_DBLCOMPLEX)
-    OMPI_F90_GET_ALIGNMENT(complex(kind(1.D0)), OMPI_ALIGNMENT_F90_DBLCOMPLEX)
-
-    #
-    # get values for Fortran MPI_OFFSET_KIND and MPI_ADDRESS_KIND
-    #
-
-    OMPI_F90_GET_INT_KIND(18, OMPI_MPI_OFFSET_KIND)
-
-    if test "$ac_cv_sizeof_void_p" = "2"; then
-        OMPI_F90_GET_INT_KIND(4, OMPI_MPI_ADDRESS_KIND)
-    elif test "$ac_cv_sizeof_void_p" = "4"; then
-        OMPI_F90_GET_INT_KIND(9, OMPI_MPI_ADDRESS_KIND)
-    elif test "$ac_cv_sizeof_void_p" = "8"; then
-        OMPI_F90_GET_INT_KIND(18, OMPI_MPI_ADDRESS_KIND)
-    elif test "$ac_cv_sizeof_void_p" = "16"; then
-        OMPI_F90_GET_INT_KIND(19, OMPI_MPI_ADDRESS_KIND)
-    else
-        AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
-    fi
-fi
-
-#
-# Substitute everything in
-#
-
-AC_SUBST(OMPI_FORTRAN_LKINDS)
-AC_SUBST(OMPI_FORTRAN_IKINDS)
-AC_SUBST(OMPI_FORTRAN_RKINDS)
-AC_SUBST(OMPI_FORTRAN_CKINDS)
-
-AC_SUBST(OMPI_SIZEOF_F90_INT1)
-AC_SUBST(OMPI_SIZEOF_F90_INT2)
-AC_SUBST(OMPI_SIZEOF_F90_INT4)
-AC_SUBST(OMPI_SIZEOF_F90_INT8)
-AC_SUBST(OMPI_SIZEOF_F90_INT16)
-
-AC_SUBST(OMPI_SIZEOF_F90_REAL4)
-AC_SUBST(OMPI_SIZEOF_F90_REAL8)
-AC_SUBST(OMPI_SIZEOF_F90_REAL16)
-
-AC_SUBST(OMPI_SIZEOF_F90_COMPLEX8)
-AC_SUBST(OMPI_SIZEOF_F90_COMPLEX16)
-AC_SUBST(OMPI_SIZEOF_F90_COMPLEX32)
-
+# get kind value for Fortran MPI_OFFSET_KIND (corresponding to INTEGER*8)
+OMPI_F90_GET_INT_KIND(MPI_OFFSET_KIND, 18, OMPI_MPI_OFFSET_KIND)
 AC_SUBST(OMPI_MPI_OFFSET_KIND)
+
+# get kind value for Fortran MPI_ADDRESS_KIND (corresponding to
+# whatever is big enough to hold (void*))
+if test "$ac_cv_sizeof_void_p" = "2"; then
+    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 4, OMPI_MPI_ADDRESS_KIND)
+elif test "$ac_cv_sizeof_void_p" = "4"; then
+    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 9, OMPI_MPI_ADDRESS_KIND)
+elif test "$ac_cv_sizeof_void_p" = "8"; then
+    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 18, OMPI_MPI_ADDRESS_KIND)
+elif test "$ac_cv_sizeof_void_p" = "16"; then
+    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 19, OMPI_MPI_ADDRESS_KIND)
+else
+    AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
+fi
 AC_SUBST(OMPI_MPI_ADDRESS_KIND)
-
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_INTEGER1, $OMPI_HAVE_F90_INTEGER1,
-    [support for fortran integer*1])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_INTEGER2, $OMPI_HAVE_F90_INTEGER2,
-    [support for fortran integer*2])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_INTEGER4, $OMPI_HAVE_F90_INTEGER4,
-    [support for fortran integer*4])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_INTEGER8, $OMPI_HAVE_F90_INTEGER8,
-    [support for fortran integer*8])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_INTEGER16, $OMPI_HAVE_F90_INTEGER16,
-    [support for fortran integer*16])
-
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_REAL4, $OMPI_HAVE_F90_REAL4,
-    [support for fortran real*4])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_REAL8, $OMPI_HAVE_F90_REAL8,
-    [support for fortran real*8])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_REAL16, $OMPI_HAVE_F90_REAL16,
-    [support for fortran real*16])
-
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_COMPLEX8, $OMPI_HAVE_F90_COMPLEX8,
-    [support for fortran complex*8])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_COMPLEX16, $OMPI_HAVE_F90_COMPLEX16,
-    [support for fortran complex*16])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_COMPLEX32, $OMPI_HAVE_F90_COMPLEX32,
-    [support for fortran complex*32])
-
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_INT1, $OMPI_SIZEOF_F90_INT1,
-    [size of fortran integer*1])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_INT2, $OMPI_SIZEOF_F90_INT2,
-    [size of fortran integer*2])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_INT4, $OMPI_SIZEOF_F90_INT4,
-    [size of fortran integer*4])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_INT8, $OMPI_SIZEOF_F90_INT8,
-    [size of fortran integer*8])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_INT16, $OMPI_SIZEOF_F90_INT16,
-    [size of fortran integer*16])
-
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_REAL4, $OMPI_SIZEOF_F90_REAL4,
-    [size of fortran real*4])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_REAL8, $OMPI_SIZEOF_F90_REAL8,
-    [size of fortran real*8])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_REAL16, $OMPI_SIZEOF_F90_REAL16,
-    [size of fortran real*16])
-
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_COMPLEX8, $OMPI_SIZEOF_F90_COMPLEX8,
-    [size of fortran complex*8])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_COMPLEX16, $OMPI_SIZEOF_F90_COMPLEX16,
-    [size of fortran complex*16])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_COMPLEX32, $OMPI_SIZEOF_F90_COMPLEX32,
-    [size of fortran complex*32])
-
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_LOGICAL, $OMPI_ALIGNMENT_F90_LOGICAL,
-    [Alignment of fortran logical])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_INT, $OMPI_ALIGNMENT_F90_INT,
-    [Alignment of fortran integer])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_REAL, $OMPI_ALIGNMENT_F90_REAL,
-    [alignment of fortran real])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_DBLPREC, $OMPI_ALIGNMENT_F90_DBLPREC,
-    [Alignment of fortran double precision])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_COMPLEX, $OMPI_ALIGNMENT_F90_COMPLEX,
-    [Alignment of fortran complex])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_DBLCOMPLEX,
-    $OMPI_ALIGNMENT_F90_DBLCOMPLEX,
-    [Alignment of fortran double complex])
-
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_INT1, $OMPI_ALIGNMENT_F90_INT1,
-    [alignment of fortran integer*1])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_INT2, $OMPI_ALIGNMENT_F90_INT2,
-    [alignment of fortran integer*2])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_INT4, $OMPI_ALIGNMENT_F90_INT4,
-    [alignment of fortran integer*4])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_INT8, $OMPI_ALIGNMENT_F90_INT8,
-    [alignment of fortran integer*8])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_INT16, $OMPI_ALIGNMENT_F90_INT16,
-    [alignment of fortran integer*16])
-
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_REAL4, $OMPI_ALIGNMENT_F90_REAL4,
-    [alignment of fortran real*4])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_REAL8, $OMPI_ALIGNMENT_F90_REAL8,
-    [alignment of fortran real*8])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_REAL16, $OMPI_ALIGNMENT_F90_REAL16,
-    [alignment of fortran real*16])
-
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_COMPLEX8, $OMPI_ALIGNMENT_F90_COMPLEX8,
-    [alignment of fortran complex*8])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_COMPLEX16, $OMPI_ALIGNMENT_F90_COMPLEX16,
-    [alignment of fortran complex*16])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_COMPLEX32, $OMPI_ALIGNMENT_F90_COMPLEX32,
-    [alignment of fortran complex*32])
-
-AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_REAL4, $OMPI_PRECISION_F90_REAL4,
-    [precision of fortran real*4])
-AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_REAL8, $OMPI_PRECISION_F90_REAL8,
-    [precision of fortran real*8])
-AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_REAL16, $OMPI_PRECISION_F90_REAL16,
-    [precision of fortran real*16])
-
-AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_COMPLEX8, $OMPI_PRECISION_F90_COMPLEX8,
-    [precision of fortran complex*8])
-AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_COMPLEX16, $OMPI_PRECISION_F90_COMPLEX16,
-    [precision of fortran complex*16])
-AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_COMPLEX32, $OMPI_PRECISION_F90_COMPLEX32,
-    [precision of fortran complex*32])
-
-AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_REAL4, $OMPI_RANGE_F90_REAL4,
-    [range of fortran real*4])
-AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_REAL8, $OMPI_RANGE_F90_REAL8,
-    [range of fortran real*8])
-AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_REAL16, $OMPI_RANGE_F90_REAL16,
-    [range of fortran real*16])
-
-AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX8, $OMPI_RANGE_F90_COMPLEX8,
-    [range of fortran complex*8])
-AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX16, $OMPI_RANGE_F90_COMPLEX16,
-    [range of fortran complex*16])
-AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX32, $OMPI_RANGE_F90_COMPLEX32,
-    [range of fortran complex*32])
 
 # checkpoint results
 AC_CACHE_SAVE

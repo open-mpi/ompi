@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -17,22 +17,15 @@ dnl
 dnl $HEADER$
 dnl
 
+# OMPI_F90_GET_SIZEOF(type, variable to set)
+# ------------------------------------------
 AC_DEFUN([OMPI_F90_GET_SIZEOF],[
-# Determine FORTRAN datatype size.
-# First arg is type, 2nd arg is config var to define.
-AC_MSG_CHECKING([size of FORTRAN $1])
-OMPI_F77_MAKE_C_FUNCTION([ompi_ac_size_fn], [size])
-
-#
-# Cannot use standard AC_TRY macros because we need two different .o
-# files here, and link them together
-#
-
-#
-# Fortran module
-#
-
-cat > conftestf.f90 <<EOF
+    AS_VAR_PUSHDEF([type_var], [ompi_cv_f90_sizeof_$1])
+    
+    AC_CACHE_CHECK([size of Fortran 90 $1], type_var,
+        [OMPI_F77_MAKE_C_FUNCTION([ompi_ac_size_fn], [size])
+         # Fortran module
+         cat > conftestf.f90 <<EOF
 program fsize
    external SIZE
    $1 :: x(2)
@@ -40,16 +33,13 @@ program fsize
 end program
 EOF
 
-#
-# C module
-#
-
-if test -f conftest.h; then
-    ompi_conftest_h="#include \"conftest.h\""
-else
-    ompi_conftest_h=""
-fi
-cat > conftest.c <<EOF
+         # C module
+         if test -f conftest.h; then
+             ompi_conftest_h="#include \"conftest.h\""
+         else
+             ompi_conftest_h=""
+         fi
+         cat > conftest.c <<EOF
 #include <stdio.h>
 #include <stdlib.h>
 $ompi_conftest_h
@@ -69,40 +59,27 @@ void $ompi_ac_size_fn(char *a, char *b)
 #endif
 EOF
 
-#
-# Try the compilation and run.  Can't use AC_TRY_RUN because it's two
-# module files.
-#
+         OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
+             [OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftestf.f90 conftest.o -o conftest $LDFLAGS $LIBS],
+                  [happy="yes"], [happy="no"])], [happy="no"])
 
-OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
-    OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftestf.f90 conftest.o -o conftest $LDFLAGS $LIBS],
-	OMPI_LOG_COMMAND([./conftest],[HAPPY=1],[HAPPY=0]),
-	[HAPPY=0]),
-    [HAPPY=0])
+         if test "$happy" = "no" ; then
+             OMPI_LOG_MSG([here is the fortran 90 program:], 1)
+             OMPI_LOG_FILE([conftestf.f90])
+             AC_MSG_WARN([Could not determine size of $1])
+             AC_MSG_WARN([See config.log for details])
+             AC_MSG_ERROR([Cannot continue])
+         fi
 
-ompi_ac_fortsize=-1
-if test "$HAPPY" = "1" -a -f conftestval; then
-    ompi_ac_fortsize=`cat conftestval`
-    AC_MSG_RESULT([$ompi_ac_fortsize])
-    eval "$2=$ompi_ac_fortsize"
-else
-    AC_MSG_RESULT([unknown])
+         AS_IF([test "$cross_compiling" = "yes"],
+             [AC_MSG_ERROR([Can not determine size of $1 when cross-compiling])],
+             [OMPI_LOG_COMMAND([./conftest],
+                 [AS_VAR_SET(type_var, [`cat conftestval`])],
+                 [AC_MSG_ERROR([Could not determine size of $1])])])
 
-    OMPI_LOG_MSG([here is the C program:], 1)
-    OMPI_LOG_FILE([conftest.c])
-    if test -f conftest.h; then
-	OMPI_LOG_MSG([here is contest.h:], 1)
-	OMPI_LOG_FILE([conftest.h])
-    fi
-    OMPI_LOG_MSG([here is the fortran program:], 1)
-    OMPI_LOG_FILE([conftestf.f90])
+        unset happy ompi_conftest_h
+        rm -f conftest*])
 
-    AC_MSG_WARN([*** Problem running configure test!])
-    AC_MSG_WARN([*** See config.log for details.])
-    AC_MSG_ERROR([*** Cannot continue.])
-fi
-str="$2=$ompi_ac_fortsize"
-eval $str
-
-unset ompi_ac_fortsize HAPPY ompi_conftest_h
-/bin/rm -f conftest*])dnl
+    $2=AS_VAR_GET(type_var)
+    AS_VAR_POPDEF([type_var])dnl
+])dnl
