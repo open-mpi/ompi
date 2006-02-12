@@ -172,7 +172,7 @@ struct opal_class_t {
  */
 struct opal_object_t {
     opal_class_t *obj_class;            /**< class descriptor */
-    volatile int obj_reference_count;   /**< reference count */
+    volatile int32_t obj_reference_count;   /**< reference count */
 #if OMPI_ENABLE_DEBUG
    const char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
    int   cls_init_lineno;           /**< In debug mode store the line number where the object get contructed */
@@ -448,7 +448,7 @@ static inline opal_object_t *opal_obj_new(size_t size, opal_class_t * cls)
 static inline int opal_obj_update(opal_object_t *object, int inc)
 {
 #if OMPI_HAVE_THREAD_SUPPORT
-    return opal_atomic_add(&(object->obj_reference_count), inc );
+    return opal_atomic_add_32(&(object->obj_reference_count), inc );
 #else
     object->obj_reference_count += inc;
     return object->obj_reference_count;
