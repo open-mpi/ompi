@@ -62,7 +62,9 @@ SUBDIRS = \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 DIST_SUBDIRS = \
+	include \
 	debuggers \
+	etc \
 	mpi \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)

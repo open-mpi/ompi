@@ -32,8 +32,10 @@ SUBDIRS = \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 DIST_SUBDIRS = \
+	include \
 	$(LIBLTDL_SUBDIR) \
 	asm \
+	etc \
 	event \
 	util \
 	mca/base \
