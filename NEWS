@@ -23,6 +23,9 @@ version 1.0.
 1.1
 ---
 
+- Open MPI is now configurable in cross-compilation environments.
+  Several Fortran 77 and Fortran 90 tests need to be pre-seeded with
+  results from a config.cache-like file.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
 
 
