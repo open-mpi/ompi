@@ -99,7 +99,7 @@ static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
 static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd,
                            char * const argv[], char * envp[]);
 #endif
-static void orte_pls_bproc_setup_env(char *** env, size_t * num_env);
+static void orte_pls_bproc_setup_env(char *** env);
 static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
                                          int ** node_arrays, int * node_array_lens,
                                          int num_contexts, int num_procs,
@@ -382,15 +382,17 @@ static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd,
 /**
  * Sets up the passed environment for processes launched by the bproc launcher.
  * @param env a pointer to the environment to setup
- * @param num_env a pointer to where the size f the environment is stored
  */
-static void orte_pls_bproc_setup_env(char *** env, size_t * num_env)
+static void orte_pls_bproc_setup_env(char *** env)
 {
     char ** merged;
     char * var;
     int rc;
+    int num_env;
+
+    num_env = opal_argv_count(env);
     /* append mca parameters to our environment */
-    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, (int*)num_env, false))) {
+    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, &num_env, false))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -438,9 +440,6 @@ static void orte_pls_bproc_setup_env(char *** env, size_t * num_env)
 
     /* make sure hostname doesn't get pushed to backend node */
     opal_unsetenv("HOSTNAME", env);
-
-    /* overwrite previously specified values with the above settings */
-    *num_env = opal_argv_count(*env);
 }
 
 /**
@@ -680,9 +679,6 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
     free(param);
     free(var);
 
-    /* overwrite previously specified values with the above settings */
-    map->app->num_env = opal_argv_count(map->app->env);
-
     /* launch the processes */
     i = 1;
     rc = orte_pls_bproc_node_list(node_array, node_array_len, &node_list,
@@ -838,7 +834,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        orte_pls_bproc_setup_env(&map->app->env, &map->app->num_env);
+        orte_pls_bproc_setup_env(&map->app->env);
         num_processes += rc;
         context++;
     }

@@ -1,19 +1,19 @@
 /* -*- C -*-
- * 
+ *
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -183,11 +183,11 @@ cleanup:
  */
 
 static int orte_pls_bproc_undump(
-    orte_rmaps_base_proc_t* proc, 
-    orte_vpid_t vpid_start, 
-    orte_vpid_t vpid_range, 
-    uint8_t* image, 
-    size_t image_len, 
+    orte_rmaps_base_proc_t* proc,
+    orte_vpid_t vpid_start,
+    orte_vpid_t vpid_range,
+    uint8_t* image,
+    size_t image_len,
     pid_t* pid)
 {
     int p_name[2];
@@ -210,9 +210,9 @@ static int orte_pls_bproc_undump(
     if (*pid == 0) {
 
         /* child is read-only */
-        close(p_image[1]); 
+        close(p_image[1]);
         close(p_name[1]);
-        
+
         /* child is write-only */
         close(p_stdout[0]);
         close(p_stderr[0]);
@@ -247,12 +247,12 @@ static int orte_pls_bproc_undump(
     }
 
     /* parent is write-only */
-    close(p_image[0]); 
-    close(p_name[0]); 
+    close(p_image[0]);
+    close(p_name[0]);
 
     /* parent is read-only */
-    close(p_stdout[1]); 
-    close(p_stderr[1]); 
+    close(p_stdout[1]);
+    close(p_stderr[1]);
 
     if(*pid < 0) {
         close(p_image[1]);
@@ -314,7 +314,7 @@ static void orte_pls_bproc_wait_proc(pid_t pid, int status, void* cbdata)
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
-        OBJ_RELEASE(proc); 
+        OBJ_RELEASE(proc);
     }
 
     /* release any waiting threads */
@@ -337,7 +337,7 @@ static void orte_pls_bproc_wait_node(pid_t pid, int status, void* cbdata)
     for(item =  opal_list_get_first(&node->node_procs);
         item != opal_list_get_end(&node->node_procs);
         item =  opal_list_get_next(item)) {
-        orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)item; 
+        orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)item;
 
         int rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, 0);
         if(ORTE_SUCCESS != rc) {
@@ -354,17 +354,17 @@ static void orte_pls_bproc_wait_node(pid_t pid, int status, void* cbdata)
 }
 
 
-/* 
+/*
  *  (1) Execute/dump the process image and read into memory.
  *  (2) Fork a daemon across the allocated set of nodes.
- *  (3) Fork/undump the required number of copies of the process 
+ *  (3) Fork/undump the required number of copies of the process
  *      on each of the nodes.
  */
 
 static int orte_pls_bproc_launch_app(
-    orte_jobid_t jobid, 
-    orte_rmaps_base_map_t* map, 
-    orte_vpid_t vpid_start, 
+    orte_jobid_t jobid,
+    orte_rmaps_base_map_t* map,
+    orte_vpid_t vpid_start,
     orte_vpid_t vpid_range)
 {
     uint8_t* image = NULL;
@@ -389,12 +389,11 @@ static int orte_pls_bproc_launch_app(
     }
 
     /* append mca parameters to our environment */
-    num_env = map->app->num_env;
-    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(&map->app->env, &num_env, true))) { 
+    num_env = opal_argv_count(map->app->env);
+    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(&map->app->env, &num_env, true))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    map->app->num_env = num_env;
 
     /* overwrite seed setting */
     var = mca_base_param_environ_variable("seed",NULL,NULL);
@@ -431,15 +430,12 @@ static int orte_pls_bproc_launch_app(
     opal_setenv(var,orte_process_info.gpr_replica_uri, true, &map->app->env);
     free(var);
 
-    /* overwrite previously specified values with the above settings */
-    map->app->num_env = opal_argv_count(map->app->env);
-
     /* read process image */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_dump(map->app, &image, &image_len))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     /* allocate a range of vpids for the daemons */
     if(ORTE_SUCCESS != (rc = orte_ns.reserve_range(0, num_nodes, &daemon_vpid_start))) {
         ORTE_ERROR_LOG(rc);
@@ -461,7 +457,7 @@ static int orte_pls_bproc_launch_app(
 
     /* return is the rank of the child or number of nodes in the parent */
     if(rc < (int)num_nodes) {
- 
+
         opal_list_item_t* item;
         orte_rmaps_base_node_t* node = NULL;
         orte_process_name_t* daemon_name;
@@ -490,8 +486,8 @@ static int orte_pls_bproc_launch_app(
                 close(fd);
             }
         } else {
-            _exit(-1); 
-        } 
+            _exit(-1);
+        }
 
         if(mca_pls_bproc_seed_component.debug) {
             opal_output(0, "orte_pls_bproc: rank=%d\n", rank);
@@ -521,9 +517,9 @@ static int orte_pls_bproc_launch_app(
             _exit(-1);
         }
         if(mca_pls_bproc_seed_component.debug) {
-            opal_output(0, "orte_pls_bproc: node=%s name=%d.%d.%d procs=%d\n", 
-			node->node->node_name, 
-                orte_process_info.my_name->cellid, 0, 
+            opal_output(0, "orte_pls_bproc: node=%s name=%d.%d.%d procs=%d\n",
+            node->node->node_name,
+                orte_process_info.my_name->cellid, 0,
                 daemon_vpid_start+rank,
                 opal_list_get_size(&node->node_procs));
         }
@@ -534,7 +530,7 @@ static int orte_pls_bproc_launch_app(
             ORTE_ERROR_LOG(rc);
             _exit(-1);
         }
-        
+
         /* save the daemons pid in the registry */
         rc = orte_pls_base_set_node_pid(node->node->node_cellid, node->node->node_name, jobid, getpid());
         if(ORTE_SUCCESS != rc) {
@@ -606,7 +602,7 @@ static int orte_pls_bproc_launch_app(
         /* release resources */
         rc = ORTE_SUCCESS;
     }
-   
+
 cleanup:
     if(NULL != image)
         free(image);
@@ -619,7 +615,7 @@ cleanup:
 
 
 /*
- * Query for the default mapping.  Launch each application context 
+ * Query for the default mapping.  Launch each application context
  * w/ a distinct set of daemons.
  */
 
@@ -647,13 +643,13 @@ int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
         item != opal_list_get_end(&mapping);
         item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
-        rc = orte_pls_bproc_launch_app(jobid, map, vpid_start, vpid_range); 
+        rc = orte_pls_bproc_launch_app(jobid, map, vpid_start, vpid_range);
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
     }
-  
+
 cleanup:
     while(NULL != (item = opal_list_remove_first(&mapping)))
         OBJ_RELEASE(item);
@@ -689,7 +685,7 @@ int orte_pls_bproc_seed_terminate_job(orte_jobid_t jobid)
     /* kill daemons */
     if(ORTE_SUCCESS != (rc = orte_pls_base_get_node_pids(jobid, &pids, &num_pids)))
         return rc;
-    for(i=0; i<num_pids; i++) { 
+    for(i=0; i<num_pids; i++) {
         if(mca_pls_bproc_seed_component.debug) {
             opal_output(0, "orte_pls_bproc: killing daemon: %d\n", pids[i]);
         }
@@ -789,7 +785,7 @@ static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
         goto complete;
     }
     rc = orte_ns.create_process_name(
-        &child_name, orte_process_info.my_name->cellid, 
+        &child_name, orte_process_info.my_name->cellid,
         orte_process_info.my_name->jobid,
         child_vpid);
     if(ORTE_SUCCESS != rc) {
@@ -833,7 +829,7 @@ static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
             ORTE_ERROR_LOG(rc);
             exit(rc);
         }
-        
+
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             exit(rc);
@@ -870,7 +866,7 @@ int orte_pls_bproc_seed_launch_threaded(orte_jobid_t jobid)
     stack.jobid = jobid;
     opal_evtimer_set(&event, orte_pls_bproc_seed_launch_cb, &stack);
     opal_evtimer_add(&event, &tv);
-   
+
     OPAL_THREAD_LOCK(&stack.mutex);
     while(stack.complete == false)
          opal_condition_wait(&stack.cond, &stack.mutex);
