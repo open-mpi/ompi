@@ -542,8 +542,7 @@ int mca_pml_ob1_send_request_start_rdma(
        bml_btl->btl_flags & MCA_BTL_FLAGS_GET) {
 
          /* prepare source descriptor/segment(s) */
-         size = sendreq->req_send.req_bytes_packed;
-         mca_bml_base_prepare_src(
+        mca_bml_base_prepare_src(
              bml_btl, 
              reg,
              &sendreq->req_send.req_convertor,
@@ -1002,7 +1001,7 @@ void mca_pml_ob1_send_request_put(
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
     }
     
-    if(release == true && NULL != bml_btl->btl_mpool) {
+    if(release == true && bml_btl->btl_mpool) {
         bml_btl->btl_mpool->mpool_release(bml_btl->btl_mpool, reg);
     }
     
