@@ -57,6 +57,7 @@ struct {
     char *compiler_env;
     char *compiler_flags_env;
     char *compiler;
+    char *module_option;
     char **preproc_flags;
     char **comp_flags;
     char **link_flags;
@@ -83,6 +84,8 @@ data_callback(const char *key, const char *value)
         if (NULL != value) data.project = strdup(value);
     } else if (0 == strcmp(key, "version")) {
         if (NULL != value) data.version = strdup(value);
+    } else if (0 == strcmp(key, "module_option")) {
+        if (NULL != value) data.module_option = strdup(value);
     } else if (0 == strcmp(key, "extra_includes")) {
         /* this is the hard one - need to put it together... */
         int i;
@@ -142,6 +145,7 @@ data_init(const char *appname)
     data.version = NULL;
     data.compiler_env = NULL;
     data.compiler_flags_env = NULL;
+    data.module_option = NULL;
     data.preproc_flags = malloc(sizeof(char*));
     data.preproc_flags[0] = NULL;
     data.comp_flags = malloc(sizeof(char*));
@@ -189,6 +193,7 @@ data_finalize(void)
     if (NULL != data.version) free(data.version);
     if (NULL != data.compiler_env) free(data.compiler_env);
     if (NULL != data.compiler_flags_env) free(data.compiler_flags_env);
+    if (NULL != data.module_option) free(data.module_option);
     opal_argv_free(data.preproc_flags);
     opal_argv_free(data.comp_flags);
     opal_argv_free(data.link_flags);
@@ -482,6 +487,14 @@ main(int argc, char *argv[])
     /* compiler flags */
     if (flags & COMP_WANT_COMPILE) {
         opal_argv_insert(&exec_argv, exec_argc, data.comp_flags);
+        /* Deal with languages like Fortran 90 that have special
+           places and flags for modules or whatever */
+        if (data.module_option != NULL) {
+            char *line;
+            asprintf(&line, "%s%s", data.module_option, OPAL_LIBDIR);
+            opal_argv_append_nosize(&exec_argv, line);
+            free(line);
+        }
         exec_argc = opal_argv_count(exec_argv);
     }
 

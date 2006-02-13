@@ -266,19 +266,14 @@ DISTCLEANFILES = $(nodist_libmpi_f90_a_SOURCES)
 if OMPI_WANT_F90_BINDINGS
 install-exec-hook:
 	@ for file in `ls *.mod`; do \
-          rm -f $$file $(DESTDIR)$(libdir); \
 	  echo $(INSTALL) $$file $(DESTDIR)$(libdir); \
 	  $(INSTALL) $$file $(DESTDIR)$(libdir); \
-	  rm -f $(DESTDIR)$(includedir)/$$file ; \
-	  echo $(LN_S) $(DESTDIR)$(libdir)/$$file $(DESTDIR)$(includedir)/$$file ; \
-	  $(LN_S) $(DESTDIR)$(libdir)/$$file $(DESTDIR)$(includedir)/$$file ; \
 	done
 
 uninstall-local:
 	@ for file in `ls *.mod`; do \
 	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
 	  rm -f $(DESTDIR)$(libdir)/$$file; \
-	  rm -f $(DESTDIR)$(includedir)/$$file; \
 	done
 else
 
