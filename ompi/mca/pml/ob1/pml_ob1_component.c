@@ -214,8 +214,15 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
 
     
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, enable_mpi_threads)) 
-        return NULL; 
-    
+        return NULL;
+
+    /* As our own progress function does nothing except calling the BML
+     * progress, let's modify the progress function pointer in our structure
+     * to avoid useless functions calls. The event library will instead call
+     * directly the BML function.
+     */
+     mca_pml_ob1.super.pml_progress = mca_bml.bml_progress;
+
     return &mca_pml_ob1.super;
 }
 
