@@ -205,7 +205,7 @@ mca_btl_portals_component_open(void)
                            &dummy);
     mca_btl_portals_module.super.btl_bandwidth = dummy;
 
-#if 0
+#if 1
     mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
 #else
     mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
@@ -472,7 +472,8 @@ mca_btl_portals_component_progress(void)
                     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                          "received send fragment %x", frag));
                 
-                    if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size) {
+                    if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size ||
+                        ev.md.threshold == 0) {
                         /* the block is full.  It's deactivated automagically, but we
                            can't start it up again until everyone is done with it.
                            The actual reactivation and all that will happen after the
