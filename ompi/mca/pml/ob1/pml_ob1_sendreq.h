@@ -207,7 +207,8 @@ do {                                                                            
                 sendreq->req_send.req_addr,                                                    \
                 sendreq->req_send.req_bytes_packed,                                            \
                 sendreq->req_rdma))) {                                                         \
-                rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl, size);              \
+                rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl,                     \ 
+                                             sendreq->req_send.req_bytes_packed);              \
             } else {                                                                           \
                 rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size,               \
                     MCA_PML_OB1_HDR_FLAGS_CONTIG);                                             \
