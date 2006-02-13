@@ -95,17 +95,26 @@ int mca_mpool_base_open(void)
                                 &mca_mpool_base_disable_sbrk); 
 #endif
 
-    /* force mem hooks if leave_pinned is enabled */
+    /* force mem hooks if leave_pinned or leave_pinned_pipeline is enabled */
 #ifdef HAVE_MALLOC_H
     if(0 == mca_mpool_base_use_mem_hooks && 0 == mca_mpool_base_disable_sbrk) {
 #else 
-    if(0 == mca_mpool_base_use_mem_hooks && 0) {
+    if(0 == mca_mpool_base_use_mem_hooks ) {
 #endif
          int param;
          mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0);
          param = mca_base_param_find("mpi", NULL, "leave_pinned");
          mca_base_param_lookup_int(param, &mca_mpool_base_use_mem_hooks);
-    } 
+         
+         if(0 == mca_mpool_base_use_mem_hooks) { 
+             /* and now check leave_pinned_pipeline if necessary */
+             mca_base_param_register_int("pml", "ob1", 
+                                         "leave_pinned_pipeline", 
+                                         "leave_pinned_pipeline", 0); 
+             param = mca_base_param_find("pml", "ob1", "leave_pinned_pipeline");
+             mca_base_param_lookup_int(param, &mca_mpool_base_use_mem_hooks);
+         }
+    }  
     
     /* get the page size for this architecture*/ 
     mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
