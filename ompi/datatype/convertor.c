@@ -31,8 +31,9 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 {
     ompi_convertor_t* convertor = OBJ_NEW(ompi_convertor_t);
 
-    convertor->remoteArch  = remote_arch;
-    convertor->pFunctions  = ompi_ddt_copy_functions;
+    convertor->remoteArch = remote_arch;
+    convertor->pFunctions = ompi_ddt_copy_functions;
+    convertor->stack_pos  = 0;
 
     return convertor;
 }
@@ -59,13 +60,8 @@ inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
     convertor->flags             = CONVERTOR_HOMOGENEOUS;
-    convertor->pDesc             = NULL;
     convertor->pStack            = convertor->static_stack;
     convertor->stack_size        = DT_STATIC_STACK_SIZE;
-    convertor->fAdvance          = NULL;
-    convertor->memAlloc_fn       = NULL;
-    convertor->memAlloc_userdata = NULL;
-    convertor->stack_pos         = 0;
     convertor->remoteArch        = 0;
     convertor->pending_length    = 0;
 }
