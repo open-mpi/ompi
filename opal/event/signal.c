@@ -127,8 +127,7 @@ opal_evsignal_add(sigset_t *evsigmask, struct opal_event *ev)
            gives a window where a signal handler *should* be installed
            but actually is not. */
         if (opal_evsel->recalc && opal_evsel->recalc(opal_evbase, 0) == -1) {
-            opal_output(0, "opal_event_loop: opal_evsel->recalc() failed.");
-            opal_mutex_unlock(&opal_event_lock);
+            opal_output(0, "opal_evsignal_add: opal_evsel->recalc() failed.");
             return (-1);
         }
 
