@@ -97,7 +97,7 @@ int mca_pml_ob1_component_open(void)
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
     mca_pml_ob1.leave_pinned_pipeline =
-        mca_pml_ob1_param_register_int("leave_pinned_pipeline", 4);
+        mca_pml_ob1_param_register_int("leave_pinned_pipeline", 0);
     
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
                                                                                                             
