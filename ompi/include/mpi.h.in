@@ -19,6 +19,11 @@
 #ifndef OMPI_MPI_H
 #define OMPI_MPI_H
 
+/* The comment below (and the ending partner) are for building fat
+   distributions on platforms that support it.  Please do not remove */
+
+/* @OMPI_BEGIN_CONFIGURE_SECTION@ */
+
 #ifndef OMPI_CONFIG_H
 
 /* Only include these if OMPI_CONFIG_H isn't defined (meaning if
@@ -102,6 +107,8 @@
 #endif
 
 #endif
+
+/* @OMPI_END_CONFIGURE_SECTION@ */
 
 #ifndef OMPI_BUILDING
 #define OMPI_BUILDING 0
