@@ -31,11 +31,15 @@
 #
 # User-configurable stuff
 #
-OMPI_PREFIX="/usr/local"
-OMPI_OPTIONS="--disable-f77 --without-cs-fs"
+OMPI_PREFIX="/usr/local/openmpi"
+OMPI_OPTIONS="--disable-f77 --without-cs-fs -enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,pml-teg,pml-uniq,ptl-self,ptl-sm,ptl-tcp,sds-pipe,sds-slurm"
 OMPI_PACKAGE="openmpi"
 OMPI_VER_PACKAGE="openmpi"
 OMPI_OSX_README="ReadMe.rtf"
+# note - if want XGrid support, make sure that a cocoa-supported 
+# architecture appears first on the list.
+OMPI_ARCH_LIST="ppc i386"
+OMPI_SDK="/Developer/SDKs/MacOSX10.4u.sdk"
 
 #
 # Not so modifiable stuff
@@ -153,59 +157,132 @@ if test ! -d "$srcdir"; then
     exit 1
 fi
 
-#
-# Run configure
-# 
-cd $srcdir
-config="./configure --prefix=$OMPI_PREFIX $OMPI_OPTIONS"
-echo "--> Running configure: $config"
-eval $config > "$BUILD_TMP/configure.out" 2>&1
+build_arch=`uname -p`"-apple-darwin"`uname -r`
 
-if test $? != 0; then
-    echo "*** Problem running configure - aborting!"
-    echo "*** See $BUILD_TMP/configure.out for help."
-    exit 1
-fi
+real_install=1
+for arch in $OMPI_ARCH_LIST ; do
+    builddir="$BUILD_TMP/build-$arch"
+    mkdir "$builddir"
 
-#
-# Build
-#
-cmd="make all"
-echo "--> Building: $cmd"
-eval $cmd > "$BUILD_TMP/make.out" 2>&1
+    case "$arch" in
+        ppc)
+            host_arch="powerpc-apple-darwin"`uname -r`
+            ;;
+        ppc64)
+            # lie, but makes building on G4 easier
+            host_arch="powerpc64-apple-darwin"`uname -r`
+            ;;
+        i386)
+            host_arch="i386-apple-darwin"`uname -r`
+            ;;
+    esac
 
-if test $? != 0; then
-    echo "*** Problem building - aborting!"
-    echo "*** See $BUILD_TMP/make.out for help."
-    exit 1
-fi
+    #
+    # Run configure
+    # 
+    cd $builddir
+    config="$srcdir/configure CFLAGS=\"-isysroot $OMPI_SDK\" --prefix=$OMPI_PREFIX $OMPI_OPTIONS --build=$build_arch --host=$host_arch"
+    echo "--> Running configure: $config"
+    eval $config > "$BUILD_TMP/configure.out" 2>&1
 
-#
-# Install into tmp place
-#
-distdir="dist/"
-fulldistdir="$BUILD_TMP/$distdir"
-cmd="make DESTDIR=$fulldistdir install"
-echo "--> Installing:"
-eval $cmd > "$BUILD_TMP/install.out" 2>&1
+    if test $? != 0; then
+        echo "*** Problem running configure - aborting!"
+        echo "*** See $BUILD_TMP/configure.out for help."
+        exit 1
+    fi
 
-if test $? != 0; then
-    echo "*** Problem installing - aborting!"
-    echo "*** See $BUILD_TMP/install.out for help."
-    exit 1
-fi
+    #
+    # Build
+    #
+    cmd="make all"
+    echo "--> Building: $cmd"
+    eval $cmd > "$BUILD_TMP/make.out" 2>&1
 
+    if test $? != 0; then
+        echo "*** Problem building - aborting!"
+        echo "*** See $BUILD_TMP/make.out for help."
+        exit 1
+    fi
+
+    #
+    # Install into tmp place
+    #
+    if $real_install -eq 1 ; then
+        distdir="dist"
+        real_install=0
+    else
+        distdir="dist-$arch"
+    fi
+    fulldistdir="$BUILD_TMP/$distdir"
+    cmd="make DESTDIR=$fulldistdir install"
+    echo "--> Installing:"
+    eval $cmd > "$BUILD_TMP/install.out" 2>&1
+
+    if test $? != 0; then
+        echo "*** Problem installing - aborting!"
+        echo "*** See $BUILD_TMP/install.out for help."
+        exit 1
+    fi
+
+    #
+    # Copy in special doc files
+    #
+    SPECIAL_FILES="README ${OMPI_OSX_README} LICENSE"
+    echo "--> Copying in special files: $SPECIAL_FILES"
+    mkdir -p  "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc"
+    cp $SPECIAL_FILES "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc/."
+    if [ ! $? = 0 ]; then
+        echo "*** Problem copying files $SPECIAL_FILES.  Aborting!"
+        exit 1
+    fi
+
+    distdir=
+    fulldistdir=
+done
+
+
+########################################################################
 #
-# Copy in special doc files
+# Make the fat binary
 #
-SPECIAL_FILES="README ${OMPI_OSX_README} LICENSE"
-echo "--> Copying in special files: $SPECIAL_FILES"
-mkdir -p  "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc"
-cp $SPECIAL_FILES "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc/."
-if [ ! $? = 0 ]; then
-    echo "*** Problem copying files $SPECIAL_FILES.  Aborting!"
-    exit 1
-fi
+########################################################################
+
+set -x
+
+for arch in $OMPI_ARCH_LIST ; do
+    cd $BUILD_TMP
+    other_archs=`ls arch-*`
+    fulldistdir="$BUILD_TMP/dist"
+
+    for other_arch in $other_archs ; do
+        cd "$fulldistdir"
+
+        # <prefix>/bin
+        files=`find bin -type f -print`
+        for file in $files ; do
+            other_file="$BUILD_TMP/dist-${other_arch}/$file"
+            if test -r $other_file ; then
+                lipo -create $file $other_file -output $file 
+            fi
+        done
+
+        # <prefix>/lib - ignore .la files
+        files=`find lib -type f -print | grep -v '\.la$'`
+        for file in $files ; do
+            other_file="$BUILD_TMP/dist-${other_arch}/$file"
+            if test -r $other_file ; then
+                lipo -create $file $other_file -output $file 
+            else
+                echo "Not lipoing missing file $other_file"
+            fi
+        done
+
+    done    
+    break
+done
+
+set +x
+exit
 
 ########################################################################
 #
