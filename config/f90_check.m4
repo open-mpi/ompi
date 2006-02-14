@@ -44,7 +44,7 @@ AC_DEFUN([OMPI_F90_CHECK], [
     if test "$OMPI_WANT_F90_BINDINGS" = "1"; then
         OMPI_F90_CHECK_TYPE([$1], [ofc_have_type=1], [ofc_have_type=0])
     else
-        AC_MSG_CHECKING([if Fortran compiler supports $ofc_fortran_type])
+        AC_MSG_CHECKING([if Fortran 90 compiler supports $ofc_fortran_type])
         AC_MSG_RESULT([skipped])
     fi
 
@@ -64,7 +64,7 @@ AC_DEFUN([OMPI_F90_CHECK], [
         # really support it.
         OMPI_F90_GET_SIZEOF([$1], [ofc_type_size])
         if test "$ofc_expected_size" != "" -a "$ofc_type_size" != "$ofc_expected_size"; then
-            AC_MSG_WARN([*** Fortran $ofc_fortran_type does not have expected size!])
+            AC_MSG_WARN([*** Fortran 90 $ofc_fortran_type does not have expected size!])
             AC_MSG_WARN([*** Expected $ofc_expected_size, got $ofc_type_size])
             AC_MSG_WARN([*** Disabling MPI support for Fortran $ofc_fortran_type])
             ofc_have_type=0
@@ -138,15 +138,20 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # same as the corresponding F77 datatypes, and that's good enough
     # (i.e., the DDT engine only looks at the F77 sizes/alignments).
 
-    ofc_upper_var_name=m4_translit(m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_F90_$ofc_upper_var_name],
+    # Finally, note that it is necessary to use the Big Long Ugly m4
+    # expressions in the AC_DEFINE_UNQUOTEDs.  If you don't (e.g., put
+    # the result of the BLUm4E in a shell variable and use that in
+    # AC_DEFINE_UNQUOTED), autoheader won't put them in the
+    # AC_CONFIG_HEADER (or AM_CONFIG_HEADER, in our case).
+
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                        [$ofc_have_type], 
                        [Whether we have Fortran 90 $ofc_type_name or not])
     AS_IF([test "$ofc_want_range" != ""],
-        [AC_DEFINE_UNQUOTED([OMPI_PRECISION_F90_$ofc_upper_var_name],
+        [AC_DEFINE_UNQUOTED([OMPI_PRECISION_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                             [$ofc_type_precision],
                             [Precision of Fortran 90 $ofc_type_name])
-         AC_DEFINE_UNQUOTED([OMPI_RANGE_F90_$ofc_upper_var_name],
+         AC_DEFINE_UNQUOTED([OMPI_RANGE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                             [$ofc_type_range],
                             [Range of Fortran 90 $ofc_type_name])], [])
 
@@ -159,6 +164,6 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # Clean up
     unset ofc_fortran_type ofc_expected_size ofc_want_range ofc_pretty_name
     unset ofc_have_type ofc_type_size ofc_type_alignment ofc_letter ofc_str
-    unset ofc_type_range ofc_type_precision ofc_upper_var_name
+    unset ofc_type_range ofc_type_precision
     unset ofc_f77_sizeof ofc_f77_alignment
 ])dnl
