@@ -30,18 +30,29 @@ fi
 
 # Read the setup information
 
-echo "Reading Fortran KIND information..." >&2
 . "$1/fortran_kinds.sh"
+
+# Output generation configuration information
 
 # Do we want the 2 buffer functions?  (see comment in
 # ompi/mpi/f90/Makefile.am)
 
 WANT_2BUFFER_FUNCTIONS=$2
 if test "$WANT_2BUFFER_FUNCTIONS" = "1"; then
-    echo "Generating 2 buffer function interfaces: yes" >&2
+    want_2buf=yes
 else
-    echo "Generating 2 buffer function interfaces: no" >&2
+    want_2buf=no
 fi
+
+cat >&2 <<EOF
+Generating:
+2 buffer functions: $want_2buf
+Max array rank:     $max_array_rank
+LOGICAL kinds:      $lkinds
+INTEGER kinds:      $ikinds
+REAL kinds:         $rkinds
+COMPLEX kinds:      $ckinds
+EOF
 
 # Do the work
 
