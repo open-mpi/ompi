@@ -28,6 +28,7 @@
 #include "mpool_base_mem_cb.h"
 
 extern int mca_mpool_base_use_mem_hooks;
+extern ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 {
@@ -86,6 +87,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
        opal_list_get_size(&mca_mpool_base_modules) == 1 &&
        opal_mem_free_is_supported()) {
         opal_mem_free_register_handler(mca_mpool_base_mem_cb, NULL);
+        OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
     }
     return module; 
 }

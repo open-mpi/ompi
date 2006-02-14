@@ -28,7 +28,7 @@
 #include "mpool_base_mem_cb.h"
 
 extern int mca_mpool_base_use_mem_hooks; 
-
+extern ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
 int mca_mpool_base_close(void)
 {
   opal_list_item_t *item;
@@ -61,6 +61,7 @@ int mca_mpool_base_close(void)
   /* deregister memory free callback */
   if(mca_mpool_base_use_mem_hooks && opal_mem_free_is_supported()) {
       opal_mem_free_unregister_handler(mca_mpool_base_mem_cb);
+      OBJ_DESTRUCT(&mca_mpool_base_mem_cb_array);
   }
   /* All done */
 

@@ -26,6 +26,7 @@
 
 extern uint32_t mca_mpool_base_page_size; 
 extern uint32_t mca_mpool_base_page_size_log; 
+ompi_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 /*
  *  memory hook callback, called when memory is free'd out from under us
@@ -33,7 +34,6 @@ extern uint32_t mca_mpool_base_page_size_log;
 void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
 {
     uint32_t i, cnt;
-    ompi_pointer_array_t regs;
     mca_mpool_base_registration_t* reg;
     mca_mpool_base_selected_module_t* current;
     int rc;
@@ -47,7 +47,6 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
           
     base_addr = down_align_addr( base, mca_mpool_base_page_size_log);
     bound_addr = up_align_addr((void*) ((unsigned long) base + size - 1), mca_mpool_base_page_size_log);
-    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
     for(item = opal_list_get_first(&mca_mpool_base_modules);
         item != opal_list_get_end(&mca_mpool_base_modules);
         item = opal_list_get_next(item)) {
@@ -62,7 +61,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                                                        current->mpool_module, 
                                                        base_addr,
                                                        size,
-                                                       &regs, 
+                                                       &mca_mpool_base_mem_cb_array, 
                                                        &cnt 
                                                        ); 
                 if(OMPI_SUCCESS != rc) { 
@@ -70,7 +69,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                 }
                 for(i = 0; i < cnt; i++) { 
                 
-                    reg = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, i);
+                    reg = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&mca_mpool_base_mem_cb_array, i);
                     if(base_addr <  (void*) ((unsigned long) reg->bound - mca_mpool_base_page_size)) { 
                         base_addr = reg->bound - mca_mpool_base_page_size; 
                     }
@@ -89,11 +88,10 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata)
                     current->mpool_module->mpool_deregister(current->mpool_module, reg); 
                     dereg++;
                 }
-                ompi_pointer_array_remove_all(&regs);
+                ompi_pointer_array_remove_all(&mca_mpool_base_mem_cb_array);
             }
         }
     }    
-    OBJ_DESTRUCT(&regs);
 #if 0
     if(dereg != 0) {
         fprintf(stderr, "[%lu,%lu,%lu] mca_mpool_base_mem_cb: addr %p size %lu base %p bound %p\n", 

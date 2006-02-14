@@ -138,17 +138,22 @@ int mca_rcache_rb_tree_insert(
  * @retval OMPI_ERR_BAD_PARAM if the passed base pointer was invalid
  */
 int mca_rcache_rb_tree_delete(mca_rcache_rb_module_t* rb_module, 
-                          mca_mpool_base_registration_t* reg)
+                              mca_mpool_base_registration_t* reg)
 {
     int rc; 
     mca_rcache_rb_tree_item_t* tree_item; 
-    tree_item = mca_rcache_rb_tree_find(rb_module, 
-                                        reg->base); 
+
+    tree_item = mca_rcache_rb_tree_find(rb_module,
+                                        reg->base);
+    
     if(NULL == tree_item) {
-        return OMPI_ERROR; 
+        return OMPI_ERROR;
     }
     rc =  ompi_rb_tree_delete(&rb_module->rb_tree, &tree_item->key); 
-    
+
+    if(OMPI_SUCCESS == rc) { 
+        OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, tree_item);
+    }
     return rc;
 }
 
