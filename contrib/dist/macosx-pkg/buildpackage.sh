@@ -229,14 +229,14 @@ for arch in $OMPI_ARCH_LIST ; do
     #
     SPECIAL_FILES="README LICENSE"
     echo "--> Copying in special files: $SPECIAL_FILES"
-    pushd $srcdir
+    pushd $srcdir >/dev/null
     mkdir -p  "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc"
     cp $SPECIAL_FILES "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc/."
     if [ ! $? = 0 ]; then
         echo "*** Problem copying files $SPECIAL_FILES.  Aborting!"
         exit 1
     fi
-    popd
+    popd >/dev/null
 
     distdir=
     fulldistdir=
@@ -267,6 +267,7 @@ for arch in $OMPI_ARCH_LIST ; do
     other_archs=`ls -d dist-*`
     fulldistdir="$BUILD_TMP/dist"
 
+    echo "--> Creating fat binares and libraries"
     for other_arch in $other_archs ; do
         cd "$fulldistdir"
 
@@ -294,6 +295,7 @@ for arch in $OMPI_ARCH_LIST ; do
 
     cd $BUILD_TMP
 
+    echo "--> Creating multi-architecture mpi.h"
     # mpi.h
     # get the top of mpi.h
     mpih_top=`grep -n '@OMPI_BEGIN_CONFIGURE_SECTION@' $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h | cut -f1 -d:`
@@ -312,7 +314,7 @@ for arch in $OMPI_ARCH_LIST ; do
     head -n $mpih_bottom_top $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h | tail -n $mpih_fun_len > mpih_$arch.txt
 
     # start putting it back together
-    rm mpi.h
+    rm -f mpi.h
     cat mpih_top.txt > mpi.h
 
     print_arch_if $arch
