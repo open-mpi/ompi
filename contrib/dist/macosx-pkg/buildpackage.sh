@@ -31,13 +31,14 @@
 #
 # User-configurable stuff
 #
-OMPI_PREFIX="/usr/local/openmpi"
-OMPI_OPTIONS="--disable-mpi-profile --disable-mpi-f77 --without-cs-fs -enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,pml-teg,pml-uniq,ptl-self,ptl-sm,ptl-tcp,sds-pipe,sds-slurm"
+OMPI_PREFIX="/usr/local/"
+OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs -enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,pml-teg,pml-uniq,ptl-self,ptl-sm,ptl-tcp,sds-pipe,sds-slurm"
 OMPI_PACKAGE="openmpi"
 OMPI_VER_PACKAGE="openmpi"
 OMPI_OSX_README="ReadMe.rtf"
 # note - if want XGrid support, make sure that a cocoa-supported 
-# architecture appears first on the list.
+# architecture appears first on the list.  Otherwise, we won't
+# lipo that component and it will be dropped
 OMPI_ARCH_LIST="ppc i386"
 OMPI_SDK="/Developer/SDKs/MacOSX10.4u.sdk"
 
