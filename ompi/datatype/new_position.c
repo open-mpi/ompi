@@ -1,12 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -26,9 +28,12 @@
 #endif
 #include <stdlib.h>
 
-static int ompi_pack_debug=0;
-
-#define DO_DEBUG(INST)  if( ompi_pack_debug ) { INST }
+#if OMPI_ENABLE_DEBUG
+int32_t ompi_position_debug = 0;
+#define DO_DEBUG(INST)  if( ompi_position_debug ) { INST }
+#else
+#define DO_DEBUG(INST)
+#endif  /* OMPI_ENABLE_DEBUG */
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
  * all basic functionalities, hence using them as basic blocks for all conversion functions.
@@ -215,6 +220,10 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     (*position) -= iov_len_local;
     pConvertor->bConverted = *position;  /* update the already converted bytes */
     assert( iov_len_local >= 0 );
+    if( (pConvertor->pending_length != iov_len_local) &&
+        (pConvertor->flags & CONVERTOR_RECV) ) {
+        opal_output( 0, "Missing some data ?" );
+    }
     if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
