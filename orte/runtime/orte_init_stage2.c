@@ -39,7 +39,7 @@
 int orte_init_stage2(void)
 {
     int ret;
-    char *error;
+    char *error_str = NULL;
 
     /* 
      * Initialize the selected modules now that all components/name are available.
@@ -47,20 +47,20 @@ int orte_init_stage2(void)
 
     if (ORTE_SUCCESS != (ret = orte_rml.init())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_rml.init";
-        goto error;
+        error_str = "orte_rml.init";
+        goto return_error;
     }
 
     if (ORTE_SUCCESS != (ret = orte_ns.init())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_ns.init";
-        goto error;
+        error_str = "orte_ns.init";
+        goto return_error;
     }
 
     if (ORTE_SUCCESS != (ret = orte_gpr.init())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_gpr.init";
-        goto error;
+        error_str = "orte_gpr.init";
+        goto return_error;
     }
 
     /*
@@ -68,24 +68,21 @@ int orte_init_stage2(void)
      */
     if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_open";
-        goto error;
+        error_str = "orte_iof_base_open";
+        goto return_error;
     }
     if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_select";
-        goto error;
+        error_str = "orte_iof_base_select";
+        goto return_error;
     }
-    
-     /* 
-     * All done 
-     */
-error:
-    if (ret != ORTE_SUCCESS) {
-        opal_show_help("help-orte-runtime",
-                       "orte_init:startup:internal-failure",
-                       true, error, ret);
-    }
+     /* All done */
+    return ORTE_SUCCESS; 
+
+return_error:
+    opal_show_help("help-orte-runtime",
+                   "orte_init:startup:internal-failure",
+                   true, error_str, ret);
     
     return ret;
 }
