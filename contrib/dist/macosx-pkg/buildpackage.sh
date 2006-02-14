@@ -32,7 +32,7 @@
 # User-configurable stuff
 #
 OMPI_PREFIX="/usr/local/openmpi"
-OMPI_OPTIONS="--disable-f77 --without-cs-fs -enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,pml-teg,pml-uniq,ptl-self,ptl-sm,ptl-tcp,sds-pipe,sds-slurm"
+OMPI_OPTIONS="--disable-mpi-profile --disable-mpi-f77 --without-cs-fs -enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,pml-teg,pml-uniq,ptl-self,ptl-sm,ptl-tcp,sds-pipe,sds-slurm"
 OMPI_PACKAGE="openmpi"
 OMPI_VER_PACKAGE="openmpi"
 OMPI_OSX_README="ReadMe.rtf"
@@ -181,33 +181,33 @@ for arch in $OMPI_ARCH_LIST ; do
     # Run configure
     # 
     cd $builddir
-    config="$srcdir/configure CFLAGS=\"-isysroot $OMPI_SDK\" --prefix=$OMPI_PREFIX $OMPI_OPTIONS --build=$build_arch --host=$host_arch"
+    config="$srcdir/configure CFLAGS=\"-arch $arch -isysroot $OMPI_SDK\" CXXFLAGS=\"-arch $arch -isysroot $OMPI_SDK\" OBJCFLAGS=\"-arch $arch -isysroot $OMPI_SDK\" --prefix=$OMPI_PREFIX $OMPI_OPTIONS --build=$build_arch --host=$host_arch"
     echo "--> Running configure: $config"
-    eval $config > "$BUILD_TMP/configure.out" 2>&1
+    eval $config > "$BUILD_TMP/configure.out-$arch" 2>&1
 
     if test $? != 0; then
         echo "*** Problem running configure - aborting!"
-        echo "*** See $BUILD_TMP/configure.out for help."
+        echo "*** See $BUILD_TMP/configure.out-$arch for help."
         exit 1
     fi
 
     #
     # Build
     #
-    cmd="make all"
+    cmd="make -j 4 all"
     echo "--> Building: $cmd"
-    eval $cmd > "$BUILD_TMP/make.out" 2>&1
+    eval $cmd > "$BUILD_TMP/make.out-$arch" 2>&1
 
     if test $? != 0; then
         echo "*** Problem building - aborting!"
-        echo "*** See $BUILD_TMP/make.out for help."
+        echo "*** See $BUILD_TMP/make.out-$arch for help."
         exit 1
     fi
 
     #
     # Install into tmp place
     #
-    if $real_install -eq 1 ; then
+    if test $real_install -eq 1 ; then
         distdir="dist"
         real_install=0
     else
@@ -216,25 +216,27 @@ for arch in $OMPI_ARCH_LIST ; do
     fulldistdir="$BUILD_TMP/$distdir"
     cmd="make DESTDIR=$fulldistdir install"
     echo "--> Installing:"
-    eval $cmd > "$BUILD_TMP/install.out" 2>&1
+    eval $cmd > "$BUILD_TMP/install.out-$arch" 2>&1
 
     if test $? != 0; then
         echo "*** Problem installing - aborting!"
-        echo "*** See $BUILD_TMP/install.out for help."
+        echo "*** See $BUILD_TMP/install.out-$arch for help."
         exit 1
     fi
 
     #
     # Copy in special doc files
     #
-    SPECIAL_FILES="README ${OMPI_OSX_README} LICENSE"
+    SPECIAL_FILES="README LICENSE"
     echo "--> Copying in special files: $SPECIAL_FILES"
+    pushd $srcdir
     mkdir -p  "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc"
     cp $SPECIAL_FILES "${fulldistdir}/${OMPI_PREFIX}/share/openmpi/doc/."
     if [ ! $? = 0 ]; then
         echo "*** Problem copying files $SPECIAL_FILES.  Aborting!"
         exit 1
     fi
+    popd
 
     distdir=
     fulldistdir=
@@ -246,43 +248,94 @@ done
 # Make the fat binary
 #
 ########################################################################
-
-set -x
+print_arch_if() {
+    case "$1" in
+        ppc)
+            echo "#ifdef __ppc__" >> mpi.h
+            ;;
+        ppc64)
+            echo "#ifdef __ppc64__" >> mpi.h
+            ;;
+        i386)
+            echo "#ifdef __i386__" >> mpi.h
+            ;;
+    esac
+} 
 
 for arch in $OMPI_ARCH_LIST ; do
     cd $BUILD_TMP
-    other_archs=`ls arch-*`
+    other_archs=`ls -d dist-*`
     fulldistdir="$BUILD_TMP/dist"
 
     for other_arch in $other_archs ; do
         cd "$fulldistdir"
 
         # <prefix>/bin
-        files=`find bin -type f -print`
+        files=`find ./${OMPI_PREFIX}/bin -type f -print`
         for file in $files ; do
-            other_file="$BUILD_TMP/dist-${other_arch}/$file"
+            other_file="$BUILD_TMP/${other_arch}/$file"
             if test -r $other_file ; then
-                lipo -create $file $other_file -output $file 
+                lipo -create $file $other_file -output $file
             fi
         done
 
         # <prefix>/lib - ignore .la files
-        files=`find lib -type f -print | grep -v '\.la$'`
+        files=`find ./${OMPI_PREFIX}/lib -type f -print | grep -v '\.la$'`
         for file in $files ; do
-            other_file="$BUILD_TMP/dist-${other_arch}/$file"
+            other_file="$BUILD_TMP/${other_arch}/$file"
             if test -r $other_file ; then
-                lipo -create $file $other_file -output $file 
+                lipo -create $file $other_file -output $file
             else
                 echo "Not lipoing missing file $other_file"
             fi
         done
 
-    done    
+    done
+
+    cd $BUILD_TMP
+
+    # mpi.h
+    # get the top of mpi.h
+    mpih_top=`grep -n '@OMPI_BEGIN_CONFIGURE_SECTION@' $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h | cut -f1 -d:`
+    mpih_top=`echo "$mpih_top - 1" | bc`
+    head -n $mpih_top $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h > mpih_top.txt
+
+    # now the bottom of mpi.h
+    mpih_bottom_top=`grep -n '@OMPI_END_CONFIGURE_SECTION@' $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h | cut -f1 -d:`
+    mpih_bottom_bottom=`wc -l $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h | cut -f1 -d/`
+    mpih_bottom=`echo "$mpih_bottom_bottom - $mpih_bottom_top" | bc`
+    tail -n $mpih_bottom $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h > mpih_bottom.txt
+
+    # now get our little section of fun
+    mpih_top=`echo "$mpih_top + 1" | bc`
+    mpih_fun_len=`echo "$mpih_bottom_top - $mpih_top + 1" | bc`
+    head -n $mpih_bottom_top $BUILD_TMP/dist/${OMPI_PREFIX}/include/mpi.h | tail -n $mpih_fun_len > mpih_$arch.txt
+
+    # start putting it back together
+    rm mpi.h
+    cat mpih_top.txt > mpi.h
+
+    print_arch_if $arch
+    cat mpih_$arch.txt >> mpi.h
+    echo "#endif" >> mpi.h
+
+    for other_arch_dir in $other_archs ; do
+        other_arch=`echo $other_arch_dir | cut -f2 -d-`
+        mpih_top=`grep -n '@OMPI_BEGIN_CONFIGURE_SECTION@' $BUILD_TMP/$other_arch_dir/${OMPI_PREFIX}/include/mpi.h | cut -f1 -d:`
+        mpih_bottom_top=`grep -n '@OMPI_END_CONFIGURE_SECTION@' $BUILD_TMP/$other_arch_dir/${OMPI_PREFIX}/include/mpi.h | cut -f1 -d:`
+        mpih_fun_len=`echo "$mpih_bottom_top - $mpih_top + 1" | bc`
+        head -n $mpih_bottom_top $BUILD_TMP/$other_arch_dir/${OMPI_PREFIX}/include/mpi.h | tail -n $mpih_fun_len > mpih_$other_arch.txt
+
+        print_arch_if $other_arch
+        cat mpih_$other_arch.txt >> mpi.h
+        echo "#endif" >> mpi.h
+    done
+
+    cat mpih_bottom.txt >> mpi.h
+    mv mpi.h $BUILD_TMP/dist/${OMPI_PREFIX}/include/.
+    rm mpih*
     break
 done
-
-set +x
-exit
 
 ########################################################################
 #
