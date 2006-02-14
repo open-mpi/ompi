@@ -131,7 +131,6 @@ do {                                                                            
     if( pml_request->req_pml_complete == true) { \
         MCA_PML_OB1_RECV_REQUEST_RETURN((recvreq)); \
     } \
-    (recvreq) = (mca_pml_ob1_recv_request_t*)MPI_REQUEST_NULL; \
 }
 
 /**
