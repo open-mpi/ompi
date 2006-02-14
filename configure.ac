@@ -569,34 +569,34 @@ OMPI_F90_RKINDS=""
 OMPI_F90_CKINDS=""
 
 # LOGICAL and friends
-OMPI_F90_CHECK([logical], [LOGICAL])
-OMPI_F90_CHECK([logical(selected_int_kind(2))], [LOGICAL*1], [1])
-OMPI_F90_CHECK([logical(selected_int_kind(4))], [LOGICAL*2], [2])
-OMPI_F90_CHECK([logical(selected_int_kind(9))], [LOGICAL*4], [4])
-OMPI_F90_CHECK([logical(selected_int_kind(18))], [LOGICAL*8], [8])
-OMPI_F90_CHECK([logical(selected_int_kind(19))], [LOGICAL*16], [16])
+OMPI_F90_CHECK([LOGICAL])
+OMPI_F90_CHECK([LOGICAL*1], [1])
+OMPI_F90_CHECK([LOGICAL*2], [2])
+OMPI_F90_CHECK([LOGICAL*4], [4])
+OMPI_F90_CHECK([LOGICAL*8], [8])
+OMPI_F90_CHECK([LOGICAL*16], [16])
 
 # INTEGER and friends
-OMPI_F90_CHECK([integer], [INTEGER])
-OMPI_F90_CHECK([integer(selected_int_kind(2))], [INTEGER*1], [1])
-OMPI_F90_CHECK([integer(selected_int_kind(4))], [INTEGER*2], [2])
-OMPI_F90_CHECK([integer(selected_int_kind(9))], [INTEGER*4], [4])
-OMPI_F90_CHECK([integer(selected_int_kind(18))], [INTEGER*8], [8])
-OMPI_F90_CHECK([integer(selected_int_kind(19))], [INTEGER*16], [16])
+OMPI_F90_CHECK([INTEGER])
+OMPI_F90_CHECK([INTEGER*1], [1])
+OMPI_F90_CHECK([INTEGER*2], [2])
+OMPI_F90_CHECK([INTEGER*4], [4])
+OMPI_F90_CHECK([INTEGER*8], [8])
+OMPI_F90_CHECK([INTEGER*16], [16])
 
 # REAL, DOUBLE PRECISION, REAL*4, *8, *16
-OMPI_F90_CHECK([real], [REAL])
-OMPI_F90_CHECK([real(kind(1.D0))], [DOUBLE PRECISION], [], [])
-OMPI_F90_CHECK([real(selected_real_kind(6))], [REAL*4], [4], [1])
-OMPI_F90_CHECK([real(selected_real_kind(15))], [REAL*8], [8], [1])
-OMPI_F90_CHECK([real(selected_real_kind(31))], [REAL*16], [16], [1])
+OMPI_F90_CHECK([REAL])
+OMPI_F90_CHECK([REAL*4], [4], [1])
+OMPI_F90_CHECK([REAL*8], [8], [1])
+OMPI_F90_CHECK([REAL*16], [16], [1])
+OMPI_F90_CHECK([DOUBLE PRECISION], [], [])
 
 # COMPLEX, DOUBLE COMPLEX, COMPLEX*8, *16, *32
-OMPI_F90_CHECK([complex], [COMPLEX])
-OMPI_F90_CHECK([complex(kind(1.D0))], [DOUBLE COMPLEX], [], [])
-OMPI_F90_CHECK([complex(selected_real_kind(6))], [COMPLEX*8], [8], [1])
-OMPI_F90_CHECK([complex(selected_real_kind(15))], [COMPLEX*16], [16], [1])
-OMPI_F90_CHECK([complex(selected_real_kind(31))], [COMPLEX*32], [32], [1])
+OMPI_F90_CHECK([COMPLEX])
+OMPI_F90_CHECK([COMPLEX*8], [8], [1])
+OMPI_F90_CHECK([COMPLEX*16], [16], [1])
+OMPI_F90_CHECK([COMPLEX*32], [32], [1])
+OMPI_F90_CHECK([DOUBLE COMPLEX], [], [])
 
 # The OMPI_F90_CKINDS list represents the overall size of the complex
 # types -- not the size of the REAL's that make them up.  For the
