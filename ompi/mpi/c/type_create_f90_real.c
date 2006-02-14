@@ -38,15 +38,15 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 {
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( 0 > p ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-        } else if( 0 > r ) {
+        if ((MPI_UNDEFINED == p && MPI_UNDEFINED == r) ||
+            (p < 0 && MPI_UNDEFINED != p) ||
+            (r < 0 && MPI_UNDEFINED != r)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
-    /* if the user does not care about p or r set them to 0 so the test associate with them will
-     * always succeed.
+    /* if the user does not care about p or r set them to 0 so the
+     * test associate with them will always succeed.
      */
     if( MPI_UNDEFINED == p ) p = 0;
     if( MPI_UNDEFINED == r ) r = 0;
@@ -56,8 +56,9 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
     else if( (FLT_DIG < p) || (FLT_MAX_10_EXP < r) ) *newtype = &ompi_mpi_double;
     else                                             *newtype = &ompi_mpi_float;
 
-    if( *newtype != &ompi_mpi_datatype_null )
+    if( *newtype != &ompi_mpi_datatype_null ) {
         return MPI_SUCCESS;
+    }
 
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }
