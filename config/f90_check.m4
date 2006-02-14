@@ -17,7 +17,7 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_F90_CHECK(F90 type, F77 type, expected size, want range and precision)
+# OMPI_F90_CHECK(Fortran type, expected size, want range and precision)
 #----------------------------------------------------------------------------
 # Check Fortran type/kind combinations, including:
 # - whether compiler supports or not
@@ -30,8 +30,8 @@ dnl
 # types to search is a comma-seperated list of values
 AC_DEFUN([OMPI_F90_CHECK], [
     ofc_fortran_type="$1"
-    ofc_expected_size="$3"
-    ofc_want_range="$4"
+    ofc_expected_size="$2"
+    ofc_want_range="$3"
 
     ofc_have_type=0
     ofc_type_size=$ac_cv_sizeof_int
@@ -71,19 +71,19 @@ AC_DEFUN([OMPI_F90_CHECK], [
         else
             # If this type has an F77 counterpart, see if it's
             # supported.
-            [ofc_f77_have_type=$OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_])
+            [ofc_f77_have_type=$OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
             if test "$ofc_f77_have_type" = "0"; then
-                AC_MSG_WARN([*** Corresponding Fortran 77 type ($2) not supported])
+                AC_MSG_WARN([*** Corresponding Fortran 77 type ($1) not supported])
                 AC_MSG_WARN([*** Skipping Fortran 90 type ($1)])
             else
 
                 # Check the size of this type against its F77 counterpart
-                [ofc_f77_sizeof=$OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_])
+                [ofc_f77_sizeof=$OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
                 if test "$ofc_f77_sizeof" != ""; then
                     AC_MSG_CHECKING([if Fortran 77 and 90 type sizes match])
                     if test "$ofc_f77_sizeof" != "$ofc_type_size"; then
                         AC_MSG_RESULT([no])
-                        AC_MSG_WARN([*** Fortran 77 size for $2 ($ofc_f77_sizeof) does not match])
+                        AC_MSG_WARN([*** Fortran 77 size for $1 ($ofc_f77_sizeof) does not match])
                         AC_MSG_WARN([*** Fortran 90 size for $1 ($ofc_type_size)])
                         AC_MSG_ERROR([*** Cannot continue])
                     else
@@ -94,14 +94,18 @@ AC_DEFUN([OMPI_F90_CHECK], [
                 # Get the alignment of the type and check against its F77
                 # counterpart
                 OMPI_F90_GET_ALIGNMENT([$1], [ofc_type_alignment])
-                ofc_f77_alignment=$[OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_])
+                ofc_f77_alignment=$[OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
                 if test "$ofc_f77_alignment" != ""; then
                     AC_MSG_CHECKING([if Fortran 77 and 90 type alignments match])
                     if test "$ofc_f77_alignment" != "$ofc_type_alignment"; then
                         AC_MSG_RESULT([no])
-                        AC_MSG_WARN([*** Fortran 77 alignment for $2 ($ofc_f77_alignment) does not match])
+                        AC_MSG_WARN([*** Fortran 77 alignment for $1 ($ofc_f77_alignment) does not match])
                         AC_MSG_WARN([*** Fortran 90 alignment for $1 ($ofc_type_alignment)])
-                        AC_MSG_ERROR([*** Cannot continue])
+# JMS Commented out for now so that a) people can continue developing
+# with f90, b) we stop breaking "make dist", and c) we can find out
+# the Real Deal from Fortran compiler vendors.
+#                        AC_MSG_ERROR([*** Cannot continue])
+                        AC_MSG_WARN([*** OMPI-F90-CHECK macro needs to be updated!])
                     else
                         AC_MSG_RESULT([yes])
                     fi
@@ -144,14 +148,14 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # AC_DEFINE_UNQUOTED), autoheader won't put them in the
     # AC_CONFIG_HEADER (or AM_CONFIG_HEADER, in our case).
 
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                        [$ofc_have_type], 
                        [Whether we have Fortran 90 $ofc_type_name or not])
     AS_IF([test "$ofc_want_range" != ""],
-        [AC_DEFINE_UNQUOTED([OMPI_PRECISION_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+        [AC_DEFINE_UNQUOTED([OMPI_PRECISION_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                             [$ofc_type_precision],
                             [Precision of Fortran 90 $ofc_type_name])
-         AC_DEFINE_UNQUOTED([OMPI_RANGE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$2], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+         AC_DEFINE_UNQUOTED([OMPI_RANGE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                             [$ofc_type_range],
                             [Range of Fortran 90 $ofc_type_name])], [])
 
