@@ -323,7 +323,6 @@ do {                                                                            
        } \
        MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq); \
     } \
-    (sendreq) = (mca_pml_ob1_send_request_t*)MPI_REQUEST_NULL; \
 }
 
 /*
