@@ -36,6 +36,9 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
 {
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (r < 0) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    }
   }
 
    if      (r > 38) *newtype = &ompi_mpi_datatype_null;
@@ -57,8 +60,9 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
    else if (r >  2) *newtype = &ompi_mpi_short;
    else             *newtype = &ompi_mpi_byte;
 
-   if( *newtype == &ompi_mpi_datatype_null )
+   if( *newtype != &ompi_mpi_datatype_null ) {
       return MPI_SUCCESS;
+   }
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }
