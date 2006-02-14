@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -119,7 +119,6 @@ AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
        [AC_LANG_PUSH(Fortran)
         AC_FC_SRCEXT(f)
         AC_FC_SRCEXT(f90)
-        AC_FC_SRCEXT(f95)
         AC_LANG_POP(Fortran)])
 
 # All done -- save values
