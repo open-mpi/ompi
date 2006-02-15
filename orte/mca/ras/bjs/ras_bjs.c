@@ -94,7 +94,7 @@ static int orte_ras_bjs_node_resolve(char* node_name, int* node_num)
 {
     /* for now we expect this to be the node number */
     if(NULL == node_name || sscanf(node_name, "%d", node_num) != 1)
-        return ORTE_NODE_ERROR;
+        return ORTE_ERROR;
     return ORTE_SUCCESS;
 }
 
@@ -189,12 +189,12 @@ static int orte_ras_bjs_discover(
 
         if(ORTE_NODE_STATE_UP != (node_state = orte_ras_bjs_node_state(node_num))) {
             opal_output(0, "error: a specified node (%d) is not up.\n", node_num);
-            rc = ORTE_NODE_DOWN;
+            rc = ORTE_ERROR;
             goto cleanup;
         }
         if(bproc_access(node_num, BPROC_X_OK) != 0) {
             opal_output(0, "error: a specified node (%d) is not accessible.\n", node_num);
-            rc = ORTE_NODE_ERROR;
+            rc = ORTE_ERROR;
             goto cleanup;
         }
 
