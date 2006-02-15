@@ -23,6 +23,16 @@ version 1.0.
 1.0.2
 -----
 
+- Change the exit status set by mpirun when an application process is
+  killed by a signal.  The exit status is now set to signo + 128, which
+  conforms with the behavior of (almost) all shells.
+- Correct a datatype problem with the convertor when partially
+  unpacking data. Now we can position the convertor to any position
+  not only on the predefined types boundaries. Thanks to Yvan Fournier
+  for reporting this to us.
+- Fix a number of standard I/O forwarding issues, including the
+  ability to background mpirun and a loss of data issue when
+  redirecting mpirun's standard input from a file.
 - Fixed bug in ompi_info where rcache and bml MCA parameters would not
   be displayed.
 - Fixed umask issues in the session directory.  Thanks to Glenn Morris
