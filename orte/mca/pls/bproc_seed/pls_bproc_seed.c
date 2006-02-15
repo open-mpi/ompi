@@ -194,15 +194,16 @@ static int orte_pls_bproc_undump(
     int p_stdout[2];
     int p_stderr[2];
     int p_image[2];
-    int rc;
+    int rc = ORTE_SUCCESS;
     size_t bytes_writen = 0;
 
     if(pipe(p_name)   < 0 ||
        pipe(p_stdout) < 0 ||
        pipe(p_stderr) < 0 ||
        pipe(p_image)  < 0) {
+       rc = ORTE_ERR_OUT_OF_RESOURCE;
        ORTE_ERROR_LOG(rc);
-       return ORTE_ERR_OUT_OF_RESOURCE;
+       return rc;
     }
 
     /* fork a child process which is overwritten with the process image */
@@ -242,8 +243,9 @@ static int orte_pls_bproc_undump(
     if (*pid < 0) {
         close(p_image[0]);
         close(p_image[1]);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
         ORTE_ERROR_LOG(rc);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
     }
 
     /* parent is write-only */
@@ -259,7 +261,9 @@ static int orte_pls_bproc_undump(
         close(p_name[1]);
         close(p_stdout[0]);
         close(p_stderr[0]);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     /* connect the app to the IOF framework */
@@ -452,7 +456,7 @@ static int orte_pls_bproc_launch_app(
     rc = bproc_vrfork(num_nodes, node_list, daemon_pids);
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
-        return OMPI_ERROR;
+        return ORTE_ERROR;
     }
 
     /* return is the rank of the child or number of nodes in the parent */
