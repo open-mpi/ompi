@@ -92,7 +92,6 @@ else
         AC_LANG_PUSH(Fortran)
         AC_FC_SRCEXT(f)
         AC_FC_SRCEXT(f90)
-        AC_FC_SRCEXT(f95)
         AC_LANG_POP(Fortran)
 
         AC_MSG_CHECKING([whether $OMPI_F77 and $OMPI_F90 compilers are compatible])
