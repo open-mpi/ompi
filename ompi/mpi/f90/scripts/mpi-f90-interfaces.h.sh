@@ -45,20 +45,16 @@ else
 fi
 
 cat >&2 <<EOF
-Generating:
+Generating MPI F90 interface functions:
 2 buffer functions: $want_2buf
 Max array rank:     $max_array_rank
-LOGICAL kinds:      $lkinds
-INTEGER kinds:      $ikinds
-REAL kinds:         $rkinds
-COMPLEX kinds:      $ckinds
+LOGICAL kinds:     $lkinds
+INTEGER kinds:     $ikinds
+REAL kinds:        $rkinds
+COMPLEX kinds:     $ckinds
 EOF
 
 # Do the work
-
-echo "Generating F90 interface functions..." >&2
-
-# Setup
 
 rank=2
 array_ranks="1"
