@@ -412,7 +412,11 @@ int orterun(int argc, char *argv[])
             if (WIFEXITED(orterun_globals.exit_status)) {
                 rc = WEXITSTATUS(orterun_globals.exit_status);
             } else {
-                rc = WTERMSIG(orterun_globals.exit_status);
+                /* If a process was killed by a signal, then make the
+                 * exit code of orterun be "signo + 128" so that "prog"
+                 * and "orterun prog" will both set the same status
+                 * value for the shell */
+                rc = WTERMSIG(orterun_globals.exit_status) + 128;
             }
             OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
