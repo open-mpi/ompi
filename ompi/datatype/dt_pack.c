@@ -591,7 +591,6 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
                                     size_t* max_data,
                                     int* freeAfter )
 {
-    const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *source_base = NULL;
     size_t length = pConv->local_size - pConv->bConverted;
@@ -613,7 +612,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
         } else {
             /* contiguous data just memcpy the smallest data in the user buffer */
             OMPI_DDT_SAFEGUARD_POINTER( source_base, iov[iov_count].iov_len,
-                                        pConv->pBaseBuf, pData, pConv->count );
+                                        pConv->pBaseBuf, pConv->pDesc, pConv->count );
             MEMCPY( iov[iov_count].iov_base, source_base, iov[iov_count].iov_len);
         }
         length -= iov[iov_count].iov_len;
