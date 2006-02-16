@@ -664,6 +664,11 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
     len = opal_value_array_get_size(&mca_base_params);
     array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     for (i = 0; i < len; ++i) {
+        /* Don't output read-only values */
+        if (array[i].mbp_read_only) {
+            continue;
+        }
+
         if (array[i].mbp_internal == internal || internal) {
             if (param_lookup(i, &storage, NULL)) {
                 if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type) {
