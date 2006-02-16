@@ -228,7 +228,7 @@ int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t **pids, size_t* num_pi
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            *(pids[i]) = *pptr;
+            (*pids)[i] = *pptr;
         }
     }
     *num_pids = num_values;
