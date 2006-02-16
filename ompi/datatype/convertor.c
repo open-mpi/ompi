@@ -295,7 +295,7 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
      * anything.
      */
     if( 0 == convertor->local_size ) {
-        convertor->flags = CONVERTOR_COMPLETED;
+        convertor->flags |= CONVERTOR_COMPLETED;
         convertor->remote_size = 0;
         return OMPI_SUCCESS;
     }
