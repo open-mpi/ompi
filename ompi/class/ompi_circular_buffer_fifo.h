@@ -135,6 +135,7 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
     /* set return data */
     index = t_ptr->fifo_index;
     read_from_tail = (void *)q_ptr[index];
+    opal_atomic_rmb();
     t_ptr->num_to_clear++;
 
     /* increment counter for later lazy free */
@@ -343,6 +344,7 @@ static inline int ompi_cb_fifo_write_to_slot_same_base_addr(int slot, void* data
     /* make sure that this slot is already reserved */
     ptr=fifo->queue;
     if (ptr[slot] == OMPI_CB_RESERVED ) {
+        opal_atomic_wmb();
         ptr[slot] = data;
         return slot;
     } else {
@@ -372,8 +374,8 @@ static inline int ompi_cb_fifo_write_to_head_same_base_addr(void *data, ompi_cb_
     ptr=fifo->queue;
     if (ptr[index] == OMPI_CB_FREE) {
         slot = index;
+        opal_atomic_wmb(); 
         ptr[slot] = data;
-        opal_atomic_wmb();
         (h_ptr->fifo_index)++;
         /* wrap around */
         (h_ptr->fifo_index) &= fifo->mask;
@@ -407,7 +409,6 @@ static inline int ompi_cb_fifo_get_slot_same_base_addr(ompi_cb_fifo_t *fifo)
     if ( OMPI_CB_FREE == ptr[index] ) {
         ptr[index] = OMPI_CB_RESERVED;
         return_value = index;
-        opal_atomic_wmb();
         (h_ptr->fifo_index)++;
         (h_ptr->fifo_index) &= fifo->mask;
     }
@@ -456,6 +457,7 @@ static inline void *ompi_cb_fifo_read_from_tail_same_base_addr(
     /* set return data */
     index = t_ptr->fifo_index;
     read_from_tail = (void *)q_ptr[index];
+    opal_atomic_rmb();
     t_ptr->num_to_clear++;
 
     /* increment counter for later lazy free */
