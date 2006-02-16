@@ -286,10 +286,8 @@ int main(int argc, char *argv[])
     }
 
     /* Set signal handlers to catch kill signals so we can properly clean up
-     * after ourselves. Set new process group so that we don't receive signals
-     * from controlling terminal/parent.
+     * after ourselves. 
      */
-    setpgid(0,0);
     opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    signal_callback, NULL);
     opal_event_add(&term_handler, NULL);
