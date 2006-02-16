@@ -238,7 +238,7 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
     opal_list_t nodes;
     opal_list_item_t* item;
     int rc;
-    orte_app_context_t **context;
+    orte_app_context_t **context = NULL;
     size_t i, num_context;
 
     rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context);
@@ -259,12 +259,16 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
     }
 
 cleanup:
-    while(NULL != (item = opal_list_remove_first(&nodes)))
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&nodes);
-    for(i=0; i<num_context; i++)
+    for(i=0; i<num_context; i++) {
         OBJ_RELEASE(context[i]);
-    free(context);
+    }
+    if (NULL != context) {
+        free(context);
+    }
     return rc;
 }
 
