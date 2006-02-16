@@ -141,6 +141,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     struct passwd *pwd;
     struct group *grp;
     orte_gpr_value_t *value;
+    int rc;
 
     cnt = num_bits(changes);
 
@@ -150,11 +151,11 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     if (cnt == 0)
 	return;
 
-	if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
 	                                                ORTE_NODE_SEGMENT, cnt, 0))) {
     	ORTE_ERROR_LOG(rc);
     	return;
-	}
+    }
 	
     idx = 0;
 
