@@ -286,8 +286,10 @@ int main(int argc, char *argv[])
     }
 
     /* Set signal handlers to catch kill signals so we can properly clean up
-     * after ourselves
+     * after ourselves. Set new process group so that we don't receive signals
+     * from controlling terminal/parent.
      */
+    setpgid(0,0);
     opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    signal_callback, NULL);
     opal_event_add(&term_handler, NULL);
@@ -351,7 +353,7 @@ int main(int argc, char *argv[])
             opal_setenv(var, "1", true, &environ);
         }
 
-        /* Setup callback on jobid */
+        /* setup callback on jobid */
         ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL, ORTE_PROC_STATE_TERMINATION);
         if(ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
@@ -370,11 +372,13 @@ int main(int argc, char *argv[])
         }
         OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
+        /* cleanup session directory */
+        orte_session_dir_cleanup(orted_globals.bootproxy);
+
         /* Finalize and clean up */
         if (ORTE_SUCCESS != (ret = orte_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-
         exit(ret);
     }
 
@@ -438,7 +442,6 @@ int main(int argc, char *argv[])
 static void signal_callback(int fd, short flags, void *arg)
 {
     OPAL_TRACE(1);
-
     orted_globals.exit_condition = true;
     opal_condition_signal(&orted_globals.condition);
 }
@@ -609,3 +612,4 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
 
     return;
 }
+
