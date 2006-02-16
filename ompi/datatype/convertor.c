@@ -358,6 +358,9 @@ void ompi_convertor_dump( ompi_convertor_t* convertor )
 {
     printf( "Convertor %p count %d stack position %d bConverted %ld\n", (void*)convertor,
             convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted );
+    printf( "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %d\n"
+            (unsigned long)convertor->local_size, (unsigned long)convertor->remote_size,
+            convertor->flags, convertor->stack_size, convertor->pending_length );
     ompi_ddt_dump( convertor->pDesc );
     printf( "Actual stack representation\n" );
     ompi_ddt_dump_stack( convertor->pStack, convertor->stack_pos,
