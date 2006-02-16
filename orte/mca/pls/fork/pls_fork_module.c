@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -34,6 +34,13 @@
 #include <sys/wait.h>
 #endif
 #include <signal.h>
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#include <time.h>
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 
 #include "orte/orte_constants.h"
 #include "opal/event/event.h"
@@ -41,12 +48,16 @@
 #include "opal/util/output.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/util/show_help.h"
+#include "opal/util/path.h"
+#include "opal/util/basename.h"
+#include "opal/class/opal_value_array.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/univ_info.h"
 #include "opal/util/opal_environ.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -61,7 +72,6 @@
 #include "orte/mca/soh/soh.h"
 #include "orte/mca/soh/base/base.h"
 #include "orte/mca/pls/fork/pls_fork.h"
-
 
 extern char **environ;
 
@@ -83,6 +93,59 @@ orte_pls_base_module_1_0_0_t orte_pls_fork_module = {
 
 static void set_handler_default(int sig);
 
+
+static bool orte_pls_fork_child_died(pid_t pid, unsigned int timeout) 
+{
+    time_t end;
+
+    end = time(NULL) + timeout;
+    while (time(NULL) < end) {
+        if (pid == waitpid(pid, NULL, WNOHANG)) {
+            /* It died -- return success */
+            return true;
+        }
+
+        /* Sleep for a second */
+        sleep(1);
+    }
+
+    /* The child didn't die, so return false */
+    return false;
+}
+
+static void orte_pls_fork_kill_processes(opal_value_array_t *pids)
+{
+    size_t i;
+    pid_t pid;
+
+    for (i = 0; i < opal_value_array_get_size(pids); ++i) {
+        pid = OPAL_VALUE_ARRAY_GET_ITEM(pids, pid_t, i);
+
+        /* Send a sigterm to the process.  If we get ESRCH back, that
+           means the process is already dead, so just proceed on to
+           the reaping of it.  If we get any other error back, just
+           skip it and go on to the next process. */
+        if (0 != kill(pid, SIGTERM) && ESRCH != errno) {
+            continue;
+        }
+
+        /* The kill succeeded.  Wait up to timeout_before_sigkill
+           seconds to see if it died. */
+        
+        if (!orte_pls_fork_child_died(pid, mca_pls_fork_component.timeout_before_sigkill)) {
+            kill(pid, SIGKILL);
+            /* Double check that it actually died */
+            if (!orte_pls_fork_child_died(pid, mca_pls_fork_component.timeout_before_sigkill)) {
+                char hostname[MAXHOSTNAMELEN];
+                gethostname(hostname, sizeof(hostname));
+                
+                opal_show_help("help-orte-pls-fork.txt",
+                               "orte-pls-fork:could-not-kill",
+                               true, hostname, pid);
+            }
+        }
+    }
+}
 
 /*
  *  Wait for a callback indicating the child has completed.
@@ -135,7 +198,7 @@ static int orte_pls_fork_proc(
     int rc;
     sigset_t sigs;
     orte_vpid_t vpid;
-    int i;
+    int i = 0, p[2];
 
     /* should pull this information from MPIRUN instead of going with
        default */
@@ -183,44 +246,56 @@ static int orte_pls_fork_proc(
                         &si,
                         &pi)){
        /* actual error can be got by simply calling GetLastError() */
-       return OMPI_ERROR;
+       return ORTE_ERROR;
     }
     /* get child pid */
     process_id = GetProcessId(&pi);
     pid = (int) process_id;
  }
 #endif
+    /* A pipe is used to communicate between the parent and child to
+       indicate whether the exec ultiimately succeeded or failed.  The
+       child sets the pipe to be close-on-exec; the child only ever
+       writes anything to the pipe if there is an error (e.g.,
+       executable not found, exec() fails, etc.).  The parent does a
+       blocking read on the pipe; if the pipe closed with no data,
+       then the exec() succeeded.  If the parent reads something from
+       the pipe, then the child was letting us know that it failed. */
+    if (pipe(p) < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_IN_ERRNO);
+        return ORTE_ERR_IN_ERRNO;
+    }
 
+    /* Fork off the child */
     pid = fork();
     if(pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if(pid == 0) {
+    if (pid == 0) {
         char *param, *param2;
         char *uri;
         char **environ_copy;
         long fd, fdmax = sysconf(_SC_OPEN_MAX);
-#if 0
-        /* for gperf - setup a new directory for each executable */
-        char path[PATH_MAX];
 
-        /* set working directory */
-        sprintf(path, "%s/%d", context->cwd, getpid());
-        if(mkdir(path,0777) != 0) {
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        }
-        if(chdir(path) != 0) {
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        }
-#else
-        if(chdir(context->cwd) != 0) {
-            opal_show_help("help-orte-pls-fork.txt", "orte-pls-fork:chdir-error",
-                           true, context->cwd, strerror(errno));
-        }
-#endif
+        /* Setup the pipe to be close-on-exec */
+        close(p[0]);
+        fcntl(p[1], F_SETFD, FD_CLOEXEC);
 
+        /* setup stdout/stderr so that any error messages that we may
+           print out will get displayed back at orterun */
+        orte_iof_base_setup_child(&opts);
+
+        /* Try to change to the context cwd and check that the app
+           exists and is executable */
+        if (ORTE_SUCCESS != orte_pls_base_check_context_cwd(context, true) ||
+            ORTE_SUCCESS != orte_pls_base_check_context_app(context)) {
+            /* Tell the parent that Badness happened */
+            write(p[1], &i, sizeof(int));
+            exit(-1);
+        }
+        
         /* setup base environment: copy the current environ and merge
            in the app context environ */
         if (NULL != context->env) {
@@ -316,9 +391,6 @@ static int orte_pls_fork_proc(
         orte_ns_nds_env_put(&proc->proc_name, vpid_start, vpid_range,
                             &environ_copy);
 
-        /* setup stdout/stderr */
-        orte_iof_base_setup_child(&opts);
-
         /* close all file descriptors w/ exception of stdin/stdout/stderr */
         for(fd=3; fd<fdmax; fd++)
             close(fd);
@@ -355,7 +427,6 @@ static int orte_pls_fork_proc(
         opal_show_help("help-orte-pls-fork.txt", "orte-pls-fork:execv-error",
                        true, context->app, strerror(errno));
         exit(-1);
-
     } else {
 
         /* connect endpoints IOF */
@@ -365,16 +436,42 @@ static int orte_pls_fork_proc(
             return rc;
         }
 
+        /* Wait to read something from the pipe or close */
+        close(p[1]);
+        while (1) {
+            rc = read(p[0], &i, sizeof(int));
+            if (rc < 0) {
+                /* Signal interrupts are ok */
+                if (errno == EINTR) {
+                    continue;
+                }
+                /* Other errno's are bad */
+                return ORTE_ERR_IN_ERRNO;
+                break;
+            } else if (0 == rc) {
+                /* Child was successful in exec'ing! */
+                break;
+            } else {
+                /* Doh -- child failed.  The child already printed a
+                   suitable error message, so disable all
+                   ORTE_ERROR_LOG reporting after this. */
+                return ORTE_ERR_FATAL;
+                break;
+            }
+        }
+
         /* save the pid in the registry */
-        if(ORTE_SUCCESS != (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
+        if (ORTE_SUCCESS != 
+            (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* wait for the child process - dont register for wait callback until
-         * after I/O is setup and the pid registered - otherwise can receive the
-         * wait callback before the above is ever completed
-        */
+        /* wait for the child process - dont register for wait
+         * callback until after I/O is setup and the pid registered -
+         * otherwise can receive the wait callback before the above is
+         * ever completed
+         */
         OPAL_THREAD_LOCK(&mca_pls_fork_component.lock);
         mca_pls_fork_component.num_children++;
         OPAL_THREAD_UNLOCK(&mca_pls_fork_component.lock);
@@ -434,7 +531,17 @@ int orte_pls_fork_launch(orte_jobid_t jobid)
                                     vpid_range,
                                     (num_processes > num_processors) ?
                                     false : true, i);
+
             if (ORTE_SUCCESS != rc) {
+                /* Set the state of this process, and all remaining
+                   processes to be launched to ABORTED.  This will
+                   cause the entire job to abort. */
+                for (; i < map->num_procs; ++i) {
+                    orte_soh.set_proc_soh(&map->procs[i]->proc_name, 
+                                          ORTE_PROC_STATE_ABORTED, 0);
+                }
+
+                /* Propagate the error up the stack */
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -462,6 +569,11 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
     orte_gpr_value_t** values = NULL;
     size_t i, k, num_values = 0;
     int rc;
+    opal_value_array_t pids;
+
+    /* setup the pid array */
+    OBJ_CONSTRUCT(&pids, opal_value_array_t);
+    opal_value_array_init(&pids, sizeof(pid_t));
 
     /* query the job segment on the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
@@ -505,10 +617,17 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
             }
         }
         if (0 != pid) {
-            kill(pid, SIGKILL);
+            opal_value_array_append_item(&pids, &pid);
         }
         OBJ_RELEASE(value);
     }
+
+    /* If we have processes to kill, go kill them */
+    if (opal_value_array_get_size(&pids) > 0) {
+        orte_pls_fork_kill_processes(&pids);
+    }
+    OBJ_DESTRUCT(&pids);
+
     if(NULL != values) {
         free(values);
     }

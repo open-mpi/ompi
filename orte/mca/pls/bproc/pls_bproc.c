@@ -391,7 +391,7 @@ static void orte_pls_bproc_setup_env(char *** env)
     int rc;
     int num_env;
 
-    num_env = opal_argv_count(env);
+    num_env = opal_argv_count(*env);
     /* append mca parameters to our environment */
     if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, &num_env, false))) {
         ORTE_ERROR_LOG(rc);
@@ -803,7 +803,13 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     int num_processes = 0;
     int context = 0;
     size_t idx, j;
+    char cwd_save[OMPI_PATH_MAX + 1];
 
+    if (NULL == getcwd(cwd_save, sizeof(cwd_save))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    cwd_save[sizeof(cwd_save) - 1] = '\0';
     /* query for the application context and allocated nodes */
     OBJ_CONSTRUCT(&mapping, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_map(jobid, &mapping))) {
@@ -826,6 +832,28 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     /* do a large lock so the processes will not decrement the process count
      * until we are done launching */
     OPAL_THREAD_LOCK(&mca_pls_bproc_component.lock);
+
+    for (item =  opal_list_get_first(&mapping);
+         item != opal_list_get_end(&mapping);
+         item =  opal_list_get_next(item)) {
+        size_t i;
+        map = (orte_rmaps_base_map_t*) item;
+        for (i = 0; i < map->num_procs; ++i) {
+            orte_app_context_t *context = map->app;
+
+            /* Check that the cwd is sane, but don't chdir there */
+            rc = orte_pls_base_check_context_cwd(context, false);
+            if (ORTE_SUCCESS != rc) {
+                goto cleanup;
+            }
+
+            /* Check that the app exists and is executable */
+            rc = orte_pls_base_check_context_app(context);
+            if (ORTE_SUCCESS != rc) {
+                goto cleanup;
+            }
+        }
+    }
 
     /* create an array to hold the pointers to the node arrays for each app
      * context. Also, create an array to hold the lengths of the node arrays */
@@ -900,6 +928,12 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         item != opal_list_get_end(&mapping);
         item =  opal_list_get_next(item)) {
         map = (orte_rmaps_base_map_t*)item;
+
+        rc = orte_pls_base_check_context_cwd(map->app, true);
+        if (ORTE_SUCCESS != rc) {
+            goto cleanup;
+        }
+
         rc = orte_pls_bproc_launch_app(cellid, jobid, map, num_processes,
                                     vpid_launch, vpid_start, map->app->idx,
                                     node_array[context], node_array_len[context]);
@@ -914,9 +948,11 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
 
     mca_pls_bproc_component.done_launching = true;
 cleanup:
+    chdir(cwd_save);
     OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
-    while(NULL != (item = opal_list_remove_first(&mapping)))
+    while(NULL != (item = opal_list_remove_first(&mapping))) {
         OBJ_RELEASE(item);
+    }
     if(NULL != node_array) {
         free(node_array);
     }

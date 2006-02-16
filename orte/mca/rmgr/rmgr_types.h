@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -91,6 +91,8 @@ typedef struct {
     char  **env;
     /** Current working directory for this app */
     char   *cwd;
+    /** Whether the cwd was set by the user or by the system */
+    bool user_specified_cwd;
     /** Length of the map_data array, not including the final NULL entry */
     size_t num_map;
     /** Mapping data about how this app should be laid out across CPUs

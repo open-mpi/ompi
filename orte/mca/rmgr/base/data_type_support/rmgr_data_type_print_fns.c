@@ -1,8 +1,10 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -65,7 +67,7 @@ int orte_rmgr_base_print_app_context(char **output, char *prefix, orte_app_conte
         tmp = tmp2;
     }
 
-    asprintf(&tmp2, "%s\n%s\tWorking dir: %s\n%s\tNum maps: %lu", tmp, pfx2, src->cwd,
+    asprintf(&tmp2, "%s\n%s\tWorking dir: %s (user: %d)\n%s\tNum maps: %lu", tmp, pfx2, src->cwd, (int) src->user_specified_cwd,
                     pfx2, (unsigned long)src->num_map);
     free(tmp);
     tmp = tmp2;

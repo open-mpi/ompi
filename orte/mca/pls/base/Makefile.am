@@ -23,6 +23,7 @@ headers += \
 
 libmca_pls_la_SOURCES += \
         base/pls_base_close.c \
+        base/pls_base_context.c \
         base/pls_base_open.c \
         base/pls_base_select.c \
 	base/pls_base_state.c \

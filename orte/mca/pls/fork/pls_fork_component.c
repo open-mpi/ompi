@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -101,6 +101,9 @@ int orte_pls_fork_component_open(void)
     mca_base_param_reg_int(c, "reap", 
                            "Whether to wait to reap all children before finalizing or not",
                            false, false, 1, &mca_pls_fork_component.reap);
+    mca_base_param_reg_int(c, "reap_timeout", 
+                           "When killing children processes, first send a SIGTERM, then wait at least this timeout (in seconds), then send a SIGKILL",
+                           false, false, 0, &mca_pls_fork_component.timeout_before_sigkill);
     mca_base_param_reg_int(c, "priority", 
                            "Priority of this component",
                            false, false, 1, &mca_pls_fork_component.priority);

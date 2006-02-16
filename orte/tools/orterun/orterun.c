@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -44,7 +44,6 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/util/path.h"
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 
@@ -279,8 +278,8 @@ int orterun(int argc, char *argv[])
     array_size = orte_pointer_array_get_size(apps_pa);
     apps = malloc(sizeof(orte_app_context_t *) * array_size);
     if (NULL == apps) {
-        opal_show_help("help-orterun.txt", "orterun:syscall-failed",
-                       true, orterun_basename, "malloc returned NULL", errno);
+        opal_show_help("help-orterun.txt", "orterun:call-failed",
+                       true, orterun_basename, "system", "malloc returned NULL", errno);
         exit(1);
     }
     num_apps = 0;
@@ -301,8 +300,8 @@ int orterun(int argc, char *argv[])
     }
     proc_infos = malloc(sizeof(struct proc_info_t) * j);
     if (NULL == proc_infos) {
-        opal_show_help("help-orterun.txt", "orterun:syscall-failed",
-                       true, orterun_basename, "malloc returned NULL", errno);
+        opal_show_help("help-orterun.txt", "orterun:call-failed",
+                       true, orterun_basename, "system", "malloc returned NULL", errno);
         exit(1);
     }
     for (i = 0; i < j; ++i) {
@@ -547,19 +546,20 @@ static void dump_aborted_procs(orte_jobid_t jobid)
             proc_infos[rank].exit_status = exit_status;
         }
 
-        if (WIFSIGNALED(exit_status) && rank_found &&
-            !proc_infos[rank].reported) {
+        if (rank_found && !proc_infos[rank].reported) {
             proc_infos[rank].reported = true;
 
-            if (9 == WTERMSIG(exit_status)) {
-                ++num_killed;
-            } else {
-                if (num_aborted < max_display_aborted) {
-                    opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
-                                   orterun_basename, (unsigned long)rank, (unsigned long)pid,
-                                   node_name, WTERMSIG(exit_status));
+            if (WIFSIGNALED(exit_status)) {
+                if (9 == WTERMSIG(exit_status)) {
+                    ++num_killed;
+                } else {
+                    if (num_aborted < max_display_aborted) {
+                        opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
+                                       orterun_basename, (unsigned long)rank, (unsigned long)pid,
+                                       node_name, WTERMSIG(exit_status));
+                    }
+                    ++num_aborted;
                 }
-                ++num_aborted;
             }
         }
 
@@ -592,7 +592,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 
     OPAL_THREAD_LOCK(&orterun_globals.lock);
 
-    /* Note that there's only two states that we're interested in
+    /* Note that there's only three states that we're interested in
        here:
 
        ABORTED: which means that one or more processes have aborted
@@ -601,6 +601,9 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 
        TERMINATED: which means that all the processes in the job have
                 completed (normally and/or abnormally).
+
+       AT_STG1: which means that everyone has hit stage gate 1, so we
+                can do the parallel debugger startup stuff.
 
        Remember that the rmgr itself will also be called for the
        ABORTED state and call the pls.terminate_job, which will result
@@ -1159,9 +1162,11 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     if (NULL != orterun_globals.wdir) {
         app->cwd = strdup(orterun_globals.wdir);
+        app->user_specified_cwd = true;
     } else {
         getcwd(cwd, sizeof(cwd));
         app->cwd = strdup(cwd);
+        app->user_specified_cwd = false;
     }
 
     /* Did the user specify a specific prefix for this app_context_t */
@@ -1231,20 +1236,15 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         goto cleanup;
     }
 
-    /* Find the argv[0] in the path, but only if not absolute or
-       relative pathname was specified */
+    /* Do not try to find argv[0] here -- the starter is responsible
+       for that because it may not be relevant to try to find it on
+       the node where orterun is executing.  So just strdup() argv[0]
+       into app. */
 
-    value = opal_basename(app->argv[0]);
-    if (strlen(value) == strlen(app->argv[0])) {
-        app->app = opal_path_findv(app->argv[0], 0, environ, app->cwd);
-    } else {
-        app->app = strdup(app->argv[0]);
-    }
-    free(value);
-
+    app->app = strdup(app->argv[0]);
     if (NULL == app->app) {
-        opal_show_help("help-orterun.txt", "orterun:executable-not-found",
-                       true, orterun_basename, app->argv[0], orterun_basename);
+        opal_show_help("help-orterun.txt", "orterun:call-failed",
+                       true, orterun_basename, "library", "strdup returned NULL", errno);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
