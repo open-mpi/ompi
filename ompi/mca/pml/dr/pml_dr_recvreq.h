@@ -248,6 +248,7 @@ do {                                                                            
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
     }                                                                             \
+    csum = request->req_recv.req_convertor.checksum;                              \
 } while (0)
 
 

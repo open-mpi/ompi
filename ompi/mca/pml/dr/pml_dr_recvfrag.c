@@ -720,6 +720,7 @@ void mca_pml_dr_recv_frag_ack(mca_pml_dr_recv_frag_t* frag)
     ack->hdr_vmask = 1;
     ack->hdr_vid = frag->hdr.hdr_match.hdr_vid;
     ack->hdr_src_req = frag->hdr.hdr_match.hdr_src_req;
+    assert(ack->hdr_src_req.pval);
     ack->hdr_dst_req.pval = NULL;
 
     /* initialize descriptor */
