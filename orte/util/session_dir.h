@@ -146,3 +146,14 @@ OMPI_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *
  *                properly cleaned up.
  */
 OMPI_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
+
+/** The orte_session_dir_cleanup() function performs a cleanup of the
+ * session directory tree when a job is aborted. It cleans up all
+ * process directories for a given job and then backs up the tree.
+ *
+ * @param jobid
+ * @retval OMPI_SUCCESS If the directory tree is properly cleaned up.
+ * @retval OMPI_ERROR If something prevents the tree from being
+ *                properly cleaned up.
+ */
+OMPI_DECLSPEC int orte_session_dir_cleanup(orte_jobid_t jobid);
