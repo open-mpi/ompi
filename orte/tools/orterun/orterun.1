@@ -1,0 +1,819 @@
+.TH ORTERUN 1 "" "Open MPI" "OPEN MPI COMMANDS"
+.SH NAME
+orterun, mpirun, mpiexec \- Execute serial and parallel jobs in Open
+MPI.  Note that
+.IR mpirun , 
+.IR mpiexec ,
+and
+.I orterun
+are all exact synonyms for each other.  Using any of the names will
+result in exactly identical behavior.
+.SH SYNTAX
+.hy 0
+.HP
+.na
+mpirun 
+[-fhvO] 
+[-c <#> | -np <#>] 
+[-D | -wd <dir>]
+[-ger | -nger] 
+[-sigs | -nsigs] 
+[-ssi <key> <value>]
+[-nw | -w] 
+[-nx]
+[-pty | -npty]
+[-s <node>] 
+[-t | -toff | -ton]
+[-tv] 
+[-x VAR1[=VALUE1][,VAR2[=VALUE2],...]]
+[[-p <prefix_str>] [-sa | -sf]]
+[<where>] 
+<program> [-- <args>]
+.PP
+.SH QUICK SUMMARY
+If you are simply looking for how to run an MPI application, you
+probably want to use the following command line:
+.sp
+.RS
+shell$ mpirun -np 4 my_mpi_application
+.RE
+.PP
+This will run 4 copies of
+.I my_mpi_application
+in your current run-time environment (if running under a supported
+resource manager, Open MPI's 
+.I orterun
+will usually automatically use the corresponding resource manager
+process starter, as opposed to, for example, 
+.I rsh
+or 
+.IR ssh ), 
+scheduling (by default) in a round-robin fashion by CPU slot.  See the
+rest of this page for more details.
+.SH OPTIONS
+There are two forms of the 
+.IR mpirun 
+command -- one for programs (i.e., SPMD-style applications), and one
+for application schemas (see appschema(5)).  Both forms of
+.IR mpirun
+use the following options by default: 
+.I \-nger 
+.IR \-w .
+These may each be overriden by their counterpart options, described
+below.
+.PP
+Additionally, 
+.I mpirun
+will send the name of the directory where it was invoked on the local
+node to each of the remote nodes, and attempt to change to that
+directory.  See the "Current Working Directory" section, below.
+.TP 10
+.B -c <#>
+Synonym for 
+.I \-np 
+(see below).
+.TP
+.B -D
+Use the executable program location as the current working directory
+for created processes.  The current working directory of the created
+processes will be set before the user's program is invoked.  This
+option is mutually exclusive with
+.IR \-wd .
+.TP
+.B -f
+Do not configure standard I/O file descriptors - use defaults.
+.TP
+.B -h
+Print useful information on this command.
+.TP
+.B -ger
+Enable GER (Guaranteed Envelope Resources) communication protocol
+and error reporting.  See MPI(7) for a description of GER.  This
+option is mutually exclusive with 
+.IR \-nger .
+.TP
+.B -nger
+Disable GER (Guaranteed Envelope Resources).  This option is mutually
+exclusive with 
+.IR \-ger .
+.TP
+.B -nsigs
+Do not have LAM catch signals in the user application.  This is the
+default, and is mutually exclusive with
+.IR \-sigs .
+.TP
+.B -np <#>
+Run this many copies of the program on the given nodes.  This option
+indicates that the specified file is an executable program and not an
+application schema.  If no nodes are specified, all LAM nodes are
+considered for scheduling; LAM will schedule the programs in a
+round-robin fashion, "wrapping around" (and scheduling multiple copies
+on a single node) if necessary.
+.TP
+.B -npty
+Disable pseudo-tty support.  Unless you are having problems with
+pseudo-tty support, you probably do not need this option.  Mutually
+exlclusive with -pty.
+.TP
+.B -nw
+Do not wait for all processes to complete before exiting
+.IR mpirun .
+This option is mutually exclusive with 
+.IR \-w .
+.TP
+.B -nx
+Do not automatically export LAM_MPI_*, LAM_IMPI_*, or IMPI_*
+environment variables to the remote nodes.
+.TP 
+.B -O
+Multicomputer is homogeneous.  Do no data conversion when passing
+messages.  THIS FLAG IS NOW OBSOLETE.
+.TP
+.B -pty
+Enable pseudo-tty support.  Among other things, this enabled
+line-buffered output (which is probably what you want).  This is the
+default.  Mutually exclusive with -npty.
+.TP
+.B -s <node>
+Load the program from this node.  This option is not valid on the
+command line if an application schema is specified.
+.TP
+.B -sigs
+Have LAM catch signals in the user process.  This options is mutually
+exclusive with 
+.IR \-nsigs .
+.TP
+.B -ssi <key> <value>
+Send arguments to various SSI modules.  See the "SSI" section, below.
+.TP
+.B -t, -ton
+Enable execution trace generation for all processes.  Trace generation
+will proceed with no further action.  These options are mutually
+exclusive with 
+.IR \-toff .
+.TP
+.B -toff
+Enable execution trace generation for all processes.  Trace generation
+for message passing traffic will begin after processes collectively
+call MPIL_Trace_on(2).  Note that trace generation for datatypes and
+communicators
+.I will
+proceed regardless of whether trace generation is enabled for messages
+or not.  This option is mutually exclusive with
+.I \-t 
+and 
+.IR \-ton .
+.TP
+.B -tv
+Launch processes under the TotalView Debugger.
+.TP
+.B -v
+Be verbose; report on important steps as they are done.
+.TP
+.B -w
+Wait for all applications to exit before 
+.IR mpirun
+exits.
+.TP 
+.B -wd <dir>
+Change to the directory <dir> before the user's program executes.
+Note that if the 
+.I -wd 
+option appears both on the command line and in an application schema,
+the schema will take precendence over the command line.  This option
+is mutually exclusive with
+.IR \-D .
+.TP 
+.B -x
+Export the specified environment variables to the remote nodes before
+executing the program.  Existing environment variables can be
+specified (see the Examples section, below), or new variable names
+specified with corresponding values.  The parser for the 
+.I \-x 
+option is not very sophisticated; it does not even understand quoted
+values.  Users are advised to set variables in the environment, and
+then use
+.I \-x 
+to export (not define) them.
+.TP
+.B -sa
+Display the exit status of all MPI processes irrespecive of whether
+they fail or run successfully. 
+.TP
+.B -sf
+Display the exit status of all processes only if one of them fails.
+.TP
+.B -p <prefix_str>
+Prefixes each process status line displayed by [-sa] and [-sf] by the
+<prefix_str>.  
+.TP
+.B <where>
+A set of node and/or CPU identifiers indicating where to start 
+.BR <program> .
+See bhost(5) for a description of the node and CPU identifiers.  
+.I mpirun
+will schedule adjoining ranks in 
+.I MPI_COMM_WORLD 
+on the same node when CPU identifiers are used.  For example, if LAM
+was booted with a CPU count of 4 on n0 and a CPU count of 2 on n1 and
+.B <where>
+is C, ranks 0 through 3 will be placed on n0, and ranks 4 and 5 will
+be placed on n1.
+.TP
+.B <args>
+Pass these runtime arguments to every new process.  These must always
+be the last arguments to
+.IR mpirun .
+This option is not valid on the command line if an application schema
+is specified.
+.SH DESCRIPTION
+One invocation of
+.I mpirun
+starts an MPI application running under LAM.
+If the application is simply SPMD, the application can be specified on the
+.I mpirun
+command line.
+If the application is MIMD, comprising multiple programs, an application
+schema is required in a separate file.
+See appschema(5) for a description of the application schema syntax,
+but it essentially contains multiple
+.I mpirun
+command lines, less the command name itself.  The ability to specify
+different options for different instantiations of a program is another
+reason to use an application schema.
+.SS Location Nomenclature
+As described above, 
+.I mpirun
+can specify arbitrary locations in the current LAM universe.
+Locations can be specified either by CPU or by node (noted by the
+"<where>" in the SYNTAX section, above).  Note that LAM does not bind
+processes to CPUs -- specifying a location "by CPU" is really a
+convenience mechanism for SMPs that ultimately maps down to a specific
+node.
+.PP
+Note that LAM effectively numbers MPI_COMM_WORLD ranks from
+left-to-right in the <where>, regardless of which nomenclature is
+used.  This can be important because typical MPI programs tend to
+communicate more with their immediate neighbors (i.e., myrank +/- X)
+than distant neighbors.  When neighbors end up on the same node, the
+shmem RPIs can be used for communication rather than the network RPIs,
+which can result in faster MPI performance.
+.PP
+Specifying locations by node will launch one copy of an executable per
+specified node.  Using a capitol "N" tells LAM to use all available
+nodes that were lambooted (see lamboot(1)).  Ranges of specific nodes
+can also be specified in the form "nR[,R]*", where R specifies either
+a single node number or a valid range of node numbers in the range of
+[0, num_nodes).  For example:
+.TP 4
+mpirun N a.out
+Runs one copy of the the executable
+.I a.out
+on all available nodes in the LAM universe.  MPI_COMM_WORLD rank 0
+will be on n0, rank 1 will be on n1, etc.
+.TP
+mpirun n0-3 a.out
+Runs one copy of the the executable
+.I a.out
+on nodes 0 through 3.  MPI_COMM_WORLD rank 0 will be on n0, rank 1
+will be on n1, etc.
+.TP
+mpirun n0-3,8-11,15 a.out
+Runs one copy of the the executable
+.I a.out
+on nodes 0 through 3, 8 through 11, and 15.  MPI_COMM_WORLD ranks will
+be ordered as follows: (0, n0), (1, n1), (2, n2), (3, n3), (4, n8),
+(5, n9), (6, n10), (7, n11), (8, n15).
+.PP
+Specifying by CPU is the preferred method of launching MPI jobs.  The
+intent is that the boot schema used with lamboot(1) will indicate how
+many CPUs are available on each node, and then a single, simple 
+.I mpirun
+command can be used to launch across all of them.  As noted above,
+specifying CPUs does not actually bind processes to CPUs -- it is only
+a convenience mechanism for launching on SMPs.  Otherwise, the by-CPU
+notation is the same as the by-node notation, except that "C" and "c"
+are used instead of "N" and "n".  
+.PP
+Assume in the following example that the LAM universe consists of four
+4-way SMPs.  So c0-3 are on n0, c4-7 are on n1, c8-11 are on n2, and
+13-15 are on n3.
+.TP 4
+mpirun C a.out
+Runs one copy of the the executable
+.I a.out
+on all available CPUs in the LAM universe.  This is typically the
+simplest (and preferred) method of launching all MPI jobs (even if it
+resolves to one process per node).  MPI_COMM_WORLD ranks 0-3 will be
+on n0, ranks 4-7 will be on n1, ranks 8-11 will be on n2, and ranks
+13-15 will be on n3.
+.TP
+mpirun c0-3 a.out
+Runs one copy of the the executable
+.I a.out
+on CPUs 0 through 3.  All four ranks of MPI_COMM_WORLD will be on
+MPI_COMM_WORLD.
+.TP
+mpirun c0-3,8-11,15 a.out
+Runs one copy of the the executable
+.I a.out
+on CPUs 0 through 3, 8 through 11, and 15.  MPI_COMM_WORLD ranks 0-3
+will be on n0, 4-7 will be on n2, and 8 will be on n3.
+.PP
+The reason that the by-CPU nomenclature is preferred over the by-node
+nomenclature is best shown through example.  Consider trying to run
+the first CPU example (with the same MPI_COMM_WORLD mapping) with the
+by-node nomenclature -- run one copy of 
+.I a.out
+for every available CPU, and maximize the number of local neighbors to
+potentially maximize MPI performance.  One solution would be to use
+the following command:
+.TP 4
+mpirun n0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3 a.out
+.PP
+This 
+.IR works ,
+but is definitely klunky to type.  It is typically easier to use the
+by-CPU notation.  One might think that the following is equivalent:
+.TP 4
+mpirun N -np 16 a.out
+.PP
+This is 
+.I not
+equivalent because the MPI_COMM_WORLD rank mappings will be assigned
+by node rather than by CPU.  Hence rank 0 will be on n0, rank 1 will
+be on n1, etc.  Note that the following, however,
+.I is
+equivalent, because LAM interprets lack of a <where> as "C":
+.TP 4
+mpirun -np 16 a.out
+.PP
+However, a "C" can tend to be more convenient, especially for
+batch-queuing scripts because the exact number of processes may vary
+between queue submissions.  Since the batch system will determine the
+final number of CPUs available, having a generic script that
+effectively says "run on everything you gave me" may lead to more
+portable / re-usable scripts.
+.PP
+Finally, it should be noted that specifying multiple <where> clauses
+are perfectly acceptable.  As such, mixing of the by-node and by-CPU
+syntax is also valid, albiet typically not useful.  For example:
+.TP 4
+mpirun C N a.out
+.PP
+However, in some cases, specifying multiple <where> clauses can be
+useful.  Consider a parallel application where MPI_COMM_WORLD rank 0
+will be a "manager" and therefore consume very few CPU cycles because
+it is usually waiting for "worker" processes to return results.
+Hence, it is probably desirable to run one "worker" process on all
+available CPUs, and run one extra process that will be the "manager":
+.TP 4
+mpirun c0 C manager-worker-program
+.SS Application Schema or Executable Program?
+To distinguish the two different forms,
+.I mpirun
+looks on the command line for <where> or the \fI-c\fR option.  If
+neither is specified, then the file named on the command line is
+assumed to be an application schema.  If either one or both are
+specified, then the file is assumed to be an executable program.  If
+<where> and \fI-c\fR both are specified, then copies of the program
+are started on the specified nodes/CPUs according to an internal LAM
+scheduling policy.  Specifying just one node effectively forces LAM to
+run all copies of the program in one place.  If \fI-c\fR is given, but
+not <where>, then all available CPUs on all LAM nodes are used.  If
+<where> is given, but not \fI-c\fR, then one copy of the program is
+run on each node.
+.PP
+.SS Program Transfer
+By default, LAM searches for executable programs on the target node
+where a particular instantiation will run.  If the file system is not
+shared, the target nodes are homogeneous, and the program is
+frequently recompiled, it can be convenient to have LAM transfer the
+program from a source node (usually the local node) to each target
+node.  The \fI-s\fR option specifies this behavior and identifies the
+single source node.
+.SS Locating Files
+LAM looks for an executable program by searching the directories in
+the user's PATH environment variable as defined on the source node(s).
+This behavior is consistent with logging into the source node and
+executing the program from the shell.  On remote nodes, the "." path
+is the home directory.
+.PP
+LAM looks for an application schema in three directories: the local
+directory, the value of the LAMAPPLDIR environment variable, and
+laminstalldir/boot, where "laminstalldir" is the directory where
+LAM/MPI was installed.
+.SS Standard I/O
+LAM directs UNIX standard input to /dev/null on all remote nodes.  On
+the local node that invoked
+.IR mpirun ,
+standard input is inherited from
+.IR mpirun .
+The default is what used to be the -w option to prevent conflicting
+access to the terminal.
+.PP
+LAM directs UNIX standard output and error to the LAM daemon on all
+remote nodes.  LAM ships all captured output/error to the node that
+invoked
+.I mpirun
+and prints it on the standard output/error of
+.IR mpirun .
+Local processes inherit the standard output/error of
+.I mpirun
+and transfer to it directly.
+.PP
+Thus it is possible to redirect standard I/O for LAM applications by
+using the typical shell redirection procedure on
+.IR mpirun .
+.sp
+.RS
+% mpirun C my_app < my_input > my_output
+.RE
+.PP
+Note that in this example
+.I only
+the local node (i.e., the node where mpirun was invoked from) will
+receive the stream from my_input on stdin.  The stdin on all the other
+nodes will be tied to /dev/null.  However, the stdout from all nodes
+will be collected into the my_output file.
+.PP
+The
+.I \-f
+option avoids all the setup required to support standard I/O described
+above.  Remote processes are completely directed to /dev/null and
+local processes inherit file descriptors from lamboot(1).
+.SS Pseudo-tty support
+The 
+.I \-pty
+option enabled pseudo-tty support for process output (it is also
+enabled by default).  This allows, among other things, for line
+buffered output from remote nodes (which is probably what you want).
+This option can be disabled with the
+.I \-npty
+switch.
+.PP
+.SS Process Termination / Signal Handling
+During the run of an MPI application, if any rank dies abnormally
+(either exiting before invoking
+.IR MPI_FINALIZE ,
+or dying as the result of a signal), 
+.I mpirun
+will print out an error message and kill the rest of the MPI
+application.
+.PP
+By default, LAM/MPI only installs a signal handler for one signal in
+user programs (SIGUSR2 by default, but this can be overridden when LAM
+is configured and built).  Therefore, it is safe for users to install
+their own signal handlers in LAM/MPI programs (LAM notices
+death-by-signal cases by examining the process' return status provided
+by the operating system).  
+.PP
+User signal handlers should probably avoid trying to cleanup MPI state
+-- LAM is neither thread-safe nor async-signal-safe.  For example, if
+a seg fault occurs in
+.I MPI_SEND
+(perhaps because a bad buffer was passed in) and a user signal handler
+is invoked, if this user handler attempts to invoke
+.IR MPI_FINALIZE ,
+Bad Things could happen since LAM/MPI was already "in" MPI when the
+error occurred.  Since
+.I mpirun
+will notice that the process died due to a signal, it is probably not
+necessary (and safest) for the user to only clean up non-MPI state.
+.PP
+If the 
+.I -sigs
+option is used with 
+.IR mpirun ,
+LAM/MPI will install several signal handlers to locally on each rank
+to catch signals, print out error messages, and kill the rest of the
+MPI application.  This is somewhat redundant behavior since this is
+now all handled by
+.IR mpirun ,
+but it has been left for backwards compatability.
+.SS Process Exit Statuses
+The
+.IR -sa ,
+\ 
+.IR -sf ,
+and
+.I -p
+parameters can be used to display the exist statuses of the individual
+MPI processes as they terminate.  
+.I -sa 
+forces the exit statuses to be displayed for all processes;
+.I -sf
+only displays the exist statuses if at least one process terminates
+either by a signal or a non-zero exit status (note that exiting before
+invoking
+.I MPI_FINALIZE
+will cause a non-zero exit status).
+.PP
+The status of each process is printed out, one per line, in the
+following format:
+.sp
+.RS 
+prefix_string node pid killed status
+.RE
+.PP
+If
+.I killed
+is 1, then
+.I status
+is the signal number.  If
+.I killed
+is 0, then
+.I status
+is the exit status of the process.
+.PP
+The default 
+.I prefix_string
+is "mpirun:", but the
+.I -p
+option can be used override this string.
+.SS Current Working Directory
+The default behavior of mpirun has changed with respect to the
+directory that processes will be started in.
+.PP
+The 
+.I \-wd 
+option to mpirun allows the user to change to an arbitrary directory
+before their program is invoked.  It can also be used in application
+schema files to specify working directories on specific nodes and/or
+for specific applications.
+.PP
+If the 
+.I \-wd
+option appears both in a schema file and on the command line, the
+schema file directory will override the command line value.
+.PP
+The
+.I \-D
+option will change the current working directory to the directory
+where the executable resides.  It cannot be used in application schema
+files.
+.I \-wd
+is mutually exclusive with 
+.IR \-D .
+.PP
+If neither 
+.I \-wd 
+nor 
+.I \-D
+are specified, the local node will send the directory name where
+mpirun was invoked from to each of the remote nodes.  The remote nodes
+will then try to change to that directory.  If they fail (e.g., if the
+directory does not exists on that node), they will start with from the
+user's home directory.
+.PP
+All directory changing occurs before the user's program is invoked; it
+does not wait until 
+.I MPI_INIT 
+is called.  
+.SS Process Environment
+Processes in the MPI application inherit their environment from the
+LAM daemon upon the node on which they are running.  The environment
+of a LAM daemon is fixed upon booting of the LAM with lamboot(1) and
+is typically inherited from the user's shell.  On the origin node,
+this will be the shell from which lamboot(1) was invoked; on remote
+nodes, the exact environment is determined by the boot SSI module used
+by lamboot(1).  The rsh boot module, for example, uses either rsh/ssh
+to launch the LAM daemon on remote nodes, and typically executes one
+or more of the user's shell-setup files before launching the LAM
+daemon.  When running dynamically linked applications which require
+the LD_LIBRARY_PATH environment variable to be set, care must be taken
+to ensure that it is correctly set when booting the LAM.
+.SS Exported Environment Variables
+All environment variables that are named in the form LAM_MPI_*,
+LAM_IMPI_*, or IMPI_* will automatically be exported to new processes
+on the local and remote nodes.  This exporting may be inhibited with
+the
+.I \-nx
+option.
+.PP
+Additionally, the 
+.I \-x
+option to 
+.IR mpirun
+can be used to export specific environment variables to the new
+processes.  While the syntax of the 
+.I \-x 
+option allows the definition of new variables, note that the parser
+for this option is currently not very sophisticated - it does not even
+understand quoted values.  Users are advised to set variables in the
+environment and use 
+.I \-x 
+to export them; not to define them.
+.SS Trace Generation
+Two switches control trace generation from processes running under LAM
+and both must be in the on position for traces to actually be
+generated.  The first switch is controlled by
+.I mpirun
+and the second switch is initially set by
+.I mpirun
+but can be toggled at runtime with MPIL_Trace_on(2) and
+MPIL_Trace_off(2).  The \fI-t\fR (\fI-ton\fR is equivalent) and
+\fI-toff\fR options all turn on the first switch.  Otherwise the first
+switch is off and calls to MPIL_Trace_on(2) in the application program
+are ineffective.  The \fI-t\fR option also turns on the second switch.
+The \fI-toff\fR option turns off the second switch.  See
+MPIL_Trace_on(2) and lamtrace(1) for more details.
+.SS MPI Data Conversion
+LAM's MPI library converts MPI messages from local representation to
+LAM representation upon sending them and then back to local
+representation upon receiving them.  If the case of a LAM consisting
+of a homogeneous network of machines where the local representation
+differs from the LAM representation this can result in unnecessary
+conversions.
+.P
+The \fI-O\fR switch used to be necessary to indicate to LAM whether
+the mulitcomputer was homogeneous or not.  LAM now automatically
+determines whether a given MPI job is homogeneous or not.  The
+.I -O
+flag will silently be accepted for backwards compatability, but it is
+ignored.
+.SS SSI (System Services Interface)
+The
+.I -ssi
+switch allows the passing of parameters to various SSI modules.  LAM's
+SSI modules are described in detail in lamssi(7).  SSI modules have
+direct impact on MPI programs because they allow tunable parameters to
+be set at run time (such as which RPI communication device driver to
+use, what parameters to pass to that RPI, etc.).
+.PP
+The 
+.I -ssi
+switch takes two arguments:
+.I <key>
+and 
+.IR <value> .
+The
+.I <key>
+argument generally specifies which SSI module will receive the value.
+For example, the
+.I <key>
+"rpi" is used to select which RPI to be used for transporting MPI
+messages.  The
+.I <value> 
+argument is the value that is passed.  For example:
+.TP 4
+mpirun -ssi rpi lamd N foo
+Tells LAM to use the "lamd" RPI and to run a single copy of "foo" on
+every node.
+.TP
+mpirun -ssi rpi tcp N foo
+Tells LAM to use the "tcp" RPI.
+.TP
+mpirun -ssi rpi sysv N foo
+Tells LAM to use the "sysv" RPI.
+.PP
+And so on.  LAM's RPI SSI modules are described in lamssi_rpi(7).
+.PP
+The 
+.I -ssi
+switch can be used multiple times to specify different
+.I <key>
+and/or
+.I <value>
+arguments.  If the same
+.I <key>
+is specified more than once, the
+.IR <value> s
+are concatenated with a comma (",") separating them.
+.PP
+Note that the 
+.I -ssi
+switch is simply a shortcut for setting environment variables.  The
+same effect may be accomplished by setting corresponding environment
+variables before running
+.IR mpirun .
+The form of the environment variables that LAM sets are:
+.IR LAM_MPI_SSI_<key>=<value> .
+.PP
+Note that the
+.I -ssi
+switch overrides any previously set environment variables.  Also note
+that unknown
+.I <key>
+arguments are still set as environment variable -- they are not
+checked (by
+.IR mpirun )
+for correctness.  Illegal or incorrect 
+.I <value>
+arguments may or may not be reported -- it depends on the specific SSI
+module.
+.PP
+The
+.I -ssi
+switch obsoletes the old
+.I -c2c
+and 
+.I -lamd
+switches.  These switches used to be relevant because LAM could only
+have two RPI's available at a time: the lamd RPI and one of the C2C
+RPIs.  This is no longer true -- all RPI's are now available and
+choosable at run-time.  Selecting the lamd RPI is shown in the
+examples above.  
+The
+.I -c2c
+switch has no direct translation since "C2C" used to refer to all
+other RPI's that were not the lamd RPI.  As such, 
+.I -ssi rpi <value>
+must be used to select the specific desired RPI (whether it is "lamd"
+or one of the other RPI's).
+.SS Guaranteed Envelope Resources
+By default, LAM will guarantee a minimum amount of message envelope
+buffering to each MPI process pair and will impede or report an error
+to a process that attempts to overflow this system resource.  This
+robustness and debugging feature is implemented in a machine specific
+manner when direct communication is used.  For normal LAM
+communication via the LAM daemon, a protocol is used.  The \fI-nger\fR
+option disables GER and the measures taken to support it.  The minimum
+GER is configured by the system administrator when LAM is installed.
+See MPI(7) for more details.
+.SH EXAMPLES
+Be sure to also see the examples in the "Location Nomenclature"
+section, above.
+.TP 4
+mpirun N prog1
+Load and execute prog1 on all nodes.  Search the user's $PATH for the
+executable file on each node.
+.TP
+mpirun -c 8 prog1
+Run 8 copies of prog1 wherever LAM wants to run them.
+.TP
+mpirun n8-10 -v -nw -s n3 prog1 -q
+Load and execute prog1 on nodes 8, 9, and 10.  Search for prog1 on
+node 3 and transfer it to the three target nodes.  Report as each
+process is created.  Give "-q" as a command line to each new process.
+Do not wait for the processes to complete before exiting
+.IR mpirun .
+.TP
+mpirun -v myapp
+Parse the application schema, myapp, and start all processes specified
+in it.  Report as each process is created.
+.TP
+mpirun -npty -wd /work/output -x DISPLAY C my_application
+
+Start one copy of "my_application" on each available CPU.  The number
+of available CPUs on each node was previously specified when LAM was
+booted with lamboot(1).  As noted above,
+.I mpirun
+will schedule adjoining rank in 
+.I MPI_COMM_WORLD 
+on the same node where possible.  For example, if n0 has a CPU count
+of 8, and n1 has a CPU count of 4,
+.I mpirun
+will place 
+.I MPI_COMM_WORLD 
+ranks 0 through 7 on n0, and 8 through 11 on n1.  This tends to
+maximize on-node communication for many parallel applications; when
+used in conjunction with the multi-protocol network/shared memory RPIs
+in LAM (see the RELEASE_NOTES and INSTALL files with the LAM
+distribution), overall communication performance can be quite good.
+Also disable pseudo-tty support, change directory to /work/output, and
+export the DISPLAY variable to the new processes (perhaps
+my_application will invoke an X application such as xv to display
+output).
+.SH DIAGNOSTICS
+.TP 4
+mpirun: Exec format error
+This usually means that either a number of processes or an appropriate
+<where> clause was not specified, indicating that LAM does not know
+how many processes to run.  See the EXAMPLES and "Location
+Nomenclature" sections, above, for examples on how to specify how many
+processes to run, and/or where to run them.  However, it can also mean
+that a non-ASCII character was detected in the application schema.
+This is usually a command line usage error where
+.I mpirun
+is expecting an application schema and an executable file was given.
+.TP
+mpirun: syntax error in application schema, line XXX
+The application schema cannot be parsed because of a usage or syntax error
+on the given line in the file.
+.TP
+<filename>: No such file or directory
+This error can occur in two cases.  Either the named file cannot be
+located or it has been found but the user does not have sufficient
+permissions to execute the program or read the application schema.
+.SH RETURN VALUE
+.I mpirun
+returns 0 if all ranks started by
+.I mpirun
+exit after calling MPI_FINALIZE.  A non-zero value is returned if an 
+internal error occurred in mpirun, or one or more ranks exited before 
+calling MPI_FINALIZE.  If an internal error occurred in mpirun, the 
+corresponding error code is returned.  In the event that one or more ranks 
+exit before calling MPI_FINALIZE, the return value of the rank of the 
+process that
+.I mpirun
+first notices died before calling MPI_FINALIZE will be returned.  Note
+that, in general, this will be the first rank that died but is not
+guaranteed to be so.
+.PP
+However, note that if the 
+.I \-nw 
+switch is used, the return value from mpirun does not indicate the exit status
+of the ranks.
+.SH SEE ALSO
+bhost(5), lamexec(1), lamssi(7), lamssi_rpi(7), lamtrace(1), loadgo(1), MPIL_Trace_on(2), mpimsg(1), mpitask(1)
