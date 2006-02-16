@@ -403,6 +403,14 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
     }
 #endif
 
+    /**
+     * hack for bproc4, change process group so that we do not receive signals 
+     * from the parent/front-end process, as bproc4 does not currently allow the
+     * process to intercept the signal
+    */
+    setpgid(0,0);
+
+    /* get current node number */
     rc = bproc_currnode();
     if(0 > rc) {
         opal_output(0, "pls_bproc_orted component running on invalid node");
