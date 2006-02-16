@@ -233,66 +233,54 @@ opal_progress(void)
 {
     size_t i;
     int events = 0;
+
+    if( opal_progress_event_flag != 0 ) {
+#if (OMPI_ENABLE_PROGRESS_THREADS == 0) && OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
 #if OPAL_TIMER_USEC_NATIVE
     opal_timer_t now = opal_timer_base_get_usec();
 #else
     opal_timer_t now = opal_timer_base_get_cycles();
-#endif
-#endif
-
-#if (OMPI_ENABLE_PROGRESS_THREADS == 0) && OPAL_HAVE_WORKING_EVENTOPS
-#if OPAL_PROGRESS_USE_TIMERS
+#endif  /* OPAL_TIMER_USEC_NATIVE */
     /* trip the event library if we've reached our tick rate and we are
        enabled */
-    if (now - event_progress_last_time > event_progress_delta && 
-        opal_progress_event_flag != 0) {
+        if (now - event_progress_last_time > event_progress_delta ) {
 #if OMPI_HAVE_THREAD_SUPPORT
-        if (opal_atomic_trylock(&progress_lock)) {
+            if (opal_atomic_trylock(&progress_lock)) {
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
-            event_progress_last_time = (event_num_mpi_users > 0) ? 
-                now - event_progress_delta : now;
+                event_progress_last_time = (event_num_mpi_users > 0) ? 
+                    now - event_progress_delta : now;
 
-            events += opal_event_loop(opal_progress_event_flag);
+                events += opal_event_loop(opal_progress_event_flag);
 #if OMPI_HAVE_THREAD_SUPPORT
-            opal_atomic_unlock(&progress_lock);
-        }
+                opal_atomic_unlock(&progress_lock);
+            }
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
-    }
+        }
 
 #else /* OPAL_PROGRESS_USE_TIMERS */
     /* trip the event library if we've reached our tick rate and we are
        enabled */
-    if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 && 
-        opal_progress_event_flag != 0) {
+        if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 ) {
 #if OMPI_HAVE_THREAD_SUPPORT
-        if (opal_atomic_trylock(&progress_lock)) {
+            if (opal_atomic_trylock(&progress_lock)) {
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
-            event_progress_counter = 
-                (event_num_mpi_users > 0) ? 0 : event_progress_delta;
-            events += opal_event_loop(opal_progress_event_flag);
+                event_progress_counter = 
+                    (event_num_mpi_users > 0) ? 0 : event_progress_delta;
+                events += opal_event_loop(opal_progress_event_flag);
 #if OMPI_HAVE_THREAD_SUPPORT
-            opal_atomic_unlock(&progress_lock);
+                opal_atomic_unlock(&progress_lock);
+            }
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
         }
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
-    }
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 
 #endif /* OMPI_ENABLE_PROGRESS_THREADS == 0 && OPAL_HAVE_WORKING_EVENTOPS */
-
+    }
 
     /* progress all registered callbacks */
     for (i = 0 ; i < callbacks_len ; ++i) {
-#if OMPI_ENABLE_DEBUG    
-        if (NULL != callbacks[i]) {
-#endif
-            events += (callbacks[i])();
-#if OMPI_ENABLE_DEBUG
-        } else {
-            opal_output(0, "WARNING: ompi_progess attempted to call NULL"
-                        " function at line %d, index %d.", __LINE__, i);
-        }  
-#endif
+        events += (callbacks[i])();
     }
 
 #if !defined(__WINDOWS__) && defined(HAVE_SCHED_YIELD)
