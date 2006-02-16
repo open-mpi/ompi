@@ -677,7 +677,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 char* var;
                 long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
-                chdir("/tmp");
                 if (mca_pls_rsh_component.debug) {
                     opal_output(0, "pls:rsh: launching on node %s\n",
                                 ras_node->node_name);
@@ -782,6 +781,28 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     if (NULL != argv[local_exec_index_end]) {
                         free(argv[local_exec_index_end]);
                         argv[local_exec_index_end] = NULL;
+                    }
+
+                    /* Finally, chdir($HOME) because we're making the
+                       assumption that this is what will happen on
+                       remote nodes (via rsh/ssh).  This allows a user
+                       to specify a path that is relative to $HOME for
+                       both the cwd and argv[0] and it will work on
+                       all nodes -- including the local nost.
+                       Otherwise, it would work on remote nodes and
+                       not the local node.  If the user does not start
+                       in $HOME on the remote nodes... well... let's
+                       hope they start in $HOME.  :-) */
+                    var = getenv("HOME");
+                    if (NULL != var) {
+                        if (mca_pls_rsh_component.debug) {
+                            opal_output(0, "pls:rsh: changing to directory %s",
+                                        var);
+                        }
+                        /* Ignore errors -- what are we going to do?
+                           (and we ignore errors on the remote nodes
+                           in the fork pls, so this is consistent) */
+                        chdir(var);
                     }
                 } else {
                     if (mca_pls_rsh_component.debug) {
