@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -19,16 +19,36 @@
 # This is the US/English general help file for Open RTE's orterun.
 #
 [orte-pls-fork:chdir-error]
-Warning: Could not change to the working directory "%s".
+Failed to change to the working directory:
 
-The error returned was "%s".
+Host:      %s
+Directory: %s
 
-This is not necessarily a fatal condition, and execution will continue.
+The error returned was "%s".  Execution will now abort.
+[orte-pls-fork:argv0-not-found]
+Failed to find the following executable:
 
+Host:       %s
+Executable: %s
+
+Cannot continue.
+[orte-pls-fork:argv0-not-accessible]
+Failed to find or execute the following executable:
+
+Host:       %s
+Executable: %s
+
+Cannot continue.
 [orte-pls-fork:execv-error]
 Could not execute the executable "%s": %s
 
 This could mean that your PATH or executable name is wrong, or that you do not
 have the necessary permissions.  Please ensure that the executable is able to be
 found and executed.
+[orte-pls-fork:could-not-kill]
+WARNING: A process refused to die!
 
+Host: %s
+PID:  %d
+
+This process may still be running and/or consuming resources.

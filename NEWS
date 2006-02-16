@@ -32,6 +32,10 @@ version 1.0.
 1.0.2
 -----
 
+- Change the behavior of orterun (mpirun, mpirexec) to search for
+  argv[0] and the cwd on the target node (i.e., the node where the
+  executable will be running in all systems except BProc, where the
+  searches are run on the node where orterun is invoked).
 - Fix race condition in shared memory transport that could cause
   crashes on machines with weak memory consistency models (including
   POWER/PowerPC machines).

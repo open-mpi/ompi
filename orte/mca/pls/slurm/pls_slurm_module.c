@@ -481,6 +481,9 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             free(newenv);
         }
 
+        /* JMS -- when not in debug mode, tie stdout/stderr to dev
+           null so we don't see messages from orted */
+
         /* get the srun process out of orterun's process group so that
            signals sent from the shell (like those resulting from
            cntl-c) don't get sent to srun */

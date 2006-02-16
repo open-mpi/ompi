@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -22,3 +22,24 @@ No available launching agents were found.
 This is an unusual error; it means that Open RTE was unable to find
 any mechanism to launch proceses, and therefore is unable start the
 process(es) in your application.
+[chdir-error]
+Failed to change to the working directory:
+
+Host:      %s
+Directory: %s
+
+The error returned was "%s".  Execution will now abort.
+[argv0-not-found]
+Failed to find the following executable:
+
+Host:       %s
+Executable: %s
+
+Cannot continue.
+[argv0-not-accessible]
+Failed to find or execute the following executable:
+
+Host:       %s
+Executable: %s
+
+Cannot continue.
