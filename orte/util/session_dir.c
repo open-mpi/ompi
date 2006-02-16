@@ -61,6 +61,7 @@
 static int orte_check_dir(bool create, char *directory);
 
 static void orte_dir_empty(char *pathname);
+static void orte_dir_empty_all(char *pathname);
 
 static bool orte_is_empty(char *pathname);
 
@@ -357,6 +358,83 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     return return_code;
 }
 
+/*
+ * A job has aborted - so force cleanup.
+ */
+
+int
+orte_session_dir_cleanup(orte_jobid_t jobid)
+{
+    int rc;
+    char *tmp;
+    char *job, *job_session_dir;
+
+    /* need to setup the top_session_dir with the prefix */
+    tmp = opal_os_path(false,
+                       orte_process_info.tmpdir_base,
+                       orte_process_info.top_session_dir, NULL);
+    
+    /* define the proc and job session directories for this process */
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&job, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        free(tmp);
+        return rc;
+    }
+    if (0 > asprintf(&job_session_dir, "%s%s%s",
+                        orte_process_info.universe_session_dir,
+                        orte_system_info.path_sep, job)) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        free(tmp);
+        free(job);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    orte_dir_empty_all(job_session_dir);
+    orte_dir_empty(orte_process_info.universe_session_dir);
+    orte_dir_empty(tmp);
+
+    if (orte_is_empty(job_session_dir)) {
+    	if (orte_debug_flag) {
+    	    opal_output(0, "sess_dir_finalize: found job session dir empty - deleting");
+    	}
+    	rmdir(job_session_dir);
+    } else {
+    	if (orte_debug_flag) {
+    	    opal_output(0, "sess_dir_finalize: job session dir not empty - leaving");
+    	}
+        goto CLEANUP;
+    }
+
+    if (orte_is_empty(orte_process_info.universe_session_dir)) {
+    	if (orte_debug_flag) {
+    	    opal_output(0, "sess_dir_finalize: found univ session dir empty - deleting");
+    	}
+    	rmdir(orte_process_info.universe_session_dir);
+    } else {
+    	if (orte_debug_flag) {
+    	    opal_output(0, "sess_dir_finalize: univ session dir not empty - leaving");
+    	}
+    	goto CLEANUP;
+    }
+
+    if (orte_is_empty(tmp)) {
+    	if (orte_debug_flag) {
+    	    opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");
+    	}
+    	rmdir(tmp);
+    } else {
+    	if (orte_debug_flag) {
+    	    opal_output(0, "sess_dir_finalize: top session dir not empty - leaving");
+    	}
+    }
+
+CLEANUP:
+    free(tmp);
+    free(job);
+    free(job_session_dir);
+    return ORTE_SUCCESS;
+}
+
 
 int
 orte_session_dir_finalize(orte_process_name_t *proc)
@@ -553,6 +631,105 @@ orte_dir_empty(char *pathname)
     }
 #endif
 }
+
+
+static void
+orte_dir_empty_all(char *pathname)
+{
+#ifndef WIN32
+    DIR *dp;
+    struct dirent *ep;
+    char *filenm;
+#ifndef HAVE_STRUCT_DIRENT_D_TYPE 
+    int ret;
+    struct stat buf;
+#endif
+    int rc;
+
+    if (NULL == pathname) {  /* protect against error */
+        return;
+    }
+
+    dp = opendir(pathname);
+    if (NULL == dp) {
+        return;
+    }
+
+    while (NULL != (ep = readdir(dp)) ) {
+        /* skip:
+         *  - . and ..
+         *  - directories
+         *  - files starting with "output-"
+         *  - universe contact (universe-setup.txt)
+         */
+        if ((0 != strcmp(ep->d_name, ".")) &&
+            (0 != strcmp(ep->d_name, "..")) &&
+            (0 != strncmp(ep->d_name, "output-", strlen("output-"))) &&
+            (0 != strcmp(ep->d_name, "universe-setup.txt"))) {
+
+            filenm = opal_os_path(false, pathname, ep->d_name, NULL);
+
+            /* is it a directory */
+#ifdef HAVE_STRUCT_DIRENT_D_TYPE
+            if (DT_DIR == ep->d_type) {
+                orte_dir_empty_all(filenm);
+                rmdir(filenm);
+                free(filenm);
+                continue;
+            }
+#else /* have dirent.d_type */
+            ret = stat(filenm, &buf);
+            if (ret < 0 || S_ISDIR(buf.st_mode)) {
+                orte_dir_empty_all(filenm);
+                rmdir(filenm);
+                free(filenm);
+                continue;
+            }
+#endif /* have dirent.d_type */
+            rc = unlink(filenm);
+            free(filenm);
+        }
+    }
+    closedir(dp);
+#else
+    bool empty = false;
+    char search_path[MAX_PATH];
+    HANDLE file;
+    WIN32_FIND_DATA file_data;
+    TCHAR *file_name;
+                        
+    if (NULL != pathname) {
+        strncpy(search_path, pathname, strlen(pathname)+1);
+        strncat (search_path, "\\*", 3);
+        file = FindFirstFile(search_path, &file_data);
+
+        if (INVALID_HANDLE_VALUE == file) {
+            FindClose(&file_data);
+            return;
+        } 
+        
+        do {
+            if(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                orte_dir_empty_all(file_name);
+            } 
+            if ((0 != strcmp(file_data.cFileName, ".")) &&
+                (0 != strcmp(file_data.cFileName, "..")) &&
+                (0 != strncmp(file_data.cFileName,"output-", strlen("output-"))) &&
+                (0 != strcmp(file_data.cFileName,"universe-setup.txt-"))) {
+                
+		            file_name = opal_os_path(false, pathname, file_data.cFileName, NULL);
+                    DeleteFile(file_name);
+
+            }
+            if (0 == FindNextFile(file, &file_data)) {
+                    empty = true;
+            }
+        } while(!empty);
+        FindClose(&file_data);
+    }
+#endif
+}
+
 
 /* tests if the directory is empty */
 static bool orte_is_empty(char *pathname)

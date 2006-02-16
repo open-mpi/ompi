@@ -387,6 +387,7 @@ static void orte_pls_bproc_setup_env(char *** env)
 {
     char ** merged;
     char * var;
+    char * param;
     int rc;
     int num_env;
 
@@ -431,6 +432,14 @@ static void orte_pls_bproc_setup_env(char *** env)
     }
     var = mca_base_param_environ_variable("gpr","replica","uri");
     opal_setenv(var,orte_process_info.gpr_replica_uri, true, env);
+    free(var);
+
+    /* universe directory - needs to match orted */
+    var = mca_base_param_environ_variable("universe", NULL, NULL);
+    asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
+                orte_universe_info.host, orte_universe_info.name);
+    opal_setenv(var, param, true, env);
+    free(param);
     free(var);
 
     /* merge in environment */
@@ -572,12 +581,12 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     }
 
     /* launch the daemons */
-    mca_pls_bproc_component.num_daemons = num_daemons;
+    mca_pls_bproc_component.num_daemons += num_daemons;
     rc = bproc_vexecmove(num_daemons, daemon_list, pids, orted_path, argv, *envp);
     if(rc != num_daemons) {
         opal_show_help("help-pls-bproc.txt", "daemon-launch-number", true,
                        num_daemons, rc, orted_path);
-        mca_pls_bproc_component.num_daemons = 0;
+        mca_pls_bproc_component.num_daemons -= num_daemons;
         rc = ORTE_ERROR;
         goto cleanup;
     }
@@ -672,7 +681,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
         goto cleanup;
     }
 
-    /* set out app context */
+    /* set up app context */
     asprintf(&param, "%d", app_context);
     var = mca_base_param_environ_variable("pls", "bproc", "app_context");
     opal_setenv(var, param, true, &map->app->env);
@@ -937,17 +946,7 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid) {
     }
     if(NULL != pids)
         free(pids);
-    /* kill daemons */
-    if(ORTE_SUCCESS != (rc = orte_pls_base_get_node_pids(jobid, &pids, &num_pids)))
-        return rc;
-    for(i=0; i<num_pids; i++) {
-        if(mca_pls_bproc_component.debug) {
-            opal_output(0, "orte_pls_bproc: killing daemon: %d\n", pids[i]);
-        }
-        kill(pids[i], mca_pls_bproc_component.terminate_sig);
-    }
-    if(NULL != pids)
-        free(pids);
+    /* dont kill daemons - allow them to do cleanup when they see the job aborts */
     return ORTE_SUCCESS;
 }
 
@@ -977,7 +976,14 @@ int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
 /**
  * Module cleanup
  */
-int orte_pls_bproc_finalize(void) {
+int orte_pls_bproc_finalize(void) 
+{
+    /* wait for all daemons */
+    OPAL_THREAD_LOCK(&mca_pls_bproc_component.lock);
+    while(mca_pls_bproc_component.num_daemons || mca_pls_bproc_component.num_procs) {
+        opal_condition_wait(&mca_pls_bproc_component.condition, &mca_pls_bproc_component.lock);
+    }
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
     return ORTE_SUCCESS;
 }
 
