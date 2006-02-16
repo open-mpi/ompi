@@ -290,6 +290,16 @@ inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
 
     /* Compute the local and remote sizes */
     convertor->local_size = convertor->count * datatype->size;
+    /* If the data is empty we don't have to anything except mark the convertor as
+     * completed. With this flag set the pack and unpack functions will not do
+     * anything.
+     */
+    if( 0 == convertor->local_size ) {
+        convertor->flags = CONVERTOR_COMPLETED;
+        convertor->remote_size = 0;
+        return OMPI_SUCCESS;
+    }
+
     if( convertor->remoteArch == ompi_mpi_local_arch ) {
         convertor->remote_size = convertor->local_size;
     } else {
