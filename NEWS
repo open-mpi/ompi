@@ -32,6 +32,9 @@ version 1.0.
 1.0.2
 -----
 
+- Fix race condition in shared memory transport that could cause
+  crashes on machines with weak memory consistency models (including
+  POWER/PowerPC machines).
 - Fix warnings about setting read-only MCA parameters on bproc systems.
 - Change the exit status set by mpirun when an application process is
   killed by a signal.  The exit status is now set to signo + 128, which
