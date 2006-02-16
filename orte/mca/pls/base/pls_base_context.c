@@ -39,6 +39,7 @@
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+extern char **environ;
 
 int orte_pls_base_check_context_cwd(orte_app_context_t *context,
                                     bool want_chdir)
