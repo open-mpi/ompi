@@ -37,7 +37,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
                void *outbuf, int outcount, MPI_Datatype datatype,
                MPI_Comm comm) 
 {
-    int rc, freeAfter;
+    int rc = 1, freeAfter;
     ompi_convertor_t local_convertor;
     struct iovec outvec;
     unsigned int iov_count;
@@ -62,31 +62,34 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
         }
     }
-
-    OBJ_CONSTRUCT( &local_convertor, ompi_convertor_t );
-    /* the resulting convertor will be set the the position ZERO */
-    ompi_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, datatype, outcount, outbuf, &local_convertor );
-
-    /* Check for truncation */
-    ompi_convertor_get_packed_size( &local_convertor, &size );
-    if( (*position + size) > (unsigned int)insize ) {
+    if( insize > 0 ) { 
+        OBJ_CONSTRUCT( &local_convertor, ompi_convertor_t );
+        /* the resulting convertor will be set the the position ZERO */
+        ompi_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, datatype, outcount, outbuf, &local_convertor );
+        
+        /* Check for truncation */
+        ompi_convertor_get_packed_size( &local_convertor, &size );
+        if( (*position + size) > (unsigned int)insize ) {
+            OBJ_DESTRUCT( &local_convertor );
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
+        }
+        
+        /* Prepare the iovec with all informations */
+        outvec.iov_base = (char*) inbuf + (*position);
+        outvec.iov_len = insize - (*position);
+        
+        /* Do the actual unpacking */
+        iov_count = 1;
+        rc = ompi_convertor_unpack( &local_convertor, &outvec, &iov_count,
+                                    &size, &freeAfter );
+        *position += size;
         OBJ_DESTRUCT( &local_convertor );
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
+        
+        /* All done.  Note that the convertor returns 1 upon success, not
+           OMPI_SUCCESS. */
+ 
     }
-
-    /* Prepare the iovec with all informations */
-    outvec.iov_base = (char*) inbuf + (*position);
-    outvec.iov_len = insize - (*position);
-    
-    /* Do the actual unpacking */
-    iov_count = 1;
-    rc = ompi_convertor_unpack( &local_convertor, &outvec, &iov_count,
-                                &size, &freeAfter );
-    *position += size;
-    OBJ_DESTRUCT( &local_convertor );
-
-    /* All done.  Note that the convertor returns 1 upon success, not
-       OMPI_SUCCESS. */
     OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
                            comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    
 }

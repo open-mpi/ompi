@@ -166,11 +166,12 @@ static void mca_pml_dr_recv_request_matched(
 
     /* fill out header */
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
-    ack->hdr_common.hdr_type = type;
+    ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK;
     ack->hdr_common.hdr_flags = MCA_PML_DR_HDR_FLAGS_MATCH;
     ack->hdr_vid = hdr->hdr_match.hdr_vid;
     ack->hdr_vmask = 0x1;
     ack->hdr_src_req = hdr->hdr_match.hdr_src_req;
+    assert(ack->hdr_src_req.pval);
     ack->hdr_dst_req.pval = recvreq;
 
     /* initialize descriptor */
@@ -224,6 +225,7 @@ static void mca_pml_dr_recv_request_nack(
     nack->hdr_vid = hdr->hdr_vid;
     nack->hdr_vmask = 1 << hdr->hdr_frag_idx;
     nack->hdr_src_req = hdr->hdr_src_req;
+    assert(nack->hdr_src_req.pval);
     nack->hdr_dst_req.pval = recvreq;
 
     /* initialize descriptor */
@@ -263,6 +265,7 @@ static void mca_pml_dr_recv_request_vfrag_ack(
 
     /* fill out header */
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
+
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK;
     ack->hdr_common.hdr_flags = 0;
     ack->hdr_vid = vfrag->vf_id;
@@ -336,7 +339,9 @@ void mca_pml_dr_recv_request_progress(
                 bytes_delivered,
                 csum);
             mca_pml_dr_recv_request_matched(recvreq, &hdr->hdr_rndv, 
-                (csum == hdr->hdr_match.hdr_csum) ? MCA_PML_DR_HDR_TYPE_ACK : MCA_PML_DR_HDR_TYPE_NACK);
+                                            MCA_PML_DR_HDR_TYPE_ACK);
+            /* mca_pml_dr_recv_request_matched(recvreq, &hdr->hdr_rndv,  */
+/*                                             (csum == hdr->hdr_match.hdr_csum) ? MCA_PML_DR_HDR_TYPE_ACK : MCA_PML_DR_HDR_TYPE_NACK); */
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:
@@ -354,7 +359,8 @@ void mca_pml_dr_recv_request_progress(
                 csum);
 
             /* if checksum fails - immediately nack this fragment */
-            if(csum != hdr->hdr_frag.hdr_frag_csum) {
+            /* if(csum != hdr->hdr_frag.hdr_frag_csum) {  */
+            if(0) {
                 bytes_received = bytes_delivered = 0;
                 mca_pml_dr_recv_request_nack(recvreq, &hdr->hdr_frag);
             } else {

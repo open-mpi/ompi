@@ -22,6 +22,16 @@
 
 static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
 {
+    vfrag->vf_send.pval = NULL;
+    vfrag->vf_recv.pval = NULL;
+    vfrag->vf_id = 0;
+    vfrag->vf_idx = 0;
+    vfrag->vf_len = 0; 
+    vfrag->vf_offset = 0; 
+    vfrag->vf_size = 0;
+    vfrag->vf_max_send_size = 0;
+    vfrag->vf_ack = 0;
+    vfrag->vf_mask = 0;
     memset(&vfrag->vf_event, 0, sizeof(vfrag->vf_event));
 }
 

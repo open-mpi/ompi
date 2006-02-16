@@ -40,7 +40,7 @@ extern "C" {
 
 struct mca_pml_dr_send_request_t {
     mca_pml_base_send_request_t req_send;
-    ompi_proc_t* req_proc; 
+    /* ompi_proc_t* req_proc;  */
     mca_bml_base_endpoint_t* req_endpoint;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t req_state;
@@ -83,7 +83,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
         rc = OMPI_SUCCESS;                                                 \
         OMPI_FREE_LIST_WAIT(&mca_pml_dr.send_requests, item, rc);          \
         sendreq = (mca_pml_dr_send_request_t*)item;                        \
-        sendreq->req_proc = proc;                                          \
+        sendreq->req_send.req_base.req_proc = proc;                        \
     }                                                                      \
 }
 
@@ -119,10 +119,11 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
 do {                                                                                      \
     mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;            \
     mca_pml_dr_comm_proc_t* proc = comm->procs + sendreq->req_send.req_base.req_peer;     \
-    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)sendreq->req_proc->proc_pml; \
+    mca_bml_base_endpoint_t* endpoint =                                                   \
+                 (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; \
     mca_bml_base_btl_t* bml_btl;                                                          \
     size_t size = sendreq->req_send.req_bytes_packed;                                     \
-                                                                                          \
+    size_t eager_limit;                                                                   \
     if(endpoint == NULL) {                                                                \
         rc = OMPI_ERR_UNREACH;                                                            \
         break;                                                                            \
@@ -146,73 +147,69 @@ do {                                                                            
                                                                                           \
     /* select a btl */                                                                    \
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                      \
-                                                                                          \
-    /* shortcut for zero byte */                                                          \
-    if(size == 0 && sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {   \
-        mca_btl_base_descriptor_t* descriptor;                                            \
-        mca_btl_base_segment_t* segment;                                                  \
-        mca_pml_dr_hdr_t* hdr;                                                            \
-                                                                                          \
-        /* allocate a descriptor */                                                       \
-        MCA_PML_DR_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_dr_match_hdr_t));        \
-        if(NULL == descriptor) {                                                          \
-            return OMPI_ERR_OUT_OF_RESOURCE;                                              \
-        }                                                                                 \
-        segment = descriptor->des_src;                                                    \
-                                                                                          \
-        /* build hdr */                                                                   \
-        hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;                                  \
-        hdr->hdr_common.hdr_flags = 0;                                                    \
-        hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_MATCH;                             \
-        hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;        \
-        hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;          \
-        hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
-        hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;                 \
-                                                                                          \
-        /* short message */                                                               \
-        descriptor->des_cbfunc = mca_pml_dr_match_completion_cache;                       \
-        descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                              \
-        descriptor->des_cbdata = sendreq;                                                 \
-                                                                                          \
-        /* request is complete at mpi level */                                            \
-        OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
-        MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                                    \
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
-                                                                                          \
-        /* send */                                                                        \
-        rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);                     \
-        if(OMPI_SUCCESS != rc) {                                                          \
-            mca_bml_base_free(bml_btl, descriptor );                                      \
-        }                                                                                 \
-                                                                                          \
-    } else {                                                                              \
-        size_t eager_limit = bml_btl->btl_eager_limit - sizeof(mca_pml_dr_hdr_t);         \
-        if(size <= eager_limit) {                                                         \
-            switch(sendreq->req_send.req_send_mode) {                                     \
-            case MCA_PML_BASE_SEND_SYNCHRONOUS:                                           \
-                rc = mca_pml_dr_send_request_start_rndv(sendreq, bml_btl, size, 0);       \
-                break;                                                                    \
-            case MCA_PML_BASE_SEND_BUFFERED:                                              \
-                rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);          \
-                break;                                                                    \
-            default:                                                                      \
-                if (bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                    \
-                    rc = mca_pml_dr_send_request_start_prepare(sendreq, bml_btl, size);   \
-                } else {                                                                  \
-                    rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);      \
-                }                                                                         \
-                break;                                                                    \
-            }                                                                             \
-        } else {                                                                          \
-            size = eager_limit;                                                           \
-            if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {           \
-                rc = mca_pml_dr_send_request_start_buffered(sendreq, bml_btl, size);      \
-            } else {                                                                      \
-                rc = mca_pml_dr_send_request_start_rndv(sendreq, bml_btl, size, 0);       \
-            }                                                                             \
-        }                                                                                 \
-    }                                                                                     \
-} while (0)
+    eager_limit = bml_btl->btl_eager_limit - sizeof(mca_pml_dr_hdr_t);                    \
+    if(size <= eager_limit) {                                                             \
+        switch(sendreq->req_send.req_send_mode) {                                         \
+        case MCA_PML_BASE_SEND_SYNCHRONOUS:                                               \
+            rc = mca_pml_dr_send_request_start_rndv(sendreq, bml_btl, size, 0);           \
+            break;                                                                        \
+        case MCA_PML_BASE_SEND_BUFFERED:                                                  \
+            rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);              \
+            break;                                                                        \
+        default:                                                                          \
+            if(size == 0) {                                                               \
+                mca_btl_base_descriptor_t* descriptor;                                    \
+                mca_btl_base_segment_t* segment;                                          \
+                mca_pml_dr_hdr_t* hdr;                                                    \
+                /* allocate a descriptor */                                               \
+                MCA_PML_DR_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_dr_match_hdr_t));        \
+                if(NULL == descriptor) {                                                          \
+                    return OMPI_ERR_OUT_OF_RESOURCE;                                              \
+                }                                                                                 \
+                segment = descriptor->des_src;                                                    \
+                                                                                                  \
+                /* build hdr */                                                                   \
+                hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;                                  \
+                hdr->hdr_common.hdr_flags = 0;                                                    \
+                hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_MATCH;                             \
+                hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;        \
+                hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;          \
+                hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
+                hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;                 \
+                hdr->hdr_match.hdr_src_req.pval = sendreq;                                        \
+                                                                                                  \
+                /* short message */                                                               \
+                descriptor->des_cbfunc = mca_pml_dr_match_completion_cache;                       \
+                descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                              \
+                descriptor->des_cbdata = sendreq;                                                 \
+                                                                                                  \
+                /* request is complete at mpi level */                                            \
+                OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
+                MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                                    \
+                OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
+                                                                                                  \
+                /* send */                                                                        \
+                rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);                     \
+                if(OMPI_SUCCESS != rc) {                                                          \
+                    mca_bml_base_free(bml_btl, descriptor );                                      \
+                }                                                                                 \
+                                                                                                  \
+            } else if (bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                         \
+                rc = mca_pml_dr_send_request_start_prepare(sendreq, bml_btl, size);   \
+            } else {                                                                  \
+                rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);      \
+            }                                                                         \
+            break;                                                                    \
+        }                                                                             \
+    } else {                                                                          \
+        size = eager_limit;                                                           \
+        if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {           \
+            rc = mca_pml_dr_send_request_start_buffered(sendreq, bml_btl, size);      \
+        } else {                                                                      \
+            rc = mca_pml_dr_send_request_start_rndv(sendreq, bml_btl, size, 0);       \
+        }                                                                             \
+    }                                                                                 \
+ } while (0)
 
 
 /*
