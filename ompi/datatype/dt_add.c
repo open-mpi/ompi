@@ -190,8 +190,10 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      * the soft UB for a data (without using a real UB marker). This approach can be used to
      * create the subarray and darray datatype. However from the MPI level this function
      * should never be called directly with a count set to 0.
+     * Adding a data-type with a size zero is legal but does not have to go through all the
+     * stuff below.
      */
-    if( count == 0 ) {
+    if( (0 == count) || (0 == pdtAdd->size) ) {
         return OMPI_SUCCESS;
     }
 
@@ -248,7 +250,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             pLast->elem.disp  += disp;
             pdtBase->desc.used++;
         } else {
-            /* if the extent of the datatype if the same as the extent of the loop
+            /* if the extent of the datatype is the same as the extent of the loop
              * description of the datatype then we simply have to update the main loop.
              */
             if( count != 1 ) {
