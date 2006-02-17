@@ -241,7 +241,7 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
 /*
  * Upper level does not need to call the _nocheck function directly.
  */
-OMPI_DECLSPEC inline int32_t
+OMPI_DECLSPEC int32_t
 ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
                                      size_t* position );
 static inline int32_t

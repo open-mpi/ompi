@@ -80,6 +80,7 @@ OBJ_CLASS_INSTANCE(ompi_convertor_t, opal_object_t, ompi_convertor_construct, om
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
+#include "ompi/communicator/communicator.h"
 inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                                     struct iovec* iov, uint32_t* out_size,
                                     size_t* max_data, int32_t* freeAfter )
@@ -91,6 +92,17 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         *out_size = 0;
         *max_data = 0;
         return 1;  /* nothing to do */
+    }
+    /* JMS */
+    if ( pConv->bConverted >= pConv->local_size ) {
+	sleep(ompi_mpi_comm_world.c_my_rank * 3);
+	printf("ASSERT FAILED\n");
+	ompi_ddt_dump(pConv->pDesc);
+	fprintf(stderr, "--------------------------------------------\n");
+	ompi_convertor_dump(pConv);
+	fprintf(stderr, "=============================================\n");
+	sleep(10);
+	abort();
     }
     assert( pConv->bConverted < pConv->local_size );
 
@@ -203,7 +215,8 @@ extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
 
-inline int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor, size_t* position )
+int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
+                                             size_t* position )
 {
     int32_t rc;
 
@@ -251,9 +264,9 @@ ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
  *
  * I consider here that the convertor is clean, either never initialized or already cleanup.
  */
-inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
-                                   const ompi_datatype_t* datatype, int32_t count,
-                                   const void* pUserBuf )
+int ompi_convertor_prepare( ompi_convertor_t* convertor,
+                            const ompi_datatype_t* datatype, int32_t count,
+                            const void* pUserBuf )
 {
     uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1;
 
