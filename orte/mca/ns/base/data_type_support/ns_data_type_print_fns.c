@@ -62,22 +62,13 @@ int orte_ns_base_std_print(char **output, char *prefix, void *src, orte_data_typ
  */
 int orte_ns_base_print_name(char **output, char *prefix, orte_process_name_t *name, orte_data_type_t type)
 {
-    char *pfx;
-
     /* set default result */
     *output = NULL;
 
-    /* protect against NULL pfx */
-    if (NULL == pfx) {
-        asprintf(&pfx, " ");
-    } else {
-        asprintf(&pfx, "%s", prefix);
-    }
+    asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%lu,%lu,%lu]",
+             (NULL == prefix ? " " : prefix), (unsigned long)name->cellid,
+             (unsigned long)name->jobid, (unsigned long)name->vpid);
 
-    asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%lu,%lu,%lu]", pfx, (unsigned long)name->cellid,
-                            (unsigned long)name->jobid, (unsigned long)name->vpid);
-
-    free(pfx);
     return ORTE_SUCCESS;
 }
 
