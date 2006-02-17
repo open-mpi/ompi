@@ -278,7 +278,6 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_unpacked += iov[iov_count].iov_len;
         pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
-        assert( iov_len_local >= 0 );
         /* We compute the checksum if we have to. But we will store the temporary
          * values in the a and b variables, and only at the end take in account the
          * value of the convertor checksum.
