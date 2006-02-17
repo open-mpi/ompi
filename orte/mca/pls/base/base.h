@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -121,6 +121,30 @@ extern "C" {
     int orte_pls_base_proxy_terminate_job(orte_jobid_t jobid);
     int orte_pls_base_proxy_terminate_proc(const orte_process_name_t *proc);
 
+    /**
+     * Check that the cwd in an app context exists and is accessible.
+     * If the user specified the cwd and we can chdir to it, print an
+     * error and fail.  If the user didn't specify it (i.e., it's a
+     * default), then see if chdir($HOME) would succeed.
+     *
+     * If either chdir() would succeed and do_chdir is true, then
+     * actually do the chdir().
+     *
+     * If we fall back to the chdir($HOME), set context->cwd to be a
+     * string pointing to the home directory name (owned by the
+     * context; safe to free at destruction).
+     */
+    int orte_pls_base_check_context_cwd(orte_app_context_t *context,
+                                        bool do_chdir);
+
+    /**
+     * Check that the app exists and is executable.  If it is not,
+     * print and error and fail.  If it is, and if the app was a naked
+     * executable (i.e., no relative or absolute path), replace the
+     * app with the string containing the absolute pathname to the
+     * exectuable (owned by the context; safe to free at destruction).
+     */
+    int orte_pls_base_check_context_app(orte_app_context_t *context);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

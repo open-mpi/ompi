@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -163,6 +163,8 @@ int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
             } else {
                 dest->app_context->cwd = NULL;
             }
+            dest->app_context->user_specified_cwd = 
+                src->app_context->user_specified_cwd;
             dest->app_context->num_map = src->app_context->num_map;
             if (NULL != src->app_context->map_data) {
                 dest->app_context->map_data = (orte_app_context_map_t **) malloc(sizeof(orte_app_context_map_t *) * src->app_context->num_map);

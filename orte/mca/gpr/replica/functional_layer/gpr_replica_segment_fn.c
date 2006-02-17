@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -470,6 +470,10 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
             
         case ORTE_EXIT_CODE:
             *((orte_exit_code_t*)value) = src->exit_code;
+            break;
+            
+        case ORTE_APP_CONTEXT:
+            *((orte_app_context_t**)value) = src->app_context;
             break;
             
         case ORTE_NULL:

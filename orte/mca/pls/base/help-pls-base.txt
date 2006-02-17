@@ -1,3 +1,4 @@
+# -*- text -*-
 #
 # Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -15,33 +16,24 @@
 # 
 # $HEADER$
 #
+[chdir-error]
+Failed to change to the working directory:
 
-noinst_LTLIBRARIES = libmca_pls_base.la
+Host:      %s
+Directory: %s
 
-dist_pkgdata_DATA = help-pls-base.txt
+The error returned was "%s".  Execution will now abort.
+[argv0-not-found]
+Failed to find the following executable:
 
-# Source code files
+Host:       %s
+Executable: %s
 
-headers = \
-        base.h
+Cannot continue.
+[argv0-not-accessible]
+Failed to find or execute the following executable:
 
-libmca_pls_base_la_SOURCES = \
-        $(headers) \
-        pls_base_close.c \
-        pls_base_context.c \
-        pls_base_open.c \
-        pls_base_select.c \
-	pls_base_state.c \
-	pls_base_proxy.c
+Host:       %s
+Executable: %s
 
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/pls/base
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-distclean-local:
-	rm -f static-components.h
+Cannot continue.

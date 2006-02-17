@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,7 +35,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
                                  size_t num_vals, orte_data_type_t type)
 {
     int rc;
-    int8_t have_prefix;
+    int8_t have_prefix, user_specified;
     size_t i;
     orte_app_context_t **app_context;
 
@@ -103,6 +103,18 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
             return rc;
         }
                         
+        /* pack the user specified cwd flag */
+        if (app_context[i]->user_specified_cwd) {
+            user_specified = 1;
+        } else {
+            user_specified = 0;
+        }
+        if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
+                        (void*)(&user_specified), 1, ORTE_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* Pack the map data */
         if (ORTE_SUCCESS != (rc = orte_dps_pack_buffer(buffer,
                 (void*)(&(app_context[i]->num_map)), 1, DPS_TYPE_SIZE_T))) {

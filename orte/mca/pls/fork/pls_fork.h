@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,12 +35,12 @@ extern "C" {
 int orte_pls_fork_component_open(void);
 int orte_pls_fork_component_close(void);
 orte_pls_base_module_t* orte_pls_fork_component_init(int *priority);
-                                                                                  
+
 /*
  * Startup / Shutdown
  */
 int orte_pls_fork_finalize(void);
-                                                                                  
+
 
 /*
  * Interface
@@ -57,16 +57,17 @@ struct orte_pls_fork_component_t {
     int debug;
     int priority;
     int reap;
+    int timeout_before_sigkill;
     size_t num_children;
     opal_mutex_t lock;
     opal_condition_t cond;
 };
 typedef struct orte_pls_fork_component_t orte_pls_fork_component_t;
-                                                                                  
-                                                                                  
+
+
 ORTE_DECLSPEC extern orte_pls_fork_component_t mca_pls_fork_component;
 ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls_fork_module;
-                                                                                  
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -34,11 +34,6 @@ requsted more nodes than exist in your cluster).
 
 While probably only useful to Open RTE developers, the error returned
 was %d.
-[orterun:executable-not-found]
-%s could not find the executable "%s".
-
-Please check your PATH and ensure that the executable is able to be
-found and executed.
 [orterun:error-spawning]
 %s was unable to start the specified application.  An attempt has been
 made to clean up all processes that did start.  The error returned was
@@ -66,8 +61,8 @@ argument.
 
 It is possible that you forgot to specify how many processes to run
 via the "-np" argument.
-[orterun:syscall-failed]
-%s encountered a system call failure.  This should not happen, and
+[orterun:call-failed]
+%s encountered a %s call failure.  This should not happen, and
 usually indicates an error within the operating system itself.
 Specifically, the following error occurred:
 
