@@ -841,8 +841,10 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         for (i = 0; i < map->num_procs; ++i) {
             orte_app_context_t *context = map->app;
 
-            /* Check that the cwd is sane, but don't chdir there */
-            rc = orte_pls_base_check_context_cwd(context, false);
+            /* Check that the cwd is sane.  We have to chdir there in
+               to check the executable, because the executable could
+               have been specified as a relative path to the wdir */
+            rc = orte_pls_base_check_context_cwd(context, true);
             if (ORTE_SUCCESS != rc) {
                 goto cleanup;
             }
@@ -850,6 +852,12 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
             /* Check that the app exists and is executable */
             rc = orte_pls_base_check_context_app(context);
             if (ORTE_SUCCESS != rc) {
+                goto cleanup;
+            }
+
+            /* Return to the original dir */
+            if (0 != chdir(cwd_save)) {
+                rc = ORTE_ERR_IN_ERRNO;
                 goto cleanup;
             }
         }
