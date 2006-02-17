@@ -35,7 +35,7 @@
 
 static void orte_iof_base_endpoint_construct(orte_iof_base_endpoint_t* endpoint)
 {
-    endpoint->ep_mode = 0;
+    endpoint->ep_mode = ORTE_IOF_SOURCE;  /* default value */
     endpoint->ep_seq = 0;
     endpoint->ep_ack = 0;
     endpoint->ep_fd = -1;
