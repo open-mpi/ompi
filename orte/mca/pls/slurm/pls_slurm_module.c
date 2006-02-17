@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -25,8 +25,22 @@
 #include "orte_config.h"
 
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -434,6 +448,7 @@ static int pls_slurm_finalize(void)
 static int pls_slurm_start_proc(int argc, char **argv, char **env,
                                 char *prefix)
 {
+    int fd;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
     if (NULL == exec_argv) {
@@ -481,8 +496,22 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             free(newenv);
         }
 
-        /* JMS -- when not in debug mode, tie stdout/stderr to dev
-           null so we don't see messages from orted */
+        /* When not in debug mode, tie stdout/stderr to dev null so we
+           don't see messages from orted */
+        if (!mca_pls_slurm_component.debug) {
+            fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
+            if (fd >= 0) {
+                if (fd != 1) {
+                    dup2(fd,1);
+                }
+                if (fd != 2) {
+                    dup2(fd,2);
+                }
+                if (fd > 2) {
+                    close(fd);
+                }
+            }
+        }
 
         /* get the srun process out of orterun's process group so that
            signals sent from the shell (like those resulting from
