@@ -310,6 +310,8 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
     return index;
 }
 
+OMPI_DECLSPEC int32_t ompi_ddt_print_args( const ompi_datatype_t* pData );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

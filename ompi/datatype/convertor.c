@@ -43,7 +43,7 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
  * everytime they grab a new one from the cache. The OBJ_CONSTRUCT on the convertor should
  * be called only on the first creation of a request (not when extracted from the cache).
  */
-inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
+int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 {
     ompi_datatype_t* datatype = (ompi_datatype_t*)convertor->pDesc;
 
@@ -211,7 +211,7 @@ extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                                                          int starting_point, const int* sizes );
 
-inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t* position )
+int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t* position )
 {
     int32_t rc;
 
@@ -263,9 +263,9 @@ ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
  *
  * I consider here that the convertor is clean, either never initialized or already cleanup.
  */
-inline int ompi_convertor_prepare( ompi_convertor_t* convertor,
-                                   const ompi_datatype_t* datatype, int32_t count,
-                                   const void* pUserBuf )
+int ompi_convertor_prepare( ompi_convertor_t* convertor,
+                            const ompi_datatype_t* datatype, int32_t count,
+                            const void* pUserBuf )
 {
     uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1;
 

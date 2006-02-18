@@ -191,7 +191,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      * create the subarray and darray datatype. However from the MPI level this function
      * should never be called directly with a count set to 0.
      */
-    if( count == 0 ) {
+    if( (0 == count) || (0 == pdtAdd->size) ) {
         return OMPI_SUCCESS;
     }
 

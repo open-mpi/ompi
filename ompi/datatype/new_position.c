@@ -219,7 +219,6 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
  complete_loop:
     (*position) -= iov_len_local;
     pConvertor->bConverted = *position;  /* update the already converted bytes */
-    assert( iov_len_local >= 0 );
     if( (pConvertor->pending_length != iov_len_local) &&
         (pConvertor->flags & CONVERTOR_RECV) ) {
         opal_output( 0, "Missing some data ?" );
