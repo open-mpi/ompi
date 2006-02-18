@@ -198,6 +198,46 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
     return MPI_SUCCESS;
 }
 
+int32_t ompi_ddt_print_args( const ompi_datatype_t* pData )
+{
+    int32_t i;
+    ompi_ddt_args_t* pArgs = pData->args;
+
+    if( pData->flags & DT_FLAG_PREDEFINED ) {
+        /* nothing to do for predefined data-types */
+        return(MPI_SUCCESS);
+    }
+
+    if( pArgs == NULL ) return MPI_ERR_INTERN;
+
+    printf( "type %d count ints %d count disp %d count datatype %d\n",
+            pArgs->create_type, pArgs->ci, pArgs->ca, pArgs->cd );
+    if( pArgs->i != NULL ) {
+        for( i = 0; i < pArgs->ci; i++ ) {
+            printf( "%d ", pArgs->i[i] );
+        }
+        printf( "\n" );
+    }
+    if( pArgs->a != NULL ) {
+        for( i = 0; i < pArgs->ca; i++ ) {
+            printf( "%ld ", (long)pArgs->a[i] );
+        }
+        printf( "\n" );
+    }
+    if( pArgs->d != NULL ) {
+        for( i = 0; i < pArgs->cd; i++ ) {
+            ompi_datatype_t* temp = pArgs->d[i];
+            if( temp->flags & DT_FLAG_PREDEFINED ) {
+                printf( "%s ", temp->name );
+            } else {
+                printf( "%p ", temp );
+            }
+        }
+        printf( "\n" );
+    }
+    return MPI_SUCCESS;
+}
+
 int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
                            int32_t* ci, int32_t* i,
                            int32_t* ca, MPI_Aint* a,
