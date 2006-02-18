@@ -33,14 +33,16 @@ result in exactly identical behavior.
 .\" **************************
 .SH QUICK SUMMARY
 If you are simply looking for how to run an MPI application, you
-probably want to use the following command line:
+probably want to use a command line of the following form:
 
-    \fBshell$\fP mpirun -np 4 my_mpi_application
+    \fBshell$\fP mpirun -np X [ --hostfile <filename> ]  <application>
 
-This will run 4 copies of \fImy_mpi_application\fR in your current run-time
+This will run X copies of \fI<application>\fR in your current run-time
 environment (if running under a supported resource manager, Open MPI's
 \fIorterun\fR will usually automatically use the corresponding resource manager
-process starter, as opposed to, for example, \fIrsh\fR or \fIssh\fR ),
+process starter, as opposed to, for example, \fIrsh\fR or \fIssh\fR,
+which require the use of a hostfile, or will default to running all X
+copies on the localhost),
 scheduling (by default) in a round-robin fashion by CPU slot.  See the
 rest of this page for more details.
 .
@@ -79,12 +81,7 @@ default.
 .
 .TP
 .B -c \fR<#>\fP
-Synonym for \fI-np\fP (see below).
-.
-.
-.TP
-.B -d, --debug-devel
-Enable debugging og OpenRTE
+Synonym for \fI-np\fP.
 .
 .
 .TP
@@ -94,19 +91,9 @@ MCA parameter.
 .
 .
 .TP
-.B --debug-daemons
-Enable debugging of any OpenRTE daemons used by this application.
-.
-.
-.TP
-.B --debug-daemons-file
-Enable debugging of any OpenRTE daemons used by this application, storing
-output in files.
-.
-.
-.TP
 .B --debugger
-Sequence of debuggers to search for when \fI--debug\fP is used.
+Sequence of debuggers to search for when \fI--debug\fP is used (i.e.,
+a synonym for \fIorte_base_user_debugger\fP MCA parameter).
 .
 .
 .TP
@@ -116,7 +103,7 @@ Display help for this command
 .
 .TP
 .B -H \fR<host1,host2,...,hostN>\fP
-Synonym for \fI-host\fP (see below).
+Synonym for \fI-host\fP.
 .
 .
 .TP
@@ -132,7 +119,7 @@ JJH - Should have man page for how to format a hostfile properly.
 .
 .TP
 .B -machinefile \fR<machinefile>\fP
-Synonym for \fI-hostfile\fP (see above).
+Synonym for \fI-hostfile\fP.
 .
 .
 .TP
@@ -142,12 +129,7 @@ Send arguments to various MCA modules.  See the "MCA" section, below.
 .
 .TP
 .B -n \fR<#>\fP
-Synonym for \fI-np\fP (see below).
-.
-.
-.TP
-.B --no-daemonize
-Do not detach OpenRTE daemons used by this application.
+Synonym for \fI-np\fP.
 .
 .
 .TP
@@ -175,7 +157,7 @@ Set the root for the session directory tree for orterun only.
 .
 .TP
 .B -tv
-Launch processes under the TotalView Debugger.
+Launch processes under the TotalView debugger.
 Deprecated backwards compatibility flag. Synonym for \fI--debug\fP.
 .
 .
@@ -211,8 +193,34 @@ then use \fI-x\fP to export (not define) them.
 .TP
 .B <args>
 Pass these runtime arguments to every new process.  These must always
-be the last arguments to \fImpirun\fP This option is not valid on the command
-line if an application schema is specified.
+be the last arguments to \fImpirun\fP. If an app context file is used,
+\fI<args>\fP will be ignored.
+.
+.P
+The follwing options are useful for developers; they are not generally
+useful to most ORTE and/or MPI users:
+.
+.TP
+.B -d, --debug-devel
+Enable debugging of the OpenRTE (the run-time layer in Open MPI).
+This is not generally useful for most users.
+.
+.
+.TP
+.B --debug-daemons
+Enable debugging of any OpenRTE daemons used by this application.
+.
+.
+.TP
+.B --debug-daemons-file
+Enable debugging of any OpenRTE daemons used by this application, storing
+output in files.
+.
+.
+.TP
+.B --no-daemonize
+Do not detach OpenRTE daemons used by this application.
+.
 .
 .\" **************************
 .\"    Description Section
