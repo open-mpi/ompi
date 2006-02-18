@@ -732,5 +732,8 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
     opal_output( 0, "%s\n", buffer );
+
+    ompi_ddt_print_args( pData );
+
     free(buffer);
 }

@@ -332,6 +332,8 @@ do { \
 #define COMPUTE_SPECIFIC_CHECKSUM( DATA, LENGTH, ADLER32 )
 #endif  /* OMPI_REQUIRE_DATA_VALIDATION */
 
+OMPI_DECLSPEC int32_t ompi_ddt_print_args( const ompi_datatype_t* pData );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
