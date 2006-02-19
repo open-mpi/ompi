@@ -230,7 +230,7 @@ int32_t ompi_ddt_print_args( const ompi_datatype_t* pData )
             if( temp->flags & DT_FLAG_PREDEFINED ) {
                 printf( "%s ", temp->name );
             } else {
-                printf( "%p ", temp );
+                printf( "%p ", (void*)temp );
             }
         }
         printf( "\n" );
