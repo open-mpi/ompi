@@ -399,9 +399,6 @@ int32_t ompi_ddt_init( void )
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
         datatype->btypes[i]         = 1;
-        datatype->packed_description = malloc(2 * sizeof(int) );
-        ((int*)(datatype->packed_description))[0] = MPI_COMBINER_DUP;
-        ((int*)(datatype->packed_description))[1] = i;
     }
 
     /* Create the f2c translation table */
