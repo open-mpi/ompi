@@ -363,7 +363,11 @@ int ompi_ddt_get_pack_description( ompi_datatype_t* datatype,
     void* recursive_buffer;
 
     if( NULL == datatype->packed_description ) {
-        datatype->packed_description = malloc( args->total_pack_size );
+        if( datatype->flags & DT_FLAG_PREDEFINED ) {
+            datatype->packed_description = malloc( 2 * sizeof(int) );
+        } else {
+            datatype->packed_description = malloc( args->total_pack_size );
+        }
         recursive_buffer = datatype->packed_description;
         __ompi_ddt_pack_description( datatype, &recursive_buffer, &next_index );
     }
