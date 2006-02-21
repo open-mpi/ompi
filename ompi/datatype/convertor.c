@@ -93,17 +93,6 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         *max_data = 0;
         return 1;  /* nothing to do */
     }
-    /* JMS */
-    if ( pConv->bConverted >= pConv->local_size ) {
-	sleep(ompi_mpi_comm_world.c_my_rank * 3);
-	printf("ASSERT FAILED\n");
-	ompi_ddt_dump(pConv->pDesc);
-	fprintf(stderr, "--------------------------------------------\n");
-	ompi_convertor_dump(pConv);
-	fprintf(stderr, "=============================================\n");
-	sleep(10);
-	abort();
-    }
     assert( pConv->bConverted < pConv->local_size );
 
     /* We dont allocate any memory. The packing function should allocate it
