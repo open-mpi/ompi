@@ -653,7 +653,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
-    time.h termios.h ulimit.h unistd.h util.h])
+    time.h termios.h ulimit.h unistd.h util.h malloc.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
 # net/if.h
@@ -780,7 +780,7 @@ OMPI_CHECK_FUNC_LIB([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe setsid mmap])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe setsid mmap mallopt])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
