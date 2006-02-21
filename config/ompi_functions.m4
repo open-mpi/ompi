@@ -127,6 +127,9 @@ case "$prefix" in
   NONE)
     echo installing to directory \"$ac_default_prefix\" 
     ;;
+  [a-zA-Z]:*)
+    echo installing to directory \"$prefix\" 
+    ;;
   *) 
     AC_MSG_ERROR(prefix \"$prefix\" must be an absolute directory path) 
     ;;
