@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -53,7 +53,7 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
         else if (MPI_OP_NULL == op) {
           err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
-            int ret = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP, msg);
+            int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
         } else if (NULL == recvcounts) {
