@@ -41,6 +41,7 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
 {
     int rc;
     ompi_win_t *ompi_win = (ompi_win_t*) win;
+    char *msg;
 
     if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
 
@@ -57,10 +58,11 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             rc = MPI_ERR_RANK;
         } else if (MPI_OP_NULL == op) {
             rc = MPI_ERR_OP;
-        } else if (!ompi_op_is_intrinsic(op) ||
-                   (target_datatype->id < DT_MAX_PREDEFINED &&
-                    -1 == ompi_op_ddt_map[target_datatype->id])) {
-            rc = MPI_ERR_OP;
+        } else if (op != &ompi_mpi_op_replace && 
+                   !ompi_op_is_valid(op, target_datatype, &msg, FUNC_NAME)) {
+            int ret = OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_OP, msg);
+            free(msg);
+            return ret;
         } else if (0 == (ompi_win_get_mode(win) & OMPI_WIN_ACCESS_EPOCH)) {
             rc = MPI_ERR_RMA_CONFLICT;
         } else {
