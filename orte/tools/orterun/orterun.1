@@ -11,12 +11,8 @@
 orterun, mpirun, mpiexec \- Execute serial and parallel jobs in Open MPI.
 
 .B Note:
-.IR mpirun , 
-.IR mpiexec ,
-and
-.I orterun
-are all exact synonyms for each other.  Using any of the names will
-result in exactly identical behavior.
+\fImpirun\fP, \fImpiexec\fP, and \fIorterun\fP are all exact synonyms for each
+other.  Using any of the names will result in exactly identical behavior.
 .
 .\" **************************
 .\"    Synopsis Section
@@ -35,9 +31,9 @@ result in exactly identical behavior.
 If you are simply looking for how to run an MPI application, you
 probably want to use a command line of the following form:
 
-    \fBshell$\fP mpirun -np X [ --hostfile <filename> ]  <application>
+    \fBshell$\fP mpirun -np X [ --hostfile <filename> ]  <program>
 
-This will run X copies of \fI<application>\fR in your current run-time
+This will run X copies of \fI<program>\fR in your current run-time
 environment (if running under a supported resource manager, Open MPI's
 \fIorterun\fR will usually automatically use the corresponding resource manager
 process starter, as opposed to, for example, \fIrsh\fR or \fIssh\fR,
@@ -59,7 +55,20 @@ directory.  See the "Current Working Directory" section, below.
 .\" Start options listing
 .\"    Indent 10 chacters from start of first column to start of second column
 .TP 10
-.B -aborted \fR<#>\fP
+.B <args>
+Pass these runtime arguments to every new process.  These must always
+be the last arguments to \fImpirun\fP. If an app context file is used,
+\fI<args>\fP will be ignored.
+.
+.
+.TP
+.B <program>
+The program executable. This is identified as the first non-recognized argument
+to mpirun.
+.
+.
+.TP
+.B -aborted\fR,\fP --aborted \fR<#>\fP
 Set the maximum number of aborted processes to display.
 .
 .
@@ -69,12 +78,12 @@ Provide an appfile, ignoring all other command line options.
 .
 .
 .TP
-.B -bynode
+.B -bynode\fR,\fP --bynode
 Allocate (map) the processes by node in a round-robin scheme.
 .
 .
 .TP
-.B -byslot
+.B -byslot\fR,\fP --byslot
 Allocate (map) the processes by slot in a round-robin scheme. This is the
 default.
 .
@@ -85,19 +94,25 @@ Synonym for \fI-np\fP.
 .
 .
 .TP
-.B --debug
+.B -debug\fR,\fP --debug
 Invoke the user-level debugger indicated by the \fIorte_base_user_debugger\fP
 MCA parameter.
 .
 .
 .TP
-.B --debugger
-Sequence of debuggers to search for when \fI--debug\fP is used (i.e.,
+.B -debugger\fR,\fP --debugger
+Sequence of debuggers to search for when \fI--debug\fP is used (i.e.
 a synonym for \fIorte_base_user_debugger\fP MCA parameter).
 .
 .
 .TP
-.B -h, --help
+.B -gmca\fR,\fP --gmca \fR<key> <value>\fP
+Pass global MCA parameters that are applicable to all contexts. \fI<key>\fP is
+the parameter name; \fI<value>\fP is the parameter value.
+.
+.
+.TP
+.B -h\fR,\fP --help
 Display help for this command
 .
 .
@@ -107,28 +122,28 @@ Synonym for \fI-host\fP.
 .
 .
 .TP
-.B -host \fR<host1,host2,...,hostN>\fP
+.B -host\fR,\fP --host \fR<host1,host2,...,hostN>\fP
 List of hosts on which to invoke processes.
 .
 .
 .TP
-.B -hostfile \fR<hostfile>\fP
+.B -hostfile\fR,\fP --hostfile \fR<hostfile>\fP
 Provide a hostfile to use. 
 JJH - Should have man page for how to format a hostfile properly.
 .
 .
 .TP
-.B -machinefile \fR<machinefile>\fP
+.B -machinefile\fR,\fP --machinefile \fR<machinefile>\fP
 Synonym for \fI-hostfile\fP.
 .
 .
 .TP
-.B -mca <key> <value>
+.B -mca\fR,\fP --mca <key> <value>
 Send arguments to various MCA modules.  See the "MCA" section, below.
 .
 .
 .TP
-.B -n \fR<#>\fP
+.B -n\fR,\fP --n \fR<#>\fP
 Synonym for \fI-np\fP.
 .
 .
@@ -136,17 +151,17 @@ Synonym for \fI-np\fP.
 .B -np \fR<#>\fP
 Run this many copies of the program on the given nodes.  This option
 indicates that the specified file is an executable program and not an
-application schema.
+application contex.
 .
 .
 .TP
-.B -nw
+.B -nw\fR,\fP --nw
 Launch the processes and do not wair for their completion. orterun will
 complete as soon as successful launch occurs.
 .
 .
 .TP
-.B -path \fR<path>\fP
+.B -path\fR,\fP --path \fR<path>\fP
 PATH to be used to look for executables to start processes.
 .
 .
@@ -156,7 +171,7 @@ Set the root for the session directory tree for orterun only.
 .
 .
 .TP
-.B -tv
+.B -tv\fR,\fP --tv
 Launch processes under the TotalView debugger.
 Deprecated backwards compatibility flag. Synonym for \fI--debug\fP.
 .
@@ -168,7 +183,7 @@ For this application, set the universe name as:
 .
 .
 .TP
-.B -v, --verbose
+.B -v\fR,\fP --verbose
 Be verbose
 .
 .
@@ -176,7 +191,7 @@ Be verbose
 .B -wd \fR<dir>\fP
 Change to the directory <dir> before the user's program executes.
 Note that if the \fI-wd\fP option appears both on the command line and in an
-application schema, the schema will take precendence over the command line.
+application context, the context will take precendence over the command line.
 .
 .
 .TP
@@ -190,18 +205,12 @@ values.  Users are advised to set variables in the environment, and
 then use \fI-x\fP to export (not define) them.
 .
 .
-.TP
-.B <args>
-Pass these runtime arguments to every new process.  These must always
-be the last arguments to \fImpirun\fP. If an app context file is used,
-\fI<args>\fP will be ignored.
-.
 .P
 The follwing options are useful for developers; they are not generally
 useful to most ORTE and/or MPI users:
 .
 .TP
-.B -d, --debug-devel
+.B -d\fR,\fP --debug-devel
 Enable debugging of the OpenRTE (the run-time layer in Open MPI).
 This is not generally useful for most users.
 .
@@ -232,11 +241,11 @@ MPI. If the application is simply SPMD, the application can be specified on the
 \fImpirun\fP command line.
 
 If the application is MIMD, comprising multiple programs, an application
-schema is required in a separate file.
-See appschema(5) for a description of the application schema syntax.
+context is required in a separate file.
+.\"See appcontext(5) for a description of the application context syntax.
 It essentially contains multiple \fImpirun\fP command lines, less the command
 name itself.  The ability to specify different options for different
-instantiations of a program is another reason to use an application schema.
+instantiations of a program is another reason to use an application context.
 .
 .
 .
@@ -276,12 +285,12 @@ nodes.
 .
 .
 .
-.SS Application Schema or Executable Program?
+.SS Application Context or Executable Program?
 .
 To distinguish the two different forms, \fImpirun\fP
 looks on the command line for \fI--app\fP option.  If
 it is specified, then the file named on the command line is
-assumed to be an application schema.  If it is not
+assumed to be an application context.  If it is not
 specified, then the file is assumed to be an executable program.
 .
 .
@@ -294,7 +303,7 @@ This behavior is consistent with logging into the source node and
 executing the program from the shell.  On remote nodes, the "." path
 is the home directory.
 .PP
-Open MPI looks for an application schema in three directories the local
+Open MPI looks for an application context in three directories the local
 directory.
 .
 .
@@ -352,14 +361,14 @@ directory that processes will be started in.
 .PP
 The \fI\-wd\fP option to mpirun allows the user to change to an arbitrary
 directory before their program is invoked.  It can also be used in application
-schema files to specify working directories on specific nodes and/or
+context files to specify working directories on specific nodes and/or
 for specific applications.
 .PP
-If the \fI\-wd\fP option appears both in a schema file and on the command line,
-the schema file directory will override the command line value.
+If the \fI\-wd\fP option appears both in a context file and on the command line,
+the context file directory will override the command line value.
 .PP
 The \fI\-D\fP option will change the current working directory to the directory
-where the executable resides.  It cannot be used in application schema files.
+where the executable resides.  It cannot be used in application context files.
 .PP
 If \fI\-wd\fP is not specified, the local node will send the directory name
 where mpirun was invoked from to each of the remote nodes.  The remote nodes
