@@ -288,18 +288,21 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
                                      module->p2p_comm->c_contextid,
                                      module);
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
-                                     
+
     /* fill in window information */
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    if (!want_locks(info)) win->w_flags |= OMPI_WIN_NO_LOCKS;
+    if (!want_locks(info)) {
+        opal_output(0, "disabling locks on new window");
+        win->w_flags |= OMPI_WIN_NO_LOCKS;
+    }
+
+    /* sync memory - make sure all initialization completed */
+    opal_atomic_mb();
 
     /* register to receive fragment callbacks */
     ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT,
                                ompi_osc_pt2pt_component_fragment_cb,
                                NULL);
-
-    /* sync memory - make sure all initialization completed */
-    opal_atomic_mb();
 
     return ret;
 }
