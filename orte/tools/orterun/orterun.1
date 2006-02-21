@@ -19,15 +19,34 @@ other.  Using any of the names will result in exactly identical behavior.
 .\" **************************
 .SH SYNOPSIS
 .
+.PP
+Single Proceess Multiple Data (SPMD) Model:
+
 .B mpirun 
 .R [ options ] 
 .B <program>
 .R [ <args> ]
+
+Multiple Instruction Multiple Data (MIMD) Model:
+
+.B mpirun
+.R [ global_options ]
+       [ local_options1 ]
+.B <program1>
+.R [ <args1> ] :
+       [ local_options2 ]
+.B <program2>
+.R [ <args2> ] : 
+       ... : 
+       [ local_optionsN ]
+.B <programN>
+.R [ <argsN> ]
 .
 .\" **************************
 .\"    Quick Summary Section
 .\" **************************
 .SH QUICK SUMMARY
+.
 If you are simply looking for how to run an MPI application, you
 probably want to use a command line of the following form:
 
@@ -35,12 +54,11 @@ probably want to use a command line of the following form:
 
 This will run X copies of \fI<program>\fR in your current run-time
 environment (if running under a supported resource manager, Open MPI's
-\fIorterun\fR will usually automatically use the corresponding resource manager
+\fImpirun\fR will usually automatically use the corresponding resource manager
 process starter, as opposed to, for example, \fIrsh\fR or \fIssh\fR,
 which require the use of a hostfile, or will default to running all X
-copies on the localhost),
-scheduling (by default) in a round-robin fashion by CPU slot.  See the
-rest of this page for more details.
+copies on the localhost), scheduling (by default) in a round-robin fashion by
+CPU slot.  See the rest of this page for more details.
 .
 .\" **************************
 .\"    Options Section
@@ -50,7 +68,8 @@ rest of this page for more details.
 .I mpirun
 will send the name of the directory where it was invoked on the local
 node to each of the remote nodes, and attempt to change to that
-directory.  See the "Current Working Directory" section, below.
+directory.  See the "Current Working Directory" section below for further
+details.
 .\"
 .\" Start options listing
 .\"    Indent 10 chacters from start of first column to start of second column
@@ -156,18 +175,18 @@ application contex.
 .
 .TP
 .B -nw\fR,\fP --nw
-Launch the processes and do not wair for their completion. orterun will
+Launch the processes and do not wair for their completion. mpirun will
 complete as soon as successful launch occurs.
 .
 .
 .TP
 .B -path\fR,\fP --path \fR<path>\fP
-PATH to be used to look for executables to start processes.
+<path> that will be used when attempting to locate requested executables.
 .
 .
 .TP
 .B --tmpdir \fR<dir>\fP
-Set the root for the session directory tree for orterun only.
+Set the root for the session directory tree for mpirun only.
 .
 .
 .TP
@@ -190,7 +209,9 @@ Be verbose
 .TP
 .B -wd \fR<dir>\fP
 Change to the directory <dir> before the user's program executes.
-Note that if the \fI-wd\fP option appears both on the command line and in an
+See the "Current Working Directory" section for notes on relative paths.
+.B Note:
+If the \fI-wd\fP option appears both on the command line and in an
 application context, the context will take precendence over the command line.
 .
 .
@@ -237,15 +258,25 @@ Do not detach OpenRTE daemons used by this application.
 .SH DESCRIPTION
 .
 One invocation of \fImpirun\fP starts an MPI application running under Open
-MPI. If the application is simply SPMD, the application can be specified on the
-\fImpirun\fP command line.
+MPI. If the application is single process multiple data (SPMD), the application
+can be specified on the \fImpirun\fP command line.
 
-If the application is MIMD, comprising multiple programs, an application
-context is required in a separate file.
+If the application is multiple instruction multiple data (MIMD), comprising of
+multiple programs, the set of programs and argument can be specified in one of
+two ways: Extended Command Line Arguments, and Application Context.
+.PP
+An application context describes the MIMD program set including all arguments
+in a separate file.
 .\"See appcontext(5) for a description of the application context syntax.
-It essentially contains multiple \fImpirun\fP command lines, less the command
-name itself.  The ability to specify different options for different
+This file essentially contains multiple \fImpirun\fP command lines, less the
+command name itself.  The ability to specify different options for different
 instantiations of a program is another reason to use an application context.
+.PP
+Extended command line arguments allow for the description of the applicaiton
+layout on the command line using colons (\fI:\fP) to separate the specification
+of programs and arguments. Some options are globally set across all specified
+programs (e.g. --hostfile), while others are specific to a single program
+(e.g. -np).
 .
 .
 .
@@ -297,26 +328,56 @@ specified, then the file is assumed to be an executable program.
 .
 .SS Locating Files
 .
-Open MPI looks for an executable program by searching the directories in
-the user's PATH environment variable as defined on the source node(s).
-This behavior is consistent with logging into the source node and
-executing the program from the shell.  On remote nodes, the "." path
-is the home directory.
+If \fIno\fP relative or absolute path is specified for a file, Open MPI
+will look for files by searching the directories in the user's PATH environment
+variable as defined on the source node(s).
 .PP
-Open MPI looks for an application context in three directories the local
-directory.
+If a relative directory is specified, it must be relative to the initial
+working directory determined by the specific starter used. For example when
+using the rsh or ssh starters, the initial directory is $HOME by default. Other
+starters may set the initial directory to the current working directory from
+the invocation of \fImpirun\fP. 
+.
+.
+.
+.SS Current Working Directory
+.
+The \fI\-wd\fP mpirun option allows the user to change to an arbitrary
+directory before their program is invoked.  It can also be used in application
+context files to specify working directories on specific nodes and/or
+for specific applications.
+.PP
+If the \fI\-wd\fP option appears both in a context file and on the command line,
+the context file directory will override the command line value.
+.PP
+If the \fI-wd\fP option is specified, Open MPI will attempt to change to the
+specified directory on all of the remote nodes. If this fails, \fImpirun\fP
+will abort.
+.PP
+If the \fI-wd\fP option is \fBnot\fP specified, Open MPI will send the
+directory name where \fImpirun\fP was invoked to each of the remote nodes. The
+remote nodes will try to change to that directory. If they are unable (e.g., if
+the directory does not exit on that node), then Open MPI will use the default
+directory determined by the starter.
+.PP
+All directory changing occurs before the user's program is invoked; it
+does not wait until \fIMPI_INIT\fP is called.  
 .
 .
 .
 .SS Standard I/O
 .
-Open MPI directs UNIX standard input to /dev/null on all remote nodes.  On
-the local node that invoked \fImpirun\fP, standard input is inherited from
-\fImpirun\fP.
+Open MPI directs UNIX standard input to /dev/null on all processes
+except the MPI_COMM_WORLD rank 0 process. The MPI_COMM_WORLD rank 0 process
+inherits standard input from \fImpirun\fP.
+.B Note:
+The node that invoked \fImpirun\fP need not be the same as the node where the
+MPI_COMM_WORLD rank 0 process resides. Open MPI handles the redirection of
+\fImpirun\fP's standard input to the rank 0 process.
 .PP
-Open MPI directs UNIX standard output and error to the Open RTE daemon on all
-remote nodes. Open MPI ships all captured output/error to the node that
-invoked \fImpirun\fP and prints it on the standard output/error of \fImpirun\fP
+Open MPI directs UNIX standard output and error from remote nodes to the node
+that invoked \fImpirun\fP and prints it on the standard output/error of
+\fImpirun\fP.
 Local processes inherit the standard output/error of \fImpirun\fP and transfer
 to it directly.
 .PP
@@ -325,10 +386,10 @@ using the typical shell redirection procedure on \fImpirun\fP.
 
       \fBshell$\fP mpirun -np 2 my_app < my_input > my_output
 
-Note that in this example \fIonly\fP the local node (i.e., the node where
-mpirun was invoked from) will receive the stream from \fImy_input\fP on stdin.  The
-stdin on all the other nodes will be tied to /dev/null.  However, the stdout
-from all nodes will be collected into the \fImy_output\fP file.
+Note that in this example \fIonly\fP the MPI_COMM_WORLD rank 0 process will
+receive the stream from \fImy_input\fP on stdin.  The stdin on all the other
+nodes will be tied to /dev/null.  However, the stdout from all nodes will
+be collected into the \fImy_output\fP file. 
 .
 .
 .
@@ -339,45 +400,14 @@ During the run of an MPI application, if any rank dies abnormally
 signal), \fImpirun\fP will print out an error message and kill the rest of the
 MPI application.
 .PP
-By default, Open MPI only installs a signal handler for one signal in
-user programs (SIGUSR2).  Therefore, it is safe for users to install
-their own signal handlers in Open MPI programs 
-.PP
 User signal handlers should probably avoid trying to cleanup MPI state
 (Open MPI is, currently, neither thread-safe nor async-signal-safe).
-For example, if a seg fault occurs in \fIMPI_SEND\fP (perhaps because a bad
-buffer was passed in) and a user signal handler is invoked, if this user
+For example, if a segmentation fault occurs in \fIMPI_SEND\fP (perhaps because
+a bad buffer was passed in) and a user signal handler is invoked, if this user
 handler attempts to invoke \fIMPI_FINALIZE\fP, Bad Things could happen since
 Open MPI was already "in" MPI when the error occurred.  Since \fImpirun\fP
 will notice that the process died due to a signal, it is probably not
 necessary (and safest) for the user to only clean up non-MPI state.
-.
-.
-.
-.SS Current Working Directory
-.
-The default behavior of mpirun has changed with respect to the
-directory that processes will be started in.
-.PP
-The \fI\-wd\fP option to mpirun allows the user to change to an arbitrary
-directory before their program is invoked.  It can also be used in application
-context files to specify working directories on specific nodes and/or
-for specific applications.
-.PP
-If the \fI\-wd\fP option appears both in a context file and on the command line,
-the context file directory will override the command line value.
-.PP
-The \fI\-D\fP option will change the current working directory to the directory
-where the executable resides.  It cannot be used in application context files.
-.PP
-If \fI\-wd\fP is not specified, the local node will send the directory name
-where mpirun was invoked from to each of the remote nodes.  The remote nodes
-will then try to change to that directory.  If they fail (e.g., if the
-directory does not exists on that node), they will start with from the
-user's home directory.
-.PP
-All directory changing occurs before the user's program is invoked; it
-does not wait until \fIMPI_INIT\fP is called.  
 .
 .
 .
@@ -387,7 +417,7 @@ Processes in the MPI application inherit their environment from the
 Open RTE daemon upon the node on which they are running.  The environment
 is typically inherited from the user's shell.  On remote nodes, the exact
 environment is determined by the boot MCA module used.  The rsh boot module,
-for example, uses either rsh/ssh to launch the LAM daemon on remote nodes, and
+for example, uses either rsh/ssh to launch the Open RTE daemon on remote nodes, and
 typically executes one or more of the user's shell-setup files before launching
 the Open RTE daemon.  When running dynamically linked applications which
 require the LD_LIBRARY_PATH environment variable to be set, care must be taken
@@ -409,15 +439,13 @@ environment and use \fI\-x\fP to export them; not to define them.
 .
 .
 .SS MCA (Modular Component Architecture)
-The
-.I -mca
-switch allows the passing of parameters to various MCA modules.
+The \fI-mca\fP switch allows the passing of parameters to various MCA modules.
 .\" Open MPI's MCA modules are described in detail in ompimca(7).
 MCA modules have direct impact on MPI programs because they allow tunable
 parameters to be set at run time (such as which BTL communication device driver
 to use, what parameters to pass to that BTL, etc.).
 .PP
-The \fI-mca\fP switch takes two arguments: \fI<key\fP and \fI<value>\fP.
+The \fI-mca\fP switch takes two arguments: \fI<key>\fP and \fI<value>\fP.
 The \fI<key>\fP argument generally specifies which MCA module will receive the value.
 For example, the \fI<key>\fP "btl" is used to select which BTL to be used for
 transporting MPI messages.  The \fI<value>\fP argument is the value that is
@@ -431,9 +459,9 @@ Tells Open MPI to use the "tcp" and "self" BTLs, and to run a single copy of
 .
 .TP
 mpirun -mca btl self -np 1 foo
-Tells Open MPI to use the "self" BTL, and to run a single copy of
-"foo" an allocated node.
-.\" And so on.  Open MPI's BTL MCA modules are described in lamssi_rpi(7).
+Tells Open MPI to use the "self" BTL, and to run a single copy of "foo" an
+allocated node.
+.\" And so on.  Open MPI's BTL MCA modules are described in ompimca_btl(7).
 .PP
 The \fI-mca\fP switch can be used multiple times to specify different
 \fI<key>\fP and/or \fI<value>\fP arguments.  If the same \fI<key>\fP is
