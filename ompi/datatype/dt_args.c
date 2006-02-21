@@ -85,26 +85,30 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
     pArgs->create_type = type;
 
     switch(type){
-        /******************************************************************/
+
     case MPI_COMBINER_DUP:
+        /* Recompute the data description packed size based on the optimization
+         * for MPI_COMBINER_DUP.
+         */
+        pArgs->total_pack_size = 2 * sizeof(int);
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_CONTIGUOUS:
         pArgs->i[0] = i[0][0];
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_VECTOR:
         pArgs->i[0] = i[0][0];
         pArgs->i[1] = i[1][0];
         pArgs->i[2] = i[2][0];
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_HVECTOR_INTEGER:
     case MPI_COMBINER_HVECTOR:
         pArgs->i[0] = i[0][0];
         pArgs->i[1] = i[1][0];
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_INDEXED:
         pos = 1;
         pArgs->i[0] = i[0][0];
@@ -112,25 +116,25 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
         pos += i[0][0];
         memcpy( pArgs->i + pos, i[2], i[0][0] * sizeof(int) );
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED:
         pArgs->i[0] = i[0][0];
         memcpy( pArgs->i + 1, i[1], i[0][0] * sizeof(int) );
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_INDEXED_BLOCK:
         pArgs->i[0] = i[0][0];
         pArgs->i[1] = i[1][0];
         memcpy( pArgs->i + 2, i[2], i[0][0] * sizeof(int) );
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_STRUCT_INTEGER:
     case MPI_COMBINER_STRUCT:
         pArgs->i[0] = i[0][0];
         memcpy( pArgs->i + 1, i[1], i[0][0] * sizeof(int) );
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_SUBARRAY:
         pos = 1;
         pArgs->i[0] = i[0][0];
@@ -142,7 +146,7 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
         pos += pArgs->i[0];
         pArgs->i[pos] = i[4][0];
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_DARRAY:
         pos = 3;
         pArgs->i[0] = i[0][0];
@@ -159,20 +163,20 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
         pos += i[2][0];
         pArgs->i[pos] = i[7][0];
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_F90_REAL:
     case MPI_COMBINER_F90_COMPLEX:
         pArgs->i[0] = i[0][0];
         pArgs->i[1] = i[1][0];
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_F90_INTEGER:
         pArgs->i[0] = i[0][0];
         break;
-        /******************************************************************/
+
     case MPI_COMBINER_RESIZED:
         break;
-        /******************************************************************/
+
     default:
         break;
     }
@@ -324,6 +328,12 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
     if( datatype->flags & DT_FLAG_PREDEFINED ) {
         position[0] = MPI_COMBINER_DUP;
         position[1] = datatype->id;
+        return OMPI_SUCCESS;
+    }
+    /* For duplicated datatype we don't have to store all the information */
+    if( MPI_COMBINER_DUP == args->create_type ) {
+        position[local_index++] = args->create_type;
+        position[local_index++] = args->d[0]->id;
         return OMPI_SUCCESS;
     }
     position[local_index++] = args->create_type;
