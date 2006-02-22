@@ -152,11 +152,14 @@ extern mca_btl_base_descriptor_t* mca_btl_self_alloc(
     int rc;
     if(size <= mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag,rc);
+        frag->segment.seg_len = size;
     } else {
         MCA_BTL_SELF_FRAG_ALLOC_SEND(frag,rc);
+        frag->segment.seg_len = 
+            size <= btl->btl_max_send_size ?
+            size : btl->btl_max_send_size;
     }
     frag->base.des_flags = 0;
-    frag->segment.seg_len = size;
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
