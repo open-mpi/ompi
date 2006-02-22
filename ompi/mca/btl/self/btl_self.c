@@ -156,6 +156,7 @@ extern mca_btl_base_descriptor_t* mca_btl_self_alloc(
         MCA_BTL_SELF_FRAG_ALLOC_SEND(frag,rc);
     }
     frag->base.des_flags = 0;
+    frag->segment.seg_len = size;
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    

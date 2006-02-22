@@ -416,7 +416,7 @@ ompi_osc_pt2pt_module_lock(int lock_type,
     /* set our mode on the window */
     ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
 
-    opal_output(0, "%d sending lock request to %d", 
+    opal_output(-1, "%d sending lock request to %d", 
                 P2P_MODULE(win)->p2p_comm->c_my_rank, target);
     /* generate a lock request */
     ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
@@ -473,7 +473,7 @@ ompi_osc_pt2pt_module_unlock(int target,
     }
 
     /* send the unlock request */
-    opal_output(0, "%d sending unlock request to %d", 
+    opal_output(-1, "%d sending unlock request to %d", 
                 P2P_MODULE(win)->p2p_comm->c_my_rank, target);
     ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
                                 proc,
