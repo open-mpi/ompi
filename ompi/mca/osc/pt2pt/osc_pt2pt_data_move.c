@@ -538,6 +538,8 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     /* lock the window for accumulates */
     OPAL_THREAD_LOCK(&longreq->req_module->p2p_acc_lock);
 
+    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
+
     /* copy the data from the temporary buffer into the user window */
     ret = ompi_osc_pt2pt_process_op(longreq->req_module, 
                                     header, 
@@ -548,6 +550,10 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
 
     /* unlock the window for accumulates */
     OPAL_THREAD_UNLOCK(&longreq->req_module->p2p_acc_lock);
+    
+    opal_output(-1, "%d finished receiving long accum message from %d",
+                longreq->req_module->p2p_comm->c_my_rank, 
+                header->hdr_origin);               
 
     /* free the temp buffer */
     free(longreq->req_comp_cbdata);
@@ -558,17 +564,7 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
 
     OPAL_THREAD_ADD32(&(longreq->req_module->p2p_num_pending_in), -1);
 
-    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
-
-    OBJ_RELEASE(longreq->req_datatype);
-    OBJ_RELEASE(longreq->req_op);
     ompi_osc_pt2pt_longreq_free(longreq);
-
-    OPAL_THREAD_ADD32(&(longreq->req_module->p2p_num_pending_in), -1);
-    
-    opal_output(-1, "%d finished receiving long accum message from %d",
-                longreq->req_module->p2p_comm->c_my_rank, 
-                header->hdr_origin);               
 }
 
 
