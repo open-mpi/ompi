@@ -57,16 +57,27 @@ static int mca_rcache_rb_component_open(void)
 
 mca_rcache_base_module_t* mca_rcache_rb_component_init(void) {
     mca_rcache_rb_module_t* rcache; 
+    
+    rcache = (mca_rcache_rb_module_t*) malloc(sizeof(mca_rcache_rb_module_t));
+    mca_rcache_rb_module_init(rcache);
+ 
     mca_base_param_reg_int(&mca_rcache_rb_component.super.rcache_version, 
                            "mru_len", 
-                           "The maximum size of the MRU (most recently used) rcache list", 
+                           "The maximum size IN ENTRIES of the MRU (most recently used) rcache list", 
                            false, 
                            false, 
                            256, 
-                           (int*)&(mca_rcache_rb_component.reg_mru_len)); 
+                           (int*)&(rcache->reg_mru_len)); 
     
-    rcache = (mca_rcache_rb_module_t*) malloc(sizeof(mca_rcache_rb_module_t));
-    mca_rcache_rb_module_init(rcache); 
+    mca_base_param_reg_int(&mca_rcache_rb_component.super.rcache_version, 
+                           "mru_size", 
+                           "The maximum size IN BYTES of the MRU (most recently used) rcache list", 
+                           false, 
+                           false, 
+                           1*1024*1024*1024, /* default to 1GB? */  
+                           (int*)&(rcache->reg_max_mru_size)); 
+
+    
     return &rcache->base; 
 }
 

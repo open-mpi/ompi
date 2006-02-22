@@ -96,14 +96,19 @@ int mca_rcache_rb_insert (
                           uint32_t flags
                           ) { 
     int rc = OMPI_SUCCESS;
-
     OPAL_THREAD_LOCK(&rcache->lock); 
     reg->flags = flags;
-
     if(flags & MCA_MPOOL_FLAGS_CACHE) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
         if(OMPI_SUCCESS != rc) { 
-            OPAL_THREAD_UNLOCK(&rcache->lock); 
+            OPAL_THREAD_UNLOCK(&rcache->lock);
+            if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
+                /* if the registration is too big for the rcache, 
+                   don't cahce it and reset the flags so the upper level 
+                   handles things appropriatly */ 
+                reg->flags = 0;
+                return OMPI_SUCCESS;
+            }
             return rc; 
         }
         OPAL_THREAD_ADD32((int32_t*)&reg->ref_count, 1); 
