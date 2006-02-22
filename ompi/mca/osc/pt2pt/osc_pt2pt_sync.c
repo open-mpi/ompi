@@ -145,6 +145,10 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 
                           opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs)));
 
+        opal_output(-1, "fence: waiting on %d in and %d out",
+                    P2P_MODULE(win)->p2p_num_pending_in,
+                    P2P_MODULE(win)->p2p_num_pending_out);
+
         /* try to start all the requests.  We've copied everything we
            need out of pending_sendreqs, so don't need the lock
            here */
