@@ -192,14 +192,12 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     
     if(size <= mca_btl_openib_component.eager_limit){ 
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
-        frag->segment.seg_len = 
-            size <= mca_btl_openib_component.eager_limit ? 
-            size: mca_btl_openib_component.eager_limit ; 
-    } else { 
+        frag->segment.seg_len = size; 
+    } else if(size <= mca_btl_openib_component.max_send_size) { 
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
-        frag->segment.seg_len = 
-            size <= mca_btl_openib_component.max_send_size ? 
-            size: mca_btl_openib_component.max_send_size ; 
+        frag->segment.seg_len = size;
+    } else { 
+        return NULL;
     }
     
     frag->segment.seg_len = size <= openib_btl->super.btl_eager_limit ? size : openib_btl->super.btl_eager_limit;  

@@ -176,12 +176,13 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     if(size <= btl->btl_eager_limit) { 
         MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc); 
         frag->segments[0].seg_len = size;
-    } else { 
+    } else if (size <= btl->btl_max_send_size) { 
         MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc); 
-        frag->segments[0].seg_len = 
-            size <= btl->btl_max_send_size ? 
-            size : btl->btl_max_send_size ; 
+        frag->segments[0].seg_len = size;
+    } else { 
+        return NULL;
     }
+    
     frag->segments[0].seg_addr.pval = frag+1;
 
     frag->base.des_src = frag->segments;
