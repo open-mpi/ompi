@@ -87,7 +87,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
        sent per operation  */
     ompi_ddt_get_extent( datatype, &lb, &ext );
     ompi_ddt_type_size( datatype, &typelng );
-    if( segsize > 0 ) {
+    if( segsize > typelng ) {
         segcount     = segsize/typelng;
         num_segments = count/segcount;
         if( (count % segcount) != 0 ) num_segments++;
