@@ -29,7 +29,7 @@
  */
 int mca_rcache_rb_mru_init(mca_rcache_rb_module_t* rcache){
     OBJ_CONSTRUCT(&rcache->mru_list, opal_list_t); 
-    rcache->reg_mru_len = mca_rcache_rb_component.reg_mru_len;
+    rcache->reg_cur_mru_size = 0;
     return OMPI_SUCCESS; 
 }
 
@@ -42,6 +42,14 @@ int mca_rcache_rb_mru_insert(
         
                               ) {
     mca_mpool_base_registration_t* old_reg; 
+    size_t reg_size = reg->bound - reg->base + 1;
+    
+    if(reg_size > rcache->reg_max_mru_size) { 
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE; 
+    }
+    
+    rcache->reg_cur_mru_size += reg_size; 
+
     if(rcache->reg_mru_len <= rcache->mru_list.opal_list_length) {
         /* call deregister - which removes the registration from
          * the tree and mru list. memory will be deregistered when
@@ -55,7 +63,20 @@ int mca_rcache_rb_mru_insert(
         old_reg->mpool->mpool_deregister(old_reg->mpool, old_reg);
         
     }
+    
+    while(rcache->reg_max_mru_size <= rcache->reg_cur_mru_size) { 
+        old_reg = (mca_mpool_base_registration_t*)
+            opal_list_get_first(&rcache->mru_list);
+        /* we need to retain first, because we only want the registration 
+         removed from the tree and the mru */
+        old_reg->mpool->mpool_retain(old_reg->mpool, old_reg);
+        old_reg->mpool->mpool_deregister(old_reg->mpool, old_reg);
+        rcache->reg_cur_mru_size -= (old_reg->bound - old_reg->base + 1);
+                
+    }
+
     opal_list_append(&rcache->mru_list,(opal_list_item_t*) reg); 
+    
     return OMPI_SUCCESS; 
 }
 

@@ -27,21 +27,21 @@
 #include "ompi/class/ompi_rb_tree.h"
 #include "ompi/mca/rcache/rcache.h"
 
-
 struct mca_rcache_rb_module_t { 
     mca_rcache_base_module_t base; 
     ompi_rb_tree_t rb_tree;
     ompi_free_list_t rb_tree_item_list; 
     opal_list_t mru_list; 
     size_t reg_mru_len; 
-    
+    size_t reg_max_mru_size;
+    size_t reg_cur_mru_size;
+
 };
 typedef struct mca_rcache_rb_module_t mca_rcache_rb_module_t; 
 
 
 struct mca_rcache_rb_component_t { 
     mca_rcache_base_component_t super; 
-    size_t reg_mru_len; 
 }; typedef struct mca_rcache_rb_component_t mca_rcache_rb_component_t; 
 
 OMPI_COMP_EXPORT extern mca_rcache_rb_component_t mca_rcache_rb_component;
