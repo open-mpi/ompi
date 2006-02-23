@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -97,7 +96,14 @@ ompi_osc_pt2pt_sendreq_send_cb(struct mca_btl_base_module_t* btl,
         return;
     }
 
-    if (OMPI_OSC_PT2PT_GET != sendreq->req_type) {
+    /* have to look at header, and not the sendreq because in the case
+       of get, it's possible that the sendreq has been freed already
+       (if the remote side replies before we get our send completion
+       callback) and already allocated to another request.  We don't
+       wait for this completion before exiting a synchronization point
+       in the case of get, as we really don't care when it completes -
+       only when the data arrives. */
+    if (OMPI_OSC_PT2PT_HDR_GET != header->hdr_base.hdr_type) {
         /* do we need to post a send? */
         if (header->hdr_msg_length != 0) {
             /* sendreq is done.  Mark it as so and get out of here */
@@ -726,7 +732,7 @@ ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
 
 /**********************************************************************
  *
- * Recveive a get on the origin side
+ * Control message communication
  *
  **********************************************************************/
 static void
