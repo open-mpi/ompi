@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,6 +18,13 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
 #include "orte/class/orte_proc_table.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
@@ -27,6 +34,7 @@
 
 static void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* proc);
 static void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc);
+static bool is_private_ipv4(struct in_addr *in);
 
 
 OBJ_CLASS_INSTANCE(
@@ -62,6 +70,28 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc)
         free(proc->proc_endpoints);
         OBJ_DESTRUCT(&proc->proc_lock);
     }
+}
+
+
+/*
+ * Check to see if an IPv4 struct in_addr is public or private.  We
+ * can only do IPv4 here because some of the TCP BTL endpoint structs
+ * only hold the struct in_addr, not the upper-level sin_family that
+ * would indicate if the address is IPv6.
+ */
+static bool is_private_ipv4(struct in_addr *in)
+{
+    /* There are definitely ways to do this more efficiently, but
+       since this is not performance-critical code, it seems better to
+       use clear code (vs. clever code) */
+
+    uint32_t addr = ntohl((uint32_t) in->s_addr);
+    unsigned int a = (addr & 0xff000000) >> 24;
+    unsigned int b = (addr & 0x00ff0000) >> 16;
+
+    return ((10 == a) ||
+            (192 == a && 168 == b) ||
+            (172 == a && 16 == b)) ? true : false;
 }
 
 
@@ -141,11 +171,11 @@ int mca_btl_tcp_proc_insert(
     struct mca_btl_tcp_module_t *btl_tcp = btl_endpoint->endpoint_btl;
     size_t i;
     unsigned long net1;
-                                                                                                          
+
     /* insert into endpoint array */
     btl_endpoint->endpoint_proc = btl_proc;
     btl_proc->proc_endpoints[btl_proc->proc_endpoint_count++] = btl_endpoint;
-                                                                                                          
+
     net1 = btl_tcp->tcp_ifaddr.sin_addr.s_addr & btl_tcp->tcp_ifmask.sin_addr.s_addr;
 
     /*
@@ -171,12 +201,75 @@ int mca_btl_tcp_proc_insert(
         btl_endpoint->endpoint_addr->addr_inuse++;
         return OMPI_SUCCESS;
     }
-    /* No common interface.. grab the first one and hope for the best */ 
-    else if(btl_proc->proc_addr_count){
-      btl_endpoint->endpoint_addr = btl_proc->proc_addrs;
-      return OMPI_SUCCESS;
-    } else { 
-      return OMPI_ERR_UNREACH;
+
+    /* There was no common interface.  So what do we do?  For the
+       moment, we'll do enough to cover 2 common cases:
+
+       1. Running MPI processes on two computers that are not on the
+          same subnet, but still have routable addresses to each
+          other.  In this case, the above subnet matching will fail,
+          but since the addresses are routable, the
+          OS/networking/routers will make it all work ok.  So we need
+          to make this function *not* return OMPI_ERR_UNREACH.
+
+       2. Running MPI processes on a typical cluster configuration
+          where a head node has 2 TCP NICs (one public IP address one
+          private IP address) and all the back-end compute nodes have
+          only private IP addresses.  In this scenario, the MPI
+          process on the head node will have 2 TCP BTL modules (one
+          for the public, one for the private).  The module with the
+          private IP address will match the subnet and all will work
+          fine.  The module with the public IP address will not match
+          anything and fall through to here -- we want it to return
+          OMPI_ERR_UNREACH so that that module will effectively have
+          no peers that it can communicate with.
+
+       To support these two scenarios, do the following:
+
+       - if my address is private (10., 192.168., or 172.16.), return
+         UNREACH.
+       - if my address is public, return the first public address from
+         my peer (and hope for the best), or UNREACH if there are none
+         available.
+
+       This does not cover some other scenarios that we'll likely need
+       to support in the future, such as:
+
+       - Flat neighborhood networks -- where all the IP's in question
+         are private, the subnet masking won't necessarily match, but
+         they're routable to each other.
+       - Really large, private TCP-based clusters, such as a 1024 node
+         TCP-based cluster.  Depending on how the subnet masks are set
+         by the admins, there may be a subnet mask that effectively
+         spans the entire cluster, or (for example) subnet masks may
+         be set such that only nodes on the same switches are on the
+         same subnet.  This latter scenario will not be supported
+         by the above cases.
+
+       To support these kinds of scenarios, we really need "something
+       better", such as allowing the user to specify a config file
+       indicating which subnets are reachable by which interface, etc.
+    */
+
+    else {
+        /* If my address is private, return UNREACH */
+        if (is_private_ipv4(&(btl_tcp->tcp_ifaddr.sin_addr))) {
+            return OMPI_ERR_UNREACH;
+        }
+
+        /* Find the first public peer address */
+        for (i = 0; i < btl_proc->proc_addr_count; ++i) {
+            mca_btl_tcp_addr_t* endpoint_addr = btl_proc->proc_addrs + i;
+            if (!is_private_ipv4(&(endpoint_addr->addr_inet))) {
+                btl_endpoint->endpoint_addr = endpoint_addr;
+                btl_endpoint->endpoint_addr->addr_inuse++;
+                return OMPI_SUCCESS;
+            }
+        }
+
+        /* Didn't find any peer addresses that were public, so return
+           UNREACH */
+        return OMPI_ERR_UNREACH;
     }
 }
 
