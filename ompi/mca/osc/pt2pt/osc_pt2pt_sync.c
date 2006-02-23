@@ -504,7 +504,7 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
             module->p2p_lock_status = MPI_LOCK_EXCLUSIVE;
             send_ack = true;
         } else {
-            opal_output(0, "%d queuing lock request from %d (%d)", 
+            opal_output(-1, "%d queuing lock request from %d (%d)", 
                         module->p2p_comm->c_my_rank, origin, lock_type);
             new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
             new_pending->proc = proc;
@@ -517,7 +517,7 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
             module->p2p_shared_count++;
             send_ack = true;
         } else {
-            opal_output(0, "queuing lock request from %d (%d)", 
+            opal_output(-1, "queuing lock request from %d (%d)", 
                         module->p2p_comm->c_my_rank, origin, lock_type);
             new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
             new_pending->proc = proc;
@@ -530,7 +530,7 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
     OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 
     if (send_ack) {
-        opal_output(0, "%d sending lock ack to %d", 
+        opal_output(-1, "%d sending lock ack to %d", 
                     module->p2p_comm->c_my_rank, origin);
         ompi_osc_pt2pt_control_send(module, proc,
                                     OMPI_OSC_PT2PT_HDR_LOCK_REQ,
@@ -573,7 +573,7 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
     OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 
     if (NULL != new_pending) {
-        opal_output(0, "sending lock request to proc");
+        opal_output(-1, "sending lock request to proc");
         /* set lock state and generate a lock request */
         module->p2p_lock_status = new_pending->lock_type;
         ompi_osc_pt2pt_control_send(module,
