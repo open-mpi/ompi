@@ -222,7 +222,7 @@ do { \
 do {  \
     /* local variables */  \
     mca_pml_ob1_recv_request_t *specific_recv, *wild_recv; \
-    mca_ptl_sequence_t wild_recv_seq, specific_recv_seq;  \
+    mca_pml_sequence_t wild_recv_seq, specific_recv_seq;  \
     int frag_tag, wild_recv_tag, specific_recv_tag;  \
   \
     /* initialization */  \

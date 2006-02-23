@@ -72,8 +72,7 @@ extern "C" {
  * PML component types
  */
 
-struct mca_ptl_base_modulet;
-struct mca_ptl_addr_t;
+typedef uint64_t mca_pml_sequence_t;
 
 struct mca_pml_proc_t {
     opal_list_item_t super;
@@ -177,7 +176,7 @@ typedef int (*mca_pml_base_module_enable_fn_t)(
 
 /**
  * For non-threaded case, provides MCA the opportunity to
- * progress outstanding requests on all ptls.
+ * progress outstanding requests on all btls.
  *
  * @return         OMPI_SUCCESS or failure status.
 */

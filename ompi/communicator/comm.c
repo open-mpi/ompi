@@ -34,7 +34,6 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/ptl/base/ptl_base_comm.h"
 #include "ompi/request/request.h"
 
 /*

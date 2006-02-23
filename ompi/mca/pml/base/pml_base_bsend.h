@@ -24,7 +24,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-struct mca_ptl_base_send_request_t;
 
 OMPI_DECLSPEC int mca_pml_base_bsend_init(bool enable_mpi_threads);
 OMPI_DECLSPEC int mca_pml_base_bsend_fini(void);

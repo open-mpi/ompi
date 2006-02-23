@@ -56,8 +56,6 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
-#include "ompi/mca/ptl/ptl.h"
-#include "ompi/mca/ptl/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/topo/topo.h"
@@ -247,11 +245,6 @@ void ompi_info::open_components()
 
   ompi_osc_base_open();
   component_map["osc"] = &ompi_osc_base_open_components;
-
-  /* mca_ptl_base_open() should not be called directly. This call is performed
-   * in the PML base open.
-   */
-  component_map["ptl"] = &mca_ptl_base_components_opened;
 
   mca_btl_base_open();
   component_map["btl"] = &mca_btl_base_components_opened;
