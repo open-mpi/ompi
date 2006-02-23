@@ -15,6 +15,9 @@
  */
 
 #include "ompi_config.h"
+#include "mpi.h"
+
+#include <stdio.h>
 
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_sendreq.h"
@@ -43,6 +46,13 @@ ompi_osc_pt2pt_module_accumulate(void *origin_addr, int origin_count,
 {
     int ret;
     ompi_osc_pt2pt_sendreq_t *sendreq;
+
+    if (!ompi_ddt_is_predefined(target_dt)) {
+        fprintf(stderr, "MPI_Accumulate currently does not support reductions\n");
+        fprintf(stderr, "with any user-defined types.  This will be rectified\n");
+        fprintf(stderr, "in a future release.\n");
+        return MPI_ERR_UNSUPPORTED_OPERATION;
+    }
 
     /* create sendreq */
     ret = ompi_osc_pt2pt_sendreq_alloc_init(OMPI_OSC_PT2PT_ACC,
