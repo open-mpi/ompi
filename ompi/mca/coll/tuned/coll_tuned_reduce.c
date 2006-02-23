@@ -48,7 +48,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     char *accumbuf = (char*)NULL;
     char *sendtmpbuf = (char*)NULL;
     long ext, lb;
-    int  typelng;
+    unsigned long typelng;
     int  allocedaccumbuf = 0;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
@@ -86,7 +86,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     /* Determine number of segments and number of elements
        sent per operation  */
     ompi_ddt_get_extent( datatype, &lb, &ext );
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_ddt_get_size( datatype, &typelng );
     if( segsize > typelng ) {
         segcount     = segsize/typelng;
         num_segments = count/segcount;
