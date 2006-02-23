@@ -88,4 +88,6 @@ int mca_pml_base_open(void)
 
     mca_base_param_lookup_string(
         mca_base_param_register_string("pml",NULL,NULL,NULL,"ob1"), &mca_pml_base_pml);
+
+    return OMPI_SUCCESS;
 }
