@@ -23,6 +23,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/op/op.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Accumulate = PMPI_Accumulate
@@ -41,7 +42,6 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
 {
     int rc;
     ompi_win_t *ompi_win = (ompi_win_t*) win;
-    char *msg;
 
     if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
 
@@ -58,21 +58,73 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             rc = MPI_ERR_RANK;
         } else if (MPI_OP_NULL == op) {
             rc = MPI_ERR_OP;
-        } else if (op != &ompi_mpi_op_replace && 
-                   !ompi_op_is_valid(op, target_datatype, &msg, FUNC_NAME)) {
-            int ret = OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_OP, msg);
-            free(msg);
-            return ret;
         } else if (0 == (ompi_win_get_mode(win) & OMPI_WIN_ACCESS_EPOCH)) {
             rc = MPI_ERR_RMA_CONFLICT;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(rc, origin_datatype, origin_count);
         }
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
+
+        /* While technically the standard probably requires that the
+           datatypes used with MPI_REPLACE conform to all the rules
+           for other reduction operators, we don't require such
+           behaivor, as checking for it is expensive here and we don't
+           care in implementation.. */
+        if (op != &ompi_mpi_op_replace) {
+            ompi_datatype_t *op_check_dt;
+            char *msg;
+
+            /* ACCUMULATE, unlike REDUCE, can use with derived
+               datatypes with predefinied operations, with some
+               restrictions outlined in MPI-2:6.3.4.  The derived
+               datatype must be composed entirley from one predefined
+               datatype (so you can do all the construction you want,
+               but at the bottom, you can only use one datatype, say,
+               MPI_INT).  If the datatype at the target isn't
+               predefined, then make sure it's composed of only one
+               datatype, and check that datatype against
+               ompi_op_is_valid(). */
+            if (ompi_ddt_is_predefined(target_datatype)) {
+                op_check_dt = target_datatype;
+            } else {
+                int i, index = -1, num_found = 0;
+                uint64_t mask = 1;
+
+                for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
+                    if (target_datatype->bdt_used & mask) {
+                        num_found++;
+                        index = i;
+                    }
+                    mask *= 2;
+                }
+                if (index < 0 || num_found > 1) {
+                    /* this is an erroneous datatype.  Let
+                       ompi_op_is_valid tell the user that */
+                    op_check_dt = target_datatype;
+                } else {
+                    /* datatype passes muster as far as restrictions
+                       in MPI-2:6.3.4.  Is the primitive ok with the
+                       op?  Unfortunately have to cast away
+                       constness... */
+                    op_check_dt = (ompi_datatype_t*)
+                        ompi_ddt_basicDatatypes[index];
+                }
+            }
+            if (!ompi_op_is_valid(op, op_check_dt, &msg, FUNC_NAME)) {
+                int ret = OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_OP, msg);
+                free(msg);
+                return ret;
+            }
+        }
     }
 
-    rc = ompi_win->w_osc_module->osc_accumulate(origin_addr, origin_count, origin_datatype,
-                                                target_rank, target_disp, target_count,
-                                                target_datatype, op, win);
+    rc = ompi_win->w_osc_module->osc_accumulate(origin_addr, 
+                                                origin_count,
+                                                origin_datatype,
+                                                target_rank, 
+                                                target_disp, 
+                                                target_count,
+                                                target_datatype, 
+                                                op, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }
