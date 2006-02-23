@@ -32,6 +32,10 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed TCP BTL network matching logic during MPI_INIT; in some cases
+  on multi-NIC nodes, a NIC could get paired with a NIC on another
+  network (typically resulting in deadlock).  Thanks to Ken Mighell
+  for pointing this out to us.
 - Change the behavior of orterun (mpirun, mpirexec) to search for
   argv[0] and the cwd on the target node (i.e., the node where the
   executable will be running in all systems except BProc, where the
