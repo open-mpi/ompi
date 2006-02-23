@@ -402,7 +402,7 @@ static int mca_pml_base_modex_subscribe(orte_process_name_t* name)
     }
     OPAL_UNLOCK(&mca_pml_base_modex_lock);
 
-    /* otherwise - subscribe to get this jobid's ptl contact info */
+    /* otherwise - subscribe to get this jobid's contact info */
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, name))) {
         ORTE_ERROR_LOG(rc);
         return rc;

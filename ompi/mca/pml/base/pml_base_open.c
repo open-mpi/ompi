@@ -25,7 +25,6 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/ptl/base/base.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -89,7 +88,4 @@ int mca_pml_base_open(void)
 
     mca_base_param_lookup_string(
         mca_base_param_register_string("pml",NULL,NULL,NULL,"ob1"), &mca_pml_base_pml);
-
-    /* All done, now let's start the PTLs */
-    return mca_ptl_base_open();
 }
