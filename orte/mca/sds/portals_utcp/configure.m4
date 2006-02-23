@@ -33,26 +33,26 @@ AC_DEFUN([MCA_sds_portals_utcp_CONFIG],[
         AC_HELP_STRING([--with-portals=DIR],
                        [Specify the installation directory of PORTALS]))
 
-    AS_IF([test -n "$with_btl_portals"],
-          [AS_IF([test -d "$with_btl_portals/include"],
-                 [sds_portals_utcp_CPPFLAGS="-I$with_btl_portals/include"
+    AS_IF([test -n "$with_portals"],
+          [AS_IF([test -d "$with_portals/include"],
+                 [sds_portals_utcp_CPPFLAGS="-I$with_portals/include"
                   CPPFLAGS="$CPPFLAGS $sds_portals_utcp_CPPFLAGS"], [])
-           AS_IF([test -d "$with_btl_portals/lib"],
-                 [sds_portals_utcp_LDFLAGS="-L$with_btl_portals/lib"
+           AS_IF([test -d "$with_portals/lib"],
+                 [sds_portals_utcp_LDFLAGS="-L$with_portals/lib"
                   LDFLAGS="$LDFLAGS $sds_portals_utcp_LDFLAGS"], [])])
 
     # Try to find all the portals libraries (this is not fun!)
     AC_ARG_WITH(portals-libs, 
         AC_HELP_STRING([--with-portals-libs=LIBS],
                        [Libraries to link with for portals]))
-    if test -n "$with_btl_portals_libs" ; then
+    if test -n "$with_portals_libs" ; then
         sds_portals_utcp_LIBS=""
-        for lib in $with_btl_portals_libs ; do
+        for lib in $with_portals_libs ; do
             sds_portals_utcp_LIBS="$sds_portals_utcp_LIBS -l$lib"
         done
     fi
 
-    sds_portals_utcp_LIBS="-lutcpapi -lutcplib -lp3api -lp3lib -lp3rt"
+    sds_portals_utcp_LIBS="-lp3utcp -lp3api -lp3lib -lp3rt -lp3utcp"
 
     # check for portals
     LIBS="$LIBS $sds_portals_utcp_LIBS"
@@ -68,7 +68,7 @@ FILE *utcp_lib_out;],
 int dummy;
 PtlInit(&dummy);
 PtlNIInit(PTL_IFACE_DEFAULT, PTL_PID_ANY, NULL, NULL, NULL);
-PtlGetRank(&rank, &nprocs);])],
+PtlGetRank(PTL_INVALID_HANDLE, &rank, &nprocs);])],
                    [AC_MSG_RESULT([yes])
                     $1],
                    [AC_MSG_RESULT([no])
