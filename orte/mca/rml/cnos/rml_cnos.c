@@ -87,7 +87,7 @@ orte_rml_cnos_open(void)
 orte_rml_module_t *
 orte_rml_cnos_init(int *priority)
 {
-    *priority = 1;
+    *priority = 0;
     return &orte_rml_cnos_module;
 }
 
@@ -246,4 +246,6 @@ orte_rml_cnos_xcast(orte_process_name_t * root,
         cbfunc(msg);
         OBJ_RELEASE(msg);
     }
+
+    return ORTE_SUCCESS;
 }
