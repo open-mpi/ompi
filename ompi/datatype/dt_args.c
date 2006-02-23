@@ -418,7 +418,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     next_buffer += number_of_datatype * sizeof(int);
     for( i = 0; i < number_of_datatype; i++ ) {
         if( position[i] < DT_MAX_PREDEFINED ) {
-            assert( position[1] < DT_MAX_PREDEFINED );
+            assert( position[i] < DT_MAX_PREDEFINED );
             array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[i]];
         } else {
             array_of_datatype[i] =
