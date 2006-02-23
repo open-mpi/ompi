@@ -385,9 +385,9 @@ int ompi_ddt_get_pack_description( ompi_datatype_t* datatype,
     return OMPI_SUCCESS;
 }
 
-ompi_datatype_t*
-ompi_ddt_create_from_packed_description( void** packed_buffer,
-                                         struct ompi_proc_t* remote_processor )
+static ompi_datatype_t*
+__ompi_ddt_create_from_packed_description( void** packed_buffer,
+                                           struct ompi_proc_t* remote_processor )
 {
     int* position = (int*)*packed_buffer;
     ompi_datatype_t* datatype = NULL;
@@ -422,8 +422,8 @@ ompi_ddt_create_from_packed_description( void** packed_buffer,
             array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[i]];
         } else {
             array_of_datatype[i] =
-                ompi_ddt_create_from_packed_description( (void**)&next_buffer,
-                                                         remote_processor );
+                __ompi_ddt_create_from_packed_description( (void**)&next_buffer,
+                                                           remote_processor );
             if( NULL == array_of_datatype[i] )
                 goto cleanup_and_exit;
         }
@@ -535,3 +535,19 @@ __ompi_ddt_create_from_args( int32_t* i, MPI_Aint* a,
 
     return datatype;
 }
+
+ompi_datatype_t*
+ompi_ddt_create_from_packed_description( void** packed_buffer,
+                                         struct ompi_proc_t* remote_processor )
+{
+    ompi_datatype_t* datatype;
+
+    datatype = __ompi_ddt_create_from_packed_description( packed_buffer,
+                                                          remote_processor );
+    if( NULL == datatype ) {
+        return NULL;
+    }
+    ompi_ddt_commit( &datatype );
+    return datatype;
+}
+
