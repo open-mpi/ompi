@@ -180,7 +180,7 @@ static inline int32_t ompi_ddt_get_extent( const ompi_datatype_t* pData, long* l
 { *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; }
 static inline int32_t ompi_ddt_get_true_extent( const ompi_datatype_t* pData, long* true_lb, long* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; }
-static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, long* size )
+static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, unsigned long* size )
 { *size = pData->size; return 0; }
 /*
  * This function return true (1) if the datatype representation depending on the count
