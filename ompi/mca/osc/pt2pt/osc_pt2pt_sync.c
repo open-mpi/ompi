@@ -287,8 +287,8 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
     ompi_win_set_mode(win, 0);
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
-    group = P2P_MODULE(win)->p2p_pw_group;
-    P2P_MODULE(win)->p2p_pw_group = NULL;
+    group = P2P_MODULE(win)->p2p_sc_group;
+    P2P_MODULE(win)->p2p_sc_group = NULL;
     OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
 
     /* BWB - do I need this? */
