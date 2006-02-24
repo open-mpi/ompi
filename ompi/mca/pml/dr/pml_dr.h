@@ -69,6 +69,12 @@ struct mca_pml_dr_t {
     ompi_free_list_t recv_frags;
     ompi_free_list_t vfrags;
     ompi_free_list_t buffers;
+
+    int timer_wdog_sec;
+    int timer_wdog_usec;
+    int timer_ack_sec;
+    int timer_ack_usec;
+    
 };
 typedef struct mca_pml_dr_t mca_pml_dr_t; 
 

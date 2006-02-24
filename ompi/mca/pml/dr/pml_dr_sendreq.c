@@ -82,11 +82,13 @@ static void mca_pml_dr_send_request_construct(mca_pml_dr_send_request_t* req)
     req->req_vfrag0.vf_len = 1;
     req->req_vfrag0.vf_idx = 1;
     req->req_vfrag0.vf_mask = 1;
+    req->req_vfrag0.vf_mask_processed = 0;
+    req->req_vfrag0.sendreq = req;
     req->req_send.req_base.req_type = MCA_PML_REQUEST_SEND;
     req->req_send.req_base.req_ompi.req_fini = mca_pml_dr_send_request_fini;
     req->req_send.req_base.req_ompi.req_free = mca_pml_dr_send_request_free;
     req->req_send.req_base.req_ompi.req_cancel = mca_pml_dr_send_request_cancel;
-
+    
 }
 
 static void mca_pml_dr_send_request_destruct(mca_pml_dr_send_request_t* req)
@@ -212,10 +214,25 @@ static void mca_pml_dr_frag_completion(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
-    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
+    mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) descriptor->des_cbdata;
+    mca_pml_dr_send_request_t* sendreq  = (mca_pml_dr_send_request_t*) vfrag->sendreq;
+    mca_bml_base_btl_t* bml_btl = vfrag->bml_btl;
+    mca_pml_dr_frag_hdr_t* hdr = (mca_pml_dr_frag_hdr_t*)descriptor->des_src->seg_addr.pval;
     bool schedule;
-
+    
+    uint64_t bit = ((uint64_t)1 << hdr->hdr_frag_idx); 
+    vfrag->vf_mask_processed |= bit;
+    
+    /* when we have local completion of the entire vfrag 
+       we stop the local wdog timers and set our ack timer 
+       as the peer should be sending us an ack for the vfrag
+    */
+    if(vfrag->vf_mask_processed == vfrag->vf_mask) { 
+        MCA_PML_DR_VFRAG_WDOG_STOP(vfrag);
+        /* MCA_PML_DR_VFRAG_ACK_START(vfrag); */
+    } else { 
+        MCA_PML_DR_VFRAG_WDOG_RESET(vfrag);
+    }
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
@@ -267,7 +284,8 @@ int mca_pml_dr_send_request_start_buffered(
     size_t max_data;
     int32_t free_after;
     int rc;
-
+    uint32_t csum; 
+    
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_dr_rendezvous_hdr_t) + size);
     if(NULL == descriptor) {
@@ -290,12 +308,14 @@ int mca_pml_dr_send_request_start_buffered(
         mca_bml_base_free(bml_btl, descriptor);
         return rc;
     }
-
+    
+    csum = size > 0 ? sendreq->req_send.req_convertor.checksum : 0;
     /* update lengths */
     segment->seg_len = sizeof(mca_pml_dr_rendezvous_hdr_t) + max_data;
     sendreq->req_send_offset = max_data;
     sendreq->req_vfrag0.vf_size = max_data;
-
+    sendreq->req_vfrag0.bml_btl = bml_btl;
+    
     descriptor->des_cbfunc = mca_pml_dr_rndv_completion;
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
@@ -330,11 +350,11 @@ int mca_pml_dr_send_request_start_buffered(
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = sendreq->req_send.req_convertor.checksum;
+    hdr->hdr_match.hdr_csum = csum;
     hdr->hdr_match.hdr_src_req.pval = sendreq;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));
-
+    
     /* re-init convertor for packed data */
     ompi_convertor_prepare_for_send(
             &sendreq->req_send.req_convertor,
@@ -408,15 +428,16 @@ int mca_pml_dr_send_request_start_copy(
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = sendreq->req_send.req_convertor.checksum;
+    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : 0;
     hdr->hdr_match.hdr_src_req.pval = sendreq;
+    hdr->hdr_match.hdr_vid =  sendreq->req_vfrag0.vf_id;
     hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));
-
+    
     /* update lengths */
     segment->seg_len = sizeof(mca_pml_dr_match_hdr_t) + max_data;
     sendreq->req_send_offset = max_data;
     sendreq->req_vfrag0.vf_size = max_data;
-
+    sendreq->req_vfrag0.bml_btl = bml_btl;
     /* short message */
     descriptor->des_cbfunc = mca_pml_dr_match_completion_free;
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -472,8 +493,9 @@ int mca_pml_dr_send_request_start_prepare(
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = sendreq->req_send.req_convertor.checksum;
+    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : 0; /* nope */
     hdr->hdr_match.hdr_src_req.pval = sendreq;
+    hdr->hdr_match.hdr_vid =  sendreq->req_vfrag0.vf_id;
     hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));
 
     /* short message */
@@ -484,7 +506,7 @@ int mca_pml_dr_send_request_start_prepare(
     /* update lengths */
     sendreq->req_send_offset = size;
     sendreq->req_vfrag0.vf_size = size;
-
+    sendreq->req_vfrag0.bml_btl = bml_btl;
     /* send */
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML); 
     if(OMPI_SUCCESS != rc) {
@@ -541,15 +563,19 @@ int mca_pml_dr_send_request_start_rndv(
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
     hdr->hdr_match.hdr_src_req.pval = sendreq;
+    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : 0;
+    hdr->hdr_match.hdr_vid =  sendreq->req_vfrag0.vf_id;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-
+    hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));
+    
     /* first fragment of a long message */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     des->des_cbdata = sendreq;
     des->des_cbfunc = mca_pml_dr_rndv_completion;
     sendreq->req_send_offset = size;
     sendreq->req_vfrag0.vf_size = size;
-
+    sendreq->req_vfrag0.bml_btl = bml_btl;
+    
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
     if(OMPI_SUCCESS != rc) {
@@ -557,6 +583,7 @@ int mca_pml_dr_send_request_start_rndv(
     }
     return rc;
 }
+
 
 
 /**
@@ -583,7 +610,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 
                 mca_pml_dr_frag_hdr_t* hdr;
                 mca_btl_base_descriptor_t* des;
-                mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send); 
+                mca_bml_base_btl_t* bml_btl = NULL; 
                 mca_pml_dr_vfrag_t* vfrag = sendreq->req_vfrag;
                 size_t size = bytes_remaining;
                 /* offset tells us how much of the vfrag has been scheduled */
@@ -593,6 +620,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 /* do we need to allocate a new vfrag 
                    (we scheduled all the vfrag already) */
                 if(vfrag->vf_size == offset) {
+                    bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send); 
                     MCA_PML_DR_VFRAG_ALLOC(vfrag,rc);
                     if(NULL == vfrag) {
                         OPAL_THREAD_LOCK(&mca_pml_dr.lock);
@@ -601,8 +629,12 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         break;
                     }
                     MCA_PML_DR_SEND_REQUEST_VFRAG_INIT(sendreq,bml_endpoint,bytes_remaining,vfrag);
+                    vfrag->bml_btl = bml_btl;
+                    vfrag->sendreq = sendreq;
                     offset = 0;
                     sendreq->req_num_vfrags++;
+                } else {  /* always schedule the vfrag accross the same btl */
+                    bml_btl = vfrag->bml_btl;
                 }
 
                 /* makes sure that we don't exceed vfrag size */
@@ -630,8 +662,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                     break;
                 }
                 des->des_cbfunc = mca_pml_dr_frag_completion;
-                des->des_cbdata = sendreq;
-
+                des->des_cbdata = vfrag;
                 /* setup header */
                 hdr = (mca_pml_dr_frag_hdr_t*)des->des_src->seg_addr.pval;
                 hdr->hdr_common.hdr_flags = 0;
@@ -643,6 +674,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 hdr->hdr_frag_csum =  sendreq->req_send.req_convertor.checksum;
                 hdr->hdr_frag_offset = sendreq->req_send_offset;
                 hdr->hdr_src_req.pval = sendreq;
+
                 hdr->hdr_dst_req = sendreq->req_vfrag0.vf_recv;
                 hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));
 
@@ -651,9 +683,10 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 sendreq->req_send_offset += size;
                 OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
 
-                /* start vfrag watchdog timer */
-                MCA_PML_DR_VFRAG_WDOG_START(vfrag);
-
+                /* start vfrag watchdog timer if this is the first part of the vfrag*/
+                if(vfrag->vf_idx == 0) { 
+                    MCA_PML_DR_VFRAG_WDOG_START(vfrag);
+                }
                 /* initiate send - note that this may complete before the call returns */
                 rc = mca_bml_base_send( bml_btl, des, MCA_BTL_TAG_PML);
                 
@@ -683,14 +716,16 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                  */
                 while(vfrag->vf_idx < vfrag->vf_len && 
                       sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
-                    if(((1 << vfrag->vf_idx) & vfrag->vf_ack) == 0) {
-                        mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send); 
+                    if(((1 << vfrag->vf_idx) & vfrag->vf_mask_processed) == 0) {
+                        mca_bml_base_btl_t* bml_btl = vfrag->bml_btl; 
                         mca_pml_dr_frag_hdr_t* hdr;
                         mca_btl_base_descriptor_t* des;
                         size_t offset = vfrag->vf_offset + (vfrag->vf_max_send_size * vfrag->vf_idx);
                         size_t size;
                         int rc;
 
+                        
+                        
                         if(vfrag->vf_idx == vfrag->vf_len - 1) {
                             size = vfrag->vf_size - offset;
                         } else {
@@ -714,7 +749,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                             break;
                         }
                         des->des_cbfunc = mca_pml_dr_frag_completion;
-                        des->des_cbdata = sendreq;
+                        des->des_cbdata = vfrag;
 
                         /* setup header */
                         hdr = (mca_pml_dr_frag_hdr_t*)des->des_src->seg_addr.pval;
@@ -735,9 +770,9 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         sendreq->req_send_offset += size;
                         OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
 
-                        /* start vfrag watchdog timer */
-                        MCA_PML_DR_VFRAG_WDOG_START(vfrag);
-
+                        /* reset the vfrag watchdog timer due to retransmission */
+                        MCA_PML_DR_VFRAG_WDOG_RESET(vfrag);
+                        
                         /* initiate send - note that this may complete before the call returns */
                         rc = mca_bml_base_send( bml_btl, des, MCA_BTL_TAG_PML);
                         
@@ -777,20 +812,28 @@ void mca_pml_dr_send_request_acked(
     mca_pml_dr_send_request_t* sendreq,
     mca_pml_dr_ack_hdr_t* ack)
 {
+    mca_pml_dr_vfrag_t* vfrag; 
     assert(sendreq);
+    MCA_PML_DR_SEND_REQUEST_VFRAG_PENDING(sendreq, ack, vfrag);
+    /* MCA_PML_DR_VFRAG_ACK_STOP(vfrag); */
     if(ack->hdr_common.hdr_flags & MCA_PML_DR_HDR_FLAGS_MATCH) {
-        sendreq->req_vfrag0.vf_recv = ack->hdr_dst_req;
-        MCA_PML_DR_SEND_REQUEST_ADVANCE(sendreq);
-    } else {
-        mca_pml_dr_vfrag_t* vfrag;
-        MCA_PML_DR_SEND_REQUEST_VFRAG_PENDING(sendreq, ack, vfrag);
-        if(NULL == vfrag) {
-            return;
+        if(ack->hdr_vmask) { 
+            sendreq->req_vfrag0.vf_recv = ack->hdr_dst_req;
+            MCA_PML_DR_SEND_REQUEST_ADVANCE(sendreq);
         }
-
+        else { 
+            vfrag->vf_idx = 0;
+            vfrag->vf_ack = 0;
+            /* retransmit missing fragments */
+            /* OPAL_THREAD_LOCK(&sendreq->req_mutex); */
+/*             opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag); */
+/*             OPAL_THREAD_UNLOCK(&sendreq->req_mutex); */
+/*             mca_pml_dr_send_request_schedule(sendreq); */
+        }
+    } else {
         /* add in acknowledged fragments */
         vfrag->vf_ack |= ack->hdr_vmask;
-
+        
         /* have all fragments w/in this vfrag been acked? */
         if((vfrag->vf_ack & vfrag->vf_mask) == vfrag->vf_mask) {
  
@@ -810,6 +853,9 @@ void mca_pml_dr_send_request_acked(
 
         } else {
             /* retransmit missing fragments */
+            /* reset local completion flags to only those that have been 
+               successfully acked */
+            vfrag->vf_mask_processed  = vfrag->vf_ack;
             OPAL_THREAD_LOCK(&sendreq->req_mutex);
             vfrag->vf_idx = 0;
             opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
@@ -818,26 +864,3 @@ void mca_pml_dr_send_request_acked(
         }
     }
 }
-
-
-void mca_pml_dr_send_request_nacked(
-    mca_pml_dr_send_request_t* sendreq,
-    mca_pml_dr_ack_hdr_t* ack)
-{
-    mca_pml_dr_vfrag_t* vfrag;
-    MCA_PML_DR_SEND_REQUEST_VFRAG_PENDING(sendreq, ack, vfrag);
-    if(NULL == vfrag) {
-        return;
-    }
-
-    /* removed nacked bits from acknowledged fragments */
-    vfrag->vf_idx = 0;
-    vfrag->vf_ack &= ~ack->hdr_vmask;
-
-    /* retransmit missing fragments */
-    OPAL_THREAD_LOCK(&sendreq->req_mutex);
-    opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
-    OPAL_THREAD_UNLOCK(&sendreq->req_mutex);
-    mca_pml_dr_send_request_schedule(sendreq);
-}
-

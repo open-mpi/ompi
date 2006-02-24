@@ -32,8 +32,7 @@
 #define MCA_PML_DR_HDR_TYPE_MATCH     1
 #define MCA_PML_DR_HDR_TYPE_RNDV      2
 #define MCA_PML_DR_HDR_TYPE_ACK       3
-#define MCA_PML_DR_HDR_TYPE_NACK      4
-#define MCA_PML_DR_HDR_TYPE_FRAG      5
+#define MCA_PML_DR_HDR_TYPE_FRAG      4
 
 #define MCA_PML_DR_HDR_FLAGS_ACK      1  /* is an ack required */
 #define MCA_PML_DR_HDR_FLAGS_NBO      2  /* is the hdr in network byte order */

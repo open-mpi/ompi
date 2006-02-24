@@ -91,6 +91,15 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr_param_register_int("eager_limit", 128 * 1024);
     mca_pml_dr.send_pipeline_depth =
         mca_pml_dr_param_register_int("send_pipeline_depth", 3);
+    mca_pml_dr.timer_wdog_sec = 
+        mca_pml_dr_param_register_int("timer_wdog_sec", 1);
+    mca_pml_dr.timer_wdog_usec = 
+        mca_pml_dr_param_register_int("timer_wdog_usec", 0);
+    mca_pml_dr.timer_ack_sec = 
+        mca_pml_dr_param_register_int("timer_ack_sec", 1);
+    mca_pml_dr.timer_ack_usec = 
+        mca_pml_dr_param_register_int("timer_ack_usec", 0);
+    
     OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
                                                                                                             
     /* requests */

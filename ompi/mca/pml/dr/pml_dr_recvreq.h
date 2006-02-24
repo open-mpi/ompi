@@ -245,10 +245,11 @@ do {                                                                            
             &max_data,                                                            \
             &free_after);                                                         \
         bytes_delivered = max_data;                                               \
+        csum = request->req_recv.req_convertor.checksum;                          \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
+        csum = 0;                                                                 \
     }                                                                             \
-    csum = request->req_recv.req_convertor.checksum;                              \
 } while (0)
 
 
@@ -310,6 +311,7 @@ do {                                                                          \
                (vfrag)->vf_id = (hdr)->hdr_vid;                               \
                (vfrag)->vf_len = (hdr)->hdr_vlen;                             \
                (vfrag)->vf_ack = 0;                                           \
+               (vfrag)->vf_mask_processed = 0;                                \
                if((hdr)->hdr_vlen == 64) {                                    \
                    (vfrag)->vf_mask = ~(uint64_t)0;                           \
                } else {                                                       \

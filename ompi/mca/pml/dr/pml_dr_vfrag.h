@@ -42,7 +42,21 @@ struct mca_pml_dr_vfrag_t {
     size_t     vf_max_send_size;
     uint64_t   vf_ack;
     uint64_t   vf_mask;
-    opal_event_t vf_event;
+    uint64_t   vf_mask_processed;
+    struct mca_pml_dr_send_request_t* sendreq;
+    struct mca_bml_base_btl_t* bml_btl;
+    /* we need a timer for the vfrag for: 
+       1) a watchdog timer for local completion of the current 
+          operation
+       2) a timeout for ACK of the VRAG
+    */
+    struct timeval tv_wdog;
+    struct timeval tv_ack;
+    opal_event_t ev_ack;
+    opal_event_t ev_wdog;
+    uint8_t cnt_wdog;
+    uint8_t cnt_ack;
+    uint8_t cnt_nack;
 };
 typedef struct mca_pml_dr_vfrag_t mca_pml_dr_vfrag_t;
 
@@ -61,17 +75,46 @@ do {                                                                       \
     OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, (opal_list_item_t*)vfrag);   \
 } while(0)
 
+#if 0
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \
 do {                                                                       \
-                                                                           \
+    opal_event_add(&vfrag->ev_wdog, &vfrag->tv_wdog);                      \
+} while(0)                                                                          
+
+#define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)                                 \
+do {                                                                       \
+    opal_event_del(&vfrag->ev_wdog);                                       \
+    opal_event_add(&vfrag->ev_wdog, &vfrag->tv_wdog);                      \
 } while(0)                                                                          
 
 #define MCA_PML_DR_VFRAG_WDOG_STOP(vfrag)                                  \
 do {                                                                       \
+   opal_event_del(&vfrag->ev_wdog);                                        \
                                                                            \
 } while(0)
 
+#define MCA_PML_DR_VFRAG_ACK_START(vfrag)                                  \
+do {                                                                       \
+    opal_event_add(&vfrag->ev_ack, &vfrag->tv_ack);                        \
+} while(0)                                                                          
 
+#define MCA_PML_DR_VFRAG_ACK_STOP(vfrag)                                   \
+do {                                                                       \
+   opal_event_del(&vfrag->ev_ack);                                         \
+                                                                           \
+} while(0)
+
+#endif
+
+#if 1
+
+#define MCA_PML_DR_VFRAG_WDOG_START(vfrag)
+#define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)
+#define MCA_PML_DR_VFRAG_WDOG_STOP(vfrag)
+#define MCA_PML_DR_VFRAG_ACK_START(vfrag)
+#define MCA_PML_DR_VFRAG_ACK_STOP(vfrag)
+
+#endif 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
