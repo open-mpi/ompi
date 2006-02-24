@@ -30,6 +30,52 @@
 
 #include "orte/dss/dss_internal.h"
 
+
+#define UNPACK_SIZE_MISMATCH(unpack_type)      \
+    do { \
+        switch(remote_type) { \
+        case ORTE_UINT8: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint8_t, ORTE_UINT8); \
+            break; \
+        case ORTE_INT8: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int8_t, ORTE_INT8); \
+            break; \
+        case ORTE_UINT16: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint16_t, ORTE_UINT16); \
+            break; \
+        case ORTE_INT16: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int16_t, ORTE_INT16); \
+            break; \
+        case ORTE_UINT32: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint32_t, ORTE_UINT32); \
+            break; \
+        case ORTE_INT32: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int32_t, ORTE_INT32); \
+            break; \
+        case ORTE_UINT64: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint64_t, ORTE_UINT64); \
+            break; \
+        case ORTE_INT64: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int64_t, ORTE_INT64); \
+            break; \
+        default: \
+            ret = ORTE_ERR_NOT_FOUND; \
+            ORTE_ERROR_LOG(ret); \
+        } \
+    } while (0)
+
+#define UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpdsstype)   \
+    do { \
+        size_t i; \
+        tmptype *tmpbuf = malloc(sizeof(tmptype) * *num_vals);          \
+        ret = orte_dss_unpack_buffer(buffer, tmpbuf, num_vals, tmpdsstype); \
+        for (i = 0 ; i < *num_vals ; ++i) {                             \
+            ((unpack_type*) dest)[i] = tmpbuf[i];                       \
+        }                                                               \
+        free(tmpbuf); \
+    } while (0)
+
+
 int orte_dss_unpack(orte_buffer_t *buffer, void *dst, size_t *num_vals,
                     orte_data_type_t type)
 {
@@ -147,14 +193,7 @@ int orte_dss_unpack_bool(orte_buffer_t *buffer, void *dest,
                          size_t *num_vals, orte_data_type_t type)
 {
     int ret;
-    /* turn this off for now - just a prototype to think about */
-#if 0
     orte_data_type_t remote_type;
-    bool *tf = (bool*)dest;
-    uint8_t *tfi8;
-    uint16_t *tfi16;
-    uint32_t *tfi32;
-    uint64_t *tfi64;
 
     /* see what type was actually packed */
     if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
@@ -162,109 +201,16 @@ int orte_dss_unpack_bool(orte_buffer_t *buffer, void *dest,
         return ret;
     }
 
-    /* see if we have a size mismatch */
-    if ((SIZEOF_BOOL == 1 && remote_type != ORTE_INT8) ||
-        (SIZEOF_BOOL == 2 && remote_type != ORTE_INT16) ||
-        (SIZEOF_BOOL == 4 && remote_type != ORTE_INT32) ||
-        (SIZEOF_BOOL == 8 && remote_type != ORTE_INT64)) {
-        /*  type mismatch exists - need to do something more complex */
-
-        /* allocate enough space for the remote variables to be unpacked,
-         * unpack the buffer to the new destination, and then converty the
-         * remote value to the local type
-         */
-        switch(remote_type) {
-            case ORTE_INT8:
-                new_dest = (void*)malloc(*num_vals);
-                if (NULL == new_dest) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                if (ORTE_SUCCESS != (
-                    ret = orte_dss_unpack_buffer(buffer, new_dest, num_vals, remote_type))) {
-                    ORTE_ERROR_LOG(ret);
-                    return ret;
-                }
-                tfi8 = (uint8_t*)new_dest;
-                for (i=0; i < *num_vals; i++) {
-                    *tf = (bool)*tfi8;
-                    tf++;
-                    tfi8++;
-                }
-                free(new_dest);
-                break;
-
-            case ORTE_INT16:
-                new_dest = (void*)malloc(*num_vals * 2);
-                if (NULL == new_dest) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                if (ORTE_SUCCESS != (
-                    ret = orte_dss_unpack_buffer(buffer, new_dest, num_vals, remote_type))) {
-                    ORTE_ERROR_LOG(ret);
-                    return ret;
-                }
-                tfi16 = (uint16_t*)new_dest;
-                for (i=0; i < *num_vals; i++) {
-                    *tf = (bool)*tfi16;
-                    tf++;
-                    tfi16++;
-                }
-                free(new_dest);
-                break;
-
-            case ORTE_INT32:
-                new_dest = (void*)malloc(*num_vals * 4);
-                if (NULL == new_dest) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                if (ORTE_SUCCESS != (
-                    ret = orte_dss_unpack_buffer(buffer, new_dest, num_vals, remote_type))) {
-                    ORTE_ERROR_LOG(ret);
-                    return ret;
-                }
-                tfi32 = (uint32_t*)new_dest;
-                for (i=0; i < *num_vals; i++) {
-                    *tf = (bool)*tfi32;
-                    tf++;
-                    tfi32++;
-                }
-                free(new_dest);
-                break;
-
-            case ORTE_INT64:
-                new_dest = (void*)malloc(*num_vals * 8);
-                if (NULL == new_dest) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                if (ORTE_SUCCESS != (
-                    ret = orte_dss_unpack_buffer(buffer, new_dest, num_vals, remote_type))) {
-                    ORTE_ERROR_LOG(ret);
-                    return ret;
-                }
-                tfi64 = (uint64_t*)new_dest;
-                for (i=0; i < *num_vals; i++) {
-                    *tf = (bool)*tfi64;
-                    tf++;
-                    tfi64++;
-                }
-                free(new_dest);
-                break;
-        }
-    } else {  /* no size mismatch, so just go ahead and unpack */
+    if (remote_type == DSS_TYPE_BOOL) {
+        /* fast path it if the sizes are the same */
+        /* Turn around and unpack the real type */
         if (ORTE_SUCCESS != (
-            ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_BOOL))) {
+               ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_BOOL))) {
             ORTE_ERROR_LOG(ret);
         }
-    }
-#endif
-
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_BOOL))) {
-        ORTE_ERROR_LOG(ret);
+    } else {
+        /* slow path - types are different sizes */
+        UNPACK_SIZE_MISMATCH(bool);
     }
 
     return ret;
@@ -277,11 +223,24 @@ int orte_dss_unpack_int(orte_buffer_t *buffer, void *dest,
                         size_t *num_vals, orte_data_type_t type)
 {
     int ret;
+    orte_data_type_t remote_type;
 
-    /* Turn around and unpack the real type */
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_INT))) {
+    /* see what type was actually packed */
+    if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
         ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+
+    if (remote_type == DSS_TYPE_INT) {
+        /* fast path it if the sizes are the same */
+        /* Turn around and unpack the real type */
+        if (ORTE_SUCCESS != (
+               ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_INT))) {
+            ORTE_ERROR_LOG(ret);
+        }
+    } else {
+        /* slow path - types are different sizes */
+        UNPACK_SIZE_MISMATCH(int);
     }
 
     return ret;
@@ -294,11 +253,24 @@ int orte_dss_unpack_sizet(orte_buffer_t *buffer, void *dest,
                           size_t *num_vals, orte_data_type_t type)
 {
     int ret;
+    orte_data_type_t remote_type;
 
-    /* Turn around and unpack the real type */
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_SIZE_T))) {
+    /* see what type was actually packed */
+    if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
         ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+
+    if (remote_type == DSS_TYPE_SIZE_T) {
+        /* fast path it if the sizes are the same */
+        /* Turn around and unpack the real type */
+        if (ORTE_SUCCESS != (
+               ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_SIZE_T))) {
+            ORTE_ERROR_LOG(ret);
+        }
+    } else {
+        /* slow path - types are different sizes */
+        UNPACK_SIZE_MISMATCH(size_t);
     }
 
     return ret;
@@ -311,11 +283,24 @@ int orte_dss_unpack_pid(orte_buffer_t *buffer, void *dest,
                         size_t *num_vals, orte_data_type_t type)
 {
     int ret;
+    orte_data_type_t remote_type;
 
-    /* Turn around and unpack the real type */
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_PID_T))) {
+    /* see what type was actually packed */
+    if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
         ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+
+    if (remote_type == DSS_TYPE_PID_T) {
+        /* fast path it if the sizes are the same */
+        /* Turn around and unpack the real type */
+        if (ORTE_SUCCESS != (
+               ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_PID_T))) {
+            ORTE_ERROR_LOG(ret);
+        }
+    } else {
+        /* slow path - types are different sizes */
+        UNPACK_SIZE_MISMATCH(pid_t);
     }
 
     return ret;
