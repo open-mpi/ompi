@@ -33,13 +33,6 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     int tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
 
-    if ((OMPI_WIN_ACCESS_EPOCH & win->w_flags) || 
-        (OMPI_WIN_EXPOSE_EPOCH & win->w_flags)) {
-        /* finish off the epoch.  More for sanity checks than anything
-           - could really just ignore this condition... */
-        ret = ompi_osc_pt2pt_module_fence(MPI_MODE_NOPRECEDE|MPI_MODE_NOSUCCEED, win);
-    }
-
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
         ret = module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);

@@ -47,7 +47,14 @@ ompi_osc_pt2pt_module_accumulate(void *origin_addr, int origin_count,
     int ret;
     ompi_osc_pt2pt_sendreq_t *sendreq;
 
-    if (!ompi_ddt_is_predefined(target_dt)) {
+    if (OMPI_WIN_FENCE & ompi_win_get_mode(win)) {
+        /* well, we're definitely in an access epoch now */
+        ompi_win_set_mode(win, OMPI_WIN_FENCE | OMPI_WIN_ACCESS_EPOCH |
+                          OMPI_WIN_EXPOSE_EPOCH);
+    }
+
+    if (op != &ompi_mpi_op_replace && 
+        !ompi_ddt_is_predefined(target_dt)) {
         fprintf(stderr, "MPI_Accumulate currently does not support reductions\n");
         fprintf(stderr, "with any user-defined types.  This will be rectified\n");
         fprintf(stderr, "in a future release.\n");
@@ -89,6 +96,12 @@ ompi_osc_pt2pt_module_get(void *origin_addr,
     int ret;
     ompi_osc_pt2pt_sendreq_t *sendreq;
 
+    if (OMPI_WIN_FENCE & ompi_win_get_mode(win)) {
+        /* well, we're definitely in an access epoch now */
+        ompi_win_set_mode(win, OMPI_WIN_FENCE | OMPI_WIN_ACCESS_EPOCH |
+                          OMPI_WIN_EXPOSE_EPOCH);
+    }
+
     /* create sendreq */
     ret = ompi_osc_pt2pt_sendreq_alloc_init(OMPI_OSC_PT2PT_GET,
                                             origin_addr,
@@ -117,6 +130,12 @@ ompi_osc_pt2pt_module_put(void *origin_addr, int origin_count,
 {
     int ret;
     ompi_osc_pt2pt_sendreq_t *sendreq;
+
+    if (OMPI_WIN_FENCE & ompi_win_get_mode(win)) {
+        /* well, we're definitely in an access epoch now */
+        ompi_win_set_mode(win, OMPI_WIN_FENCE | OMPI_WIN_ACCESS_EPOCH |
+                          OMPI_WIN_EXPOSE_EPOCH);
+    }
 
     /* create sendreq */
     ret = ompi_osc_pt2pt_sendreq_alloc_init(OMPI_OSC_PT2PT_PUT,
