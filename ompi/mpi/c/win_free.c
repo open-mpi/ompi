@@ -34,22 +34,16 @@ static const char FUNC_NAME[] = "MPI_Win_free";
 
 int MPI_Win_free(MPI_Win *win) 
 {
-    int ret, mode;
+    int ret;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(*win)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
-        }
-
-        /* we allow users to be in an epoch, because that tends to
-           happen with people using MPI_FENCE.  However, do not allow
-           users to be in a Lock / Unlock or a PWSC synchronization */
-        mode = ompi_win_get_mode(*win);
-        if (0 != (mode & (OMPI_WIN_POSTED | OMPI_WIN_STARTED | 
-                          OMPI_WIN_LOCK_ACCESS))) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+        } else if ((OMPI_WIN_ACCESS_EPOCH|OMPI_WIN_EXPOSE_EPOCH) &
+                   ompi_win_get_mode(*win)) {
+            return OMPI_ERRHANDLER_INVOKE(*win, 
                                           MPI_ERR_RMA_CONFLICT, 
                                           FUNC_NAME);
         }

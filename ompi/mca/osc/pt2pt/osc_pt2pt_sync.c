@@ -175,7 +175,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 
     /* all transfers are done - back to the real world we go */
     if (0 == (assert & MPI_MODE_NOSUCCEED)) {
-        ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_EXPOSE_EPOCH);
+        ompi_win_set_mode(win, OMPI_WIN_FENCE);
     } else {
         ompi_win_set_mode(win, 0);
     }
@@ -189,15 +189,15 @@ ompi_osc_pt2pt_module_start(ompi_group_t *group,
                             int assert,
                             ompi_win_t *win)
 {
+    assert(P2P_MODULE(win)->p2p_num_pending_in == 0);
+    assert(P2P_MODULE(win)->p2p_num_pending_out == 0);
+
     OBJ_RETAIN(group);
     /* BWB - do I need this? */
     ompi_group_increment_proc_count(group);
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
-    if (NULL != P2P_MODULE(win)->p2p_sc_group || NULL != P2P_MODULE(win)->p2p_pw_group) {
-        OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
-        return MPI_ERR_RMA_CONFLICT;
-    }
+    assert(NULL == P2P_MODULE(win)->p2p_sc_group);
     P2P_MODULE(win)->p2p_sc_group = group;    
     OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
 
@@ -305,15 +305,15 @@ ompi_osc_pt2pt_module_post(ompi_group_t *group,
 {
     int i;
 
+    assert(P2P_MODULE(win)->p2p_num_pending_in == 0);
+    assert(P2P_MODULE(win)->p2p_num_pending_out == 0);
+
     OBJ_RETAIN(group);
     /* BWB - do I need this? */
     ompi_group_increment_proc_count(group);
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
-    if (NULL != P2P_MODULE(win)->p2p_sc_group || NULL != P2P_MODULE(win)->p2p_pw_group) {
-        OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
-        return MPI_ERR_RMA_CONFLICT;
-    }
+    assert(NULL == P2P_MODULE(win)->p2p_pw_group);
     P2P_MODULE(win)->p2p_pw_group = group;    
     OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
 
