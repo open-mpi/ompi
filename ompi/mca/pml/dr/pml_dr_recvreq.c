@@ -17,6 +17,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/crc.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h" 
@@ -139,7 +140,7 @@ static void mca_pml_dr_ctl_completion(
 static void mca_pml_dr_recv_request_matched(
     mca_pml_dr_recv_request_t* recvreq,
     mca_pml_dr_rendezvous_hdr_t* hdr, 
-    uint8_t type)
+    uint8_t mask)
 {
     ompi_proc_t* proc = recvreq->req_proc;
     mca_bml_base_endpoint_t* bml_endpoint = NULL; 
@@ -169,11 +170,12 @@ static void mca_pml_dr_recv_request_matched(
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK;
     ack->hdr_common.hdr_flags = MCA_PML_DR_HDR_FLAGS_MATCH;
     ack->hdr_vid = hdr->hdr_match.hdr_vid;
-    ack->hdr_vmask = 0x1;
+    ack->hdr_vmask = mask;
     ack->hdr_src_req = hdr->hdr_match.hdr_src_req;
     assert(ack->hdr_src_req.pval);
     ack->hdr_dst_req.pval = recvreq;
-
+    ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
+    
     /* initialize descriptor */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     des->des_cbfunc = mca_pml_dr_ctl_completion;
@@ -192,50 +194,6 @@ retry:
     frag->num_segments = 0;
     frag->request = recvreq;
     opal_list_append(&mca_pml_dr.acks_pending, (opal_list_item_t*)frag);
-}
-
-/*
- * Generate an ack to the peer after first fragment is matched.
- */
-
-static void mca_pml_dr_recv_request_nack(
-    mca_pml_dr_recv_request_t* recvreq,
-    mca_pml_dr_frag_hdr_t* hdr)
-{
-    ompi_proc_t* proc = recvreq->req_proc;
-    mca_bml_base_endpoint_t* bml_endpoint = NULL; 
-    mca_btl_base_descriptor_t* des;
-    mca_bml_base_btl_t* bml_btl;
-    mca_pml_dr_ack_hdr_t* nack;
-    int rc;
-
-    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
-    bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
-    
-    /* allocate descriptor */
-    MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
-    if(NULL == des) {
-        return;
-    }
-
-    /* fill out header */
-    nack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
-    nack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_NACK;
-    nack->hdr_common.hdr_flags = MCA_PML_DR_HDR_FLAGS_MATCH;
-    nack->hdr_vid = hdr->hdr_vid;
-    nack->hdr_vmask = 1 << hdr->hdr_frag_idx;
-    nack->hdr_src_req = hdr->hdr_src_req;
-    assert(nack->hdr_src_req.pval);
-    nack->hdr_dst_req.pval = recvreq;
-
-    /* initialize descriptor */
-    des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    des->des_cbfunc = mca_pml_dr_ctl_completion;
-
-    rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
-    if(rc != OMPI_SUCCESS) {
-        mca_bml_base_free(bml_btl, des);
-    }
 }
 
 
@@ -272,6 +230,7 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     ack->hdr_vmask = vfrag->vf_ack;
     ack->hdr_src_req = recvreq->req_vfrag0.vf_send;
     ack->hdr_dst_req.pval = recvreq;
+    ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
 
     /* initialize descriptor */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -302,7 +261,9 @@ void mca_pml_dr_recv_request_progress(
     mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
     size_t i;
     uint32_t csum = 0;
-
+    uint64_t bit;
+    mca_pml_dr_vfrag_t* vfrag;
+    
     for(i=0; i<num_segments; i++)
         bytes_received += segments[i].seg_len;
 
@@ -338,14 +299,17 @@ void mca_pml_dr_recv_request_progress(
                 bytes_received,
                 bytes_delivered,
                 csum);
-            mca_pml_dr_recv_request_matched(recvreq, &hdr->hdr_rndv, 
-                                            MCA_PML_DR_HDR_TYPE_ACK);
             /* mca_pml_dr_recv_request_matched(recvreq, &hdr->hdr_rndv,  */
-/*                                             (csum == hdr->hdr_match.hdr_csum) ? MCA_PML_DR_HDR_TYPE_ACK : MCA_PML_DR_HDR_TYPE_NACK); */
+/*                                             MCA_PML_DR_HDR_TYPE_ACK); */
+            if(csum != hdr->hdr_match.hdr_csum) { 
+                assert(0); 
+            }
+
+            mca_pml_dr_recv_request_matched(recvreq, &hdr->hdr_rndv,
+                                            (csum == hdr->hdr_match.hdr_csum));
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:
-
             bytes_received -= sizeof(mca_pml_dr_frag_hdr_t);
             data_offset = hdr->hdr_frag.hdr_frag_offset;
             MCA_PML_DR_RECV_REQUEST_UNPACK(
@@ -357,28 +321,26 @@ void mca_pml_dr_recv_request_progress(
                 bytes_received,
                 bytes_delivered,
                 csum);
-
-            /* if checksum fails - immediately nack this fragment */
-            /* if(csum != hdr->hdr_frag.hdr_frag_csum) {  */
-            if(0) {
-                bytes_received = bytes_delivered = 0;
-                mca_pml_dr_recv_request_nack(recvreq, &hdr->hdr_frag);
-            } else {
-                mca_pml_dr_vfrag_t* vfrag;
-                uint64_t bit = ((uint64_t)1 << hdr->hdr_frag.hdr_frag_idx); 
-
-                /* update vfrag status */
-                MCA_PML_DR_RECV_REQUEST_VFRAG_LOOKUP(recvreq, &hdr->hdr_frag, vfrag);
-                if((vfrag->vf_ack & bit) == 0) {
-                    vfrag->vf_ack |= bit;
-                    if((vfrag->vf_ack & vfrag->vf_mask) == vfrag->vf_mask) {
-                        /* done w/ this vfrag - ack it */
-                        mca_pml_dr_recv_request_vfrag_ack(recvreq, vfrag);
-                    }
-                } else {
-                    /* duplicate fragment - send an ack w/ the frags completed */
+            
+            bit = ((uint64_t)1 << hdr->hdr_frag.hdr_frag_idx); 
+            
+            MCA_PML_DR_RECV_REQUEST_VFRAG_LOOKUP(recvreq, &hdr->hdr_frag, vfrag);
+            
+            /* update the mask to show that this vfrag was received, 
+               note that it might still fail the checksum though */
+            vfrag->vf_mask_processed |= bit;
+            if(csum == hdr->hdr_frag.hdr_frag_csum) { 
+                /* this part of the vfrag passed the checksum, 
+                   mark it so that we ack it after receiving the 
+                   entire vfrag */
+                vfrag->vf_ack |= bit;
+                if((vfrag->vf_mask_processed & vfrag->vf_mask) == vfrag->vf_mask) { 
+                    /* we have received all the pieces of the vfrag, ack 
+                       everything that passed the checksum */ 
                     mca_pml_dr_recv_request_vfrag_ack(recvreq, vfrag);
                 }
+            } else {
+                bytes_received = bytes_delivered = 0;
             }
             break;
 

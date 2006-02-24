@@ -21,6 +21,7 @@
 #ifndef OMPI_PML_DR_SEND_REQUEST_H
 #define OMPI_PML_DR_SEND_REQUEST_H
 
+#include "opal/util/crc.h"
 #include "ompi_config.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/btl/btl.h"
@@ -32,6 +33,7 @@
 #include "pml_dr_comm.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_vfrag.h"
+#include "opal/event/event.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -60,6 +62,8 @@ struct mca_pml_dr_send_request_t {
     opal_mutex_t        req_mutex;
     size_t              req_num_acks;
     size_t              req_num_vfrags;
+    
+    
 };
 typedef struct mca_pml_dr_send_request_t mca_pml_dr_send_request_t;
 
@@ -167,6 +171,8 @@ do {                                                                            
                     return OMPI_ERR_OUT_OF_RESOURCE;                                              \
                 }                                                                                 \
                 segment = descriptor->des_src;                                                    \
+                /* setup vfrag */                                                                 \
+                sendreq->req_vfrag0.vf_size = 0;                                                  \
                                                                                                   \
                 /* build hdr */                                                                   \
                 hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;                                  \
@@ -177,6 +183,8 @@ do {                                                                            
                 hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
                 hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;                 \
                 hdr->hdr_match.hdr_src_req.pval = sendreq;                                        \
+                hdr->hdr_match.hdr_vid = sendreq->req_vfrag0.vf_id;                               \
+                hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));        \
                                                                                                   \
                 /* short message */                                                               \
                 descriptor->des_cbfunc = mca_pml_dr_match_completion_cache;                       \
@@ -331,6 +339,7 @@ do {                                                                            
         vfrag->vf_mask = (((uint64_t)1 << vfrag->vf_len) - (uint64_t)1);                \
     }                                                                                   \
                                                                                         \
+    vfrag->vf_mask_processed = 0;                                                       \
     vfrag->vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                                \
     vfrag->vf_ack = 0;                                                                  \
     vfrag->vf_offset = sendreq->req_send_offset;                                        \
