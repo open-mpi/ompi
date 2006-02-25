@@ -127,7 +127,7 @@ case "$prefix" in
   NONE)
     echo installing to directory \"$ac_default_prefix\" 
     ;;
-  [a-zA-Z]:*)
+  @<:@a-zA-Z@:>@:*)
     echo installing to directory \"$prefix\" 
     ;;
   *) 
