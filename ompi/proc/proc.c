@@ -519,16 +519,15 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                      proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
                      proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
 
-                    /* if the nodename of this info is my local host,
-                     * find the associated proc entry and set the local
-                     * flag
-                     */
-                    if (0 == strcmp(str, orte_system_info.nodename) &&
-                        0 == orte_ns.compare(mask, &name, &proc->proc_name)) {
+                    /* find the associated proc entry and update its
+                       arch flag.  If the nodename of this info is
+                       my local host, also set the LOCAL flag. */
+                    if (0 == orte_ns.compare(mask, &name, &proc->proc_name)) {
+                        proc->proc_arch = arch;
+                        if (0 == strcmp(str, orte_system_info.nodename)) {
                             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+                        }
                     }
-                    /* set the architecture entry for this proc */
-                    proc->proc_arch = arch;
                 }
             }
         }
