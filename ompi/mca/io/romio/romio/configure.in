@@ -496,7 +496,7 @@ if test -n "$arch_solaris" || test -n "$arch_solaris86" ; then
         TEST_CC="$CC"
         TEST_F77="$F77"
     fi
-    AR="ar cr"
+    #OMPI: Bad for automake: AR="ar cr"
 # solaris does not have l option to ar
 fi
 
@@ -516,8 +516,8 @@ fi
 
 if test -n "$arch_tflop" || test -n "$arch_tflops"; then
     # TFLOP_FLAGS="-cougar -D__PUMA"
-    AR="xar cr$AR_LOCAL"
-    RANLIB="xranlib"
+    #OMPI: Bad for automake: AR="xar cr$AR_LOCAL"
+    #OMPI: Bad for automake: RANLIB="xranlib"
     MPI_LIB="$MPI_LIB"
     if test -z "$MPI" ; then
         MPI=mpich
@@ -560,7 +560,7 @@ fi
 #
 if test -n "$arch_hpux" || test -n "$arch_sppux" ; then
     have_aio=no
-    RANLIB=":"
+    #OMPI: Bad for automake: RANLIB=":"
     if test -z "$MPI"; then
         if test -f "/opt/mpi/include/mpi.h" ; then
             echo "assuming that you want to use ROMIO with HP MPI"
@@ -623,7 +623,7 @@ if test -n "$arch_CRAY" ; then
     FTESTDEFINE="integer ilen"
     F77GETARG="call pxfgetarg(i, str, ilen, ierr)"
     have_aio=no
-    RANLIB=":"
+    # OMPI: bad for automake: RANLIB=":"
     AC_DEFINE(CRAY,1,[Define if Cray])
     if test -z "$MPI" || test -n "$mpi_sgi" ; then
         MPI=cray
@@ -672,7 +672,7 @@ fi
 #
 if test -n "$arch_IRIX"; then
    if test $osversion = 4 ; then
-	RANLIB="ar ts"
+	# OMPI: Bad for automake:RANLIB="ar ts"
         if test -n "$mpi_sgi"; then
             AC_MSG_ERROR([SGI\'s MPI does not work with IRIX 4.x])
         fi
@@ -696,7 +696,7 @@ if test -n "$arch_IRIX"; then
                 mpi_mpich=1
             fi            
 	fi
-        RANLIB=":"
+        #OMPI: Bad for automake: RANLIB=":"
         AC_DEFINE(AIO_SIGNOTIFY_NONE,1,[Define if no signotify])
 	if test $cputype -ge 5000 ; then
             MIPS=4
