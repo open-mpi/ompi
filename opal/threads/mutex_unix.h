@@ -40,6 +40,7 @@
 #endif
 #if OMPI_HAVE_SOLARIS_THREADS
 #include <thread.h>
+#include <synch.h>
 #endif
 
 #include "opal/class/opal_object.h"
