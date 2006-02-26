@@ -29,7 +29,8 @@
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h" 
 #include "orte/mca/errmgr/errmgr.h"
-                                                                                                               
+#include "ompi/datatype/dt_arch.h"                                                                                                               
+
 static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     mca_pml_ob1_recv_request_t* request, mca_pml_ob1_comm_proc_t* proc);
 
@@ -264,6 +265,18 @@ static void mca_pml_ob1_recv_request_ack(
     ack->hdr_dst_req.pval = recvreq;
     ack->hdr_rdma_offset = recvreq->req_rdma_offset;
 
+#ifdef WORDS_BIGENDIAN
+    ack->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    /* if we are little endian and the remote side is big endian,
+       we're responsible for making sure the data is in network byte
+       order */
+    if (recvreq->req_recv.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        ack->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+        MCA_PML_OB1_ACK_HDR_HTON(*ack);
+    }
+#endif
+
     /* initialize descriptor */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     des->des_cbfunc = mca_pml_ob1_ctl_completion;
@@ -350,6 +363,18 @@ static void mca_pml_ob1_rget_completion(
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
     hdr->hdr_des = frag->rdma_hdr.hdr_rget.hdr_des;
+
+#ifdef WORDS_BIGENDIAN
+    hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    /* if we are little endian and the remote side is big endian,
+       we're responsible for making sure the data is in network byte
+       order */
+    if (recvreq->req_recv.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+        MCA_PML_OB1_FIN_HDR_HTON(*hdr);
+    }
+#endif
                                                                                                             
     /* queue request */
     rc = mca_bml_base_send(
@@ -715,6 +740,17 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
                 hdr->hdr_seg_cnt = dst->des_dst_cnt;
                 memcpy(hdr->hdr_segs, dst->des_dst, dst->des_dst_cnt * sizeof(mca_btl_base_segment_t));
+
+#ifdef WORDS_BIGENDIAN
+                hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+                /* if we are little endian and the remote side is big endian,
+                   we're responsible for making sure the data is in network byte
+                   order */
+                if (recvreq->req_recv.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+                    /* BWB - FIX ME - TIM, what do we do here? */
+                }
+#endif
 
                 /* update request state */
                 recvreq->req_rdma_offset += size;

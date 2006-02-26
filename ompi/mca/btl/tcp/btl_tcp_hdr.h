@@ -23,6 +23,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/btl/base/base.h"
 #include "btl_tcp.h" 
+#include "opal/types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -44,6 +45,18 @@ struct mca_btl_tcp_hdr_t {
     uint64_t size; 
 }; 
 typedef struct mca_btl_tcp_hdr_t mca_btl_tcp_hdr_t; 
+
+#define MCA_BTL_TCP_HDR_HTON(hdr)     \
+    do {                              \
+        hdr.count = htons(hdr.count); \
+        hdr.size = hton64(hdr.size);  \
+    } while (0)
+
+#define MCA_BTL_TCP_HDR_NTOH(hdr)     \
+    do {                              \
+        hdr.count = ntohs(hdr.count); \
+        hdr.size = ntoh64(hdr.size);  \
+    } while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

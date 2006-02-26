@@ -29,6 +29,7 @@
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_rdma.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/datatype/dt_arch.h"
 #include "ompi/mca/bml/bml.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -108,6 +109,22 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
  * Start a send request. 
  */
 
+#ifdef WORDS_BIGENDIAN
+#define MCA_PML_OB1_SEND_REQUEST_START_MATCH_FIXUP(sendreq, hdr) \
+    hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#define MCA_PML_OB1_SEND_REQUEST_START_MATCH_FIXUP(sendreq, hdr) \
+    do { \
+        if (sendreq->req_send.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) { \
+            hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO; \
+            MCA_PML_OB1_MATCH_HDR_HTON(hdr->hdr_match); \
+        } \
+    } while (0)
+#else
+#define MCA_PML_OB1_SEND_REQUEST_START_MATCH_FIXUP(sendreq, hdr)
+#endif
+
+
 #define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)                                            \
 do {                                                                                           \
     mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;                \
@@ -173,6 +190,7 @@ do {                                                                            
                 hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;       \
                 hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                   \
                 hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;              \
+                MCA_PML_OB1_SEND_REQUEST_START_MATCH_FIXUP(sendreq, hdr);                      \
                                                                                                \
                 /* short message */                                                            \
                 descriptor->des_cbfunc = mca_pml_ob1_match_completion_cache;                   \

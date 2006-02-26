@@ -33,6 +33,7 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_hdr.h"
+#include "ompi/datatype/dt_arch.h"                                                                                                               
 
 
 
@@ -68,17 +69,45 @@ void mca_pml_ob1_recv_frag_callback(
         return;
     }
                                                                                                                       
+    /* hdr_type and hdr_flags are uint8_t, so no endian problems */
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_OB1_HDR_TYPE_MATCH:
+        {
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO) {
+                MCA_PML_OB1_MATCH_HDR_NTOH(hdr->hdr_match);
+            }
+#endif
+            mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
+            break;
+        }
     case MCA_PML_OB1_HDR_TYPE_RNDV:
+        {
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO) {
+                MCA_PML_OB1_RNDV_HDR_NTOH(hdr->hdr_rndv);
+            }
+#endif
+            mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
+            break;
+        }
     case MCA_PML_OB1_HDR_TYPE_RGET:
         {
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            /* BWB - FIX ME - Tim, what do I do with rget? */
+#endif
             mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
             break;
         }
     case MCA_PML_OB1_HDR_TYPE_ACK:
         {
-            mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)
+            mca_pml_ob1_send_request_t* sendreq;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO) {
+                MCA_PML_OB1_ACK_HDR_NTOH(hdr->hdr_ack);
+            }
+#endif
+            sendreq = (mca_pml_ob1_send_request_t*)
                 hdr->hdr_ack.hdr_src_req.pval;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
             sendreq->req_rdma_offset = hdr->hdr_ack.hdr_rdma_offset;
@@ -87,21 +116,37 @@ void mca_pml_ob1_recv_frag_callback(
         }
     case MCA_PML_OB1_HDR_TYPE_FRAG:
         {
-            mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)
+            mca_pml_ob1_recv_request_t* recvreq;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO) {
+                MCA_PML_OB1_FRAG_HDR_NTOH(hdr->hdr_frag);
+            }
+#endif
+            recvreq = (mca_pml_ob1_recv_request_t*)
                 hdr->hdr_frag.hdr_dst_req.pval;
             mca_pml_ob1_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
             break;
         }
     case MCA_PML_OB1_HDR_TYPE_PUT:
         {
-            mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)
+            mca_pml_ob1_send_request_t* sendreq;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            /* BWB - FIX ME - Tim, what do I do with rdma headers? */
+#endif
+            sendreq = (mca_pml_ob1_send_request_t*)
                 hdr->hdr_rdma.hdr_req.pval;
             mca_pml_ob1_send_request_put(sendreq,btl,&hdr->hdr_rdma);
             break;
         }
     case MCA_PML_OB1_HDR_TYPE_FIN:
         {
-            mca_btl_base_descriptor_t* rdma = (mca_btl_base_descriptor_t*)
+            mca_btl_base_descriptor_t* rdma;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO) {
+                MCA_PML_OB1_FIN_HDR_NTOH(hdr->hdr_fin);
+            }
+#endif
+            rdma = (mca_btl_base_descriptor_t*)
                 hdr->hdr_fin.hdr_des.pval;
             rdma->des_cbfunc(btl, NULL, rdma, OMPI_SUCCESS);
             break;

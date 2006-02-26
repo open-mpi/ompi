@@ -390,6 +390,7 @@ int mca_btl_tcp_send(
     frag->hdr.base.tag = tag;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_SEND;
     frag->hdr.count = 0;
+    if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
     return mca_btl_tcp_endpoint_send(endpoint,frag);
 }
 
@@ -431,6 +432,7 @@ int mca_btl_tcp_put(
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT;
     frag->hdr.count = frag->base.des_dst_cnt;
+    if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
     return mca_btl_tcp_endpoint_send(endpoint,frag);
 }
 
@@ -466,6 +468,7 @@ int mca_btl_tcp_get(
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_GET;
     frag->hdr.count = frag->base.des_src_cnt;
+    if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
     return mca_btl_tcp_endpoint_send(endpoint,frag);
 }
 
