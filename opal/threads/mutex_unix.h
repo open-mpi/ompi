@@ -38,6 +38,9 @@
 #include <errno.h>
 #include <stdio.h>
 #endif
+#if OMPI_HAVE_SOLARIS_THREADS
+#include <thread.h>
+#endif
 
 #include "opal/class/opal_object.h"
 #include "opal/sys/atomic.h"
