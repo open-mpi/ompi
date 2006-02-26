@@ -219,6 +219,9 @@ struct mca_btl_base_header_t{
 }; 
 typedef struct mca_btl_base_header_t mca_btl_base_header_t; 
 
+#define MCA_BTL_BASE_HEADER_HTON(hdr)
+#define MCA_BTL_BASE_HEADER_NTOH(hdr)
+
 /*
  *  BTL component interface functions and datatype.
  */

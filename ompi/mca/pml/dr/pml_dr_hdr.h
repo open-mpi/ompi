@@ -29,6 +29,8 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/types.h"
+
 #define MCA_PML_DR_HDR_TYPE_MATCH     1
 #define MCA_PML_DR_HDR_TYPE_RNDV      2
 #define MCA_PML_DR_HDR_TYPE_ACK       3
@@ -37,46 +39,6 @@
 #define MCA_PML_DR_HDR_FLAGS_ACK      1  /* is an ack required */
 #define MCA_PML_DR_HDR_FLAGS_NBO      2  /* is the hdr in network byte order */
 #define MCA_PML_DR_HDR_FLAGS_MATCH    4  /* is the ack in response to a match */
-
-
-/*
- * Convert a 64 bit value to network byte order.
- */
-
-static inline uint64_t hton64(uint64_t val)
-{ 
-    union { uint64_t ll;                
-            uint32_t l[2]; 
-    } w, r;      
-
-    /* platform already in network byte order? */
-    if(htonl(1) == 1L)
-        return val;
-    w.ll = val;
-    r.l[0] = htonl(w.l[1]);
-    r.l[1] = htonl(w.l[0]);
-    return r.ll; 
-}
-
-
-/*
- * Convert a 64 bit value from network to host byte order.
- */
-
-static inline uint64_t ntoh64(uint64_t val)
-{ 
-    union { uint64_t ll;                
-            uint32_t l[2]; 
-    } w, r;      
-
-    /* platform already in network byte order? */
-    if(htonl(1) == 1L)
-        return val;
-    w.ll = val;
-    r.l[0] = ntohl(w.l[1]);
-    r.l[1] = ntohl(w.l[0]);
-    return r.ll; 
-}
 
 
 /**

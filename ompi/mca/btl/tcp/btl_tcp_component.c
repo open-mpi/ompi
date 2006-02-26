@@ -601,6 +601,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
         close(sd);
         return;
     }
+    OMPI_PROCESS_NAME_NTOH(guid);
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {

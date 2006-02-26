@@ -89,6 +89,52 @@ typedef struct orte_process_name_t orte_process_name_t;
 extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all
 
+#if SIZEOF_SIZE_T == 8
+
+/**
+ * Convert process name from host to network byte order.
+ *
+ * @param name
+ */
+#define OMPI_PROCESS_NAME_HTON(n) \
+    n.cellid = hton64(n.cellid); \
+    n.jobid = hton64(n.jobid); \
+    n.vpid = hton64(n.vpid);  
+
+/**
+ * Convert process name from network to host byte order.
+ *
+ * @param name
+ */
+#define OMPI_PROCESS_NAME_NTOH(n) \
+    n.cellid = ntoh64(n.cellid); \
+    n.jobid = ntoh64(n.jobid); \
+    n.vpid = ntoh64(n.vpid); 
+
+#else
+
+/**
+ * Convert process name from host to network byte order.
+ *
+ * @param name
+ */
+#define OMPI_PROCESS_NAME_HTON(n) \
+    n.cellid = htonl(n.cellid); \
+    n.jobid = htonl(n.jobid); \
+    n.vpid = htonl(n.vpid);  
+
+/**
+ * Convert process name from network to host byte order.
+ *
+ * @param name
+ */
+#define OMPI_PROCESS_NAME_NTOH(n) \
+    n.cellid = ntohl(n.cellid); \
+    n.jobid = ntohl(n.jobid); \
+    n.vpid = ntohl(n.vpid);  
+
+#endif
+
 
 /** List of names for general use
  */

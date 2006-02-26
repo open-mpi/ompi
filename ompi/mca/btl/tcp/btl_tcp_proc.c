@@ -28,6 +28,7 @@
 #include "orte/class/orte_proc_table.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/datatype/dt_arch.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
@@ -171,6 +172,20 @@ int mca_btl_tcp_proc_insert(
     struct mca_btl_tcp_module_t *btl_tcp = btl_endpoint->endpoint_btl;
     size_t i;
     unsigned long net1;
+
+#ifndef WORDS_BIGENDIAN
+    /* if we are little endian and our peer is not so lucky, then we
+       need to put all information sent to him in big endian (aka
+       Network Byte Order) and expect all information received to
+       be in NBO.  Since big endian machines always send and receive
+       in NBO, we don't care so much about that case. */
+    if (btl_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        printf("setting BIGENDIAN\n");
+        btl_endpoint->endpoint_nbo = true;
+    } else {
+         printf("not setting big endian\n");
+    }
+#endif
 
     /* insert into endpoint array */
     btl_endpoint->endpoint_proc = btl_proc;

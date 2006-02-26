@@ -29,6 +29,8 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/types.h"
+
 #define MCA_PML_OB1_HDR_TYPE_MATCH     1
 #define MCA_PML_OB1_HDR_TYPE_RNDV      2
 #define MCA_PML_OB1_HDR_TYPE_RGET      3
@@ -44,47 +46,6 @@
 #define MCA_PML_OB1_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
 #define MCA_PML_OB1_HDR_FLAGS_PIN     4  /* is user buffer pinned */
 #define MCA_PML_OB1_HDR_FLAGS_CONTIG  8  /* is user buffer contiguous */
-
-
-/*
- * Convert a 64 bit value to network byte order.
- */
-
-static inline uint64_t hton64(uint64_t val)
-{ 
-    union { uint64_t ll;                
-            uint32_t l[2]; 
-    } w, r;      
-
-    /* platform already in network byte order? */
-    if(htonl(1) == 1L)
-        return val;
-    w.ll = val;
-    r.l[0] = htonl(w.l[1]);
-    r.l[1] = htonl(w.l[0]);
-    return r.ll; 
-}
-
-
-/*
- * Convert a 64 bit value from network to host byte order.
- */
-
-static inline uint64_t ntoh64(uint64_t val)
-{ 
-    union { uint64_t ll;                
-            uint32_t l[2]; 
-    } w, r;      
-
-    /* platform already in network byte order? */
-    if(htonl(1) == 1L)
-        return val;
-    w.ll = val;
-    r.l[0] = ntohl(w.l[1]);
-    r.l[1] = ntohl(w.l[0]);
-    return r.ll; 
-}
-
 
 /**
  * Common hdr attributes - must be first element in each hdr type 
@@ -203,13 +164,13 @@ typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 #define MCA_PML_OB1_ACK_HDR_NTOH(h) \
     do { \
     MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
-    (h).hdr_dst_size = ntoh64((h).hdr_dst_size); \
+    (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
     } while (0)
 
 #define MCA_PML_OB1_ACK_HDR_HTON(h) \
     do { \
     MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-    (h).hdr_dst_size = hton64((h).hdr_dst_size); \
+    (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
     } while (0) 
 
 /**
@@ -235,6 +196,16 @@ struct mca_pml_ob1_fin_hdr_t {
     ompi_ptr_t hdr_des;                       /**< completed descriptor */
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
+
+#define MCA_PML_OB1_FIN_HDR_NTOH(h) \
+    do { \
+    MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
+    } while (0)
+
+#define MCA_PML_OB1_FIN_HDR_HTON(h) \
+    do { \
+    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+    } while (0) 
 
 /**
  * Union of defined hdr types.
