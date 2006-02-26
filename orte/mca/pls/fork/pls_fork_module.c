@@ -38,8 +38,11 @@
 #include <fcntl.h>
 #endif
 #include <time.h>
-#if HAVE_SYS_PARAM_H
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
 #endif
 
 #include "orte/orte_constants.h"
