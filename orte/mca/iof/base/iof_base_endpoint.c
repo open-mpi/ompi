@@ -230,11 +230,12 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
 /* return true if we should read stdin from fd, false otherwise */
 static bool orte_iof_base_endpoint_stdin_check(int fd)
 {
-    if (isatty(fd) && (getpgrp() != tcgetpgrp(fd))) {
+#if !defined(__WINDOWS__)
+    if( isatty(fd) && (getpgrp() != tcgetpgrp(fd)) ) {
         return false;
-    } else {
-        return true;
     }
+#endif  /* !defined(__WINDOWS__) */
+    return true;
 }
 
 
@@ -324,11 +325,13 @@ int orte_iof_base_endpoint_create(
                    between being backgrounded and not.  If the
                    filedescriptor is not a tty, don't worry about it
                    and always stay connected. */
+#if !defined(__WINDOWS__)
                 opal_signal_set(&(endpoint->ep_stdin_event),
                                 SIGCONT,
                                 orte_iof_base_endpoint_stdin_cb,
                                 endpoint);
                 opal_signal_add(&(endpoint->ep_stdin_event), NULL);
+#endif  /* !defined(__WINDOWS__) */
             }
 
             /* always setup the event, but only add it if we should be
