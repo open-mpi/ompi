@@ -32,6 +32,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/datatype/dt_arch.h"
 
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
     { /* ompi_osc_base_component_t */
@@ -334,6 +335,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
                 descriptor->des_dst[0].seg_addr.pval;
             payload = (void*) (header + 1);
 
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+            }
+#endif
+
             /* get our module pointer */
             module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
             if (NULL == module) return;
@@ -350,6 +357,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             header = (ompi_osc_pt2pt_send_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
             payload = (void*) (header + 1);
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+            }
+#endif
 
             /* get our module pointer */
             module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
@@ -371,6 +384,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             header = (ompi_osc_pt2pt_send_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
             payload = (void*) (header + 1);
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+            }
+#endif
 
             /* get our module pointer */
             module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
@@ -407,6 +426,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
                 descriptor->des_dst[0].seg_addr.pval;
             payload = (void*) (header + 1);
 
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_REPLY_HDR_NTOH(*header);
+            }
+#endif
+
             /* get original sendreq pointer */
             sendreq = (ompi_osc_pt2pt_sendreq_t*) header->hdr_origin_sendreq.pval;
             module = sendreq->req_module;
@@ -421,6 +446,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
                 (ompi_osc_pt2pt_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
 
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            }
+#endif
+
             /* get our module pointer */
             module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
             if (NULL == module) return;
@@ -433,6 +464,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             ompi_osc_pt2pt_control_header_t *header = 
                 (ompi_osc_pt2pt_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            }
+#endif
 
             /* get our module pointer */
             module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
@@ -450,6 +487,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             ompi_osc_pt2pt_control_header_t *header = 
                 (ompi_osc_pt2pt_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            }
+#endif
 
             /* get our module pointer */
             module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
@@ -469,6 +512,12 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             ompi_osc_pt2pt_control_header_t *header = 
                 (ompi_osc_pt2pt_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            }
+#endif
 
             /* get our module pointer */
             module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);

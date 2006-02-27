@@ -32,6 +32,8 @@
 #define OMPI_OSC_PT2PT_HDR_LOCK_REQ   0x0040
 #define OMPI_OSC_PT2PT_HDR_UNLOCK_REQ 0x0080
 
+#define OMPI_OSC_PT2PT_HDR_FLAG_NBO   0x0001
+
 struct ompi_osc_pt2pt_base_header_t {
     uint8_t hdr_type;
     /* eventually, this will include endian information */
@@ -58,12 +60,11 @@ struct ompi_osc_pt2pt_send_header_t {
 };
 typedef struct ompi_osc_pt2pt_send_header_t ompi_osc_pt2pt_send_header_t;
 
-#define OMPI_OSC_PT2PT_REQ_HDR_HTON(hdr) \
+#define OMPI_OSC_PT2PT_SEND_HDR_HTON(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_HTON((hdr).hdr_base) \
         (hdr).hdr_windx = htons((hdr).hdr_windx); \
         (hdr).hdr_origin = htonl((hdr).hdr_origin); \
-        (hdr).hdr_origin_sendreq = hton64((hdr).hdr_origin_sendreq); \
         (hdr).hdr_origin_tag = htonl((hdr).hdr_origin_tag); \
         (hdr).hdr_target_disp = htonl((hdr).hdr_target_disp); \
         (hdr).hdr_target_count = htonl((hdr).hdr_target_count); \
@@ -71,12 +72,11 @@ typedef struct ompi_osc_pt2pt_send_header_t ompi_osc_pt2pt_send_header_t;
         (hdr).hdr_msg_length = htonl((hdr).hdr_msg_length); \
     } while (0)
 
-#define OMPI_OSC_PT2PT_REQ_HDR_NTOH(hdr) \
+#define OMPI_OSC_PT2PT_SEND_HDR_NTOH(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_NTOH((hdr).hdr_base) \
         (hdr).hdr_windx = ntohs((hdr).hdr_windx); \
         (hdr).hdr_origin = ntohl((hdr).hdr_origin); \
-        (hdr).hdr_origin_sendreq = ntoh64((hdr).hdr_origin_sendreq); \
         (hdr).hdr_origin_tag = ntohl((hdr).hdr_origin_tag); \
         (hdr).hdr_target_disp = ntohl((hdr).hdr_target_disp); \
         (hdr).hdr_target_count = ntohl((hdr).hdr_target_count); \
@@ -98,7 +98,6 @@ typedef struct ompi_osc_pt2pt_reply_header_t ompi_osc_pt2pt_reply_header_t;
 #define OMPI_OSC_PT2PT_REPLY_HDR_HTON(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_HTON((hdr).hdr_base) \
-        (hdr).hdr_origin_sendreq = hton64((hdr).hdr_origin_sendreq); \
         (hdr).hdr_target_tag = htonl((hdr).hdr_target_tag); \
         (hdr).hdr_msg_length = htonl((hdr).hdr_msg_length); \
     } while (0)
@@ -106,7 +105,6 @@ typedef struct ompi_osc_pt2pt_reply_header_t ompi_osc_pt2pt_reply_header_t;
 #define OMPI_OSC_PT2PT_REPLY_HDR_NTOH(hdr) \
     do { \
         OMPI_OSC_PT2PT_BASE_HDR_NTOH((hdr).hdr_base) \
-        (hdr).hdr_origin_sendreq = ntoh64((hdr).hdr_origin_sendreq); \
         (hdr).hdr_target_tag = ntohl((hdr).hdr_target_tag); \
         (hdr).hdr_msg_length = ntohl((hdr).hdr_msg_length); \
     } while (0)

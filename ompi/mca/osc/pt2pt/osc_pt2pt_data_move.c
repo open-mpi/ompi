@@ -28,6 +28,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/datatype/dt_arch.h"
 
 static inline int32_t
 create_send_tag(ompi_osc_pt2pt_module_t *module)
@@ -104,6 +105,11 @@ ompi_osc_pt2pt_sendreq_send_cb(struct mca_btl_base_module_t* btl,
        in the case of get, as we really don't care when it completes -
        only when the data arrives. */
     if (OMPI_OSC_PT2PT_HDR_GET != header->hdr_base.hdr_type) {
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+            OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+        }
+#endif
         /* do we need to post a send? */
         if (header->hdr_msg_length != 0) {
             /* sendreq is done.  Mark it as so and get out of here */
@@ -191,6 +197,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     /* pack header */
     header = (ompi_osc_pt2pt_send_header_t*) descriptor->des_src[0].seg_addr.pval;
     written_data += sizeof(ompi_osc_pt2pt_send_header_t);
+    header->hdr_base.hdr_flags = 0;
     header->hdr_windx = sendreq->req_module->p2p_comm->c_contextid;
     header->hdr_origin = sendreq->req_module->p2p_comm->c_my_rank;
     header->hdr_origin_sendreq.pval = (void*) sendreq;
@@ -259,9 +266,13 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
         header->hdr_msg_length = 0;
     }
 
-#if 0 /* BWB - FIX ME */
-    /* put in network byte order */
-    OMPI_OSC_PT2PT_REQ_HDR_HTON(header);
+#ifdef WORDS_BIGENDIAN
+    header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if (sendreq->req_target_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+        OMPI_OSC_PT2PT_SEND_HDR_HTON(*header);
+    }
 #endif
 
     /* send fragment */
@@ -319,6 +330,12 @@ ompi_osc_pt2pt_replyreq_send_cb(struct mca_btl_base_module_t* btl,
         abort();
         return;
     }
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+            OMPI_OSC_PT2PT_REPLY_HDR_NTOH(*header);
+        }
+#endif
 
     /* do we need to post a send? */
     if (header->hdr_msg_length != 0) {
@@ -390,6 +407,7 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
     header = (ompi_osc_pt2pt_reply_header_t*) descriptor->des_src[0].seg_addr.pval;
     written_data += sizeof(ompi_osc_pt2pt_reply_header_t);
     header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_REPLY;
+    header->hdr_base.hdr_flags = 0;
     header->hdr_origin_sendreq = replyreq->rep_origin_sendreq;
     header->hdr_target_tag = 0;
 
@@ -421,9 +439,13 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
         header->hdr_target_tag = create_send_tag(module);
     }
 
-#if 0 /* BWB - FIX ME */
-    /* put in network byte order */
-    OMPI_OSC_PT2PT_REPLYREQ_HDR_HTON(header);
+#ifdef WORDS_BIGENDIAN
+    header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if (replyreq->rep_origin_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+        OMPI_OSC_PT2PT_REPLY_HDR_HTON(*header);
+    }
 #endif
 
     /* send fragment */
@@ -786,9 +808,13 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
     header->hdr_value[1] = value1;
     header->hdr_windx = module->p2p_comm->c_contextid;
 
-#if 0 /* BWB - FIX ME */
-    /* put in network byte order */
-    OMPI_OSC_PT2PT_CONTROL_HDR_HTON(header);
+#ifdef WORDS_BIGENDIAN
+    header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if (proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+        OMPI_OSC_PT2PT_CONTROL_HDR_HTON(*header);
+    }
 #endif
 
     /* send fragment */
