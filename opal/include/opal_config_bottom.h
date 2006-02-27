@@ -111,7 +111,7 @@
 #    endif
 #  endif
 #  if OMPI_BUILDING
-#    include "win32/win_compat.h"
+#    include "opal/win32/win_compat.h"
 #  endif
 #else
    /* On Unix - get rid of the defines */ 
