@@ -180,10 +180,7 @@ int mca_btl_tcp_proc_insert(
        be in NBO.  Since big endian machines always send and receive
        in NBO, we don't care so much about that case. */
     if (btl_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-        printf("setting BIGENDIAN\n");
         btl_endpoint->endpoint_nbo = true;
-    } else {
-         printf("not setting big endian\n");
     }
 #endif
 
