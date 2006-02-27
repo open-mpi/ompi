@@ -21,7 +21,7 @@
 
 #include "windows.h"
 
-#include <opal/include/sys/timer.h>
+#include <opal/sys/timer.h>
 
 OMPI_DECLSPEC opal_timer_t opal_timer_windows_freq;
 
