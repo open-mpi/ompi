@@ -39,8 +39,6 @@
 extern "C" {
 #endif
 
-typedef uint64_t mca_pml_dr_sequence_t;
-
 /**
  * DR PML module
  */
