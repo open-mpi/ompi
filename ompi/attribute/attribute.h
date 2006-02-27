@@ -491,6 +491,15 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
  */
 int ompi_attr_create_predefined(void);
 
+/**
+ * \internal
+ *
+ * Free all the predefined attributes
+ *
+ * @returns OMPI_SUCCESS
+ */
+int ompi_attr_free_predefined(void);
+
 struct orte_gpr_notify_data_t;
 /**
  * \internal

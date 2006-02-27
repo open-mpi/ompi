@@ -497,12 +497,15 @@ int ompi_attr_init(void)
 
 int ompi_attr_finalize(void)
 {
+    int ret;
+
+    ret = ompi_attr_free_predefined();
     OBJ_RELEASE(keyval_hash);
     OBJ_RELEASE(key_bitmap);
 
-    return OMPI_SUCCESS;
+    return ret;
 }
-  
+
 
 int ompi_attr_create_keyval(ompi_attribute_type_t type,
                             ompi_attribute_fn_ptr_union_t copy_attr_fn,
@@ -583,7 +586,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
 
     /* This will delete the key only when no attributes are associated
        with it, else it will just decrement the reference count, so that when
-       the last attribute is deleted, this object gets deleted too */  
+       the last attribute is deleted, this object gets deleted too */
 
     OBJ_RELEASE(key_item);
 
@@ -1028,7 +1031,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
 	    DELETE_ATTR_CALLBACKS(win, old_attr, key_item);
 	    break;
 
-	case TYPE_ATTR:	    
+	case TYPE_ATTR:
 	    DELETE_ATTR_CALLBACKS(datatype, old_attr, key_item);
 	    break;
 
@@ -1039,13 +1042,13 @@ static int set_value(ompi_attribute_type_t type, void *object,
         OBJ_RELEASE(old_attr);
     }
 
-    ret = opal_hash_table_set_value_uint32(*keyhash, key, new_attr); 
+    ret = opal_hash_table_set_value_uint32(*keyhash, key, new_attr);
 
     if (need_lock) {
         OPAL_THREAD_UNLOCK(&alock);
     }
     if (OMPI_SUCCESS != ret) {
-	return ret; 
+	return ret;
     }
 
     /* Increase the reference count of the object, only if there was no
