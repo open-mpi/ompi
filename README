@@ -38,7 +38,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (21 Nov 2005):
+base as of this writing (27 Feb 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -77,10 +77,6 @@ base as of this writing (21 Nov 2005):
   be supplemented with cohesive installation and user documentation
   files.
 
-- MPI-2 one-sided functionality will not be included in the first few
-  releases of Open MPI.  Attempting to use any MPI-2 one-sided
-  function will result in an run-time MPI exception.
-
 - Systems that have been tested are:
   - Linux, 32 bit, with gcc
   - Linux, 64 bit (x86), with gcc
@@ -89,7 +85,7 @@ base as of this writing (21 Nov 2005):
 
 - Other systems have been lightly (but not fully tested):
   - Other compilers on Linux, 32 and 64 bit
-  - Other 64 bit platforms (Linux and AIX on PPC64, Sparc)
+  - Other 64 bit platforms (Linux and AIX on PPC64, SPARC)
 
 - Building shared libraries on AIX with the xlc compilers is only
   supported if you supply the following command line option to
@@ -128,7 +124,7 @@ base as of this writing (21 Nov 2005):
      configured with.
 
   2. Fortran compilers may have different values for the logical
-     .TRUE. constant.  As such, any MPI function that uses the fortran
+     .TRUE. constant.  As such, any MPI function that uses the Fortran
      LOGICAL type may only get .TRUE. values back that correspond to
      the the .TRUE. value of the Fortran compiler that Open MPI was
      configured with.  Note that some Fortran compilers allow forcing
@@ -153,8 +149,9 @@ base as of this writing (21 Nov 2005):
 
 - Due to limitations in the Libtool 1.5 series, Fortran 90 MPI
   bindings support can only be built as a static library.  It is
-  expected that Libtool 2.0 will be able to support shared libraries
-  for the Fortran 90 bindings.
+  expected that Libtool 2.0 (and therefore future releases of Open
+  MPI) will be able to support shared libraries for the Fortran 90
+  bindings.
 
 - On Linux, if either the malloc_hooks or malloc_interpose memory
   hooks are enabled, it will not be possible to link against a static
@@ -163,8 +160,10 @@ base as of this writing (21 Nov 2005):
   statically linked, it is recommended you compile Open MPI with the
   --without-memory-manager configure option.
 
-- The XGrid support is experimental - see the Open MPI FAQ for more
-  information.
+- The XGrid support is experimental - see the Open MPI FAQ and this
+  post on the Open MPI user's mailing list for more information:
+
+  http://www.open-mpi.org/community/lists/users/2006/01/0539.php
 
 - The MX library limits the maximum message fragment size for both
   on-node and off-node messages.  As of MX v1.0.3, the inter-node
@@ -183,7 +182,7 @@ base as of this writing (21 Nov 2005):
 
 - The current version of the Open MPI point-to-point engine does not
   yet support hardware-level MPI message matching.  As such, MPI
-  message matching must be performed in software, artifically
+  message matching must be performed in software, artificially
   increasing latency for short messages on certain networks (such as
   MX and hardware-supported Portals).  Future versions of Open MPI
   will support hardware matching on networks that provide it, and will
@@ -204,7 +203,7 @@ shell$ make all install
 ---------------------------------------------------------------------------
 
 There are many available configure options (see "./configure --help"
-for a full list); a summary of the more important ones follows:
+for a full list); a summary of the more commonly used ones follows:
 
 --prefix=<directory>
   Install Open MPI into the base directory named <directory>.  Hence,
@@ -271,7 +270,7 @@ for a full list); a summary of the more important ones follows:
   --with-f90-max-array-dim option.
 
 --with-f90-max-array-dim=<DIM>
-  The F90 MPI bindings are stictly typed, even including the number of
+  The F90 MPI bindings are strictly typed, even including the number of
   dimensions for arrays for MPI choice buffer parameters.  Open MPI
   generates these bindings at compile time with a maximum number of
   dimensions as specified by this parameter.  The default value is 4.
@@ -287,6 +286,38 @@ for a full list); a summary of the more important ones follows:
   components.
 
 There are several other options available -- see "./configure --help".
+
+Changing the compilers that Open MPI uses to build itself uses the
+standard Autoconf mechanism of setting special environment variables
+either before invoking configure or on the configure command line.
+The following environment variables are recognized by configure:
+
+CC          - C compiler to use
+CFLAGS      - Compile flags to pass to the C compiler
+CPPFLAGS    - Preprocessor flags to pass to the C compiler
+
+CXX         - C++ compiler to use
+CXXFLAGS    - Compile flags to pass to the C++ compiler
+CXXCPPFLAGS - Preprocessor flags to pass to the C++ compiler
+
+F77         - Fortran 77 compiler to use
+FFLAGS      - Compile flags to pass to the Fortran 77 compiler
+
+FC          - Fortran 90 compiler to use
+FCFLAGS     - Compile flags to pass to the Fortran 90 compiler
+
+LDFLAGS     - Linker flags to pass to all compilers
+LIBS        - Libraries to pass to all compilers (it is rarely
+              necessary for users to need to specify additional LIBS)
+
+For example:
+
+shell$ ./configure CC=mycc CXX=myc++ F77=myf77 F90=myf90 ...
+
+It is required that the compilers specified be compile and link
+compatible, meaning that object files created by one compiler must be
+able to be linked with object files from the other compilers and
+produce correctly functioning executables.
 
 Open MPI supports all the "make" targets that are provided by GNU
 Automake, such as:
