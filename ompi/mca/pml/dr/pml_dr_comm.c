@@ -32,6 +32,7 @@ static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
     OBJ_CONSTRUCT(&proc->frags_cant_match, opal_list_t);
     OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
     OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
+    OBJ_CONSTRUCT(&proc->acked_vfrags, opal_list_t);
 }
 
 
