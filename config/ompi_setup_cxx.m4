@@ -179,6 +179,6 @@ AC_DEFUN([_OMPI_PROG_CXX],[
     # make sure the compiler actually works, if not cross-compiling.
     # Don't just use the AC macro so that we can have a pretty
     # message.
-    OMPI_CHECK_COMPILER_WORKS([C++], [exit(0)], [], 
+    OMPI_CHECK_COMPILER_WORKS([C++], [return 0], [], 
            [AC_MSG_ERROR([Could not run a simple C++ program.  Aborting.])])
 ])

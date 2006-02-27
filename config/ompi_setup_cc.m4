@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl Copyright (c) 2004-2006 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -155,7 +155,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
     # optimization is not prohibitive).  If we're using anything else,
     # be conservative and just use -O.
     #
-    # Note: gcc-imperonating compilers accept -O3
+    # Note: gcc-impersonating compilers accept -O3
     if test "$GCC" = yes; then
         OPTFLAGS="-O3"
     else
