@@ -28,6 +28,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype.h"
 
 #include "btl_portals.h"
 #include "btl_portals_compat.h"
@@ -485,6 +486,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     ptl_md_t md;
     ptl_handle_me_t me_h;
     int ret;
+    long lb;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
@@ -493,8 +495,9 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
         return NULL;
     }
 
+    ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segments[0].seg_len = *size;
-    frag->segments[0].seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    frag->segments[0].seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
     frag->segments[0].seg_key.key64 = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
 
     frag->base.des_src = NULL;
