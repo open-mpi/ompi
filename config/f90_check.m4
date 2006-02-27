@@ -17,7 +17,7 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_F90_CHECK(Fortran type, expected size, want range and precision)
+# OMPI_F90_CHECK(Fortran type, expected size)
 #----------------------------------------------------------------------------
 # Check Fortran type/kind combinations, including:
 # - whether compiler supports or not
@@ -31,7 +31,6 @@ dnl
 AC_DEFUN([OMPI_F90_CHECK], [
     ofc_fortran_type="$1"
     ofc_expected_size="$2"
-    ofc_want_range="$3"
 
     ofc_have_type=0
     ofc_type_size=$ac_cv_sizeof_int
@@ -111,11 +110,6 @@ AC_DEFUN([OMPI_F90_CHECK], [
                     fi
                 fi
 
-                # Do we want the range and precision?
-                AS_IF([test "$ofc_want_range" != ""],
-                    [OMPI_F90_GET_RANGE([$1], [ofc_type_range])
-                    OMPI_F90_GET_PRECISION([$1], [ofc_type_precision])], [])
-
                 # If we passed in the expected size, then also add the
                 # type to the relevant list of types found.
                 if test "$ofc_expected_size" != ""; then
@@ -151,13 +145,6 @@ AC_DEFUN([OMPI_F90_CHECK], [
     AC_DEFINE_UNQUOTED([OMPI_HAVE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                        [$ofc_have_type], 
                        [Whether we have Fortran 90 $ofc_type_name or not])
-    AS_IF([test "$ofc_want_range" != ""],
-        [AC_DEFINE_UNQUOTED([OMPI_PRECISION_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
-                            [$ofc_type_precision],
-                            [Precision of Fortran 90 $ofc_type_name])
-         AC_DEFINE_UNQUOTED([OMPI_RANGE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
-                            [$ofc_type_range],
-                            [Range of Fortran 90 $ofc_type_name])], [])
 
     # Save some in shell variables for later use.  Have to use m4
     # functions here (vs. $ompi_upper_var_name, defined above) because
