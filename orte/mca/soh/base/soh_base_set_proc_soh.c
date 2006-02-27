@@ -64,6 +64,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
     if (ORTE_SUCCESS != (rc = orte_ns.get_vpid(&vpid, proc))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
+        free(segment);
         return rc;
     }
 
@@ -71,6 +72,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
         if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens), &(value->num_tokens), proc))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
+            free(segment);
             return rc;
         }
     }
@@ -78,6 +80,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_STATE_KEY, ORTE_PROC_STATE, &state))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
+        free(segment);
         return rc;
     }
 
@@ -85,6 +88,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_PROC_EXIT_CODE_KEY, ORTE_EXIT_CODE, &exit_code))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(value);
+        free(segment);
         return rc;
     }
 
@@ -174,6 +178,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
         if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(value))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
+            free(segment);
             return rc;
         }
     }
@@ -181,6 +186,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
 cleanup:
     /* all done */
     if (NULL != value) OBJ_RELEASE(value);
+    free(segment);
 
     return rc;
 }
