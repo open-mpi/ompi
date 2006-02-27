@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -29,7 +29,9 @@ libromio_dist_la_LIBADD  = \
 	adio/libadio.la \
 	mpi-io/libmpi-io.la \
 	mpi-io/glue/openmpi/libglue.la \
-	$(MCA_io_romio_STATIC_LTLIBS) \
-	@ROMIO_LIBLIST@
+	$(MCA_io_romio_STATIC_LTLIBS) @ROMIO_LIBLIST@
 libromio_dist_la_DEPENDENCIES = \
-	$(libromio_dist_la_LIBADD)
+	adio/libadio.la \
+	mpi-io/libmpi-io.la \
+	mpi-io/glue/openmpi/libglue.la \
+	$(MCA_io_romio_STATIC_LTLIBS)
