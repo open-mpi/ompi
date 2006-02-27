@@ -156,6 +156,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if ( NULL != bml_endpoints ) {
 	free ( bml_endpoints) ;
     }
+    OBJ_DESTRUCT(&reachable);
     return rc;
 }
 
