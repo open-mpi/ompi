@@ -41,11 +41,11 @@
 #include <process.h>
 #include <signal.h>
 /*#if defined(OMPI_BUILDING) && OMPI_BUILDING */
-#include "win32/ompi_uio.h"
-#include "win32/ompi_time.h"
-#include "win32/ompi_utsname.h"
-#include "win32/ompi_util.h"
-#include "win32/ompi_misc.h"
+#include "opal/win32/ompi_uio.h"
+#include "opal/win32/ompi_time.h"
+#include "opal/win32/ompi_utsname.h"
+#include "opal/win32/ompi_util.h"
+#include "opal/win32/ompi_misc.h"
 #include "opal/util/printf.h"
 /*#endif*/
 
