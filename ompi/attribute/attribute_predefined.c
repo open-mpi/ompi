@@ -97,8 +97,12 @@
  * Private functions
  */
 static int create_comm(int target_keyval, bool want_inherit);
+static int free_comm(int keyval);
+
 /* JMS for when we implement windows */
 static int create_win(int target_keyval);
+static int free_win(int keyval);
+
 static int set_f(int keyval, MPI_Fint value);
 
 
@@ -127,10 +131,10 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_DISP_UNIT)) ||
 #if 0
         /* JMS For when we implement IMPI */
-        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_CLIENT_SIZE, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_CLIENT_COLOR, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_HOST_SIZE, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_HOST_COLOR, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(IMPI_CLIENT_SIZE, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(IMPI_CLIENT_COLOR, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(IMPI_HOST_SIZE, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(IMPI_HOST_COLOR, true)) ||
 #endif
         0) {
         return ret;
@@ -152,13 +156,13 @@ int ompi_attr_create_predefined(void)
                                     ompi_comm_size(MPI_COMM_WORLD))) ||
 #if 0
         /* JMS For when we implement IMPI */
-        OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_SIZE,
+        OMPI_SUCCESS != (ret = set(IMPI_CLIENT_SIZE,
                                    &attr_impi_client_size)) ||
-        OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_COLOR,
+        OMPI_SUCCESS != (ret = set(IMPI_CLIENT_COLOR,
                                    &attr_impi_client_color)) ||
-        OMPI_SUCCESS != (ret = set(MPI_IMPI_HOST_SIZE,
+        OMPI_SUCCESS != (ret = set(IMPI_HOST_SIZE,
                                    &attr_impi_host_size)) ||
-        OMPI_SUCCESS != (ret = set(MPI_IMPI_HOST_COLOR,
+        OMPI_SUCCESS != (ret = set(IMPI_HOST_COLOR,
                                    &attr_impi_host_color)) ||
 #endif
         0) {
@@ -207,7 +211,34 @@ int ompi_attr_create_predefined(void)
     free(sub_name);
 
     return rc;
+}
 
+
+int ompi_attr_free_predefined(void)
+{
+    int ret;
+
+    if (OMPI_SUCCESS != (ret = free_comm(MPI_TAG_UB)) ||
+        OMPI_SUCCESS != (ret = free_comm(MPI_HOST)) ||
+        OMPI_SUCCESS != (ret = free_comm(MPI_IO)) ||
+        OMPI_SUCCESS != (ret = free_comm(MPI_WTIME_IS_GLOBAL)) ||
+        OMPI_SUCCESS != (ret = free_comm(MPI_APPNUM)) ||
+        OMPI_SUCCESS != (ret = free_comm(MPI_LASTUSEDCODE)) ||
+        OMPI_SUCCESS != (ret = free_comm(MPI_UNIVERSE_SIZE)) ||
+        OMPI_SUCCESS != (ret = free_win(MPI_WIN_BASE)) ||
+        OMPI_SUCCESS != (ret = free_win(MPI_WIN_SIZE)) ||
+        OMPI_SUCCESS != (ret = free_win(MPI_WIN_DISP_UNIT)) ||
+#if 0
+        /* JMS For when we implement IMPI */
+        OMPI_SUCCESS != (ret = free_comm(IMPI_CLIENT_SIZE)) ||
+        OMPI_SUCCESS != (ret = free_comm(IMPI_CLIENT_COLOR)) ||
+        OMPI_SUCCESS != (ret = free_comm(IMPI_HOST_SIZE)) ||
+        OMPI_SUCCESS != (ret = free_comm(IMPI_HOST_COLOR)) ||
+#endif
+        0) {
+        return ret;
+    }
+    return OMPI_SUCCESS;
 }
 
 
@@ -315,6 +346,13 @@ static int create_comm(int target_keyval, bool want_inherit)
 }
 
 
+static int free_comm(int keyval)
+{
+  int key = keyval;
+  return ompi_attr_free_keyval (COMM_ATTR, &key, true);
+}
+
+
 static int create_win(int target_keyval)
 {
     int err;
@@ -334,6 +372,13 @@ static int create_win(int target_keyval)
         return OMPI_ERR_BAD_PARAM;
     }
     return OMPI_SUCCESS;
+}
+
+
+static int free_win(int keyval)
+{
+  int key = keyval;
+  return ompi_attr_free_keyval (WIN_ATTR, &key, true);
 }
 
 
