@@ -118,7 +118,7 @@ You can attach TotalView to MPI processes started by \icmd{mpirun} /
 \item Use the \cmdarg{-tv} convenience argument when running
   \cmd{mpirun} or \cmd{mpiexec} (this is the preferred method):
 
-  \lstset{style=lam-cmdline}
+  \lstset{style=ompi-cmdline}
   \begin{lstlisting}
 shell$ mpirun -tv [...other mpirun arguments...]
   \end{lstlisting}
@@ -126,7 +126,7 @@ shell$ mpirun -tv [...other mpirun arguments...]
 
   For example:
   
-  \lstset{style=lam-cmdline}
+  \lstset{style=ompi-cmdline}
   \begin{lstlisting}
 shell$ mpirun -tv C my_mpi_program arg1 arg2 arg3
   \end{lstlisting}
@@ -135,7 +135,7 @@ shell$ mpirun -tv C my_mpi_program arg1 arg2 arg3
 \item Directly launch \cmd{mpirun} in TotalView (you {\em cannot}
   launch \cmd{mpiexec} in TotalView):
   
-  \lstset{style=lam-cmdline}
+  \lstset{style=ompi-cmdline}
   \begin{lstlisting}
 shell$ totalview mpirun -a [...mpirun arguments...]
   \end{lstlisting}
@@ -143,7 +143,7 @@ shell$ totalview mpirun -a [...mpirun arguments...]
   
   For example:
   
-  \lstset{style=lam-cmdline}
+  \lstset{style=ompi-cmdline}
   \begin{lstlisting}
 shell$ totalview mpirun -a C my_mpi_program arg1 arg2 arg3
   \end{lstlisting}
@@ -202,7 +202,7 @@ good reasons for this:
   automatically start the parallel program.  Create or edit your
   \ifile{\$HOME/.tvdrc} file to include the following:
 
-\lstset{style=lam-shell}
+\lstset{style=ompi-shell}
 \begin{lstlisting}
 # Set a variable to say what the MPI ``starter'' program is
 set starter_program mpirun
@@ -265,7 +265,7 @@ jobs in TotalView:
   processes if they were launched by scripts instead of \cmd{mpirun}.
   Specifically, the following won't work:
                 
-  \lstset{style=lam-cmdline}
+  \lstset{style=ompi-cmdline}
   \begin{lstlisting}
 shell$ mpirun -tv C script_to_launch_foo
   \end{lstlisting}
@@ -273,7 +273,7 @@ shell$ mpirun -tv C script_to_launch_foo
 
   But this will:
 
-  \lstset{style=lam-cmdline}
+  \lstset{style=ompi-cmdline}
   \begin{lstlisting}
 shell$ mpirun -tv C foo
   \end{lstlisting}
@@ -304,8 +304,7 @@ shell$ mpirun -tv C foo
   Consult with your system administrator to ensure that this is set up
   properly.  You may need to edit your ``dot'' files (e.g.,
   \file{.profile}, \file{.bashrc}, \file{.cshrc}, etc.) to ensure that
-  relevant environment variable settings exist on all nodes when you
-  \cmd{lamboot}.
+  relevant environment variable settings exist on all nodes.
   
 \item It is always a good idea to let \cmd{mpirun} finish before you
   rerun or exit TotalView.
@@ -382,7 +381,7 @@ export the \ienvvar{DISPLAY} environment variable, and run a shell
 script that invokes an \cmd{xterm} with ``\cmd{gdb}'' (for example)
 running in it on each node.  For example:
 
-\lstset{style=lam-cmdline}
+\lstset{style=ompi-cmdline}
 \begin{lstlisting}
 shell$ mpirun C -x DISPLAY xterm-gdb.csh
 \end{lstlisting}
@@ -405,7 +404,7 @@ to alter the value of this variable.
 
 Consider the following script:
 
-\lstset{style=lam-shell}
+\lstset{style=ompi-shell}
 \begin{lstlisting}
 #!/bin/csh -f
 
