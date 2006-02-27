@@ -165,8 +165,10 @@ base as of this writing (27 Feb 2006):
   statically linked, it is recommended you compile Open MPI with the
   --without-memory-manager configure option.
 
-- The XGrid support is experimental - see the Open MPI FAQ for more
-  information.
+- The XGrid support is experimental - see the Open MPI FAQ and this
+  post on the Open MPI user's mailing list for more information:
+
+  http://www.open-mpi.org/community/lists/users/2006/01/0539.php
 
 - The MX library limits the maximum message fragment size for both
   on-node and off-node messages.  As of MX v1.0.3, the inter-node
