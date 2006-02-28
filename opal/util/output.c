@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -285,7 +285,6 @@ void opal_output_close(int output_id)
 	temp_str = NULL;
 	temp_str_len = 0;
     }
-    OBJ_DESTRUCT(&verbose);
     OPAL_THREAD_UNLOCK(&mutex);
 }
 
@@ -362,12 +361,16 @@ void opal_output_set_output_file_info(const char *dir,
 void opal_output_finalize(void)
 {
     if (initialized) {
-	if (verbose_stream != -1) {
-	    opal_output_close(verbose_stream);
-	}
-	verbose_stream = -1;
+        if (verbose_stream != -1) {
+            opal_output_close(verbose_stream);
+        }
+        verbose_stream = -1;
+
+        free (output_prefix);
+        free (output_dir);
+        OBJ_DESTRUCT(&verbose);
+        OBJ_DESTRUCT(&mutex);
     }
-    OBJ_DESTRUCT(&mutex);
 }
 
 /************************************************************************/
